@@ -1,9 +1,12 @@
 includeTargets << grailsScript("_GrailsSettings")
 includeTargets << grailsScript("_GrailsClasspath")
+includeTargets << grailsScript("War")
 
 def jettyvers="6.1.21"
 
 target(main: "The description of the script goes here!") {
+    //execute war
+    warMain()
     bundleAll()
 }
 

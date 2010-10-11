@@ -213,7 +213,7 @@ then
 fi  
 
 #run war phase
-yes | $GRAILS_HOME/bin/grails -Dgrails.project.work.dir=$GWORKDIR prod war
+yes | $GRAILS_HOME/bin/grails -Dgrails.project.work.dir=$GWORKDIR prod build-launcher
 if [ 0 != $? ]
 then
    echo "Run Deck build failed"
