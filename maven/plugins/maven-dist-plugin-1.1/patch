@@ -1,0 +1,16 @@
+ndex: ./src/plugins-build/dist/plugin.jelly
+===================================================================
+RCS file: /home/cvs/jakarta-turbine-maven/src/plugins-build/dist/plugin.jelly,v
+retrieving revision 1.3
+diff -u -r1.3 plugin.jelly
+--- ./src/plugins-build/dist/plugin.jelly       2 Aug 2002 02:01:46 -0000       1.3
++++ ./src/plugins-build/dist/plugin.jelly       6 Aug 2002 13:23:10 -0000
+@@ -48,9 +48,6 @@
+       <fileset dir=".">
+         <include name="README.txt"/>
+         <include name="LICENSE*"/>
+-        <include name="project.properties"/>
+-        <include name="maven.xml"/>
+-        <include name="project.xml"/>
+       </fileset>
+     </copy>

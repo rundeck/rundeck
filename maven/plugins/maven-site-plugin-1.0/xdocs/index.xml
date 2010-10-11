@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <title>Maven Site Plug-in</title>
+    <author email="jason@zenplex.com">Jason van Zyl</author>
+  </properties>
+
+  <body>
+    <section name="Maven Site Plug-in">
+      <p>
+        This plug-in is used to generate the documentation site for your
+        project.
+      </p>
+    </section>
+ </body>
+</document>

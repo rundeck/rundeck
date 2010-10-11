@@ -1,0 +1,15 @@
+div.formRemoteList{
+    position:relative;
+    overflow:visible; overflow-y:auto; overflow-x:hidden; padding-right:17px;
+}
+div.overflowx{
+    position:relative;
+    overflow:visible; overflow-x:auto; overflow-y:hidden; padding-bottom:17px;
+}
+
+div.pflowlist{
+    width:97%;
+}
+div.login div.row input{
+    font-family:Verdana, Geneva, Arial, sans-serif;
+}

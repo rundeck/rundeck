@@ -1,0 +1,258 @@
+<?xml version="1.0"?>
+
+<project 
+  xmlns:j="jelly:core"
+  xmlns:maven="jelly:maven"
+  xmlns:deploy="deploy"
+  xmlns:m="maven">
+  
+  <j:choose>
+    <j:when test="${!pom.build.resources.includes.isEmpty()}">
+      <property name="maven.has.jar.resource.patterns" value="true"/>
+    </j:when>
+    <j:when test="${!pom.build.resources.excludes.isEmpty()}">
+      <property name="maven.has.jar.resource.patterns" value="true"/>
+    </j:when>
+    <j:otherwise>
+      <property name="maven.has.jar.resource.patterns" value="false"/>
+    </j:otherwise>
+  </j:choose>
+
+  <patternset id="maven.jar.resources.set">
+    <j:forEach var="res" items="${pom.build.resources.includes}">
+      <include name="${res}"/>
+    </j:forEach>
+    <j:forEach var="res" items="${pom.build.resources.excludes}">
+      <exclude name="${res}"/>
+    </j:forEach>
+  </patternset>
+
+  <!-- ================================================================== -->
+  <!--     prepare-filesystem                                             -->
+  <!-- ================================================================== -->
+
+  <goal name="java:prepare-filesystem"
+        description="Create the directory structure needed to compile">
+    <mkdir dir="${maven.build.dest}"/>
+  </goal>
+
+  <!-- ================================================================== -->
+  <!--     compile                                                        --> 
+  <!-- ================================================================== -->
+
+  <goal name="java:compile"
+        description="Compile the project"
+        prereqs="java:prepare-filesystem">
+
+    <j:choose>
+	  <j:when test="${sourcesPresent == 'true'}">
+        <javac
+          destdir="${maven.build.dest}"
+          excludes="**/package.html"
+          debug="${maven.compile.debug}"
+          deprecation="${maven.compile.deprecation}"
+          optimize="${maven.compile.optimize}">
+          <src>
+            <path refid="maven.compile.src.set"/>
+          </src>
+      
+          <j:forEach var="sm" items="${pom.build.sourceModifications}">
+            <available property="classPresent" classname="${sm.className}"/>
+            <j:if test="${classPresent != 'true'}">
+              <j:forEach var="exclude" items="${sm.excludes}">
+              <exclude name="${exclude}"/>
+              </j:forEach>
+            </j:if>
+          </j:forEach>
+      
+          <classpath>
+            <path refid="maven.dependency.classpath"/>
+            <pathelement path="${maven.build.dest}"/>
+          </classpath>
+          <j:set var="compilerargs" value="${maven.compile.compilerargs}" />
+          <j:if test="${compilerargs != null}">
+            <compilerarg line="${maven.compile.compilerargs}" />
+          </j:if>
+          
+          <j:set var="executable" value="${maven.compile.executable}" />
+          <j:if test="${executable != null}">
+            <setProperty name="executable" value="${maven.compile.executable}" />
+          </j:if>
+          
+          <j:set var="fork" value="${maven.compile.fork}" />
+          <j:if test="${fork != null}">
+            <setProperty name="fork" value="${maven.compile.fork}" />
+          </j:if>
+          
+          <j:set var="source" value="${maven.compile.source}" />
+          <j:if test="${source != null}">
+            <setProperty name="source" value="${maven.compile.source}" />
+          </j:if>
+          
+          <j:set var="target" value="${maven.compile.target}" />
+          <j:if test="${target != null}">
+            <setProperty name="target" value="${maven.compile.target}" />
+          </j:if>
+        </javac>
+      </j:when>
+      <j:otherwise>
+        <echo>No java source files to compile.</echo>
+      </j:otherwise>      
+    </j:choose>
+
+  </goal>
+
+  <!-- ================================================================== -->
+  <!-- J A R  R E S O U R C E S                                           -->
+  <!-- ================================================================== -->
+
+  <goal name="java:jar-resources"
+        description="Copy any resources that must be present in the deployed JAR file">
+
+    <j:if test="${maven.has.jar.resource.patterns}">
+
+    <!-- Copy any resources that must be present in the deployed
+         JAR file.
+    -->
+    
+    <echo>maven.jarResources.basedir: ${maven.jarResources.basedir}</echo>
+
+    <copy todir="${maven.build.dest}">
+      <fileset dir="${maven.jarResources.basedir}">
+        <patternset refid="maven.jar.resources.set"/>
+      </fileset>
+    </copy>
+
+    </j:if>
+  </goal>
+
+  <!-- ================================================================== -->
+  <!-- J A R                                                              -->
+  <!-- ================================================================== -->
+
+  <goal name="java:jar"
+        description="Create the deliverable jar file."
+        prereqs="test:test">
+
+    <available property="maven.jar.manifest.available" 
+      file="${maven.jar.manifest}"/>
+
+    <j:choose>
+	  <j:when test="${maven.jar.manifest.available}">
+	    <echo>Using manifest file ${maven.jar.manifest}</echo>
+	  </j:when>
+	  <j:otherwise>
+	    <touch file="${maven.build.dir}/Manifest.mf" />
+	    <j:set var="maven.jar.manifest" value="${maven.build.dir}/Manifest.mf" />
+	  </j:otherwise>
+	</j:choose>
+
+    <jar
+      jarfile="${maven.build.dir}/${maven.final.name}.jar"
+      basedir="${maven.build.dest}"
+      excludes="${maven.jar.excludes}"
+      manifest="${maven.jar.manifest}"> 
+
+      <metainf dir="${basedir}">
+        <include name="LICENSE.txt"/>
+      </metainf>
+      <manifest>
+        <attribute name="Built-By" value="${user.name}"/>
+        <attribute name="Created-By" value="Apache Jakarta Maven"/>
+        <attribute name="Package" value="${pom.package}"/>
+        <section name="${pom.package}">
+          <attribute name="Specification-Title" value="${pom.id}"/>
+          <attribute name="Specification-Version" value="${pom.currentVersion}"/>
+          <attribute name="Specification-Vendor" value="${pom.organization.name}"/>
+          <attribute name="Implementation-Title" value="${pom.package}"/>
+          <attribute name="Implementation-Version" value="${pom.currentVersion}"/>
+          <attribute name="Implementation-Vendor" value="${pom.organization.name}"/>
+        </section>
+      </manifest>
+    </jar>
+  </goal>
+
+  <!-- ================================================================== -->
+  <!-- S N A P S H O T  J A R                                             -->
+  <!-- ================================================================== -->
+
+  <goal
+    name="jar:snapshot"
+    description="Create a snapshot jar, ie 'id-YYYYMMDD.hhmmss.jar'">
+
+    <maven:snapshot project="${pom}"/>    
+
+    <j:set var="maven.final.name" value="${snapshotSignature}"/>
+    <echo>Building snapshot JAR: ${maven.final.name}</echo>
+    
+    <attainGoal name="java:jar"/>
+    
+  </goal>
+
+  <!-- ================================================================== -->
+  <!-- D E P L O Y  S N A P S H O T                                       -->
+  <!-- ================================================================== -->
+
+  <goal
+    name="jar:deploy-snapshot"
+    description="Deploy a snapshot jar to the remote repository">
+
+    <m:user-check user="${maven.username}"/>
+    <attainGoal name="jar:snapshot"/>
+    <property name="maven.jar.to.deploy" value="${maven.final.name}.jar"/>
+    <property name="dir" value="${maven.repo.central.directory}/${pom.id}/jars"/>
+
+    <deploy:artifact
+      artifact="${maven.build.dir}/${maven.jar.to.deploy}"
+      type="jars"
+      assureDirectoryCommand="mkdir -p"
+      siteCommand="cd @deployDirectory@; chmod g+w ${maven.jar.to.deploy}; chgrp maven ${maven.jar.to.deploy}; ln -sf ${maven.jar.to.deploy} ${pom.id}-SNAPSHOT.jar"
+    />
+                    
+  </goal>
+
+  <!-- ================================================================== -->
+  <!-- D E P L O Y  J A R                                                 -->
+  <!-- ================================================================== -->
+
+  <goal
+    name="jar:deploy"
+    description="Deploy a jar to the remote repository">
+
+    <m:user-check user="${maven.username}"/>
+    <attainGoal name="java:jar"/>
+    <property name="maven.jar.to.deploy" value="${maven.final.name}.jar"/>
+
+    <deploy:artifact
+      artifact="${maven.build.dir}/${maven.jar.to.deploy}"
+      type="jars"
+      assureDirectoryCommand="mkdir -p"
+    />
+
+  </goal>
+
+  <!-- ================================================================== -->
+  <!-- C L E A N                                                          -->
+  <!-- ================================================================== -->
+
+  <goal name="jar:install" prereqs="java:jar"
+  	description="Install the jar in the local repository">
+    
+    <property name="jardir__" value="${maven.repo.local}/${pom.id}/jars"/>
+    <mkdir dir="${jardir__}"/>    
+    <copy 
+      file="${maven.build.dir}/${maven.final.name}.jar"
+      todir="${jardir__}"
+    />
+  </goal>
+
+  <goal name="clean" description="Remove all project artifacts"
+    prereqs="clean:clean"/>
+
+  <goal name="clean:clean"
+        description="Remove all project artifacts">
+    <delete dir="${maven.build.dir}"/>
+    <delete dir="${maven.test.reportsDirectory}"/>
+  </goal>
+
+</project>

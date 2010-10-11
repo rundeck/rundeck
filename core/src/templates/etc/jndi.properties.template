@@ -1,0 +1,36 @@
+#
+# JNDI Properties
+#
+#
+# connectionName, it should be something other than the manager accout to prevent publishing of its password
+# the connectionName will need ability to search the directory for role memberships of rundeck users
+#
+jndi.connectionName=@jndi.connectionName@
+#
+# password for the connectionName
+#
+jndi.connectionPassword=@jndi.connectionPassword@
+#
+# url to the jndi server
+#
+jndi.connectionUrl=@jndi.connectionUrl@
+#
+# the role base for all roles that rundeck users can be members of
+#
+jndi.roleBase=@jndi.roleBase@
+#
+# the relative distinguished name for each role
+#
+jndi.roleNameRDN=@jndi.roleNameRDN@
+#
+# the relative distinguished name identifying the members in role
+#
+jndi.roleMemberRDN=@jndi.roleMemberRDN@
+#
+# the user base for all users for rundeck
+#
+jndi.userBase=@jndi.userBase@
+#
+# the relative distinguished name identifying the user
+#
+jndi.userNameRDN=@jndi.userNameRDN@

@@ -1,0 +1,17 @@
+*~
+*.iws
+build
+maven/repository/*
+*/target
+*/maven.log
+*/build.properties
+rundeckapp/stacktrace.log
+rundeckapp/grails-app/i18n/messages.properties.orig
+rundeckapp/lib/rundeck-common-1.0.0.jar
+rundeckapp/lib/rundeck-core-1.0.0.jar
+rundeckapp/lib/rundeck-commander-1.0.0.jar
+maven.log
+core/src/java/com/dtolabs/rundeck/core/VersionConstants.java
+rundeckapp/env.bash
+rundeckapp/work
+rundeckapp/web-app/plugins

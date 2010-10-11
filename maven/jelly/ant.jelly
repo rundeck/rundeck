@@ -1,0 +1,44 @@
+<project default="ant:configure" 
+         xmlns:j="jelly:core">
+
+   <!-- 
+     ** These properties are defined and exported from 
+     ** project.properties.export
+   ant.zip.src
+   ant.zip.dest 
+   ant.pkg.dest
+   ant.pkg.dirName
+     -->
+
+
+   <!--
+     ** ant goals
+     -->
+
+   <!--
+     -->
+   <goal name="ant:configure" prereqs="ant:get">
+      <chmod dir="${ant.pkg.dest}/${ant.pkg.dirName}/bin"
+             perm="ugo+rx" includes="*"/>
+   </goal>
+
+
+   <!--
+     ** gets the ant pkg if not installed
+     -->
+   <goal name="ant:get"> 
+      <available file="${ant.pkg.dest}/${ant.pkg.dirName}" 
+                 property="ant.installed"/>
+      <property name="ant.installed" value="false"/>
+      <j:set var="antInstalled" value="${ant.installed}"/>
+
+      <j:if test="${antInstalled == 'false'}">
+         <get src="${ant.zip.src}" dest="${ant.zip.dest}"/>
+         <unzip src="${ant.zip.dest}" dest="${ant.pkg.dest}" />
+         <delete file="${ant.zip.dest}"/>
+      </j:if> 
+
+   </goal> 
+
+
+</project> 

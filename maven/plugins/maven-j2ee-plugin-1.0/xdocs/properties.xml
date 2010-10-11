@@ -1,0 +1,467 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <author email="dion@multitask.com.au">dIon Gillard</author>
+    <author email="kevino@jacus.com.au">Kevin O'Neill</author>
+    <author email="plynch@apache.org">Peter Lynch</author>
+    <title>Maven J2EE Plug-in Properties Documentation</title>
+  </properties>
+
+  <body>
+    <section name="Maven J2EE Plug-in Properties">
+      <p>
+        The following is an overview of the various properties (and
+        default values) used by the Maven J2EE Plug-in <a
+          href="build-file.html">build file</a>.  These properties
+        control various aspects of the J2EE build.  Most of these
+        properties are optional and have defaults; however, there are
+        mandatory properties that must be set as described in this document.
+      </p>
+      <p>
+        These properties can be overridden to change the default behavior of
+        the Maven J2EE Plug-in.  If you need to override any of these properties,
+        please refer to the <a href="../../start/integrate.html">Integration</a>
+        document for the preferred method of setting properties in your project.
+      </p>
+      <table>
+        <tr><th>Section</th><th>Description</th></tr>
+        <tr>
+          <td><a href="#General Settings">General Settings</a></td>
+          <td>
+            These properties specify various settings that may be used in any
+            J2EE Plug-in target.
+          </td>
+        </tr>
+        <tr>
+          <td><a href="#War Settings">War</a></td>
+          <td>
+            These properties specify various settings that control the build
+            of a war file by the J2EE Plug-in.
+          </td>
+        </tr>
+        <tr>
+          <td><a href="#EJB Settings">EJB</a></td>
+          <td>
+            These properties specify various settings that control the build
+            of a ejb jar by the J2EE Plug-in.
+          </td>
+        </tr>
+        <tr>
+          <td><a href="#Ear Settings">Ear</a></td>
+          <td>
+            These properties specify various settings that control the build
+            of an ear file by the J2EE Plug-in.
+          </td>
+        </tr>
+        <tr>
+          <td><a href="#Application Server">Appserver</a></td>
+          <td>
+            These properties detail what application server instance you would
+            like to install and control for your project and how to configure
+            it.
+          </td>
+        </tr>
+      </table>
+    </section>
+
+
+    <section name="General Settings" >
+    <table>
+        <tr><th>Property</th><th>Optional?</th><th>Description</th></tr>
+        <tr>
+          <td><a name="maven.j2ee.version">maven.j2ee.version</a></td>
+          <td>
+            No for the "appserver:install" goal.
+            Otherwise, Yes.
+          </td>
+          <td>
+            Specifies the version of J2EE you are trying to use. Valid values are:
+            <ul>
+              <li>12</li>
+              <li>13</li>
+            </ul>
+            The above values represent version 1.2 and 1.3 respectively.
+            The value of this property is especially important for the
+            <a href="appserver.html#Supported Servers">supported servers</a>
+            used with the appserver control features of this plugin.
+          </td>
+        </tr>
+    </table>
+    </section>
+
+
+    <section name="War Settings">
+      <table>
+        <tr><th>Property</th><th>Optional?</th><th>Description</th></tr>
+        <tr>
+          <td><a name="maven.j2ee.war.name">maven.j2ee.war.name</a></td>
+          <td>No</td>
+          <td>
+            Specifies the name of the web application to be built.
+          </td>
+        </tr>
+        <tr>
+          <td><a name="maven.j2ee.war.src">maven.j2ee.war.src</a></td>
+          <td>Yes</td>
+          <td>
+            Specifies the directory in the local file system that is
+            used as the base directory for finding web applications. It defaults
+            to <code><a href="../properties.html#Directory Layout Settings">${maven.src.dir}</a>/webapps</code>
+          </td>
+        </tr>
+        <tr>
+          <td><a name="maven.j2ee.war.content">maven.j2ee.war.content</a></td>
+          <td>Yes</td>
+          <td>
+            Specifies the directory in the local file system that holds
+            web content to be placed in the war file. It defaults
+            to ${maven.j2ee.war.src}/${maven.j2ee.war.name}
+          </td>
+        </tr>
+        <tr>
+          <td><a name="maven.j2ee.war.classes.includes">maven.j2ee.war.classes.includes</a></td>
+          <td>Yes</td>
+          <td>
+            Specifies the pattern of files in the directory specified by
+            <code><a href="../properties.html#Directory Layout Settings">${maven.build.dest}</a></code>
+            to be included in the <code>/WEB-INF/classes</code> of the resulting
+            war file. It defaults to <code>**</code>, that is, all files.
+          </td>
+        </tr>
+        <tr>
+          <td><a name="maven.j2ee.war.classes.excludes">maven.j2ee.war.classes.excludes</a></td>
+          <td>Yes</td>
+          <td>
+            Specifies the pattern of files in the directory specified by
+            <code><a href="../properties.html#Directory Layout Settings">${maven.build.dest}</a></code>
+            that are <strong>not</strong> to be included in the
+            <code>/WEB-INF/classes</code> of the resulting war file.
+            It defaults to <code>**/package.html</code>.
+          </td>
+        </tr>
+        <tr>
+          <td><a name="maven.j2ee.war.lib.includes">maven.j2ee.war.lib.includes</a></td>
+          <td>Yes</td>
+          <td>
+            <p>WARNING: This property is temporarily unused.</p>
+            Specifies the pattern of files in the
+            <a href="../project-descriptor.html#dependencies">project dependencies</a>
+            to be included in the <code>/WEB-INF/lib</code> of the resulting
+            war file. It defaults to <code>*.jar</code>, that is, all dependencies.
+          </td>
+        </tr>
+        <tr>
+          <td><a name="maven.j2ee.war.lib.excludes">maven.j2ee.war.lib.excludes</a></td>
+          <td>Yes</td>
+          <td>
+            <p>WARNING: This property is temporarily unused.</p>
+            Specifies the pattern of files in the
+            <a href="../project-descriptor.html#dependencies">project dependencies</a>
+            not to be included in the <code>/WEB-INF/lib</code> of the resulting
+            war file. It defaults to blank, that is, no dependencies are excluded.
+          </td>
+        </tr>
+        <tr>
+          <td><a name="maven.j2ee.war.webxml">maven.j2ee.war.webxml</a></td>
+          <td>Yes</td>
+          <td>
+            Specifies the deployment descriptor to be used when building the war
+            file. It will be placed in <code>/WEB-INF/web.xml</code> of the resulting
+            war file. It defaults to <code><a href="../properties.html#Directory Layout Settings">${maven.conf.dir}</a>/${maven.j2ee.war.name}-web.xml</code>
+          </td>
+        </tr>
+      </table>
+    </section>
+
+    <section name="EJB Settings">
+      <table>
+        <tr><th>Property</th><th>Optional?</th><th>Description</th></tr>
+        <tr>
+          <td><a name="maven.j2ee.ejb.name">maven.j2ee.ejb.name</a></td>
+          <td>No</td>
+          <td>
+            Specifies the name of the ejb jar to be built.
+          </td>
+        </tr>
+        <tr>
+          <td><a name="maven.j2ee.ejb.conf.dir">maven.j2ee.ejb.conf.dir</a></td>
+          <td>No</td>
+          <td>
+            Specifies the directory to be used to find the deployment descriptor
+            and other files to be placed in <code>META-INF</code> directory of
+            the resulting  ejb jar. It defaults to
+            <code><a href="../properties.html#Directory Layout Settings">${maven.conf.dir}</a>/<a href="properties.html#maven.j2ee.ejb.name">${maven.j2ee.ejb.name}</a></code>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <a name="maven.j2ee.ejb.conf.includes">maven.j2ee.ejb.conf.includes
+            </a>
+          </td>
+          <td>Yes</td>
+          <td>
+            Specifies the a pattern of files to be included in the
+            <code>META-INF</code> directory of the resulting ejb jar, relative
+            to the <code>${maven.j2ee.ejb.conf.dir}</code>. It defaults to
+            <code>ejb-jar.xml</code>.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <a name="maven.j2ee.ejb.conf.excludes">maven.j2ee.ejb.conf.excludes
+            </a>
+          </td>
+          <td>Yes</td>
+          <td>
+            Specifies the a pattern of files to be excluded from the
+            <code>META-INF</code> directory of the resulting ejb jar, relative
+            to the <code>${maven.j2ee.ejb.conf.dir}</code>. It defaults to
+            blank.
+          </td>
+        </tr>
+        <tr>
+          <td><a name="maven.j2ee.ejb.includes">maven.j2ee.ejb.includes</a></td>
+          <td>Yes</td>
+          <td>
+            Specifies the pattern of files in the
+            <a href="../properties.html#Directory Layout Settings">${maven.build.dest}</a>
+            directory to be included in the generated ejb jar. Defaults to <code>**/*</code>.
+          </td>
+        </tr>
+        <tr>
+          <td><a name="maven.j2ee.ejb.excludes">maven.j2ee.ejb.excludes</a></td>
+          <td>Yes</td>
+          <td>
+            Specifies the pattern of compiled class files to be <strong>excluded</strong>
+            from the generated ejb jar. Defaults to <code>**/package.html</code>.
+          </td>
+        </tr>
+        <tr>
+          <td><a name="maven.j2ee.ejb.local.includes">maven.j2ee.ejb.local.includes</a></td>
+          <td>Yes</td>
+          <td>
+            If this property exists then a jar file with the name
+            <code><a href="properties.html#maven.j2ee.ejb.name">${maven.j2ee.ejb.name}</a>-local.jar</code>
+            containing the matching files will be generated in
+            <code><a href="../properties.html#Directory Layout Settings">${maven.build.dir}</a>/ejb</code>.
+          </td>
+        </tr>
+        <tr>
+          <td><a name="maven.j2ee.ejb.local.excludes">maven.j2ee.ejb.local.excludes</a></td>
+          <td>Yes</td>
+          <td>
+            Files to be <strong>excluded</strong> from the
+            <code><a href="properties.html#maven.j2ee.ejb.name">${maven.j2ee.ejb.name}</a>-local.jar</code>
+          </td>
+        </tr>
+        <tr>
+          <td><a name="maven.j2ee.ejb.remote.includes">maven.j2ee.ejb.remote.includes</a></td>
+          <td>Yes</td>
+          <td>
+            If this property exists then a jar file with the name
+            <code><a href="properties.html#maven.j2ee.ejb.name">${maven.j2ee.ejb.name}</a>-remote.jar</code>
+            containing the matching files will be generated in
+            <code><a href="../properties.html#Directory Layout Settings">${maven.build.dir}</a>/ejb</code>.
+          </td>
+        </tr>
+        <tr>
+          <td><a name="maven.j2ee.ejb.remote.excludes">maven.j2ee.ejb.remote.excludes</a></td>
+          <td>Yes</td>
+          <td>
+            Files to be <strong>excluded</strong> from the
+            <code><a href="properties.html#maven.j2ee.ejb.name">${maven.j2ee.ejb.name}</a>-remote.jar</code>
+          </td>
+        </tr>
+      </table>
+    </section>
+
+
+    <section name="Ear Settings">
+      <table>
+        <tr><th>Property</th><th>Optional?</th><th>Description</th></tr>
+        <tr>
+          <td><a name="maven.j2ee.ear.name">maven.j2ee.ear.name</a></td>
+          <td>No</td>
+          <td>
+            Specifies the name of the enterprise application to be built.
+          </td>
+        </tr>
+        <tr>
+          <td><a name="maven.j2ee.ear.includes">maven.j2ee.ear.includes</a></td>
+          <td>Yes</td>
+          <td>
+            Specifies the pattern of files in the
+            <code><a href="../properties.html#Directory Layout Settings">${maven.build.dir}</a></code>
+            directory to be included in the resulting ear file. It defaults to
+            <code>*.jar, *.war</code>, that is, all jar and war files.
+          </td>
+        </tr>
+        <tr>
+          <td><a name="maven.j2ee.ear.excludes">maven.j2ee.ear.excludes</a></td>
+          <td>Yes</td>
+          <td>
+            Specifies the pattern of files in the
+            <code><a href="../properties.html#Directory Layout Settings">${maven.build.dir}</a></code>
+            directory that are not to be included in the resulting ear file.
+            It defaults to blank, that is, nothing is excluded.
+          </td>
+        </tr>
+        <tr>
+          <td><a name="maven.j2ee.ear.appxml">maven.j2ee.ear.appxml</a></td>
+          <td>Yes</td>
+          <td>
+            Specifies the deployment descriptor to be used when building the ear
+            file. It will be placed in <code>/application.xml</code> of the resulting
+            ear file. It defaults to <code><a href="../properties.html#Directory Layout Settings">${maven.conf.dir}</a>/${maven.j2ee.ear.name}-application.xml</code>
+          </td>
+        </tr>
+
+      </table>
+    </section>
+
+
+
+    <section name="Application Server">
+      <p> Although application server ( appserver ) instance control is part
+      of the J2EE plugin, all appserver related properties begin with
+      the "maven.appserver" prefix. This is indicative of the large scope of
+      functionality within the appserver targets.
+      </p>
+      <table>
+        <tr><th>Property</th><th>Optional?</th><th>Description</th></tr>
+
+        <tr>
+          <td><a name="maven.appserver.name">maven.appserver.name</a></td>
+          <td>No</td>
+          <td>
+            Specifies the name of the application server to install and control
+            for your project.
+            <p />
+            Please refer to the <a href="appserver.html#Supported Servers">supported servers</a>
+            table for a current list of supported appservers and the ${maven.appserver.name}
+            value they use use.
+          </td>
+        </tr>
+
+        <tr>
+          <td><a name="maven.appserver.version">maven.appserver.version</a></td>
+          <td>No</td>
+          <td>
+            Specifies the version of the appserver to install and control
+            for your project. Please refer to the
+            <a href="appserver.html#Supported Servers">supported servers</a>
+            table for a current list of supported appservers and the
+            ${maven.appserver.version} value they use.
+          </td>
+        </tr>
+
+        <tr>
+          <td><a name="maven.appserver.home">maven.appserver.home</a></td>
+          <td>No</td>
+          <td>
+            Specifies the directory where the shared installation of the appserver
+            resides. This should be the home of the appserver specified by
+            <a href="#maven.appserver.name">${maven.appserver.name}</a>
+            and <a href="#maven.appserver.version">${maven.appserver.version}</a>.
+          </td>
+        </tr>
+
+        <tr>
+          <td><a name="maven.appserver.dir">maven.appserver.dir</a></td>
+          <td>No</td>
+          <td>
+            Specifies the directory where the appserver instance is installed
+            during the "appserver:install" goal.
+            Defaults to be ${basedir}/server .
+          </td>
+        </tr>
+
+        <tr>
+          <td><a name="maven.appserver.host">maven.appserver.host</a></td>
+          <td>No</td>
+          <td>
+            Specifies the default host to use to access the started server
+            instance. Defaults to 'localhost'.
+          </td>
+        </tr>
+
+        <tr>
+          <td><a name="maven.appserver.port.http">maven.appserver.port.http</a></td>
+          <td>No</td>
+          <td>
+            Specifies the HTTP port number to use to access the started server
+            instance. Defaults to 8080.
+          </td>
+        </tr>
+
+        <tr>
+          <td><a name="maven.appserver.url">maven.appserver.url</a></td>
+          <td>No</td>
+          <td>
+            The URL that is used to test if your appserver instance is running.
+            This URL must point to a target that will return a response code &lt; 400
+            when your appserver instance is started. Default value is
+            http://${maven.appserver.host}:${maven.appserver.port.http}/index.html
+          </td>
+        </tr>
+
+        <tr>
+          <td><a name="maven.appserver.port.https">maven.appserver.port.https</a></td>
+          <td>Yes</td>
+          <td>
+            Specifies the HTTPS port number to use to access the started server
+            instance using SSL. Defaults to 444.
+          </td>
+        </tr>
+
+        <tr>
+          <td><a name="maven.appserver.port.one">maven.appserver.port.one</a></td>
+          <td>Yes</td>
+          <td>
+            Optional additional port you can specify when configuring appserver files during
+            install.
+          </td>
+        </tr>
+        <tr>
+          <td><a name="maven.appserver.port.two">maven.appserver.port.two</a></td>
+          <td>Yes</td>
+          <td>
+            Optional additional port you can specify when configuring appserver files during
+            install.
+          </td>
+        </tr>
+        <tr>
+          <td><a name="maven.appserver.port.three">maven.appserver.port.three</a></td>
+          <td>Yes</td>
+          <td>
+            Optional additional port you can specify when configuring appserver files during
+            install.
+          </td>
+        </tr>
+
+        <tr>
+          <td><a name="maven.appserver.classpath">maven.appserver.classpath</a></td>
+          <td>Yes</td>
+          <td>
+            A <a href="http://jakarta.apache.org/ant/manual/using.html#path">path-like</a>
+            value that can specify resources to make available as
+            part of the classpath of the JVM used when controlling your appserver instance.
+            For example, you may have several webapps running in the same container
+            that require a JDBC driver be available. Adding a reference to that
+            jar here will put it in the classpath of the JVM used to start
+            your appserver.
+            <p/>
+            An example of a valid value might be:
+            <p/>
+            <code>/jars/database.jar;/jars/foobar.jar</code>
+            <p/>
+            Path seperators are automatically converted to their system correct values.
+            By default, there are no additional paths. <strong>Jars required to control an appserver
+            are automatically built-in and do not need to be added here.</strong>
+          </td>
+        </tr>
+      </table>
+    </section>
+  </body>
+</document>

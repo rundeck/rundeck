@@ -1,0 +1,13 @@
+A simple plugin to make jalopy available to you.
+
+Your maven.xml might look something like this:
+  
+  <goal name="format" prereqs="jalopy:taskdef">
+    <jalopy fileformat="unix"
+            loglevel="info"
+            threads="2">
+      <fileset dir="src/test" >
+        <include name="**/*.java" />
+      </fileset>
+    </jalopy>
+  </goal>

@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+
+<project xmlns:j="jelly:core">
+
+  <!-- ================================================================== -->
+  <!-- S I M P L E   D O C B O O K   D O C U M E N T A T I O N            -->
+  <!-- ================================================================== -->
+  <goal 
+    name="docbook:transform"
+    description="Transform any docbook-simple source into xdocs for later use">
+
+    <style 
+      basedir="${maven.src.docbook-simple}"
+      destdir="${maven.gen.docs}" extension=".xml"
+      style="${plugins.dir}/docbook2document.xsl"
+      includes="**/*.xml, **/*.sgml"
+    />
+      
+  </goal>
+  
+</project>

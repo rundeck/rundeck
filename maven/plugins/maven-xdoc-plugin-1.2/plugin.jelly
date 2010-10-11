@@ -1,0 +1,265 @@
+<?xml version="1.0"?>
+
+<project xmlns:j="jelly:core" 
+         xmlns:log="jelly:log"
+         xmlns:define="jelly:define"
+         xmlns:texen="texen"
+         xmlns:dvsl="dvsl">
+
+  <!-- ================================================================== -->
+  <!-- P R O J E C T  D O C U M E N T A T I O N                           -->
+  <!-- ================================================================== -->
+
+  <goal name="xdoc"
+        prereqs="xdoc:generate-from-pom, xdoc:transform"
+        description="Generate html project documentation xdoc sources"/>
+
+  <!-- ================================================================== -->
+  <!-- T E X E N  T A G  I N I T I A L I Z A T I O N                      -->
+  <!-- ================================================================== -->
+  <goal name="init-texen-tag">
+  
+    <define:taglib uri="texen">
+      <define:jellybean
+        name="texen"
+        className="org.apache.maven.BaseProjectTask"
+        method="execute"
+      />
+      
+      <!-- ================================================================== -->
+      <!-- T E X E N  T A G                                                   -->
+      <!-- ================================================================== -->
+  
+      <define:tag name="generate">
+
+        <texen:texen
+          controlTemplate="${controlTemplate}"
+          outputDirectory="${outputDirectory}"
+          templatePath="${templatePath}"
+          outputFile="${outputFile}"
+          mavenProject="${mavenProject}"
+          reactorProjects="${reactorProjects}"
+        />
+
+      </define:tag>
+      
+    </define:taglib>
+  
+  </goal>
+
+  <goal
+    name="xdoc:generate-from-pom"
+    prereqs="init-texen-tag"
+    description="Generates xdocs for site based on project descriptor">
+
+    <texen:generate
+      controlTemplate="Control.vm"
+      outputDirectory="${maven.gen.docs}"
+      templatePath="${plugin.dir}/templates"
+      outputFile="xdocs.report"
+      mavenProject="${pom}"
+    />
+
+  </goal>
+
+  <!-- ================================================================== -->
+  <!-- D V S L  T A G  I N I T I A L I Z A T I O N                        -->
+  <!-- ================================================================== -->
+
+  <goal name="init-dvsl-tag">
+
+    <define:taglib uri="dvsl">
+      <define:jellybean 
+        name="dvsl" 
+        className="org.apache.maven.DVSLBean"
+        method="execute">
+      </define:jellybean>
+    </define:taglib>
+
+    <tstamp>
+      <format property="build.date" pattern="${maven.xdoc.date.format}"
+              locale="${maven.xdoc.date.locale}"/>
+    </tstamp>
+
+  </goal>
+
+  <!-- ================================================================== -->
+  <!-- D V S L  D O C U M E N T A T I O N                                 -->
+  <!-- ================================================================== -->
+
+  <goal name="xdoc:transform"
+        prereqs="init-dvsl-tag"
+        description="Generate html project documentation xdoc sources">
+
+    <tstamp>
+      <format property="mavenCurrentYear" pattern="yyyy" />
+    </tstamp>
+
+    <mkdir dir="${maven.docs.dest}"/>
+
+    <!-- Transform the auto-generated xdocs first -->
+
+    <available 
+      file="${maven.gen.docs}" 
+      type="dir"
+      property="maven.gen.docs.available"
+    />
+    
+    <!-- This is busted
+    <j:if test="${!maven.gen.docs.available}" >
+      <log:info>
+        No Maven generated documentation to transform - skipping.
+      </log:info>
+    </j:if>
+    -->
+    
+    <j:if test="${maven.gen.docs.available}">
+    
+    <dvsl:dvsl
+      basedir = "${maven.gen.docs}"
+      destdir = "${maven.docs.dest}/"
+      extension = ".html"
+      force = "true"
+      toolboxFile = "${plugin.dir}/toolbox.props"
+      style = "${plugin.dir}/site.dvsl"
+      excludes = "**/project.xml,**/template.xml"
+      includes = "**/*.xml"
+      outputEncoding = "${maven.docs.outputencoding}"
+      mavenProject = "${pom}">
+    </dvsl:dvsl>
+
+    </j:if>
+
+    <!-- Copy maven supplied stylesheets.  -->
+    <copy todir="${maven.docs.dest}/style" overwrite="yes" filtering="yes">
+      <fileset dir="${plugin.dir}/css">
+        <include name="**/*.css"/>
+      </fileset>
+      <filterset>
+        <filter token="UI_BODY_BACKGROUND" value="${maven.ui.body.background}"/>
+        <filter token="UI_BODY_FOREGROUND" value="${maven.ui.body.foreground}"/>
+        <filter token="UI_SECTION_BACKGROUND" value="${maven.ui.section.background}"/>
+        <filter token="UI_SECTION_FOREGROUND" value="${maven.ui.section.foreground}"/>
+        <filter token="UI_SUBSECTION_BACKGROUND" value="${maven.ui.subsection.background}"/>
+        <filter token="UI_SUBSECTION_FOREGROUND" value="${maven.ui.subsection.foreground}"/>
+
+        <filter token="UI_TABLE_HEADER_BACKGROUND" value="${maven.ui.table.header.background}"/>
+        <filter token="UI_TABLE_HEADER_FOREGROUND" value="${maven.ui.table.header.foreground}"/>
+        <filter token="UI_TABLE_ROW_ODD_BACKGROUND" value="${maven.ui.table.row.odd.background}"/>
+        <filter token="UI_TABLE_ROW_ODD_FOREGROUND" value="${maven.ui.table.row.odd.foreground}"/>
+        <filter token="UI_TABLE_ROW_EVEN_BACKGROUND" value="${maven.ui.table.row.even.background}"/>
+        <filter token="UI_TABLE_ROW_EVEN_FOREGROUND" value="${maven.ui.table.row.even.foreground}"/>
+
+        <filter token="UI_BANNER_BACKGROUND" value="${maven.ui.banner.background}"/>
+        <filter token="UI_BANNER_FOREGROUND" value="${maven.ui.banner.foreground}"/>
+        <filter token="UI_BANNER_BORDER_TOP" value="${maven.ui.banner.border.top}"/>
+        <filter token="UI_BANNER_BORDER_BOTTOM" value="${maven.ui.banner.border.bottom}"/>
+
+        <filter token="UI_SOURCE_BACKGROUND" value="${maven.ui.source.background}"/>
+        <filter token="UI_SOURCE_FOREGROUND" value="${maven.ui.source.foreground}"/>
+        <filter token="UI_SOURCE_BORDER_TOP" value="${maven.ui.source.border.top}"/>
+        <filter token="UI_SOURCE_BORDER_BOTTOM" value="${maven.ui.source.border.bottom}"/>
+        <filter token="UI_SOURCE_BORDER_RIGHT" value="${maven.ui.source.border.right}"/>
+        <filter token="UI_SOURCE_BORDER_LEFT" value="${maven.ui.source.border.left}"/>
+
+        <filter token="UI_NAVCOL_BACKGROUND" value="${maven.ui.navcol.background}"/>
+        <filter token="UI_NAVCOL_FOREGROUND" value="${maven.ui.navcol.foreground}"/>
+        <filter token="UI_NAVCOL_BACKGROUND_NS4" value="${maven.ui.navcol.background.ns4}"/>
+        <filter token="UI_NAVCOL_FOREGROUND_NS4" value="${maven.ui.navcol.foreground.ns4}"/>
+        <filter token="UI_NAVCOL_BORDER_TOP" value="${maven.ui.navcol.border.top}"/>
+        <filter token="UI_NAVCOL_BORDER_RIGHT" value="${maven.ui.navcol.border.right}"/>
+        <filter token="UI_NAVCOL_BORDER_BOTTOM" value="${maven.ui.navcol.border.bottom}"/>
+
+        <filter token="UI_BREADCRUMBS_BACKGROUND" value="${maven.ui.breadcrumbs.background}"/>
+        <filter token="UI_BREADCRUMBS_FOREGROUND" value="${maven.ui.breadcrumbs.foreground}"/>
+        <filter token="UI_BREADCRUMBS_BORDER_TOP" value="${maven.ui.breadcrumbs.border.top}"/>
+        <filter token="UI_BREADCRUMBS_BORDER_BOTTOM" value="${maven.ui.breadcrumbs.border.bottom}"/>
+
+        <filter token="UI_HREF_LINK" value="${maven.ui.href.link}"/>
+        <filter token="UI_HREF_LINK_ACTIVE" value="${maven.ui.href.link.active}"/>
+        <filter token="UI_HREF_LINK_SELFREF" value="${maven.ui.href.link.selfref}"/>
+      </filterset>
+    </copy>
+
+    <!-- Copy maven supplied images.  -->
+    <copy todir="${maven.docs.dest}/images" overwrite="yes" filtering="no">
+      <fileset dir="${plugin.dir}/images">
+        <include name="**/*.gif"/>
+        <include name="**/*.jpeg"/>
+        <include name="**/*.jpg"/>
+        <include name="**/*.png"/>
+      </fileset>
+    </copy>
+
+    <available 
+      file="${maven.docs.src}"
+      type="dir"
+      property="maven.docs.src.available"
+    />
+
+    <!-- Then transform user supplied xdocs next -->
+
+    <j:if test="${maven.docs.src.available}">
+
+    <log:info>
+      Transforming user supplied documentation.
+    </log:info>
+
+    <dvsl:dvsl
+      basedir = "${maven.docs.src}"
+      destdir = "${maven.docs.dest}/"
+      extension = ".html"
+      force = "true"
+      toolboxFile = "${plugin.dir}/toolbox.props"
+      style = "${plugin.dir}/site.dvsl"
+      excludes = "**/project.xml,**/template.xml"
+      includes = "**/*.xml"
+      outputEncoding = "${maven.docs.outputencoding}"
+      mavenProject = "${pom}">
+    </dvsl:dvsl>
+    
+    <available
+      file="${maven.docs.src}/images"
+      type="dir"
+      property="maven.docs.src.images.available"
+    />
+
+    <j:if test="${maven.docs.src.images.available}">
+
+      <!-- Copy user supplied images -->
+      <copy todir="${maven.docs.dest}/images" filtering="no">
+        <fileset dir="${maven.docs.src}/images">
+          <include name="**/*.gif"/>
+          <include name="**/*.jpeg"/>
+          <include name="**/*.jpg"/>
+          <include name="**/*.png"/>
+        </fileset>
+      </copy>
+
+    </j:if>
+
+    <!-- Copy user supplied htm/html -->
+    <copy todir="${maven.docs.dest}" filtering="no">
+      <fileset dir="${maven.docs.src}">
+        <include name="**/*.html"/>
+        <include name="**/*.htm"/>
+      </fileset>
+    </copy>
+    
+    
+    <!-- A hack to make the fileset below work. The files don't have to be
+         present but the directory does. -->
+    <mkdir dir="${maven.docs.src}/stylesheets"/>
+
+    <!-- Copy user supplied stylesheets, can override maven -->
+    <copy todir="${maven.docs.dest}/style" overwrite="true" filtering="no">
+      <fileset dir="${maven.docs.src}/stylesheets">
+        <include name="**/*.css"/>
+      </fileset>
+    </copy>
+
+    </j:if>
+
+  </goal>
+
+</project>

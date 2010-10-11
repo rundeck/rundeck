@@ -1,0 +1,268 @@
+/*
+ * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package com.dtolabs.launcher;
+
+import com.dtolabs.rundeck.core.Constants;
+import com.dtolabs.rundeck.core.utils.PropertyUtil;
+
+import java.io.*;
+import java.util.Enumeration;
+import java.util.Properties;
+
+
+/**
+ * give us ability to set all framework/modules.* properties at the cmd line
+ * such as --framework.property.name=<value>, which implies:
+ * framework.property.name=<value>
+ * by generating a preferences.properties file that contains overridden values otherwise default values
+ * from new defaults file apply.
+ */
+
+public class Preferences {
+
+    public static String[] PREFS_ALLOWED_PROP_TYPES = Constants.PREFS_ALLOWED_PROP_TYPES;
+    public static String JAVA_HOME = Constants.JAVA_HOME;
+    public static String ENV_JAVA_HOME = System.getProperty("user.java_home");
+
+    // required properties
+    public static String SYSTEM_RDECK_HOME = Constants.getSystemHomeDir();
+    public static String SYSTEM_RDECK_BASE = Constants.getSystemBaseDir();
+
+    // location of default properties file which some of them can be overridden at setup time
+    public static String RUNDECK_DEFAULTS_PROPERTIES_NAME = Constants.getDefaultsPropertiesName();
+
+    /**
+     * generate preferences file represented by preferences String
+     */
+    public static void generate(String args[], String preferences) throws Exception {
+        generate(args, preferences, null);
+
+    }
+    /**
+     * generate preferences file represented by preferences String
+     */
+    public static void generate(String args[], String preferences, Properties inputProps) throws Exception {
+        String base;
+        String homedir;
+        base = inputProps.getProperty("rdeck.base");
+        homedir = inputProps.getProperty("rdeck.home");
+        if ((null == ENV_JAVA_HOME || "".equals(ENV_JAVA_HOME)) && (null == JAVA_HOME || "".equals(JAVA_HOME))){
+            throw new Exception("property: java.home, not defined");
+        }
+        if(null==base) {
+            base = SYSTEM_RDECK_BASE;
+        }
+        if(null==homedir) {
+            homedir = SYSTEM_RDECK_HOME;
+        }
+        if (null == homedir || "".equals(homedir))
+            throw new Exception("property: rdeck.home, not defined");
+        if (null == base || "".equals(base))
+            throw new Exception("property: rdeck.base, not defined");
+
+        File baseDir = new File(base);
+        if (!baseDir.isDirectory()) {
+            if (baseDir.exists()) {
+                throw new Exception(base + " exists and is not a directory");
+            }
+            if (!baseDir.mkdirs()) {
+                throw new Exception(base + " does not exist and cannot be created");
+            }
+        }
+
+        // the properties used to generate the preferences.properties file
+        Properties systemProperties = System.getProperties();
+        Properties defaultProperties = new Properties();
+
+        //
+        // bootstrap the rdeck.home, rdeck.base, ant.home, and java.home
+        //
+        String jhome = ENV_JAVA_HOME;
+        if(null==jhome) {
+            jhome = JAVA_HOME;
+        }
+        defaultProperties.setProperty("user.java_home", jhome);
+        defaultProperties.setProperty("java.home", jhome);
+        defaultProperties.setProperty("rdeck.home", homedir);
+        defaultProperties.setProperty("rdeck.base", base);
+
+        //
+        // additional properties needed for successful rdeck setup, based on above
+        // bootstrapping properties
+        //
+        defaultProperties.setProperty("framework.projects.dir", Constants.getFrameworkDepotsDir(base));
+        defaultProperties.setProperty("framework.rdeck.base", base);
+        final String configDir = Constants.getFrameworkConfigDir(base);
+        defaultProperties.setProperty("framework.etc.dir", configDir);
+        defaultProperties.setProperty("framework.var.dir", Constants.getBaseVar(base));
+        defaultProperties.setProperty("framework.logs.dir", Constants.getFrameworkLogsDir(base));
+
+        Enumeration propEnum = systemProperties.propertyNames();
+        while (propEnum.hasMoreElements()) {
+            String propName = (String) propEnum.nextElement();
+            String propType = propName.split("\\.")[0];
+            //if (Arrays.binarySearch(PREFS_ALLOWED_PROP_TYPES, propType) > -1) {
+                defaultProperties.setProperty(propName, systemProperties.getProperty(propName));
+            //}
+        }
+
+        // load the default properties
+        loadResourcesDefaults(defaultProperties, RUNDECK_DEFAULTS_PROPERTIES_NAME);
+        if(null!=inputProps) {
+            defaultProperties.putAll(inputProps);
+        }
+        parseNonReqOptionsAsProperties(defaultProperties, args);
+
+        // expand all keyValues within defaultProperties against keys within same defaultProperties
+        // and return new expandedDefaultProperties
+        Properties expandedDefaultProperties = PropertyUtil.expand(defaultProperties);
+
+        // parse any --<framework|modules>-<property>-<name>=<value> as
+        // <framework|modules>.<property>.<name>=<value> and ensure it is a valid property
+
+        // ensure ${rdeck_base}/etc exists
+        File rdeck_base_etc = new File(configDir);
+        if (!rdeck_base_etc.isDirectory()) {
+            if (!rdeck_base_etc.mkdir()) {
+                throw new Exception("Unable to create directory: " + configDir);
+            }
+        }
+
+        // generate the preferences.properties file into ${rdeck.base}/etc from expandedDefaultProperties
+        expandedDefaultProperties.store(new FileOutputStream(preferences), "rdeck setup preferences");
+
+    }
+
+    // load properties file
+    private static void loadDefaults(Properties defaultProperties, String propertiesFile) throws IOException {
+        FileInputStream fis = new FileInputStream(propertiesFile);
+        try {
+            defaultProperties.load(fis);
+        } finally {
+            if(null!=fis){
+                fis.close();
+            }
+        }
+    }
+    // load properties file
+    public static void loadResourcesDefaults(Properties defaultProperties, String propertiesFileName) throws IOException {
+        final String resource = Setup.TEMPLATE_RESOURCES_PATH + "/" + propertiesFileName;
+        InputStream is = Preferences.class.getClassLoader().getResourceAsStream(
+            resource);
+        if(null==is) {
+            throw new IOException("Unable to load resource: " + resource);
+        }
+        try {
+            defaultProperties.load(is);
+        } finally {
+            if (null != is) {
+                is.close();
+            }
+        }
+    }
+
+    /**
+     * Parse arguments that match "--key=value" and populate the Properties with the values.
+     * @param defaultProperties the properties
+     * @param args the arguments
+     * @throws Exception if an error occurs
+     */
+    public static void parseNonReqOptionsAsProperties(final Properties defaultProperties, final String[] args) throws Exception {
+
+        // loop thru each argument on cmdline
+        for (final String argProp : args) {
+            //System.out.println("parseNonReqOptionsAsProperties(), argProp: " + argProp);
+
+            // ignore anything that does not start with --
+            if (!argProp.startsWith("--")) {
+                continue;
+            }
+
+            final String propName = convert2PropName(argProp);
+
+            // get the desired property value from cmdline that we want to reset this property with
+            // this value is the rhs of the = sign
+
+            final int equalsAt = argProp.indexOf('=');
+            final String propValue = argProp.substring(equalsAt + 1);
+
+            if (null == propValue || "".equals(propValue)) {
+                throw new Exception("argument: " + argProp + " not valid");
+            }
+
+            defaultProperties.setProperty(propName, propValue);
+        }
+
+    }
+
+    // parse the property argument and convert from format
+    //   --foo.bar...=value
+    //   to
+    //   format foo.bar...=value
+    // also check if it is a valid type of property
+    private static String convert2PropName(String argProp) throws Exception {
+
+        //System.out.println("argProp: " + argProp);
+
+        if (!argProp.startsWith("--")) {
+            throw new Exception("argument: " + argProp + " does not start with --");
+        }
+        if (argProp.indexOf("=") == -1) {
+            throw new Exception("argument: " + argProp + " does not contain an = sign");
+        }
+
+        // remove hyphens
+        String argProperty = argProp.substring(2);
+
+
+        if (null == argProperty || "".equals(argProperty))
+            throw new Exception("argument: " + argProp + " not valid");
+
+        // get the lhs of =, the property name
+        String argPropName = argProperty.split("=")[0];
+
+
+        if (null == argPropName || "".equals(argPropName))
+            throw new Exception("argument: " + argProp + " not valid");
+
+        // get the rhs of =, the property value
+        int equalsAt = argProperty.indexOf('=');
+        String argPropValue = argProperty.substring(equalsAt + 1);
+
+        if (null == argPropValue || "".equals(argPropValue))
+            throw new Exception("argument: " + argProp + " not valid");
+
+        //System.out.println("argPropName: " + argPropName);
+
+        // ensure this type of prop is one that we will handle
+        //String[] dotSplit = argPropName.split("\\.");
+        //String propType = dotSplit[0];
+
+        //if (Arrays.binarySearch(PREFS_ALLOWED_PROP_TYPES, propType) < 0) {
+            //StringBuffer allowedProps = new StringBuffer();
+            //for (int i = 0; i < PREFS_ALLOWED_PROP_TYPES.length; i++) {
+                //allowedProps.append(PREFS_ALLOWED_PROP_TYPES[i]);
+                //allowedProps.append(" ");
+            //}
+            //throw new Exception("argument: " + argProp + " not allowed, " +
+                    //allowedProps.toString());
+        //}
+        return argPropName;
+
+    }
+
+}

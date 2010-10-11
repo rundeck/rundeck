@@ -1,0 +1,284 @@
+<?xml version="1.0"?>
+
+<project xmlns:j="jelly:core" xmlns:log="jelly:log"
+         xmlns:define="jelly:define" xmlns:server="serverLib">
+
+  <!-- ================================================================ -->
+  <!-- D E F A U L T  G O A L                                           -->
+  <!-- ================================================================ -->
+  <goal name="j2ee" prereqs="j2ee:validate-war"
+        description="Check that a war file is valid" />
+
+  <!-- ================================================================ -->
+  <!-- A P P S E R V E R  C O N T R O L                                 -->
+  <!-- ================================================================ -->
+
+  <!--==================================================================-->
+  <!-- S U P P O R T E D  A P P S E R V E R S                           -->
+  <!--==================================================================-->
+  <j:import inherit="true" uri="./appserver/tomcat-4.x.jelly" />
+
+  <!--==================================================================-->
+  <!-- B E G I N  C O R E  P R O C E S S I N G                          -->
+  <!--==================================================================-->
+  <goal name="appserver:init">
+    <define:taglib uri="serverLib">
+      <define:jellybean name="server-started-check"
+        className="org.apache.maven.jelly.tags.ServerStartedCheckTag" />
+    </define:taglib>
+    <server:server-started-check propertyName="maven.appserver.started"
+        URL="${maven.appserver.url}"/>
+
+    <available property="maven.appserver.installed"
+      file="${maven.appserver.dir}" type="dir" />
+
+    <!-- tell the user what Maven thinks about their appserver instance -->
+    <log:info>
+      <j:set var="maven.appserver.installed.msg">
+        <j:choose>
+          <j:when test="${maven.appserver.installed}">installed</j:when>
+          <j:otherwise>not installed</j:otherwise>
+        </j:choose>
+      </j:set>
+      <j:set var="maven.appserver.started.msg">
+        <j:choose>
+          <j:when test="${maven.appserver.installed}">started</j:when>
+          <j:otherwise>not started</j:otherwise>
+        </j:choose>
+      </j:set>
+      Maven has determined your <j:expr value="${maven.appserver.fullname}"/>
+      appserver instance is <j:expr value="${maven.appserver.installed.msg}"/>
+      in directory <j:expr value="${maven.appserver.dir}"/>
+      and <j:expr value="${maven.appserver.started.msg}"/>
+      on <j:expr value="${maven.appserver.url}"/>
+    </log:info>
+  </goal>
+
+  <!--==================================================================-->
+  <!-- I N S T A L L                                                    -->
+  <!--==================================================================-->
+  <goal name="appserver:install" prereqs="appserver:init"
+    description="Install or reinstall a appserver instance">
+    <j:choose>
+      <!-- not installed - simply install -->
+      <j:when test="${!maven.appserver.installed}">
+        <attainGoal name="appserver:install-${maven.appserver.fullname}" />
+      </j:when>
+      <!-- installed and stopped -->
+      <j:when
+        test="${maven.appserver.installed} and ${!maven.appserver.started}">
+        <attainGoal name="maven:appserver-reinstall" />
+      </j:when>
+      <!-- installed and started -->
+<!--
+      <j:when test="${maven.appserver.installed} and ${!maven.appserver.started}">
+-->
+      <property name="appserverInstalled" value="${maven.appserver.installed}" />
+      <property name="appserverStarted" value="${maven.appserver.started}" />
+      <j:when test="${appserverInstalled  and !appserverStarted}">
+        <attain>
+          <attainGoal name="appserver:stop" />
+          <attainGoal name="appserver:reinstall" />
+          <attainGoal name="appserver:start" />
+        </attain>
+      </j:when>
+      <!-- one of those 'things' that should never happen -->
+      <j:otherwise>
+        <log:info>
+          Could not determine the current status for your
+          <j:expr value="${maven.appserver.fullname}"/> instance.
+        </log:info>
+      </j:otherwise>
+    </j:choose>
+
+  </goal>
+
+  <!--==================================================================-->
+  <!-- R E I N S T A L L                                                -->
+  <!--==================================================================-->
+  <!-- the purpose of this target is to allow the user to be very       -->
+  <!-- specific when using pre and post goals and sometimes there may   -->
+  <!-- be custom implementations of reinstall                           -->
+  <goal name="appserver:reinstall"
+    prereqs="appserver:init,appserver:install-${maven.appserver.fullname}" />
+
+  <!--==================================================================-->
+  <!-- S T A R T                                                        -->
+  <!--==================================================================-->
+  <goal name="appserver:start" prereqs="appserver:init"
+    description="Start or restart an appserver instance">
+
+    <!-- property to remember what goal the user first called -->
+    <property name="appserver:start.called" value="true" />
+
+    <!-- must install before starting -->
+    <j:if test="${!maven.appserver.installed}">
+      <log:info>
+        Installing the <j:expr value="${maven.appserver.fullname}"/>
+        appserver instance before starting it..."/>
+      </log:info>
+      <attainGoal name="appserver:install" />
+    </j:if>
+
+    <j:choose>
+      <j:when test="${maven.appserver.started}">
+        <attain>
+          <attainGoal name="appserver:stop" />
+          <log:info>
+          Restarting the <j:expr value="${maven.appserver.fullname}"/>
+          appserver instance ..."/>
+          </log:info>
+          <attainGoal name="appserver:restart" />
+        </attain>
+      </j:when>
+      <j:when test="${!maven.appserver.installed}">
+        <log:info>
+          Installing the <j:expr value="${maven.appserver.fullname}"/>
+          appserver instance before starting it ..."/>
+        </log:info>
+        <attainGoal name="appserver:install" />
+        <attainGoal name="appserver:start-${maven.appserver.fullname}"/>
+      </j:when>
+    </j:choose>
+
+  </goal>
+
+  <!--==================================================================-->
+  <!-- R E S T A R T                                                    -->
+  <!--==================================================================-->
+  <!-- the purpose of this target is to allow the user to be very       -->
+  <!-- when using pre and post goals                                    -->
+  <goal name="appserver:restart"
+    prereqs="appserver:init,appserver:start-${maven.appserver.fullname}" />
+
+  <!--==================================================================-->
+  <!-- S T O P                                                          -->
+  <!--==================================================================-->
+  <goal name="appserver:stop" prereqs="appserver:init"
+    description="Stop an appserver instance if started">
+
+    <j:choose>
+<!--
+      <j:when test="${maven.appserver.installed} and ${maven.appserver.started}">
+-->
+      <property name="appserverInstalled" value="${maven.appserver.installed}" />
+      <property name="appserverStarted" value="${maven.appserver.started}" />
+
+      <j:when test="${appserverInstalled == 'true' and appserverStarted == 'true'}">
+        <attainGoal
+          name="appserver:stop-${maven.appserver.fullname}" />
+      </j:when>
+      <j:otherwise>
+        <j:if test="${!appserver-clean.called}">
+          <log:info>
+            The <j:expr value="${maven.appserver.fullname}"/> instance
+            is already stopped!
+          </log:info>
+        </j:if>
+      </j:otherwise>
+    </j:choose>
+
+  </goal>
+
+  <!--==================================================================-->
+  <!-- C L E A N                                                        -->
+  <!--==================================================================-->
+  <goal name="appserver:clean" prereqs="appserver:init"
+    description="Safely delete an installed appserver instance">
+
+     <!-- property to remember what goal the user first called -->
+    <property name="appserver:clean.called" value="true" />
+
+    <j:if test="${maven.appserver.started}">
+      <log:info>
+        Stopping the <j:expr value="${maven.appserver.fullname}"/>
+        appserver instance before deleting it..."/>
+      </log:info>
+      <attainGoal name="appserver:stop" />
+    </j:if>
+
+    <j:if test="${maven.appserver.installed}">
+      <log:info>
+        Deleting the <j:expr value="${maven.appserver.fullname}"/>
+        appserver instance ..."/>
+      </log:info>
+      <delete dir="${maven.appserver.dir}"/>
+    </j:if>
+
+    <j:if test="${!maven.appserver.installed}">
+      <log:info>
+        The <j:expr value="${maven.appserver.fullname}"/>
+        appserver instance is already cleaned!"/>
+      </log:info>
+    </j:if>
+
+  </goal>
+
+  <!-- ================================================================ -->
+  <!-- V A L I D A T E  A  W A R                                        -->
+  <!-- ================================================================ -->
+  <goal name="j2ee:validate-war" 
+    description="Check that a war file is valid">
+    
+    <taskdef name="warvalidator" classname="org.apache.maven.j2ee.WarValidator">
+      <classpath>
+      	<pathelement path="${plugin.dir}" />
+        <pathelement path="${plugin.getDependencyPath('ant')}"/>
+        <pathelement path="${plugin.getDependencyPath('dom4j')}"/>
+        <pathelement path="${plugin.getDependencyPath('xml-apis')}"/>
+      </classpath>
+    </taskdef>
+
+	<warvalidator warFileName="${maven.war.build.dir}/${pom.id}.war">
+      <formatter type="plain" usefile="false"/>
+    </warvalidator>
+  </goal>
+  
+  <!-- ================================================================ -->
+  <!-- E A R                                                            -->
+  <!-- ================================================================ -->
+  <goal name="j2ee:ear" 
+    description="Create an EAR file from the project">
+    
+    <echo>Building EAR ${pom.id}</echo>
+    
+    <ear earfile="${maven.war.build.dir}/${pom.id}.ear"
+         appxml="${maven.j2ee.ear.appxml}">
+      
+      <!-- include marked dependencies -->
+      <j:forEach var="dep" items="${pom.dependencies}">
+        <j:if test="${dep.getProperty('ear.bundle.jar')=='true'}">
+          <lib dir="${maven.repo.local}/${dep.getProjectId()}/jars/">
+            <include name="${dep.getArtifact()}"/>
+          </lib>    
+        </j:if>  
+      </j:forEach>            
+   
+      <!-- include license -->
+      <metainf dir="${basedir}">
+        <include name="LICENSE.txt"/>
+      </metainf>      
+      
+      <!-- standard manifest entries -->
+      <!-- fix me - classPath entries? -->
+      <manifest>
+        <attribute name="Built-By" value="${user.name}" />
+        <section name="${pom.package}">
+          <attribute name="Specification-Title" value="${pom.id}" />
+          <attribute name="Specification-Version"
+                     value="${pom.currentVersion}" />
+          <attribute name="Specification-Vendor"
+                     value="${pom.organization.name}" />
+          <attribute name="Implementation-Title"
+                     value="${pom.package}" />
+          <attribute name="Implementation-Version"
+                     value="${pom.currentVersion}" />
+          <attribute name="Implementation-Vendor"
+                     value="${pom.organization.name}" />
+        </section>
+      </manifest>
+	</ear>
+	
+  </goal>
+   
+</project>

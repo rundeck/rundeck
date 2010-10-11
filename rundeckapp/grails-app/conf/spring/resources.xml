@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<beans>
+    <bean id="defaultGrailsServiceInjectorJobListener" class="com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener">
+        <constructor-arg type="java.lang.String" value="defaultGrailsServiceInjectorJobListener"/>
+        <constructor-arg>
+            <map>
+                <!-- include any services you want injected into the Job's jobDataMap -->
+                <!-- e.g. :
+                <entry>
+                    <key><value>myServiceKey</value></key>
+                    <ref bean="myServiceName"/>
+                </entry>
+                -->
+                <entry>
+                    <key><value>executionService</value></key>
+                    <ref bean="executionService"/>
+                </entry>
+            </map>
+        </constructor-arg>
+        <constructor-arg ref="quartzScheduler"/>
+    </bean>
+
+</beans>

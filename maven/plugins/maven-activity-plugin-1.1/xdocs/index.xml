@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <title>Maven Activity Plug-in</title>
+    <author email="jason@zenplex.com">Jason van Zyl</author>
+  </properties>
+
+  <body>
+    <section name="Maven Activity Plug-in">
+      <p>
+         This plugin generates a file activity report and a developer
+         activity report. Currently this uses CVS semantics but can easily
+         be made to use other SCMs when we get the commons-scm project
+         off the ground.
+      </p>
+    </section>
+ </body>
+</document>

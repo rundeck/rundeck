@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<document>
+  <properties>
+    <title>Checkstyle Properties</title>
+    <author email="smor@apache.org">Stéphane MOR</author>
+  </properties>
+
+  <body>
+    <section name="Checkstyle Settings">
+      <table>
+        <tr><th>Property</th><th>Optional?</th><th>Description</th></tr>
+        <tr>
+          <td>maven.checkstyle.includes</td>
+          <td>Yes</td>
+          <td>
+            Specifies a comma-separated list of Ant patterns to use
+            when matching files in the source tree to be included in the
+            Checkstyle report.  The pattern specified is relative to
+            <code>${maven.src.dir}</code>.  The default value is
+            <code>**/*.java</code>, which matches all Java source files
+            in the source tree (specified by the <code>${maven.src.dir}</code>
+            property.
+          </td>
+        </tr>
+        <tr>
+          <td>maven.checkstyle.excludes</td>
+          <td>Yes</td>
+          <td>
+            Specifies a comma-separated list of Ant patterns to use when
+            matching files in the source tree to be excluded from the
+            Checkstyle report.  The pattern specified is relative to
+            <code>${maven.src.dir}</code>.  The default value is to not
+            exclude any files.
+          </td>
+        </tr>
+        <tr>
+          <td>maven.checkstyle.properties</td>
+          <td>Yes</td>
+          <td>
+            Specifies the location of the checkstyle properties that will be
+            used to check the source.
+            <p>
+              There is also a sample file shipped with maven of the Jakarta
+              <a href="http://jakarta.apache.org/turbine/">Turbine</a> project
+              coding style, which maven adheres to.
+            </p>
+            <p>For more information on checkstyle properties, please see the
+            <a href="http://checkstyle.sourceforge.net">CheckStyle Home Page</a>
+            </p>
+            <p>The default value is
+              <code>${plugin.dir}/core/sun-code-conventions-checkstyle.properties</code>.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>maven.checkstyle.fail.on.violation</td>
+          <td>Yes</td>
+          <td>
+            Specifies if the <code>maven:check-source</code> task
+            should fail upon a violation.  This will stop the build
+            process.  The default value is <code>false</code>.
+          </td>
+        </tr>
+        <tr>
+          <td>maven.checkstyle.cache.file</td>
+          <td>Yes</td>
+          <td>
+            Specifies the cache file used to speed up Checkstyle on
+            successive runs.  The default value is
+            <code>${maven.build.dest}/checkstyle-cachefile</code>.
+          </td>
+        </tr>
+        <tr>
+          <td>maven.checkstyle.useFile</td>
+          <td>Yes</td>
+          <td>
+            If false, the checkstyle task will display violations on stdout.
+            If true, a text file will be created with the violations. Note:
+            this is in addition to the XML result file (containing the
+            violations in XML format) which is always created.
+          </td>
+        </tr>
+      </table>
+    </section>
+  </body>
+</document>
+

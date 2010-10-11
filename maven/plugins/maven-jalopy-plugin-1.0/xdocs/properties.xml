@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<document>
+
+  <properties>
+    <title>Jalopy Properties</title>
+    <author email="evenisse@ifrance.com">Emmanuel Venisse</author>
+  </properties>
+
+  <body>
+    <section name="Jalopy Settings">
+      <table>
+        <tr>
+          <td>maven.jalopy.fileFormat</td>
+          <td>Yes</td>
+          <td>
+            Sets the file format of the output files. The file format
+            controls what end of line character is used. Either one of
+            "UNIX", "DOS", MAC", "DEFAULT" or "AUTO" can be used. Defaults
+            to "AUTO" (case insensitive). Defaults to "unix".
+          </td>
+        </tr>
+        <tr>
+          <td>maven.jalopy.style</td>
+          <td>Yes</td>
+          <td>
+            Sets the preferences file to use - given either relative to
+            the project's basedir or as an absolute local path or internet
+            address. If omitted, the current preferences are used, if available.
+            Otherwise the Jalopy build-in defaults will be used.
+            Defaults to "${plugin.dir}/jalopy_maven.xml".
+          </td>
+        </tr>
+        <tr>
+          <td>maven.jalopy.history</td>
+          <td>Yes</td>
+          <td>
+            Specifies the history policy to use. Either one of "COMMENT",
+            "FILE" or "NONE" can be used. Defaults to "none".
+          </td>
+        </tr>
+        <tr>
+          <td>maven.jalopy.logLevel</td>
+          <td>Yes</td>
+          <td>
+            Specifies the logging level for message output. Either one of
+            "ERROR", "WARN", "INFO" or "DEBUG" can be used.
+            Defaults to "info".
+          </td>
+        </tr>
+        <tr>
+          <td>maven.jalopy.nbThread</td>
+          <td>Yes</td>
+          <td>
+            Specifies the number of processing threads to use. Integer between 1 - 8.
+            Defaults to "2".
+          </td>
+        </tr>
+        <tr>
+          <td>maven.jalopy.failOnError</td>
+          <td>Yes</td>
+          <td>
+            Indicates whether a run should be held if errors occured. Defaults to "true".
+          </td>
+        </tr>
+        <tr>
+          <td>maven.jalopy.filesetInclude</td>
+          <td>Yes</td>
+          <td>
+            Specifies a fileset source file to format. Defaults to "**/*.java".
+          </td>
+        </tr>
+      </table>
+    </section>
+  </body>
+</document>

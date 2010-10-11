@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<document>
+  <properties>
+    <title>Changes</title>
+    <author email="dion@multitask.com.au">dIon Gillard</author>
+  </properties>
+
+  <releases>
+    <release version="1.2" date="in CVS">
+      <action dev="evenisse" type="update">
+        Created link with development process page if development-process.xml
+        exist in xdocs directory, otherwise a link with development process
+        page on Maven site.
+      </action>
+      <action dev="dion" type="add">
+        Added documentation for the new changes report.
+      </action>
+      <action dev="vmassol" type="add">
+        Added the new <a href="changes-report.html">changes report</a>.
+      </action>
+      <action dev="vmassol" type="add">
+        Added an id column for committers on the team-list page.
+      </action>
+    </release>
+  </releases>
+</document>
+

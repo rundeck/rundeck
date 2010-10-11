@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+
+<project xmlns:j="jelly:core" xmlns:u="jelly:util">
+
+  <j:set var="latexSrcDir" value="${maven.latex.src.dir}"/>
+
+  <j:if test="${!latexSrcDir.equals('MAVEN_LATEX_SRC_DIR_NOT_SET')}">
+
+    <echo>Configuring for LaTeX</echo>
+
+    <taskdef name="latex" classname="de.prima.shire.anttex.LaTeX"/>
+
+    <goal name="latex:prepare-filesystem">
+      <mkdir dir="${maven.build.dir}/docs/pdf/"/>
+    </goal>
+
+    <goal name="latex:generate"
+          prereqs="latex:prepare-filesystem">
+
+      <echo>scanning: ${latexSrcDir}</echo>
+
+      <copy todir="${maven.build.dir}/latex">
+        <fileset dir="${latexSrcDir}" includes="**/*.tex,**/*.bib"/>
+      </copy>
+
+      <fileScanner var="latexFiles">
+        <fileset dir="${maven.build.dir}/latex">
+          <patternset>
+            <include name="**/*.tex"/>
+          </patternset>
+        </fileset>
+      </fileScanner>
+
+      <j:forEach var="file" items="${latexFiles.iterator()}">
+
+        <u:tokenize var="docs" delim=" ">${maven.latex.docs}</u:tokenize>
+
+        <j:forEach var="doc" items="${docs}"> 
+          <j:if test="${doc.equals(file.getName())}">
+            <echo>Generating from ${file}</echo>
+            <latex latexfile="${file.path}"
+                   pdftex="on"
+                   bibtex="on"
+                   verbose="off"
+                   directory="${file.parentFile.path}"/>
+          </j:if>
+        </j:forEach>
+      </j:forEach>
+
+      <copy todir="${maven.build.dir}/docs/pdf/" flatten="true">
+        <fileset dir="${maven.build.dir}/latex" includes="**/*.pdf"/>
+      </copy>
+    </goal>
+
+    <postGoal name="site:generate">
+      <attainGoal name="latex:generate"/>
+    </postGoal>
+
+  </j:if>
+
+</project>

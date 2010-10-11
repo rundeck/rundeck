@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <title>Maven XDoc Plug-in</title>
+    <author email="jason@zenplex.com">Jason van Zyl</author>
+  </properties>
+
+  <body>
+    <section name="Maven XDoc Plug-in">
+      <p>
+        This plug-in provides the primary mechanism that is used to produce
+        the Maven documentation.
+      </p>
+      <p>
+      The documentation is in <code>Anakia</code> format. More information
+      along with samples, can be found at:
+      <ul>
+        <li>
+          <a href="http://jakarta.apache.org/site/jakarta-site-tags.html">the tags defined</a>
+        </li>
+        <li>
+          <a href="http://jakarta.apache.org/site/jakarta-site-tags-example.html">examples of the tags</a>
+        </li>
+      </ul>
+      </p>
+    </section>
+ </body>
+</document>

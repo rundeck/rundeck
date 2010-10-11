@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="Maven">
+
+  <title>Maven</title>
+
+  <body>
+    <links>
+      <item name="Maven"  href="http://jakarta.apache.org/turbine/maven/"/>
+      <item name="Clover" href="http://www.thecortex.net/clover/"/>
+    </links>
+    <menu name="Overview">
+      <item name="Build File"          href="/build-file.html"/>
+      <item name="Properties"          href="/properties.html"/>
+      <item name="Directory Layout"    href="/dirlayout.html"/>
+      <item name="Futures"             href="/futures.html"/>
+    </menu>
+  </body>
+</project>

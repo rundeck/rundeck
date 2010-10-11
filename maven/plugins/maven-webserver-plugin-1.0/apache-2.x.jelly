@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+
+<project xmlns:j="jelly:core" xmlns:log="jelly:log">
+
+  <goal name="webserver:apache-2.x-reqs">
+
+    <!-- Check if user has http.conf in a conf dir -->
+    <available file="${maven.webserver.conf.dir}/conf/httpd.conf"
+      type="file"  property="maven.webserver.apache2x.has.conf"
+      value="true" />
+
+    <fail unless="maven.webserver.apache2x.has.conf">
+To use this webserver, you must have a project specific
+configuration file at the following location:
+
+${maven.webserver.conf.dir}/conf/httpd.conf
+    </fail>
+
+  </goal>
+
+  <goal name="webserver:install-apache-2.x" prereqs="webserver:apache-2.x-reqs">
+
+    <!-- Create common directories and copy configuration files -->
+    <mkdir dir="${maven.webserver.dir}/logs"/>
+    <mkdir dir="${maven.webserver.dir}/conf"/>
+
+    <!-- copy any user configuration files w/ filtering by forcing copy -->
+    <!-- expecting at least a httpd.conf -->
+    <copy todir="${maven.webserver.dir}" overwrite="true">
+      <fileset dir="${maven.webserver.conf.dir}" />
+      <filterset refid="maven.webserver.filterset" />
+    </copy>
+
+  </goal>
+
+  <goal name="webserver:start-apache-2.x">
+    <log:warn>
+      Not implemented yet!
+    </log:warn>
+  </goal>
+
+  <goal name="webserver:restart-apache-2.x">
+    <log:warn>
+      Not implemented yet!
+    </log:warn>
+  </goal>
+
+  <goal name="webserver:stop-apache-2.x">
+    <log:warn>
+      Not implemented yet!
+    </log:warn>
+  </goal>
+
+  </project>

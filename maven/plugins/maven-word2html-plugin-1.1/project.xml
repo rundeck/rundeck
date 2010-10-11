@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project>
+
+  <pomVersion>3</pomVersion>
+  <id>maven-word2html-plugin</id>
+  <name>Maven Word to HTML Plug-in</name>
+  <currentVersion>1.1</currentVersion>
+  <organization>
+    <name>Apache Software Foundation</name>
+    <url>http://jakarta.apache.org/</url>
+    <logo>http://jakarta.apache.org/turbine/maven/images/jakarta-logo-blue.gif</logo>
+  </organization>
+  <inceptionYear>2002</inceptionYear>
+  <package>org.apache.maven</package>
+  <logo>http://jakarta.apache.org/turbine/maven/images/maven.jpg</logo>
+
+  <description>
+  	A Maven plugin to convert word docs into html for project usage
+  </description>
+
+  <shortDescription>Convert Word docs to HTML</shortDescription>
+
+  <url>http://jakarta.apache.org/turbine/maven/reference/plugins/word2html/</url>
+  <issueTrackingUrl>http://nagoya.apache.org/scarab/servlet/scarab/</issueTrackingUrl>
+  <siteAddress>jakarta.apache.org</siteAddress>
+  <siteDirectory>/www/jakarta.apache.org/turbine/maven/reference/plugins/word2html/</siteDirectory>
+  <distributionDirectory>/www/jakarta.apache.org/builds/jakarta-turbine-maven/</distributionDirectory>
+
+  <repository>
+    <connection>scm:cvs:pserver:anoncvs@cvs.apache.org:/home/cvspublic:jakarta-turbine-maven/src/plugins-build/word2html/</connection>
+    <url>http://cvs.apache.org/viewcvs/jakarta-turbine-maven/src/plugins-build/word2html/</url>
+  </repository>
+
+  <developers>
+    <developer>
+      <name>dIon Gillard</name>
+      <id>dion</id>
+      <email>dion@multitask.com.au</email>
+      <organization>Multitask Consulting</organization>
+      <roles>
+        <role>Java Developer</role>
+      </roles>
+    </developer>
+  </developers>
+
+  <build>
+
+    <nagEmailAddress>turbine-maven-dev@jakarta.apache.org</nagEmailAddress>
+
+  </build>
+</project>
+

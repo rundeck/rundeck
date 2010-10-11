@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <title>Maven Ant Plug-in</title>
+    <author email="jason@zenplex.com">Jason van Zyl</author>
+  </properties>
+
+  <body>
+    <section name="Maven Ant Plug-in">
+      <p>
+        This plugin generates a vanilla ant build.xml file that so that user's
+        that haven't installed Maven can still build. Though it is always
+        highly recommended that you install Maven :-)
+      </p>
+    </section>
+ </body>
+</document>

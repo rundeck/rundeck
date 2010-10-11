@@ -1,0 +1,59 @@
+<!--
+  ~ Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+  ~
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~
+  ~      http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~  Unless required by applicable law or agreed to in writing, software
+  ~  distributed under the License is distributed on an "AS IS" BASIS,
+  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  See the License for the specific language governing permissions and
+  ~  limitations under the License.
+  -->
+
+<!--
+   /**
+     * valid, with both accessto sub elements
+     */
+    static String XML1 = "<acls>\n"
+                                 + "  <acl description=\"admin, access to any command using any context at anytime\">\n"
+                                 + "    <accessto>\n"
+                                 + "      <command module=\"*\" name=\"*\"/>\n"
+                                 + "      <script allowed=\"true\"/>\n"
+                                 + "    </accessto>\n"
+                                 + "    <by>\n"
+                                 + "      <role name=\"admin\"/>\n"
+                                 + "    </by>\n"
+                                 + "    <using>\n"
+                                 + "      <context project=\"*\" type=\"*\" name=\"*\"/>\n"
+                                 + "    </using>\n"
+                                 + "    <when>\n"
+                                 + "      <timeandday day=\"*\" hour=\"*\" minute=\"*\"/>\n"
+                                 + "    </when>\n"
+                                 + "  </acl>\n"
+                                 + "</acls>";
+                                 -->
+                                 
+<policies>
+    <policy description="Admin can do anything, anytime.">
+    
+        <context project="*">
+            <resource type="*" name="*">
+                <command module="*" name="*" actions="*"/>
+                <command group="*" job="*" actions="*"/>
+            </resource>        
+        </context>
+        
+        <by>
+            <group name="admin"/>
+        </by>
+        
+        <when>
+            <timeandday day="*" hour="*" minute="*"/>
+        </when>
+    
+    </policy>
+</policies>

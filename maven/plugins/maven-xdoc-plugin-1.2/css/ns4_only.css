@@ -1,0 +1,162 @@
+/* simple rules suitable for Netscape 4.x only; richer rules are in tigris.css. see <http://style.tigris.org/> */
+
+/* colors, backgrounds, borders, link indication */ 
+
+body {
+ background: #fff;
+ color: #000;
+ }
+#leftcol a:link, #leftcol a:visited {
+ color: blue;
+ }
+a:active, a:hover, #leftcol a:active, #leftcol a:hover {
+ color: #f30;
+ }
+#login a:link, #login a:visited {
+ color: white; 
+ text-decoration: underline;
+ }
+#banner a:active, #banner a:hover {
+ color: #f90;
+ }
+#leftcol a, #breadcrumbs a  {
+ text-decoration: none;
+ }
+h2 .lastchild {
+ color: #777
+ } 
+.a td { 
+ background: #ddd;
+ }
+.b td { 
+ background: #efefef;
+ }
+.tabs td, .tabs th {
+ background-color: #ddd;
+ }
+body .app th {
+ background-color: #bbb;
+ }
+body .tabs th {
+ background-color: #888;
+ color: #fff;
+ }
+body .app .axial th {
+ background-color: #ddd;
+ color: black
+ }
+.tabs td {
+ background-color: #ddd;
+ }
+.alert { 
+ color: #c00;
+ }
+.confirm {
+ color: green;
+ }
+.info {
+ color: blue;
+ }
+.selection {
+ background: #ffc;
+ }
+#login {
+ color: #fff;
+ }
+#helptext th {
+ background: #cc9;
+ }
+#helptext td {
+ background: #ffc;
+ }
+.tabs a  {
+ text-decoration: none;
+ }
+#navcolumn div strong {
+ color: #555;
+ }
+#banner, #banner td { 
+ background: #036;
+ color: #fff;
+ }
+body #banner #login a { 
+ color: white;
+ }
+
+
+/* font and text properties, exclusive of link indication, alignment, text-indent */
+
+body, div, p, th, td, li, dl, dd {
+ font-family: Lucida, Arial, Helvetica, sans-serif;
+ }
+code, pre {
+ font-family: 'Andale Mono', Courier, monospace;
+ }
+h2, h3, h4 {
+ font-family: Tahoma, Verdana, Helvetica, Arial, sans-serif;
+ }
+.selection {
+ font-weight: bold
+ }
+#login .username {
+ font-weight: bold;
+ }
+
+
+/* box properties (exclusive of borders), positioning, alignments, list types, text-indent */
+
+th, td {
+ text-align: left;
+ vertical-align: top 
+ }
+.right {
+ text-align: right;
+ }
+.center {
+ text-align: center;
+ }
+body .app .axial th {
+ text-align: right;
+ }
+.app .axial td th {
+ text-align: left;
+ }
+body td .stb {
+ margin-top: 1em;
+ text-indent: 0;
+ }
+body td .mtb {
+ margin-top: 2em;
+ text-indent: 0;
+ }
+dd {
+ margin-bottom: .67em;
+ }
+#footer {
+ margin: 4px
+ }
+#helptext {
+ margin-top: 1em
+ }
+#helptext td div {
+ margin: .5em
+ }
+.courtesylinks {
+ margin-top: 1em;
+ padding-top: 1em
+ }
+#navcolumn div {
+ margin-bottom: .5em;
+ }
+#navcolumn div div {
+ margin-top: .3em
+ }
+#navcolumn div div {
+ padding-left: 1em;
+ }
+#banner, #banner td { 
+ vertical-align: middle;
+ }
+body.docs, body.nonav {
+ margin: 1em
+ }

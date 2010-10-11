@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+  ~
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~
+  ~      http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~  Unless required by applicable law or agreed to in writing, software
+  ~  distributed under the License is distributed on an "AS IS" BASIS,
+  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  See the License for the specific language governing permissions and
+  ~  limitations under the License.
+  -->
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<!--                                                                         -->
+<!-- Canonical form of the Rundeck project XML document type.                -->
+<!--                                                                         -->
+<!-- Project documents are used both to specify the bulk loading of objects  -->
+<!-- as well as define the format of dumps of sections of a Workbench        -->
+<!-- project's object model.                                                 -->
+<!--                                                                         -->
+<!-- This document type defines the most general XML mapping of the object   -->
+<!-- model.                                                                  -->
+<!--                                                                         -->
+<!-- Any number of objects can be defined in a given document. Each object   -->
+<!-- is represented by one of the four base type elements: node, setting     -->
+<!-- package and deployment. Each object of a given base type is identified  -->
+<!-- by the required type and name attributes.                               -->
+<!--                                                                         -->
+<!-- Note that unique object names by type are assumed, and that each file   -->
+<!-- may reference a particular object only once.                            -->
+<!--                                                                         -->
+<!-- When defining an object, it is unnecessary to specify all attributes    -->
+<!-- beyond name and type. The system will preserve existing attribute       -->
+<!-- values, or leave unspecified attributes of a new object unset. It is    -->
+<!-- therefore possible limit the XML definition of an object to the type,   -->
+<!-- name and only those optional attributes whose values must be changed.   -->
+<!--                                                                         -->
+<!-- The dependencies between objects are represented by the "resources" and -->
+<!-- "referrers" sub-elements. The "replace" attribute determines whether    -->
+<!-- pre-existing resource and referrer relationships are preserved with     -->
+<!-- the new being added, or whether they are wholly replaced by the new     -->
+<!-- dependencies.                                                           -->
+<!--                                                                         -->
+<!-- If the replace attribute is omitted, the resource and referrer depend-  -->
+<!-- -encies are replaced by those specified in the XML.                     -->
+<!--                                                                         -->
+<!-- Note that batch operations associated with resources of all objects     -->
+<!-- specified by the project XML are executed before those associated with  -->
+<!-- referrers. This has particular relavence when replacing referrers since -->
+<!-- great care must be taken to ensure that a comprehensive set of          -->
+<!-- replacements are provided. It is not sufficient to rely on the same     -->
+<!-- dependency being specified as a resource relationship elsewhere in the  -->
+<!-- project XML (or even more subtly to imagine that not replacing resource -->
+<!-- relationships for the parent object will automatically preserve the     -->
+<!-- relationship from the referrer perspective).                            -->
+<!--                                                                         -->
+<!-- Just remember that resources and referrers are two halves of the same   -->
+<!-- relationship tieing the object model together as a whole!               -->
+<!--                                                                         -->
+<!-- However, if no resource or referrer dependencies are specified in the   -->
+<!-- XML, then existing relationships are left undisturbed.                  -->
+<!--                                                                         -->
+<!-- The "resource" sub-element identifies particular objects by type and    -->
+<!-- name. These objects do not necessarily have to be defined in the XML    -->
+<!-- document given that they already exist in the object model.             -->
+<!--                                                                         -->
+<!-- In general, semantic validation is left to the Workbench type model's   -->
+<!-- constraint checking. Note that since new objects are created during     -->
+<!-- processing of the document while updates are batched for execution      -->
+<!-- once document processing is complete, a validation error at any         -->
+<!-- point will leave the object model partially updated. i.e. there is      -->
+<!-- no transactional integrity across the processing of a single document   -->
+<!-- that contains new objects.                                              -->
+<!--                                                                         -->
+<!-- The net effect of this will be to leave extraneous new objects in the   -->
+<!-- model.                                                                  -->
+<!--                                                                         -->
+<!-- However, documents that consist only of pre-existing objects will only  -->
+<!-- use the batch update interface. Failures in this case are completely    -->
+<!-- rolled back leaving the object model unchanged.                         -->
+<!--                                                                         -->
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+
+<!ELEMENT project (node*,setting*,package*,deployment*)>
+
+<!ELEMENT deployment ( (resources?, referrers?, transforms?) | ( referrers?, resources?, transforms? ) )>
+<!ATTLIST deployment
+	name NMTOKEN #REQUIRED
+	type NMTOKEN #REQUIRED
+	description CDATA #IMPLIED
+	basedir CDATA #IMPLIED
+   installRoot CDATA #IMPLIED
+   startuprank CDATA #IMPLIED
+   tags CDATA #IMPLIED
+>
+
+<!ELEMENT package ( (resources?, referrers?) | ( referrers?, resources? ) )>
+<!ATTLIST package
+	name NMTOKEN #REQUIRED
+	type NMTOKEN #REQUIRED
+	description CDATA #IMPLIED
+   filename CDATA #IMPLIED
+   filetype CDATA #IMPLIED
+   base CDATA #IMPLIED
+   version CDATA #IMPLIED
+   release CDATA #IMPLIED
+   arch CDATA #IMPLIED
+   vendor CDATA #IMPLIED
+   buildtime CDATA #IMPLIED
+   restart (true|false) #IMPLIED
+   repoUrl CDATA #IMPLIED
+   installroot CDATA #IMPLIED
+   releasetag CDATA #IMPLIED
+   installrank CDATA #IMPLIED
+   tags CDATA #IMPLIED
+>
+
+<!ELEMENT setting (referrers?)>
+<!ATTLIST setting
+	name NMTOKEN #REQUIRED
+	type NMTOKEN #REQUIRED
+	description CDATA #IMPLIED
+   settingValue CDATA #IMPLIED
+   settingType CDATA #IMPLIED
+>
+
+<!ELEMENT node ( (resources?, referrers?) | ( referrers?, resources? ) )>
+<!ATTLIST node
+	name CDATA #REQUIRED
+	type NMTOKEN #REQUIRED
+	description CDATA #IMPLIED
+   osFamily CDATA #IMPLIED
+   osName CDATA #IMPLIED
+   osArch CDATA #IMPLIED
+   osVersion CDATA #IMPLIED
+   hostname CDATA #IMPLIED
+   username CDATA #IMPLIED
+   tags CDATA #IMPLIED
+>
+
+<!ELEMENT resources (resource+)>
+<!ATTLIST resources
+	replace (true|false) #IMPLIED
+>
+
+<!ELEMENT referrers (resource+)>
+<!ATTLIST referrers
+	replace (true|false) #IMPLIED
+>
+
+<!ELEMENT resource EMPTY>
+<!ATTLIST resource
+	name CDATA #REQUIRED
+	type NMTOKEN #REQUIRED
+>
+
+<!ELEMENT transforms (transform+)>
+
+<!ELEMENT transform EMPTY>
+<!ATTLIST transform
+	name CDATA #REQUIRED
+	description CDATA #IMPLIED
+	filetype CDATA #IMPLIED
+	outputdir CDATA #IMPLIED
+	template CDATA #IMPLIED
+	templatetype CDATA #IMPLIED
+	templatedir CDATA #IMPLIED
+	direction CDATA #IMPLIED
+	proximity CDATA #IMPLIED
+>
+

@@ -1,0 +1,75 @@
+    <!--
+    ========================================================================
+        E N H Y D R A  3.1
+    ========================================================================
+    -->
+
+    <!--
+       ========================================================================
+         Install and configure Enhydra 3.1 instance
+       ========================================================================
+    -->
+    <target name="install-enhydra-31">
+
+      <!-- Create common directories and copy configuration files -->
+      <mkdir dir="${maven.appserver.dir}/conf"/>
+      <mkdir dir="${maven.appserver.dir}/work"/>
+      <mkdir dir="${maven.appserver.dir}/webapps"/>
+
+      <!-- copy any user configuration files w/ filtering by forcing copy -->
+      <!-- expecting at least multiserver.conf -->
+      <copy todir="${maven.appserver.dir}/conf" overwrite="true" >
+        <fileset dir="${maven.conf.dir}/enhydra31" excludes="**/web.xml"/>
+        <filterset refid="maven.appserver.filterset" />
+      </copy>
+
+      <!-- Note: Enhydra 3.1 does not support automatic war deployment  -->
+      <!-- so any war files will have to be unwared -->
+    </target>
+
+
+    <!--
+       ========================================================================
+         Start Enhydra 3.1
+       ========================================================================
+    -->
+    <target name="start-enhydra-31">
+
+        <java classname="org.apache.cactus.ant.EnhydraRun" fork="yes">
+            <arg value="-start"/>
+            <arg value="${maven.appserver.dir}/conf/multiserver.conf"/>
+            <classpath>
+                <fileset dir="${maven.appserver.home}/lib">
+                    <include name="enhydra.jar"/>
+                    <include name="admin.jar"/>
+                </fileset>
+                <pathelement location="${cactus.ant.jar}"/>
+                <pathelement location="${java.home}/../lib/tools.jar"/>
+            </classpath>
+        </java>
+
+    </target>
+
+    <!--
+       ========================================================================
+         Stop Enhydra 3.1
+       ========================================================================
+    -->
+    <target name="stop-enhydra-31">
+
+        <java classname="org.apache.cactus.ant.EnhydraRun" fork="yes">
+            <arg value="-stop"/>
+            <classpath>
+                <fileset dir="${maven.appserver.home}/lib">
+                    <include name="enhydra.jar"/>
+                    <include name="admin.jar"/>
+                </fileset>
+                <pathelement location="${cactus.ant.jar}"/>
+                <pathelement location="${java.home}/../lib/tools.jar"/>
+            </classpath>
+        </java>
+
+    </target>
+
+
+

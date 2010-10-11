@@ -1,0 +1,257 @@
+<?xml version="1.0"?>
+
+<project 
+  xmlns:j="jelly:core"
+  xmlns:maven="jelly:maven"
+  xmlns:deploy="deploy"
+  xmlns:m="maven">
+
+  <!-- ================================================================== -->
+  <!-- D I S T R I B U T I O N S                                          -->
+  <!-- ================================================================== -->
+
+  <property name="maven.dist.assembly.dir" value="${maven.build.dir}/${maven.final.name}"/>
+  <property name="maven.dist.bin.archive.dir" value="${maven.dist.assembly.dir}/bin"/>
+  <property name="maven.dist.src.archive.dir" value="${maven.dist.assembly.dir}/src"/>
+  <property name="maven.dist.bin.assembly.dir" value="${maven.dist.assembly.dir}/bin/${maven.final.name}"/>
+  <property name="maven.dist.src.assembly.dir" value="${maven.dist.assembly.dir}/src/${maven.final.name}"/>
+  <property name="maven.dist.dir" value="${maven.build.dir}/distributions"/>
+
+  <goal
+    name="dist:prepare-bin-filesystem"
+    prereqs="java:jar,javadoc:generate"
+    description="Builds the binary distribution file system.">
+    
+    <!--
+    
+    This is the directory where everything is copied to so that it can
+    be archived.
+    
+    -->
+    
+    <delete dir="${maven.dist.bin.assembly.dir}"/>
+    <mkdir dir="${maven.dist.bin.assembly.dir}"/>
+
+    <echo>
+      +-------------------------------------------------------+
+      | C R E A T I N G  B I N A R Y  D I S T R I B U T I O N |
+      +-------------------------------------------------------+
+    </echo>
+
+    <copy todir="${maven.dist.bin.assembly.dir}">
+      <fileset dir=".">
+        <include name="README.txt"/>
+        <include name="LICENSE*"/>
+      </fileset>
+    </copy>
+
+    <!-- Copy Jars -->
+    <copy todir="${maven.dist.bin.assembly.dir}">
+      <fileset dir="${maven.build.dir}">
+        <include name="${maven.final.name}.jar"/>
+      </fileset>
+    </copy>
+
+    <!-- Copy documentation -->
+    <copy todir="${maven.dist.bin.assembly.dir}/docs">
+      <fileset dir="${maven.docs.dest}">
+        <include name="**"/>
+      </fileset>
+    </copy>
+  </goal>
+
+  <goal
+    name="dist:prepare-src-filesystem"
+    description="Builds the source distribution file system.">
+
+    <!-- S O U R C E  D I S T R I B U T I O N -->
+
+    <delete dir="${maven.dist.src.assembly.dir}" />
+    <mkdir dir="${maven.dist.src.assembly.dir}" />
+
+    <echo>
+      +-------------------------------------------------------+
+      | C R E A T I N G  S O U R C E  D I S T R I B U T I O N |
+      +-------------------------------------------------------+
+    </echo>
+
+    <copy todir="${maven.dist.src.assembly.dir}">
+      <fileset dir=".">
+        <include name="README.txt"/>
+        <include name="LICENSE*"/>
+        <include name="project.properties"/>
+        <include name="maven.xml"/>
+        <include name="project.xml"/>
+      </fileset>
+    </copy>
+
+    <available property="maven.dist.build.xml.avail"
+               file="${basedir}/build.xml"/>
+
+    <j:choose>
+      <j:when test="${maven.dist.build.xml.avail}">
+        <copy todir="${maven.dist.src.assembly.dir}" file="build.xml"/>
+      </j:when>
+      <j:otherwise>
+        <attainGoal name="ant:generate-build"/>
+        <move 
+          file="build.xml"
+          tofile="${maven.dist.src.assembly.dir}/build.xml"/>
+      </j:otherwise>
+    </j:choose>
+
+    <!-- Copy Source -->
+    <copy todir="${maven.dist.src.assembly.dir}/src">
+      <fileset dir="${maven.src.dir}">
+      </fileset>
+    </copy>
+  </goal>
+
+  <goal name="dist"
+    prereqs="dist:build"
+    description="Build a complete distribution.">
+  </goal>
+        
+  <goal
+    name="dist:build"
+    prereqs="dist:build-bin,dist:build-src"
+    description="Build a complete distribution.">
+  </goal>
+
+  <goal
+    name="dist:build-setup">
+    <delete dir="${maven.dist.dir}"/>
+    <mkdir dir="${maven.dist.dir}"/>
+  </goal>
+
+  <goal
+    name="dist:build-bin"
+    prereqs="dist:build-setup,dist:prepare-bin-filesystem"
+    description="Build the binary distribution.">
+
+    <!-- Create a tar.gz file -->
+    <tar longfile="gnu" tarfile="${maven.dist.dir}/${maven.final.name}.tar">
+      <tarfileset dir="${maven.dist.bin.archive.dir}"/>
+    </tar>
+
+    <gzip 
+      zipfile="${maven.dist.dir}/${maven.final.name}.tar.gz"
+      src="${maven.dist.dir}/${maven.final.name}.tar"
+    />
+    
+    <delete file="${maven.dist.dir}/${maven.final.name}.tar"/>
+
+    <!-- Create a zip file -->
+    <zip zipfile="${maven.dist.dir}/${maven.final.name}.zip">
+      <zipfileset dir="${maven.dist.bin.archive.dir}"/>
+    </zip>
+  </goal>
+
+  <goal
+    name="dist:build-src"
+    prereqs="dist:build-setup,dist:prepare-src-filesystem"
+    description="Build the source distribution.">
+	
+    <!-- Create a tar.gz file -->
+    <tar longfile="gnu" tarfile="${maven.dist.dir}/${maven.final.name}-src.tar">
+      <tarfileset dir="${maven.dist.src.archive.dir}"/>
+    </tar>
+
+    <gzip 
+      zipfile="${maven.dist.dir}/${maven.final.name}-src.tar.gz" 
+      src="${maven.dist.dir}/${maven.final.name}-src.tar"
+    />
+    
+    <delete file="${maven.dist.dir}/${maven.final.name}-src.tar"/>
+
+    <!-- Create a zip file -->
+    <zip zipfile="${maven.dist.dir}/${maven.final.name}-src.zip">
+      <zipfileset dir="${maven.dist.src.archive.dir}"/>
+    </zip>
+
+  </goal>
+
+  <!-- ================================================================== -->
+  <!-- D E P L O Y  D I S T R I B U T I O N                               -->
+  <!-- ================================================================== -->
+
+  <goal
+    name="dist:deploy">
+
+    <m:user-check user="${maven.username}"/>
+
+    <!--
+    
+    Generate the site documentation if it has not already been generated.
+    We need some markers or timestamps for this so we don't repeat work
+    if it's not necessary.
+    
+    -->
+
+    <attainGoal name="dist:build"/>
+
+    <tar tarfile="distributions.tar" basedir="${maven.dist.dir}"/>
+    <gzip zipfile="distributions.tar.gz" src="distributions.tar"/>
+    <delete file="distributions.tar"/>
+
+    <deploy:artifact
+      artifact="distributions.tar.gz"
+      type="distributions"
+      assureDirectoryCommand="mkdir -p"
+      siteCommand="cd @deployDirectory@;gunzip distributions.tar.gz;tar xUvf distributions.tar;chmod -R g+u *;rm distributions.tar"
+    />
+  
+  </goal>
+
+
+  <goal
+    name="dist:deploy-bin">
+
+    <m:user-check user="${maven.username}"/>
+
+    <attainGoal name="dist:build-bin"/>
+
+    <deploy:artifact
+      artifact="${maven.dist.dir}/${maven.final.name}.tar.gz"
+      type="distributions"
+      assureDirectoryCommand="mkdir -p"
+      siteCommand="cd @deployDirectory@;chmod -R g+u *;"
+    />
+
+  </goal>
+
+  <goal
+    name="dist:deploy-src">
+
+    <m:user-check user="${maven.username}"/>
+
+    <attainGoal name="dist:build-src"/>
+
+    <deploy:artifact
+      artifact="${maven.dist.dir}/${maven.final.name}-src.tar.gz"
+      type="distributions"
+      assureDirectoryCommand="mkdir -p"
+      siteCommand="cd @deployDirectory@;chmod -R g+u *;"
+    />
+
+  </goal>
+
+  <!-- ================================================================== -->
+  <!-- D E P L O Y  S N A P S H O T  D I S T R I B U T I O N              -->
+  <!-- ================================================================== -->
+
+  <maven:snapshot project="${pom}"/>    
+
+  <goal
+    name="dist:deploy-snapshot">
+    
+    <m:user-check user="${maven.username}"/>
+    
+    <j:set var="maven.final.name" value="${snapshotSignature}"/>
+    <echo>Building snapshot distribution: ${maven.final.name}</echo>
+        
+    <attainGoal name="dist:deploy"/>
+    
+  </goal>
+
+</project>

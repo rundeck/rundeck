@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+
+<project name="$workspace.name" default="co-all" basedir=".">
+
+<!-- ===================================================================== -->
+<!--                                                                       -->
+<!-- P R O J E C T  C H E C K O U T S                                      -->
+<!--                                                                       -->
+<!-- ===================================================================== -->
+
+<target
+  name="setup-directories">
+  <mkdir dir="$workspace.baseDirectory"/>
+</target>
+
+<target
+  name="reactor">
+  
+  <antcall target="co-all"/>
+  <antcall target="build-all"/>
+
+</target>
+
+<target 
+  name="co-all"
+  depends="setup-directories">
+#foreach ($project in $workspace.profile.projects)
+  <antcall target="co-$project.id"/>
+#end
+</target>
+
+#foreach ($project in $workspace.profile.projects)
+<target 
+  name="co-$project.id">
+##if ($project.isAvailableAsSource())
+  <cvs
+    cvsRoot="$project.cvsRoot"
+    package="$project.cvsModule"
+    dest="$workspace.baseDirectory"
+  />
+##end
+</target>
+
+#end
+
+<!-- ===================================================================== -->
+<!--                                                                       -->
+<!-- P R O J E C T  B U I L D S                                            -->
+<!--                                                                       -->
+<!-- ===================================================================== -->
+
+<target 
+  name="build-all">
+  
+##if ($project.isAvailableAsSource())
+#foreach ($project in $workspace.profile.projects)
+  <antcall target="build-$project.id"/>
+#end
+##end
+</target>
+
+#foreach ($project in $workspace.profile.projects)
+##if ($project.isAvailableAsSource())
+<target 
+  name="build-$project.id">
+  <ant 
+    dir="$workspace.baseDirectory/$project.cvsModule"
+    target="maven:compile"
+  />
+##end
+</target>
+
+#end
+
+</project>

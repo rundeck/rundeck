@@ -1,0 +1,66 @@
+<!--
+  ~ Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+  ~
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~
+  ~      http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~  Unless required by applicable law or agreed to in writing, software
+  ~  distributed under the License is distributed on an "AS IS" BASIS,
+  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  See the License for the specific language governing permissions and
+  ~  limitations under the License.
+  -->
+
+<policies>
+<!--
+Define Super User, Admin
+** orig **
+<acl description="All roles, access to any Module command at anytime">
+  <accessto>
+    <command module="^Module$" name="*"/>
+    <script allowed="true"/>
+  </accessto>
+  <by>
+    <role name="*"/>
+  </by>
+  <using>
+    <context project="*" type="*" name="*"/>
+  </using>
+  <when>
+    <timeandday day="*" hour="*" minute="*"/>
+  </when>
+</acl>
+
+-->
+<policy description="All roles, access to any Module command at any time.">
+    
+    <context project="*"> <!-- What they have access to -->        
+        <anynodes/>
+
+        <resource type="*" name="*">
+          <!--
+          <command url="http://localhost/modules?module=^Module$&amp;name=*"/>
+          <command url="http://localhost/module/Module/name/*"/>
+              -->
+          <!-- Just for fun, what would a job look like...
+          <command url="http://localhost/job/foo/bar/adhocScript"/>
+          -->
+          
+          <command module="^Module$" name="*"/>
+        </resource>
+        
+        <anyscript/>
+    </context>
+    
+    <by>
+        <user name="*"/>
+    </by>
+    
+    <when>
+        <timeandday day="*" hour="*" minute="*"/>
+    </when>
+</policy>
+</policies>

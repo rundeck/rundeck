@@ -1,0 +1,112 @@
+    <!--
+       ========================================================================
+         Run Resin 2.0 tests
+       ========================================================================
+    -->
+    <target name="test.resin.20" depends="prepare.test.resin.20"
+        if="maven.appserver.home" description="Run tests on Resin 2.0">
+
+        <!-- Start the servlet engine, wait for it to be started, run the
+             unit tests, stop the servlet engine, wait for it to be stopped.
+             The servlet engine is stopped if the tests fail for any reason -->
+
+        <runservertests testURL="http://localhost:${test.port}/test"
+            startTarget="start.resin.20"
+            stopTarget="stop.resin.20"
+            testTarget="test"/>
+
+    </target>
+
+    <!--
+       ========================================================================
+         Start Resin 2.0
+       ========================================================================
+    -->
+    <target name="start.resin.20">
+
+        <java classname="org.apache.cactus.ant.ResinRun" fork="yes">
+
+            <arg value="-start"/>
+
+            <arg value="-conf"/>
+            <arg value="resin.conf"/>
+
+            <!-- Needed so that Resin use the maven.appserver.home variable as it's
+                 root directory for resolving file paths -->
+            <jvmarg value="-Dresin.home=${maven.appserver.dir}"/>
+
+            <classpath>
+                <pathelement location="${cactus.ant.jar}"/>
+                <fileset dir="${maven.appserver.home}/lib">
+                    <include name="*.jar"/>
+                </fileset>
+            </classpath>
+
+        </java>
+
+    </target>
+
+    <!--
+       ========================================================================
+         Stop Resin 2.0
+       ========================================================================
+    -->
+    <target name="stop.resin.20">
+
+        <java classname="org.apache.cactus.ant.ResinRun" fork="yes">
+
+            <arg value="-stop"/>
+
+            <classpath>
+                <pathelement location="${cactus.ant.jar}"/>
+                <fileset dir="${maven.appserver.home}/lib">
+                    <include name="*.jar"/>
+                </fileset>
+            </classpath>
+
+        </java>
+
+    </target>
+
+    <!--
+       ========================================================================
+         Display a warning message if the needed servlet engine home property
+         is not set
+       ========================================================================
+    -->
+    <target name="check.test.resin.20" unless="maven.appserver.home">
+
+        <echo message=""/>
+        <echo message="******************************************************"/>
+        <echo message="WARNING : The 'maven.appserver.home' property has not been"/>
+        <echo message="set. No test will be run on that servlet engine."/>
+        <echo message="******************************************************"/>
+        <echo message=""/>
+
+    </target>
+
+    <!--
+       ========================================================================
+         Prepare directories and variables for running the tests
+       ========================================================================
+    -->
+    <target name="prepare.test.resin.20"
+        depends="check.test.resin.20,testwar" if="maven.appserver.home">
+
+        <echo message="maven.appserver.home = ${maven.appserver.home}"/>
+
+        <property name="maven.appserver.dir" value="${target.test.dir}/resin20"/>
+        <property name="conf.resin20.dir" value="${conf.test.dir}/resin20"/>
+
+        <mkdir dir="${maven.appserver.dir}"/>
+
+        <!-- Copy resin configuration files -->
+        <copy file="${conf.resin20.dir}/resin.conf"
+            tofile="${maven.appserver.dir}/resin.conf" filtering="on"/>
+
+        <!-- Create the war file -->
+        <copy file="${target.test.dir}/test.war"
+            tofile="${maven.appserver.dir}/test.war"/>
+
+    </target>
+

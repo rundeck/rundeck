@@ -1,0 +1,59 @@
+## -----------------------------------------------------------------------
+## Transform a v2 project descriptor into a v3 project descriptor.
+## -----------------------------------------------------------------------
+## Summary of changes:
+##
+## 1. Increment the <version> element and change the element
+##    to <pomVersion> as it isn't very clear as to what <version>
+##    refers to.
+##
+## 2. Remove the <jar> and <type> elements from the <dependency>
+##    elements. The versioning has been implemented in the
+##    central repository. Also convert the <name> element to <id> as
+##    the <name> should be the display name and <id> the unique
+##    project identifier.
+## 
+## 3. Expansion of the <organization> element to include a <name>
+##    and <url>.
+## -----------------------------------------------------------------------
+
+#match ("project")
+<project>
+  $context.applyTemplates("*")
+</project>  
+#end
+
+#match ("dependencies")
+  <dependencies>
+  $context.applyTemplates("dependency")
+  </dependencies>
+#end
+
+#match ("dependency")
+  <dependency>
+    <id>$context.node.name</id>
+    <version>$context.node.version</version>
+    #if ($context.node.url != null)<url>$context.node.url</url>#end
+  </dependency>
+#end
+
+#match ("organization")
+  #if (! $context.node.url)
+    <organization>
+      <name>$context.node</name>
+      <url></url>
+    </organization>
+  #end
+#end
+
+#match ("*")
+#if ($node.name() == "version")
+  <pomVersion>3</pomVersion>
+#elseif ($node.name() == "dependencies")
+$context.applyTemplates("dependencies")
+#elseif ($node.name() == "organization")
+$context.applyTemplates("organization")
+#else
+$node.copy()
+#end
+#end

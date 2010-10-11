@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+
+<project 
+  xmlns:j="jelly:core" 
+  xmlns:define="jelly:define"
+  xmlns:license="license">
+
+  <!-- ================================================================== -->
+  <!-- L I C E N S E                                                      -->
+  <!-- ================================================================== -->
+
+  <goal name="license"
+        description="Generate a xml file from your license.txt"
+        prereqs="license:transfer"/>
+
+  <goal name="license:transfer"
+        description="Generate a xml file from your license.txt">
+
+      <define:taglib uri="license">
+        <define:jellybean
+          name="license"
+          className="org.apache.maven.license.LicenseTask"
+          method="doExecute"
+        />
+      </define:taglib>
+
+      <mkdir dir="${maven.gen.docs}"/>
+
+      <j:set var="licenseX" value='${context.getVariable("maven.license.licenseFile")}X'/>	
+
+      <j:choose>
+        <j:when test="${licenseX != 'X'}">
+          <j:set var="licenseFile" value='${context.getVariable("maven.license.licenseFile")}'/>
+        </j:when>
+        <j:otherwise>
+          <j:set var="licenseFile" value='${context.getVariable("basedir")}/LICENSE.txt'/>
+        </j:otherwise>  
+      </j:choose>
+      
+      <license:license
+        projectDescriptor="project.xml"
+        output="${maven.gen.docs}/license.xml"
+	licenseFile="${licenseFile}"
+        outputEncoding="${maven.docs.outputencoding}"
+        project="${maven.ant.project}"
+        mavenProject="${pom}"
+      />
+      
+  </goal>
+
+</project>

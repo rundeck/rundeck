@@ -1,0 +1,93 @@
+<?xml version="1.0"?>
+
+<project
+  xmlns:j="jelly:core"
+  xmlns:define="jelly:define"
+  xmlns:m="maven">
+  
+  <!-- ================================================================== -->
+  <!-- M A V E N  T A G  L I B R A R Y                                    -->
+  <!-- ================================================================== -->
+  <!-- A collection of dynamic tag libraries that make writing            -->
+  <!-- plugins convenient.                                                -->
+  <!-- ================================================================== -->
+
+  <define:taglib uri="maven">
+    
+    <!-- ================================================================== -->
+    <!-- U S E R N A M E  C H E C K                                         -->
+    <!-- ================================================================== -->
+    <!-- For several goals we need to make sure that Maven can grab         -->
+    <!-- hold of a valid username. For deployment goals in particular       -->
+    <!-- where Maven needs to upload an artifact to a server.               -->
+    <!-- ================================================================== -->
+    
+    <define:tag name="user-check">
+      <j:set var="tmp" value="${user}"/>
+      <j:if test="${tmp.equals('USERNAME_NOT_SET')}">
+        <fail message="">
++------------------------------------------------------------------
+| ERROR!
+|
+| You must specify a maven username in order to deploy the site!
+| You can either set this property in your ~/build.properties
+| or specify one on the command line:
+|
+| maven -Dmaven.username=${user.name} [goal]
++------------------------------------------------------------------
+        </fail>
+      </j:if>
+    </define:tag>
+    
+    <define:jellybean
+      name="create-dependency-classpath"
+      className="org.apache.maven.CreateDependencyClasspath"
+      method="execute"
+    />
+    
+  </define:taglib>
+
+  <!-- Allow a hook for processing around the build start. -->
+
+  <goal name="build:start"/>
+  
+  <!-- ================================================================== -->
+  <!-- D R I V E R  I N I T I A L I Z A T I O N                           -->
+  <!-- ================================================================== -->
+  <!-- All things we want to provide to all plugins, or processes we      -->
+  <!-- performed before every build are declared/defined here.      	    -->
+  <!-- ================================================================== -->
+
+  <j:set var="dir__" value="${pom.build.sourceDirectory}X"/>
+  <j:if test="${dir__ != 'X'}">
+    <available
+      property="sourcesPresent"
+      file="${pom.build.sourceDirectory}"
+    />
+  </j:if>
+
+  <j:set var="dir__" value="${pom.build.unitTestSourceDirectory}X"/>
+  <j:if test="${dir__ != 'X'}">
+    <available
+      property="unitTestSourcesPresent"
+      file="${pom.build.unitTestSourceDirectory}"
+    />
+  </j:if>
+
+  <m:create-dependency-classpath
+    refid="maven.dependency.classpath"
+    context="${context}"
+  />
+
+  <path id="maven-classpath">
+    <fileset dir="${maven.home}/lib"/>
+  </path>
+
+  <j:if test="${sourcesPresent == 'true'}">
+  <path id="maven.compile.src.set">
+    <pathelement location="${pom.build.SourceDirectory}"/>
+  </path>
+  </j:if>
+  
+</project>
+

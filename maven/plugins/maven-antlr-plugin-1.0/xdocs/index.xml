@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <title>Maven Antlr Plug-in</title>
+    <author email="jason@zenplex.com">Jason van Zyl</author>
+  </properties>
+
+  <body>
+    <section name="Maven Antlr Plug-in">
+      <p>
+         This plugin processes Antlr grammar files and allows the easy
+         integration of Antlr generated sources with the rest of your
+         project sources.
+      </p>
+    </section>
+ </body>
+</document>

@@ -1,0 +1,119 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <author email="plynch@apache.org">Peter Lynch</author>
+    <title>Maven J2EE Plug-in: Appserver Notes</title>
+  </properties>
+
+  <body>
+    <section name="Maven J2EE Appserver Control">
+    <p>
+    This page offers some general information about the appserver control
+    features of the J2EE plug-in. Specific details about
+    <a href="./build-file.html#maven:appserver-install">related targets</a> and
+    their <a href="./properties.html#Application Server" >properties</a> can be found elsewhere.
+    </p>
+    </section>
+    <section name="Plug-in Rationale">
+    <p>
+      When developing a web application (or website for that matter), each developer
+      working on the project needs to have an environment to run and test their
+      application. Rather than store a complete application server install in source
+      control, it is much more feasible to have a centralized install of that
+      application server. Then, using only the minimum configuration files the
+      developer can control a separate isolated instance of the application server
+      on their machine.
+    </p>
+    <p>
+      The Maven J2EE plug-in appserver features use this technique to install and control
+      application server instances for your project needs. The appserver
+      features <strong>are not</strong> for
+      deploying webapps or war files into application servers.
+    </p>
+    </section>
+
+    <section name="Supported Servers">
+    <p>
+      The following table shows the various appserver versions that are
+      supported by the appserver control features of the Maven J2EE plug-in
+      and what propety values are required to be set in order for the
+      maven:appserver-* targets to work with those versions.
+    </p>
+    <table>
+      <tr>
+        <th>Server</th>
+        <th>${maven.appserver.name}</th>
+        <th>${maven.appserver.version}</th>
+        <th>${maven.j2ee.version}</th>
+      </tr>
+      <tr>
+        <td><a href="http://jakarta.apache.org/tomcat">Tomcat 4.x</a></td>
+        <td><code>tomcat</code></td>
+        <td><code>40</code></td>
+        <td><code>12</code> or <code>13</code></td>
+      </tr>
+    </table>
+
+    <p>The following application servers are expected to be supported soon:</p>
+    <ul>
+      <li><a href="http://enhydra.enhydra.org/">Enhydra</a></li>
+      <li><a href="http://www.orionserver.com/">Orion</a></li>
+      <li><a href="http://www.caucho.com/products/resin/">Resin</a></li>
+      <li><a href="http://www.weblogic.com/">Weblogic</a></li>
+    </ul>
+    </section>
+
+    <section name="Appserver Proxy Build File">
+      <p>
+      To make life even easier when using the appserver targets, the Maven J2EE
+      plug-in includes a proxy build file. This means a file similar to the one
+      below is copied to the directory specified by
+      <a href="./properties.html#maven.appserver.dir">${maven.appserver.dir}</a>.
+      </p>
+      <table><tr><th>${maven.appserver.dir}/build.xml</th></tr></table>
+      <source><![CDATA[
+      <?xml version="1.0"?>
+        <project name="Maven Application Server Plugin Proxy" default="install"
+        basedir="@basedir@">
+
+        <!-- ================================================================== -->
+        <!-- Proxy for controlling an installed application server instance     -->
+        <!-- ================================================================== -->
+
+        <!-- ========================================================== -->
+        <!-- Give user a chance to override without editing this file   -->
+        <!-- (and without typing -D each time they compile)             -->
+        <!-- ========================================================== -->
+        <!-- all ant projects specific properties                       -->
+        <property file="${user.home}/build.properties" />
+        <!-- project/user specific settings                             -->
+        <property file="@basedir@/build.properties" />
+        <!-- anything here is expected to be project defaults           -->
+        <property file="@basedir@/project.properties" />
+        <!-- ========================================================== -->
+
+        <target name="install">
+          <ant antfile="${maven.home}/plugins/j2ee/build.xml"
+            target="appserver-install" />
+        </target>
+
+        <target name="start">
+        <ant antfile="${maven.home}/plugins/j2ee/build.xml"
+          target="appserver-start" />
+        </target>
+
+        <target name="stop">
+        <ant antfile="${maven.home}/plugins/j2ee/build.xml"
+          target="appserver-stop" />
+          </target>
+
+        </project>]]>
+      </source>
+      <p>Using this build file, you can run the appserver related targets quickly
+      from within your ${maven.appserver.dir} directory. Typing simply</p>
+      <source><![CDATA[ant]]></source>
+      <p>can stop, re-install, and re-start a started server instance.</p>
+    </section>
+  </body>
+</document>

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project>
+
+  <pomVersion>3</pomVersion>
+  <id>maven-changelog-plugin</id>
+  <name>Maven Changelog Plug-in</name>
+  <currentVersion>1.1</currentVersion>
+  <organization>
+    <name>Apache Software Foundation</name>
+    <url>http://jakarta.apache.org/</url>
+    <logo>http://jakarta.apache.org/turbine/maven/images/jakarta-logo-blue.gif</logo>
+  </organization>
+  <inceptionYear>2001</inceptionYear>
+  <package>org.apache.maven</package>
+  <logo>http://jakarta.apache.org/turbine/maven/images/maven.jpg</logo>
+
+  <!-- Gump integration -->
+  <gumpRepositoryId>jakarta</gumpRepositoryId>
+
+  <description>
+  </description>
+
+  <shortDescription>Java Project Management Tools</shortDescription>
+
+  <url>http://jakarta.apache.org/turbine/maven/reference/plugins/changelog/</url>
+  <issueTrackingUrl>http://nagoya.apache.org/scarab/servlet/scarab/</issueTrackingUrl>
+  <siteAddress>jakarta.apache.org</siteAddress>
+  <siteDirectory>/www/jakarta.apache.org/turbine/maven/reference/plugins/changelog/</siteDirectory>
+  <distributionDirectory>/www/jakarta.apache.org/builds/jakarta-turbine-maven/</distributionDirectory>
+
+  <repository>
+    <connection>scm:cvs:pserver:anoncvs@cvs.apache.org:/home/cvspublic:jakarta-turbine-maven/src/plugins-build/changelog/</connection>
+    <url>http://cvs.apache.org/viewcvs/jakarta-turbine-maven/src/plugins-build/changelog/</url>
+  </repository>
+
+  <developers>
+    <developer>
+      <name>dIon Gillard</name>
+      <id>dion</id>
+      <email>dion@multitask.com.au</email>
+      <organization>Multitask Consulting</organization>
+      <roles>
+        <role>Java Developer</role>
+        <role>Documentation</role>
+      </roles>
+    </developer>
+    
+    <developer>
+      <name>Pete Kazmier</name>
+      <id>kaz</id>
+      <email>pete-apache-dev@kazmier.com</email>
+      <organization></organization>
+      <roles>
+        <role>Documentation</role>
+        <role>Java Developer</role>
+      </roles>
+    </developer>
+    
+    <developer>
+      <name>Emmanuel Venisse</name>
+      <id>evenisse</id>
+      <email>evenisse@ifrance.com</email>
+      <organization>Fi System</organization>
+      <roles>
+        <role>Java Developer</role>
+      </roles>
+    </developer>
+
+    <developer>
+      <name>Jason van Zyl</name>
+      <id>jvanzyl</id>
+      <email>jason@zenplex.com</email>
+      <organization>Zenplex</organization>
+      <roles>
+        <role>Architect</role>
+        <role>Release Manager</role>
+      </roles>
+    </developer>
+
+  </developers>
+
+  <dependencies>
+
+    <dependency>
+      <id>ant</id>
+      <version>1.5</version>
+    </dependency>
+
+    <dependency>
+      <id>junit</id>
+      <version>3.7</version>
+    </dependency>
+
+    <dependency>
+      <id>regexp</id>
+      <version>1.2</version>
+    </dependency>
+    
+    <!-- 
+    
+    Required because of AbstractExecutor. We can probably make this
+    a stand-alone bean now that we are using jelly.
+    
+    -->
+    <dependency>
+      <id>maven</id>
+      <version>b5</version>
+      <jar>maven.jar</jar>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+
+    <nagEmailAddress>turbine-maven-dev@jakarta.apache.org</nagEmailAddress>
+
+    <sourceDirectory>src/java</sourceDirectory>
+
+    <unitTestSourceDirectory>src/test/java</unitTestSourceDirectory>
+    <integrationUnitTestSourceDirectory/>
+
+    <aspectSourceDirectory></aspectSourceDirectory>
+
+    <!-- Unit test classes -->
+    <unitTest>
+      <includes>
+        <include>**/*Test.java</include>
+      </includes>
+    </unitTest>
+    
+    <!-- J A R  R E S O U R C E S -->
+    <!-- Resources that are packaged up inside the JAR file -->
+
+    <resources>
+    </resources>
+
+    <jars>
+    </jars>
+  </build>
+</project>
+

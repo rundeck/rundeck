@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <title>Maven Reactor Plug-in</title>
+    <author email="jason@zenplex.com">Jason van Zyl</author>
+  </properties>
+
+  <body>
+    <section name="Maven Reactor Plug-in">
+      <p>
+        This plug-in provides the facility to process N projects in an
+        arbitrary fashion. You may use the Reactor to perform group builds,
+        perform continuous integration, or provide a documentation site
+        comprised of several different projects.
+      </p>
+    </section>
+ </body>
+</document>

@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <title>Maven War Plugin</title>
+    <author email="vmassol@octo.com">Vincent Massol</author>
+  </properties>
+
+  <body>
+    <section name="Maven War Plugin">
+      <p>
+        This plug-in provides the ability to generate either a deployed webapp
+        or a webapp packaged as a WAR file.
+      </p>
+    </section>
+ </body>
+</document>

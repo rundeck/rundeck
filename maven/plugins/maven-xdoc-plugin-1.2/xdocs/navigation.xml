@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="Maven xdoc Plugin">
+
+  <title>Maven xdoc Plugin</title>
+
+  <body>
+    <links>
+      <item name="Maven"  href="http://jakarta.apache.org/turbine/maven/"/>
+    </links>
+    <menu name="Overview">
+      <item name="Properties"        href="/properties.html"/>
+      <item name="Changes report"    href="/changes-report.html"/>
+    </menu>
+  </body>
+</project>

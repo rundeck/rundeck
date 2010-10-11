@@ -1,0 +1,33 @@
+#match("project")
+digraph maven {
+  graph [fontpath="/usr/share/fonts/default/TrueType/",concentrate=true,color=black];
+  edge [color=gray72];
+  graph[rankdir="LR",page="21,29.7",size="20.8,29.4",ratio=fill,center=1];
+  node[fontcolor=white,fontname="helr____",fontsize=10.0,shape=polygon,style=filled];
+  subgraph goals {
+  $context.applyTemplates("plugin")
+  }
+}
+#end
+
+#match("plugin")
+  $context.applyTemplates("goal")
+#end
+
+#match("goal")
+  #foreach( $prereq in $node.selectNodes("prerequisite") )
+      #set ( $name = $prereq.attrib("name") )
+      #set ( $plugin = $name.indexOf(":") )
+      #set ( $prereqName = $attrib.name )
+      #set ( $prereqPlugin = $prereqName.indexOf(":") )
+      #if ( $plugin == -1 ) #set( $color = "#003366" ) #else #set ( $color = "orange" ) #end
+      #if ( $prereqPlugin == -1 ) #set( $prereqcolor = "#003366" ) #else #set ( $prereqcolor = "orange" ) #end
+
+      node[fillcolor="$color"];
+      "$name";
+      node[fillcolor="$prereqcolor"];
+      "$prereqName";
+      "$name" -> "$prereqName" ;
+
+  #end
+#end

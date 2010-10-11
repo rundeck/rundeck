@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="Maven Checkstyle Plugin">
+
+  <title>Maven Checkstyle Plugin</title>
+
+  <body>
+    <links>
+      <item name="Maven"                   href="http://jakarta.apache.org/turbine/maven/"/>
+      <item name="Checkstyle"              href="http://checkstyle.sf.net/"/>
+    </links>
+    <menu name="Overview">
+      <item name="Properties"              href="/properties.html" />
+    </menu>
+  </body>
+</project>

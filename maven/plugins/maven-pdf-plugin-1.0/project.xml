@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project>
+
+  <pomVersion>3</pomVersion>
+  <id>maven-pdf-plugin</id>
+  <name>Maven PDF Plug-in</name>
+  <currentVersion>1.0</currentVersion>
+  <organization>
+    <name>Apache Software Foundation</name>
+    <url>http://jakarta.apache.org/</url>
+    <logo>http://jakarta.apache.org/turbine/maven/images/jakarta-logo-blue.gif</logo>
+  </organization>
+  <inceptionYear>2001</inceptionYear>
+  <package>org.apache.maven</package>
+  <logo>http://jakarta.apache.org/turbine/maven/images/maven.jpg</logo>
+
+  <description>
+  </description>
+
+  <shortDescription>Java Project Management Tools</shortDescription>
+
+  <url>http://jakarta.apache.org/turbine/maven/reference/plugins/pdf/</url>
+  <issueTrackingUrl>http://nagoya.apache.org/scarab/servlet/scarab/</issueTrackingUrl>
+  <siteAddress>jakarta.apache.org</siteAddress>
+  <siteDirectory>/www/jakarta.apache.org/turbine/maven/reference/plugins/pdf/</siteDirectory>
+  <distributionDirectory>/www/jakarta.apache.org/builds/jakarta-turbine-maven/</distributionDirectory>
+
+  <repository>
+    <connection>scm:cvs:pserver:anoncvs@cvs.apache.org:/home/cvspublic:jakarta-turbine-maven/src/plugins-build/pdf/</connection>
+    <url>http://cvs.apache.org/viewcvs/jakarta-turbine-maven/src/plugins-build/pdf/</url>
+  </repository>
+
+  <developers>
+    <developer>
+      <name>dIon Gillard</name>
+      <id>dion</id>
+      <email>dion@multitask.com.au</email>
+      <organization>Multitask Consulting</organization>
+      <roles>
+        <role>Documentation</role>
+      </roles>
+    </developer>
+    
+    <developer>
+      <name>Jason van Zyl</name>
+      <id>jvanzyl</id>
+      <email>jason@zenplex.com</email>
+      <organization>Zenplex</organization>
+      <roles>
+        <role>Architect</role>
+        <role>Release Manager</role>
+      </roles>
+    </developer>
+  </developers>
+
+  <dependencies>
+
+    <dependency>
+      <id>fop</id>
+      <version>0.20.3</version>
+      <properties>
+        <classloader>root.maven</classloader>
+      </properties>
+    </dependency>
+
+    <dependency>
+      <id>batik</id>
+      <version>1.1.1</version>
+      <properties>
+        <classloader>root.maven</classloader>
+      </properties>
+    </dependency>
+
+    <dependency>
+      <id>logkit</id>
+      <version>1.0.1</version>
+      <properties>
+        <classloader>root.maven</classloader>
+      </properties>
+    </dependency>
+
+    <dependency>
+      <id>avalon-framework</id>
+      <version>4.0</version>
+      <properties>
+        <classloader>root.maven</classloader>
+      </properties>
+    </dependency>
+
+    <dependency>
+      <id>xerces</id>
+      <version>1.2.3</version>
+      <properties>
+        <classloader>root.maven</classloader>
+      </properties>
+    </dependency>
+
+    <dependency>
+      <id>xalan</id>
+      <version>2.3.1</version>
+      <properties>
+        <classloader>root.maven</classloader>
+      </properties>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+
+    <nagEmailAddress>turbine-maven-dev@jakarta.apache.org</nagEmailAddress>
+
+    <sourceDirectory>src/java</sourceDirectory>
+
+    <unitTestSourceDirectory>src/test</unitTestSourceDirectory>
+
+    <!-- Unit test classes -->
+    <unitTest>
+      <includes>
+        <include>**/*Test.java</include>
+      </includes>
+    </unitTest>
+    
+  </build>
+</project>
+

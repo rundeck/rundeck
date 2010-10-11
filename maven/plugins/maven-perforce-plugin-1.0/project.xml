@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project>
+
+  <pomVersion>3</pomVersion>
+  <id>maven-perforce-plugin</id>
+  <name>Maven Perforce Plugin</name>
+  <currentVersion>1.0</currentVersion>
+  <organization>
+    <name>Apache Software Foundation</name>
+    <url>http://jakarta.apache.org/</url>
+    <logo>http://jakarta.apache.org/turbine/maven/images/jakarta-logo-blue.gif</logo>
+  </organization>
+  <inceptionYear>2001</inceptionYear>
+  <package>org.apache.maven</package>
+  <logo>http://jakarta.apache.org/turbine/maven/images/maven.jpg</logo>
+
+  <description>
+  </description>
+
+  <shortDescription>Java Project Management Tools</shortDescription>
+
+  <url>http://jakarta.apache.org/turbine/maven/reference/plugins/perforce/</url>
+  <issueTrackingUrl>http://nagoya.apache.org/scarab/servlet/scarab/</issueTrackingUrl>
+  <siteAddress>jakarta.apache.org</siteAddress>
+  <siteDirectory>/www/jakarta.apache.org/turbine/maven/reference/plugins/perforce/</siteDirectory>
+  <distributionDirectory>/www/jakarta.apache.org/builds/jakarta-turbine-maven/</distributionDirectory>
+
+  <repository>
+    <connection>scm:cvs:pserver:anoncvs@cvs.apache.org:/home/cvspublic:jakarta-turbine-maven/src/plugins-build/perforce/</connection>
+    <url>http://cvs.apache.org/viewcvs/jakarta-turbine-maven/src/plugins-build/perforce/</url>
+  </repository>
+
+  <!-- THIS IS INCOMPLETE -->
+  <developers>
+    <developer>
+      <name>dIon Gillard</name>
+      <id>dion</id>
+      <email>dion@multitask.com.au</email>
+      <organization>Multitask Consulting</organization>
+      <roles>
+        <role>Documentation</role>
+      </roles>
+    </developer>
+
+    <developer>
+      <name>Jason van Zyl</name>
+      <id>jvanzyl</id>
+      <email>jason@zenplex.com</email>
+      <organization>Zenplex</organization>
+      <roles>
+        <role>Architect</role>
+        <role>Release Manager</role>
+      </roles>
+    </developer>
+
+  </developers>
+
+  <dependencies>
+
+    <dependency>
+      <id>ant</id>
+      <version>1.5</version>
+      <properties>
+        <classloader>root</classloader>
+      </properties>
+    </dependency>
+
+    <dependency>
+      <id>oro</id>
+      <version>2.0.6</version>
+      <properties>
+        <classloader>root</classloader>
+      </properties>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+
+    <nagEmailAddress>turbine-maven-dev@jakarta.apache.org</nagEmailAddress>
+
+    <sourceDirectory>src/java</sourceDirectory>
+
+    <unitTestSourceDirectory>src/test</unitTestSourceDirectory>
+
+    <!-- Unit test classes -->
+    <unitTest>
+      <includes>
+        <include>**/*Test.java</include>
+      </includes>
+    </unitTest>
+    
+  </build>
+</project>
+

@@ -1,0 +1,1 @@
+Local cache of jars necessary for successful core build.  The "maven.repo.depslocal" property in core/project.properties will be set to point to this dir at maven build time.

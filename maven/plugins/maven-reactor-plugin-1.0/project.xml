@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project>
+
+  <pomVersion>3</pomVersion>
+  <id>maven-reactor-plugin</id>
+  <name>Maven Reactor Plugin</name>
+  <currentVersion>1.0</currentVersion>
+  <organization>
+    <name>Apache Software Foundation</name>
+    <url>http://jakarta.apache.org/</url>
+    <logo>http://jakarta.apache.org/turbine/maven/images/jakarta-logo-blue.gif</logo>
+  </organization>
+  <inceptionYear>2001</inceptionYear>
+  <package>org.apache.maven</package>
+  <logo>http://jakarta.apache.org/turbine/maven/images/maven.jpg</logo>
+
+  <description>
+  </description>
+
+  <shortDescription>Java Project Management Tools</shortDescription>
+
+  <url>http://jakarta.apache.org/turbine/maven/reference/plugins/reactor/</url>
+  <issueTrackingUrl>http://nagoya.apache.org/scarab/servlet/scarab/</issueTrackingUrl>
+  <siteAddress>jakarta.apache.org</siteAddress>
+  <siteDirectory>/www/jakarta.apache.org/turbine/maven/reference/plugins/reactor/</siteDirectory>
+  <distributionDirectory>/www/jakarta.apache.org/builds/jakarta-turbine-maven/</distributionDirectory>
+
+  <repository>
+    <connection>scm:cvs:pserver:anoncvs@cvs.apache.org:/home/cvspublic:jakarta-turbine-maven/src/plugins-build/reactor/</connection>
+    <url>http://cvs.apache.org/viewcvs/jakarta-turbine-maven/src/plugins-build/reactor/</url>
+  </repository>
+
+  <developers>
+    <developer>
+      <name>dIon Gillard</name>
+      <id>dion</id>
+      <email>dion@multitask.com.au</email>
+      <organization>Multitask Consulting</organization>
+      <roles>
+        <role>Documentation</role>
+      </roles>
+    </developer>
+
+    <developer>
+      <name>Glenn McAllister</name>
+      <id>glennm</id>
+      <email>glenn@somanetworks.com</email>
+      <organization>SOMA Networks, Inc.</organization>
+      <roles>
+        <role>Java Developer</role>
+      </roles>
+    </developer>
+
+    <developer>
+      <name>Bob McWhirter</name>
+      <id>werken</id>
+      <email>bob@werken.com</email>
+      <organization>The Werken Company</organization>
+      <roles>
+        <role>Java Developer</role>
+      </roles>
+    </developer>
+
+    <developer>
+      <name>Stéphane Mor</name>
+      <id>smor</id>
+      <email>stephanemor@yahoo.fr</email>
+      <organization>Hasgard Systèmes et Réseaux</organization>
+      <roles>
+        <role>Java Developer</role>
+      </roles>
+    </developer>
+
+    <developer>
+      <name>Kurt Schrader</name>
+      <id>kschrader</id>
+      <email>kschrader@karmalab.org</email>
+      <organization>University of Michigan</organization>
+      <roles>
+        <role>Java Developer</role>
+      </roles>
+    </developer>
+
+    <developer>
+      <name>James Strachan</name>
+      <id>jstrachan</id>
+      <email>james_strachan@yahoo.co.uk</email>
+      <organization>Spiritsoft</organization>
+      <roles>
+        <role>Java Developer</role>
+      </roles>
+    </developer>
+
+    <developer>
+      <name>Jason van Zyl</name>
+      <id>jvanzyl</id>
+      <email>jason@zenplex.com</email>
+      <organization>Zenplex</organization>
+      <roles>
+        <role>Architect</role>
+        <role>Release Manager</role>
+      </roles>
+    </developer>
+
+  </developers>
+
+  <dependencies>
+
+    <dependency>
+      <id>ant</id>
+      <version>1.5</version>
+    </dependency>
+
+    <dependency>
+      <id>dom4j</id>
+      <version>1.4-dev-7</version>
+    </dependency>
+
+    <dependency>
+      <id>commons-jelly</id>
+      <version>SNAPSHOT</version>
+    </dependency>
+
+    <!-- jelly depends on org.xml.* classes -->
+    <dependency>
+      <id>xml-apis</id>
+      <version>2.0.2</version>
+    </dependency>
+
+    <dependency>
+      <id>maven</id>
+      <version>b5</version>
+      <jar>maven.jar</jar>
+    </dependency>
+
+    <dependency>
+      <id>junit</id>
+      <version>3.7</version>
+    </dependency>
+
+    <dependency>
+      <id>commons-betwixt</id>
+      <version>SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+      <id>commons-digester</id>
+      <version>1.2</version>
+    </dependency>
+
+    <dependency>
+      <id>commons-lang</id>
+      <version>1.0-b1.1</version>
+      <url>http://jakarta.apache.org/commons/</url>
+    </dependency>
+
+    <dependency>
+      <id>commons-collections</id>
+      <version>2.0</version>
+      <url>http://jakarta.apache.org/commons/</url>
+    </dependency>
+
+    <dependency>
+      <id>commons-beanutils</id>
+      <version>1.4.1</version>
+      <url>http://jakarta.apache.org/commons/</url>
+    </dependency>
+
+    <dependency>
+      <id>commons-logging</id>
+      <version>1.0.1</version>
+      <url>http://jakarta.apache.org/commons/logging.html</url>
+    </dependency>
+
+    <dependency>
+      <id>velocity</id>
+      <version>1.4-dev</version>
+    </dependency>
+
+    <dependency>
+      <id>commons-graph</id>
+      <version>0.8.1</version>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+
+    <nagEmailAddress>turbine-maven-dev@jakarta.apache.org</nagEmailAddress>
+
+    <sourceDirectory>src/java</sourceDirectory>
+
+    <unitTestSourceDirectory>src/test/java</unitTestSourceDirectory>
+
+    <!-- Unit test classes -->
+    <unitTest>
+      <includes>
+        <include>**/*Test.java</include>
+      </includes>
+      <excludes>
+        <exclude>**/TestConstantsTest.java</exclude>
+      </excludes>
+    </unitTest>
+    
+  </build>
+</project>
+

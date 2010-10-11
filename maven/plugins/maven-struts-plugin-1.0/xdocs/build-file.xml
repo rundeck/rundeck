@@ -1,0 +1,110 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <author email="dion@multitask.com.au">dIon Gillard</author>
+    <title>Maven Plug-in Build File Documentation</title>
+  </properties>
+
+  <body>
+    <section name="Maven Struts Plug-in Build File">
+      <p>
+        Maven utilizes <a href="http://jakarta.apache.org/ant/">Ant</a>
+        to provide users with an easy-to-use and familiar interface to
+        manage projects that have been described with a valid Maven <a
+        href="../project-descriptor.html">project descriptor</a>.
+        The build files that Maven <a href="../../start/index.html">
+        installs</a> are stored in <code>${maven.home}</code> directory.
+      </p>
+      <p>
+        This document describes the Ant build file and targets
+        that are available when using the Struts Plug-in with Maven.
+      </p>
+      <p>
+        The current recommended approach to using Maven is to add
+        delegators to these Maven-provided targets in your project's
+        main build file.  This will enable you to use your existing
+        build file with the additional Maven functionality.  In
+        addition, it is also recommended that you load a standard set of
+        property files.  The property files will setup your environment, 
+        <code>${lib.repo}</code> and <code>${maven.home}</code>, and
+        allow you to override Maven defaults properties.  Please refer
+        to the <a href="../../start/integrate.html">Integration</a> document for
+        more information on how to integrate these build targets into
+        your project.
+      </p>
+      <p>
+        The following table contains a brief overview of the
+        build file that is installed as part of the Maven Struts Plug-in in the
+        <code>${maven.home}/plugin/struts</code> directory. In addition,
+        the various Ant targets in this file is discussed.
+      </p>
+      <table>
+        <tr><th>Build File</th><th>Description</th></tr>
+        <tr>
+          <td><a href="#struts/build.xml">build.xml</a></td>
+          <td>
+            Contains a target validate Struts <code>WAR</code> files.
+          </td>
+        </tr>
+      </table>
+      <p>
+        The build file utilizes various properties for default and
+        user-configurable settings.  All Struts Plug-in properties are described
+        in the <a href="properties.html">Properties</a> document.
+      
+        The rest of this document assumes your project follows the standard 
+        <a href="dirlayout.html">Directory Layout</a>; however, it is
+        possible to override many of these defaults.
+      </p>
+    </section>
+    <section name="struts/build.xml">
+      <table>
+        <tr><th>Target</th><th>Description</th></tr>
+        <tr>
+          <td><a href="#maven:validate-struts-war">maven:validate-struts-war</a></td>
+          <td>Validate a Struts <code>WAR</code> file.</td>
+        </tr>
+      </table>
+      <p/>
+      <subsection name="maven:validate-struts-war">
+        <p>
+          The <code>maven:validate-struts-war</code> target validates the struts
+          war file.
+        </p>
+        <p>
+          The validator checks the folowing:
+          <ol>
+            <li>It's a valid war file as per the <a href="../j2ee/index.html">
+              J2EE War Validator</a></li>
+            <li>The war file has a struts configuration, usually 
+              <code>WEB-INF/struts-config.xml</code></li>
+            <li>Form Beans defined by a <code>&lt;form-bean&gt;</code> tag
+              have a <code>type</code> that is loadable from the war file 
+              and <strong>not</strong> the classpath. If the form bean has
+              a <code>className</code>, that class too must be loaded from
+              the war</li>
+            <li>Actions defined by a <code>&lt;action&lt;</code> tag have 
+              several validations:
+              <ol>
+                <li>the <code>className</code> attribute must be a 
+                  class loadable from the war</li>
+                <li>the <code>name</code> attribute, must match a 
+                  <code>&lt;form-bean&gt; name</code> attribute.</li>
+                <li>the <code>path</code> attribute must start with a 
+                  forward slash, i.e. '/'</li>
+                <li>the <code>scope</code> attribute must be one of
+                  <code>request</code> or <code>sesssion</code></li>
+                <li>the <code>type</code> attribute must be a class
+                  loadable from the war</li>
+                <li>the <code>unknown</code> and <code>validate</code>
+                  attributes must be either <code>true</code> or <code>
+                  false</code></li>
+              </ol>
+            </li>
+          </ol>
+        </p>
+      </subsection>
+    </section>
+  </body>
+</document>

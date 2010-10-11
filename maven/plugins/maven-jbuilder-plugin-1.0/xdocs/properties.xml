@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<document>
+
+  <properties>
+    <title>JBuilder Properties</title>
+    <author email="evenisse@ifrance.com">Emmanuel Venisse</author>
+  </properties>
+
+  <body>
+    <section name="JBuilder Settings">
+	    <p>
+	      No properties are needed.
+	    </p>
+    </section>
+  </body>
+</document>

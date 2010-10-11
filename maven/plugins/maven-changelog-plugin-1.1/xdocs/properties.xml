@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<document>
+
+  <properties>
+    <title>Changelog Properties</title>
+    <author email="smor@apache.org">Stéphane MOR</author>
+  </properties>
+
+  <body>
+    <section name="Changelog Properties">
+      <table>
+        <tr>
+          <td>maven.changelog.range</td>
+          <td>Yes</td>
+          <td>
+            Specifies the range to use when generating the change log.
+            This is used by the "changelog" goal.  The default value is
+            <code>5</code> days.  Note: when using the Subversion
+            changelog factory, you <b>must</b> set this property to an
+            empty value because the Subversion ra_dav module (used to
+            access DAV repositories) does not support date operations
+            yet.  If you are using a local repository (ra_local), then
+            this does not apply to you.
+          </td>
+        </tr>
+        <tr>
+          <td>maven.changelog.factory</td>
+          <td>Yes</td>
+          <td>
+            Specifies a fully qualified class name implementing the
+            <code>org.apache.maven.changelog.ChangeLogFactory</code> interface.
+            The class creates the <code>ChangeLogGenerator</code> and
+            <code>ChangeLogParser</code> pair required to create the change
+            log.  This is used by the "changelog" and "activity" goals.
+            The default value is <a
+            href="../apidocs/org/apache/maven/cvslib/CvsChangeLogFactory.html">
+            org.apache.maven.cvslib.CvsChangeLogFactory</a>.  In
+            addition, there is also a Subversion factory (<a
+            href="../apidocs/org/apache/maven/svnlib/SvnChangeLogFactory.html">
+            org.apache.maven.svnlib.SvnChangeLogFactory</a>) as well as
+            a StarTeam factory (<a 
+            href="../apidocs/org/apache/maven/starteamlib/StarteamChangeLogFactory.html">
+            org.apache.maven.starteamlib.StarteamChangeLogFactory</a>).
+          </td>
+        </tr>
+      </table>
+    </section>
+  </body>
+</document>

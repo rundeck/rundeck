@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <title>Maven Dependency Plugin</title>
+    <author email="jason@zenplex.com">Jason van Zyl</author>
+  </properties>
+
+  <body>
+    <section name="Maven Dependency Plugin">
+      <p>
+        This plugin is used to extract the project dependencies for a given
+        project using source code analysis. This is useful in setting up
+        new projects and semi-automatic maintenance of a project's
+        dependencies.
+      </p>
+    </section>
+ </body>
+</document>

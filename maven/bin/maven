@@ -1,0 +1,114 @@
+#! /bin/sh
+
+#   Copyright (c) 2001-2002 The Apache Software Foundation.  All rights
+#   reserved.
+
+FOREHEAD_VERSION=1.0-beta-4
+
+MAVEN_OPTS="-Xmx128m"
+
+if [ -f "$HOME/.mavenrc" ] ; then 
+  . $HOME/.mavenrc
+fi
+
+# OS specific support.  $var _must_ be set to either true or false.
+cygwin=false;
+darwin=false;
+case "`uname`" in
+  CYGWIN*) cygwin=true ;;
+  Darwin*) darwin=true ;;
+esac
+
+if [ -z "$MAVEN_HOME" ] ; then
+  # try to find MAVEN
+  if [ -d /opt/maven ] ; then 
+    MAVEN_HOME=/opt/maven
+  fi
+
+  if [ -d ${HOME}/maven ] ; then 
+    MAVEN_HOME=${HOME}/maven
+  fi
+
+  ## resolve links - $0 may be a link to maven's home
+  PRG=$0
+  progname=`basename $0`
+  saveddir=`pwd`
+
+  # need this for relative symlinks
+  cd `dirname $PRG`
+  
+  while [ -h "$PRG" ] ; do
+    ls=`ls -ld "$PRG"`
+    link=`expr "$ls" : '.*-> \(.*\)$'`
+    if expr "$link" : '.*/.*' > /dev/null; then
+	PRG="$link"
+    else
+	PRG="`dirname $PRG`/$link"
+    fi
+  done
+  
+  MAVEN_HOME=`dirname "$PRG"`/..
+
+  # make it fully qualified
+  MAVEN_HOME=`cd "$MAVEN_HOME" && pwd`
+
+  cd $saveddir
+fi
+
+# For Cygwin, ensure paths are in UNIX format before anything is touched
+if $cygwin ; then
+  [ -n "$MAVEN_HOME" ] &&
+    MAVEN_HOME=`cygpath --unix "$MAVEN_HOME"`
+  [ -n "$JAVA_HOME" ] &&
+    JAVA_HOME=`cygpath --unix "$JAVA_HOME"`
+  [ -n "$CLASSPATH" ] &&
+    CLASSPATH=`cygpath --path --unix "$CLASSPATH"`
+fi
+
+if [ -z "$JAVACMD" ] ; then 
+  if [ -n "$JAVA_HOME"  ] ; then
+    if [ -x "$JAVA_HOME/jre/sh/java" ] ; then 
+      # IBM's JDK on AIX uses strange locations for the executables
+      JAVACMD=$JAVA_HOME/jre/sh/java
+    else
+      JAVACMD=$JAVA_HOME/bin/java
+    fi
+  else
+    JAVACMD=java
+  fi
+fi
+ 
+if [ ! -x "$JAVACMD" ] ; then
+  echo "Error: JAVA_HOME is not defined correctly."
+  echo "  We cannot execute $JAVACMD"
+  exit
+fi
+
+if [ -z "$JAVA_HOME" ] ; then
+  echo "Warning: JAVA_HOME environment variable is not set."
+  echo "  If build fails because sun.* classes could not be found"
+  echo "  you will need to set the JAVA_HOME environment variable"
+  echo "  to the installation directory of java."
+fi
+
+# For Cygwin, switch paths to Windows format before running java
+if $cygwin; then
+  MAVEN_HOME=`cygpath --path --windows "$MAVEN_HOME"`
+  JAVA_HOME=`cygpath --path --windows "$JAVA_HOME"`
+fi
+
+# For Darwin, use classes.jar for TOOLS_JAR
+TOOLS_JAR="${JAVA_HOME}/lib/tools.jar"
+if $darwin; then
+  TOOLS_JAR="/System/Library/Frameworks/JavaVM.framework/Versions/CurrentJDK/Classes/classes.jar"
+fi
+
+MAIN_CLASS=com.werken.forehead.Forehead
+
+$JAVACMD \
+  $MAVEN_OPTS \
+  -classpath ${MAVEN_HOME}/lib/forehead-${FOREHEAD_VERSION}.jar \
+  -Dforehead.conf.file=${MAVEN_HOME}/bin/forehead.conf  \
+  -Dtools.jar=$TOOLS_JAR \
+  -Dmaven.home=${MAVEN_HOME} \
+  $MAIN_CLASS $@

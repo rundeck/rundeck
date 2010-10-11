@@ -1,0 +1,11 @@
+<policies>
+  <policy description="Administrative group that has access to execute all jobs and modules in any project.">
+    <context project="*">
+      <command group="*" job="*" actions="*"/>
+      <command name="*" module="*" actions="*"/>
+    </context>
+    <by>
+      <group name="admin"/>
+    </by>
+  </policy>
+</policies>

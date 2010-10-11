@@ -1,0 +1,10 @@
+set RDECK_HOME=@rdeck.home@
+
+set RDECK_BASE=@rdeck.base@
+
+set JAVA_HOME=@user.java_home@
+
+:: Unsetting JRE_HOME to ensure there is no conflict with JAVA_HOME
+(set JRE_HOME=)
+
+set Path=%JAVA_HOME%\bin;%RDECK_HOME%\bin;%Path%

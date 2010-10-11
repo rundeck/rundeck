@@ -1,0 +1,24 @@
+RDECK_HOME=@rdeck.home@
+export RDECK_HOME
+
+RDECK_BASE=@rdeck.base@
+export RDECK_BASE
+
+JAVA_HOME=@user.java_home@
+export JAVA_HOME
+
+PATH=$JAVA_HOME/bin:$RDECK_HOME/bin:$PATH
+export PATH
+
+if test -t 0 -a -z "$RUNDECK_CLI_TERSE"
+then
+  RUNDECK_CLI_TERSE=true
+  export RUNDECK_CLI_TERSE
+fi
+
+if test -n "$JRE_HOME"
+then
+   unset JRE_HOME
+fi
+
+umask 002

@@ -1,0 +1,120 @@
+    <!--
+       ========================================================================
+         Run WebLogic 6.1 tests
+       ========================================================================
+    -->
+    <target name="test.weblogic.61" depends="prepare.test.weblogic.61"
+        if="maven.appserver.home" description="Run tests on WebLogic 6.1">
+
+        <!-- Start the servlet engine, wait for it to be started, run the
+             unit tests, stop the servlet engine, wait for it to be stopped.
+             The servlet engine is stopped if the tests fail for any reason -->
+
+        <runservertests
+            testURL="http://localhost:${test.port}/test/ServletRedirector?Cactus_Service=RUN_TEST"
+            startTarget="start.weblogic.61"
+            stopTarget="stop.weblogic.61"
+            testTarget="test"/>
+
+    </target>
+
+    <!--
+       ========================================================================
+         Start WebLogic 6.1
+       ========================================================================
+    -->
+    <target name="start.weblogic.61">
+
+        <java classname="weblogic.Server" fork="yes"
+            dir="${maven.appserver.dir}">
+
+            <classpath>
+                <pathelement location="${maven.appserver.home}/wlserver6.1/lib/weblogic.sp.jar"/>
+                <pathelement location="${maven.appserver.home}/wlserver6.1/lib/weblogic.jar"/>
+            </classpath>
+
+            <jvmarg value="-hotspot"/>
+            <jvmarg value="-ms64m"/>
+            <jvmarg value="-mx64m"/>
+            <jvmarg value="-Djava.library.path=${java.library.path};${maven.appserver.home}/wlserver6.1/bin"/>
+            <jvmarg value="-Dweblogic.RootDirectory=."/>
+            <jvmarg value="-Dweblogic.Domain=testdomain"/>
+            <jvmarg value="-Dweblogic.Name=testserver"/>
+            <jvmarg value="-Dbea.home=${maven.appserver.home}"/>
+            <jvmarg value="-Dweblogic.management.password=password"/>
+            <jvmarg value="-Djava.security.policy==./lib/weblogic.policy"/>
+
+        </java>
+
+    </target>
+
+    <!--
+       ========================================================================
+         Stop WebLogic 6.1
+       ========================================================================
+    -->
+    <target name="stop.weblogic.61">
+
+        <java classname="weblogic.Admin" fork="yes">
+
+            <classpath>
+                <pathelement location="${maven.appserver.home}/wlserver6.1/lib/weblogic.sp.jar"/>
+                <pathelement location="${maven.appserver.home}/wlserver6.1/lib/weblogic.jar"/>
+            </classpath>
+
+            <arg line="-url t3://localhost:${test.port}"/>
+            <arg line="-username system"/>
+            <arg line="-password password"/>
+            <arg value="SHUTDOWN"/>
+
+        </java>
+
+    </target>
+
+    <!--
+       ========================================================================
+         Display a warning message if the needed servlet engine home property
+         is not set
+       ========================================================================
+    -->
+    <target name="check.test.weblogic.61" unless="maven.appserver.home">
+
+        <echo message=""/>
+        <echo message="******************************************************"/>
+        <echo message="WARNING : The 'maven.appserver.home' property has not been"/>
+        <echo message="set. No test will be run on that servlet engine."/>
+        <echo message="******************************************************"/>
+        <echo message=""/>
+
+    </target>
+
+    <!--
+       ========================================================================
+         Prepare directories and variables for running the tests
+       ========================================================================
+    -->
+    <target name="prepare.test.weblogic.61"
+        depends="check.test.weblogic.61,testwar" if="maven.appserver.home">
+
+        <echo message="maven.appserver.home = ${maven.appserver.home}"/>
+
+        <property name="maven.appserver.dir"
+            value="${target.test.dir}/weblogic61"/>
+        <property name="conf.weblogic61.dir"
+            value="${conf.test.dir}/weblogic61"/>
+
+        <mkdir dir="${maven.appserver.dir}/config/testdomain/applications"/>
+
+        <!-- Copy WL 6.1 configuration files -->
+        <copy file="${conf.weblogic61.dir}/config.xml"
+            todir="${maven.appserver.dir}/config/testdomain" filtering="on"/>
+        <copy file="${conf.weblogic61.dir}/fileRealm.properties"
+            todir="${maven.appserver.dir}/config/testdomain"/>
+        <copy file="${conf.weblogic61.dir}/SerializedSystemIni.dat"
+            todir="${maven.appserver.dir}/config/testdomain"/>
+
+        <!-- Copy the war file -->
+        <copy file="${target.test.dir}/test.war"
+            todir="${maven.appserver.dir}/config/testdomain/applications"/>
+
+    </target>

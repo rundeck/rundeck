@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <title>Maven Deployment Plug-in</title>
+    <author email="jason@zenplex.com">Jason van Zyl</author>
+  </properties>
+
+  <body>
+    <section name="Maven Deployment Plug-in">
+      <p>
+        This plugin is a general deployment mechanism used for deploying
+        artifacts into the central Maven repository and for deploying
+        a project's site.
+      </p>
+    </section>
+ </body>
+</document>

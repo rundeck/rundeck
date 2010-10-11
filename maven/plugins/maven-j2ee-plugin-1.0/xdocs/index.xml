@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <title>Maen J2EE Plug-in</title>
+    <author email="dion@multitask.com.au">dIon Gillard</author>
+    <author email="plynch@apache.org">Peter Lynch</author>
+  </properties>
+
+  <body>
+    <section name="Maven J2EE Plug-in">
+      <p>
+        This document provides an overview of the reference section
+        for the Maven J2EE Plug-in.
+        The documents presented here are references, if you are looking
+        for more verbose usage material, please refer to the <a
+        href="../../start/index.html">Getting Started</a> section.
+      </p>
+
+      <subsection name="Overview of the J2EE Plug-in Reference Documentation">
+        <table>
+          <tr><th>Document</th><th>Description</th></tr>
+          <tr><td><a href="build-file.html">Build File</a></td>
+            <td>
+              This document provides detailed information on the various
+              targets that are available as part of the Maven J2EE Plug-in.
+              These targets can be delegated to by your project's local
+              build file.
+            </td>
+          </tr>
+          <tr><td><a href="properties.html">Properties</a></td>
+            <td>
+              The behavior of the Maven J2EE Plug-in can be altered via numerous
+              properties.  This document describes each property
+              available as the default used.
+            </td>
+          </tr>
+          <tr><td><a href="dirlayout.html">Directory Layout</a></td>
+            <td>
+              The preferred directory layout structure is documented
+              here.  This is a useful document if you are trying to
+              determine what a particular component of your directory
+              hierarchy is used for.
+            </td>
+          </tr>
+          <tr><td><a href="appserver.html">Appserver Notes</a></td>
+            <td>
+              <p>
+                This page contains additional reference material regarding the application server (
+                appserver ) control features of the Maven J2EE plugin.
+              </p>
+              <p>
+                For additional help in understanding what the appserver features of the
+                Maven J2EE plugin are, look at the
+                <a href="properties.html#Application Server">J2EE plug-in properties</a>
+                and <a href="./build-file.html#maven:appserver-install">J2EE build file</a>
+                documents.
+              </p>
+            </td>
+          </tr>
+          <tr><td><a href="futures.html">Futures</a></td>
+            <td>
+              These are the current thoughts on additional items
+              that could or should be added to the plug-in.
+              They may or may not make it to an actual task list of a
+              developer.
+            </td>
+          </tr>
+        </table>
+      </subsection>
+    </section>
+ </body>
+</document>

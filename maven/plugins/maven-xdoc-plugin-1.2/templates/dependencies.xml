@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <title>Dependencies</title>
+  </properties>
+
+  <body>
+    <section name="Dependencies">
+    #if ($project.dependencies.size() == 0)
+      <p> 
+        There are no dependencies for this project.  It is a standalone
+        application that does not depend on any other project.
+      </p>
+    #else
+      <p> 
+        The following is a list of dependencies for this project.  These
+        dependencies are required to compile and run the application:
+      </p>
+      <table>
+        <tr>
+          <th>ID</th>
+          <th>Version</th>
+          <th>JAR</th>
+        </tr>
+        #foreach ($dep in $project.dependencies)
+        <tr>
+          <td> 
+            #if ($dep.url && $dep.url.length() != 0) 
+              <a href="$escape.getText($dep.url)">$!dep.id</a> 
+            #else 
+              $!dep.id 
+            #end
+          </td>
+          <td>$!dep.version</td>
+          <td>$!dep.jar</td>
+        </tr>
+        #end
+      </table>
+    #end    
+    </section>
+  </body>
+</document>

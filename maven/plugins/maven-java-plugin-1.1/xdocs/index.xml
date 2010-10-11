@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <title>Maven Java Plug-in</title>
+    <author email="jason@zenplex.com">Jason van Zyl</author>
+  </properties>
+
+  <body>
+    <section name="Maven Java Plug-in">
+      <p>
+        This plug-in provides your basic Javac and Jar facilities.
+      </p>
+    </section>
+ </body>
+</document>

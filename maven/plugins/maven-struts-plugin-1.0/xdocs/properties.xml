@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <author email="dion@multitask.com.au">dIon Gillard</author>
+    <title>Maven Struts Plug-in Properties Documentation</title>
+  </properties>
+
+  <body>
+    <section name="Maven Struts Plug-in Properties">
+      <p>
+        The following is an overview of the various properties (and
+        default values) used by the Maven Struts Plug-in <a
+          href="build-file.html">build file</a>. Most of these
+        properties are optional and have defaults; however, there are 
+        mandatory properties that must be set as described in this document.
+      </p>
+      <p>
+        These properties can be overridden to change the default behavior of 
+        the Maven Struts Plug-in.  If you need to override any of these properties,
+        please refer to the <a href="../../start/integrate.html">Integration</a>
+        document for the preferred method of setting properties in your project.  
+      </p>
+      <table>
+        <tr><th>Section</th><th>Description</th></tr>
+        <tr>
+          <td><a href="#War Settings">War</a></td>
+          <td>
+            These properties specify various settings that control the validation
+            of a war file by the Struts Plug-in.
+          </td>
+        </tr>
+        <tr>
+          <td><a href="#Callbacks">Callbacks</a></td>
+          <td>
+            These properties specify settings that allow you to pre or post-process
+            targets in the plug-in's build file.
+          </td>
+        </tr>
+      </table>
+    </section>
+
+    <section name="War Settings">
+      <table>
+        <tr><th>Property</th><th>Optional?</th><th>Description</th></tr>
+        <tr>
+          <td><a name="maven.j2ee.war.name">maven.j2ee.war.name</a></td>
+          <td>No</td>
+          <td>
+            Specifies the name of the web application to be validated. This
+            property is defined by the <a href="../j2ee/index.html">J2EE Plugin
+            </a>.
+          </td>
+        </tr>
+      </table>
+    </section>
+    <section name="Callbacks">
+      <table>
+        <tr><th>Property</th><th>Optional?</th><th>Description</th></tr>
+        <tr>
+          <td><a name="maven.struts.callback.pre-validate-struts-war.buildFile">
+            maven.struts.callback.pre-validate-struts-war.buildFile</a></td>
+          <td>Yes</td>
+          <td>
+            Specifies the build file to be used when pre-processing a war file
+            validation. There is no default for this property.
+          </td>
+        </tr>
+        <tr>
+          <td><a name="maven.struts.callback.pre-validate-struts-war.buildTarget">
+            maven.struts.callback.pre-validate-validate-struts-war.buildTarget</a></td>
+          <td>Yes</td>
+          <td>
+            Specifies the target of the preprocess build file to be called as a
+            war is being validated.
+            There is no default for this property.
+          </td>
+        </tr>
+        <tr>
+          <td><a name="maven.struts.callback.post-validate-struts-war.buildFile">
+          maven.struts.callback.post-validate-struts-war.buildFile</a></td>
+          <td>Yes</td>
+          <td>
+            Specifies the build file to be used when post-processing a war file
+            validation. There is no default for this property.
+          </td>
+        </tr>
+        <tr>
+          <td><a name="maven.struts.callback.post-validate-struts-war.buildTarget">
+          maven.struts.callback.post-validate-struts-war.buildTarget</a></td>
+          <td>Yes</td>
+          <td>
+            Specifies the target of the postprocess build file to be called after
+            a war has been validated.
+            There is no default for this property.
+          </td>
+        </tr>
+      </table>
+    </section>
+  </body>
+</document>

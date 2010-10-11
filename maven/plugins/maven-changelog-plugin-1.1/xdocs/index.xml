@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <title>Maven Changelog Plug-in</title>
+    <author email="jason@zenplex.com">Jason van Zyl</author>
+  </properties>
+
+  <body>
+    <section name="Maven Changelog Plug-in">
+      <p>
+        This plugin produces a nicely formatted changelog report so project
+        team members can see at a glance what changes have been made
+        recently to the project.  Currently, there are two supported
+        source control systems: CVS and Subversion.
+      </p>
+    </section>
+ </body>
+</document>

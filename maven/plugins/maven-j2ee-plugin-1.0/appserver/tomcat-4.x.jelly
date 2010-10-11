@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+
+<!--
+    ========================================================================
+        T O M C A T  4.x  C O N T R O L
+    ========================================================================
+-->
+<project>
+
+    <!--
+       ========================================================================
+         Install and configure Tomcat 4.0 instance
+       ========================================================================
+    -->
+    <goal name="appserver:install-tomcat-4.x">
+
+        <!-- Create common directories and copy configuration files -->
+        <mkdir dir="${maven.appserver.dir}/conf"/>
+        <mkdir dir="${maven.appserver.dir}/work"/>
+        <mkdir dir="${maven.appserver.dir}/webapps"/>
+        <mkdir dir="${maven.appserver.dir}/logs"/>
+
+        <!-- copy any user configuration files w/ filtering by forcing copy -->
+        <!-- expecting at least a server.xml -->
+        <copy filtering="true" todir="${maven.appserver.dir}/conf" overwrite="true">
+            <fileset dir="${maven.conf.dir}/${maven.appserver.fullname}" excludes="**/web.xml"/>
+<!--
+            <filterset refid="maven.appserver.filterset" />
+-->
+        </copy>
+
+    </goal>
+
+    <!--
+       ========================================================================
+         Start Tomcat 4.0
+       ========================================================================
+    -->
+    <goal name="appserver:start-tomcat-4.x">
+      <java classname="org.apache.catalina.startup.Bootstrap" fork="yes"
+        dir="${maven.appserver.dir}">
+        <classpath>
+          <pathelement path="${maven.appserver.classpath}"/>
+          <fileset dir="${maven.appserver.home}">
+            <include name="bin/bootstrap.jar"/>
+          </fileset>
+        </classpath>
+        <jvmarg value="-Dcatalina.base=${maven.appserver.dir}"/>
+        <jvmarg value="-Dcatalina.home=${maven.appserver.home}"/>
+        <arg value="start"/>
+      </java>
+    </goal>
+
+    <!--
+       ========================================================================
+         Stop Tomcat 4.0
+       ========================================================================
+    -->
+    <goal name="appserver:stop-tomcat-4.x">
+      <java classname="org.apache.catalina.startup.Bootstrap" fork="yes"
+        dir="${maven.appserver.dir}">
+        <classpath>
+          <pathelement path="${maven.appserver.classpath}"/>
+          <fileset dir="${maven.appserver.home}">
+            <include name="bin/bootstrap.jar"/>
+          </fileset>
+        </classpath>
+        <jvmarg value="-Dcatalina.base=${maven.appserver.dir}"/>
+        <jvmarg value="-Dcatalina.home=${maven.appserver.home}"/>
+        <arg value="stop"/>
+      </java>
+    </goal>
+
+</project>
+

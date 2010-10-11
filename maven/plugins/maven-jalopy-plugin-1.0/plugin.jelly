@@ -1,0 +1,50 @@
+<project>
+
+  <!--==================================================================-->
+  <!-- J A L O P Y (source code formatter)                              -->
+  <!--==================================================================-->
+
+  <goal name="jalopy"
+     description="Format all sources with code convention conformance"
+     prereqs="jalopy:format"/>
+
+  <goal name="jalopy:taskdef">
+    <taskdef name="jalopy"
+             classname="de.hunsicker.jalopy.plugin.ant.AntPlugin">
+      <classpath>
+        <pathelement path="${plugin.getDependencyPath('jalopy')}"/>
+        <pathelement path="${plugin.getDependencyPath('jalopy-ant')}"/>
+        <pathelement path="${plugin.getDependencyPath('aelfred')}"/>
+        <pathelement path="${plugin.getDependencyPath('jaxp')}"/>
+        <pathelement path="${plugin.getDependencyPath('jdom')}"/>
+        <pathelement path="${plugin.getDependencyPath('log4j')}"/>
+        <pathelement path="${plugin.getDependencyPath('oro')}"/>
+        <pathelement path="${plugin.getDependencyPath('sax')}"/>
+        <pathelement path="${plugin.getDependencyPath('textarea')}"/>
+      </classpath>
+    </taskdef>
+  </goal>
+
+  <goal name="jalopy:format"
+        description="Format all sources with code convention conformance"
+        prereqs="jalopy:taskdef, java:compile">
+
+    <path id="project.classpath">
+      <path refid="maven.dependency.classpath"/>
+      <pathelement path="${maven.build.dest}"/>
+    </path>
+   
+    <jalopy fileformat="${maven.jalopy.fileFormat}"
+            style="${maven.jalopy.style}"
+            history="${maven.jalopy.history}"
+            loglevel="${maven.jalopy.logLevel}"
+            failonerror="${maven.jalopy.failOnError}"
+            threads="${maven.jalopy.nbThread}"
+            classpathref="project.classpath">
+      <fileset dir="${pom.build.sourceDirectory}" >
+        <include name="${maven.jalopy.filesetInclude}" />
+      </fileset>
+    </jalopy>
+  </goal>
+
+</project>

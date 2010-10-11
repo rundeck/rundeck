@@ -1,0 +1,5 @@
+RDpropertyfilelogin {
+org.mortbay.jetty.plus.jaas.spi.PropertyFileLoginModule required
+debug="true"
+file="${realm.properties.location}";
+};

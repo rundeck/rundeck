@@ -1,0 +1,230 @@
+<?xml version="1.0"?>
+
+<project
+  xmlns:j="jelly:core"
+  xmlns:define="jelly:define"
+  xmlns:maven="jelly:maven"
+  xmlns:dvsl="dvsl"
+  xmlns:dep="depTagLib">
+
+  <define:taglib uri="depTagLib">
+    <define:jellybean
+      name="packageProjectMap"
+      className="org.apache.maven.dependency.PackageProjectMap"
+      method="execute"
+    />
+    <define:jellybean
+      name="resolveProjects"
+      className="org.apache.maven.dependency.ProjectResolver"
+      method="execute"
+    />
+  </define:taglib>
+
+  <!-- ================================================================== -->
+  <!-- P A C K A G E  T O  P R O J E C T  M A P                           -->
+  <!-- ================================================================== -->
+  <!-- Create the map used to resolve package references into             -->
+  <!-- project references. Used in the process of analysing sources to    -->
+  <!-- determine a project's first order dependencies.                    -->
+  <!-- ================================================================== -->
+
+  <goal
+    name="dependency:package-project-map"
+    description="Map the packages to project names in a file">
+
+    <echo>Generating package to project id map ...</echo>
+    <echo>descriptorDir: ${maven.descriptorDir}</echo>
+
+    <dep:packageProjectMap
+      descriptorDir="${maven.descriptorDir}"
+      map="${maven.home}/package-project.map">
+    </dep:packageProjectMap>
+
+  </goal>
+
+  <!-- ================================================================== -->
+  <!-- C H E C K O U T  S O U R C E S                                     -->
+  <!-- ================================================================== -->
+  <!-- This takes the POMs in the subdirectories of                       -->
+  <!-- maven's descriptor dir, retrieves the CVS info, and checks out the -->
+  <!-- source to ${maven.tmpDir}. We need to check if the project has     -->
+  <!-- already been checked out, and then simply update the project.      -->
+  <!-- ================================================================== -->
+
+  <goal
+    name="dependency:checkout-sources"
+    description="Check out the sources of the projects">
+
+    <fileScanner var="scanner">
+      <fileset dir="${maven.descriptorDir}" includes="**/project.xml"/>
+    </fileScanner>
+
+    <!--
+
+    We want to process each POM and checkout the sources
+    for the project so that we can analyse them.
+
+    -->
+
+    <j:forEach var="file" items="${scanner.iterator()}">
+      ${file.absolutePath}
+      <maven:pom projectDescriptor="${file.absolutePath}">
+        ${project.id}
+        ${project.repository.cvsRoot}
+        ${project.repository.cvsModule}
+
+        <mkdir dir="${maven.tmpDir}"/>
+
+        <cvspass
+          cvsRoot="${project.repository.cvsRoot}"
+          password="${project.repository.password}"
+        />
+
+        <cvs
+          cvsRoot="${project.repository.cvsRoot}"
+          package="${project.repository.cvsModule}"
+          dest="${maven.tmpDir}"
+        />
+
+      </maven:pom>
+    </j:forEach>
+
+  </goal>
+
+  <!-- ================================================================== -->
+  <!-- R E S O L V E  P R O J E C T S  F R O M  S O U R C E               -->
+  <!-- ================================================================== -->
+  <!-- From the sources that we checked out in "checkout-sources", we     -->
+  <!-- retrieve the package informations, and write the mappings to       -->
+  <!-- ${maven.home}/package-project.map.                                 -->
+  <!-- ================================================================== -->
+
+  <goal
+    name="dependency:resolve-projects"
+    description="Discovers the dependencies from the source code">
+
+    <!--
+
+    For each project directory we want to look at the Java sources
+    and determine the project references.
+
+    -->
+    <echo>Discover the depedne ...</echo>
+    <echo>descriptorDir: ${maven.descriptorDir}</echo>
+
+
+    <maven:directoryList directory="${maven.tmpDir}"/>
+
+    ${directoryList}
+
+    <j:forEach var="file" items="${directoryList.iterator()}">
+
+      ${file}
+
+      <dep:resolveProjects
+        base="${file}"
+        mapFile="${maven.home}/package-project.map"
+        packageExcludes="${file},java,javax">
+      </dep:resolveProjects>
+
+    </j:forEach>
+
+  </goal>
+
+  <!-- ================================================================== -->
+  <!-- D E P E N D E N C I E S   T O   P O M                              -->
+  <!-- ================================================================== -->
+  <!-- Puts the dependencies generated in resolve-projects back to the    -->
+  <!-- POM.                                                               -->
+  <!-- ================================================================== -->
+
+  <goal name="dependency:dependencies-to-pom"
+        prereqs="init-dvsl-tag"
+        description="Put the generated dependencies back to the POM">
+
+    <fileScanner var="scanner">
+      <fileset dir="${maven.descriptorDir}" includes="*/project.xml"/>
+    </fileScanner>
+
+    <j:forEach var="file" items="${scanner.iterator()}">
+
+    <echo>
+      project      file : ${file.absolutePath}
+      dependencies file : ${maven.tmpDir}/${file.ParentFile.name}/deps.xml
+    </echo>
+
+    <dvsl:dvsl
+      in="${file.absolutePath}"
+      out="${file.absolutePath}.new/"
+      extension=".xml"
+      force="true"
+      toolboxFile="${plugin.dir}/toolbox.props"
+      style="${plugin.dir}/createpom.dvsl"
+      outputEncoding="${maven.docs.outputencoding}">
+
+      <tool name="toolbox.string.basedir" value="${basedir}"/>
+      <tool name="toolbox.string.projectDependencies" value="${maven.tmpDir}/${file.ParentFile.name}/deps.xml"/>
+
+    </dvsl:dvsl>
+
+    </j:forEach>
+
+  </goal>
+
+  <!-- ================================================================= -->
+  <!-- P R O C E S S   P R O J E C T   D E S C R I P T O R S             -->
+  <!-- ================================================================= -->
+  <!-- This goal is a collection of goals. It should first checkout the  -->
+  <!-- source of the projects we consider, then match packages to        -->
+  <!-- projects, get the package names from the sources, and them        -->
+  <!-- all that in a file "deps.xml" in each source dir of each project  -->
+  <!-- that contains all the projects' 1st-order dependencies, in term   -->
+  <!-- of projects rather than packages !                                -->
+  <!--                                                                   -->
+  <!-- This is to be used mainly by new projects (ie: you build the      -->
+  <!-- the source, and this takes care of your POM and dependencies.     -->
+  <!-- It may also be used during the whole lifetime of the project, if  -->
+  <!-- project maintainers end up having a missing dependencies section. -->
+  <!--                                                                   -->
+  <!-- This is the purpose for dependencies-to-pom. As soon as your      -->
+  <!-- Project Object Model changes, this could be used to regenerate    -->
+  <!-- the dependencies, so that your code always has appropriate        -->
+  <!-- dependencies.                                                     -->
+  <!-- We need something that allows us to keep the dependencies that    -->
+  <!-- the user defines, for any reason.                                 -->
+  <!-- ================================================================= -->
+
+  <goal
+    name="dependency:process-project-descriptors"
+    description="Map the packages to dependencies, check out the sources,
+discover the dependencies and update the POM">
+
+    <attainGoal name="dependency:package-project-map"/>
+    <!--
+      Until we can't simply update the sources instead of checking them out
+      everytime, it's wiser to do it by hand.
+    <attainGoal name="dependency:checkout-sources"/>
+    -->
+
+    <attainGoal name="dependency:resolve-projects"/>
+    <attainGoal name="dependency:dependencies-to-pom"/>
+
+    <!-- Then, we need to put those dependencies back into the POM -->
+
+  </goal>
+
+  <!-- ================================================================== -->
+  <!-- D E F A U L T   G O A L    F O R    T H I S    P L U G I N         -->
+  <!-- ================================================================== -->
+  <!-- Map the packages to dependencies, check out the sources,           -->
+  <!-- discover the dependencies and update the POM                       -->
+  <!-- ================================================================== -->
+
+  <goal
+    name="dependency"
+    description="Map the packages to dependencies, check out the sources,
+discover the dependencies and update the POM">
+    <attainGoal name="dependency:process-project-descriptors"/>
+  </goal>
+
+</project>

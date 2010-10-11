@@ -1,0 +1,6 @@
+<XDtClass:forAllClasses>
+  <XDtClass:ifHasClassTag tagName="ant.type" paramName="name">
+     <XDtClass:classTagValue tagName="ant.type"
+			     paramName="name"/>=<XDtClass:fullClassName/>
+  </XDtClass:ifHasClassTag>
+</XDtClass:forAllClasses>

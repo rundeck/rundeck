@@ -1,0 +1,37 @@
+#
+# JNDI Properties
+#
+#
+# connectionName, it should be something other than the manager account to prevent publishing of its password.
+# the connectionName will need ability to search the directory for role memberships of rundeck users.
+# With ActiveDirectory, this account will likely need to bind to the server.  OpenLDAP, most likely, does not need to bind.
+#
+jndi.connectionName=CN\=rundeck,OU\=Users,DC\=mycompany,DC\=com
+#
+# password for the connectionName
+#
+jndi.connectionPassword=myPassword
+#
+# url to the jndi server
+#
+jndi.connectionUrl=ldap\://myLdapServer.mycompany.com\:389/
+#
+# the role base for all roles that rundeck users can be members of
+#
+jndi.roleBase=OU\=roles,DC\=mycompany,DC\=com
+#
+# the relative distinguished name for each role
+#
+jndi.roleNameRDN=CN
+#
+# the relative distinguished name identifying the members in role
+#
+jndi.roleMemberRDN=member
+#
+# the user base for all users for rundeck
+#
+jndi.userBase=OU\=Users,DC\=mycompany,DC\=com
+#
+# the relative distinguished name identifying the user
+#
+jndi.userNameRDN=CN

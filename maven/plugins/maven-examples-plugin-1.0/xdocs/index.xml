@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <title>Maven Examples</title>
+    <author email="dion@multitask.com.au">dIon Gillard</author>
+  </properties>
+
+  <body>
+    <section name="Maven Examples">
+      <p>
+        This plug-in provides examples of using maven for various types of
+        projects 
+      </p>
+      <p>
+        The following samples are provided:
+        <ul>
+        <li><a href="#Simple Java Example">A Simple Java Example</a></li>
+        <li><a href="#Simple WebApp Example">A Simple Web Application Example</a></li>
+        </ul>
+      </p>
+    </section>
+    
+    <section name="Simple Java Example">
+      <p>
+        This example project shows how easy it is to 'Mavenize' a set of
+        Java classes that are built into a jar file.
+      </p>
+      <p>
+        You can find this example in your 
+        <code>${maven.home}/plugins/maven-examples-plugin-1.0/simple-java</code>
+        directory.
+      </p>
+      <p>
+        It consists of
+        <ul>
+          <li>A single java source file: 
+            <code>src/java/org/apache/maven/examples/simplejava/SimpleJava.java</code>
+          </li>
+          <li>and a Maven project definition, <code>project.xml</code></li>
+        </ul>
+      </p>
+      <p>
+        With just the addition of the Maven project.xml file, the wide array
+        of built-in maven functionality is now available for use in this
+        project.
+      </p>
+      <p>
+        Maven packages its functionality as <code>plugins</code>
+        and each plugin adds one or more <code>goals</code> that may be
+        executed. For example, the <code>java</code> plugin provides a
+        <code>jar</code> goal for compiling code and bundling it into a 
+        jar file.
+      </p>
+      <p>
+        To build the java code into a jar, type the following from the
+        command prompt:
+      </p>
+        <source>
+          maven jar
+        </source>
+    </section>
+    
+    <section name="Simple WebApp Example">
+    </section>
+ </body>
+</document>

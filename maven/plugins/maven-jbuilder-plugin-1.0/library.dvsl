@@ -1,0 +1,16 @@
+#match ("classpath")
+  #set( $mavenProject = $context.getAppValue("mavenProject") )
+<?xml version="1.0" encoding="UTF-8"?>
+
+<library>
+  <fullname>$mavenProject.id</fullname>
+  <class>
+$context.applyTemplates("classpathentry")
+  </class>
+  <required>$mavenProject.id</required>
+</library>
+#end
+
+#match("classpathentry")
+  <path>[$attrib.path]</path>
+#end

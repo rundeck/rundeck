@@ -1,0 +1,35 @@
+    <!--
+       ========================================================================
+         The filterset used when configuring files for the appserver
+       ========================================================================
+    -->
+    <filterset id="maven.appserver.filterset">
+      <!-- filters must be explicitly listed from properties instead of file  -->
+      <!-- this is due to the user may have overridden these properties and   -->
+      <!-- the fact that properties can't be expanded from a filtersfile      -->
+      <!-- for the user to add more filter tokens, they should use a callback -->
+      <filter token="maven.appserver.name" value="${maven.appserver.name}" />
+      <filter token="maven.appserver.version" value="${maven.appserver.name}" />
+      <filter token="maven.appserver.home" value="${maven.appserver.home}" />
+      <filter token="maven.appserver.dir" value="${maven.appserver.dir}" />
+      <filter token="maven.appserver.host" value="${maven.appserver.host}" />
+      <filter token="maven.appserver.url" value="${maven.appserver.url}" />
+      <filter token="maven.appserver.port.http" value="${maven.appserver.port.http}" />
+      <filter token="maven.appserver.port.https" value="${maven.appserver.port.https}" />
+      <filter token="maven.appserver.port.one" value="${maven.appserver.port.one}" />
+      <filter token="maven.appserver.port.two" value="${maven.appserver.port.two}" />
+      <filter token="maven.appserver.port.three" value="${maven.appserver.port.three}" />
+      <filter token="maven.appserver.classpath" value="${maven.appserver.classpath}" />
+    </filterset>
+
+    <!--
+       ========================================================================
+         Initialize the build. Must be called by all targets
+       ========================================================================
+    -->
+    <target name="init">
+        <tstamp/>
+    </target>
+
+
+

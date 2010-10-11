@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <author email="dion@multitask.com.au">dIon Gillard</author>
+    <author email="plynch@apache.org">Peter Lynch</author>
+    <title>Futures for the J2EE Plug-in</title>
+  </properties>
+
+  <body>
+  <section name="Futures">
+    <p>
+    The following is a list of things that are being contemplated
+    for the Maven J2EE Plug-in.
+    </p>
+    <ol>
+      <li>
+        Add support for external jars in the EAR target (ATM, the only solution
+        is to copy them with a callback in ${maven.build.dir} and they will
+        be placed at the root level of the EAR file. We also need to have
+        Class-Path entries in generated J2EE EJB jars and such. Quite tricky
+        as it doesn't work the same for all application servers (and across
+        versions of them !).
+      </li>
+      <li>
+        Add HTML validation.
+      </li>
+      <li>
+        Add EAR validation.
+      </li>
+      <li>
+        Add validation of Tag libraries to the war target.
+      </li>
+      <li>
+        Add technology specific validators, e.g. JSP/Turbine/Velocity/Struts
+        etc
+      </li>
+      <li>
+        Allow integration with a 'webserver' plugin so that application server
+        requests can seamlessly be hooked into the application server.
+      </li>
+      <li>
+        Tie where applicable the appserver instance to other Maven plugins that
+        need an application server instance to do their work.
+      </li>
+   </ol>
+   </section>
+ </body>
+</document>

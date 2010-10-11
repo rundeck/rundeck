@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+
+<project xmlns:j="jelly:core" xmlns:util="jelly:util">
+
+  <!-- ================================================================== -->
+  <!-- J A V A D O C S                                                    -->
+  <!-- ================================================================== -->
+
+  <goal name="javadoc"
+        description="Generate API documentation"
+        prereqs="javadoc:generate"/>
+
+  <goal
+    name="javadoc:generate"
+    description="Generate API documentation">
+    
+    <j:if test="${sourcesPresent == 'true'}">
+
+    <mkdir dir="${maven.javadoc.destdir}"/>
+
+    <!-- Get the year to display in the Javadocs -->
+    <tstamp>
+      <format property="year" pattern="${pom.inceptionYear}-yyyy"/>
+    </tstamp>
+
+    <property
+      name="copyright"
+      value="Copyright &amp;copy; ${year} ${pom.organization.name}. All Rights Reserved."
+    />
+
+    <property
+      name="title"
+      value="${pom.name} ${pom.currentVersion} API"
+    />
+
+    <j:choose>
+      <j:when test="${maven.mode.online}"/>
+      <j:otherwise>
+        <j:set var="maven.javadoc.links" value=""/>
+      </j:otherwise>
+    </j:choose>
+
+    <util:tokenize var="links" delim="," trim="true">${maven.javadoc.links}</util:tokenize>
+
+    <j:forEach var="link" items="${links}">
+      <echo>Linking with API information from ${link.trim()} ...</echo>
+    </j:forEach>
+
+    <javadoc
+      source="1.4"
+      sourcepath="${pom.build.sourceDirectory}"
+      packagenames="${pom.package}.*"
+      destdir="${maven.javadoc.destdir}"
+      author="${maven.javadoc.author}"
+      private="${maven.javadoc.private}"
+      version="${maven.javadoc.version}"
+      use="${maven.javadoc.use}"
+      windowtitle="${title}"
+      doctitle="${title}"
+      bottom="${copyright}"
+      stylesheetfile="${maven.javadoc.stylesheet}">
+      <j:forEach var="link" items="${links}">
+        <link href="${link.trim()}"/>
+      </j:forEach>
+      <classpath>
+        <path refid="maven.dependency.classpath"/>
+        <path location="${maven.build.dest}"/>
+      </classpath>
+    </javadoc>
+
+    </j:if>
+
+  </goal>
+
+</project>

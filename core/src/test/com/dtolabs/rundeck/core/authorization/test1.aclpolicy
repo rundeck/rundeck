@@ -1,0 +1,129 @@
+<!--
+  ~ Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+  ~
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~
+  ~      http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~  Unless required by applicable law or agreed to in writing, software
+  ~  distributed under the License is distributed on an "AS IS" BASIS,
+  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  See the License for the specific language governing permissions and
+  ~  limitations under the License.
+  -->
+
+<!-- Test Example. -->
+
+<policies xmlns:ActiveDirectory="http://dtolabs.com/rundeck/activedirectory" xmlns:ldap="http://dtolabs.com/rundeck/ldap">
+    
+    <directory name="HQ AD">
+    
+    </directory>
+    
+    <user name="johndoe">
+        <member group="admin"/>
+    </user>
+        
+    <role name="superuser">
+        <group ldap:name="ou=Foo, dc=example, dc=com" ActiveDirectory:recurse="true|false"/>
+        <group name="admin"/>
+        <user username="johnwayne"/>
+    </role>
+    
+    
+    <policy description="Poker Promote Command ACL">
+        
+        <!-- What those in the <by/> element have access to -->
+        <context project="poker"> 
+            
+            <!-- this will change to job instead of command. -->
+            <command group="poker/.*$" actions="CREATE"/>
+            
+            <nodeset> <!-- Super Project Support? -->
+                <include tags="Foo+Bar"/>
+                <include tags="Baz"/>
+                <exclude tags="FooBar" dominant="true"/>
+            </nodeset>
+    
+            <resource type="SimpleTomcatServer" name="*">
+              <command module="Poker-ThirdParty" name="[pP]romote.*"/>
+            </resource>
+            
+            <resource> <!-- implies any type -->
+              <!-- provide that jobs are not registed with projects, the using implies that any node 
+                    must be contained within the target project. -->
+              <job group="poker/.*$" name="[Dd]eploy.*" actions="READ,UPDATE,RUN"/>
+            </resource>
+        </context>
+        
+        <!-- run any job named collect-logs regardless of the group for any project and nodes tag Web+Log -->
+        <context project="*">
+              <nodeset>
+                <include tags="Web+Log"/>
+              </nodeset>
+              <command group="*" job="collect-logs" foo="bar" actions="READ,UPDATE,RUN"/>
+              <!-- vs. -->
+              <command job="collect-logs" foo="bar" actions="READ,UPDATE,RUN"/>
+        </context>
+        
+        <by>
+            <group ldap:name="ou=Foo, dc=example, dc=com" ActiveDirectory:recurse="true|false"/>
+            <group name="admin"/>
+            <user username="johnwayne"/>
+            <role name="superuser"/>
+        </by>
+        
+        <when>
+            <timeandday day="*" hour="*" minute="*"/>
+        </when>
+        
+    </policy>
+
+    <policy description="Another Policy">
+    
+        <context project="*">
+            <command group="foo/.*$" job="adhocScript" actions="EXECUTE,READ"/>
+        </context>
+    
+        <by>
+            <group name="foo"/>
+        </by>
+    </policy>
+    
+    <policy description="Another Policy">
+    
+        <context project="*">
+            <command group="foo/.*$" job="adhocScript" actions="EXECUTE,READ"/>
+        </context>
+    
+        <by>
+            <group name="admin-invalidinput"/>
+        </by>
+    </policy>
+    
+    <policy description="Lions Beware">
+        <context project="Lion">
+            <command group="*" job="*" actions="READ"/>
+        </context>
+    
+        <by>
+            <group name="admin-environment"/>
+        </by>
+    </policy>
+    
+    <policy description="test actions">
+        <context project="test-actions-environment">
+            <command group="*" job="*" actions="workflow_run"/>
+            <command group="*" job="*" actions=",,,foobar,foo,,bar"/>
+            <command group="foobar" job="anyaction" actions="*"/>
+            <command group="foobar" job="emptyactions" actions=""/>
+            <command group="foobar" job="noactions"/>
+        </context>
+        
+        <by>
+            <group name="admin-action"/>
+        </by>
+    </policy>
+</policies>

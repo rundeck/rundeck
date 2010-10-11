@@ -1,0 +1,218 @@
+## ----------------------------------------------------- define some attributes
+
+#set( $mono = "Courier" )
+#set( $sans = "Helvetica" )
+#set( $serif = "Times Roman" )
+
+#set( $margin = "1in" )
+
+#set( $normalParaSpacing = 'space-before.optimum="1em" space-before.minimum="0.8em" space-before.maximum="1.2em"' )
+#set( $headerSpacing = 'space-before.minimum="1em" space-before.optimum="1.5em" space-before.maximum="2em"' )
+
+## ------------------------------------------- match cases for various elements
+
+#match( "project" )
+<?xml version="1.0" encoding="utf-8"?>
+<fo:root xmlns:fo="http://www.w3.org/1999/XSL/Format">
+    <!-- defines the layout master -->
+    <fo:layout-master-set>
+      <fo:simple-page-master
+	    master-name="main" 
+        margin-top="$margin" 
+        margin-bottom="$margin" 
+        margin-left="$margin"
+        margin-right="$margin">
+          <fo:region-body margin-bottom="0.25in"/> 
+          <fo:region-after extent="0.25in"/>
+      </fo:simple-page-master>
+    </fo:layout-master-set>
+
+    $context.applyTemplates()
+
+</fo:root>                      
+#end
+
+#match( "project/body/menu" )
+
+    $context.applyTemplates()
+
+#end
+
+#match( "project/body/menu/item" )
+
+        #set( $file = $context.toolbox.strings.replace( $attrib.href, ".html", ".xml" ) )
+
+        #set( $document = $node.selectSingleNode("document('${context.toolbox.basePath}/${file}')/document" ) )
+
+        $context.applyTemplates( $document )
+
+#end
+
+#match( "document" )
+
+   <fo:page-sequence master-reference="main">
+
+        <!-- header -->
+        <fo:static-content flow-name="xsl-region-after">
+          <fo:block 
+	       text-align="end" 
+	       font-size="8pt" 
+	       font-family="$serif" 
+	       color="black"
+	       padding-right="3pt">
+	       $!root.getChild("properties").getChild("title").getText()  page <fo:page-number/>
+          </fo:block>
+        </fo:static-content>
+                
+        $context.applyTemplates()
+
+   </fo:page-sequence>
+
+#end
+
+#match( "document/properties")
+
+    ## Do nothing, properties should not be copied
+
+#end
+
+#match( "document/body" )
+
+    <fo:flow flow-name="xsl-region-body">
+
+        $context.applyTemplates()
+        
+    </fo:flow>
+
+#end
+
+// ------------------------------------------------------------------- sections
+
+#match( "section" )
+
+  <fo:block font-size="14pt" font-family="$serif" color="blue" $headerSpacing>
+        $attrib.name
+  </fo:block>	
+
+  $context.applyTemplates() 
+
+#end
+
+#match( "subsection" )
+
+  <fo:block font-size="12pt" font-family="$serif" color="blue" $headerSpacing>
+        $attrib.name
+  </fo:block>	
+
+  $context.applyTemplates() 
+
+#end
+
+// --------------------------------------------------------------------- blocks
+
+#match ( "p" )
+
+ <fo:block font-size="10pt" font-family="$serif" color="black" $normalParaSpacing>
+
+        $context.applyTemplates() 
+
+ </fo:block>
+
+#end
+
+#match( "source" )
+
+ <fo:block wrap-option="no-wrap" 
+           white-space-collapse='false' 
+           font-size="10pt" font-family="$mono" color="gray" 
+           border-style="dotted" border-width="thin" border-color="gray"
+           $normalParaSpacing>$toolbox.htmlescape.getText( $node.value() )</fo:block>	
+
+#end
+
+#match( "table" )
+
+ <fo:block 
+           font-size="10pt" font-family="$sans" color="black" 
+           border-style="solid" border-width="thin" border-color="gray"
+           padding=".5em"
+           background-color="yellow"
+           $normalParaSpacing>
+           WARNING: Table in source document at this location was not generated, tables
+           are not yet supported.
+ </fo:block>	
+
+#end
+
+#match( "ul" )
+    <fo:list-block>
+        $context.applyTemplates() 
+    </fo:list-block>
+#end
+
+#match( "ul/li" )
+
+    <fo:list-item>
+        <fo:list-item-label end-indent="label-end()">
+            <fo:block><fo:character character="&#x2022;"/></fo:block>
+        </fo:list-item-label>
+        <fo:list-item-body start-indent="body-start()">
+            <fo:block> $context.applyTemplates() </fo:block>
+        </fo:list-item-body>
+    </fo:list-item>
+
+#end
+
+#match( "ol" )
+    <fo:list-block>
+        $context.applyTemplates() 
+    </fo:list-block>
+#end
+
+#match( "ol/li" )
+
+    <fo:list-item>
+        <fo:list-item-label end-indent="label-end()">
+            <fo:block>$node.valueOf( "count()" )</fo:block>
+        </fo:list-item-label>
+        <fo:list-item-body start-indent="body-start()">
+            <fo:block> $context.applyTemplates() </fo:block>
+        </fo:list-item-body>
+    </fo:list-item>
+
+#end
+
+#match( "glossary" )
+
+    ## This forces the glossary to be ignored. It should be transformed to an
+    ## xdoc before processing.
+    
+#end
+
+<!-- Inline font modifiers -->
+
+#match( "strong|b" )
+    <fo:inline font-weight="bold">
+        $context.applyTemplates()
+    </fo:inline>
+#end
+
+#match( "emph|i" )
+    <fo:inline font-style="italic">
+        $context.applyTemplates()
+    </fo:inline>
+#end
+
+<!-- Image link -->
+
+#match ( "a[@href]" )
+    <fo:basic-link external-destination="$toolbox.htmlescape.getText( $attrib.href )">
+        <fo:inline color="blue" text-decoration="underline">
+            $context.applyTemplates()
+        </fo:inline>
+    </fo:basic-link>
+#end
+
+#match( "text()" )
+    $node.value()
+#end

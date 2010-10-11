@@ -1,0 +1,59 @@
+Mon Sep 30 21:46:10 EDT 2002  [debug] AvalonLogSystem initialized using logfile 'velocity.log'
+Mon Sep 30 21:46:10 EDT 2002   [info] ************************************************************** 
+Mon Sep 30 21:46:10 EDT 2002   [info] Starting Jakarta Velocity v1.3
+Mon Sep 30 21:46:10 EDT 2002   [info] RuntimeInstance initializing.
+Mon Sep 30 21:46:10 EDT 2002   [info] Default Properties File: org/apache/velocity/runtime/defaults/velocity.properties
+Mon Sep 30 21:46:10 EDT 2002   [info] Trying to use logger class org.apache.velocity.runtime.log.AvalonLogSystem
+Mon Sep 30 21:46:10 EDT 2002   [info] Using logger class org.apache.velocity.runtime.log.AvalonLogSystem
+Mon Sep 30 21:46:10 EDT 2002   [info] Default ResourceManager initializing. (class org.apache.velocity.runtime.resource.ResourceManagerImpl)
+Mon Sep 30 21:46:10 EDT 2002   [info] Resource Loader Instantiated: org.apache.velocity.runtime.resource.loader.FileResourceLoader
+Mon Sep 30 21:46:10 EDT 2002   [info] FileResourceLoader : initialization starting.
+Mon Sep 30 21:46:10 EDT 2002   [info] FileResourceLoader : adding path '.'
+Mon Sep 30 21:46:10 EDT 2002   [info] FileResourceLoader : initialization complete.
+Mon Sep 30 21:46:10 EDT 2002   [info] ResourceCache : initialized. (class org.apache.velocity.runtime.resource.ResourceCacheImpl)
+Mon Sep 30 21:46:10 EDT 2002   [info] Default ResourceManager initialization complete.
+Mon Sep 30 21:46:10 EDT 2002   [info] Loaded System Directive: org.apache.velocity.runtime.directive.Literal
+Mon Sep 30 21:46:10 EDT 2002   [info] Loaded System Directive: org.apache.velocity.runtime.directive.Macro
+Mon Sep 30 21:46:10 EDT 2002   [info] Loaded System Directive: org.apache.velocity.runtime.directive.Parse
+Mon Sep 30 21:46:10 EDT 2002   [info] Loaded System Directive: org.apache.velocity.runtime.directive.Include
+Mon Sep 30 21:46:10 EDT 2002   [info] Loaded System Directive: org.apache.velocity.runtime.directive.Foreach
+Mon Sep 30 21:46:10 EDT 2002   [info] Loaded User Directive: org.apache.tools.dvsl.directive.MatchDirective
+Mon Sep 30 21:46:10 EDT 2002   [info] Created: 20 parsers.
+Mon Sep 30 21:46:10 EDT 2002   [info] Velocimacro : initialization starting.
+Mon Sep 30 21:46:10 EDT 2002   [info] Velocimacro : adding VMs from VM library template : VM_global_library.vm
+Mon Sep 30 21:46:10 EDT 2002  [error] ResourceManager : unable to find resource 'VM_global_library.vm' in any resource loader.
+Mon Sep 30 21:46:10 EDT 2002   [info] Velocimacro : error using  VM library template VM_global_library.vm : org.apache.velocity.exception.ResourceNotFoundException: Unable to find resource 'VM_global_library.vm'
+Mon Sep 30 21:46:10 EDT 2002   [info] Velocimacro :  VM library template macro registration complete.
+Mon Sep 30 21:46:10 EDT 2002   [info] Velocimacro : allowInline = true : VMs can be defined inline in templates
+Mon Sep 30 21:46:10 EDT 2002   [info] Velocimacro : allowInlineToOverride = false : VMs defined inline may NOT replace previous VM definitions
+Mon Sep 30 21:46:10 EDT 2002   [info] Velocimacro : allowInlineLocal = false : VMs defined inline will be  global in scope if allowed.
+Mon Sep 30 21:46:10 EDT 2002   [info] Velocimacro : messages on  : VM system will output logging messages
+Mon Sep 30 21:46:10 EDT 2002   [info] Velocimacro : autoload off  : VM system will not automatically reload global library macros
+Mon Sep 30 21:46:10 EDT 2002   [info] Velocimacro : initialization complete.
+Mon Sep 30 21:46:10 EDT 2002   [info] Velocity successfully started.
+Mon Sep 30 21:46:10 EDT 2002   [info] Velocimacro : added new VM : #printRow( count ) : source = DVSL:stylesheet
+Mon Sep 30 21:46:10 EDT 2002   [info] Velocimacro : added new VM : #loadNavigation( filename ) : source = DVSL:stylesheet
+Mon Sep 30 21:46:10 EDT 2002   [info] Velocimacro : added new VM : #selectNavigation( fileUtil docSrc ) : source = DVSL:stylesheet
+Mon Sep 30 21:46:10 EDT 2002   [info] Velocimacro : added new VM : #itemLink( item ) : source = DVSL:stylesheet
+Mon Sep 30 21:46:13 EDT 2002  [error] Left side ($context.toolbox.docVersion.indexOf("maven.xdoc.version")) of '<' operation has null value. Operation not possible. document [line 153, column 79]
+Mon Sep 30 21:46:13 EDT 2002  [error] Left side ($context.toolbox.srcPresent) of '==' operation has null value. If a reference, it may not be in the context. Operation not possible. document [line 235, column 52]
+Mon Sep 30 21:46:13 EDT 2002  [error] Left side ($context.toolbox.docVersion.indexOf("maven.xdoc.version")) of '<' operation has null value. Operation not possible. document [line 153, column 79]
+Mon Sep 30 21:46:13 EDT 2002  [error] Left side ($context.toolbox.srcPresent) of '==' operation has null value. If a reference, it may not be in the context. Operation not possible. document [line 235, column 52]
+Mon Sep 30 21:46:13 EDT 2002  [error] Left side ($context.toolbox.docVersion.indexOf("maven.xdoc.version")) of '<' operation has null value. Operation not possible. document [line 153, column 79]
+Mon Sep 30 21:46:13 EDT 2002  [error] Left side ($context.toolbox.srcPresent) of '==' operation has null value. If a reference, it may not be in the context. Operation not possible. document [line 235, column 52]
+Mon Sep 30 21:46:13 EDT 2002  [error] Left side ($context.toolbox.docVersion.indexOf("maven.xdoc.version")) of '<' operation has null value. Operation not possible. document [line 153, column 79]
+Mon Sep 30 21:46:13 EDT 2002  [error] Left side ($context.toolbox.srcPresent) of '==' operation has null value. If a reference, it may not be in the context. Operation not possible. document [line 235, column 52]
+Mon Sep 30 21:46:13 EDT 2002   [warn] org.apache.velocity.runtime.exception.ReferenceException: reference : template = item [line 4,column 14] : $relativePath is not a valid reference.
+Mon Sep 30 21:46:13 EDT 2002   [warn] org.apache.velocity.runtime.exception.ReferenceException: reference : template = item [line 4,column 14] : $relativePath is not a valid reference.
+Mon Sep 30 21:46:13 EDT 2002   [warn] org.apache.velocity.runtime.exception.ReferenceException: reference : template = item [line 4,column 14] : $relativePath is not a valid reference.
+Mon Sep 30 21:46:13 EDT 2002   [warn] org.apache.velocity.runtime.exception.ReferenceException: reference : template = item [line 4,column 14] : $relativePath is not a valid reference.
+Mon Sep 30 21:46:14 EDT 2002  [error] Left side ($context.toolbox.docVersion.indexOf("maven.xdoc.version")) of '<' operation has null value. Operation not possible. document [line 153, column 79]
+Mon Sep 30 21:46:14 EDT 2002  [error] Left side ($context.toolbox.srcPresent) of '==' operation has null value. If a reference, it may not be in the context. Operation not possible. document [line 235, column 52]
+Mon Sep 30 21:46:14 EDT 2002  [error] Left side ($context.toolbox.docVersion.indexOf("maven.xdoc.version")) of '<' operation has null value. Operation not possible. document [line 153, column 79]
+Mon Sep 30 21:46:14 EDT 2002  [error] Left side ($context.toolbox.testSrcPresent) of '==' operation has null value. If a reference, it may not be in the context. Operation not possible. document [line 222, column 62]
+Mon Sep 30 21:46:14 EDT 2002  [error] Left side ($context.toolbox.srcPresent) of '==' operation has null value. If a reference, it may not be in the context. Operation not possible. document [line 225, column 58]
+Mon Sep 30 21:46:14 EDT 2002  [error] Left side ($context.toolbox.srcPresent) of '==' operation has null value. If a reference, it may not be in the context. Operation not possible. document [line 235, column 52]
+Mon Sep 30 21:46:14 EDT 2002  [error] Left side ($attrib.due-to) of '!=' operation has null value. Operation not possible. action [line 542, column 32]
+Mon Sep 30 21:46:14 EDT 2002  [error] Left side ($attrib.due-to) of '!=' operation has null value. Operation not possible. action [line 542, column 32]
+Mon Sep 30 21:46:14 EDT 2002  [error] Left side ($attrib.due-to) of '!=' operation has null value. Operation not possible. action [line 542, column 32]
+Mon Sep 30 21:46:14 EDT 2002  [error] Left side ($attrib.due-to) of '!=' operation has null value. Operation not possible. action [line 542, column 32]

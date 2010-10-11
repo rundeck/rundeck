@@ -1,0 +1,30 @@
+#
+#
+log4j.rootCategory=INFO, file
+
+#
+# file - DailyRollingFileAppender
+#
+log4j.appender.file=org.apache.log4j.DailyRollingFileAppender
+log4j.appender.file.file=@framework.logs.dir@/command.log
+log4j.appender.file.datePattern='.'yyyy-MM-dd
+log4j.appender.file.append=true
+log4j.appender.file.layout=org.apache.log4j.PatternLayout
+log4j.appender.file.layout.ConversionPattern=%d{ISO8601} [%t] %-5p %c - %m%n
+
+#
+# Rundeck CommonLog category
+#
+#log4j.logger.com.dtolabs.rundeck.log.common=INFO,CommonLog
+
+
+#
+# CommonLog - SocketAppender for remote logging of events
+#
+# uncomment these lines and configure them to log the report
+# events to the log4j server host.
+#
+#log4j.appender.CommonLog=org.apache.log4j.net.SocketAppender
+#log4j.appender.CommonLog.remoteHost=@framework.server.hostname@
+#log4j.appender.CommonLog.port=1055
+#log4j.appender.CommonLog.locationInfo=true

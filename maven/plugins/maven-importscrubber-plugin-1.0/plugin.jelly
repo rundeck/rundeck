@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+
+<project xmlns:j="jelly:core">
+
+  <!-- ================================================================== -->
+  <!-- I M P O R T  S C R U B B E R                                       -->
+  <!-- ================================================================== -->
+
+  <goal
+    name="importscrubber"
+    description="Scrub import statements">
+
+  </goal>                                
+
+</project>

@@ -1,0 +1,125 @@
+    <!--
+       ========================================================================
+         Run WebLogic 5.1 tests
+       ========================================================================
+    -->
+    <target name="test.weblogic.51" depends="prepare.test.weblogic.51"
+        if="maven.appserver.home" description="Run tests on WebLogic 5.1">
+
+        <!-- Start the servlet engine, wait for it to be started, run the
+             unit tests, stop the servlet engine, wait for it to be stopped.
+             The servlet engine is stopped if the tests fail for any reason -->
+
+        <runservertests testURL="http://localhost:${test.port}/test"
+            startTarget="start.weblogic.51"
+            stopTarget="stop.weblogic.51"
+            testTarget="test"/>
+
+    </target>
+
+    <!--
+       ========================================================================
+         Start WebLogic 5.1
+       ========================================================================
+    -->
+    <target name="start.weblogic.51">
+
+        <java classname="weblogic.Server" fork="yes">
+
+            <classpath>
+              <pathelement location="${maven.appserver.home}/lib/weblogic510sp8boot.jar"/>
+              <pathelement location="${maven.appserver.home}/classes/boot"/>
+            </classpath>
+
+            <jvmarg value="-ms64m"/>
+            <jvmarg value="-mx64m"/>
+            <jvmarg value="-Dweblogic.class.path=${maven.appserver.home}/lib/weblogic510sp8.jar;${maven.appserver.home}/license;${maven.appserver.home}/classes;${maven.appserver.home}/lib/weblogicaux.jar"/>
+            <jvmarg value="-Dweblogic.home=${maven.appserver.dir}"/>
+            <jvmarg value="-Dweblogic.system.home=${maven.appserver.dir}"/>
+            <jvmarg value="-Dweblogic.system.name=testinstance"/>
+            <jvmarg value="-Djava.security.manager"/>
+            <jvmarg value="-Djava.security.policy==${conf.weblogic51.dir}/weblogic.policy"/>
+
+        </java>
+
+    </target>
+
+    <!--
+       ========================================================================
+         Stop WebLogic 5.1
+       ========================================================================
+    -->
+    <target name="stop.weblogic.51">
+
+        <java classname="weblogic.Admin" fork="yes">
+
+            <classpath>
+                <pathelement location="${maven.appserver.home}/lib/weblogic510sp8.jar"/>
+                <pathelement location="${maven.appserver.home}/license"/>
+                <pathelement location="${maven.appserver.home}/classes"/>
+                <pathelement location="${maven.appserver.home}/lib/weblogicaux.jar"/>
+            </classpath>
+
+            <arg value="t3://localhost:${test.port}/test"/>
+            <arg value="SHUTDOWN"/>
+            <arg value="system"/>
+            <arg value="password"/>
+
+        </java>
+
+    </target>
+
+    <!--
+       ========================================================================
+         Display a warning message if the needed servlet engine home property
+         is not set
+       ========================================================================
+    -->
+    <target name="check.test.weblogic.51" unless="maven.appserver.home">
+
+        <echo message=""/>
+        <echo message="******************************************************"/>
+        <echo message="WARNING : The 'maven.appserver.home' property has not been"/>
+        <echo message="set. No test will be run on that servlet engine."/>
+        <echo message="******************************************************"/>
+        <echo message=""/>
+
+    </target>
+
+    <!--
+       ========================================================================
+         Prepare directories and variables for running the tests
+       ========================================================================
+    -->
+    <target name="prepare.test.weblogic.51"
+        depends="check.test.weblogic.51,testwar" if="maven.appserver.home">
+
+        <echo message="maven.appserver.home = ${maven.appserver.home}"/>
+
+        <property name="maven.appserver.dir"
+            value="${target.test.dir}/weblogic51"/>
+        <property name="conf.weblogic51.dir"
+            value="${conf.test.dir}/weblogic51"/>
+        <filter token="target.wlinstance.dir"
+            value="${maven.appserver.dir}/testinstance"/>
+
+        <mkdir dir="${maven.appserver.dir}/testinstance"/>
+
+        <!-- Delete some config file so that they will be copied every time -->
+        <delete file="${maven.appserver.dir}/weblogic.properties"/>
+
+        <copy file="${conf.weblogic51.dir}/weblogic.properties"
+            tofile="${maven.appserver.dir}/weblogic.properties"
+            filtering="on"/>
+
+        <!-- Copy the war file -->
+        <copy file="${target.test.dir}/test.war"
+            tofile="${maven.appserver.dir}/testinstance/test.war"/>
+
+        <!-- This is needed here because WebLogic 5.1 does not support
+             automatic war deployment (except with latest Service Packs and
+             even when it does there are issues with support files -->
+        <unwar src="${maven.appserver.dir}/testinstance/test.war"
+            dest="${maven.appserver.dir}/testinstance/test"/>
+
+    </target>

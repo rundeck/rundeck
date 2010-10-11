@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <title>Maven Clover Plug-in</title>
+    <author email="vmassol@octo.com">Vincent Massol</author>
+  </properties>
+
+  <body>
+    <section name="Maven Clover Plug-in">
+      <p>
+        This document provides an overview of the Maven Clover Plug-in.
+      </p>
+      <p>
+        The documents presented here are references, if you are looking
+        for more verbose usage material, please refer to the <a
+        href="../../start/index.html">Getting Started</a> section.
+      </p>
+      <subsection name="What it is">
+        <p>
+          The Clover Plug-in is the place where <a
+          href="http://www.thecortex.net/clover/">Clover</a> tools are found
+          in Maven.
+        </p>
+        <p>
+          Clover is a tool that generates Test Coverage reports. It is free for
+          non-commercial use. If your project is a commercial project you will
+          need to get a license for the Clover jar before using this Plug-in.
+        </p>
+        <p>
+          In order to use this Plug-in you need to place the clover jar in your
+          <code>ANT_HOME/lib</code> directory.
+        </p>
+      </subsection>
+      <subsection name="Overview of the Clover Plug-in Reference Documentation">
+        <table>
+          <tr><th>Document</th><th>Description</th></tr>
+          <tr><td><a href="build-file.html">Build File</a></td>
+            <td>
+              This document provides detailed information on the various
+              targets that are available as part of the Maven Clover Plug-in.
+              These targets can be delegated to by your project's local
+              build file.
+            </td>
+          </tr>
+          <tr><td><a href="properties.html">Properties</a></td>
+            <td>
+              The behavior of the Maven Clover Plug-in can be altered via
+              properties.  This document describes each property
+              available as the default used.
+            </td>
+          </tr>
+          <tr><td><a href="dirlayout.html">Directory Layout</a></td>
+            <td>
+              The preferred directory layout structure is documented
+              here.  This is a useful document if you are trying to
+              determine what a particular component of your directory
+              hierarchy is used for.
+            </td>
+          </tr>
+          <tr><td><a href="futures.html">Futures</a></td>
+            <td>
+              These are the current thoughts on additional items
+              that could or should be added to the plug-in.
+              They may or may not make it to an actual task list of a
+              developer.
+            </td>
+          </tr>
+        </table>
+      </subsection>
+    </section>
+ </body>
+</document>

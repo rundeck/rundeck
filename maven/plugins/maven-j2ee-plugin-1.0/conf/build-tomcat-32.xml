@@ -1,0 +1,117 @@
+    <!--
+       ========================================================================
+         Run Tomcat 3.2 tests
+       ========================================================================
+    -->
+    <target name="test.tomcat.32" depends="prepare.test.tomcat.32"
+        if="maven.appserver.home" description="Run tests on Tomcat 3.2">
+
+        <!-- Start the servlet engine, wait for it to be started, run the
+             unit tests, stop the servlet engine, wait for it to be stopped.
+             The servlet engine is stopped if the tests fail for any reason -->
+
+        <runservertests testURL="http://localhost:${test.port}/test"
+            startTarget="start.tomcat.32"
+            stopTarget="stop.tomcat.32"
+            testTarget="test"/>
+
+    </target>
+
+    <!--
+       ========================================================================
+         Start Tomcat 3.2
+       ========================================================================
+    -->
+    <target name="start.tomcat.32">
+
+        <java classname="org.apache.tomcat.startup.Tomcat" fork="yes">
+            <arg value="-config"/>
+            <arg value="${maven.appserver.dir}/conf/server.xml"/>
+            <classpath>
+                <pathelement location="${java.home}/../lib/tools.jar"/>
+                <fileset dir="${maven.appserver.home}/lib">
+                    <include name="*.jar"/>
+                </fileset>
+            </classpath>
+        </java>
+
+    </target>
+
+    <!--
+       ========================================================================
+         Stop Tomcat 3.2
+       ========================================================================
+    -->
+    <target name="stop.tomcat.32">
+
+        <java classname="org.apache.tomcat.startup.Tomcat" fork="yes">
+            <jvmarg value="-Dtomcat.home=${maven.appserver.home}"/>
+            <arg value="-stop"/>
+            <arg value="-config"/>
+            <arg value="${maven.appserver.dir}/conf/server.xml"/>
+            <classpath>
+                <pathelement location="${java.home}/../lib/tools.jar"/>
+                <fileset dir="${maven.appserver.home}/lib">
+                    <include name="*.jar"/>
+                </fileset>
+            </classpath>
+        </java>
+
+    </target>
+
+    <!--
+       ========================================================================
+         Display a warning message if the needed servlet engine home property
+         is not set
+       ========================================================================
+    -->
+    <target name="check.test.tomcat.32" unless="maven.appserver.home">
+
+        <echo message=""/>
+        <echo message="******************************************************"/>
+        <echo message="WARNING : The 'maven.appserver.home' property has not been "/>
+        <echo message="set. No test will be run on that servlet engine."/>
+        <echo message="******************************************************"/>
+        <echo message=""/>
+
+    </target>
+
+    <!--
+       ========================================================================
+         Prepare directories and variables for running the tests
+       ========================================================================
+    -->
+    <target name="prepare.test.tomcat.32"
+        depends="check.test.tomcat.32,testwar" if="maven.appserver.home">
+
+        <echo message="maven.appserver.home = ${maven.appserver.home}"/>
+
+        <property name="maven.appserver.dir"
+            value="${target.test.dir}/tomcat32"/>
+        <property name="conf.tomcat32.dir" value="${conf.test.dir}/tomcat32"/>
+        <filter token="maven.appserver.dir" value="${maven.appserver.dir}"/>
+
+        <!-- Create work and conf directories and copy configuration files -->
+        <mkdir dir="${maven.appserver.dir}/conf"/>
+        <mkdir dir="${maven.appserver.dir}/work"/>
+        <mkdir dir="${maven.appserver.dir}/webapps"/>
+
+        <!-- Delete some config file so that they will be copied every time -->
+        <delete file="${maven.appserver.dir}/conf/testserver.xml"/>
+
+        <!-- Delete the expanded war so that the new one is picked up -->
+        <delete dir="${maven.appserver.dir}/webapps"/>
+
+        <!-- Copy the default tomcat web.xml to our test conf/ directory.
+             This is needed otherwise tomcat does not start -->
+        <copy file="${maven.appserver.home}/conf/web.xml"
+            tofile="${maven.appserver.dir}/conf/web.xml"/>
+
+        <copy file="${conf.tomcat32.dir}/server.xml"
+            tofile="${maven.appserver.dir}/conf/server.xml" filtering="on"/>
+
+        <!-- Copy the war file -->
+        <copy file="${target.test.dir}/test.war"
+            tofile="${maven.appserver.dir}/webapps/test.war"/>
+
+    </target>

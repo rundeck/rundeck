@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <title>Maven Word 2 HTML Plug-in</title>
+    <author email="dion@multitask.com.au">dIon Gillard</author>
+  </properties>
+
+  <body>
+    <section name="Maven Word to HTML Plug-in">
+      <p>
+        This plug-in allows you to write your project documentation in Microsoft
+        Word, and generate HTML from it on a <strong>Windows</strong> platform
+        only.
+      </p>
+      <p>
+        It converts Word documents to HTML using the 
+        <a href="http://msdn.microsoft.com/downloads/default.asp?url=/downloads/topic.asp?URL=/MSDN-FILES/028/001/175/topic.xml">
+        Microsoft® Windows® Script</a>. You will need this installed to
+        successfully use this plugin.
+      </p>
+      <p>
+        To use this plug-in, make sure the property 
+        <code>${maven.word2html.src.dir}</code> has been set and run the 
+        <code>site:generate</code> goal.
+      </p>
+      <p>
+        All documents matching <code>*.doc</code> in the directory will be
+        converted to HTML.
+      </p>
+    </section>
+ </body>
+</document>

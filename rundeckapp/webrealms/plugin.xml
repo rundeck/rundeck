@@ -1,0 +1,21 @@
+<plugin name='webrealms' version='0.2' grailsVersion='1.2.0 &gt; *'>
+  <author>Greg Schueler</author>
+  <authorEmail>greg@dtosolutions.com</authorEmail>
+  <title>Allows configuration of web.xml to support UserRealms and security constraints</title>
+  <description>Simply generates definitions in web.xml to define login configuration with particular realm, and security constraints.
+</description>
+  <documentation>http://grails.org/Webrealms+Plugin</documentation>
+  <resources>
+    <resource>DataSource</resource>
+    <resource>DefaultWebrealmsConfig</resource>
+    <resource>UrlMappings</resource>
+  </resources>
+  <dependencies>
+    <resolvers>
+      <resolver type='grailsPlugins' name='grailsPlugins' />
+      <resolver type='mavenLocal' />
+      <resolver type='mavenCentral' />
+    </resolvers>
+  </dependencies>
+  <behavior />
+</plugin>

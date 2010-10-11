@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+
+<project xmlns:j="jelly:core"
+         xmlns:antlr="jelly:antlr"
+         xmlns:util="jelly:util"
+         xmlns:maven="jelly:org.apache.maven.jelly.tags.project.MavenTagLibrary">
+
+  <j:set var="antlrSrcDir" value="${maven.antlr.src.dir}"/>
+
+  <j:if test="${!antlrSrcDir.equals('MAVEN_ANTLR_SRC_DIR_NOT_SET')}">
+
+    <echo>Configuring for ANTLR</echo>
+
+    <path id="maven.antlr.compile.src.set"
+          location="${maven.build.dir}/antlr"/>
+
+    <maven:addPath id="maven.compile.src.set"
+                   refid="maven.antlr.compile.src.set"/>
+
+    <goal name="antlr:prepare-filesystem">
+      <mkdir dir="${maven.build.dir}/antlr"/>
+    </goal>
+
+    <goal name="antlr:generate"
+          prereqs="antlr:prepare-filesystem">
+
+      <util:tokenize var="grammars" delim=" ">
+         ${maven.antlr.grammars}
+      </util:tokenize>
+
+      <antlr:antlr outputDir="${maven.build.dir}/antlr">
+        <j:forEach var="grammar" items="${grammars.iterator()}">
+          <antlr:grammar>${grammar}</antlr:grammar>
+        </j:forEach>
+      </antlr:antlr>
+    </goal>
+
+    <preGoal name="java:compile">
+      <attainGoal name="antlr:generate"/>
+    </preGoal>
+
+  </j:if>
+
+</project>

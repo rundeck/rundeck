@@ -1,0 +1,77 @@
+## -----------------------------------------------------------------------
+## Transform a v1 project descriptor into a v2 project descriptor.
+## -----------------------------------------------------------------------
+## Summary of changes:
+##
+## 1. Add <version> to the project.xml file. The v1 descriptors lacked
+##    this element.
+##
+## 2. Source references are now used in the JUnit <batchtest> instead
+##    of class references.
+##
+## 3. Moving to a single directories for the unit test sources and
+##    the integration test sources.
+## -----------------------------------------------------------------------
+
+#match ("project")
+<project>
+  <version>2</version>
+  $context.applyTemplates("*")
+</project>  
+#end
+
+#match ("build")
+<build>
+  $context.applyTemplates("*")
+</build>  
+#end
+
+#match ("unitTestClassEntries")
+  <unitTestPatterns>
+  $context.applyTemplates("unitTestClassEntry")
+  </unitTestPatterns>
+#end
+
+#match ("unitTestClassEntry")
+  <unitTestPattern>
+    $context.toolbox.strings.replace($context.node.toString(),'.class','.java')
+  </unitTestPattern>
+#end
+
+#match ("integrationUnitTestClassEntries")
+  <integrationUnitTestPatterns>
+  $context.applyTemplates("integrationUnitTestClassEntry")
+  </integrationUnitTestPatterns>
+#end
+
+#match ("integrationUnitTestClassEntry")
+  <integrationUnitTestPattern>
+    $context.toolbox.strings.replace($context.node.toString(),'.class','.java')
+  </integrationUnitTestPattern>
+#end
+
+#match ("testSourceDirectories")
+$context.applyTemplates("testSourceDirectory")
+#end
+
+#match ("testSourceDirectory")
+  #if ($context.node.toString() == "src/test")
+  <unitTestSourceDirectory>$context.node</unitTestSourceDirectory>
+  #elseif ($context.node.toString() == "src/rttest")
+  <integrationUnitTestSourceDirectory>$context.node</integrationUnitTestSourceDirectory>
+  #end
+#end
+
+#match ("*")
+#if ($node.name() == "build")
+$context.applyTemplates("build")
+#elseif ($node.name() == "unitTestClassEntries")
+$context.applyTemplates("unitTestClassEntries")
+#elseif ($node.name() == "integrationUnitTestClassEntries")
+$context.applyTemplates("integrationUnitTestClassEntries")
+#elseif ($node.name() == "runtimeTestClassEntries")
+## We don't want to do anything here.
+#else
+$node.copy()
+#end
+#end

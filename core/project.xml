@@ -1,0 +1,487 @@
+<?xml version="1.0"?>
+<project>
+
+   <!--
+     ** version of Mavens project descriptor, leave alone maven will deal with 
+     ** it
+     -->
+   <pomVersion>3</pomVersion>
+
+   <!--
+     ** full name of the project, for JavaDoc titles
+     -->
+   <name>rundeck-core</name>
+
+   <!--
+     ** short name/version of the project, for jar and dist file generation
+   <id>depo</id>
+     -->
+   <id>rundeck-core</id>
+   <currentVersion>1.0.0</currentVersion>
+
+
+   <!--
+     ** Organizational attributes name/url
+     -->
+   <organization>
+      <name>DTO Labs</name>
+      <url>http://dtolabs.com/rundeck/</url>
+   </organization>
+
+   <!--
+     ** Copyright data generated for JavaDoc
+     -->
+   <inceptionYear>2010</inceptionYear>
+
+   <!--
+     ** JavaDoc pkg name
+     -->
+   <package>com.dtolabs.rundeck</package>
+
+   <!--
+     ** single line description of project
+     -->
+   <shortDescription>Rundeck Run Framework</shortDescription>
+
+   <!-- OPTIONAL for GUMP
+      <gumpRepositoryId>???</gumpRepositoryId>
+     -->
+ 
+   <!--
+     ** A detailed description of this project for "front page" of report
+     -->
+   <description>
+      This is the Rundeck Run Framework
+   </description>
+
+   <!--
+     ** URL to projects home page (not where cvs is located)
+     -->
+   <url>http://dtolabs.com/rundeck</url>
+
+   <!--
+     ** Projects logo url (can be rel/abs path)
+     -->
+   <logo>http://dtolabs.com/images/rundeck-logo.png</logo>
+
+   
+   <!--  
+     ** Repository we will be doing checkouts from and it's browsable url
+     ** NOTE:  we must manage this file and replace cvs username in connection element for the correct one
+     ** also, requires key synchronization since SSH is used.
+     -->
+   <!--
+     ** Our participating developers
+     -->
+   <developers>
+      <developer>
+         <name>Greg Schueler</name>
+         <id>greg</id>
+         <email>greg.schueler@gmail.com</email>
+         <organization>DTO Labs</organization>
+      </developer>
+   </developers>
+
+   <!--
+     ** Classpath Dependencies.  We package jars in centralized server referenced by url property value from 
+     ** maven.repo.remote property (default set in build.xml file)
+     **    (Last currently set value was http://tellyouwhat.dnsalias.net/repo/ which is relative to doc root)
+     **
+     ** each dependency  must be packaged as so: 
+     ** <id>/jars/<id>-<version>.jar (relative to /repo/)
+     ** nested <war.bundle.jar>true</war.bundle.jar> to indicate whether this jar should be pkg'd in deployed war
+     -->
+   <dependencies>
+
+      <!--<dependency>
+         <id>groovy-all</id>
+         <version>1.6.4</version>
+         <url>http://groovy.codehaus.net</url>
+         <properties>
+            <war.bundle.jar>false</war.bundle.jar>
+         </properties>
+      </dependency>-->
+
+      <dependency>
+         <id>xdoclet</id>
+         <version>1.2.3</version>
+         <url>http://xdoclet.sourceforge.net</url>
+         <properties> 
+            <war.bundle.jar>false</war.bundle.jar>
+         </properties>
+      </dependency>
+
+      <dependency>
+          <id>xjavadoc</id>
+          <version>1.1</version>
+          <url>http://xdoclet.sourceforge.net/</url>
+          <properties>
+              <war.bundle.jar>false</war.bundle.jar>
+          </properties>
+      </dependency>
+      <!--<dependency>
+         <id>java-activation</id>
+         <version>1.1</version>  
+         <url>http://java.sun.com/</url>
+         <properties>
+            <war.bundle.jar>false</war.bundle.jar>
+         </properties>
+      </dependency>
+      <dependency>
+         <id>java-mail</id>
+         <version>1.4</version> 
+         <url>http://java.sun.com/</url>
+         <properties>
+            <war.bundle.jar>false</war.bundle.jar>
+         </properties>
+      </dependency>
+      <dependency>
+         <id>java-mail-apis</id>
+         <version>1.3.1</version> 
+         <url>http://java.sun.com/</url>
+         <properties>
+            <war.bundle.jar>false</war.bundle.jar>
+         </properties>
+      </dependency>-->
+      <dependency>
+         <id>commons-net</id>
+         <version>1.4.1</version>
+         <url>http://jakarta.apache.org/</url>
+         <properties>
+            <war.bundle.jar>false</war.bundle.jar>
+         </properties>
+      </dependency>
+      <!--<dependency>
+         <id>xml-commons-resolver</id>
+         <version>1.2</version>
+         <url>http://xml.apache.org/commons</url>
+         <properties>
+            <war.bundle.jar>false</war.bundle.jar>
+         </properties>
+      </dependency>-->
+      <dependency>
+        <id>commons-logging</id>
+        <version>1.1</version>
+        <url>http://jakarta.apache.org/commons/logging</url>
+        <properties>
+            <war.bundle.jar>true</war.bundle.jar>
+         </properties>
+      </dependency>
+      
+      <!-- when we start testing -->
+      <dependency>
+         <id>junit</id>
+         <version>3.8.1</version> 
+         <url>http://www.junit.org/</url>
+         <properties>
+            <war.bundle.jar>false</war.bundle.jar>
+         </properties>
+      </dependency>
+
+
+      <!-- needed in compile and runtime of ant tasks -->
+      <dependency>
+         <id>ant</id>
+         <version>1.8.1</version>
+         <properties>
+            <war.bundle.jar>true</war.bundle.jar>
+         </properties>
+      </dependency>
+
+      <!-- needed at ant runtime for testing -->
+      <dependency>
+         <id>ant-launcher</id>
+         <version>1.8.1</version>
+         <url>http://ant.apache.org/</url>
+         <properties>
+            <war.bundle.jar>true</war.bundle.jar>
+         </properties>
+      </dependency>
+
+      <!-- logging for debug, error, etc -->
+      <dependency>
+         <id>log4j</id>
+         <version>1.2.15</version>
+         <properties>
+            <war.bundle.jar>true</war.bundle.jar>
+         </properties>
+      </dependency>
+
+       <!-- commons-codec required by commons-httpclient -->
+      <dependency>
+         <id>commons-codec</id>
+         <version>1.3</version>
+         <url>http://jakarta.apache.org/commons/codec/</url>
+         <properties>
+            <war.bundle.jar>true</war.bundle.jar>
+         </properties>
+      </dependency>
+
+
+      <dependency>
+         <id>commons-httpclient</id>
+         <version>3.0.1</version>
+         <url>http://jakarta.apache.org/commons/httpclient/</url>
+         <properties>
+            <war.bundle.jar>true</war.bundle.jar>
+         </properties>
+      </dependency>
+
+      <dependency>
+         <id>commons-beanutils</id>
+         <version>1.8.0</version>
+         <url>http://jakarta.apache.org/commons/</url>
+         <properties>
+            <war.bundle.jar>true</war.bundle.jar>
+         </properties>
+      </dependency>
+
+      <dependency>
+         <id>commons-collections</id>
+         <version>3.2.1</version>
+         <url>http://jakarta.apache.org/commons/</url>
+         <properties>
+            <war.bundle.jar>true</war.bundle.jar>
+         </properties>
+      </dependency>
+
+      <!--<dependency>
+         <id>commons-dbcp</id>
+         <version>1.0</version>
+         <url>http://jakarta.apache.org/commons/</url>
+         <properties>
+            <war.bundle.jar>false</war.bundle.jar>
+         </properties>
+      </dependency>
+-->
+      <!--<dependency>
+         <id>commons-fileupload</id>
+         <version>1.0</version>
+         <url>http://jakarta.apache.org/commons/</url>
+         <properties>
+            <war.bundle.jar>false</war.bundle.jar>
+         </properties>
+      </dependency>-->
+
+      <dependency>
+         <id>commons-lang</id>
+         <version>2.4</version>
+         <url>http://jakarta.apache.org/commons/</url>
+         <properties>
+            <war.bundle.jar>true</war.bundle.jar>
+         </properties>
+      </dependency>
+
+      <!--<dependency>
+         <id>commons-pool</id>
+         <version>1.0</version>
+         <url>http://jakarta.apache.org/commons/</url>
+         <properties>
+            <war.bundle.jar>false</war.bundle.jar>
+         </properties>
+      </dependency>-->
+
+      <!--<dependency>
+         <id>commons-resources</id>
+         <version>0.1</version>
+         <url>http://jakarta.apache.org/commons/</url>
+         <properties>
+            <war.bundle.jar>false</war.bundle.jar>
+         </properties>
+      </dependency>-->
+
+<!--      <dependency>
+         <id>jakarta-oro</id>
+         <version>2.0.6</version>
+         <url>http://jakarta.apache.org/oro/</url>
+         <properties>
+            <war.bundle.jar>false</war.bundle.jar>
+         </properties>
+      </dependency>-->
+
+      <dependency>
+         <id>xerces</id>
+         <version>2.6.0</version>
+         <url>http://xml.apache.org/xerces-j/</url>
+         <properties>
+            <war.bundle.jar>true</war.bundle.jar>
+         </properties>
+      </dependency>
+
+      <dependency>
+         <id>xml-apis</id>
+         <version>2.6.0</version>
+         <url>http://xml.apache.org/</url>
+         <properties>
+            <war.bundle.jar>true</war.bundle.jar>
+         </properties>
+      </dependency>
+
+      <dependency>
+         <id>dom4j</id>
+         <version>1.6.1</version>
+         <url>http://www.dom4j.org/</url>
+         <properties>
+            <war.bundle.jar>true</war.bundle.jar>
+         </properties>
+      </dependency>
+
+       <dependency>
+           <id>jaxen</id>
+           <version>1.1</version>
+           <url>http://jaxen.org/</url>
+           <properties>
+               <war.bundle.jar>true</war.bundle.jar>
+           </properties>
+       </dependency>
+
+      <dependency>
+         <id>commons-cli</id>
+         <version>1.0</version>
+         <url>http://jakarta.apache.org/commons/cli</url>
+         <properties>
+            <war.bundle.jar>true</war.bundle.jar> 
+         </properties>
+      </dependency>
+
+      <!-- ssh task library -->
+      <dependency>
+         <id>ant-jsch</id>
+         <version>1.8.1</version>
+         <url>http://ant.apache.org</url>
+         <properties>
+            <war.bundle.jar>true</war.bundle.jar>
+         </properties>
+      </dependency>    
+
+      <!-- ssh implmentation library -->
+      <dependency>
+         <id>jsch</id>
+         <version>0.1.42</version>
+         <url>http://www.jcraft.com/jsch/index.html</url>
+         <properties>
+            <war.bundle.jar>true</war.bundle.jar>
+         </properties>
+      </dependency>                       
+
+
+      <!--      
+       <dependency>
+           <id>stax-api</id>
+           <version>1.0</version>
+           <url>http://woodstox.codehaus.org/</url>
+           <properties>
+               <war.bundle.jar>true</war.bundle.jar>
+           </properties>
+       </dependency>
+       -->
+
+       <dependency>
+           <id>wstx-asl</id>
+           <version>2.8</version>
+           <url>http://woodstox.codehaus.org/</url>
+           <properties>
+               <war.bundle.jar>true</war.bundle.jar>
+           </properties>
+       </dependency>
+
+       <!--<dependency>
+         <id>concurrent</id>
+         <version>1.3.4</version>
+         <url>http://www.hpl.hp.com/semweb/</url>
+         <properties>
+            <war.bundle.jar>false</war.bundle.jar>
+         </properties>
+      </dependency>-->
+
+     <!--<dependency>
+         <id>jyaml</id>
+         <version>1.3</version>
+         <url>http://jyaml.sourceforge.net/</url>
+         <properties>
+            <war.bundle.jar>false</war.bundle.jar>
+         </properties>
+      </dependency>-->
+
+    <dependency>
+         <id>jython</id>
+         <version>2.5.0</version>
+         <url>http://jython.sourceforge.net/</url>
+         <properties>
+            <war.bundle.jar>true</war.bundle.jar>
+         </properties>
+      </dependency>
+
+    <dependency>
+         <id>jruby</id>
+         <version>1.3.1</version>
+         <url>http://jruby.codehaus.net/</url>
+         <properties>
+            <war.bundle.jar>true</war.bundle.jar>
+         </properties>
+      </dependency>
+
+
+   </dependencies>
+
+   <!--
+     ** build related environmental info
+     -->
+   <build>
+
+      <unitTest>
+         <excludes>
+             <exclude>**/AbstractBaseTest*</exclude>
+         </excludes>
+      </unitTest>
+
+      <!--
+        ** builds will compile source from this directory on down
+        -->
+      <sourceDirectory>src/java</sourceDirectory>
+
+      <!--
+        ** JUnit testing location
+      <unitTestSourceDirectory>src/test</unitTestSourceDirectory>
+      <unitTestSourceDirectory>src/_notest</unitTestSourceDirectory>
+        -->
+      <unitTestSourceDirectory>src/test</unitTestSourceDirectory>
+
+      <!--
+        ** Not defined, perhaps Cactus
+        -->
+      <integrationUnitTestSourceDirectory/>
+
+      <!-- aspect programming such as AspectJ, not enabled in properties -->
+      <aspectSourceDirectory/>
+
+      <!--
+        ** Unit tests for JUnit Framework only
+        -->
+      <unitTestPatterns>
+         <unitTestPattern>include = **/Test*.java</unitTestPattern>
+      </unitTestPatterns>
+
+      <!-- for Cactus framework only -->
+      <integrationUnitTestPatterns/>
+
+      <!-- 
+        ** Additional jar resources to pkg up, such as property files to ship, etc
+        ** You have to be lucky to get this right, this seems right now
+      <resources>
+         <includes>
+            <include>*.properties</include> 
+         </includes>
+      </resources>
+      <resources>
+         <includes>
+            <include>log4j.properties</include> 
+         </includes>
+      </resources>
+        -->
+
+
+
+   </build>
+         
+</project>

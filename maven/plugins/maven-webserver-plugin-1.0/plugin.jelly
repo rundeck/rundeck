@@ -1,0 +1,200 @@
+<?xml version="1.0"?>
+
+<!-- ================================================================== -->
+<!-- W E B S E R V E R  P L U G I N                                     -->
+<!-- ================================================================== -->
+<project xmlns:j="jelly:core" xmlns:log="jelly:log">
+
+  <!--==================================================================-->
+  <!-- S U P P O R T E D  W E B S E R V E R S                           -->
+  <!--==================================================================-->
+  <j:import inherit="true" uri="apache-2.x.jelly" />
+
+  <!--==================================================================-->
+  <!-- B E G I N  C O R E  P R O C E S S I N G                          -->
+  <!--==================================================================-->
+  <!-- tell the user what Maven thinks about their webserver instance -->
+  <goal name="webserver:init">
+
+    <condition property="maven.webserver.started">
+      <http url="${maven.webserver.url}" />
+    </condition>
+
+    <available property="maven.webserver.installed"
+      file="${maven.webserver.dir}" type="dir" />
+
+    <j:set var="maven.webserver.installed.msg">
+      <j:choose>
+        <j:when test="${maven.webserver.installed}">installed</j:when>
+        <j:otherwise>not installed</j:otherwise>
+      </j:choose>
+    </j:set>
+    <j:set var="maven.webserver.started.msg">
+      <j:choose>
+        <j:when test="${maven.webserver.installed}">started</j:when>
+        <j:otherwise>not started</j:otherwise>
+      </j:choose>
+    </j:set>
+    <log:info trim="false">
+Maven has determined your <j:expr value="${maven.webserver.fullname}"/> webserver instance is <j:expr value="${maven.webserver.installed.msg}"/> in directory [<j:expr value="${maven.webserver.dir}"/>] and <j:expr value="${maven.webserver.started.msg}"/> on <j:expr value="${maven.webserver.url}"/>
+    </log:info>
+  </goal>
+
+  <!--==================================================================-->
+  <!-- I S T A L L                                                      -->
+  <!--==================================================================-->
+  <goal name="webserver:install" prereqs="webserver:init"
+    description="Install or reinstall a webserver instance">
+
+    <mkdir dir="${maven.webserver.dir}" />
+
+    <j:choose>
+      <!-- not installed - simply install -->
+      <j:when test="${!maven.webserver.installed}">
+        <attainGoal name="webserver:install-${maven.webserver.fullname}" />
+      </j:when>
+      <!-- installed and stopped -->
+      <j:when
+        test="${maven.webserver.installed} and ${!maven.webserver.started}">
+        <attainGoal name="webserver:reinstall" />
+      </j:when>
+      <!-- installed and started -->
+      <j:when test="${maven.webserver.installed} and ${!maven.webserver.started}">
+        <attain>
+          <attainGoal name="webserver:stop" />
+          <attainGoal name="webserver:reinstall" />
+          <attainGoal name="webserver:start" />
+        </attain>
+      </j:when>
+      <!-- one of those 'things' that should never happen -->
+      <j:otherwise>
+        <log:info>
+          Could not determine the current status for your
+          <j:expr value="${maven.webserver.fullname}"/> instance.
+        </log:info>
+      </j:otherwise>
+    </j:choose>
+
+  </goal>
+
+  <!--==================================================================-->
+  <!-- R E I N S T A L L                                                -->
+  <!--==================================================================-->
+  <!-- the purpose of this target is to allow the user to be very       -->
+  <!-- specific when using pre and post goals and sometimes there may   -->
+  <!-- be custom implementations of reinstall                           -->
+  <goal name="webserver:reinstall"
+    prereqs="webserver:init, webserver:install-${maven.webserver.fullname}" >
+    <!-- <attainGoal name="webserver:install-${maven.webserver.fullname}" /> -->
+  </goal>
+
+
+  <!--==================================================================-->
+  <!-- S T A R T                                                        -->
+  <!--==================================================================-->
+  <goal name="webserver:start" prereqs="webserver:init"
+    description="Start or restart a webserver instance">
+
+    <!-- property to remember what goal the user first called -->
+    <property name="webserver:start.called" value="true" />
+
+    <!-- must install before starting -->
+    <j:if test="${!maven.webserver.installed}">
+      <log:info>
+        Installing the <j:expr value="${maven.webserver.fullname}"/>
+        webserver instance before starting it..."/>
+      </log:info>
+      <attainGoal name="webserver:install" />
+    </j:if>
+
+    <j:choose>
+      <j:when test="${maven.webserver.started}">
+        <attain>
+          <attainGoal name="webserver:stop" />
+          <log:info>
+          Restarting the <j:expr value="${maven.webserver.fullname}"/>
+          webserver instance ..."/>
+          </log:info>
+          <attainGoal name="webserver:restart" />
+        </attain>
+      </j:when>
+      <j:when test="${!maven.webserver.installed}">
+        <log:info>
+          Installing the <j:expr value="${maven.webserver.fullname}"/>
+          webserver instance before starting it ..."/>
+        </log:info>
+        <attainGoal name="webserver:install" />
+        <attainGoal name="webserver:start-${maven.webserver.fullname}"/>
+      </j:when>
+    </j:choose>
+
+  </goal>
+
+  <!--==================================================================-->
+  <!-- R E S T A R T                                                    -->
+  <!--==================================================================-->
+  <!-- the purpose of this target is to allow the user to be very       -->
+  <!-- specific when using pre and post goals                           -->
+  <goal name="webserver:restart"
+    prereqs="webserver:init,webserver:restart-${maven.webserver.fullname}">
+    <!-- <attainGoal name="start-${maven.webserver.fullname}" />-->
+  </goal>
+
+  <!--==================================================================-->
+  <!-- S T O P                                                          -->
+  <!--==================================================================-->
+  <goal name="webserver:stop" prereqs="webserver:init"
+    description="Stop a webserver instance if started">
+
+    <j:choose>
+      <j:when test="${maven.webserver.installed} and ${maven.webserver.started}">
+        <attainGoal
+          name="webserver:stop-${maven.webserver.fullname}" />
+      </j:when>
+      <j:otherwise>
+        <j:if test="${!webserver-clean.called}">
+          <log:info>
+            The <j:expr value="${maven.webserver.fullname}"/>
+            is already stopped!
+          </log:info>
+        </j:if>
+      </j:otherwise>
+    </j:choose>
+
+  </goal>
+
+  <!--==================================================================-->
+  <!-- C L E A N                                                        -->
+  <!--==================================================================-->
+  <goal name="webserver:clean" prereqs="webserver:init"
+    description="Safely delete an installed webserver instance">
+
+     <!-- property to remember what goal the user first called -->
+    <property name="webserver:clean.called" value="true" />
+
+    <j:if test="${maven.webserver.started}">
+      <log:info>
+        Stopping the <j:expr value="${maven.webserver.fullname}"/>
+        webserver instance before deleting it..."/>
+      </log:info>
+      <attainGoal name="webserver:stop" />
+    </j:if>
+
+    <j:if test="${maven.webserver.installed}">
+      <log:info>
+        Deleting the <j:expr value="${maven.webserver.fullname}"/>
+        webserver instance ..."/>
+      </log:info>
+      <delete dir="${maven.webserver.dir}"/>
+    </j:if>
+
+    <j:if test="${!maven.webserver.installed}">
+      <log:info>
+        The <j:expr value="${maven.webserver.fullname}"/>
+        webserver instance is already cleaned!"/>
+      </log:info>
+    </j:if>
+
+  </goal>
+
+</project>

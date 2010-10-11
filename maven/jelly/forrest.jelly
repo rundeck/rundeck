@@ -1,0 +1,45 @@
+<project default="forrest:configure" 
+         xmlns:j="jelly:core">
+
+   <!-- 
+     ** These properties are defined and exported from 
+     ** project.properties.export
+   forrest.zip.src
+   forrest.zip.dest 
+   forrest.pkg.dest
+   forrest.pkg.dirName
+   build.dest
+     -->
+
+
+   <!--
+     ** forrest goals
+     -->
+
+   <!--
+     -->
+   <goal name="forrest:configure" prereqs="forrest:get">
+      <chmod dir="${forrest.pkg.dest}/${forrest.pkg.dirName}/bin"
+             perm="ugo+rx" includes="*"/>
+   </goal>
+
+
+   <!--
+     ** gets the forrest pkg if not installed
+     -->
+   <goal name="forrest:get"> 
+      <available file="${forrest.pkg.dest}/${forrest.pkg.dirName}" 
+                 property="forrest.installed"/>
+      <property name="forrest.installed" value="false"/>
+      <j:set var="forrestInstalled" value="${forrest.installed}"/>
+
+      <j:if test="${forrestInstalled == 'false'}">
+         <get src="${forrest.zip.src}" dest="${forrest.zip.dest}"/>
+         <unzip src="${forrest.zip.dest}" dest="${forrest.pkg.dest}" />
+         <delete file="${forrest.zip.dest}"/>
+      </j:if> 
+
+   </goal> 
+
+
+</project> 

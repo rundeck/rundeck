@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <title>Maven Cactus Plug-in</title>
+    <author email="jason@zenplex.com">Jason van Zyl</author>
+  </properties>
+
+  <body>
+    <section name="Maven Cactus Plug-in">
+      <p>
+         This plugin allows the easy integration of Cactus with the
+         web application project.
+      </p>
+    </section>
+ </body>
+</document>

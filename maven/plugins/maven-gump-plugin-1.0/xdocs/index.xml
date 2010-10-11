@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <title>Maven Gump Plug-in</title>
+    <author email="jason@zenplex.com">Jason van Zyl</author>
+  </properties>
+
+  <body>
+    <section name="Maven Gump Plug-in">
+      <p>
+        This plug-in generates a descriptor that allows your project to
+        participate in Gump builds. The use for this descriptor will soon be
+        negated by the use of the Maven Reactor but until the Reactor is
+        complete the generation of the Gump descriptor is somewhat useful.
+      </p>
+    </section>
+ </body>
+</document>

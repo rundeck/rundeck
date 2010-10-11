@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+
+<!-- ================================================================== -->
+<!-- Maven appserver goals proxy for controlling server instances       -->
+<!--                                                                    -->
+<!-- Simplifies using maven to control your server instances.           -->
+<!-- This file copied here by Maven.                                    -->
+<!-- ================================================================== -->
+
+<project>
+  <goal name="install" prereqs="appserver:install" />
+  <goal name="start" prereqs="appserver:start" />
+  <goal name="stop" prereqs="appserver:stop" />
+</project>
+

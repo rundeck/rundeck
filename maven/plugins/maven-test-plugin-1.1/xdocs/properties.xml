@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<document>
+
+  <properties>
+    <title>Test Properties</title>
+    <author email="smor@apache.org">Stéphane MOR</author>
+  </properties>
+
+  <body>
+    <section name="Test Settings">
+      <table>
+        <tr><th>Property</th><th>Optional?</th><th>Description</th></tr>
+        <tr>
+          <td>maven.junit.fork</td>
+          <td>Yes</td>
+          <td>
+            When using Java 1.4, it may be necessary to fork the JUnit
+            tests to prevent XML parser issues.  The default value is
+            <code>no</code>.
+          </td>
+        </tr>
+        <tr>
+          <td>maven.junit.dir</td>
+          <td>Yes</td>
+          <td>
+            The directory to invoke the VM in. (ignored if fork is disabled).
+	    The default value is <code>${basedir}</code>.
+          </td>
+        </tr>
+        <tr>
+          <td>maven.junit.usefile</td>
+          <td>Yes</td>
+          <td>
+            If this value is set to false, JUnit test run details will appear on
+            the console as the tests are executed. If not, they are stored in
+            a file in the <code>test-reports</code> directory. The default value
+            is <code>true</code>.
+          </td>
+        </tr>
+        <tr>
+          <td>maven.test.dest</td>
+          <td>Yes</td>
+          <td>
+            Specifies the unit test classes directory.  This is the
+            location where the java classes for the test source
+            code will be generated to.  The default value is 
+            <code>${maven.build.dir}/test-classes</code>.
+          </td>
+        </tr>
+        <tr>
+          <td>maven.iutest.dest</td>
+          <td>Yes</td>
+          <td>
+            Specifies the integration unit test classes directory.  
+            This is the location where the java classes for the 
+            integration unit test source code will be generated to.  
+            The default value is 
+            <code>${maven.build.dir}/iutest-classes</code>.
+          </td>
+        </tr>
+        <tr>
+          <td>maven.iutest.dir</td>
+          <td>Yes</td>
+          <td>
+            Specifies the integration unit test source directory.
+            This property should never be overridden as the value is
+            determined directly from the project descriptor.  The
+            default value is 
+            <code>${maven.integrationUnitTestSourceDirectory}</code>.
+          </td>
+        </tr>
+        <tr>
+          <td>maven.out.test.dir</td>
+          <td>Yes</td>
+          <td>
+            Specifies the directory where the integration unit testing
+            is run.  The default value is <code>${build.dir}/iutest</code>.
+          </td>
+        </tr>
+        <tr>
+          <td>maven.webapp.dir</td>
+          <td>Yes</td>
+          <td>
+            Specifies the directory of the web application used to
+            perform integration unit testing.  The default value is
+            <code>${iutest.dir}/testapp</code>.
+          </td>
+        </tr>
+        <tr>
+          <td>maven.conf.test.dir</td>
+          <td>Yes</td>
+          <td>
+            Specifies the configuration directory used to build the
+            web application used for integration unit testing.  The
+            default value is <code>${iutest.dir}/cactus</code>.
+          </td>
+        </tr>
+        <tr>
+          <td>maven.tomcat.home</td>
+          <td>Yes</td>
+          <td>
+            Specifies your local Tomcat installation directory. 
+            The default value is <code>${tdk.home}</code>.  If
+            <code>${tdk.home}</code> is not specified in your
+            <code>${user.home}/build.properties</code>, you should set
+            this property.  This is used for the integration unit
+            testing.
+          </td>
+        </tr>
+        <tr>
+          <td>maven.test.port</td>
+          <td>Yes</td>
+          <td>
+            Specifies the port that Tomcat will use for integration
+            unit testing.  The default value is <code>8192</code>.
+          </td>
+        </tr>
+      </table>
+    </section>
+  </body>
+</document>

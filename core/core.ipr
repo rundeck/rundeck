@@ -1,0 +1,436 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project relativePaths="false" version="4">
+  <component name="AntConfiguration">
+    <defaultAnt bundledAnt="true" />
+  </component>
+  <component name="Archetypes.Configuration">
+    <option name="archetypesFileLocation" value="archetypes.xml" />
+    <option name="workingDirectory" value="" />
+  </component>
+  <component name="BuildJarProjectSettings">
+    <option name="BUILD_JARS_ON_MAKE" value="false" />
+  </component>
+  <component name="CodeStyleProjectProfileManger">
+    <option name="PROJECT_PROFILE" />
+    <option name="USE_PROJECT_LEVEL_SETTINGS" value="false" />
+  </component>
+  <component name="CodeStyleSettingsManager">
+    <option name="PER_PROJECT_SETTINGS" />
+    <option name="USE_PER_PROJECT_SETTINGS" value="false" />
+  </component>
+  <component name="CompilerConfiguration">
+    <option name="DEFAULT_COMPILER" value="Javac" />
+    <option name="DEPLOY_AFTER_MAKE" value="0" />
+    <resourceExtensions>
+      <entry name=".+\.(properties|xml|html|dtd|tld)" />
+      <entry name=".+\.(gif|png|jpeg|jpg)" />
+    </resourceExtensions>
+    <wildcardResourcePatterns>
+      <entry name="?*.properties" />
+      <entry name="?*.xml" />
+      <entry name="?*.html" />
+      <entry name="?*.dtd" />
+      <entry name="?*.tld" />
+      <entry name="?*.gif" />
+      <entry name="?*.png" />
+      <entry name="?*.jpeg" />
+      <entry name="?*.jpg" />
+    </wildcardResourcePatterns>
+  </component>
+  <component name="CopyrightManager" default="dtolabs">
+    <copyright>
+      <option name="notice" value="Copyright &amp;#36;today.year DTO Labs, Inc. (http://dtolabs.com)&#10; &#10; Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);&#10; you may not use this file except in compliance with the License.&#10; You may obtain a copy of the License at&#10;&#10;     http://www.apache.org/licenses/LICENSE-2.0&#10;&#10; Unless required by applicable law or agreed to in writing, software&#10; distributed under the License is distributed on an &quot;AS IS&quot; BASIS,&#10; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.&#10; See the License for the specific language governing permissions and&#10; limitations under the License." />
+      <option name="keyword" value="Copyright" />
+      <option name="myName" value="dtolabs" />
+      <option name="myLocal" value="true" />
+    </copyright>
+    <module2copyright>
+      <element module="All" copyright="dtolabs" />
+    </module2copyright>
+  </component>
+  <component name="DependenciesAnalyzeManager">
+    <option name="myForwardDirection" value="false" />
+  </component>
+  <component name="DependencyValidationManager">
+    <scope name="core" pattern="file:*/" />
+    <option name="SKIP_IMPORT_STATEMENTS" value="false" />
+  </component>
+  <component name="EclipseCompilerSettings">
+    <option name="DEBUGGING_INFO" value="true" />
+    <option name="GENERATE_NO_WARNINGS" value="true" />
+    <option name="DEPRECATION" value="false" />
+    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
+    <option name="MAXIMUM_HEAP_SIZE" value="128" />
+  </component>
+  <component name="EclipseEmbeddedCompilerSettings">
+    <option name="DEBUGGING_INFO" value="true" />
+    <option name="GENERATE_NO_WARNINGS" value="true" />
+    <option name="DEPRECATION" value="false" />
+    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
+    <option name="MAXIMUM_HEAP_SIZE" value="128" />
+  </component>
+  <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false" />
+  <component name="EntryPointsManager">
+    <entry_points version="2.0" />
+  </component>
+  <component name="ExportToHTMLSettings">
+    <option name="printScope" value="1" />
+    <option name="PRINT_LINE_NUMBERS" value="true" />
+    <option name="OPEN_IN_BROWSER" value="true" />
+    <option name="OUTPUT_DIRECTORY" value="$PROJECT_DIR$/exportToHTML" />
+  </component>
+  <component name="IdProvider" IDEtalkID="48BED7A3BBCF3323B91068465D3FF55D" />
+  <component name="InspectionProjectProfileManager">
+    <option name="PROJECT_PROFILE" value="Project Default" />
+    <option name="USE_PROJECT_LEVEL_SETTINGS" value="false" />
+    <scopes />
+    <profiles>
+      <profile version="1.0" is_locked="false">
+        <option name="myName" value="Project Default" />
+        <option name="myLocal" value="false" />
+      </profile>
+    </profiles>
+    <list size="0" />
+  </component>
+  <component name="IssueNavigationConfiguration">
+    <option name="links">
+      <list>
+        <IssueNavigationLink>
+          <option name="issueRegexp" value="#(\d{7})" />
+          <option name="linkRegexp" value="https://sourceforge.net/tracker/?func=detail&amp;aid=$1&amp;group_id=151079&amp;atid=779847" />
+        </IssueNavigationLink>
+      </list>
+    </option>
+  </component>
+  <component name="JavacSettings">
+    <option name="DEBUGGING_INFO" value="true" />
+    <option name="GENERATE_NO_WARNINGS" value="false" />
+    <option name="DEPRECATION" value="true" />
+    <option name="ADDITIONAL_OPTIONS_STRING" value="-Xlint:unchecked" />
+    <option name="MAXIMUM_HEAP_SIZE" value="128" />
+  </component>
+  <component name="JavadocGenerationManager">
+    <option name="OUTPUT_DIRECTORY" />
+    <option name="OPTION_SCOPE" value="protected" />
+    <option name="OPTION_HIERARCHY" value="true" />
+    <option name="OPTION_NAVIGATOR" value="true" />
+    <option name="OPTION_INDEX" value="true" />
+    <option name="OPTION_SEPARATE_INDEX" value="true" />
+    <option name="OPTION_DOCUMENT_TAG_USE" value="false" />
+    <option name="OPTION_DOCUMENT_TAG_AUTHOR" value="false" />
+    <option name="OPTION_DOCUMENT_TAG_VERSION" value="false" />
+    <option name="OPTION_DOCUMENT_TAG_DEPRECATED" value="true" />
+    <option name="OPTION_DEPRECATED_LIST" value="true" />
+    <option name="OTHER_OPTIONS" value="" />
+    <option name="HEAP_SIZE" />
+    <option name="LOCALE" />
+    <option name="OPEN_IN_BROWSER" value="true" />
+  </component>
+  <component name="JikesSettings">
+    <option name="JIKES_PATH" value="" />
+    <option name="DEBUGGING_INFO" value="true" />
+    <option name="DEPRECATION" value="true" />
+    <option name="GENERATE_NO_WARNINGS" value="false" />
+    <option name="IS_EMACS_ERRORS_MODE" value="true" />
+    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
+  </component>
+  <component name="LogConsolePreferences">
+    <option name="FILTER_ERRORS" value="false" />
+    <option name="FILTER_WARNINGS" value="false" />
+    <option name="FILTER_INFO" value="true" />
+    <option name="CUSTOM_FILTER" />
+  </component>
+  <component name="Maven Reloaded">
+    <option name="config">
+      <value>
+        <option name="pluginEnabled" value="false" />
+        <option name="updateClasspathsEnabled" value="true" />
+        <option name="sortDependenciesEnabled" value="false" />
+        <option name="removeDuplicateDependenciesEnabled" value="false" />
+        <option name="respondToPomChangesEnabled" value="true" />
+        <option name="manageSourceRootsEnabled" value="true" />
+        <option name="manageModuleInterdependenciesEnabled" value="true" />
+        <option name="downloadSourcesEnabled" value="false" />
+        <option name="downloadJavadocEnabled" value="false" />
+        <option name="generateSourcesEnabled" value="false" />
+        <option name="settingsPath" value="/Users/greg/.m2/settings.xml" />
+        <option name="searchFilter" value="" />
+        <option name="disabledPoms">
+          <value>
+            <collection type="java.util.TreeSet" />
+          </value>
+        </option>
+        <option name="moduleInterDependencies">
+          <value>
+            <map type="java.util.TreeMap" />
+          </value>
+        </option>
+        <option name="logLevel" value="1" />
+      </value>
+    </option>
+  </component>
+  <component name="MavenBuildProjectComponent">
+    <option name="mavenExecutable" value="" />
+    <option name="Settings File" value="/Users/greg/.m2/settings.xml" />
+    <option name="mavenCommandLineParams" value="" />
+    <option name="vmOptions" value="" />
+    <option name="useMavenEmbedder" value="false" />
+    <option name="useFilter" value="false" />
+    <option name="Batch Mode" value="false" />
+    <option name="Check Plugin Updates" value="false" />
+    <option name="Debug" value="false" />
+    <option name="Errors" value="false" />
+    <option name="Fail At End" value="false" />
+    <option name="Fail Fast" value="false" />
+    <option name="Fail Never" value="false" />
+    <option name="Lax Checksums" value="false" />
+    <option name="No Plugin Registry" value="false" />
+    <option name="No Plugin Updates" value="false" />
+    <option name="Non Recursive" value="false" />
+    <option name="Offline" value="false" />
+    <option name="Reactor" value="false" />
+    <option name="Strict Checksums" value="false" />
+    <option name="Update Plugins" value="false" />
+    <option name="Update Snapshots" value="false" />
+    <option name="Skip Tests" value="false" />
+    <pom-list />
+  </component>
+  <component name="PEExternalization">
+    <option name="IGNORE_METHOD_NAMES" value="" />
+    <option name="IGNORE_METHOD_NAMES_ENABLED" value="false" />
+    <option name="IGNORE_CLASS_CONSTRUCTORS">
+      <value>
+        <option class="Exception" includeInheritors="true" />
+      </value>
+    </option>
+    <option name="IGNORE_CLASS_CONSTRUCTOR_NAMES_ENABLED" value="true" />
+    <option name="IGNORE_CLASS_METHODS_ENABLED" value="true" />
+    <option name="IGNORE_STRINGS_CONTAINS_ONLY_ENABLED" value="true" />
+    <option name="IGNORE_STRINGS_CONTAINS_ONLY_WHITESPACES" value="true" />
+    <option name="IGNORE_STRINGS_CONTAINS_ONLY_PUNCTUATIONS" value="true" />
+    <option name="IGNORE_STRINGS_CONTAINS_ONLY_SPECIFIED_ENABLED" value="true" />
+    <option name="IGNORE_STRINGS_CONTAINS_ONLY_SPECIFIED" value="" />
+    <option name="IGNORE_CLASS_METHODS">
+      <value>
+        <option class="Exception" includeInheritors="false" />
+        <option class="java.util.ResourceBundle" includeInheritors="true" />
+      </value>
+    </option>
+    <option name="IGNORE_CONSTANTS_DECLARATIONS" value="true" />
+  </component>
+  <component name="Palette2">
+    <group name="Swing">
+      <item class="com.intellij.uiDesigner.HSpacer" tooltip-text="Horizontal Spacer" icon="/com/intellij/uiDesigner/icons/hspacer.png" removable="false" auto-create-binding="false" can-attach-label="false">
+        <default-constraints vsize-policy="1" hsize-policy="6" anchor="0" fill="1" />
+      </item>
+      <item class="com.intellij.uiDesigner.VSpacer" tooltip-text="Vertical Spacer" icon="/com/intellij/uiDesigner/icons/vspacer.png" removable="false" auto-create-binding="false" can-attach-label="false">
+        <default-constraints vsize-policy="6" hsize-policy="1" anchor="0" fill="2" />
+      </item>
+      <item class="javax.swing.JPanel" icon="/com/intellij/uiDesigner/icons/panel.png" removable="false" auto-create-binding="false" can-attach-label="false">
+        <default-constraints vsize-policy="3" hsize-policy="3" anchor="0" fill="3" />
+      </item>
+      <item class="javax.swing.JScrollPane" icon="/com/intellij/uiDesigner/icons/scrollPane.png" removable="false" auto-create-binding="false" can-attach-label="true">
+        <default-constraints vsize-policy="7" hsize-policy="7" anchor="0" fill="3" />
+      </item>
+      <item class="javax.swing.JButton" icon="/com/intellij/uiDesigner/icons/button.png" removable="false" auto-create-binding="true" can-attach-label="false">
+        <default-constraints vsize-policy="0" hsize-policy="3" anchor="0" fill="1" />
+        <initial-values>
+          <property name="text" value="Button" />
+        </initial-values>
+      </item>
+      <item class="javax.swing.JRadioButton" icon="/com/intellij/uiDesigner/icons/radioButton.png" removable="false" auto-create-binding="true" can-attach-label="false">
+        <default-constraints vsize-policy="0" hsize-policy="3" anchor="8" fill="0" />
+        <initial-values>
+          <property name="text" value="RadioButton" />
+        </initial-values>
+      </item>
+      <item class="javax.swing.JCheckBox" icon="/com/intellij/uiDesigner/icons/checkBox.png" removable="false" auto-create-binding="true" can-attach-label="false">
+        <default-constraints vsize-policy="0" hsize-policy="3" anchor="8" fill="0" />
+        <initial-values>
+          <property name="text" value="CheckBox" />
+        </initial-values>
+      </item>
+      <item class="javax.swing.JLabel" icon="/com/intellij/uiDesigner/icons/label.png" removable="false" auto-create-binding="false" can-attach-label="false">
+        <default-constraints vsize-policy="0" hsize-policy="0" anchor="8" fill="0" />
+        <initial-values>
+          <property name="text" value="Label" />
+        </initial-values>
+      </item>
+      <item class="javax.swing.JTextField" icon="/com/intellij/uiDesigner/icons/textField.png" removable="false" auto-create-binding="true" can-attach-label="true">
+        <default-constraints vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+          <preferred-size width="150" height="-1" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JPasswordField" icon="/com/intellij/uiDesigner/icons/passwordField.png" removable="false" auto-create-binding="true" can-attach-label="true">
+        <default-constraints vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+          <preferred-size width="150" height="-1" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JFormattedTextField" icon="/com/intellij/uiDesigner/icons/formattedTextField.png" removable="false" auto-create-binding="true" can-attach-label="true">
+        <default-constraints vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+          <preferred-size width="150" height="-1" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JTextArea" icon="/com/intellij/uiDesigner/icons/textArea.png" removable="false" auto-create-binding="true" can-attach-label="true">
+        <default-constraints vsize-policy="6" hsize-policy="6" anchor="0" fill="3">
+          <preferred-size width="150" height="50" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JTextPane" icon="/com/intellij/uiDesigner/icons/textPane.png" removable="false" auto-create-binding="true" can-attach-label="true">
+        <default-constraints vsize-policy="6" hsize-policy="6" anchor="0" fill="3">
+          <preferred-size width="150" height="50" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JEditorPane" icon="/com/intellij/uiDesigner/icons/editorPane.png" removable="false" auto-create-binding="true" can-attach-label="true">
+        <default-constraints vsize-policy="6" hsize-policy="6" anchor="0" fill="3">
+          <preferred-size width="150" height="50" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JComboBox" icon="/com/intellij/uiDesigner/icons/comboBox.png" removable="false" auto-create-binding="true" can-attach-label="true">
+        <default-constraints vsize-policy="0" hsize-policy="2" anchor="8" fill="1" />
+      </item>
+      <item class="javax.swing.JTable" icon="/com/intellij/uiDesigner/icons/table.png" removable="false" auto-create-binding="true" can-attach-label="false">
+        <default-constraints vsize-policy="6" hsize-policy="6" anchor="0" fill="3">
+          <preferred-size width="150" height="50" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JList" icon="/com/intellij/uiDesigner/icons/list.png" removable="false" auto-create-binding="true" can-attach-label="false">
+        <default-constraints vsize-policy="6" hsize-policy="2" anchor="0" fill="3">
+          <preferred-size width="150" height="50" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JTree" icon="/com/intellij/uiDesigner/icons/tree.png" removable="false" auto-create-binding="true" can-attach-label="false">
+        <default-constraints vsize-policy="6" hsize-policy="6" anchor="0" fill="3">
+          <preferred-size width="150" height="50" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JTabbedPane" icon="/com/intellij/uiDesigner/icons/tabbedPane.png" removable="false" auto-create-binding="true" can-attach-label="false">
+        <default-constraints vsize-policy="3" hsize-policy="3" anchor="0" fill="3">
+          <preferred-size width="200" height="200" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JSplitPane" icon="/com/intellij/uiDesigner/icons/splitPane.png" removable="false" auto-create-binding="false" can-attach-label="false">
+        <default-constraints vsize-policy="3" hsize-policy="3" anchor="0" fill="3">
+          <preferred-size width="200" height="200" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JSpinner" icon="/com/intellij/uiDesigner/icons/spinner.png" removable="false" auto-create-binding="true" can-attach-label="true">
+        <default-constraints vsize-policy="0" hsize-policy="6" anchor="8" fill="1" />
+      </item>
+      <item class="javax.swing.JSlider" icon="/com/intellij/uiDesigner/icons/slider.png" removable="false" auto-create-binding="true" can-attach-label="false">
+        <default-constraints vsize-policy="0" hsize-policy="6" anchor="8" fill="1" />
+      </item>
+      <item class="javax.swing.JSeparator" icon="/com/intellij/uiDesigner/icons/separator.png" removable="false" auto-create-binding="false" can-attach-label="false">
+        <default-constraints vsize-policy="6" hsize-policy="6" anchor="0" fill="3" />
+      </item>
+      <item class="javax.swing.JProgressBar" icon="/com/intellij/uiDesigner/icons/progressbar.png" removable="false" auto-create-binding="true" can-attach-label="false">
+        <default-constraints vsize-policy="0" hsize-policy="6" anchor="0" fill="1" />
+      </item>
+      <item class="javax.swing.JToolBar" icon="/com/intellij/uiDesigner/icons/toolbar.png" removable="false" auto-create-binding="false" can-attach-label="false">
+        <default-constraints vsize-policy="0" hsize-policy="6" anchor="0" fill="1">
+          <preferred-size width="-1" height="20" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JToolBar$Separator" icon="/com/intellij/uiDesigner/icons/toolbarSeparator.png" removable="false" auto-create-binding="false" can-attach-label="false">
+        <default-constraints vsize-policy="0" hsize-policy="0" anchor="0" fill="1" />
+      </item>
+      <item class="javax.swing.JScrollBar" icon="/com/intellij/uiDesigner/icons/scrollbar.png" removable="false" auto-create-binding="true" can-attach-label="false">
+        <default-constraints vsize-policy="6" hsize-policy="0" anchor="0" fill="2" />
+      </item>
+    </group>
+  </component>
+  <component name="ProjectDetails">
+    <option name="projectName" value="core" />
+  </component>
+  <component name="ProjectFileVersion" converted="true" />
+  <component name="ProjectKey">
+    <option name="state" value="project:///Users/greg/devel/rundeckdev2/core/core.ipr" />
+  </component>
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/core.iml" filepath="$PROJECT_DIR$/core.iml" />
+    </modules>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_5" assert-keyword="true" jdk-15="true" project-jdk-name="1.5" project-jdk-type="JavaSDK" />
+  <component name="ResourceManagerContainer">
+    <option name="myResourceBundles">
+      <value>
+        <list size="0" />
+      </value>
+    </option>
+  </component>
+  <component name="RmicSettings">
+    <option name="IS_EANABLED" value="false" />
+    <option name="DEBUGGING_INFO" value="true" />
+    <option name="GENERATE_NO_WARNINGS" value="false" />
+    <option name="GENERATE_IIOP_STUBS" value="false" />
+    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
+  </component>
+  <component name="TestDoxConfiguration">
+    <option name="createTestIfMissing" value="true" />
+    <option name="deletePackageOccurrences" value="true" />
+  </component>
+  <component name="ToggleTest">
+    <toggle from="*" to="*UnitTest" />
+    <toggle from="*" to="*AtomicTest" />
+  </component>
+  <component name="UMLDiagramComponent">
+    <diagram name="controller">
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.ActionResult" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.AntExecutionStrategy" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.BaseActionResult" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.BaseDispatchAction" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.BaseExecutionStrategy" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.Controller" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.DispatchAction" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.DispatchActionFactory" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.ErrorhandlerController" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.ExecExecutionStrategy" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.ExecutionStrategy" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.ExecutionStrategyFactory" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.HandlerContextDispatchAction" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.InvalidContextParameterException" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.ListDispatchAction" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.LocalDispatchExecutionStrategy" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.LocaldispatchFetchExecutionStrategy" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.NodeDispatchExecutionStrategy" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.ObjectContextDispatchAction" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.TaskContainerStrategy" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.TaskSequenceAdd" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.TaskSequenceCreate" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.Workflow" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.WorkflowAdd" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.WorkflowCreate" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.WorkflowDispatchAction" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.TestLocalDispatchExecutionStrategy" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.TestBaseActionResult" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.TestController" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.TestExecExecutionStrategy" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.TestHandlerContextDispatchAction" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.TestListDispatchAction" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.TestObjectContextDispatchAction" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.TestTaskSequenceAdd" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.TestTaskSequenceCreate" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.TestWorkflowAdd" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.tasks.controller.TestWorkflowCreate" />
+      <compartment-visibility />
+    </diagram>
+    <diagram name="CTL">
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.cli.CtlMain" />
+      <command command-class="de.frag.umlplugin.uml.command.AddClassCommand" psi-class="com.dtolabs.ctl.cli.CtlExec" />
+      <compartment-visibility />
+    </diagram>
+  </component>
+  <component name="VcsDirectoryMappings">
+    <mapping directory="" vcs="Git" />
+  </component>
+  <component name="WebServicesPlugin" addRequiredLibraries="true" />
+  <component name="com.intellij.jsf.UserDefinedFacesConfigs">
+    <option name="USER_DEFINED_CONFIGS">
+      <value>
+        <list size="0" />
+      </value>
+    </option>
+  </component>
+</project>
+

@@ -1,0 +1,73 @@
+<!--
+  ~ Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+  ~
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~
+  ~      http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~  Unless required by applicable law or agreed to in writing, software
+  ~  distributed under the License is distributed on an "AS IS" BASIS,
+  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  See the License for the specific language governing permissions and
+  ~  limitations under the License.
+  -->
+
+<!DOCTYPE project PUBLIC
+    "-//DTO Labs Inc.//DTD Resources Document 1.0//EN" "project.dtd">
+<prozject>
+
+  <deployment name="deployment1" type="Deployment1" description="description1" tags="tag5,tag6"
+              installRoot="installRoot1"
+              basedir="basedir1"
+              startuprank="startuprank1"
+
+      >
+      <transforms>
+          <transform
+              name="name1.file"
+              description="xformdesc1"
+              direction="direction1"
+              filetype="filetype1"
+              outputdir="outputdir1"
+              proximity="proximity1"
+              template="template1"
+              templatetype="templatetype1"
+              templatedir="templatedir1"
+
+              />
+      </transforms>
+
+  </deployment>
+  <deployment name="deployment2" type="Deployment2" description="description2" tags="tag1,tag2"
+              installRoot="installRoot2"
+              basedir="basedir2"
+              startuprank="startuprank2"
+
+      >
+      <transforms>
+          <transform
+              name="name2.file"
+              description="xformdesc2"
+              filetype="filetype2"
+              outputdir="outputdir2"
+              template="template2"
+              templatetype="templatetype2"
+              templatedir="templatedir2"
+              direction="direction2"
+              proximity="proximity2"/>
+          <transform
+              name="name3.file"
+              description="xformdesc3"
+              filetype="filetype3"
+              outputdir="outputdir3"
+              template="template3"
+              templatetype="templatetype3"
+              templatedir="templatedir3"
+              direction="direction3"
+              proximity="proximity3"/>
+      </transforms>
+
+  </deployment>
+</prozject>

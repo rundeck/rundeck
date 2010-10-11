@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <author email="vmassol@octo.com">Vincent Massol</author>
+    <title>Futures for the Clover Plug-in</title>
+  </properties>
+
+  <body>
+    <section name="Futures">
+      <p>
+        The following is a list of things that are being contemplated
+        for the Maven Clover Plug-in.
+      </p>
+      <ol>
+        <li>Also run integration unit tests before generating the reports</li>
+        <li>Export the name of the Clover database as a property</li>
+     </ol>
+   </section>
+ </body>
+</document>

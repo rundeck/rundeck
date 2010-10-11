@@ -1,0 +1,38 @@
+body {
+ background: @UI_BODY_BACKGROUND@;
+ color: @UI_BODY_FOREGROUND@;
+ }
+
+a:active, a:hover, #leftcol a:active, #leftcol a:hover {
+ color: @UI_HREF_LINK_ACTIVE@;
+ }
+
+#leftcol a:link, #leftcol a:visited {
+ color: @UI_HREF_LINK@;
+ }
+
+.a td { 
+ background: @UI_TABLE_ROW_ODD_BACKGROUND@;
+ color: @UI_TABLE_ROW_ODD_FOREGROUND@;
+ }
+
+.b td { 
+ background: @UI_TABLE_ROW_EVEN_BACKGROUND@;
+ color: @UI_TABLE_ROW_EVEN_FOREGROUND@;
+ }
+
+body .app th {
+ background-color: @UI_TABLE_HEADER_BACKGROUND@;
+ color: @UI_TABLE_HEADER_FOREGROUND@;
+ }
+
+#navcolumn div strong {
+ background: @UI_NAVCOL_BACKGROUND_NS4@;
+ color: @UI_NAVCOL_FOREGROUND_NS4@;
+ }
+
+#banner, #banner td { 
+ background: @UI_BANNER_BACKGROUND@;
+ color: @UI_BANNER_FOREGROUND@;
+ }
+

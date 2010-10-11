@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project>
+
+  <!-- the version of maven's project object model -->
+  <pomVersion>3</pomVersion>
+  
+  <!-- a unique name for this project -->
+  <id>maven-examples-simple-java</id>
+  
+  <!-- a short but descriptive name for the project -->
+  <name>Simple Java</name>
+  
+  <!-- The version of the project under development, e.g.
+       1.1, 1.2, 2.0-dev -->
+  <currentVersion>1.0-SNAPSHOT</currentVersion>
+  
+  <!-- details about the organization that 'owns' the project -->
+  <organization>
+    <name>Apache Software Foundation</name>
+    <url>http://jakarta.apache.org/</url>
+  </organization>
+  
+  <!-- the year the project started -->
+  <inceptionYear>2002</inceptionYear>
+  
+  <!-- the top level of java packages that this project defines
+       e.g. if your project contains the packages
+       com.mycompany.accounts.reports, com.mycompany.accounts.reports
+       and com.mycompany.accounts.utils, the package would be
+       'com.mycompany.accounts' -->
+  <package>org.apache.maven.examples.simplejava</package>
+  
+  <!-- a short description of what the project does -->
+  <shortDescription>A simple java project</shortDescription>
+
+  <!-- the project home page -->
+  <url>http://jakarta.apache.org/turbine/maven/</url>
+
+  <!-- the version control repository and http url for online access
+       the connection element has the form:
+       scm:<system>:<system specific connection string> -->
+  <repository>
+    <connection>scm:cvs:pserver:anoncvs@cvs.apache.org:/home/cvspublic:jakarta-turbine-maven</connection>
+    <url>http://cvs.apache.org/viewcvs/jakarta-turbine-maven/</url>
+  </repository>
+
+  <!-- any mailing lists for the project -->
+  <mailingLists/>
+  
+  <!-- who the developers are for the project -->
+  <developers />
+
+  <!-- jar files the project is dependent on -->
+  <dependencies/>
+  
+  <!-- build information for the project -->
+  <build>
+  	<sourceDirectory>src/java</sourceDirectory>
+  </build>
+
+</project>
+

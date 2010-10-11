@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <author email="vmassol@octo.com">Vincent Massol</author>
+    <title>Maven Clover Plug-in Properties Documentation</title>
+  </properties>
+
+  <body>
+    <section name="Maven Clover Plug-in Properties">
+      <p>
+        The following is an overview of the various properties (and
+        default values) used by the Maven Clover Plug-in <a
+          href="build-file.html">build file</a>. Most of these
+        properties are optional and have defaults; however, there are 
+        mandatory properties that must be set as described in this document.
+      </p>
+      <p>
+        These properties can be overridden to change the default behavior of
+        the Maven Clover Plug-in.  If you need to override any of these
+        properties, please refer to the
+        <a href="../../start/integrate.html">Integration</a>
+        document for the preferred method of setting properties in your project.  
+      </p>
+      <table>
+        <tr><th>Section</th><th>Description</th></tr>
+        <tr>
+          <td><a href="#Misc Settings">Misc</a></td>
+          <td>
+            These properties specify various settings that control the
+            behaviour of the Clover Plug-in.
+          </td>
+        </tr>
+      </table>
+    </section>
+
+    <section name="Misc Settings">
+      <table>
+        <tr><th>Property</th><th>Optional?</th><th>Description</th></tr>
+        <tr>
+          <td><a name="maven.clover.database.dir">maven.clover.database.dir</a></td>
+          <td>No</td>
+          <td>
+            Specifies the location of the Clover database. The default value is
+            <code>${maven.build.dir}/clover/database</code>.
+          </td>
+        </tr>
+      </table>
+    </section>
+  </body>
+</document>

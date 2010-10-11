@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<document>
+
+  <properties>
+    <title>Properties</title>
+    <author email="smor@apache.org">Stéphane MOR</author>
+    <author email="dion@multitask.com.au">dIon Gillard</author>
+  </properties>
+
+  <body>
+    <section name="Compile Settings">
+      <table>
+        <tr><th>Property</th><th>Optional?</th><th>Description</th></tr>
+        <tr>
+          <td>maven.compile.aspects</td>
+          <td>Yes</td>
+          <td>
+            Specifies that Aspects are included during compilation.
+            Used by the "java:compile" goal.
+            The default value is <code>false</code>.  Please
+            refer to the <a href="http://www.aspectj.org/">AspectJ</a>
+            web site for more information on Aspect-Oriented
+            Programming.
+          </td>
+        </tr>
+        <tr>
+          <td>maven.compile.compilerargs</td>
+          <td>Yes</td>
+          <td>
+            <p>
+              Provides arguments to a compiler when <code>maven.compile.fork</code>
+              is set to true
+            </p>
+            <p>
+              Corresponds to the nested <code>compilerarg</code> element for the ant 
+              <a href="http://jakarta.apache.org/ant/manual/CoreTasks/javac.html">javac</a>
+              task.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>maven.compile.debug</td>
+          <td>Yes</td>
+          <td>
+            Specifies wether to include debugging information in the compiled
+            class files; the default value is <code>on</code>.
+            Used by the "java:compile" goal.
+          </td>
+        </tr>
+        <tr>
+          <td>maven.compile.deprecation</td>
+          <td>Yes</td>
+          <td>
+            Specifies wether source should be compiled with deprecation
+            information; the default value is <code>off</code>.
+            Used by the "java:compile" goal.
+          </td>
+        </tr>
+        <tr>
+          <td>maven.compile.executable</td>
+          <td>Yes</td>
+          <td>
+            <p>
+              Names the program to be invoked as the java compiler
+            </p>
+            <p>
+              Corresponds to the <code>executable</code> attribute for the ant 
+              <a href="http://jakarta.apache.org/ant/manual/CoreTasks/javac.html">javac</a>
+              task.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>maven.compile.fork</td>
+          <td>Yes</td>
+          <td>
+            <p>
+              Runs the compiler in a separate process
+            </p>
+            <p>
+              Corresponds to the <code>fork</code> attribute for the ant 
+              <a href="http://jakarta.apache.org/ant/manual/CoreTasks/javac.html">javac</a>
+              task.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>maven.compile.optimize</td>
+          <td>Yes</td>
+          <td>
+            Specifies whether source should be compiled with optimization; the
+            default value is <code>off</code>.  
+            Used by the "java:compile" goal.
+          </td>
+        </tr>
+        <tr>
+          <td>maven.compile.source</td>
+          <td>Yes</td>
+          <td>
+            <p>
+              Provide source compatibility with a specific release
+            </p>
+            <p>
+              Corresponds to the <code>source</code> attribute for the ant 
+              <a href="http://jakarta.apache.org/ant/manual/CoreTasks/javac.html">javac</a>
+              task.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td>maven.compile.target</td>
+          <td>Yes</td>
+          <td>
+            <p>
+              Generate class files for a specific JVM version
+            </p>
+            <p>
+              Corresponds to the <code>target</code> attribute for the ant 
+              <a href="http://jakarta.apache.org/ant/manual/CoreTasks/javac.html">javac</a>
+              task.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </section>
+    <section name="Jar Settings">
+      <table>
+        <tr>
+          <td>maven.jar.excludes</td>
+          <td>Yes</td>
+          <td>
+            Specifies a list of patterns to exclude from the jar process.
+            The default value is <code>**/package.html</code>, and is used
+            by the "java:jar" target.
+          </td>
+        </tr>
+        <tr>
+          <td>maven.jar.manifest</td>
+          <td>Yes</td>
+          <td>
+            Specifies the manifest to be used in the creation of a jar.
+            This file is 'merged' with the default manifest created by
+            Maven. Any values specified in the file referenced by this 
+            property will override Maven's defaults.
+          </td>
+        </tr>
+      </table>
+    </section>
+  </body>
+</document>

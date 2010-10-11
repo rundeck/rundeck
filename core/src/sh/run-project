@@ -1,0 +1,68 @@
+#!/bin/sh
+
+#
+# $Revision: 1084 $
+#
+
+
+errorMsg() {
+   echo "$*" 1>&2
+}
+log () {
+        echo ${1}: ${2}
+}
+
+#
+# This hack checks if this shell script was called within (most probably) a cygwin context
+# during an ssh to a windows box and if so, to actually exec the .bat batch file instead.
+#
+if [ -n "$OS" -a "$OS" = "Windows_NT" ]
+then
+   exec cmd.exe /C $RDECK_HOME/bin/run-project.bat "$@" --cygwin
+fi
+
+if [ "${RDECK_BASE}X" = "X" ]
+then
+   #determine base
+   PDIR=$(cd `dirname $0/`/../.. && pwd)
+   if [ -f "$PDIR/etc/framework.properties" ]
+   then
+       export RDECK_BASE=$PDIR
+   fi
+fi
+if [ "${RDECK_BASE}X" = "X" ]
+then
+    errorMsg "RDECK_BASE was not set"
+    exit 1
+fi
+
+if [ ! -r $RDECK_BASE/etc/profile ]; then
+   errorMsg "Unable to source $RDECK_BASE/etc/profile"
+   exit 1
+fi
+
+. $RDECK_BASE/etc/profile
+
+
+
+
+LIBDIR=$RDECK_HOME/tools/lib
+cp=
+for i in `ls $LIBDIR/*.jar`
+do
+  cp=${cp}:${i}
+done
+
+#cp=$RDECK_HOME/classes:$ANT_HOME/lib/xerces-2.6.0.jar:$ANT_HOME/lib/xml-apis.jar
+
+#
+# Launch the cmdline tool
+#
+exec $JAVA_HOME/bin/java -classpath $cp \
+     -Drdeck.base=$RDECK_BASE \
+     -Drdeck.home=$RDECK_HOME \
+     -Djava.protocol.handler.pkgs=com.sun.net.ssl.internal.www.protocol  \
+     -Djavax.net.ssl.trustStore=$RDECK_BASE/etc/truststore \
+     -Djavax.net.ssl.trustStoreType=jks  \
+     -Drdeck.traceExceptions=$RUNDECK_TRACE_EXCEPTIONS \
+     com.dtolabs.rundeck.core.cli.project.ProjectTool "$@"

@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+
+<project xmlns:j="jelly:core">
+
+  <!--==================================================================-->
+  <!-- Compile all source code, weaving the Aspects                     -->
+  <!--==================================================================-->    
+  <goal name="aspectj"
+    description="Compile code with AspectJ"
+    prereqs="aspectj:compile"/>
+
+  <goal name="aspectj:compile"
+    description="Compile code with AspectJ">
+  
+    <j:if test="${sourcesPresent == 'true'}">
+
+      <taskdef name="ajc" classname="org.aspectj.tools.ant.taskdefs.Ajc"/>
+
+      <available property="aspectSourcesPresent"
+        file="${pom.build.aspectSourceDirectory}"/>
+
+      <uptodate property="aspectj.compile.notRequired" 
+        targetfile="${maven.build.dir}/${maven.final.name}.jar">
+        <srcfiles dir="${pom.build.sourceDirectory}"/>
+        <j:if test="${aspectSourcesPresent == 'true'}">
+          <srcfiles dir="${pom.build.aspectSourceDirectory}"/>
+        </j:if>
+      </uptodate>
+
+      <j:set var="aspectjCompileNotRequired" value="${aspectj.compile.notRequired}"/>
+      <j:if test="${aspectjCompileNotRequired == null}">
+
+        <ajc
+          destdir="${maven.build.dest}"
+          excludes="**/package.html"
+          debug="${maven.compile.debug}"
+          deprecation="${maven.compile.deprecation}"
+          optimize="${maven.compile.optimize}">
+
+          <src>
+            <path refid="maven.compile.src.set"/>
+              <j:if test="${aspectSourcesPresent == 'true'}">
+                <pathelement location="${pom.build.aspectSourceDirectory}"/>
+              </j:if>
+          </src>
+      
+          <j:forEach var="sm" items="${pom.build.sourceModifications}">
+            <available property="classPresent" classname="${sm.className}"/>
+            <j:if test="${classPresent != 'true'}">
+              <j:forEach var="exclude" items="${sm.excludes}">
+                <exclude name="${exclude}"/>
+              </j:forEach>
+            </j:if>
+          </j:forEach>
+      
+          <classpath>
+            <path refid="maven.dependency.classpath"/>
+            <pathelement path="${maven.build.dest}"/>
+            <pathelement path="${plugin.getDependencyPath('aspectj:aspectjrt')}"/>
+          </classpath>
+        </ajc>
+
+      </j:if>
+
+	</j:if>
+	    
+  </goal>
+
+</project>

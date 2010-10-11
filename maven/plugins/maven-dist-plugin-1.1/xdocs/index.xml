@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <title>Maven Distribution Plug-in</title>
+    <author email="jason@zenplex.com">Jason van Zyl</author>
+  </properties>
+
+  <body>
+    <section name="Maven Distribution Plug-in">
+      <p>
+        This plugin produces consistent distributions that can be used
+        for releases and snapshots.
+      </p>
+    </section>
+ </body>
+</document>

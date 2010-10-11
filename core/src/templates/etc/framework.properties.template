@@ -1,0 +1,202 @@
+# framework.properties -
+#
+# $Id: framework.properties.template 2128 2010-08-17 21:29:24Z ahonor $
+#
+
+# ----------------------------------------------------------------
+# Installation specific settings
+# ----------------------------------------------------------------
+
+java.home = @user.java_home@
+file.separator = @file.separator@
+rdeck.base =@rdeck.base@
+rdeck.home =@rdeck.home@
+user.home =@user.home@
+
+framework.application.libpath =@framework.application.libpath@
+framework.application.properties =@framework.application.properties@
+
+#
+# Email settings
+#
+# recipient addresses to send email (comma separated)
+framework.email.tolist = @framework.email.tolist@
+# email address appearing in message "from" field
+framework.email.from = @framework.email.from@
+# email address replies should go
+framework.email.replyto = @framework.email.replyto@
+# The rdeck email relay host. must be a functioning smtp relay server
+framework.email.mailhost = @framework.email.mailhost@
+framework.email.mailport = @framework.email.mailport@
+# User/pass info if the smtp server requires it
+framework.email.user = @framework.email.user@
+framework.email.password = @framework.email.password@
+framework.email.ssl = @framework.email.ssl@
+framework.email.failonerror = @framework.email.failonerror@
+
+# ----------------------------------------------------------------
+# Do not make changes below this line 
+# ----------------------------------------------------------------
+
+
+#
+# framework.crypto.keystore.filename is the path to the JKS keystore containing a certchain for
+# verifying signed jars
+# 
+framework.crypto.keystore.filename = @framework.crypto.keystore.filename@
+
+#
+# framework.crypto.keystore.password is any password for verifying the keystore integrity
+#
+framework.crypto.keystore.password = @framework.crypto.keystore.password@
+
+#
+# framework.crypto.jarSigning.aliasName  is the name of the cert alias to use for verification
+#
+framework.crypto.jarSigning.aliasName = @framework.crypto.jarSigning.aliasName@
+
+
+
+#the hostname of this rdeck node (likely matches hostname)
+framework.node.hostname = @framework.node.hostname@
+
+#the logical name of this rdeck node (used during Node registration)
+framework.node.name = @framework.node.name@
+
+# for backwards compatability
+framework.node = @framework.node.hostname@
+
+# the node type
+framework.node.type = @framework.node.type@
+
+# 
+#
+# Version of this RUNDECK implementation
+#
+framework.rdeck.version = @framework.rdeck.version@
+
+#
+# Root directory of the framework pkg
+#
+framework.rdeck.dir = ${rdeck.home}
+
+#
+# Root directory of the framework instance
+#
+framework.rdeck.base = @rdeck.base@
+
+#
+# Base directory of the installed functional modules
+#
+framework.modules.dir = @rdeck.base@@file.separator@modules
+
+
+#
+# project spaces containing resources
+#
+framework.projects.dir= @rdeck.base@@file.separator@projects
+framework.depots.dir= @rdeck.base@@file.separator@projects
+
+#
+# directory containing instance based property files
+#
+framework.etc.dir= @framework.etc.dir@
+
+#
+# Base directory where instance of framework var dir is kept
+#
+framework.var.dir= @framework.var.dir@
+
+#
+# Framework tmp dir
+#
+framework.tmp.dir= ${framework.var.dir}@file.separator@tmp
+
+#
+# Base directory where logs are kept
+#
+framework.logs.dir=${framework.var.dir}@file.separator@logs
+
+#
+# Date/time stamp format used in logs. See java.text.SimpleDateFormat
+#
+framework.log.format=[yyyy-MM-dd hh:mm:ss-Z]
+
+
+#
+# Base directory where module source code is kept
+#
+framework.src.dir= @framework.src.dir@
+
+#
+# Name of nodes metadata file for each project (e.g. nodes.xml/nodes.properties)
+#
+framework.nodes.file.name= @framework.nodes.file.name@
+
+#
+# Local Authentication/Authorization Security
+#
+framework.authorization.class = @framework.authorization.class@
+framework.authentication.class = @framework.authentication.class@
+#
+# Remote Client connection authentication
+#
+framework.nodeauthentication.classname = @framework.nodeauthentication.classname@
+
+#
+# Remote Central Dispatcher service class
+#
+framework.centraldispatcher.classname = @framework.centraldispatcher.classname@
+
+#
+#
+# rdeck server connection.
+#
+framework.server.username = @framework.server.username@
+framework.server.password = @framework.server.password@
+framework.server.hostname = @framework.server.hostname@
+framework.server.name = @framework.server.name@
+framework.server.port = @framework.server.port@
+framework.server.url = @framework.server.url@
+
+#
+# URL to Rundeck
+#
+framework.rundeck.url = @framework.rundeck.url@
+
+#
+# ssh keypath
+#  
+framework.ssh.keypath = @framework.ssh.keypath@
+
+#
+# ssh user
+#
+framework.ssh.user = @framework.ssh.user@
+
+
+#
+# ssh timeout. The connection can be dropped after a specified number of milliseconds.
+# A "0" value means wait forever.
+#
+framework.ssh.timeout = 30000
+
+#
+# Set the formatting for run-exec console output
+#
+# Examples:
+# 1) Format specification to work with Rundeck. %command will be "run-exec"
+#
+# framework.log.run-exec.console.format =[%user@%node %command][%level] %message
+#
+framework.log.run-exec.console.format =[%user@%node %command][%level] %message
+
+#
+# The default project name
+#
+framework.project.default.name = @framework.project.default.name@
+
+#
+# Flag controlling if a default project will be created. true or leave unset
+#
+framework.project.default.create = @framework.project.default.create@

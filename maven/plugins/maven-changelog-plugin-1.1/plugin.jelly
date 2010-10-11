@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+
+<project 
+  xmlns:j="jelly:core" 
+  xmlns:define="jelly:define"
+  xmlns:changelog="changelog">
+
+  <!-- ================================================================== -->
+  <!-- C H A N G E  L O G  R E P O R T                                    -->
+  <!-- ================================================================== -->
+
+  <goal name="changelog"
+        description="Generate a changelog report"
+        prereqs="changelog:generate"/>
+
+  <goal name="changelog:generate"
+        description="Generate a changelog report">
+
+    <j:choose>
+      <j:when test="${maven.mode.online}">
+      <define:taglib uri="changelog">
+        <define:jellybean
+          name="changelog"
+          className="org.apache.maven.changelog.ChangeLog"
+          method="doExecute"
+        />
+      </define:taglib>
+
+      <mkdir dir="${maven.build.dir}/generated-xdocs"/>
+
+      <changelog:changelog
+        projectDescriptor="project.xml"
+        basedir="${basedir}"
+        output="${maven.gen.docs}/changelog.xml"
+        range="${maven.changelog.range}"
+        factory="${maven.changelog.factory}"
+        outputEncoding="${maven.docs.outputencoding}"
+        project="${maven.ant.project}"
+        mavenProject="${pom}"
+      />
+      </j:when>
+
+      <j:otherwise>
+        <echo>The Changelog is available in the online mode only.</echo>
+      </j:otherwise>
+    </j:choose>
+
+  </goal>
+
+</project>

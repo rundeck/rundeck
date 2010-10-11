@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<document>
+  <properties>
+    <title>Changes</title>
+    <author email="vmassol@octo.com">Vincent Massol</author>
+  </properties>
+
+  <releases>
+    <release version="1.1" date="in CVS">
+      <action dev="vmassol" type="update">
+        The Clover plugin now depends on version 1.0 of the Clover jar.
+      </action>
+      <action dev="vmassol" type="add">
+        A special 30-days redistributable clover 1.0 jar (fully functional) 
+        has been uploaded to Maven remote repository, making this plugin 
+        transparent to use.
+      </action>
+      <action dev="vmassol" type="add">
+        Creation of this changes page.
+      </action>
+    </release>
+    <release version="1.0" date="unknown">
+      <action dev="vmassol" type="unknown">
+        This changes did not exist at that time. Please refer to CVS for
+        history changes before version 1.1.
+      </action>
+    </release>
+  </releases>
+</document>
+

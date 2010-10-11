@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+
+<project 
+  xmlns:j="jelly:core"
+  xmlns:define="jelly:define"
+  xmlns:tasklist="tasklist">
+
+  <!-- ================================================================== -->
+  <!-- T A S K   C R E A T I O N                                          -->
+  <!-- ================================================================== -->
+
+  <goal name="tasklist"
+        description="Generate a list of tasks from @task tags in your code">
+    <attainGoal name="tasklist:generate"/>
+  </goal>
+
+  <goal 
+    name="tasklist:generate">
+
+    <j:if test="${sourcesPresent == 'true'}">
+
+    <define:taglib uri="tasklist">
+      <define:jellybean
+        name="tasklist"
+        className="org.apache.maven.tasklist.TaskListExecutor"
+        method="doExecute"
+      />
+    </define:taglib>
+
+    <mkdir dir="${maven.gen.docs}"/>
+
+    <tasklist:tasklist
+      projectDescriptor="project.xml"
+      base="${maven.src.dir}"
+      includes="**/*.java"
+      outputFile="${maven.gen.docs}/task-list.xml"
+      outputEncoding="${maven.docs.outputencoding}"
+      project="${maven.ant.project}"
+      mavenProject="${pom}"
+    />
+
+    </j:if>
+
+  </goal>
+
+</project>

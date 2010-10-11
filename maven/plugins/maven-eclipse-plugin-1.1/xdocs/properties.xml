@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<document>
+
+  <properties>
+    <title>Eclipse Properties</title>
+    <author email="vmassol@octo.com">Vincent Massol</author>
+    <author email="dion@apache.org">dIon Gillard</author>
+  </properties>
+
+  <body>
+    <section name="Eclipse Settings">
+      <table>
+        <tr><th>Property</th><th>Optional?</th><th>Description</th></tr>
+        <tr>
+          <td>maven.eclipse.workspace</td>
+          <td>Yes</td>
+          <td>
+			Location of the <a href="http://www.eclipse.org">Eclipse</a>
+			workspace that holds your configuration and source.
+			<p>
+			  On Windows, this will be the <code>workspace</code> directory
+			  under your eclipse installation. For example, if you installed
+			  eclipse into <code>c:\eclipse</code>, the workspace is 
+			  <code>c:\eclipse\workspace</code>.
+			</p>
+			<p>
+			  If this parameter is specified, the <a href="goals.html#eclipse:external-tools">
+			  external-tools</a> goal will use it as the destination to copy the generated file.
+            </p>
+          </td>
+        </tr>
+      </table>
+	  <p>
+		Note that you will need to defined a <code>MAVEN_REPO</code> Java 
+		Classpath variable in Eclipse. This is done by selecting the Window
+		menu, then Preferences. In the dialog box, select the Java node and
+		then Classpath Variables. Create a new variable named 
+		<code>MAVEN_REPO</code> that points to your local Maven repository.
+	  </p>
+    </section>
+  </body>
+</document>

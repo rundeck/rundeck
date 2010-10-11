@@ -1,0 +1,301 @@
+#######################################################################
+## J D E P E N D    D V S L    S T Y L E S H E E T                   ##
+#######################################################################
+
+## This stylesheet is used to transform the output of JDepend's xml
+## generator.  The XML is transformed into a standard xdoc that can
+## then be transformed (yet again) using whatever stylesheet is used
+## to format one's site.
+##
+## Based on the XSL stylesheet jdepend.xsl from Ant.
+##
+## Version: $Id: jdepend.dvsl 4 2005-09-01 19:52:40Z connary_scott $
+
+#######################################################################
+## V E L O C I T Y    M A C R O S                                    ##
+#######################################################################
+
+## Prints a standard navbar for navigation.
+##
+#macro (navbar)
+      <p>
+        [<a href="#Summary">summary</a>]
+        [<a href="#Packages">packages</a>]
+        [<a href="#Cycles">cycles</a>]
+        [<a href="#Explanations">explanations</a>]
+      </p>
+#end
+
+## Used to print the abstract and concrete classes that a package
+## contains.  Also removes the leading package information from 
+## the fully qualified class (to conserve screen space).  Also, 
+## creates a link to the xref sources so users can quickly navigate
+## the code.
+##
+#macro (classes $currentNode $xpath)
+    #if (! $currentNode.get($xpath))
+        <i>None</i>
+    #end
+    #foreach ($class in $currentNode.selectNodes($xpath))
+        #set ($index = $class.value().lastIndexOf('.'))
+        #set ($index = $index + 1)
+        #set ($dir = $context.toolbox.strings.replace($class.value(), ".", "/"))
+        <a href="xref/${dir}.html">$class.value().substring($index)</a><br/>
+    #end
+#end
+
+## Used to print the "used" and "used by" packages.  Also, creates a
+## link to the appropriate package in the report.  
+##
+#macro (packages $currentNode $xpath)
+    #if (! $currentNode.get($xpath))
+        <i>None</i>
+    #end
+    #foreach ($class in $currentNode.selectNodes($xpath))
+        <a href="#${class.value()}">$class.value()</a><br/>
+    #end
+#end
+
+## Convert a string that represents a number using the specified
+## pattern.  
+##
+#macro (formatAsNumber $string $pattern)
+    #set ($value = $context.toolbox.numbers.parse($string))
+    $context.toolbox.formatter.formatNumber($value, $pattern)
+#end
+
+#######################################################################
+## T E M P L A T E    D E F I N I T I O N S                          ## 
+####################################################################### 
+
+## Matches the root element of the JDepend XML report.
+##
+#match ("JDepend")
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <title>JDepend Source Code Analysis</title>
+  </properties>
+
+  <body>
+    ###################################################################
+    <section name="Metric Results">
+      #navbar ()
+      <p>
+        The following document contains the results of a <a
+        href="http://www.clarkware.com/software/JDepend.html">JDepend</a>
+        metric analysis.  The various metrics are defined at the bottom
+        of this document.
+      </p>
+    </section>
+
+    ###################################################################
+    <section name="Summary">
+      #navbar ()
+      <table>
+        <tr>
+          <th>Package</th>
+          <th><font size="-1">Total<br/>Classes</font></th>
+          <th><font size="-1">Abstract<br/>Classes</font></th>
+          <th><font size="-1">Concrete<br/>Classes</font></th>
+          <th><font size="-1">Afferent<br/>Couplings</font></th>
+          <th><font size="-1">Efferent<br/>Couplings</font></th>
+          <th><font size="-1">Abstractness</font></th>
+          <th><font size="-1">Instability</font></th>
+          <th><font size="-1">Distance</font></th>
+        </tr>
+
+      #foreach ($package in $node.selectNodes("./Packages/Package"))
+          #if (! $package.get("error"))
+        <tr>
+          <td>
+            <a href="#$package.attribute("name")">$package.attribute("name")</a>
+          </td>
+          <td align="right">$package.valueOf("Stats/TotalClasses")</td>
+          <td>$package.valueOf("Stats/AbstractClasses")</td>
+          <td>$package.valueOf("Stats/ConcreteClasses")</td>
+          <td>$package.valueOf("Stats/Ca")</td>
+          <td>$package.valueOf("Stats/Ce")</td>
+          <td>#formatAsNumber ($package.valueOf("Stats/A") "0%")</td>
+          <td>#formatAsNumber ($package.valueOf("Stats/I") "0%")</td>
+          <td>#formatAsNumber ($package.valueOf("Stats/D") "0%")</td>
+        </tr>
+          #end
+      #end
+
+      #foreach ($package in $node.selectNodes("./Packages/Package"))
+          #if ($package.get("error"))
+        <tr>
+          <td colspan="1">$package.attribute("name")</td>
+          <td colspan="8">$package.valueOf("error")</td>
+        </tr>
+          #end
+      #end
+      </table>
+    </section>
+
+    ###################################################################
+    <section name="Packages">
+      #navbar ()
+
+      #foreach ($package in $node.selectNodes("./Packages/Package"))
+          #if (! $package.get("error"))
+        <subsection name="${package.attribute('name')}">
+          <table>
+            <tr>
+              <th>Afferent Couplings</th>
+              <th>Efferent Couplings</th>
+              <th>Abstractness</th>
+              <th>Instability</th>
+              <th>Distance</th>
+            </tr>
+            <tr>
+              <td>$package.valueOf("Stats/Ca")</td>
+              <td>$package.valueOf("Stats/Ce")</td>
+              <td>#formatAsNumber ($package.valueOf("Stats/A") "0%")</td>
+              <td>#formatAsNumber ($package.valueOf("Stats/I") "0%")</td>
+              <td>#formatAsNumber ($package.valueOf("Stats/D") "0%")</td>
+            </tr>
+          </table>
+
+          <table>
+            <tr>
+              <th>Abstract Classes</th>
+              <th>Concrete Classes</th>
+              <th>Used by Packages</th>
+              <th>Uses Packages</th>
+            </tr>
+            <tr>
+              <td>#classes ($package "AbstractClasses/Class")</td>
+              <td>#classes ($package "ConcreteClasses/Class")</td>
+              <td>#packages ($package "UsedBy/Package")</td>
+              <td>#packages ($package "DependsUpon/Package")</td>
+            </tr>
+          </table>
+        </subsection>
+          #end
+      #end
+    </section>
+
+    ###################################################################
+    <section name="Cycles">
+      #navbar ()
+
+      #if (! $node.get("Cycles/Package"))
+        <p>There are no cyclic dependancies.</p>
+
+      #else
+        <table>
+          <tr>
+            <th>Package</th>
+            <th>Cyclic Dependencies</th>
+          </tr>
+          
+          #foreach ($cycle in $node.selectNodes("./Cycles/Package"))
+          <tr> 
+            <td>$cycle.attribute('Name')</td>
+            <td>
+            #foreach ($package in $cycle.selectNodes("Package"))
+              $package.value()<br/>
+            #end
+            </td>
+          </tr>
+          #end
+
+        </table>
+      #end
+    </section>
+
+    ###################################################################
+    <section name="Explanations">
+      #navbar ()
+
+      <p>
+        The following explanations are for quick reference and are
+        lifted directly from the original <a
+        href="http://www.clarkware.com/software/JDepend.html">JDepend
+        documentation</a>.
+      </p>
+      
+      <table>
+        <tr>
+          <th>Term</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td>Number of Classes</td>
+          <td>
+            The number of concrete and abstract classes (and interfaces)
+            in the package is an indicator of the extensibility of the
+            package.
+          </td>
+        </tr>
+        <tr>
+          <td>Afferent Couplings</td>
+          <td>
+            The number of other packages that depend upon classes within
+            the package is an indicator of the package's responsibility.
+          </td>
+        </tr>
+        <tr>
+          <td>Efferent Couplings</td>
+          <td>
+            The number of other packages that the classes in the package
+            depend upon is an indicator of the package's independence.
+          </td>
+        </tr>
+        <tr>
+          <td>Abstractness</td> 
+          <td>
+            The ratio of the number of abstract classes (and interfaces)
+            in the analyzed package to the total number of classes in
+            the analyzed package.  The range for this metric is 0 to 1,
+            with A=0 indicating a completely concrete package and A=1
+            indicating a completely abstract package.
+          </td>
+        </tr>
+        <tr>
+          <td>Instability</td>
+          <td>
+            The ratio of efferent coupling (Ce) to total coupling (Ce /
+            (Ce + Ca)). This metric is an indicator of the package's
+            resilience to change.  The range for this metric is 0 to 1,
+            with I=0 indicating a completely stable package and I=1
+            indicating a completely instable package.
+          </td>
+        </tr>
+        <tr>
+          <td>Distance</td>
+          <td>
+            The perpendicular distance of a package from the idealized
+            line A + I = 1. This metric is an indicator of the package's
+            balance between abstractness and stability.  A package
+            squarely on the main sequence is optimally balanced with
+            respect to its abstractness and stability. Ideal packages
+            are either completely abstract and stable (x=0, y=1) or
+            completely concrete and instable (x=1, y=0).  The range for
+            this metric is 0 to 1, with D=0 indicating a package that is
+            coincident with the main sequence and D=1 indicating a
+            package that is as far from the main sequence as possible. 
+          </td>
+        </tr>
+        <tr>
+          <td>Cycles</td>
+          <td>
+            Packages participating in a package dependency cycle are in
+            a deadly embrace with respect to reusability and their
+            release cycle. Package dependency cycles can be easily
+            identified by reviewing the textual reports of dependency
+            cycles. Once these dependency cycles have been identified
+            with JDepend, they can be broken by employing various
+            object-oriented techniques.
+          </td>
+        </tr>
+      </table>
+    </section>
+
+  </body>
+</document>
+#end
+

@@ -1,0 +1,57 @@
+<project name="rundeck" default="dist">
+  <!--
+  **
+  ** Simple wrapper around grails commands
+  **
+  -->
+    <property file="application.properties"/>
+    <property file="build.properties"/>
+    <property name="proj.name" value="${app.name}"/>
+    <property name="proj.vers" value="${app.version}"/>
+
+    <target name="-checkversion">
+        <condition property="version.properties.available">
+            <and>
+                <isset property="version.properties"/>
+                <available file="${version.properties}" type="file"/>
+            </and>
+        </condition>
+    </target>
+    <target name="-getversion" if="version.properties.available">
+        <property file="${version.properties}"/>
+    </target>
+
+    <target name="config" description="update build number in app messages.properties" depends="-checkversion,-getversion">
+        <tstamp/>
+        <property name="version.build" value="${DSTAMP}"/>
+        <property name="version.number" value="${proj.vers}"/>
+        <property name="version.ident" value="${proj.vers}.${DSTAMP}"/>
+        <echo>build ident: ${version.ident}</echo>
+
+    </target>
+
+    <target name="dist" depends="clean,config,war">
+    </target>
+
+    <target name="test">
+        <exec executable="grails" failonerror="true">
+            <arg line="test-app"/>
+        </exec>
+    </target>
+
+    <target name="clean">
+        <exec executable="grails" failonerror="true">
+            <arg line="clean"/>
+        </exec>
+    </target>
+
+    <target name="war">
+        <!--<exec executable="grails">
+            <arg line=" upgrade - -force"/>
+        </exec>
+        -->
+        <exec executable="grails" failonerror="true">
+            <arg line=" prod war"/>
+        </exec>
+    </target>
+</project>

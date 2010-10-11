@@ -1,0 +1,921 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+
+<project name="maven-j2ee" default="war" basedir="..">
+
+  <!-- ================================================================== -->
+  <!-- I N I T                                                            -->
+  <!-- ================================================================== -->
+  <target name="init" unless="maven.init">
+    <taskdef
+      name="create-classpath"
+      classname="org.apache.maven.ant.CreateClasspath">
+      <classpath>
+        <pathelement location="${maven.repo.local}/maven.jar"/>
+      </classpath>
+    </taskdef>
+
+    <create-classpath
+      listFile="${maven.home}/plugins/core/jars.list"
+      reference="pre-maven-classpath"
+      baseDir="${maven.repo.local}"
+    />
+
+    <path id="maven-classpath">
+      <path refid="pre-maven-classpath"/>
+      <pathelement location="${maven.repo.local}/maven.jar"/>
+    </path>
+
+    <!-- define maven taskdefs, as taskdefs are not yet inheritable? -->
+    <taskdef resource="maven-taskdefs.properties">
+      <classpath refid="maven-classpath" />
+    </taskdef>
+
+    <property name="maven.init" value="true" />
+
+    <!-- call common build file initialization to verify project, update jars
+         load project and default properties etc -->
+    <maven-ant antfile="${maven.home}/plugins/core/build-init.xml"
+      target="verify-project"
+      inheritAll="true"
+      inheritRefs="true"
+      exportAll="true"
+      exportRefs="true"/>
+
+  </target>
+
+  <!-- ================================================================== -->
+  <!-- L O C A L   I N I T                                                -->
+  <!-- ================================================================== -->
+
+  <target name="local-init" depends="init">
+    <!-- Pick up tool specific defaults -->
+    <property file="${maven.home}/plugins/j2ee/default.properties"/>
+
+    <!-- ear -->
+    <condition property="maven.j2ee.callback.pre-ear.ok">
+      <and>
+        <available file="${maven.j2ee.callback.pre-ear.buildFile}"/>
+        <not>
+          <equals arg1="${maven.j2ee.callback.pre-ear.buildTarget}"
+                  arg2="$${maven.j2ee.callback.pre-ear.buildTarget}" />
+        </not>
+      </and>
+    </condition>
+
+    <condition property="maven.j2ee.callback.post-ear.ok">
+      <and>
+        <available file="${maven.j2ee.callback.post-ear.buildFile}"/>
+        <not>
+          <equals arg1="${maven.j2ee.callback.post-ear.buildTarget}"
+                  arg2="$${maven.j2ee.callback.post-ear.buildTarget}" />
+        </not>
+      </and>
+    </condition>
+
+    <!-- ejb -->
+    <condition property="maven.j2ee.callback.pre-ejb.ok">
+      <and>
+        <available file="${maven.j2ee.callback.pre-ejb.buildFile}"/>
+        <not>
+          <equals arg1="${maven.j2ee.callback.pre-ejb.buildTarget}"
+                  arg2="$${maven.j2ee.callback.pre-ejb.buildTarget}" />
+        </not>
+      </and>
+    </condition>
+
+    <condition property="maven.j2ee.callback.post-ejb.ok">
+      <and>
+        <available file="${maven.j2ee.callback.post-ejb.buildFile}"/>
+        <not>
+          <equals arg1="${maven.j2ee.callback.post-ejb.buildTarget}"
+                  arg2="$${maven.j2ee.callback.post-ejb.buildTarget}" />
+        </not>
+      </and>
+    </condition>
+
+    <!-- validate-war -->
+    <condition property="maven.j2ee.callback.pre-validate-war.ok">
+      <and>
+        <available file="${maven.j2ee.callback.pre-validate-war.buildFile}"/>
+        <not>
+          <equals arg1="${maven.j2ee.callback.pre-validate-war.buildTarget}"
+                  arg2="$${maven.j2ee.callback.pre-validate-war.buildTarget}" />
+        </not>
+      </and>
+    </condition>
+
+    <condition property="maven.j2ee.callback.post-validate-war.ok">
+      <and>
+        <available file="${maven.j2ee.callback.post-validate-war.buildFile}"/>
+        <not>
+          <equals arg1="${maven.j2ee.callback.post-validate-war.buildTarget}"
+                  arg2="$${maven.j2ee.callback.post-validate-war.buildTarget}" />
+        </not>
+      </and>
+    </condition>
+
+    <!-- war -->
+    <condition property="maven.j2ee.callback.pre-war.ok">
+      <and>
+        <available file="${maven.j2ee.callback.pre-war.buildFile}"/>
+        <not>
+          <equals arg1="${maven.j2ee.callback.pre-war.buildTarget}"
+                  arg2="$${maven.j2ee.callback.pre-war.buildTarget}" />
+        </not>
+      </and>
+    </condition>
+
+    <condition property="maven.j2ee.callback.post-war.ok">
+      <and>
+        <available file="${maven.j2ee.callback.post-war.buildFile}"/>
+        <not>
+          <equals arg1="${maven.j2ee.callback.post-war.buildTarget}"
+                  arg2="$${maven.j2ee.callback.post-war.buildTarget}" />
+        </not>
+      </and>
+    </condition>
+
+  </target>
+
+  <!-- ================================================================== -->
+  <!-- W A R                                                              -->
+  <!-- ================================================================== -->
+
+  <!-- build a war file -->
+  <target name="war" depends="local-init, pre-war-callback, war-init,
+    war-error, war-build, post-war-callback"
+    description="o Create a war file" />
+
+  <!-- check to make sure all files and properties are available -->
+  <target name="war-init">
+    <condition property="maven.j2ee.war.ready">
+      <and>
+        <not>
+          <equals arg1="${maven.j2ee.war.name}" arg2="$${maven.j2ee.war.name}"/>
+        </not>
+        <available file="${maven.j2ee.war.src}" type="dir"/>
+        <available file="${maven.j2ee.war.content}" type="dir"/>
+        <available file="${maven.j2ee.war.webxml}" type="file"/>
+      </and>
+    </condition>
+  </target>
+
+  <!-- print failure message if files and properties not available -->
+  <target name="war-error" unless="maven.j2ee.war.ready">
+    <fail>
+    +------------------------------------------------------------------------------
+    |
+    | ERROR: One of the required properties for maven:war was not provided.
+    |
+    |        Please ensure that the property maven.j2ee.war.name is defined:
+    |
+    |        maven.j2ee.war.name = ${maven.j2ee.war.name}
+    |
+    |        Please ensure that the following directories exist:
+    |
+    |        ${maven.j2ee.war.src}
+    |        ${maven.j2ee.war.content}
+    |
+    |        and the following files:
+    |
+    |        ${maven.j2ee.war.webxml}
+    +------------------------------------------------------------------------------
+    </fail>
+  </target>
+
+  <!-- process any user specified pre-war callback -->
+  <target name="pre-war-callback" if="maven.j2ee.callback.pre-war.ok">
+    <maven-ant antfile="${maven.j2ee.callback.pre-war.buildFile}"
+      target="${maven.j2ee.callback.pre-war.buildTarget}"
+      inheritRefs="true" exportAll="false" exportRefs="false"/>
+  </target>
+
+  <!-- build the war file from the various sources -->
+  <target name="war-build">
+    <!-- make sure the source is compiled -->
+    <maven-ant antfile="${maven.home}/plugins/core/build.xml"
+      inheritRefs="true" exportAll="false" exportRefs="false" target="jar" />
+
+    <echo>Building WAR ${maven.j2ee.war.name}</echo>
+
+    <war warfile="${maven.build.dir}/${maven.j2ee.war.name}.war"
+         webxml="${maven.j2ee.war.webxml}">
+      <fileset dir="${maven.j2ee.war.content}"/>
+      <lib dir="${maven.repo.local}">
+        <patternset refid="maven.dependency.set" />
+        <include name="${maven.j2ee.war.lib.includes}" />
+        <exclude name="${maven.j2ee.war.lib.excludes}" />
+      </lib>
+      <classes dir="${maven.build.dest}">
+        <include name="${maven.j2ee.war.classes.includes}" />
+        <exclude name="${maven.j2ee.war.classes.excludes}" />
+      </classes>
+      <metainf dir="${basedir}">
+        <include name="LICENSE.txt"/>
+      </metainf>
+      <manifest>
+        <attribute name="Built-By" value="${user.name}" />
+        <section name="${maven.package}">
+          <attribute name="Specification-Title" value="${maven.id}" />
+          <attribute name="Specification-Version"
+            value="${maven.currentVersion}" />
+          <attribute name="Specification-Vendor"
+            value="${maven.organization}" />
+          <attribute name="Implementation-Title"
+            value="${maven.package}" />
+          <attribute name="Implementation-Version"
+            value="${maven.currentVersion}" />
+          <attribute name="Implementation-Vendor"
+            value="${maven.organization}" />
+        </section>
+      </manifest>
+    </war>
+  </target>
+
+  <!-- process any user specified post-war callback -->
+  <target name="post-war-callback" if="maven.j2ee.callback.post-war.ok">
+    <maven-ant antfile="${maven.j2ee.callback.post-war.buildFile}"
+      target="${maven.j2ee.callback.post-war.buildTarget}"
+      inheritRefs="true" exportAll="false" exportRefs="false"/>
+  </target>
+
+  <!-- ================================================================== -->
+  <!-- V A L I D A T E - W A R                                            -->
+  <!-- ================================================================== -->
+  <target name="validate-war" depends="local-init, pre-validate-war-callback, validate-war-init,
+    validate-war-error, validate, post-validate-war-callback" />
+
+  <!-- validate a war file -->
+  <target name="validate-war-init">
+    <condition property="maven.j2ee.war-validator.ready">
+      <available file="${maven.build.dir}/${maven.j2ee.war.name}.war" />
+    </condition>
+  </target>
+
+  <!-- fail if the war file doesn't exist -->
+  <target name="validate-war-error" unless="maven.j2ee.war-validator.ready">
+    <fail>
+    +------------------------------------------------------------------------------
+    |
+    | ERROR: One of the required properties for maven:validate-war was not provided.
+    |
+    |        Please ensure that the property maven.j2ee.war.name is defined:
+    |
+    |        maven.j2ee.war.name = ${maven.j2ee.war.name}
+    |
+    |        Please ensure that the following file exists:
+    |
+    |        ${maven.build.dir}/${maven.j2ee.war.name}.war
+    +------------------------------------------------------------------------------
+    </fail>
+  </target>
+
+  <!-- process any user specified pre-validate war callback -->
+  <target name="pre-validate-war-callback"
+    if="maven.j2ee.callback.pre-validate-war.ok">
+    <maven-ant antfile="${maven.j2ee.callback.pre-validate-war.buildFile}"
+      target="${maven.j2ee.callback.pre-validate-war.buildTarget}"
+      inheritRefs="true" exportAll="false" exportRefs="false"/>
+  </target>
+
+  <!-- perform the validation using our custom task -->
+  <target name="validate">
+
+    <warvalidator warFileName="${maven.build.dir}/${maven.j2ee.war.name}.war">
+      <formatter type="plain" usefile="false"/>
+    </warvalidator>
+
+  </target>
+
+  <!-- process any user specified post-validate war callback -->
+  <target name="post-validate-war-callback"
+    if="maven.j2ee.callback.post-validate-war.ok">
+    <maven-ant antfile="${maven.j2ee.callback.post-validate-war.buildFile}"
+      target="${maven.j2ee.callback.post-validate-war.buildTarget}"
+      inheritRefs="true" exportAll="false" exportRefs="false"/>
+  </target>
+
+  <!-- ================================================================== -->
+  <!-- E A R                                                              -->
+  <!-- ================================================================== -->
+
+  <!-- produce an ear file -->
+  <target name="ear" depends="local-init, pre-ear-callback, ear-init,
+    ear-error, war, ear-build, post-ear-callback"
+    description="o Create an ear file" />
+
+  <!-- check files and properties are available -->
+  <target name="ear-init">
+    <condition property="maven.j2ee.ear.ready">
+      <and>
+        <not>
+          <equals arg1="${maven.j2ee.ear.name}"
+                  arg2="$${maven.j2ee.ear.name}" />
+        </not>
+        <available file="${maven.j2ee.ear.appxml}" type="file"/>
+      </and>
+    </condition>
+  </target>
+
+  <!-- fail if files and properties aren't available -->
+  <target name="ear-error" unless="maven.j2ee.ear.ready">
+    <!-- extend this list with requirements as needed -->
+    <fail>
+    +------------------------------------------------------------------------------
+    |
+    | ERROR: One of the required properties for maven:ear was not provided.
+    |
+    |        Please ensure that the property maven.j2ee.ear.name is defined:
+    |
+    |        maven.j2ee.ear.name = ${maven.j2ee.ear.name}
+    |
+    |        and the following files:
+    |
+    |        ${maven.j2ee.ear.appxml}
+    +------------------------------------------------------------------------------
+    </fail>
+  </target>
+
+  <!-- process any user specified pre ear callback -->
+  <target name="pre-ear-callback" if="maven.j2ee.callback.pre-ear.ok">
+    <maven-ant antfile="${maven.j2ee.callback.pre-ear.buildFile}"
+      target="${maven.j2ee.callback.pre-ear.buildTarget}"
+      inheritRefs="true" exportAll="false" exportRefs="false"/>
+  </target>
+
+  <!-- run the ear task -->
+  <target name="ear-build">
+    <echo>Building EAR ${maven.j2ee.ear.name}</echo>
+
+    <ear earfile="${maven.build.dir}/${maven.j2ee.ear.name}.ear"
+         appxml="${maven.j2ee.ear.appxml}">
+      <fileset dir="${maven.build.dir}" includes="${maven.j2ee.ear.includes}"
+        excludes="${maven.j2ee.ear.excludes}" />
+      <metainf dir="${basedir}">
+        <include name="LICENSE.txt"/>
+      </metainf>
+      <manifest>
+        <attribute name="Built-By" value="${user.name}" />
+        <section name="${maven.package}">
+          <attribute name="Specification-Title" value="${maven.id}" />
+          <attribute name="Specification-Version"
+            value="${maven.currentVersion}" />
+          <attribute name="Specification-Vendor"
+            value="${maven.organization}" />
+          <attribute name="Implementation-Title"
+            value="${maven.package}" />
+          <attribute name="Implementation-Version"
+            value="${maven.currentVersion}" />
+          <attribute name="Implementation-Vendor"
+            value="${maven.organization}" />
+        </section>
+      </manifest>
+    </ear>
+  </target>
+
+  <!-- process any user specified post ear callback -->
+  <target name="post-ear-callback" if="maven.j2ee.callback.post-ear.ok">
+    <maven-ant antfile="${maven.j2ee.callback.post-ear.buildFile}"
+      target="${maven.j2ee.callback.post-ear.buildTarget}"
+      inheritRefs="true" exportAll="false" exportRefs="false"/>
+  </target>
+
+  <!-- ================================================================== -->
+  <!-- E J B                                                              -->
+  <!-- ================================================================== -->
+
+  <!-- produce an ejb jar -->
+  <target name="ejb" depends="local-init, pre-ejb-callback, ejb-init,
+    ejb-error, ejb-build, post-ejb-callback"
+    description="Create an ejb file" />
+
+  <!-- check to make sure required files and properties are available -->
+  <target name="ejb-init">
+    <condition property="maven.j2ee.ejb.ready">
+      <and>
+        <not>
+          <equals arg1="${maven.j2ee.ejb.name}"
+                  arg2="$${maven.j2ee.ejb.name}" />
+        </not>
+        <available file="${maven.j2ee.ejb.conf.dir}" type="dir"/>
+      </and>
+    </condition>
+
+    <property name="maven.j2ee.ejb.target-base"
+      value="${maven.build.dir}/ejb/"/>
+  </target>
+
+  <!-- fail the ejb jar if required files and properties are not available -->
+  <target name="ejb-error" unless="maven.j2ee.ejb.ready">
+    <fail>
+    +------------------------------------------------------------------------------
+    |
+    | ERROR: One of the required properties for maven:ejb was not provided.
+    |
+    |        Please ensure that the property maven.j2ee.ejb.name is defined:
+    |
+    |        maven.j2ee.ejb.name = ${maven.j2ee.ejb.name}
+    |
+    |        and the following directories exist:
+    |
+    |        ${maven.j2ee.ejb.conf.dir}
+    +------------------------------------------------------------------------------
+    </fail>
+  </target>
+
+  <!-- process any user defined pre ejb jar callback -->
+  <target name="pre-ejb-callback" if="maven.j2ee.callback.pre-ejb.ok">
+    <maven-ant antfile="${maven.j2ee.callback.pre-ejb.buildFile}"
+      target="${maven.j2ee.callback.pre-ejb.buildTarget}"
+      inheritRefs="true" exportAll="false" exportRefs="false"/>
+  </target>
+
+  <!-- produce the ejb jar a remote and local jar -->
+  <target name="ejb-build" depends="ejb-jar, ejb-remote, ejb-local"/>
+
+  <!-- produce an ejb jar file by running the jar task -->
+  <target name="ejb-jar">
+
+    <!-- ejb jar is always built -->
+    <echo>Building EJB jar for ${maven.j2ee.ejb.name}</echo>
+
+    <mkdir dir="${maven.j2ee.ejb.target-base}"/>
+
+    <jar jarfile="${maven.j2ee.ejb.target-base}/${maven.j2ee.ejb.name}.jar"
+      index="true">
+      <fileset dir="${maven.build.dir}/classes"
+        includes="${maven.j2ee.ejb.includes}"
+        excludes="${maven.j2ee.ejb.excludes}" />
+
+      <metainf dir="${basedir}">
+        <include name="LICENSE.txt"/>
+      </metainf>
+
+      <metainf dir="${maven.j2ee.ejb.conf.dir}"
+        includes="${maven.j2ee.ejb.conf.includes}"
+        excludes="${maven.j2ee.ejb.conf.excludes}">
+      </metainf>
+
+      <manifest>
+        <attribute name="Built-By" value="${user.name}" />
+        <section name="${maven.package}">
+          <attribute name="Specification-Title" value="${maven.id}" />
+          <attribute name="Specification-Version"
+            value="${maven.currentVersion}" />
+          <attribute name="Specification-Vendor"
+            value="${maven.organization}" />
+          <attribute name="Implementation-Title"
+            value="${maven.package}" />
+          <attribute name="Implementation-Version"
+            value="${maven.currentVersion}" />
+          <attribute name="Implementation-Vendor"
+            value="${maven.organization}" />
+        </section>
+      </manifest>
+    </jar>
+  </target>
+
+  <!-- produce an ejb jar with local interfaces -->
+  <target name="ejb-local" if="maven.j2ee.ejb.local.includes">
+
+    <echo>Building EJB local interface jar for ${maven.j2ee.ejb.name}</echo>
+
+    <!-- in case excludes hasn't been set -->
+    <property name="maven.j2ee.ejb.local.excludes" value=""/>
+
+    <mkdir dir="${maven.j2ee.ejb.target-base}"/>
+
+    <jar jarfile="${maven.j2ee.ejb.target-base}/${maven.j2ee.ejb.name}-local.jar"
+      index="true">
+      <fileset dir="${maven.build.dir}/classes"
+        includes="${maven.j2ee.ejb.local.includes}"
+        excludes="${maven.j2ee.ejb.local.excludes}" />
+
+      <metainf dir="${basedir}">
+        <include name="LICENSE.txt"/>
+      </metainf>
+
+
+      <manifest>
+        <attribute name="Built-By" value="${user.name}" />
+        <section name="${maven.package}">
+          <attribute name="Specification-Title" value="${maven.id}" />
+          <attribute name="Specification-Version"
+            value="${maven.currentVersion}" />
+          <attribute name="Specification-Vendor"
+            value="${maven.organization}" />
+          <attribute name="Implementation-Title"
+            value="${maven.package}" />
+          <attribute name="Implementation-Version"
+            value="${maven.currentVersion}" />
+          <attribute name="Implementation-Vendor"
+            value="${maven.organization}" />
+        </section>
+      </manifest>
+    </jar>
+  </target>
+
+  <!-- produce an ejb jar with remote references -->
+  <target name="ejb-remote" if="maven.j2ee.ejb.remote.includes">
+
+    <!-- ejb jar is always built -->
+    <echo>Building EJB remote interface jar for ${maven.j2ee.ejb.name}</echo>
+
+    <!-- in case excludes hasn't been set -->
+    <property name="maven.j2ee.ejb.remote.excludes" value=""/>
+
+    <mkdir dir="${maven.j2ee.ejb.target-base}"/>
+
+    <jar jarfile="${maven.j2ee.ejb.target-base}/${maven.j2ee.ejb.name}-remote.jar"
+      index="true">
+      <fileset dir="${maven.build.dir}/classes"
+        includes="${maven.j2ee.ejb.remote.includes}"
+        excludes="${maven.j2ee.ejb.remote.excludes}" />
+
+      <metainf dir="${basedir}">
+        <include name="LICENSE.txt"/>
+      </metainf>
+
+      <manifest>
+        <attribute name="Built-By" value="${user.name}" />
+        <section name="${maven.package}">
+          <attribute name="Specification-Title" value="${maven.id}" />
+          <attribute name="Specification-Version"
+            value="${maven.currentVersion}" />
+          <attribute name="Specification-Vendor"
+            value="${maven.organization}" />
+          <attribute name="Implementation-Title"
+            value="${maven.package}" />
+          <attribute name="Implementation-Version"
+            value="${maven.currentVersion}" />
+          <attribute name="Implementation-Vendor"
+            value="${maven.organization}" />
+        </section>
+      </manifest>
+    </jar>
+  </target>
+
+  <!-- process any user defined post ejb jar callback -->
+  <target name="post-ejb-callback" if="maven.j2ee.callback.post-ejb.ok">
+    <maven-ant antfile="${maven.j2ee.callback.post-ejb.buildFile}"
+      target="${maven.j2ee.callback.post-ejb.buildTarget}"
+      inheritRefs="true" exportAll="false" exportRefs="false"/>
+  </target>
+
+
+  <!-- ================================================================== -->
+  <!-- A P P S E R V E R  M A I N  T A R G E T S                          -->
+  <!-- ================================================================== -->
+  <!-- set a property indicating if the server is installed -->
+  <target name="check-appserver-installed">
+    <available property="maven.appserver.installed"
+      file="${maven.appserver.dir}"
+      type="dir" />
+  </target>
+
+  <!-- set a property indicating if the appserver is started -->
+  <target name="check-appserver-started">
+    <!-- This is temporary workaround for the lack of HTTP condition
+     in Ant 1.4* -->
+    <taskdef
+      name="server-started-check"
+      classname="org.apache.maven.ant.ServerStartedCheckTask">
+      <classpath>
+        <pathelement location="${maven.repo.local}/maven.jar"/>
+      </classpath>
+    </taskdef>
+    <server-started-check propertyName="maven.appserver.started"
+      URL="${maven.appserver.url}" />
+  </target>
+
+  <!--==================================================================-->
+  <!-- check and confirm proper appserver properties                    -->
+  <!--==================================================================-->
+  <target name="check-appserver-properties">
+    <property name="maven.appserver.properties.ok" value="true" />
+    <condition property="maven.appserver.properties.ok">
+      <and>
+        <not>
+          <equals arg1="${maven.j2ee.version}"
+                  arg2="$${maven.j2ee.version}" />
+        </not>
+        <not>
+          <equals arg1="${maven.appserver.name}"
+                  arg2="$${maven.appserver.name}" />
+        </not>
+        <not>
+          <equals arg1="${maven.appserver.version}"
+                  arg2="$${maven.appserver.version}" />
+        </not>
+        <not>
+          <equals arg1="${maven.appserver.dir}"
+                  arg2="$${maven.appserver.dir}" />
+        </not>
+        <not>
+          <equals arg1="${maven.appserver.host}"
+                  arg2="$${maven.appserver.host}" />
+        </not>
+        <not>
+          <equals arg1="${maven.appserver.port.http}"
+                  arg2="$${maven.appserver.port.http}" />
+        </not>
+        <not>
+          <equals arg1="${maven.appserver.url}"
+                  arg2="$${maven.appserver.url}" />
+        </not>
+        <available file="${maven.appserver.home}" type="dir"/>
+      </and>
+    </condition>
+  </target>
+
+  <target name="confirm-appserver-properties"
+    depends="check-appserver-properties"
+    unless="maven.appserver.properties.ok">
+    <fail>
+      One or more required maven.appserver.* properties are invalid.
+      Examine the values below, make your corrections and try again.
+      --------------------------------------------------------------
+
+      $${maven.j2ee.version} = ${maven.j2ee.version}
+
+      $${maven.appserver.name} = ${maven.appserver.name}
+
+      $${maven.appserver.version} = ${maven.appserver.version}
+
+      $${maven.appserver.home} = ${maven.appserver.home}
+
+      $${maven.appserver.dir} = ${maven.appserver.dir}
+
+      $${maven.appserver.host} = ${maven.appserver.host}
+
+      $${maven.appserver.port.http} = ${maven.appserver.port.http}
+
+      $${maven.appserver.url} =
+      ${maven.appserver.url}
+    </fail>
+  </target>
+  <target name="appserver-init"
+    depends="confirm-appserver-properties,
+             check-appserver-installed,
+             check-appserver-started" />
+
+  <!--==================================================================-->
+  <!-- I N S T A L L                                                    -->
+  <!--
+    Install Rules:
+    1. if appserver is installed and stopped , reinstall over what is there
+    2. if appserver is installed and started , stop-reinstall-restart
+    3. always overwrite install files from last install in case the user
+    changed property values. ( see the appserver's specific install target )
+  -->
+  <!--==================================================================-->
+  <target name="appserver-install"
+    depends="local-init,
+             appserver-init,
+             appserver-install-notify,
+             appserver-install-proxy">
+  </target>
+
+  <target name="appserver-install-notify">
+    <property name="appserver-install.called" value="true" />
+  </target>
+
+  <target name="appserver-install-proxy"
+      depends="warn-appserver-reinstall-restarted,
+               warn-appserver-reinstall,
+               warn-appserver-restarted,
+               appserver-stop,
+               pre-appserver-install-callback,
+               appserver-install-build,
+               post-appserver-install-callback,
+               appserver-restart"/>
+
+  <target name="appserver-install-build">
+    <echo message="Installing ${maven.appserver.name} ${maven.appserver.version}" />
+    <echo message="to ${maven.appserver.dir}" />
+    <ant antfile="${maven.home}/plugins/j2ee/conf/build-j2ee-${maven.j2ee.version}.xml"
+      target="install-${maven.appserver.name}-${maven.appserver.version}" />
+
+      <!-- copy the proxy file -->
+      <copy file="${maven.home}/plugins/j2ee/build-appserver-proxy.xml"
+        tofile="${maven.appserver.dir}/build.xml">
+        <filterset>
+          <filter token="basedir" value="${basedir}" />
+        </filterset>
+      </copy>
+  </target>
+
+  <!-- called from install target if when requested to install and the -->
+  <!-- appserver was already installed and started -->
+  <target name="appserver-restart"
+    if="appserver-install.called,maven.appserver.installed,
+        maven.appserver.started" unless="appserver-start.called">
+    <echo>Restarting ${maven.appserver.name}-${maven.appserver.version}
+       after reinstalling into ${maven.appserver.dir}</echo>
+    <antcall target="appserver-start-proxy"/>
+  </target>
+
+  <!--===================================================================-->
+  <!-- various user notification messages - clunky until Ant 1.5         -->
+  <target name="warn-appserver-reinstall-restarted-check">
+    <condition property="warn-appserver-reinstall-restarted-check.ok">
+      <and>
+        <not>
+          <equals arg1="${appserver-install.called}"
+            arg2="$${appserver-install.called}" />
+        </not>
+        <not>
+          <equals arg1="${maven.appserver.installed}"
+            arg2="$${maven.appserver.installed}" />
+        </not>
+        <not>
+          <equals arg1="${maven.appserver.started}"
+            arg2="$${maven.appserver.started}" />
+        </not>
+        <not>
+          <equals arg1="${maven.appserver.started}"
+            arg2="false" />
+        </not>
+      </and>
+    </condition>
+  </target>
+  <target name="warn-appserver-reinstall-restarted"
+    depends="warn-appserver-reinstall-restarted-check"
+    if="warn-appserver-reinstall-restarted-check.ok">
+    <echo message="Stoping, reinstalling and restarting appserver..." />
+  </target>
+
+  <target name="warn-appserver-reinstall-check">
+    <condition property="warn-appserver-reinstall-check.ok">
+      <and>
+        <not>
+          <equals arg1="${appserver-install.called}"
+            arg2="$${appserver-install.called}" />
+        </not>
+        <not>
+          <equals arg1="${maven.appserver.installed}"
+            arg2="$${maven.appserver.installed}" />
+        </not>
+        <equals arg1="${maven.appserver.started}"
+            arg2="true" />
+      </and>
+    </condition>
+  </target>
+  <target name="warn-appserver-reinstall"
+    depends="warn-appserver-reinstall-check"
+    if="warn-appserver-reinstall-check.ok"
+    unless="maven.appserver.started">
+    <echo message="Reinstalling your appserver..." />
+  </target>
+
+  <target name="warn-appserver-restarted"
+    if="appserver-start.called">
+    <echo message="Restarting your appserver..." />
+  </target>
+
+  <!-- process any user specified appserver-install callbacks -->
+  <target name="pre-appserver-install-callback"
+    if="maven.appserver.callback.pre-appserver-install.ok">
+    <maven-ant antfile="${maven.appserver.callback.pre-appserver-install.buildFile}"
+      target="${maven.appserver.callback.pre-appserver-install.buildTarget}"
+      inheritRefs="true" exportAll="false" exportRefs="false"/>
+  </target>
+
+  <target name="post-appserver-install-callback"
+    if="maven.appserver.callback.post-appserver-install.ok">
+    <maven-ant antfile="${maven.appserver.callback.post-appserver-install.buildFile}"
+      target="${maven.appserver.callback.post-appserver-install.buildTarget}"
+      inheritRefs="true" exportAll="false" exportRefs="false"/>
+  </target>
+
+  <!--==================================================================-->
+  <!-- S T A R T                                                        -->
+  <!--
+    Start Rules:
+    1. if the appserver is not installed, install, then start
+    2. if already installed and stopped, attempt to start
+    3. if already installed and started, stop and then start again ( restart )
+    WITHOUT a reinstall - this is a quick way to reload webapps classes and
+    configuration if auto class reloading doesn't cut it
+   -->
+  <target name="appserver-start"
+    depends="local-init,
+             appserver-init,
+             appserver-start-notify,
+             appserver-install-proxy,
+             appserver-start-proxy" />
+
+   <target name="appserver-start-notify">
+     <property name="appserver-start.called" value="true" />
+   </target>
+
+  <target name="appserver-start-proxy"
+    depends="pre-appserver-start-callback,
+             appserver-start-build,
+             post-appserver-start-callback"/>
+
+  <target name="appserver-start-build">
+    <ant antfile="${maven.home}/plugins/j2ee/conf/build-j2ee-${maven.j2ee.version}.xml"
+      target="start-${maven.appserver.name}-${maven.appserver.version}" />
+  </target>
+
+  <!-- process any user specified appserver-start callbacks -->
+  <target name="pre-appserver-start-callback"
+    if="maven.appserver.callback.pre-appserver-start.ok">
+    <maven-ant antfile="${maven.appserver.callback.pre-appserver-start.buildFile}"
+      target="${maven.appserver.callback.pre-appserver-start.buildTarget}"
+      inheritRefs="true" exportAll="false" exportRefs="false"/>
+  </target>
+
+  <target name="post-appserver-start-callback"
+    if="maven.appserver.callback.post-appserver-start.ok">
+    <maven-ant antfile="${maven.appserver.callback.post-appserver-start.buildFile}"
+      target="${maven.appserver.callback.post-appserver-start.buildTarget}"
+      inheritRefs="true" exportAll="false" exportRefs="false"/>
+  </target>
+
+  <!--==================================================================-->
+  <!-- S T O P                                                          -->
+  <!--
+    Stop Rules:
+    1. if the appserver is started, stop it
+  -->
+  <!--==================================================================-->
+ <target name="appserver-stop"
+    depends="local-init,
+             appserver-init,
+             pre-appserver-stop-callback,
+             appserver-stop-build,
+             post-appserver-stop-callback"/>
+
+  <target name="appserver-stop-build"
+    depends="warn-appserver-stopped"
+    if="maven.appserver.started">
+    <echo>Stoping ${maven.appserver.name}-${maven.appserver.version}</echo>
+    <ant antfile="${maven.home}/plugins/j2ee/conf/build-j2ee-${maven.j2ee.version}.xml"
+        target="stop-${maven.appserver.name}-${maven.appserver.version}" />
+  </target>
+
+  <!-- let the user know we think their appserver appears stopped -->
+  <target name="warn-appserver-stopped" unless="maven.appserver.started">
+    <echo message="Could not establish a http connection to" />
+    <echo message="" />
+    <echo message="${maven.appserver.url}" />
+    <echo message="" />
+    <echo message="Your ${maven.appserver.name} instance appears stopped." />
+  </target>
+
+  <!-- process any user specified appserver-stop callbacks -->
+  <target name="pre-appserver-stop-callback"
+    if="maven.appserver.callback.pre-appserver-stop.ok">
+    <maven-ant antfile="${maven.appserver.callback.pre-appserver-stop.buildFile}"
+      target="${maven.appserver.callback.pre-appserver-stop.buildTarget}"
+      inheritRefs="true" exportAll="false" exportRefs="false"/>
+  </target>
+
+  <target name="post-appserver-stop-callback"
+    if="maven.appserver.callback.post-appserver-stop.ok">
+    <maven-ant antfile="${maven.appserver.callback.post-appserver-stop.buildFile}"
+      target="${maven.appserver.callback.post-appserver-stop.buildTarget}"
+      inheritRefs="true" exportAll="false" exportRefs="false"/>
+  </target>
+
+  <!--==================================================================-->
+  <!-- C L E A N                                                        -->
+  <!--
+    Clean Rules:
+    1. if the server is running, stop it
+    2. delete the entire install directory.
+  -->
+  <!--==================================================================-->
+  <target name="appserver-clean"
+    depends="local-init,
+              appserver-init,
+              appserver-stop,
+              pre-appserver-clean-callback,
+              appserver-clean-build,
+              post-appserver-clean-callback"/>
+
+  <target name="appserver-clean-build" >
+    <echo message="Deleting ${maven.appserver.name}-${maven.appserver.version}" />
+    <echo message="and all installed webapps from" />
+    <echo message="${maven.appserver.dir}..." />
+    <delete dir="${maven.appserver.dir}"/>
+  </target>
+
+  <!-- process any user specified appserver-clean callbacks -->
+  <target name="pre-appserver-clean-callback"
+    if="maven.appserver.callback.pre-appserver-clean.ok">
+    <maven-ant antfile="${maven.appserver.callback.pre-appserver-clean.buildFile}"
+      target="${maven.appserver.callback.pre-appserver-clean.buildTarget}"
+      inheritRefs="true" exportAll="false" exportRefs="false"/>
+  </target>
+
+  <target name="post-appserver-clean-callback"
+    if="maven.appserver.callback.post-appserver-clean.ok">
+    <maven-ant antfile="${maven.appserver.callback.post-appserver-clean.buildFile}"
+      target="${maven.appserver.callback.post-appserver-clean.buildTarget}"
+      inheritRefs="true" exportAll="false" exportRefs="false"/>
+  </target>
+
+</project>

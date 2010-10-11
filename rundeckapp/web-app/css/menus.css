@@ -1,0 +1,147 @@
+a.maintool:hover, span.maintool:hover, a.subtool:hover, span.subtool:hover{
+    background: #ddf;
+    text-decoration:underline;
+}
+span.subtool,a.subtool{
+    display:block;
+    padding:5px 10px;
+    color:blue;
+    font-weight:normal;
+    cursor:pointer;
+}
+
+span.subtool.return,a.subtool.return{
+    border: 1px solid #aaf;
+    -moz-border-radius: 3px;
+    -webkit-border-radius:3px;
+    display:inline;
+}
+
+
+a.menuSelected,span.menuSelected{
+    background: #ddf;
+}
+div.summarySubtoolMenu {
+    border:1px solid #aaa;
+    margin:0;
+    padding:0;
+    width: 200px;
+    position:absolute;
+    background:white;
+    -moz-box-shadow:5px 5px 5px #888;
+    -webkit-box-shadow: 5px 5px 5px #888;
+}
+div.summarySubmenu {
+    border:1px solid #aaa;
+    margin:0;
+    padding:0;
+    width: 200px;
+    background:white;
+}
+div.summarySubtoolMenu div.summarySubmenu{
+    border-top:0;
+    border-left:0;
+    border-right:0;
+}
+div.summarySubtoolMenu div.compbutton{
+    border-top:0;
+    border-left:0;
+    border-right:0;
+}
+div.summarySubtoolMenu div.menuSectionTitle{
+    padding: 5px;
+    border-bottom: 1px solid #ccc;
+}
+div.menuSection ul{
+    margin:0;
+    padding:0;
+    list-style-type:none;
+}
+div.menuSection ul li {
+    display:block;
+    padding:0;
+}
+div.menuSection ul li a{
+    display:block;
+    padding: 5px 5px 5px 15px;
+    color:blue;
+    font-weight:normal;
+}
+div.menuSection ul li a:hover{
+    color:blue;
+    text-decoration:underline;
+    text-shadow: 3px 3px 6px #aaa;
+}
+
+
+/** compbutton **/
+
+.compbutton{
+border: 1px solid #aaa;
+}
+.compbutton.radio{
+    border: 1px solid #ccc;
+    color: #555;
+}
+.compbutton.radio.select{
+    background: #ddd;
+}
+a.compbutton{
+  padding: 3px;
+  color: blue;
+  font-weight: normal;
+    white-space:nowrap;
+}
+a.compbuttontext{
+  padding: 3px;
+  color: blue;
+  font-weight: normal;
+    white-space:nowrap;
+}
+a.compbutton:hover {
+  text-decoration: underline;
+}
+a.compbuttontext:hover {
+  text-decoration: underline;
+}
+span.compbutton{
+  padding: 3px;
+  color: blue;
+  font-weight: normal;
+  cursor: pointer;
+}
+span.compbuttontext{
+  padding: 3px;
+  color: blue;
+  font-weight: normal;
+  cursor:pointer;
+}
+span.compbutton:hover {
+  text-decoration: underline;
+}
+span.compbuttontext:hover {
+  text-decoration: underline;
+}
+
+a.compbutton.small{
+    font-size: 90%;
+}
+a.compbutton.icon{
+    padding:2px;
+}
+a.compbutton.block{
+    display: block;
+}
+a.compbutton.fixed{
+    padding:2px;
+    margin:3px;
+}
+
+
+a.compbutton img{
+    vertical-align: middle;
+}
+a.compbutton:hover{
+  color:blue;
+}
+

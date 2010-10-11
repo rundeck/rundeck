@@ -1,0 +1,48 @@
+<!--
+  ~ Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+  ~
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~
+  ~      http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~  Unless required by applicable law or agreed to in writing, software
+  ~  distributed under the License is distributed on an "AS IS" BASIS,
+  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  See the License for the specific language governing permissions and
+  ~  limitations under the License.
+  -->
+
+<!DOCTYPE project PUBLIC
+    "-//DTO Labs Inc.//DTD Resources Document 1.0//EN" "project.dtd">
+<project>
+  <node name="homestar" type="Node" description="this is the testnode1 node" tags="boring,priority1"
+        hostname="homestar"
+        osArch="arm"
+        osFamily="unix"
+        osName="Linux"
+        osVersion="10.5.1"
+        username="username1"
+      >
+
+  </node>
+  <node name="cheat" type="Node" description="registered Node asdf" tags="boring"
+        hostname="the@cheat"
+        osArch="i386"
+        osFamily="unix"
+        osName="Linux"
+        osVersion="5.1"
+      >
+
+  </node>
+  <node name="strongbad" type="Node" description="This is the third test node" tags="priority1,elf"
+        hostname="strongbad"
+        osArch="i686"
+        osFamily="unix"
+        osName="Mac OS X"
+        osVersion="3.7"
+      >
+
+  </node>
+</project>

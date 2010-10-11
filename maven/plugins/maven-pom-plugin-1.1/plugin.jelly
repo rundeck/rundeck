@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+
+<project 
+  xmlns:j="jelly:core"
+  xmlns:d="jelly:define"
+  xmlns:v="jelly:validate"
+  xmlns:x="jelly:xml"
+  xmlns:pom="pom">
+
+  <!-- default goal -->
+  <goal name="pom" description="Validate the Maven XML project descriptor"
+    prereqs="pom:validate" />
+
+  <!-- ================================================================== -->
+  <!-- V A L I D A T E  P O M                                             -->
+  <!-- ================================================================== -->
+
+  <goal
+    name="pom:validate"
+    description="Validate the Maven XML project descriptor">
+
+    <d:taglib uri="pom">
+      <d:jellybean
+        name="validate"
+        className="org.apache.maven.Validator"
+        method="execute"
+      />
+    </d:taglib>
+    
+    <pom:validate
+      validator="${maven.home}/maven-project.xsd"
+      projectDescriptor="project.xml"
+    />
+
+    <echo>POM is valid</echo>
+
+  </goal>
+
+  <!-- ================================================================== -->
+  <!-- Validate POM using new Plugin mechanism                            -->
+  <!-- (see http://www.apache.org/~jvanzyl/plugin.txt                     -->
+  <!-- ================================================================== -->
+
+  <goal name="pom:validate-new"
+    description="Validate the Maven XML project descriptor (experimental)">
+
+    <x:parse var="pom" xml="project.xml"/>
+
+    <!-- Validate core Maven POM -->
+    <x:set var="mavencore" select="$pom/project/*[name() != 'plugins']"/>
+    <v:verifier uri="/../maven-project.xsd" var="coreschema"/>
+    <v:validate var="resultflag" verifier="${coreschema}">
+      <project>
+        <x:expr select="$mavencore"/>
+      </project>
+    </v:validate>    
+
+    <!-- Validate POM extensions for plugins against plugins schemas -->
+    <x:forEach select="$pom/project/plugins/plugin" var="plugin">
+      <x:set var="pluginid" select="string($plugin/id)"/>
+      <x:set var="pluginversion" select="string($plugin/version)"/>
+      <v:verifier uri="/../plugins/${pluginid}-${pluginversion}/plugin.xsd" 
+        var="pluginschema"/>
+      <v:validate var="resultflag" verifier="${pluginschema}">
+        <x:expr select="$plugin"/>
+      </v:validate>    
+    </x:forEach>
+
+  </goal>
+
+  <!-- ================================================================== -->
+  <!-- U P D A T E  P O M                                                 -->
+  <!-- ================================================================== -->
+
+  <goal
+    name="pom:update"
+    description="Update the POM from its current version to a specified version">
+
+  </goal>
+
+</project>
