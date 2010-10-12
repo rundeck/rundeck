@@ -81,6 +81,8 @@ public class ResourceXMLConstants {
     public static final String NODE_OS_NAME = "osName";
     public static final String NODE_OS_VERSION = "osVersion";
     public static final String NODE_USERNAME = "username";
+    public static final String NODE_EDIT_URL = "editUrl";
+    public static final String NODE_REMOTE_URL = "remoteUrl";
     /**
      * attributes of "node" nodes
      */
@@ -91,6 +93,8 @@ public class ResourceXMLConstants {
         NODE_OS_NAME,
         NODE_OS_VERSION,
         NODE_USERNAME,
+        NODE_EDIT_URL,
+        NODE_REMOTE_URL
     };
     public static final String SETTING_TYPE = "settingType";
     public static final String SETTING_VALUE = "settingValue";

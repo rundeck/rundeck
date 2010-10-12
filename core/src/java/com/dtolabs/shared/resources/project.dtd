@@ -142,6 +142,8 @@
    hostname CDATA #IMPLIED
    username CDATA #IMPLIED
    tags CDATA #IMPLIED
+   editUrl CDATA #IMPLIED
+   remoteUrl CDATA #IMPLIED
 >
 
 <!ELEMENT resources (resource+)>

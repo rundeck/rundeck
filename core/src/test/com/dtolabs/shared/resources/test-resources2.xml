@@ -24,6 +24,8 @@
         osArch="osArch1"
         osVersion="osVersion1"
         username="username1"
+        editUrl="EditURL"
+        remoteUrl="RemoteURL"
       >
 
   </node>

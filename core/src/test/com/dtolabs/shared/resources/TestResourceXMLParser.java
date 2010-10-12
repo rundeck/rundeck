@@ -281,7 +281,7 @@ public class TestResourceXMLParser extends TestCase {
             assertEquals("wrong node type", "node", entity.getResourceType());
             assertEquals("wrong name", "node1", entity.getName());
             assertEquals("wrong type", "Node1", entity.getType());
-            assertEquals("wrong properties size", 8, entity.getProperties().size());
+            assertEquals("wrong properties size", 10, entity.getProperties().size());
             assertEquals("wrong resources size", 0, entity.getResources().size());
             assertEquals("wrong referrers size", 0, entity.getReferrers().size());
             assertNull("wrong transforms ", entity.getTransforms());
@@ -293,6 +293,8 @@ public class TestResourceXMLParser extends TestCase {
             assertEquals("wrong value", "osFamily1", entity.getProperty(ResourceXMLConstants.NODE_OS_FAMILY));
             assertEquals("wrong value", "osName1", entity.getProperty(ResourceXMLConstants.NODE_OS_NAME));
             assertEquals("wrong value", "osVersion1", entity.getProperty(ResourceXMLConstants.NODE_OS_VERSION));
+            assertEquals("wrong value", "EditURL", entity.getProperty(ResourceXMLConstants.NODE_EDIT_URL));
+            assertEquals("wrong value", "RemoteURL", entity.getProperty(ResourceXMLConstants.NODE_REMOTE_URL));
         }
 
         { //test attributes of xpath="setting"

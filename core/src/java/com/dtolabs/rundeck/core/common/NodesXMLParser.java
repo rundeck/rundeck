@@ -111,6 +111,24 @@ public class NodesXMLParser implements NodeFileParser, ResourceXMLReceiver {
                 node.getSettings().put(setting.getName(), setting.getProperty(SETTING_VALUE));
             }
         }
+
+        if(null!=entity.getProperty(NODE_EDIT_URL)){
+            //use attributes for other node data
+
+            if (null == node.getAttributes()) {
+                node.setAttributes(new HashMap<String, String>());
+            }
+            node.getAttributes().put(NODE_EDIT_URL, entity.getProperty(NODE_EDIT_URL));
+        }
+        if(null != entity.getProperty(NODE_REMOTE_URL)){
+            //use attributes for other node data
+
+            if (null == node.getAttributes()) {
+                node.setAttributes(new HashMap<String, String>());
+            }
+            node.getAttributes().put(NODE_REMOTE_URL, entity.getProperty(NODE_REMOTE_URL));
+        }
+
     }
 
     public void resourcesParsed(final ResourceXMLParser.EntitySet entities) {

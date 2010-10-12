@@ -48,6 +48,10 @@
                         ${node.description}
                     </span>
 
+                    <g:if test="${node.attributes?.editUrl}">
+                        <a href="${node.attributes?.editUrl}" target="_new">Edit...</a>
+                    </g:if>
+
                     <g:if test="${expanddetail}">
                         <g:link  controller="reports" action="index" params="${[nodeFilter:node.nodename]}" title="View Events for Node ${node.nodename}">
                             &raquo; events

@@ -23,6 +23,7 @@ package com.dtolabs.rundeck.core.common;
 * $Id$
 */
 
+import com.dtolabs.shared.resources.ResourceXMLConstants;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -167,6 +168,30 @@ public class TestNodesXMLParser extends TestCase {
             assertEquals("set2val", node2.getSettings().get("set2"));
             assertEquals("set3val", node2.getSettings().get("set3"));
             assertEquals("set4val", node2.getSettings().get("set4"));
+        }
+    }
+    public void testParseEditRemoteUrl() throws Exception {
+
+        {
+            final nodeReceiver receiver = new nodeReceiver();
+            nodesXMLParser = new NodesXMLParser(xmlfile3, receiver);
+            nodesXMLParser.parse();
+            assertEquals("wrong number of nodes parsed", 3, receiver.map.size());
+
+            INodeEntry node0 = receiver.map.get("testnode1");
+            assertNotNull(node0.getAttributes());
+            assertEquals("TestEditUrl1", node0.getAttributes().get(ResourceXMLConstants.NODE_EDIT_URL));
+            assertNull(node0.getAttributes().get(ResourceXMLConstants.NODE_REMOTE_URL));
+
+            INodeEntry node1 = receiver.map.get("testnode2");
+            assertNotNull(node1.getAttributes());
+            assertEquals("TestRemoteUrl2", node1.getAttributes().get(ResourceXMLConstants.NODE_REMOTE_URL));
+            assertNull(node1.getAttributes().get(ResourceXMLConstants.NODE_EDIT_URL));
+
+            INodeEntry node2 = receiver.map.get("testnode3");
+            assertNotNull(node2.getAttributes());
+            assertEquals("TestEditUrl3", node2.getAttributes().get(ResourceXMLConstants.NODE_EDIT_URL));
+            assertEquals("TestRemoteUrl3", node2.getAttributes().get(ResourceXMLConstants.NODE_REMOTE_URL));
         }
     }
 }

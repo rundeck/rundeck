@@ -24,6 +24,7 @@
         osName="Mac OS X"
         osVersion="10.5.1"
         username="username1"
+        editUrl="TestEditUrl1"
       >
 
   </node>
@@ -33,6 +34,7 @@
         osFamily="windows"
         osName="Windows XP"
         osVersion="5.1"
+        remoteUrl="TestRemoteUrl2"
       >
     <resources>
         <resource name="set1" type="Setting"/>
@@ -45,6 +47,8 @@
         osFamily="solaris"
         osName="Solaris Something"
         osVersion="3.7"
+        editUrl="TestEditUrl3"
+        remoteUrl="TestRemoteUrl3"
       >
 
     <resources>
