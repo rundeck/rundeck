@@ -365,26 +365,6 @@
       </dependency>                       
 
 
-      <!--      
-       <dependency>
-           <id>stax-api</id>
-           <version>1.0</version>
-           <url>http://woodstox.codehaus.org/</url>
-           <properties>
-               <war.bundle.jar>true</war.bundle.jar>
-           </properties>
-       </dependency>
-       -->
-
-       <dependency>
-           <id>wstx-asl</id>
-           <version>2.8</version>
-           <url>http://woodstox.codehaus.org/</url>
-           <properties>
-               <war.bundle.jar>true</war.bundle.jar>
-           </properties>
-       </dependency>
-
        <!--<dependency>
          <id>concurrent</id>
          <version>1.3.4</version>
