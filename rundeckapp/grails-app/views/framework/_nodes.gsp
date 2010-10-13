@@ -1,5 +1,5 @@
-<g:set var="ukey" value="${g.rkey()}"/>
-<table cellpadding="0" cellspacing="0" width="100%">
+<%@ page import="com.dtolabs.rundeck.core.dispatcher.DataContextUtils" %><g:set var="ukey" value="${g.rkey()}"/>
+<table cellpadding="0" cellspacing="0" width="100%" id="nodesTable">
 
         <% def seen=false %>
         <g:each in="${nodes.keySet().sort()}" var="nodekey" status="i">
@@ -48,9 +48,22 @@
                         ${node.description}
                     </span>
 
-                    <g:if test="${node.attributes?.editUrl}">
-                        <a href="${node.attributes?.editUrl}" target="_new">Edit...</a>
+                    <g:if test="${node.attributes?.remoteUrl}">
+                        <g:set var="nodecontextdata" value="${DataContextUtils.nodeData(node)}"/>
+                        <%
+                            nodecontextdata.project=nodedata.project.name
+                        %>
+                        <g:set var="remoteUrl" value="${DataContextUtils.replaceDataReferences(node.attributes?.remoteUrl,[node:nodecontextdata])}" />
+                        <span class="action " title="Edit this node via remote URL..." onclick='doRemoteEdit("${node.nodename.encodeAsJavaScript()}","${remoteUrl.encodeAsJavaScript()}");'>Edit&hellip;</span>
                     </g:if>
+                    <g:elseif test="${node.attributes?.editUrl}">
+                        <g:set var="nodecontextdata" value="${DataContextUtils.nodeData(node)}"/>
+                        <%
+                            nodecontextdata.project=nodedata.project.name
+                        %>
+                        <g:set var="editUrl" value="${DataContextUtils.replaceDataReferences(node.attributes?.editUrl,[node:nodecontextdata])}" />
+                        <a href="${editUrl}" target="_blank" title="Opens a link to edit this node at a remote site.">Edit</a>
+                    </g:elseif>
 
                     <g:if test="${expanddetail}">
                         <g:link  controller="reports" action="index" params="${[nodeFilter:node.nodename]}" title="View Events for Node ${node.nodename}">
@@ -83,3 +96,23 @@
         initTooltipForElements('tr.node_entry span.node_ident');
     }
 </g:javascript>
+
+<div id="remoteEditholder" style="display:none" class="popout">
+    <span id="remoteEditHeader">
+            <span class="welcomeMessage">Edit node: <g:img file="icon-small-Node.png" width="16px" height="16px"/><span id="editNodeIdent"></span></span>
+    </span>
+    <span class="toolbar" id="remoteEditToolbar">
+        <span class="action " onclick="_rdeckNodeEditCompleted();" title="Close the remote edit box and discard any changes"><g:img file="icon-tiny-removex-gray.png" /> Cancel and close</span>
+    </span>
+    <div id="remoteEditResultHolder" class="info message" style="display:none">
+        <span id="remoteEditResultText" class="info message" >
+        </span>
+        <span class="action " onclick="_rdeckNodeEditCompleted();"> Continue&hellip;</span>
+    </div>
+    <div id="remoteEditError" class="error note" style="display:none">
+    </div>
+    <div id="remoteEditWait"  style="display:none"></div>
+    <div id="remoteEditTarget" >
+
+    </div>
+</div>

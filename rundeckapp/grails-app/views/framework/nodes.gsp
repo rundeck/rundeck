@@ -1,5 +1,6 @@
 <html>
 <head>
+    <g:set var="rkey" value="${g.rkey()}" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="nodes"/>
@@ -45,6 +46,122 @@
                 _setFilterSuccess(response,name);
             }});
         }
+
+        var remoteSite;
+        //remote edit loader
+
+        function doRemoteEdit(name,url){
+            //create iframe for url
+            var hold=$('remoteEditholder');
+            var tgt=$('remoteEditTarget');
+            var ident=$('editNodeIdent');
+            ident.innerHTML=name;
+            var ifm = document.createElement('iframe');
+            ifm.width="640px";
+            ifm.height="480px";
+            ifm.src=url;
+            remoteSite=url;
+            tgt.hide();
+            tgt.appendChild(ifm);
+            var errhold=$('remoteEditError');
+            errhold.innerHTML="";
+            errhold.hide();
+            $('remoteEditResultHolder').hide();
+            _rdeckNodeEditWaiting();
+
+        }
+        var waitingStart=false;
+        var waitingStartTimer;
+        var remoteTimeoutSecs=30;
+        function _rdeckNodeEditStartTimeout(){
+            if(waitingStart){
+                _rdeckNodeEditFinishedError("Remote editor did not load in "+remoteTimeoutSecs+" seconds.  There may be an error or the server is unavailable.");
+            }
+        }
+        function _rdeckNodeEditDoneWaiting(){
+            waitingStart=false;
+            clearTimeout(waitingStartTimer);
+            $('remoteEditWait').hide();
+        }
+        function _rdeckNodeEditWaiting(){
+            waitingStart=true;
+            waitingStartTimer=setTimeout(_rdeckNodeEditStartTimeout,remoteTimeoutSecs*1000);
+            $('remoteEditWait').show();
+            $('remoteEditWait').loading();
+            $('nodesTable').hide();
+            $('${rkey}nodesfilterholder').hide();
+            $('remoteEditholder').show();
+        }
+        function _rdeckNodeEditStarted(){
+            _rdeckNodeEditDoneWaiting();
+            var hold=$('remoteEditholder');
+            var tgt=$('remoteEditTarget');
+            tgt.show();
+            $('nodesTable').hide();
+            $('${rkey}nodesfilterholder').hide();
+            hold.show();
+        }
+        function _rdeckNodeEditFinished(changed){
+            _rdeckNodeEditDoneWaiting();
+            if(changed){
+                $('remoteEditResultText').innerHTML="Node changes were saved successfully.";
+            }else{
+                $('remoteEditResultText').innerHTML="Node changes were not saved.";
+            }
+            var tgt=$('remoteEditTarget');
+            tgt.innerHTML="";
+            tgt.hide();
+            $('remoteEditToolbar').hide();
+            $('remoteEditResultHolder').show();
+        }
+        function _rdeckNodeEditCompleted(){
+            _rdeckNodeEditDoneWaiting();
+            var hold=$('remoteEditholder');
+            var tgt=$('remoteEditTarget');
+            tgt.innerHTML="";
+            hold.hide();
+            $('remoteEditToolbar').show();
+            $('nodesTable').show();
+            $('${rkey}nodesfilterholder').show();
+            var errhold=$('remoteEditError');
+            errhold.innerHTML="";
+            errhold.hide();
+        }
+        function _rdeckNodeEditFinishedError(msg){
+            _rdeckNodeEditDoneWaiting();
+            var hold=$('remoteEditholder');
+            var tgt=$('remoteEditTarget');
+            $('remoteEditWait').hide();
+            tgt.innerHTML="";
+            var errhold=$('remoteEditError');
+            errhold.innerHTML="Remote edit reported an error: "+msg;
+            errhold.show();
+        }
+        function onmessage(msg){
+            var data=msg.data;
+            var origin=msg.origin;
+            if(data.startsWith('rundeck:node:edit:started')){
+                _rdeckNodeEditStarted();
+            }else if(data.startsWith('rundeck:node:edit:true')){
+                _rdeckNodeEditFinished(true);
+            }else if(data.startsWith('rundeck:node:edit:error')){
+                var err=data.substring('rundeck:node:edit:error'.length);
+                if(err.startsWith(":")){
+                    err=err.substring(1);
+                }
+                _rdeckNodeEditFinishedError(err?err:"The remote editor reported an error");
+            }else if(data.startsWith('rundeck:node:edit:')){
+                _rdeckNodeEditFinished(false);
+            }else{
+                _rdeckNodeEditFinishedError("Unexpected response: "+data);
+            }
+        }
+        if (typeof window.addEventListener != 'undefined') {
+          window.addEventListener('message', onmessage, false);
+        } else if (typeof window.attachEvent != 'undefined') {
+          window.attachEvent('onmessage', onmessage);
+        }
+
     </script>
     <style type="text/css">
         .detail_content{
@@ -62,10 +179,22 @@
         .node_entry .project{
             
         }
+        #remoteEditholder{
+            margin: 0px 20px 0 20px;
+            
+        }
+        #remoteEditholder iframe{
+            border:0;
+        }
+        #remoteEditholder .toolbar{
+            margin:4px;
+        }
+        #remoteEditholder #remoteEditWait{
+            margin:10px;
+        }
     </style>
 </head>
 <body>
-<g:set var="rkey" value="${g.rkey()}" />
 
 <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
     <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
@@ -114,7 +243,7 @@
             </g:if>
             <td style="text-align:left;vertical-align:top;" id="${rkey}nodescontent">
                 <g:if test="${!params.nofilters}">
-                <div style="margin-bottom: 5px;">
+                <div style="margin-bottom: 5px;" id="${rkey}nodesfilterholder">
                     <g:if test="${wasfiltered}">
 
                         <g:if test="${!params.compact}">
