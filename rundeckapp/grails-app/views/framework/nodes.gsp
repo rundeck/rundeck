@@ -212,7 +212,7 @@
             if(!remoteEditStarted && PROTOCOL+':started'==data){
                 _rdeckNodeEditStarted();
             }else if(PROTOCOL+':error'==data || data.startsWith(PROTOCOL+':error:')){
-                var err=data.substring(PROTOCOL+':error'.length);
+                var err=data.substring((PROTOCOL+':error').length);
                 if(err.startsWith(":")){
                     err=err.substring(1);
                 }
