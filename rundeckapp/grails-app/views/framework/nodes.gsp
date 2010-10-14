@@ -134,7 +134,7 @@
             $('remoteEditWait').hide();
             tgt.innerHTML="";
             var errhold=$('remoteEditError');
-            errhold.innerHTML="Remote edit reported an error: "+msg;
+            errhold.innerHTML="Remote editor reported an error: "+msg;
             errhold.show();
         }
         function onmessage(msg){
@@ -142,15 +142,15 @@
             var origin=msg.origin;
             if(data.startsWith('rundeck:node:edit:started')){
                 _rdeckNodeEditStarted();
-            }else if(data.startsWith('rundeck:node:edit:true')){
+            }else if(data.startsWith('rundeck:node:edit:finished:true')){
                 _rdeckNodeEditFinished(true);
             }else if(data.startsWith('rundeck:node:edit:error')){
                 var err=data.substring('rundeck:node:edit:error'.length);
                 if(err.startsWith(":")){
                     err=err.substring(1);
                 }
-                _rdeckNodeEditFinishedError(err?err:"The remote editor reported an error");
-            }else if(data.startsWith('rundeck:node:edit:')){
+                _rdeckNodeEditFinishedError(err?err:"(No message)");
+            }else if(data.startsWith('rundeck:node:edit:finished')){
                 _rdeckNodeEditFinished(false);
             }else{
                 _rdeckNodeEditFinishedError("Unexpected response: "+data);
