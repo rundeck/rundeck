@@ -47,119 +47,192 @@
             }});
         }
 
+        /*********
+         *  remote editor
+         *********/
+        
         var remoteSite;
-        //remote edit loader
+        var remoteEditStarted=false;
+        var remoteEditExpect=false;
 
+        /**
+         * Start remote editor for node with url
+         * @param name node name
+         * @param url url
+         */
         function doRemoteEdit(name,url){
+            _remoteEditClear();
+
+            $('editNodeIdent').innerHTML=name;
+
             //create iframe for url
-            var hold=$('remoteEditholder');
-            var tgt=$('remoteEditTarget');
-            var ident=$('editNodeIdent');
-            ident.innerHTML=name;
             var ifm = document.createElement('iframe');
             ifm.width="640px";
             ifm.height="480px";
+            _remoteEditExpect(url);
             ifm.src=url;
-            remoteSite=url;
-            tgt.hide();
-            tgt.appendChild(ifm);
+
+            $('remoteEditTarget').appendChild(ifm);
+
+            _remoteEditShow();
+        }
+
+        //setup functions
+
+        /**
+         * Begin listener for message protocol from origin url
+         * @param originUrl
+         */
+        function _remoteEditExpect(originUrl){
+            remoteEditExpect=true;
+            remoteSite=originUrl;
+            remoteEditStarted=false;
+
+            Event.observe(window,'message', _rdeckNodeEditOnmessage);
+        }
+
+        /**
+         * Stop listener for message protocol
+         */
+        function _remoteEditStop(){
+            remoteEditExpect=false;
+            remoteSite=null;
+            remoteEditStarted=false;
+
+            Event.stopObserving(window,'message', _rdeckNodeEditOnmessage);
+        }
+
+        /**
+         * Clear/reset remote editor dom content
+         */
+        function _remoteEditClear(){
+            _remoteEditStop();
+            
+            _clearTarget();
+
+            $('editNodeIdent').innerHTML='';
             var errhold=$('remoteEditError');
             errhold.innerHTML="";
             errhold.hide();
-            $('remoteEditResultHolder').hide();
-            _rdeckNodeEditWaiting();
-
-        }
-        var waitingStart=false;
-        var waitingStartTimer;
-        var remoteTimeoutSecs=30;
-        function _rdeckNodeEditStartTimeout(){
-            if(waitingStart){
-                _rdeckNodeEditFinishedError("Remote editor did not load in "+remoteTimeoutSecs+" seconds.  There may be an error or the server is unavailable.");
+            
+            if($('remoteEditCloseText')){
+                $('remoteEditCloseText').innerHTML="Close remote editing";
             }
         }
-        function _rdeckNodeEditDoneWaiting(){
-            waitingStart=false;
-            clearTimeout(waitingStartTimer);
-            $('remoteEditWait').hide();
-        }
-        function _rdeckNodeEditWaiting(){
-            waitingStart=true;
-            waitingStartTimer=setTimeout(_rdeckNodeEditStartTimeout,remoteTimeoutSecs*1000);
-            $('remoteEditWait').show();
-            $('remoteEditWait').loading();
-            $('nodesTable').hide();
-            $('${rkey}nodesfilterholder').hide();
+
+        /**
+         * Show remote editor dom content
+         */
+        function _remoteEditShow(){
+            $('remoteEditTarget').show();
             $('remoteEditholder').show();
-        }
-        function _rdeckNodeEditStarted(){
-            _rdeckNodeEditDoneWaiting();
-            var hold=$('remoteEditholder');
-            var tgt=$('remoteEditTarget');
-            tgt.show();
+
+            $('remoteEditResultHolder').hide();
             $('nodesTable').hide();
             $('${rkey}nodesfilterholder').hide();
-            hold.show();
         }
+
+        /**
+         * Hide remote editor dom content
+         */
+        function _remoteEditHide(){
+            $('remoteEditholder').hide();
+            $('remoteEditTarget').hide();
+
+            $('remoteEditToolbar').show();
+            $('nodesTable').show();
+            $('${rkey}nodesfilterholder').show();
+        }
+
+        /**
+         * Clear iframe holder
+         */
+        function _clearTarget(){
+            $('remoteEditTarget').innerHTML="";
+            $('remoteEditTarget').hide();
+
+        }
+        /**
+         * Finish all node editor stuff, and hide it
+         */
+        function _remoteEditCompleted(){
+            _remoteEditStop();
+            _remoteEditHide();
+            _remoteEditClear();
+        }
+
+        //protocol handler functions
+
+
+        /**
+         * handler for :finished message
+         * @param changed true if changes were saved
+         */
         function _rdeckNodeEditFinished(changed){
-            _rdeckNodeEditDoneWaiting();
+            _remoteEditStop();
+            _clearTarget();
+            
             if(changed){
                 $('remoteEditResultText').innerHTML="Node changes were saved successfully.";
             }else{
                 $('remoteEditResultText').innerHTML="Node changes were not saved.";
             }
-            var tgt=$('remoteEditTarget');
-            tgt.innerHTML="";
-            tgt.hide();
+            
             $('remoteEditToolbar').hide();
             $('remoteEditResultHolder').show();
         }
-        function _rdeckNodeEditCompleted(){
-            _rdeckNodeEditDoneWaiting();
-            var hold=$('remoteEditholder');
-            var tgt=$('remoteEditTarget');
-            tgt.innerHTML="";
-            hold.hide();
-            $('remoteEditToolbar').show();
-            $('nodesTable').show();
-            $('${rkey}nodesfilterholder').show();
+
+        /**
+         * handler for error message
+         * @param origin
+         * @param msg
+         */
+        function _rdeckNodeEditError(origin,msg){
+            _remoteEditStop();
+            _clearTarget();
+            
             var errhold=$('remoteEditError');
-            errhold.innerHTML="";
-            errhold.hide();
-        }
-        function _rdeckNodeEditFinishedError(msg){
-            _rdeckNodeEditDoneWaiting();
-            var hold=$('remoteEditholder');
-            var tgt=$('remoteEditTarget');
-            $('remoteEditWait').hide();
-            tgt.innerHTML="";
-            var errhold=$('remoteEditError');
-            errhold.innerHTML="Remote editor reported an error: "+msg;
+            errhold.innerHTML=(origin?origin+" reported an error: ":"")+msg;
             errhold.show();
         }
-        function onmessage(msg){
+
+        /**
+         * handler for :started message
+         */
+        function _rdeckNodeEditStarted(){
+            remoteEditStarted=true;
+            if($('remoteEditCloseText')){
+                $('remoteEditCloseText').innerHTML="Cancel and close";
+            }
+        }
+
+        var PROTOCOL='rundeck:node:edit';
+        /**
+         * onmessage handler
+         * @param msg
+         */
+        function _rdeckNodeEditOnmessage(msg){
+            if(!remoteEditExpect || !remoteSite || !remoteSite.startsWith(msg.origin+"/")){
+                return;
+            }
             var data=msg.data;
-            var origin=msg.origin;
-            if(data.startsWith('rundeck:node:edit:started')){
+            if(!remoteEditStarted && PROTOCOL+':started'==data){
                 _rdeckNodeEditStarted();
-            }else if(data.startsWith('rundeck:node:edit:finished:true')){
-                _rdeckNodeEditFinished(true);
-            }else if(data.startsWith('rundeck:node:edit:error')){
-                var err=data.substring('rundeck:node:edit:error'.length);
+            }else if(PROTOCOL+':error'==data || data.startsWith(PROTOCOL+':error:')){
+                var err=data.substring(PROTOCOL+':error'.length);
                 if(err.startsWith(":")){
                     err=err.substring(1);
                 }
-                _rdeckNodeEditFinishedError(err?err:"(No message)");
-            }else if(data.startsWith('rundeck:node:edit:finished')){
-                _rdeckNodeEditFinished(false);
-            }else{
-                _rdeckNodeEditFinishedError("Unexpected response: "+data);
+                _rdeckNodeEditError(msg.origin,err?err:"(No message)");
+            }else if (remoteEditStarted){
+                if(PROTOCOL+':finished:true'==data){
+                    _rdeckNodeEditFinished(true);
+                }else if(PROTOCOL+':finished:false'==data){
+                    _rdeckNodeEditFinished(false);
+                }else{
+                    _rdeckNodeEditError(null,"Unexpected message received from ["+msg.origin+"]: "+data);
+                }
             }
-        }
-        if (typeof window.addEventListener != 'undefined') {
-          window.addEventListener('message', onmessage, false);
-        } else if (typeof window.attachEvent != 'undefined') {
-          window.attachEvent('onmessage', onmessage);
         }
 
     </script>
@@ -188,9 +261,6 @@
         }
         #remoteEditholder .toolbar{
             margin:4px;
-        }
-        #remoteEditholder #remoteEditWait{
-            margin:10px;
         }
     </style>
 </head>

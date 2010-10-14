@@ -99,10 +99,10 @@
 
 <div id="remoteEditholder" style="display:none" class="popout">
     <span id="remoteEditHeader">
-            <span class="welcomeMessage">Edit node: <g:img file="icon-small-Node.png" width="16px" height="16px"/><span id="editNodeIdent"></span></span>
+            <span class="welcomeMessage">Edit node: <g:img file="icon-small-Node.png" width="16px" height="16px"/> <span id="editNodeIdent"></span></span>
     </span>
     <span class="toolbar" id="remoteEditToolbar">
-        <span class="action " onclick="_rdeckNodeEditCompleted();" title="Close the remote edit box and discard any changes"><g:img file="icon-tiny-removex-gray.png" /> Cancel and close</span>
+        <span class="action " onclick="_rdeckNodeEditCompleted();" title="Close the remote edit box and discard any changes"><g:img file="icon-tiny-removex-gray.png" /> <span id="remoteEditCloseText">Cancel and close</span></span>
     </span>
     <div id="remoteEditResultHolder" class="info message" style="display:none">
         <span id="remoteEditResultText" class="info message" >
@@ -111,7 +111,6 @@
     </div>
     <div id="remoteEditError" class="error note" style="display:none">
     </div>
-    <div id="remoteEditWait"  style="display:none"></div>
     <div id="remoteEditTarget" >
 
     </div>
