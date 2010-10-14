@@ -114,10 +114,6 @@
             var errhold=$('remoteEditError');
             errhold.innerHTML="";
             errhold.hide();
-            
-            if($('remoteEditCloseText')){
-                $('remoteEditCloseText').innerHTML="Close remote editing";
-            }
         }
 
         /**
@@ -201,9 +197,6 @@
          */
         function _rdeckNodeEditStarted(){
             remoteEditStarted=true;
-            if($('remoteEditCloseText')){
-                $('remoteEditCloseText').innerHTML="Cancel and close";
-            }
         }
 
         var PROTOCOL='rundeck:node:edit';

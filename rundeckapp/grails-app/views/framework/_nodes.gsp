@@ -102,7 +102,7 @@
             <span class="welcomeMessage">Edit node: <g:img file="icon-small-Node.png" width="16px" height="16px"/> <span id="editNodeIdent"></span></span>
     </span>
     <span class="toolbar" id="remoteEditToolbar">
-        <span class="action " onclick="_remoteEditCompleted();" title="Close the remote edit box and discard any changes"><g:img file="icon-tiny-removex-gray.png" /> <span id="remoteEditCloseText">Cancel and close</span></span>
+        <span class="action " onclick="_remoteEditCompleted();" title="Close the remote edit box and discard any changes"><g:img file="icon-tiny-removex-gray.png" /> Close remote editing</span>
     </span>
     <div id="remoteEditResultHolder" class="info message" style="display:none">
         <span id="remoteEditResultText" class="info message" >
