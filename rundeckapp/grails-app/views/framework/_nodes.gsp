@@ -102,12 +102,12 @@
             <span class="welcomeMessage">Edit node: <g:img file="icon-small-Node.png" width="16px" height="16px"/> <span id="editNodeIdent"></span></span>
     </span>
     <span class="toolbar" id="remoteEditToolbar">
-        <span class="action " onclick="_rdeckNodeEditCompleted();" title="Close the remote edit box and discard any changes"><g:img file="icon-tiny-removex-gray.png" /> <span id="remoteEditCloseText">Cancel and close</span></span>
+        <span class="action " onclick="_remoteEditCompleted();" title="Close the remote edit box and discard any changes"><g:img file="icon-tiny-removex-gray.png" /> <span id="remoteEditCloseText">Cancel and close</span></span>
     </span>
     <div id="remoteEditResultHolder" class="info message" style="display:none">
         <span id="remoteEditResultText" class="info message" >
         </span>
-        <span class="action " onclick="_rdeckNodeEditCompleted();"> Continue&hellip;</span>
+        <span class="action " onclick="_remoteEditCompleted();"> Continue&hellip;</span>
     </div>
     <div id="remoteEditError" class="error note" style="display:none">
     </div>
