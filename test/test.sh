@@ -24,7 +24,7 @@ fi
 #copy jobs file to replace template
 cp $DIR/test.jobs.xml $DIR/test.jobs.expanded.xml
 
-sed -i '' "s/@DIRNAME@/$DIR/" $DIR/test.jobs.expanded.xml
+sed -i '' "s#@DIRNAME@#$DIR#" $DIR/test.jobs.expanded.xml
 
 #load jobs
 $RDECK_BASE/tools/bin/run-jobs load -f $DIR/test.jobs.xml > $DIR/load.out
@@ -34,8 +34,8 @@ if [ 0 != $? ] ; then
 fi
 cat $DIR/load.out
 
-grep Failed $DIR/load.out 
-if [ 0 != $? ] ; then
+grep -q Failed $DIR/load.out 
+if [ 0 == $? ] ; then
 	echo Failed to load some job : $!
 	exit 2
 fi
