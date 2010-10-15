@@ -118,7 +118,8 @@ public class UpdateUtils {
                         }
                     }
                 } catch (BuildException e) {
-                    throw new UpdateException("Get task failed retrieving file from server", e);
+                    logger.error("Error getting URL <" + srcUrl + ">: " + e.getMessage(), e);
+                    throw new UpdateException(e);
                 } finally {
                     lock.release();
                     channel.close();
