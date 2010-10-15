@@ -73,7 +73,7 @@
 <div id="nodesContent">
 
 <div class="pageBody solo">
-
+<g:render template="/common/messages"/>
 <div id="${rkey}nodeForm">
     <g:set var="isCompact" value="${params.compact?true:false}"/>
     <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|project$/)||(query && !query.nodeFilterIsEmpty())}"/>
@@ -113,6 +113,12 @@
         </td>
             </g:if>
             <td style="text-align:left;vertical-align:top;" id="${rkey}nodescontent">
+
+                <g:ifUserInAnyRoles roles="admin,nodes_admin">
+                    <g:if test="${selectedProject && selectedProject.shouldUpdateNodesResourceFile()}">
+                        <span class="floatr"><g:link action="reloadNodes" params="${[project:selectedProject.name]}" class="action button" title="Click to update the resources.xml file from the source URL, for project ${selectedProject.name}" onclick="\$(this.parentNode).loading();">Update Nodes for project ${selectedProject.name}</g:link></span>
+                    </g:if>
+                </g:ifUserInAnyRoles>
                 <g:if test="${!params.nofilters}">
                 <div style="margin-bottom: 5px;">
                     <g:if test="${wasfiltered}">

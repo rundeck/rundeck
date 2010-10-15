@@ -10,6 +10,7 @@ class FrameworkController  {
     FrameworkService frameworkService
     ExecutionService executionService
     UserService userService
+    RoleService roleService
 
     def index = {
         redirect(action:"nodes")        
@@ -181,6 +182,10 @@ class FrameworkController  {
             query:query
         ]
 
+        if(query.project && framework.getFrameworkProjectMgr().existsFrameworkProject(query.project)){
+            model.selectedProject=framework.getFrameworkProjectMgr().getFrameworkProject(query.project)
+        }
+
         if(usedFilter){
             model['filterName']=usedFilter
         }
@@ -203,6 +208,24 @@ class FrameworkController  {
         }else{
             render result.allnodes as JSON
         }
+    }
+
+    def reloadNodes = {
+        if(params.project){
+            if(roleService.isUserInAnyRoles(request,['admin','nodes_admin'])){
+                Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+                def project=framework.getFrameworkProjectMgr().getFrameworkProject(params.project)
+               //if reload parameter is specified, and user is admin, reload from source URL
+                try {
+                    project.updateNodesResourceFile()
+                } catch (Exception e) {
+                    log.error("Error updating node resources file for project ${project.name}: "+e.message)
+                    flash.error="Error updating node resources file for project ${project.name}: "+e.message
+                }
+            }
+        }
+        redirect(action:'nodes')
+
     }
 
     def storeNodeFilter={ExtNodeFilters query->
