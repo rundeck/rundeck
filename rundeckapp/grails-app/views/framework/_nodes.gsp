@@ -54,7 +54,7 @@
                             nodecontextdata.project=nodedata.project.name
                         %>
                         <g:set var="remoteUrl" value="${DataContextUtils.replaceDataReferences(node.attributes?.remoteUrl,[node:nodecontextdata])}" />
-                        <span class="action " title="Edit this node via remote URL..." onclick='doRemoteEdit("${node.nodename.encodeAsJavaScript()}","${remoteUrl.encodeAsJavaScript()}");'>Edit&hellip;</span>
+                        <span class="action " title="Edit this node via remote URL..." onclick='doRemoteEdit("${node.nodename.encodeAsJavaScript()}","${nodedata.project.name.encodeAsJavaScript()}","${remoteUrl.encodeAsJavaScript()}");'>Edit&hellip;</span>
                     </g:if>
                     <g:elseif test="${node.attributes?.editUrl}">
                         <g:set var="nodecontextdata" value="${DataContextUtils.nodeData(node)}"/>
@@ -107,7 +107,7 @@
     <div id="remoteEditResultHolder" class="info message" style="display:none">
         <span id="remoteEditResultText" class="info message" >
         </span>
-        <span class="action " onclick="_remoteEditCompleted();"> Continue&hellip;</span>
+        <span class="action " onclick="_remoteEditContinue();"> Continue&hellip;</span>
     </div>
     <div id="remoteEditError" class="error note" style="display:none">
     </div>

@@ -54,15 +54,17 @@
         var remoteSite;
         var remoteEditStarted=false;
         var remoteEditExpect=false;
+        var projectname;
 
         /**
          * Start remote editor for node with url
          * @param name node name
          * @param url url
          */
-        function doRemoteEdit(name,url){
+        function doRemoteEdit(name,project,url){
             _remoteEditClear();
 
+            projectname=project;
             $('editNodeIdent').innerHTML=name;
 
             //create iframe for url
@@ -98,6 +100,7 @@
             remoteEditExpect=false;
             remoteSite=null;
             remoteEditStarted=false;
+            projectname=null;
 
             Event.stopObserving(window,'message', _rdeckNodeEditOnmessage);
         }
@@ -109,6 +112,8 @@
             _remoteEditStop();
             
             _clearTarget();
+
+            shouldrefresh=false;
 
             $('editNodeIdent').innerHTML='';
             var errhold=$('remoteEditError');
@@ -157,7 +162,40 @@
             _remoteEditClear();
         }
 
-        //protocol handler functions
+        var shouldrefresh=false;
+        /**
+         * If necessary, reload the nodes page
+         */
+        function _remoteEditContinue(){
+            if(shouldrefresh){
+                document.location='${createLink(controller:"framework",action:"nodes")}';
+            }else{
+                _remoteEditCompleted();
+            }
+        }
+
+        /**
+         * Perform Ajax request to tell server to re-fetch the nodes data for the project
+         */
+        function _remoteEditDidSave(){
+            if(projectname){
+                new Ajax.Request('${createLink(controller:"framework",action:"reloadNodes")}.json',{
+                    parameters:{project:projectname},
+                    evalJSON:true,
+                    onSuccess:function(req){
+                        var data=req.responseJSON;
+                        if(data.success){
+                            shouldrefresh=true;
+                        }
+                    },
+                    onFailure:function(e){
+                        console.log(e);
+                    }
+                });
+            }
+        }
+
+        //protocol handler functions//
 
 
         /**
@@ -165,14 +203,15 @@
          * @param changed true if changes were saved
          */
         function _rdeckNodeEditFinished(changed){
-            _remoteEditStop();
-            _clearTarget();
             
             if(changed){
                 $('remoteEditResultText').innerHTML="Node changes were saved successfully.";
+                _remoteEditDidSave();
             }else{
                 $('remoteEditResultText').innerHTML="Node changes were not saved.";
             }
+            _remoteEditStop();
+            _clearTarget();
             
             $('remoteEditToolbar').hide();
             $('remoteEditResultHolder').show();
