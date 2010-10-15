@@ -210,7 +210,29 @@ class FrameworkController  {
         }
     }
 
+    /**
+     * calls performNodeReload, then redirects to 'nodes' action (for normal request), or returns JSON 
+     * results (for ajax request). JSON format: {success:true/false, message:string}
+     */
     def reloadNodes = {
+        def didsucceed=performNodeReload()
+        withFormat {
+            json{
+                def data=[success:didsucceed,message:didsucceed?"Remote resources loaded for project: ${params.project}":"Failed to load remote resources for project: ${params.project}"]
+                render data as JSON
+            }
+            html{
+                redirect(action:'nodes')
+            }
+        }
+    }
+
+    /**
+     * If user has admin rights and the project parameter is specified, attempt to re-fetch the resources.xml
+     * via the project's project.resources.url (if it exists).
+     * Returns true if re-fetch succeeded, false otherwise.
+     */
+    def performNodeReload = {
         if(params.project){
             if(roleService.isUserInAnyRoles(request,['admin','nodes_admin'])){
                 Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
@@ -218,14 +240,14 @@ class FrameworkController  {
                //if reload parameter is specified, and user is admin, reload from source URL
                 try {
                     project.updateNodesResourceFile()
+                    return true
                 } catch (Exception e) {
                     log.error("Error updating node resources file for project ${project.name}: "+e.message)
                     flash.error="Error updating node resources file for project ${project.name}: "+e.message
                 }
             }
         }
-        redirect(action:'nodes')
-
+        return false
     }
 
     def storeNodeFilter={ExtNodeFilters query->
