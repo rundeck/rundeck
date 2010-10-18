@@ -41,6 +41,8 @@ public class FrameworkProject extends FrameworkResourceParent {
     public static final String PROP_FILENAME = "project.properties";
     public static final String ETC_DIR_NAME = "etc";
     public static final String NODES_XML = "resources.xml";
+    public static final String PROJECT_RESOURCES_URL_PROPERTY = "project.resources.url";
+    public static final String PROJECT_RESOURCES_FILE_PROPERTY = "project.resources.file";
     /**
      * Reference to deployments base directory
      */
@@ -204,6 +206,9 @@ public class FrameworkProject extends FrameworkResourceParent {
      * @return
      */
     public String getNodesResourceFilePath() {
+        if(hasProperty(PROJECT_RESOURCES_FILE_PROPERTY)) {
+            return new File(getProperty(PROJECT_RESOURCES_FILE_PROPERTY)).getAbsolutePath();
+        }
         final Framework framework = projectResourceMgr.getFramework();
         final String s;
         if(framework.existsProperty(Framework.NODES_RESOURCES_FILE_PROP)){
@@ -248,6 +253,29 @@ public class FrameworkProject extends FrameworkResourceParent {
             return nodesCache.get(nodesFile);
         }
 
+    }
+
+    /**
+     * Conditionally update the nodes resources file if a URL source is defined for it 
+     *
+     * @throws UpdateUtils.UpdateException
+     *
+     */
+    public void updateNodesResourceFile() throws UpdateUtils.UpdateException {
+        if (shouldUpdateNodesResourceFile()) {
+            UpdateUtils.updateFileFromUrl(getProperty(PROJECT_RESOURCES_URL_PROPERTY), getNodesResourceFilePath());
+            logger.debug("Updated nodes resources file: " + getNodesResourceFilePath());
+        }
+    }
+
+    /**
+     * Return true if the resources file should be pulled from the server If he node is the server and workbench
+     * integration is enabled then the file should not be updated.
+     *
+     * @return
+     */
+    private boolean shouldUpdateNodesResourceFile() {
+        return hasProperty(PROJECT_RESOURCES_URL_PROPERTY);
     }
 
 
