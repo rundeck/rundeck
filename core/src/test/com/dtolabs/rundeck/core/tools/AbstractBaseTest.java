@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 import org.apache.tools.ant.BuildException;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -165,6 +166,12 @@ public abstract class AbstractBaseTest extends TestCase {
         typedefProperties = TYPEDEF_PROPERTIES;
         new File(modulesBase).mkdirs();
         ctlDavBase.mkdirs();
+        File dummykey = new File(baseDir, "etc/dummy_ssh_key.pub");
+        try {
+            dummykey.createNewFile();
+        } catch (IOException e) {
+            throw new BuildException("failed to create dummy keyfile: " + e.getMessage(), e);
+        }
 
         // check to see if Setup was run, if so, just return.
         if (new File(baseDir, "etc" + "/" + "framework.properties").exists()) {
@@ -181,6 +188,7 @@ public abstract class AbstractBaseTest extends TestCase {
         
         final ArrayList argsList = new ArrayList(Arrays.asList(SETUP_ARGS));
         argsList.add("--framework.webdav.uri=" + davUrl);
+        argsList.add("--framework.ssh.keypath=" + dummykey.getAbsolutePath());
 
         try {
             System.out.println("Running Setup");

@@ -25,10 +25,6 @@ if [ ! -f $JAVA_HOME/bin/java ] ; then
     exit 1
 fi
 
-if [ ! -f $HOME/.ssh/id_dsa.pub ] ; then
-    echo "ERROR: $HOME/.ssh/id_dsa file must exist.  Please run: ssh-keygen -t dsa"
-    exit 1
-fi
 BASEDIR=`pwd`
 
 # VERS will be determined from "version.properties" file in root
