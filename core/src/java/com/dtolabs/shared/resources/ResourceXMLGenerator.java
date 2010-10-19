@@ -35,6 +35,7 @@ import org.dom4j.io.XMLWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -49,6 +50,7 @@ public class ResourceXMLGenerator {
     static Logger log4j = Logger.getLogger(ResourceXMLGenerator.class.getName());
 
     private File file;
+    private OutputStream output;
     private List<ResourceXMLParser.Entity> entities;
 
     /**
@@ -58,6 +60,16 @@ public class ResourceXMLGenerator {
      */
     public ResourceXMLGenerator(final File file) {
         this.file = file;
+        this.entities = new ArrayList<ResourceXMLParser.Entity>();
+    }
+
+    /**
+     * Constructor for the ResourceXMLGenerator
+     *
+     * @param file destination output file
+     */
+    public ResourceXMLGenerator(final OutputStream output) {
+        this.output = output;
         this.entities = new ArrayList<ResourceXMLParser.Entity>();
     }
 
@@ -95,7 +107,13 @@ public class ResourceXMLGenerator {
      */
     public void addNode(final INodeEntry node) {
         //convert to entity
-        addEntity(createEntity(node));
+        final ResourceXMLParser.Entity entity = createEntity(node);
+        addEntity(entity);
+        if(null!=entity.getResources()){
+            for (final ResourceXMLParser.Entity entity1 : entity.getResources()) {
+                addEntity(entity1);
+            }
+        }
     }
 
     /**
@@ -120,6 +138,24 @@ public class ResourceXMLGenerator {
         ent.setProperty(NODE_OS_NAME, notNull(node.getOsName()));
         ent.setProperty(NODE_OS_VERSION, notNull(node.getOsVersion()));
         ent.setProperty(NODE_USERNAME, notNull(node.getUsername()));
+        if(null!=node.getAttributes() && null!=node.getAttributes().get(NODE_EDIT_URL)) {
+            ent.setProperty(NODE_EDIT_URL, notNull(node.getAttributes().get(NODE_EDIT_URL)));
+        }
+        if(null!=node.getAttributes() && null!=node.getAttributes().get(NODE_REMOTE_URL)) {
+            ent.setProperty(NODE_REMOTE_URL, notNull(node.getAttributes().get(NODE_REMOTE_URL)));
+        }
+        //iterate settings
+        if(null!=node.getSettings()){
+            for (final String setName : node.getSettings().keySet()) {
+                String value = node.getSettings().get(setName);
+                final ResourceXMLParser.Entity setent = new ResourceXMLParser.Entity();
+                setent.setName(setName);
+                setent.setResourceType(SETTING_ENTITY_TAG);
+                setent.setProperty(SETTING_VALUE, value);
+                setent.setType("Setting");
+                ent.addResource(setent);
+            }
+        }
 
         return ent;
     }
@@ -179,7 +215,11 @@ public class ResourceXMLGenerator {
             }
         }
 
-        serializeDocToFile(file, doc);
+        if (null != file) {
+            serializeDocToStream(new FileOutputStream(file), doc);
+        } else if (null != output) {
+            serializeDocToStream(output, doc);
+        }
     }
 
     /**
@@ -297,9 +337,9 @@ public class ResourceXMLGenerator {
      *
      * @throws IOException
      */
-    private static void serializeDocToFile(final File file, final Document doc) throws IOException {
+    private static void serializeDocToStream(final OutputStream output, final Document doc) throws IOException {
         final OutputFormat format = OutputFormat.createPrettyPrint();
-        final XMLWriter writer = new XMLWriter(new FileOutputStream(file), format);
+        final XMLWriter writer = new XMLWriter(output, format);
         writer.write(doc);
         writer.flush();
     }
