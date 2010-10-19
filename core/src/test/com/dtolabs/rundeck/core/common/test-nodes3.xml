@@ -17,7 +17,7 @@
 <!DOCTYPE project PUBLIC
     "-//DTO Labs Inc.//DTD Resources Document 1.0//EN" "project.dtd">
 <project>
-  <node name="testnode1" type="SubNode" description="this is the testnode1 node" tags="boring,priority1"
+  <node name="test1" type="SubNode" description="this is the test1 node" tags="boring,priority1"
         hostname="host1.local"
         osArch="i386"
         osFamily="unix"

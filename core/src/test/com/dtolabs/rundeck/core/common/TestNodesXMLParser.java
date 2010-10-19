@@ -84,11 +84,11 @@ public class TestNodesXMLParser extends TestCase {
             nodesXMLParser = new NodesXMLParser(xmlfile1, receiver);
             nodesXMLParser.parse();
             assertEquals("wrong number of nodes parsed", 2, receiver.map.size());
-            INodeEntry node1 = receiver.map.get("testnode1");
+            INodeEntry node1 = receiver.map.get("test1");
             assertNotNull(node1);
-            assertEquals("testnode1", node1.getNodename());
+            assertEquals("test1", node1.getNodename());
             assertEquals("SubNode", node1.getType());
-            assertEquals("this is the testnode1 node", node1.getDescription());
+            assertEquals("this is the test1 node", node1.getDescription());
             assertNotNull(node1.getTags());
             assertEquals(new HashSet<String>(Arrays.asList("boring", "priority1")), node1.getTags());
             assertEquals("host1.local", node1.getHostname());
@@ -147,8 +147,8 @@ public class TestNodesXMLParser extends TestCase {
             nodesXMLParser.parse();
             assertEquals("wrong number of nodes parsed", 3, receiver.map.size());
 
-            INodeEntry node0 = receiver.map.get("testnode1");
-            assertEquals("testnode1", node0.getNodename());
+            INodeEntry node0 = receiver.map.get("test1");
+            assertEquals("test1", node0.getNodename());
             assertEquals("SubNode", node0.getType());
             assertNull(node0.getSettings());
 
@@ -178,7 +178,7 @@ public class TestNodesXMLParser extends TestCase {
             nodesXMLParser.parse();
             assertEquals("wrong number of nodes parsed", 3, receiver.map.size());
 
-            INodeEntry node0 = receiver.map.get("testnode1");
+            INodeEntry node0 = receiver.map.get("test1");
             assertNotNull(node0.getAttributes());
             assertEquals("TestEditUrl1", node0.getAttributes().get(ResourceXMLConstants.NODE_EDIT_URL));
             assertNull(node0.getAttributes().get(ResourceXMLConstants.NODE_REMOTE_URL));

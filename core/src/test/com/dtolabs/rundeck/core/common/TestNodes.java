@@ -71,13 +71,13 @@ public class TestNodes extends AbstractBaseTest {
         nodes = new Nodes(project, xmlfile1, Nodes.Format.projectxml);
         assertNotNull(nodes);
         assertEquals("incorrect number of parsed nodes: " + nodes.listNodes().size(), 2, nodes.listNodes().size());
-        assertTrue("nodes did not parse testnode1", nodes.hasNode("testnode1"));
+        assertTrue("nodes did not parse test1", nodes.hasNode("test1"));
         assertTrue("nodes did not parse testnode2", nodes.hasNode("testnode2"));
         assertFalse("nodes should not parse testnode3", nodes.hasNode("testnode3"));
         {
-            INodeEntry node1 = nodes.getNode("testnode1");
+            INodeEntry node1 = nodes.getNode("test1");
             assertNotNull(node1);
-            assertEquals("testnode1", node1.getNodename());
+            assertEquals("test1", node1.getNodename());
             assertEquals("host1.local", node1.getHostname());
             assertEquals("i386", node1.getOsArch());
             assertEquals("unix", node1.getOsFamily());
@@ -85,12 +85,12 @@ public class TestNodes extends AbstractBaseTest {
             assertEquals("10.5.1", node1.getOsVersion());
             assertEquals("SubNode", node1.getType());
             assertEquals("username1", node1.getUsername());
-            assertEquals("tags were incorrect size for testnode1: " + node1.getTags().size(),
+            assertEquals("tags were incorrect size for test1: " + node1.getTags().size(),
                     2,
                     node1.getTags().size());
-            assertTrue("tags for testnode1 did not contain boring", node1.getTags().contains("boring"));
-            assertTrue("tags for testnode1 did not contain priority1", node1.getTags().contains("priority1"));
-            assertFalse("tags for testnode1 should not contain priority2", node1.getTags().contains("priority2"));
+            assertTrue("tags for test1 did not contain boring", node1.getTags().contains("boring"));
+            assertTrue("tags for test1 did not contain priority1", node1.getTags().contains("priority1"));
+            assertFalse("tags for test1 should not contain priority2", node1.getTags().contains("priority2"));
         }
         {
             INodeEntry node1 = nodes.getNode("testnode2");
@@ -103,12 +103,12 @@ public class TestNodes extends AbstractBaseTest {
             assertEquals("5.1", node1.getOsVersion());
             assertEquals("Node", node1.getType());
             assertNull( node1.getUsername());
-            assertEquals("tags were incorrect size for testnode1: " + node1.getTags().size(),
+            assertEquals("tags were incorrect size for test1: " + node1.getTags().size(),
                     1,
                     node1.getTags().size());
-            assertTrue("tags for testnode1 did not contain boring", node1.getTags().contains("boring"));
-            assertFalse("tags for testnode1 should not contain priority1", node1.getTags().contains("priority1"));
-            assertFalse("tags for testnode1 should not contain priority2", node1.getTags().contains("priority2"));
+            assertTrue("tags for test1 did not contain boring", node1.getTags().contains("boring"));
+            assertFalse("tags for test1 should not contain priority1", node1.getTags().contains("priority1"));
+            assertFalse("tags for test1 should not contain priority2", node1.getTags().contains("priority2"));
         }
         {
             INodeEntry node1 = nodes.getNode("testnode3");
@@ -125,14 +125,14 @@ public class TestNodes extends AbstractBaseTest {
 
         assertNotNull(nodes);
         ArrayList nodeDescs = new ArrayList();
-        INodeBase nodeDesc1 = new NodeEntryImpl("host1.local", "testnode1");
+        INodeBase nodeDesc1 = new NodeEntryImpl("host1.local", "test1");
         INodeBase nodeDesc2 = new NodeEntryImpl("testnode2", "testnode2");
         nodeDescs.add(nodeDesc1);
         nodeDescs.add(nodeDesc2);
         {
             NodeSet nset = new NodeSet();
             nset.createInclude();
-            nset.createExclude().setName("testnode1");
+            nset.createExclude().setName("test1");
 
             Collection result = nodes.filterNodes(nodeDescs, nset);
             assertNotNull(result);
@@ -142,7 +142,7 @@ public class TestNodes extends AbstractBaseTest {
         }
         {
             NodeSet nset = new NodeSet();
-            nset.createInclude().setName("testnode1");
+            nset.createInclude().setName("test1");
             nset.createExclude();
 
             Collection result = nodes.filterNodes(nodeDescs, nset);
@@ -272,7 +272,7 @@ public class TestNodes extends AbstractBaseTest {
             NodeSet nset = new NodeSet();
             nset.createExclude();
             nset.createInclude().setHostname(".*.local");
-            nset.getInclude().setName("testnode1");
+            nset.getInclude().setName("test1");
 
             Collection result = nodes2.filterNodes(nodeDescs2, nset);
             assertNotNull(result);
@@ -293,13 +293,13 @@ public class TestNodes extends AbstractBaseTest {
 
         INodeEntry node1 = nodes.getNodeByHostname("host1.local");
         assertNotNull(node1);
-        assertEquals("incorrect name", "testnode1", node1.getNodename());
+        assertEquals("incorrect name", "test1", node1.getNodename());
 
         INodeEntry node2 = nodes.getNodeByHostname("testnode2");
         assertNotNull(node2);
         assertEquals("incorrect name", "testnode2", node2.getNodename());
 
-        assertNull(nodes.getNodeByHostname("testnode1"));
+        assertNull(nodes.getNodeByHostname("test1"));
     }
 
 
@@ -310,7 +310,7 @@ public class TestNodes extends AbstractBaseTest {
         nodes = new Nodes(project, xmlfile1, Nodes.Format.projectxml);
         assertTrue(nodes.hasNodeByHostname("host1.local"));
         assertTrue(nodes.hasNodeByHostname("testnode2"));
-        assertFalse(nodes.hasNodeByHostname("testnode1"));
+        assertFalse(nodes.hasNodeByHostname("test1"));
     }
 
     public void testGetNodeXML() throws Exception {
@@ -319,9 +319,9 @@ public class TestNodes extends AbstractBaseTest {
                 getFrameworkInstance().getFrameworkProjectMgr());
         nodes = new Nodes(project, xmlfile1, Nodes.Format.projectxml);
 
-        INodeEntry node1 = nodes.getNode("testnode1");
+        INodeEntry node1 = nodes.getNode("test1");
         assertNotNull(node1);
-        assertEquals("incorrect name", "testnode1", node1.getNodename());
+        assertEquals("incorrect name", "test1", node1.getNodename());
 
         INodeEntry node2 = nodes.getNode("testnode2");
         assertNotNull(node2);
@@ -335,7 +335,7 @@ public class TestNodes extends AbstractBaseTest {
                 new File(getFrameworkProjectsBase()),
                 getFrameworkInstance().getFrameworkProjectMgr());
         nodes = new Nodes(project, xmlfile1, Nodes.Format.projectxml);
-        assertTrue(nodes.hasNode("testnode1"));
+        assertTrue(nodes.hasNode("test1"));
         assertTrue(nodes.hasNode("testnode2"));
         assertFalse(nodes.hasNode("host1.local"));
     }
@@ -348,7 +348,7 @@ public class TestNodes extends AbstractBaseTest {
 
         assertNotNull(nodes);
         final ArrayList<INodeBase> nodelist = new ArrayList<INodeBase>();
-        final INodeBase nodeDesc1 = NodeBaseImpl.create("testnode1");
+        final INodeBase nodeDesc1 = NodeBaseImpl.create("test1");
         final INodeBase nodeDesc2 = NodeBaseImpl.create("testnode2");
         nodelist.add(nodeDesc1);
         nodelist.add(nodeDesc2);
@@ -359,7 +359,7 @@ public class TestNodes extends AbstractBaseTest {
             assertTrue("doesn't contain correct node desc", result.contains(nodeDesc1));
             assertTrue("doesn't contain correct node desc", result.contains(nodeDesc2));
             INodeEntry[] entries = result.toArray(new INodeEntry[2]);
-            assertEquals("Incorrect entry", "testnode1", entries[0].getNodename());
+            assertEquals("Incorrect entry", "test1", entries[0].getNodename());
             assertEquals("Incorrect entry", "testnode2", entries[1].getNodename());
         }
     }
