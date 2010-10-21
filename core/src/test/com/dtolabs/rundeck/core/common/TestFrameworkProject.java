@@ -151,7 +151,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         Nodes nodes = project.getNodes();
         assertNotNull(nodes);
         assertEquals("nodes was incorrect size", 2, nodes.listNodes().size());
-        assertTrue("nodes did not have correct test node1", nodes.hasNode("testnode1"));
+        assertTrue("nodes did not have correct test node1", nodes.hasNode("test1"));
         assertTrue("nodes did not have correct test node2", nodes.hasNode("testnode2"));
     }
 

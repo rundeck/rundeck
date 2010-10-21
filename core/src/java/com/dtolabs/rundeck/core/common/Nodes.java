@@ -68,6 +68,11 @@ public class Nodes implements NodeReceiver {
             final NodeFileParser parser = createParser(this.project, nodesFile);
             parser.parse();
         }
+        //add local node if it does not exist
+        final String fwkNode = project.getFrameworkProjectMgr().getFramework().getFrameworkNodeName();
+        if (null == nodes.get(fwkNode)) {
+            nodes.put(fwkNode, project.getFrameworkProjectMgr().getFramework().createFrameworkNode());
+        }
 
     }
 

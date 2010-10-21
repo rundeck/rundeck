@@ -233,7 +233,7 @@ public class TestExecTool extends AbstractBaseTest {
             final String result = action.formatResults(c, false).toString();
             System.out.println("TEST-DEBUG: result='" + result + "'");
             assertNotNull(result);
-            assertEquals("doesn't contain correct result", "cheat homestar strongbad", result);
+            assertEquals("doesn't contain correct result", "cheat homestar strongbad test1", result);
         }
         {
             ExecTool main = new ExecTool();
@@ -259,10 +259,10 @@ public class TestExecTool extends AbstractBaseTest {
             Map incmap = main.parseIncludeArgs(nodeKeys);
             ExecTool.ListAction action = main.createListAction(main.createNodeSet(incmap, exmap));
             final Collection c = action.filterNodes();
-            assertEquals("wrong size", 1, c.size());
+            assertEquals("wrong size", 2, c.size());
             final String result = action.formatResults(c, false).toString();
             assertNotNull(result);
-            assertEquals("doesn't contain correct result", "cheat", result);
+            assertEquals("doesn't contain correct result", "cheat test1", result);
         }
     }
 
