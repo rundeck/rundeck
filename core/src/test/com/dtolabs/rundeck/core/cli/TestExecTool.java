@@ -209,7 +209,7 @@ public class TestExecTool extends AbstractBaseTest {
         //use mix of include and exclude
         {
             ExecTool main = new ExecTool();
-            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-X", "strongbad", "-I", "os-name=Linux"});
+            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-X", "strongbad", "-I", "os-name=Testux"});
 
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
@@ -218,7 +218,7 @@ public class TestExecTool extends AbstractBaseTest {
             assertTrue("doesn't contain hostname entry", exmap.containsKey("hostname"));
             assertEquals("doesn't contain correct value", "strongbad", exmap.get("hostname"));
             assertTrue("doesn't contain os-name entry", incmap.containsKey("os-name"));
-            assertEquals("doesn't contain correct value", "Linux", incmap.get("os-name"));
+            assertEquals("doesn't contain correct value", "Testux", incmap.get("os-name"));
         }
     }
 
@@ -237,7 +237,7 @@ public class TestExecTool extends AbstractBaseTest {
         }
         {
             ExecTool main = new ExecTool();
-            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-X", "homestar", "-I", "os-name=Linux"});
+            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-X", "homestar", "-I", "os-name=Testux"});
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
             NodeSet nodeset = main.createNodeSet(incmap, exmap);

@@ -21,7 +21,7 @@
         hostname="homestar"
         osArch="arm"
         osFamily="unix"
-        osName="Linux"
+        osName="Testux"
         osVersion="10.5.1"
         username="username1"
       >
@@ -31,7 +31,7 @@
         hostname="the@cheat"
         osArch="i386"
         osFamily="unix"
-        osName="Linux"
+        osName="Testux"
         osVersion="5.1"
       >
 
@@ -40,7 +40,7 @@
         hostname="strongbad"
         osArch="i686"
         osFamily="unix"
-        osName="Mac OS X"
+        osName="Mac OS Xzz"
         osVersion="3.7"
       >
 
