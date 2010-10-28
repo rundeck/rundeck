@@ -20,6 +20,7 @@
     Created: Apr 14, 2010 4:07:58 PM
     $Id$
  --%>
+<g:set var="rkey" value="${rkey()}"/>
 <g:javascript>
     function _addNodeFilterInput(name, isinclude, label) {
         var prefix = (isinclude ? 'Include' : 'Exclude');
@@ -55,7 +56,9 @@
     }
 </g:javascript>
 
-<g:set var="NODE_FILTERS" value="${['','Name','Type','Tags','OsName','OsFamily','OsArch','OsVersion']}"/>
+<g:set var="NODE_FILTERS_ALL" value="${['Name','Tags','','OsName','OsFamily','OsArch','OsVersion','Type']}"/>
+<g:set var="NODE_FILTERS" value="${['Name','Tags']}"/>
+<g:set var="NODE_FILTERS_X" value="${['','OsName','OsFamily','OsArch','OsVersion','Type']}"/>
 <g:set var="NODE_FILTER_MAP" value="${['':'Hostname','OsName':'OS Name','OsFamily':'OS Family','OsArch':'OS Architecture','OsVersion':'OS Version']}"/>
         <%--<tr>
             <td>
@@ -76,7 +79,7 @@
         <tr>
             <td>
                 <span class=" ${hasErrors(bean:query,field:'nodeInclude','fieldError')}">
-                    Node Include Filters
+                    Include
                 </span>
             </td>
             <td>
@@ -91,23 +94,9 @@
                     <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error"  width="16px" height="16px"/>
                 </g:hasErrors>
                 <div id="nodeFilterDivInclude" style="">
-                    <g:each var="key" in="${NODE_FILTERS}">
-                            <div id="nodeFilterInclude${key}"  style="${query?.('nodeInclude'+key)?'':'display:none;'}">
-                            <span class="input">
-                                ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}:
-                                <input type='text' name="nodeInclude${key}"
-                                    value="${query?.('nodeInclude'+key)?.encodeAsHTML()}" id="schedJobNodeInclude${key}" onchange="_matchNodes()"/>
-                                <span title="Remove filter for ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}"
-                                    class="filterRemove action"
-                                    onclick="_removeNodeFilterInput('${key}',true);"
-                                    ><img src="${resource( dir:'images',file:'icon-tiny-removex.png' )}" alt="remove" width="12px" height="12px"/></span>
-                            </span>
-                                <g:if test="${g.message(code:'node.metadata.'+key+'.defaults',default:'')}">
-                                    <g:select from="${g.message(code:'node.metadata.'+key+'.defaults').split(',').sort()}" onchange="_setNodeFilterDefault('${key}',true,this.value);"/>
-                                </g:if>
-                            </div>
+                    <g:each var="key" in="${NODE_FILTERS_ALL}">
+                        <g:render template="nodeFilterField" model="${[key:key,include:true,query:query,NODE_FILTER_MAP:NODE_FILTER_MAP]}"/>
                     </g:each>
-
                 </div>
                 <div class="filterSetButtons">
                     <g:each var="key" in="${NODE_FILTERS}">
@@ -120,12 +109,39 @@
                             >${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}</span>
                     </g:each>
                 </div>
+                <span class="filterAdd button textbtn action" onclick="Element.show('${rkey}moreIncludeFilters');Element.hide(this);">more&hellip;</span>
+                <div class="filterSetButtons" id="${rkey}moreIncludeFilters" style="display:none">
+                    <g:each var="key" in="${NODE_FILTERS_X}">
+                        <span
+                            style="${query?.('nodeInclude'+key)?'display:none':''}"
+                            title="Add Filter for ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}"
+                            class="filterAdd button textbtn action"
+                            id="filterAddInclude${key}"
+                            onclick="_addNodeFilterInput('${key}',true,'${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}');"
+                            >${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}</span>
+                    </g:each>
+                </div>
             </td>
         </tr>
         <tr>
+            <td ></td>
+            <td >
+
+                <g:render template="/common/nodefilterRegexSyntaxNote"/>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align:left">
+                <g:expander key="${rkey}nodeXtraFilters">
+                    Extended Filters...
+                </g:expander>
+            </td>
+        </tr>
+    <tbody id="${rkey}nodeXtraFilters" style="display:none">
+        <tr>
             <td>
-                <span for="nodeExclude" class=" ${hasErrors(bean:query,field:'nodeExclude','fieldError')}">
-                    Node Exclude Filters
+                <span class=" ${hasErrors(bean:query,field:'nodeExclude','fieldError')}" >
+                    Exclude
                 </span>
             </td>
             <td>
@@ -142,25 +158,13 @@
                 </div>
 
                 <div id="nodeFilterDivExclude" style="">
-                    <g:each var="key" in="${NODE_FILTERS}">
-                            <div id="nodeFilterExclude${key}" style="${query?.('nodeExclude'+key)?'':'display:none;'}">
-                            <span class="input">
-                                ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}:
-                                <input type='text' name="nodeExclude${key}"
-                                    value="${query?.('nodeExclude'+key)?.encodeAsHTML()}" id="schedJobNodeExclude${key}" onchange="_matchNodes()"/>
-                                <span class="filterRemove action"
-                                    onclick="_removeNodeFilterInput('${key}',false);"
-                                    ><img src="${resource( dir:'images',file:'icon-tiny-removex.png' )}" alt="remove" width="12px" height="12px"/></span>
-                            </span>
-                                <g:if test="${g.message(code:'node.metadata.'+key+'.defaults',default:'')}">
-                                    <g:select from="${g.message(code:'node.metadata.'+key+'.defaults').split(',').sort()}" onchange="_setNodeFilterDefault('${key}',false,this.value);"/>
-                                </g:if>
-                            </div>
+                    <g:each var="key" in="${NODE_FILTERS_ALL}">
+                        <g:render template="nodeFilterField" model="${[key:key,include:false,query:query,NODE_FILTER_MAP:NODE_FILTER_MAP]}"/>
                     </g:each>
 
                 </div>
                 <div class="filterSetButtons">
-                    <g:each var="key" in="${NODE_FILTERS}">
+                    <g:each var="key" in="${NODE_FILTERS_ALL}">
                             <span
                                 style="${query?.('nodeExclude'+key)?'display:none':''}"
                             title="Add Filter: ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}"
@@ -170,13 +174,6 @@
                             >${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}</span>
                     </g:each>
                 </div>
-            </td>
-        </tr>
-        <tr>
-            <td ></td>
-            <td >
-
-                <g:render template="/common/nodefilterRegexSyntaxNote"/>
             </td>
         </tr>
         <g:if test="${filterErrors?.filter}">
@@ -209,4 +206,4 @@
                     <span class="action " id="nodeExcludePrecedenceTrueLabel" >Yes</span></label>
             </td>
         </tr>
-    
+    </tbody>
