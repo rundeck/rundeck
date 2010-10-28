@@ -523,20 +523,6 @@ class ScheduledExecutionController  {
         scheduledExecution.adhocLocalString=null
         scheduledExecution.adhocFilepath=null
 
-        if(!scheduledExecution.jobName){
-            //TODO: finalize format
-            if(scheduledExecution.name){
-                scheduledExecution.jobName=scheduledExecution.name+" - "+scheduledExecution.command+" Job"
-            } else if(scheduledExecution.command){
-                scheduledExecution.jobName=scheduledExecution.command+" Job"
-            }else if(scheduledExecution.adhocRemoteString){
-                scheduledExecution.jobName="Remote Script Job"
-            }else if(scheduledExecution.adhocLocalString){
-                scheduledExecution.jobName="Inline Script Job"
-            }else if(scheduledExecution.adhocFilepath){
-                scheduledExecution.jobName="Remote Script File Job"
-            }
-        }
         if(!scheduledExecution.validate()){
             failed=true
         }
