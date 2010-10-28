@@ -266,6 +266,9 @@
                 }
             }
         }
+        /**
+         * END remote edit code
+         */
 
     </script>
     <style type="text/css">
@@ -294,6 +297,17 @@
         #remoteEditholder .toolbar{
             margin:4px;
         }
+        .runbox{
+            background: #ddd;
+            margin-bottom: 10px;
+            padding:5px;
+        }
+        .runbox input[type='text']{
+            font-size: 150%;
+            font-family: Monaco, 'Courier New', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
+            font-family: Courier, monospace;
+        }
+
     </style>
 </head>
 <body>
@@ -317,12 +331,12 @@
                 <g:if test="${params.compact}">
                     <g:hiddenField name="compact" value="${params.compact}"/>
                 </g:if>
-                <span class="prompt action" onclick="['${rkey}filter','${rkey}filterdispbtn'].each(Element.toggle); if (${isCompact}) { $('${rkey}nodescontent').toggle(); }">
+                <span class="prompt action" onclick="['${rkey}filter','${rkey}filterdispbtn','runbox'].each(Element.toggle); if (${isCompact}) { $('${rkey}nodescontent').toggle(); }">
                     Filter
                     <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-open.png')}" width="12px" height="12px"/>
                 </span>
 
-                <g:render template="/common/queryFilterManager" model="${[filterName:filterName,filterset:filterset,deleteActionSubmit:'deleteNodeFilter',storeActionSubmit:'storeNodeFilter']}"/>
+                <g:render template="/common/queryFilterManager" model="${[rkey:rkey,filterName:filterName,filterset:filterset,deleteActionSubmit:'deleteNodeFilter',storeActionSubmit:'storeNodeFilter']}"/>
                 <div class="presentation filter">
 
                     <g:hiddenField name="max" value="${max}"/>
@@ -345,6 +359,28 @@
             </g:if>
             <td style="text-align:left;vertical-align:top;" id="${rkey}nodescontent">
 
+                        <g:if test="${wasfiltered && session.project && total>0}">
+                            <div class=" runbox" id="runbox">
+                            <g:form action="execAndForget" controller="scheduledExecution" method="post" style="display:inline">
+                                Command:
+                                <g:img file="icon-small-shell.png" width="16px" height="16px"/>
+                                <g:hiddenField name="project" value="${session.project}"/>
+                                <g:hiddenField name="doNodedispatch" value="true"/>
+                                <g:hiddenField name="nodeKeepgoing" value="true"/>
+                                <g:hiddenField name="nodeThreadcount" value="1"/>
+                                <g:hiddenField name="description" value=""/>
+
+                                <g:hiddenField name="workflow.commands[0].adhocExecution" value="true"/>
+                                <g:hiddenField name="workflow.threadcount" value="1"/>
+                                <g:hiddenField name="workflow.keepgoing" value="false"/>
+                                <g:hiddenField name="workflow.project" value="${session.project}"/>
+
+                                <g:textField name="workflow.commands[0].adhocRemoteString" size="80" placeholder="Enter a shell command" autofocus="true" />
+                                <g:render template="nodeFiltersHidden" model="${[params:params,query:query]}"/>
+                                <input type="submit" value="Run"/>
+                            </g:form>
+                            </div>
+                        </g:if>
                 <g:ifUserInAnyRoles roles="admin,nodes_admin">
                     <g:if test="${selectedProject && selectedProject.shouldUpdateNodesResourceFile()}">
                         <span class="floatr"><g:link action="reloadNodes" params="${[project:selectedProject.name]}" class="action button" title="Click to update the resources.xml file from the source URL, for project ${selectedProject.name}" onclick="\$(this.parentNode).loading();">Update Nodes for project ${selectedProject.name}</g:link></span>
@@ -355,7 +391,7 @@
                     <g:if test="${wasfiltered}">
 
                         <g:if test="${!params.compact}">
-                            <span class="prompt">${total} Nodes</span>
+                            <span class="prompt">${total} Node${1!=total?'s':''}</span>
                             matching filter:
                         </g:if>
 
@@ -370,16 +406,19 @@
                             </span>
                         </g:if>
 
-                        <div style="padding:5px 0;margin:5px 0;${!filtersOpen?'':'display:none;'} " id='${rkey}filterdispbtn' >
-                            <span title="Click to modify filter" class="info textbtn query action" onclick="['${rkey}filter','${rkey}filterdispbtn'].each(Element.toggle);if(${isCompact}){$('${rkey}nodescontent').toggle();}" >
+                        <div >
+                            <span style="padding:5px 0;margin:5px 0;${!filtersOpen?'':'display:none;'} " id='${rkey}filterdispbtn' >
+                            <span title="Click to modify filter" class="info textbtn query action" onclick="['${rkey}filter','${rkey}filterdispbtn','runbox'].each(Element.toggle);if(${isCompact}){$('${rkey}nodescontent').toggle();}" >
                                 <g:render template="displayNodeFilters" model="${[displayParams:query]}"/>
                                 <img src="${resource(dir:'images',file:'icon-tiny-disclosure.png')}" width="12px" height="12px"/></span>
+                            </span>
+
                         </div>
-                        
+
                     </g:if>
                     <g:else>
                         <span class="prompt">Nodes (${total})</span>
-                        <span class="prompt action" onclick="['${rkey}filter','${rkey}filterdispbtn'].each(Element.toggle);if(${isCompact}){$('${rkey}nodescontent').toggle();}" id="${rkey}filterdispbtn"  style="${!filtersOpen?'':'display:none;'}">
+                        <span class="prompt action" onclick="['${rkey}filter','${rkey}filterdispbtn','runbox'].each(Element.toggle);if(${isCompact}){$('${rkey}nodescontent').toggle();}" id="${rkey}filterdispbtn"  style="${!filtersOpen?'':'display:none;'}">
                             Filter
                             <img src="${resource(dir:'images',file:'icon-tiny-disclosure.png')}" width="12px" height="12px"/></span>
                         <g:if test="${filterset}">
