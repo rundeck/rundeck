@@ -26,6 +26,8 @@
 <g:set var="realFieldName" value="${(fieldPrefix?fieldPrefix:'')+(fieldName?fieldName:'command.option.'+optionSelect.name)}"/>
 <g:if test="${optionSelect}">
     <g:set var="optName" value="${optionSelect.name}"/>
+    
+    <%-- Print out the input box for random input --%>
     <g:if test="${!optionSelect.enforced || err}">
         <g:textField name="${realFieldName}"
             class="optionvaluesfield"
@@ -36,9 +38,13 @@
             <wdgt:eventHandler for="${rkey}" state="empty" visible="true" targetSelector="${'#'+optName.encodeAsHTML()+'_state span.reqwarning'}" frequency="1"  inline='true'/>
     </g:if>
 
+    <%-- The Dropdown list --%>
     <g:if test="${(values || optionSelect.values) && !err}">
+        
+    
         <g:set var="labelsSet" value="${values && values instanceof Map?values.keySet():values?values:optionSelect.values?optionSelect.values:[]}"/>
         <g:set var="valuesMap" value="${values && values instanceof Map?values:null}"/>
+
         <g:if test="${labelsSet && 1==labelsSet.size() && optionSelect.enforced}">
             <g:set var="sellabel" value="${labelsSet.iterator().next()}"/>
             <g:set var="selvalue" value="${valuesMap?valuesMap[sellabel]:sellabel}"/>
@@ -46,13 +52,15 @@
             <span class="singlelabel">${sellabel.encodeAsHTML()}</span>
         </g:if>
         <g:else>
+ 
             <select class="optionvalues" id="${rkey}_sel" ${optionSelect.enforced?'name="'+realFieldName.encodeAsHTML()+'"':''}>
                 <g:if test="${!optionSelect.enforced}">
                     <option value="" >-choose-</option>
                 </g:if>
-                <g:each in="${labelsSet.sort()}" var="sellabel">
-                    <g:set var="selvalue" value="${valuesMap?valuesMap[sellabel]:sellabel}"/>
-                    <option value="${selvalue.encodeAsHTML()}" ${selectedvalue&& selvalue==selectedvalue || selvalue==optionSelect.defaultValue || selectedoptsmap && selvalue== selectedoptsmap[optName]?'selected':''}>${sellabel.encodeAsHTML()}</option>
+                
+                <g:each in="${labelsSet}" var="sellabel">
+                    <g:set var="entry" value="${sellabel instanceof Map?sellabel:[name:sellabel,value:sellabel]}"/>
+                    <option value="${entry.value.encodeAsHTML()}" ${selectedvalue && entry.value==selectedvalue || entry.value==optionSelect.defaultValue || selectedoptsmap && entry.value == selectedoptsmap[optName]?'selected':''}>${entry.name.encodeAsHTML()}</option>
                 </g:each>
             </select>
             <g:if test="${!optionSelect.enforced || err}">
