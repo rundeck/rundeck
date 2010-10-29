@@ -359,13 +359,16 @@
             </g:if>
             <td style="text-align:left;vertical-align:top;" id="${rkey}nodescontent">
 
-                        <g:if test="${wasfiltered && session.project && total>0}">
+                        <g:if test="${session.project && total>0}">
                             <div class=" runbox" id="runbox">
                             <g:form action="execAndForget" controller="scheduledExecution" method="post" style="display:inline">
                                 Command:
                                 <g:img file="icon-small-shell.png" width="16px" height="16px"/>
                                 <g:hiddenField name="project" value="${session.project}"/>
                                 <g:hiddenField name="doNodedispatch" value="true"/>
+                                <g:if test="${!wasfiltered}">
+                                    <g:hiddenField name="nodeIncludeName" value=".*"/>
+                                </g:if>
                                 <g:hiddenField name="nodeKeepgoing" value="true"/>
                                 <g:hiddenField name="nodeThreadcount" value="1"/>
                                 <g:hiddenField name="description" value=""/>
