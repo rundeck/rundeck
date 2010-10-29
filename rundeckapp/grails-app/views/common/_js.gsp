@@ -29,7 +29,7 @@
     };
     var _setLoading=function(element,text){
         element=$(element);
-        if(!text){
+        if(null==text){
             text="Loading&hellip;";
         }
         element.innerHTML='<span class="loading"><img src="'+appLinks.iconSpinner+'" alt="Loading"/> '+text+"</span>";

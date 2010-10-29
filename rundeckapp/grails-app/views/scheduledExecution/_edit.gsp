@@ -6,7 +6,9 @@
         <g:renderErrors bean="${scheduledExecution}" as="list"/>
     </div>
 </g:hasErrors>
-<g:set var="NODE_FILTERS" value="${['','Name','Type','Tags','OsName','OsFamily','OsArch','OsVersion']}"/>
+<g:set var="NODE_FILTERS" value="${['Name','Tags']}"/>
+<g:set var="NODE_FILTERS_X" value="${['','OsName','OsFamily','OsArch','OsVersion','Type']}"/>
+<g:set var="NODE_FILTERS_ALL" value="${['Name','Tags','','OsName','OsFamily','OsArch','OsVersion','Type']}"/>
 <g:set var="NODE_FILTER_MAP" value="${['':'Hostname','OsName':'OS Name','OsFamily':'OS Family','OsArch':'OS Architecture','OsVersion':'OS Version']}"/>
 
 <g:set var="isWorkflow" value="${true}"/>
@@ -21,7 +23,7 @@
         var selArgs='${scheduledExecution?.argString?.encodeAsJavaScript()}';
         var isWorkflow=${isWorkflow};
 var node_filter_map =${NODE_FILTER_MAP.encodeAsJSON()};
-var node_filter_keys =${NODE_FILTERS.encodeAsJSON()};
+var node_filter_keys =${NODE_FILTERS_ALL.encodeAsJSON()};
 var curSEID =${editSchedExecId?editSchedExecId:"null"};
 
 var applinks={
@@ -99,6 +101,19 @@ var applinks={
             $('jobChooseBtn').down('img').src=AppImages.disclosure;
             $('jobChooseSpinner').hide();
         }
+
+        /**
+         * Validate the form
+         *
+         */
+         function validateJobEditForm(form){
+             var wfitem=$(form).down('div.wfitemEditForm');
+             if(wfitem){
+                 doyft(wfitem.identify());
+                 return false;
+             }
+             return true;
+         }
 
         Event.observe(window,'load',_enableDragdrop);
 //]>
@@ -220,6 +235,13 @@ var applinks={
     }
 
     /*** END Options */
+
+    .nodefilterfield{
+        margin-bottom: 5px;
+    }
+    .filterkeyset{
+        padding:3px 0;
+    }
 </style>
 <g:set var="wasSaved" value="${ (params?.saved=='true') || scheduledExecution?.id || scheduledExecution?.jobName || scheduledExecution?.scheduled}"/>
     
@@ -396,7 +418,7 @@ var applinks={
         </td>
     </tr>
 
-    <tbody id="optionsContent" >
+    <tbody id="optionsContent" class="savedJobFields" style=" ${wdgt.styleVisible(if:wasSaved)}">
         <tr>
             <td><span id="optsload"></span>Options:</td>
             <td>
@@ -441,6 +463,11 @@ var applinks={
                 <g:set var="editwf" value="${session.editWF && session.editWF[scheduledExecution.id.toString()]?session.editWF[scheduledExecution.id.toString()]:scheduledExecution.workflow}"/>
                 <g:render template="/execution/execDetailsWorkflow" model="${[workflow:editwf,context:scheduledExecution,edit:true,error:scheduledExecution?.errors?.hasFieldErrors('workflow')]}"/>
                 <g:hiddenField name="_sessionwf" value="true"/>
+                <g:if test="${null==editwf || null==editwf.commands || 0==editwf.commands.size()}">
+                    <g:javascript>
+                        fireWhenReady('workflowContent',function(){_wfiaddnew('command');});
+                    </g:javascript>
+                </g:if>
             </td>
         </tr>
     </tbody>
@@ -601,24 +628,21 @@ var applinks={
             </span>
             <g:javascript>
                 <wdgt:eventHandlerJS for="doNodedispatch" state="checked" oneway="true" >
-                    <wdgt:action visible="true" target="nodeFilterFields"/>
+                    <wdgt:action visible="true" targetSelector="tbody.nodeFilterFields"/>
                     <wdgt:action visible="true" target="nodeDispatchFields" />
                 </wdgt:eventHandlerJS>
                 <wdgt:eventHandlerJS for="doNodedispatch" state="unchecked" oneway="true" >
                     <wdgt:action visible="false" target="nodeDispatchFields"/>
-                    <wdgt:action visible="false" target="nodeFilterFields"/>
+                    <wdgt:action visible="false" targetSelector="tbody.nodeFilterFields"/>
                 </wdgt:eventHandlerJS>
             </g:javascript>
         </td>
     </tr>
-    <tbody id="nodeFilterFields" style="${wdgt.styleVisible(if:scheduledExecution?.doNodedispatch)}" class="subfields">
-        <tr>
-            <th colspan="2">Filtering Options</th>
-        </tr>
+    <tbody style="${wdgt.styleVisible(if:scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields">
         <tr>
             <td>
                 <span class=" ${hasErrors(bean:scheduledExecution,field:'nodeInclude','fieldError')}">
-                    Node Include Filters
+                    Include
                 </span>
             </td>
             <td>
@@ -631,10 +655,9 @@ var applinks={
                 <g:hasErrors bean="${scheduledExecution}" field="nodeInclude">
                     <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error"  width="16px" height="16px"/>
                 </g:hasErrors>
-                <g:render template="/common/nodefilterRegexSyntaxNote"/>
-                <div id="nodeFilterDivInclude" style="margin-bottom: 20px;">
-                    <g:each var="key" in="${NODE_FILTERS}">
-                            <div id="nodeFilterInclude${key}"  style="${wdgt.styleVisible(if:scheduledExecution?.('nodeInclude'+key))}">
+                <div id="nodeFilterDivInclude" >
+                    <g:each var="key" in="${NODE_FILTERS_ALL}">
+                            <div id="nodeFilterInclude${key}"  style="${wdgt.styleVisible(if:scheduledExecution?.('nodeInclude'+key))}"  class="nodefilterfield">
                             <span class="input">
                                 ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}:
                                 <input type='text' name="nodeInclude${key}" class="filterIncludeText"
@@ -648,13 +671,13 @@ var applinks={
                                 </g:javascript>
                             </span>
                                 <g:if test="${g.message(code:'node.metadata.'+key+'.defaults',default:'')}">
-                                    <g:select from="${g.message(code:'node.metadata.'+key+'.defaults').split(',').sort()}" onchange="setFilter('${key}',true,this.value);"/>
+                                    <g:select from="${g.message(code:'node.metadata.'+key+'.defaults').split(',').sort()}" onchange="setFilter('${key}',true,this.value);_matchNodesKeyPress();"/>
                                 </g:if>
                             </div>
                     </g:each>
 
                 </div>
-                <div>
+                <div class="filterkeyset">
                     <g:each var="key" in="${NODE_FILTERS}">
                         <span
                             style="${wdgt.styleVisible(unless:scheduledExecution?.('nodeInclude'+key))}"
@@ -664,17 +687,38 @@ var applinks={
                             onclick="addFilter('${key}',true,'${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}');"
                             >${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}</span>
                     </g:each>
+                    <span class="filterAdd button textbtn action" onclick="Element.show('${rkey}moreIncludeFilters');Element.hide(this);">more&hellip;</span>
                 </div>
+                <div id="${rkey}moreIncludeFilters" style="display:none;" class="filterkeyset">
+                    <g:each var="key" in="${NODE_FILTERS_X}">
+                        <span
+                            style="${wdgt.styleVisible(unless:scheduledExecution?.('nodeInclude'+key))}"
+                            title="Add Filter for ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}"
+                            class="filterAdd button textbtn action"
+                            id="filterAddInclude${key}"
+                            onclick="addFilter('${key}',true,'${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}');"
+                            >${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}</span>
+                    </g:each>
+                </div>
+                <g:render template="/common/nodefilterRegexSyntaxNote"/>
             </td>
         </tr>
         <tr>
             <td>
-                <span for="nodeExclude" class=" ${hasErrors(bean:scheduledExecution,field:'nodeExclude','fieldError')}">
-                    Node Exclude Filters
+            </td>
+            <td >
+                <g:expander key="extNodeFilters">Extended Filters&hellip;</g:expander>
+            </td>
+        </tr>
+    </tbody>
+    <tbody  style="display:none" class="subfields" id="extNodeFilters">
+        <tr>
+            <td>
+                <span class=" ${hasErrors(bean:scheduledExecution,field:'nodeExclude','fieldError')}">
+                    Exclude
                 </span>
             </td>
             <td>
-
                 <div>
                     <g:hasErrors bean="${scheduledExecution}" field="nodeExclude">
                     <div class="fieldError">
@@ -685,9 +729,9 @@ var applinks={
                         <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error"  width="16px" height="16px"/>
                     </g:hasErrors>
                 </div>
-                <div id="nodeFilterDivExclude" style="margin-bottom: 20px;">
-                    <g:each var="key" in="${NODE_FILTERS}">
-                            <div id="nodeFilterExclude${key}" style="${wdgt.styleVisible(if:scheduledExecution?.('nodeExclude'+key))}">
+                <div id="nodeFilterDivExclude" >
+                    <g:each var="key" in="${NODE_FILTERS_ALL}">
+                            <div id="nodeFilterExclude${key}" style="${wdgt.styleVisible(if:scheduledExecution?.('nodeExclude'+key))}" class="nodefilterfield">
                             <span class="input">
                                 ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}:
                                 <input type='text' name="nodeExclude${key}"
@@ -700,14 +744,14 @@ var applinks={
                                 </g:javascript>
                             </span>
                                 <g:if test="${g.message(code:'node.metadata.'+key+'.defaults',default:'')}">
-                                    <g:select from="${g.message(code:'node.metadata.'+key+'.defaults').split(',').sort()}" onchange="setFilter('${key}',false,this.value);"/>
+                                    <g:select from="${g.message(code:'node.metadata.'+key+'.defaults').split(',').sort()}" onchange="setFilter('${key}',false,this.value);_matchNodesKeyPress();"/>
                                 </g:if>
                             </div>
                     </g:each>
 
                 </div>
-                <div>
-                    <g:each var="key" in="${NODE_FILTERS}">
+                <div class="filterkeyset">
+                    <g:each var="key" in="${NODE_FILTERS_ALL}">
                             <span
                                 style="${wdgt.styleVisible(unless:scheduledExecution?.('nodeExclude'+key))}"
                             title="Add Filter: ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}"
@@ -720,21 +764,23 @@ var applinks={
             </td>
         </tr>
         <tr>
-            <td>Exclude Filters have precedence?</td>
+            <td>Precedence to:</td>
             <td>
-                <label>
+                <label  title="Include more nodes">
                 <g:radio name="nodeExcludePrecedence" value="false"
                     checked="${!scheduledExecution?.nodeExcludePrecedence}"
                     id="nodeExcludePrecedenceFalse" onchange="_matchNodes()"/>
-                    No</label>
+                    Included</label>
 
-                <label>
+                <label title="Exclude more nodes">
                 <g:radio name="nodeExcludePrecedence" value="true"
                     checked="${scheduledExecution?.nodeExcludePrecedence}"
-                    id="nodeExcludePrecedenceTrue" onchange="_matchNodes()"/>
-                    Yes</label>
+                    id="nodeExcludePrecedenceTrue" onchange="_matchNodes()" />
+                    Excluded</label>
             </td>
         </tr>
+    </tbody>
+    <tbody style="${wdgt.styleVisible(if:scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields">
     <tr>
         <td onclick="_formUpdateMatchedNodes()"><span id="mnodeswait"></span> <span class="button action textbtn" title="click to refresh">Matched nodes</span></td>
         <td id="matchednodes" class="embed matchednodes" >
