@@ -45,7 +45,7 @@ public class NodeFilter {
 
     static belongsTo = [user:User]
     static constraints={
-        name(blank:false,unique:true)
+        name(blank:false)
         nodeInclude(nullable: true)
         nodeExclude(nullable: true)
         nodeIncludeName(nullable: true)
