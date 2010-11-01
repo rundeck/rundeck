@@ -237,26 +237,6 @@ export PATH=$MYPATH
 export GRAILS_HOME=
 }
 
-do_clean(){
-
-    echo "Cleaning..."
-    #clean localrepo of build artifacts
-    rm -r $BUILD_ROOT/localrepo/rundeck*
-
-
-    #remove rundeckapp lib dir which may contain previously built jars
-    rm  $BUILD_ROOT/rundeckapp/lib/rundeck*.jar
-
-    #clean build target dirs
-    rm -rf $BASEDIR/core/target
-    rm -r $BASEDIR/rundeckapp/target
-
-    #clean intermediate maven repo dirs of build artifacts
-    rm -r $BASEDIR/maven/repository/rundeck*
-    
-    echo "Cleaned local build artifacts and targets."
-}
-
 do_release_increment(){
     RELNUM=$(($RELNUM + 1))
 
