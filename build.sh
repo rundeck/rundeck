@@ -177,7 +177,6 @@ export PATH=$PATH:$GRAILS_HOME/bin
 GWORKDIR=$BASEDIR/rundeckapp/work
 
 #echo 'y' to the command to quell y/n prompt on second time running it:
-#echo -e "y\n" | $GRAILS_HOME/bin/grails install-plugin jetty
 yes | $GRAILS_HOME/bin/grails -Dgrails.project.work.dir=$GWORKDIR install-plugin jetty
 if [ 0 != $? ]
 then
@@ -185,28 +184,20 @@ then
    exit 2
 fi  
 
-#echo 'y' to the command to quell y/n prompt on second time running it:
-#yes | $GRAILS_HOME/bin/grails install-plugin $BASEDIR/rundeckapp/plugins/grails-webrealms-0.2.zip
-#if [ 0 != $? ]
-#then
-   #echo "failed to install webrealms plugin"
-   #exit 2
-#fi  
+# # run clean and test 
+# $GRAILS_HOME/bin/grails -Dgrails.project.work.dir=$GWORKDIR clean
+# if [ 0 != $? ]
+# then
+#    echo "Run Deck clean failed"
+#    exit 2
+# fi  
 
-# run clean and test 
-$GRAILS_HOME/bin/grails -Dgrails.project.work.dir=$GWORKDIR clean
-if [ 0 != $? ]
-then
-   echo "Run Deck clean failed"
-   exit 2
-fi  
-
-$GRAILS_HOME/bin/grails -Dgrails.project.work.dir=$GWORKDIR test-app
-if [ 0 != $? ]
-then
-   echo "Run Deck tests failed"
-   exit 2
-fi  
+# $GRAILS_HOME/bin/grails -Dgrails.project.work.dir=$GWORKDIR test-app
+# if [ 0 != $? ]
+# then
+#    echo "Run Deck tests failed"
+#    exit 2
+# fi  
 
 #run war phase
 yes | $GRAILS_HOME/bin/grails -Dgrails.project.work.dir=$GWORKDIR prod build-launcher
