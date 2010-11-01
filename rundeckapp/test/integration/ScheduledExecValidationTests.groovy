@@ -2213,7 +2213,6 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             def workflow = new Workflow(threadcount:1,keepgoing:true)
             def wfitem = new CommandExec(adhocExecution:true,adhocRemoteString:'test command',)
             workflow.addToCommands(wfitem)
-            workflow.scheduledExecution=se
             se.workflow=workflow
             se.save()
 
@@ -2279,7 +2278,6 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             def workflow = new Workflow(threadcount:1,keepgoing:true)
             def wfitem = new CommandExec(name: 'aResource', type: 'aType', command: 'aCommand')
             workflow.addToCommands(wfitem)
-            workflow.scheduledExecution=se
             se.workflow=workflow
             se.save()
 
@@ -2338,7 +2336,6 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             def workflow = new Workflow(threadcount:1,keepgoing:true)
             def wfitem = new CommandExec(name: 'aResource', type: 'aType', command: 'aCommand')
             workflow.addToCommands(wfitem)
-            workflow.scheduledExecution=se
             se.workflow=workflow
             def opt1 = new Option(name: 'test1', defaultValue: 'val1', enforced: false, valuesUrl: "http://test.com/test")
             def opt2 = new Option(name: 'test2', defaultValue: 'val2', enforced: true, values: ['a', 'b', 'c'])

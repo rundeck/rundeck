@@ -886,6 +886,11 @@ class ExecutionService implements ApplicationContextAware, Executor{
             throw new ExecutionServiceException('Job "'+se.jobName+'" ['+se.id+'] is currently being executed (execution ['+found.id+'])')
         }
 
+        //create duplicate workflow
+        if(se.workflow){
+            props.workflow=new Workflow(se.workflow)
+        }
+
         def Execution execution = createExecution(props, framework)
         se.addToExecutions(execution)
         execution.scheduledExecution=se
@@ -908,6 +913,11 @@ class ExecutionService implements ApplicationContextAware, Executor{
         }
 
 
+        if(execution.workflow && !execution.workflow.save(flush:true)){
+            execution.workflow.errors.allErrors.each { log.warn(it.defaultMessage) }
+            log.error("unable to save execution workflow")
+            throw new ExecutionServiceException("unable to create execution workflow")
+        }
         if(!execution.save(flush:true)){
             execution.errors.allErrors.each { log.warn(it.defaultMessage) }
             log.error("unable to save execution")

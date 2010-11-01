@@ -12,8 +12,6 @@ class Execution extends ExecutionContext {
     String failedNodeList
     boolean cancelled
 
-    static belongsTo = ScheduledExecution
-    
     static constraints = {
         workflow(nullable:true)
         argString(nullable:true)

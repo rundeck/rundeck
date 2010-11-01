@@ -348,12 +348,21 @@ class ScheduledExecutionController  {
             def jobname = scheduledExecution.generateJobScheduledName()
             def groupname = scheduledExecution.generateJobGroupName()
             def jobtitle=scheduledExecution.jobName
-            scheduledExecution.delete()
-            scheduledExecutionService.deleteJob(jobname,groupname)    
+            //unlink any Execution records
+            def torem=[]
+            def execs = scheduledExecution.executions
+            execs.each{Execution exec->
+                torem<<exec
+            }
+            torem.each{Execution exec->
+                scheduledExecution.removeFromExecutions(exec)
+                exec.scheduledExecution=null
+            }
+            scheduledExecution.delete(flush:true)
+            scheduledExecutionService.deleteJob(jobname,groupname)
             flash.message = "Job '${jobtitle}' was successfully deleted."
             redirect(controller:'menu',action:'list', params:[:])
-        }
-    else {
+        } else {
             flash.message = "ScheduledExecution not found with id ${params.id}"
             redirect(controller:'menu',action:'list', params:params)
         }
@@ -581,13 +590,9 @@ class ScheduledExecutionController  {
                 if(!wfitemfailed){
                     def oldwf=scheduledExecution.workflow
                     final Workflow newworkflow = new Workflow(wf)
-                    newworkflow.scheduledExecution=scheduledExecution
                     scheduledExecution.workflow=newworkflow
                     if(oldwf){
-                        def execs = Execution.findByWorkflow(oldwf)
-                        if(!execs){
                             oldwf.delete()
-                        }
                     }
                     wf.discard()
                 }else{
@@ -1251,7 +1256,6 @@ class ScheduledExecutionController  {
                 }
                 if(!wfitemfailed){
                     final Workflow workflow = new Workflow(wf)
-                    workflow.scheduledExecution=scheduledExecution
                     scheduledExecution.workflow=workflow
                     wf.discard()
                 }else{

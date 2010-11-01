@@ -33,9 +33,7 @@ public class Workflow {
     List commands
     String strategy="node-first"
     static hasMany=[commands:CommandExec]
-    static belongsTo = [scheduledExecution:ScheduledExecution]
     static constraints = {
-        scheduledExecution(nullable:true)
         strategy(nullable:false, inList:['node-first','step-first'])
     }
     public String toString() {
@@ -49,6 +47,7 @@ public class Workflow {
     public Workflow(Workflow source){
         this.threadcount=source.threadcount
         this.keepgoing=source.keepgoing
+        this.strategy=source.strategy
         commands = new ArrayList()
         source.commands.each {
             commands.add(createItem(it))
