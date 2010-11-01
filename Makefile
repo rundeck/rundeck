@@ -7,10 +7,13 @@ JETTYVERS=6.1.21
 GRAILS_HOME=${BUILD_ROOT}/local/grails-$GRAILSVERS
 #PATH=$PATH:$GRAILS_HOME/bin
 
-GARGS += -Dgrails.project.work.dir=rundeckapp/work
-grails=grails $(GARGS)
+GARGS += -Dgrails.project.work.dir=${PWD}/rundeckapp/work
 
-BUILD_ON_COMMIT=.git/index
+GRAILS=grails $(GARGS)
+
+RUNDECK_FILES=$(shell find rundeckapp/{src,test,grails-app} -name "*.java" -o -name "*.groovy" -o -name "*.gsp")
+CORE_FILES=$(shell find core/src -name "*.java")
+
 
 core = core/target/rundeck-core-$(VERSION).jar
 war = rundeckapp/target/rundeck-$(VERSION).war
@@ -24,24 +27,24 @@ rundeck: $(war) $(launcher)
 rpm: $(war)
 	@echo rpmbuild
 
-$(core): $(BUILD_ON_COMMIT)
+$(core): $(CORE_FILES)
 	./build.sh rundeck_core
 
-$(war): $(core) $(BUILD_ON_COMMIT)
+$(war): $(core) $(RUNDECK_FILES)
 	./build.sh rundeckapp
 
-$(launcher): $(core) $(BUILD_ON_COMMIT)
+$(launcher): $(core) $(RUNDECK_FILES)
 	./build.sh rundeckapp
 
 .PHONY: test
 test: $(war)
 	@echo Running TestSuite
-	pushd rundeckapp; $(grails) test-app; popd
+	pushd rundeckapp; $(GRAILS) test-app; popd
 	
 clean:
 	rm $(core) $(war) $(launcher)
 
-	pushd rundeckapp; $(grails) clean; popd
+	pushd rundeckapp; $(GRAILS) clean; popd
 
 	@echo "Cleaning..."
 	#clean localrepo of build artifacts
