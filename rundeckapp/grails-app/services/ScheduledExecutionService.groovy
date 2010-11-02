@@ -234,7 +234,7 @@ class ScheduledExecutionService {
         def kprops=['argString','adhocLocalString','adhocRemoteString','adhocFilepath']
         def props = se.properties.findAll{it.key=~/^(type|name|command|argString|adhocExecution|adhoc.*String|adhocFilepath)$/}
         if(props){
-            def Workflow workflow = new Workflow(threadcount:1,keepgoing:true,scheduledExecution:se)
+            def Workflow workflow = new Workflow(threadcount:1,keepgoing:true)
             def cexec
             if(props.jobName){
                 cexec = new JobExec(props)
