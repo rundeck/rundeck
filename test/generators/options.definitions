@@ -1,0 +1,3 @@
+<option name='standbyServer' value='releng-test-0001' enforcedvalues='true' required='true' values='releng-test-0001' description='name of standby server' />
+<option name='standbyServer' value='releng-test-0002' enforcedvalues='true' required='true' values='releng-test-0002' description='name of standby server' />
+<option name='standbyServer' value='releng-test-0003' enforcedvalues='true' required='true' values='releng-test-0003' description='name of standby server' />

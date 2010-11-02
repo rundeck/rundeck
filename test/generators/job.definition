@@ -1,0 +1,22 @@
+
+  <job>
+    <name>@NAME@</name>
+    <description>@DESCRIPTION@</description>
+    <additional>@ADDITIONAL@</additional>
+    <loglevel>INFO</loglevel>
+    <group>@GROUP@</group>
+    <context>
+      <project>@PROJECT@</project>
+      <options>
+          @OPTIONS@
+      </options>
+    </context>
+    <sequence threadcount='1' keepgoing='false' strategy='node-first'>
+@COMMANDS@
+    </sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+  </job>
+
