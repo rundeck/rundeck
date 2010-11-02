@@ -4,6 +4,7 @@ import javax.servlet.http.HttpSession
 class UserController {
     UserService userService
     RoleService roleService
+    def grailsApplication
 
     def index = {
         redirect(action:"login")
@@ -15,7 +16,11 @@ class UserController {
     }
     def logout = {
         session.invalidate()
-        redirect(controller:'menu', action:'index')
+        if(params.refLink && grailsApplication.config.grails.serverURL && params.refLink.startsWith(grailsApplication.config.grails.serverURL)){
+            return redirect(url:params.refLink)
+        }else{
+            return redirect(controller:'menu', action:'index')
+        }
     }
     
     def login = {

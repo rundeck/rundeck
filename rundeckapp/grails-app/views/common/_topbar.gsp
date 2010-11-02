@@ -82,7 +82,7 @@ function createProject(value){
                 <span class="userName" title="User ${session.user} is currently logged in.">
                     <g:link controller="user" action="profile">${session.user}</g:link>
                 </span> &raquo;
-                <g:link action="logout" controller="user" title="Logout user: ${session.user}">logout</g:link>
+                <g:link action="logout" controller="user" title="Logout user: ${session.user}" params="${[refLink:controllerName&&actionName?createLink(controller:controllerName,action:actionName,params:params,absolute:true):'']}">logout</g:link>
             </span>
             <a href="${g.message(code:'app.wiki.help')}" class="help">
                 help
