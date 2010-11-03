@@ -778,6 +778,7 @@ function setShowFinalLine(val){
     if(runningcmd.failednodes){
         $('execRetry').show();
     }
+    $('execRerun').show();
     jobFinishStatus(result);
  }
   function jobFinishStatus(result){
@@ -950,17 +951,6 @@ var starttime;
                         <g:render template="/scheduledExecution/showStats" model="[scheduledExecution:scheduledExecution,lastrun:lastrun?lastrun:null, successrate:successrate]"/>
                     </td>
                 </g:if>
-                <g:else>
-                    <g:set var="jobRunAuth" value="${ auth.allowedTest(job:executionResource, action:[UserAuth.WF_CREATE,UserAuth.WF_READ])}"/>
-                    <g:set var="canRun" value="${ jobRunAuth}"/>
-                    <g:if test="${canRun}">
-                    <td style="vertical-align:top;" class="toolbar">
-                        <span class="group " id="${ukey}jobDisplayButtons${execution.id}">
-                            <g:link controller="scheduledExecution" action="createFromExecution" params="${[executionId:execution.id]}" class="action button floatl" title="Rerun or Save this transient Job &hellip;" ><img src="${resource(dir:'images',file:'icon-small-run.png')}"  alt="run" width="16px" height="16px"/> Rerun or Save &hellip;</g:link>
-                        </span>
-                    </td>
-                    </g:if>
-                </g:else>
             </tr>
         </table>
 
@@ -1009,7 +999,7 @@ var starttime;
 
             </g:else>
 
-                    <span id="execRetry" style="${wdgt.styleVisible(if:null!=execution.dateCompleted && null!=execution.failedNodeList)}">
+                    <span id="execRetry" style="${wdgt.styleVisible(if:null!=execution.dateCompleted && null!=execution.failedNodeList)}; margin-right:10px;">
                         <g:if test="${scheduledExecution}">
                             <g:set var="jobRunAuth" value="${ auth.allowedTest(job:executionResource,action:UserAuth.WF_RUN)}"/>
                             <g:set var="canRun" value="${ ( !authMap || authMap[scheduledExecution.id.toString()] ||jobAuthorized ) && jobRunAuth}"/>
@@ -1030,6 +1020,12 @@ var starttime;
                                 </g:link>
                             </g:if>
                         </g:else>
+                    </span>
+                    <span id="execRerun" style="${wdgt.styleVisible(if:null!=execution.dateCompleted)}" >
+                        <g:set var="jobRunAuth" value="${ auth.allowedTest(job:executionResource, action:[UserAuth.WF_CREATE,UserAuth.WF_READ])}"/>
+                        <g:if test="${jobRunAuth }">
+                            <g:link controller="scheduledExecution" action="createFromExecution" params="${[executionId:execution.id]}" class="action button" title="Rerun or Save this Execution&hellip;" ><img src="${resource(dir:'images',file:'icon-small-run.png')}"  alt="run" width="16px" height="16px"/> Rerun or Save &hellip;</g:link>
+                        </g:if>
                     </span>
                 </td>
                 <td width="50%" >
