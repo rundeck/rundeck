@@ -37,6 +37,13 @@ public interface Decision {
     Explanation explain();
     
     /**
+     * Decision evaluation time.
+     * 
+     * @return evaluationTime The number of milliseconds it took to render this decision.
+     */
+    long evaluationDuration();
+    
+    /**
      * Return the time in seconds since the cache was last refreshed.
      * @return seconds
      */
