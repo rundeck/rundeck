@@ -826,6 +826,7 @@ class ScheduledExecutionController  {
         }
         def props=[:]
         props.putAll(execution.properties)
+        props.workflow=new Workflow(execution.workflow)
         if(params.failedNodes && 'true'==params.failedNodes){
             //replace the node filter with the failedNodeList from the execution
             props = props.findAll{!(it.key=~/^node(In|Ex)clude.*$/)}
@@ -843,11 +844,9 @@ class ScheduledExecutionController  {
             session.removeAttribute('undoOPTS');
             session.removeAttribute('redoOPTS');
         }
-        if(params.workflow){
-            //store workflow in session
-            def wf=WorkflowController.getSessionWorkflow(session,params,params.workflow)
-            session.editWFPassThru=true
-        }
+        //store workflow in session
+        def wf=WorkflowController.getSessionWorkflow(session,null,props.workflow)
+        session.editWFPassThru=true
 
         def model=create.call()
         render(view:'create',model:model)
