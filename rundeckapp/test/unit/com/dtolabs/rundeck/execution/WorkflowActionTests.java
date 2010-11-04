@@ -983,6 +983,10 @@ public class WorkflowActionTests extends TestCase {
     }
 
     static class testListener implements ExecutionListener {
+        public boolean isTerse() {
+            return false;
+        }
+
         public void log(int i, String s) {
             System.err.println(i + ": " + s);
         }
