@@ -129,8 +129,8 @@ class CommandAction extends AbstractAction {
             gen=null;
         }else{
             String logformat = ExecTool.DEFAULT_LOG_FORMAT;
-            if (getFramework().existsProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT)) {
-                logformat = getFramework().getProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT);
+            if (null!=listener && null!=listener.getLogFormat()) {
+                logformat = listener.getLogFormat();
             }
             gen= new LogReformatter(logformat, new MapGenerator<String, String>() {
                 public Map<String, String> getMap() {

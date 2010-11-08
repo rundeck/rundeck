@@ -509,10 +509,15 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
             }else if(null!=scriptpath){
                 setScriptAsStream(new FileInputStream(getScriptpath()));
             }
-
+            final String logformat;
+            if (getFramework().existsProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT)) {
+                logformat = getFramework().getProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT);
+            }else{
+                logformat=null;
+            }
             //configure execution listener
             final ExecutionListener executionListener = new CLIExecutionListener(blistener,
-                FailedNodesFilestore.createListener(getFailedNodes()), this, this, argTerse);
+                FailedNodesFilestore.createListener(getFailedNodes()), this, this, argTerse, logformat);
 
             //acquire ExecutionService object
             final ExecutionService service = ExecutionServiceFactory.instance().createExecutionService(framework,
