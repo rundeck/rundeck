@@ -37,6 +37,13 @@ public interface ExecutionListener {
      * @return
      */
     public boolean isTerse();
+
+    /**
+     * Return log message format 
+     * @return
+     */
+    public String getLogFormat();
+
     /**
      * Log a message
      *
