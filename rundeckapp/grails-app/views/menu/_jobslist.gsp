@@ -97,7 +97,7 @@
                                     <div>
                                     <span class="prompt">Additional <g:message code="domain.ScheduledExecution.title"/> Info</span>
                                     <div class="presentation extraInfo" >
-                                        ${scheduledExecution.extraInfo.decodeMarkdown()}
+                                        ${scheduledExecution.extraInfo.encodeAsHTML()}
                                     </div>
                                     </div>
                                 </g:if>
