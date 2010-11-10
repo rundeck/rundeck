@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
 import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.core.authorization.Decision
 
 class MenuController {
     FrameworkService frameworkService
@@ -118,7 +119,7 @@ class MenuController {
         return render(view:'jobsFragment',model:jobsFragment(query))
     }
     def jobsFragment = {ScheduledExecutionQuery query ->
-        
+        long start=System.currentTimeMillis()
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         def projects = frameworkService.projects(framework)
         session.projects=projects
@@ -152,6 +153,7 @@ class MenuController {
             results.paginateParams['filterName']=usedFilter
         }
         results.params=params
+        log.debug("jobsFragment(tot): "+(System.currentTimeMillis()-start));
         return results
     }
     /**
@@ -182,11 +184,14 @@ class MenuController {
         return results
     }
     def listWorkflows(ScheduledExecutionQuery query,Framework framework,String user) {
+        long start=System.currentTimeMillis()
         def projects = frameworkService.projects(framework)
         if(null!=query){
             query.configureFilter()
         }
         def qres = scheduledExecutionService.listWorkflows(query)
+        log.debug("service.listWorkflows: "+(System.currentTimeMillis()-start));
+        long rest=System.currentTimeMillis()
         def schedlist=qres.schedlist
         def total=qres.total
         def filters=qres._filters
@@ -194,6 +199,8 @@ class MenuController {
         def finishq=scheduledExecutionService.finishquery(query,params,qres)
         
         def nextExecutions=scheduledExecutionService.nextExecutionTimes(schedlist.findAll { it.scheduled })
+        log.debug("listWorkflows(nextSched): "+(System.currentTimeMillis()-rest));
+        long running=System.currentTimeMillis()
         
         //find currently running executions
         def runlist = Execution.findAllByDateCompletedIsNullAndScheduledExecutionIsNotNull()
@@ -201,14 +208,45 @@ class MenuController {
         runlist.each{
             nowrunning[it.scheduledExecution.id.toString()]=it.id.toString()
         }
-        
+        log.debug("listWorkflows(running): "+(System.currentTimeMillis()-running));
+        long preeval=System.currentTimeMillis()
+
+        //collect all jobs and authorize the user for the set of available Job actions
+        def jobnames=[:]
+        Set res = new HashSet()
+        schedlist.each{ ScheduledExecution sched->
+            if(!jobnames[sched.generateFullName()]){
+                jobnames[sched.generateFullName()]=[]
+            }
+            jobnames[sched.generateFullName()]<<sched.id.toString()
+            res.add(["job": sched.jobName, "group": sched.groupPath?:''])
+        }
+        // Filter the groups by what the user is authorized to see.
+
+        def authorization = frameworkService.getFrameworkFromUserSession(request.session, request).getAuthorizationMgr()
+        def decisions = authorization.evaluate(res, request.subject, new HashSet([UserAuth.WF_CREATE,UserAuth.WF_READ,UserAuth.WF_DELETE,UserAuth.WF_RUN,UserAuth.WF_UPDATE,UserAuth.WF_KILL]), Collections.emptySet())
+//        def decisions = authorization.evaluate(res, request.subject, new HashSet([UserAuth.WF_READ]), Collections.emptySet())
+        log.debug("listWorkflows(evaluate): "+(System.currentTimeMillis()-preeval));
+
+        long viewable=System.currentTimeMillis()
+
+
+        def Map jobauthorizations=[:]
+
+        //produce map: [actionName:[id1,id2,...],actionName2:[...]] for all allowed actions for jobs
+        decisions.findAll { it.authorized}.groupBy { it.action }.each{k,v->
+            jobauthorizations[k] = new HashSet(v.collect {
+                jobnames[ScheduledExecution.generateFullName(it.resource.group,it.resource.job)]
+            }.flatten())
+        }
+
         def authorizemap=[:]
         def pviewmap=[:]
         def newschedlist=[]
         def unauthcount=0
         def actualGroups=[]
         schedlist.each{ ScheduledExecution se->
-            authorizemap[se.id.toString()]=scheduledExecutionService.userAuthorizedForJob(request,se,framework)
+            authorizemap[se.id.toString()]=jobauthorizations[UserAuth.WF_READ]?.contains(se.id.toString())
             if(authorizemap[se.id.toString()] || roleService.isUserInAnyRoles(request,['admin','job_view_unauthorized'])){
                 newschedlist<<se
                 if(se.groupPath){
@@ -221,29 +259,15 @@ class MenuController {
             }
         }
         schedlist=newschedlist
-        
-        
-        def groupsAndJobs = ScheduledExecution.executeQuery("select se.groupPath, se.jobName from ScheduledExecution se where se.groupPath is not null" )
-        
-        // Filter the groups by what the user is authorized to see.
-        def Set res = groupsAndJobs.collect {
-            ["job": it[1], "group": it[0]]
-        }        
-        
-        def authorization = frameworkService.getFrameworkFromUserSession(request.session, request).getAuthorizationMgr()
+        log.debug("listWorkflows(viewable): "+(System.currentTimeMillis()-viewable));
+        long last=System.currentTimeMillis()
+
         // construct groups how it was originally intended.
         // each groupPath, plus a count.
-        def decisions = authorization.evaluate(res, request.subject, new HashSet(["workflow_read"]), Collections.emptySet())
-        
+
         def groupMap=[:]
-        decisions.findAll{ decision -> 
-            decision.isAuthorized()
-        }.collect { decision ->
-            decision?.resource?.group
-        }.groupBy{group -> group }.each{
-            if(actualGroups.contains(it.key)){
-                groupMap[it.key]=it.value.size
-            }
+        schedlist.collect{ it.groupPath?:'' }.groupBy{it}.each{k,v->
+            groupMap[k]=v.size()
         }
         
         def groupTree=[:]
@@ -308,11 +332,14 @@ class MenuController {
                 i++
             }
         }
-        
+        log.debug("listWorkflows(last): "+(System.currentTimeMillis()-last));
+        log.debug("listWorkflows(total): "+(System.currentTimeMillis()-start));
+
         return [
         projects:projects,
         nextScheduled:schedlist,
         nextExecutions: nextExecutions,
+        jobauthorizations:jobauthorizations,
         authMap:authorizemap,
         nowrunning: nowrunning,
         groups:groupMap,
