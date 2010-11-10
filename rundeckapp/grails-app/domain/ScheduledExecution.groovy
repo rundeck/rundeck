@@ -101,6 +101,22 @@ class ScheduledExecution extends ExecutionContext {
         return [seconds?seconds:'0',minute,hour,dayOfMonth.toUpperCase(),month.toUpperCase(),dayOfMonth=='?'?dayOfWeek.toUpperCase():'?',year?year:'*'].join(" ")
     }
 
+    /**
+     * Return full name with group path
+     */
+    def String generateFullName(){
+        return generateFullName(groupPath,jobName)
+    }
+
+
+    /**
+     * Return full name for group and path
+     * @param group group path, no leading or trailing slash character
+     * @param jobname job name
+     */
+    static String generateFullName(String group,String jobname){
+        return [group?:'',jobname].join("/")
+    }
 
     /**
      * attempt to parse the string into 6-7 components, and fill the properties
