@@ -70,7 +70,7 @@
     <g:render template="/framework/remoteOptionValuesJS"/>
 </head>
 <body>
-
+<g:timerStart key="jobs.gsp"/>
 
 <div class="pageBody solo" id="indexMain">
     <g:if test="${flash.savedJob}">
@@ -92,5 +92,6 @@
 
     </div>
 </div>
+<g:timerEnd key="jobs.gsp"/>
 </body>
 </html>

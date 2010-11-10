@@ -5,3 +5,6 @@
     All rights reserved.
     
     Build <span class="num"><g:message code="main.app.build.num"/></span>
+<g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
+    <g:timerSummary/>
+</g:if>
