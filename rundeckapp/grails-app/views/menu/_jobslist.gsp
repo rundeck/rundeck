@@ -104,7 +104,7 @@
                                         </td>
                                         <td style="width: 80px; vertical-align: top; white-space:nowrap;height:100%; text-align:right" class="jobbuttons ">
                                             <div class="right">
-                                            <g:render template="/scheduledExecution/actionButtons" model="${[scheduledExecution:scheduledExecution,authMap:authMap]}"/>
+                                            <g:render template="/scheduledExecution/actionButtons" model="${[scheduledExecution:scheduledExecution,authMap:authMap,jobauthorizations:jobauthorizations]}"/>
                                             <g:set var="lastrun" value="${scheduledExecution.id?Execution.findByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution,[max: 1, sort:'dateStarted', order:'desc']):null}"/>
                                             <g:set var="successcount" value="${scheduledExecution.id?Execution.countByScheduledExecutionAndStatus(scheduledExecution,'true'):0}"/>
                                             <g:set var="successrate" value="${execCount>0? (successcount/execCount) : 0}"/>

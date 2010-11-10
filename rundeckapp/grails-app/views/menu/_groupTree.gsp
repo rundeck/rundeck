@@ -32,14 +32,14 @@
             (${group.value.total})
         </g:if>
         <g:if test="${group.value.subs || group.value.jobs}">
-            <g:render controller="menu" template="groupTree" model="${[groupTree:group.value.subs,currentJobs:group.value.jobs?group.value.jobs:[],subtree:true, prefix:(prefix?prefix+'/'+group.key:group.key),expanded:group.value.count==0||wasfiltered,wasfiltered:wasfiltered,jscallback:jscallback,small:small?true:false]}"/>
+            <g:render controller="menu" template="groupTree" model="${[groupTree:group.value.subs,currentJobs:group.value.jobs?group.value.jobs:[],subtree:true, prefix:(prefix?prefix+'/'+group.key:group.key),expanded:group.value.count==0||wasfiltered,wasfiltered:wasfiltered,jscallback:jscallback,small:small?true:false,jobauthorizations:jobauthorizations]}"/>
         </g:if>
     </li>
 </g:each>
 
     <g:if test="${currentJobs}">
         <li>
-        <g:render template="jobslist" model="[jobslist:currentJobs,total:currentJobs?.size(),nowrunning:nowrunning,nextExecutions:nextExecutions,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,headers:false,wasfiltered:wasfiltered,small:small?true:false,jobsjscallback:jobsjscallback]"/>
+        <g:render template="jobslist" model="[jobslist:currentJobs,total:currentJobs?.size(),nowrunning:nowrunning,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,headers:false,wasfiltered:wasfiltered,small:small?true:false,jobsjscallback:jobsjscallback]"/>
         </li>
     </g:if>
 </ul>

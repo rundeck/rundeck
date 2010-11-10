@@ -182,9 +182,8 @@
 
 
                 <span id="busy" style="display:none"></span>
-
                 <g:if test="${ groupTree}">
-                    <g:render template="groupTree" model="${[small:params.compact?true:false,groupTree:groupTree.subs,currentJobs:groupTree['jobs']?groupTree['jobs']:[],wasfiltered:wasfiltered?true:false,nowrunning:nowrunning,nextExecutions:nextExecutions,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
+                    <g:render template="groupTree" model="${[small:params.compact?true:false,groupTree:groupTree.subs,currentJobs:groupTree['jobs']?groupTree['jobs']:[],wasfiltered:wasfiltered?true:false,nowrunning:nowrunning,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
                 </g:if>
                 <g:if test="${unauthorizedcount && !g.isUserInRoleTest(role:'admin') && !g.isUserInRoleTest(role:'job_view_unauthorized')}">
                     <div class="note info">
