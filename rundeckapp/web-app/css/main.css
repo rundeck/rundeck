@@ -1464,28 +1464,6 @@ div.filter label.additional{
 }
 
 
-div.extraInfo {
-    color: #555;
-    background:white;
-    /*font-size:9pt;*/
-}
-div.extraInfo table{
-    border: 1px solid #eee;
-
-    /*font-size:9pt;*/
-}
-div.extraInfo td{
-       border: 1px solid #eee;
-    color: #555;
-    padding: 2px;
-    /*font-size:9pt;*/
-}
-div.extraInfo a{
-    /*color: #6b6;*/
-    color:#ED6600;
-    text-decoration:underline;
-}
-
 
 /* job display page */
 
@@ -1530,31 +1508,6 @@ div.jobHead span.jobSummary{
     margin: 5px 0 5px 32px;
     padding-left:5px;
     display:block;
-}
-div.presentation.extraInfo {
-    padding:5px 10px;
-}
-div.extraInfo {
-    color: #555;
-    background:white;
-}
-div.extraInfo table{
-    border: 1px solid #eee;
-
-
-}
-div.extraInfo td{
-    border: 1px solid #eee;
-    color: #555;
-    padding: 2px;
-}
-div.extraInfo a{
-    /*color: #6b6;*/
-    color:#0066ED;
-    text-decoration:underline;
-}
-div.extraInfo ul,div.extraInfo ol,div.extraInfo p{
-    margin: 5px 0;
 }
 
 

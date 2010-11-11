@@ -97,14 +97,7 @@
                                         <td>
                                 <g:render template="/scheduledExecution/showDetail" model="[scheduledExecution:scheduledExecution]"/>
 
-                                <g:if test="${scheduledExecution.extraInfo}">
-                                    <div>
-                                    <span class="prompt">Additional <g:message code="domain.ScheduledExecution.title"/> Info</span>
-                                    <div class="presentation extraInfo" >
-                                        ${scheduledExecution.extraInfo.encodeAsHTML()}
-                                    </div>
-                                    </div>
-                                </g:if>
+
                                         </td>
                                         <td style="width: 80px; vertical-align: top; white-space:nowrap;height:100%; text-align:right" class="jobbuttons ">
                                             <div class="right">
