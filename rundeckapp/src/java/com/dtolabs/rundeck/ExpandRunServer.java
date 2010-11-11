@@ -420,8 +420,8 @@ public class ExpandRunServer {
         //configure commandline arguments
         final ArrayList<String> execargs = new ArrayList<String>();
         execargs.add(baseDir.getAbsolutePath());
-        if (args.length > 0) {
-            execargs.addAll(Arrays.asList(args.clone()));
+        if (args.length > 1) {
+            execargs.addAll(Arrays.asList(Arrays.copyOfRange(args.clone(), 1, args.length)));
         }
 
         //execute the RunServer.main method
