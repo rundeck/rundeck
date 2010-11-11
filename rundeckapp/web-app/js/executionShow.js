@@ -37,6 +37,7 @@ var lastTBody;
 var ctxBodySet = new Array();
 var ctxBodyFinalSet = new Array();
 var ctxGroupSet = new Array();
+var ctxGroupMap={};
 
 var taildelay = 1;
 var reloadedIndex = -1;
@@ -253,6 +254,35 @@ function setShowFinalLine(val){
       contextStatus=new Object();
   }
 
+function createTable(){
+     var tbl=$(document.createElement("table"));
+     tbl.setAttribute("border","0");
+     tbl.setAttribute("width","100%");
+     tbl.setAttribute("height","auto");
+     tbl.setAttribute("cellSpacing","0");
+     tbl.setAttribute("cellPadding","0");
+     tbl.addClassName('execoutput');
+     tbl.setAttribute('id','cmdoutputtbl');
+     var th =tbl.createTHead();
+     var thr1=th.insertRow(-1);
+     var thi=document.createElement("th");
+     thi.setAttribute("width","20px");
+     thr1.appendChild(thi);
+     var th1=document.createElement("th");
+     th1.innerHTML="Time";
+     thr1.appendChild(th1);
+     var th2=document.createElement("th");
+     th2.innerHTML="Message";
+     th2.setAttribute('colspan','2');
+     thr1.appendChild(th2);
+     var tbod = document.createElement("tbody");
+     tbl.appendChild(tbod);
+
+     $('commandPerform').appendChild(tbl);
+
+     $('commandPerform').show();
+    return tbl;
+}
  function appendCmdOutput(data){
      var orig=data;
      var needsScroll=false;
@@ -275,34 +305,7 @@ function setShowFinalLine(val){
          }
          if(!cmdoutputtbl){
 
-             var tbl=$(document.createElement("table"));
-             tbl.setAttribute("border","0");
-             tbl.setAttribute("width","100%");
-             tbl.setAttribute("height","auto");
-             tbl.setAttribute("cellSpacing","0");
-             tbl.setAttribute("cellPadding","0");
-             tbl.addClassName('execoutput');
-             tbl.setAttribute('id','cmdoutputtbl');
-             var th =tbl.createTHead();
-             var thr1=th.insertRow(-1);
-             var thi=document.createElement("th");
-             thi.setAttribute("width","20px");
-             thr1.appendChild(thi);
-             var th1=document.createElement("th");
-             th1.innerHTML="Time";
-             thr1.appendChild(th1);
-             var th2=document.createElement("th");
-             th2.innerHTML="Message";
-             th2.setAttribute('colspan','2');
-             thr1.appendChild(th2);
-             var tbod = document.createElement("tbody");
-             tbl.appendChild(tbod);
-
-             $('commandPerform').appendChild(tbl);
-
-
-             $('commandPerform').show();
-             cmdoutputtbl=tbl;
+             cmdoutputtbl=createTable();
              isnew=true;
          }
          if(!runningcmd){
@@ -544,156 +547,178 @@ function setShowFinalLine(val){
         var c=document.documentElement.clientHeight|| document.body.clientHeight;
         return ((a-b)<=c);
     }
- function genDataRow(data,tbl){
-     reverseOutputTable(tbl);
+function genDataRowNodes(data,tbl){
+    
+}
+
+function createFinalContextTbody(data,tbl,ctxid){
+    //remove last row and place in new table body
+    try{
+     var lastcell = lastTBody.rows[isAppendTop()?0:lastTBody.rows.length-1];
+     lastTBody.removeChild(lastcell);
+     var temptbod=document.createElement("tbody");
+     temptbod.setAttribute('id','final'+lastTBody.getAttribute('id'));
+     if(isAppendTop()){
+        tbl.insertBefore(temptbod,lastTBody);
+     }else{
+        tbl.appendChild(temptbod);
+     }
+     temptbod.appendChild(lastcell);
+     ctxBodyFinalSet.push(temptbod);
+     if(showFinalLine.value){
+         Element.show($(temptbod));
+     }else if(groupOutput.value && collapseCtx.value){
+         Element.hide($(temptbod));
+     }
+     if(0==lastTBody.rows.length){
+         var expicon=$('ctxExp'+contextIdCounter);
+         if(expicon){
+             expicon.removeClassName('expandicon');
+         }
+         var ctxgrp = $('ctxgroup'+contextIdCounter);
+
+         if(ctxgrp && ctxgrp.rows.length>0){
+             $(ctxgrp.rows[0]).removeClassName('expandable');
+             $(ctxgrp.rows[0]).removeClassName('action');
+         }
+     }else{
+
+         var ctxgrp = $('ctxgroup'+contextIdCounter);
+
+         if(ctxgrp && ctxgrp.rows.length>0){
+             $(ctxgrp.rows[0]).addClassName('expandable');
+             $(ctxgrp.rows[0]).addClassName('action');
+         }
+     }
+    }catch(e){
+     appendCmdOutputError(e);
+    }
+
+    if(null!=$('ctxIcon'+(ctxid))){
+    var status=contextStatus[(ctxid)+""];
+    var iconname="-small-ok.png";
+    if(typeof(status)!="undefined"){
+        iconname="-small-"+status+".png";
+    }
+    var img = document.createElement('img');
+     img.setAttribute('alt','');
+    //                 img.setAttribute('title',status);
+     img.setAttribute('width','16');
+     img.setAttribute('height','16');
+     img.setAttribute('src', iconUrl+iconname);
+     img.setAttribute('style','vertical-align:center');
+     $('ctxIcon'+(ctxid)).appendChild(img);
+    }
+    contextIdCounter++;
+}
+function createNewContextTbody(data,tbl,ctxid){
+    //create new Table body
+     var newtbod = $(document.createElement("tbody"));
+
+     newtbod.setAttribute('id','ctxgroup'+ctxid);
+     if(isAppendTop()){
+        tbl.insertBefore(newtbod,tbl.tBodies[0]);
+     }else{
+        tbl.appendChild(newtbod);
+     }
+     ctxGroupSet.push(newtbod);
+     if(!groupOutput.value){
+         newtbod.hide();
+     }
+
+
+     var tr = $(newtbod.insertRow(isAppendTop()?0:-1));
+     var iconcell = $(tr.insertCell(0));
+     iconcell.setAttribute('id','ctxIcon'+ctxid);
+     tr.addClassName('contextRow');
+     if(isAppendTop()){
+         tr.addClassName("up");
+     }else{
+         tr.addClassName("down");
+     }
+     iconcell.addClassName("icon");
+     var cell = $(tr.insertCell(1));
+     cell.setAttribute('colSpan','2');
+//         cell.colSpan=2;
+
+
+     if(null!=data['node'] && 'run'!=data['command']){
+        cell.innerHTML+="<span class='node'>"+ "<img src='"+AppImages.iconSmallNodeObject+"' width='16' height='16' alt=''/> "+data['node']+"</span>";
+     }else if (null !=data['node'] && 'run'==data['command'] ){
+        cell.innerHTML+="<span class='node'>"+ "<img src='"+AppImages.iconSmallNodeObject+"' width='16' height='16' alt=''/> "+data['node']+"</span>";
+     }
+
+     if(data['command'] || data['module'] || data['context']){
+         if(data['module'] || data['command'] && "run"!=data['command']){
+            cell.innerHTML+="<span class='cmdname' title='"+data['command']+"'>"+data['command']+"</span>";
+         }else if(data['command'] && "run"==data['command']){
+            cell.innerHTML+="<span class='cmdname' title='"+data['command']+"'>"+data['command']+"</span>";
+         }
+         if(data['context']){
+             //split context into project,type,object
+             var t = data['context'].split('.');
+             if(t.size()>2){
+                 cell.innerHTML+=" <span class='resname'>"+t[2]+"</span>";
+             }
+             if(t.size()>1){
+                 cell.innerHTML+=" <span class='typename'>"+t[1]+"</span>";
+             }
+//                cell.innerHTML+=" <span class='contextInfo'>("+data['context']+") </span>";
+         }
+     }else{
+        tr.addClassName('console');
+        cell.innerHTML+=" <span class='console'>[console]</span>";
+     }
+     var cell2 = $(tr.insertCell(2));
+     cell2.setAttribute('id','ctxExp'+ctxid);
+     cell2.addClassName('rowexpicon');
+     cell2.addClassName('expandicon');
+     tr.onclick = function(){toggleDataBody(ctxid);};
+
+     //create new tablebody for data rows
+     var datatbod = $(document.createElement("tbody"));
+     if(isAppendTop()){
+        tbl.insertBefore(datatbod,newtbod);
+     }else{
+        tbl.appendChild(datatbod);
+     }
+     lastTBody=datatbod;
+     lastTBody.setAttribute('id','databody'+ctxid);
+     ctxBodySet.push(lastTBody);
+     if(groupOutput.value && collapseCtx.value){
+         Element.hide($(lastTBody));
+         cell2.addClassName('closed');
+     }else{
+         cell2.addClassName('opened');
+     }
+}
+/**
+ * Generate the data row for tail/browse mode
+ * @param data
+ * @param tbl
+ */
+function genDataRow(data,tbl){
+    reverseOutputTable(tbl);
      var ctxid=contextIdCounter;
      if(null==lastTBody){
          lastTBody=tbl.tBodies[0];
      }
      if(null==lastrow || lastrow['module']!=data['module'] || lastrow['command']!=data['command'] || lastrow['node']!=data['node'] || lastrow['context']!=data['context']){
          if(null!=lastrow){
-             //remove last row and place in new table body
-             try{
-                 var lastcell = lastTBody.rows[isAppendTop()?0:lastTBody.rows.length-1];
-                 lastTBody.removeChild(lastcell);
-                 var temptbod=document.createElement("tbody");
-                 temptbod.setAttribute('id','final'+lastTBody.getAttribute('id'));
-                 if(isAppendTop()){
-                    tbl.insertBefore(temptbod,lastTBody);
-                 }else{
-                    tbl.appendChild(temptbod);
-                 }
-                 temptbod.appendChild(lastcell);
-                 ctxBodyFinalSet.push(temptbod);
-                 if(showFinalLine.value){
-                     Element.show($(temptbod));
-                 }else if(groupOutput.value && collapseCtx.value){
-                     Element.hide($(temptbod));
-                 }
-                 if(0==lastTBody.rows.length){
-                     var expicon=$('ctxExp'+contextIdCounter);
-                     if(expicon){
-                         expicon.removeClassName('expandicon');
-                     }
-                     var ctxgrp = $('ctxgroup'+contextIdCounter);
-
-                     if(ctxgrp && ctxgrp.rows.length>0){
-                         $(ctxgrp.rows[0]).removeClassName('expandable');
-                         $(ctxgrp.rows[0]).removeClassName('action');
-                     }
-                 }else{
-
-                     var ctxgrp = $('ctxgroup'+contextIdCounter);
-
-                     if(ctxgrp && ctxgrp.rows.length>0){
-                         $(ctxgrp.rows[0]).addClassName('expandable');
-                         $(ctxgrp.rows[0]).addClassName('action');
-                     }
-                 }
-             }catch(e){
-                 appendCmdOutputError(e);
-             }
-
-            if(null!=$('ctxIcon'+(ctxid))){
-                var status=contextStatus[(ctxid)+""];
-                var iconname="-small-ok.png";
-                if(typeof(status)!="undefined"){
-                    iconname="-small-"+status+".png";
-                }
-                var img = document.createElement('img');
-                 img.setAttribute('alt','');
-//                 img.setAttribute('title',status);
-                 img.setAttribute('width','16');
-                 img.setAttribute('height','16');
-                 img.setAttribute('src', iconUrl+iconname);
-                 img.setAttribute('style','vertical-align:center');
-                 $('ctxIcon'+(ctxid)).appendChild(img);
-            }
-            contextIdCounter++;
+             createFinalContextTbody(data,tbl,ctxid);
          }
          ctxid=contextIdCounter;
-         //create new Table body
-         var newtbod = $(document.createElement("tbody"));
-
-         newtbod.setAttribute('id','ctxgroup'+ctxid);
-         if(isAppendTop()){
-            tbl.insertBefore(newtbod,tbl.tBodies[0]);
-         }else{
-            tbl.appendChild(newtbod);
-         }
-         ctxGroupSet.push(newtbod);
-         if(!groupOutput.value){
-             newtbod.hide();
-         }
-
-
-         var tr = $(newtbod.insertRow(isAppendTop()?0:-1));
-         var iconcell = $(tr.insertCell(0));
-         iconcell.setAttribute('id','ctxIcon'+ctxid);
-         tr.addClassName('contextRow');
-         if(isAppendTop()){
-             tr.addClassName("up");
-         }else{
-             tr.addClassName("down");
-         }
-         iconcell.addClassName("icon");
-         var cell = $(tr.insertCell(1));
-         cell.setAttribute('colSpan','2');
-//         cell.colSpan=2;
-
-
-         if(null!=data['node'] && 'run'!=data['command']){
-            cell.innerHTML+="<span class='node'>"+ "<img src='"+AppImages.iconSmallNodeObject+"' width='16' height='16' alt=''/> "+data['node']+"</span>";
-         }else if (null !=data['node'] && 'run'==data['command'] ){
-            cell.innerHTML+="<span class='node'>"+ "<img src='"+AppImages.iconSmallNodeObject+"' width='16' height='16' alt=''/> "+data['node']+"</span>";
-         }
-
-         if(data['command'] || data['module'] || data['context']){
-             if(data['module'] || data['command'] && "run"!=data['command']){
-                cell.innerHTML+="<span class='cmdname' title='"+(data['module']?data.module:'Unknown Module')+"-&gt;"+data['command']+"'>"+data['command']+"</span>";
-             }else if(data['command'] && "run"==data['command']){
-                 cell.innerHTML+="<span class='cmdname' title='"+data['command']+"'>"+data['command']+"</span>";
-             }
-             if(data['context']){
-                 //split context into project,type,object
-                 var t = data['context'].split('.');
-                 if(t.size()>2){
-                     cell.innerHTML+=" <span class='resname'>"+t[2]+"</span>";
-                 }
-                 if(t.size()>1){
-                     cell.innerHTML+=" <span class='typename'>"+t[1]+"</span>";
-                 }
-//                cell.innerHTML+=" <span class='contextInfo'>("+data['context']+") </span>";
-             }
-         }else{
-            tr.addClassName('console');
-            cell.innerHTML+=" <span class='console'>[console]</span>";
-         }
-         var cell2 = $(tr.insertCell(2));
-         cell2.setAttribute('id','ctxExp'+ctxid);
-         cell2.addClassName('rowexpicon');
-         cell2.addClassName('expandicon');
-         tr.onclick = function(){toggleDataBody(ctxid);};
-
-         //create new tablebody for data rows
-         var datatbod = $(document.createElement("tbody"));
-         if(isAppendTop()){
-            tbl.insertBefore(datatbod,newtbod);
-         }else{
-            tbl.appendChild(datatbod);
-         }
-         lastTBody=datatbod;
-         lastTBody.setAttribute('id','databody'+ctxid);
-         ctxBodySet.push(lastTBody);
-         if(groupOutput.value && collapseCtx.value){
-             Element.hide($(lastTBody));
-             cell2.addClassName('closed');
-         }else{
-             cell2.addClassName('opened');
-         }
+         createNewContextTbody(data,tbl,ctxid);
 
      }
      var tr = $(lastTBody.insertRow(isAppendTop()?0:-1));
+     configureDataRow(tr,data);
+
+     runningcmd.count++;
+     lastrow=data;
+     return tr;
+ }
+function configureDataRow(tr,data){
 
      var tdicon = $(tr.insertCell(0));
      tdicon.setAttribute('width','16');
@@ -729,11 +754,7 @@ function setShowFinalLine(val){
          txt = txt.replace(/>/g,'&gt;');
          tddata.innerHTML=txt;
      }
-
-     runningcmd.count++;
-     lastrow=data;
-     return tr;
- }
+}
  function clearCmdOutput(){
      $('commandPerform').innerHTML='';
      cmdoutputtbl=null;
