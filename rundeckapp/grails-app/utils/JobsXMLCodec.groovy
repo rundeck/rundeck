@@ -51,7 +51,6 @@ class JobsXMLCodec {
                     }
                     name(jobi.jobName)
                     description(jobi.description)
-                    additional(jobi.extraInfo)
                     loglevel(jobi.loglevel)
                     if(jobi.groupPath){
                         group(jobi.groupPath)
@@ -327,10 +326,6 @@ class JobsXMLCodec {
                     throw new JobXMLException("'description' element not found")
                 }
                 props['description'] = job.description.text()
-                if (!job.additional) {
-                    throw new JobXMLException("'additional' element not found")
-                }
-                props['extraInfo'] = job.additional.text()
                 if(job.loglevel){
                     props['loglevel'] = job.loglevel.text()
                 }
