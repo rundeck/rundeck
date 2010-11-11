@@ -384,25 +384,6 @@ var applinks={
         </td>
     </tr>
 
-    <tr>
-        <td>
-            <label for="extraInfo" class="${hasErrors(bean:scheduledExecution,field:'extraInfo','fieldError')}">Additional Information</label>
-        </td>
-        <td>
-            <span class="input ${hasErrors(bean:scheduledExecution,field:'extraInfo','fieldError')}">
-                <g:if test="${!scheduledExecution?.extraInfo}">
-                    <g:expander key="extraInfoHolder">Add Additional Information</g:expander>
-                </g:if>
-                <div id="extraInfoHolder" style="${wdgt.styleVisible(if:scheduledExecution?.extraInfo)}">
-                <g:textArea name="extraInfo" value="${scheduledExecution?.extraInfo}"  cols="70" rows="10" />
-                <g:hasErrors bean="${scheduledExecution}" field="extraInfo">
-                    <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error" width="16px" height="16px"/>
-                </g:hasErrors>
-                </div>
-            </span>
-        </td>
-    </tr>
-
     </tbody>
     <tr>
         <td class="${hasErrors(bean:scheduledExecution,field:'project','fieldError')} required" id="schedProjErr">Project</td>

@@ -88,10 +88,6 @@
                                 <td><g:textField name="descFilter" id="${rkey}descFilter" value="${params.descFilter}"/></td>
                             </tr>
                             <tr>
-                                <td><label for="${rkey}additionalFilter"><g:message code="jobquery.title.additionalFilter"/></label>:</td>
-                                <td><g:textField name="additionalFilter" id="${rkey}additionalFilter" value="${params.additionalFilter}"/></td>
-                            </tr>
-                            <tr>
                                 <td><label for="${rkey}loglevelFilter"><g:message code="jobquery.title.loglevelFilter"/></label>:</td>
                                 <td><g:select name="loglevelFilter" id="${rkey}loglevelFilter" value="${params.loglevelFilter}"
                                     from="${['1. Debug','2. Verbose','3. Information','4. Warning','5. Error']}"
