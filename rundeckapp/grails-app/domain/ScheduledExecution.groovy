@@ -17,7 +17,6 @@ class ScheduledExecution extends ExecutionContext {
 
     Date nextExecution
     boolean scheduled = false
-    String extraInfo
     Long totalTime=0
     Long execCount=0
     String adhocExecutionType
@@ -55,7 +54,6 @@ class ScheduledExecution extends ExecutionContext {
         nodeExcludePrecedence(nullable:true)
         user(nullable:true)
         userRoleList(nullable:true)
-        extraInfo(nullable:true)
         loglevel(nullable:true)
         totalTime(nullable:true)
         execCount(nullable:true)

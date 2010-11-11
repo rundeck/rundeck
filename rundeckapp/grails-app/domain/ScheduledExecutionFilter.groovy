@@ -29,7 +29,6 @@ public class ScheduledExecutionFilter {
     String groupPath
 
     String descFilter
-    String additionalFilter
     String loglevelFilter
 
     String idlist
