@@ -23,6 +23,7 @@ import java.net.*;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Properties;
 import java.util.jar.JarFile;
 import java.util.jar.Attributes;
@@ -31,12 +32,28 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+/*
+ * Note that any non java/javax from the JavaSE runtime that are included in this file must also
+ * be copied into the resulting rundeck-lanucher.jar via rundeckapp/scripts/BuildLauncher.groovy.
+ */
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
 /**
  * ExpandRunServer extracts some contents to particular locations, generates config files based on internal templates,
  * and then loads and starts the jetty server configured for the application.
  */
 public class ExpandRunServer {
 
+    
+    
     private static final String CONFIG_DEFAULTS_PROPERTIES = "config-defaults.properties";
     //system props for launcher config
     private static final String SYS_PROP_RUNDECK_LAUNCHER_DEBUG = "rundeck.launcher.debug";
@@ -45,6 +62,9 @@ public class ExpandRunServer {
     private static final String RUN_SERVER_CLASS = "com.dtolabs.rundeck.RunServer";
 
     private static final String PROP_LOGINMODULE_NAME = "loginmodule.name";
+    private static final String SERVER_DATASTORE_PATH = "server.datastore.path";
+    private static final String RUNDECK_SERVER_CONFIG_DIR = "rundeck.server.configDir";
+    
     /**
      * Config properties are defaulted in config-defaults.properties, but can be overridden by system properties
      */
@@ -53,7 +73,7 @@ public class ExpandRunServer {
         "server.hostname",
         "server.reportservice.port",
         "rdeck.base",
-        "server.datastore.path",
+        SERVER_DATASTORE_PATH,
         "default.user.name",
         "default.user.password",
         PROP_LOGINMODULE_NAME,
@@ -67,7 +87,7 @@ public class ExpandRunServer {
 
     //members
     String basedir;
-    File temp;
+
     File serverdir;
     File configDir;
     File thisJar;
@@ -83,12 +103,73 @@ public class ExpandRunServer {
     private static final String RUNDECK_JETTY_LIBS = "Rundeck-Jetty-Libs";
     private static final String RUNDECK_JETTY_LIB_PATH = "Rundeck-Jetty-Lib-Path";
     private static final String RUNDECK_VERSION = "Rundeck-Version";
+    
+    private final Options options = new Options();
 
     public static void main(final String[] args) throws Exception {
         new ExpandRunServer().run(args);
     }
 
+    @SuppressWarnings("static-access")
     public ExpandRunServer() {
+        
+        Option baseDir =    OptionBuilder.withLongOpt("basedir")
+                                         .hasArg()
+                                         .withDescription("The basedir")
+                                         .withArgName("PATH")
+                                         .create('b');
+        
+        Option serverDir =  OptionBuilder.withLongOpt("serverdir")
+                                         .hasArg()
+                                         .withDescription("The base directory for the server")
+                                         .withArgName("PATH")
+                                         .create();
+        
+        Option binDir =     OptionBuilder.withLongOpt("bindir")
+                                         .hasArg()
+                                         .withArgName("PATH")
+                                         .withDescription("The install directory for the tools used by users.")
+                                         .create('x');
+        
+        Option sbinDir =    OptionBuilder.withLongOpt("sbindir")
+                                         .hasArg()
+                                         .withArgName("PATH")
+                                         .withDescription("The install directory for the tools used by administrators.")
+                                         .create('s');
+        
+        Option configDir =  OptionBuilder.withLongOpt("configdir")
+                                         .hasArg()
+                                         .withArgName("PATH")
+                                         .withDescription("The location of the configuration.")
+                                         .create('c');
+        
+        Option dataDir =    OptionBuilder.withLongOpt("datadir")
+                                         .hasArg()
+                                         .withArgName("PATH")
+                                         .withDescription("The location of Rundeck's runtime data.")
+                                         .create();
+        
+        Option help =       OptionBuilder.withLongOpt("help")
+                                         .withDescription("Display this message.")
+                                         .create('h');
+        
+        Option debugFlag =  OptionBuilder.withDescription("Show debug information")
+                                         .create('d');
+        
+        Option skipInstall = OptionBuilder.withLongOpt("skipinstall")
+                                          .withDescription("Skip the extraction of the utilities from the launcher.")
+                                          .create();
+        
+        options.addOption(baseDir);
+        options.addOption(dataDir);
+        options.addOption(serverDir);
+        options.addOption(binDir);
+        options.addOption(sbinDir);
+        options.addOption(configDir);
+        options.addOption(help);
+        options.addOption(debugFlag);
+        options.addOption(skipInstall);
+        
         debug = Boolean.getBoolean(SYS_PROP_RUNDECK_LAUNCHER_DEBUG);
         rewrite = Boolean.getBoolean(SYS_PROP_RUNDECK_LAUNCHER_REWRITE);
         useJaas = null == System.getProperty(SYS_PROP_RUNDECK_JAASLOGIN) || Boolean.getBoolean(
@@ -120,44 +201,86 @@ public class ExpandRunServer {
             throw new RuntimeException("Jar file attribute not found: " + RUNDECK_JETTY_LIB_PATH);
         }
     }
-
+    
     public void run(final String[] args) throws Exception {
-        parseArgs(args);
+        
+        CommandLineParser parser = new GnuParser();
+        final File toolsdir = new File(basedir, "tools");
+        File bindir = new File(toolsdir, "bin");
+        File toolslibdir = new File(toolsdir, "lib");
+        
+        CommandLine cl = null; 
+        try {
+            cl = parser.parse(this.options, args);
+            
+            if(cl.hasOption('h')) {
+                // automatically generate the help statement
+                HelpFormatter formatter = new HelpFormatter();
+                formatter.printHelp( "java [JAVA_OPTIONS] -jar rundeck-launcher.jar ", "\nRun the rundeck server, installing the " +
+                		"necessary components if they do not exist.\n", options, 
+                		"\nhttp://rundeck.org\n", true );
+                return;
+            }
+            
+        } catch (ParseException e) {
+            // oops, something went wrong
+            System.err.println( "Parsing failed.  Reason: " + e.getMessage() );
+            return;
+        }
+        debug = cl.hasOption('d');
+        DEBUG("Debugging is turned on.");
+        
+        this.basedir = cl.getOptionValue("basedir", new File(thisJar.getAbsolutePath()).getParentFile().getAbsolutePath());  // TODO: is the first getAbsolutePath required?
+        this.serverdir = new File(cl.getOptionValue("serverdir", basedir+"/server"));
+        this.configDir = new File(cl.getOptionValue("c", serverdir + "/config"));
+        DEBUG("configDir is " + configDir.getAbsolutePath());
+        bindir = new File(cl.getOptionValue("bindir"), toolsdir+"/bin");
+        
+        
+
+        
         initArgs();
-        coreJarName = "rundeck-core-" + versionString + ".jar";
-        serverdir = new File(basedir + "/server");
-        temp = new File(serverdir, "work");
+        this.coreJarName = "rundeck-core-" + versionString + ".jar";
+//        serverdir = new File(basedir + "/server");
+
         if (null != basedir) {
             System.setProperty("rdeck.base", basedir);
         }
-        configDir = new File(serverdir, "config");
-
-        final File libdir = new File(serverdir, "lib");
-        DEBUG("Extracting libs to: " + libdir.getAbsolutePath() + " ... ");
-        extractLibs(libdir);
-        extractJettyLibs(libdir);
-        final File expdir = new File(serverdir, "exp");
-        DEBUG("Extracting webapp to: " + expdir.getAbsolutePath() + " ... ");
-        extractWar(expdir);
-
-        final File toolsdir = new File(basedir, "tools");
-        final File bindir = new File(toolsdir, "bin");
-        final File toolslibdir = new File(toolsdir, "lib");
-        DEBUG("Extracting bin scripts to: " + bindir.getAbsolutePath() + " ... ");
-
-
-        extractBin(bindir, new File(serverdir, "exp/webapp/WEB-INF/lib/" + coreJarName));
-        copyToolLibs(toolslibdir, new File(serverdir, "exp/webapp/WEB-INF/lib/" + coreJarName));
+//        configDir = new File(serverdir, "config");
 
         final Properties defaults = loadDefaults(CONFIG_DEFAULTS_PROPERTIES);
-        final Properties configuration = createConfiguration(defaults);
+        Properties configuration = new Properties();
+        
+        if(!cl.hasOption("skipinstall")) {
+            final File libdir = new File(serverdir, "lib");
+            DEBUG("Extracting libs to: " + libdir.getAbsolutePath() + " ... ");
+            extractLibs(libdir);
+            extractJettyLibs(libdir);
+            final File expdir = new File(serverdir, "exp");
+            DEBUG("Extracting webapp to: " + expdir.getAbsolutePath() + " ... ");
+            extractWar(expdir);
+            
+            DEBUG("Extracting bin scripts to: " + bindir.getAbsolutePath() + " ... ");
 
-        configuration.put("realm.properties.location", configDir.getAbsolutePath() + "/realm.properties");
+            extractBin(bindir, new File(serverdir, "exp/webapp/WEB-INF/lib/" + coreJarName));
+            copyToolLibs(toolslibdir, new File(serverdir, "exp/webapp/WEB-INF/lib/" + coreJarName));
+        
+            
+            configuration = createConfiguration(defaults);
 
-        DEBUG("Runtime configuration properties: " + configuration);
+            configuration.put("realm.properties.location", configDir.getAbsolutePath() + "/realm.properties");
 
-        expandTemplates(configuration, configDir, rewrite);
-        execute(args, configDir, new File(basedir), serverdir, configuration);
+            DEBUG("Runtime configuration properties: " + configuration);
+     
+            expandTemplates(configuration, configDir, rewrite);
+        } else {
+            configuration.putAll(defaults);
+            configuration.put(SERVER_DATASTORE_PATH, cl.getOptionValue("datadir", serverdir.getAbsolutePath()));
+            configuration.put(RUNDECK_SERVER_CONFIG_DIR, this.configDir.getAbsoluteFile());
+        }
+        
+                
+        execute(cl.getArgs(), configDir, new File(basedir), serverdir, configuration);
     }
 
     private void copyToolLibs(final File toolslibdir, final File coreJar) throws IOException {
@@ -347,7 +470,7 @@ public class ExpandRunServer {
             properties.put("server.hostname", localhostname);
         }
         properties.put("rdeck.base", basedir);
-        properties.put("server.datastore.path", serverdir + "/data/grailsdb");
+        properties.put(SERVER_DATASTORE_PATH, serverdir + "/data/grailsdb");
         properties.put("rundeck.log.dir", serverdir + "/logs");
         for (final String configProperty : configProperties) {
             if (null != System.getProperty(configProperty)) {
@@ -407,7 +530,7 @@ public class ExpandRunServer {
         IOException {
         //set some system properties used by the RunServer class
         System.setProperty("server.http.port", configuration.getProperty("server.http.port"));
-        System.setProperty("rundeck.server.configDir", configDir.getAbsolutePath());
+        System.setProperty(RUNDECK_SERVER_CONFIG_DIR, configDir.getAbsolutePath());
         System.setProperty("rundeck.server.serverDir", serverDir.getAbsolutePath());
         System.setProperty("rundeck.config.location", new File(configDir, configuration.getProperty(
             "rundeck.config.name")).getAbsolutePath());
@@ -427,7 +550,6 @@ public class ExpandRunServer {
         //execute the RunServer.main method
         int result = 500;
         try {
-
             invokeMain(runClassName, execargs.toArray(new String[execargs.size()]), new File(
                 serverdir, "lib"));
             result = 0;//success
@@ -487,17 +609,6 @@ public class ExpandRunServer {
     private InputStream loadResourceInternal(final String path) throws IOException {
         final ZipFile jar = new ZipFile(thisJar);
         return jar.getInputStream(new ZipEntry(path));
-    }
-
-    /**
-     * Parse CLI arguments, current usage: &lt;basedir&gt;
-     *
-     * @param args
-     */
-    private void parseArgs(final String[] args) {
-        if (args.length > 0) {
-            basedir = args[0];
-        }
     }
 
     /**

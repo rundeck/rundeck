@@ -42,7 +42,6 @@ target(cpLibs:"Copy libs to launcher jar contents"){
     def fileName = grailsAppName
     def version = metadata.getApplicationVersion()
 
-
     def targetdir="target/launcher-contents/lib"
     ant.mkdir(dir:"${targetdir}")
     ant.copy(file:"target/${fileName}-server-${version}.jar",todir:"${targetdir}")
@@ -52,6 +51,7 @@ target(cpLibs:"Copy libs to launcher jar contents"){
     //expand war into webap dir
     ant.unjar(src:"target/${fileName}-${version}.war",dest:"target/launcher-contents/pkgs/webapp"){
     }
+
 }
 target(cpTemplates:"Copy templates into launcher jar"){
     def targetdir="target/launcher-contents/templates"
@@ -68,6 +68,7 @@ target(bundleAll:"rebundle war, jars and launcher as self-extracting bundle"){
     def fileName = grailsAppName
     def version = metadata.getApplicationVersion()
 
+    ant.unjar(src:"target/launcher-contents/pkgs/webapp/WEB-INF/lib/commons-cli-1.0.jar", dest:"target/launcher-contents")
 
     ant.jar(basedir:"target/launcher-contents", destfile:"target/${fileName}-launcher-${version}.jar"){
         manifest{

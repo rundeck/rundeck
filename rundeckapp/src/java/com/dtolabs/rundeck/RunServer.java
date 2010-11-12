@@ -22,6 +22,7 @@ import org.mortbay.jetty.security.HashUserRealm;
 import org.mortbay.jetty.webapp.WebAppContext;
 
 import java.io.*;
+import java.util.Map;
 
 /**
  * Run the jetty server using system properties and commandline input for configuration
@@ -66,6 +67,7 @@ public class RunServer {
         server.addHandler(context);
         configureRealms(server);
         try {
+            
             server.start();
             server.join();
         } catch (Exception e) {
