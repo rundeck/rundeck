@@ -28,15 +28,19 @@
 <div class="buttons">
         <span class="group floatr" id="${ukey}jobDisplayButtons${scheduledExecution.id}">
             <g:if test="${!small}">
+                <g:if test="${!execPage}">
                 <auth:allowed job="${scheduledExecution}" action="${UserAuth.WF_DELETE}">
                     <span class="icon button floatl" title="Delete ${g.message(code:'domain.ScheduledExecution.title')}" onclick="menus.showRelativeTo(this,'${ukey}jobDisplayDeleteConf${scheduledExecution.id}',-2,-2);return false;"><img src="${resource(dir:'images',file:'icon-small-removex.png')}" alt="delete" width="16px" height="16px"/></span>
                 </auth:allowed>
+                </g:if>
                 <auth:allowed job="${scheduledExecution}" action="${UserAuth.WF_CREATE}">
                     <g:link controller="scheduledExecution" title="Copy Job" action="copy" id="${scheduledExecution.id}" class="icon button floatl"><img src="${resource(dir:'images',file:'icon-small-copy.png')}" alt="copy" width="16px" height="16px"/></g:link>
                 </auth:allowed>
+                <g:if test="${!execPage}">
                 <auth:allowed job="${scheduledExecution}" name="${UserAuth.WF_UPDATE}">
                     <g:link controller="scheduledExecution" title="Edit Job" action="edit" id="${scheduledExecution.id}" class="icon button floatl"><img src="${resource(dir:'images',file:'icon-small-edit.png')}" alt="edit" width="16px" height="16px"/></g:link>
                 </auth:allowed>
+                </g:if>
                 <auth:allowed job="${scheduledExecution}" name="${UserAuth.WF_READ}">
                     <g:link controller="scheduledExecution" title="Download XML" action="show" id="${scheduledExecution.id}.xml" class="icon button floatl"><img src="${resource(dir:'images',file:'icon-small-file-xml.png')}" alt="Download XML" width="13px" height="16px"/></g:link>
                 </auth:allowed>
