@@ -28,10 +28,6 @@ package com.dtolabs.rundeck.core;
  */
 
 public final class Constants {
-    /**
-     * The Ctl specification version
-     */
-    public static final String RUNDECK_VERSION = "1.2";
 
     public static final String PARM_ACTION = "params.action";
     public static final String PARM_PROJECT = "context.project";
