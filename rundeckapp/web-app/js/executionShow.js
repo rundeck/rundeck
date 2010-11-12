@@ -37,7 +37,9 @@ var lastTBody;
 var ctxBodySet = new Array();
 var ctxBodyFinalSet = new Array();
 var ctxGroupSet = new Array();
-var ctxGroupMap={};
+
+//node mode
+var ctxGroupTbodies={};
 
 var taildelay = 1;
 var reloadedIndex = -1;
@@ -468,16 +470,20 @@ function createTable(){
           $('databody'+ctxid).hide();
           $('ctxExp'+ctxid).removeClassName('opened');
           $('ctxExp'+ctxid).addClassName('closed');
-          if (collapseCtx.value && showFinalLine.value) {
-              $('finaldatabody' + ctxid).show();
-          } else {
-              $('finaldatabody' + ctxid).hide();
+          if($('finaldatabody' + ctxid)){
+              if (collapseCtx.value && showFinalLine.value) {
+                  $('finaldatabody' + ctxid).show();
+              } else {
+                  $('finaldatabody' + ctxid).hide();
+              }
           }
       } else {
           $('databody'+ctxid).show();
           $('ctxExp'+ctxid).removeClassName('closed');
           $('ctxExp'+ctxid).addClassName('opened');
-          $('finaldatabody' + ctxid).show();
+          if($('finaldatabody' + ctxid)){
+            $('finaldatabody' + ctxid).show();
+          }
       }
 
 
@@ -548,7 +554,115 @@ function createTable(){
         return ((a-b)<=c);
     }
 function genDataRowNodes(data,tbl){
-    
+    reverseOutputTable(tbl);
+    var node=data.node;
+    if(!node){
+       node=execData.node;
+    }
+    var tbody;
+    if(!ctxGroupTbodies[node]){
+        tbody=createNewNodeTbody(data,tbl,node);
+        ctxGroupTbodies[node]=tbody;
+    }else{
+        tbody=ctxGroupTbodies[node];
+    }
+
+    var tr = $(tbody.insertRow(-1));
+    configureDataRow(tr,data,node);
+    if($('ctxCount'+node)){
+        $('ctxCount'+node).innerHTML=''+tbody.rows.length + " lines";
+        if(data.level =='ERROR'|| data.level=='SEVERE'){
+            $('ctxCount'+node).addClassName(data.level);
+        }
+    }
+    runningcmd.count++;
+    lastrow=data;
+    return tr;
+}
+function createNewNodeTbody(data,tbl,ctxid) {
+    //create new Table body
+    var newtbod = $(document.createElement("tbody"));
+
+    newtbod.setAttribute('id', 'ctxgroup' + ctxid);
+    if (isAppendTop()) {
+        tbl.insertBefore(newtbod, tbl.tBodies[0]);
+    } else {
+        tbl.appendChild(newtbod);
+    }
+    ctxGroupSet.push(newtbod);
+    if (!groupOutput.value) {
+        newtbod.hide();
+    }
+
+
+    var tr = $(newtbod.insertRow(isAppendTop() ? 0 : -1));
+    var iconcell = $(tr.insertCell(0));
+    iconcell.setAttribute('id', 'ctxIcon' + ctxid);
+    tr.addClassName('contextRow');
+    if (isAppendTop()) {
+        tr.addClassName("up");
+    } else {
+        tr.addClassName("down");
+    }
+    iconcell.addClassName("icon");
+    var cell = $(tr.insertCell(1));
+    cell.setAttribute('colSpan', '2');
+
+
+    if (null != data['node'] && 'run' != data['command']) {
+        cell.innerHTML +=
+        "<span class='node'>" + "<img src='" + AppImages.iconSmallNodeObject + "' width='16' height='16' alt=''/> "
+            + data['node'] + "</span>";
+    } else if (null != data['node'] && 'run' == data['command']) {
+        cell.innerHTML +=
+        "<span class='node'>" + "<img src='" + AppImages.iconSmallNodeObject + "' width='16' height='16' alt=''/> "
+            + data['node'] + "</span>";
+    }
+
+    if (data['command'] || data['module'] || data['context']) {
+        if (data['module'] || data['command'] && "run" != data['command']) {
+            cell.innerHTML += "<span class='cmdname' title='" + data['command'] + "'>" + data['command'] + "</span>";
+        } else if (data['command'] && "run" == data['command']) {
+            cell.innerHTML += "<span class='cmdname' title='" + data['command'] + "'>" + data['command'] + "</span>";
+        }
+        if (data['context']) {
+            //split context into project,type,object
+            var t = data['context'].split('.');
+            if (t.size() > 2) {
+                cell.innerHTML += " <span class='resname'>" + t[2] + "</span>";
+            }
+            if (t.size() > 1) {
+                cell.innerHTML += " <span class='typename'>" + t[1] + "</span>";
+            }
+        }
+    } else {
+        tr.addClassName('console');
+        cell.innerHTML += " <span class='console'>[console]</span>";
+    }
+    var countspan = document.createElement('span');
+    countspan.setAttribute('id', 'ctxCount' + ctxid);
+    countspan.setAttribute('count', '0');
+    countspan.addClassName('ctxcounter');
+    countspan.innerHTML = " -";
+    cell.appendChild(countspan);
+    var cell2 = $(tr.insertCell(2));
+    cell2.setAttribute('id', 'ctxExp' + ctxid);
+    cell2.addClassName('rowexpicon');
+    cell2.addClassName('expandicon');
+    tr.onclick = function() {
+        toggleDataBody(ctxid);
+    };
+
+    //create new tablebody for data rows
+    var datatbod = $(document.createElement("tbody"));
+    datatbod.setAttribute('id', 'databody' + ctxid);
+    tbl.appendChild(datatbod);
+
+    //start all data tbody as closed
+    Element.hide($(datatbod));
+    cell2.addClassName('closed');
+
+    return datatbod;
 }
 
 function createFinalContextTbody(data,tbl,ctxid){
@@ -692,12 +806,26 @@ function createNewContextTbody(data,tbl,ctxid){
          cell2.addClassName('opened');
      }
 }
+
+/**
+ * create data row for the table, depending on type of output mode
+ * @param data
+ * @param tbl
+ */
+function genDataRow(data,tbl){
+    if(nodemode){
+        return genDataRowNodes(data,tbl);
+    }else{
+        return genDataRowBrowse(data,tbl);
+    }
+}
+
 /**
  * Generate the data row for tail/browse mode
  * @param data
  * @param tbl
  */
-function genDataRow(data,tbl){
+function genDataRowBrowse(data,tbl){
     reverseOutputTable(tbl);
      var ctxid=contextIdCounter;
      if(null==lastTBody){
@@ -712,13 +840,14 @@ function genDataRow(data,tbl){
 
      }
      var tr = $(lastTBody.insertRow(isAppendTop()?0:-1));
-     configureDataRow(tr,data);
+     configureDataRow(tr,data,ctxid);
 
      runningcmd.count++;
      lastrow=data;
      return tr;
  }
-function configureDataRow(tr,data){
+
+function configureDataRow(tr,data,ctxid){
 
      var tdicon = $(tr.insertCell(0));
      tdicon.setAttribute('width','16');
