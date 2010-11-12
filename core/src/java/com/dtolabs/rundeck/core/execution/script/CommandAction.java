@@ -124,35 +124,39 @@ class CommandAction extends AbstractAction {
                                                       .getUsername();
 
         DefaultNodeDispatcher.configureNodeContextThreadLocalsForProject(project);
-
-        String logformat = ExecTool.DEFAULT_LOG_FORMAT;
-        if (getFramework().existsProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT)) {
-            logformat = getFramework().getProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT);
-        }
-        final LogReformatter gen = new LogReformatter(logformat, new MapGenerator<String, String>() {
-            public Map<String, String> getMap() {
-                final HashMap<String, String> contextData = new HashMap<String, String>();
-                //discover node name and username
-                final String thrNode = DefaultNodeDispatcher.getThreadLocalForProject(
-                    DefaultNodeDispatcher.NODE_NAME_LOCAL_REF_ID,
-                    CommandAction.this.project);
-                if(null!=thrNode){
-                    contextData.put("node", thrNode );
-                } else {
-                    contextData.put("node",  fwkNodeName );
-                }
-                final String thrUser = DefaultNodeDispatcher.getThreadLocalForProject(
-                    DefaultNodeDispatcher.NODE_USER_LOCAL_REF_ID,
-                    CommandAction.this.project);
-                if(null!=thrUser){
-                    contextData.put("user",  thrUser);
-                } else {
-                    contextData.put("user", fwkUser);
-                }
-                contextData.put("command", "run-exec");
-                return contextData;
+        final LogReformatter gen ;
+        if (null!=listener && listener.isTerse()) {
+            gen=null;
+        }else{
+            String logformat = ExecTool.DEFAULT_LOG_FORMAT;
+            if (getFramework().existsProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT)) {
+                logformat = getFramework().getProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT);
             }
-        });
+            gen= new LogReformatter(logformat, new MapGenerator<String, String>() {
+                public Map<String, String> getMap() {
+                    final HashMap<String, String> contextData = new HashMap<String, String>();
+                    //discover node name and username
+                    final String thrNode = DefaultNodeDispatcher.getThreadLocalForProject(
+                        DefaultNodeDispatcher.NODE_NAME_LOCAL_REF_ID,
+                        CommandAction.this.project);
+                    if(null!=thrNode){
+                        contextData.put("node", thrNode );
+                    } else {
+                        contextData.put("node",  fwkNodeName );
+                    }
+                    final String thrUser = DefaultNodeDispatcher.getThreadLocalForProject(
+                        DefaultNodeDispatcher.NODE_USER_LOCAL_REF_ID,
+                        CommandAction.this.project);
+                    if(null!=thrUser){
+                        contextData.put("user",  thrUser);
+                    } else {
+                        contextData.put("user", fwkUser);
+                    }
+                    contextData.put("command", "run-exec");
+                    return contextData;
+                }
+            });
+        }
 
         //bind System printstreams to the thread
         final ThreadBoundOutputStream threadBoundSysOut = ThreadBoundOutputStream.bindSystemOut();

@@ -40,6 +40,7 @@ public class CLIExecutionListener implements ExecutionListener {
     private FailedNodesListener failedNodesListener;
     private CLIToolLogger logger;
     private CLILoggerParams loggerParams;
+    private boolean terse;
 
     /**
      * Create the CLIExecutionListener
@@ -66,6 +67,16 @@ public class CLIExecutionListener implements ExecutionListener {
         this.failedNodesListener = failedNodesListener;
         this.logger = logger;
         this.loggerParams = loggerParams;
+    }
+
+    public CLIExecutionListener(final BuildListener buildListener, final FailedNodesListener failedNodesListener,
+                                final CLIToolLogger logger,
+                                final CLILoggerParams loggerParams, final boolean terse) {
+        this.buildListener = buildListener;
+        this.failedNodesListener = failedNodesListener;
+        this.logger = logger;
+        this.loggerParams = loggerParams;
+        this.terse = terse;
     }
 
     /**
@@ -111,4 +122,11 @@ public class CLIExecutionListener implements ExecutionListener {
         return buildListener;
     }
 
+    public boolean isTerse() {
+        return terse;
+    }
+
+    public void setTerse(final boolean terse) {
+        this.terse = terse;
+    }
 }

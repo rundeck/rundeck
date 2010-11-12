@@ -493,18 +493,6 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
                 //STDOUT so they are captured later in the stream.
                 map.put(Project.MSG_INFO, Project.MSG_WARN);
                 blistener=new LogLevelConvertBuildListener(listener, map);
-            }else if(!argTerse) {
-                String logformat = DEFAULT_LOG_FORMAT;
-                if (getFramework().existsProperty(FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT)) {
-                    logformat = getFramework().getProperty(FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT);
-                }
-                final String nodeName = getFramework().getFrameworkNodeName();
-                final HashMap<String, String> contextData = new HashMap<String, String>();
-                contextData.put("node", nodeName);
-                contextData.put("user", user);
-                contextData.put("command", "run-exec");
-                final LogReformatter gen = new LogReformatter(logformat, contextData);
-                blistener = createExecToolCommandLogger(getAntLoglevel(), gen);
             }else {
                 blistener = createExecToolCommandLogger(getAntLoglevel(), null);
             }
@@ -524,7 +512,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
 
             //configure execution listener
             final ExecutionListener executionListener = new CLIExecutionListener(blistener,
-                FailedNodesFilestore.createListener(getFailedNodes()), this, this);
+                FailedNodesFilestore.createListener(getFailedNodes()), this, this, argTerse);
 
             //acquire ExecutionService object
             final ExecutionService service = ExecutionServiceFactory.instance().createExecutionService(framework,

@@ -33,6 +33,11 @@ import org.apache.tools.ant.BuildListener;
  */
 public interface ExecutionListener {
     /**
+     * Return true if output should be terse and not prefixed
+     * @return
+     */
+    public boolean isTerse();
+    /**
      * Log a message
      *
      * @param level   the log level
