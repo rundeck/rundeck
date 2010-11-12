@@ -909,15 +909,15 @@ class ScheduledExecutionController  {
         if(scheduledExecution.id){
             params.id=scheduledExecution.id
             if(!scheduledExecution.scheduled){
-                return executeNow()
+                return redirect(action:executeNow,id:scheduledExecution.id)
             }else{
-                redirect(action:show,id:scheduledExecution.id)
+                return redirect(action:show,id:scheduledExecution.id)
             }
         }else{
 
             scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
             flash.message=g.message(code:'ScheduledExecutionController.save.failed')
-            render(view:'create',model:[scheduledExecution:scheduledExecution,params:params])
+            return render(view:'create',model:[scheduledExecution:scheduledExecution,params:params])
         }
     }
     /**
