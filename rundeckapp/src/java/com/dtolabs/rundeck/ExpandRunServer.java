@@ -149,6 +149,12 @@ public class ExpandRunServer {
                                          .withDescription("The location of Rundeck's runtime data.")
                                          .create();
         
+        Option projectDir =    OptionBuilder.withLongOpt("projectdir")
+                                            .hasArg()
+                                            .withArgName("PATH")
+                                            .withDescription("The location of Rundeck's project data.")
+                                            .create('p');
+        
         Option help =       OptionBuilder.withLongOpt("help")
                                          .withDescription("Display this message.")
                                          .create('h');
@@ -169,6 +175,7 @@ public class ExpandRunServer {
         options.addOption(help);
         options.addOption(debugFlag);
         options.addOption(skipInstall);
+        options.addOption(projectDir);
         
         debug = Boolean.getBoolean(SYS_PROP_RUNDECK_LAUNCHER_DEBUG);
         rewrite = Boolean.getBoolean(SYS_PROP_RUNDECK_LAUNCHER_REWRITE);
@@ -279,6 +286,9 @@ public class ExpandRunServer {
             configuration.put(RUNDECK_SERVER_CONFIG_DIR, this.configDir.getAbsoluteFile());
         }
         
+        if(cl.hasOption('p')) {
+            System.setProperty("rdeck.projects",cl.getOptionValue('p'));
+        }
                 
         execute(cl.getArgs(), configDir, new File(basedir), serverdir, configuration);
     }

@@ -213,6 +213,7 @@ public class Framework extends FrameworkResourceParent {
             throw new NullPointerException(
                 "rdeck_base_dir was not set in constructor and system property rdeck.base was not defined");
         }
+        
         final String projectsBaseDir = null == projects_base_dir ? getBaseDir() + Constants.FILE_SEP + "projects"
                                      : projects_base_dir;
         if (null == projectsBaseDir) {
@@ -369,7 +370,7 @@ public class Framework extends FrameworkResourceParent {
         }
         Framework instance = new Framework(rdeck_base_dir,
                                            null,
-                                           null,
+                                           Constants.getFrameworkProjectsDir(rdeck_base_dir),
                                            authenticator,
                                            authorization);
         return instance;

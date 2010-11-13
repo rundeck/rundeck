@@ -290,9 +290,20 @@ public final class Constants {
      * Return framework projects dir
      * @param rdeck_base Ctl Base directory
      * @return
+     * @see Constants#getFrameworkProjectsDir(String)
      */
+    @Deprecated
     public static final String getFrameworkDepotsDir(final String rdeck_base) {
-        return rdeck_base + FILE_SEP + "projects";
+        return getFrameworkProjectsDir(rdeck_base);
+    }
+    
+    /**
+     * Return framework projects dir
+     * @param rdeck_base Ctl Base directory
+     * @return
+     */
+    public static final String getFrameworkProjectsDir(final String rdeck_base) {
+        return System.getProperty("rdeck.projects", rdeck_base + FILE_SEP + "projects");
     }
 
     /**
