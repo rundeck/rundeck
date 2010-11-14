@@ -15,9 +15,7 @@
 	<classpathentry kind="lib" path="target/tools/lib/commons-logging-1.1.jar"/>
 	<classpathentry kind="lib" path="target/tools/lib/dom4j-1.6.1.jar"/>
 	<classpathentry kind="lib" path="target/tools/lib/jaxen-1.1.jar"/>
-	<classpathentry kind="lib" path="target/tools/lib/jruby-1.3.1.jar"/>
 	<classpathentry kind="lib" path="target/tools/lib/jsch-0.1.42.jar"/>
-	<classpathentry kind="lib" path="target/tools/lib/jython-2.5.0.jar"/>
 	<classpathentry kind="lib" path="target/tools/lib/log4j-1.2.15.jar"/>
 	<classpathentry kind="lib" path="target/tools/lib/rundeck-core-1.0.0.jar"/>
 	<classpathentry kind="lib" path="target/tools/lib/xerces-2.6.0.jar"/>

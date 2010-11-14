@@ -182,7 +182,7 @@ public class Policies {
                     
                     // TODO: time of day check.
                     
-                    
+                    long userMatchStart = System.currentTimeMillis();
                     NodeList usernames = (NodeList) this.byUserName.evaluate(policy, XPathConstants.NODESET);
                     
                     Set<String> policyUsers = new HashSet<String>(usernames.getLength());
@@ -200,13 +200,17 @@ public class Policies {
                         
                         if(!Collections.disjoint(policyUsers, usernamePrincipals)) {
                             matchedContexts.add(new Context(policy));
+                            System.err.println("Policy: " + i + " Matched on User: " + (System.currentTimeMillis() - userMatchStart) + "ms");
                             break;
                         }
                     }
+                    System.err.println("Policy: " + i + " No match on User: " + (System.currentTimeMillis() - userMatchStart) + "ms");
+                    
                     
                     Set<Group> groupPrincipals = subject.getPrincipals(Group.class);
                     if(groupPrincipals.size() > 0) {
                         // no username matched, check groups.
+                        long groupCollectStart = System.currentTimeMillis();
                         NodeList groups = (NodeList) this.byGroup.evaluate(policy, XPathConstants.NODESET);
                         Set<Object> policyGroups = new HashSet<Object>(groups.getLength());
                         for(int g = 0; g < groups.getLength(); g++) {
@@ -239,8 +243,11 @@ public class Policies {
                                 groupNames.add(groupPrincipal.getName());
                             }
                         }
+                        
+                        long collectDuration = System.currentTimeMillis() - groupCollectStart;
                         if(!Collections.disjoint(policyGroups, groupNames)) {
                             matchedContexts.add(new Context(policy));
+                            System.err.println("matched on group. " + collectDuration + "ms");
                             continue;
                         }
                     }

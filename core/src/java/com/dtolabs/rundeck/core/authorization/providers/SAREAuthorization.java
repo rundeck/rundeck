@@ -110,18 +110,25 @@ public class SAREAuthorization implements Authorization {
         
         this.decisionsMade++;
         
+        long narrowStart = System.currentTimeMillis();
         List<Context> contexts = policies.narrowContext(subject, environment);
+        long narrowDuration = System.currentTimeMillis() - narrowStart;
+        
         if(contexts.size() <= 0) {
             return authorize(false, "No context matches subject or environment", Code.REJECTED_NO_SUBJECT_OR_ENV_FOUND, resource, subject, action, environment, System.currentTimeMillis() - start);
         }
         
         ContextDecision contextDecision = null;
+        
+        long contextIncludeStart = System.currentTimeMillis();
         for(Context ctx : contexts) {
             contextDecision = ctx.includes(resource, action);
             if(contextDecision.granted()) {
+                System.err.println("Decision Breakdown: Narrow:" + narrowDuration + " Context: " + (System.currentTimeMillis() - contextIncludeStart));
                 return createAuthorize(true, contextDecision, resource, subject, action, environment, System.currentTimeMillis() - start);
             }
         }
+        System.err.println("Decision Breakdown: Narrow:" + narrowDuration + " Context: " + (System.currentTimeMillis() - contextIncludeStart));
         
         if(contextDecision == null) {
             return authorize(false, "No resource or action matched.", 
