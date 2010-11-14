@@ -25,6 +25,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -41,6 +42,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
@@ -72,6 +74,12 @@ public class Policies {
     private final List<File> policyFiles = new ArrayList<File>();
     private final List<Document> aclpolicies = new ArrayList<Document>();
     
+    private final XPathExpression count;
+    private final XPathExpression allPolicies;
+    private final XPathExpression byUserName;
+    private final XPathExpression byGroup;
+
+    
     public Policies() {
         xpath.setNamespaceContext(new NamespaceContext() {
             
@@ -89,6 +97,17 @@ public class Policies {
                 }
             }
         });
+        
+        try {
+            this.count = xpath.compile("count(//policy)");
+            this.allPolicies = xpath.compile("//policy");
+            this.byUserName = xpath.compile("by/user/@username");
+            this.byGroup = xpath.compile("by/group/@name | by/group/@ldap:name");
+        } catch (XPathExpressionException e) {
+            throw new IllegalArgumentException(e);
+        }
+        
+        
     }
     
     public void add(File file) throws SAXException, IOException, ParserConfigurationException {
@@ -110,7 +129,7 @@ public class Policies {
         int count = 0;
         for(Document f : aclpolicies) {
             try {
-                Double n = (Double)xpath.evaluate("count(//policy)", f, XPathConstants.NUMBER);
+                Double n = (Double)this.count.evaluate(f, XPathConstants.NUMBER);
                 count += n;
             } catch (XPathExpressionException e) {
                 // TODO squash
@@ -150,7 +169,7 @@ public class Policies {
         List<Context> matchedContexts = new ArrayList<Context>();
         for(Document f : aclpolicies) {
             try {
-                NodeList policiesToEvaluate = (NodeList)xpath.evaluate("//policy", f, XPathConstants.NODESET);
+                NodeList policiesToEvaluate = (NodeList)this.allPolicies.evaluate(f, XPathConstants.NODESET);
                 for(int i = 0; i < policiesToEvaluate.getLength(); i++) {
 
                     Node policy = policiesToEvaluate.item(i);                   
@@ -164,7 +183,7 @@ public class Policies {
                     // TODO: time of day check.
                     
                     
-                    NodeList usernames = (NodeList) xpath.evaluate("by/user/@username", policy, XPathConstants.NODESET);
+                    NodeList usernames = (NodeList) this.byUserName.evaluate(policy, XPathConstants.NODESET);
                     
                     Set<String> policyUsers = new HashSet<String>(usernames.getLength());
                     for(int u = 0; u < usernames.getLength(); u++) {
@@ -188,7 +207,7 @@ public class Policies {
                     Set<Group> groupPrincipals = subject.getPrincipals(Group.class);
                     if(groupPrincipals.size() > 0) {
                         // no username matched, check groups.
-                        NodeList groups = (NodeList) xpath.evaluate("by/group/@name | by/group/@ldap:name", policy, XPathConstants.NODESET);
+                        NodeList groups = (NodeList) this.byGroup.evaluate(policy, XPathConstants.NODESET);
                         Set<Object> policyGroups = new HashSet<Object>(groups.getLength());
                         for(int g = 0; g < groups.getLength(); g++) {
                             Node group = groups.item(g);
@@ -283,7 +302,9 @@ public class Policies {
         }
         
     }
-
+    
+    final static private Map<String, XPathExpression> commandFilterCache = new HashMap<String, XPathExpression>();
+    
     public class Context {
         public Context(Node policy) {
             super();
@@ -291,6 +312,7 @@ public class Policies {
         }
 
         final private Node policy;
+        
 
         public ContextDecision includes(Map<String, String> resource, String action) {
             // keep track of each context and the the resulting grant or rejection
@@ -311,7 +333,13 @@ public class Policies {
                         filter.append(" and ");
                     }
                 }
-                NodeList commands = (NodeList) xpath.evaluate("descendant-or-self::command["+filter.toString()+"]", policy, XPathConstants.NODESET);
+                
+                String filterString = filter.toString();
+                if(!commandFilterCache.containsKey(filterString)) {
+                    commandFilterCache.put(filterString, xpath.compile("descendant-or-self::command["+filterString+"]"));
+                }
+                
+                NodeList commands = (NodeList) commandFilterCache.get(filterString).evaluate(policy, XPathConstants.NODESET);
                 
                 for(int i = 0; i < commands.getLength(); i++) {
                     
