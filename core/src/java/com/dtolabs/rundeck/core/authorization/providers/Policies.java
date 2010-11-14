@@ -45,6 +45,7 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.w3c.dom.DOMException;
+import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -69,6 +70,7 @@ public class Policies {
     private static final String NS_LDAP = "http://dtolabs.com/rundeck/ldap";
     private final XPath xpath = XPathFactory.newInstance().newXPath();
     private final List<File> policyFiles = new ArrayList<File>();
+    private final List<Document> aclpolicies = new ArrayList<Document>();
     
     public Policies() {
         xpath.setNamespaceContext(new NamespaceContext() {
@@ -95,7 +97,7 @@ public class Policies {
         DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
         domFactory.setNamespaceAware(true);
         DocumentBuilder builder = domFactory.newDocumentBuilder();
-        builder.parse(file);
+        aclpolicies.add(builder.parse(file));
         
         this.policyFiles.add(file);
     }
@@ -106,15 +108,13 @@ public class Policies {
     
     public int count() {
         int count = 0;
-        for(File f : policyFiles) {
+        for(Document f : aclpolicies) {
             try {
-                Double n = (Double)xpath.evaluate("count(//policy)", new InputSource(new FileReader(f)), XPathConstants.NUMBER);
+                Double n = (Double)xpath.evaluate("count(//policy)", f, XPathConstants.NUMBER);
                 count += n;
             } catch (XPathExpressionException e) {
                 // TODO squash
-            } catch (FileNotFoundException e) {
-                // TODO squash
-            }
+            } 
         }
         return count;
     }
@@ -148,9 +148,9 @@ public class Policies {
     public List<Context> narrowContext(Subject subject, Set<Attribute> environment) {
         
         List<Context> matchedContexts = new ArrayList<Context>();
-        for(File f : policyFiles) {
+        for(Document f : aclpolicies) {
             try {
-                NodeList policiesToEvaluate = (NodeList)xpath.evaluate("//policy", new InputSource(new FileReader(f)), XPathConstants.NODESET);
+                NodeList policiesToEvaluate = (NodeList)xpath.evaluate("//policy", f, XPathConstants.NODESET);
                 for(int i = 0; i < policiesToEvaluate.getLength(); i++) {
 
                     Node policy = policiesToEvaluate.item(i);                   
@@ -233,10 +233,7 @@ public class Policies {
             } catch (XPathExpressionException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
-            } catch (FileNotFoundException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+            } 
         }
         return matchedContexts;
     }
@@ -472,11 +469,11 @@ public class Policies {
     @Deprecated
     public List<String> listAllRoles() {
         List<String> results = new ArrayList<String>();
-        for(File f: policyFiles) {
+        for(Document f: aclpolicies) {
             try {
                 
                 NodeList groups = (NodeList) xpath.evaluate("//by/group/@ldap:name | //by/group/@name", 
-                        new InputSource(new FileReader(f)), XPathConstants.NODESET);
+                        f, XPathConstants.NODESET);
                 
                 for(int i = 0; i < groups.getLength(); i++) {
                     
@@ -487,10 +484,7 @@ public class Policies {
             } catch (XPathExpressionException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
-            } catch (FileNotFoundException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+            } 
         }
         
         return results;
