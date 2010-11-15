@@ -102,6 +102,22 @@ var applinks={
             $('jobChooseSpinner').hide();
         }
 
+        function _menuDidCreateProject(value){
+            var selected=$F('schedEditFrameworkProject');
+            new Ajax.Updater('schedEditFrameworkProjectHolder','${createLink(controller:'framework',action:'projectSelect')}',{
+                parameters:{callback:'_editFormSelectProject',key:'project',noselection:'-Choose a Project-',nocreate:'true',selected:selected},
+                onComplete:function(transport){
+                    if (transport.request.success()) {
+                        if($('schedEditFrameworkProjectHolder').down('select')){
+                            $('schedEditFrameworkProjectHolder').down('select').setAttribute('id','schedEditFrameworkProject');
+                        }
+                    }
+                }
+            });
+        }
+        function _menuDidSelectProject(value){
+        }
+
         /**
          * Validate the form
          *
@@ -388,7 +404,9 @@ var applinks={
     <tr>
         <td class="${hasErrors(bean:scheduledExecution,field:'project','fieldError')} required" id="schedProjErr">Project</td>
         <td>
-            <g:select id="schedEditFrameworkProject" name="project" from="${session.projects*.name}" value="${scheduledExecution.project?scheduledExecution.project.toString():session.projects?.size()==1?session.projects[0].name:session.project?session.project:''}" onchange="_pageSelectProject(this.value);" noSelection="['':'-Choose a Project-']"/>
+            <div id="schedEditFrameworkProjectHolder">
+                <g:select id="schedEditFrameworkProject" name="project" from="${session.projects*.name}" value="${scheduledExecution.project?scheduledExecution.project.toString():session.projects?.size()==1?session.projects[0].name:session.project?session.project:''}" onchange="_editFormSelectProject(this.value);" noSelection="['':'-Choose a Project-']"/>
+            </div>
             <g:hasErrors bean="${scheduledExecution}" field="project">
                     <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error"  width="16px" height="16px" id="schedProjErrImg"/>
                     <wdgt:eventHandler for="schedEditFrameworkProject" state="unempty" >
