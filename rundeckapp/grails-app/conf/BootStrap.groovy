@@ -1,3 +1,4 @@
+import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import org.springframework.web.context.support.WebApplicationContextUtils
 import org.springframework.web.context.WebApplicationContext
@@ -74,8 +75,8 @@ class BootStrap {
                  setup.performSetup()
                  log.info("Rundeck initialization complete.")
              }
-
-             File f = new File(rdeckBase, "etc/framework.properties")
+             def configDir = Constants.getFrameworkConfigDir(rdeckBase)
+             File f = new File(configDir, "framework.properties")
              if (! f.exists()) {
                  throw new RuntimeException("framework configuration file not found: " + f.getAbsolutePath())
              }

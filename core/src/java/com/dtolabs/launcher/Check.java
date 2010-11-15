@@ -176,7 +176,7 @@ public class Check implements PolicyAnalyzerListener {
      * @param baseDir RUNDECK base directory
      */
     void testBaseFiles(final File baseDir) {
-        final File etcDir = new File(baseDir, "etc");
+        final File etcDir = new File(Constants.getFrameworkConfigDir(baseDir.getAbsolutePath()));
         reporter.beginCheckOnDirectory(etcDir);
         final String[] requiredFiles = new String[]{
             "framework.properties",
@@ -254,7 +254,7 @@ public class Check implements PolicyAnalyzerListener {
 
     void testEtcLog4jProperties(final File baseDir, final Properties inputProps) throws
         CheckException {
-        final File file = new File(baseDir, "etc/log4j.properties");
+        final File file = new File(new File(Constants.getFrameworkConfigDir(baseDir.getAbsolutePath())), "log4j.properties");
 
         final Properties expectedProps = new Properties();
         /*
@@ -356,7 +356,7 @@ log4j.appender.CommonLog.locationInfo=true
      */
     void testEtcFrameworkProperties(final File baseDir, final RequiredParams params,
                                     final Properties inputProps) throws CheckException {
-        final File file = new File(baseDir, "etc/framework.properties");
+        final File file = new File(new File(Constants.getFrameworkConfigDir(baseDir.getAbsolutePath())), "framework.properties");
         final Collection<String> requiredExistProperties = new ArrayList<String>();
 
 

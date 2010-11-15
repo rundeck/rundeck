@@ -105,9 +105,10 @@ public class Framework extends FrameworkResourceParent {
             authenticationMgr = AuthenticationMgrFactory.create(lookup.getProperty(AUTHENT_CLS_PROP), this)
                 .getAuthenticationMgr();
         }
+        System.err.println("Using " + getConfigDir());
         if(null==authorizationMgr){
             authorizationMgr = AuthorizationMgrFactory.create(lookup.getProperty(AUTHORIZE_CLS_PROP),
-                this, new File(getBaseDir(), "etc")).getAuthorizationMgr();
+                this, getConfigDir()).getAuthorizationMgr();
         }
         if(null==centralDispatcherMgr){
             try {
@@ -593,7 +594,7 @@ public class Framework extends FrameworkResourceParent {
     }
 
     public File getConfigDir() {
-        return new File(getBaseDir(), "etc");
+        return new File(Constants.getFrameworkConfigDir(getBaseDir().getAbsolutePath()));
     }
 
 

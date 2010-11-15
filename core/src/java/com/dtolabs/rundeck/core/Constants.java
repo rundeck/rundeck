@@ -207,7 +207,7 @@ public final class Constants {
      * @param rdeck_base Ctl Base directory
      */
     public static final String getFrameworkConfigDir(final String rdeck_base) {
-        return rdeck_base + FILE_SEP + "etc";
+        return System.getProperty("rdeck.config", rdeck_base + FILE_SEP + "etc");
     }
 
     /**

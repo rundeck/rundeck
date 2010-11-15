@@ -151,6 +151,7 @@ public class SAREAuthorization implements Authorization {
         decision.explain().describe(pw);
         sb.append(out.toString());
         
+        System.err.println(sb.toString());
         logger.info(sb.toString());
 
         return decision;
