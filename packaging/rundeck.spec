@@ -28,7 +28,7 @@ fi
 %defattr(0644, rundeck, rundeck, 0775)
 
 # System Integration
-/etc/rc.d/init.d/rundeckd
+%attr(755, root, root) /etc/rc.d/init.d/rundeckd
 
 # Client Configuration
 %config /etc/rundeck/client/framework.properties
