@@ -14,7 +14,7 @@ setDefaultTarget(main)
 
 target(doCompile:"Compile stuff") {
 	ant.mkdir(dir:"target/server-classes")
-	ant.javac(srcdir:"src/java", destdir:"target/server-classes",includes:"com/dtolabs/rundeck/RunServer.java",classpathref:'grails.compile.classpath')
+	ant.javac(srcdir:"src/java", destdir:"target/server-classes",includes:"com/dtolabs/rundeck/*.java",classpathref:'grails.compile.classpath')
 }
 
 target(dojar:"create server jar with embedded war") {
@@ -22,6 +22,8 @@ target(dojar:"create server jar with embedded war") {
     def fileName = grailsAppName
     def version = metadata.getApplicationVersion()
 
+    ant.unjar(src:"target/launcher-contents/pkgs/webapp/WEB-INF/lib/commons-cli-1.0.jar", dest:"target/server-classes")
+    
     ant.mkdir(dir:"target/server-classes/pkgs")
 	ant.jar(basedir:"target/server-classes", destfile:"target/${fileName}-server-${version}.jar"){
         manifest{
