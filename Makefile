@@ -1,3 +1,5 @@
+SHELL=/bin/bash
+
 VERSION=1.0.0
 RELEASE=0
 
