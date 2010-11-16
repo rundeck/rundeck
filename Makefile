@@ -25,7 +25,7 @@ rundeck: $(war) $(launcher)
 	@echo $(VERSION)-$(RELEASE)
 
 rpm: $(war)
-	@echo rpmbuild
+	cd packaging; $(MAKE)
 
 $(core): $(CORE_FILES)
 	./build.sh rundeck_core
