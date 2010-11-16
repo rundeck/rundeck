@@ -162,10 +162,17 @@ public class SAREAuthorization implements Authorization {
             Set<Attribute> environment) {
         
         Set<Decision> decisions = new HashSet<Decision>();
+        long duration=0;
         for(Map<String, String> resource: resources) {
             for(String action: actions) {
-                decisions.add(evaluate(resource, subject, action, environment));
+                final Decision decision = evaluate(resource, subject, action, environment);
+                duration += decision.evaluationDuration();
+                decisions.add(decision);
             }
+        }
+        if(decisions.size()>0){
+            System.err.println(
+                "Decisions: " + decisions.size() + ", total: " + duration + "ms. avg: " + (duration / decisions.size()));
         }
         return decisions;
     }
