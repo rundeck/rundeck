@@ -16,50 +16,22 @@
 
 package com.dtolabs.rundeck.core.authorization.providers;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import javax.naming.InvalidNameException;
-import javax.naming.ldap.LdapName;
-import javax.security.auth.Subject;
-import javax.xml.namespace.NamespaceContext;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
-
-import org.w3c.dom.DOMException;
-import org.w3c.dom.Document;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-
-import com.dtolabs.rundeck.core.authentication.Group;
-import com.dtolabs.rundeck.core.authentication.LdapGroup;
-import com.dtolabs.rundeck.core.authentication.Username;
 import com.dtolabs.rundeck.core.authorization.Attribute;
 import com.dtolabs.rundeck.core.authorization.Explanation;
 import com.dtolabs.rundeck.core.authorization.Explanation.Code;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import javax.security.auth.Subject;
+import javax.xml.namespace.NamespaceContext;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * Policies represent the policies as described in the policies file(s).
@@ -68,25 +40,27 @@ import com.dtolabs.rundeck.core.authorization.Explanation.Code;
  */
 public class Policies {
     
-    private static final String NS_AD = "http://dtolabs.com/rundeck/activedirectory";
-    private static final String NS_LDAP = "http://dtolabs.com/rundeck/ldap";
-    private final XPath xpath = XPathFactory.newInstance().newXPath();
+    static final String NS_AD = "http://dtolabs.com/rundeck/activedirectory";
+    static final String NS_LDAP = "http://dtolabs.com/rundeck/ldap";
+    private static final XPath xpath = XPathFactory.newInstance().newXPath();
     private final List<File> policyFiles = new ArrayList<File>();
-    private final List<Document> aclpolicies = new ArrayList<Document>();
-    
+
     private final XPathExpression count;
     private final XPathExpression allPolicies;
     private final XPathExpression byUserName;
     private final XPathExpression byGroup;
 
+    private PoliciesCache cache;
+
     
-    public Policies() {
+    public Policies(final PoliciesCache cache) {
+        this.cache = cache;
         xpath.setNamespaceContext(new NamespaceContext() {
-            
+
             @SuppressWarnings("rawtypes")
             public Iterator getPrefixes(String namespaceURI) { return null; }
             public String getPrefix(String namespaceURI) { return null; }
-            
+
             public String getNamespaceURI(String prefix) {
                 if(prefix.equals("ldap")) {
                     return NS_LDAP;
@@ -97,7 +71,7 @@ public class Policies {
                 }
             }
         });
-        
+
         try {
             this.count = xpath.compile("count(//policy)");
             this.allPolicies = xpath.compile("//policy");
@@ -106,34 +80,18 @@ public class Policies {
         } catch (XPathExpressionException e) {
             throw new IllegalArgumentException(e);
         }
-        
-        
-    }
-    
-    public void add(File file) throws SAXException, IOException, ParserConfigurationException {
-        
-        /* Just checking to make sure it's a well formed document. */
-        DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
-        domFactory.setNamespaceAware(true);
-        DocumentBuilder builder = domFactory.newDocumentBuilder();
-        aclpolicies.add(builder.parse(file));
-        
-        this.policyFiles.add(file);
-    }
-    
-    public void remove(File file) {
-        this.policyFiles.remove(file);
     }
     
     public int count() {
         int count = 0;
-        for(Document f : aclpolicies) {
+        for(PoliciesDocument f : cache) {
+
             try {
-                Double n = (Double)this.count.evaluate(f, XPathConstants.NUMBER);
+                Double n = f.countPolicies();
                 count += n;
             } catch (XPathExpressionException e) {
                 // TODO squash
-            } 
+            }
         }
         return count;
     }
@@ -145,21 +103,13 @@ public class Policies {
      * @throws PoliciesParseException Thrown when there is a problem parsing a file.
      */
     public static Policies load(File rootPath) throws IOException, PoliciesParseException {
-        
-        Policies p = new Policies();
-        
-        for(File f : rootPath.listFiles(new FilenameFilter(){
-            public boolean accept(File dir, String name) {
-                return name.endsWith(".aclpolicy");
-            }})) {
-            try {
-                p.add(f);
-            } catch (SAXException e) {
-                throw new PoliciesParseException(e);
-            } catch (ParserConfigurationException e) {
-                throw new PoliciesParseException(e);
-            }
-        }            
+
+        Policies p = null;
+        try {
+            p = new Policies(new PoliciesCache(rootPath));
+        } catch (ParserConfigurationException e) {
+            throw new PoliciesParseException(e);
+        }
         
         return p;
     }
@@ -167,95 +117,9 @@ public class Policies {
     public List<Context> narrowContext(Subject subject, Set<Attribute> environment) {
         
         List<Context> matchedContexts = new ArrayList<Context>();
-        for(Document f : aclpolicies) {
+        for(final PoliciesDocument f : cache) {
             try {
-                NodeList policiesToEvaluate = (NodeList)this.allPolicies.evaluate(f, XPathConstants.NODESET);
-                for(int i = 0; i < policiesToEvaluate.getLength(); i++) {
-
-                    Node policy = policiesToEvaluate.item(i);                   
-                    
-                    // What constitutes a match?
-                    // * The username matches exactly 1 in the context.
-                    // * 1 subject group matches 1 group.  non disjoint sets.
-                    //
-                    // First match stops the search.
-                    
-                    // TODO: time of day check.
-                    
-                    long userMatchStart = System.currentTimeMillis();
-                    NodeList usernames = (NodeList) this.byUserName.evaluate(policy, XPathConstants.NODESET);
-                    
-                    Set<String> policyUsers = new HashSet<String>(usernames.getLength());
-                    for(int u = 0; u < usernames.getLength(); u++) {
-                        Node username = usernames.item(u);
-                        policyUsers.add(username.getNodeValue());
-                    }
-                    
-                    Set<Username> userPrincipals = subject.getPrincipals(Username.class);
-                    if(userPrincipals.size() > 0) {
-                        Set<String> usernamePrincipals = new HashSet<String>();
-                        for(Username username: userPrincipals) {
-                            usernamePrincipals.add(username.getName());
-                        }
-                        
-                        if(!Collections.disjoint(policyUsers, usernamePrincipals)) {
-                            matchedContexts.add(new Context(policy));
-                            System.err.println("Policy: " + i + " Matched on User: " + (System.currentTimeMillis() - userMatchStart) + "ms");
-                            break;
-                        }
-                    }
-                    System.err.println("Policy: " + i + " No match on User: " + (System.currentTimeMillis() - userMatchStart) + "ms");
-                    
-                    
-                    Set<Group> groupPrincipals = subject.getPrincipals(Group.class);
-                    if(groupPrincipals.size() > 0) {
-                        // no username matched, check groups.
-                        long groupCollectStart = System.currentTimeMillis();
-                        NodeList groups = (NodeList) this.byGroup.evaluate(policy, XPathConstants.NODESET);
-                        Set<Object> policyGroups = new HashSet<Object>(groups.getLength());
-                        for(int g = 0; g < groups.getLength(); g++) {
-                            Node group = groups.item(g);
-                            String ns = group.getNamespaceURI();
-                            if(ns == null) {
-                                policyGroups.add(group.getNodeValue());
-                            } else if (NS_LDAP.equalsIgnoreCase(ns) || NS_AD.equalsIgnoreCase(ns)) {
-                                try {
-                                    policyGroups.add(new LdapName(group.getNodeValue()));
-                                } catch (InvalidNameException e) {
-                                    // TODO Auto-generated catch block
-                                    e.printStackTrace();
-                                } catch (DOMException e) {
-                                    // TODO Auto-generated catch block
-                                    e.printStackTrace();
-                                }
-                            }
-                        }
-                        Set<Object> groupNames = new HashSet<Object>();
-                        for(Group groupPrincipal: groupPrincipals) {
-                            if(groupPrincipal instanceof LdapGroup) {
-                                try {
-                                    groupNames.add(new LdapName(groupPrincipal.getName()));
-                                } catch (InvalidNameException e) {
-                                    // TODO Auto-generated catch block
-                                    e.printStackTrace();
-                                }
-                            } else {
-                                groupNames.add(groupPrincipal.getName());
-                            }
-                        }
-                        
-                        long collectDuration = System.currentTimeMillis() - groupCollectStart;
-                        if(!Collections.disjoint(policyGroups, groupNames)) {
-                            matchedContexts.add(new Context(policy));
-                            System.err.println("matched on group. " + collectDuration + "ms");
-                            continue;
-                        }
-                    }
-                    
-//                    if(subject.getPrincipals(LdapGroupPrincipal.class).size() > 0) {
-//                      //todo check against ldap.    
-//                    }
-                }
+                matchedContexts.addAll(f.matchedContexts(subject, environment));
             } catch (XPathExpressionException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -312,7 +176,7 @@ public class Policies {
     
     final static private Map<String, XPathExpression> commandFilterCache = new HashMap<String, XPathExpression>();
     
-    public class Context {
+    public static class Context {
         public Context(Node policy) {
             super();
             this.policy = policy;
@@ -504,24 +368,16 @@ public class Policies {
     @Deprecated
     public List<String> listAllRoles() {
         List<String> results = new ArrayList<String>();
-        for(Document f: aclpolicies) {
+        for(PoliciesDocument f: cache) {
             try {
+                results.addAll(f.groupNames());
                 
-                NodeList groups = (NodeList) xpath.evaluate("//by/group/@ldap:name | //by/group/@name", 
-                        f, XPathConstants.NODESET);
-                
-                for(int i = 0; i < groups.getLength(); i++) {
-                    
-                    String result = groups.item(i).getNodeValue();
-                    if(result == null || result.length() <= 0) continue;
-                    results.add(result);    
-                }
             } catch (XPathExpressionException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             } 
         }
-        
+
         return results;
     }
 }

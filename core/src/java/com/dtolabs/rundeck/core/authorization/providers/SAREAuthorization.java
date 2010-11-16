@@ -249,7 +249,6 @@ public class SAREAuthorization implements Authorization {
             public Explanation explain() {
                 return explanation;
             }
-            @Override
             public long evaluationDuration() {
                 return evaluationTime;
             }
