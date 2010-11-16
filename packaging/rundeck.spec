@@ -49,6 +49,7 @@ fi
 %dir /var/run/rundeck
 %dir /var/run/rundeck/data
 %dir /var/run/rundeck/work
+%dir /var/rundeck/projects
 
 # The Rundeck WebApp.  The Exploded War Goes Here.
 /var/run/rundeck/exp/webapp

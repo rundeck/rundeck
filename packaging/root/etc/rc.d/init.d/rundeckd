@@ -15,7 +15,7 @@ if [ -f /etc/sysconfig/lighttpd ]; then
 fi
 
 prog="rundeckd"
-rundeckd="java -Drdeck.config=/etc/rundeck/client -jar rundeck-launcher-1.0.0.jar --skipinstall --basedir /etc/rundeck/client --configdir /etc/rundeck/server --datadir /var/run/rundeck/data --serverdir /var/run/rundeck -p /var/run/rundeck/projects"
+rundeckd="java -Djava.security.auth.login.config=/etc/rundeck/server/jaas-loginmodule.conf -Dloginmodule.name=RDpropertyfilelogin -Drdeck.config=/etc/rundeck/client -Drdeck.base=/etc/rundeck/client -Drundeck.server.configDir=/etc/rundeck/server -Dserver.datastore.path=/var/run/rundeck/data -Drundeck.server.serverDir=/var/run/rundeck -Drdeck.projects=/var/rundeck/projects -cp $(find /var/run/rundeck/lib -printf %p:)/var/run/rundeck/lib/rundeck-server-1.0.0.jar com.dtolabs.rundeck.RunServer /etc/rundeck/client 9999"
 RETVAL=0
 PID_FILE=/var/run/rundeckd.pid
 

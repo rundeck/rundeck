@@ -8,6 +8,7 @@ rpm:
 	mkdir -p target/var/run/rundeck/exp/webapp
 	mkdir -p target/var/run/rundeck/{data,work}
 	mkdir -p target/var/log/rundeck
+	mkdir -p target/var/rundeck/projects
 	cp -R root/* target
 	cp -R ../core/target/tools/lib/*.jar target/var/lib/rundeck
 	unzip -o ../rundeckapp/target/rundeck-1.0.0.war -d target/var/run/rundeck/exp/webapp/
