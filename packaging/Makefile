@@ -1,0 +1,14 @@
+.PHONY: rundeck.rpm
+
+rundeck.rpm:
+	mkdir -p dist/RPMS/noarch
+	mkdir -p target/var/lib/rundeck
+	mkdir -p target/var/run/rundeck/exp/webapp
+	mkdir -p target/var/run/rundeck/{data,work}
+	cp -R root/* target
+	cp -R ../core/target/tools/lib/*.jar target/var/lib/rundeck
+	unzip -f ../rundeckapp/target/rundeck-1.0.0.war -d target/var/run/rundeck/exp/webapp/
+	rpmbuild -bb --target=noarch --define "_topdir ${PWD}/dist" --buildroot="${PWD}/target" rundeck.spec 
+    
+clean:
+	rm -rf target dist/RPMS/noarch

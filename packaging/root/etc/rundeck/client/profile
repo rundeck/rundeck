@@ -1,0 +1,24 @@
+RDECK_HOME=/private/tmp/rdl
+export RDECK_HOME
+
+RDECK_BASE=/private/tmp/rdl
+export RDECK_BASE
+
+JAVA_HOME=/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Home
+export JAVA_HOME
+
+PATH=$JAVA_HOME/bin:$RDECK_HOME/bin:$PATH
+export PATH
+
+if test -t 0 -a -z "$RUNDECK_CLI_TERSE"
+then
+  RUNDECK_CLI_TERSE=true
+  export RUNDECK_CLI_TERSE
+fi
+
+if test -n "$JRE_HOME"
+then
+   unset JRE_HOME
+fi
+
+umask 002

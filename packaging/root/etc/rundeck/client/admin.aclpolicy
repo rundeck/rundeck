@@ -1,0 +1,11 @@
+<policies>
+  <policy description="Default ACL for Admin Access">
+    <context project="*">
+      <command group="*" job="*" actions="*"/>
+      <command name="*" module="*" actions="*"/>
+    </context>
+    <by>
+      <group name="admin"/>
+    </by>
+  </policy>
+</policies>

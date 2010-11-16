@@ -1,0 +1,77 @@
+#!/bin/sh
+#
+# rundeckd    Startup script for the tapd
+#
+# chkconfig: 2345 90 10
+# description: rundeckd, providing rundeckd
+# pidfile: /var/run/rundeckd.pid
+
+# Source function library
+. /etc/rc.d/init.d/functions
+
+
+if [ -f /etc/sysconfig/lighttpd ]; then
+	. /etc/sysconfig/lighttpd
+fi
+
+prog="rundeckd"
+rundeckd="java -Drdeck.config=/etc/rundeck/client -jar rundeck-launcher-1.0.0.jar --skipinstall --basedir /etc/rundeck/client --configdir /etc/rundeck/server --datadir /var/run/rundeck/data --serverdir /var/run/rundeck -p /var/run/rundeck/projects"
+RETVAL=0
+PID_FILE=/var/run/rundeckd.pid
+
+start() {
+	echo -n $"Starting $prog: "
+	daemon $rundeckd
+	RETVAL=$?
+	echo
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog
+	return $RETVAL
+}
+
+stop() {
+	echo -n $"Stopping $prog: "
+	killproc $rundeckd
+	RETVAL=$?
+	echo
+	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/$prog
+	return $RETVAL
+}
+
+reload() {
+	echo -n $"Reloading $prog: "
+	killproc $rundeckd -HUP
+	RETVAL=$?
+	echo
+	return $RETVAL
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		stop
+		start
+		;;
+	condrestart)
+		if [ -f /var/lock/subsys/$prog ]; then
+			stop
+			start
+		fi
+		;;
+	reload)
+		reload
+		;;
+	status)
+		status $rundeckd
+		RETVAL=$?
+		;;
+	*)
+		echo $"Usage: $0 {start|stop|restart|condrestart|reload|status}"
+		RETVAL=1
+esac
+
+exit $RETVAL
