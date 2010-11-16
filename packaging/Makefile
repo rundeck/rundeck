@@ -2,7 +2,7 @@ SHELL=/bin/bash
 
 .PHONY: rundeck.rpm
 
-rundeck.rpm:
+rpm:
 	mkdir -p dist/RPMS/noarch
 	mkdir -p target/var/lib/rundeck
 	mkdir -p target/var/run/rundeck/exp/webapp
