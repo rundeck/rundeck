@@ -128,7 +128,7 @@ public class Setup implements CLIToolLogger {
 
     private void newImpl( File homedir, File basedir) throws SetupException {
         // create dirs
-        File etcdir = new File(basedir, "etc");
+        File etcdir = new File(Constants.getFrameworkConfigDir(basedir.getAbsolutePath()));
         if(!etcdir.exists() && !etcdir.mkdir()){
             throw new SetupException("Unable to create directory: " + etcdir.getAbsolutePath());
         }
