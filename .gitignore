@@ -15,3 +15,4 @@ core/src/java/com/dtolabs/rundeck/core/VersionConstants.java
 rundeckapp/env.bash
 rundeckapp/work
 rundeckapp/web-app/plugins
+packaging/dist
