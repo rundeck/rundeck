@@ -48,16 +48,10 @@ fi
 %config /etc/rundeck/server/rundeck-config.properties
 
 %dir /var/log/rundeck
-<<<<<<< HEAD
 %dir /var/lib/rundeck
 %dir /var/lib/rundeck/logs
 %dir /var/lib/rundeck/data
 %dir /var/lib/rundeck/work
-=======
-%dir /var/run/rundeck
-%dir /var/run/rundeck/data
-%dir /var/run/rundeck/work
->>>>>>> Change rundeckd to use RunServer instead of ExpandRunServer.  Ultimatly, the options should live in the RunServer class.
 %dir /var/rundeck/projects
 
 # The Rundeck WebApp.  The Exploded War Goes Here.
