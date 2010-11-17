@@ -1,13 +1,13 @@
-RDECK_HOME=/private/tmp/rdl
+RDECK_HOME=/etc/rundeck/client
 export RDECK_HOME
 
-RDECK_BASE=/private/tmp/rdl
+RDECK_BASE=/etc/rundeck/client
 export RDECK_BASE
 
-JAVA_HOME=/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Home
+JAVA_HOME=/usr/lib/jvm/java/
 export JAVA_HOME
 
-PATH=$JAVA_HOME/bin:$RDECK_HOME/bin:$PATH
+PATH=$PATH:$JAVA_HOME/bin
 export PATH
 
 if test -t 0 -a -z "$RUNDECK_CLI_TERSE"

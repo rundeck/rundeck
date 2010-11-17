@@ -19,7 +19,7 @@ getent passwd rundeck >/dev/null || useradd -m -g rundeck rundeck
 %post
 /sbin/chkconfig --add rundeckd
 
-%postun
+%preun
 if [ "$1" = 0 ]; then
 	/sbin/chkconfig --del rundeckd
 fi
@@ -36,7 +36,6 @@ fi
 %config /etc/rundeck/client/log4j.properties
 %config /etc/rundeck/client/preferences.properties
 %config /etc/rundeck/client/profile
-%config /etc/rundeck/client/profile.bat
 %config /etc/rundeck/client/project.properties
 
 # Server Configuration
