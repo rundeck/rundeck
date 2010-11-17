@@ -34,7 +34,6 @@ fi
 %config /etc/rundeck/client/framework.properties
 %config /etc/rundeck/client/admin.aclpolicy
 %config /etc/rundeck/client/log4j.properties
-%config /etc/rundeck/client/preferences.properties
 %config /etc/rundeck/client/profile
 %config /etc/rundeck/client/project.properties
 
