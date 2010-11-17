@@ -244,94 +244,31 @@ class MenuController {
         def pviewmap=[:]
         def newschedlist=[]
         def unauthcount=0
-        def actualGroups=[]
+
+        /*
+         'group/name' -> [ jobs...]
+         */
+        def jobgroups=[:]
         schedlist.each{ ScheduledExecution se->
             authorizemap[se.id.toString()]=jobauthorizations[UserAuth.WF_READ]?.contains(se.id.toString())
             if(authorizemap[se.id.toString()] || roleService.isUserInAnyRoles(request,['admin','job_view_unauthorized'])){
                 newschedlist<<se
-                if(se.groupPath){
-                    actualGroups<<se.groupPath
+                if(!jobgroups[se.groupPath?:'']){
+                    jobgroups[se.groupPath?:'']=[se]
+                }else{
+                    jobgroups[se.groupPath?:'']<<se
                 }
             }
             if(!authorizemap[se.id.toString()]){
                 log.debug("Unauthorized job: ${se}")
                 unauthcount++
             }
+
         }
         schedlist=newschedlist
         log.debug("listWorkflows(viewable): "+(System.currentTimeMillis()-viewable));
         long last=System.currentTimeMillis()
 
-        // construct groups how it was originally intended.
-        // each groupPath, plus a count.
-
-        def groupMap=[:]
-        schedlist.collect{ it.groupPath?:'' }.groupBy{it}.each{k,v->
-            groupMap[k]=v.size()
-        }
-        
-        def groupTree=[:]
-        /*
-         Build a tree structure of the available grouppaths, and their job counts
-         [
-         'a' :[
-         count:6,
-         subs:[
-         'b': [
-         count:4,
-         ],
-         'c': [
-         count:1,
-         subs:[
-         'd': [
-         count: 1,
-         ]
-         ]
-         ]
-         ]
-         ]
-         ]
-         */
-        
-        
-        /*
-         'group/name' -> [ jobs...]
-         */
-        def jobgroups=[:]
-        schedlist.each{sched->
-            def key=sched.groupPath
-            if(!key){
-                key=''
-            }
-            if(jobgroups[key]){
-                jobgroups[key]<<sched
-            }else{
-                jobgroups[key]=[sched]
-            }
-        }
-        groupTree['jobs']=jobgroups['']
-        groupTree['count']=jobgroups['']?.size()
-        groupTree['total']=jobgroups['']?.size()
-        groupTree['subs']=[:]
-        groupMap.each{ String k,v ->
-            def l = k.split("/")
-            
-            def cmap=groupTree['subs']
-            def i=0
-            l.each{p ->
-                def path=l[0..i].join("/")
-                def subs
-                if(!cmap[p]){
-                    subs=[:]
-                    cmap[p]=[count:jobgroups[path]?jobgroups[path].size():0,total:v,subs:subs,jobs:jobgroups[path]]
-                }else{
-                    subs=cmap[p]['subs']
-                    cmap[p]['total']+=v
-                }
-                cmap=subs
-                i++
-            }
-        }
         log.debug("listWorkflows(last): "+(System.currentTimeMillis()-last));
         log.debug("listWorkflows(total): "+(System.currentTimeMillis()-start));
 
@@ -342,8 +279,7 @@ class MenuController {
         jobauthorizations:jobauthorizations,
         authMap:authorizemap,
         nowrunning: nowrunning,
-        groups:groupMap,
-        groupTree:groupTree,
+        jobgroups:jobgroups,
         paginateParams:finishq.paginateParams,
         displayParams:finishq.displayParams,
         total: total,
