@@ -6,7 +6,7 @@ rpm:
 	mkdir -p dist/RPMS/noarch
 	mkdir -p target/var/lib/rundeck
 	mkdir -p target/var/run/rundeck/exp/webapp
-	mkdir -p target/var/run/rundeck/{data,work}
+	mkdir -p target/var/run/rundeck/{data,work,logs}
 	mkdir -p target/var/log/rundeck
 	mkdir -p target/var/rundeck/projects
 	cp -R root/* target

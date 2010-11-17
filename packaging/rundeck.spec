@@ -30,6 +30,10 @@ fi
 # System Integration
 %attr(755, root, root) /etc/rc.d/init.d/rundeckd
 
+%dir /etc/rundeck
+%dir /etc/rundeck/client
+%dir /etc/rundeck/server
+
 # Client Configuration
 %config /etc/rundeck/client/framework.properties
 %config /etc/rundeck/client/admin.aclpolicy
@@ -45,11 +49,13 @@ fi
 
 %dir /var/log/rundeck
 %dir /var/run/rundeck
+%dir /var/run/rundeck/logs
 %dir /var/run/rundeck/data
 %dir /var/run/rundeck/work
 %dir /var/rundeck/projects
 
 # The Rundeck WebApp.  The Exploded War Goes Here.
+%dir /var/run/rundeck/exp
 /var/run/rundeck/exp/webapp
 
 # Server Bootstrap

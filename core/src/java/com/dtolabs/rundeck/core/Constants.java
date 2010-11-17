@@ -334,7 +334,7 @@ public final class Constants {
      * @return
      */
     public static final String getFrameworkLogsDir(final String rdeck_base) {
-        return getBaseVar(rdeck_base) + FILE_SEP + "logs";
+        return System.getProperty("rdeck.runlogs", getBaseVar(rdeck_base) + FILE_SEP + "logs");
     }
 
     /**
