@@ -48,7 +48,7 @@ class BootStrap {
                  basedir.mkdir()
              }
              //see if initialization system property is set
-             if (!new File(Constants.getFrameworkConfigDir(basedir.getAbsolutePath())).isDirectory()){
+	     if (!Constants.getFrameworkConfigFile().isDirectory()){
                  log.info("Performing rundeck first-run initialization...")
                  //setup the base dir
                  Setup setup=new Setup()
