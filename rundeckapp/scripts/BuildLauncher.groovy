@@ -22,7 +22,7 @@ target(dojar:"create server jar with embedded war") {
     def fileName = grailsAppName
     def version = metadata.getApplicationVersion()
 
-    ant.unjar(src:"target/launcher-contents/pkgs/webapp/WEB-INF/lib/commons-cli-1.0.jar", dest:"target/server-classes")
+//    ant.unjar(src:"target/launcher-contents/pkgs/webapp/WEB-INF/lib/commons-cli-1.0.jar", dest:"target/server-classes")
     
     ant.mkdir(dir:"target/server-classes/pkgs")
 	ant.jar(basedir:"target/server-classes", destfile:"target/${fileName}-server-${version}.jar"){
