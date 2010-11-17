@@ -16,6 +16,8 @@
 
 package com.dtolabs.rundeck.core;
 
+import java.io.File;
+
 
 /**
  * Manifest constants for Ctl
@@ -209,6 +211,18 @@ public final class Constants {
     public static final String getFrameworkConfigDir(final String rdeck_base) {
         return System.getProperty("rdeck.config", rdeck_base + FILE_SEP + "etc");
     }
+    
+    /**
+     * Helper method to {@link #getFrameworkConfigDir()}
+     * @return configDirectory.
+     */
+    public static final String getFrameworkConfigDir() {
+        return getFrameworkConfigDir(getSystemBaseDir());
+    }
+    
+    public static final File getFrameworkConfigFile() {
+        return new File(getFrameworkConfigDir());
+    }
 
     /**
      * Standard Ctl configuration properties
@@ -234,6 +248,14 @@ public final class Constants {
      */
     public static final String getLog4jProperties(final String rdeck_base) {
         return getFrameworkConfigDir(rdeck_base) + FILE_SEP + "log4j.properties";
+    }
+    
+    public static final String getLog4jProperties() {
+        return getLog4jProperties(getSystemBaseDir());
+    }
+    
+    public static final File getLog4jPropertiesFile() {
+        return new File(getLog4jProperties());
     }
 
     /**

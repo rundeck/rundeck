@@ -643,13 +643,15 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
      * @throws Exception
      */
     public static void main(final String[] args) throws Exception {
-        final File basedir = new File(Constants.getSystemBaseDir());
+        
         /**
          * Initialize the log4j logger
          */
-        PropertyConfigurator.configure(new File(new File(basedir, "etc"),
+        File configDir = Constants.getFrameworkConfigFile();
+        PropertyConfigurator.configure(new File(configDir,
             "log4j.properties").getAbsolutePath());
-        final ExecTool ExecTool = new ExecTool(basedir.getAbsolutePath());
+        File systemBaseDir = new File(Constants.getSystemBaseDir());
+        final ExecTool ExecTool = new ExecTool(systemBaseDir.getAbsolutePath());
         ExecTool.shouldExit = true;
         ExecTool.run(args);
     }

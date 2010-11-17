@@ -207,7 +207,7 @@ public class Check implements PolicyAnalyzerListener {
             }
         }
         return success;
-    }
+    }   
 
     /**
      * Check existence of required directories

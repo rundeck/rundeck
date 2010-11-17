@@ -154,9 +154,8 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
      * @throws Exception action error
      */
     public static void main(final String[] args) throws Exception {
-        final File basedir = new File(Constants.getSystemBaseDir());
-        PropertyConfigurator.configure(new File(new File(basedir, "etc"),
-            "log4j.properties").getAbsolutePath());
+        
+        PropertyConfigurator.configure(Constants.getLog4jPropertiesFile().getAbsolutePath());
         final QueueTool tool = new QueueTool(new DefaultCLIToolLogger());
         tool.setShouldExit(true);
         int exitCode = 1; //pessimistic initial value
