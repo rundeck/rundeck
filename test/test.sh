@@ -59,9 +59,9 @@ if [ 0 != $? ] ; then
 	exit 2
 fi
 
-$RDECK_BASE/tools/bin/dispatch -- uptime > $DIR/exec.out
+$RDECK_BASE/tools/bin/dispatch -Q -- uptime > $DIR/exec.out 
 if [ 0 != $? ] ; then
-	echo Failed: dispatch -- uptime : $!
+	echo Failed: dispatch -Q -- uptime : $!
 	exit 2
 fi
 grep 'Succeeded queueing' -q $DIR/exec.out 
