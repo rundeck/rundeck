@@ -1,6 +1,6 @@
 name: rundeck
 version: 1.0
-release: 0
+release: 0%{?_buildnumber:.%{_buildnumber}}
 license: APL
 summary: It Slices, it Dices, it Takes Out Your Garbage
 group: System

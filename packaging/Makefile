@@ -1,5 +1,9 @@
 SHELL=/bin/bash
 
+BUILD_NUMBER?=snapshot
+RPMBUILD_DEFINES = --define "_topdir ${PWD}/dist" 
+RPMBUILD_DEFINES+= --define "_buildnumber $(BUILD_NUMBER)"
+
 .PHONY: rundeck.rpm
 
 rpm:
@@ -12,9 +16,9 @@ rpm:
 	@mkdir -p target/var/rundeck/projects
 	@cp -R root/* target
 	@cp -R ../core/target/tools/lib/*.jar target/var/lib/rundeck
-	@find ../core/target/bin ! -regex ".*.bat$$" -and -type f | xargs -J Z cp Z target/usr/bin
+	@find ../core/target/bin ! -regex ".*.bat$$" -and -type f | xargs -I Z cp Z target/usr/bin
 	@unzip -oq ../rundeckapp/target/rundeck-1.0.0.war -d target/var/run/rundeck/exp/webapp/
-	rpmbuild -bb --target=noarch --define "_topdir ${PWD}/dist" --buildroot="${PWD}/target" rundeck.spec 
+	rpmbuild -bb --target=noarch $(RPMBUILD_DEFINES) --buildroot="${PWD}/target" rundeck.spec 
     
 clean:
 	rm -rf target dist/RPMS/noarch
