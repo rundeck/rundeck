@@ -105,7 +105,6 @@ public class Framework extends FrameworkResourceParent {
             authenticationMgr = AuthenticationMgrFactory.create(lookup.getProperty(AUTHENT_CLS_PROP), this)
                 .getAuthenticationMgr();
         }
-        System.err.println("Using " + getConfigDir());
         if(null==authorizationMgr){
             authorizationMgr = AuthorizationMgrFactory.create(lookup.getProperty(AUTHORIZE_CLS_PROP),
                 this, getConfigDir()).getAuthorizationMgr();
