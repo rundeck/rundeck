@@ -14,7 +14,7 @@ GARGS += -Dgrails.project.work.dir=${PWD}/rundeckapp/work
 GRAILS=grails $(GARGS)
 
 RUNDECK_FILES=$(shell find rundeckapp/{src,test,grails-app,scripts} -name "*.java" -o -name "*.groovy" -o -name "*.gsp")
-CORE_FILES=$(shell find core/src -name "*.java")
+CORE_FILES=$(shell find core/src -name "*.java" -o -name "*/sh/*")
 
 
 core = core/target/rundeck-core-$(VERSION).jar
