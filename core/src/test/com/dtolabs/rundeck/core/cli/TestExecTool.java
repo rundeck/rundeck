@@ -797,14 +797,25 @@ public class TestExecTool extends AbstractBaseTest {
     public void testQueueOption() throws Exception {
         {
             ExecTool main = new ExecTool();
-            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "--queue"});
-            assertTrue(main.isArgQueue());
+            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "--noqueue"});
+            assertTrue(main.isArgNoQueue());
         }
-
         {
             ExecTool main = new ExecTool();
-            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-Q"});
-            assertTrue(main.isArgQueue());
+            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-" + ExecTool.NO_QUEUE_FLAG});
+            assertTrue(main.isArgNoQueue());
+        }
+
+        //test old -Q/--queue have no effect
+        {
+            ExecTool main = new ExecTool();
+            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-Q" });
+            assertFalse(main.isArgNoQueue());
+        }
+        {
+            ExecTool main = new ExecTool();
+            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "--queue" });
+            assertFalse(main.isArgNoQueue());
         }
         //test action calls
         final Framework framework = getFrameworkInstance();
