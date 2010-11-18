@@ -31,7 +31,7 @@ log () {
 #
 if [ -n "$OS" -a "$OS" = "Windows_NT" ]
 then
-   exec cmd.exe /C $RDECK_HOME/bin/run-jobs.bat "$@"
+   exec cmd.exe /C $RDECK_HOME/bin/rd-queue.bat "$@"
 fi
 
 
@@ -49,12 +49,14 @@ then
     errorMsg "RDECK_BASE was not set"
     exit 1
 fi
+
 if [ ! -r $RDECK_BASE/etc/profile ]; then
    errorMsg "Unable to source $RDECK_BASE/etc/profile"
    exit 1
 fi
 
 . $RDECK_BASE/etc/profile
+
 
 
 LIBDIR=$RDECK_HOME/tools/lib
@@ -71,4 +73,4 @@ exec $JAVA_HOME/bin/java -classpath $cp \
      -Duser.java_home=$JAVA_HOME \
      -Drdeck.base=$RDECK_BASE \
      -Drdeck.home=$RDECK_HOME \
-     com.dtolabs.rundeck.core.cli.run.RunTool "$@"
+     com.dtolabs.rundeck.core.cli.queue.QueueTool "$@"

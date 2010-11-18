@@ -54,7 +54,7 @@ public class Check implements PolicyAnalyzerListener {
      * check usage
      */
     public static final String CHECK_USAGE =
-        "run-check [-vq] -d basedir  -n nodename -N hostname -s serverhostname [ --key=value ]";
+        "rd-check [-vq] -d basedir  -n nodename -N hostname -s serverhostname [ --key=value ]";
     /**
      * location of the to be generated preferences.properties file
      */

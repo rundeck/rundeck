@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 /**
- * Main class for creating new projects. This is called via run-project shell command.
+ * Main class for creating new projects. This is called via rd-project shell command.
  */
 public class ProjectTool implements ActionMaker, CLITool {
     public final static String ACTION_CREATE = "create";
@@ -132,15 +132,15 @@ public class ProjectTool implements ActionMaker, CLITool {
     public void help() {
         final HelpFormatter formatter = new HelpFormatter();
         formatter.printHelp(80,
-                "run-project [options]",
+                "rd-project [options]",
                 "options:",
                 options,
                 "Examples:\n"
-                + "\trun-project -p project --action create; # Initialize project\n"
-                + "\trun-project -p project --action install; # Install resources and their modules\n"
-                + "\trun-project -p project --action install --pview; # Install resources and their modules and process view files\n"
-                + "\trun-project -p project --action pview; # Install process view files for deployed resources\n"
-                + "\trun-project -p project --action purge ; # purges all resources\n"
+                + "\trd-project -p project --action create; # Initialize project\n"
+                + "\trd-project -p project --action install; # Install resources and their modules\n"
+                + "\trd-project -p project --action install --pview; # Install resources and their modules and process view files\n"
+                + "\trd-project -p project --action pview; # Install process view files for deployed resources\n"
+                + "\trd-project -p project --action purge ; # purges all resources\n"
                 + "\n");
     }
 

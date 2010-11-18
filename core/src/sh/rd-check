@@ -15,7 +15,7 @@ errorMsg() {
 #
 if [ -n "$OS" -a "$OS" = "Windows_NT" ]
 then
-   exec cmd.exe /C $RDECK_HOME/bin/run-check.bat "$@"
+   exec cmd.exe /C $RDECK_HOME/bin/rd-check.bat "$@"
 fi
 
 argsOrig=$*

@@ -39,14 +39,6 @@ import java.util.regex.Pattern;
 import java.io.File;
 
 /**
- * JobsTool commandline tool (run-jobs), which provides actions for listing stored jobs from the server, and loading XML
- * definitions to the server. Server communication happens through the {@link com.dtolabs.rundeck.core.dispatcher.CentralDispatcher}
- * server layer.<p> Two actions are defined: list, load. </p> <p> 'list' action: list stored
- * jobs matching query input, or all jobs if no query options are provided.  Optionally write the XML content to a file
- * indicated with the -f/--file option. </p> <p> 'load' action: load XML content from a file indicated with -f/--file
- * option to the server, listing the server's response about success/failure/skipped status for each Job defined.
- * Behavior when duplicate jobs already exist on the server can be specified using the </p>
- *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
@@ -421,11 +413,11 @@ public class RunTool extends BaseTool {
     }
 
     public String getHelpString() {
-        return "run-run : start running a Job on the server\n"
-               + "run-run -i <id>: Run a job by ID immediately\n"
-               + "run-run -j <group/name>: Run a job by Name immediately. Group must be specified if name is not unique.\n"
-               + "run-run -I <include> -X <exclude> [-i/-j ...]: Specify node filters and run a Job\n"
-               + "run-run -i <id> -- <arguments...>: Specify commandline arguments to the Job";
+        return "run : start running a Job on the server\n"
+               + "run -i <id>: Run a job by ID immediately\n"
+               + "run -j <group/name>: Run a job by Name immediately. Group must be specified if name is not unique.\n"
+               + "run -I <include> -X <exclude> [-i/-j ...]: Specify node filters and run a Job\n"
+               + "run -i <id> -- <arguments...>: Specify commandline arguments to the Job";
     }
 
     public void log(final String output) {

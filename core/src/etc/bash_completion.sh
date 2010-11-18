@@ -1,5 +1,5 @@
 #
-# BASH shell tab completion for RUNDECK's "run" and "run-project" commands
+# BASH shell tab completion for RUNDECK's "dispatch" and "rd-project" commands
 #
 # Source this file from your login shell. 
 #
@@ -60,7 +60,7 @@ _lsubtract()
 
 
 #
-# program completion for the 'run-project' command
+# program completion for the 'rd-project' command
 #
 _runproject()
 {
@@ -74,7 +74,7 @@ _runproject()
     comp_line=$COMP_LINE
     context=()
     eval set $COMP_LINE
-    shift; # shift once to drop the "run-project" from the argline
+    shift; # shift once to drop the "rd-project" from the argline
     while [ "$#" -gt 0 ]; do
 	OPT="$1"
 	case "$OPT" in
@@ -94,7 +94,7 @@ _runproject()
 	[ ${context[1]} = "create" -o ${context[1]} = "install" ] && opts_action=${context[1]}
     }
 
-    # If just the "run-project" command was typed, offer the first clopt
+    # If just the "rd-project" command was typed, offer the first clopt
     [ -z "${opts_project}" -a ${prev} != "-p" ] && {
 	COMPREPLY=( "-p" )
 	return 0
@@ -119,12 +119,12 @@ _runproject()
 
 }
 # register the completion function
-complete -F _runproject run-project
+complete -F _runproject rd-project
 
 #
-# program completion for the 'run' command
+# program completion for the 'dispatch' command
 #
-_run_complete()
+_dispatch_complete()
 {
     [ -z "${RDECK_BASE}" -o ! \( -d "${RDECK_BASE}" \) ] && {
 	return 0 ; 
@@ -136,7 +136,7 @@ _run_complete()
     comp_line=$COMP_LINE
     context=()
     eval set $COMP_LINE
-    shift; # shift once to drop the "run-project" from the argline
+    shift; # shift once to drop the "rd-project" from the argline
     while [ "$#" -gt 0 ]; do
 	OPT="$1"
 	case "$OPT" in
@@ -155,7 +155,7 @@ _run_complete()
 	[ -d ${_rdeck_projectdir}/${context[0]} ] && opts_project=${context[0]}
     }
 
-    # If just the "run" command was typed, offer the first clopt
+    # If just the "dispatch" command was typed, offer the first clopt
     [ -z "${opts_project}" -a ${prev} != "-p" ] && {
 	COMPREPLY=( "-p" )
 	return 0
@@ -177,5 +177,5 @@ _run_complete()
     }
 }
 # register the completion function
-complete -F _run_complete run
+complete -F _dispatch_complete dispatch
 

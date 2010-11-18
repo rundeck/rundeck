@@ -660,7 +660,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
     public void help() {
         final HelpFormatter formatter = new HelpFormatter();
         formatter.printHelp(80,
-            "run-exec [-h] [-v] [-V] [-q] [-p project] " +
+            "dispatch [-h] [-v] [-V] [-q] [-p project] " +
             "[-I nodes] [-X xnodes] " +
             "[--threadcount <1>] [--keepgoing] " +
             "[--queue] " +

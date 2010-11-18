@@ -18,8 +18,9 @@ log () {
 #
 if [ -n "$OS" -a "$OS" = "Windows_NT" ]
 then
-   exec cmd.exe /C $RDECK_HOME/bin/run-project.bat "$@" --cygwin
+   exec cmd.exe /C $RDECK_HOME/bin/dispatch.bat "$@"
 fi
+
 
 if [ "${RDECK_BASE}X" = "X" ]
 then
@@ -43,17 +44,14 @@ fi
 
 . $RDECK_BASE/etc/profile
 
-
-
-
 LIBDIR=$RDECK_HOME/tools/lib
+
 cp=
 for i in `ls $LIBDIR/*.jar`
 do
   cp=${cp}:${i}
 done
 
-#cp=$RDECK_HOME/classes:$ANT_HOME/lib/xerces-2.6.0.jar:$ANT_HOME/lib/xml-apis.jar
 
 #
 # Launch the cmdline tool
@@ -65,4 +63,5 @@ exec $JAVA_HOME/bin/java -classpath $cp \
      -Djavax.net.ssl.trustStore=$RDECK_BASE/etc/truststore \
      -Djavax.net.ssl.trustStoreType=jks  \
      -Drdeck.traceExceptions=$RUNDECK_TRACE_EXCEPTIONS \
-     com.dtolabs.rundeck.core.cli.project.ProjectTool "$@"
+     -Drdeck.cli.terse=$RUNDECK_CLI_TERSE \
+     com.dtolabs.rundeck.core.cli.ExecTool "$@"

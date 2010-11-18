@@ -41,7 +41,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 /**
- * JobsTool commandline tool (run-jobs), which provides actions for listing stored jobs from the server, and loading XML
+ * JobsTool commandline tool (rd-jobs), which provides actions for listing stored jobs from the server, and loading XML
  * definitions to the server. Server communication happens through the {@link com.dtolabs.rundeck.core.dispatcher.CentralDispatcher}
  * server layer. </p> <p> 'list' action: list stored
  * jobs matching query input, or all jobs if no query options are provided.  Optionally write the XML content to a file
@@ -573,13 +573,13 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
     }
 
     public String getHelpString() {
-        return "run-jobs [<action>] [options...]: list Jobs on the server, or upload Jobs to the server from a file\n"
+        return "rd-jobs [<action>] [options...]: list Jobs on the server, or upload Jobs to the server from a file\n"
                + "\tList action (default):\n"
-               + "run-jobs [list] [query options] : list jobs matching the query, or all available\n"
-               + "run-jobs [list] --name <name> : Match jobs with the given name\n"
-               + "run-jobs [list] [query options] --file <output> : Save matched Jobs to output file as XML\n"
+               + "rd-jobs [list] [query options] : list jobs matching the query, or all available\n"
+               + "rd-jobs [list] --name <name> : Match jobs with the given name\n"
+               + "rd-jobs [list] [query options] --file <output> : Save matched Jobs to output file as XML\n"
                + "\tLoad action:\n"
-               + "run-jobs load --file <file> : load jobs stored in XML file";
+               + "rd-jobs load --file <file> : load jobs stored in XML file";
     }
 
     /**

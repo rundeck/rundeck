@@ -17,7 +17,7 @@
 package com.dtolabs.rundeck.core.cli.project;
 
 /**
- * thrown by run-project actions
+ * thrown by rd-project actions
  */
 public class ProjectToolException extends RuntimeException {
     public ProjectToolException(String message) {

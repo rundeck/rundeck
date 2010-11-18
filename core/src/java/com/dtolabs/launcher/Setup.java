@@ -49,7 +49,7 @@ public class Setup implements CLIToolLogger {
     /**
      * setup usage statement
      */
-    public static String SETUP_USAGE = "run-setup [-v] -n nodename [-N hostname] -s serverhostname [ --key=value ]";
+    public static String SETUP_USAGE = "rd-setup [-v] -n nodename [-N hostname] -s serverhostname [ --key=value ]";
 
     /**
       * force a rewrite of the framework configuration files. always true
@@ -204,7 +204,7 @@ public class Setup implements CLIToolLogger {
         ////////
         //5. if default project name is set, create default project
         /*
-            run run-project -p ${project.default.name} -a create
+            run rd-project -p ${project.default.name} -a create
          */
         if ("true".equals(prefs.getProperty("project.default.create"))
             && null != prefs.getProperty("project.default.name")) {

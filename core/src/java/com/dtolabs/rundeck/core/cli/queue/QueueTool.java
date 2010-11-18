@@ -189,9 +189,9 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
     }
 
     public String getHelpString() {
-        return "run-queue <action> : list the executions running in the queue or kill a running execution\n"
-               + "run-queue [list] : list the executions running in the queue [default]\n"
-               + "run-queue kill --eid <id> : kill an execution running in the queue\n";
+        return "rd-queue <action> : list the executions running in the queue or kill a running execution\n"
+               + "rd-queue [list] : list the executions running in the queue [default]\n"
+               + "rd-queue kill --eid <id> : kill an execution running in the queue\n";
     }
 
     /**
@@ -337,9 +337,9 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
             throw new QueueToolException(msg, e);
         }
         if (result.isSuccessful()) {
-            log("run-queue kill: success. [" + execid + "] " + result.getMessage());
+            log("rd-queue kill: success. [" + execid + "] " + result.getMessage());
         } else {
-            error("run-queue kill: failed. [" + execid + "] " + result.getMessage());
+            error("rd-queue kill: failed. [" + execid + "] " + result.getMessage());
         }
     }
 
