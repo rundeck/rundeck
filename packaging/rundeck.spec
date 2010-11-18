@@ -87,7 +87,13 @@ fi
 /var/lib/rundeck/xerces-2.6.0.jar
 /var/lib/rundeck/xml-apis-2.6.0.jar
 
-
-
+# CLI Tools
+%attr(755, root, root) /usr/bin/run
+%attr(755, root, root) /usr/bin/dispatch
+%attr(755, root, root) /usr/bin/rd-check
+%attr(755, root, root) /usr/bin/rd-jobs
+%attr(755, root, root) /usr/bin/rd-project
+%attr(755, root, root) /usr/bin/rd-queue
+%attr(755, root, root) /usr/bin/rd-setup
 
 %changelog
