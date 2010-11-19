@@ -987,6 +987,10 @@ public class WorkflowActionTests extends TestCase {
             return false;
         }
 
+        public String getLogFormat() {
+            return null;
+        }
+
         public void log(int i, String s) {
             System.err.println(i + ": " + s);
         }
