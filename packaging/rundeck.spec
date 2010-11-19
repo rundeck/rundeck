@@ -47,7 +47,7 @@ fi
 %config /etc/rundeck/server/realm.properties
 %config /etc/rundeck/server/rundeck-config.properties
 
-%dir /var/log/rundeck
+%attr(1775, rundeck, rundeck) %dir /var/log/rundeck
 %dir /var/lib/rundeck
 %dir /var/lib/rundeck/logs
 %dir /var/lib/rundeck/data
