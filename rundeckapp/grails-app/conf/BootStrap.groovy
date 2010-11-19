@@ -126,10 +126,7 @@ class BootStrap {
          if(grailsApplication.config.output.markdown.enabled){
              servletContext.setAttribute("output.markdown.enabled",grailsApplication.config.output.markdown.enabled=="true"?"true":"false")
          }else{
-             servletContext.setAttribute("output.markdown.enabled","true")
-         }
-         if("true" != servletContext.getAttribute("output.markdown.enabled")){
-             log.info("Execution Output Markdown is disabled.")
+             servletContext.setAttribute("output.markdown.enabled","false")
          }
          if(grailsApplication.config.nowrunning.interval){
              servletContext.setAttribute("nowrunning.interval",grailsApplication.config.nowrunning.interval)
