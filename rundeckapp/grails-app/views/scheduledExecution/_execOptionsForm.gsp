@@ -3,22 +3,6 @@
     <tmpl:showHead scheduledExecution="${scheduledExecution}" iconName="icon-job" subtitle="Choose Execution Options"/>
     <div class="clear"></div>
     
-    <g:if test="${scheduledExecution?.extraInfo}">
-    <div class="schedExecPagePart">
-        <div class="presentation"  id="schedExExtra${scheduledExecution?.id}">
-            <g:if test="${scheduledExecution?.extraInfo}">
-            <div class="extraInfo">
-                ${scheduledExecution?.extraInfo?.encodeAsHTML()}
-            </div>
-            </g:if>
-            <g:else>
-                <div class="note empty">None</div>
-            </g:else>
-
-        </div>
-    </div>
-    </g:if>
-
 </div>
 <div class="pageSubtitle subtitleAction">
         Choose Execution Options

@@ -28,7 +28,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
       <project>test1</project>
@@ -57,7 +56,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
       <project>test1</project>
@@ -86,7 +84,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description>a simple desc</description>
-    <additional >some extra info</additional>
     <loglevel>INFO</loglevel>
     <!-- no context-->
     <dispatch>
@@ -102,7 +99,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description>a simple desc</description>
-    <additional >some extra info</additional>
     <loglevel>INFO</loglevel>
     <context>
       <!-- no project -->
@@ -126,7 +122,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description>a simple desc</description>
-    <additional >some extra info</additional>
     <loglevel>INFO</loglevel>
     <context>
       <project>test1</project>
@@ -150,7 +145,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description>a simple desc</description>
-    <additional >some extra info</additional>
     <loglevel>INFO</loglevel>
     <group>some/group</group>
     <context>
@@ -207,7 +201,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect size",1,jobs.size()
             assertEquals "incorrect jobName","wait1",jobs[0].jobName
             assertEquals "incorrect description","a simple desc",jobs[0].description
-            assertEquals "incorrect extraInfo","some extra info",jobs[0].extraInfo
             assertEquals "incorrect loglevel","INFO",jobs[0].loglevel
             assertEquals "incorrect project","test1",jobs[0].project
             assertEquals "incorrect type","MyService",jobs[0].type
@@ -236,7 +229,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect size",1,jobs.size()
             assertEquals "incorrect jobName","wait1",jobs[0].jobName
             assertEquals "incorrect description","a simple desc",jobs[0].description
-            assertEquals "incorrect extraInfo","some extra info",jobs[0].extraInfo
             assertEquals "incorrect loglevel","INFO",jobs[0].loglevel
             assertEquals "incorrect project","test1",jobs[0].project
             assertEquals "incorrect type","MyService",jobs[0].type
@@ -265,7 +257,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>8</id>
     <name>punch2</name>
     <description>dig it potato</description>
-    <additional >a mad &lt;shelf&gt; excellent &amp;</additional>
     <loglevel>WARN</loglevel>
     <group>simple</group>
     <context>
@@ -290,7 +281,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect size",1,jobs.size()
             assertEquals "incorrect jobName","punch2",jobs[0].jobName
             assertEquals "incorrect description","dig it potato",jobs[0].description
-            assertEquals "incorrect extraInfo","a mad <shelf> excellent &",jobs[0].extraInfo
             assertEquals "incorrect loglevel","WARN",jobs[0].loglevel
             assertEquals "incorrect project","zig",jobs[0].project
             assertEquals "incorrect type","RoboDog",jobs[0].type
@@ -318,7 +308,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>8</id>
     <name>punch2</name>
     <description>dig it potato</description>
-    <additional >a mad &lt;shelf&gt; excellent &amp;</additional>
     <loglevel>WARN</loglevel>
     <group>simple/</group>
     <context>
@@ -350,7 +339,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>8</id>
     <name>punch2</name>
     <description>dig it potato</description>
-    <additional >a mad &lt;shelf&gt; excellent &amp;</additional>
     <loglevel>WARN</loglevel>
     <group>/simple</group>
     <context>
@@ -383,7 +371,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>8</id>
     <name>punch2</name>
     <description>dig it potato</description>
-    <additional >a mad &lt;shelf&gt; excellent &amp;</additional>
     <loglevel>WARN</loglevel>
     <group>this/is/a/simple/path/</group>
     <context>
@@ -414,7 +401,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>8</id>
     <name>punch2</name>
     <description>dig it potato</description>
-    <additional >a mad &lt;shelf&gt; excellent &amp;</additional>
     <loglevel>WARN</loglevel>
     <group>//</group>
     <context>
@@ -445,7 +431,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>8</id>
     <name>punch2</name>
     <description>dig it potato</description>
-    <additional >a mad &lt;shelf&gt; excellent &amp;</additional>
     <loglevel>WARN</loglevel>
     <context>
       <project>zig</project>
@@ -477,7 +462,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>1</id>
     <name>XYZ Monthly WNP Report</name>
     <description />
-    <additional />
     <loglevel>VERBOSE</loglevel>
     <context>
       <project>demo</project>
@@ -531,7 +515,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>1</id>
     <name>XYZ Monthly WNP Report</name>
     <description />
-    <additional />
     <loglevel>VERBOSE</loglevel>
     <context>
       <depot>demo</depot> <!-- "depot" should be interpreted as "project" -->
@@ -581,7 +564,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>8</id>
     <name>punch2</name>
     <description>dig it potato</description>
-    <additional >a mad &lt;shelf&gt; excellent &amp;</additional>
     <loglevel>WARN</loglevel>
     <group>simple</group>
     <context>
@@ -638,7 +620,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>8</id>
     <name>punch2</name>
     <description>dig it potato</description>
-    <additional >a mad &lt;shelf&gt; excellent &amp;</additional>
     <loglevel>WARN</loglevel>
     <group>simple</group>
     <context>
@@ -701,7 +682,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>8</id>
     <name>punch2</name>
     <description>dig it potato</description>
-    <additional >a mad &lt;shelf&gt; excellent &amp;</additional>
     <loglevel>WARN</loglevel>
     <group>simple</group>
     <context>
@@ -767,7 +747,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description>a simple desc</description>
-    <additional >some extra info</additional>
     <loglevel>INFO</loglevel>
     <group>some/group</group>
     <context>
@@ -811,7 +790,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description>a simple desc</description>
-    <additional >some extra info</additional>
     <loglevel>INFO</loglevel>
     <group>some/group</group>
     <context>
@@ -871,7 +849,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description>a simple desc</description>
-    <additional >some extra info</additional>
     <loglevel>INFO</loglevel>
     <group>some/group</group>
     <context>
@@ -936,7 +913,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description>a simple desc</description>
-    <additional >some extra info</additional>
     <loglevel>INFO</loglevel>
     <group>some/group</group>
     <context>
@@ -1003,7 +979,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description>a simple desc</description>
-    <additional >some extra info</additional>
     <loglevel>INFO</loglevel>
     <group>some/group</group>
     <context>
@@ -1070,7 +1045,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -1108,7 +1082,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -1144,7 +1117,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -1185,7 +1157,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -1222,7 +1193,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -1263,7 +1233,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -1299,7 +1268,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -1343,7 +1311,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -1388,7 +1355,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -1434,7 +1400,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -1488,7 +1453,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -1537,7 +1501,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -1585,7 +1548,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -1635,7 +1597,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -1684,7 +1645,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -1733,7 +1693,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -1782,7 +1741,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -1837,7 +1795,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -1907,7 +1864,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -1944,7 +1900,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -1997,7 +1952,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -2050,7 +2004,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -2089,7 +2042,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -2128,7 +2080,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -2177,7 +2128,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -2207,7 +2157,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -2240,7 +2189,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -2273,7 +2221,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -2309,7 +2256,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -2342,7 +2288,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -2375,7 +2320,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <id>5</id>
     <name>wait1</name>
     <description></description>
-    <additional />
     <loglevel>INFO</loglevel>
     <context>
         <project>test1</project>
@@ -2412,7 +2356,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         type:'MyService',
@@ -2436,7 +2379,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "wrong number of jobs",1,doc.job.size()
             assertEquals "wrong name","test job 1",doc.job[0].name[0].text()
             assertEquals "wrong description","test descrip",doc.job[0].description[0].text()
-            assertEquals "wrong additional","test extra",doc.job[0].additional[0].text()
             assertEquals "wrong loglevel","INFO",doc.job[0].loglevel[0].text()
             assertNotNull "missing context",doc.job[0].context
             assertEquals "incorrect context size",1,doc.job[0].context.size()
@@ -2466,7 +2408,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         type:'MyService',
@@ -2509,7 +2450,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         type:'MyService',
@@ -2556,7 +2496,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         type:'MyService',
@@ -2601,7 +2540,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         type:'MyService',
@@ -2649,7 +2587,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         type:'MyService',
@@ -2705,7 +2642,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         //type
@@ -2738,7 +2674,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         //type
@@ -2779,7 +2714,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         //type
@@ -2816,7 +2750,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         //type
@@ -2849,7 +2782,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         //type
@@ -2885,7 +2817,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         //type
@@ -2925,7 +2856,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         //type
@@ -2966,7 +2896,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         //type
@@ -3007,7 +2936,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         //type
@@ -3069,7 +2997,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         argString:'',
@@ -3127,7 +3054,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         argString:'',
@@ -3215,7 +3141,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         argString:'',
@@ -3269,7 +3194,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         argString:'',
@@ -3323,7 +3247,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         argString:'',
@@ -3382,7 +3305,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         argString:'',
@@ -3436,7 +3358,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         argString:'',
@@ -3490,7 +3411,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         argString:'',
@@ -3544,7 +3464,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         argString:'',
@@ -3600,7 +3519,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         argString:'',
@@ -3649,7 +3567,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         argString:'',
@@ -3699,7 +3616,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         argString:'',
@@ -3749,7 +3665,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         argString:'',
@@ -3807,7 +3722,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         argString:'',
@@ -3871,7 +3785,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         type:'MyService',
@@ -3920,7 +3833,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                 [
                         jobName:'test job 1',
                         description:'test descrip',
-                        extraInfo:'test extra',
                         loglevel: 'INFO',
                         project:'test1',
                         type:'MyService',
@@ -3971,7 +3883,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                    [
                            jobName:'test job 1',
                            description:'test descrip',
-                           extraInfo:'test extra',
                            loglevel: 'INFO',
                            project:'test1',
                            type:'MyService',
@@ -4004,7 +3915,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                    [
                            jobName:'test job 1',
                            description:'test descrip',
-                           extraInfo:'test extra',
                            loglevel: 'INFO',
                            project:'test1',
                            type:'MyService',
@@ -4037,7 +3947,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                    [
                            jobName:'test job 1',
                            description:'test descrip',
-                           extraInfo:'test extra',
                            loglevel: 'INFO',
                            project:'test1',
                            type:'MyService',

@@ -29,7 +29,6 @@ public class ScheduledExecutionQuery extends BaseQuery{
     String groupPath
     
     String descFilter
-    String additionalFilter
     String loglevelFilter
     String idlist
 
@@ -40,7 +39,6 @@ public class ScheduledExecutionQuery extends BaseQuery{
                 job:'jobName',
                 proj:'project',
                 desc:'description',
-                additional:'extraInfo',
             ]
     /**
      * equality filters
