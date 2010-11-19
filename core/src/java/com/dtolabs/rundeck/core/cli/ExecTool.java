@@ -69,7 +69,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
 
     private String argProject;
 
-    private boolean argQueue;
+    private boolean argNoQueue;
     private boolean argTerse;
 
     private boolean shouldExit = false;
@@ -87,6 +87,11 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
      * reference to the command line {@link org.apache.commons.cli.Options} instance.
      */
     protected static final Options options = new Options();
+
+    /**
+     * Flag for --noqueue option
+     */
+    public static final String NO_QUEUE_FLAG = "L";
 
     static {
         options.addOption("h", "help", false, "print usage");
@@ -106,7 +111,10 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
         options.addOption("s", "scriptfile", true, "scriptfile script file");
         options.addOption("S", "stdin", false, "read script from stdin");
         options.addOption("N", "nodesfile", true, "Path to arbitrary nodes file");
-        options.addOption("Q", "queue", false, "Send the execution to the command dispatcher queue");
+        options.addOption(NO_QUEUE_FLAG, "noqueue", false,
+            "Run locallay, do not send the execution to the command dispatcher queue");
+        options.addOption("Q", "queue", false,
+            "Send the execution to the command dispatcher queue (default behavior)");
         options.addOption("z", "terse", false, "leave log messages unadorned");
     }
 
@@ -215,8 +223,8 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
             argTerse = true;
         }
 
-        if (cli.hasOption("Q")) {
-            argQueue = true;
+        if (cli.hasOption(NO_QUEUE_FLAG)) {
+            argNoQueue = true;
         }
 
         if (cli.hasOption("S") && cli.hasOption("s")) {
@@ -392,10 +400,10 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
             if ((null == argsDeferred || 0 == argsDeferred.length) && null == getScript()
                 && null == getServerScriptFilePath() && !isInlineScript()) {
                 listAction();
-            } else if (argQueue) {
-                queueAction();
-            } else {
+            } else if (argNoQueue) {
                 runAction();
+            } else {
+                queueAction();
             }
             exitCode = 0;
         } catch (Throwable t) {
@@ -911,12 +919,12 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
         this.failedNodes = failedNodes;
     }
 
-    public boolean isArgQueue() {
-        return argQueue;
+    public boolean isArgNoQueue() {
+        return argNoQueue;
     }
 
-    public void setArgQueue(boolean argQueue) {
-        this.argQueue = argQueue;
+    public void setArgNoQueue(boolean argNoQueue) {
+        this.argNoQueue = argNoQueue;
     }
 
     Framework getFramework() {

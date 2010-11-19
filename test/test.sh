@@ -52,16 +52,16 @@ if [ 0 != $? ] ; then
 fi
 
 # try dispatch
-
-$RDECK_BASE/tools/bin/dispatch -- uptime 
+echo "using --noqueue option"
+$RDECK_BASE/tools/bin/dispatch --noqueue -- uptime
 if [ 0 != $? ] ; then
 	echo Failed to dispatch uptime via cli : $!
 	exit 2
 fi
 
-$RDECK_BASE/tools/bin/dispatch -Q -- uptime > $DIR/exec.out 
+$RDECK_BASE/tools/bin/dispatch -- uptime > $DIR/exec.out
 if [ 0 != $? ] ; then
-	echo Failed: dispatch -Q -- uptime : $!
+	echo Failed: dispatch -- uptime : $!
 	exit 2
 fi
 grep 'Succeeded queueing' -q $DIR/exec.out 
