@@ -800,6 +800,13 @@ table.execoutput td.info .SEVERE{
 table.execoutput td.info .ERROR{
     color: red;
 }
+table.execoutput .ctxcounter{
+    margin-left:10px;
+    font-family:monospace;
+}
+table.execoutput .ctxcounter.SEVERE, table.execoutput .ctxcounter.ERROR{
+    color: red;
+}
 
 .outputdisplayopts{
     padding: 5px 10px;
