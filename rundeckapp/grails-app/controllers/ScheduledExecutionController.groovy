@@ -54,7 +54,7 @@ class ScheduledExecutionController  {
 
     def groupTreeFragment = {
         def tree = scheduledExecutionService.getGroupTree()
-        render(template:"groupTree",model:[groupTree:tree,jscallback:params.jscallback])
+        render(template:"/menu/groupTree",model:[jobgroups:tree,jscallback:params.jscallback])
     }
 
     def error={

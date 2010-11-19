@@ -22,7 +22,8 @@
     $Id$
  --%>
 
-
+<g:timerStart key="_workflowsFull.gsp"/>
+<g:timerStart key="head"/>
 <%-- define form display conditions --%>
 <g:set var="isCompact" value="${params.compact?true:false}"/>
 
@@ -182,10 +183,13 @@
 
 
                 <span id="busy" style="display:none"></span>
-
-                <g:if test="${ groupTree}">
-                    <g:render template="groupTree" model="${[small:params.compact?true:false,groupTree:groupTree.subs,currentJobs:groupTree['jobs']?groupTree['jobs']:[],wasfiltered:wasfiltered?true:false,nowrunning:nowrunning,nextExecutions:nextExecutions,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
+<g:timerEnd key="head"/>
+                <g:if test="${ jobgroups}">
+                    <g:timerStart key="groupTree"/>
+                    <g:render template="groupTree" model="${[small:params.compact?true:false,currentJobs:jobgroups['']?jobgroups['']:[],wasfiltered:wasfiltered?true:false,nowrunning:nowrunning,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
+                    <g:timerEnd key="groupTree"/>
                 </g:if>
+    <g:timerStart key="tail"/>
                 <g:if test="${unauthorizedcount && !g.isUserInRoleTest(role:'admin') && !g.isUserInRoleTest(role:'job_view_unauthorized')}">
                     <div class="note info">
                         ${unauthorizedcount} <g:message code="unauthorized.hidden.message" />
@@ -220,3 +224,5 @@
     });
 
 </g:javascript>
+<g:timerEnd key="tail"/>
+<g:timerEnd key="_workflowsFull.gsp"/>

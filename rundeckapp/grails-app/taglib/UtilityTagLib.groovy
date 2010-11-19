@@ -540,4 +540,75 @@ class UtilityTagLib{
             out << servletContext.getAttribute(attrs.attribute)
         }
     }
+
+    def timerStart = { attrs,body->
+        if(attrs.key){
+
+            if(!request.pageTimers){
+                request.pageTimers=[:]
+            }
+            if(!request.pageTimersStack){
+                request.pageTimersStack=[attrs.key]
+            }else{
+                request.pageTimersStack<<attrs.key
+            }
+            def path=request.pageTimersStack.join("/")
+            if(!request.pageTimers[path]){
+                request.pageTimers[path]=[start:System.currentTimeMillis()]
+            }else{
+                request.pageTimers[path].start=System.currentTimeMillis()
+            }
+        }
+    }
+
+    def timerEnd={attrs,body->
+        if(attrs.key){
+
+            if(!request.pageTimers){
+                request.pageTimers=[:]
+            }
+            if(!request.pageTimersStack){
+                request.pageTimersStack=[]
+            }
+            def path=request.pageTimersStack.join("/")
+            request.pageTimersStack.pop()
+            if(request.pageTimers[path]){
+                request.pageTimers[path].end=System.currentTimeMillis()
+                def tot=request.pageTimers[path].end-request.pageTimers[path].start
+                if(!request.pageTimers[path].counts){
+                    request.pageTimers[path].counts=[tot]
+                }else{
+                    request.pageTimers[path].counts<<tot
+                }
+                if(!request.pageTimers[path].total){
+                    request.pageTimers[path].total=tot
+                }else{
+                    request.pageTimers[path].total+=tot
+                }
+            }
+        }
+    }
+    def timerSummary={attrs,body->
+        def sets;
+        if(attrs.key){
+            sets=[(attrs.key):request.pageTimers[attrs.key]]
+        }else{
+            sets=request.pageTimers
+        }
+        //calculate overhead== total time at level X - sum of level X+1 totals
+        sets.each{k,v->
+            //sum of lower level totals
+            def z = sets.keySet().findAll{it.startsWith(k+'/') && it.lastIndexOf('/')==k.length()}.collect{sets[it].total}.inject(0) { acc, val -> acc + val }
+            if(z>0){
+                sets[k].overhead=sets[k].total-z
+            }
+        }
+        sets.each{k,v->
+            out<<"<div>"
+            out<<"<b>${k}:</b>"
+            out<<"${v.counts?.size()} calls, ${v.total}ms total. "+(v.counts?.size()>1?"Avg: ${v.total/v.counts.size()}ms. ":'')+(v.overhead?"(overhead: ${v.overhead}ms)":'')
+            out<<"</div>"
+        }
+        request.pageTimers=null
+    }
 }

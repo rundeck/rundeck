@@ -196,6 +196,22 @@ public class TestSAREAuthorization extends TestCase {
                 "execute", null);
         assertFalse("foobar/moduleName was granted authorization when it shouldn't.", decision.isAuthorized());
         
+        Set<Map<String,String>> resources = new HashSet<Map<String,String>>();
+        final int resourcesCount = 100;
+        final int actionsCount = 10;
+        for(int i = 0; i < resourcesCount; i++) {
+            resources.add(declareScript(Integer.toString(i), "big/test/" + Integer.toString(i)));
+        }
+        Set<String> actions = new HashSet<String>();
+        for(int i = 0; i < actionsCount; i++) {
+            actions.add("Action" + Integer.toString(i));
+        }
+        long start = System.currentTimeMillis();
+        authorization.evaluate(resources, subject, actions, environment);
+        long end = System.currentTimeMillis() - start;
+        System.out.println("Took " + end + "ms for " + resourcesCount + " resources and " + actionsCount + " actions.");
+        
+        
     }
     
     public void off_testProjectEnvironment() throws Exception {

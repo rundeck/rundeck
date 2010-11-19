@@ -290,29 +290,11 @@ class ScheduledExecutionService {
      */
     def Map getGroupTree(){
         def groupMap = getGroups()
-
-        def groupTree=[:]
-        groupMap.each{ String k,v ->
-            def l = k.split("/")
-
-            def parent=null
-            def cmap=groupTree
-            def i=0
-            l.each{p ->
-                def path=l[0..i].join("/")
-                def subs
-                if(!cmap[p]){
-                    subs=[:]
-                    cmap[p]=[count:groupMap[path]?groupMap[path]:0,subs:subs]
-                }else{
-                    subs=cmap[p]['subs']
-
-                }
-                cmap=subs
-                i++
-            }
+        def tree=[:]
+        groupMap.keySet().each{
+            tree[it]=[]
         }
-        return groupTree
+        return tree
     }
 
     def listNextScheduledJobs(int num){

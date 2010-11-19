@@ -8,7 +8,7 @@
         <div class="presentation"  id="schedExExtra${scheduledExecution?.id}">
             <g:if test="${scheduledExecution?.extraInfo}">
             <div class="extraInfo">
-                ${scheduledExecution?.extraInfo?.decodeMarkdown()}
+                ${scheduledExecution?.extraInfo?.encodeAsHTML()}
             </div>
             </g:if>
             <g:else>

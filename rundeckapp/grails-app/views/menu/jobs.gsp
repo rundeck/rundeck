@@ -70,7 +70,7 @@
     <g:render template="/framework/remoteOptionValuesJS"/>
 </head>
 <body>
-
+<g:timerStart key="jobs.gsp"/>
 
 <div class="pageBody solo" id="indexMain">
     <g:if test="${flash.savedJob}">
@@ -82,7 +82,7 @@
             fireWhenReady('jobrow_${flash.savedJob.id}',doyft.curry('jobrow_${flash.savedJob.id}'));
         </g:javascript>
     </g:if>
-    <g:render template="workflowsFull" model="${[groupTree:groupTree,currentJobs:groupTree['jobs']?groupTree['jobs']:[],wasfiltered:wasfiltered?true:false,nowrunning:nowrunning,nextExecutions:nextExecutions,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
+    <g:render template="workflowsFull" model="${[jobgroups:jobgroups,wasfiltered:wasfiltered?true:false,nowrunning:nowrunning,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
 </div>
 <div id="execDiv" style="display:none">
 
@@ -92,5 +92,6 @@
 
     </div>
 </div>
+<g:timerEnd key="jobs.gsp"/>
 </body>
 </html>

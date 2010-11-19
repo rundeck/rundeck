@@ -114,6 +114,12 @@ public class NoAuthorization implements Authorization, LegacyAuthorization {
                         out.println("No authorization attempted.");
                     }
                 };
+            }
+
+
+            @Override
+            public long evaluationDuration() {
+                return 0;
             }};
     }
 
@@ -161,6 +167,12 @@ public class NoAuthorization implements Authorization, LegacyAuthorization {
                         return Code.GRANTED_NO_AUTHORIZATION_ATTEMPTED;
                     }
                 };
+            }
+
+
+            @Override
+            public long evaluationDuration() {
+                return 0;
             }});
             }
         }

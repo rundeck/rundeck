@@ -84,6 +84,8 @@ public class SAREAuthorization implements Authorization {
     private Decision internalEvaluate(Map<String, String> resource, Subject subject, String action, 
             Set<Attribute> environment) {
         
+        long start = System.currentTimeMillis();
+        
         if(resource == null) {
             throw new IllegalArgumentException("Resource does not identify any resource because it's an empty resource property or null.");
         } else {
@@ -99,7 +101,7 @@ public class SAREAuthorization implements Authorization {
         
         if(subject == null) throw new IllegalArgumentException("Invalid subject, subject is null.");
         if(action == null || action.length() <= 0) {
-            return authorize(false, "No action provided.", Code.REJECTED_NO_ACTION_PROVIDED, resource, subject, action, environment);
+            return authorize(false, "No action provided.", Code.REJECTED_NO_ACTION_PROVIDED, resource, subject, action, environment, System.currentTimeMillis() - start);
         }
         // environment can be null.
         if(environment == null) {
@@ -108,24 +110,29 @@ public class SAREAuthorization implements Authorization {
         
         this.decisionsMade++;
         
+        long narrowStart = System.currentTimeMillis();
         List<Context> contexts = policies.narrowContext(subject, environment);
+        long narrowDuration = System.currentTimeMillis() - narrowStart;
+        
         if(contexts.size() <= 0) {
-            return authorize(false, "No context matches subject or environment", Code.REJECTED_NO_SUBJECT_OR_ENV_FOUND, resource, subject, action, environment);
+            return authorize(false, "No context matches subject or environment", Code.REJECTED_NO_SUBJECT_OR_ENV_FOUND, resource, subject, action, environment, System.currentTimeMillis() - start);
         }
         
         ContextDecision contextDecision = null;
+        
+        long contextIncludeStart = System.currentTimeMillis();
         for(Context ctx : contexts) {
             contextDecision = ctx.includes(resource, action);
             if(contextDecision.granted()) {
-                return authorize(true, contextDecision, resource, subject, action, environment);
+                return createAuthorize(true, contextDecision, resource, subject, action, environment, System.currentTimeMillis() - start);
             }
         }
-        
+
         if(contextDecision == null) {
             return authorize(false, "No resource or action matched.", 
-                Code.REJECTED_NO_RESOURCE_OR_ACTION_MATCH, resource, subject, action, environment);
+                Code.REJECTED_NO_RESOURCE_OR_ACTION_MATCH, resource, subject, action, environment, System.currentTimeMillis() - start);
         } else {
-            return authorize(false, contextDecision, resource, subject, action, environment);
+            return createAuthorize(false, contextDecision, resource, subject, action, environment, System.currentTimeMillis() - start);
         }
     }
     
@@ -137,7 +144,7 @@ public class SAREAuthorization implements Authorization {
         
         Decision decision = internalEvaluate(resource, subject, action, environment);
         StringBuilder sb = new StringBuilder();
-        sb.append("Evaluating ").append(decision).append(':');
+        sb.append("Evaluating ").append(decision).append(" (").append(decision.evaluationDuration()).append("ms)").append(':');
         
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         PrintStream pw = new PrintStream(out, true);
@@ -153,9 +160,12 @@ public class SAREAuthorization implements Authorization {
             Set<Attribute> environment) {
         
         Set<Decision> decisions = new HashSet<Decision>();
+        long duration=0;
         for(Map<String, String> resource: resources) {
             for(String action: actions) {
-                decisions.add(evaluate(resource, subject, action, environment));
+                final Decision decision = evaluate(resource, subject, action, environment);
+                duration += decision.evaluationDuration();
+                decisions.add(decision);
             }
         }
         return decisions;
@@ -165,8 +175,8 @@ public class SAREAuthorization implements Authorization {
     
     private static Decision authorize(final boolean authorized, final String reason, 
             final Code reasonId, final Map<String, String> resource, final Subject subject, 
-            final String action, final Set<Attribute> environment) {
-        return authorize(authorized, new Explanation() {
+            final String action, final Set<Attribute> environment, final long evaluationTime) {
+        return createAuthorize(authorized, new Explanation() {
                     
                     public Code getCode() {
                         return reasonId;
@@ -179,12 +189,12 @@ public class SAREAuthorization implements Authorization {
                     public String toString() {
                         return "\t" + reason + " => " + reasonId;
                     }
-                }, resource, subject, action, environment);
+                }, resource, subject, action, environment, evaluationTime);
     }
     
-    private static Decision authorize(final boolean authorized, final Explanation explanation, 
+    private static Decision createAuthorize(final boolean authorized, final Explanation explanation, 
             final Map<String, String> resource, final Subject subject, 
-            final String action, final Set<Attribute> environment) {
+            final String action, final Set<Attribute> environment, final long evaluationTime) {
         
         return new Decision(){
             private String representation;
@@ -239,6 +249,9 @@ public class SAREAuthorization implements Authorization {
             }
             public Explanation explain() {
                 return explanation;
+            }
+            public long evaluationDuration() {
+                return evaluationTime;
             }
         };
     }  
