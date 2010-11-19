@@ -360,7 +360,7 @@ public class ReportAgent {
     }
 
     /**
-     * Log events concerning an adhoc or run-exec script execution.
+     * Log events concerning an adhoc or dispatch script execution.
      *
      * @param project    project name
      * @param author     author of the event

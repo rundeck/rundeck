@@ -177,9 +177,9 @@ public class JobDefinitionSerializerTest extends TestCase {
             assertEquals("wrong size for /joblist/job", 1, jobs.size());
 
             assertNotNull("expected /joblist/job/name", document.selectSingleNode("/joblist/job/name"));
-            assertEquals("run-exec commandline job", document.selectSingleNode("/joblist/job/name").getStringValue());
+            assertEquals("dispatch commandline job", document.selectSingleNode("/joblist/job/name").getStringValue());
             assertNotNull("expected /joblist/job/description", document.selectSingleNode("/joblist/job/description"));
-            assertEquals("run-exec commandline job", document.selectSingleNode("/joblist/job/description").getStringValue());
+            assertEquals("dispatch commandline job", document.selectSingleNode("/joblist/job/description").getStringValue());
             assertNotNull("expected /joblist/job/loglevel", document.selectSingleNode("/joblist/job/loglevel"));
             assertEquals("ERROR", document.selectSingleNode("/joblist/job/loglevel").getStringValue());
 

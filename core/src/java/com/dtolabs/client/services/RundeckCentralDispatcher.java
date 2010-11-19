@@ -102,7 +102,7 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
         CentralDispatcherException {
         final File tempxml;
         try {
-            tempxml = File.createTempFile("run-exec", "xml");
+            tempxml = File.createTempFile("dispatch", "xml");
             JobDefinitionSerializer.serializeToFile(iDispatchedScript, tempxml);
         } catch (IOException e) {
             throw new CentralDispatcherServerRequestException("Unable to queue command: " + e.getMessage(), e);

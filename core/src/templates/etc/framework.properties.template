@@ -182,14 +182,14 @@ framework.ssh.user = @framework.ssh.user@
 framework.ssh.timeout = 30000
 
 #
-# Set the formatting for run-exec console output
+# Set the formatting for dispatch console output
 #
 # Examples:
-# 1) Format specification to work with Rundeck. %command will be "run-exec"
+# 1) Format specification to work with Rundeck. %command will be "dispatch"
 #
-# framework.log.run-exec.console.format =[%user@%node %command][%level] %message
+# framework.log.dispatch.console.format =[%user@%node %command][%level] %message
 #
-framework.log.run-exec.console.format =[%user@%node %command][%level] %message
+framework.log.dispatch.console.format =[%user@%node %command][%level] %message
 
 #
 # The default project name

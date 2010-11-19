@@ -135,7 +135,7 @@ public class ScriptfileUtils {
          * Prepare a file to save the content
          */
         final File scriptfile;
-        scriptfile = File.createTempFile("run-exec", ".tmp", new File(framework.getProperty("framework.var.dir")));
+        scriptfile = File.createTempFile("dispatch", ".tmp", new File(framework.getProperty("framework.var.dir")));
 
         final FileWriter writer = new FileWriter(scriptfile);
 

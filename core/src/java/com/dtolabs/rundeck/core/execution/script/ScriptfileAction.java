@@ -134,7 +134,7 @@ class ScriptfileAction extends CommandAction {
         final long time = System.currentTimeMillis();
         final String prefix = time + "-" + nodeentry.getNodename();
         final String remoteFilename =
-            null == scriptfile ? prefix + "-run-exec-script" : prefix + "-" + scriptfile.getName();
+            null == scriptfile ? prefix + "-dispatch-script" : prefix + "-" + scriptfile.getName();
         /**
         * Define the remote directory where the script file
         * will be remotely copied.

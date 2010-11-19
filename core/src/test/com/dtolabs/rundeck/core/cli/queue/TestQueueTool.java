@@ -187,7 +187,7 @@ public class TestQueueTool extends AbstractBaseTest {
                 }
             });
 
-            //exec the run-exec
+            //exec the dispatch
 
             tool.run(new String[]{"list"});
             assertTrue("list action was not called", actionCalled[0]);

@@ -152,7 +152,7 @@ class CommandAction extends AbstractAction {
                     } else {
                         contextData.put("user", fwkUser);
                     }
-                    contextData.put("command", "run-exec");
+                    contextData.put("command", "dispatch");
                     return contextData;
                 }
             });

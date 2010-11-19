@@ -50,7 +50,7 @@ public class TestActionFactory extends AbstractBaseTest {
 
     protected void setUp() {
         super.setUp();
-        testScriptFile=new File("src/test/com/dtolabs/rundeck/core/cli/test-run-exec-script.txt");
+        testScriptFile=new File("src/test/com/dtolabs/rundeck/core/cli/test-dispatch-script.txt");
     }
 
     protected void tearDown() throws Exception {

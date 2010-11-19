@@ -60,7 +60,7 @@ public class JobDefinitionSerializer {
         final String loglevelstr = ExecutionUtils.getMessageLogLevel(dispatchdef.getLoglevel(), Constants.MSG_INFO)
             .toUpperCase();
 
-        final Element job = addJobBasic(root, "run-exec commandline job", loglevelstr);
+        final Element job = addJobBasic(root, "dispatch commandline job", loglevelstr);
 
         addScriptDispatch(dispatchdef, job);
 

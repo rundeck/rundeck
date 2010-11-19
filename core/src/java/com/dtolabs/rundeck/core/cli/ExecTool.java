@@ -36,7 +36,7 @@ import java.io.*;
 import java.util.*;
 
 /**
- * Main class for <code>run-exec</code> command line tool. This command will dispatch the command either locally or
+ * Main class for <code>dispatch</code> command line tool. This command will dispatch the command either locally or
  * remotely.
  */
 public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
@@ -341,7 +341,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
         }
 
         //generate string
-        list.add(0, "run-exec");
+        list.add(0, "dispatch");
         return StringArrayUtil.asString(list.toArray(new String[list.size()]), " ");
     }
 
@@ -470,7 +470,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
     }
 
     public static final String DEFAULT_LOG_FORMAT = "[%user@%node %command][%level] %message";
-    public static final String FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT = "framework.log.run-exec.console.format";
+    public static final String FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT = "framework.log.dispatch.console.format";
     /**
      *
      * Execute the script with the ExecutionService layer, using a build listener
@@ -533,15 +533,15 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
         } else {
             tags = null;
         }
-        final String script = CLIUtils.generateArgline("run-exec", inputArgs);
+        final String script = CLIUtils.generateArgline("dispatch", inputArgs);
         if (null != result && result.isSuccess()) {
             debug("Finished execution: " + result.getResultObject());
             final String resultString =
-                null != result.getResultObject() ?  result.getResultObject().toString() : "run-exec succeeded" ;
+                null != result.getResultObject() ?  result.getResultObject().toString() : "dispatch succeeded" ;
             ReportAgent.logExecInfo(
                 executionItem.getDispatchedScript().getFrameworkProject(),
                 user,
-                "run-exec",
+                "dispatch",
                 com.dtolabs.shared.reports.Constants.ActionType.SUCCEED,getFramework().getFrameworkNodeName(),
                 null,
                 resultString,
@@ -559,7 +559,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
         ReportAgent.logExecInfo(
             executionItem.getDispatchedScript().getFrameworkProject(),
             user,
-            "run-exec",
+            "dispatch",
             com.dtolabs.shared.reports.Constants.ActionType.FAIL, getFramework().getFrameworkNodeName(),
             null,
             failureString,
@@ -668,10 +668,10 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
             null,
             options,
             "Examples:\n"
-            + "| run-exec\n | => Prints all nodes\n"
-            + "| run-exec -p default -- whoami\n | => Runs the whoami command on all nodes\n"
-            + "| run-exec -X node1 -- uptime\n | => Runs the uptime command on all nodes except node1\n"
-            + "| run-exec -s myscript.sh\n | => Copies and then runs myscript.sh to matcing nodes\n"
+            + "| dispatch\n | => Prints all nodes\n"
+            + "| dispatch -p default -- whoami\n | => Runs the whoami command on all nodes\n"
+            + "| dispatch -X node1 -- uptime\n | => Runs the uptime command on all nodes except node1\n"
+            + "| dispatch -s myscript.sh\n | => Copies and then runs myscript.sh to matcing nodes\n"
             + "\n"
             + "[RUNDECK version " + VersionConstants.VERSION + " (" + VersionConstants.BUILD + ")]");
     }
@@ -761,7 +761,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
                                        "Path does not exist or is not a directory: " + logpath);
             }
             try {
-                final File logfile = File.createTempFile("run-exec-", ".log", logsdir);
+                final File logfile = File.createTempFile("dispatch-", ".log", logsdir);
                 ThreadBoundOutputStream.bindSystemOut().installThreadStream(new FileOutputStream(logfile));
             } catch (IOException e) {
                 throw new CoreException("Cannot configure print stream to a file. " +

@@ -66,7 +66,7 @@ public class ExecToolCommandLogger extends DefaultLogger{
     }
 
     /**
-     * Process string specified by the framework.log.run-exec.console.format property replacing any well known tokens with values
+     * Process string specified by the framework.log.dispatch.console.format property replacing any well known tokens with values
      * from the event.
      *
      * @param event   The BuildEvent

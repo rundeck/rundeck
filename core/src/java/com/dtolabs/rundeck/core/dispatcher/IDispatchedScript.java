@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * IDispatchedScript describes the parameters for a run-exec invocation sent to the Dispatcher
+ * IDispatchedScript describes the parameters for a dispatch invocation sent to the Dispatcher
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$

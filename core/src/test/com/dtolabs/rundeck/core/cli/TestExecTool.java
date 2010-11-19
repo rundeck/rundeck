@@ -44,7 +44,7 @@ import java.util.Map;
 public class TestExecTool extends AbstractBaseTest {
     ExecTool main;
     /**
-     * script file to use to test run-exec -s which requires valid file
+     * script file to use to test dispatch -s which requires valid file
      */
     File testScriptFile;
     String[] nodeKeys = {
@@ -75,7 +75,7 @@ public class TestExecTool extends AbstractBaseTest {
         File projectEtcDir = new File(d.getBaseDir(), "etc");
         //copy test nodes xml file to test dir
         try {
-            final File testNodes = new File("src/test/com/dtolabs/rundeck/core/cli/test-run-exec-nodes.xml");
+            final File testNodes = new File("src/test/com/dtolabs/rundeck/core/cli/test-dispatch-nodes.xml");
             final File projectNodes = new File(projectEtcDir, "resources.xml");
             FileUtils.copyFileStreams(testNodes, projectNodes);
         } catch (IOException e) {
@@ -815,7 +815,7 @@ public class TestExecTool extends AbstractBaseTest {
             final testCentralDispatcher test = new testCentralDispatcher();
             framework.setCentralDispatcherMgr(test);
 
-            //exec the run-exec
+            //exec the dispatch
 
             main.run(new String[]{"-p", "testProject", "-Q", "--", "shell", "command", "string"});
             test.assertQueueScriptOnlyCalled();
@@ -835,7 +835,7 @@ public class TestExecTool extends AbstractBaseTest {
             final testCentralDispatcher test = new testCentralDispatcher();
             framework.setCentralDispatcherMgr(test);
 
-            //exec the run-exec
+            //exec the dispatch
 
             main.run(new String[]{"-p", "testProject", "-Q", "--", "shell", "space string"});
             test.assertQueueScriptOnlyCalled();
@@ -856,15 +856,15 @@ public class TestExecTool extends AbstractBaseTest {
             final testCentralDispatcher test = new testCentralDispatcher();
             framework.setCentralDispatcherMgr(test);
 
-            //exec the run-exec
+            //exec the dispatch
 
             main.run(new String[]{"-p", "testProject", "-Q", "-s",
-                "src/test/com/dtolabs/rundeck/core/cli/test-run-exec-script.txt"});
+                "src/test/com/dtolabs/rundeck/core/cli/test-dispatch-script.txt"});
             test.assertQueueScriptOnlyCalled();
             assertNull("unexpected value: ", test.passedinScript.getArgs());
             assertNull("unexpected value: "+ test.passedinScript.getScript(), test.passedinScript.getScript());
             assertEquals("unexpected value: " + test.passedinScript.getServerScriptFilePath(),
-                "src/test/com/dtolabs/rundeck/core/cli/test-run-exec-script.txt", test.passedinScript.getServerScriptFilePath());
+                "src/test/com/dtolabs/rundeck/core/cli/test-dispatch-script.txt", test.passedinScript.getServerScriptFilePath());
             assertNull(test.passedinScript.getScriptAsStream());
             assertEquals("testProject", test.passedinScript.getFrameworkProject());
         }
@@ -877,7 +877,7 @@ public class TestExecTool extends AbstractBaseTest {
             final testCentralDispatcher test = new testCentralDispatcher();
             framework.setCentralDispatcherMgr(test);
 
-            //exec the run-exec
+            //exec the dispatch
 
             main.run(
                 new String[]{"-p", "testProject", "-K", "-C", "2", "-I", "hostname1", "-X", "tags=baloney", "-Q", "--",

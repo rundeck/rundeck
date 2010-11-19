@@ -381,7 +381,7 @@ log4j.appender.CommonLog.locationInfo=true
             "framework.ssh.keypath",
             "framework.ssh.user",
             "framework.ssh.timeout",
-            "framework.log.run-exec.console.format",
+            "framework.log.dispatch.console.format",
             "framework.server.url",
             "framework.rundeck.url",
             "framework.rdeck.version",

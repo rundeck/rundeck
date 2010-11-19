@@ -1,4 +1,4 @@
-:: run-exec.bat
+:: dispatch.bat
 ::
 :: $Revision: 1022 $
 ::
@@ -35,7 +35,7 @@ SET cp=%RDECK_HOME%\classes;%ANT_HOME%\lib\xerces-2.6.0.jar;%ANT_HOME%\lib\xml-a
 
 
 ::
-:: run run-exec main class
+:: run dispatch main class
 ::
 call "%JAVA_HOME%\bin\java.exe" ^
     -Xms64m -Xmx128m ^
