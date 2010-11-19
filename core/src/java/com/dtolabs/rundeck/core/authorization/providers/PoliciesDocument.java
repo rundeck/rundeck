@@ -165,13 +165,9 @@ public class PoliciesDocument {
 
                 if (!Collections.disjoint(policyUsers, usernamePrincipals)) {
                     matchedContexts.add(policy.getContext());
-                    System.err.println(
-                        "Policy: " + i + " Matched on User: " + (System.currentTimeMillis() - userMatchStart) + "ms");
                     break;
                 }
             }
-            System.err.println(
-                "Policy: " + i + " No match on User: " + (System.currentTimeMillis() - userMatchStart) + "ms");
 
 
             Set<Group> groupPrincipals = subject.getPrincipals(Group.class);
@@ -197,7 +193,6 @@ public class PoliciesDocument {
                 long collectDuration = System.currentTimeMillis() - groupCollectStart;
                 if (!Collections.disjoint(policyGroups, groupNames)) {
                     matchedContexts.add(policy.getContext());
-                    System.err.println("matched on group. " + collectDuration + "ms");
                     continue;
                 }
             }

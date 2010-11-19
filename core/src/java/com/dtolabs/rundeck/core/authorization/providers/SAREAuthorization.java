@@ -124,12 +124,10 @@ public class SAREAuthorization implements Authorization {
         for(Context ctx : contexts) {
             contextDecision = ctx.includes(resource, action);
             if(contextDecision.granted()) {
-                System.err.println("Decision Breakdown: Narrow:" + narrowDuration + " Context: " + (System.currentTimeMillis() - contextIncludeStart));
                 return createAuthorize(true, contextDecision, resource, subject, action, environment, System.currentTimeMillis() - start);
             }
         }
-        System.err.println("Decision Breakdown: Narrow:" + narrowDuration + " Context: " + (System.currentTimeMillis() - contextIncludeStart));
-        
+
         if(contextDecision == null) {
             return authorize(false, "No resource or action matched.", 
                 Code.REJECTED_NO_RESOURCE_OR_ACTION_MATCH, resource, subject, action, environment, System.currentTimeMillis() - start);
@@ -169,10 +167,6 @@ public class SAREAuthorization implements Authorization {
                 duration += decision.evaluationDuration();
                 decisions.add(decision);
             }
-        }
-        if(decisions.size()>0){
-            System.err.println(
-                "Decisions: " + decisions.size() + ", total: " + duration + "ms. avg: " + (duration / decisions.size()));
         }
         return decisions;
     }
