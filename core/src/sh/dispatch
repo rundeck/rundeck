@@ -1,15 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 
-#
-# $Revision: 1084 $
-#
-
-
-errorMsg() {
-   echo "$*" 1>&2
+errorMsg() { 
+	echo "$*" 1>&2 
 }
-log () {
-        echo ${1}: ${2}
+log () { 
+	echo ${1}: ${2} 
 }
 
 #
@@ -21,42 +16,26 @@ then
    exec cmd.exe /C $RDECK_HOME/bin/dispatch.bat "$@"
 fi
 
+# Look for parent directory
+PDIR=$(cd `dirname $0/`/../.. && pwd)
 
-if [ "${RDECK_BASE}X" = "X" ]
-then
-   #determine base
-   PDIR=$(cd `dirname $0/`/../.. && pwd)
-   if [ -f "$PDIR/etc/framework.properties" ]
-   then
-       export RDECK_BASE=$PDIR
-   fi
-fi
-if [ "${RDECK_BASE}X" = "X" ]
-then
-    errorMsg "RDECK_BASE was not set"
-    exit 1
+if [ -r $RDECK_BASE/etc/framework.properties ]; then
+	. $RDECK_BASE/etc/profile
+elif [ -r /etc/rundeck/client/profile ]; then
+	. /etc/rundeck/client/profile
+elif [ -r "$PDIR/etc/profile" ]; then
+	. $PDIR/etc/profile
 fi
 
-if [ ! -r $RDECK_BASE/etc/profile ]; then
-   errorMsg "Unable to source $RDECK_BASE/etc/profile"
-   exit 1
+if [ "${RDECK_BASE}X" = "X" ]; then
+	errorMsg "Unable to determine RDECK_BASE."
+	exit 1
 fi
-
-. $RDECK_BASE/etc/profile
-
-LIBDIR=$RDECK_HOME/tools/lib
-
-cp=
-for i in `ls $LIBDIR/*.jar`
-do
-  cp=${cp}:${i}
-done
-
 
 #
 # Launch the cmdline tool
 #
-exec $JAVA_HOME/bin/java -classpath $cp \
+exec $JAVA_HOME/bin/java ${RDECK_JVM} -classpath ${CLI_CP} \
      -Drdeck.base=$RDECK_BASE \
      -Drdeck.home=$RDECK_HOME \
      -Djava.protocol.handler.pkgs=com.sun.net.ssl.internal.www.protocol  \

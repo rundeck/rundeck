@@ -21,4 +21,13 @@ then
    unset JRE_HOME
 fi
 
+LIBDIR=$RDECK_HOME/tools/lib
+
+CLI_CP=
+for i in `ls $LIBDIR/*.jar`
+do
+ CLI_CP=${CLI_CP}:${i}
+done
+export CLI_CP
+
 umask 002

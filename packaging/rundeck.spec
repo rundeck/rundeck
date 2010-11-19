@@ -48,52 +48,50 @@ fi
 %config /etc/rundeck/server/rundeck-config.properties
 
 %dir /var/log/rundeck
-%dir /var/run/rundeck
-%dir /var/run/rundeck/logs
-%dir /var/run/rundeck/data
-%dir /var/run/rundeck/work
+%dir /var/lib/rundeck
+%dir /var/lib/rundeck/logs
+%dir /var/lib/rundeck/data
+%dir /var/lib/rundeck/work
 %dir /var/rundeck/projects
 
 # The Rundeck WebApp.  The Exploded War Goes Here.
-%dir /var/run/rundeck/exp
-/var/run/rundeck/exp/webapp
+%dir /var/lib/rundeck/exp
+/var/lib/rundeck/exp/webapp
 
 # Server Bootstrap
-%dir /var/run/rundeck/lib
-/var/run/rundeck/lib/jetty-6.1.21.jar
-/var/run/rundeck/lib/jetty-naming-6.1.21.jar
-/var/run/rundeck/lib/jetty-plus-6.1.21.jar
-/var/run/rundeck/lib/jetty-util-6.1.21.jar
-/var/run/rundeck/lib/rundeck-server-1.0.0.jar
-/var/run/rundeck/lib/servlet-api-2.5-20081211.jar
+%dir /var/lib/rundeck/bootstrap
+/var/lib/rundeck/bootstrap/jetty-6.1.21.jar
+/var/lib/rundeck/bootstrap/jetty-naming-6.1.21.jar
+/var/lib/rundeck/bootstrap/jetty-plus-6.1.21.jar
+/var/lib/rundeck/bootstrap/jetty-util-6.1.21.jar
+/var/lib/rundeck/bootstrap/rundeck-server-1.0.0.jar
+/var/lib/rundeck/bootstrap/servlet-api-2.5-20081211.jar
 
 # CLI Lib Support
-%dir /var/lib/rundeck/
-/var/lib/rundeck/ant-1.8.1.jar
-/var/lib/rundeck/ant-jsch-1.8.1.jar
-/var/lib/rundeck/ant-launcher-1.8.1.jar
-/var/lib/rundeck/commons-beanutils-1.8.0.jar
-/var/lib/rundeck/commons-cli-1.0.jar
-/var/lib/rundeck/commons-codec-1.3.jar
-/var/lib/rundeck/commons-collections-3.2.1.jar
-/var/lib/rundeck/commons-httpclient-3.0.1.jar
-/var/lib/rundeck/commons-lang-2.4.jar
-/var/lib/rundeck/commons-logging-1.1.jar
-/var/lib/rundeck/dom4j-1.6.1.jar
-/var/lib/rundeck/jaxen-1.1.jar
-/var/lib/rundeck/jsch-0.1.42.jar
-/var/lib/rundeck/log4j-1.2.15.jar
-/var/lib/rundeck/rundeck-core-1.0.0.jar
-/var/lib/rundeck/xerces-2.6.0.jar
-/var/lib/rundeck/xml-apis-2.6.0.jar
+%dir /var/lib/rundeck/cli
+/var/lib/rundeck/cli/ant-1.8.1.jar
+/var/lib/rundeck/cli/ant-jsch-1.8.1.jar
+/var/lib/rundeck/cli/ant-launcher-1.8.1.jar
+/var/lib/rundeck/cli/commons-beanutils-1.8.0.jar
+/var/lib/rundeck/cli/commons-cli-1.0.jar
+/var/lib/rundeck/cli/commons-codec-1.3.jar
+/var/lib/rundeck/cli/commons-collections-3.2.1.jar
+/var/lib/rundeck/cli/commons-httpclient-3.0.1.jar
+/var/lib/rundeck/cli/commons-lang-2.4.jar
+/var/lib/rundeck/cli/commons-logging-1.1.jar
+/var/lib/rundeck/cli/dom4j-1.6.1.jar
+/var/lib/rundeck/cli/jaxen-1.1.jar
+/var/lib/rundeck/cli/jsch-0.1.42.jar
+/var/lib/rundeck/cli/log4j-1.2.15.jar
+/var/lib/rundeck/cli/rundeck-core-1.0.0.jar
+/var/lib/rundeck/cli/xerces-2.6.0.jar
+/var/lib/rundeck/cli/xml-apis-2.6.0.jar
 
 # CLI Tools
 %attr(755, root, root) /usr/bin/run
 %attr(755, root, root) /usr/bin/dispatch
-%attr(755, root, root) /usr/bin/rd-check
 %attr(755, root, root) /usr/bin/rd-jobs
 %attr(755, root, root) /usr/bin/rd-project
 %attr(755, root, root) /usr/bin/rd-queue
-%attr(755, root, root) /usr/bin/rd-setup
 
 %changelog

@@ -4,11 +4,24 @@ export RDECK_HOME
 RDECK_BASE=/etc/rundeck/client
 export RDECK_BASE
 
-JAVA_HOME=/usr/lib/jvm/java/
+JAVA_HOME=/usr/lib/jvm/jre-1.6.0-openjdk.x86_64
 export JAVA_HOME
 
 PATH=$PATH:$JAVA_HOME/bin
 export PATH
+
+export CLI_CP=$(find /var/lib/rundeck/cli -name \*.jar -printf %p:)
+export BOOTSTRAP_CP=$(find /var/lib/rundeck/bootstrap -name \*.jar -printf %p:)
+export RDECK_JVM=-Djava.security.auth.login.config=/etc/rundeck/server/jaas-loginmodule.conf \
+	-Dloginmodule.name=RDpropertyfilelogin \
+	-Drdeck.config=/etc/rundeck/client \
+	-Drdeck.base=/etc/rundeck/client \
+	-Drundeck.server.configDir=/etc/rundeck/server \
+	-Dserver.datastore.path=/var/run/rundeck/data \
+	-Drundeck.server.serverDir=/var/run/rundeck \
+	-Drdeck.projects=/var/rundeck/projects \
+	-Drdeck.runlogs=/var/run/rundeck/logs \
+	-Drundeck.config.name=/etc/rundeck/server/rundeck-config.properties
 
 if test -t 0 -a -z "$RUNDECK_CLI_TERSE"
 then
