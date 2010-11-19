@@ -30,6 +30,11 @@ function showRowSelected(elem, tbl, classname) {
     }
 }
 
+
+function _editFormSelectProject(value){
+
+}
+
 function testScriptAuth(project) {
     if (!project) {
         selFrameworkProject = '';

@@ -17,7 +17,12 @@ function selectProject(value){
         parameters:{project:value},
         onSuccess:function(transport){
             $('projectSelect').loading(value?value:'All projects...');
-            oopsEmbeddedLogin();
+            if(typeof(_menuDidSelectProject)=='function'){
+                _menuDidSelectProject(value);
+                loadProjectSelect();
+            }else{
+                oopsEmbeddedLogin();
+            }
         }
     });
 }
@@ -42,7 +47,12 @@ function createProject(value){
         },
         onSuccess:function(transport){
             $('projectSelect').loading(value?value:'All projects...');
-            oopsEmbeddedLogin();
+            if(typeof(_menuDidCreateProject)=='function'){
+                _menuDidCreateProject(value);
+                loadProjectSelect();
+            }else{
+                oopsEmbeddedLogin();
+            }
         }
     });
 }
