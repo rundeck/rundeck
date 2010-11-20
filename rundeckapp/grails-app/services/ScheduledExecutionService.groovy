@@ -459,7 +459,6 @@ class ScheduledExecutionService {
 
     def Map nextExecutionTimes(Collection scheduledExecutions) {
         def map = [ : ]
-        log.info("looking up getNextFireTime for ["+scheduledExecutions.size()+ "] objects")
         scheduledExecutions.each {
             def next = nextExecutionTime(it)
             if(next){

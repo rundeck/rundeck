@@ -23,10 +23,9 @@ import java.net.*;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Properties;
-import java.util.jar.JarFile;
 import java.util.jar.Attributes;
+import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -276,10 +275,12 @@ public class ExpandRunServer {
             configuration = createConfiguration(defaults);
 
             configuration.put("realm.properties.location", configDir.getAbsolutePath() + "/realm.properties");
+            configuration.put("log4j.properties.location", expdir.getAbsolutePath() + "/webapp/WEB-INF/classes/log4j.properties");
 
             DEBUG("Runtime configuration properties: " + configuration);
      
             expandTemplates(configuration, configDir, rewrite);
+            placeLog4jConfig(configuration, new File(configDir, "log4j.properties"));
         } else {
             configuration.putAll(defaults);
             configuration.put(SERVER_DATASTORE_PATH, cl.getOptionValue("datadir", serverdir.getAbsolutePath()));
@@ -291,6 +292,20 @@ public class ExpandRunServer {
         }
                 
         execute(cl.getArgs(), configDir, new File(basedir), serverdir, configuration);
+    }
+
+    /**
+     * Move log4j configuration file from config dir to webapp location if it does not exist
+     * @param configuration configuration properties
+     * @param log4jConfigFile source log4j config file
+     * @throws IOException if an error occurs
+     */
+    private void placeLog4jConfig(final Properties configuration, final File log4jConfigFile) throws IOException {
+        //copy log4j config
+        final File log4jdest = new File(configuration.getProperty("log4j.properties.location"));
+        if (!log4jdest.exists() && !log4jConfigFile.renameTo(log4jdest)) {
+            ERR("Couldn't move log4j.properties file to destination: " + log4jdest.getAbsolutePath());
+        }
     }
 
     private void copyToolLibs(final File toolslibdir, final File coreJar) throws IOException {
@@ -393,7 +408,14 @@ public class ExpandRunServer {
          */
         final FilenameFilter filenameFilter = new FilenameFilter() {
             public boolean accept(final File file, final String name) {
-                final File destFile = new File(file, renamer.rename(name));
+                final String destName = renamer.rename(name);
+                final File destFile;
+                if (null != props.getProperty(destName + ".location")) {
+                    destFile = new File(props.getProperty(destName + ".location"));
+                } else {
+                    destFile = new File(file, destName);
+                }
+
                 final boolean accept = (overwrite || !destFile.isFile())
                                        && name.startsWith(tmplPrefix)
                                        && name.endsWith(tmplSuffix);

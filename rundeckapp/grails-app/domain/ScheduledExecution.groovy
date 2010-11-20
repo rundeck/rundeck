@@ -32,7 +32,6 @@ class ScheduledExecution extends ExecutionContext {
         jobName(blank:false)
         groupPath(nullable:true)
         nextExecution(nullable:true)
-        scheduled(nullable:true)
         nodeKeepgoing(nullable:true)
         doNodedispatch(nullable:true)
         nodeInclude(nullable:true)
