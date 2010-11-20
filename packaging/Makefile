@@ -1,8 +1,21 @@
 SHELL=/bin/bash
 
-BUILD_NUMBER?=snapshot.$(shell date "+%Y%m%d%H%M")
+TAG?=snapshot
+
 RPMBUILD_DEFINES = --define "_topdir ${PWD}/dist" 
+
+ifndef BUILD_NUMBER
+ALPHATAG?=$(shell date "+%Y%m%d%H%M")$(TAG)
+endif
+
+ifdef BUILD_NUMBER
+ALPHATAG?=$(TAG)
 RPMBUILD_DEFINES+= --define "_buildnumber $(BUILD_NUMBER)"
+endif
+
+ifndef GA_RELEASE
+RPMBUILD_DEFINES+= --define "_alphatag $(ALPHATAG)"
+endif
 
 .PHONY: rundeck.rpm
 
@@ -18,7 +31,7 @@ rpm:
 	@cp -R ../core/target/tools/lib/*.jar target/var/lib/rundeck/cli
 	@find ../core/target/bin ! -regex ".*.bat$$" -and -type f | sed -e /rd-check/d -e /rd-setup/d | xargs -I Z cp Z target/usr/bin
 	@unzip -oq ../rundeckapp/target/rundeck-1.0.0.war -d target/var/lib/rundeck/exp/webapp/
-	ln -s /var/lib/rundeck/exp/webapp/WEB-INF/classes/log4j.properties; mv log4j.properties target/var/lib/rundeck/exp/webapp/WEB-INF/classes
+	@ln -s /var/lib/rundeck/exp/webapp/WEB-INF/classes/log4j.properties; mv log4j.properties target/var/lib/rundeck/exp/webapp/WEB-INF/classes
 	rpmbuild -bb --target=noarch-linux $(RPMBUILD_DEFINES) --buildroot="${PWD}/target" rundeck.spec 
     
 clean:
