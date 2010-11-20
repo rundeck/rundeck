@@ -18,6 +18,7 @@ rpm:
 	@cp -R ../core/target/tools/lib/*.jar target/var/lib/rundeck/cli
 	@find ../core/target/bin ! -regex ".*.bat$$" -and -type f | sed -e /rd-check/d -e /rd-setup/d | xargs -I Z cp Z target/usr/bin
 	@unzip -oq ../rundeckapp/target/rundeck-1.0.0.war -d target/var/lib/rundeck/exp/webapp/
+	ln -s /var/lib/rundeck/exp/webapp/WEB-INF/classes/log4j.properties; mv log4j.properties target/var/lib/rundeck/exp/webapp/WEB-INF/classes
 	rpmbuild -bb --target=noarch-linux $(RPMBUILD_DEFINES) --buildroot="${PWD}/target" rundeck.spec 
     
 clean:
