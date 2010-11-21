@@ -1,11 +1,18 @@
 SHELL=/bin/bash
 
 TAG?=snapshot
-ALPHATAG?=$(shell date "+%Y%m%d%H%M")$(TAG)
+
 RPMBUILD_DEFINES = --define "_topdir ${PWD}/dist" 
+
+ifndef BUILD_NUMBER
+ALPHATAG?=$(shell date "+%Y%m%d%H%M")$(TAG)
+endif
+
 ifdef BUILD_NUMBER
+ALPHATAG?=$(TAG)
 RPMBUILD_DEFINES+= --define "_buildnumber $(BUILD_NUMBER)"
 endif
+
 ifndef GA_RELEASE
 RPMBUILD_DEFINES+= --define "_alphatag $(ALPHATAG)"
 endif
