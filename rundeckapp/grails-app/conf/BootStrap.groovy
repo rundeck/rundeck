@@ -48,7 +48,8 @@ class BootStrap {
                  basedir.mkdir()
              }
              //see if initialization system property is set
-	     if (!Constants.getFrameworkConfigFile().isDirectory()){
+             def configDir = Constants.getFrameworkConfigDir(rdeckBase)
+             if (!new File(configDir).isDirectory()){
                  log.info("Performing rundeck first-run initialization...")
                  //setup the base dir
                  Setup setup=new Setup()
@@ -77,7 +78,6 @@ class BootStrap {
                  setup.performSetup()
                  log.info("Rundeck initialization complete.")
              }
-             def configDir = Constants.getFrameworkConfigDir(rdeckBase)
              File f = new File(configDir, "framework.properties")
              if (! f.exists()) {
                  throw new RuntimeException("framework configuration file not found: " + f.getAbsolutePath())
