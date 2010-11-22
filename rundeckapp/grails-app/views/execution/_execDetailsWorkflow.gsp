@@ -109,18 +109,18 @@
     </ol>
     <div id="workflowDropfinal" wfitemNum="${workflow?.commands? workflow.commands.size():0}" style="display:none"></div>
     <div class="empty note ${error?'error':''}" id="wfempty" style="${wdgt.styleVisible(unless:workflow && workflow?.commands)}">
-        No Workflow Items
+        No Workflow ${g.message(code:'Workflow.step.label')}s
     </div>
     <g:if test="${edit}">
     <div >
     <div id="wfnewbutton" style="margin-top:5px; padding-left:20px;">
-        <span class="action textbtn ready" onclick="$('wfnewtypes').show();$('wfnewbutton').hide();" title="Add a new Workflow Item to the end">
-            Add an item
+        <span class="action textbtn ready" onclick="$('wfnewtypes').show();$('wfnewbutton').hide();" title="Add a new Workflow ${g.message(code:'Workflow.step.label')} to the end">
+            Add a ${g.message(code:'Workflow.step.label')}
         </span>
     </div>
     <div id="wfnewtypes" style="display:none; margin-top:10px" class="popout">
-        <span > Add Workflow Item</span>
-        <div class="info note">Choose the type of Workflow item:</div>
+        <span > Add a Workflow ${g.message(code:'Workflow.step.label')}</span>
+        <div class="info note">Choose the type of Workflow ${g.message(code:'Workflow.step.label')}:</div>
         <div style="margin:10px;">
         <span class="button action" onclick="_wfiaddnew('command');" title="Execute a remote command"><g:img file='icon-tiny-add.png'/> Command</span>
         <span class="button action" onclick="_wfiaddnew('script');" title="Execute  an inline script"><g:img file='icon-tiny-add.png'/> Script</span>

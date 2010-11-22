@@ -29,14 +29,14 @@
 
     <g:if test="${edit}">
         <span class="wfitemcontrols controls autohide" id="pfctrls_${i}" >
-            <span class="action" onclick="menus.showRelativeTo(this,'itemdel_${i}',-2,-2);" title="Delete this item"><g:img file="icon-tiny-removex.png"/></span>
+            <span class="action" onclick="menus.showRelativeTo(this,'itemdel_${i}',-2,-2);" title="Delete this ${g.message(code:'Workflow.step.label')}"><g:img file="icon-tiny-removex.png"/></span>
            
             <span class="action textbtn" onclick="_wfiedit(${i});">edit</span>
             <span class="action dragHandle"  title="Drag to reorder"><g:img file="icon-tiny-drag.png"/></span>
 
         </span>
         <div id="itemdel_${i}" class="confirmMessage popout confirmbox"  style="display:none;">
-            Really delete item ${i+1}?
+            Really delete ${g.message(code:'Workflow.step.label')} ${i+1}?
             <span class="action button small textbtn" onclick="['itemdel_${i}'].each(Element.hide);">No</span>
             <span class="action button small textbtn" onclick="_doRemoveItem(${i});">Yes</span>
         </div>
