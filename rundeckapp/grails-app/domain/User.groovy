@@ -4,7 +4,6 @@ class User {
     String firstName
     String lastName
     String email
-    UserAuth authorization
     Date dateCreated
     Date lastUpdated
     
@@ -12,7 +11,6 @@ class User {
     String filterPref
     static hasMany = [reportfilters:ReportFilter,jobfilters:ScheduledExecutionFilter,nodefilters:NodeFilter]
     static constraints={
-		authorization(unique:true)
         firstName(nullable:true)
         lastName(nullable:true)
         email(nullable:true)

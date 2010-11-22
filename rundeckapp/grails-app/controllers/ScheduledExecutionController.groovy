@@ -132,21 +132,13 @@ class ScheduledExecutionController  {
 
         def total = Execution.countByScheduledExecution(scheduledExecution)
 
-        def boolean objexists = false
-        def boolean auth = false
-        if(scheduledExecution.workflow){
-            auth=user && user.authorization.workflow_run
-        }else if (scheduledExecution.adhocExecution){
-            auth = frameworkService.userAuthorizedForScript(session.user,scheduledExecution.project,scheduledExecution.adhocRemoteString?scheduledExecution.adhocRemoteString:scheduledExecution.adhocLocalString,framework)
-        }
+        //todo: authorize job for workflow_read
 
 
         withFormat{
             html{
                 [scheduledExecution:scheduledExecution, crontab:crontab, params:params,
             executions:executions,
-            objexists:objexists,
-            authorized:auth,
             total:total,
             nextExecution:scheduledExecutionService.nextExecutionTime(scheduledExecution),
             max: params.max?params.max:10,
@@ -1900,22 +1892,11 @@ class ScheduledExecutionController  {
     }
     def executeScheduledExecution = {ScheduledExecution scheduledExecution, Framework framework, List rolelist,params->
         def User user = User.findByLogin(params.user)
-        if(!user || !user.authorization.workflow_run){
+        if(!user){
             def msg = g.message(code:'unauthorized.job.run.user',args:[params.user])
             log.error(msg)
             flash.error=msg
             return [error:'unauthorized',message:msg]
-        }
-        if(scheduledExecution.adhocExecution){
-            if(! frameworkService.userAuthorizedForScript(params.user,
-                scheduledExecution.project,
-                scheduledExecution.adhocRemoteString?scheduledExecution.adhocRemoteString:scheduledExecution.adhocLocalString,
-                framework)){
-                def msg = g.message(code:'unauthorized.job.run.script',args:[params.user,scheduledExecution.project])
-                log.error(msg)
-                flash.error=msg
-                return [error:'unauthorized',message:msg]
-            }
         }
 
         def extra = [:]

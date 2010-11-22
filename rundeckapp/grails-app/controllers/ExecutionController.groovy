@@ -39,12 +39,8 @@ class ExecutionController {
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         if(e.scheduledExecution){
             def ScheduledExecution scheduledExecution = e.scheduledExecution //ScheduledExecution.get(e.scheduledExecutionId)
-            def User user = User.findByLogin(session.user)
-            def boolean objexists = false
-            def boolean auth = false
-            auth=user && user.authorization.workflow_run
 
-            return [scheduledExecution: scheduledExecution, execution:e, filesize:filesize,jobauthorized:auth,objexists:objexists]
+            return [scheduledExecution: scheduledExecution, execution:e, filesize:filesize]
         }else{
             return [execution:e, filesize:filesize]
         }
