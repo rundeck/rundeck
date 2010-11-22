@@ -96,12 +96,12 @@
         <g:if test="${newitemtype||newitem}">
             <g:hiddenField name="newitem" value="true"/>
             <g:hiddenField name="newitemtype" value="${newitemtype}"/>
-            <span class="action button small textbtn" onclick="_wficancelnew(${num});" title="Cancel adding new item">Cancel</span>
-            <span class="action button small textbtn" onclick="_wfisavenew('wfiedit_${rkey}');" title="Save the new item">Save</span>
+            <span class="action button small textbtn" onclick="_wficancelnew(${num});" title="Cancel adding new ${g.message(code:'Workflow.step.label')}">Cancel</span>
+            <span class="action button small textbtn" onclick="_wfisavenew('wfiedit_${rkey}');" title="Save the new ${g.message(code:'Workflow.step.label')}">Save</span>
         </g:if>
         <g:else>
-            <span class="action button small textbtn" onclick="_wfiview(${num});" title="Discard changes to the item">Discard</span>
-            <span class="action button small textbtn" onclick="_wfisave(${num}, 'wfiedit_${rkey}');" title="Save changes to the item">Save</span>
+            <span class="action button small textbtn" onclick="_wfiview(${num});" title="Discard changes to the ${g.message(code:'Workflow.step.label')}">Discard</span>
+            <span class="action button small textbtn" onclick="_wfisave(${num}, 'wfiedit_${rkey}');" title="Save changes to the ${g.message(code:'Workflow.step.label')}">Save</span>
         </g:else>
     </div>
     <div class="clear"></div>
