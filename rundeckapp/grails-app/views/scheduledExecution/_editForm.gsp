@@ -4,7 +4,7 @@
 
         <div class="buttons">
 
-            <g:actionSubmit id="editFormCancelButton" value="Cancel"/>
+            <g:actionSubmit id="editFormCancelButton" value="Cancel"  onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"/>
             <g:actionSubmit value="Update"/>
 
         </div>

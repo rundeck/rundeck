@@ -118,13 +118,17 @@ var applinks={
         function _menuDidSelectProject(value){
         }
 
+        var wascancelled=false;
+        function jobEditCancelled(){
+            wascancelled=true;
+        }
         /**
          * Validate the form
          *
          */
          function validateJobEditForm(form){
              var wfitem=$(form).down('div.wfitemEditForm');
-             if(wfitem){
+             if(wfitem && !wascancelled){
                  doyft(wfitem.identify());
                  return false;
              }
