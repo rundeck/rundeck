@@ -34,7 +34,7 @@ package com.dtolabs.shared.reports;
  * @version $Revision: 9667 $
  */
 public class Constants {
-    public static final String INDEX_LOGGER_NAME = "com.dtolabs.log.common";
+    public static final String INDEX_LOGGER_NAME = "com.dtolabs.rundeck.log.common";
 
 
     public static final String MDC_REMOTE_HOST_KEY = "rundeckRemoteHost";

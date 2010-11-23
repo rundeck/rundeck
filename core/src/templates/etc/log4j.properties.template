@@ -6,7 +6,7 @@ log4j.rootCategory=INFO, file
 #
 # Rundeck CommonLog category (uncomment if you are using Reportcenter)
 #
-#log4j.logger.com.dtolabs.rundeck.log.common=INFO,CommonLog
+log4j.logger.com.dtolabs.rundeck.log.common=INFO,CommonLog
 
 #
 # stdout - ConsoleAppender
