@@ -41,7 +41,7 @@ if [ 0 != $? ] ; then
 fi
 
 
-grep 'id="indexMain"' -q $DIR/curl.out 
+grep 'id="nodesContent"' -q $DIR/curl.out 
 if [ 0 != $? ] ; then
     errorMsg "login didnt seem to return the right page"
     exit 2
