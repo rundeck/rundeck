@@ -114,38 +114,36 @@ function createProject(value){
 
    <span id="top_tabs">
 
-    <g:set var="wfselected" value=""/>
-    <g:ifPageProperty name='meta.tabpage' >
-    <g:ifPageProperty name='meta.tabpage' equals='jobs'>
-        <g:set var="wfselected" value="selected"/>
-    </g:ifPageProperty>
-    </g:ifPageProperty>
-    <g:link controller="menu" action="jobs" class=" toptab ${wfselected}" style="height:29px">
-        %{--<img src="${resource(dir: 'images', file: 'icon-med-job.png')}" width="24px" height="24px" alt=""/>--}%
-        <g:message code="gui.menu.Workflows"/>
-    </g:link>
-    <g:set var="eventsselected" value=""/>
-    <g:ifPageProperty name='meta.tabpage' >
-    <g:ifPageProperty name='meta.tabpage' equals='events'>
-        <g:set var="eventsselected" value="selected"/>
-    </g:ifPageProperty>
-    </g:ifPageProperty>
-    <g:if test="${session?.user}">
-        <a href="${createLink(controller: 'reports', action: 'index')}" class=" toptab ${eventsselected}"  style="height:29px">
-            %{--<img src="${resource(dir: 'images', file: 'icon-med-Reportcenter.png')}" width="24px" height="24px" alt=""/>--}%
+        <g:set var="resselected" value=""/>
+        <g:ifPageProperty name='meta.tabpage' >
+        <g:ifPageProperty name='meta.tabpage' equals='nodes'>
+           <g:set var="resselected" value="selected"/>
+        </g:ifPageProperty>
+        </g:ifPageProperty>
+        <g:link controller="framework" action="nodes" class=" toptab ${resselected}"  style="height:29px">
+           <g:message code="gui.menu.Resources"/>
+        </g:link>
+
+        <g:set var="eventsselected" value=""/>
+        <g:ifPageProperty name='meta.tabpage' >
+        <g:ifPageProperty name='meta.tabpage' equals='events'>
+            <g:set var="eventsselected" value="selected"/>
+        </g:ifPageProperty>
+        </g:ifPageProperty>
+        <g:link controller="reports"  action="index" class=" toptab ${eventsselected}"  style="height:29px">
             <g:message code="gui.menu.Events"/>
-        </a>
-    </g:if>
-    <g:set var="resselected" value=""/>
-    <g:ifPageProperty name='meta.tabpage' >
-    <g:ifPageProperty name='meta.tabpage' equals='nodes'>
-        <g:set var="resselected" value="selected"/>
-    </g:ifPageProperty>
-    </g:ifPageProperty>
-    <g:link controller="framework" action="nodes" class=" toptab ${resselected}"  style="height:29px">
-        %{--<img src="${resource(dir: 'images', file: 'icon-med-NodeManager.png')}" width="24px" height="24px" alt=""/>--}%
-        <g:message code="gui.menu.Resources"/>
-    </g:link>
+        </g:link>
+
+        <g:set var="wfselected" value=""/>
+        <g:ifPageProperty name='meta.tabpage' >
+        <g:ifPageProperty name='meta.tabpage' equals='jobs'>
+           <g:set var="wfselected" value="selected"/>
+        </g:ifPageProperty>
+        </g:ifPageProperty>
+        <g:link controller="menu" action="jobs" class=" toptab ${wfselected}" style="height:29px">
+           <g:message code="gui.menu.Workflows"/>
+        </g:link>
+
        <span class="projects" style="font-size:9pt; line-height: 12px; margin-left:20px;">
            <img src="${resource(dir:'images',file:'icon-tiny-rarrow-sep.png')}" alt="project: " width="7px" height="12px"/>
            <span id="projectSelect">
