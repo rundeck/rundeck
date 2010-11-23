@@ -49,7 +49,7 @@ public class DataContextUtils {
     /**
      * Prefix string used for all environment variable names
      */
-    public static final String ENV_VAR_PREFIX = "CT_";
+    public static final String ENV_VAR_PREFIX = "RD_";
 
 
     /**
@@ -262,7 +262,7 @@ public class DataContextUtils {
     }
 
     /**
-     * Convert option keys into environment variable names. Convert to uppercase and prepend "CT_OPTION_"
+     * Convert option keys into environment variable names. Convert to uppercase and prepend "RD_"
      *
      * @param options the input options
      * @param prefix
