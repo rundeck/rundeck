@@ -1,3 +1,4 @@
+<%@ page import="com.dtolabs.rundeck.core.dispatcher.DataContextUtils" %>
 <%--
  Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
 
@@ -113,7 +114,7 @@
             <div class="presentation">
                 <span class="info note">The option values will be available to scripts in these forms:</span>
                 <div>
-                    Bash: <code>$CT_OPTION_<span id="bashpreview${rkey}">${option?.name?.toUpperCase()}</span></code>
+                    Bash: <code>$<span id="bashpreview${rkey}">${option?.name?DataContextUtils.generateEnvVarName('option.'+option.name):''}</span></code>
                 </div>
                 <div>
                     Commandline Arguments: <code>$<!-- -->{option.<span id="clipreview${rkey}">${option?.name?.encodeAsHTML()}</span>}</code>
@@ -125,7 +126,7 @@
         </div>
         <g:javascript>
         function _tobashvar(str){
-            return str.toUpperCase().replace(/[.]/g,'_').replace(/[{}$]/,'');
+            return "${DataContextUtils.ENV_VAR_PREFIX}OPTION_"+str.toUpperCase().replace(/[.]/g,'_').replace(/[{}$]/,'');
         }
         <wdgt:eventHandler for="optname_${rkey}" state="unempty" inline="true" jsonly="true" action="keyup">
             <wdgt:action target="preview_${rkey}" visible="true" test="true"/>
