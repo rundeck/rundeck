@@ -107,6 +107,9 @@ class ReportsController {
             query.recentFilter="1d"
             params.recentFilter="1d"
         }
+        if(query && !query.projFilter && session.project){
+            query.projFilter = session.project
+        }
 
 //        if(null!=query){
 //            query.configureFilter()
