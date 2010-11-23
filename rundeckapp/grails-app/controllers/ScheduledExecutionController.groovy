@@ -22,7 +22,7 @@ class ScheduledExecutionController  {
     def ScheduledExecutionService scheduledExecutionService
 
  
-    def index = { redirect(controller:'menu',action:'list',params:params) }
+    def index = { redirect(controller:'menu',action:'jobs',params:params) }
 
     // the delete, save and update actions only
     // accept POST requests
@@ -47,10 +47,10 @@ class ScheduledExecutionController  {
         if(params.id && params.id!=''){
             redirect(action:show,params:[id:params.id])
         }else{
-            redirect(controller:'menu',action:'list')
+            redirect(action:index)
         }
     }
-    def list = {redirect(controller:'menu',action:'list',params:params) }
+    def list = {redirect(action:index,params:params) }
 
     def groupTreeFragment = {
         def tree = scheduledExecutionService.getGroupTree()
@@ -361,10 +361,10 @@ class ScheduledExecutionController  {
             scheduledExecution.delete(flush:true)
             scheduledExecutionService.deleteJob(jobname,groupname)
             flash.message = "Job '${jobtitle}' was successfully deleted."
-            redirect(controller:'menu',action:'list', params:[:])
+            redirect(action:index, params:[:])
         } else {
             flash.message = "ScheduledExecution not found with id ${params.id}"
-            redirect(controller:'menu',action:'list', params:params)
+            redirect(action:index, params:params)
         }
     }
 
@@ -417,7 +417,7 @@ class ScheduledExecutionController  {
         def crontab = [:]
         if(!scheduledExecution) {
             flash.message = "ScheduledExecution not found with id ${params.id}"
-            return redirect(controller:'menu',action:'list', params:params)
+            return redirect(action:index, params:params)
         }
         //clear session workflow
         if(session.editWF ){
@@ -790,7 +790,7 @@ class ScheduledExecutionController  {
         if(!scheduledExecution){
             flash.message = "ScheduledExecution not found with id ${params.id}"
             log.info("update: there was no object by id: " +params.id+". redirecting to menu.")
-            redirect(controller:'menu',action:'list')
+            redirect(action:index)
             return;
         }
         def newScheduledExecution = new ScheduledExecution()
