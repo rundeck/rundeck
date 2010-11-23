@@ -76,10 +76,6 @@
                                 <td><label for="${rkey}jobFilter"><g:message code="jobquery.title.jobFilter"/></label>:</td>
                                 <td><g:textField name="jobFilter" id="${rkey}jobFilter" value="${params.jobFilter}" /></td>
                             </tr>
-                            <%--<tr>
-                                <td><label for="${rkey}projFilter"><g:message code="jobquery.title.projFilter"/></label>:</td>
-                                <td><g:textField name="projFilter" id="${rkey}projFilter" value="${params.projFilter}"/></td>
-                            </tr>--%>
                             <tr>
                                 <td><label for="${rkey}groupPath"><g:message code="jobquery.title.groupPath"/></label>:</td>
                                 <td><g:textField name="groupPath" id="${rkey}groupPath" value="${params.groupPath}"/></td>
@@ -88,22 +84,10 @@
                                 <td><label for="${rkey}descFilter"><g:message code="jobquery.title.descFilter"/></label>:</td>
                                 <td><g:textField name="descFilter" id="${rkey}descFilter" value="${params.descFilter}"/></td>
                             </tr>
-                            <tr>
-                                <td><label for="${rkey}loglevelFilter"><g:message code="jobquery.title.loglevelFilter"/></label>:</td>
-                                <td><g:select name="loglevelFilter" id="${rkey}loglevelFilter" value="${params.loglevelFilter}"
-                                    from="${['1. Debug','2. Verbose','3. Information','4. Warning','5. Error']}"
-                                    keys="${['DEBUG','VERBOSE','INFO','WARN','ERR']}"
-                                    noSelection="${['':'-any-']}"
-                                  /></td>
-                            </tr>
-
-
 
                             <tr>
                                 <td colspan="2">
                                     <g:submitToRemote  value="Filter" name="filterAll" url="[controller:'menu',action:'workflowsFragment']" update="${rkey}wffilterform" />
-                                    %{--<g:submitButton name="Filter" value="Filter"/>--}%
-                                    %{--<g:submitButton name="Clear" value="Clear" />--}%
                                     <g:submitToRemote  value="Clear" name="clearFilter" url="[controller:'menu',action:'workflowsFragment',params:[Clear:'Clear']]" update="${rkey}wffilterform" />
                                 </td>
                             </tr>
