@@ -20,7 +20,7 @@
         </g:if>
     </div>
 </g:if>
-<g:set var="gkeys" value="${jobgroups.sort{a,b->a.key<=>b.key}}"/>
+<g:set var="gkeys" value="${jobgroups.sort{a,b->a.key<=>b.key}.grep{it.key!=''}}"/>
 <g:timerEnd key="gtx"/>
 <g:set var="indentpx" value="${16}"/>
 <g:set var="prevkey" value="${null}"/>
@@ -30,7 +30,7 @@
     <g:timerStart key="_groupTree2.gsp-loop"/>
     <g:timerStart key="prepare"/>
     <g:set var="displaygroup" value="${group.key}"/>
-    <g:if test="${null!=prevkey && group.key.startsWith(prevkey)}">
+    <g:if test="${prevkey && group.key.startsWith(prevkey+'/')}">
         %{
             indent++
         }%
