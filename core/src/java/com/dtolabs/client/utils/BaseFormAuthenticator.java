@@ -74,7 +74,7 @@ public abstract class BaseFormAuthenticator implements HttpAuthenticator {
      * Cookie name for java auth session: {@value}
      */
     public static final String JAVA_SESSION_COOKIE_NAME = "JSESSIONID";
-    public static final Pattern JAVA_SESSION_COOKIE_PATTERN = Pattern.compile("^JSESSIONID(_CT_.+)?$");
+    public static final Pattern JAVA_SESSION_COOKIE_PATTERN = Pattern.compile("^JSESSIONID$");
     /**
      * Secure protocol: {@value}
      */
