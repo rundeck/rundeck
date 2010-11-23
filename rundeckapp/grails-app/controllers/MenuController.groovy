@@ -83,7 +83,7 @@ class MenuController {
     
     
     def index ={
-        redirect(action:'jobs')
+        redirect(controller:'framework',action:'nodes')
     }
     
     def workflows = {ScheduledExecutionQuery query ->
