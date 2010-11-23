@@ -93,7 +93,6 @@ class FrameworkService implements ApplicationContextAware {
         }
         if(!session.Framework){
             String rundeckbase=getRundeckBase()
-            log.warn("rdeck.base is: ${rundeckbase}")
 
             //determine list of possible acl roles
             List l = BaseAclsAuthorization.listRoles(new File(Constants.getFrameworkConfigDir(rundeckbase)))
