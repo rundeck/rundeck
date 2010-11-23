@@ -19,7 +19,6 @@
  * 
  * User: greg
  * Created: Jan 14, 2005 4:57:46 PM
- * $Id: DefaultFormAuthenticator.java 7839 2008-02-19 21:00:26Z ahonor $
  */
 package com.dtolabs.client.utils;
 
