@@ -25,7 +25,7 @@
                 </wdgt:eventHandlerJS>
             </g:javascript>
             <div id="schedCreateButtons">
-                <g:actionSubmit id="createFormCancelButton" value="Cancel"/>
+                <g:actionSubmit id="createFormCancelButton" value="Cancel" onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"/>
                 <g:if test="${auth.allowedTest(job:[jobName:'create', groupPath:'ui'], action:[UserAuth.WF_CREATE])}">
                     <g:actionSubmit action="save" value="Create"  class="cformAllowSave cformAllowSaveOnly"
                         style="${wdgt.styleVisible(if:scheduledExecution.scheduled || wasSaved)}"/>
