@@ -1,13 +1,17 @@
 import org.springframework.web.servlet.ModelAndView
 import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.core.common.Framework
 
 class ReportsController {
     def reportService
     def userService
+    def frameworkService
 
     def index = { ReportQuery query->
        //find previous executions
         def usedFilter
+        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        FrameworkController.autosetSessionProject(session,framework)
 
         def User u = userService.findOrCreateUser(session.user)
         def filterPref= UserController.parseKeyValuePref(u.filterPref)
