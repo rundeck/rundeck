@@ -1,0 +1,1066 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>RUNDECK(1) RunDeck User Manuals | Version 1.0</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Alex Honor" />
+  <meta name="date" content="November 20, 2010" />
+</head>
+<body>
+<h1 class="title">RUNDECK(1) RunDeck User Manuals | Version 1.0</h1>
+<h1 id="job-v20"
+>job-v20</h1
+><p
+>The 'job' XML file declares job entries for RunDeck.</p
+><p
+>This is a demonstration document using all possible elements in the current RunDeck &quot;jobs&quot; XML.</p
+><h2 id="loading-and-unloading"
+>Loading and unloading</h2
+><p
+>This file can be batch loaded via <em
+  >rd-jobs</em
+  > load command:</p
+><pre
+><code
+  >rd-jobs load --file /path/to/jobs.xml
+</code
+  ></pre
+><p
+>RunDeck job definitions can be dumped and saved to a file via rd-jobs list command:</p
+><pre
+><code
+  >rd-jobs list --file /tmp/jobs.xml
+</code
+  ></pre
+><h1 id="joblist"
+>joblist</h1
+><p
+>The root (aka &quot;top-level&quot;) element of the jobs XML file.</p
+><p
+><em
+  >Nested elements</em
+  ></p
+><dl
+><dt
+  ><a href="#job"
+    >job</a
+    >*</dt
+  ><dd
+  >declares a single job</dd
+  ></dl
+><p
+><em
+  >Example</em
+  ></p
+><pre
+><code
+  >&lt;joblist&gt;
+  &lt;job&gt;
+   ...
+  &lt;/job&gt;
+  &lt;job&gt;
+   ...
+  &lt;/job&gt;
+&lt;/joblist&gt;
+</code
+  ></pre
+><h2 id="job"
+>job</h2
+><p
+>The job element is a sub-element of <a href="#joblist"
+  >joblist</a
+  > and defines a job executable in RunDeck.</p
+><p
+>The following elements are used to describe the job. Only one of each element is allowed.</p
+><p
+><em
+  >Nested elements</em
+  ></p
+><dl
+><dt
+  >id</dt
+  ><dd
+  ><p
+    >job identifier</p
+    ></dd
+  ><dt
+  >name</dt
+  ><dd
+  ><p
+    >the job name</p
+    ></dd
+  ><dt
+  >description</dt
+  ><dd
+  ><p
+    >the job description</p
+    ></dd
+  ><dt
+  >additional</dt
+  ><dd
+  ><p
+    >additional information</p
+    ></dd
+  ><dt
+  >group</dt
+  ><dd
+  ><p
+    >group name</p
+    ></dd
+  ><dt
+  >context</dt
+  ><dd
+  ><p
+    >command context</p
+    ></dd
+  ><dt
+  >dispatch</dt
+  ><dd
+  ><p
+    >dispatch options</p
+    ></dd
+  ><dt
+  >sequence</dt
+  ><dd
+  ><p
+    >workflow sequence</p
+    ></dd
+  ><dt
+  >notification</dt
+  ><dd
+  ><p
+    >email noticfications</p
+    ></dd
+  ><dt
+  >nodefilters</dt
+  ><dd
+  ><p
+    >node filtering expressions</p
+    ></dd
+  ><dt
+  >loglevel</dt
+  ><dd
+  ><p
+    >the logging level</p
+    ></dd
+  ></dl
+><p
+><em
+  >Job command modes</em
+  ></p
+><p
+>Jobs execute a sequence of commands. Commands come in several styles:</p
+><ul
+><li
+  >System command</li
+  ><li
+  >A script</li
+  ><li
+  >A script file</li
+  ><li
+  >Another defined job</li
+  ></ul
+><p
+><em
+  >Examples</em
+  ></p
+><p
+>Execute the Unix 'who' command</p
+><pre
+><code
+  >&lt;joblist&gt;
+  &lt;job&gt;
+    &lt;name&gt;who's logged in?&lt;/name&gt;
+    &lt;description&gt;Runs the unix who command&lt;/description&gt;
+    &lt;additional/&gt;
+    &lt;group&gt;sysadm/users&lt;/group&gt;
+    &lt;context&gt;
+      &lt;project&gt;default&lt;/project&gt;
+    &lt;/context&gt;
+    &lt;sequence&gt;
+      &lt;command&gt;
+        &lt;!-- the Unix 'who' command --&gt;
+        &lt;exec&gt;who&lt;/exec&gt;
+      &lt;/command&gt;
+     &lt;/sequence&gt;
+    &lt;nodefilters excludeprecedence=&quot;true&quot;&gt;
+      &lt;include&gt;
+        &lt;os-family&gt;unix&lt;/os-family&gt;
+      &lt;/include&gt;
+    &lt;/nodefilters&gt;
+    &lt;dispatch&gt;
+      &lt;threadcount&gt;1&lt;/threadcount&gt;
+      &lt;keepgoing&gt;true&lt;/keepgoing&gt;
+    &lt;/dispatch&gt;
+  &lt;/job&gt;
+&lt;/joblist&gt;
+</code
+  ></pre
+><p
+>Execute a Bash script</p
+><pre
+><code
+  >&lt;joblist&gt;
+  &lt;job&gt;
+    &lt;name&gt;a simple script&lt;/name&gt;
+    &lt;description&gt;Runs a trivial bash script&lt;/description&gt;
+    &lt;additional/&gt;
+    &lt;group&gt;sysadm/users&lt;/group&gt;
+    &lt;context&gt;
+      &lt;project&gt;default&lt;/project&gt;
+    &lt;/context&gt;
+    &lt;sequence&gt;
+      &lt;command&gt;
+        &lt;script&gt;&lt;![CDATA[#!/bin/bash
+echo this is an example job running on $(hostname)
+echo whatever
+exit 0 ]]&gt;&lt;/script&gt;
+      &lt;/command&gt;
+     &lt;/sequence&gt;
+    &lt;dispatch&gt;
+      &lt;threadcount&gt;1&lt;/threadcount&gt;
+      &lt;keepgoing&gt;true&lt;/keepgoing&gt;
+    &lt;/dispatch&gt;
+  &lt;/job&gt;
+&lt;/joblist&gt;
+</code
+  ></pre
+><p
+>Execute a sequence of other commands, scripts and jobs:</p
+><pre
+><code
+  >&lt;joblist&gt;
+  &lt;job&gt;
+    &lt;name&gt;test coreutils&lt;/name&gt;
+    &lt;description/&gt;
+    &lt;additional/&gt;
+    &lt;context&gt;
+      &lt;project&gt;default&lt;/project&gt;
+    &lt;/context&gt;
+    &lt;sequence&gt;         
+     &lt;!-- the Unix 'who' command --&gt;
+     &lt;command&gt;
+        &lt;exec&gt;who&lt;/exec&gt;
+     &lt;/command&gt;
+     &lt;!-- a Job named test/other tests --&gt;
+     &lt;command&gt;
+        &lt;jobref group=&quot;test&quot; name=&quot;other tests&quot;/&gt;
+     &lt;/command&gt;
+    &lt;/sequence&gt;
+    &lt;dispatch&gt;
+      &lt;threadcount&gt;1&lt;/threadcount&gt;
+      &lt;keepgoing&gt;false&lt;/keepgoing&gt;
+    &lt;/dispatch&gt;
+  &lt;/job&gt;
+&lt;/joblist&gt;
+</code
+  ></pre
+><h2 id="id"
+>id</h2
+><p
+>The job identifier is a sub-element of <a href="#job"
+  >job</a
+  >. This is normally defined by RunDeck upon job creation. If it is specified, job will be created with this id.</p
+><p
+>If a job was already defined with this id, it will be updated with the included job definition.</p
+><h2 id="name"
+>name</h2
+><p
+>The job name is a sub-element of <a href="#job"
+  >job</a
+  >. The combination of 'name' and <a href="#group"
+  >group</a
+  > must be unique if the <a href="#id"
+  >id</a
+  > identifier is not included.</p
+><h2 id="description"
+>description</h2
+><p
+>The job description is a sub-element of <a href="#job"
+  >job</a
+  > and allows a short description of the job.</p
+><h2 id="additional"
+>additional</h2
+><p
+>The additional element is a sub-element of <a href="#job"
+  >job</a
+  > and provides a place to declare additional user information.</p
+><h2 id="group"
+>group</h2
+><p
+>The group is a sub-element of <a href="#job"
+  >job</a
+  > and defines the job's group identifier. This is a &quot;/&quot; (slash) separated string that mimics a directory structure.</p
+><p
+><em
+  >Example</em
+  ></p
+><pre
+><code
+  >&lt;job&gt;
+    &lt;name&gt;who&lt;/name&gt;
+    &lt;description&gt;who is logged in?&lt;/description&gt;
+    &lt;additional/&gt;
+    &lt;group&gt;/sysadm/users&lt;/group&gt;
+&lt;/job&gt;
+</code
+  ></pre
+><h2 id="schedule"
+>schedule</h2
+><p
+><code>schedule</code> is a sub-element of <a href="#job"
+  >job</a
+  > and specifies periodic job execution using the stated schedule. The schedule can be specified using embedded elements as shown below, or using a single <a href="#crontab"
+  >crontab</a
+  > attribute to set a full crontab expression.</p
+><p
+><em
+  >Nested elements</em
+  ></p
+><dl
+><dt
+  ><a href="#time"
+    >time</a
+    ></dt
+  ><dd
+  ><p
+    >the hour and minute and seconds</p
+    ></dd
+  ><dt
+  ><a href="#weekday"
+    >weekday</a
+    ></dt
+  ><dd
+  ><p
+    >day(s) of week</p
+    ></dd
+  ><dt
+  ><a href="#month"
+    >month</a
+    ></dt
+  ><dd
+  ><p
+    >month(s)</p
+    ></dd
+  ><dt
+  ><a href="#year"
+    >year</a
+    ></dt
+  ><dd
+  ><p
+    >year</p
+    ></dd
+  ></dl
+><p
+><em
+  >Attributes</em
+  ></p
+><dl
+><dt
+  ><a href="#crontab"
+    >crontab</a
+    ></dt
+  ><dd
+  >a full crontab expression</dd
+  ></dl
+><p
+><em
+  >Example</em
+  ></p
+><p
+>Run the job every morning at 6AM, 7AM and 8AM.</p
+><pre
+><code
+  >&lt;schedule&gt;
+ &lt;time hour=&quot;06,07,08&quot; minute=&quot;00&quot;/&gt;
+ &lt;weekday day=&quot;*&quot;/&gt;
+ &lt;month month=&quot;*&quot;/&gt;
+ &lt;/schedule&gt;
+</code
+  ></pre
+><p
+>Run the job every morning at 6:00:02AM, 7:00:02AM and 8:00:02AM only in the year 2010:</p
+><pre
+><code
+  >&lt;schedule&gt;
+ &lt;time hour=&quot;06,07,08&quot; minute=&quot;00&quot; seconds=&quot;02&quot;/&gt;
+ &lt;weekday day=&quot;*&quot;/&gt;
+ &lt;month month=&quot;*&quot;/&gt;
+ &lt;year year=&quot;2010&quot;/&gt;
+&lt;/schedule&gt;
+</code
+  ></pre
+><p
+>Run the job every morning at 6:00:02AM, 7:00:02AM and 8:00:02AM only in the year 2010, using a single crontab attribute to express it:</p
+><pre
+><code
+  >&lt;schedule crontab=&quot;02 00 06,07,08 ? * * 2010&quot;/&gt;
+</code
+  ></pre
+><p
+>For more information, see http://www.quartz-scheduler.org/docs/tutorials/crontrigger.html or http://www.stonebranch.com</p
+><h3 id="crontab"
+>crontab</h3
+><p
+>Attribute of the <a href="#schedule"
+  >schedule</a
+  >, sets the schedule with a full crontab string. For more information, see http://www.quartz-scheduler.org/docs/tutorials/crontrigger.html.</p
+><p
+>If specified, then the embedded schedule elements are not used.</p
+><h3 id="time"
+>time</h3
+><p
+>The <a href="#schedule"
+  >schedule</a
+  > time to run the job</p
+><p
+><em
+  >Attributes</em
+  ></p
+><dl
+><dt
+  >hour</dt
+  ><dd
+  ><p
+    >values: 00-23</p
+    ></dd
+  ><dt
+  >minute</dt
+  ><dd
+  ><p
+    >values: 00-59</p
+    ></dd
+  ></dl
+><h3 id="weekday"
+>weekday</h3
+><p
+>The <a href="#schedule"
+  >schedule</a
+  > weekday to run the job</p
+><p
+><em
+  >Attributes</em
+  ></p
+><dl
+><dt
+  >day</dt
+  ><dd
+  >values: * - all 1-5 days mon-fri 1,2,3-5 - days mon,tue,wed-fri, etc</dd
+  ></dl
+><h3 id="month"
+>month</h3
+><p
+>The <a href="#schedule"
+  >schedule</a
+  > month to run the job</p
+><p
+><em
+  >Attributes</em
+  ></p
+><dl
+><dt
+  >month</dt
+  ><dd
+  ><p
+    >values: * - all 1-10 - month jan-oct 1,2,3-5 - months jan,feb,mar-may, etc.</p
+    ></dd
+  ><dt
+  >day</dt
+  ><dd
+  ><p
+    >day of the month: * - all; 1-31 specific days</p
+    ></dd
+  ></dl
+><h2 id="context"
+>context</h2
+><p
+>The <a href="#job"
+  >job</a
+  > context.</p
+><p
+><em
+  >Nested elements</em
+  ></p
+><dl
+><dt
+  ><a href="#project"
+    >project</a
+    ></dt
+  ><dd
+  ><p
+    >the project name (required)</p
+    ></dd
+  ><dt
+  ><a href="#options"
+    >options</a
+    ></dt
+  ><dd
+  ><p
+    >job options. specifies one or more option elements</p
+    ></dd
+  ></dl
+><h3 id="project"
+>project</h3
+><p
+>The <a href="#context"
+  >context</a
+  > project name.</p
+><h3 id="options"
+>options</h3
+><p
+>The <a href="#context"
+  >context</a
+  > options that correspond to the called <a href="#command"
+  >command</a
+  >.</p
+><p
+><em
+  >Nested elements</em
+  ></p
+><dl
+><dt
+  >option](#option)</dt
+  ><dd
+  >an option element</dd
+  ></dl
+><p
+><em
+  >Example</em
+  ></p
+><pre
+><code
+  >&lt;options&gt;
+    &lt;option name=&quot;detail&quot; value=&quot;true&quot;/&gt;
+&lt;/options&gt;
+</code
+  ></pre
+><h4 id="option"
+>option</h4
+><p
+>Defines one option within the <a href="#options"
+  >options</a
+  >.</p
+><p
+><em
+  >Attributes</em
+  ></p
+><dl
+><dt
+  >name</dt
+  ><dd
+  ><p
+    >the option name</p
+    ></dd
+  ><dt
+  >value</dt
+  ><dd
+  ><p
+    >the default value</p
+    ></dd
+  ><dt
+  >values</dt
+  ><dd
+  ><p
+    >comma separated list of values</p
+    ></dd
+  ><dt
+  >valuesUrl</dt
+  ><dd
+  ><p
+    >URL to a list of JSON values</p
+    ></dd
+  ><dt
+  >enforcedvalues</dt
+  ><dd
+  ><p
+    >Boolean specifying that must pick from one of values</p
+    ></dd
+  ><dt
+  >regex</dt
+  ><dd
+  ><p
+    >Regex pattern of acceptable value</p
+    ></dd
+  ><dt
+  >description</dt
+  ><dd
+  ><p
+    >Description of the option</p
+    ></dd
+  ><dt
+  >required</dt
+  ><dd
+  ><p
+    >Boolean specifying that the option is required</p
+    ></dd
+  ></dl
+><p
+><em
+  >Example</em
+  ></p
+><p
+>Define defaults for the &quot;port&quot; option.</p
+><pre
+><code
+  >&lt;option name=&quot;port&quot; value=&quot;80&quot; values=&quot;80,8080,8888&quot; enforcedvalues=&quot;true&quot; regex=&quot;\d+&quot;/&gt;
+</code
+  ></pre
+><h4 id="valuesurl-json"
+>valuesUrl JSON</h4
+><p
+>The data returned from the valuesUrl can be formatted as a map:</p
+><pre
+><code
+  >{&quot;x label&quot;:&quot;X value&quot;,&quot;y label&quot;:&quot;Y value&quot;, &quot;z label&quot;:&quot;Z value&quot;}
+</code
+  ></pre
+><p
+>or as array:</p
+><pre
+><code
+  >[&quot;x value&quot;,&quot;y value&quot;, &quot;z value&quot;]
+</code
+  ></pre
+><h2 id="dispatch"
+>dispatch</h2
+><p
+>The <a href="#job"
+  >job</a
+  > dispatch options. See the [Dispatcher options] for general information.</p
+><p
+><em
+  >Nested elements</em
+  ></p
+><dl
+><dt
+  ><a href="#threadcount"
+    >threadcount</a
+    ></dt
+  ><dd
+  ><p
+    >dispatch up to threadcount</p
+    ></dd
+  ><dt
+  ><a href="#keepgoing"
+    >keepgoing</a
+    ></dt
+  ><dd
+  ><p
+    >keep going flag</p
+    ></dd
+  ></dl
+><p
+><em
+  >Example</em
+  ></p
+><pre
+><code
+  >&lt;dispatch&gt;
+  &lt;threadcount&gt;1&lt;/threadcount&gt;
+  &lt;keepgoing&gt;false&lt;/keepgoing&gt;
+&lt;/dispatch&gt;
+</code
+  ></pre
+><h3 id="threadcount"
+>threadcount</h3
+><p
+>Defines the number of threads to execute within <a href="#dispatch"
+  >dispatch</a
+  >. Must be a positive integer.</p
+><h3 id="keepgoing"
+>keepgoing</h3
+><p
+>Boolean describing if the <a href="#dispatch"
+  >dispatch</a
+  > should continue of an error occurs (true/false). If true, continue if an error occurs.</p
+><h2 id="loglevel"
+>loglevel</h2
+><p
+>The <a href="#job"
+  >job</a
+  > logging level. The lower the more profuse the messages.</p
+><ul
+><li
+  >DEBUG</li
+  ><li
+  >VERBOSE</li
+  ><li
+  >INFO</li
+  ><li
+  >WARN</li
+  ><li
+  >ERR</li
+  ></ul
+><h2 id="nodefilters"
+>nodefilters</h2
+><p
+>The <a href="#job"
+  >job</a
+  > nodefilters options. See <a href="#includeexclude-patterns"
+  >Include/exclude patterns</a
+  > for a general description.</p
+><p
+><em
+  >Attributes</em
+  ></p
+><dl
+><dt
+  >excludeprecedence</dt
+  ><dd
+  >boolean value: true or false</dd
+  ></dl
+><p
+><em
+  >Nested elements</em
+  ></p
+><dl
+><dt
+  >include</dt
+  ><dd
+  ><p
+    >include filter</p
+    ></dd
+  ><dt
+  >exclude</dt
+  ><dd
+  ><p
+    >exclude filter</p
+    ></dd
+  ></dl
+><p
+><em
+  >Example</em
+  ></p
+><pre
+><code
+  >&lt;nodefilters excludeprecedence=&quot;true&quot;&gt;
+  &lt;include&gt;
+    &lt;hostname/&gt;
+    &lt;type/&gt;
+    &lt;tags&gt;tomcats&lt;/tags&gt;
+    &lt;os-name/&gt;
+    &lt;os-family/&gt;
+    &lt;os-arch/&gt;
+    &lt;os-version/&gt;
+    &lt;name/&gt;
+  &lt;/include&gt;
+&lt;/nodefilters&gt;
+</code
+  ></pre
+><h3 id="include"
+>include</h3
+><p
+>See <a href="#includeexclude-patterns"
+  >Include/exclude patterns</a
+  ></p
+><h3 id="exclude"
+>exclude</h3
+><p
+>See <a href="#includeexclude-patterns"
+  >Include/exclude patterns</a
+  ></p
+><h3 id="includeexclude-patterns"
+>Include/exclude patterns</h3
+><p
+>The <a href="#nodefilters"
+  >nodefilters</a
+  > include and exclude patterns.</p
+><p
+><em
+  >Nested elements</em
+  ></p
+><dl
+><dt
+  >hostname</dt
+  ><dd
+  ><p
+    >node hostname</p
+    ></dd
+  ><dt
+  >name</dt
+  ><dd
+  ><p
+    >node resource name</p
+    ></dd
+  ><dt
+  >type</dt
+  ><dd
+  ><p
+    >node type</p
+    ></dd
+  ><dt
+  >tags</dt
+  ><dd
+  ><p
+    >node tags. comma separted</p
+    ></dd
+  ><dt
+  >os-name</dt
+  ><dd
+  ><p
+    >operating system name (eg, Linux, Mac OS X)</p
+    ></dd
+  ><dt
+  >os-family</dt
+  ><dd
+  ><p
+    >operating system family (eg, unix, windows)</p
+    ></dd
+  ><dt
+  >os-arch</dt
+  ><dd
+  ><p
+    >operating system architecture (eg i386,sparc)</p
+    ></dd
+  ><dt
+  >os-version</dt
+  ><dd
+  ><p
+    >operating system version</p
+    ></dd
+  ></dl
+><h2 id="sequence"
+>sequence</h2
+><p
+>The <a href="#job"
+  >job</a
+  > workflow sequence.</p
+><p
+><em
+  >Attributes</em
+  ></p
+><dl
+><dt
+  >keepgoing</dt
+  ><dd
+  ><p
+    >true/false. (default false). If true, the workflow sequence will continue even if there is a failure</p
+    ></dd
+  ><dt
+  >strategy</dt
+  ><dd
+  ><p
+    >node-first/step-first. (default &quot;node-first&quot;). The strategy to use for executing the workflow across nodes.</p
+    ></dd
+  ></dl
+><p
+>The strategy attribute determines the way that the workflow is executed. &quot;node-first&quot; means execute the full workflow on each node prior to the next. &quot;step-first&quot; means execute each step across all nodes prior to the next step.</p
+><p
+><em
+  >Nested elements</em
+  ></p
+><dl
+><dt
+  ><a href="#command"
+    >command</a
+    ></dt
+  ><dd
+  >a sequence item</dd
+  ></dl
+><h3 id="command"
+>command</h3
+><p
+>Defines an item for a workflow <a href="#sequence"
+  >sequence</a
+  >.</p
+><p
+>The different types of sequence items are defined in different ways.</p
+><p
+>See:</p
+><ul
+><li
+  ><a href="#script-sequence-item"
+    >Script sequence item</a
+    ></li
+  ><li
+  ><a href="#job-sequence-item"
+    >Job sequence item</a
+    ></li
+  ></ul
+><h4 id="script-sequence-item"
+>Script sequence item</h4
+><p
+>Script items can be defined in three ways within a command element:</p
+><ul
+><li
+  >Simple shell command using <code>exec</code> element.</li
+  ><li
+  >Embedded script using <code>script</code> element.</li
+  ><li
+  >Script file using <code>scriptfile</code> and <code>scriptargs</code> elements.</li
+  ></ul
+><p
+>Example exec item:</p
+><pre
+><code
+  >&lt;command&gt;
+   &lt;exec&gt;echo this is a shell command&lt;/exec&gt;
+&lt;/command&gt;
+</code
+  ></pre
+><p
+>Inline script. Note that using CDATA section will preserve linebreaks in the script. Simply put the script within a <code>script</code> element:</p
+><pre
+><code
+  >&lt;command&gt;
+    &lt;script&gt;&lt;![CDATA[#!/bin/bash
+echo this is a test
+echo whatever
+exit 2 ]&gt;&lt;/script&gt;
+&lt;/command&gt;
+</code
+  ></pre
+><p
+>Script File:</p
+><pre
+><code
+  >&lt;command &gt;
+    &lt;scriptfile&gt;/path/to/a/script&lt;/scriptfile&gt;
+    &lt;scriptargs&gt;-whatever something&lt;/scriptargs&gt;
+&lt;/command&gt;      
+</code
+  ></pre
+><h4 id="job-sequence-item"
+>Job sequence item</h4
+><p
+>Define a <a href="#jobref"
+  >jobref</a
+  > element within the <a href="#command"
+  >command</a
+  > element</p
+><h5 id="jobref"
+>jobref</h5
+><p
+><em
+  >Attributes</em
+  ></p
+><dl
+><dt
+  >name</dt
+  ><dd
+  ><p
+    >the job name</p
+    ></dd
+  ><dt
+  >group</dt
+  ><dd
+  ><p
+    >the group name</p
+    ></dd
+  ></dl
+><p
+><em
+  >Nested elements</em
+  ></p
+><p
+>Optional &quot;arg&quot; element can be embedded:</p
+><dl
+><dt
+  ><a href="#arg"
+    >arg</a
+    ></dt
+  ><dd
+  >option arguments to the script or job</dd
+  ></dl
+><p
+>Example passing arguments to the job:</p
+><pre
+><code
+  >&lt;command &gt;
+    &lt;jobref group=&quot;My group&quot; name=&quot;My Job&quot;&gt;
+       &lt;arg line=&quot;-option value -option2 value2&quot;/&gt;
+    &lt;/jobref&gt;
+&lt;/command&gt;      
+</code
+  ></pre
+><h2 id="notification"
+>notification</h2
+><p
+>Defines email notifications for Job success and failure, with in a <a href="#job"
+  >job</a
+  > definition.</p
+><p
+><em
+  >Nested elements</em
+  ></p
+><dl
+><dt
+  ><a href="#onsuccess"
+    >onsuccess</a
+    ></dt
+  ><dd
+  ><p
+    >define notifications for success result</p
+    ></dd
+  ><dt
+  ><a href="#onfailure"
+    >onfailure</a
+    ></dt
+  ><dd
+  ><p
+    >define notifications for failure/kill result</p
+    ></dd
+  ></dl
+><p
+><em
+  >Example</em
+  ></p
+><pre
+><code
+  >&lt;notification&gt;
+    &lt;onfailure&gt;
+        &lt;email recipients=&quot;test@example.com,foo@example.com&quot; /&gt;
+    &lt;/onfailure&gt;
+    &lt;onsuccess&gt;
+        &lt;email recipients=&quot;test@example.com&quot; /&gt;
+   &lt;/onsuccess&gt;
+&lt;/notification&gt;      
+</code
+  ></pre
+><h3 id="onsuccess"
+>onsuccess</h3
+><p
+>Embed an <a href="#email"
+  >email</a
+  > element to send email on success, within <a href="#notification"
+  >notification</a
+  >.</p
+><h3 id="onfailure"
+>onfailure</h3
+><p
+>Embed an <a href="#email"
+  >email</a
+  > element to send email on failure or kill, within <a href="#notification"
+  >notification</a
+  >.</p
+><h3 id="email"
+>email</h3
+><p
+>Define email recipients for Job execution result, within <a href="#onsuccess"
+  >onsuccess</a
+  > or <a href="#onfailure"
+  >onfailure</a
+  >.</p
+><p
+><em
+  >Attributes</em
+  ></p
+><dl
+><dt
+  >recipients</dt
+  ><dd
+  >comma-separated list of email addresses</dd
+  ></dl
+><p
+><em
+  >Example</em
+  ></p
+><pre
+><code
+  >        &lt;email recipients=&quot;test@example.com,dev@example.com&quot; /&gt;
+</code
+  ></pre
+>
+</body>
+</html>

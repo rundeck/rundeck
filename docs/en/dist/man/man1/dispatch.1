@@ -1,0 +1,218 @@
+.TH RUNDECK 1 "November 20, 2010" "RunDeck User Manuals" "Version 1.0"
+.SH NAME
+.PP
+dispatch - execute commands across nodes
+.SH SYNOPSIS
+.PP
+dispatch [\f[I]options\f[]]
+.SH DESCRIPTION
+.PP
+The dispatch command is used to remotely execute ad-hoc shell
+commands on a set of nodes which are specified by the filter
+options.
+.SH OPTIONS
+.PP
+-h, --help : Print usage message.
+.PP
+-v : Run verbosely.
+.PP
+-V : Turn on debug messages.
+.PP
+-q, --quiet : Show only error messages.
+.PP
+-N, --nodesfile \f[I]FILE\f[] : Use specified file containing nodes
+resource model.
+.PP
+-C, --threadcount \f[I]COUNT\f[] : Dispatch execution to Nodes
+using \f[I]COUNT\f[] threads.
+.PP
+-K, --keepgoing : Keep going when an error occurs on multiple
+dispatch.
+.PP
+-I, --nodes \f[I]FILTER\f[] : Include node parameter list.
+.PP
+-X, --xnodes \f[I]FILTER\f[] : Exclude node parameter list.
+.PP
+-filter-exclude-precedence \f[I]true|false\f[] : Set the exclusion
+filter to have precedence or not.
+.PP
+-p \f[I]NAME\f[] : Project name
+.PP
+-- \f[I]COMMAND_STRING\f[] : Dispatch specified command string
+.PP
+-s, --script \f[I]SCRIPT\f[] : Dispatch specified script file
+.PP
+-S, --stdin : Execute input read from \f[I]STDIN\f[]
+.PP
+-Q, --queue : Queue this command to the dispatcher service and run
+it
+.SH COMMAND MODE
+.PP
+Command mode occurs when the -p option is present (or there is only
+one Project), ando one (and only one) of the following options are
+specified: --, -s, or -S
+.SS COMMAND STRING (--)
+.PP
+The remote (or locally) shell command that is invoked is specified
+after the \[lq]--\[rq] on the command-line.
+This string should begin with the command name and be followed by
+any arguments you want to pass to it.
+.PP
+\f[I]Examples\f[]
+.PP
+Execute the apachectl restart command across Nodes tagged
+\[lq]web\[rq]:
+.IP
+.nf
+\f[C]
+dispatch\ -I\ tags=web\ --\ sudo\ apachectl\ restart
+\f[]
+.fi
+.PP
+Execute apachectl status using the \[lq]keepgoing\[rq] flag across
+nodes that have a hostname that begin with \[lq]web\[rq]:
+.IP
+.nf
+\f[C]
+dispatch\ -I\ hostname=web.*\ -K\ --\ apachectl\ status
+\f[]
+.fi
+.PP
+Run the locally installed update.sh script in three threads and
+keepgoing if an error occurs:
+.IP
+.nf
+\f[C]
+dispatch\ -I\ tags=dev\ -K\ -C\ 3\ --\ sh\ -c\ update.sh\ 
+\f[]
+.fi
+.SS SCRIPT (-s)
+.PP
+Sometimes it is preferable to save a sequence of command statements
+into a file on the admin host and then execute that file across a
+number of target hosts.
+The script specified via the -s option is a script local to where
+the dispatch command is executed but that script file is copied to
+the remote target machines and then executed.
+.PP
+\f[I]Examples\f[]
+.PP
+Execute the \[lq]myscript.sh\[rq] shell script across the Nodes
+tagged \[lq]web\[rq]:
+.IP
+.nf
+\f[C]
+dispatch\ -I\ tags=web\ -s\ myscript.sh
+\f[]
+.fi
+.PP
+Note: The script file is copied to a temporary directory on the
+target machines (on unix it is /tmp and on Windows c:)
+.SS STDIN (-S)
+.PP
+As an alternative to specifying the commands either as deferred
+arguments after the double hyphen (\[lq]--\[rq]) or as a saved
+script (\[lq]-s script\[rq]), dispatch can also read command input
+from stdin.
+.PP
+\f[I]Examples\f[]
+.PP
+Execute the uname command across all Unix nodes
+.IP
+.nf
+\f[C]
+echo\ "uname\ -a"\ |\ dispatch\ -I\ os-family=unix\ --stdin
+\f[]
+.fi
+.PP
+Multi-line scripts are easier to write using a here document:
+.IP
+.nf
+\f[C]
+dispatch\ --stdin\ <<END
+\ \ statement\ 1;
+\ \ statement\ 2;
+\ \ statement\ 3;
+END
+\f[]
+.fi
+.PP
+Note: The input read from stdin is saved to a temporary file and
+then content is called with the -s script mode described above to
+transfer and invoke the script.
+.SH LISTING MODE
+.PP
+dispatch will enter Listing Mode when no Command String is
+specified on the command line.
+.PP
+In this mode, dispatch will output the list of available nodes.
+.PP
+\f[I]Example\f[]
+.IP
+.nf
+\f[C]
+$\ dispatch
+daffy\ porky
+\f[]
+.fi
+.PP
+When the -v (verbose) option is specified, the node listing will
+include the details about the nodes that can be used for filtering:
+hostname, os-arch, os-family, os-version, os-name, tags.
+.PP
+\f[I]Example\f[]
+.IP
+.nf
+\f[C]
+$\ dispatch\ -v
+\ \ \ \ daffy:
+\ \ \ \ \ \ \ hostname:\ daffy.local
+\ \ \ \ \ \ \ os-arch:\ i386
+\ \ \ \ \ \ \ os-family:\ unix
+\ \ \ \ \ \ \ os-name:\ Mac\ OS\ X
+\ \ \ \ \ \ \ os-version:\ 10.5.2
+\ \ \ \ \ \ \ tags:\ [development]
+\ \ \ \ porky:
+\ \ \ \ \ \ \ hostname:\ porky
+\ \ \ \ \ \ \ os-arch:\ x86
+\ \ \ \ \ \ \ os-family:\ windows
+\ \ \ \ \ \ \ os-name:\ Windows\ XP
+\ \ \ \ \ \ \ os-version:\ 5.1
+\ \ \ \ \ \ \ tags:\ [testing]
+\f[]
+.fi
+.PP
+When combined with the -I/-X Node Filtering options, you can easily
+determine which nodes will be the target of any remotely executed
+command prior to invoking it:
+.IP
+.nf
+\f[C]
+dispatch\ -v\ -X\ os-family=unix
+\ \ \ \ porky:
+\ \ \ \ \ \ \ hostname:\ porky
+\ \ \ \ \ \ \ os-arch:\ x86
+\ \ \ \ \ \ \ os-family:\ windows
+\ \ \ \ \ \ \ os-name:\ Windows\ XP
+\ \ \ \ \ \ \ os-version:\ 5.1
+\ \ \ \ \ \ \ tags:\ [testing]
+\f[]
+.fi
+.SH ERROR CODE
+.PP
+The dispatch command will exit non zero if a command dispatch error
+occurs.
+.PP
+0 : All commands executed successfully
+.PP
+1 : One or more commands failed
+.PP
+127 : Unknown error case
+.SH SEE ALSO
+.PP
+\f[C]rd-options\f[] (1), \f[C]rdq\f[] (1).
+.PP
+The RunDeck source code and all documentation may be downloaded
+from <https://github.com/dtolabs/rundeck/>.
+.SH AUTHORS
+Alex Honor.

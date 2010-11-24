@@ -1,0 +1,331 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>RUNDECK(1) RunDeck User Manuals | Version 1.0</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Greg Schueler" />
+  <meta name="author" content="Alex Honor" />
+  <meta name="date" content="November 20, 2010" />
+</head>
+<body>
+<h1 class="title">RUNDECK(1) RunDeck User Manuals | Version 1.0</h1>
+<h1 id="name"
+>NAME</h1
+><p
+>rd-options - introduction to rundeck dispatcher options</p
+><h1 id="description"
+>DESCRIPTION</h1
+><p
+>Both the dispatch and run commands can use the node-dispatch feature to execute commands on remote nodes.</p
+><p
+>Finally the base set is filtered based on the filtering options specified on the command line, as described below.</p
+><h1 id="filtering-options"
+>FILTERING OPTIONS</h1
+><p
+>Both run and dispatch can use the commandline options -I (include, aka --nodes) and -X (exclude, aka --xnodes) to specify which nodes to include and exclude from the base set of nodes.</p
+><p
+>You can specify a single value, a list of values, or a regular expression as the argument to these options.</p
+><p
+>When only inclusion filters (-I) are specified, then only the nodes from the base set that match those filters are used.</p
+><p
+><em
+  >Examples</em
+  ></p
+><pre
+><code
+  >dispatch -I dev01 -- ps
+dispatch -I dev01,dev02 -- ps
+dispatch -I dev.* -- ps
+</code
+  ></pre
+><p
+>This executes the ps command using various selector types. The first matches only the node with hostname dev01, the second two nodes with hostnames dev01 and dev02, and the third all nodes with hostnames that match the regular expression dev.*.</p
+><p
+>When only exclusion filters (-X) are specified, then only the nodes from the base set that do not match those filters are used.</p
+><p
+><em
+  >Examples</em
+  ></p
+><pre
+><code
+  >dispatch -X web01 -- ps
+dispatch -X web01,web02 -- ps
+dispatch -X &quot;web.*&quot; -- ps
+</code
+  ></pre
+><p
+>This executes the 'ps' command by excluding nodes based on hostname selectors, thus it will execute on all nodes that are not matched by the exclusion filters.</p
+><p
+>By default, the -I and -X options are used to filter based on the node hostname property, as it is specified in the nodes.properties file.</p
+><p
+>However, keywords can be used to specify other properties to filter on besides hostname.</p
+><h1 id="keywords"
+>KEYWORDS</h1
+><p
+>Keywords are specifed by using one of the filter options with &quot;key=value&quot; as the argument to the option.</p
+><p
+><em
+  >Example</em
+  ></p
+><pre
+><code
+  >dispatch -I os-name=Linux -- ps
+</code
+  ></pre
+><p
+>This executes on all nodes with an operating system named &quot;Linux&quot;.</p
+><p
+>Notice that the argument to -I specifies os-name= and then the value Linux. The keyword used is os-name, and so the filter will match the &quot;os-name&quot; property in nodes.properties.</p
+><p
+>The available keywords are:</p
+><ul
+><li
+  ><p
+    >hostname : hostname of the node [default keyword]</p
+    ></li
+  ><li
+  ><p
+    >name : resource name of the node, which may be different than hostname</p
+    ></li
+  ><li
+  ><p
+    >type : type name of the node, typically &quot;Node&quot;</p
+    ></li
+  ><li
+  ><p
+    >tags : a set of user defined tags</p
+    ></li
+  ><li
+  ><p
+    >os-name : operating system name, e.g. &quot;Linux&quot;, &quot;Macintosh OS X&quot;</p
+    ></li
+  ><li
+  ><p
+    >os-family : operating system familiy, e.g. &quot;windows&quot;,&quot;unix&quot;</p
+    ></li
+  ><li
+  ><p
+    >os-arch : operating system CPU architecture, e.g. &quot;x86&quot;, &quot;x386&quot;</p
+    ></li
+  ><li
+  ><p
+    >os-version : operating system version number</p
+    ></li
+  ></ul
+><p
+>All of the keywords can accept a single value, a comma-separated list, or a regular expression.</p
+><h1 id="tags"
+>TAGS</h1
+><p
+>In addition, the tags keyword can use the boolean operator + to represent logical AND. The comma used to separate lists serves as logical OR. The following example matches all nodes tagged with both &quot;devel&quot; AND &quot;secure&quot;, OR with &quot;server&quot;:</p
+><pre
+><code
+  >dispatch -I tags=devel+secure,server -- ps
+</code
+  ></pre
+><h2 id="combining-options"
+>Combining Options</h2
+><p
+>All keywords can be combined by specifying the -I or -X options multiple times on the command line.</p
+><p
+>The following example includes all nodes tagged with both &quot;devel&quot; and &quot;secure&quot;, as well as all nodes with hostnames matching web.*:</p
+><pre
+><code
+  >dispatch -I tags=devel+secure -I web.* -- ps
+</code
+  ></pre
+><p
+>The following includes all nodes tagged with both &quot;devel&quot; and &quot;secure&quot;, as well as all nodes with hostnames matching web.*, and excludes the node with hostname &quot;web01&quot;:</p
+><pre
+><code
+  >dispatch -X web01 -I tags=devel+secure -I web.* -- ps
+</code
+  ></pre
+><p
+>Note, however, that you cannot specify the same keyword multiple times for the same type of filter:</p
+><p
+>WRONG:</p
+><pre
+><code
+  >dispatch -X web01 -X dev01 -I tags=devel+secure -I web.* -- ps
+</code
+  ></pre
+><p
+>This example will not exclude the node &quot;web01&quot;, because there are two -X options with the same keyword. Both -X web01 and -X dev01 default to the &quot;hostname&quot; keyword, and the second entry will override the first. To exclude both of those nodes, you must combine them for the option -X web01,dev01:</p
+><p
+>CORRECT:</p
+><pre
+><code
+  >dispatch -X web01,dev01 -I tags=devel+secure -I web.* -- ps
+</code
+  ></pre
+><p
+>The last example brings up the issue of Precedence. The command line first specifies -X web01, then later specifies &quot;-I web.*&quot;. However, the hostname &quot;web01&quot; would be matched by the regular expression &quot;web.*&quot;. So is the node with hostname &quot;web01&quot; included in the set of nodes to execute on, or is it excluded?</p
+><h1 id="attributes"
+>Attributes</h1
+><p
+>Arbitrary attributes can be used in node filtering as well. If you add Setting resources or other Resources to the Node object, any Attributes exported by those resources are available for Node filtering.</p
+><p
+>Simply specify the attribute name as a filter with one of the -I/-X arguments:</p
+><pre
+><code
+  >dispatch -I my-attribute=true -- ps
+</code
+  ></pre
+><p
+>This will execute ps on any node with an attribute named my-attribute with a value of &quot;true&quot;.</p
+><h1 id="precedence"
+>Precedence</h1
+><p
+>Precedence is the issue of whether a node should be included in the result set when it matches both an exclusion filter and an inclusion filter.</p
+><p
+>Take a simplified example:</p
+><pre
+><code
+  >dispatch -X web01 -I web.* -- ps
+</code
+  ></pre
+><p
+>The intent is to exclude &quot;web01&quot; while including all other nodes matching the regular expression &quot;web.*&quot;. Depending on which filter takes precedence, the exclusion filter or the inclusion filter, the result may be different.</p
+><p
+>When inclusion has precedence, nodes that match both filters will be included. When exclusion has precedence, nodes that match both filters will be excluded. So which filter has precedence?</p
+><p
+>The first filter specified on a command line takes precedence. This means that if you specify any -X option before a -I option, then exclusion will take precedence, and vice versa.</p
+><p
+>So in the example above, the -X takes precedence (it is first), and so the node with hostname &quot;dev01&quot; is excluded from the result set.</p
+><p
+>If you change the order of the options:</p
+><pre
+><code
+  >dispatch -I web.* -X web01 -- ps
+</code
+  ></pre
+><p
+>Then the node with hostname &quot;web01&quot; will be included in the results.</p
+><p
+>Note: When only one filter is used, either -I or -X, there is no need to worry about precedence.</p
+><p
+>In general, a good rule of thumb when trying to determine which precedence you need is to specify the most restrictive filter first.</p
+><p
+>For an inverse example, suppose you want to dispatch to all non-windows nodes, but you want to include any nodes tagged with &quot;development&quot;. You might try this at first:</p
+><p
+>WRONG:</p
+><pre
+><code
+  >dispatch -X os-family=windows -I tags=development -- ps
+</code
+  ></pre
+><p
+>This will not return the correct result set, because the -X takes precedence as it is the first filter on the line. So any nodes that have both os-family=windows and tag=development will be excluded.</p
+><p
+>CORRECT:</p
+><pre
+><code
+  >dispatch -I tags=development -X os-family=windows -- ps
+</code
+  ></pre
+><p
+>Here since the -I is specified first, the inclusion filter has precedence, and any nodes that have both os-family=windows and tag=development will be included in the result.</p
+><h1 id="explicit-precedence-using---filter-exclude-precedence"
+>Explicit Precedence using --filter-exclude-precedence</h1
+><p
+>Using the --filter-exclude-precedence command-line option, the precedence can be set explicitly. The argument is &quot;true&quot; or &quot;false&quot;. When the argument is &quot;true&quot; then the exclusion filter takes precedence, regardless of the order of the filter options. When the argument is &quot;false&quot; then the inclusion filter takes precedence.</p
+><pre
+><code
+  >dispatch -I web.* -X web01 --filter-exclude-precedence true -- ps
+</code
+  ></pre
+><p
+>This command-line correctly excludes the &quot;web01&quot; node because the --filter-exclude-precedence option is set to &quot;true&quot;.</p
+><h1 id="retrying-on-failed-nodes"
+>Retrying on failed nodes</h1
+><p
+>When the -K option is specified to run or dispatch, then the command will be executed on all matched nodes, even if some nodes fail during the process. The list of which nodes failed will be printed at the end of the sequence.</p
+><pre
+><code
+  >Command failed: Execution failed on the following nodes: [calculon,centos5]
+</code
+  ></pre
+><p
+>If you simply execute a command with some node filters and the -K option, then a message is printed echoing the same commandline that you executed, but with the list of failed nodes inserted as the node filters:</p
+><pre
+><code
+  >$ dispatch -I tags=something -K -p demo -s myscript.sh
+....
+Command failed: Execution failed on the following nodes: [calculon,centos5]
+Execute this command to retry on the failed nodes:
+    dispatch -I name=calculon,centos5 -K -p demo -s myscript.sh
+</code
+  ></pre
+><p
+>You can copy and paste the printed command to retry the same command only on the list of failed nodes.</p
+><h2 id="storing-the-failed-node-list-in-a-file"
+>Storing the failed node list in a file:</h2
+><p
+>Ctl and dispatch have an option that stores the list of nodes where the command failed into a file, which can then be specified again to re-execute the command on only those failed nodes.</p
+><p
+>Use the &quot;failednodes&quot; option:</p
+><pre
+><code
+  >-F,--failednodes Filepath to store failed nodes
+</code
+  ></pre
+><p
+>When you specify a set of Node filters, as well as the -K option, also include the -F option with the path to a file.</p
+><p
+>E.g.:</p
+><pre
+><code
+  >$ dispatch -K -F /home/ctier/tempnodes -I tags=mynodes -p demo -- ps
+</code
+  ></pre
+><p
+>If the execution fails on some nodes, that list is stored in the file, and an additional message is printed:</p
+><pre
+><code
+  >error: Execute this command to retry on the failed nodes:    
+dispatch -K -F /home/ctier/tempnodes -p demo -- ps
+</code
+  ></pre
+><p
+>Notice that this command specifies the same filepath as originally specified, but not the Node filtering options. The list of nodes will be read from the file.</p
+><p
+>When all the executions succeed on the nodes, any file at the specified path will be deleted. This means that you can have some looping logic in a shell script to re-try the execution if the specified file exists:</p
+><pre
+><code
+  >#!/bin/bash
+COMMAND=...
+NODEFILE=/home/ctier/tempnodes
+dispatch -K -F $NODEFILE -I tags=mynodes -p demo -- $COMMAND
+if [ -f $NODEFILE ] ; then
+   # since the node file exists, some nodes failed, retry.
+  dispatch -K -F $NODEFILE -p demo -- $COMMAND   
+fi
+
+if [ -f $NODEFILE ] ; then
+  # if the file still exists, then some nodes failed again
+ echo &quot;Some nodes failed after retry, aborting...&quot;
+ exit 1
+fi
+</code
+  ></pre
+><h1 id="see-also"
+>SEE ALSO</h1
+><p
+><code
+  >dispatch</code
+  > (1), <code
+  >run</code
+  > (1), <code
+  >rd-jobs</code
+  > (1).</p
+><p
+>The RunDeck source code and all documentation may be downloaded from <a href="https://github.com/dtolabs/rundeck/"
+  ><code
+    >https://github.com/dtolabs/rundeck/</code
+    ></a
+  >.</p
+>
+</body>
+</html>

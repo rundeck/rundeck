@@ -1,0 +1,2743 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>RUNDECK(1) RunDeck User Manuals | Version 1.0</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Alex Honor" />
+  <meta name="date" content="November 20, 2010" />
+  <link rel="stylesheet" href="RunDeck-Guide.css" type="text/css" />
+</head>
+<body>
+<h1 class="title">RUNDECK(1) RunDeck User Manuals | Version 1.0</h1>
+<div id="TOC"
+><ul
+  ><li
+    ><a href="#getting-started"
+      ><span class="toc-section-number"
+	>1</span
+	> Getting Started</a
+      ><ul
+      ><li
+	><a href="#rundeck-basics"
+	  ><span class="toc-section-number"
+	    >1.1</span
+	    > RunDeck Basics</a
+	  ><ul
+	  ><li
+	    ><a href="#command-dispatching"
+	      ><span class="toc-section-number"
+		>1.1.1</span
+		> Command dispatching</a
+	      ></li
+	    ><li
+	    ><a href="#resource-model"
+	      ><span class="toc-section-number"
+		>1.1.2</span
+		> Resource model</a
+	      ></li
+	    ><li
+	    ><a href="#authorization"
+	      ><span class="toc-section-number"
+		>1.1.3</span
+		> Authorization</a
+	      ></li
+	    ><li
+	    ><a href="#project"
+	      ><span class="toc-section-number"
+		>1.1.4</span
+		> Project</a
+	      ></li
+	    ></ul
+	  ></li
+	><li
+	><a href="#installing-rundeck"
+	  ><span class="toc-section-number"
+	    >1.2</span
+	    > Installing RunDeck</a
+	  ><ul
+	  ><li
+	    ><a href="#system-requirements"
+	      ><span class="toc-section-number"
+		>1.2.1</span
+		> System Requirements</a
+	      ><ul
+	      ><li
+		><a href="#java"
+		  ><span class="toc-section-number"
+		    >1.2.1.1</span
+		    > Java</a
+		  ></li
+		><li
+		><a href="#network-access"
+		  ><span class="toc-section-number"
+		    >1.2.1.2</span
+		    > Network access</a
+		  ></li
+		></ul
+	      ></li
+	    ><li
+	    ><a href="#installing-from-source"
+	      ><span class="toc-section-number"
+		>1.2.2</span
+		> Installing from Source</a
+	      ></li
+	    ><li
+	    ><a href="#installing-on-linux"
+	      ><span class="toc-section-number"
+		>1.2.3</span
+		> Installing on Linux</a
+	      ></li
+	    ><li
+	    ><a href="#installing-on-other-platforms"
+	      ><span class="toc-section-number"
+		>1.2.4</span
+		> Installing on other platforms</a
+	      ></li
+	    ></ul
+	  ></li
+	><li
+	><a href="#first-time-setup"
+	  ><span class="toc-section-number"
+	    >1.3</span
+	    > First-Time Setup</a
+	  ><ul
+	  ><li
+	    ><a href="#logins"
+	      ><span class="toc-section-number"
+		>1.3.1</span
+		> Logins</a
+	      ></li
+	    ></ul
+	  ></li
+	><li
+	><a href="#getting-help"
+	  ><span class="toc-section-number"
+	    >1.4</span
+	    > Getting Help</a
+	  ></li
+	><li
+	><a href="#summary"
+	  ><span class="toc-section-number"
+	    >1.5</span
+	    > Summary</a
+	  ></li
+	></ul
+      ></li
+    ><li
+    ><a href="#rundeck-basics-1"
+      ><span class="toc-section-number"
+	>2</span
+	> RunDeck Basics</a
+      ><ul
+      ><li
+	><a href="#project-setup"
+	  ><span class="toc-section-number"
+	    >2.1</span
+	    > Project Setup</a
+	  ><ul
+	  ><li
+	    ><a href="#resource-model-1"
+	      ><span class="toc-section-number"
+		>2.1.1</span
+		> Resource model</a
+	      ></li
+	    ></ul
+	  ></li
+	><li
+	><a href="#rundeck-interfaces"
+	  ><span class="toc-section-number"
+	    >2.2</span
+	    > RunDeck Interfaces</a
+	  ><ul
+	  ><li
+	    ><a href="#graphical-console"
+	      ><span class="toc-section-number"
+		>2.2.1</span
+		> Graphical Console</a
+	      ><ul
+	      ><li
+		><a href="#navigation"
+		  ><span class="toc-section-number"
+		    >2.2.1.1</span
+		    > Navigation</a
+		  ></li
+		></ul
+	      ></li
+	    ><li
+	    ><a href="#shell-tools"
+	      ><span class="toc-section-number"
+		>2.2.2</span
+		> Shell Tools</a
+	      ></li
+	    ></ul
+	  ></li
+	><li
+	><a href="#command-execution"
+	  ><span class="toc-section-number"
+	    >2.3</span
+	    > Command Execution</a
+	  ><ul
+	  ><li
+	    ><a href="#dispatcher-options"
+	      ><span class="toc-section-number"
+		>2.3.1</span
+		> Dispatcher options</a
+	      ><ul
+	      ><li
+		><a href="#filtering-nodes-in-the-shell"
+		  ><span class="toc-section-number"
+		    >2.3.1.1</span
+		    > Filtering nodes in the shell</a
+		  ></li
+		><li
+		><a href="#filtering-nodes-graphically"
+		  ><span class="toc-section-number"
+		    >2.3.1.2</span
+		    > Filtering nodes graphically</a
+		  ></li
+		></ul
+	      ></li
+	    ><li
+	    ><a href="#ad-hoc-commands"
+	      ><span class="toc-section-number"
+		>2.3.2</span
+		> Ad-hoc commands</a
+	      ><ul
+	      ><li
+		><a href="#shell-tool-command-execution"
+		  ><span class="toc-section-number"
+		    >2.3.2.1</span
+		    > Shell tool command execution</a
+		  ></li
+		><li
+		><a href="#graphical-command-shell-execution"
+		  ><span class="toc-section-number"
+		    >2.3.2.2</span
+		    > Graphical command shell execution</a
+		  ><ul
+		  ><li
+		    ><a href="#following-execution-output"
+		      ><span class="toc-section-number"
+			>2.3.2.2.1</span
+			> Following execution output</a
+		      ></li
+		    ></ul
+		  ></li
+		></ul
+	      ></li
+	    ><li
+	    ><a href="#controlling-ad-hoc-command-execution"
+	      ><span class="toc-section-number"
+		>2.3.3</span
+		> Controlling ad-hoc command execution</a
+	      ></li
+	    ><li
+	    ><a href="#queuing-commands-to-rundeck"
+	      ><span class="toc-section-number"
+		>2.3.4</span
+		> Queuing commands to RunDeck</a
+	      ></li
+	    ><li
+	    ><a href="#tracking-execution"
+	      ><span class="toc-section-number"
+		>2.3.5</span
+		> Tracking execution</a
+	      ></li
+	    ></ul
+	  ></li
+	><li
+	><a href="#history"
+	  ><span class="toc-section-number"
+	    >2.4</span
+	    > History</a
+	  ><ul
+	  ><li
+	    ><a href="#filtering-event-history"
+	      ><span class="toc-section-number"
+		>2.4.1</span
+		> Filtering event history</a
+	      ></li
+	    ><li
+	    ><a href="#event-view"
+	      ><span class="toc-section-number"
+		>2.4.2</span
+		> Event view</a
+	      ></li
+	    ><li
+	    ><a href="#rss-link"
+	      ><span class="toc-section-number"
+		>2.4.3</span
+		> RSS Link</a
+	      ></li
+	    ></ul
+	  ></li
+	><li
+	><a href="#tips-and-tricks"
+	  ><span class="toc-section-number"
+	    >2.5</span
+	    > Tips and Tricks</a
+	  ><ul
+	  ><li
+	    ><a href="#saving-filters"
+	      ><span class="toc-section-number"
+		>2.5.1</span
+		> Saving filters</a
+	      ></li
+	    ><li
+	    ><a href="#auto-completion"
+	      ><span class="toc-section-number"
+		>2.5.2</span
+		> Auto-Completion</a
+	      ></li
+	    ></ul
+	  ></li
+	><li
+	><a href="#summary-1"
+	  ><span class="toc-section-number"
+	    >2.6</span
+	    > Summary</a
+	  ></li
+	></ul
+      ></li
+    ><li
+    ><a href="#jobs"
+      ><span class="toc-section-number"
+	>3</span
+	> Jobs</a
+      ><ul
+      ><li
+	><a href="#job-groups"
+	  ><span class="toc-section-number"
+	    >3.1</span
+	    > Job groups</a
+	  ></li
+	><li
+	><a href="#listing-and-filtering-jobs"
+	  ><span class="toc-section-number"
+	    >3.2</span
+	    > Listing and filtering Jobs</a
+	  ><ul
+	  ><li
+	    ><a href="#filtering-jobs"
+	      ><span class="toc-section-number"
+		>3.2.1</span
+		> Filtering Jobs</a
+	      ></li
+	    ></ul
+	  ></li
+	><li
+	><a href="#running-a-job"
+	  ><span class="toc-section-number"
+	    >3.3</span
+	    > Running a Job</a
+	  ><ul
+	  ><li
+	    ><a href="#choose-execution-options"
+	      ><span class="toc-section-number"
+		>3.3.1</span
+		> Choose execution options</a
+	      ></li
+	    ><li
+	    ><a href="#following-running-jobs"
+	      ><span class="toc-section-number"
+		>3.3.2</span
+		> Following Running Jobs</a
+	      ></li
+	    ></ul
+	  ></li
+	><li
+	><a href="#creating-jobs"
+	  ><span class="toc-section-number"
+	    >3.4</span
+	    > Creating Jobs</a
+	  ><ul
+	  ><li
+	    ><a href="#temporary-jobs"
+	      ><span class="toc-section-number"
+		>3.4.1</span
+		> Temporary Jobs</a
+	      ></li
+	    ><li
+	    ><a href="#saved-jobs"
+	      ><span class="toc-section-number"
+		>3.4.2</span
+		> Saved Jobs</a
+	      ></li
+	    ><li
+	    ><a href="#simple-saved-job"
+	      ><span class="toc-section-number"
+		>3.4.3</span
+		> Simple saved job</a
+	      ></li
+	    ></ul
+	  ></li
+	><li
+	><a href="#scheduled-jobs"
+	  ><span class="toc-section-number"
+	    >3.5</span
+	    > Scheduled Jobs</a
+	  ></li
+	><li
+	><a href="#job-history"
+	  ><span class="toc-section-number"
+	    >3.6</span
+	    > Job history</a
+	  ></li
+	><li
+	><a href="#killing-jobs"
+	  ><span class="toc-section-number"
+	    >3.7</span
+	    > Killing Jobs</a
+	  ></li
+	><li
+	><a href="#deleting-jobs"
+	  ><span class="toc-section-number"
+	    >3.8</span
+	    > Deleting Jobs</a
+	  ></li
+	><li
+	><a href="#updating-and-copying-jobs"
+	  ><span class="toc-section-number"
+	    >3.9</span
+	    > Updating and copying Jobs</a
+	  ></li
+	><li
+	><a href="#exporting-jobs-as-xml"
+	  ><span class="toc-section-number"
+	    >3.10</span
+	    > Exporting Jobs as XML</a
+	  ></li
+	><li
+	><a href="#importing-jobs-as-xml"
+	  ><span class="toc-section-number"
+	    >3.11</span
+	    > Importing Jobs as XML</a
+	  ></li
+	><li
+	><a href="#summary-2"
+	  ><span class="toc-section-number"
+	    >3.12</span
+	    > Summary</a
+	  ></li
+	></ul
+      ></li
+    ><li
+    ><a href="#job-workflows"
+      ><span class="toc-section-number"
+	>4</span
+	> Job Workflows</a
+      ><ul
+      ><li
+	><a href="#authoring-tools"
+	  ><span class="toc-section-number"
+	    >4.1</span
+	    > Authoring tools</a
+	  ></li
+	><li
+	><a href="#workflow-control-settings"
+	  ><span class="toc-section-number"
+	    >4.2</span
+	    > Workflow control settings</a
+	  ></li
+	><li
+	><a href="#workflow-steps"
+	  ><span class="toc-section-number"
+	    >4.3</span
+	    > Workflow steps</a
+	  ><ul
+	  ><li
+	    ><a href="#command-step"
+	      ><span class="toc-section-number"
+		>4.3.1</span
+		> Command step</a
+	      ></li
+	    ><li
+	    ><a href="#script-step"
+	      ><span class="toc-section-number"
+		>4.3.2</span
+		> Script step</a
+	      ></li
+	    ><li
+	    ><a href="#script-file-step"
+	      ><span class="toc-section-number"
+		>4.3.3</span
+		> Script file step</a
+	      ></li
+	    ><li
+	    ><a href="#job-reference-step"
+	      ><span class="toc-section-number"
+		>4.3.4</span
+		> Job reference step</a
+	      ></li
+	    ></ul
+	  ></li
+	><li
+	><a href="#reordering-steps"
+	  ><span class="toc-section-number"
+	    >4.4</span
+	    > Reordering steps</a
+	  ></li
+	><li
+	><a href="#save-the-changes"
+	  ><span class="toc-section-number"
+	    >4.5</span
+	    > Save the changes</a
+	  ></li
+	><li
+	><a href="#summary-3"
+	  ><span class="toc-section-number"
+	    >4.6</span
+	    > Summary</a
+	  ></li
+	></ul
+      ></li
+    ><li
+    ><a href="#job-options"
+      ><span class="toc-section-number"
+	>5</span
+	> Job Options</a
+      ><ul
+      ><li
+	><a href="#prompting-the-user"
+	  ><span class="toc-section-number"
+	    >5.1</span
+	    > Prompting the user</a
+	  ></li
+	><li
+	><a href="#options-editor"
+	  ><span class="toc-section-number"
+	    >5.2</span
+	    > Options editor</a
+	  ></li
+	><li
+	><a href="#defining-an-option"
+	  ><span class="toc-section-number"
+	    >5.3</span
+	    > Defining an option</a
+	  ></li
+	><li
+	><a href="#remote-option-values"
+	  ><span class="toc-section-number"
+	    >5.4</span
+	    > Remote option values</a
+	  ><ul
+	  ><li
+	    ><a href="#json-format"
+	      ><span class="toc-section-number"
+		>5.4.1</span
+		> JSON format</a
+	      ></li
+	    ><li
+	    ><a href="#variable-expansion-in-remote-urls"
+	      ><span class="toc-section-number"
+		>5.4.2</span
+		> Variable expansion in remote URLs</a
+	      ></li
+	    ><li
+	    ><a href="#remote-request-failures"
+	      ><span class="toc-section-number"
+		>5.4.3</span
+		> Remote request failures</a
+	      ></li
+	    ></ul
+	  ></li
+	><li
+	><a href="#script-usage"
+	  ><span class="toc-section-number"
+	    >5.5</span
+	    > Script usage</a
+	  ></li
+	><li
+	><a href="#calling-a-job-with-options"
+	  ><span class="toc-section-number"
+	    >5.6</span
+	    > Calling a Job with options</a
+	  ></li
+	><li
+	><a href="#summary-4"
+	  ><span class="toc-section-number"
+	    >5.7</span
+	    > Summary</a
+	  ></li
+	></ul
+      ></li
+    ><li
+    ><a href="#authorization-1"
+      ><span class="toc-section-number"
+	>6</span
+	> Authorization</a
+      ><ul
+      ><li
+	><a href="#summary-5"
+	  ><span class="toc-section-number"
+	    >6.1</span
+	    > Summary</a
+	  ></li
+	></ul
+      ></li
+    ><li
+    ><a href="#examples"
+      ><span class="toc-section-number"
+	>7</span
+	> Examples</a
+      ><ul
+      ><li
+	><a href="#summary-6"
+	  ><span class="toc-section-number"
+	    >7.1</span
+	    > Summary</a
+	  ></li
+	></ul
+      ></li
+    ><li
+    ><a href="#coordinatation"
+      ><span class="toc-section-number"
+	>8</span
+	> Coordinatation</a
+      ><ul
+      ><li
+	><a href="#execution-strategies-revisited"
+	  ><span class="toc-section-number"
+	    >8.1</span
+	    > Execution strategies revisited</a
+	  ><ul
+	  ><li
+	    ><a href="#step-vs-node-oriented"
+	      ><span class="toc-section-number"
+		>8.1.1</span
+		> Step vs Node oriented</a
+	      ></li
+	    ><li
+	    ><a href="#topology-structures-tiers-and-slices"
+	      ><span class="toc-section-number"
+		>8.1.2</span
+		> Topology structures: Tiers and Slices</a
+	      ></li
+	    ><li
+	    ><a href="#coordination-models"
+	      ><span class="toc-section-number"
+		>8.1.3</span
+		> Coordination models</a
+	      ><ul
+	      ><li
+		><a href="#sync-points"
+		  ><span class="toc-section-number"
+		    >8.1.3.1</span
+		    > Sync points</a
+		  ></li
+		></ul
+	      ></li
+	    ></ul
+	  ></li
+	><li
+	><a href="#summary-7"
+	  ><span class="toc-section-number"
+	    >8.2</span
+	    > Summary</a
+	  ></li
+	></ul
+      ></li
+    ><li
+    ><a href="#administration"
+      ><span class="toc-section-number"
+	>9</span
+	> Administration</a
+      ><ul
+      ><li
+	><a href="#ssl"
+	  ><span class="toc-section-number"
+	    >9.1</span
+	    > SSL</a
+	  ></li
+	><li
+	><a href="#ldap"
+	  ><span class="toc-section-number"
+	    >9.2</span
+	    > LDAP</a
+	  ></li
+	><li
+	><a href="#backup-and-recovery"
+	  ><span class="toc-section-number"
+	    >9.3</span
+	    > Backup and recovery</a
+	  ></li
+	><li
+	><a href="#high-availability"
+	  ><span class="toc-section-number"
+	    >9.4</span
+	    > High availability</a
+	  ></li
+	><li
+	><a href="#configuration"
+	  ><span class="toc-section-number"
+	    >9.5</span
+	    > Configuration</a
+	  ></li
+	><li
+	><a href="#logs"
+	  ><span class="toc-section-number"
+	    >9.6</span
+	    > Logs</a
+	  ></li
+	><li
+	><a href="#summary-8"
+	  ><span class="toc-section-number"
+	    >9.7</span
+	    > Summary</a
+	  ></li
+	></ul
+      ></li
+    ></ul
+  ></div
+>
+<h1 id="getting-started"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >1</span
+    > Getting Started</a
+  ></h1
+><p
+>This chapter will be about getting started with RunDeck. We will begin by explaining ... , then move on to ..., finally ... At the end of this chapter you should understand what RunDeck is, how you should use it and you should be all setup to do so.</p
+><h2 id="rundeck-basics"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >1.1</span
+    > RunDeck Basics</a
+  ></h2
+><p
+>Several fundamental concepts underly and drive the development of the RunDeck system. If you are a new user, knowing about them will help you use and integrate RunDeck into your environment.</p
+><h3 id="command-dispatching"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >1.1.1</span
+    > Command dispatching</a
+  ></h3
+><p
+>RunDeck supports a notion called Command dispatching wherein a user specifies dispatch critera along with an action (called a command) and this specification is used to perform a distributed execution.</p
+><p
+>Internally, a mechanism called the command dispatcher does a lookup to find node resources meeting specified filtering criteria and performs the distributed command execution. The command executes in a data context that contains information about the Node resource.</p
+><p
+>The command dispatcher supports two methods of command execution:</p
+><ul
+><li
+  >Ad hoc commands: Execute any shell command or shell script across a set of hosts.<br
+     /></li
+  ><li
+  >Jobs: Encapsulate commands as a named Job and tie them together into Job workflows.</li
+  ></ul
+><p
+>RunDeck provides both graphical and command line interfaces to interact with the command dispatcher.</p
+><h3 id="resource-model"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >1.1.2</span
+    > Resource model</a
+  ></h3
+><p
+>The command dispatcher works in conjunction with a resource model. A resource model is a representation of hosts deployed in your network. A <em
+  >Node</em
+  > resource is either a physical or virtual instance of an operating system that is network accessible.</p
+><p
+>Nodes have a number of basic properties but these properties can be extended to include arbitrary named key value pairs.</p
+><p
+>You can configure RunDeck to retrieve and store resource model data from any source, so long as it meets the RunDeck resource model document requirement.</p
+><h3 id="authorization"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >1.1.3</span
+    > Authorization</a
+  ></h3
+><p
+>RunDeck uses an authorization model where users belong to groups and those groups are associated with abitrarily defined roles.</p
+><p
+>Every action executed through the RunDeck command dispatcher must meet the requirements of an access control policy definition.</p
+><p
+>Since RunDeck respects the ACLs definition, you can use role-based authorization to restrict some users to only a subset of actions. This provides a Self-Service type interface, where some users can have access to a limited set of actions to execute.</p
+><h3 id="project"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >1.1.4</span
+    > Project</a
+  ></h3
+><p
+>All RunDeck activities occur within the context of a single project. Each project has its own resource model and Job store.</p
+><p
+>Multiple projects can be maintained on the same RunDeck server. Projects are independent of one another, so you can use them to organize unrelated systems within a single RunDeck installation. This can be useful for managing different infrastructures.</p
+><h2 id="installing-rundeck"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >1.2</span
+    > Installing RunDeck</a
+  ></h2
+><p
+>Assuming the system requirements are met, RunDeck can be installed either from source, system package or via the launcher.</p
+><h3 id="system-requirements"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >1.2.1</span
+    > System Requirements</a
+  ></h3
+><p
+>The following operating systems are known to support RunDeck:</p
+><ul
+><li
+  >Linux: Most recent distributions are likely to work</li
+  ><li
+  >Windows: XP, Server and above</li
+  ><li
+  >Mac OS X 10.4 or later</li
+  ><li
+  >Solaris or OpenSolaris</li
+  ></ul
+><p
+>Root (or Administrator on Windows) is not required or recommended. We recommend using a dedicated user account such as &quot;rundeck&quot;.</p
+><p
+>If there is need for root access, please set up the RunDeck user to have access via sudo.</p
+><h4 id="java"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >1.2.1.1</span
+    > Java</a
+  ></h4
+><p
+>RunDeck is a Java-Servlet based server and therefore requires the Java runtime.</p
+><p
+>The install process requires that the latest version of Java 1.5 or 1.6 be installed. Both the <a href="http://openjdk.java.net/"
+  >Open JDK</a
+  > and <a href="http://java.com/"
+  >Sun/Oracle</a
+  > JVMs can be used. You must have the JAVA_HOME environment variable defined in your environment before running the install script.</p
+><p
+>Verify your Java version to check it meets the requirement:</p
+><pre
+><code
+  >$ java -version
+java version &quot;1.6.0_22&quot;
+Java(TM) SE Runtime Environment (build 1.6.0_22-b04-307-10M3261)
+Java HotSpot(TM) 64-Bit Server VM (build 17.1-b03-307, mixed mode)
+</code
+  ></pre
+><h4 id="network-access"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >1.2.1.2</span
+    > Network access</a
+  ></h4
+><p
+>Cients should be set up to allow the RunDeck server user to connect to the clients using SSH via public-key authentication. It should not prompt for a password. There are various ways of installing SSH on Windows; we recommend <a href="http://www.cygwin.com/"
+  >Cygwin</a
+  >.</p
+><p
+>TCP ports 8080 and 1055 need to be open on the server. In addition, TCP port 22 needs to be open on the clients for SSH.</p
+><p
+>To check the ports are free on a Unix host run:</p
+><pre
+><code
+  >netstat -an | egrep '8080|1055' 
+</code
+  ></pre
+><p
+>If the ports are in use on the server, you will see output similar to below:</p
+><pre
+><code
+  >tcp46      0      0  *.8080                 *.*                    LISTEN
+tcp46      0      0  *.1055                 *.*                    LISTEN
+</code
+  ></pre
+><p
+>The installation procedures describe how to choose different ports, if there is a conflict.</p
+><h3 id="installing-from-source"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >1.2.2</span
+    > Installing from Source</a
+  ></h3
+><p
+>Checkout the sources from GitHub: https://github.com/dtolabs/rundeck</p
+><p
+>Run the build script:</p
+><pre
+><code
+  >./build.sh
+</code
+  ></pre
+><p
+>Build clean</p
+><pre
+><code
+  >./build.sh -clean
+</code
+  ></pre
+><h3 id="installing-on-linux"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >1.2.3</span
+    > Installing on Linux</a
+  ></h3
+><p
+>If you want to install RunDeck on Linux via a binary installer, you can generally do so through the basic package-management tool that comes with your distribution. If you’re on Fedora, you can use yum:</p
+><pre
+><code
+  >$ yum install rundeck
+</code
+  ></pre
+><h3 id="installing-on-other-platforms"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >1.2.4</span
+    > Installing on other platforms</a
+  ></h3
+><p
+>Use the launcher as an alternative to a system package:</p
+><ol style="list-style-type: decimal;"
+><li
+  ><p
+    >Download the launcher jar file.</p
+    ></li
+  ><li
+  ><p
+    >Create a directory for the installation.</p
+    ><pre
+    ><code
+      >mkdir $HOME/rundeck 
+</code
+      ></pre
+    ></li
+  ><li
+  ><p
+    >Copy the launcher jar to the installation directory.</p
+    ><pre
+    ><code
+      >cp rundeck-launcher-1.0.0.jar $HOME/rundeck
+</code
+      ></pre
+    ></li
+  ><li
+  ><p
+    >Change directory and start the jar.</p
+    ><pre
+    ><code
+      >cd $HOME/rundeck    
+/usr/bin/java -jar rundeck-launcher-1.0.0.jar
+</code
+      ></pre
+    ></li
+  ><li
+  ><p
+    >Wait for the Started message.</p
+    ><pre
+    ><code
+      >2010-11-19 13:35:51.127::INFO:  Started SocketConnector@0.0.0.0:8080
+</code
+      ></pre
+    ></li
+  ></ol
+><h2 id="first-time-setup"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >1.3</span
+    > First-Time Setup</a
+  ></h2
+><h3 id="logins"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >1.3.1</span
+    > Logins</a
+  ></h3
+><p
+>RunDeck supports a number of user directory configurations. By default, the installation uses a file based directory, but connectivity to LDAP is also available.</p
+><p
+>The RunDeck installation process will have defined a set of initial logins useful during the getting started phase.</p
+><ul
+><li
+  >admin: Belongs to the &quot;admin&quot; group and is automatically granted the &quot;admin&quot; role privileges.</li
+  ><li
+  >deploy: Has access to run commands and jobs but unable to modify job definitions.</li
+  ></ul
+><h2 id="getting-help"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >1.4</span
+    > Getting Help</a
+  ></h2
+><p
+>RunDeck includes a set of Unix manual pages describing the shell tools.</p
+><p
+>For Linux users read the introductory man page:</p
+><pre
+><code
+  >$ man rundeck
+</code
+  ></pre
+><p
+>For those who installed the launcher add the man pages to your MANPATH</p
+><pre
+><code
+  >MANPATH=$MANPATH:$HOME/rundeck/man
+</code
+  ></pre
+><h2 id="summary"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >1.5</span
+    > Summary</a
+  ></h2
+><p
+>You should have a basic understanding of what RunDeck. You should also now have a working version of RunDeck on your system that’s set up with your personal identity. It’s now time to learn some RunDeck basics.</p
+><p
+>% RUNDECK(1) RunDeck User Manuals | Version 1.0 % Alex Honor % November 20, 2010</p
+><h1 id="rundeck-basics-1"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2</span
+    > RunDeck Basics</a
+  ></h1
+><h2 id="project-setup"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.1</span
+    > Project Setup</a
+  ></h2
+><p
+>A RunDeck &quot;Project&quot; provides a space to manage related management activities.</p
+><p
+>!!!! <em
+  >TODO</em
+  >: Show Create a project menu item in gui</p
+><p
+>The <code>rd-project</code> shell tool is used to create the workspace for each project.</p
+><p
+>On the RunDeck server, run the <code>rd-project</code> command and specify a project name, here we use &quot;demo&quot;:</p
+><pre
+><code
+  >rd-project -a create -p demo
+</code
+  ></pre
+><p
+>This will create the &quot;demo&quot; Project configuration in the server, and generate a bootstrap resource model containing information about the RunDeck server's host.</p
+><h3 id="resource-model-1"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.1.1</span
+    > Resource model</a
+  ></h3
+><p
+>The initial resource model generated by <code>rd-project</code> will contain information just about the RunDeck server host and is used just for bootstrapping the project.</p
+><p
+>You can list the Node resources in a project resource model using the shell tool, <code>dispatch</code>. Specify project name using the <code>-p project</code> option.</p
+><p
+>Here the <code>dispatch</code> command lists the registered server for the &quot;demo&quot; project after the project setup. The <code>-v</code> gives a verbose listing that includes more detail:</p
+><pre
+><code
+  >$ dispatch -p demo -v   
+ strongbad:
+    hostname: strongbad
+    os-arch: x86_64
+    os-family: unix
+    os-name: Mac OS X
+    os-version: 10.6.2
+    tags: []
+   ---- Attributes ----
+</code
+  ></pre
+><p
+>Node resources have standard properties, such as &quot;hostname&quot; but these can be extended via attributes. One of the more useful properties is the &quot;tags&quot; property. A tag is a text label that you give to the Node, perhaps denoting a classification, a role the node plays in the environment, or group membership.</p
+><p
+>The output above shows the &quot;strongbad&quot; node currently has an empty tags property: <code>tags: []</code>.</p
+><p
+>It is useful to start thinking about node tagging for the nodes you manage because you will use them later when specifying filtering options to drive distributed command dispatch.</p
+><p
+>Each Project has its configuration located in its own directory located in path like: <code>$RD_BASE/projects/<em
+  >project</em
+  >/etc/project.properties</code>.</p
+><p
+>This configuration contains two important properties for accessing and storing resource model data:</p
+><ul
+><li
+  ><code>project.resources.file</code>: File path to store resource model data.</li
+  ><li
+  ><code>project.resources.url</code>: URL to the server providing the resource model data.</li
+  ></ul
+><p
+>You can configure RunDeck to retrieve and store resource model data from any source, so long as it meets the RunDeck resource model document requirement.</p
+><p
+>RunDeck reads the XML document retrieved from the ${project.resources.url} site and stores it in the path defined by ${project.resources.file}.</p
+><p
+>Here's the XML document stored for the &quot;demo&quot; project that corresponds to the output printed by the <code>dispatch -v</code> shown earlier:</p
+><pre
+><code
+  >&lt;project&gt;
+    &lt;node name=&quot;strongbad&quot; type=&quot;Node&quot; 
+      description=&quot;the RunDeck server host&quot; tags=&quot;&quot; 
+      hostname=&quot;strongbad&quot; 
+      osArch=&quot;x86_64&quot; osFamily=&quot;unix&quot; osName=&quot;Mac OS X&quot; osVersion=&quot;10.6.2&quot;
+      username=&quot;alexh&quot; 
+      editUrl=&quot;&quot; remoteUrl=&quot;&quot;/&gt;
+&lt;/project&gt;
+</code
+  ></pre
+><p
+>Chances are you are maintaining information about your hosts within another tool, perhaps Chef, Puppet, Nagios, Amazon EC2, RightScale or even an in-house database. One of these other tools might be considered the authorative source of knowledge about the nodes deployed in your network, therefore it is best to create an interface to one of these tools and expose it as a web service to RunDeck. This could be done as a simple CGI script that does a transformation from the tool's format to the one RunDeck understands.</p
+><p
+>Of course, a rudimentary alternative is to maintain this information in an XML document you maintain in a source repository that is periodically exported to Rundeck. This method could be practical if your host infrastructure rarely changes.</p
+><p
+>The &quot;resource-v10&quot; manual contains reference information about the RunDeck resources document content and structure.</p
+><p
+>Check the RunDeck web site for providers to the RunDeck resource model.</p
+><h2 id="rundeck-interfaces"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.2</span
+    > RunDeck Interfaces</a
+  ></h2
+><p
+>RunDeck provides two primary user interfaces:</p
+><ul
+><li
+  >A HTML-based graphical console running as a webapp</li
+  ><li
+  >A suite of shell tools</li
+  ></ul
+><p
+>Both interfaces allow you to view resources, dispatch commands, as well as, store and run jobs.</p
+><h3 id="graphical-console"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.2.1</span
+    > Graphical Console</a
+  ></h3
+><p
+>To get started, go to the URL for your RunDeck server. Login to the web app with the credentials defined by the RunDeck user directory configuration. (The default installation username/password is: default/default)</p
+><h4 id="navigation"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.2.1.1</span
+    > Navigation</a
+  ></h4
+><p
+>The RunDeck page header contains global navigation control to move between browsing Jobs, Events and Resources. It also has links to logout and view the user's profile.</p
+><dl
+><dt
+  >Resources</dt
+  ><dd
+  ><p
+    >The Resources page displays the Node resources configured in your Project resource models. Like the Jobs and Events pages a filter control can be used to limit the listing to just the Node resources matching the criteria.</p
+    ></dd
+  ><dt
+  >Events</dt
+  ><dd
+  ><p
+    >From the Events page, one can view currently executing commands in the &quot;Now Running&quot; area or browse execution history. The execution history can be filtered based on user selected parameters. Once the filter has been set, the matching history is displayed. The current filter settings also configure an RSS link, found in the top right of the page.</p
+    ></dd
+  ><dt
+  >Jobs</dt
+  ><dd
+  ><p
+    >From the Jobs page, one can list, create and run Jobs. A configurable filter allows a user to limit the Job listing to those Jobs matching the filtering criteria. These filter settings can be saved to a Users profile.</p
+    ></dd
+  ><dt
+  >Admin</dt
+  ><dd
+  ><p
+    >If your login belongs to the &quot;admin&quot; group and therefore granted &quot;admin&quot; priveleges, a wrench icon will be displayed next to your login name. This page allows the admin to view group memberships for all users, as well as, edit their profile data.</p
+    ></dd
+  ><dt
+  >Project menu</dt
+  ><dd
+  ><p
+    >By default information about all projects is displayed. It is sometimes preferable to limit this information to just a particular project. The top navigation bar contains a menu to select the desired project.</p
+    ></dd
+  ></dl
+><h3 id="shell-tools"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.2.2</span
+    > Shell Tools</a
+  ></h3
+><p
+>RunDeck includes a number of shell tools to dispatch commands, load and run Job definitions and interact with the execution queue. These are an alternative to those same functions accessible in the graphical console.</p
+><dl
+><dt
+  >dispatch</dt
+  ><dd
+  >Execute ad hoc commands and scripts</dd
+  ><dt
+  >rdq</dt
+  ><dd
+  >Query the dispatcher for currently running Jobs and possibly kill them<br
+     /></dd
+  ><dt
+  >rd-jobs</dt
+  ><dd
+  >List defined jobs as well as load them from text file definitions</dd
+  ><dt
+  >run</dt
+  ><dd
+  >Invoke the execution of a stored Job</dd
+  ><dt
+  >rd-project</dt
+  ><dd
+  >Setup a new RunDeck project</dd
+  ><dt
+  >rd-setup</dt
+  ><dd
+  >(Re-)configure an instance of RunDeck</dd
+  ></dl
+><p
+>Consult the online manual pages for options and usage information.</p
+><h2 id="command-execution"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.3</span
+    > Command Execution</a
+  ></h2
+><p
+>RunDeck supports two modes of execution: <em
+  >ad-hoc</em
+  > commands and <em
+  >Job</em
+  >.</p
+><p
+>An <em
+  >ad hoc</em
+  > command is any system command or shell script executed via the command dispatcher. Ad hoc commands can be executed via a command line utility named <code>dispatch</code> or as a Job run from the graphical console.</p
+><p
+>A <em
+  >Job</em
+  > specifies a sequence of one or more command invocations that can be run once (i.e, is temporary) or named and stored for later use. Stored jobs can be started via the shell tool, <code>run</code>, and their progress checked with <code>rdq</code>.</p
+><h3 id="dispatcher-options"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.3.1</span
+    > Dispatcher options</a
+  ></h3
+><p
+>Dispatcher execution can be controlled by various types of options.</p
+><dl
+><dt
+  >Execution control</dt
+  ><dd
+  ><p
+    >Command execution can be controlled in various ways. Concurrency is controlled through threadcount. Execution can continue if specified to keepgoing</p
+    ></dd
+  ><dt
+  >Include and exclude patterns</dt
+  ><dd
+  ><p
+    >Filtering options specify include and exclude patterns to determine which nodes from the project resource model to distribute commands.</p
+    ></dd
+  ><dt
+  >Keywords</dt
+  ><dd
+  ><p
+    >Keywords are used within they include and exclude patterns. The &quot;tags&quot; keywords additionally can use a boolean operator to combine logical ORs and ANDs.</p
+    ></dd
+  ><dt
+  >Option combination</dt
+  ><dd
+  ><p
+    >All keywords can be combined by specifying the include and exclude options multiple times on the command line.</p
+    ></dd
+  ></dl
+><p
+>One can experiment querying the resource model in the graphical console or with the <code>dispatch</code> tool.</p
+><h4 id="filtering-nodes-in-the-shell"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.3.1.1</span
+    > Filtering nodes in the shell</a
+  ></h4
+><p
+><code>dispatch</code> can use the commandline options -I (include) and -X (exclude) to specify which nodes to include and exclude from the base set of nodes. You can specify a single value, a list of values, or a regular expression as the argument to these options.</p
+><p
+><em
+  >Examples</em
+  ></p
+><p
+>List nodes with OS name, Linux:</p
+><pre
+><code
+  >dispatch -p demo -I os-name=Linux
+</code
+  ></pre
+><p
+>List Linux nodes but exclude ones with names prefixed &quot;web.&quot;:</p
+><pre
+><code
+  >dispatch -p demo -I os-name=Linux -X &quot;web.*&quot;
+</code
+  ></pre
+><p
+>List nodes that are tagged both &quot;web&quot; and &quot;prod&quot; :</p
+><pre
+><code
+  >dispatch -p demo -I tags=web+prod
+</code
+  ></pre
+><p
+>Execute the <code>apachectl restart</code> command in 10 threads across all nodes tagged &quot;web&quot; and keepgoing in case an error occurs :</p
+><pre
+><code
+  >dispatch -p demo -I tags=web -K -C 10 -- sudo apachectl restart 
+</code
+  ></pre
+><p
+>Consult the &quot;rd-options(1)&quot; manual page for the complete reference on available dispatcher options.</p
+><h4 id="filtering-nodes-graphically"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.3.1.2</span
+    > Filtering nodes graphically</a
+  ></h4
+><p
+>!!! TODO !!!</p
+><h3 id="ad-hoc-commands"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.3.2</span
+    > Ad-hoc commands</a
+  ></h3
+><p
+>Typically, an &quot;ad hoc&quot; command is a shell script or system executable that you run at an interactive terminal. Ad hoc commands can be executed via the <code>dispatch</code> shell command or a graphical shell.</p
+><h4 id="shell-tool-command-execution"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.3.2.1</span
+    > Shell tool command execution</a
+  ></h4
+><p
+>Use <code>dispatch</code> to execute individual commands or shell script files.</p
+><p
+>Here <code>dispatch</code> is used to run the Unix uptime command to print system status:</p
+><pre
+><code
+  >$ dispatch -I os-family=unix -- uptime
+[ctier@centos54 dispatch][INFO]  10:34:54 up 46 min,  2 users,  load average: 0.00, 0.00, 0.00
+[alexh@strongbad dispatch][INFO] 10:34  up 2 days, 18:51, 2 users, load averages: 0.55 0.80 0.75
+[demo@ubuntu dispatch][INFO]  10:35:01 up 2 days, 18:40,  2 users,  load average: 0.00, 0.01, 0.00
+</code
+  ></pre
+><p
+>Notice, the <code>dispatch</code> command prepends the message output with a header that helps understand from where the output originates. The header format includes the login and node where the <code>dispatch</code> execution occurred.</p
+><p
+>Execute the Unix <code>whomi</code> command to see what user ID is used by that Node to run dispatched commands:</p
+><pre
+><code
+  >$ dispatch -I os-family=unix -- whoami
+[ctier@centos54 dispatch][INFO] ctier
+[alexh@strongbad dispatch][INFO] alexh
+[demo@ubuntu dispatch][INFO] demo
+</code
+  ></pre
+><p
+>You can see that the resource model defines each Node to use a different login to execute <code>dispatch</code> commands. That feature can be handy when Nodes serve different roles and therefore, use different logins to manage processes. See the <code>username</code> attribute in &quot;resource-v10(1)&quot; manual page.</p
+><p
+>The <code>dispatch</code> command can also execute shell scripts. Here's a trivial script that generates a bit of system info:</p
+><pre
+><code
+  >#!/bin/sh
+echo &quot;info script&quot;
+echo uptime=`uptime`
+echo whoami=`whoami`
+echo uname=`uname -a`
+</code
+  ></pre
+><p
+>Use the -s option to specify the &quot;info.sh&quot; script file:</p
+><pre
+><code
+  >$ dispatch -I os-family=unix -s info.sh
+</code
+  ></pre
+><p
+>The <code>dispatch</code> command copies the &quot;info.sh&quot; script located on the server to each &quot;unix&quot; Node and then executes it.</p
+><h4 id="graphical-command-shell-execution"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.3.2.2</span
+    > Graphical command shell execution</a
+  ></h4
+><p
+>The RunDeck graphical console also provides the ability to execute ad-hoc commands to a set of filtered Node resources. The command prompt can accept any ad-hoc command string you might run via an SSH command or via the <code>dispatch</code> shell tool.</p
+><p
+>But before running any commands, you need to select the project containing the Nodes you wish to dispatch. Use the project menu to select the desired project name. After the project has been selected you will see a long horizontal textfield labeled &quot;Command&quot;. This is the RunDeck command prompt tool bar.</p
+><p
+>To use the command prompt, type the desired ad-hoc command string into the textfield and press the &quot;Run&quot; button. The command will be dispatched to all the Node resources currently listed below the command prompt tool bar.</p
+><p
+>If the project selection menu was just chosen, then all Node resources in that project resource model will be listed. You will most likely want to limit the execution of your ad-hoc command to a subset of these.</p
+><p
+>Use the filter control to refine the list of Nodes to target for your ad-hoc command. Press the &quot;Filter&quot; link to open the filter control form. Inside the filter form you will see an area to define an include filter expression and a link to &quot;Extended Filters...&quot; where an exclusion expression can also be defined. Many simple cases can use either a regex pattern on Node name or a tag expression. Type in the desired filter expression and press the &quot;Filter&quot; button to refine the Node listing and redisplay the command prompt tool bar.</p
+><p
+>Once you are satisifed with the Node listing, input the ad-hoc command string, then press the &quot;Run&quot; button to begin execution. The browser will be directed to a page where execution output can be followed.</p
+><h5 id="following-execution-output"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.3.2.2.1</span
+    > Following execution output</a
+  ></h5
+><p
+>Command execution is displayed on a spearate page. This page provides several views to read the output using different formats.</p
+><dl
+><dt
+  >Tail Output</dt
+  ><dd
+  ><p
+    >Displays output messages from the command execution as if you were running the Unix <code>tail -f</code> command on the output log file. By default, only the last 20 lines of output is displayed but this can be expanded or reduced by pressing the &quot;-&quot; or &quot;+&quot; buttons. You can also type in an exact number into the textfield.</p
+    ></dd
+  ><dt
+  >Annotated</dt
+  ><dd
+  ><p
+    >The annotated mode displays the output messages in the order they are received but labels the each line with the Node from which the message originated. Through its additional controls each Node context can be expanded to show the output it produced, or completely collapsed to hide the textual detail.</p
+    ></dd
+  ><dt
+  >Node Output</dt
+  ><dd
+  ><p
+    >Output messages are sorted into Node specific sections and are not interlaced. By default, the messages are collapsed but can be revealed by pressing the disclosure icon to the right.</p
+    ></dd
+  ></dl
+><p
+>Also, notice the URL in the location bar of your browser. This URL can be shared to others interested in the progress of execution. The URL contains the execution ID (EID) and has a form like:</p
+><pre
+><code
+  > http://rundeckserver/execution/follow/{EID}
+</code
+  ></pre
+><p
+>After execution completes, the command will have a status:</p
+><ul
+><li
+  >Successful: No errors occurred during execution of the command across the filtered Node set</li
+  ><li
+  >Failed: One or more errors occurred. A list of Nodes that incurred an error is displayed. The page will also contain a link &quot;Retry Failed Nodes...&quot; in case you would like to retry the command.</li
+  ></ul
+><p
+>A URL also exists for this page which can be used later to refer to this execution:</p
+><pre
+><code
+  > http://rundeckserver/execution/show/{EID}
+</code
+  ></pre
+><p
+>You can download the entire output as a text file from this page. Press the &quot;Download&quot; link to retrieve the file to your desk top.</p
+><h3 id="controlling-ad-hoc-command-execution"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.3.3</span
+    > Controlling ad-hoc command execution</a
+  ></h3
+><p
+>Parallel execution is managed using thread count via &quot;-C&quot; option. The &quot;-C&quot; option specifies to the number of execution threads. Here's an example that runs the uptime command across the Linux hosts with two threads:</p
+><pre
+><code
+  >dispatch -I os-name=Linux -C 2 -- uptime
+</code
+  ></pre
+><p
+>The keepgoing and retry flags control when to exit incase an error occurs. Use &quot;-K/-R&quot; flags. Here's an example script that checks if the host has port 8080 in the listening state. If it does not, it will exit with code 1.</p
+><pre
+><code
+  >#!/bin/sh
+netstat -an | grep 8080 | grep -q LISTEN
+if [ &quot;$?&quot; != 0 ]; then
+echo &quot;not listening on 8080&quot;
+exit 1;
+fi
+echo  listening port=8080, host=`hostname`;
+</code
+  ></pre
+><p
+>Commands or scripts that exit with a non-zero exit code will cause the dispatch to fail unless the keepgoing flag is set.</p
+><pre
+><code
+  >$ dispatch -I os-family=unix -s /tmp/listening.sh
+[alexh@strongbad dispatch][INFO] Connecting to centos54:22
+[alexh@strongbad dispatch][INFO] done.
+[ctier@centos54 dispatch][INFO] not listening on 8080
+error: Remote command failed with exit status 1
+The script failed on centos54 and caused dispatch to error out immediately.
+</code
+  ></pre
+><p
+>Running the command again, but this time with the &quot;-K&quot; keepgoing flag will cause dispatch to continue and print on which nodes the script failed:</p
+><pre
+><code
+  >$ dispatch -K -I tags=web -s /tmp/listening.sh
+[alexh@strongbad dispatch][INFO] Connecting to centos54:22
+[alexh@strongbad dispatch][INFO] done.
+[ctier@centos54 dispatch][INFO] not listening on 8080
+[ctier@centos54 dispatch][ERROR] Failed execution for node: centos54: Remote command failed with exit status 1
+[alexh@strongbad dispatch][INFO] listening port=8080, host=strongbad
+[alexh@strongbad dispatch][INFO] Connecting to 172.16.167.211:22
+[alexh@strongbad dispatch][INFO] done.
+[demo@ubuntu dispatch][INFO] not listening on 8080
+[demo@ubuntu dispatch][ERROR] Failed execution for node: ubuntu: Remote command failed with exit status 1
+error: Execution failed on the following 2 nodes: [centos54, ubuntu]
+error: Execute this command to retry on the failed nodes:
+    dispatch -K -s /tmp/listening.sh -p demo -I
+    name=centos54,ubuntu
+</code
+  ></pre
+><h3 id="queuing-commands-to-rundeck"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.3.4</span
+    > Queuing commands to RunDeck</a
+  ></h3
+><p
+>Commands or scripts executed on the command line by dispatch can also be queued as temporary jobs in RunDeck by using the &quot;-Q&quot; option. The dispatch -Q usage is equivalent to a &quot;Run and Forget&quot; action in the graphical console.</p
+><p
+>The script below is a long running check that will conduct a check periodically waiting a set time between each pass. The script can be run with or without arguments as the parameters are defaulted inside the script:</p
+><pre
+><code
+  >$ cat ~/bin/checkagain.sh 
+#!/bin/bash
+iterations=$1 secs=$2 port=$3
+echo &quot;port ${port:=8080} will be checked ${iterations:=30} times waiting ${secs:=5}s between each iteration&quot; 
+i=0
+while [ $i -lt ${iterations} ]; do
+  echo &quot;iteration: #${i}&quot;
+  netstat -an | grep $port | grep LISTEN &amp;&amp; exit 0
+  echo ----
+  sleep ${secs}
+  i=$(($i+1))
+done
+echo &quot;Not listening on $port after $i checks&quot; ; exit 1
+</code
+  ></pre
+><p
+>Running dispatch with the -Q option causes the execution to queue in RunDeck and controlled as temporary Job. The -I centos54 limits execution to just the &quot;centos54&quot; node:</p
+><pre
+><code
+  >$ dispatch -Q -I centos54 -s ~/bin/checkagain.sh 
+Succeeded queueing workflow: Workflow:(threadcount:1){ [command( scriptfile: /Users/alexh/bin/checkagain.sh)] }
+Queued job ID: 5 &lt;http://strongbad:8080/execution/follow/4&gt;
+</code
+  ></pre
+><p
+>To pass arguments to the script pass them after the &quot;--&quot; (double dash):</p
+><pre
+><code
+  >$ iters=5 secs=60 port=8080
+$ dispatch -Q -I centos54 -s ~/bin/checkagain.sh -- $iters $secs $ports
+</code
+  ></pre
+><h3 id="tracking-execution"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.3.5</span
+    > Tracking execution</a
+  ></h3
+><p
+>Queued ad-hoc command and temporary or saved Job executions can be tracked from the &quot;Events&quot; page in the &quot;Now Running&quot; area at the top of the page.</p
+><p
+>This page provides a listing of all running executions, when they started, who started them and an approximation of their completion progress.</p
+><p
+>Users with &quot;workflow_kill&quot; privilege, will also see a link to kill the Job in case they want to stop it immediatly.</p
+><p
+>Execution can also be tracked using the <code>rdq</code> shell tool.</p
+><pre
+><code
+  >$ rdq
+Queue: 1 items
+[5] workflow:
+Workflow:(threadcount:1){[command( scriptfile: /Users/alexh/bin/checkagain.sh)]
+} &lt;http://strongbad:8080/execution/follow/5&gt;
+</code
+  ></pre
+><p
+>Running jobs can also be killed via the rdq &quot;kill&quot; command. The rdq command includes the execution ID for each running job. Specify execution ID using the &quot;-e&quot; option:</p
+><pre
+><code
+  >$ ctl-queue kill -e 5
+ctl-queue kill: success. [5] Job status: killed
+</code
+  ></pre
+><p
+>Show now running page...</p
+><h2 id="history"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.4</span
+    > History</a
+  ></h2
+><p
+>History for queued ad-hoc commands, as well as, temporary and saved Job executions is stored in by the RunDeck server. History data can be filtered and viewed inside the &quot;Events&quot; page of the graphical console.</p
+><h3 id="filtering-event-history"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.4.1</span
+    > Filtering event history</a
+  ></h3
+><p
+>By default, the Events page will list history for the last day's executions. The page contains a filter control that can be used to expand or limit the executions.</p
+><p
+>The filter form contains a number of fields to limit search:</p
+><ul
+><li
+  >Within: Time range. Choices include 1 day, 1 week, 1 month or other (given a start after/before to ended after/before).</li
+  ><li
+  >Job Name: Job title name.</li
+  ><li
+  >Project: Project name. This may be set if the project menu was used.</li
+  ><li
+  >Resource: Name of project resource.</li
+  ><li
+  >User: User initiating action.</li
+  ><li
+  >Node: Node name.</li
+  ><li
+  >Tags: Event tag name.</li
+  ><li
+  >Report ID: Report identifier.</li
+  ><li
+  >Message: Message text.</li
+  ><li
+  >Result: Success or failure status.</li
+  ></ul
+><p
+>After filling the form pressing the &quot;Filter&quot; button, the page will display events matching the search.</p
+><p
+>Filters can be saved to a menu that makes repeating searches more convenient. Click the &quot;save this filter...&quot; link to save the filter configuration.</p
+><h3 id="event-view"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.4.2</span
+    > Event view</a
+  ></h3
+><p
+>History for each execution contains the command(s) executed, dispatcher options, success status and a link to a file containing all the output messages.</p
+><h3 id="rss-link"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.4.3</span
+    > RSS Link</a
+  ></h3
+><p
+>An RSS icon provides a link to an RSS view of the events that match the current filtering critera.</p
+><h2 id="tips-and-tricks"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.5</span
+    > Tips and Tricks</a
+  ></h2
+><h3 id="saving-filters"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.5.1</span
+    > Saving filters</a
+  ></h3
+><p
+>Each of the filter controls provides the means to save the current filter configuration. Press the &quot;save this filter...&quot; link to give it a name. Each saved filter is added to a menu you can access the next time you want that filter configuration.</p
+><h3 id="auto-completion"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.5.2</span
+    > Auto-Completion</a
+  ></h3
+><p
+>If you use the Bash shell, RunDeck comes with a nice auto-completion script you can enable. Add this to your <code
+  >.bashrc</code
+  > file:</p
+><pre
+><code
+  >source ~/$RD_HOME/etc/rundeck-completion.bash
+</code
+  ></pre
+><p
+>Press the Tab key when you're writing a Git command, and it should return a set of suggestions for you to pick from:</p
+><pre
+><code
+  >$ dispatch &lt;tab&gt;&lt;tab&gt;
+</code
+  ></pre
+><h2 id="summary-1"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >2.6</span
+    > Summary</a
+  ></h2
+><p
+>At this point, you can do basic RunDeck operations - setup a project, define and query the project resource model, execute ad-hoc commands, run and save Jobs and view history.</p
+><p
+>Next, we'll cover one of RunDeck's core features: Jobs.</p
+><p
+>% RUNDECK(1) RunDeck User Manuals | Version 1.0 % Alex Honor % November 20, 2010</p
+><h1 id="jobs"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >3</span
+    > Jobs</a
+  ></h1
+><p
+>In previous sections of this manual, you learned how to execute ad-hoc commands across a filtered set of Node resources. This chapter introduces a fundamental RunDeck feature, <em
+  >Jobs</em
+  >. But first, one might ask why introduce another layer over ad-hoc command execution.</p
+><p
+>Here are some issues that might arise over time:</p
+><ul
+><li
+  >One might find certain ad-hoc command executions are repeated, and perhaps, represent what has become a routine procedure.</li
+  ><li
+  >Another user in your group needs a simple self-service interface to run a procedure across a set of nodes.</li
+  ><li
+  >Routine procedures need to be encapsulated and be the basis for other routine procedures.</li
+  ></ul
+><p
+>Jobs provide a means to encapsulate a procedure in a logically named Job. A <em
+  >Job</em
+  > is a configuration representing the steps in a procedure, a Node filter specification, and dispatcher execution control parameters. Jobs access is governed by an access control policy that describes how users are granted authorization to use Jobs.</p
+><p
+>RunDeck lets you organize and execute Jobs, and observe the output as the Job is running. You can view a list of the currently running Jobs that is dynamically updated as the Jobs progress. Jobs can also be killed if they need to be stopped.</p
+><p
+>Each Job has a record of every time it has been executed, and the output from those executions can be viewed.</p
+><p
+>The next sections describes how to navigate and run existing Jobs. In later sections, the topic of Job creation will be covered.</p
+><p
+>If you want to skip ahead, you can go straight to <a href="#creating-jobs"
+  >Creating Jobs</a
+  >.</p
+><h2 id="job-groups"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >3.1</span
+    > Job groups</a
+  ></h2
+><p
+>As many jobs will accumulate over time, it is useful to organize Jobs into groups. A group is a logical set of jobs, and one job group can exist inside another. RunDeck displays job lists as a set of folders corresponding to the group structure your jobs define.</p
+><p
+>Beyond organizing jobs, groups assist in defining access control policy, as we'll cover later in the Authorization chapter.</p
+><h2 id="listing-and-filtering-jobs"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >3.2</span
+    > Listing and filtering Jobs</a
+  ></h2
+><p
+>All Job activity begins on the main &quot;Jobs&quot; page inside RunDeck. After logging in, press the &quot;Jobs&quot; button in the top navigation bar and any Jobs you are authorized to see will be displayed.</p
+><p
+>If the Jobs were defined inside groups, you will see the listing grouped into a folder like structure. These folders represent the Job groups described earlier. You can navigate these folders by pressing the folder icon to reveal its contents.</p
+><p
+>Once you have navigated to a Job, you will see its name, possibly its description and a summary total of how many times it has been executed.</p
+><p
+>Clicking on the job name will will expand the window to show the Job detail. You will see a button bar containing icons representing the actions you are able to perform. Other Job detail will include what command(s) it will run, filter expressions and other dispatcher options.</p
+><h3 id="filtering-jobs"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >3.2.1</span
+    > Filtering Jobs</a
+  ></h3
+><p
+>The Job page lets you search for Jobs using the Filter option.</p
+><p
+>Click the &quot;Filter&quot; link to show the filter options:</p
+><p
+>This will show the Filter fields:</p
+><p
+>Enter a value in any of the filter fields:</p
+><ul
+><li
+  >Job Name: the name of the job</li
+  ><li
+  >Group: the name of the job group</li
+  ><li
+  >Description: Job description text</li
+  ></ul
+><p
+>You can type a substring or a regular expression in any of these fields.</p
+><p
+>After pressing the &quot;Filter&quot; button, the Job list will be filtered to include only the matching jobs.</p
+><p
+>To refine the filter, click on the blue-outlined Filter description, and change the filter fields.</p
+><p
+>To reset the filter and go back to the full job page, click the &quot;Clear&quot; button in the Filter fields.</p
+><h2 id="running-a-job"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >3.3</span
+    > Running a Job</a
+  ></h2
+><p
+>Any stored job can be started from the Job page by pressing the green &quot;Run&quot; icon in the Job control bar. If you do not see the Run icon, it means your login does not have &quot;run&quot; privileges.</p
+><p
+>Jobs can also be started from the command line using the <code>run</code> shell tool.</p
+><p
+>Here's an example that starts a hypothetical job named &quot;restart&quot; belonging in the &quot;apps/web&quot; Job group:</p
+><pre
+><code
+  >$ run -j apps/web/restart
+Job execution started:
+[51] restart &lt;http://strongbad:8080/execution/follow/51&gt;
+</code
+  ></pre
+><p
+>After the Run button has been pressed the page will be directed to choose execution options.</p
+><h3 id="choose-execution-options"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >3.3.1</span
+    > Choose execution options</a
+  ></h3
+><p
+>Jobs can be defined to prompt the user for options. This page contains a form presenting any of these Job options.</p
+><p
+>Some options will have default values while others may present you with a menu of choices. Some options are optional while others are required. Lastly, their might be a pattern govering what values are acceptable.</p
+><p
+>If there are any such Job options, you can change them here before proceeding with the execution.</p
+><p
+>When you are ready press &quot;Run Job Now&quot; page and you will be directed to page where you can follow the progress of the Job. You can press the &quot;Cancel&quot; button</p
+><h3 id="following-running-jobs"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >3.3.2</span
+    > Following Running Jobs</a
+  ></h3
+><p
+>Once you have started running a Job, you can follow the output of the job in the Execution Follow page.</p
+><p
+>Depending where you are in the RunDeck console, you can track a running Job starting from several locations:</p
+><ul
+><li
+  ><p
+    >If you have just pressed the Run button for a Job and chose its execution options and pressed &quot;Run Job Now&quot; you will automatically be directed to this page.</p
+    ></li
+  ><li
+  ><p
+    >From the Jobs page, you can click to the Job you are interested in tracking and click the spinning cursor icon labeled &quot;now&quot;.</p
+    ></li
+  ><li
+  ><p
+    >From the Events page, open the &quot;Now Running&quot; area adn then click on the &quot;output »&quot; link for the running execution.</p
+    ></li
+  ></ul
+><h2 id="creating-jobs"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >3.4</span
+    > Creating Jobs</a
+  ></h2
+><p
+>With RunDeck you can define two kinds of Jobs.</p
+><ul
+><li
+  >Temporary: A temporary Job defines a set of commands to execute and a node filter configuration.</li
+  ><li
+  >Saved: Saved jobs also define a set of commands to execute and dispatcher options but can be given a name and stored in a group. Additionally, saved Jobs can be given an execution schedule.</li
+  ></ul
+><h3 id="temporary-jobs"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >3.4.1</span
+    > Temporary Jobs</a
+  ></h3
+><p
+>A temporary job is a bit like an ad-hoc command except you get more controls about how the commands will execute plus the execution can be tracked tracked within the RunDeck webapp.</p
+><p
+>To create a temporary job, begin by logging in to the RunDeck webapp, and press the &quot;Jobs&quot; tab.</p
+><ol style="list-style-type: decimal;"
+><li
+  >Locate the &quot;New Job&quot; button in the right hand corner and press it to display the &quot;Create New Job&quot; form.</li
+  ><li
+  >A job is defined in terms of one or more workflow items. In the Workflows area, click the &quot;Add an item&quot; link.</li
+  ><li
+  >Workflow items can be one of several types. Click the &quot;Script&quot; workflow item type.</li
+  ><li
+  >A script type can be any script that can be executed on the target hosts. Type in the &quot;info&quot; shell script we executed earlier using dispatch.</li
+  ><li
+  >At the bottom of the form, push the &quot;Run and Forget&quot; button to begin execution.</li
+  ><li
+  >Execution output can be followed on the subsequent page.</li
+  ></ol
+><h3 id="saved-jobs"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >3.4.2</span
+    > Saved Jobs</a
+  ></h3
+><p
+>Running ad hoc commands and temporary jobs are a typical part of day to day administrative tasks. Occasionally, ad-hoc commands become routine procedures and if were reusable, would become valuable as they could be handed off to others in the team or invoked from within other Jobs. RunDeck provides an interface to declare and save jobs, both graphically or declared with an XML file.</p
+><h3 id="simple-saved-job"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >3.4.3</span
+    > Simple saved job</a
+  ></h3
+><p
+>For the first saved Job example, create a Job that calls the info script.</p
+><ol style="list-style-type: decimal;"
+><li
+  >Like in the earlier example, begin by pressing the &quot;New Job&quot; button.</li
+  ><li
+  >Within the new job form:<ul
+    ><li
+      >Select &quot;Yes&quot; for the &quot;Save this job?&quot; prompt. Pressing Yes reveals a form to define a name, group and description for the job.</li
+      ><li
+      >For &quot;Job Name&quot;, enter &quot;info&quot; and for the &quot;Group&quot;, enter &quot;adm/resources&quot;.</li
+      ><li
+      >Providing a description will be come helpful to other users to understand the intent and purpose for the Job.</li
+      ><li
+      >Check the box for &quot;Dispatch to Nodes&quot;</li
+      ><li
+      >Choose the &quot;Node Exclude Filters&quot; and enter the name of your RunDeck server. This will cause the job to run on just the remote Nodes (eg., centos54 and ubuntu).</li
+      ><li
+      >Type in the info script that we used earlier.</li
+      ><li
+      >Save the script changes in the Workflow editor.</li
+      ><li
+      >Press the &quot;Create&quot; button at the bottom of the page.</li
+      ></ul
+    ></li
+  ><li
+  >After the the job is created, the browser is directed to the Jobs page. The folder structure reflecting the group naming will show one Job.<ul
+    ><li
+      >Press through the folders and then to the job itself</li
+      ></ul
+    ></li
+  ><li
+  >Notice the button bar with controls for editing and running the job.<ul
+    ><li
+      >Press the green arrow icon to run the Job.</li
+      ></ul
+    ></li
+  ><li
+  >Press the &quot;Run Job Now&quot; button to begin execution.<ul
+    ><li
+      >Output from the script execution from the target Nodes will be displayed on the subsequent page.</li
+      ></ul
+    ></li
+  ></ol
+><h2 id="scheduled-jobs"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >3.5</span
+    > Scheduled Jobs</a
+  ></h2
+><p
+>Saved jobs can be configured to run on a periodic basis. If you want to create a Scheduled Job, select Yes under &quot;Schedule to run repeatedly?&quot;</p
+><p
+>The schedule can be defined in a simple graphical chooser or Unix crontab format.</p
+><p
+>To use the simple chooser, choose an hour and minute. You can then choose &quot;Every Day&quot; (default), or uncheck that option and select individual days of the week. You can select &quot;Every Month&quot; (default) or unselect that option and choose specific months of the year:</p
+><p
+>If the crontab time and date format is preferred, enter a cron expression.</p
+><p
+>The exact crontab syntax used is referenced here: <a href="http://www.quartz-scheduler.org/docs/api/1.8.1/org/quartz/CronExpression.html"
+  >CronExpression</a
+  ></p
+><h2 id="job-history"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >3.6</span
+    > Job history</a
+  ></h2
+><p
+>In the Jobs page, you can see the outcome of previous executions of Jobs by clicking the &quot;Executions&quot; link for the Job. This returns a filtered history peraining to that Job. You can click on any past execution in the list to see the full execution state.</p
+><h2 id="killing-jobs"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >3.7</span
+    > Killing Jobs</a
+  ></h2
+><p
+>Jobs that are currently running can be Killed immediately.</p
+><p
+>WARNING: This feature should be used with caution, as it forcibly kills the Java Thread that the Job is running on. It may result in the RunDeck server becoming flaky. It is a deprecated feature of Java that is not recommended to be used, so do so only when extremely necessary.</p
+><p
+>From the Events view Now Running section, or in the Job execution follow page, click on the &quot;Kill Job Now&quot; button for the running Job.</p
+><p
+>When prompted &quot;Really kill this job?&quot; Click the &quot;Yes&quot; button.</p
+><p
+>The Job will terminate with a &quot;Killed&quot; completion status.</p
+><h2 id="deleting-jobs"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >3.8</span
+    > Deleting Jobs</a
+  ></h2
+><p
+>In the Jobs, click the red &quot;X&quot; icon for the Job you want to delete.</p
+><p
+>Click &quot;Yes&quot; when it says &quot;Really delete this Job?&quot;</p
+><h2 id="updating-and-copying-jobs"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >3.9</span
+    > Updating and copying Jobs</a
+  ></h2
+><p
+>All of the data you set when creating a job can be modified. To edit a Job, you can either click the Pencil icon in the Job list:</p
+><p
+>Similarly, to Copy a Job definition to a new Job, choose the Copy icon or the Copy button.</p
+><h2 id="exporting-jobs-as-xml"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >3.10</span
+    > Exporting Jobs as XML</a
+  ></h2
+><p
+>Job definitions created inside the RunDeck graphical console can be exported to an XML file format and be used for later import.</p
+><p
+>Two methods exist to retrieve the XML definition one inside RunDeck's graphical interface and the other using the <code>rd-jobs</code> shell tool.</p
+><p
+>From RunDeck's Job page navigate to the Job you wish to export. Locate the icon with an XML symbol in the toolbar. It is labeled &quot;Download XML&quot; in the mouse tool tip.</p
+><p
+>Press this button to initiate the file download to your browser. Depending on your browser, it will be stored to your downloads directory.</p
+><p
+>If you prefer the command line open a shell on the RunDeck server. Run the <code>rd-jobs</code> command to write it to disk. By default, rd-jobs will dump all Job definitions to one file. To limit it to just a single Job specify its name:</p
+><pre
+><code
+  >rd-jobs -n &quot;job-name&quot; -f jobs.xml
+</code
+  ></pre
+><p
+>This will store the results in the &quot;jobs.xml&quot; file.</p
+><p
+>Consult the &quot;rd-jobs(1)&quot; manual page for additional command usage.</p
+><h2 id="importing-jobs-as-xml"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >3.11</span
+    > Importing Jobs as XML</a
+  ></h2
+><p
+>If you have a &quot;jobs.xml&quot; file (See above) and want to upload it via the GUI web interface, you can do so.</p
+><p
+>Click on the New Job&quot; button in the Job list.</p
+><p
+>In the &quot;Create New Job&quot; form, click on the button that says &quot;Uplaod Definition...&quot; on the right side:</p
+><p
+>Click the Choose File button and choose your jobs.xml file to upload.</p
+><p
+>Choose an option where it says &quot;When a job with the same name already exists:&quot;:</p
+><ul
+><li
+  >Update - this means that a job defined in the xml will overwrite any existing job with the same name<br
+     /></li
+  ><li
+  >Skip - this means that a job defined in the xml will be skipped over if there is an existing job with the same name<br
+     /></li
+  ><li
+  >Create - this means that the job defined in the xml will be used to create a new job if there is an existing job with the same name.</li
+  ></ul
+><p
+>Click the Upload button. If there are any errors with the Job definitions in the XML file, they will show up on the page.</p
+><h2 id="summary-2"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >3.12</span
+    > Summary</a
+  ></h2
+><p
+>Next, we'll cover how to create multi-step procedures using Job Workflows.</p
+><p
+>% RUNDECK(1) RunDeck User Manuals | Version 1.0 % Alex Honor % November 20, 2010</p
+><h1 id="job-workflows"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >4</span
+    > Job Workflows</a
+  ></h1
+><p
+>The Job's most basic feature is its ability to execute one or more commands across a set of nodes. This sequence of commands is called a <em
+  >workflow</em
+  >, and each step in the workflow is defined as an invocation to a command.</p
+><p
+>The steps of the Job workflow are displayed when viewing a Job's detail from a Job listing or within the Job editor form.</p
+><h2 id="authoring-tools"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >4.1</span
+    > Authoring tools</a
+  ></h2
+><p
+>Workflows can be defined within the RunDeck graphical console or as an XML document that is loaded to the server.</p
+><p
+>The graphical console provides an authoring environment where steps can be added, edited, removed or reordered.</p
+><p
+>Users prefering to define Jobs in XML should read the &quot;job-v10(1)&quot; manual page.</p
+><p
+>It is also possible to author Jobs inside the graphical console and then export the definiton as an XML file using the <code>rd-jobs</code> shell tool (man &quot;rd-jobs(1)&quot;).</p
+><h2 id="workflow-control-settings"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >4.2</span
+    > Workflow control settings</a
+  ></h2
+><p
+>Workflow execution is controlled by two important settings: <em
+  >Keepgoing</em
+  > and <em
+  >Strategy</em
+  >.</p
+><p
+><em
+  >Keepgoing</em
+  >: This manages what to do if a step incurs and error:</p
+><ul
+><li
+  >No: Fail immediately (default)</li
+  ><li
+  >Yes: Continue to next step</li
+  ></ul
+><p
+>The default is to fail immediately but depending on the procedure at hand you can choose to have the execution continue.</p
+><p
+><em
+  >Strategy</em
+  >: Controls the order of execution of steps and command dispatch to nodes: <em
+  >Node-oriented</em
+  > and <em
+  >Step-oriented</em
+  >.</p
+><ul
+><li
+  ><em
+    >Node-oriented</em
+    >: Executes the full workflow on each node before the next node. (default)</li
+  ><li
+  ><em
+    >Step-oriented</em
+    >: Executes each step on all nodes before the next node.</li
+  ></ul
+><p
+>The following illustrations contrast the strategies showing how three steps proceed across two nodes.</p
+><p
+>Node-oriented flow illustrated:</p
+><pre
+><code
+  >1.   NodeA    step#1
+2.     &quot;      step#2
+3.     &quot;      step#3
+4.   NodeB    step#1
+5.     &quot;      step#2
+6.     &quot;      step#3
+</code
+  ></pre
+><p
+>Step-oriented flow illustrated:</p
+><pre
+><code
+  >1.   NodeA    step#1
+2.   NodeB      &quot;
+3.   NodeA    step#2
+4.   NodeB      &quot;
+5.   NodeA    step#1
+6.   NodeB      &quot;
+</code
+  ></pre
+><p
+>The process you are automating will determine which strategy is correct, though the node-oriented flow is more commonplace.</p
+><h2 id="workflow-steps"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >4.3</span
+    > Workflow steps</a
+  ></h2
+><p
+>The following sections describe how to construct a workflow as a set of steps that call commands of different types.</p
+><p
+>When creating a new Job definition, the Workflow form will be set with defaults and have no workflow steps defined. The workflow editor will have a form open asking to enter a shell command as the first step.</p
+><p
+>To add new steps simply press the &quot;Add a step&quot; link inside the workflow editor form. This will prompt you with a dialog asking which kind of workflow step you would like to add. Each kind of step has its own form. When you are done filling out the form, press &quot;Save&quot; to add it to the sequence. Pressing &quot;Cancel&quot; will close the form and leave the sequence unchanged.</p
+><p
+>New steps are always added to the end of the sequence. See <a href="#reordering-steps"
+  >Reordering steps</a
+  > for directions on modifying the step order.</p
+><p
+>The next several sections describe the specification of each kind of command step.</p
+><h3 id="command-step"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >4.3.1</span
+    > Command step</a
+  ></h3
+><p
+>Use the command step to call system commands. This is the default type of workflow step when creating a Job. Enter any command string you would type at the terminal on the remote hosts.</p
+><p
+>This is similar to calling the command with <code>dispatch</code>:</p
+><pre
+><code
+  >dispatch [filter-options] -- command
+</code
+  ></pre
+><h3 id="script-step"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >4.3.2</span
+    > Script step</a
+  ></h3
+><p
+>Execute the supplied shell script content. Optionally, can pass an argument to the script specified in the lower text field.</p
+><p
+>This is similar to calling the command with <code>dispatch</code>:</p
+><pre
+><code
+  >dispatch [filter-options] --stdin -- args &lt;&lt;EOF 
+script content here 
+EOF
+</code
+  ></pre
+><h3 id="script-file-step"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >4.3.3</span
+    > Script file step</a
+  ></h3
+><p
+>Executes the script file local to the sever to the filtered Node set. Arguments can be passed to the script by specifying them in the lower text field.</p
+><p
+>This is similar to calling the script file with <code>dispatch</code>:</p
+><pre
+><code
+  >dispatch [filter-options] -s scriptfile -- args
+</code
+  ></pre
+><h3 id="job-reference-step"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >4.3.4</span
+    > Job reference step</a
+  ></h3
+><p
+>To call another saved Job, create a Job Reference step. Enter the name of the Job and its group.</p
+><p
+>The Job Reference form provides a Job browser to make it easier to select from the existing set of saved Jobs. Click the &quot;Choose A Job...&quot; link and navigate to the desired Job.</p
+><p
+>Finally, if the Job defines Options, you can specify them in the commandline arguments text field.</p
+><p
+>This is simililar to calling the other Job with <code>run</code>:</p
+><pre
+><code
+  >dispatch [filter-options] -j group/jobname
+</code
+  ></pre
+><h2 id="reordering-steps"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >4.4</span
+    > Reordering steps</a
+  ></h2
+><p
+>The order of the Workflow steps can be modified by hovering over any item and then clicking and dragging the double arrow icon to the desired position. A blue horizontal bar helps highlight the position where the Job will land.</p
+><p
+>After releasing the select Job, it will land in the desired position and the step order will be updated.</p
+><p
+>If you wish to Undo the step reordering, press the &quot;Undo&quot; link above the steps.</p
+><p
+>The &quot;Redo&quot; button can be pressed to reapply the last undone change.</p
+><p
+>Press the &quot;Revert All Changes&quot; button to go back to the original step order.</p
+><h2 id="save-the-changes"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >4.5</span
+    > Save the changes</a
+  ></h2
+><p
+>Once the Workflow steps have been defined and order, changes are permanently saved after pressing the &quot;Create&quot; button if new or the &quot;Update&quot; button if the Job is being modified.</p
+><h2 id="summary-3"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >4.6</span
+    > Summary</a
+  ></h2
+><p
+>At this point you should understand what a Job workflow is, the kinds of steps they can contain and how to define a workflow.</p
+><p
+>Next, we'll cover more about RunDeck's Job Option features.</p
+><p
+>% RUNDECK(1) RunDeck User Manuals | Version 1.0 % Alex Honor % November 20, 2010</p
+><h1 id="job-options"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >5</span
+    > Job Options</a
+  ></h1
+><p
+>Any command or script can be wrapped as a Job. Creating a Job for every use case would proliferate a large number of Jobs differing only by how the Job provides data to the scripts they call. These differences are often environment or application version related. Other times only the person running the Job can provide the needed information to run the Job correctly.</p
+><p
+>Making your scripts and commands data driven, means they can become more generic and therefore, resuable in different contexts. Rather than maintain variations of the same basic process, letting Jobs be driven by externally provided data leads to better abstraction and encapsulation of your process.</p
+><p
+>RunDeck Jobs can be configured to prompt a user for input by defining one or more named <em
+  >options</em
+  >. An <em
+  >option</em
+  > is a named parameter that can be required or optional and include a range of choices that will be presented to the user when the Job is run.</p
+><p
+>Users can supply options by typing in a value or selecting from a menu of choices. A validation pattern will ensure input complies to the option requirement. Once chosen, the value chosen for the option is accessible to the commands called by the Job.</p
+><p
+>When option choices are restricted to a standard set, they can be defined statically in the Job definition. When option choices must be dynamic, the Job can be defined to use a URL to retrieve option data from an external source. Enabling Jobs to access external sources via URL opens the door to integrating RunDeck with other tools and incorporating their data into Job workflows.</p
+><h2 id="prompting-the-user"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >5.1</span
+    > Prompting the user</a
+  ></h2
+><p
+>The obvious effect from defining Job options is their appearance to the user running the Job. Users will be presented a page called &quot;Choose Execution Options...&quot; where input and menu choices must be configured.</p
+><p
+>Command line users executing Jobs via the <code>run</code> shell tool also will specify options as an argument string.</p
+><p
+>It is worth spending a moment to consider how options become part of the user interface to Jobs and give some thought to this next level of procedure formalization.</p
+><ul
+><li
+  >Naming and description convention: Visualize how the user will read the option name and judge its purpose from the description you supply.</li
+  ><li
+  >Required options: Making an option required means the Job will fail if a user leaves it out.</li
+  ><li
+  >Input restrictions and validation: If you need to make the option value be somewhat open ended consider how you can create safeguards to control their choice.</li
+  ></ul
+><h2 id="options-editor"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >5.2</span
+    > Options editor</a
+  ></h2
+><p
+>Options can be created for any stored Job. The Job edit page contains an area displaying a summary to existing options and a link to add new ones or edit existing ones.</p
+><p
+>The option summary shows each option and its default value if it defines them.</p
+><p
+>Clicking the &quot;edit&quot; link opens up the options editor.</p
+><p
+>The options editor displays an expanded summary for each defined option. Each option is listed with its usage summary, description, values list and any restrictions. Pressing the &quot;Add an option&quot; link will open a form to define a new parameter. Pressing the &quot;Close&quot; link will collapse the options editor and return back to the summary view.</p
+><p
+>Moving the mouse over any row in the options editor reveals links to delete or edit the highlighted option. Pressing the remove icon will display a prompt confirming you want to delete that option from the Job. Clicking the &quot;edit&quot; link opens a new form that lets you modify all aspects of that option.</p
+><p
+>Options can also be defined as part of an XML job definition and later loaded to the RunDeck server. See &quot;job-v10(1)&quot; and &quot;rd-jobs(1)&quot; manual pages if you prefer using an XML Job definition.</p
+><h2 id="defining-an-option"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >5.3</span
+    > Defining an option</a
+  ></h2
+><p
+>New options can be defined by pressing the &quot;Add an option&quot; link while existing ones can be changed by pressing their &quot;edit&quot; link.</p
+><p
+>The option definition form is organized into several areas:</p
+><dl
+><dt
+  >Identification</dt
+  ><dd
+  ><p
+    >Here you provide the option's name and description. The name becomes part of acceptable arguments to the Job while the description will be provided as help text to users running the Job.</p
+    ></dd
+  ><dt
+  >Allowed values</dt
+  ><dd
+  ><p
+    >This can contain a static list of values or a URL to a server providing option data. Values can be specified as a comma separated list as seen above but can also be requested from an external source using a &quot;remote URL&quot; <a href="#remote-option-values"
+      >See below</a
+      >.</p
+    ></dd
+  ><dt
+  >Restrictions</dt
+  ><dd
+  ><p
+    >Defines criteria on which input to accept or present. Option choices can be controlled using the &quot;Enforced from values&quot; restriction. When set &quot;true&quot;, RunDeck will only present a popup menu. If set &quot;false&quot;, a text field will also be presented. Enter a regular expression in the &quot;Match Regular Expression&quot; field the Job will evaluate when run.</p
+    ></dd
+  ><dt
+  >Requirement</dt
+  ><dd
+  ><p
+    >Indicates if the Job can only run if a choice is provided for that Option. Choosing &quot;No&quot; states the option is not required Choose &quot;Yes&quot; to state the option is required.</p
+    ></dd
+  ></dl
+><p
+>Once satisfied with the option definition, press the &quot;Save&quot; button to add it to the Job definition. Pressing the &quot;Cancel&quot; button will dismiss the changes and close the form.</p
+><h2 id="remote-option-values"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >5.4</span
+    > Remote option values</a
+  ></h2
+><p
+>If the &quot;valuesUrl&quot; is specified for an Option, then the list of allowed values is retrieved from this URL. File URL schemes are also acceptable (e.g, file:///path/to/job/options/optA.json).</p
+><p
+>The accepted JSON data format is described below.</p
+><h3 id="json-format"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >5.4.1</span
+    > JSON format</a
+  ></h3
+><p
+>The format of the response is expected to be JSON data. Two styles of return data are supported: list and object</p
+><p
+><em
+  >Examples</em
+  ></p
+><p
+>List:</p
+><pre
+><code
+  >[&quot;x value for test&quot;,&quot;y value for test&quot;]
+</code
+  ></pre
+><p
+>This will populate the select menu with the given values.</p
+><p
+>Object:</p
+><pre
+><code
+  >{&quot;X Label&quot;:&quot;x value&quot;,&quot;Y Label&quot;:&quot;y value&quot;, &quot;A Label&quot;:&quot;a value&quot;}
+</code
+  ></pre
+><p
+>This will show only the labels, but the corresponding value will be used in the option.</p
+><h3 id="variable-expansion-in-remote-urls"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >5.4.2</span
+    > Variable expansion in remote URLs</a
+  ></h3
+><p
+>The URL used in the &quot;valuesUrl&quot; can embed variables which will be filled with certain context items when making the remote request. This helps make the URLs more generic and contextual to the Job.</p
+><p
+>Two types of expansions are available, Job context, and Option context.</p
+><p
+>To include job information in the URL, specify a variable of the form ${job.<em
+  >property</em
+  >}.</p
+><p
+>Properties available for Job context:</p
+><ul
+><li
+  >name: Name of the Job</li
+  ><li
+  >group: Group of the Job</li
+  ><li
+  >description: Job description</li
+  ><li
+  >project: Project name</li
+  ><li
+  >argString: Default argument string for a job</li
+  ></ul
+><p
+>To include Option information in the URL, specify a variable of the form ${option.<em
+  >property</em
+  >}:</p
+><p
+>Properties available for Option context:</p
+><ul
+><li
+  >name: Name of the current option</li
+  ></ul
+><p
+><em
+  >Examples</em
+  ></p
+><pre
+><code
+  >valuesUrl=&quot;http://server.com/test?name=${option.name}&quot;
+</code
+  ></pre
+><p
+>Passes the option name as the &quot;name&quot; query parameter to the URL.</p
+><pre
+><code
+  >valuesUrl=&quot;http://server.com/test?jobname=${job.name}&amp;jobgroup=${job.group}&quot;
+</code
+  ></pre
+><p
+>Passes the job name and group as query parameters.</p
+><h3 id="remote-request-failures"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >5.4.3</span
+    > Remote request failures</a
+  ></h3
+><p
+>If the request for the remote option values fails, then the GUI form will display a warning message:</p
+><blockquote
+><p
+  >failed loading remote option values</p
+  ></blockquote
+><p
+>In this case, the option will be allowed to use a textfield to set the value.</p
+><h2 id="script-usage"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >5.5</span
+    > Script usage</a
+  ></h2
+><p
+>Option values can be passed to scripts as an argument or referenced inside the script via a named token. Option values can be accessed in one of several ways:</p
+><dl
+><dt
+  >Value passed as an environment variable:</dt
+  ><dd
+  ><p
+    >Bash: $RD_OPTION_<em
+      >NAME</em
+      > <sup
+      ><a href="#fn1" class="footnoteRef" id="fnref1"
+	>1</a
+	></sup
+      ></p
+    ></dd
+  ><dt
+  >Value passed as an argument to a script:</dt
+  ><dd
+  ><p
+    >Commandline Arguments: ${option.<em
+      >name</em
+      >}</p
+    ></dd
+  ><dt
+  >Value referenced as a replacement token inside the script:</dt
+  ><dd
+  ><p
+    >Script Content: @option.<em
+      >vip</em
+      >@</p
+    ></dd
+  ></dl
+><p
+>A single example helps illustrate these methods. Imagine a trivial script is wrapped in a Job named &quot;hello&quot; and has an option named &quot;message&quot;. The &quot;hello&quot; Job option signature would be &quot;-message &lt;&gt;&quot;. Here's the content of this simple script.</p
+><pre class="bash"
+><code
+  >    #!/bin/sh    
+    echo envvar=$RD_OPTION_MESSAGE ;# read from environment
+    echo args=$1                   ;# comes from argument vector
+    echo message=@option.message@  ;# replacement token
+</code
+  ></pre
+><p
+>When the user runs the &quot;hello&quot; job they will be prompted for the &quot;message&quot; value. Let's assume they type the word &quot;hello&quot; in response. The output of the Job will be:</p
+><pre
+><code
+  >envar=hello
+args=hello    
+message=hello    
+</code
+  ></pre
+><p
+>It's important to know what happens if the option isn't set. This can happen if you define an option that is not required and do not give it a default value.</p
+><p
+>Let's imagine the Job was run without a message option supplied, the output would look like this:</p
+><pre
+><code
+  >envar=
+args=
+message=@option.message@
+</code
+  ></pre
+><p
+>Here are some tips to deal with this possibility:</p
+><dl
+><dt
+  >Environment variable:</dt
+  ><dd
+  ><p
+    >As a precaution you might test existence for the variable and perhaps set a default value. To test its existence you might use:</p
+    ><pre
+    ><code
+      > test -s  $RD_OPTION_NAME
+</code
+      ></pre
+    ><p
+    >You might also use a Bash feature that tests and defaults it to a value:</p
+    ><pre
+    ><code
+      > ${RD_OPTION_NAME:=mydefault} 
+</code
+      ></pre
+    ></dd
+  ><dt
+  >Replacement token</dt
+  ><dd
+  >If the option is unset the token will be left alone inside the script. You might write your script a bit more defensively and change the implementation like so:</dd
+  ></dl
+><pre class="bash"
+><code
+  >        message=@option.message@
+        if [ &quot;$message&quot; == &quot;@option.message@&quot; ] ; then
+           message=mydefault
+        fi 
+</code
+  ></pre
+><h2 id="calling-a-job-with-options"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >5.6</span
+    > Calling a Job with options</a
+  ></h2
+><p
+>Jobs can be invoked from the command line using the <code>run</code> shell tool or as a step in another Job's workflow.</p
+><p
+>Using the <code>run</code> command pass them after the double hyphen:</p
+><pre
+><code
+  >run -j jobId -- -paramA valA -paramB valB
+</code
+  ></pre
+><p
+>Inside an XML definition, insert them as an <code>arg</code> element:</p
+><pre class="xml"
+><code
+  >&lt;command&gt;
+    &lt;jobref group=&quot;test&quot; name=&quot;other tests&quot;&gt;
+        &lt;arg line=&quot;-paramA valA -paramB valB&quot;/&gt;
+    &lt;/jobref&gt;
+&lt;/command&gt;
+</code
+  ></pre
+><p
+>Consult the &quot;run(1)&quot; and &quot;job-v20(1)&quot; manual pages for additional information.</p
+><h2 id="summary-4"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >5.7</span
+    > Summary</a
+  ></h2
+><p
+>After reading this chapter you should understand how to run Jobs with options, as well as, add and edit them. % RUNDECK(1) RunDeck User Manuals | Version 1.0 % Alex Honor % November 20, 2010</p
+><h1 id="authorization-1"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >6</span
+    > Authorization</a
+  ></h1
+><p
+>!!!! TODO !!!!</p
+><h2 id="summary-5"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >6.1</span
+    > Summary</a
+  ></h2
+><p
+>% RUNDECK(1) RunDeck User Manuals | Version 1.0 % Alex Honor % November 20, 2010</p
+><h1 id="examples"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >7</span
+    > Examples</a
+  ></h1
+><h2 id="summary-6"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >7.1</span
+    > Summary</a
+  ></h2
+><p
+>% RUNDECK(1) RunDeck User Manuals | Version 1.0 % Alex Honor % November 20, 2010</p
+><h1 id="coordinatation"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >8</span
+    > Coordinatation</a
+  ></h1
+><h2 id="execution-strategies-revisited"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >8.1</span
+    > Execution strategies revisited</a
+  ></h2
+><h3 id="step-vs-node-oriented"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >8.1.1</span
+    > Step vs Node oriented</a
+  ></h3
+><h3 id="topology-structures-tiers-and-slices"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >8.1.2</span
+    > Topology structures: Tiers and Slices</a
+  ></h3
+><h3 id="coordination-models"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >8.1.3</span
+    > Coordination models</a
+  ></h3
+><p
+>and job refs</p
+><p
+>jobs manage different tiers</p
+><h4 id="sync-points"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >8.1.3.1</span
+    > Sync points</a
+  ></h4
+><p
+>Coordinate with sync points to understand when to continue or not</p
+><h2 id="summary-7"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >8.2</span
+    > Summary</a
+  ></h2
+><p
+>% RUNDECK(1) RunDeck User Manuals | Version 1.0 % Alex Honor % November 20, 2010</p
+><h1 id="administration"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >9</span
+    > Administration</a
+  ></h1
+><h2 id="ssl"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >9.1</span
+    > SSL</a
+  ></h2
+><h2 id="ldap"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >9.2</span
+    > LDAP</a
+  ></h2
+><h2 id="backup-and-recovery"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >9.3</span
+    > Backup and recovery</a
+  ></h2
+><h2 id="high-availability"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >9.4</span
+    > High availability</a
+  ></h2
+><h2 id="configuration"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >9.5</span
+    > Configuration</a
+  ></h2
+><p
+>rdeck.base * linux: /etc/rundeck/client * launcher: $RDECK_BASE/etc</p
+><p
+>for server linux: /etc/rundeck/server (like jetty.home) laucher: $RDECK_BASE/server</p
+><h2 id="logs"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >9.6</span
+    > Logs</a
+  ></h2
+><p
+>linux: /var/log/rundeck launcher: $RDECK_BASE/var/logs</p
+><h2 id="summary-8"
+><a href="#TOC"
+  ><span class="header-section-number"
+    >9.7</span
+    > Summary</a
+  ></h2
+><div class="footnotes"
+><hr
+   /><ol
+  ><li id="fn1"
+    ><p
+      >To pass environment variables through remote command dispatches, it is required to properly configure the SSH server on the remote end. See the AcceptEnv directive in the &quot;sshd_config(5)&quot; manual page for instructions. Use a wild card pattern to permit RD_ prefixed variables to provide open access to RunDeck generated environment variables. <a href="#fnref1" class="footnoteBackLink" title="Jump back to footnote 1">↩</a></p
+      ></li
+    ></ol
+  ></div
+>
+</body>
+</html>
