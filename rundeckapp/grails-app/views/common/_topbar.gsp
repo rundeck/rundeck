@@ -150,8 +150,11 @@ function createProject(value){
        <g:if test="${session?.project}">
            <span class="action textbtn" onclick="loadProjectSelect();" title="Select project...">${session?.project}</span>
        </g:if>
-       <g:else>
+       <g:elseif test="${session?.projects}">
            <span class="action textbtn" onclick="loadProjectSelect();" title="Select project...">All Projects&hellip;</span>
+       </g:elseif>
+       <g:else>
+           <span class="action button icon" onclick="doCreateProject();" title="Create a project...">Create a new Project&hellip;</span>
        </g:else></span></span>
        <g:ifUserInAnyRoles roles="admin,user_admin">
            %{--<span class="button " onclick="doCreateProject();">New Project&hellip;</span>--}%
