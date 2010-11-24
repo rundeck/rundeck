@@ -1075,7 +1075,7 @@ class ExecutionService implements ApplicationContextAware, Executor{
             }
         }
         if (scheduledExecution.save(flush:true)) {
-            log.warn("updated scheduled Execution")
+            log.info("updated scheduled Execution")
         } else {
             scheduledExecution.errors.allErrors.each {log.warn(it.defaultMessage)}
             log.warn("failed saving execution to history")
