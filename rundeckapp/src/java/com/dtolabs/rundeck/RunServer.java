@@ -114,6 +114,7 @@ public class RunServer {
      */
     private void configureJAASRealms(final Server server) {
         final JAASUserRealm realm = new JAASUserRealm();
+        realm.setCallbackHandlerClass("org.mortbay.jetty.plus.jaas.callback.DefaultCallbackHandler");
         realm.setName(REALM_NAME);
         realm.setLoginModuleName(loginmodulename);
         server.addUserRealm(realm);
