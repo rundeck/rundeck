@@ -59,17 +59,7 @@ class ReportService implements ReportAcceptor {
         }
         rep.properties = fields
 
-        //check authorization if "author" matches a User entry
-        def User u = User.findByLogin(rep.author)
-        if(u){
-            if(!u.authorization.events_create){
-                //disallowed, delete report
-                def auth=rep.author
-                System.err.println("User ${auth} FAILED access to reportService/makeReport: no authorization for: events_create");
-                rep.discard()
-                return
-            }
-        }
+        //TODO: authorize event creation?
 
         if (rep && !rep.save(flush: true)) {
             System.err.println("error saving report: ${fields}")

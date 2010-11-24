@@ -555,7 +555,7 @@ class ExecutionService implements ApplicationContextAware, Executor{
             throw new Exception("Workflow is empty")
         }
         def User user = User.findByLogin(userName?userName:execMap.user)
-        if (!user || !user.authorization.workflow_run) {
+        if (!user) {
             throw new Exception(g.message(code:'unauthorized.job.run.user',args:[userName?userName:execMap.user]))
         }
         //convert argString into Map<String,String>

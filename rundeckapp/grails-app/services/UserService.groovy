@@ -7,7 +7,7 @@ class UserService {
     def findOrCreateUser(String login) {
         def User user = User.findByLogin(login)
         if(!user){
-            def User u = new User(login:login,authorization:UserAuth.createDefault())
+            def User u = new User(login:login)
             if(!u.save(flush:true)){
                 System.err.println("unable to save user: ${u}, ${u.errors.each{g.message(error:it)}}");
             }
