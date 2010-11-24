@@ -121,8 +121,7 @@ class MenuController {
     def jobsFragment = {ScheduledExecutionQuery query ->
         long start=System.currentTimeMillis()
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-        def projects = frameworkService.projects(framework)
-        session.projects=projects
+        FrameworkController.autosetSessionProject(session,framework)
         def usedFilter=null
         
         if(params.filterName){

@@ -67,10 +67,11 @@ class FrameworkController  {
             query=new ExtNodeFilters()
             usedFilter=null
         }
+        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        FrameworkController.autosetSessionProject(session,framework)
         if(query && !query.project && session.project){
             query.project=session.project
         }
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         def allnodes = [:]
         def nodesbyproject = [:]
         def totalexecs = [:]
@@ -336,12 +337,22 @@ class FrameworkController  {
         [projects:projects,project:session.project]
     }
     def selectProject={
-        if(params.project){
+        if(null!=params.project){
             session.project=params.project
         }else{
             session.removeAttribute('project') 
         }
         render params.project
+    }
+
+    static autosetSessionProject( session, Framework framework) {
+        def projects=new ArrayList(framework.getFrameworkProjectMgr().listFrameworkProjects())
+        session.projects=projects
+        if(null==session.project && 1==projects.size()){
+            session.project=projects[0].name
+        }else if(0==projects.size()){
+            session.removeAttribute('project')
+        }
     }
 }
 
