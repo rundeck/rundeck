@@ -1,0 +1,301 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>RUNDECK(1) RunDeck User Manuals | Version 1.0</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Alex Honor" />
+  <meta name="date" content="November 20, 2010" />
+</head>
+<body>
+<h1 class="title">RUNDECK(1) RunDeck User Manuals | Version 1.0</h1>
+<h1 id="project-v10"
+>project-v10</h1
+><p
+>The <code
+  >project</code
+  > XML document declares a resource model that can also be uploaded to a project hosted on the RunDeck server. This is a demonstration document using all possible elements.</p
+><h1 id="elements"
+>Elements</h1
+><h2 id="project"
+>project</h2
+><p
+>The root (aka &quot;top-level&quot;) element of the project.xml file. Can contain the following elements:</p
+><dl
+><dt
+  ><a href="#node"
+    >node</a
+    ></dt
+  ><dd
+  ><p
+    >A node resource element.</p
+    ></dd
+  ><dt
+  ><a href="#setting"
+    >setting</a
+    ></dt
+  ><dd
+  ><p
+    >A setting resource element.</p
+    ></dd
+  ></dl
+><p
+><em
+  >Example</em
+  ></p
+><pre
+><code
+  >&lt;project&gt;
+  &lt;node .../&gt;
+  &lt;setting ...  /&gt;
+&lt;/project&gt;
+</code
+  ></pre
+><h2 id="node"
+>node</h2
+><p
+>The node element defines a Node resource.</p
+><p
+><em
+  >Attributes</em
+  ></p
+><dl
+><dt
+  >type</dt
+  ><dd
+  ><p
+    >The node type.</p
+    ></dd
+  ><dt
+  >name</dt
+  ><dd
+  ><p
+    >The node name. This is a logical identifier from the node. (required)</p
+    ></dd
+  ><dt
+  >description</dt
+  ><dd
+  ><p
+    >A brief description about the node.</p
+    ></dd
+  ><dt
+  >hostname</dt
+  ><dd
+  ><p
+    >The hostname or IP address of the remote host. (required)</p
+    ></dd
+  ><dt
+  >osArch</dt
+  ><dd
+  ><p
+    >The operating system architecture.</p
+    ></dd
+  ><dt
+  >osFamily</dt
+  ><dd
+  ><p
+    >The operating system family (e.g, unix or windows).</p
+    ></dd
+  ><dt
+  >osName</dt
+  ><dd
+  ><p
+    >The operating system name (e.g., Linux or Mac OS X).</p
+    ></dd
+  ><dt
+  >tags</dt
+  ><dd
+  ><p
+    >Comma separated list of filtering tags.</p
+    ></dd
+  ><dt
+  >username</dt
+  ><dd
+  ><p
+    >The username on the remote host to which RunDeck connects.</p
+    ></dd
+  ><dt
+  >password</dt
+  ><dd
+  ><p
+    >The remote connection password.</p
+    ></dd
+  ><dt
+  >editUrl</dt
+  ><dd
+  ><p
+    >URL to an external resource model editor service</p
+    ></dd
+  ><dt
+  >remoteUrl</dt
+  ><dd
+  ><p
+    >URL to an external resource model service</p
+    ></dd
+  ></dl
+><p
+><em
+  >Nested Elements</em
+  ></p
+><dl
+><dt
+  ><a href="#resources"
+    >resources</a
+    ></dt
+  ><dd
+  >Associated resources.</dd
+  ></dl
+><p
+><em
+  >Examples</em
+  ></p
+><p
+>Define a node named &quot;strongbad&quot;:</p
+><pre
+><code
+  >&lt;node name=&quot;strongbad&quot; type=&quot;Node&quot;
+    description=&quot;a development host&quot;
+    hostname=&quot;strongbad.local&quot;
+    osArch=&quot;i386&quot; osFamily=&quot;unix&quot; osName=&quot;Darwin&quot; osVersion=&quot;9.2.2&quot;
+    username=&quot;alexh&quot;/&gt;
+</code
+  ></pre
+><p
+>Define a node of the type LinuxNode that has a Port as a resource:</p
+><pre
+><code
+  >&lt;node type=&quot;LinuxNode&quot; name=&quot;centos54&quot; hostname=&quot;centos54.local&quot;
+      description=&quot;Sample Linux node&quot; tags=&quot;sample,linux&quot;     
+      &gt;
+    &lt;resources&gt;
+      &lt;resource type=&quot;Port&quot; name=&quot;httpd&quot;/&gt;
+    &lt;/resources&gt;
+&lt;/node&gt;
+</code
+  ></pre
+><p
+>Define a node named that uses a non standard SSH port. The &quot;hostname&quot; value is overloaded to include the port (192.168.1.106:4022):</p
+><pre
+><code
+  >&lt;node name=&quot;centos54&quot; type=&quot;Node&quot;
+    description=&quot;a centos host&quot;
+    hostname=&quot;192.168.1.106:4022&quot;
+    username=&quot;deploy&quot;/&gt;
+</code
+  ></pre
+><h2 id="setting"
+>setting</h2
+><p
+>The setting element defines a Setting resource.</p
+><p
+><em
+  >Attributes</em
+  ></p
+><dl
+><dt
+  >type</dt
+  ><dd
+  ><p
+    >the resource type.</p
+    ></dd
+  ><dt
+  >name</dt
+  ><dd
+  ><p
+    >the setting name (required).</p
+    ></dd
+  ><dt
+  >description</dt
+  ><dd
+  ><p
+    >brief description.</p
+    ></dd
+  ><dt
+  >settingType</dt
+  ><dd
+  ><p
+    >the value type.</p
+    ></dd
+  ><dt
+  >settingValue</dt
+  ><dd
+  ><p
+    >the setting value (required).</p
+    ></dd
+  ></dl
+><p
+><em
+  >Example</em
+  ></p
+><pre
+><code
+  >&lt;setting type=&quot;Port&quot; name=&quot;&quot;tomcatListenPort&quot;&quot; 
+       description=&quot;The port tomcat listens&quot; 
+       settingValue=&quot;8080&quot; /&gt;
+</code
+  ></pre
+><h2 id="resources"
+>resources</h2
+><p
+>The resources tag defines a set of resource relationships. Each related resource is referenced via a <a href="#resource"
+  >resource</a
+  > element.</p
+><p
+><em
+  >Nested elements</em
+  ></p
+><dl
+><dt
+  ><a href="#resource"
+    >resource</a
+    ></dt
+  ><dd
+  >An associated resource.</dd
+  ></dl
+><p
+><em
+  >Example</em
+  ></p
+><pre
+><code
+  >&lt;resources&gt;
+   &lt;resource type=&quot;Port&quot; name=&quot;tomcatListenPort&quot; /&gt;
+&lt;/resources&gt;
+</code
+  ></pre
+><h2 id="resource"
+>resource</h2
+><p
+>A resource element is used to reference another resource in the project model by type and name.</p
+><p
+><em
+  >Attributes</em
+  ></p
+><dl
+><dt
+  >type</dt
+  ><dd
+  ><p
+    >the resource type.</p
+    ></dd
+  ><dt
+  >name</dt
+  ><dd
+  ><p
+    >the resource name.</p
+    ></dd
+  ></dl
+><p
+><em
+  >Example</em
+  ></p
+><p
+>Reference a Port setting named &quot;tomcatListenPort&quot;.</p
+><pre
+><code
+  >&lt;resource type=&quot;Port&quot; name=&quot;tomcatListenPort&quot; /&gt;
+</code
+  ></pre
+>
+</body>
+</html>

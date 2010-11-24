@@ -1,0 +1,839 @@
+.TH RUNDECK 1 "November 20, 2010" "RunDeck User Manuals" "Version 1.0"
+.SH job-v20
+.PP
+The `job' XML file declares job entries for RunDeck.
+.PP
+This is a demonstration document using all possible elements in the
+current RunDeck \[lq]jobs\[rq] XML.
+.SS Loading and unloading
+.PP
+This file can be batch loaded via \f[I]rd-jobs\f[] load command:
+.IP
+.nf
+\f[C]
+rd-jobs\ load\ --file\ /path/to/jobs.xml
+\f[]
+.fi
+.PP
+RunDeck job definitions can be dumped and saved to a file via
+rd-jobs list command:
+.IP
+.nf
+\f[C]
+rd-jobs\ list\ --file\ /tmp/jobs.xml
+\f[]
+.fi
+.SH joblist
+.PP
+The root (aka \[lq]top-level\[rq]) element of the jobs XML file.
+.PP
+\f[I]Nested elements\f[]
+.TP
+.B job (#job)*
+declares a single job
+.RS
+.RE
+.PP
+\f[I]Example\f[]
+.IP
+.nf
+\f[C]
+<joblist>
+\ \ <job>
+\ \ \ ...
+\ \ </job>
+\ \ <job>
+\ \ \ ...
+\ \ </job>
+</joblist>
+\f[]
+.fi
+.SS job
+.PP
+The job element is a sub-element of joblist (#joblist) and defines
+a job executable in RunDeck.
+.PP
+The following elements are used to describe the job.
+Only one of each element is allowed.
+.PP
+\f[I]Nested elements\f[]
+.TP
+.B id
+job identifier
+.RS
+.RE
+.TP
+.B name
+the job name
+.RS
+.RE
+.TP
+.B description
+the job description
+.RS
+.RE
+.TP
+.B additional
+additional information
+.RS
+.RE
+.TP
+.B group
+group name
+.RS
+.RE
+.TP
+.B context
+command context
+.RS
+.RE
+.TP
+.B dispatch
+dispatch options
+.RS
+.RE
+.TP
+.B sequence
+workflow sequence
+.RS
+.RE
+.TP
+.B notification
+email noticfications
+.RS
+.RE
+.TP
+.B nodefilters
+node filtering expressions
+.RS
+.RE
+.TP
+.B loglevel
+the logging level
+.RS
+.RE
+.PP
+\f[I]Job command modes\f[]
+.PP
+Jobs execute a sequence of commands.
+Commands come in several styles:
+.IP \[bu] 2
+System command
+.IP \[bu] 2
+A script
+.IP \[bu] 2
+A script file
+.IP \[bu] 2
+Another defined job
+.PP
+\f[I]Examples\f[]
+.PP
+Execute the Unix `who' command
+.IP
+.nf
+\f[C]
+<joblist>
+\ \ <job>
+\ \ \ \ <name>who\[aq]s\ logged\ in?</name>
+\ \ \ \ <description>Runs\ the\ unix\ who\ command</description>
+\ \ \ \ <additional/>
+\ \ \ \ <group>sysadm/users</group>
+\ \ \ \ <context>
+\ \ \ \ \ \ <project>default</project>
+\ \ \ \ </context>
+\ \ \ \ <sequence>
+\ \ \ \ \ \ <command>
+\ \ \ \ \ \ \ \ <!--\ the\ Unix\ \[aq]who\[aq]\ command\ -->
+\ \ \ \ \ \ \ \ <exec>who</exec>
+\ \ \ \ \ \ </command>
+\ \ \ \ \ </sequence>
+\ \ \ \ <nodefilters\ excludeprecedence="true">
+\ \ \ \ \ \ <include>
+\ \ \ \ \ \ \ \ <os-family>unix</os-family>
+\ \ \ \ \ \ </include>
+\ \ \ \ </nodefilters>
+\ \ \ \ <dispatch>
+\ \ \ \ \ \ <threadcount>1</threadcount>
+\ \ \ \ \ \ <keepgoing>true</keepgoing>
+\ \ \ \ </dispatch>
+\ \ </job>
+</joblist>
+\f[]
+.fi
+.PP
+Execute a Bash script
+.IP
+.nf
+\f[C]
+<joblist>
+\ \ <job>
+\ \ \ \ <name>a\ simple\ script</name>
+\ \ \ \ <description>Runs\ a\ trivial\ bash\ script</description>
+\ \ \ \ <additional/>
+\ \ \ \ <group>sysadm/users</group>
+\ \ \ \ <context>
+\ \ \ \ \ \ <project>default</project>
+\ \ \ \ </context>
+\ \ \ \ <sequence>
+\ \ \ \ \ \ <command>
+\ \ \ \ \ \ \ \ <script><![CDATA[#!/bin/bash
+echo\ this\ is\ an\ example\ job\ running\ on\ $(hostname)
+echo\ whatever
+exit\ 0\ ]]></script>
+\ \ \ \ \ \ </command>
+\ \ \ \ \ </sequence>
+\ \ \ \ <dispatch>
+\ \ \ \ \ \ <threadcount>1</threadcount>
+\ \ \ \ \ \ <keepgoing>true</keepgoing>
+\ \ \ \ </dispatch>
+\ \ </job>
+</joblist>
+\f[]
+.fi
+.PP
+Execute a sequence of other commands, scripts and jobs:
+.IP
+.nf
+\f[C]
+<joblist>
+\ \ <job>
+\ \ \ \ <name>test\ coreutils</name>
+\ \ \ \ <description/>
+\ \ \ \ <additional/>
+\ \ \ \ <context>
+\ \ \ \ \ \ <project>default</project>
+\ \ \ \ </context>
+\ \ \ \ <sequence>\ \ \ \ \ \ \ \ \ 
+\ \ \ \ \ <!--\ the\ Unix\ \[aq]who\[aq]\ command\ -->
+\ \ \ \ \ <command>
+\ \ \ \ \ \ \ \ <exec>who</exec>
+\ \ \ \ \ </command>
+\ \ \ \ \ <!--\ a\ Job\ named\ test/other\ tests\ -->
+\ \ \ \ \ <command>
+\ \ \ \ \ \ \ \ <jobref\ group="test"\ name="other\ tests"/>
+\ \ \ \ \ </command>
+\ \ \ \ </sequence>
+\ \ \ \ <dispatch>
+\ \ \ \ \ \ <threadcount>1</threadcount>
+\ \ \ \ \ \ <keepgoing>false</keepgoing>
+\ \ \ \ </dispatch>
+\ \ </job>
+</joblist>
+\f[]
+.fi
+.SS id
+.PP
+The job identifier is a sub-element of job (#job).
+This is normally defined by RunDeck upon job creation.
+If it is specified, job will be created with this id.
+.PP
+If a job was already defined with this id, it will be updated with
+the included job definition.
+.SS name
+.PP
+The job name is a sub-element of job (#job).
+The combination of `name' and group (#group) must be unique if the
+id (#id) identifier is not included.
+.SS description
+.PP
+The job description is a sub-element of job (#job) and allows a
+short description of the job.
+.SS additional
+.PP
+The additional element is a sub-element of job (#job) and provides
+a place to declare additional user information.
+.SS group
+.PP
+The group is a sub-element of job (#job) and defines the job's
+group identifier.
+This is a \[lq]/\[rq] (slash) separated string that mimics a
+directory structure.
+.PP
+\f[I]Example\f[]
+.IP
+.nf
+\f[C]
+<job>
+\ \ \ \ <name>who</name>
+\ \ \ \ <description>who\ is\ logged\ in?</description>
+\ \ \ \ <additional/>
+\ \ \ \ <group>/sysadm/users</group>
+</job>
+\f[]
+.fi
+.SS schedule
+.PP
+schedule is a sub-element of job (#job) and specifies periodic job
+execution using the stated schedule.
+The schedule can be specified using embedded elements as shown
+below, or using a single crontab (#crontab) attribute to set a full
+crontab expression.
+.PP
+\f[I]Nested elements\f[]
+.TP
+.B time (#time)
+the hour and minute and seconds
+.RS
+.RE
+.TP
+.B weekday (#weekday)
+day(s) of week
+.RS
+.RE
+.TP
+.B month (#month)
+month(s)
+.RS
+.RE
+.TP
+.B year (#year)
+year
+.RS
+.RE
+.PP
+\f[I]Attributes\f[]
+.TP
+.B crontab (#crontab)
+a full crontab expression
+.RS
+.RE
+.PP
+\f[I]Example\f[]
+.PP
+Run the job every morning at 6AM, 7AM and 8AM.
+.IP
+.nf
+\f[C]
+<schedule>
+\ <time\ hour="06,07,08"\ minute="00"/>
+\ <weekday\ day="*"/>
+\ <month\ month="*"/>
+\ </schedule>
+\f[]
+.fi
+.PP
+Run the job every morning at 6:00:02AM, 7:00:02AM and 8:00:02AM
+only in the year 2010:
+.IP
+.nf
+\f[C]
+<schedule>
+\ <time\ hour="06,07,08"\ minute="00"\ seconds="02"/>
+\ <weekday\ day="*"/>
+\ <month\ month="*"/>
+\ <year\ year="2010"/>
+</schedule>
+\f[]
+.fi
+.PP
+Run the job every morning at 6:00:02AM, 7:00:02AM and 8:00:02AM
+only in the year 2010, using a single crontab attribute to express
+it:
+.IP
+.nf
+\f[C]
+<schedule\ crontab="02\ 00\ 06,07,08\ ?\ *\ *\ 2010"/>
+\f[]
+.fi
+.PP
+For more information, see
+http://www.quartz-scheduler.org/docs/tutorials/crontrigger.html or
+http://www.stonebranch.com
+.SS crontab
+.PP
+Attribute of the schedule (#schedule), sets the schedule with a
+full crontab string.
+For more information, see
+http://www.quartz-scheduler.org/docs/tutorials/crontrigger.html.
+.PP
+If specified, then the embedded schedule elements are not used.
+.SS time
+.PP
+The schedule (#schedule) time to run the job
+.PP
+\f[I]Attributes\f[]
+.TP
+.B hour
+values: 00\[en]23
+.RS
+.RE
+.TP
+.B minute
+values: 00\[en]59
+.RS
+.RE
+.SS weekday
+.PP
+The schedule (#schedule) weekday to run the job
+.PP
+\f[I]Attributes\f[]
+.TP
+.B day
+values: * - all 1\[en]5 days mon-fri 1,2,3\[en]5 - days
+mon,tue,wed-fri, etc
+.RS
+.RE
+.SS month
+.PP
+The schedule (#schedule) month to run the job
+.PP
+\f[I]Attributes\f[]
+.TP
+.B month
+values: * - all 1\[en]10 - month jan-oct 1,2,3\[en]5 - months
+jan,feb,mar-may, etc.
+.RS
+.RE
+.TP
+.B day
+day of the month: * - all; 1\[en]31 specific days
+.RS
+.RE
+.SS context
+.PP
+The job (#job) context.
+.PP
+\f[I]Nested elements\f[]
+.TP
+.B project (#project)
+the project name (required)
+.RS
+.RE
+.TP
+.B options (#options)
+job options.
+specifies one or more option elements
+.RS
+.RE
+.SS project
+.PP
+The context (#context) project name.
+.SS options
+.PP
+The context (#context) options that correspond to the called
+command (#command).
+.PP
+\f[I]Nested elements\f[]
+.TP
+.B option](#option)
+an option element
+.RS
+.RE
+.PP
+\f[I]Example\f[]
+.IP
+.nf
+\f[C]
+<options>
+\ \ \ \ <option\ name="detail"\ value="true"/>
+</options>
+\f[]
+.fi
+.SS option
+.PP
+Defines one option within the options (#options).
+.PP
+\f[I]Attributes\f[]
+.TP
+.B name
+the option name
+.RS
+.RE
+.TP
+.B value
+the default value
+.RS
+.RE
+.TP
+.B values
+comma separated list of values
+.RS
+.RE
+.TP
+.B valuesUrl
+URL to a list of JSON values
+.RS
+.RE
+.TP
+.B enforcedvalues
+Boolean specifying that must pick from one of values
+.RS
+.RE
+.TP
+.B regex
+Regex pattern of acceptable value
+.RS
+.RE
+.TP
+.B description
+Description of the option
+.RS
+.RE
+.TP
+.B required
+Boolean specifying that the option is required
+.RS
+.RE
+.PP
+\f[I]Example\f[]
+.PP
+Define defaults for the \[lq]port\[rq] option.
+.IP
+.nf
+\f[C]
+<option\ name="port"\ value="80"\ values="80,8080,8888"\ enforcedvalues="true"\ regex="\\d+"/>
+\f[]
+.fi
+.SS valuesUrl JSON
+.PP
+The data returned from the valuesUrl can be formatted as a map:
+.IP
+.nf
+\f[C]
+{"x\ label":"X\ value","y\ label":"Y\ value",\ "z\ label":"Z\ value"}
+\f[]
+.fi
+.PP
+or as array:
+.IP
+.nf
+\f[C]
+["x\ value","y\ value",\ "z\ value"]
+\f[]
+.fi
+.SS dispatch
+.PP
+The job (#job) dispatch options.
+See the [Dispatcher options] for general information.
+.PP
+\f[I]Nested elements\f[]
+.TP
+.B threadcount (#threadcount)
+dispatch up to threadcount
+.RS
+.RE
+.TP
+.B keepgoing (#keepgoing)
+keep going flag
+.RS
+.RE
+.PP
+\f[I]Example\f[]
+.IP
+.nf
+\f[C]
+<dispatch>
+\ \ <threadcount>1</threadcount>
+\ \ <keepgoing>false</keepgoing>
+</dispatch>
+\f[]
+.fi
+.SS threadcount
+.PP
+Defines the number of threads to execute within
+dispatch (#dispatch).
+Must be a positive integer.
+.SS keepgoing
+.PP
+Boolean describing if the dispatch (#dispatch) should continue of
+an error occurs (true/false).
+If true, continue if an error occurs.
+.SS loglevel
+.PP
+The job (#job) logging level.
+The lower the more profuse the messages.
+.IP \[bu] 2
+DEBUG
+.IP \[bu] 2
+VERBOSE
+.IP \[bu] 2
+INFO
+.IP \[bu] 2
+WARN
+.IP \[bu] 2
+ERR
+.SS nodefilters
+.PP
+The job (#job) nodefilters options.
+See Include/exclude patterns (#includeexclude-patterns) for a
+general description.
+.PP
+\f[I]Attributes\f[]
+.TP
+.B excludeprecedence
+boolean value: true or false
+.RS
+.RE
+.PP
+\f[I]Nested elements\f[]
+.TP
+.B include
+include filter
+.RS
+.RE
+.TP
+.B exclude
+exclude filter
+.RS
+.RE
+.PP
+\f[I]Example\f[]
+.IP
+.nf
+\f[C]
+<nodefilters\ excludeprecedence="true">
+\ \ <include>
+\ \ \ \ <hostname/>
+\ \ \ \ <type/>
+\ \ \ \ <tags>tomcats</tags>
+\ \ \ \ <os-name/>
+\ \ \ \ <os-family/>
+\ \ \ \ <os-arch/>
+\ \ \ \ <os-version/>
+\ \ \ \ <name/>
+\ \ </include>
+</nodefilters>
+\f[]
+.fi
+.SS include
+.PP
+See Include/exclude patterns (#includeexclude-patterns)
+.SS exclude
+.PP
+See Include/exclude patterns (#includeexclude-patterns)
+.SS Include/exclude patterns
+.PP
+The nodefilters (#nodefilters) include and exclude patterns.
+.PP
+\f[I]Nested elements\f[]
+.TP
+.B hostname
+node hostname
+.RS
+.RE
+.TP
+.B name
+node resource name
+.RS
+.RE
+.TP
+.B type
+node type
+.RS
+.RE
+.TP
+.B tags
+node tags.
+comma separted
+.RS
+.RE
+.TP
+.B os-name
+operating system name (eg, Linux, Mac OS X)
+.RS
+.RE
+.TP
+.B os-family
+operating system family (eg, unix, windows)
+.RS
+.RE
+.TP
+.B os-arch
+operating system architecture (eg i386,sparc)
+.RS
+.RE
+.TP
+.B os-version
+operating system version
+.RS
+.RE
+.SS sequence
+.PP
+The job (#job) workflow sequence.
+.PP
+\f[I]Attributes\f[]
+.TP
+.B keepgoing
+true/false.
+(default false).
+If true, the workflow sequence will continue even if there is a
+failure
+.RS
+.RE
+.TP
+.B strategy
+node-first/step-first.
+(default \[lq]node-first\[rq]).
+The strategy to use for executing the workflow across nodes.
+.RS
+.RE
+.PP
+The strategy attribute determines the way that the workflow is
+executed.
+\[lq]node-first\[rq] means execute the full workflow on each node
+prior to the next.
+\[lq]step-first\[rq] means execute each step across all nodes prior
+to the next step.
+.PP
+\f[I]Nested elements\f[]
+.TP
+.B command (#command)
+a sequence item
+.RS
+.RE
+.SS command
+.PP
+Defines an item for a workflow sequence (#sequence).
+.PP
+The different types of sequence items are defined in different
+ways.
+.PP
+See:
+.IP \[bu] 2
+Script sequence item (#script-sequence-item)
+.IP \[bu] 2
+Job sequence item (#job-sequence-item)
+.SS Script sequence item
+.PP
+Script items can be defined in three ways within a command element:
+.IP \[bu] 2
+Simple shell command using exec element.
+.IP \[bu] 2
+Embedded script using script element.
+.IP \[bu] 2
+Script file using scriptfile and scriptargs elements.
+.PP
+Example exec item:
+.IP
+.nf
+\f[C]
+<command>
+\ \ \ <exec>echo\ this\ is\ a\ shell\ command</exec>
+</command>
+\f[]
+.fi
+.PP
+Inline script.
+Note that using CDATA section will preserve linebreaks in the
+script.
+Simply put the script within a script element:
+.IP
+.nf
+\f[C]
+<command>
+\ \ \ \ <script><![CDATA[#!/bin/bash
+echo\ this\ is\ a\ test
+echo\ whatever
+exit\ 2\ ]></script>
+</command>
+\f[]
+.fi
+.PP
+Script File:
+.IP
+.nf
+\f[C]
+<command\ >
+\ \ \ \ <scriptfile>/path/to/a/script</scriptfile>
+\ \ \ \ <scriptargs>-whatever\ something</scriptargs>
+</command>\ \ \ \ \ \ 
+\f[]
+.fi
+.SS Job sequence item
+.PP
+Define a jobref (#jobref) element within the command (#command)
+element
+.SS jobref
+.PP
+\f[I]Attributes\f[]
+.TP
+.B name
+the job name
+.RS
+.RE
+.TP
+.B group
+the group name
+.RS
+.RE
+.PP
+\f[I]Nested elements\f[]
+.PP
+Optional \[lq]arg\[rq] element can be embedded:
+.TP
+.B arg (#arg)
+option arguments to the script or job
+.RS
+.RE
+.PP
+Example passing arguments to the job:
+.IP
+.nf
+\f[C]
+<command\ >
+\ \ \ \ <jobref\ group="My\ group"\ name="My\ Job">
+\ \ \ \ \ \ \ <arg\ line="-option\ value\ -option2\ value2"/>
+\ \ \ \ </jobref>
+</command>\ \ \ \ \ \ 
+\f[]
+.fi
+.SS notification
+.PP
+Defines email notifications for Job success and failure, with in a
+job (#job) definition.
+.PP
+\f[I]Nested elements\f[]
+.TP
+.B onsuccess (#onsuccess)
+define notifications for success result
+.RS
+.RE
+.TP
+.B onfailure (#onfailure)
+define notifications for failure/kill result
+.RS
+.RE
+.PP
+\f[I]Example\f[]
+.IP
+.nf
+\f[C]
+<notification>
+\ \ \ \ <onfailure>
+\ \ \ \ \ \ \ \ <email\ recipients="test\@example.com,foo\@example.com"\ />
+\ \ \ \ </onfailure>
+\ \ \ \ <onsuccess>
+\ \ \ \ \ \ \ \ <email\ recipients="test\@example.com"\ />
+\ \ \ </onsuccess>
+</notification>\ \ \ \ \ \ 
+\f[]
+.fi
+.SS onsuccess
+.PP
+Embed an email (#email) element to send email on success, within
+notification (#notification).
+.SS onfailure
+.PP
+Embed an email (#email) element to send email on failure or kill,
+within notification (#notification).
+.SS email
+.PP
+Define email recipients for Job execution result, within
+onsuccess (#onsuccess) or onfailure (#onfailure).
+.PP
+\f[I]Attributes\f[]
+.TP
+.B recipients
+comma-separated list of email addresses
+.RS
+.RE
+.PP
+\f[I]Example\f[]
+.IP
+.nf
+\f[C]
+\ \ \ \ \ \ \ \ <email\ recipients="test\@example.com,dev\@example.com"\ />
+\f[]
+.fi
+.SH AUTHORS
+Alex Honor.

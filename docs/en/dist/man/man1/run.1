@@ -1,0 +1,109 @@
+.TH RUNDECK 1 "November 20, 2010" "RunDeck User Manuals" "Version 1.0"
+.SH NAME
+.PP
+run - execute a stored Job
+.SH SYNOPSIS
+.PP
+run [-h] [-v] [-l level] [nodefilters] [-i id] [-j group/name][--
+arguments]
+.SH DESCRIPTION
+.PP
+The run command is used to start the execution of a Job defined in
+CTL Center.
+The Job is executed on the server, and the ID for the execution is
+displayed.
+This is equivalent to logging in to CTL Center and starting a Job
+within the web application GUI.
+.PP
+The Job can either be specified by ID (-i), or by name and optional
+group (-j).
+The Node filters used for the execution of the job can also be
+specified on the commandline, and will be used instead of any
+already defined for the Job.
+Arguments to the Execution can be specfied after (--).
+.SH OPTIONS
+.PP
+-h, --help : Print usage message.
+.PP
+-v : Run verbosely.
+.PP
+-l, --loglevel \f[I]LEVEL\f[] : Run the command using the specified
+LEVEL.
+*LEVEL can be \f[C]verbose\f[], \f[C]info\f[], \f[C]warning\f[],
+\f[C]error\f[].
+.PP
+-I \f[I]FILTER\f[] : Include node filter.
+.PP
+-X \f[I]FILTER\f[] : Exclude node filter.
+.PP
+-C \f[I]COUNT\f[] : Threadcount, defaults to 1.
+.PP
+-K : Keep going on node failure.
+.PP
+-N : Do not keep going on node failures.
+.PP
+-j, --job \f[I]NAME\f[] : Job job (group and name).
+Run a Job specified by Job name and group.
+eg: `Group/Job'.
+.PP
+-i, --id \f[I]IDENTIFIER\f[] : Run the Job with this IDENTIFIER
+.PP
+-- \f[I]ARGUMENTS\f[] : Pass the specified ARGUMENTS as options to
+the job
+.SH EXECUTION
+.PP
+This tool requires a unique Job to be identified for execution.
+This is done either by using \f[C]-i\ id\f[], or
+\f[C]-j\ group/name\f[].
+The group is optional if only one Job with the name exists.
+.SS EXAMPLES
+.PP
+Run the Job that has ID \f[C]12\f[]:
+.IP
+.nf
+\f[C]
+run\ -i\ 12
+\f[]
+.fi
+.PP
+Run the job named \[lq]Full\[rq] in the group \[lq]QA/Test\[rq]
+.IP
+.nf
+\f[C]
+run\ -g\ QA/Test\ -n\ Full
+\f[]
+.fi
+.PP
+Also runs the job \[lq]Full\[rq] in QA/Test group:
+.IP
+.nf
+\f[C]
+run\ -j\ QA/Test/Full
+\f[]
+.fi
+.PP
+If you try to run a job by name only, but it is not unique, you
+will get an error message like this:
+.IP
+.nf
+\f[C]
+run\ -j\ testJob
+Error:\ Failed\ request\ to\ run\ a\ job:\ Server\ reported\ an\ error:\ No\ unique\ job\ matched\ the\ input:\ testJob,\ null.\ found\ (2)
+\f[]
+.fi
+.PP
+Running a Job and specifying Node filters:
+.IP
+.nf
+\f[C]
+run\ -I\ tags=dev\ -X\ os-family=windows\ -C\ 2\ -K\ -j\ \[aq]test/Job\ 1\[aq]
+\f[]
+.fi
+.SH SEE ALSO
+.PP
+\f[C]rdq\f[] (1), \f[C]rd-jobs\f[] (1).
+.PP
+The RunDeck source code and all documentation may be downloaded
+from <https://github.com/dtolabs/rundeck/>.
+.SH AUTHORS
+Alex Honor.

@@ -1,0 +1,237 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>RUNDECK(1) RunDeck User Manuals | Version 1.0</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Alex Honor" />
+  <meta name="date" content="November 20, 2010" />
+</head>
+<body>
+<h1 class="title">RUNDECK(1) RunDeck User Manuals | Version 1.0</h1>
+<h1 id="name"
+>NAME</h1
+><p
+>dispatch - execute commands across nodes</p
+><h1 id="synopsis"
+>SYNOPSIS</h1
+><p
+>dispatch [<em
+  >options</em
+  >]</p
+><h1 id="description"
+>DESCRIPTION</h1
+><p
+>The dispatch command is used to remotely execute ad-hoc shell commands on a set of nodes which are specified by the filter options.</p
+><h1 id="options"
+>OPTIONS</h1
+><p
+>-h, --help : Print usage message.</p
+><p
+>-v : Run verbosely.</p
+><p
+>-V : Turn on debug messages.</p
+><p
+>-q, --quiet : Show only error messages.</p
+><p
+>-N, --nodesfile <em
+  >FILE</em
+  > : Use specified file containing nodes resource model.</p
+><p
+>-C, --threadcount <em
+  >COUNT</em
+  > : Dispatch execution to Nodes using <em
+  >COUNT</em
+  > threads.</p
+><p
+>-K, --keepgoing : Keep going when an error occurs on multiple dispatch.</p
+><p
+>-I, --nodes <em
+  >FILTER</em
+  > : Include node parameter list.</p
+><p
+>-X, --xnodes <em
+  >FILTER</em
+  > : Exclude node parameter list.</p
+><p
+>-filter-exclude-precedence <em
+  >true|false</em
+  > : Set the exclusion filter to have precedence or not.</p
+><p
+>-p <em
+  >NAME</em
+  > : Project name</p
+><p
+>-- <em
+  >COMMAND_STRING</em
+  > : Dispatch specified command string</p
+><p
+>-s, --script <em
+  >SCRIPT</em
+  > : Dispatch specified script file</p
+><p
+>-S, --stdin : Execute input read from <em
+  >STDIN</em
+  ></p
+><p
+>-Q, --queue : Queue this command to the dispatcher service and run it</p
+><h1 id="command-mode"
+>COMMAND MODE</h1
+><p
+>Command mode occurs when the -p option is present (or there is only one Project), ando one (and only one) of the following options are specified: --, -s, or -S</p
+><h2 id="command-string---"
+>COMMAND STRING (--)</h2
+><p
+>The remote (or locally) shell command that is invoked is specified after the &quot;--&quot; on the command-line. This string should begin with the command name and be followed by any arguments you want to pass to it.</p
+><p
+><em
+  >Examples</em
+  ></p
+><p
+>Execute the apachectl restart command across Nodes tagged &quot;web&quot;:</p
+><pre
+><code
+  >dispatch -I tags=web -- sudo apachectl restart
+</code
+  ></pre
+><p
+>Execute apachectl status using the &quot;keepgoing&quot; flag across nodes that have a hostname that begin with &quot;web&quot;:</p
+><pre
+><code
+  >dispatch -I hostname=web.* -K -- apachectl status
+</code
+  ></pre
+><p
+>Run the locally installed update.sh script in three threads and keepgoing if an error occurs:</p
+><pre
+><code
+  >dispatch -I tags=dev -K -C 3 -- sh -c update.sh 
+</code
+  ></pre
+><h2 id="script--s"
+>SCRIPT (-s)</h2
+><p
+>Sometimes it is preferable to save a sequence of command statements into a file on the admin host and then execute that file across a number of target hosts. The script specified via the -s option is a script local to where the dispatch command is executed but that script file is copied to the remote target machines and then executed.</p
+><p
+><em
+  >Examples</em
+  ></p
+><p
+>Execute the &quot;myscript.sh&quot; shell script across the Nodes tagged &quot;web&quot;:</p
+><pre
+><code
+  >dispatch -I tags=web -s myscript.sh
+</code
+  ></pre
+><p
+>Note: The script file is copied to a temporary directory on the target machines (on unix it is /tmp and on Windows c:)</p
+><h2 id="stdin--s"
+>STDIN (-S)</h2
+><p
+>As an alternative to specifying the commands either as deferred arguments after the double hyphen (&quot;--&quot;) or as a saved script (&quot;-s script&quot;), dispatch can also read command input from stdin.</p
+><p
+><em
+  >Examples</em
+  ></p
+><p
+>Execute the uname command across all Unix nodes</p
+><pre
+><code
+  >echo &quot;uname -a&quot; | dispatch -I os-family=unix --stdin
+</code
+  ></pre
+><p
+>Multi-line scripts are easier to write using a here document:</p
+><pre
+><code
+  >dispatch --stdin &lt;&lt;END
+  statement 1;
+  statement 2;
+  statement 3;
+END
+</code
+  ></pre
+><p
+>Note: The input read from stdin is saved to a temporary file and then content is called with the -s script mode described above to transfer and invoke the script.</p
+><h1 id="listing-mode"
+>LISTING MODE</h1
+><p
+>dispatch will enter Listing Mode when no Command String is specified on the command line.</p
+><p
+>In this mode, dispatch will output the list of available nodes.</p
+><p
+><em
+  >Example</em
+  ></p
+><pre
+><code
+  >$ dispatch
+daffy porky
+</code
+  ></pre
+><p
+>When the -v (verbose) option is specified, the node listing will include the details about the nodes that can be used for filtering: hostname, os-arch, os-family, os-version, os-name, tags.</p
+><p
+><em
+  >Example</em
+  ></p
+><pre
+><code
+  >$ dispatch -v
+    daffy:
+       hostname: daffy.local
+       os-arch: i386
+       os-family: unix
+       os-name: Mac OS X
+       os-version: 10.5.2
+       tags: [development]
+    porky:
+       hostname: porky
+       os-arch: x86
+       os-family: windows
+       os-name: Windows XP
+       os-version: 5.1
+       tags: [testing]
+</code
+  ></pre
+><p
+>When combined with the -I/-X Node Filtering options, you can easily determine which nodes will be the target of any remotely executed command prior to invoking it:</p
+><pre
+><code
+  >dispatch -v -X os-family=unix
+    porky:
+       hostname: porky
+       os-arch: x86
+       os-family: windows
+       os-name: Windows XP
+       os-version: 5.1
+       tags: [testing]
+</code
+  ></pre
+><h1 id="error-code"
+>ERROR CODE</h1
+><p
+>The dispatch command will exit non zero if a command dispatch error occurs.</p
+><p
+>0 : All commands executed successfully</p
+><p
+>1 : One or more commands failed</p
+><p
+>127 : Unknown error case</p
+><h1 id="see-also"
+>SEE ALSO</h1
+><p
+><code
+  >rd-options</code
+  > (1), <code
+  >rdq</code
+  > (1).</p
+><p
+>The RunDeck source code and all documentation may be downloaded from <a href="https://github.com/dtolabs/rundeck/"
+  ><code
+    >https://github.com/dtolabs/rundeck/</code
+    ></a
+  >.</p
+>
+</body>
+</html>

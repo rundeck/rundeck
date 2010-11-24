@@ -1,0 +1,238 @@
+.TH RUNDECK 1 "November 20, 2010" "RunDeck User Manuals" "Version 1.0"
+.SH project-v10
+.PP
+The \f[C]project\f[] XML document declares a resource model that
+can also be uploaded to a project hosted on the RunDeck server.
+This is a demonstration document using all possible elements.
+.SH Elements
+.SS project
+.PP
+The root (aka \[lq]top-level\[rq]) element of the project.xml file.
+Can contain the following elements:
+.TP
+.B node (#node)
+A node resource element.
+.RS
+.RE
+.TP
+.B setting (#setting)
+A setting resource element.
+.RS
+.RE
+.PP
+\f[I]Example\f[]
+.IP
+.nf
+\f[C]
+<project>
+\ \ <node\ .../>
+\ \ <setting\ ...\ \ />
+</project>
+\f[]
+.fi
+.SS node
+.PP
+The node element defines a Node resource.
+.PP
+\f[I]Attributes\f[]
+.TP
+.B type
+The node type.
+.RS
+.RE
+.TP
+.B name
+The node name.
+This is a logical identifier from the node.
+(required)
+.RS
+.RE
+.TP
+.B description
+A brief description about the node.
+.RS
+.RE
+.TP
+.B hostname
+The hostname or IP address of the remote host.
+(required)
+.RS
+.RE
+.TP
+.B osArch
+The operating system architecture.
+.RS
+.RE
+.TP
+.B osFamily
+The operating system family (e.g, unix or windows).
+.RS
+.RE
+.TP
+.B osName
+The operating system name (e.g., Linux or Mac OS X).
+.RS
+.RE
+.TP
+.B tags
+Comma separated list of filtering tags.
+.RS
+.RE
+.TP
+.B username
+The username on the remote host to which RunDeck connects.
+.RS
+.RE
+.TP
+.B password
+The remote connection password.
+.RS
+.RE
+.TP
+.B editUrl
+URL to an external resource model editor service
+.RS
+.RE
+.TP
+.B remoteUrl
+URL to an external resource model service
+.RS
+.RE
+.PP
+\f[I]Nested Elements\f[]
+.TP
+.B resources (#resources)
+Associated resources.
+.RS
+.RE
+.PP
+\f[I]Examples\f[]
+.PP
+Define a node named \[lq]strongbad\[rq]:
+.IP
+.nf
+\f[C]
+<node\ name="strongbad"\ type="Node"
+\ \ \ \ description="a\ development\ host"
+\ \ \ \ hostname="strongbad.local"
+\ \ \ \ osArch="i386"\ osFamily="unix"\ osName="Darwin"\ osVersion="9.2.2"
+\ \ \ \ username="alexh"/>
+\f[]
+.fi
+.PP
+Define a node of the type LinuxNode that has a Port as a resource:
+.IP
+.nf
+\f[C]
+<node\ type="LinuxNode"\ name="centos54"\ hostname="centos54.local"
+\ \ \ \ \ \ description="Sample\ Linux\ node"\ tags="sample,linux"\ \ \ \ \ 
+\ \ \ \ \ \ >
+\ \ \ \ <resources>
+\ \ \ \ \ \ <resource\ type="Port"\ name="httpd"/>
+\ \ \ \ </resources>
+</node>
+\f[]
+.fi
+.PP
+Define a node named that uses a non standard SSH port.
+The \[lq]hostname\[rq] value is overloaded to include the port
+(192.168.1.106:4022):
+.IP
+.nf
+\f[C]
+<node\ name="centos54"\ type="Node"
+\ \ \ \ description="a\ centos\ host"
+\ \ \ \ hostname="192.168.1.106:4022"
+\ \ \ \ username="deploy"/>
+\f[]
+.fi
+.SS setting
+.PP
+The setting element defines a Setting resource.
+.PP
+\f[I]Attributes\f[]
+.TP
+.B type
+the resource type.
+.RS
+.RE
+.TP
+.B name
+the setting name (required).
+.RS
+.RE
+.TP
+.B description
+brief description.
+.RS
+.RE
+.TP
+.B settingType
+the value type.
+.RS
+.RE
+.TP
+.B settingValue
+the setting value (required).
+.RS
+.RE
+.PP
+\f[I]Example\f[]
+.IP
+.nf
+\f[C]
+<setting\ type="Port"\ name=""tomcatListenPort""\ 
+\ \ \ \ \ \ \ description="The\ port\ tomcat\ listens"\ 
+\ \ \ \ \ \ \ settingValue="8080"\ />
+\f[]
+.fi
+.SS resources
+.PP
+The resources tag defines a set of resource relationships.
+Each related resource is referenced via a resource (#resource)
+element.
+.PP
+\f[I]Nested elements\f[]
+.TP
+.B resource (#resource)
+An associated resource.
+.RS
+.RE
+.PP
+\f[I]Example\f[]
+.IP
+.nf
+\f[C]
+<resources>
+\ \ \ <resource\ type="Port"\ name="tomcatListenPort"\ />
+</resources>
+\f[]
+.fi
+.SS resource
+.PP
+A resource element is used to reference another resource in the
+project model by type and name.
+.PP
+\f[I]Attributes\f[]
+.TP
+.B type
+the resource type.
+.RS
+.RE
+.TP
+.B name
+the resource name.
+.RS
+.RE
+.PP
+\f[I]Example\f[]
+.PP
+Reference a Port setting named \[lq]tomcatListenPort\[rq].
+.IP
+.nf
+\f[C]
+<resource\ type="Port"\ name="tomcatListenPort"\ />
+\f[]
+.fi
+.SH AUTHORS
+Alex Honor.

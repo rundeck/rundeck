@@ -1,0 +1,78 @@
+.TH RUNDECK 1 "November 20, 2010" "RunDeck User Manuals" "Version 1.0"
+.SH NAME
+.PP
+rd-setup - Setup the RunDeck software after the distribution has
+been extracted into its installation directory.
+.SH SYNOPSIS
+.PP
+rd-setup [-fv] -n nodename [-N hostname] [-s serverhostname] [
+--key=value ]\&...
+.SH DESCRIPTION
+.PP
+The rd-setup command is used to setup the RunDeck software after
+the distribution has been extracted into its installation
+directory.
+.PP
+During the first time installation or if the -f flag is set
+rd-setup will create a new instance of the framework and generate
+all the configuration files found in $RD_BASE/etc.
+.SH OPTIONS
+.PP
+-h : displays the usage information presented above.
+.PP
+-v : run verbose.
+.PP
+-f : Force re-generation of configuration files
+.PP
+-n : The nodename
+.PP
+-N : The hostname
+.PP
+--key=value : Override the default values during the installation
+by specifying one or more --key=value combinations.
+.SH ENVIRONMENT VARIABLES
+.PP
+The following environment variables are assumed during the
+execution of rd-setup:
+.IP \[bu] 2
+JAVA_HOME :Java installation directory
+.IP \[bu] 2
+RD_HOME : RunDeck installation directory
+.IP \[bu] 2
+RD_BASE : RunDeck framework instance directory
+.SH EXECUTION
+.PP
+\f[I]Examples\f[]
+.PP
+Execute the rd-setup command defining the hostname setting as
+\[lq]adminhost\[rq]:
+.IP
+.nf
+\f[C]
+rd-setup\ -n\ adminhost
+\f[]
+.fi
+.PP
+Execute the rd-setup command defining the framework hostname as
+\[lq]localhost\[rq] and specifies the framework.ssh.keypath value
+.IP
+.nf
+\f[C]
+rd-setup\ -n\ localhost\ --framework.ssh.keypath=/path/to/keyfile
+\f[]
+.fi
+.SH FILES
+.PP
+The rd-setup command generates a working configuration from a set
+of template files found in: $RD_HOME/lib/templates/etc.
+Additionally, initial configuration default values are maintained
+in rd-defaults.properties but these can be overwridden using
+--key=value flags.
+.SH SEE ALSO
+.PP
+\f[C]rundeck\f[] (1), \f[C]rd-project\f[] (1).
+.PP
+The RunDeck source code and all documentation may be downloaded
+from <https://github.com/dtolabs/rundeck/>.
+.SH AUTHORS
+Alex Honor.
