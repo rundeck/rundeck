@@ -7,6 +7,7 @@ group: System
 requires(post): chkconfig
 requires(postun): chkconfig
 requires: java-1.6.0-openjdk
+requires: openssh
 
 %description
 RunDeck, is no ordinary wooden deck. You can build a bon fire on this deck.
@@ -15,6 +16,9 @@ Rundeck provides a single console for dispatching commands across many resources
 %pre
 getent group rundeck >/dev/null || groupadd rundeck
 getent passwd rundeck >/dev/null || useradd -m -g rundeck rundeck
+if [ ! -e ~rundeck/.ssh/rundeck.id_rsa ]; then
+	ssh-keygen -q -t rsa -C '' -N '' -f ~rundeck/.ssh/rundeck.id_rsa
+fi
 
 %post
 /sbin/chkconfig --add rundeckd
