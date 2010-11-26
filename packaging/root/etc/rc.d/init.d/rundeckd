@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash 
 #
 # rundeckd    Startup script for the tapd
 #
@@ -17,26 +17,33 @@ PID_FILE=/var/run/rundeckd.pid
 
 start() {
 	echo -n $"Starting $prog: "
-	nohup $rundeckd 2>&1 >/var/log/rundeck/service.log &
-	RETVAL=$?
-	echo $RETVAL > /var/run/rundeckd.pid
+	nohup $rundeckd 2>&1 >>/var/log/rundeck/service.log &
+ 	RETVAL=$?	
+	PID=$!
+	echo $PID > /var/run/rundeckd.pid
+	if [ $RETVAL -eq 0 ]; then 
+		touch /var/lock/subsys/$prog
+		echo_success
+	else
+		echo_failure
+	fi
 	echo
-	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog
 	return $RETVAL
 }
 
 stop() {
 	echo -n $"Stopping $prog: "
-	killproc $rundeckd
+	killproc -p /var/run/rundeckd.pid "$rundeckd"
 	RETVAL=$?
 	echo
 	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/$prog
 	return $RETVAL
 }
 
+### NOT USED
 reload() {
 	echo -n $"Reloading $prog: "
-	killproc $rundeckd -HUP
+	killproc -p /var/run/rundeckd.pid "$rundeckd" -HUP
 	RETVAL=$?
 	echo
 	return $RETVAL
@@ -59,15 +66,12 @@ case "$1" in
 			start
 		fi
 		;;
-	reload)
-		reload
-		;;
 	status)
 		status $rundeckd
 		RETVAL=$?
 		;;
 	*)
-		echo $"Usage: $0 {start|stop|restart|condrestart|reload|status}"
+		echo $"Usage: $0 {start|stop|restart|condrestart|status}"
 		RETVAL=1
 esac
 
