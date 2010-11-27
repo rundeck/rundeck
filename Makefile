@@ -20,13 +20,16 @@ core = core/target/rundeck-core-$(VERSION).jar
 war = rundeckapp/target/rundeck-$(VERSION).war
 launcher = rundeckapp/target/rundeck-launcher-$(VERSION).jar
 
-.PHONY: clean, rundeck
+.PHONY: clean rundeck docs
 
 rundeck: $(war) $(launcher)
 	@echo $(VERSION)-$(RELEASE)
 
-rpm: $(war)
+rpm: $(war) docs
 	cd packaging; $(MAKE) clean rpm
+
+docs:
+	$(MAKE) -C docs
 
 $(core): $(CORE_FILES)
 	./build.sh rundeck_core
