@@ -26,6 +26,6 @@ html :
 	-for f in $(PAGES); do ( $(PANDOC) -s -w html $$f.md -o $(DIST)/html/$$f.html; ); done
 
 clean :
-	rm *.5 *.5.gz
+	rm -f *.5 *.5.gz
 
 

@@ -18,9 +18,9 @@ $(DIST)/html : dist
 
 html : $(DIST)/html
 	$(ECHO) Generating HTML book
-	$(PANDOC) --number-sections --toc -s 0[1-9]-*/*.md --css=$(CSS) --template=templates/html.template --include-before=templates/before.html --include-after=templates/after.html -o $(DIST)/html/RunDeck-Guide.html
+	$(PANDOC) --number-sections --toc -s 0[0-9]-*/*.md --css=$(CSS) --template=templates/html.template --include-before=templates/before.html --include-after=templates/after.html -o $(DIST)/html/RunDeck-Guide.html
 	cp $(CSS) $(DIST)/html
 
 clean :
-	rm -r $(DIST)
+	rm -fr $(DIST)
 	$(MAKE) -C manpages clean
