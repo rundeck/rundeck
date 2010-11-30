@@ -149,7 +149,7 @@ This is simililar to calling the other Job with <code>run</code>:
 ## Reordering steps
 
 The order of the Workflow steps can be modified by hovering over any
-item and then clicking and dragging the double arrow icon to the
+step and then clicking and dragging the double arrow icon to the
 desired position. A blue horizontal bar helps highlight the position
 where the Job will land.
 

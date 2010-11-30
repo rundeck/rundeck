@@ -1,18 +1,18 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>RUNDECK(1) RunDeck User Manuals | Version 1.0</title>
+  <title>JOB-V20(1) RunDeck User Manuals | Version 1.0</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta name="generator" content="pandoc" />
   <meta name="author" content="Alex Honor" />
   <meta name="date" content="November 20, 2010" />
 </head>
 <body>
-<h1 class="title">RUNDECK(1) RunDeck User Manuals | Version 1.0</h1>
-<h1 id="job-v20"
->job-v20</h1
+<h1 class="title">JOB-V20(1) RunDeck User Manuals | Version 1.0</h1>
+<h1 id="name"
+>NAME</h1
 ><p
->The 'job' XML file declares job entries for RunDeck.</p
+>job-v20 - The 'job' XML file declares job entries for RunDeck.</p
 ><p
 >This is a demonstration document using all possible elements in the current RunDeck &quot;jobs&quot; XML.</p
 ><h2 id="loading-and-unloading"
@@ -264,7 +264,7 @@ exit 0 ]]&gt;&lt;/script&gt;
   >. This is normally defined by RunDeck upon job creation. If it is specified, job will be created with this id.</p
 ><p
 >If a job was already defined with this id, it will be updated with the included job definition.</p
-><h2 id="name"
+><h2 id="name-1"
 >name</h2
 ><p
 >The job name is a sub-element of <a href="#job"
@@ -856,32 +856,32 @@ exit 0 ]]&gt;&lt;/script&gt;
     >command</a
     ></dt
   ><dd
-  >a sequence item</dd
+  >a sequence step</dd
   ></dl
 ><h3 id="command"
 >command</h3
 ><p
->Defines an item for a workflow <a href="#sequence"
+>Defines a step for a workflow <a href="#sequence"
   >sequence</a
   >.</p
 ><p
->The different types of sequence items are defined in different ways.</p
+>The different types of sequence steps are defined in different ways.</p
 ><p
 >See:</p
 ><ul
 ><li
-  ><a href="#script-sequence-item"
-    >Script sequence item</a
+  ><a href="#script-sequence-step"
+    >Script sequence step</a
     ></li
   ><li
-  ><a href="#job-sequence-item"
-    >Job sequence item</a
+  ><a href="#job-sequence-step"
+    >Job sequence step</a
     ></li
   ></ul
-><h4 id="script-sequence-item"
->Script sequence item</h4
+><h4 id="script-sequence-step"
+>Script sequence step</h4
 ><p
->Script items can be defined in three ways within a command element:</p
+>Script steps can be defined in three ways within a command element:</p
 ><ul
 ><li
   >Simple shell command using <code>exec</code> element.</li
@@ -891,7 +891,7 @@ exit 0 ]]&gt;&lt;/script&gt;
   >Script file using <code>scriptfile</code> and <code>scriptargs</code> elements.</li
   ></ul
 ><p
->Example exec item:</p
+>Example exec step:</p
 ><pre
 ><code
   >&lt;command&gt;
@@ -921,8 +921,8 @@ exit 2 ]&gt;&lt;/script&gt;
 &lt;/command&gt;      
 </code
   ></pre
-><h4 id="job-sequence-item"
->Job sequence item</h4
+><h4 id="job-sequence-step"
+>Job sequence step</h4
 ><p
 >Define a <a href="#jobref"
   >jobref</a

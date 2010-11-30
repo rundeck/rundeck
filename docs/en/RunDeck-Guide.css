@@ -1,25 +1,14 @@
 
 body {
-    background-color:#aaa;
-    font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;
+    background-color:#FFFFFF;
+    font-family:arial, sans;
     font-size:100%;
-    margin:0; 
-    padding:0;
-    border:0;
-    padding: 20px;
-}
-#docbody{
-    margin: 0 auto;
-    background:white;
-    padding:10px 20px;
-    width: 700px;
+    margin:1em 2em;
 }
 
 h1 {
-    border-bottom:0.5em solid red;
     font-size:	2.18em;
     letter-spacing:-0.01em;
-    margin:0 0 0.67em 0;
 }			
 
 h2 {
@@ -28,46 +17,30 @@ h2 {
 }
 
 a:link {
-    color:#444;
-    font-weight:bold;
+    color:#669966;
 }
 
 a:visited {
-    color: #444;
+    color:       #336633;
 }
 
 a:hover {
     text-decoration:  none;
     color:       #FFFFFF;
-    background-color:  red;
-}
-h1 a{
-    text-decoration:none;
-    color:black;
+    background-color:  #669966;
 }
 
 ul {
-  margin: 10px 0px;
+  margin: 20px;
 }
 
 ol {
-  margin: 10px 0px;
+  margin: 20px;
 }
 
-ol li, ul li{
-    margin: 10px 0px;
-}
-
-pre {
-    font-family: courier,monspace;
-    margin: 10px;
-    overflow:auto;
-    max-width:700px;
-    color: black;
-    border:1px solid #ddd;
-    border-width: 5px 2px 2px 5px;
-    background: #eee;
-    padding: 10px;
+body pre {
+  margin: 10px;
+  font-weight: bold;
 }
 
 pre.xml {
@@ -78,10 +51,12 @@ pre.bash {
    /* bash syntax highlight here*/
 }  
 
-span.header-section-number:after{
-    content:" - ";
-}
+div.filelisting {
+   /* file listing box here*/
+        border-style: solid double;
 
-span.toc-section-number:after{
-    content:" - ";
-}
+}    
+div.filelisting p {
+   /* caption title*/   
+    margin: 5px;
+}    

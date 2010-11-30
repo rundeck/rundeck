@@ -144,7 +144,7 @@ running Job starting from several locations:
 * From the Jobs page, you can click to the Job you are interested in
   tracking and click the spinning cursor icon labeled "now".
 
-* From the Events page, open the "Now Running" area adn then click
+* From the History page, open the "Now Running" area adn then click
   on the "output »" link for the running  execution.  
   
   
@@ -168,8 +168,8 @@ To create a temporary job, begin by logging in to the RunDeck webapp,
 and press the "Jobs" tab.
 
 1.  Locate the "New Job" button in the right hand corner and press it to display the "Create New Job" form.
-1.  A job is defined in terms of one or more workflow items. In the Workflows area, click the "Add an item" link.
-1.  Workflow items can be one of several types. Click the "Script" workflow item type.
+1.  A job is defined in terms of one or more workflow steps. In the Workflows area, click the "Add a step" link.
+1.  Workflow steps can be one of several types. Click the "Script" workflow step type.
 1.  A script type can be any script that can be executed on the target
 hosts. Type in the "info" shell script we executed earlier using
 dispatch.
@@ -249,7 +249,7 @@ kills the Java Thread that the Job is running on. It may result in the
 RunDeck server becoming flaky. It is a deprecated feature of Java that
 is not recommended to be used, so do so only when extremely necessary.
 
-From the Events view Now Running section, or in the Job execution
+From the History view Now Running section, or in the Job execution
 follow page, click on the "Kill Job Now" button for the running Job.
 
 When prompted "Really kill this job?" Click the "Yes" button.

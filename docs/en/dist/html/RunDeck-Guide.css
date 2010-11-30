@@ -50,3 +50,13 @@ pre.xml {
 pre.bash {
    /* bash syntax highlight here*/
 }  
+
+div.filelisting {
+   /* file listing box here*/
+        border-style: solid double;
+
+}    
+div.filelisting p {
+   /* caption title*/   
+    margin: 5px;
+}    

@@ -1,7 +1,7 @@
-.TH RUNDECK 1 "November 20, 2010" "RunDeck User Manuals" "Version 1.0"
-.SH job-v20
+.TH JOB-V20 1 "November 20, 2010" "RunDeck User Manuals" "Version 1.0"
+.SH NAME
 .PP
-The `job' XML file declares job entries for RunDeck.
+job-v20 - The `job' XML file declares job entries for RunDeck.
 .PP
 This is a demonstration document using all possible elements in the
 current RunDeck \[lq]jobs\[rq] XML.
@@ -678,24 +678,24 @@ to the next step.
 \f[I]Nested elements\f[]
 .TP
 .B command (#command)
-a sequence item
+a sequence step
 .RS
 .RE
 .SS command
 .PP
-Defines an item for a workflow sequence (#sequence).
+Defines a step for a workflow sequence (#sequence).
 .PP
-The different types of sequence items are defined in different
+The different types of sequence steps are defined in different
 ways.
 .PP
 See:
 .IP \[bu] 2
-Script sequence item (#script-sequence-item)
+Script sequence step (#script-sequence-step)
 .IP \[bu] 2
-Job sequence item (#job-sequence-item)
-.SS Script sequence item
+Job sequence step (#job-sequence-step)
+.SS Script sequence step
 .PP
-Script items can be defined in three ways within a command element:
+Script steps can be defined in three ways within a command element:
 .IP \[bu] 2
 Simple shell command using exec element.
 .IP \[bu] 2
@@ -703,7 +703,7 @@ Embedded script using script element.
 .IP \[bu] 2
 Script file using scriptfile and scriptargs elements.
 .PP
-Example exec item:
+Example exec step:
 .IP
 .nf
 \f[C]
@@ -739,7 +739,7 @@ Script File:
 </command>\ \ \ \ \ \ 
 \f[]
 .fi
-.SS Job sequence item
+.SS Job sequence step
 .PP
 Define a jobref (#jobref) element within the command (#command)
 element

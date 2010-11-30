@@ -1,18 +1,18 @@
-% RUNDECK(1) RunDeck User Manuals | Version 1.0
+% RD-QUEUE(1) RunDeck User Manuals | Version 1.0
 % Greg Schueler; Alex Honor
 % November 20, 2010
 
 # NAME
 
-rdq - execute commands across nodes
+rd-queue - Lists and kills executions in the RunDeck queue
 
 # SYNOPSIS
 
-rdq [*action*] [-h] [-e]
+rd-queue [*action*] [-h] [-e]
 
 # DESCRIPTION
 
-The rdq command is used to query the Central Dispatcher for a list of currently running Executions, or to Kill a currently running execution.
+The rd-queue command is used to query the Central Dispatcher for a list of currently running Executions, or to Kill a currently running execution.
 
 The tool provides two actions:
 
@@ -35,13 +35,13 @@ The tool provides two actions:
 
 This is the default action of the tool, so to list all running Executions, simply use:
 
-    rdq
+    rd-queue
 
 The output will display the number of executions, and their IDs and identifying names or descriptions, as well as a link to the RunDeck page to follow the output.
 
 *Example*
 
-    rdq 
+    rd-queue 
     Queue: 1 items
     [160] adhoc script job <http://localhost:8080/rundeck/execution/follow/160>
 
@@ -51,8 +51,8 @@ This action allows you to specify the Execution ID of a currently running execut
 
 *Example*
 
-    rdq kill -e 160
-    rdq kill: success. [160] Job status: killed
+    rd-queue kill -e 160
+    rd-queue kill: success. [160] Job status: killed
   
 # SEE ALSO
 

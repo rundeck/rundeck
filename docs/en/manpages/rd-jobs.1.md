@@ -1,4 +1,4 @@
-% RUNDECK(1) RunDeck User Manuals | Version 1.0
+% RD-JOBS(1) RunDeck User Manuals | Version 1.0
 % Greg Schueler; Alex Honor
 % November 20, 2010
 

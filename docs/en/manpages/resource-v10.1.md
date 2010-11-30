@@ -1,8 +1,10 @@
-% RUNDECK(1) RunDeck User Manuals | Version 1.0
+% PROJECT-V10(1) RunDeck User Manuals | Version 1.0
 % Alex Honor
 % November 20, 2010
 
-# project-v10
+# NAME
+
+project-v10 - describes the RunDeck resource model document
 
 The `project` XML document declares a resource model that can also be
 uploaded to a project hosted on the RunDeck server. This is a

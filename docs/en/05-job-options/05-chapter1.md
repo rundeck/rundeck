@@ -5,31 +5,31 @@
 # Job Options
 
 Any command or script can be wrapped as a Job. Creating a Job for
-every use case would proliferate a large number of Jobs differing only
-by how the Job provides data to the scripts they call. These
+every use case will proliferate a large number of Jobs differing only
+by how the Job jobs calls the scripts. These
 differences are often environment or application version
 related. Other times only the person running the Job can provide the
 needed information to run the Job correctly. 
 
-Making your scripts and commands data driven, means they can become
+By making your scripts and commands data driven, will make them
 more generic and therefore, resuable in different contexts. Rather than
 maintain variations of the same basic process, letting Jobs be driven
-by externally provided data leads to better abstraction and
-encapsulation of your process.
+by a model of options from externally provided data will lead to
+better abstraction and encapsulation of your process.
 
 RunDeck Jobs can be configured to prompt a user for input by defining
-one or more named *options*. An *option* is a named parameter that
+one or more named *options*. An *option* models a named parameter that
 can be required or optional and include a range of choices that will
 be presented to the user when the Job is run.
 
-Users can supply options by typing in a value or selecting from a menu
-of choices. A validation pattern will ensure input complies to the
-option requirement.
-Once chosen, the value chosen for the option is accessible to the
-commands called by the Job.
+Users supply options by typing in a value or selecting from a menu
+of choices. A validation pattern ensures input complies to the
+option requirement. Once chosen, the value chosen for the option is
+accessible to the commands called by the Job.
 
-When option choices are restricted to a standard set, they can be
-defined statically in the Job definition. When option choices must be
+Option choices can be modeled as a static set or from a dynamic
+source. Static choices can be modeled as a comma separated list in the
+job definition. When option values must be
 dynamic, the Job can be defined to use a URL to retrieve option data
 from an external source. Enabling Jobs to access external sources via
 URL opens the door to integrating RunDeck with other tools and
@@ -81,7 +81,6 @@ display a prompt confirming you want to delete that option from the Job.
 Clicking the "edit" link opens a new form that lets you modify all
 aspects of that option.
 
-
 Options can also be defined as part of an XML job definition and later
 loaded to the RunDeck server. See "job-v10(1)" and "rd-jobs(1)" manual
 pages if you prefer using an XML Job definition.
@@ -101,7 +100,8 @@ Identification
 
 Allowed values
 
-:    This can contain a static list of values or a URL to a server
+:    Allowed values provide a model of possible choices.
+     This can contain a static list of values or a URL to a server
      providing option data. Values can be specified as a comma
      separated list as seen above but can also be requested from an
      external source using a "remote URL" [See below](#remote-option-values).
@@ -126,40 +126,43 @@ Once satisfied with the option definition, press the "Save" button to
 add it to the Job definition. Pressing the "Cancel" button will
 dismiss the changes and close the form.
 
+## Option valuesUrl
 
-## Remote option values
+A model of option values can be retrieved from an external source.
+When the "valuesUrl" is specified for an Option, then the model of
+allowed values is retrieved from the specified URL. 
 
-If the "valuesUrl" is specified for an Option, then the list of
-allowed values is retrieved from this URL. File URL schemes are
-also acceptable (e.g, file:///path/to/job/options/optA.json).
+File URL scheme is also acceptable (e.g, file:///path/to/job/options/optA.json).
 
-The accepted JSON data format is described below.
+The value data must be returned in JSON data format described below.
 
 ### JSON format
 
-The format of the response is expected to be JSON data.
-Two styles of return data are supported: list and object
-
+Two styles of return data are supported: simple list and a name value list.
 
 *Examples*
 
-List:
+Simple List:
 
     ["x value for test","y value for test"]
 
 This will populate the select menu with the given values.
 
-Object:
+Name Value List:
  
-    {"X Label":"x value","Y Label":"y value", "A Label":"a value"}
+    [
+      {"X Label":"x value"},
+      {"Y Label":"y value"},
+      {"A Label":"a value"}
+    ] 
 
-This will show only the labels, but the corresponding value will be
-used in the option.
+The above will present, in order, the element name, but the
+corresponding value will be used in the option.
 
 ### Variable expansion in remote URLs
 
-The URL used in the "valuesUrl" can embed variables which will be
-filled with certain context items when making the remote request. This
+The URL declared for the "valuesUrl" can embed variables which will be
+filled with certain job context items when making the remote request. This
 helps make the URLs more generic and contextual to the Job.
 
 Two types of expansions are available, Job context, and Option
@@ -192,7 +195,6 @@ Passes the option name as the "name" query parameter to the URL.
     valuesUrl="http://server.com/test?jobname=${job.name}&jobgroup=${job.group}"
 
 Passes the job name and group as query parameters.
-
 
 ### Remote request failures
 

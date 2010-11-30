@@ -1,10 +1,10 @@
-% RUNDECK(1) RunDeck User Manuals | Version 1.0
+% RUN(1) RunDeck User Manuals | Version 1.0
 % Alex Honor
 % November 20, 2010
 
 # NAME 
 
-run - execute a stored Job
+run - execute a stored Job on the RunDeck server
 
 # SYNOPSIS
 
@@ -85,7 +85,7 @@ Running a Job and specifying Node filters:
 
 # SEE ALSO
 
-`rdq` (1), `rd-jobs` (1).
+`rd-queue` (1), `rd-jobs` (1).
 
 The RunDeck source code and all documentation may be downloaded from
 <https://github.com/dtolabs/rundeck/>.
