@@ -1,0 +1,69 @@
+.TH RD-QUEUE 1 "November 20, 2010" "RunDeck User Manuals" "Version 1.0"
+.SH NAME
+.PP
+rd-queue - Lists and kills executions in the RunDeck queue
+.SH SYNOPSIS
+.PP
+rd-queue [\f[I]action\f[]] [-h] [-e]
+.SH DESCRIPTION
+.PP
+The rd-queue command is used to query the Central Dispatcher for a
+list of currently running Executions, or to Kill a currently
+running execution.
+.PP
+The tool provides two actions:
+.IP \[bu] 2
+\f[C]list\f[] : list the currently running executions on the server
+(default action)
+.IP \[bu] 2
+\f[C]kill\f[] : kill the execution specified by ID
+.SH OPTIONS
+.PP
+-h, --help : Print usage message.
+.PP
+-e, --eid : ID of the execution to kill
+.SH LIST ACTION
+.PP
+This is the default action of the tool, so to list all running
+Executions, simply use:
+.IP
+.nf
+\f[C]
+rd-queue
+\f[]
+.fi
+.PP
+The output will display the number of executions, and their IDs and
+identifying names or descriptions, as well as a link to the RunDeck
+page to follow the output.
+.PP
+\f[I]Example\f[]
+.IP
+.nf
+\f[C]
+rd-queue\ 
+Queue:\ 1\ items
+[160]\ adhoc\ script\ job\ <http://localhost:8080/rundeck/execution/follow/160>
+\f[]
+.fi
+.SH KILL ACTION
+.PP
+This action allows you to specify the Execution ID of a currently
+running execution that you want to stop.
+.PP
+\f[I]Example\f[]
+.IP
+.nf
+\f[C]
+rd-queue\ kill\ -e\ 160
+rd-queue\ kill:\ success.\ [160]\ Job\ status:\ killed
+\f[]
+.fi
+.SH SEE ALSO
+.PP
+\f[C]dispatch\f[] (1), \f[C]run\f[] (1).
+.PP
+The RunDeck source code and all documentation may be downloaded
+from <https://github.com/dtolabs/rundeck/>.
+.SH AUTHORS
+Greg Schueler; Alex Honor.

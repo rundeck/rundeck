@@ -99,7 +99,7 @@ to have access via sudo.
 RunDeck is a Java-Servlet based server and therefore requires the Java
 runtime.
 
-The install process requires that the latest version of Java 1.5 or 1.6
+The install process requires that the latest version of Java 1.6
 be installed. Both the [Open JDK](http://openjdk.java.net/) and [Sun/Oracle](http://java.com/) JVMs can be used.
 You must have the JAVA_HOME environment variable defined
 in your environment before running the install script. 
@@ -156,24 +156,29 @@ If you want to install RunDeck on Linux via a binary installer, you can generall
 Use the launcher as an alternative to a system package:
 
 1. Download the launcher jar file.
-
-1. Create a directory for the installation.
+1. Define RDECK_BASE environment variable to the location of the install
 
     ~~~~~~~
-    mkdir $HOME/rundeck 
+    export RDECK_BASE=$HOME/rundeck 
+    ~~~~~~~
+
+1. Create the directory for the installation.
+
+    ~~~~~~~
+    mkdir -p $RDECK_BASE 
     ~~~~~~~
 
 1. Copy the launcher jar to the installation directory.
 
     ~~~~~~~
-    cp rundeck-launcher-1.0.0.jar $HOME/rundeck
+    cp rundeck-launcher-1.0.0.jar $RDECK_BASE
     ~~~~~~~
 
 1. Change directory and start the jar.
 
     ~~~~~~~
-    cd $HOME/rundeck    
-    /usr/bin/java -jar rundeck-launcher-1.0.0.jar
+    cd $RDECK_BASE    
+    java -jar rundeck-launcher-1.0.0.jar
     ~~~~~~~
 
 1. Wait for the Started message.
@@ -181,6 +186,19 @@ Use the launcher as an alternative to a system package:
     ~~~~~~~
     2010-11-19 13:35:51.127::INFO:  Started SocketConnector@0.0.0.0:8080
     ~~~~~~~
+
+1. Update your shell environment 
+
+    ~~~~~~~
+    PATH=$PATH:$RDECK_BASE/tools/bin
+    MANPATH=$MANPATH:$RDECK_BASE/man
+    ~~~~~~~
+
+
+If you get an error message that resembles the one below, you probably
+are using an unupported Java version.
+
+    Exception in thread "main" java.lang.UnsupportedClassVersionError: Bad version number in .class file
 
 ## First-Time Setup ##
 
@@ -198,25 +216,12 @@ logins useful during the getting started phase.
 * deploy: Has access to run commands and jobs but unable to modify job
   definitions.
   
-## Getting Help ##
 
-RunDeck includes a set of Unix manual pages describing the shell
-tools.
-
-For Linux users read the introductory man page:
-
-    $ man rundeck
-
-For those who installed the launcher add the man pages to your MANPATH
-
-    MANPATH=$MANPATH:$HOME/rundeck/man
-
-  
 ## Summary ##
 
 You should have a basic understanding of what RunDeck. You
 should also now have a working version of RunDeck on your system
-that’s set up with your personal identity. It’s now time to learn some
+that’s set up with your personal identity. It is now time to learn some
 RunDeck basics.
 
   

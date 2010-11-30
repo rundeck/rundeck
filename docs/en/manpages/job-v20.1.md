@@ -1,10 +1,10 @@
-% RUNDECK(1) RunDeck User Manuals | Version 1.0
+% JOB-V20(1) RunDeck User Manuals | Version 1.0
 % Alex Honor
 % November 20, 2010
 
-# job-v20
+# NAME
 
-The 'job' XML file declares job entries for RunDeck.
+job-v20 - The 'job' XML file declares job entries for RunDeck.
 
 This is a demonstration document using all possible elements in the
 current RunDeck "jobs" XML.
@@ -583,31 +583,31 @@ nodes prior to the next step.
 
 [command](#command)
 
-:    a sequence item
+:    a sequence step
 
 
 ### command
 
-Defines an item for a workflow [sequence](#sequence).
+Defines a step for a workflow [sequence](#sequence).
 
-The different types of sequence items are defined in different ways.
+The different types of sequence steps are defined in different ways.
 
 See:
 
-* [Script sequence item](#script-sequence-item)
-* [Job sequence item](#job-sequence-item)
+* [Script sequence step](#script-sequence-step)
+* [Job sequence step](#job-sequence-step)
 
 
  
-#### Script sequence item 
+#### Script sequence step 
 
-Script items can be defined in three ways within a command element:
+Script steps can be defined in three ways within a command element:
 
 * Simple shell command using <code>exec</code> element.
 * Embedded script using <code>script</code> element.
 * Script file using <code>scriptfile</code> and <code>scriptargs</code> elements.
 
-Example exec item:
+Example exec step:
 
 
     <command>
@@ -635,7 +635,7 @@ Script File:
     </command>      
 
 
-#### Job sequence item
+#### Job sequence step
 
 Define a [jobref](#jobref) element within the [command](#command) element
 

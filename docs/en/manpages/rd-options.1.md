@@ -1,4 +1,4 @@
-% RUNDECK(1) RunDeck User Manuals | Version 1.0
+% RD-OPTIONS(1) RunDeck User Manuals | Version 1.0
 % Greg Schueler; Alex Honor
 % November 20, 2010
 

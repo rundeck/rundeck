@@ -1,10 +1,10 @@
-% RUNDECK(1) RunDeck User Manuals | Version 1.0
+% DISPATCH(1) RunDeck User Manuals | Version 1.0
 % Alex Honor
 % November 20, 2010
 
 # NAME
 
-dispatch - execute commands across nodes
+dispatch - execute commands across nodes via the rundeck dispatcher
 
 # SYNOPSIS
 
@@ -195,7 +195,7 @@ occurs.
    
 # SEE ALSO
 
-`rd-options` (1), `rdq` (1).
+`rd-options` (1), `rd-queue` (1).
 
 The RunDeck source code and all documentation may be downloaded from
 <https://github.com/dtolabs/rundeck/>.
