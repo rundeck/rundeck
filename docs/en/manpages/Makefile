@@ -3,7 +3,7 @@ include ../../Makefile.inc
 DIST = ../dist
 .SUFFIXES: .1.gz .1
 
-manpages: dispatch.1.gz job-v20.1.gz rd-jobs.1.gz rd-options.1.gz rd-setup.1.gz rdq.1.gz resource-v10.1.gz run.1 rundeck.1.gz rundeck-guide.1.gz
+manpages: dispatch.1.gz job-v20.1.gz rd-jobs.1.gz rd-options.1.gz rd-setup.1.gz rd-queue.1.gz resource-v10.1.gz run.1 
 
 rundeck-guide.1:
 	pandoc -s -w man ../0[1-9]-*/*.md -o rundeck-guide.1
