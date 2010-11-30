@@ -218,7 +218,7 @@ Value passed as an argument to a script:
 :    Commandline Arguments: ${option._name_}
 
 Value referenced as a replacement token inside the script:
-:    Script Content: @option._vip_@
+:    Script Content: @option._name_@
 
 A single example helps illustrate these methods. Imagine a trivial script
 is wrapped in a Job named "hello" and has an option named "message".

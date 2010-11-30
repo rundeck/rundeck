@@ -71,7 +71,8 @@ as the "www" user while the app and database components run as user
 
 With this information in hand, the administrator prepares the project
 resource model using an XML file. The file listing
-below contains the node definitions for the five nodes - anv1, anv2, anv3, anv4, anv5:
+below contains the node definitions for the five nodes - 
+anv1, anv2, anv3, anv4, anv5:
 
 File listing: resources.xml
 
@@ -280,6 +281,8 @@ The screenshot below contains the Option edit form for the "method" option.
 The form includes elements to define description and default
 value, as well as, Allowed Values and Restrictions.
 
+![Option editor for method](images/screen-option-edit.png)
+
 Allowed values can be specified as a comma separated list as seen above but
 can also be requested from an external source using a "remote URL".
 
@@ -288,8 +291,9 @@ restriction. When set "true", the RunDeck UI will only present a
 popup menu. If set "false", a text field will also be presented. Use
 the "Match Regular Expression" form to validate the input option.
 
-Here's a screenshot of how RunDeck will display the VIP menu choices:
+Here's a screenshot of how RunDeck will display the menu choices:
 
+![Allowed Values menu](images/screen-allowedvalues-menu.png)
 
 
 ### Script access to option data
@@ -577,8 +581,12 @@ A *resource model provider* is an external service that is accesible
 via HTTP GET method returning data conforming to the RunDeck
 resources document format (resource-v10(5)). This allows RunDeck
 projects to obtain node information from other tools or data sources.
+Integrating with a tool that generates XML and is accessible via HTTP
+might be as easy as a wrapper script using [curl] and
+[xmlstarlet].
+
 To configure a resource model provider, the
-<code>project.resource.url</code> setting must be configured.
+<code>project.resource.url</code> setting must be configured. 
 
 Earlier in the [RunDeck set up](#rundeck-set-up) section, the anvils project
 resource model was defined using an XML file located on the server. As
@@ -586,6 +594,9 @@ node information changes, this file will need to be edited in
 place. Since it's just a file local to the server, nothing controls
 versioning and so won't have a log of changes. A better alternative
 would be to implement a resource model provider.
+
+[curl]: http://curl.haxx.se/
+[xmlstarlet]: http://xmlstar.sourceforge.net/
 
 ### Simple SCM resource model provider
 
@@ -598,8 +609,8 @@ retrieve file revisions based on a URL and thus make it accessible as
 a resource model provider.
 
 The Acme administrator decides this approach is a good first step to
-control versioning for the anvils resource model. Acme is a subversion user
-and installed "viewvc" to give web access to the repository.
+control versioning for the anvils resource model. Acme is a [subversion] user
+and installed [viewvc] to give web access to the repository.
 
 First, the current resources.xml is added to the repsotitory and committed:
 
@@ -623,6 +634,9 @@ from <code>project.resources.url</code> and then stored at
 anvils resource model, it will request the resources.xml file from
 the viewvc URL, obtaining the latest revision.
 
+[subversion]: http://subversion.tigris.org/
+[viewvc]: http://www.viewvc.org/
+
 ### Editable resource model providers
 
 Some teams have acquired or developed tools to manage information
@@ -639,7 +653,8 @@ relevant nodes using the <code>resources</code> element.
 As a matter of convenience for graphical console users, the RunDeck
 resource model document format provides two attributes belonging to
 the <code>node</code> tag that help connect the dots between the
-RunDeck UI and the editing interface provided by the external data management tool.
+RunDeck UI and the editing interface provided by the external data
+management tool.
 
 *editUrl*
 
@@ -660,41 +675,49 @@ RunDeck UI and the editing interface provided by the external data management to
 
 #### RightScale resource model provider
 
-RightScale provides a management layer for the Amazon EC2 cloud
-service and acts as a life cycle manager for virtual hosts. It
-provides an API that returns XML data about the hosts managed in your
+[RightScale] provides a management layer for the [Amazon EC2] cloud
+service and acts as a life cycle manager for virtual hosts. The
+[RightScale API] returns XML data about the hosts managed in your
 deployments. The data in this XML can be mapped to a RunDeck resource
 model via a simple transformation process. 
 
-The hypothetical Acme Anvils hosts are actually EC2 servers maintained with RightScale.
-Additionally, the administrator does not want to hand edit the
+The hypothetical Acme Anvils servers are actually EC2 virtual
+instances maintained with RightScale.
+The administrator does not want to hand edit the
 resources.xml file everytime nodes are decomissioned or there is a
 scaling event which instantiates new servers. He decides a better
-approach would be to create a resource model provider that will use
-the RightScale API and transform the results to meet RunDeck's
-needs. Finally, the administrator decides to utilize the
+approach will be to create a resource model provider using
+the RightScale API and transform the data to meet RunDeck's
+needs. The administrator also decides to utilize the
 <code>editUrl</code> attribute to provide a web link back to the
-RightScale user interface. This way, when he browses the Nodes he can
-click on the link to get back to that server configuration in RightScale.
+RightScale user interface. This way, when someone browses the Nodes
+inside RunDeck, they can click on the link to get back to that server
+configuration in RightScale.
+
 
 The basic technical requirements to accomplish the the resource model
-can be achived by a CGI script that 
+generation can be achieved with a CGI script that:
 
 * creates a session specifying the RightScale account credentials
-* use the api to query for the server info for the Acme deployment
-* iterate over the results and generate the resources.xml 
+* uses the RightScale api to query for the server info for the Acme deployment
+* iterates over the results and generates the resources.xml and writes
+  it to the response stream.
 
-These steps can be done with cUrl and xmlstarlet
+Here's how such a script looks:
 
-... show CGI script listing ...
+    ... TODO: include CGI script listing ...
+
+[RightScale]: http://www.rightscale.com/
+[RightScale API]: http://support.rightscale.com/15-References/RightScale_API_Reference_Guide
+[Amazon EC2]: http://aws.amazon.com/ec2/
 
 #### Custom database resource model provider
 
-... Acme matures a bit and builds its own datacenter and a custom cmdb...
+... TODO: Acme matures a bit and builds its own datacenter and a custom [CMDB]...
+... example shows use remote html form via remoteUrl and [AJAX] protocol...
 
-
-... example shows use remote html form via remoteUrl and ajax protocol...
-
+[CMDB]: http://en.wikipedia.org/wiki/Configuration_management_database
+[AJAX]: http://en.wikipedia.org/wiki/Ajax_(programming)
 
 ## Option model provider
  
@@ -711,10 +734,10 @@ that act as option model providers.
 
 An end-to-end release process often requires obtaining build artifacts
 and publishing them to a central repository for later distribution.
-A continuous integration server like Hudson makes identifying the
-build artifacts a simple Job configuration step. Hudson proivdes a network
-API to obtain the list of artifacts from successful builds via a
-simple HTTP GET request.
+A continuous integration server like [Hudson] makes identifying the
+build artifacts a simple Job configuration step. The [Hudson API]
+provides a network interface to obtain the list of artifacts from
+successful builds via a simple HTTP GET request.
 
 Acme builds its artifacts as RPMs and has confiugred their build job
 to identify them. The operations team wants to create Jobs that would
@@ -722,14 +745,14 @@ allow them to choose a version of these artifacts generated by the
 automated build.
 
 A simple CGI script that requests the information from Hudson and then
-generates a JSON document is sufficient to accomplish this. The CGI
+generates a [JSON] document is sufficient to accomplish this. The CGI
 script can use query paramaters to specify the Hudson server, hudson job
 and artifact path. Job writers can then specify the paramaterized URL
 to the CGI script to obtain the artifacts list as an options model
 and present the results as a menu to Job users.
 
 The code listing below shows the the CGI script essentially does a
-call to the <code>cUrl</code> command to retreive the XML document
+call to the <code>cURL</code> command to retreive the XML document
 containing the artifacts information and then parses it using
 <code>xmlstarlet</code>.
  
@@ -779,19 +802,23 @@ The server response should return JSON data resembling the example below:
 Now in place, jobs can request this option data like so:
 
      <option name="method" enforcedvalues="true" required="true" 
-          valuesUrl="http://ops.acme.com/cgi/hudson-artifacts.cgi?hudsonJob=anvils"/> 
+        valuesUrl="http://ops.acme.com/cgi/hudson-artifacts.cgi?hudsonJob=anvils"/> 
 
 The RunDeck UI will display the package names in the menu and once
 selected the Job will have the path to the build artifact on the
 Hudson server.
 
+[Hudson]: http://hudson-ci.org/
+[Hudson API]: http://wiki.hudson-ci.org/display/HUDSON/Remote+access+API
+[JSON]: http://www.json.org/
+
 ### Yum repoquery option model provider
 
-Yum is a great tool for automating RPM package management. With Yum,
+[Yum] is a great tool for automating [RPM] package management. With Yum,
 administrators can publish packages to the repository and then use the
 yum client tool to automate the installation of packages along with
 their declared dependencies. Yum includes a command
-called [repoquery](http://linux.die.net/man/1/repoquery) useful for
+called [repoquery] useful for
 querying Yum repositories similarly to rpm queries.
 
 Acme set up their own Yum repository to distribute application release
@@ -835,17 +862,17 @@ operations web server, it can be tested directly by requesting it using cUrl.
  
 The server response should return JSON data resembling the example below:
 
-    [
-      {"blah":"val"},
-      {"blah":"val"}
-    ]
+    TODO: include JSON example
  
 Now in place, jobs can request the option model data like so:
 
      <option name="method" enforcedvalues="true" required="true" 
-          valuesUrl="http://ops.acme.com/cgi/yum-repoquery.cgi?package=anvils"/> 
+        valuesUrl="http://ops.acme.com/cgi/yum-repoquery.cgi?package=anvils"/> 
 
 The RunDeck UI will display the package names in the menu and once
 selected, the Job will have the matching package versions.
  
-## Summary
+[Yum]: http://yum.baseurl.org/
+[RPM]: http://www.rpm.org/
+[repoquery]: http://linux.die.net/man/1/repoquery
+ 
