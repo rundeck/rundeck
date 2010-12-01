@@ -5,7 +5,7 @@
 # RunDeck by example
 
 This chapter presents working examples reflecting a variety of
-solutions you can create with RunDeck. Helping you to apply concepts
+solutions you can create with RunDeck. Helping you apply concepts
 and features introduced in earlier chapters is the focus of these examples.
 Rather than make the examples abstract, they are set in the context
 of Acme Anvils, a fictious organization that manages an online application. 

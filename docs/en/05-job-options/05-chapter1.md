@@ -11,7 +11,7 @@ differences are often environment or application version
 related. Other times only the person running the Job can provide the
 needed information to run the Job correctly. 
 
-By making your scripts and commands data driven, will make them
+Making your scripts and commands data driven, will also make them
 more generic and therefore, resuable in different contexts. Rather than
 maintain variations of the same basic process, letting Jobs be driven
 by a model of options from externally provided data will lead to

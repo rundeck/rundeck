@@ -12,7 +12,7 @@ to a command.
 The steps of the Job workflow are displayed when viewing a Job's
 detail from a Job listing or within the Job editor form.
 
-## Authoring tools
+## Workflow definition
 
 Workflows can be defined within the RunDeck graphical console or as an
 XML document that is loaded to the server.
@@ -20,7 +20,7 @@ XML document that is loaded to the server.
 The graphical console provides an authoring environment where steps
 can be added, edited, removed or reordered.
 
-Users prefering to define Jobs in XML should read the "job-v10(1)"
+Users prefering to define Jobs in XML should read the "job-v20(1)"
 manual page. 
 
 It is also possible to author Jobs inside the graphical console

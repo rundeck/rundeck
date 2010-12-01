@@ -4,12 +4,18 @@
 
 # RunDeck Basics 
 
+This chapter covers the basics for using RunDeck. The chapter begins
+by describing the RunDeck user interfaces, both its graphical and
+command line. From there it will show you how to set up a project and
+learn about command execution. You will learn more about using the
+command dispatcher to control execution and finally, how to find and
+use history.
 
 ## RunDeck Interfaces 
 
 RunDeck provides two primary user interfaces:
 
-* An HTML-based graphical console running as a webapp
+* An HTML-based graphical console 
 * A suite of shell tools
 
 Both interfaces allow you to view resources, dispatch commands, as
@@ -31,9 +37,9 @@ logout and view the user's profile.
 Resources
 
 :    The Resources page displays the Node resources configured in your
-     Project resource models. Like the Jobs and History pages a filter
+     Project resource model. Like the Jobs and History pages, a filter
      control can be used to limit the listing to just the Node resources
-     matching the criteria.
+     matching the filter criteria.
 
 History
 
@@ -49,7 +55,7 @@ Jobs
 :    From the Jobs page, one can list, create and run Jobs. A
      configurable filter allows a user to limit the Job listing to those
      Jobs matching the filtering criteria. These filter settings can be
-     saved to a Users profile.
+     saved to a Users profile. Only authorized jobs will be visible.
 
 Admin
 
@@ -63,26 +69,27 @@ Project menu
 :    By default information about all projects is displayed. It is
      sometimes preferable to limit this information to just a particular
      project. The top navigation bar contains a menu to select the
-     desired project.     
+     desired project. If only one project exists, the menu will
+     automatically be defaulted.
 
 ### Shell Tools 
 
 RunDeck includes a number of shell tools to dispatch commands, load
-and run Job definitions and interact with the execution queue. These
-are an alternative to those same functions accessible in the graphical
-console.
+and run Job definitions and interact with the dispatcher queue. These
+command tools are an alternative to functions accessible in the
+graphical console.
 
-dispatch
+`dispatch`
   ~ Execute ad hoc commands and scripts
-rd-queue
+`rd-queue`
   ~ Query the dispatcher for currently running Jobs and possibly kill them  
-rd-jobs
+`rd-jobs`
   ~ List defined jobs as well as load them from text file definitions
-run
+`run`
   ~ Invoke the execution of a stored Job
-rd-project
+`rd-project`
   ~ Setup a new RunDeck project
-rd-setup
+`rd-setup`
   ~ (Re-)configure an instance of RunDeck   
   
 Consult the online manual pages for options and usage information.
@@ -92,8 +99,8 @@ Consult the online manual pages for options and usage information.
 A RunDeck *Project* provides a space to manage related management
 activities. 
 
-A Project can be set up either inside the graphical console or via the
-command line.
+A Project can be set up either from the graphical console or using the
+`rd-project` shell tool.
 
 After logging into the graphical console, you will notice a Project
 menu in the top navigation bar. If no projects exist, the menu will be
@@ -113,21 +120,19 @@ specify a project name, here we use "demo":
     rd-project -a create -p demo
 
 After running this command, you can login into the graphical console
-and see the new project in the project chooser menu.
-
+and see the new project in the project menu.
 
 The project setup process generates Project configuration in the server, and
-generate a bootstrap resource model containing information about the
-RunDeck server's host.
+a bootstrap resource model.
 
 ### Resource model
 
 The initial resource model generated during project setup will contain
-information just about the RunDeck server host and is used just for
-bootstrapping the project. You can browse the resource model of a
-project by going to the "Resources" page.
+information just about the RunDeck server host and is useful just for
+running local commands on the RunDeck server. 
+You can browse the project resource model by going to the "Resources" page.
 
-In the shell, you can list the Node resources in a project resource
+In the shell, you can list the Node resources in a resource
 model using the shell tool, <code>dispatch</code>. 
 Specify project name using the <code>-p project</code> option.
 
@@ -147,7 +152,7 @@ a verbose listing that includes more detail:
 
 Node resources have standard properties, such as "hostname" but these
 can be extended via attributes. One of the more useful properties
-is the "tags" property. A tag is a text label that you give to the
+is the "tags" property. A *tag* is a text label that you give to the
 Node, perhaps denoting a classification, a role the node plays in the
 environment, or group membership. 
 
@@ -162,11 +167,11 @@ Each Project has its configuration located in its own directory
 located in path like:
 <code>$RDECK\_BASE/projects/_project_/etc/project.properties</code>.
 
-This configuration contains two important properties for accessing and
+This configuration file contains two important properties for accessing and
 storing resource model data:
 
 * <code>project.resources.file</code>: File path to store resource
-  model data.
+  model data (required).
 * <code>project.resources.url</code>: URL to the server providing the
   resource model data.
 
@@ -189,13 +194,13 @@ to the output printed by the <code>dispatch -v</code> shown earlier:
           editUrl="" remoteUrl=""/>
     </project>
 
-Chances are you are maintaining information about your hosts within
+Chances are you maintain information about your hosts within
 another tool, perhaps Chef, Puppet, Nagios, Amazon EC2, RightScale or
-even an in-house database. One of these other tools might be
-considered the authorative source of knowledge about the nodes
-deployed in your network, therefore it is best to create an interface
-to one of these tools and expose it as a web service to RunDeck. This
-could be done as a simple CGI script that does a transformation from
+even an in-house database. One of these tools might be
+considered the authority of knowledge about the nodes
+deployed in your network. Therefore, it is best to create an interface
+to the authorative tool and expose it as RunDeck resource model provider. This
+can be done as a simple CGI script that does a transformation from
 the tool's format to the one RunDeck understands.
 
 Of course, a rudimentary alternative is to maintain this information
@@ -211,14 +216,14 @@ model.
 
 ## Command Execution
 
-RunDeck supports two modes of execution: *ad-hoc* commands and *Job*.
+RunDeck supports two modes of execution: *ad-hoc commands* and *Job*.
 
-An _ad hoc_ command is any system command or shell script executed
+An *ad-hoc command* is any system command or shell script executed
 via the command dispatcher. Ad hoc commands can be executed via a
-command line utility named <code>dispatch</code> or as a Job run from
+command line utility named <code>dispatch</code> or run from
 the graphical console.
 
-A _Job_ specifies a sequence of one or more command invocations that
+A *Job* specifies a sequence of one or more command invocations that
 can be run once (i.e, is temporary) or named and stored for later use.
 Stored jobs can be started via the shell tool, <code>run</code>, and
 their progress checked with <code>rd-queue</code>.
@@ -256,8 +261,8 @@ console or with the <code>dispatch</code> tool.
 #### Filtering nodes graphically  
 
 Node resources are displayed in the Resources page. Setting the
-project menu in the navigation bar will include Nodes to
-just those within that project's resource model.
+project menu in the navigation bar will list just the Nodes
+in that project's resource model.
 
 Nodes can be filtered using include and exclude patterns by using
 the Filter form. The form can be opened by pressing the "Filter" link.
@@ -275,7 +280,7 @@ Architecture, OS Version and Type.
   
 #### Filtering nodes in the shell
 
-<code>dispatch</code> can use the commandline options -I (include) and
+<code>dispatch</code> uses the commandline options -I (include) and
 -X (exclude) to specify which nodes to include and
 exclude from the base set of nodes. You can specify a single value, a
 list of values, or a regular expression as the argument to these
@@ -295,8 +300,9 @@ List nodes that are tagged both "web" and "prod" :
 
     dispatch -p demo -I tags=web+prod
 
-Execute the <code>apachectl restart</code> command in 10 threads
-across all nodes tagged "web" and keepgoing in case an error occurs :
+Here's an example that will execute the <code>apachectl restart</code>
+command in 10 threads across all nodes tagged "web" and keepgoing in
+case an error occurs :
 
     dispatch -p demo -I tags=web -K -C 10 -- sudo apachectl restart 
 
@@ -305,8 +311,8 @@ available dispatcher options.
   
 ### Ad-hoc commands 
 
-Typically, an "ad hoc" command is a shell script or system executable
-that you run at an interactive terminal. Ad hoc commands can be
+Typically, an ad-hoc command is a shell script or system executable
+that you run at an interactive terminal. Ad-hoc commands can be
 executed via the <code>dispatch</code> shell command or a graphical
 shell.
 
@@ -443,7 +449,7 @@ You can download the entire output as a text file from this
 page. Press the "Download" link to retrieve the file to your desk top.
 
 
-### Controlling ad-hoc command execution
+### Controlling command execution
 
 Parallel execution is managed using thread count via "-C" option. The
 "-C" option specifies to the number of execution threads. Here's an
@@ -561,7 +567,8 @@ job. Specify execution ID using the "-e" option:
     $ ctl-queue kill -e 5
     ctl-queue kill: success. [5] Job status: killed
 
-Show now running page...
+
+!!! TODO: Show now running page...
 
 ## History
 

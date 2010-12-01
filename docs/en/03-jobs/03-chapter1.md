@@ -323,6 +323,12 @@ definitions in the XML file, they will show up on the page.
 
 ## Summary
 
+After reading this chapter, you should be familiar with RunDeck Jobs
+and able to find and run them. You should understand how to create
+temporary and saved jobs and understand how to find thier history.
+Finally, you should be aware of how to export and import Job
+definitions as XML documents.
+
 Next, we'll cover how to create multi-step procedures using Job
 Workflows.
 
