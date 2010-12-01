@@ -3,7 +3,7 @@ include ../../../Makefile.inc
 DIST = ../../dist
 .SUFFIXES: .5.gz .5
 
-manpages: job-v20.5.gz resource-v10.5.gz
+manpages: aclpolicy-v10.5.gz job-v20.5.gz resource-v10.5.gz
 
 %.5.gz: %.5
 	gzip < $< > $@
@@ -11,7 +11,7 @@ manpages: job-v20.5.gz resource-v10.5.gz
 %.5:
 	pandoc -s -w man $@.md -o $@
 
-PAGES = job-v20.5 resource-v10.5
+PAGES = aclpolicy-v10.5 job-v20.5 resource-v10.5
 
 publish : roff html
 
