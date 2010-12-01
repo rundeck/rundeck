@@ -29,10 +29,10 @@ rpm:
 	@mkdir -p dist/SOURCES/usr/share/man/man{1,5}
 	@mkdir -p dist/SOURCES/usr/share/man/en/man{1,5}
 	@cp -R root/* dist/SOURCES
-	@cp ../docs/en/manpages/*.1.gz dist/SOURCES/usr/share/man/man1
-	#@cp ../docs/en/manpages/*.5.gz dist/SOURCES/usr/share/man/man5
-	@cp ../docs/en/manpages/*.1.gz dist/SOURCES/usr/share/man/en/man1
-	#@cp ../docs/en/manpages/*.5.gz dist/SOURCES/usr/share/man/en/man5
+	@cp ../docs/en/manpages/man1/*.1.gz dist/SOURCES/usr/share/man/man1
+	@cp ../docs/en/manpages/man5/*.5.gz dist/SOURCES/usr/share/man/man5
+	@cp ../docs/en/manpages/man1/*.1.gz dist/SOURCES/usr/share/man/en/man1
+	@cp ../docs/en/manpages/man5/*.5.gz dist/SOURCES/usr/share/man/en/man5
 	@cp -R ../core/target/tools/lib/*.jar dist/SOURCES/var/lib/rundeck/cli
 	@find ../core/target/bin ! -regex ".*.bat$$" -and -type f | sed -e /rd-check/d -e /rd-setup/d | xargs -I Z cp Z dist/SOURCES/usr/bin
 	@unzip -oq ../rundeckapp/target/rundeck-1.0.0.war -d dist/SOURCES/var/lib/rundeck/exp/webapp/

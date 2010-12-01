@@ -2,10 +2,12 @@ include ../../Makefile.inc
 
 DIRS = man1 man5
 
-.PHONY: all clean
+.PHONY: clean subdirs $(DIRS)
 
-all : $(DIRS)
-	$(MAKE) -C $<
+subdirs: $(DIRS)
+
+$(DIRS) : 
+	$(MAKE) -C $@
 
 clean : $(DIRS)
 	$(MAKE) -C $< clean
