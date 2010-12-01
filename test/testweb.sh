@@ -34,7 +34,7 @@ if [ 0 != $? ] ; then
 fi
 
 
-curl -s -S -L -c $DIR/cookies -b $DIR/cookies -d j_username=default -d j_password=default $loginurl > $DIR/curl.out 
+curl -s -S -L -c $DIR/cookies -b $DIR/cookies -d j_username=admin -d j_password=admin $loginurl > $DIR/curl.out 
 if [ 0 != $? ] ; then
     errorMsg "failed login request to ${loginurl}"
     exit 2
