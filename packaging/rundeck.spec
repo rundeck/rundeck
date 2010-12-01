@@ -17,7 +17,7 @@ Rundeck provides a single console for dispatching commands across many resources
 getent group rundeck >/dev/null || groupadd rundeck
 getent passwd rundeck >/dev/null || useradd -m -g rundeck rundeck
 if [ ! -e ~rundeck/.ssh/rundeck.id_rsa ]; then
-	ssh-keygen -q -t rsa -C '' -N '' -f ~rundeck/.ssh/rundeck.id_rsa
+	su -c "ssh-keygen -q -t rsa -C '' -N '' -f ~rundeck/.ssh/rundeck.id_rsa" rundeck
 fi
 
 %post
