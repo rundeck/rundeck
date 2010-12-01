@@ -115,9 +115,9 @@ The <code>rd-project</code> shell tool can also be used to create a
 project.
 
 On the RunDeck server, execute the <code>rd-project</code> command and
-specify a project name, here we use "demo":
+specify a project name, here we use "examples":
 
-    rd-project -a create -p demo
+    rd-project -a create -p examples
 
 After running this command, you can login into the graphical console
 and see the new project in the project menu.
@@ -137,10 +137,10 @@ model using the shell tool, <code>dispatch</code>.
 Specify project name using the <code>-p project</code> option.
 
 Here the <code>dispatch</code> command lists the registered server for
-the "demo" project after the project setup. The <code>-v</code> gives
+the "examples" project after the project setup. The <code>-v</code> gives
 a verbose listing that includes more detail:
 
-    $ dispatch -p demo -v	
+    $ dispatch -p examples -v	
      strongbad:
         hostname: strongbad
         os-arch: x86_64
@@ -182,7 +182,7 @@ document requirement.
 RunDeck reads the XML document retrieved from the ${project.resources.url}
 site and stores it in the path defined by ${project.resources.file}.
 
-Here's the XML document stored for the "demo" project that corresponds
+Here's the XML document stored for the "examples" project that corresponds
 to the output printed by the <code>dispatch -v</code> shown earlier:
 
     <project>
@@ -290,21 +290,21 @@ options.
 
 List nodes  with OS name, Linux:
 
-    dispatch -p demo -I os-name=Linux
+    dispatch -p examples -I os-name=Linux
 
 List Linux nodes but exclude ones with names prefixed "web.":
 
-    dispatch -p demo -I os-name=Linux -X "web.*"
+    dispatch -p examples -I os-name=Linux -X "web.*"
 
 List nodes that are tagged both "web" and "prod" :
 
-    dispatch -p demo -I tags=web+prod
+    dispatch -p examples -I tags=web+prod
 
 Here's an example that will execute the <code>apachectl restart</code>
 command in 10 threads across all nodes tagged "web" and keepgoing in
 case an error occurs :
 
-    dispatch -p demo -I tags=web -K -C 10 -- sudo apachectl restart 
+    dispatch -p examples -I tags=web -K -C 10 -- sudo apachectl restart 
 
 Consult the "rd-options(1)" manual page for the complete reference on
 available dispatcher options.
@@ -326,7 +326,7 @@ print system status:
     $ dispatch -I os-family=unix -- uptime
     [ctier@centos54 dispatch][INFO]  10:34:54 up 46 min,  2 users,  load average: 0.00, 0.00, 0.00
     [alexh@strongbad dispatch][INFO] 10:34  up 2 days, 18:51, 2 users, load averages: 0.55 0.80 0.75
-    [demo@ubuntu dispatch][INFO]  10:35:01 up 2 days, 18:40,  2 users,  load average: 0.00, 0.01, 0.00
+    [examples@ubuntu dispatch][INFO]  10:35:01 up 2 days, 18:40,  2 users,  load average: 0.00, 0.01, 0.00
 
 Notice, the <code>dispatch</code> command prepends the message output
 with a header that helps understand from where the output originates. The header
@@ -339,7 +339,7 @@ used by that Node to run dispatched commands:
     $ dispatch -I os-family=unix -- whoami
     [ctier@centos54 dispatch][INFO] ctier
     [alexh@strongbad dispatch][INFO] alexh
-    [demo@ubuntu dispatch][INFO] demo
+    [examples@ubuntu dispatch][INFO] examples
 
 You can see that the resource model defines each Node to use a
 different login to execute <code>dispatch</code> commands.  That
@@ -493,11 +493,11 @@ failed:
     [alexh@strongbad dispatch][INFO] listening port=8080, host=strongbad
     [alexh@strongbad dispatch][INFO] Connecting to 172.16.167.211:22
     [alexh@strongbad dispatch][INFO] done.
-    [demo@ubuntu dispatch][INFO] not listening on 8080
-    [demo@ubuntu dispatch][ERROR] Failed execution for node: ubuntu: Remote command failed with exit status 1
+    [examples@ubuntu dispatch][INFO] not listening on 8080
+    [examples@ubuntu dispatch][ERROR] Failed execution for node: ubuntu: Remote command failed with exit status 1
     error: Execution failed on the following 2 nodes: [centos54, ubuntu]
     error: Execute this command to retry on the failed nodes:
-	    dispatch -K -s /tmp/listening.sh -p demo -I
+	    dispatch -K -s /tmp/listening.sh -p examples -I
 	    name=centos54,ubuntu
 	
 ### Queuing commands to RunDeck
