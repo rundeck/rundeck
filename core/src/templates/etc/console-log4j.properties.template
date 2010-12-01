@@ -26,5 +26,5 @@ log4j.appender.file.layout.ConversionPattern=%d{ISO8601} [%t] %-5p %c - %m%n
 #
 #log4j.appender.CommonLog=org.apache.log4j.net.SocketAppender
 #log4j.appender.CommonLog.remoteHost=@framework.server.hostname@
-#log4j.appender.CommonLog.port=1055
+#log4j.appender.CommonLog.port=4435
 #log4j.appender.CommonLog.locationInfo=true

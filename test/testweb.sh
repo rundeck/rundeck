@@ -15,7 +15,7 @@ fi
 
 # test log in 
 
-url='http://localhost:8080'
+url='http://localhost:4440'
 loginurl="${url}/j_security_check"
 
 # get main page for login
