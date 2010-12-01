@@ -70,7 +70,7 @@ class BootStrap {
                      if(hostname=~/^[\d\.]+$/){
                          hostname="localhost"
                      }
-                     port="8080"
+                     port="4440"
                  }
                  setup.getParameters().setNodeArg(hostname)
                  setup.getParameters().properties["framework.server.port"]=port
@@ -303,8 +303,8 @@ class BootStrap {
          if ("true" != grailsApplication.config.reportservice.log4j.disabled.toString()) {
              int port = -1
              if (!grailsApplication.config.reportservice.log4j.port) {
-                 port = 1055
-                 log.warn("'reportservice.log4j.port' configuration property not set: using default listen port (1055)")
+                 port = 4435
+                 log.warn("'reportservice.log4j.port' configuration property not set: using default listen port (4435)")
              } else {
                  def t = grailsApplication.config.reportservice.log4j.port
                  port = Integer.parseInt(t.toString())

@@ -267,7 +267,7 @@ log4j.appender.CommonLog.locationInfo=true
         expectedProps.setProperty("log4j.logger.com.dtolabs.rundeck.log.common", "INFO,CommonLog");
         expectedProps.setProperty("log4j.appender.CommonLog", "org.apache.log4j.net.SocketAppender");
         expectedProps.setProperty("log4j.appender.CommonLog.remoteHost", requiredParams.getServerHostname());
-        expectedProps.setProperty("log4j.appender.CommonLog.port", "1055");
+        expectedProps.setProperty("log4j.appender.CommonLog.port", "4435");
         expectedProps.setProperty("log4j.appender.CommonLog.locationInfo", "true");
 
 

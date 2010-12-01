@@ -29,7 +29,7 @@ import java.util.Map;
  */
 public class RunServer {
 
-    int port = Integer.getInteger("server.http.port", 8080);
+    int port = Integer.getInteger("server.http.port", 4440);
     File basedir;
     File serverdir;
     private static final String REALM_NAME = "rundeckrealm";
