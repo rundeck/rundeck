@@ -8,6 +8,7 @@
 # org.mortbay.util.Password should be used to generate obfuscated
 # passwords or password checksums
 #
-# This sets the default user account(s) for the Rundeck app
+# This sets the temporary user accounts for the Rundeck app
 #
-${default.user.name}:${default.user.password},user,admin,architect,deploy,build
+${default.admin.name}:${default.admin.password},user,admin
+${default.user.name}:${default.user.password},user
