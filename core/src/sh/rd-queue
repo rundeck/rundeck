@@ -39,4 +39,5 @@ exec $JAVA_HOME/bin/java ${RDECK_JVM} -classpath ${CLI_CP} \
      -Duser.java_home=$JAVA_HOME \
      -Drdeck.base=$RDECK_BASE \
      -Drdeck.home=$RDECK_HOME \
+     $RDECK_SSL_OPTS \
      com.dtolabs.rundeck.core.cli.queue.QueueTool "$@"

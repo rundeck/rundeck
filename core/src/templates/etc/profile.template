@@ -30,4 +30,6 @@ do
 done
 export CLI_CP
 
+export RDECK_SSL_OPTS="-Djavax.net.ssl.trustStore=$RDECK_BASE/etc/truststore -Djavax.net.ssl.trustStoreType=jks -Djava.protocol.handler.pkgs=com.sun.net.ssl.internal.www.protocol"
+
 umask 002

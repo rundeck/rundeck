@@ -8,3 +8,5 @@ set JAVA_HOME=@user.java_home@
 (set JRE_HOME=)
 
 set Path=%JAVA_HOME%\bin;%RDECK_HOME%\bin;%Path%
+
+set RDECK_SSL_OPTS="-Djavax.net.ssl.trustStore=%RDECK_BASE%\etc\truststore -Djavax.net.ssl.trustStoreType=jks -Djava.protocol.handler.pkgs=com.sun.net.ssl.internal.www.protocol"

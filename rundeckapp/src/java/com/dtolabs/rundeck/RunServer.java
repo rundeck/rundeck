@@ -17,12 +17,14 @@
 package com.dtolabs.rundeck;
 
 import org.mortbay.jetty.Server;
+import org.mortbay.jetty.bio.SocketConnector;
 import org.mortbay.jetty.plus.jaas.JAASUserRealm;
 import org.mortbay.jetty.security.HashUserRealm;
+import org.mortbay.jetty.security.SslSocketConnector;
 import org.mortbay.jetty.webapp.WebAppContext;
 
 import java.io.*;
-import java.util.Map;
+import java.util.Properties;
 
 /**
  * Run the jetty server using system properties and commandline input for configuration
@@ -30,6 +32,7 @@ import java.util.Map;
 public class RunServer {
 
     int port = Integer.getInteger("server.http.port", 4440);
+    int httpsPort = Integer.getInteger("server.https.port", 4443);
     File basedir;
     File serverdir;
     private static final String REALM_NAME = "rundeckrealm";
@@ -38,6 +41,19 @@ public class RunServer {
     String loginmodulename;
     private boolean useJaas;
     private static final String RUNDECK_JAASLOGIN = "rundeck.jaaslogin";
+    public static final String RUNDECK_SSL_CONFIG = "rundeck.ssl.config";
+    public static final String RUNDECK_KEYSTORE = "keystore";
+    public static final String RUNDECK_KEYSTORE_PASSWORD = "keystore.password";
+    public static final String RUNDECK_KEY_PASSWORD = "key.password";
+    public static final String RUNDECK_TRUSTSTORE = "truststore";
+    public static final String RUNDECK_TRUSTSTORE_PASSWORD = "truststore.password";
+    private String keystore;
+    private String keystorePassword;
+    private String keyPassword;
+    private String truststore;
+    private String truststorePassword;
+    private static final String RUNDECK_SERVER_SERVER_DIR = "rundeck.server.serverDir";
+    private static final String RUNDECK_SERVER_CONFIG_DIR = "rundeck.server.configDir";
 
     public static void main(final String[] args) throws Exception {
         new RunServer().run(args);
@@ -61,7 +77,14 @@ public class RunServer {
         if (null != basedir) {
             System.setProperty("rdeck.base", basedir.getAbsolutePath());
         }
-        final Server server = new Server(port);
+        final Server server = new Server();
+        if(isSSLEnabled()){
+            configureSSLConnector(server);
+        }else{
+            warnNoSSLConfig();
+            configureHTTPConnector(server);
+        }
+
         server.setStopAtShutdown(true);
         final WebAppContext context = createWebAppContext(new File(serverdir, "exp/webapp"));
         server.addHandler(context);
@@ -74,6 +97,45 @@ public class RunServer {
             e.printStackTrace();
             System.exit(100);
         }
+    }
+
+    private void warnNoSSLConfig() {
+        System.err.println("WARNING: HTTPS is not enabled, specify -Drundeck.ssl.config="+basedir+"/server/config/ssl.properties to enable.");
+    }
+
+    private boolean isSSLEnabled() {
+        if (null == System.getProperty(RUNDECK_SSL_CONFIG)) {
+            return false;
+        }
+        if (null != keystore) {
+            if (!new File(keystore).exists()) {
+                System.err.println("ERROR: keystore file does not exist, you must create it: " + keystore);
+                return false;
+            }
+        } else {
+            System.err.println("ERROR: keystore property not specified: " + System.getProperty(RUNDECK_SSL_CONFIG));
+            return false;
+        }
+        return true;
+    }
+
+    private void configureHTTPConnector(final Server server) {
+        final SocketConnector connector = new SocketConnector();
+        connector.setPort(port);
+        server.addConnector(connector);
+    }
+
+    private void configureSSLConnector(final Server server) {
+        //configure ssl
+        final SslSocketConnector connector = new SslSocketConnector();
+        connector.setPort(httpsPort);
+        connector.setMaxIdleTime(30000);
+        connector.setKeystore(keystore);
+        connector.setPassword(keystorePassword);
+        connector.setKeyPassword(keyPassword);
+        connector.setTruststore(truststore);
+        connector.setTrustPassword(truststorePassword);
+        server.addConnector(connector);
     }
 
     /**
@@ -144,15 +206,30 @@ public class RunServer {
      * serverdir/config
      */
     private void init() {
-        if (null != System.getProperty("rundeck.server.serverDir")) {
-            serverdir = new File(System.getProperty("rundeck.server.serverDir"));
+        if (null != System.getProperty(RUNDECK_SERVER_SERVER_DIR)) {
+            serverdir = new File(System.getProperty(RUNDECK_SERVER_SERVER_DIR));
         } else {
             serverdir = new File(basedir, "server");
         }
-        if (null != System.getProperty("rundeck.server.configDir")) {
-            configdir = new File(System.getProperty("rundeck.server.configDir"));
+        if (null != System.getProperty(RUNDECK_SERVER_CONFIG_DIR)) {
+            configdir = new File(System.getProperty(RUNDECK_SERVER_CONFIG_DIR));
         } else {
             configdir = new File(serverdir, "config");
+        }
+        if(null!=System.getProperty(RUNDECK_SSL_CONFIG)){
+            final Properties sslProperties = new Properties();
+            try{
+                sslProperties.load(new FileInputStream(System.getProperty(RUNDECK_SSL_CONFIG)));
+            } catch (IOException e) {
+                System.err.println("Could not load specified rundeck.ssl.config file: " + System.getProperty(
+                    RUNDECK_SSL_CONFIG) + ": " + e.getMessage());
+                e.printStackTrace(System.err);
+            }
+            keystore = sslProperties.getProperty(RUNDECK_KEYSTORE);
+            keystorePassword = sslProperties.getProperty(RUNDECK_KEYSTORE_PASSWORD);
+            keyPassword = sslProperties.getProperty(RUNDECK_KEY_PASSWORD);
+            truststore = sslProperties.getProperty(RUNDECK_TRUSTSTORE);
+            truststorePassword = sslProperties.getProperty(RUNDECK_TRUSTSTORE_PASSWORD);
         }
     }
 
@@ -169,6 +246,9 @@ public class RunServer {
         }
         if (args.length > 1) {
             port = Integer.parseInt(args[1]);
+        }
+        if (args.length > 2) {
+            httpsPort = Integer.parseInt(args[2]);
         }
     }
 }

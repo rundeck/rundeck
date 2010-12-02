@@ -57,6 +57,7 @@ CALL %JAVA_HOME%\bin\java "-Dant.home=%ANT_HOME%" ^
                           "-Duser.java_home=%JAVA_HOME%" ^
                           "-Drdeck.home=%RDECK_HOME%" ^
                           "-Drdeck.base=%RDECK_BASE%" ^
+                          %RDECK_SSL_OPTS% ^
                           -cp "%RDECK_HOME%\classes;%ANT_HOME%\lib\ant.jar;%ANT_HOME%\lib\ant-launcher.jar;%ANT_HOME%\lib\regexp-1.5.jar;%ANT_HOME%\lib\ant-apache-regexp.jar" ^
                           com.dtolabs.rundeck.core.cli.run.RunTool %*
 

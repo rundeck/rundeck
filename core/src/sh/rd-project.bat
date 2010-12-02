@@ -58,9 +58,7 @@ CALL %JAVA_HOME%\bin\java "-Dant.home=%ANT_HOME%" ^
                           "-Drdeck.home=%RDECK_HOME%" ^
                           "-Drdeck.base=%RDECK_BASE%" ^
                           "-Duser.name=%USER_NAME%" ^
-                           -Djava.protocol.handler.pkgs="com.sun.net.ssl.internal.www.protocol"  ^
-                           -Djavax.net.ssl.trustStore="%RDECK_BASE%\etc\truststore" ^
-                           -Djavax.net.ssl.trustStoreType="jks"  ^
+                           %RDECK_SSL_OPTS% ^
                           -cp "%RDECK_HOME%\classes;%ANT_HOME%\lib\xerces-2.6.0.jar;%ANT_HOME%\lib\xml-apis.jar" ^
                           com.dtolabs.rundeck.core.cli.project.ProjectTool %*
 
