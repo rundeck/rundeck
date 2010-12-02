@@ -15,13 +15,17 @@ fi
 
 # test log in 
 
-url='http://localhost:4440'
+url=$1
+if [ -z "$url" ] ; then
+    url='http://localhost:4440'
+fi
 loginurl="${url}/j_security_check"
+curlopts=$2
 
 # get main page for login
 echo "WEB Starting tests."
 echo "WEB Trying login..."
-curl -s -S -L -c $DIR/cookies ${url}/menu/index > $DIR/curl.out 
+curl $curlopts -s -S -L -c $DIR/cookies ${url}/menu/index > $DIR/curl.out 
 if [ 0 != $? ] ; then
     errorMsg "failed menu request to ${url}/menu/index"
     exit 2
@@ -34,7 +38,7 @@ if [ 0 != $? ] ; then
 fi
 
 
-curl -s -S -L -c $DIR/cookies -b $DIR/cookies -d j_username=admin -d j_password=admin $loginurl > $DIR/curl.out 
+curl $curlopts -s -S -L -c $DIR/cookies -b $DIR/cookies -d j_username=admin -d j_password=admin $loginurl > $DIR/curl.out 
 if [ 0 != $? ] ; then
     errorMsg "failed login request to ${loginurl}"
     exit 2
@@ -55,7 +59,7 @@ fi
 echo "WEB Login OK"
 echo "WEB Testing Nodes..."
 # get nodes page
-curl -s -S -L -c $DIR/cookies -b $DIR/cookies ${url}/resources/nodes?project=test > $DIR/curl.out
+curl $curlopts -s -S -L -c $DIR/cookies -b $DIR/cookies ${url}/resources/nodes?project=test > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "failed nodes request"
     exit 2
