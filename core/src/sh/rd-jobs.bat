@@ -67,6 +67,7 @@ CALL %JAVA_HOME%\bin\java "-Dant.home=%ANT_HOME%" ^
                           "-Duser.java_home=%JAVA_HOME%" ^
                           "-Drdeck.home=%RDECK_HOME%" ^
                           "-Drdeck.base=%RDECK_BASE%" ^
+                          %RDECK_SSL_OPTS% ^
                           -cp  ^
                           com.dtolabs.rundeck.core.cli.ctljobs.JobsTool %*
 

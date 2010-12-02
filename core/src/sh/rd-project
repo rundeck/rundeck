@@ -38,8 +38,6 @@ fi
 exec $JAVA_HOME/bin/java ${RDECK_JVM} -classpath ${CLI_CP} \
      -Drdeck.base=$RDECK_BASE \
      -Drdeck.home=$RDECK_HOME \
-     -Djava.protocol.handler.pkgs=com.sun.net.ssl.internal.www.protocol  \
-     -Djavax.net.ssl.trustStore=$RDECK_BASE/etc/truststore \
-     -Djavax.net.ssl.trustStoreType=jks  \
      -Drdeck.traceExceptions=$RUNDECK_TRACE_EXCEPTIONS \
+     $RDECK_SSL_OPTS \
      com.dtolabs.rundeck.core.cli.project.ProjectTool "$@"

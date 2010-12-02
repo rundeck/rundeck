@@ -43,9 +43,7 @@ call "%JAVA_HOME%\bin\java.exe" ^
     -Drdeck.base="%RDECK_BASE%" ^
 	-Drdeck.home="%RDECK_HOME%" ^
 	-Dant.home="%ANT_HOME%" ^
-    -Djava.protocol.handler.pkgs="com.sun.net.ssl.internal.www.protocol"  ^
-    -Djavax.net.ssl.trustStore="%RDECK_BASE%\etc\truststore" ^
-    -Djavax.net.ssl.trustStoreType="jks"  ^
+    %RDECK_SSL_OPTS% ^
     -Drdeck.traceExceptions="%RUNDECK_TRACE_EXCEPTIONS%" ^
     -Drdeck.cli.terse="%RUNDECK_CLI_TERSE%" ^
 	com.dtolabs.rundeck.core.cli.ExecTool %*
