@@ -69,6 +69,7 @@ public class ExpandRunServer {
      */
     final static String[] configProperties = {
         "server.http.port",
+        "server.https.port",
         "server.hostname",
         "server.reportservice.port",
         "rdeck.base",
