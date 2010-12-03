@@ -281,6 +281,7 @@ public class ExpandRunServer {
      
             expandTemplates(configuration, serverdir, rewrite);
             setScriptFilesExecutable(new File(serverdir, "sbin"));
+            extractDocs(new File(basedir, "docs"));
         } else {
             configuration.putAll(defaults);
             configuration.put(SERVER_DATASTORE_PATH, cl.getOptionValue("datadir", serverdir.getAbsolutePath()));
@@ -294,21 +295,24 @@ public class ExpandRunServer {
         execute(cl.getArgs(), configDir, new File(basedir), serverdir, configuration);
     }
 
+    private void extractDocs(final File targetdir) throws IOException {
+        if(!targetdir.exists() && !targetdir.mkdirs()) {
+            ERR("Unable to create docs dir: " + targetdir);
+        }
+        //extract launcher "docs" dir into the targetdir
+        ZipUtil.extractZip(thisJar.getAbsolutePath(), targetdir, "docs", "docs/");
+    }
+
     /**
      * Set executable bit on any script files in the directory if it exists
      * @param sbindir
      */
     private void setScriptFilesExecutable(final File sbindir) {
-        //set executable on shell scripts
-        final FilenameFilter filenameFilter = new FilenameFilter() {
-            public boolean accept(final File file, final String s) {
-                return s.endsWith(".sh");
-            }
-        };
+        //set executable on files
         if (sbindir.exists()) {
-            for (final String s : sbindir.list(filenameFilter)) {
+            for (final String s : sbindir.list()) {
                 final File script = new File(sbindir, s);
-                if (!script.setExecutable(true)) {
+                if (script.isFile() && !script.setExecutable(true)) {
                     ERR("Unable to set executable permissions for file: " + script.getAbsolutePath());
                 }
             }
