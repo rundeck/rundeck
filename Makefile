@@ -20,12 +20,12 @@ core = core/target/rundeck-core-$(VERSION).jar
 war = rundeckapp/target/rundeck-$(VERSION).war
 launcher = rundeckapp/target/rundeck-launcher-$(VERSION).jar
 
-.PHONY: clean rundeck docs
+.PHONY: clean rundeck docs appdocs
 
 rundeck: $(war) $(launcher)
 	@echo $(VERSION)-$(RELEASE)
 
-rpm: $(war) docs
+rpm: $(war)
 	cd packaging; $(MAKE) clean rpm
 
 docs:
@@ -34,10 +34,10 @@ docs:
 $(core): $(CORE_FILES)
 	./build.sh rundeck_core
 
-$(war): $(core) $(RUNDECK_FILES)
+$(war): appdocs $(core) $(RUNDECK_FILES)
 	./build.sh rundeckapp
 
-$(launcher): $(core) $(RUNDECK_FILES) docs
+appdocs: docs
 	-rm -rf ./rundeckapp/target/launcher-contents/docs ./rundeckapp/web-app/docs
 	mkdir -p ./rundeckapp/target/launcher-contents/docs/man/man1
 	mkdir -p ./rundeckapp/target/launcher-contents/docs/man/man5
@@ -46,6 +46,8 @@ $(launcher): $(core) $(RUNDECK_FILES) docs
 	cp docs/en/dist/html/* ./rundeckapp/web-app/docs
 	cp docs/en/manpages/man1/*.gz ./rundeckapp/target/launcher-contents/docs/man/man1
 	cp docs/en/manpages/man5/*.gz ./rundeckapp/target/launcher-contents/docs/man/man5
+
+$(launcher): appdocs $(core) $(RUNDECK_FILES)
 	./build.sh rundeckapp
 
 .PHONY: test
@@ -54,7 +56,7 @@ test: $(war)
 	pushd rundeckapp; $(GRAILS) test-app; popd
 	
 clean:
-	rm $(core) $(war) $(launcher)
+	-rm $(core) $(war) $(launcher)
 
 	pushd rundeckapp; $(GRAILS) clean; popd
 
