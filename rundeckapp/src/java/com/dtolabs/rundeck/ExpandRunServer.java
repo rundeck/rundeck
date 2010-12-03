@@ -299,16 +299,11 @@ public class ExpandRunServer {
      * @param sbindir
      */
     private void setScriptFilesExecutable(final File sbindir) {
-        //set executable on shell scripts
-        final FilenameFilter filenameFilter = new FilenameFilter() {
-            public boolean accept(final File file, final String s) {
-                return s.endsWith(".sh");
-            }
-        };
+        //set executable on files
         if (sbindir.exists()) {
-            for (final String s : sbindir.list(filenameFilter)) {
+            for (final String s : sbindir.list()) {
                 final File script = new File(sbindir, s);
-                if (!script.setExecutable(true)) {
+                if (script.isFile() && !script.setExecutable(true)) {
                     ERR("Unable to set executable permissions for file: " + script.getAbsolutePath());
                 }
             }
