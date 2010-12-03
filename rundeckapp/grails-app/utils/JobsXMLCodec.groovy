@@ -275,7 +275,7 @@ class JobsXMLCodec {
                     }
                     if(jobi.notifications){
                         notification{
-                            jobi.notifications.each{note->
+                            jobi.notifications.sort{a,b->a.eventTrigger<=>b.eventTrigger}.each{note->
                                 if(note.type=='email'){
                                     delegate."${note.eventTrigger}"{
                                         email(recipients:note.content)
