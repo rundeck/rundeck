@@ -1,7 +1,12 @@
 include ../../../Makefile.inc
 
 DIST = ../../dist
+CSS=RunDeck-Guide.css
+TEMPLATES=../../templates
 .SUFFIXES: .5.gz .5
+.PHONY: all
+
+all: manpages html
 
 manpages: aclpolicy-v10.5.gz job-v20.5.gz resource-v10.5.gz
 
@@ -23,7 +28,7 @@ roff :
 html :
 	$(ECHO) Generating html for system man pages
 	mkdir -p $(DIST)/html
-	-for f in $(PAGES); do ( $(PANDOC) -s -w html $$f.md -o $(DIST)/html/$$f.html; ); done
+	-for f in $(PAGES); do ( $(PANDOC) -s   --css=$(CSS) --template=$(TEMPLATES)/html.template --include-before=$(TEMPLATES)/before.html --include-after=$(TEMPLATES)/after.html $$f.md -o $(DIST)/html/$${f%.5}.html; ); done
 
 clean :
 	rm -f *.5 *.5.gz
