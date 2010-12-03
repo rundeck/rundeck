@@ -38,10 +38,12 @@ $(war): $(core) $(RUNDECK_FILES)
 	./build.sh rundeckapp
 
 $(launcher): $(core) $(RUNDECK_FILES) docs
-	-rm -rf ./rundeckapp/target/launcher-contents/docs
+	-rm -rf ./rundeckapp/target/launcher-contents/docs ./rundeckapp/web-app/docs
 	mkdir -p ./rundeckapp/target/launcher-contents/docs/man/man1
 	mkdir -p ./rundeckapp/target/launcher-contents/docs/man/man5
+	mkdir -p ./rundeckapp/web-app/docs
 	cp docs/en/dist/html/* ./rundeckapp/target/launcher-contents/docs
+	cp docs/en/dist/html/* ./rundeckapp/web-app/docs
 	cp docs/en/manpages/man1/*.gz ./rundeckapp/target/launcher-contents/docs/man/man1
 	cp docs/en/manpages/man5/*.gz ./rundeckapp/target/launcher-contents/docs/man/man5
 	./build.sh rundeckapp

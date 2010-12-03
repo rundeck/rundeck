@@ -41,6 +41,14 @@ a:hover {
     color:       #FFFFFF;
     background-color:  red;
 }
+a[href*="://"]{
+    background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKBAMAAAB/HNKOAAAAAXNSR0IArs4c6QAAABJQTFRFY39IZmZmgICAmZmZzMzM////A5BfGQAAAAF0Uk5TAEDm2GYAAAABYktHRACIBR1IAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAPUlEQVQI12NgYFBSUmJgYDINDWIAsoGkoKAKkBQNcnUCkiohSkYMos5OAgoMoiGqAgwMoqGhQFJQUFCAAQDq2geW9A6RGwAAAABJRU5ErkJggg==)  99% 40% no-repeat;
+    padding-right: 15px;
+}
+a[href*="://"]:hover{
+    background: red url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKBAMAAAB/HNKOAAAAAXNSR0IArs4c6QAAABJQTFRFY39IZmZmgICAmZmZzMzM////A5BfGQAAAAF0Uk5TAEDm2GYAAAABYktHRACIBR1IAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAPUlEQVQI12NgYFBSUmJgYDINDWIAsoGkoKAKkBQNcnUCkiohSkYMos5OAgoMoiGqAgwMoqGhQFJQUFCAAQDq2geW9A6RGwAAAABJRU5ErkJggg==)  99% 40% no-repeat;
+    padding-right: 15px;
+}
 h1 a{
     text-decoration:none;
     color:black;
