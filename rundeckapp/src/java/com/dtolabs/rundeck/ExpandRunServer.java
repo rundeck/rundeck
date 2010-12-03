@@ -276,12 +276,10 @@ public class ExpandRunServer {
             configuration = createConfiguration(defaults);
 
             configuration.put("realm.properties.location", configDir.getAbsolutePath() + "/realm.properties");
-            configuration.put("log4j.properties.location", expdir.getAbsolutePath() + "/webapp/WEB-INF/classes/log4j.properties");
 
             DEBUG("Runtime configuration properties: " + configuration);
      
             expandTemplates(configuration, serverdir, rewrite);
-            placeLog4jConfig(configuration, new File(configDir, "log4j.properties"));
             setScriptFilesExecutable(new File(serverdir, "sbin"));
         } else {
             configuration.putAll(defaults);
@@ -314,20 +312,6 @@ public class ExpandRunServer {
                     ERR("Unable to set executable permissions for file: " + script.getAbsolutePath());
                 }
             }
-        }
-    }
-
-    /**
-     * Move log4j configuration file from config dir to webapp location if it does not exist
-     * @param configuration configuration properties
-     * @param log4jConfigFile source log4j config file
-     * @throws IOException if an error occurs
-     */
-    private void placeLog4jConfig(final Properties configuration, final File log4jConfigFile) throws IOException {
-        //copy log4j config
-        final File log4jdest = new File(configuration.getProperty("log4j.properties.location"));
-        if (!log4jdest.exists() && !log4jConfigFile.renameTo(log4jdest)) {
-            ERR("Couldn't move log4j.properties file to destination: " + log4jdest.getAbsolutePath());
         }
     }
 
