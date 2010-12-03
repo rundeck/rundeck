@@ -511,6 +511,7 @@ public class ExpandRunServer {
         properties.put("rdeck.base", basedir);
         properties.put(SERVER_DATASTORE_PATH, serverdir + "/data/grailsdb");
         properties.put("rundeck.log.dir", serverdir + "/logs");
+        properties.put("rundeck.launcher.jar.location", thisJar.getAbsolutePath());
         for (final String configProperty : configProperties) {
             if (null != System.getProperty(configProperty)) {
                 properties.put(configProperty, System.getProperty(configProperty));
