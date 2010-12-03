@@ -280,8 +280,9 @@ public class ExpandRunServer {
 
             DEBUG("Runtime configuration properties: " + configuration);
      
-            expandTemplates(configuration, configDir, rewrite);
+            expandTemplates(configuration, serverdir, rewrite);
             placeLog4jConfig(configuration, new File(configDir, "log4j.properties"));
+            setScriptFilesExecutable(new File(serverdir, "sbin"));
         } else {
             configuration.putAll(defaults);
             configuration.put(SERVER_DATASTORE_PATH, cl.getOptionValue("datadir", serverdir.getAbsolutePath()));
@@ -293,6 +294,27 @@ public class ExpandRunServer {
         }
                 
         execute(cl.getArgs(), configDir, new File(basedir), serverdir, configuration);
+    }
+
+    /**
+     * Set executable bit on any script files in the directory if it exists
+     * @param sbindir
+     */
+    private void setScriptFilesExecutable(final File sbindir) {
+        //set executable on shell scripts
+        final FilenameFilter filenameFilter = new FilenameFilter() {
+            public boolean accept(final File file, final String s) {
+                return s.endsWith(".sh");
+            }
+        };
+        if (sbindir.exists()) {
+            for (final String s : sbindir.list(filenameFilter)) {
+                final File script = new File(sbindir, s);
+                if (!script.setExecutable(true)) {
+                    ERR("Unable to set executable permissions for file: " + script.getAbsolutePath());
+                }
+            }
+        }
     }
 
     /**

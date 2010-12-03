@@ -59,7 +59,7 @@ target(cpTemplates:"Copy templates into launcher jar"){
     def targetdir="target/launcher-contents/templates"
     ant.mkdir(dir:"${targetdir}")
     ant.copy(todir:"${targetdir}"){
-        fileset(dir:"etc/templates",includes:"*")
+        fileset(dir:"etc/templates",includes:"**/*")
     }
     ant.copy(todir:"target/launcher-contents",file:"etc/config-defaults.properties")
 }

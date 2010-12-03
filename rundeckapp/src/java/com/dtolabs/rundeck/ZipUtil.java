@@ -145,6 +145,11 @@ public class ZipUtil {
                 }
             } else if (!entry.isDirectory()) {
                 if (!destFile.exists()) {
+                    //create parent dirs if necessary
+                    File parent = destFile.getParentFile();
+                    if(!parent.exists() && !parent.mkdirs()){
+                        throw new IOException("Unable to create parent dir for file: " + destFile.getAbsolutePath());
+                    }
                     if (!destFile.createNewFile()) {
                         throw new IOException("Unable to create file: " + destFile.getAbsolutePath());
                     }
