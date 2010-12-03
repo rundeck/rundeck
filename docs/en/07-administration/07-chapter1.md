@@ -30,7 +30,6 @@ The script is located here: `/etc/init.d/rundeckd`
 ### Launcher
 
 The Launcher installation generates the script into the RDECK_BASE directory.
-You may choose to incorporate it into your server's boot process.
 
 The script is located here: `$RDECK_BASE/server/sbin/rundeckd`.
 
@@ -42,14 +41,19 @@ The script is located here: `$RDECK_BASE/server/sbin/rundeckd`.
 
     $RDECK_BASE/server/sbin/rundeckd stop
 
+You may choose to incorporate this script into your server's operating
+system specific boot process.
+
 ## Configuration
 
-### Directory layout
+### Configuration layout
 
 Configuration file layout differs between the RPM and Launcher
-installation methods.
+installation methods. See [RPM layout](#rpm-layout) and
+[Launcher layout](#launcher-layout) for details.
 
 #### RPM layout
+
     /etc/rundeck
     |-- client
     |   |-- admin.aclpolicy
@@ -77,23 +81,79 @@ installation methods.
     `-- rundeck-config.properties
 
 ### Configuration files
+Configuration is specified in a number of standard RunDeck
+configuration files generated during the installation process.
 
-`admin.aclpolicy`
-~   Access control policy for "admin" group (man aclpolicy(5))
-`framework.properties`
-~   Configuration used by shell tools
-`log4j.properties`
-~   Logging configuration file
-`profile`
-~   Shell environment variables
-`project.properties`
-~   Project creation bootstrap config
-`jaas-loginmodule.conf`
-~   User realm configuration
-`realm.properties`
-~   User realm logins
-`rundeck-config.properties`
-~   The RunDeck webapp configuration
+See the [Configuration layout](#configuration-layout) section for where these
+files reside for RPM and Launcher installations.
+
+The purpose of each configuration file is described in its own section.
+
+#### admin.aclpolicy
+
+Administrator access control policy defined with a "aclpolicy(5)" XML
+document.
+
+This file governs the access for the "admin" group and role. 
+
+See [Authorization](#authorization) for information about setting up
+policy files for other user groups.
+
+#### framework.properties
+
+Configuration used by shell tools. This file contains a number of
+settings used by the shell tools to interoperate with the RunDeck
+services. 
+
+#### log4j.properties
+
+RunDeck uses [log4j] as its application logging facility. This file
+defines the logging configuration for the RunDeck server. 
+
+[log4j]: http://logging.apache.org/log4j/
+
+#### profile
+
+Shell environment variables used by the shell tools. This file
+contains several paramaters needed during the startup of the shell
+tools like umask, Java home and classpath, and SSL options.
+
+#### project.properties
+
+RunDeck [project](#project) configuration file. One of these is
+generated at project setup time. There are two important settings in
+this file:
+
+* `project.resources.file`: Path to the project resource model document
+  (see resources-v10(5)).
+* `project.resources.url`: Optionally set to reference an external
+  resource model provider.
+
+#### jaas-loginmodule.conf
+
+[JAAS] configuration for the RunDeck server. The listing below
+shows the file content for a normal RPM installation. One can see it
+specifies the use of the [PropertyFileLoginModule]:
+
+    RDpropertyfilelogin {
+      org.mortbay.jetty.plus.jaas.spi.PropertyFileLoginModule required
+      debug="true"
+      file="/etc/rundeck/server/config/realm.properties";
+    };
+
+[JAAS]: http://docs.codehaus.org/display/JETTY/JAAS
+[PropertyFileLoginModule]: http://jetty.codehaus.org/jetty/jetty-6/apidocs/org/mortbay/jetty/plus/jaas/spi/PropertyFileLoginModule.html
+
+#### realm.properties
+
+Property file user directory when PropertyFileLoginModule is
+used. Specified from [jaas-loginmodule.conf](#jaas-loginmodule.conf).
+
+#### rundeck-config.properties
+
+The primary RunDeck webapp configuration file. Defines default
+loglevel, datasource configuration, [role mapping](#role-mapping), and
+[GUI customization](#customizing-rundeck-gui).
 
 ## Logs
 
@@ -101,28 +161,47 @@ Dependeing on the installer used, the log files will be under a base
 directory:
 
 *   RPM: `/var/log/rundeck`
-    - `rundeck.audit.log`: Authorization messages
-    - `rundeck.log`: Application messages
-    - `service.log`: Standard input and output
-*   Launcher: `$RDECK_BASE/var/logs`
-    -   `service.log`: All output is logged here
+*   Launcher: `$RDECK_BASE/server/logs`
 
+The following files will be found in the log directory:
+
+     .
+     |-- command.log
+     |-- rundeck.audit.log
+     |-- rundeck.log
+     `-- service.log
+
+Different facilities log to their own files:
+
+* `command.log`: Shell tools log their activity to the command.log
+* `rundeck.audit.log`: Authorization messages pertaining to aclpolicy
+* `rundeck.log`: General RunDeck application messages
+* `service.log`: Standard input and output generated during runtime
 
 ## Backup and recovery
 
 RunDeck backup should only be done with the server down. 
 
-(1) Stop the server
+(1) Stop the server. See: [startup and shutdown](#startup-and-shtudown)
 
-(2) Copy the data files:
+        rundeckd stop
 
-* RPM install: `/var/lib/rundeck/data`
-* Launcher install: `$RDECK_BASE/server/data`
+(2) Copy the data files. (Assumes file datastore configuration). The
+location of the data directory depends on the installation method:
 
+    * RPM install: `/var/lib/rundeck/data`
+    * Launcher install: `$RDECK_BASE/server/data`
+
+             cp -r data /path/to/backup/dir
+    
 (3) Export the jobs
 
-    rd-jobs -f jobs.xml
-    
+         rd-jobs -f /path/to/backup/dir/job.xml
+
+(4) Start the server
+
+         rundeckd start    
+
 ## SSH
 
 RunDeck uses [SSH] for remote execution. 
@@ -316,10 +395,228 @@ membership using the Active Directory server.
 
 ## Authorization
 
+Three dimensions of information dictate authorization inside RunDeck:
+
+* *group* memberships assigned to a *user* login.  
+* access control policy that grants access to one or more *policy
+  action*s to a *group*  or *user*.
+* role mapping that ties *policy action*s to a set of user *group*s.
+
+The section on [managing logins](#managing-logins) discusses how to
+assign group memberships to users.
+
+The remainder of this section will describe how to use the access
+control policy and role mappings.
+
+*Note from the project team*: The authorization layer is an early work
+ in progress. Please share your ideas on the IRC or mailing list.
+
+### Access control policy
+
+Access to running or modifying Jobs is managed in an access control
+policy defined using the aclpolicy XML document (aclpolicy-v10(5)). 
+This file contains a number of policy elements that describe what user
+group is allowed to perform which actions.
+
+Policies can be organized into more than one file to help organize
+access by group or pattern of use. The normal RunDeck install will
+have generated a policy for the "admin" group. Not all users will need
+to be given "admin" access level to control and modify all Jobs. More
+typically, a group of users will be given access to just a subset of
+Jobs.
+
+File listing: admin.aclpolicy example
+
+    <policies>
+      <policy description="Administrative group that has access to
+    execute all jobs in any project.">
+        <context project="*">
+          <command group="*" job="*" actions="*"/>
+        </context>
+        <by>
+          <group name="admin"/>
+        </by>
+      </policy>
+    </policies>
+
+The example policy document above demonstrates the access granted to
+the users in group "admin". The asterisks indicate a wild card for
+those attributes (eg, semantically it means "ALL"). 
+
+### Access control policy actions
+
+The authorization defines a number of actions that can be referenced
+inside the access control policy document. Reading their names, one
+might see these actions as a granular set of roles.
+
+`admin`
+~   Enables the user or group "super user" access.
+`user_admin`
+~   Modify user profiles.
+`workflow_read`
+~   Read and view jobs.
+`workflow_create`
+~   Create new jobs.
+`workflow_update`
+~   Edit existing jo.bs
+`workflow_delete`
+~   Remove jobs.
+`workflow_kill`
+~   Kill running jobs.
+`workflow_run`
+~   Execute a job.
+`events_read`
+~   List and view history.
+`events_create`
+~   Create new events.
+`events_update`
+~   Modify history (unused).
+`events_delete`
+~   Delete events (unused).
+`resources_read`
+~   List and view resources.
+`resources_create`
+~   Create resources (unused).
+`resources_update`
+~   Modify resources (unused).
+`resources_delete`
+~   Delete resources (unused).
+`job_view_unauthorized`
+~   Special role for viewing jobs that the user is unauthorized to run.
+
 ### Role mapping
 
-### Acess control policy
+Role mapping is a way of adapting the User Roles provided by your
+authentication system to the Application Roles used by the RunDeck web
+app. This lets you work with whatever authentication provider based
+roles you have. Role mappings are defined in the
+[rundeck-config.properties](#rundeck-config.properties) configuration file.
 
+*Application Roles*
+
+:   Role names used by the RunDeck application for testing whether the
+    user is allowed to perform certain actions
+
+*User Roles*
+
+:   Role names used by an authencation system
+
+These properties provide a mapping of allowed *Application Roles* to a
+set of specified *User Roles*. The defaults shown here match the set of
+default User Roles installed in the file based login mechanism (ie,
+[realm.properties](#realm.properties) when you install RunDeck.
+
+If you use your own directory-based authentication (eg [Active Directory](#active-directory)) you
+may need to modify the roles you use, especially if you are unable to
+change the roles/groups that User profiles are assigned to in your
+directory.
+
+These are the default Application Roles that the role mapping can override:
+
++-----------------------+-----------------------+
+|**Application Role**   |**User Role**          |
++-----------------------+-----------------------+
+|`admin`                |admin                  |
++-----------------------+-----------------------+
+|`user_admin`           |admin                  |
++-----------------------+-----------------------+
+|`workflow_read`        |user                   |
++-----------------------+-----------------------+
+|`workflow_create`      |admin                  |
++-----------------------+-----------------------+
+|`workflow_update`      |admin                  |
++-----------------------+-----------------------+
+|`workflow_kill`        |user                   |
++-----------------------+-----------------------+
+|`workflow_run`         |user                   |
++-----------------------+-----------------------+
+|`events_read`          |user                   |
++-----------------------+-----------------------+
+|`events_create`        |user                   |
++-----------------------+-----------------------+
+|`events_update`        |admin                  |
++-----------------------+-----------------------+
+|`events_delete`        |admin                  |
++-----------------------+-----------------------+
+|`resources_read`       |user                   |
++-----------------------+-----------------------+
+|`resources_create`     |admin                  |
++-----------------------+-----------------------+
+|`resources_update`     |admin                  |
++-----------------------+-----------------------+
+|`resources_delete`     |admin                  |
++-----------------------+-----------------------+
+|`job_view_unauthorized`|job\_view\_unauthorized|
++-----------------------+-----------------------+
+
+
+Note
+
+:    Setting the mapping value to a comma-separated list of Role names
+     grants that Application Role to a user in any of the mapped roles.
+
+
+If no role mapping is defined for an Application Role, then the
+literal name of the Application Role will be tested as the role
+name. E.g. If "mappedRoles.admin" is not defined, then a role named
+"admin" will be used.
+
+The listing below contains the role mappings that appear after a
+normal RunDeck installation you will find in [rundeck-config.properties](#rundeck-config.properties). 
+
+    #
+    # Map rundeck actions to allowed roles
+    #       mappedRoles.X=A,B,C
+    # means allow X to users in role A, B or C
+    #
+    mappedRoles.admin=admin
+    mappedRoles.user_admin=admin
+    mappedRoles.workflow_read=user
+    mappedRoles.workflow_create=admin
+    mappedRoles.workflow_update=admin
+    mappedRoles.workflow_delete=admin
+    mappedRoles.workflow_kill=user
+    mappedRoles.workflow_run=user
+    mappedRoles.events_read=user
+    mappedRoles.events_create=user
+    mappedRoles.events_update=user
+    mappedRoles.events_delete=user
+    mappedRoles.resources_read=user
+    mappedRoles.resources_create=admin
+    mappedRoles.resources_update=admin
+    mappedRoles.resources_delete=admin
+    #special role for viewing jobs unauthorized to run
+    mappedRoles.job_view_unauthorized=job_view_unauthorized
+
+You can replace all of the *User Roles* shown in this file with your own
+custom role names from your directory service.
+
+### Troubleshooting access control policy
+
+After defining an aclpolicy file to grant access to a particular group
+of users, you may find them getting "unauthorized" messages or
+complaints that certain actions are not possible. 
+
+To diagnose this, begin by checking two bits:
+
+1. The user's group membership. This can be done by going to the
+   user's profile page in RunDeck. That page will list the groups the
+   user is a member. 
+2. Read the messages inside the `rundeck.audit.log` log file. The
+   authorization facility generates fairly low level messages describing
+   how the policy is matched to the user context.
+
+If you don't see any output in the audit log for a user's action and
+they are able to login, then make sure [role mapping](#role-mapping)
+is set correctly.
+
+Once the user role mappings are defined correctly ask the user to
+login again and attempt accessing their jobs. You should watch the
+stream of messages flowing through the audit log.
+For each entry, you'll see all decisions leading up to either a
+AUTHORIZED or a REJECTED message.  It's not uncommon to see REJECTED
+messages followed by AUTHORIZED.  The important thing is to look at
+the last decision made.
 
 ## Configuring Rundeck for SSL
 
@@ -421,7 +718,7 @@ Use the entire OBF: output as the password in the ssl.properties file, eg:
     key.password=OBF:1lk2j1lkj321lj13lj
     
 
-### Troubleshooting
+### Troubleshooting keystore
 
 Some common error messages and causes:
 
@@ -444,3 +741,26 @@ clients (web browsers or e.g. curl).
 Export pem cacert for use by e.g. curl: 
 
     keytool -export -keystore etc/keystore -rfc -alias rundeck > rundeck.server.pem
+
+## Customizing RunDeck GUI
+
+You can modify some display features of the RunDeck GUI by setting
+these properties in the [rundeck-config.properties](#rundeck-config.properties) file:
+
++-------------------------+-------------------------------------+--------------------+
+|**Property**             |   **Description**                   |**example**         |
++-------------------------+-------------------------------------+--------------------+
+|`rundeck.gui.title`      |Title shown in app header            |Test App            |
++-------------------------+-------------------------------------+--------------------+
+|`rundeck.gui.logo`       |Logo icon path relative to           | test-logo.png      |
+|                         |webapps/rundeck/images dir           |                    |
++-------------------------+-------------------------------------+--------------------+
+|`rundeck.gui.logo-width` |Icon width for proper display (32px  |32px                |
+|                         |is best)                             |                    |
++-------------------------+-------------------------------------+--------------------+
+|`rundeck.gui.logo-height`|Icon height for proper display (32px |32px                |
+|                         |is best)                             |                    |
++-------------------------+-------------------------------------+--------------------+
+|`rundeck.gui.titleLink`  |URL for the link used by the app     |http://rundeck.org  |
+|                         |header icon.                         |                    |
++-------------------------+-------------------------------------+--------------------+

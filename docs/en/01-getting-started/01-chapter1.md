@@ -42,7 +42,7 @@ interact with the command dispatcher.
 ### Resource model
 
 The command dispatcher works in conjunction with a resource model. A
-*resource model* is a representation of nodes deployed in your
+*resource model* is a representation of hosts deployed in your
 network. A _Node_  is a resource that is either a physical or virtual instance
 of a network accessible host.
 
@@ -51,7 +51,12 @@ extended to include arbitrary named key value pairs.
 
 You can configure RunDeck to retrieve and store resource model data
 from any source, so long as it meets the RunDeck resource model
-document requirement.
+document requirement. 
+
+A *resource model provider* is an external service
+accesible via the HTTP GET method that returns data conforming to the
+RunDeck resources document format (resource-v10(5)). 
+
 
 ### Authorization
 
@@ -228,15 +233,16 @@ are using an unupported Java version.
 
 RunDeck supports a number of user directory configurations. By
 default, the installation uses a file based directory, but connectivity to
-LDAP is also available.
+LDAP is also available. See [Managing logins](#managing-logins) in the
+Administration chapter.
 
 The RunDeck installation process will have defined a set of temporary
 logins useful during the getting started phase.
 
 * `user`: Has access to run commands and jobs but unable to modify job
-  definitions.
+  definitions. Password: "user"
 * `admin`: Belongs to the "admin" group and is automatically granted
-  the "admin" and "user" role privileges.
+  the "admin" and "user" role privileges. Password: "admin"
   
 ### Group membership
 

@@ -20,7 +20,7 @@ XML document that is loaded to the server.
 The graphical console provides an authoring environment where steps
 can be added, edited, removed or reordered.
 
-Users prefering to define Jobs in XML should read the "job-v20(1)"
+Users prefering to define Jobs in XML should read the "job-v20(5)"
 manual page. 
 
 It is also possible to author Jobs inside the graphical console

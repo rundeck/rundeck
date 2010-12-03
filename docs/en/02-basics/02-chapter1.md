@@ -25,8 +25,7 @@ well as, store and run jobs.
 
 To get started, go to the URL for your RunDeck server. 
 Login to the web app with the credentials defined by the RunDeck user
-directory configuration. (The default installation username/password
-is: default/default)
+directory configuration. 
 
 #### Navigation
 
@@ -111,10 +110,10 @@ will open prompting you for a project name.
 After typing in your project name, RunDeck initializes it and returns
 you to the "Resources" view.
 
-The <code>rd-project</code> shell tool can also be used to create a
+The `rd-project` shell tool can also be used to create a
 project.
 
-On the RunDeck server, execute the <code>rd-project</code> command and
+On the RunDeck server, execute the `rd-project` command and
 specify a project name, here we use "examples":
 
     rd-project -a create -p examples
@@ -133,11 +132,11 @@ running local commands on the RunDeck server.
 You can browse the project resource model by going to the "Resources" page.
 
 In the shell, you can list the Node resources in a resource
-model using the shell tool, <code>dispatch</code>. 
-Specify project name using the <code>-p project</code> option.
+model using the shell tool, `dispatch`. 
+Specify project name using the `-p project` option.
 
-Here the <code>dispatch</code> command lists the registered server for
-the "examples" project after the project setup. The <code>-v</code> gives
+Here the `dispatch` command lists the registered server for
+the "examples" project after the project setup. The `-v` gives
 a verbose listing that includes more detail:
 
     $ dispatch -p examples -v	
@@ -157,33 +156,33 @@ Node, perhaps denoting a classification, a role the node plays in the
 environment, or group membership. 
 
 The output above shows the "strongbad" node currently has an empty
-tags property: <code>tags: []</code>.
+tags property: `tags: []`.
 
-It is useful to start thinking about node tagging for the nodes you manage
+It is important to start thinking about node tagging for the nodes you manage
 because you will use them later when specifying filtering
 options to drive distributed command dispatch.
 
 Each Project has its configuration located in its own directory
 located in path like:
-<code>$RDECK\_BASE/projects/_project_/etc/project.properties</code>.
+`$RDECK_BASE/projects/`_project_`/etc/project.properties`.
 
 This configuration file contains two important properties for accessing and
 storing resource model data:
 
-* <code>project.resources.file</code>: File path to store resource
+* `project.resources.file`: File path to store resource
   model data (required).
-* <code>project.resources.url</code>: URL to the server providing the
-  resource model data.
+* `project.resources.url`: URL to the resource model provider
 
 You can configure RunDeck to retrieve and store resource model data
 from any source, so long as it meets the RunDeck resource model
-document requirement.
+document requirement. Set the `project.resource.url` to the resource
+model provider of your choice.
 
-RunDeck reads the XML document retrieved from the ${project.resources.url}
-site and stores it in the path defined by ${project.resources.file}.
+RunDeck reads the XML document retrieved from the `${project.resources.url}`
+site and stores it in the path defined by `${project.resources.file}`.
 
 Here's the XML document stored for the "examples" project that corresponds
-to the output printed by the <code>dispatch -v</code> shown earlier:
+to the output printed by the `dispatch -v` shown earlier:
 
     <project>
         <node name="strongbad" type="Node" 
@@ -208,11 +207,13 @@ as an XML document, storing it in a source repository that is
 periodically exported to Rundeck. This method could be practical if
 your host infrastructure rarely changes.
 
-The "resource-v10" manual contains reference information about the
+The "resource-v10(5)" manual contains reference information about the
 RunDeck resources document content and structure.
 
-Check the RunDeck web site for providers to the RunDeck resource
-model.
+Check the RunDeck web site for resource model providers. If you are
+interested in creating your own, see the
+[Resource model provider](#resource-model-provider-examples) section in the
+[Examples](#rundeck-by-example) chapter.
 
 ## Command Execution
 
@@ -220,13 +221,13 @@ RunDeck supports two modes of execution: *ad-hoc commands* and *Job*.
 
 An *ad-hoc command* is any system command or shell script executed
 via the command dispatcher. Ad hoc commands can be executed via a
-command line utility named <code>dispatch</code> or run from
+command line utility named `dispatch` or run from
 the graphical console.
 
 A *Job* specifies a sequence of one or more command invocations that
 can be run once (i.e, is temporary) or named and stored for later use.
-Stored jobs can be started via the shell tool, <code>run</code>, and
-their progress checked with <code>rd-queue</code>.
+Stored jobs can be started via the shell tool, `run`, and
+their progress checked with `rd-queue`.
 
 ### Dispatcher options
 
@@ -256,7 +257,7 @@ Option combination
      exclude options multiple times on the command line.
   
 One can experiment querying the resource model in the graphical
-console or with the <code>dispatch</code> tool.
+console or with the `dispatch` tool.
 
 #### Filtering nodes graphically  
 
@@ -280,7 +281,7 @@ Architecture, OS Version and Type.
   
 #### Filtering nodes in the shell
 
-<code>dispatch</code> uses the commandline options -I (include) and
+`dispatch` uses the commandline options -I (include) and
 -X (exclude) to specify which nodes to include and
 exclude from the base set of nodes. You can specify a single value, a
 list of values, or a regular expression as the argument to these
@@ -300,7 +301,7 @@ List nodes that are tagged both "web" and "prod" :
 
     dispatch -p examples -I tags=web+prod
 
-Here's an example that will execute the <code>apachectl restart</code>
+Here's an example that will execute the `apachectl restart`
 command in 10 threads across all nodes tagged "web" and keepgoing in
 case an error occurs :
 
@@ -313,14 +314,14 @@ available dispatcher options.
 
 Typically, an ad-hoc command is a shell script or system executable
 that you run at an interactive terminal. Ad-hoc commands can be
-executed via the <code>dispatch</code> shell command or a graphical
+executed via the `dispatch` shell command or a graphical
 shell.
 
 #### Shell tool command execution
 
-Use <code>dispatch</code> to execute individual commands or shell script files.
+Use `dispatch` to execute individual commands or shell script files.
 
-Here <code>dispatch</code> is used to run the Unix uptime command to
+Here `dispatch` is used to run the Unix `uptime` command to
 print system status:
 
     $ dispatch -I os-family=unix -- uptime
@@ -328,12 +329,12 @@ print system status:
     [alexh@strongbad dispatch][INFO] 10:34  up 2 days, 18:51, 2 users, load averages: 0.55 0.80 0.75
     [examples@ubuntu dispatch][INFO]  10:35:01 up 2 days, 18:40,  2 users,  load average: 0.00, 0.01, 0.00
 
-Notice, the <code>dispatch</code> command prepends the message output
+Notice, the `dispatch` command prepends the message output
 with a header that helps understand from where the output originates. The header
-format includes the login and node where the <code>dispatch</code> execution
+format includes the login and node where the `dispatch` execution
 occurred.
 
-Execute the Unix <code>whomi</code> command to see what user ID is
+Execute the Unix `whomi` command to see what user ID is
 used by that Node to run dispatched commands:
 
     $ dispatch -I os-family=unix -- whoami
@@ -342,12 +343,12 @@ used by that Node to run dispatched commands:
     [examples@ubuntu dispatch][INFO] examples
 
 You can see that the resource model defines each Node to use a
-different login to execute <code>dispatch</code> commands.  That
+different login to execute `dispatch` commands.  That
 feature can be handy when Nodes serve different roles and therefore,
 use different logins to manage processes. See the
-<code>username</code> attribute in "resource-v10(1)" manual page.
+`username` attribute in "resource-v10(5)" manual page.
 
-The <code>dispatch</code> command can also execute shell
+The `dispatch` command can also execute shell
 scripts. Here's a trivial script that generates a bit of system info:
 
     #!/bin/sh
@@ -360,7 +361,7 @@ Use the -s option to specify the "info.sh" script file:
 
     $ dispatch -I os-family=unix -s info.sh
     
-The <code>dispatch</code> command copies the "info.sh" script located
+The `dispatch` command copies the "info.sh" script located
 on the server to each "unix" Node and then executes it.
 
 #### Graphical command shell execution
@@ -368,7 +369,7 @@ on the server to each "unix" Node and then executes it.
 The RunDeck graphical console also provides the ability to execute
 ad-hoc commands to a set of filtered Node resources.
 The command prompt can accept any ad-hoc command string you might run
-via an SSH command or via the <code>dispatch</code> shell tool.
+via an SSH command or via the `dispatch` shell tool.
 
 But before running any commands, you need to select the project
 containing the Nodes you wish to dispatch. Use the project
@@ -407,7 +408,7 @@ several views to read the output using different formats.
 Tail Output
 
 :   Displays output messages from the command execution as if you were
-    running the Unix <code>tail -f</code> command on the output log file. 
+    running the Unix `tail -f` command on the output log file. 
     By default, only the last 20 lines of output is displayed but this
     can be expanded or reduced by pressing the "-" or "+" buttons. You
     can also type in an exact number into the textfield.
@@ -525,7 +526,7 @@ arguments as the parameters are defaulted inside the script:
     echo "Not listening on $port after $i checks" ; exit 1
 
 Running dispatch with the -Q option causes the execution to queue in
-RunDeck and controlled as  temporary Job. The -I centos54 limits
+RunDeck and controlled as  temporary Job. The `-I centos54` limits
 execution to just the "centos54" node:
 
     $ dispatch -Q -I centos54 -s ~/bin/checkagain.sh 
@@ -552,7 +553,7 @@ progress.
 Users with "workflow_kill" privilege, will also see a link to kill the
 Job in case they want to stop it immediatly.
 
-Execution can also be tracked using the <code>rd-queue</code> shell tool.
+Execution can also be tracked using the `rd-queue` shell tool.
 
     $ rd-queue
     Queue: 1 items
@@ -560,7 +561,7 @@ Execution can also be tracked using the <code>rd-queue</code> shell tool.
     Workflow:(threadcount:1){[command( scriptfile: /Users/alexh/bin/checkagain.sh)]
     } <http://strongbad:4440/execution/follow/5>
 
-Running jobs can also be killed via the rd-queue "kill" command. The
+Running jobs can also be killed via the `rd-queue kill` command. The
 rd-queue command includes the execution ID for each running
 job. Specify execution ID using the "-e" option:
 

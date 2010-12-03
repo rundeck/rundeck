@@ -325,7 +325,7 @@ definitions.
 
 While each job can be defined graphically in RunDeck, each can
 succinctly be defined using an XML file comforming to the
-"jobs-v20(1)" document format. This XML 
+"job-v20(5)" document format. This XML 
 document contains a set of tags corresponding to the choices seen in
 the RunDeck GUI form.
 
@@ -511,10 +511,11 @@ Run Restart specifying the method, "kill":
 ## Job access control
 
 Access to running or modifying Jobs is managed in an access control
-policy defined using the aclpolicy XML format (man
-"aclpolicy-v10(5)"). 
+policy defined using the aclpolicy XML format (aclpolicy-v10(5)). 
 This file contains a number of policy elements that describe what user
-group is allowed to perform which actions.
+group is allowed to perform which actions. The
+[Authorization](#authorization) section of the Administration chapter
+covers this in detail.
 
 The administrator wants to use the aclpolicy to define two levels of
 access. The first level, has limited privilge and allows for just
@@ -570,7 +571,7 @@ not include icons for editing or deleting the Job. Only workflow\_read
 and workflow\_actions were allowed in the `user.aclpolicy` file.
 
 
-## Resource model provider
+## Resource model provider examples
 
 RunDeck dispatches commands to the nodes defined in the project resource
 model stored in an XML file. A RunDeck project can also be configured
@@ -719,7 +720,7 @@ Here's how such a script looks:
 [CMDB]: http://en.wikipedia.org/wiki/Configuration_management_database
 [AJAX]: http://en.wikipedia.org/wiki/Ajax_(programming)
 
-## Option model provider
+## Option model provider examples
  
 A simple method to integrate information from other tools is via an
 options model provider. An *options model provider* is an external

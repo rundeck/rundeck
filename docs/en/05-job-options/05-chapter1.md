@@ -126,10 +126,10 @@ Once satisfied with the option definition, press the "Save" button to
 add it to the Job definition. Pressing the "Cancel" button will
 dismiss the changes and close the form.
 
-## Option valuesUrl
+## Option model provider
 
 A model of option values can be retrieved from an external source.
-When the "valuesUrl" is specified for an Option, then the model of
+When the `valuesUrl` is specified for an Option, then the model of
 allowed values is retrieved from the specified URL. 
 
 File URL scheme is also acceptable (e.g, file:///path/to/job/options/optA.json).
@@ -305,10 +305,13 @@ Inside an XML definition, insert them as an <code>arg</code> element:
 </command>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
-Consult the "run(1)" and "job-v20(1)" manual pages for additional
+Consult the "run(1)" and "job-v20(5)" manual pages for additional
 information.
      
 ## Summary
 
 After reading this chapter you should understand how to run Jobs with
-options, as well as, add and edit them. 
+options, as well as, add and edit them. If you are interested in
+generating option data for one of your jobs, see the
+[option model provider](#option-model-provider-examples) section in the
+[Examples](#rundeck-by-example) chapter.

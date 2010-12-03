@@ -291,22 +291,22 @@ Run the <code>rd-jobs</code> command to write it to disk. By default,
 rd-jobs will dump all Job definitions to one file. To limit it to just
 a single Job specify its name:
 
-    rd-jobs -n "job-name" -f jobs.xml
+    rd-jobs -n "job-name" -f job.xml
 
-This will store the results in the "jobs.xml" file.
+This will store the results in the "job.xml" file (job-v20(5)).
 
 Consult the "rd-jobs(1)" manual page for additional command usage.
 
 ## Importing Jobs as XML
 
-If you have a "jobs.xml" file (See above) and want to upload it via
+If you have a "job.xml" file (See above) and want to upload it via
 the GUI web interface, you can do so.
 
 Click on the New Job" button in the Job list.
 
 In the "Create New Job" form, click on the button that says "Uplaod Definition..." on the right side:
 
-Click the Choose File button and choose your jobs.xml file to upload.
+Click the Choose File button and choose your job.xml file to upload.
 
 Choose an option where it says "When a job with the same name already
 exists:":
