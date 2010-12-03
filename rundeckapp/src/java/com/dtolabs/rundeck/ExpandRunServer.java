@@ -281,6 +281,7 @@ public class ExpandRunServer {
      
             expandTemplates(configuration, serverdir, rewrite);
             setScriptFilesExecutable(new File(serverdir, "sbin"));
+            extractDocs(new File(basedir, "docs"));
         } else {
             configuration.putAll(defaults);
             configuration.put(SERVER_DATASTORE_PATH, cl.getOptionValue("datadir", serverdir.getAbsolutePath()));
@@ -292,6 +293,14 @@ public class ExpandRunServer {
         }
                 
         execute(cl.getArgs(), configDir, new File(basedir), serverdir, configuration);
+    }
+
+    private void extractDocs(final File targetdir) throws IOException {
+        if(!targetdir.exists() && !targetdir.mkdirs()) {
+            ERR("Unable to create docs dir: " + targetdir);
+        }
+        //extract launcher "docs" dir into the targetdir
+        ZipUtil.extractZip(thisJar.getAbsolutePath(), targetdir, "docs", "docs/");
     }
 
     /**
