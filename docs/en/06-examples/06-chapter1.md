@@ -471,9 +471,9 @@ defined jobs:
 
     rd-jobs list
     Found 3 jobs:
-	- Restart [9] <http://strongbad:8080/scheduledExecution/show/9>
-	- start [10] <http://strongbad:8080/scheduledExecution/show/10>
-	- stop [11] <http://strongbad:8080/scheduledExecution/show/11>
+	- Restart [9] <http://strongbad:4440/scheduledExecution/show/9>
+	- start [10] <http://strongbad:4440/scheduledExecution/show/10>
+	- stop [11] <http://strongbad:4440/scheduledExecution/show/11>
 
 Of course, the jobs can be viewed inside RunDeck's UI by going to
 the Jobs page.
@@ -523,32 +523,32 @@ definitions.
 
 Policies can be organized into more than one file to help organize
 access by group or pattern of use. The normal RunDeck install will
-define two user groups: admin and deploy and have a generated a policy
+define two user groups: "admin" and "user" and have a generated a policy
 for the "admin" group. 
 
 The Acme administrator decides to create a policy that allows users in
-the "deploy" group to run commands just in the "anvils" and
-"anvils/web" Job groups. We can employ the "deploy" login and group as
+the "user" group to run commands just in the "anvils" and
+"anvils/web" Job groups. We can employ the "user" login and group as
 it was also included in the normal install.
 
-To create the aclpolicy file for the "deploy" group:
+To create the aclpolicy file for the "user" group:
 
-    cp $RDECK_BASE/etc/admin.aclpolicy $RDECK_BASE/etc/deploy.aclpolicy
+    cp $RDECK_BASE/etc/admin.aclpolicy $RDECK_BASE/etc/user.aclpolicy
 
 Modify the <command> and <group> elements as shown in the example
 below. Notice that just workflow\_read,workflow\_run actions are
 allowed.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.xml}
-$ cat $RDECK_BASE/etc/deploy.aclpolicy
+$ cat $RDECK_BASE/etc/user.aclpolicy
 <policies>
-  <policy description="Deploy group access policy.">
+  <policy description="User group access policy.">
     <context project="*">
       <command group="anvils" job="*" actions="workflow_read,workflow_run"/>
       <command group="anvils/web" job="*" actions="workflow_read,workflow_run"/>
     </context>
     <by>
-      <group name="deploy"/>
+      <group name="user"/>
     </by>
   </policy>
 </policies>
@@ -558,16 +558,16 @@ Restart jetty so RunDeck loads the new policy file.
 
     jetty.sh restart
 
-Once the RunDeck webapp has started, login as the "deploy" user (the
-password is probably "deploy"). Just the Jobs in the "anvils" group are
-displayed in the Jobs page. The "deploy" user does is not allowed to access
+Once the RunDeck webapp has started, login as the "user" user (the
+password is probably "user"). Just the Jobs in the "anvils" group are
+displayed in the Jobs page. The "user" user does is not allowed to access
 jobs outside of "/anvils group.
 
 Notice the absence of the "New Job" button that would be displayed if
 logged in as "admin". Job creation is an action not granted to
-"deploy". Notice also, that the button bar for the listed Jobs does
+"user". Notice also, that the button bar for the listed Jobs does
 not include icons for editing or deleting the Job. Only workflow\_read
-and workflow\_actions were allowed in the deploy.aclpolicy file.
+and workflow\_actions were allowed in the `user.aclpolicy` file.
 
 
 ## Resource model provider
@@ -763,7 +763,7 @@ File listing: hudson-artifacts.cgi
     # Returns a JSON list of key/val pairs
     #
     # Query Params and their defaults
-    hudsonUrl=https://build.acme.com:8080/job
+    hudsonUrl=https://build.acme.com:4440/job
     hudsonJob=ApplicationBuild
     artifactPath=/artifact/bin/dist/RPMS/noarch/
     

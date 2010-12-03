@@ -108,7 +108,7 @@ belonging in the "apps/web" Job group:
 
     $ run -j apps/web/restart
     Job execution started:
-    [51] restart <http://strongbad:8080/execution/follow/51>
+    [51] restart <http://strongbad:4440/execution/follow/51>
 
 After the Run button has been pressed the page will be directed to
 choose execution options.

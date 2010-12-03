@@ -2,7 +2,7 @@
 % Alex Honor
 % November 20, 2010
 
-# Getting Started #
+# Getting Started
 
 This chapter helps new users getting started with RunDeck. We will begin
 by explaining the basics, covering essential RunDeck concepts and
@@ -10,13 +10,13 @@ terminology and then move on to installation and finally, setup.
 At the end of this chapter you should understand what RunDeck is, how
 you should use it and you should be all setup to do so.
 
-## RunDeck Basics ##
+## RunDeck Basics
 
 Several fundamental concepts underly and drive the development of the
 RunDeck system. If you are a new user, knowing about them will
 help you use and integrate RunDeck into your environment.
 
-### Command dispatching ###
+### Command dispatching
 
 RunDeck supports a notion called Command dispatching wherein a
 user specifies dispatch critera along with an action (called a
@@ -39,7 +39,7 @@ The command dispatcher supports two methods of command execution:
 RunDeck provides both graphical and command line interfaces to
 interact with the command dispatcher.
 
-### Resource model ###
+### Resource model
 
 The command dispatcher works in conjunction with a resource model. A
 *resource model* is a representation of nodes deployed in your
@@ -53,7 +53,7 @@ You can configure RunDeck to retrieve and store resource model data
 from any source, so long as it meets the RunDeck resource model
 document requirement.
 
-### Authorization ###
+### Authorization
 
 RunDeck enforces an *access control policy* that grants certain
 privileges to groups of users.
@@ -65,7 +65,7 @@ authorization to restrict some users to only a subset of actions. This
 provides a self-service type interface, where some users can have
 access to a limited set of actions to execute.
 
-### Project ###
+### Project
 
 A *project* is a place to separate management activity.
 All RunDeck activities occur within the context of a project.
@@ -76,12 +76,12 @@ Projects are independent from one another, so you can use them to
 organize unrelated systems within a single RunDeck
 installation. This can be useful for managing different infrastructures.
 
-## Installing RunDeck ##
+## Installing RunDeck
 
 Assuming the system requirements are met, RunDeck can be installed
 either from source, system package or via the launcher.
 
-### System Requirements ###
+### System Requirements
 
 The following operating systems are known to support RunDeck:
 
@@ -97,7 +97,7 @@ to have access via [sudo].
 
 [sudo]: http://en.wikipedia.org/wiki/Sudo
 
-#### Java ####
+#### Java
 
 RunDeck is a Java-Servlet based server and therefore requires the Java
 runtime.
@@ -114,31 +114,42 @@ Verify your Java version to check it meets the requirement:
     Java(TM) SE Runtime Environment (build 1.6.0_22-b04-307-10M3261)
     Java HotSpot(TM) 64-Bit Server VM (build 17.1-b03-307, mixed mode)
 
-#### Network access ####
+#### Network access
 
-Cients should be set up to allow the RunDeck server user to connect to
-the clients using SSH via public-key authentication. It should not
-prompt for a password. There are various ways for installing SSH on
-Windows; we recommend [Cygwin](http://www.cygwin.com/).
+When the server starts, it binds to several TCP ports:
 
-TCP ports 8080 and 1055 need to be open on the server. In addition,
-TCP port 22 needs to be open on the clients for SSH.
+*  4440 (http) 
+*  4443 (https)
+*  4435 (log4j)
 
 To check the ports are free on a Unix host run:
 
-    netstat -an | egrep '8080|1055' 
+    netstat -an | egrep '4440|4435' 
 
 If the ports are in use on the server, you will see output similar to below:
 
-    tcp46      0      0  *.8080                 *.*                    LISTEN
-    tcp46      0      0  *.1055                 *.*                    LISTEN
+    tcp46      0      0  *.4440                 *.*                    LISTEN
+    tcp46      0      0  *.4435                 *.*                    LISTEN
 
 The installation procedures describe how to choose different ports, if
 there is a conflict.
     
-### Installing from Source ###
+In addition, TCP port 22 needs to be open on the clients for SSH.
+    
+Cients should be set up to allow the RunDeck server user to connect to
+the clients using SSH via public-key authentication. It should not
+prompt for a password. See
+[Configure remote machine for SSH](#configuring-remote-machine-for-ssh)
+in the Administration chapter.
 
-Checkout the sources from GitHub: https://github.com/dtolabs/rundeck
+There are various ways for installing SSH on Windows; we recommend
+[Cygwin].
+
+[Cygwin]: http://www.cygwin.com/
+    
+### Installing from Source
+
+Checkout the sources from [GitHub](https://github.com/dtolabs/rundeck)
 
 Run the build script:
 
@@ -151,7 +162,7 @@ Build clean
 The build will generate a launcher jar. On Linux build servers, an RPM
 will also be generated.
 
-### Installing on Linux ###
+### Installing with RPM
 
 If you want to install RunDeck on Linux via a binary installer, you
 can generally do so through the RPM tool that comes with your distribution. 
@@ -162,7 +173,7 @@ To install it using yum:
     
     $ yum install rundeck
 
-### Installing on other platforms ###
+### Installing with Launcher
 
 Use the launcher as an alternative to a system package:
 
@@ -195,7 +206,7 @@ Use the launcher as an alternative to a system package:
 1. Wait for the Started message.
 
     ~~~~~~~
-    2010-11-19 13:35:51.127::INFO:  Started SocketConnector@0.0.0.0:8080
+    2010-11-19 13:35:51.127::INFO:  Started SocketConnector@0.0.0.0:4440
     ~~~~~~~
 
 1. Update your shell environment 
@@ -211,24 +222,49 @@ are using an unupported Java version.
 
     Exception in thread "main" java.lang.UnsupportedClassVersionError: Bad version number in .class file
 
-## First-Time Setup ##
+## First-Time Setup
 
-### Logins ###
+### Logins 
 
 RunDeck supports a number of user directory configurations. By
 default, the installation uses a file based directory, but connectivity to
 LDAP is also available.
 
-The RunDeck installation process will have defined a set of initial
+The RunDeck installation process will have defined a set of temporary
 logins useful during the getting started phase.
 
-* admin: Belongs to the "admin" group and is automatically granted
-  the "admin" role privileges.
-* deploy: Has access to run commands and jobs but unable to modify job
+* `user`: Has access to run commands and jobs but unable to modify job
   definitions.
+* `admin`: Belongs to the "admin" group and is automatically granted
+  the "admin" and "user" role privileges.
   
+### Group membership
 
-## Summary ##
+If you installed RunDeck using the RPM installation method, it will
+have created a unix group called "rundeck".
+
+    $ groups rundeck
+    rundeck : rundeck
+
+It also made several log files writable to members of the "rundeck" group.
+
+    $ ls -l /var/log/rundeck/command.log
+    -rw-rw-r-- 1 rundeck rundeck 588 Dec  2 11:24 /var/log/rundeck/command.log
+
+If you want to use the RunDeck shell tools, be sure to add that group
+to the necessary user accounts.
+
+RunDeck shell tool users that do not belong to group, rundeck, will
+get error messages like so:
+
+    $ rd-jobs
+    log4j:ERROR setFile(null,true) call failed. java.io.FileNotFoundException: /var/log/rundeck/command.log (Permission denied)
+
+Consult the [usermod] command to modify a user account.
+
+[usermod]: http://linux.die.net/man/8/usermod
+
+## Summary 
 
 You should now have a basic understanding of RunDeck. You
 should also have a working version of RunDeck on your system

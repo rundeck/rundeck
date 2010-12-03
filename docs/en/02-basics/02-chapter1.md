@@ -460,16 +460,16 @@ threads:
 
 The keepgoing and retry flags control when to exit incase an error
 occurs. Use "-K/-R" flags. Here's an example script that checks if the
-host has port 8080 in the listening state. If it does not, it will
+host has port 4440 in the listening state. If it does not, it will
 exit with code 1.
 
     #!/bin/sh
-    netstat -an | grep 8080 | grep -q LISTEN
+    netstat -an | grep 4440 | grep -q LISTEN
     if [ "$?" != 0 ]; then
-    echo "not listening on 8080"
+    echo "not listening on 4440"
     exit 1;
     fi
-    echo  listening port=8080, host=`hostname`;
+    echo  listening port=4440, host=`hostname`;
 
 Commands or scripts that exit with a non-zero exit code will cause the
 dispatch to fail unless the keepgoing flag is set.
@@ -477,7 +477,7 @@ dispatch to fail unless the keepgoing flag is set.
     $ dispatch -I os-family=unix -s /tmp/listening.sh
     [alexh@strongbad dispatch][INFO] Connecting to centos54:22
     [alexh@strongbad dispatch][INFO] done.
-    [ctier@centos54 dispatch][INFO] not listening on 8080
+    [ctier@centos54 dispatch][INFO] not listening on 4440
     error: Remote command failed with exit status 1
     The script failed on centos54 and caused dispatch to error out immediately.
 
@@ -488,12 +488,12 @@ failed:
     $ dispatch -K -I tags=web -s /tmp/listening.sh
     [alexh@strongbad dispatch][INFO] Connecting to centos54:22
     [alexh@strongbad dispatch][INFO] done.
-    [ctier@centos54 dispatch][INFO] not listening on 8080
+    [ctier@centos54 dispatch][INFO] not listening on 4440
     [ctier@centos54 dispatch][ERROR] Failed execution for node: centos54: Remote command failed with exit status 1
-    [alexh@strongbad dispatch][INFO] listening port=8080, host=strongbad
+    [alexh@strongbad dispatch][INFO] listening port=4440, host=strongbad
     [alexh@strongbad dispatch][INFO] Connecting to 172.16.167.211:22
     [alexh@strongbad dispatch][INFO] done.
-    [examples@ubuntu dispatch][INFO] not listening on 8080
+    [examples@ubuntu dispatch][INFO] not listening on 4440
     [examples@ubuntu dispatch][ERROR] Failed execution for node: ubuntu: Remote command failed with exit status 1
     error: Execution failed on the following 2 nodes: [centos54, ubuntu]
     error: Execute this command to retry on the failed nodes:
@@ -513,7 +513,7 @@ arguments as the parameters are defaulted inside the script:
     $ cat ~/bin/checkagain.sh 
     #!/bin/bash
     iterations=$1 secs=$2 port=$3
-    echo "port ${port:=8080} will be checked ${iterations:=30} times waiting ${secs:=5}s between each iteration" 
+    echo "port ${port:=4440} will be checked ${iterations:=30} times waiting ${secs:=5}s between each iteration" 
     i=0
     while [ $i -lt ${iterations} ]; do
       echo "iteration: #${i}"
@@ -530,12 +530,12 @@ execution to just the "centos54" node:
 
     $ dispatch -Q -I centos54 -s ~/bin/checkagain.sh 
     Succeeded queueing workflow: Workflow:(threadcount:1){ [command( scriptfile: /Users/alexh/bin/checkagain.sh)] }
-    Queued job ID: 5 <http://strongbad:8080/execution/follow/4>
+    Queued job ID: 5 <http://strongbad:4440/execution/follow/4>
 
 To pass arguments to the script pass them after the "\--" (double
 dash):
 
-    $ iters=5 secs=60 port=8080
+    $ iters=5 secs=60 port=4440
     $ dispatch -Q -I centos54 -s ~/bin/checkagain.sh -- $iters $secs $ports
 
 
@@ -558,7 +558,7 @@ Execution can also be tracked using the <code>rd-queue</code> shell tool.
     Queue: 1 items
     [5] workflow:
     Workflow:(threadcount:1){[command( scriptfile: /Users/alexh/bin/checkagain.sh)]
-    } <http://strongbad:8080/execution/follow/5>
+    } <http://strongbad:4440/execution/follow/5>
 
 Running jobs can also be killed via the rd-queue "kill" command. The
 rd-queue command includes the execution ID for each running
