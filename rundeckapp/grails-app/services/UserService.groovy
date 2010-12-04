@@ -18,11 +18,6 @@ class UserService {
 
     def boolean userHasAuthorization(String login, String auth){
         
-//        def User user = User.findByLogin(login)
-//        if(!user){
-//            return false;
-//        }
-//        return user.authorization[auth]?true:false
         throw new Exception("Not supported.")
     }
 }
