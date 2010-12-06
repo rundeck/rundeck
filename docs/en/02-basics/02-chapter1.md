@@ -441,10 +441,6 @@ After execution completes, the command will have a status:
   an error is displayed. The page will also contain a link "Retry
   Failed Nodes..." in case you would like to retry the command.
 
-A URL also exists for this page which can be used later to refer to
-this execution:
-
-     http://rundeckserver/execution/show/{EID}
 
 You can download the entire output as a text file from this
 page. Press the "Download" link to retrieve the file to your desk top.
@@ -480,7 +476,8 @@ dispatch to fail unless the keepgoing flag is set.
     [alexh@strongbad dispatch][INFO] done.
     [ctier@centos54 dispatch][INFO] not listening on 4440
     error: Remote command failed with exit status 1
-    The script failed on centos54 and caused dispatch to error out immediately.
+
+The script failed on centos54 and caused dispatch to error out immediately.
 
 Running the command again, but this time with the "-K" keepgoing flag
 will cause dispatch to continue and print on which nodes the script
@@ -574,7 +571,7 @@ job. Specify execution ID using the "-e" option:
 ## History
 
 History for queued ad-hoc commands, as well as, temporary and
-saved Job executions  is stored in by the RunDeck server. History data
+saved Job executions  is stored by the RunDeck server. History data
 can be filtered and viewed inside the "History" page of the graphical
 console.
 
