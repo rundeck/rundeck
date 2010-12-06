@@ -8,12 +8,9 @@ rd-jobs - List or load jobs to the RunDeck server
 
 # SYNOPSIS
 
-dispatch [*action*] [*action options*]...
+rd-jobs [*action*] [*action options*]...
 
 # DESCRIPTION
-
-The dispatch command is used to remotely execute ad-hoc shell commands
-on a set of nodes which are specified by the filter options.
 
 The rd-jobs command lists Jobs stored on the server and optionally downloads them as XML, or uploads Job XML to the server from a file.
 
@@ -101,7 +98,7 @@ and the URL to view the Job in the server.
    
 The Load action uploads the specified file to the server, and the list of loaded jobs are displayed. If any Jobs cannot be stored (e.g. the user is unauthorized to run a certain command), the list of unsuccessfully created jobs are also displayed.
 
-The `-d,\--duplicate` option lets you specify what should happen if any
+The `-d,--duplicate` option lets you specify what should happen if any
 of the Job definitions have the same Name and Group of an existing Job
 on the server. The default option is "update", which means to
 overwrite the existing definitions with the new version. "skip" means

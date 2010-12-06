@@ -1,4 +1,4 @@
-% PROJECT-V10(1) RunDeck User Manuals | Version 1.0
+% PROJECT-V10(5) RunDeck User Manuals | Version 1.0
 % Alex Honor
 % November 20, 2010
 
@@ -194,4 +194,5 @@ Reference a Port setting named "tomcatListenPort".
 
 
 
-
+The RunDeck source code and all documentation may be downloaded from
+<https://github.com/dtolabs/rundeck/>.

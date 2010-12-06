@@ -1,0 +1,10 @@
+<policies>
+  <policy description="User group has access to run and kill jobs.">
+    <context project="*">
+      <command group="*" job="*" actions="workflow_run,workflow_kill"/>
+    </context>
+    <by>
+      <group name="user"/>
+    </by>
+  </policy>
+</policies>

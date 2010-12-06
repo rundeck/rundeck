@@ -13,7 +13,7 @@ same directory, helping the management of each set of rules.  This
 reduces the complexity of each file.  The default path is
 
 * RPM install: `/etc/rundeck/client`
-* Launcher install: `$RDBASE_BASE/etc`
+* Launcher install: `$RDECK_BASE/etc`
 
 Policy files are parsed using XPath that is fairly liberal in what it
 excepts.  So creating arbitrary blocks for documentation or
@@ -90,10 +90,12 @@ Known actions are:
 
 Possible values are limitless so it requires an understanding of the
 job definition you're trying to run.  The best way to understand what
-the actions are is to look at the rd-audit.log.
+the actions are is to look at the rundeck-audit.log.
 This will show all the options as they're being evaluated.
 
 ## `<context>` Element
 
 ...is currently ignored.
 
+The RunDeck source code and all documentation may be downloaded from
+<https://github.com/dtolabs/rundeck/>.

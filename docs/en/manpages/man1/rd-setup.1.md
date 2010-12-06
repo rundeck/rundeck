@@ -16,7 +16,7 @@ The rd-setup command is used to setup the RunDeck software after the distributio
 
 During the first time installation or if the -f flag is set rd-setup
 will create a new instance of the framework and generate all the
-configuration files found in $RD_BASE/etc.
+configuration files found in $RDECK_BASE/etc.
 
 # OPTIONS
 
@@ -46,10 +46,7 @@ of rd-setup:
 * JAVA_HOME
 :Java installation directory
 
-* RD_HOME
-: RunDeck installation directory
-
-* RD_BASE
+* RDECK_BASE
 : RunDeck framework instance directory
 
 # EXECUTION #
@@ -69,7 +66,7 @@ Execute the rd-setup command defining the framework hostname as
 # FILES #
 
 The rd-setup command generates a working configuration from a set of
-template files found in: $RD_HOME/lib/templates/etc. Additionally,
+template files found in: $RDECK_BASE/lib/templates/etc. Additionally,
 initial configuration default values are maintained in
 rd-defaults.properties but these can be overwridden using
 \--key=value flags.
