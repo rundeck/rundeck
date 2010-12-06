@@ -72,7 +72,7 @@ class UserController {
                 return render(template:"/common/error")
             }
         }
-        [user:u,authorization:u.authorization]
+        [user:u]
     }
     def create={
         render(view:'register',model:[user:new User(),newuser:true])
@@ -88,7 +88,7 @@ class UserController {
         u = new User(login:params.login,authorization:UserAuth.createDefault())
         u.dashboardPref="1,2,3,4"
 
-        def model=[user: u,authorization:u.authorization,newRegistration:true]
+        def model=[user: u,newRegistration:true]
         return model
     }
     def store={
@@ -104,12 +104,6 @@ class UserController {
         }
         u = new User(params.subMap(['login','firstName','lastName','email']))
 
-        if(roleService.isUserInAnyRoles(request,['admin','user_admin'])){
-            //allow modifying authorizations only if admin/user_admin
-            u.authorization=new UserAuth(params.authorization)
-        }else{
-            u.authorization = UserAuth.createDefault()
-        }
         if(!u.save(flush:true)){
             def errmsg= u.errors.allErrors.collect { g.message(error:it) }.join("\n")
             flash.error="Error updating user: ${errmsg}"
@@ -134,13 +128,6 @@ class UserController {
 
         bindData(u,params.subMap(['firstName','lastName','email']))
 
-        if(roleService.isUserInAnyRoles(request,['admin','user_admin'])){
-            bindData(u.authorization,params.authorization)
-        }
-
-        if(!u.authorization){
-            u.authorization = UserAuth.createDefault()
-        }
         if(!u.save(flush:true)){
             def errmsg= u.errors.allErrors.collect { g.message(error:it) }.join("\n")
             flash.error="Error updating user: ${errmsg}"
