@@ -20,7 +20,7 @@ clean : $(DIRS)
 
 #generate md file for index for each man section
 htmlindex: subdirs
-	-rm man1.index.md man5.index.md
+	-rm -f man1.index.md man5.index.md
 	echo "## Command Reference" >> man1.index.md
 	for i in man1/*.md ; do \
 		f=$$(basename $$i); \
@@ -34,4 +34,4 @@ htmlindex: subdirs
 	done;
 	#concat md files and generate index.html
 	$(PANDOC) -s index.md man1.index.md man5.index.md  --css=$(CSS) --template=$(TEMPLATES)/html.template --include-before=$(TEMPLATES)/before.html --include-after=$(TEMPLATES)/after.html -o $(DIST)/html/index.html;
-	-rm man1.index.md man5.index.md
+	-rm  -f man1.index.md man5.index.md

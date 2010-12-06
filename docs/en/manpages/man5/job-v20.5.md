@@ -1,4 +1,4 @@
-% JOB-V20(1) RunDeck User Manuals | Version 1.0
+% JOB-V20(5) RunDeck User Manuals | Version 1.0
 % Alex Honor
 % November 20, 2010
 
@@ -52,47 +52,43 @@ element is allowed.
 
 *Nested elements*
 
-id
+[id](#id)
 
 :    job identifier
 
-name
+[name](#name-1)
 
 :    the job name
 
-description
+[description](#description)
 
 :    the job description
 
-additional
-
-:    additional information 
-
-group
+[group](#group)
 
 :    group name
 
-context
+[context](#context)
 
 :    command context
 
-dispatch
+[dispatch](#dispatch)
 
 :    dispatch options
 
-sequence
+[sequence](#sequence)
 
 :    workflow sequence
 
-notification
+[notification](#notification)
 
 :    email noticfications
 
-nodefilters
+[nodefilters](#nodefilters)
 
 :    node filtering expressions
 
-loglevel
+[loglevel](#loglevel)
 
 :    the logging level
 
@@ -488,11 +484,11 @@ excludeprecedence
 
 *Nested elements*
 
-include
+[include](#include)
 
 :    include filter
 
-exclude
+[exclude](#exclude)
 
 :    exclude filter
 
@@ -719,3 +715,10 @@ recipients
 *Example*
 
             <email recipients="test@example.com,dev@example.com" />
+
+# SEE ALSO
+
+`rd-jobs` (1).
+
+The RunDeck source code and all documentation may be downloaded from
+<https://github.com/dtolabs/rundeck/>.

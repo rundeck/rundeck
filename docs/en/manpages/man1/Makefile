@@ -6,7 +6,7 @@ TEMPLATES=../../templates
 .SUFFIXES: .1.gz .1
 .PHONY: all
 
-all: manpages html
+all: manpages html roff
 
 manpages: dispatch.1.gz rd-jobs.1.gz rd-options.1.gz rd-setup.1.gz rd-queue.1.gz run.1.gz 
 

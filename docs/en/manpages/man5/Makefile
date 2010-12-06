@@ -6,7 +6,7 @@ TEMPLATES=../../templates
 .SUFFIXES: .5.gz .5
 .PHONY: all
 
-all: manpages html
+all: manpages html roff
 
 manpages: aclpolicy-v10.5.gz job-v20.5.gz resource-v10.5.gz
 
