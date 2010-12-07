@@ -260,7 +260,7 @@ only on the list of failed nodes.
 
 ## Storing the failed node list in a file:
 
-Ctl and dispatch have an option that stores the list of nodes where
+Jobs and dispatch have an option that stores the list of nodes where
 the command failed into a file, which can then be specified again to
 re-execute the command on only those failed nodes.
 

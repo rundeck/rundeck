@@ -18,7 +18,7 @@ help you use and integrate RunDeck into your environment.
 
 ### Command dispatching
 
-RunDeck supports a notion called Command dispatching wherein a
+RunDeck supports a notion called *command dispatching* wherein a
 user specifies dispatch critera along with an action (called a
 command) and this specification is used to perform a distributed execution.
 
@@ -55,7 +55,7 @@ document requirement.
 
 A *resource model provider* is an external service
 accesible via the HTTP GET method that returns data conforming to the
-RunDeck resources document format (resource-v10(5)). 
+RunDeck resource model document format (resource-v10(5)). 
 
 
 ### Authorization
@@ -65,10 +65,10 @@ privileges to groups of users.
 Every action executed through the RunDeck command dispatcher must meet
 the requirements of an access control policy definition. 
 
-Since RunDeck respects the policy definition, you can use role-based
+Since RunDeck respects the policy definition, you can define role-based
 authorization to restrict some users to only a subset of actions. This
-provides a self-service type interface, where some users can have
-access to a limited set of actions to execute.
+enables a self-service type interface, where some users have
+access to only a limited set of executable actions.
 
 ### Project
 
@@ -127,7 +127,7 @@ When the server starts, it binds to several TCP ports:
 *  4443 (https)
 *  4435 (log4j)
 
-To check the ports are free on a Unix host run:
+To check if the ports are free on a Unix host, run:
 
     netstat -an | egrep '4440|4435' 
 
@@ -218,7 +218,7 @@ Use the launcher as an alternative to a system package:
 
     ~~~~~~~
     PATH=$PATH:$RDECK_BASE/tools/bin
-    MANPATH=$MANPATH:$RDECK_BASE/man
+    MANPATH=$MANPATH:$RDECK_BASE/docs/man
     ~~~~~~~
 
 

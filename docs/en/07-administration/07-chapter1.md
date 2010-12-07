@@ -429,7 +429,7 @@ File listing: admin.aclpolicy example
 
     <policies>
       <policy description="Administrative group that has access to
-    execute all jobs in any project.">
+    execute all actions.">
         <context project="*">
           <command group="*" job="*" actions="*"/>
         </context>

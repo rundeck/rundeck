@@ -78,20 +78,28 @@ and run Job definitions and interact with the dispatcher queue. These
 command tools are an alternative to functions accessible in the
 graphical console.
 
-`dispatch`
+[dispatch]
   ~ Execute ad hoc commands and scripts
-`rd-queue`
+[rd-queue]
   ~ Query the dispatcher for currently running Jobs and possibly kill them  
-`rd-jobs`
+[rd-jobs]
   ~ List defined jobs as well as load them from text file definitions
-`run`
+[run]
   ~ Invoke the execution of a stored Job
-`rd-project`
+[rd-project]
   ~ Setup a new RunDeck project
-`rd-setup`
+[rd-setup]
   ~ (Re-)configure an instance of RunDeck   
   
 Consult the online manual pages for options and usage information.
+
+[dispatch]: dispatch.html
+[rd-queue]: rd-queue.html
+[rd-jobs]: rd-jobs.html
+[run]: run.html
+[rd-project]: rd-project.html
+[rd-setup]: rd-setup.html
+
 
 ## Project Setup 
 
@@ -503,9 +511,9 @@ failed:
 	
 ### Queuing commands to RunDeck
 
-Commands or scripts executed on the command line by dispatch can also
-be queued as temporary jobs in RunDeck by using the "-Q" option. The dispatch
--Q usage is equivalent to a "Run and Forget" action in the graphical console.
+Commands or scripts executed on the command line by `dispatch` can also
+be queued as temporary jobs in RunDeck. The `dispatch` command
+is equivalent to a "Run and Forget" action in the graphical console.
 
 The script below is a long running check that will conduct a check periodically
 waiting a set time between each pass. The script can be run with or without
@@ -525,11 +533,11 @@ arguments as the parameters are defaulted inside the script:
     done
     echo "Not listening on $port after $i checks" ; exit 1
 
-Running dispatch with the -Q option causes the execution to queue in
+Running `dispatch` causes the execution to queue in
 RunDeck and controlled as  temporary Job. The `-I centos54` limits
 execution to just the "centos54" node:
 
-    $ dispatch -Q -I centos54 -s ~/bin/checkagain.sh 
+    $ dispatch -I centos54 -s ~/bin/checkagain.sh 
     Succeeded queueing workflow: Workflow:(threadcount:1){ [command( scriptfile: /Users/alexh/bin/checkagain.sh)] }
     Queued job ID: 5 <http://strongbad:4440/execution/follow/4>
 
@@ -537,7 +545,7 @@ To pass arguments to the script pass them after the "\--" (double
 dash):
 
     $ iters=5 secs=60 port=4440
-    $ dispatch -Q -I centos54 -s ~/bin/checkagain.sh -- $iters $secs $ports
+    $ dispatch -I centos54 -s ~/bin/checkagain.sh -- $iters $secs $ports
 
 
 ### Tracking execution
@@ -565,8 +573,8 @@ Running jobs can also be killed via the `rd-queue kill` command. The
 rd-queue command includes the execution ID for each running
 job. Specify execution ID using the "-e" option:
 
-    $ ctl-queue kill -e 5
-    ctl-queue kill: success. [5] Job status: killed
+    $ rd-queue kill -e 5
+    rd-queue kill: success. [5] Job status: killed
 
 
 !!! TODO: Show now running page...

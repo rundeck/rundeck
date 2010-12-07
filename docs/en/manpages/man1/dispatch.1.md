@@ -29,6 +29,9 @@ on a set of nodes which are specified by the filter options.
 -q, \--quiet
 : Show only error messages.
 
+-z, \--terse
+: Leave log messages unadorned
+
 -N, \--nodesfile *FILE*
 : Use specified file containing nodes resource model.
 
@@ -60,8 +63,10 @@ on a set of nodes which are specified by the filter options.
 : Execute input read from *STDIN*
 
 -Q, \--queue
-: Queue this command to the dispatcher service and run it
+: Queue this command to the dispatcher service and run it (deprecated)
 
+-L, \--noqueue
+: Execute the command locally not through the central dispatcher (experimental)
 
 # COMMAND MODE #
 
