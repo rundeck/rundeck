@@ -86,6 +86,19 @@ pre.bash {
    /* bash syntax highlight here*/
 }  
 
+table {
+    border: 1px solid #ddd;
+    border-collapse:collapse;
+}
+
+td{
+    padding:2px 4px;
+}
+
+tr.odd{
+    background: #eee;
+}
+
 span.header-section-number:after{
     content:" - ";
 }
