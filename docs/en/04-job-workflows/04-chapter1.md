@@ -144,7 +144,7 @@ commandline arguments text field.
 
 This is simililar to calling the other Job with <code>run</code>:
 
-    dispatch [filter-options] -j group/jobname
+    run [filter-options] -j group/jobname
     
 ## Reordering steps
 

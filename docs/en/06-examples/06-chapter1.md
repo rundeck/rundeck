@@ -186,7 +186,7 @@ Two sets of scripts are already in use to manage the startup and shutdown
 procedures. Rather than force the issue as to
 which one is correct or superior, the administrator focuses on
 creating a skeleton to more easily present how scripts can be
-encapsulated by the job workflow. After examplesnstrating this simple
+encapsulated by the job workflow. After demonstrating this simple
 framework, the administrator can discuss how to incorporate the best
 of both script implementations into the Job definitions.
 

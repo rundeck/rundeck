@@ -27,7 +27,7 @@ node resources meeting specified filtering criteria and then
 performs the distributed command execution. The command executes in a data
 context that contains information about the Node resource. Besides
 node filtering, dispatcher options include parameters to control
-parrallel execution, ordering and error handling.
+parallel execution, ordering and error handling.
 
 The command dispatcher supports two methods of command execution:
 

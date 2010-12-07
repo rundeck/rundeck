@@ -157,7 +157,7 @@ loglevel, datasource configuration, [role mapping](#role-mapping), and
 
 ## Logs
 
-Dependeing on the installer used, the log files will be under a base
+Depending on the installer used, the log files will be under a base
 directory:
 
 *   RPM: `/var/log/rundeck`
