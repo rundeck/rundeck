@@ -1,8 +1,7 @@
 <policies>
-  <policy description="Administrative group that has access to execute all jobs and modules in any project.">
+  <policy description="Administrative group that has access to execute all actions.">
     <context project="*">
       <command group="*" job="*" actions="*"/>
-      <command name="*" module="*" actions="*"/>
     </context>
     <by>
       <group name="admin"/>
