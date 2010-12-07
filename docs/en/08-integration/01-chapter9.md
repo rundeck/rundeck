@@ -1,100 +1,78 @@
 Integration with External Data Providers
 ====
 
-RunDeck can integrate with external data by configuring the use of *Providers*.  Providers are third-party services or systems that export data that RunDeck can import.
+RunDeck can integrate with external data by configuring the use of *Providers*.  Providers are third-party services or systems that export data that RunDeck can import. Additionally, RunDeck supports an external Editor for Node data.
 
 RunDeck makes use of common data formats (XML & JSON).  Third-party software may produce these formats natively, however it is typical to have to massage the output of one system into the appropriate format to be consumed by RunDeck.  Since URLs and HTTP are a lowest-common-denominator for communication, RunDeck only requires that the data Providers make this data available as a file at a URL or on the local disk.
 
 There are a few types of external integration:
 
-*Resource Model Provider*
-:   Provides a set of Nodes in XML format. E.g. a CMDB or hosted virtual machines service.
+[*Resource Model Provider*](#resource-model-provider)
+:   Provides a set of Nodes in XML format. E.g. a CMDB or hosted virtual machines service. RunDeck can be configured to use a different provider for each Project, and can refresh the Resources it uses from this provider.
 
-*Resource Editor*
-:   Provides a web-based editor to manage the Node definitions.
+[*Resource Editor*](#resource-editor)
+:   Provides a web-based editor to manage the Node definitions. RunDeck can link to this editor from the Resources page, and has optional JavaScript interactions to make editing externally-managed Node resources integrated with the RunDeck GUI.
 
-*Option Values Model Provider*
-:   Provides a dataset in JSON format, used as input option values to choose from when running a Job. 
+[*Option Model Provider*](#option-model-provider)
+:   Provides a dataset in JSON format, used as input option values for Jobs. Each Job Option can be configured to load the set of allowed input values from a remote service, and the RunDeck GUI will prompt the user to choose from those values when running a Job.
 
 Resource Model Provider
 -------------
 
-The Resource model provider is a way to transfer Node definitions from other systems, tools or services into RunDeck. The requirements for providing the Resource model data are simple, and so this can be done in whichever way suits your environment best.
+The Resource model provider is a way to transfer Node definitions from other systems, tools or services into RunDeck. The means of providing the Resource model data can be done in whichever way suits your environment best.
 
-### Overview ###
+Resource model data is a set of Node descriptors, each with a uniquely identifying name.  In addition to Name, some pieces of metadata are required (like `hostname`, and `username`), and some are optional.
 
-Resource model data is a set of Node descriptors, each with a uniquely identifying name.  In addition to Name, these pieces of metadata are required:
+(See [resource.xml - node](resource-v10.html#node) for more detail about the `node` entry.)
 
-* Hostname
-* Username
-
-And these are optional
-
-* Description
-* Tags
-* OS and Hardware details
-* more...
-
-The Resource model data, commonly referred to as resources.xml, is stored on the server as a file.  Each Project in RunDeck has its own resources.xml file, and this file is used to determine what Nodes are available and how to connect to those Nodes and run commands.
-
-The Resource model data does not have to include the RunDeck server Node, as it is implicitly included.
-
-The Resource model data is assumed to be a static file, unless a Provider URL is configured, in which case an admin can tell the RunDeck server to refresh the Resource model from the URL.
-
-In addition to defining where the Resource model is provided from, each Node entry in the data can specify one of two URLs for a more streamlined User Experience when managing and editing Nodes.
-
-These two URLs are called the "editUrl" and the "remoteUrl".  "editUrl" is simply a URL to an external web service, and if provided then the User will see an "Edit" link next to the Node definition in the Resources listing.  This link will open the URL provided in another browser window, to allow simple editing of the specified Node resource.  The "remoteUrl" provides a slightly smarter JavaScript based in-browser editing experience. (see [RemoteUrl below](#RemoteUrl)).
+The Resource model data, commonly referred to as resources.xml, is stored on the server as a file.  Each Project in RunDeck has its own resources.xml file, and this file is used to determine what Nodes are available and how to connect to those Nodes and run commands. The Resource model data is assumed to be a static file, unless a Provider URL is configured, in which case an admin can tell the RunDeck server to refresh the Resource model from the URL.
 
 ### Requirements ###
 
 In order to provide the Resource model data to RunDeck:
 
 1. The data must be stored in XML in the specific [resource-v10.xml format](resource-v10.html). ^[Currently XML is required, but JSON support is planned.]
+2. Each Node entry must have a unique `name` value. You may have to convert the external system's identifier to be unique, or create one yourself.
 3. The data must be *either*: 
     * accessible on-disk from the RunDeck server, 
     * OR accessible via a HTTP URL
 
 This means you can provide the data in the way that best suits your specific use-case.  Some examples:
 
-* Hand-crafted XML data, which you could store in a revision control system.  The URL for the contents would be provided to RunDeck.
+* Hand-crafted XML data, which you could store in a revision control system.  The URL for the file in the SCM system would be provided to RunDeck.
     * To update the data you would commit changes to your RCS, and then tell RunDeck to refresh.
 * XML generated from a custom CMDB or other software, and stored on disk.
     * You could do this with a cron-job, or via some external trigger.  RunDeck will simply read the resource.xml file identified in the configuration file.
 * XML generated from a simple CGI script which interfaces with another third-party or external service.
     * You could run Apache and host a simple CGI script.  The CGI script would communicate to some other system and then return the XML content.  You could tell RunDeck to refresh the Resource model, which would in turn cause the CGI to access the external data and return the reformatted content.
 
+The Resource model data does not have to include the RunDeck server Node, as it is implicitly included.
+
 ### Configuration ###
 
-Resource model providers are defined on a per-project basis, in the `project.properties` file.
+Resource model providers are defined on a per-project basis, in the [`project.properties`](#project.properties) file.
 
-Define the file where the resource.xml will be stored on-disk.  The default location is `$RDECK_BASE/projects/PROJECT/etc/resources.xml`.
+Define the file where the resource.xml will be stored on-disk.  Each new project will have a good default location, but you may change it.
 
     project.resources.file = ..
     
-This is both where RunDeck will read the XML contents from, and where it will store it to if refreshing from a remote URL.
+This file path is where RunDeck will read the XML contents from, and also where it will store it to if refreshing from a remote URL.
 
     project.resources.url = http://...
     
 This configures the remote URL for loading the resources.xml.  
 
-
 ### Implementations and Examples ###
-
-RunDeck dispatches commands to the nodes defined in the project resource
-model stored in an XML file. A RunDeck project can also be configured
-to retrieve this file from a *resource model provider* via URL and
-store the data locally. 
 
 A *resource model provider* is an external service that is accesible
 via HTTP GET method returning data conforming to the RunDeck
-resources document format ([resource-v10](resource-v10.html)). This allows RunDeck
-projects to obtain node information from other tools or data sources.
-Integrating with a tool that generates XML and is accessible via HTTP
-might be as easy as a wrapper script using [curl] and
-[xmlstarlet].
+resources document format ([resource-v10](resource-v10.html)).
 
-To configure a resource model provider, the
-<code>project.resource.url</code> setting must be configured. 
+Integrating with a tool that generates XML and is accessible via HTTP
+might be as easy as a wrapper script using [curl] and [xmlstarlet].
+
+[curl]: http://curl.haxx.se/
+[xmlstarlet]: http://xmlstar.sourceforge.net/
 
 Earlier in the [RunDeck set up](#rundeck-set-up) section, the anvils project
 resource model was defined using an XML file located on the server. As
@@ -102,9 +80,6 @@ node information changes, this file will need to be edited in
 place. Since it's just a file local to the server, nothing controls
 versioning and so won't have a log of changes. A better alternative
 would be to implement a resource model provider.
-
-[curl]: http://curl.haxx.se/
-[xmlstarlet]: http://xmlstar.sourceforge.net/
 
 #### Simple SCM resource model provider
 
@@ -120,7 +95,7 @@ The Acme administrator decides this approach is a good first step to
 control versioning for the anvils resource model. Acme is a [subversion] user
 and installed [viewvc] to give web access to the repository.
 
-First, the current resources.xml is added to the repsotitory and committed:
+First, the current resources.xml is added to the repository and committed:
 
     svn add resources.xml http://svn.acme.com/ops/anvils/resources.xml
     svn commit -m "added resource model for anvils" resources.xml
@@ -145,20 +120,23 @@ the viewvc URL, obtaining the latest revision.
 [subversion]: http://subversion.tigris.org/
 [viewvc]: http://www.viewvc.org/
 
-#### EC2 Nodes ####
+#### Amazon EC2 Nodes ####
 
 [Amazon's EC2](http://aws.amazon.com/ec2/) (Elastic Cloud Compute) is a cloud service in wide use for dynamic infrastructure; it is easy to start up and shut down Node "Instances" in the cloud.  
 
 For RunDeck, we would like to have a way of querying the EC2 service to see what EC2 Instances are available for use as RunDeck Nodes.
 
-Amazon has a well-defined API for communication with their services, and we can make use of that to pull out the EC2 data, and generate XML.
+Amazon has a well-defined API for communication with their services, which allows us to pull out the EC2 data, and generate XML.
 
-DTO Labs has created a Java-based implementation of this mechanism as the [java-ec2-nodes](https://github.com/dtolabs/java-ec2-nodes) project.  You can either build the project yourself, or download the binary distribution.
+For this purpose, DTO Labs has created a Java-based implementation of this mechanism as the [java-ec2-nodes](https://github.com/dtolabs/java-ec2-nodes) project.
+
+* [java-ec2-nodes](https://github.com/dtolabs/java-ec2-nodes) project source code
+* [download the binary distribution](https://github.com/dtolabs/java-ec2-nodes/archives/master).
 
 Use is fairly simple:
 
 1. Unpack the distribution file "java-ec2-nodes-0.1-bin.zip".  This contains the required java Libs and a Perl based CGI script.
-2. Create an `AWSCredentials.properties` to specify your AWS credentials. (Available at [this page](http://aws.amazon.com/security-credentials).)
+2. Create an `AWSCredentials.properties` to specify your AWS credentials. (Available at [this page](http://aws.amazon.com/security-credentials).) Place the file within the expanded java-ec2-nodes directory.
     This file should contain:
 
         accessKey=<your access key>
@@ -166,9 +144,8 @@ Use is fairly simple:
         
 4. Place the generatenodes.cgi file within a webroot folder of an Apache server, and configure Apache to allow `Options +ExecCGI` for that folder.
 4. Modify the "$basedir" variable in generatenodes.cgi to point to the dir containing the zip contents you unpacked.
-3. Modify the "$awscreds" variable in generatenodes.cgi to be the path to a credentials properties file. 
 
-Finally, you should be able to get the URL for the cgi (e.g. `http://myserver/scripts/generatenodes.cgi`) and see an XML file returned.  Note that the CGI allows query parameters to be used as API filters, e.g. `?tag:mytag=myvalue`.  (These filters are specific to the [EC2 API](http://docs.amazonwebservices.com/AWSEC2/latest/APIReference/ApiReference-query-DescribeInstances.html).)
+Finally, you should be able to do HTTP GET for the CGI (e.g. `http://myserver/scripts/generatenodes.cgi`) and see an XML file returned.  Note that the CGI allows query parameters to be used as API filters, e.g. `?tag:mytag=myvalue`.  (These filters are specific to the [EC2 API](http://docs.amazonwebservices.com/AWSEC2/latest/APIReference/ApiReference-query-DescribeInstances.html).)
 
 Once you have the CGI producing valid XML, you can set the `project.resources.url` property in your project's project.properties file to be the URl to the CGI.  
 
@@ -209,6 +186,9 @@ Option model providers are configured on a per-Option basis (where a Job may hav
 
 Each Option entry for a Job can be configured to get the set of possible values from a remote URL.  If you are authoring the Jobs via [job.xml file format](job-v20.html#option), simply add a `valuesUrl` attribute for the `<option>`.  If you are modifying the Job in the RunDeck web GUI, you can entry a URL in the "Remote URL" field for the Option.
 
+e.g.:
+
+    <option valuesUrl="http://site.example.com/values.json" ...
 
 *Note*: File URL scheme is also acceptable (e.g, `file:/path/to/job/options/optA.json`).
 
@@ -264,11 +244,11 @@ Properties available for Option context:
 
 *Examples*
 
-    valuesUrl="http://server.com/test?name=${option.name}"
+    http://server.com/test?name=${option.name}
 
 Passes the option name as the "name" query parameter to the URL.
 
-    valuesUrl="http://server.com/test?jobname=${job.name}&jobgroup=${job.group}"
+    http://server.com/test?jobname=${job.name}&jobgroup=${job.group}
 
 Passes the job name and group as query parameters.
 
@@ -436,7 +416,7 @@ selected, the Job will have the matching package versions.
 Resource Editor
 ------
 
-The Resource Editor integration is simple a way to link to a third-party system used for managing Node definitions from within the RunDeck Resources listing. Each Node entry in the resources.xml can define a URL to provide an "Edit" link that will appear in the RunDeck Resources listing for that Node.
+The Resource Editor integration is a way to link to a third-party system used for managing Node definitions from within the RunDeck Resources listing. Each Node entry in the resources.xml can define a URL to provide an "Edit" link that will appear in the RunDeck Resources listing for that Node.
 
 This allows you to make use of the Resource Model Provider in a more seamless way.  RunDeck will load the resource.xml from the third-party Provider system, and users of RunDeck can click straight to the Editor for those Nodes.  The Provider and the Editor could be the same system, or they could both be custom CGI scripts that integrate with a third system.
 
@@ -458,11 +438,9 @@ management tool. They can use `editUrl` or `remoteUrl` attributes to specify the
 
 :    Specifies a URL to a remote site which will allow editing of the Node.  When specified, the Node resource will display an "Edit" link in the RunDeck GUI and clicking it will open a new browser page for the URL.
 
-`remoteUrl`
+[`remoteUrl`](#using-remoteurl)
 
-:    Define the value for the *remoteUrl* attribute to
-     specifies a URL for a remote site which will be loaded in an iframe within a RunDeck page.  Clicking the "Edit" link for the Node will load content from the site within the current RunDeck page, allow you to perform your edit at the remote site, and has optional JavaScript hooks to report the state of the editing process back to the RunDeck page for a more streamlined user interface. After users are
-     finished with the external editing form, they press close.
+:    Specifies a URL for a remote site which will be loaded in an iframe within a RunDeck page.  Clicking the "Edit" link for the Node will load content from the site within the current RunDeck page, allow you to perform your edit at the remote site, and has optional JavaScript hooks to report the state of the editing process back to the RunDeck page for a more streamlined user interface. 
 
 ### Using properties ###
 
@@ -509,7 +487,7 @@ The remote page can send these messages simply with this javascript:
 
 `window.parent` will be the enclosing browser window when the site is loaded within an iframe.  This script simply checks whether the page is loaded in an iframe before sending the message.
     
-The first argument to `postMessage` is one of the message codes shown below.  The second argument is the expected "origin", meaning the URL scheme, server and port of the server receiving the message.  You can specify "*" to include any site that may be loading the content, but you may want to restrict it to your RunDeck installation's hostname and port.
+The first argument to `postMessage` is one of the message codes shown below.  The second argument is the expected "origin", meaning the URL scheme, server and port of the server receiving the message.  You can specify "*" to include any site that may be loading the content, but you may want to restrict it to your RunDeck installation's scheme, hostname and port.
 
 RunDeck can receive the following messages sent by the remote site:
 
@@ -533,6 +511,8 @@ The user will also have the option to close and cancel the remote editing proces
 
 Note that sending the "error" or "finished" message will close the editing session and all subsequent messages will be ignored.
 
+TODO: The JavaScript code to communicate back to RunDeck could be bundled into a simple widget script file for easier inclusion on remote sites.
+
 ### Examples ###
 
 Here are some examples of using the `editUrl` and `remoteUrl` in a resources.xml file:
@@ -552,3 +532,41 @@ Specify a remote URL with embedded "name" and "project" properties as parameters
 Specify a remote URL with embedded "name" property as part of the path:
 
     <node name="venkman" remoteUrl="http://mycmdb:8080/node/edit/${node.name}"  ... />
+
+#### Simple site integration ####
+
+The [ndbtest](https://github.com/gschueler/ndbtest) project on github provides an example of how the remote Resource Editor can integrate with RunDeck using JavaScript.
+
+This project is a simple [Grails](http://grails.org) application which provides a database of Node data.  The standard web-based user flow is:
+
+* List all nodes.
+* Edit a Node with the edit page. From here the User can:
+    * Cancel the Node changes
+        * Goes to the Node show page
+    * Save the Node changes
+        * Result is successful
+            * Goes to the Node show page
+        * Result fails, so display an Error message (either on the edit page or the list page)
+
+We want the Node's "edit" link in RunDeck to go directly to an edit page, so the `remoteUrl` for each Node entry then should be a URL to link to this page, for example:
+
+    remoteUrl="http://localhost:8080/node/edit?name=${node.name}&amp;project=${node.project}"
+
+The code below shows that the `name` & `project` are used to select the correct node from the database, even though the built-in identifier is an ID number:
+
+* [NodeController.groovy:51](https://github.com/gschueler/ndbtest/blob/master/grails-app/controllers/com/dtolabs/ndb/NodeController.groovy#L51).
+
+    * Note that if there is no Node found with the specified values, then the response will be to set an error message and then show the list page.
+
+So the JavaScript for integrating with RunDeck is then added to the following pages in this system:
+
+* [node/edit.gsp](https://github.com/gschueler/ndbtest/blob/master/grails-app/views/node/edit.gsp)
+    * If an error has occurred, it posts an error message starting on [Line 27](https://github.com/gschueler/ndbtest/blob/master/grails-app/views/node/edit.gsp#L27)
+    * Otherwise, it posts the `started` message starting [on line 34](https://github.com/gschueler/ndbtest/blob/master/grails-app/views/node/edit.gsp#L34)
+* [node/show.gsp](https://github.com/gschueler/ndbtest/blob/master/grails-app/views/node/show.gsp)
+    * If the node save was successful, send the `finished:true` message, starting at [line 21](https://github.com/gschueler/ndbtest/blob/master/grails-app/views/node/show.gsp#L21).
+    * Otherwise send the `finished:false` message starting at [line 28](https://github.com/gschueler/ndbtest/blob/master/grails-app/views/node/show.gsp#L28).
+* [node/list.gsp](https://github.com/gschueler/ndbtest/blob/master/grails-app/views/node/list.gsp)
+    * If an error has occurred, it posts an error message starting on [line 20](https://github.com/gschueler/ndbtest/blob/master/grails-app/views/node/list.gsp#L20).
+
+To complete the round-trip of editing a Node and then showing the results back in RunDeck, the ndbtest project would have to export XML formatted Resource data, and then your RunDeck project.properties file would have to point to the appropriate URL.  (This is left as an exercise to the reader.)
