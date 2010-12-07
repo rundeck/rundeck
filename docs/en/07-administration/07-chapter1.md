@@ -182,21 +182,21 @@ Different facilities log to their own files:
 
 RunDeck backup should only be done with the server down. 
 
-(1) Stop the server. See: [startup and shutdown](#startup-and-shtudown)
+(1) Export the jobs
+
+         rd-jobs -f /path/to/backup/dir/job.xml
+
+(2) Stop the server. See: [startup and shutdown](#startup-and-shtudown)
 
         rundeckd stop
 
-(2) Copy the data files. (Assumes file datastore configuration). The
+(3) Copy the data files. (Assumes file datastore configuration). The
 location of the data directory depends on the installation method:
 
     * RPM install: `/var/lib/rundeck/data`
     * Launcher install: `$RDECK_BASE/server/data`
 
              cp -r data /path/to/backup/dir
-    
-(3) Export the jobs
-
-         rd-jobs -f /path/to/backup/dir/job.xml
 
 (4) Start the server
 
@@ -282,6 +282,16 @@ If you are running RunDeck on Windows, we heartily recommend using
 Cygwin on Windows as it includes SSH and a number of
 Unix-like tools that are useful when you work in a command line
 environment.
+
+#### Passing environment variables through remote command
+
+To pass environment variables through remote command
+dispatches, it is required to properly configure the SSH server on the
+remote end. See the `AcceptEnv` directive in the "sshd\_config(5)"
+manual page for instructions. 
+
+Use a wild card pattern to permit `RD_` prefixed variables to provide
+open access to RunDeck generated environment variables.
 
 ## Managing logins
 
