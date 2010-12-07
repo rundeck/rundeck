@@ -1,7 +1,3 @@
-% RUNDECK(1) RunDeck User Manuals | Version 1.0
-% Alex Honor
-% November 20, 2010
-
 # Job Workflows
 
 The Job's most basic feature is its ability to execute one or more

@@ -1,7 +1,3 @@
-% RUNDECK(1) RunDeck User Manuals | Version 1.0
-% Alex Honor
-% November 20, 2010
-
 # Job Options
 
 Any command or script can be wrapped as a Job. Creating a Job for
