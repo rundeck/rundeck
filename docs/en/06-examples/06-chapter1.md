@@ -802,7 +802,7 @@ The server response should return JSON data resembling the example below:
 
 Now in place, jobs can request this option data like so:
 
-     <option name="method" enforcedvalues="true" required="true" 
+     <option name="package" enforcedvalues="true" required="true" 
         valuesUrl="http://ops.acme.com/cgi/hudson-artifacts.cgi?hudsonJob=anvils"/> 
 
 The RunDeck UI will display the package names in the menu and once
@@ -867,7 +867,7 @@ The server response should return JSON data resembling the example below:
  
 Now in place, jobs can request the option model data like so:
 
-     <option name="method" enforcedvalues="true" required="true" 
+     <option name="package" enforcedvalues="true" required="true" 
         valuesUrl="http://ops.acme.com/cgi/yum-repoquery.cgi?package=anvils"/> 
 
 The RunDeck UI will display the package names in the menu and once
