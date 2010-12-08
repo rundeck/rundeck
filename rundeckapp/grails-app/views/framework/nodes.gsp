@@ -380,7 +380,12 @@
 
                                 <g:textField name="workflow.commands[0].adhocRemoteString" size="80" placeholder="Enter a shell command" autofocus="true" />
                                 <g:render template="nodeFiltersHidden" model="${[params:params,query:query]}"/>
+                                <g:if test="${auth.allowedTest(job:[jobName:'adhoc_run', groupPath:'ui'], action:UserAuth.WF_RUN)}">
                                 <input type="submit" value="Run"/>
+                                </g:if>
+                                <g:else>
+                                    <span class="button disabled" title="You are not authorized to run ad-hoc jobs">Run</span>
+                                </g:else>
                             </g:form>
                             </div>
                         </g:if>
