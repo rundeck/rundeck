@@ -451,7 +451,7 @@ Node Output
 :   Output messages are sorted into Node specific sections and are not
     interlaced. By default, the messages are collapsed but can be
     revealed by pressing the disclosure icon to the right. 
-    ![Node output](figures/fig02010.png)
+    ![Node output](figures/fig0210.png)
 
 Also, notice the URL in the location bar of your browser. This URL can
 be shared to others interested in the progress of execution. The URL
@@ -598,7 +598,7 @@ saved Job executions  is stored by the RunDeck server. History data
 can be filtered and viewed inside the "History" page of the graphical
 console.
 
-![History page](figures/fig02011.png)
+![History page](figures/fig0211.png)
 
 ### Filtering event history
 
@@ -620,7 +620,7 @@ The filter form contains a number of fields to limit search:
 * Message: Message text.
 * Result: Success or failure status.
 
-![History filter form](figures/fig02012.png)
+![History filter form](figures/fig0212.png)
 
 After filling the form pressing the "Filter" button, the page will
 display events matching the search.
@@ -635,14 +635,14 @@ History for each execution contains the command(s) executed,
 dispatcher options, success status and a link to a file containing all
 the output messages.
 
-![Event view](figures/fig02013.png)
+![Event view](figures/fig0213.png)
 
 ### RSS link
 
 An RSS icon provides a link to an RSS view of the events that match
 the current filtering critera.
 
-![RSS link](figures/fig02014.png)
+![RSS link](figures/fig0214.png)
 
 ## Tips and Tricks 
 

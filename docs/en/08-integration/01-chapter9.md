@@ -39,8 +39,8 @@ In order to provide the Resource model data to RunDeck:
 
 This means you can provide the data in the way that best suits your specific use-case.  Some examples:
 
-* Hand-crafted XML data, which you could store in a revision control system.  The URL for the file in the SCM system would be provided to RunDeck.
-    * To update the data you would commit changes to your RCS, and then tell RunDeck to refresh.
+* Hand-crafted XML data, which you could store in a version control system.  The URL for the file in the VCS repository would be provided to RunDeck.
+    * To update the data you would commit changes to your VCS, and then tell RunDeck to refresh.
 * XML generated from a custom CMDB or other software, and stored on disk.
     * You could do this with a cron-job, or via some external trigger.  RunDeck will simply read the resource.xml file identified in the configuration file.
 * XML generated from a simple CGI script which interfaces with another third-party or external service.
@@ -64,34 +64,24 @@ This configures the remote URL for loading the resources.xml.
 
 ### Implementations and Examples ###
 
-A *resource model provider* is an external service that is accesible
-via HTTP GET method returning data conforming to the RunDeck
-resources document format ([resource-v10](resource-v10.html)).
-
-Integrating with a tool that generates XML and is accessible via HTTP
-might be as easy as a wrapper script using [curl] and [xmlstarlet].
 
 [curl]: http://curl.haxx.se/
 [xmlstarlet]: http://xmlstar.sourceforge.net/
+[CMDB]: http://en.wikipedia.org/wiki/Configuration_management_database
+[AJAX]: http://en.wikipedia.org/wiki/Ajax_(programming)
 
-Earlier in the [RunDeck set up](#rundeck-set-up) section, the anvils project
-resource model was defined using an XML file located on the server. As
-node information changes, this file will need to be edited in
-place. Since it's just a file local to the server, nothing controls
-versioning and so won't have a log of changes. A better alternative
-would be to implement a resource model provider.
-
-#### Simple SCM resource model provider
+#### Simple VCS resource model provider
 
 Putting the resources.xml file under the control of a source code
 management tool is a simple solution to controlling and tracking
-change. 
+change to the resources.xml file. 
 Any changes will be committed and the commit messages become an audit
 log. Most source code management tools provide a web interface to
 retrieve file revisions based on a URL and thus make it accessible as
 a resource model provider.
 
-The Acme administrator decides this approach is a good first step to
+Going back to the [Acme Anvils Example](#acme-anvils) section, imagine the
+administrator decides the VCS approach is a good first step to
 control versioning for the anvils resource model. Acme is a [subversion] user
 and installed [viewvc] to give web access to the repository.
 
@@ -159,13 +149,6 @@ Then modify the URL used as your project.resources.url, to specify a query param
 
 More configuration is available for the [java-ec2-nodes project](https://github.com/dtolabs/java-ec2-nodes).
 
-#### Custom database resource model provider
-
-... TODO: Acme matures a bit and builds its own datacenter and a custom [CMDB]...
-... example shows use remote html form via remoteUrl and [AJAX] protocol...
-
-[CMDB]: http://en.wikipedia.org/wiki/Configuration_management_database
-[AJAX]: http://en.wikipedia.org/wiki/Ajax_(programming)
 
 Option model provider
 -------
