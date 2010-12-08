@@ -266,6 +266,12 @@ a.button.disabled, span.button.disabled{
     color:#888;
     border: 1px solid #eee;
 }
+a.button.disabled:hover, span.button.disabled:hover{
+    background:#eee;
+    cursor: default;
+    color:#888;
+    border: 1px solid #eee;
+}
 div.buttonholder, td.buttonholder, span.buttonholder{
     padding:5px;
 }
