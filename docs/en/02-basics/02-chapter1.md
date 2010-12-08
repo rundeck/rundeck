@@ -1,7 +1,3 @@
-% RUNDECK(1) RunDeck User Manuals | Version 1.0
-% Alex Honor
-% November 20, 2010
-
 # RunDeck Basics 
 
 This chapter covers the basics for using RunDeck. The chapter begins
@@ -180,8 +176,8 @@ It is important to start thinking about node tagging for the nodes you manage
 because you will use them later when specifying filtering
 options to drive distributed command dispatch.
 
-Each Project has its configuration located in its own directory
-located in path like:
+Each Project has a configuration file called [project.properties](#project.properties),
+located at this path:
 `$RDECK_BASE/projects/`_project_`/etc/project.properties`.
 
 This configuration file contains two important properties for accessing and
@@ -189,7 +185,7 @@ storing resource model data:
 
 * `project.resources.file`: File path to store resource
   model data (required).
-* `project.resources.url`: URL to the resource model provider
+* `project.resources.url`: URL to an external resource model provider (optional)
 
 You can configure RunDeck to retrieve and store resource model data
 from any source, so long as it meets the RunDeck resource model
@@ -230,8 +226,8 @@ RunDeck resources document content and structure.
 
 Check the RunDeck web site for resource model providers. If you are
 interested in creating your own, see the
-[Resource model provider](#resource-model-provider-examples) section in the
-[Examples](#rundeck-by-example) chapter.
+[Resource model provider](#resource-model-provider) section in the
+[Integration with External Data Providers](#integration-with-external-data-providers) chapter.
 
 ## Command Execution
 

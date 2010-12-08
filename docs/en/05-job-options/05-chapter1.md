@@ -1,7 +1,3 @@
-% RUNDECK(1) RunDeck User Manuals | Version 1.0
-% Alex Honor
-% November 20, 2010
-
 # Job Options
 
 Any command or script can be wrapped as a Job. Creating a Job for
@@ -132,84 +128,20 @@ Once satisfied with the option definition, press the "Save" button to
 add it to the Job definition. Pressing the "Cancel" button will
 dismiss the changes and close the form.
 
-## Option model provider
+## Remote option values
 
 A model of option values can be retrieved from an external source.
 When the `valuesUrl` is specified for an Option, then the model of
 allowed values is retrieved from the specified URL. 
 
-File URL scheme is also acceptable (e.g, file:///path/to/job/options/optA.json).
+This is useful in a couple of scenarios when RunDeck is used to coordinate process that depend on other systems:
 
-The value data must be returned in JSON data format described below.
+* Deploying packages or artifacts produced by a build or CI server, e.g. Hudson.
+    * A list of recent Hudson build artifacts can be imported as Options data, so that a User can pick an appropriate package name to deploy from a list.
+* Selecting from a set of available environments, defined in a CMDB
+* Any situation in which input variables for your Jobs must be selected from some set of values produced by a different system.
 
-### JSON format
-
-Two styles of return data are supported: simple list and a name value list.
-
-*Examples*
-
-Simple List:
-
-    ["x value for test","y value for test"]
-
-This will populate the select menu with the given values.
-
-Name Value List:
- 
-    [
-      {"X Label":"x value"},
-      {"Y Label":"y value"},
-      {"A Label":"a value"}
-    ] 
-
-The above will present, in order, the element name, but the
-corresponding value will be used in the option.
-
-### Variable expansion in remote URLs
-
-The URL declared for the "valuesUrl" can embed variables which will be
-filled with certain job context items when making the remote request. This
-helps make the URLs more generic and contextual to the Job.
-
-Two types of expansions are available, Job context, and Option
-context.
-
-To include job information in the URL, specify a variable of the form
-${job._property_}.
-
-Properties available for Job context:
-
-* name: Name of the Job
-* group: Group of the Job
-* description: Job description
-* project: Project name
-* argString: Default argument string for a job
-
-To include Option information in the URL, specify a variable of the
-form ${option._property_}:
-
-Properties available for Option context:
-
-* name: Name of the current option
-
-*Examples*
-
-    valuesUrl="http://server.com/test?name=${option.name}"
-
-Passes the option name as the "name" query parameter to the URL.
-
-    valuesUrl="http://server.com/test?jobname=${job.name}&jobgroup=${job.group}"
-
-Passes the job name and group as query parameters.
-
-### Remote request failures
-
-If the request for the remote option values fails, then the GUI form
-will display a warning message:
-
->  failed loading remote option values
-    
-In this case, the option will be allowed to use a textfield to set the value.
+See [Chapter 9 - Option Model Provider](#option-model-provider).
 
 ## Script usage
 

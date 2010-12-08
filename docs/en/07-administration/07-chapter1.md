@@ -1,7 +1,3 @@
-% RUNDECK(1) RunDeck User Manuals | Version 1.0
-% Alex Honor
-% November 20, 2010
-
 # Administration
 
 ## Startup and shutdown
@@ -125,9 +121,9 @@ generated at project setup time. There are two important settings in
 this file:
 
 * `project.resources.file`: Path to the project resource model document
-  (see resources-v10(5)).
-* `project.resources.url`: Optionally set to reference an external
-  resource model provider.
+  (see [resources-v10(5)](resources-v10.html)).
+* `project.resources.url`: (Optional) The URL to an external
+  [Resource Model Provider](#resource-model-provider).
 
 #### jaas-loginmodule.conf
 
