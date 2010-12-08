@@ -2,7 +2,6 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
-    <meta name="selectedMenu" content="Admin"/>
     <title><g:message code="main.app.name"/> - User Profile</title>
 </head>
 

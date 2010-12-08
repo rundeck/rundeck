@@ -4,7 +4,6 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="nodes"/>
-    <meta name="selectedMenu" content="Nodes"/>
     <title>Nodes</title>
     <script type="text/javascript">
         function showError(message) {

@@ -3,7 +3,6 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="nowrunning"/>
-    <meta name="selectedMenu" content="Events"/>
     <title>Now Running</title>
     <script type="text/javascript">
         //<!--

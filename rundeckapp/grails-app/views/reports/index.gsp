@@ -3,7 +3,6 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="events"/>
-    <meta name="selectedMenu" content="Events"/>
     <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="${createLink(controller:"feed",action:"index",params:paginateParams?paginateParams:[:])}"/>
     <title><g:message code="main.app.name"/></title>
     <g:javascript>

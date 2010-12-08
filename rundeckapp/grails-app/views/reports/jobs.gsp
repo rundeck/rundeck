@@ -2,8 +2,7 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
-        <meta name="tabpage" content="jobReports"/>
-        <meta name="selectedMenu" content="Events"/>
+        <meta name="tabpage" content="events"/>
         <meta name="rssfeed" content="${createLink(controller:"feed",action:"jobs",params:paginateParams)}"/>
         <title><g:message code="main.app.name"/> - <g:message code="domain.ScheduledExecution.title"/>s</title>
     </head>
