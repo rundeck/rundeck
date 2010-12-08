@@ -119,6 +119,8 @@ With the resources file in place and the project configuration updated, the
 administrator has finished with the resource model preparation and can begin
 dispatching commands.
 
+![Anvils resources](figures/fig0601.png)
+
 ## Tag classification and command dispatching
 
 With tags that describe application role, commands can be targeted
@@ -156,6 +158,10 @@ Using a wildcard for node name, list all the nodes:
 
     dispatch -p anvils -I '.*' 
     anv1 anv2 anv3 anv4 anv5 
+
+Here's an example using filters in the graphical console:
+
+![Anvils filtered list](figures/fig0602.png)
 
 Filtering with tags provides an abstraction over hostnames
 and lets the administrator think about scripting process using loose
@@ -257,6 +263,8 @@ The administrator chooses to create a top level group named
 Users logging into the RunDeck graphical console, will see this
 grouping of jobs.
 
+![Anvils job group](figures/fig0604.png)
+
 ## Job option
 
 To support specifying the restart method to the scripts,
@@ -281,7 +289,7 @@ The screenshot below contains the Option edit form for the "method" option.
 The form includes elements to define description and default
 value, as well as, Allowed Values and Restrictions.
 
-![Option editor for method](images/screen-option-edit.png)
+![Option editor for method](figures/fig0605.png)
 
 Allowed values can be specified as a comma separated list as seen above but
 can also be requested from an external source using a "remote URL".
@@ -293,7 +301,7 @@ the "Match Regular Expression" form to validate the input option.
 
 Here's a screenshot of how RunDeck will display the menu choices:
 
-![Allowed Values menu](images/screen-allowedvalues-menu.png)
+![Option menu for method](figures/fig0606.png)
 
 
 ### Script access to option data
@@ -478,6 +486,8 @@ defined jobs:
 Of course, the jobs can be viewed inside RunDeck's UI by going to
 the Jobs page.
 
+![Anvils restart jobs](figures/fig0607.png)
+
 You will see the composition of the "Restart" job as a workflow
 calling the jobs: stop and start. The "Restart" job passes the
 "method" option value to the lower level stop and start Jobs.
@@ -493,6 +503,8 @@ options selection page. The menu for the "method" option dislays the
 two choices: "normal" and "kill". No other choices can be made, nor a
 textfield for free form entry, because the "method" option was defined
 with the restriction "enforced from allowed values".
+
+![Restart run page](figures/fig0608.png)
 
 The jobs can also be started from the command line using the
 <code>run</code> shell tool. The job group and name are specified

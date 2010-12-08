@@ -71,6 +71,10 @@ Project menu
      desired project. If only one project exists, the menu will
      automatically be defaulted.
 
+![Top navigation bar](figures/fig0201.png)
+
+
+
 ### Shell Tools 
 
 RunDeck includes a number of shell tools to dispatch commands, load
@@ -111,7 +115,11 @@ A Project can be set up either from the graphical console or using the
 
 After logging into the graphical console, you will notice a Project
 menu in the top navigation bar. If no projects exist, the menu will be
-replaced by a single button. Create a new project by pressing that button
+replaced by a single button. 
+
+![Create project button](figures/fig0203.png)
+
+Create a new project by pressing that button
 or choosing the "Create a Project" item from the menu. A dialog window
 will open prompting you for a project name.
 
@@ -131,6 +139,8 @@ and see the new project in the project menu.
 
 The project setup process generates Project configuration in the server, and
 a bootstrap resource model.
+
+![New project resources](figures/fig0204.png)
 
 ### Resource model
 
@@ -276,9 +286,13 @@ in that project's resource model.
 Nodes can be filtered using include and exclude patterns by using
 the Filter form. The form can be opened by pressing the "Filter" link.
 
+![Resource filter link](figures/fig0205.png)
+
 When the form opens, you will see it divided into an Include section
 where simple include expressions can be set, as well as, an "Extended
 Filters..." link where exclude expressions can be made. 
+
+![Resource filter form](figures/fig0206.png)
 
 After filling out the filter form, press "Filter" to generate a new
 listing. Pressing "Clear" resets the form.
@@ -385,6 +399,8 @@ menu to select the desired project name. After the project has been
 selected you will see a long horizontal textfield labeled
 "Command". This is the RunDeck command prompt tool bar.
 
+![Resource command prompt](figures/fig0207.png)
+
 To use the command prompt, type the desired ad-hoc command string into
 the textfield and press the "Run" button. The command will be
 dispatched to all the Node resources currently listed below the
@@ -410,7 +426,11 @@ will be directed to a page where execution output can be followed.
 
 ##### Following execution output
 
-Command execution is displayed on a spearate page. This page provides
+Command execution is displayed on a spearate page. 
+
+![Execution follow page](figures/fig0208.png)
+
+This page provides
 several views to read the output using different formats.
 
 Tail Output
@@ -428,12 +448,14 @@ Annotated
     message originated. Through its additional controls each Node
     context can be expanded to show the output it produced, or
     completely collapsed to hide the textual detail.    
+    ![Annotated output](figures/fig0209.png)
 
 Node Output
 
 :   Output messages are sorted into Node specific sections and are not
     interlaced. By default, the messages are collapsed but can be
     revealed by pressing the disclosure icon to the right. 
+    ![Node output](figures/fig02010.png)
 
 Also, notice the URL in the location bar of your browser. This URL can
 be shared to others interested in the progress of execution. The URL
@@ -573,15 +595,14 @@ job. Specify execution ID using the "-e" option:
     $ rd-queue kill -e 5
     rd-queue kill: success. [5] Job status: killed
 
-
-!!! TODO: Show now running page...
-
 ## History
 
 History for queued ad-hoc commands, as well as, temporary and
 saved Job executions  is stored by the RunDeck server. History data
 can be filtered and viewed inside the "History" page of the graphical
 console.
+
+![History page](figures/fig02011.png)
 
 ### Filtering event history
 
@@ -603,6 +624,8 @@ The filter form contains a number of fields to limit search:
 * Message: Message text.
 * Result: Success or failure status.
 
+![History filter form](figures/fig02012.png)
+
 After filling the form pressing the "Filter" button, the page will
 display events matching the search.
 
@@ -616,10 +639,14 @@ History for each execution contains the command(s) executed,
 dispatcher options, success status and a link to a file containing all
 the output messages.
 
-### RSS Link
+![Event view](figures/fig02013.png)
+
+### RSS link
 
 An RSS icon provides a link to an RSS view of the events that match
 the current filtering critera.
+
+![RSS link](figures/fig02014.png)
 
 ## Tips and Tricks 
 

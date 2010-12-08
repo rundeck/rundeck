@@ -73,6 +73,8 @@ The Job page lets you search for Jobs using the Filter option.
 
 Click the "Filter" link to show the filter options:
 
+![Job filter form](figures/fig0317.png)
+
 This will show the Filter fields:
 
 Enter a value in any of the filter fields:
@@ -87,6 +89,8 @@ fields.
 After pressing the "Filter" button, the Job list will be filtered to
 include only the matching jobs.
 
+![Job filtered list](figures/fig0318.png)
+
 To refine the filter, click on the blue-outlined Filter description,
 and change the filter fields.
 
@@ -99,6 +103,8 @@ To reset the filter and go back to the full job page, click the
 Any stored job can be started from the Job page by pressing the green
 "Run" icon in the Job control bar. If you do not see the Run icon, it
 means your login does not have "run" privileges.
+
+![Job run button](figures/fig0319.png)
 
 Jobs can also be started from the command line using the
 <code>run</code> shell tool.
@@ -158,14 +164,18 @@ With RunDeck you can define two kinds of Jobs.
   dispatcher options but can be given a name and stored in a
   group. Additionally, saved Jobs can be given an execution schedule.
 
+From the Jobs, page press the "New Job" button to begin creating a Job.
+
+![New Job button](figures/fig0301.png)
+
 ### Temporary Jobs
 
 A temporary job is a bit like an ad-hoc command except you get more
 controls about how the commands will execute plus the execution can be
-tracked tracked within the RunDeck webapp.
+tracked within the RunDeck webapp.
 
-To create a temporary job, begin by logging in to the RunDeck webapp,
-and press the "Jobs" tab.
+To create a temporary job, begin by logging in to the RunDeck
+graphical console, and press the "Jobs" tab.
 
 1.  Locate the "New Job" button in the right hand corner and press it to display the "Create New Job" form.
 1.  A job is defined in terms of one or more workflow steps. In the Workflows area, click the "Add a step" link.
@@ -176,6 +186,7 @@ dispatch.
 1.  At the bottom of the form, push the "Run and Forget" button to begin execution.
 1.  Execution output can be followed on the subsequent page.
 
+![Temporary job form](figures/fig0302.png)
 
 ### Saved Jobs
 
@@ -201,22 +212,29 @@ For the first saved Job example, create a Job that calls the info script.
      -   Providing a description will be come helpful to other users to understand the intent and purpose for the Job.
      -   Check the box for "Dispatch to Nodes"
      -   Choose the "Node Exclude Filters" and enter the name of your RunDeck server. This will cause the job to run on just the remote Nodes (eg., centos54 and ubuntu).
-     -   Type in the info script that we used earlier. 
-     -   Save the script changes in the Workflow editor.
+     -   Type in and info script 
+     -   Save the Workflow step
      -   Press the "Create" button at the bottom of the page.
+     ![Simple saved job form](figures/fig0303.png)
 1.   After the the job is created, the browser is directed to the Jobs page. The folder structure reflecting the group naming will show one Job.
      -    Press through the folders and then to the job itself
 1.   Notice the button bar with controls for editing and running the
 job.
      -    Press the green arrow icon to run the Job.
+     ![Simple saved job](figures/fig0304.png)
+
 1.   Press the "Run Job Now" button to begin execution.
      -    Output from the script execution from the target Nodes will be displayed on the subsequent page.
+     ![Simple saved job output](figures/fig0305.png)
+
 
 ## Scheduled Jobs
 
 Saved jobs can be configured to run on a periodic basis. 
 If you want to create a Scheduled Job, select Yes under "Schedule to
 run repeatedly?"
+
+![Scheduled job simple form](figures/fig0306.png)
 
 The schedule can be defined in a simple graphical chooser or Unix
 crontab format.
@@ -226,19 +244,29 @@ choose "Every Day" (default), or uncheck that option and select
 individual days of the week. You can select "Every Month" (default) or
 unselect that option and choose specific months of the year:
 
-
 If the crontab time and date format is preferred, enter a cron
 expression.
 
-The exact crontab syntax used is referenced here: [CronExpression](http://www.quartz-scheduler.org/docs/api/1.8.1/org/quartz/CronExpression.html)
+![Scheduled job crontab form](figures/fig0307.png)
 
+Use the crontab syntax referenced here: [CronExpression](http://www.quartz-scheduler.org/docs/api/1.8.1/org/quartz/CronExpression.html)
+
+After the Job has been updated to include a schedule, a clock icon
+will be displayed when the Job is listed:
+
+![Scheduled job icon](figures/fig0308.png)
 
 ## Job history
 
 In the Jobs page, you can see the outcome of previous executions of
-Jobs by clicking the "Executions" link for the Job. This returns a
-filtered history peraining to that Job.  You can click on
+Jobs by clicking the "Executions" link for the Job.
+
+![Job executions link](figures/fig0309.png)
+
+This returns a filtered history peraining to that Job.  You can click on
 any past execution in the list to see the full execution state.
+
+![Job executions matches](figures/fig0310.png)
 
 ## Killing Jobs
 
@@ -260,15 +288,21 @@ The Job will terminate with a "Killed" completion status.
 
 In the Jobs, click the red "X" icon for the Job you want to delete.
 
+![Job delete button](figures/fig0311.png)
+
 Click "Yes" when it says "Really delete this Job?"
 
 ## Updating and copying Jobs
 
 All of the data you set when creating a job can be modified. To edit a
-Job, you can either click the Pencil icon in the Job list:
+Job, you can click the Pencil icon in the Job list:
+
+![Job edit button](figures/fig0312.png)
 
 Similarly, to Copy a Job definition to a new Job, choose the Copy icon
 or the Copy button.
+
+![Job copy button](figures/fig0313.png)
 
 ## Exporting Jobs as XML
 
@@ -282,8 +316,10 @@ From RunDeck's Job page navigate to the Job you wish to export.
 Locate the icon with an XML symbol in the toolbar. It is labeled
 "Download XML"  in the mouse tool tip. 
 
+![Job export button](figures/fig0314.png)
+
 Press this button to initiate the file download to your
-browser. Depending on your browser, it will be stored to your
+browser. Depending on your browser, it will be stored in your
 downloads directory.
 
 If you prefer the command line open a shell on the RunDeck server.
@@ -306,7 +342,11 @@ Click on the New Job" button in the Job list.
 
 In the "Create New Job" form, click on the button that says "Uplaod Definition..." on the right side:
 
+![Job import button](figures/fig0315.png)
+
 Click the Choose File button and choose your job.xml file to upload.
+
+![Job import form](figures/fig0316.png)
 
 Choose an option where it says "When a job with the same name already
 exists:":

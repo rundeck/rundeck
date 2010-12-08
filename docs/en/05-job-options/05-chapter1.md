@@ -63,10 +63,14 @@ Options can be created for any stored Job. The Job edit page contains
 an area displaying a summary to existing options and a link to add new
 ones or edit existing ones.
 
+![Add option link](figures/fig0501.png)
+
 The option summary shows each option and its default value if it defines
 them.
 
-Clicking the "edit" link opens up the options editor. 
+Clicking the  "edit" link opens the options editor. 
+
+![Option editor](figures/fig0503.png)
 
 The options editor displays an expanded summary for each defined
 option. Each option is listed with its usage summary,
@@ -89,6 +93,8 @@ pages if you prefer using an XML Job definition.
 
 New options can be defined by pressing the "Add an option" link while
 existing ones can be changed by pressing their "edit" link.
+
+![Option edit form](figures/fig0502.png)
 
 The option definition form is organized into several areas:
 
@@ -222,8 +228,11 @@ Value referenced as a replacement token inside the script:
 
 A single example helps illustrate these methods. Imagine a trivial script
 is wrapped in a Job named "hello" and has an option named "message".
-The "hello" Job option signature would be "-message <>". Here's the
-content of this simple script. 
+The "hello" Job option signature would be "-message <>".
+
+![Option usage](figures/fig0504.png)
+
+Here's the content of this simple script. 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
     #!/bin/sh    
@@ -233,12 +242,16 @@ content of this simple script.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 When the user runs the "hello" job they will be prompted for the
-"message" value. Let's assume they type the word "hello" in
-response. The output of the Job will be:
+"message" value.
 
-    envar=hello
-    args=hello    
-    message=hello    
+![Option entered](figures/fig0505.png)
+
+Let's assume they entered the word "howdy" in response. 
+The output of the Job will be:
+
+    envar=howdy
+    args=howdy    
+    message=howdy    
 
 It's important to know what happens if the option isn't set. This can
 happen if you define an option that is not required and do not give it

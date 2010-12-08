@@ -32,6 +32,8 @@ and then export the definiton as an XML file using the
 Workflow execution is controlled by two important settings: *Keepgoing*
 and *Strategy*.
 
+![Workflow controls](figures/fig0401.png)
+
 *Keepgoing*: This manages what to do if a step incurs and error:
 
 *   No: Fail immediately (default)
@@ -85,12 +87,16 @@ When creating a new Job definition, the Workflow form will be set with
 defaults and have no workflow steps defined. The workflow editor will
 have a form open asking to enter a shell command as the first step. 
 
+![Add a step](figures/fig0402.png)
+
 To add new steps simply press the "Add a step" link inside the workflow
 editor form. This will prompt you with a dialog asking which kind of
 workflow step you would like to add. Each kind of step has its own
 form. When you are done filling out the form, press "Save" to add it
 to the sequence. Pressing "Cancel" will close the form and leave the
 sequence unchanged.
+
+![Workflow step types](figures/fig0403.png)
 
 New steps are always added to the end of the sequence. See
 [Reordering steps](#reordering-steps) for directions on modifying the
@@ -105,6 +111,8 @@ Use the command step to call system commands. This is the default type
 of workflow step when creating a Job. Enter any command string you
 would type at the terminal on the remote hosts.
 
+![Command step type](figures/fig0404.png)
+
 This is similar to calling the command with <code>dispatch</code>:
 
     dispatch [filter-options] -- command
@@ -113,6 +121,8 @@ This is similar to calling the command with <code>dispatch</code>:
 
 Execute the supplied shell script content. Optionally, can pass an
 argument to the script specified in the lower text field.
+
+![Script step type](figures/fig0405.png)
 
 This is similar to calling the command with <code>dispatch</code>:
 
@@ -126,6 +136,9 @@ Executes the script file local to the sever to the filtered Node
 set. Arguments can be passed to the script by specifying them in the
 lower text field.
 
+![Script file step type](figures/fig0406.png)
+
+
 This is similar to calling the script file with <code>dispatch</code>:
 
     dispatch [filter-options] -s scriptfile -- args
@@ -134,6 +147,8 @@ This is similar to calling the script file with <code>dispatch</code>:
 
 To call another saved Job, create a Job Reference step. Enter the name
 of the Job and its group. 
+
+![Job step type](figures/fig0407.png)
 
 The Job Reference form provides a Job browser to make it easier to
 select from the existing set of saved Jobs. 
@@ -152,6 +167,8 @@ The order of the Workflow steps can be modified by hovering over any
 step and then clicking and dragging the double arrow icon to the
 desired position. A blue horizontal bar helps highlight the position
 where the Job will land.
+
+![Job step reorder](figures/fig0408.png)
 
 After releasing the select Job, it will land in the desired position
 and the step order will be updated.
