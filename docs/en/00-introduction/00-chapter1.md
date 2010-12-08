@@ -90,11 +90,11 @@ graphical interface and network interfaces used by the RunDeck shell
 tools. 
 
 Access to the RunDeck application requires a login and
-password. The default RunDeck installation uses a flat file containing
-a set of default logins. Logins are defined in terms of a username and
-password as well as one or more user groups. An alternative
-configuration to the flat file user directory, is LDAP (or
-ActiveDirectory). 
+password. The default RunDeck installation uses a flat file user
+directory containing a set of default logins. Logins are defined in
+terms of a username and password as well as one or more user
+groups. An alternative configuration to the flat file user directory,
+is LDAP (e.g., ActiveDirectory). 
 Users must also be authorized to perform actions like command and job
 execution. This is controlled by an access control facility that reads
 policy files defined by the RunDeck administrator. Privilege is
