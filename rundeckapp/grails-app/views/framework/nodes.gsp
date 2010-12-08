@@ -4,7 +4,6 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="nodes"/>
-    <meta name="selectedMenu" content="Nodes"/>
     <title>Nodes</title>
     <script type="text/javascript">
         function showError(message) {
@@ -414,7 +413,7 @@
                             </span>
                         </g:if>
 
-                        <div >
+                        <div style="margin:5px 0; padding:5px 0;">
                             <span style="padding:5px 0;margin:5px 0;${!filtersOpen?'':'display:none;'} " id='${rkey}filterdispbtn' >
                             <span title="Click to modify filter" class="info textbtn query action" onclick="['${rkey}filter','${rkey}filterdispbtn','runbox'].each(Element.toggle);if(${isCompact}){$('${rkey}nodescontent').toggle();}" >
                                 <g:render template="displayNodeFilters" model="${[displayParams:query]}"/>

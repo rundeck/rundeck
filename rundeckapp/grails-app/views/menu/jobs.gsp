@@ -3,7 +3,6 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="jobs"/>
-    <meta name="selectedMenu" content="Workflows"/>
     <title><g:message code="main.app.name"/></title>
     <script type="text/javascript">
 
@@ -74,10 +73,12 @@
 
 <div class="pageBody solo" id="indexMain">
     <g:if test="${flash.savedJob}">
+        <div style="margin-bottom:10px;">
         <span class="popout message note" style="background:white">
             ${flash.savedJobMessage?flash.savedJobMessage:'Saved changes to Job'}:
             <g:link controller="scheduledExecution" action="show" id="${flash.savedJob.id}">${flash.savedJob.jobName}</g:link>
         </span>
+        </div>
         <g:javascript>
             fireWhenReady('jobrow_${flash.savedJob.id}',doyft.curry('jobrow_${flash.savedJob.id}'));
         </g:javascript>

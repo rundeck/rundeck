@@ -42,8 +42,8 @@ appdocs: docs
 	mkdir -p ./rundeckapp/target/launcher-contents/docs/man/man1
 	mkdir -p ./rundeckapp/target/launcher-contents/docs/man/man5
 	mkdir -p ./rundeckapp/web-app/docs
-	cp docs/en/dist/html/* ./rundeckapp/target/launcher-contents/docs
-	cp docs/en/dist/html/* ./rundeckapp/web-app/docs
+	cp -r docs/en/dist/html/* ./rundeckapp/target/launcher-contents/docs
+	cp -r docs/en/dist/html/* ./rundeckapp/web-app/docs
 	cp docs/en/dist/man/man1/*.1 ./rundeckapp/target/launcher-contents/docs/man/man1
 	cp docs/en/dist/man/man5/*.5 ./rundeckapp/target/launcher-contents/docs/man/man5
 
