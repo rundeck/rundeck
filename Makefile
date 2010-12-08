@@ -11,7 +11,7 @@ GRAILS_HOME=${BUILD_ROOT}/local/grails-$GRAILSVERS
 
 GARGS += -Dgrails.project.work.dir=${PWD}/rundeckapp/work
 
-GRAILS=grails $(GARGS)
+GRAILS=$(GRAILS_HOME)/bin/grails $(GARGS)
 
 RUNDECK_FILES=$(shell find rundeckapp/{src,test,grails-app,scripts} -name "*.java" -o -name "*.groovy" -o -name "*.gsp")
 CORE_FILES=$(shell find core/src -name "*.java" -o -path "*/src/sh/*")
@@ -65,13 +65,13 @@ clean:
 	#rm -r ${BUILD_ROOT}/localrepo/rundeck*
 
 	#remove rundeckapp lib dir which may contain previously built jars
-	rm rundeckapp/lib/rundeck*.jar
+	-rm rundeckapp/lib/rundeck*.jar
 
 	#clean build target dirs
-	rm -rf core/target
-	rm -r rundeckapp/target
+	-rm -rf core/target
+	-rm -r rundeckapp/target
 
 	#clean intermediate maven repo dirs of build artifacts
-	rm -r maven/repository/rundeck*
+	-rm -r maven/repository/rundeck*
 
 	@echo "Cleaned local build artifacts and targets."
