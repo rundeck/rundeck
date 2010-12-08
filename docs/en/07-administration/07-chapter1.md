@@ -624,6 +624,17 @@ AUTHORIZED or a REJECTED message.  It's not uncommon to see REJECTED
 messages followed by AUTHORIZED.  The important thing is to look at
 the last decision made.
 
+### Authorization caveats
+
+* aclpolicy is used to determine what UI widgets are displayed (e.g., run,
+  edit, delete, etc).  But Authorization for pages still depends on Roles.
+  (i.e. the AuthorizationFilter code looks at role membership, not
+  aclpolicy).
+* role mapping changes require a server restart, while aclpolicy
+  changes do not.
+* new and deleted aclpolicy files are detected after restarts
+  
+
 ## Configuring Rundeck for SSL
 
 This document describes how to configure Rundeck for SSL/HTTPS
