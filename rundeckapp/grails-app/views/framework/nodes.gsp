@@ -413,7 +413,7 @@
                             </span>
                         </g:if>
 
-                        <div >
+                        <div style="margin:5px 0; padding:5px 0;">
                             <span style="padding:5px 0;margin:5px 0;${!filtersOpen?'':'display:none;'} " id='${rkey}filterdispbtn' >
                             <span title="Click to modify filter" class="info textbtn query action" onclick="['${rkey}filter','${rkey}filterdispbtn','runbox'].each(Element.toggle);if(${isCompact}){$('${rkey}nodescontent').toggle();}" >
                                 <g:render template="displayNodeFilters" model="${[displayParams:query]}"/>
