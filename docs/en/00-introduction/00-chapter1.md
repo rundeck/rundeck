@@ -86,6 +86,8 @@ RunDeck server configuration includes settings to define the outbound
 user that must also be allowed by the remote hosts. Remote machines
 are not required to make SSH connections back to the server.
 
+![RunDeck architecture](figures/fig0001.png)
+
 The RunDeck application itself is a Java-based webapp that runs in its
 own embedded servlet container. The application provides both
 graphical interface and network interfaces used by the RunDeck shell
