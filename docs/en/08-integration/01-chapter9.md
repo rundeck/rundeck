@@ -271,9 +271,9 @@ to the CGI script to obtain the artifacts list as an options model
 and present the results as a menu to Job users.
 
 The code listing below shows the the CGI script essentially does a
-call to the <code>cURL</code> command to retreive the XML document
+call to the [curl] command to retreive the XML document
 containing the artifacts information and then parses it using
-<code>xmlstarlet</code>.
+[xmlstarlet].
  
 File listing: hudson-artifacts.cgi
  
@@ -306,7 +306,7 @@ File listing: hudson-artifacts.cgi
         -t -o "}"
 
 After deploying this script to a CGI enabled directory on the
-operations web server, it can be tested directly by requesting it using cUrl.
+operations web server, it can be tested directly by requesting it using `curl`.
 
     curl -d "hudsonJob=anvils&artifactPath=/artifact/bin/dist/RPMS/noarch/" \
         --get http://opts.acme.com/cgi/hudson-artifacts.cgi
@@ -374,7 +374,7 @@ File listing: yum-repoquery.cgi
     echo '}'
 
 After deploying this script to the CGI enabled directory on the
-operations web server, it can be tested directly by requesting it using cUrl.
+operations web server, it can be tested directly by requesting it using `curl`.
 
     curl -d "repo=acme&label=Anvils&package=anvils" \
         --get http://ops.acme.com/cgi/yum-repoquery.cgi
