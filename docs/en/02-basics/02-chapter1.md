@@ -207,6 +207,21 @@ to the output printed by the `dispatch -v` shown earlier:
           editUrl="" remoteUrl=""/>
     </project>
 
+You'll notice the root node is called `project` and there is a single
+node descriptor for "strongbad". The `node` tag has a number of
+required and optional attributes. Additional node descriptors can be
+added by defining new `node` elements inside the `project` tag. 
+Here's an example of a node called "homestar" with just the required
+attributes: 
+
+        <node name="homestar" type="Node" 
+          hostname="192.168.1.02" 
+          username="alexh" />
+
+The `hostname` and `username` values are used for the SSH connection
+while the `name` and `type` are used to define Node identity in the
+resource model.
+	  
 Chances are you maintain information about your hosts within
 another tool, perhaps Chef, Puppet, Nagios, Amazon EC2, RightScale or
 even an in-house database. One of these tools might be

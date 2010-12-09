@@ -38,17 +38,17 @@ The node element defines a Node resource.
 
 *Attributes*
 
-type
-
-:   The node type.
-    
 name
 
 :   The node name. This is a logical identifier from the node. (required)
 
+type
+
+:   The node type, such as "Node". (required)
+
 description
 
-:   A brief description about the node.
+:   A brief description about the node. (optional)
 
 hostname
 
@@ -56,35 +56,31 @@ hostname
 
 osArch
 
-:   The operating system architecture.
+:   The operating system architecture.  (optional)
 
 osFamily
 
-:   The operating system family (e.g, unix or windows).
+:   The operating system family, such as unix or windows.  (optional)
 
 osName
 
-:   The operating system name (e.g., Linux or Mac OS X).
+:   The operating system name such as Linux or Mac OS X.  (optional)
 
 tags
 
-:   Comma separated list of filtering tags.
+:   Comma separated list of filtering tags.  (optional)
 
 username
 
-:   The username on the remote host to which RunDeck connects.
-
-password
-
-:   The remote connection password.
+:   The username used for the remote connection. (required)
 
 editUrl
 
-:   URL to an external resource model editor service
+:   URL to an external resource model editor service  (optional)
 
 remoteUrl
 
-:   URL to an external resource model service
+:   URL to an external resource model service.  (optional)
 
 *Nested Elements*
 
@@ -121,6 +117,12 @@ value is overloaded to include the port (192.168.1.106:4022):
         hostname="192.168.1.106:4022"
         username="deploy"/>
 	
+An example using just the required attributes:
+
+    <node name="centos54" type="Node"
+        hostname="192.168.1.106:4022"
+        username="deploy"/>
+		
 ## setting
 
 The setting element defines a Setting resource.
