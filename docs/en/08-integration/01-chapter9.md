@@ -240,7 +240,7 @@ Passes the job name and group as query parameters.
 If the request for the remote option values fails, then the GUI form
 will display a warning message:
 
->  failed loading remote option values
+![](figures/fig0901.png)
     
 In this case, the option will be allowed to use a textfield to set the value.
 
