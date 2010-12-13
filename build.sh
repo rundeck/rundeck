@@ -117,47 +117,18 @@ build_rundeck_core(){
 
 
 cd $BASEDIR/core
-echo maven.repo.depslocal = $LOCALDEPSREPOURL > $BASEDIR/core/build.properties
-MAVEN_HOME=$BASEDIR/maven
-cd $BASEDIR/core && $MAVEN_HOME/bin/maven clean rdeck:zip
-if [ 0 != $? ]
-then
-   echo "RUN build failed"
-   exit 2
-fi
-#remove previous build artifacts from maven repository
-rm -rf $BASEDIR/maven/repository/rundeck-core
+gradle clean check
+gradle -PbuildNum=$RELNUM assemble
 rm -rf $LOCALREPO/rundeck-core
 
 mkdir -p $LOCALREPO/rundeck-core/jars
-cp target/rundeck-core-$VERS.jar $LOCALREPO/rundeck-core/jars/rundeck-core-$VERS.jar 
+cp build/libs/rundeck-core-$VERS.jar $LOCALREPO/rundeck-core/jars/rundeck-core-$VERS.jar 
 if [ 0 != $? ]
 then
-   echo "RUN build failed: cannot copy target/rundeck-core-$VERS.jar"
-   exit 2
-fi
-mkdir -p $LOCALREPO/rundeck-core/zips
-cp target/dist/zips/rundeck-core-$VERS.zip $LOCALREPO/rundeck-core/zips/rundeck-core-$VERS.zip
-if [ 0 != $? ]
-then
-   echo "RUN build failed: cannot copy target/dist/zips/rundeck-core-$VERS.zip"
-   exit 2
-fi
-mkdir -p $LOCALREPO/rundeck-core/tgzs
-cp target/dist/tgzs/rundeck-core-$VERS.tgz $LOCALREPO/rundeck-core/tgzs/rundeck-core-$VERS.tgz
-if [ 0 != $? ]
-then
-   echo "RUN build failed: cannot copy target/dist/tgzs/rundeck-core-$VERS.tgz"
+   echo "Core build failed: cannot copy core/build/libs/rundeck-core-$VERS.jar"
    exit 2
 fi
 
-mkdir -p $MAVEN_HOME/repository/rundeck-core/jars
-cp target/rundeck-core-$VERS.jar $MAVEN_HOME/repository/rundeck-core/jars/rundeck-core-$VERS.jar
-if [ 0 != $? ]
-then
-   echo "RUN build failed: cannot copy target/rundeck-core-$VERS.jar"
-   exit 2
-fi
 }
 
 build_rundeckapp(){

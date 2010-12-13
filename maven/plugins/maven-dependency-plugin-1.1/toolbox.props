@@ -1,3 +1,0 @@
-toolbox.contextname = toolbox
-toolbox.tool.htmlescape = org.apache.velocity.anakia.Escape
-toolbox.tool.fileutil = org.apache.velocity.texen.util.FileUtil

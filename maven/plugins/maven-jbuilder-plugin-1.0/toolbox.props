@@ -1,7 +1,0 @@
-toolbox.contextname = toolbox
-toolbox.tool.htmlescape = org.apache.velocity.anakia.Escape
-toolbox.tool.numbers = java.text.DecimalFormat
-toolbox.tool.fileutil = org.apache.velocity.texen.util.FileUtil
-toolbox.tool.formatter = org.apache.maven.DVSLFormatter
-toolbox.tool.pathtool = org.apache.maven.DVSLPathTool
-toolbox.tool.maven = org.apache.maven.MavenTool
