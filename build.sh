@@ -117,8 +117,13 @@ build_rundeck_core(){
 
 
 cd $BASEDIR/core
-gradle clean check
-gradle -PbuildNum=$RELNUM assemble
+echo "core build starting..."
+./gradlew -PbuildNum=$RELNUM clean check assemble
+if [ 0 != $? ]
+then
+   echo "Core build assemble failed: $!"
+   exit 2
+fi
 rm -rf $LOCALREPO/rundeck-core
 
 mkdir -p $LOCALREPO/rundeck-core/jars
@@ -128,6 +133,7 @@ then
    echo "Core build failed: cannot copy core/build/libs/rundeck-core-$VERS.jar"
    exit 2
 fi
+echo "core build complete"
 
 }
 
