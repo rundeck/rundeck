@@ -159,22 +159,22 @@ if [ 0 != $? ]
 then
    echo "failed to install jetty plugin"
    exit 2
-fi  
+fi
 
 # # run clean and test 
-# $GRAILS_HOME/bin/grails -Dgrails.project.work.dir=$GWORKDIR clean
-# if [ 0 != $? ]
-# then
-#    echo "Run Deck clean failed"
-#    exit 2
-# fi  
+$GRAILS_HOME/bin/grails -Dgrails.project.work.dir=$GWORKDIR clean
+if [ 0 != $? ]
+then
+   echo "Run Deck clean failed"
+   exit 2
+fi
 
-# $GRAILS_HOME/bin/grails -Dgrails.project.work.dir=$GWORKDIR test-app
-# if [ 0 != $? ]
-# then
-#    echo "Run Deck tests failed"
-#    exit 2
-# fi  
+$GRAILS_HOME/bin/grails -Dgrails.project.work.dir=$GWORKDIR test-app
+if [ 0 != $? ]
+then
+   echo "Run Deck tests failed"
+   exit 2
+fi
 
 #run war phase
 yes | $GRAILS_HOME/bin/grails -Dgrails.project.work.dir=$GWORKDIR prod build-launcher
