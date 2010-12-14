@@ -21,6 +21,8 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 import org.apache.tools.ant.Project;
 
+import java.io.File;
+
 
 /**
  * TestFramework 
@@ -74,7 +76,9 @@ public class TestFramework extends AbstractBaseTest {
         final Framework framework = Framework.getInstance(getBaseDir(), getModulesBase(), getFrameworkProjectsBase());
         assertNotNull("Framework.getInstance returned null", framework);
         assertTrue("framework.node.hostname property was not set", framework.existsProperty("framework.node.hostname"));
-        assertEquals("basedir did not match", framework.getBaseDir().getAbsolutePath(), getBaseDir());
+        assertEquals("basedir did not match: " + framework.getBaseDir().getAbsolutePath(), new File(
+            getBaseDir()).getAbsolutePath(),
+            framework.getBaseDir().getAbsolutePath());
         assertNotNull("authorization manager was null", framework.getAuthorizationMgr());
         assertNotNull("authentication manager was null", framework.getAuthenticationMgr());
         assertNotNull("FrameworkProjectMgr was null", framework.getFrameworkProjectMgr());
