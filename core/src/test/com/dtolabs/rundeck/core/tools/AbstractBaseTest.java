@@ -165,6 +165,7 @@ public abstract class AbstractBaseTest extends TestCase {
         taskdefProperties = TASKDEF_PROPERTIES;
         typedefProperties = TYPEDEF_PROPERTIES;
         new File(modulesBase).mkdirs();
+        new File(baseDir,"etc").mkdirs();
         ctlDavBase.mkdirs();
         File dummykey = new File(baseDir, "etc/dummy_ssh_key.pub");
         try {

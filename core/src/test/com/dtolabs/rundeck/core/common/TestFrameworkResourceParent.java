@@ -34,7 +34,7 @@ public class TestFrameworkResourceParent extends TestCase {
     private final String RESOURCE_NAME = "aHaha";
     private final String RESOURCE_NAME2 = "aHaha2";
     private Framework framework = null;
-    File projectsBasedir = new File("target/tests/TestFrameworkResourceParent");
+    File projectsBasedir = new File("build/test-target/TestFrameworkResourceParent");
     File projectBasedir = new File(projectsBasedir, RESOURCE_PROJECT);
     final File baseDir = new File(projectsBasedir, RESOURCE_NAME);
 

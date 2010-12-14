@@ -62,9 +62,10 @@ sourceSets {
         }
     }
 }
-test {
-    systemProperties 'rdeck.base': 'target/rdeck_base'
-    systemProperties 'rdeck.home': 'target'
+
+test{
+    systemProperties 'rdeck.base': "$projectDir/build/rdeck_base"
+    systemProperties 'rdeck.home': "$projectDir/build"
 }
 
 task expandTemplate << {

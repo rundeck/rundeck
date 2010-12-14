@@ -52,8 +52,9 @@ public class TestResourceXMLGenerator extends TestCase {
     }
 
     protected void setUp() throws Exception {
-        test1 = new File("target/TestResourceXMLGenerator-test1.xml");
-        test2 = new File("target/doesnotexist/test.xml");
+        new File("build/test-target").mkdirs();
+        test1 = new File("build/test-target/TestResourceXMLGenerator-test1.xml");
+        test2 = new File("build/test-target/doesnotexist/test.xml");
         reader = new SAXReader(true);
         reader.setEntityResolver(ResourceXMLParser.createEntityResolver());
     }

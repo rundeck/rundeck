@@ -39,8 +39,8 @@ public class TestFileUtils extends TestCase {
 
     @Override
     protected void setUp() throws Exception {
-        tempdir = new File("target/TestFileUtilsdir");
-        tempdir.mkdir();
+        tempdir = new File("build/test-target/TestFileUtilsdir");
+        tempdir.mkdirs();
     }
 
     @Override
