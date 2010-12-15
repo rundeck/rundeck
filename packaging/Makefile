@@ -25,6 +25,7 @@ rpm:
 	@mkdir -p dist/SOURCES/var/lib/rundeck/exp/webapp
 	@mkdir -p dist/SOURCES/var/lib/rundeck/{data,work,logs,cli}
 	@mkdir -p dist/SOURCES/var/log/rundeck
+	@mkdir -p dist/SOURCES/var/lib/rundeck/var/tmp
 	@mkdir -p dist/SOURCES/var/rundeck/projects
 	@mkdir -p dist/SOURCES/usr/share/man/man{1,5}
 	@mkdir -p dist/SOURCES/usr/share/man/en/man{1,5}
