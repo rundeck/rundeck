@@ -28,14 +28,16 @@
     <thead>
 
     <tr>
-        <th colspan="4">Event</th>
+        <th colspan="2"></th>
+        <th>Job</th>
+        <th colspan="1">Event</th>
 
-        <th><g:message code="jobquery.title.messageFilter"/></th>
         <g:if test="${options.tags}">
             <th><g:message code="jobquery.title.tagsFilter"/></th>
         </g:if>
+        <th><g:message code="jobquery.title.projFilter"/></th>
         <th><g:message code="jobquery.title.userFilter"/></th>
-        <th><g:message code="jobquery.title.nodeFilter"/></th>
+        %{--<th><g:message code="jobquery.title.nodeFilter"/></th>--}%
         <th><g:message code="jobquery.title.endFilter"/></th>
     </tr>
     </thead>
@@ -43,77 +45,44 @@
         <g:set var="rpt" value="${it}"/>
         <tr class="  ${it?.status != 'succeed' ? 'fail' : ''}  ${!it.dateCompleted ? 'nowrunning' : ''} hilite expandComponentHolder sectionhead" onclick="Expander.toggle(this,'${rkey}subsect_${it.id}');">
             <td style="width:12px;">
-                <g:if test="${it.dateCompleted}">
-                    <img
-                        src="${resource(dir: 'images', file: 'icon-tiny-' + (it?.status == 'succeed' ? 'ok' : 'warn') + '.png')}"
-                        title="${it?.status}: <g:relativeDate atDate='${it.dateCompleted}'/>"
-                        alt="" width="12px" height="12px"/>
-                </g:if>
-            </td>
-            <td style="width:12px;">
                 <span class="action textbtn expandComponentControl" >
                     <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure.png')}" title="Toggle extra information" alt="" width="12px" height="12px"/>
                 </span>
             </td>
 
+            <td style="width:16px;" class="${it?.status} statusmessage">
+                ${it?.status=='succeed'?'OK':'FAIL'}
+            </td>
+            <td class="eventtitle">
+                <g:if test="${it.jcJobId }">
+                    ${ScheduledExecution.get(it.jcJobId).generateFullName()}
+                </g:if>
+            </td>
 
-            <td style="overflow:hidden;white-space:nowrap;width:50px;">
+            <td style="" class="eventtitle ${it.jcJobId?'job':'adhoc'}">
 
-                <span class="actiontitle ${it?.status != 'succeed' ? 'fail' : ''} ${it.actionType}">
+                <span class="actiontitle ${it?.status != 'succeed' ? '' : ''} ">
                     <g:if test="${it.jcJobId || it.jcExecId}">
 
                         <g:if test="${it.jcJobId}">
                             ${it.title.encodeAsHTML()}
                         </g:if>
                         <g:else>
-                            <span class="info note"><g:truncate max="${maxmsgsize}">${rpt.title}</g:truncate></span>
+                            <g:truncate max="${maxmsgsize}">${rpt.title}</g:truncate>
                         </g:else>
                     </g:if>
+                    <g:elseif test="${it instanceof ExecReport && it.adhocScript}">
+                        <g:truncate max="${maxmsgsize}">${rpt.adhocScript.encodeAsHTML()}</g:truncate>
+                    </g:elseif>
                     <g:else>
-                        <span class="info note"><g:truncate max="${maxmsgsize}">${rpt.title}</g:truncate></span>
+                        <g:truncate max="${maxmsgsize}">${rpt.title}</g:truncate>
                     </g:else>
                 </span>
             </td>
 
-            <td style="width:16px;">
-                <g:if test="${it.jcJobId || it.jcExecId }">
-                    <img src="${resource(dir: 'images', file: 'icon-small-job.png')}"
-                        title="${g.message(code:'domain.ScheduledExecution.title')} Execution"
-                        alt="" width="16px" height="16px"/>
-                </g:if>
-                <g:else>
-                    <g:img file="icon-small-shell.png" width="16px" height="16px"/>
-                </g:else>
-            </td>
 
-            <td style="overflow:hidden;white-space:nowrap;">
-                <g:if test="${it.message}">
+           
 
-                    <%
-                        def msgtrunc = it.message
-                        def sb = new StringBuffer()
-                        if(options.msgmaxsize && it.message.size()> options.msgmaxsize){
-                            msgtrunc = it.message.substring(0,options.msgmaxsize)
-                        }
-                        else if (it.message.size() > options.msgsplitsize) {
-                            msgtrunc = it.message.replaceAll('(\\S{' + options.msgsplitsize + '})', '$1\r\n\r')
-                            def argssplit = []
-                            argsplit = msgtrunc.split('\\r\\n\\r')
-                            argsplit.each {
-                                if (sb.size() > 0) {
-                                    sb << " <br>"
-                                }
-                                sb << it
-                            }
-                            msgtrunc = sb.toString()
-                        }
-                    %>
-                    <div class="msgtext msgrow"  title="${it.message.encodeAsHTML()}" style="width:300%">
-                        %{--${msgtrunc.encodeAsHTML()}--}%
-                        ${it.message.encodeAsHTML()}
-                    </div>
-                </g:if>
-            </td>
             <g:if test="${options.tags}">
             <td>
                 <g:if test="${it.tags}">
@@ -124,15 +93,18 @@
             </td>
             </g:if>
 
-            <td class="sepL user">
+            <td class="sepL project">
+                ${it?.ctxProject.encodeAsHTML()}
+            </td>
+            <td class=" user">
                 ${it?.author.encodeAsHTML()}
             </td>
 
-            <td>
-                <g:if test="${it instanceof ExecReport}">
-                    ${it?.node.encodeAsHTML()}
-                </g:if>
-            </td>
+            %{--<td>--}%
+                %{--<g:if test="${it instanceof ExecReport}">--}%
+                    %{--${it?.node.encodeAsHTML()}--}%
+                %{--</g:if>--}%
+            %{--</td>--}%
 
             <td style="white-space:nowrap" class="right">
                 <g:if test="${it.dateCompleted}">

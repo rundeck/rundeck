@@ -48,6 +48,15 @@ public class CommandExec extends ExecutionContext implements IWorkflowCmdItem {
         return sb.toString()
     }
 
+    public String summarize(){
+        StringBuffer sb = new StringBuffer()
+        sb << (adhocRemoteString ? "${adhocRemoteString}" : '')
+        sb << (adhocLocalString ? "${adhocLocalString}" : '')
+        sb << (adhocFilepath ? "${adhocFilepath}" : '')
+        sb << (argString ? " -- ${argString}" : '')
+        return sb.toString()
+    }
+
     static constraints = {
         returnProperty(nullable: true)
         ifString(nullable: true)

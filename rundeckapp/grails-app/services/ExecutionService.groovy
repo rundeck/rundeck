@@ -396,7 +396,7 @@ class ExecutionService implements ApplicationContextAware, Executor{
     }
 
 
-    public static synchronized logExecution(uri,project,user,issuccess,framework,execId,Date startDate=null, jobExecId=null, jobName=null, moduleName=null, boolean isadhoc=false, adhocScript=null,iscancelled=false){
+    public static synchronized logExecution(uri,project,user,issuccess,framework,execId,Date startDate=null, jobExecId=null, jobSummary=null,iscancelled=false){
 
         def internalLog = org.apache.log4j.Logger.getLogger("ExecutionService")
         if(null==project || null==user  ){
@@ -414,14 +414,10 @@ class ExecutionService implements ApplicationContextAware, Executor{
         if(jobExecId){
             org.apache.log4j.MDC.put('rundeckJobId',jobExecId)
         }
-        if(jobName){
-            org.apache.log4j.MDC.put('rundeckJobName',jobName)
-        }
-        if(isadhoc && adhocScript){
-            org.apache.log4j.MDC.put('adhocScript',adhocScript)
+        if(jobSummary){
+            org.apache.log4j.MDC.put('rundeckJobName',jobSummary)
         }
         def logger = org.apache.log4j.Logger.getLogger("com.dtolabs.rundeck.log.internal")
-        org.apache.log4j.MDC.put(LogConstants.MDC_ADHOCEXEC_KEY,Boolean.toString(isadhoc))
         org.apache.log4j.MDC.put(LogConstants.MDC_ITEM_TYPE_KEY,"commandExec")
         org.apache.log4j.MDC.put(LogConstants.MDC_PROJECT_KEY,project)
         if(uri){
@@ -431,10 +427,7 @@ class ExecutionService implements ApplicationContextAware, Executor{
 //        org.apache.log4j.MDC.put(LogConstants.MDC_ENT_NAME_KEY,null!=name?name:'')
 //        org.apache.log4j.MDC.put(LogConstants.MDC_ENT_TYPE_KEY,null!=type?type:'')
 //        org.apache.log4j.MDC.put(LogConstants.MDC_CMD_NAME_KEY,null!=command?command:'')
-        if(moduleName){
-            org.apache.log4j.MDC.put(LogConstants.MDC_CONTROLLER_KEY,moduleName)
-        }
-        org.apache.log4j.MDC.put(LogConstants.MDC_ACTION_KEY, jobName?jobName:"rundeck Job Execution")
+        org.apache.log4j.MDC.put(LogConstants.MDC_ACTION_KEY, jobSummary?jobSummary:"rundeck Job Execution")
         org.apache.log4j.MDC.put(LogConstants.MDC_ACTION_TYPE_KEY, issuccess ? LogConstants.ActionType.SUCCEED.toString():iscancelled?LogConstants.ActionType.CANCEL.toString():LogConstants.ActionType.FAIL.toString())
         org.apache.log4j.MDC.put(LogConstants.MDC_NODENAME_KEY, framework.getFrameworkNodeName())
         logger.info(issuccess?'Job completed successfully':iscancelled?'Job killed':'Job failed')
@@ -451,7 +444,6 @@ class ExecutionService implements ApplicationContextAware, Executor{
         org.apache.log4j.MDC.remove(LogConstants.MDC_ACTION_TYPE_KEY)
         org.apache.log4j.MDC.remove(LogConstants.MDC_NODENAME_KEY)
         org.apache.log4j.MDC.remove(LogConstants.MDC_ADHOCEXEC_KEY)
-        org.apache.log4j.MDC.remove('adhocScript')
         org.apache.log4j.MDC.remove('rundeckJobName')
         org.apache.log4j.MDC.remove('rundeckJobId')
         org.apache.log4j.MDC.remove('rundeckExecId')
@@ -1048,9 +1040,28 @@ class ExecutionService implements ApplicationContextAware, Executor{
         }
         if(execSaved) {
             def Framework fw = frameworkService.getFramework()
-            logExecution(null, execution.project, execution.user, "true" == execution.status, fw, exId, execution.dateStarted, jobid, jobname, null, false, '', props.cancelled)
+            logExecution(null, execution.project, execution.user, "true" == execution.status, fw, exId, execution.dateStarted, jobid, summarizeJob(scheduledExecution,execution), props.cancelled)
             notificationService.triggerJobNotification(props.status == 'true' ? 'success' : 'failure', schedId, [execution: execution])
         }
+    }
+    def summarizeJob(ScheduledExecution job=null,Execution exec){
+//        if(job){
+//            return job.groupPath?job.generateFullName():job.jobName
+//        }else{
+            //summarize execution
+            StringBuffer sb = new StringBuffer()
+            final def wfsize = exec.workflow.commands.size()
+
+            if(wfsize>0){
+                sb<<exec.workflow.commands[0].summarize()
+            }else{
+                sb<< "[Empty workflow]"
+            }
+            if(wfsize>1){
+                sb << " [... ${wfsize} steps]"
+            }
+            return sb.toString()
+//        }
     }
     def updateScheduledExecState(ScheduledExecution scheduledExecution, Execution execution){
         if (scheduledExecution.scheduled) {
