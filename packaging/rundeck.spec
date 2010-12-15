@@ -58,6 +58,10 @@ fi
 %dir /var/lib/rundeck/work
 %dir /var/rundeck/projects
 
+# Rundeck VAR directory.
+%dir /var/lib/rundeck/var
+%dir /var/lib/rundeck/var/tmp
+
 # Docs
 %doc /usr/share/man
 
