@@ -36,4 +36,10 @@ public interface ExecutionService {
      * @return result
      */
     public ExecutionResult executeItem(ExecutionItem item) throws ExecutionException;
+
+    /**
+     * Return the execution listener if any
+     * @return
+     */
+    public ExecutionListener getListener();
 }

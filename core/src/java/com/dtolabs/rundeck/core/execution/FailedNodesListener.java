@@ -43,4 +43,9 @@ public interface FailedNodesListener {
      * Called if no nodes failed during execution.
      */
     public void nodesSucceeded();
+
+    /**
+     * Called with full list of matched nodes prior to execution.
+     */
+    public void matchedNodes(Collection<String> names);
 }
