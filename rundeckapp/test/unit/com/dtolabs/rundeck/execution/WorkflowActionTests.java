@@ -112,6 +112,10 @@ public class WorkflowActionTests extends TestCase {
             count++;
             return BaseExecutionResult.createSuccess("TestResult" + count);
         }
+
+        public ExecutionListener getListener() {
+            return null;
+        }
     }
 
     static class failExecutor implements Executor {
