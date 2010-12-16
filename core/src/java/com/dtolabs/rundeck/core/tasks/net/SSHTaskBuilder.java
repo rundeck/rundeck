@@ -114,6 +114,7 @@ public class SSHTaskBuilder {
                 throw new BuilderException(
                     "SSH Keyfile, " + sshKeypath + ", does not exist and is needed: " + sshKeypath);
             }
+            project.log("Using ssh keyfile: " + sshKeypath, Project.MSG_DEBUG);
             sshexecTask.setKeyfile(sshKeypath);
 
         } else if (nodeAuth.isPasswordBasedAuthentication(nodeentry)) {
