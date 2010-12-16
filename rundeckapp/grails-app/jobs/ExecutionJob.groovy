@@ -9,6 +9,7 @@ import org.quartz.InterruptableJob
 import com.dtolabs.rundeck.core.execution.ExecutionServiceThread
 import com.dtolabs.rundeck.core.NodesetFailureException
 import org.apache.tools.ant.BuildException
+import com.dtolabs.rundeck.execution.NodeRecorder
 
 class ExecutionJob implements InterruptableJob {
 
@@ -50,7 +51,7 @@ class ExecutionJob implements InterruptableJob {
         }
         try{
             saveState(initMap.executionService, initMap.execution ? initMap.execution : (Execution) null, success,
-                _interrupted, initMap.isTemp, initMap.scheduledExecutionId ? initMap.scheduledExecutionId : -1L,extractFailedNodes(result?.thread))
+                _interrupted, initMap.isTemp, initMap.scheduledExecutionId ? initMap.scheduledExecutionId : -1L,result?.execmap)
         }catch(Throwable t){
             log.error("Unable to save Job execution state: ${t.message?t.message:'no message'}",t)
         }
@@ -61,9 +62,14 @@ class ExecutionJob implements InterruptableJob {
      * an {@link ExecutionServiceThread}.
      * @return the list of failed node names, or null
      */
-    private static Collection<String> extractFailedNodes(Thread thread) {
-        if (null != thread && thread instanceof ExecutionServiceThread) {
-            Exception e = ((ExecutionServiceThread) thread).getException()
+    private static Collection<String> extractFailedNodes(Map execmap=null) {
+        if(null==execmap){
+            return null;
+        }
+        if(null!=execmap.noderecorder && execmap.noderecorder instanceof NodeRecorder){
+            return ((NodeRecorder)execmap.noderecorder).getFailedNodes()
+        } else if (null != execmap.thread && execmap.thread instanceof ExecutionServiceThread) {
+            Exception e = ((ExecutionServiceThread) execmap.thread).getException()
             if (null != e && e instanceof NodesetFailureException) {
                 return ((NodesetFailureException) e).getNodeset();
             } else if (null != e && e instanceof BuildException) {
@@ -176,16 +182,17 @@ class ExecutionJob implements InterruptableJob {
 
 
         try {
-            success = executionService.executeAsyncFinish(execmap.thread,execmap.loghandler)
+            success = executionService.executeAsyncFinish(execmap)
         } catch (Exception exc) {
             throw new RuntimeException("Execution failed: "+exc.getMessage(), exc)
         }
         log.info("ExecutionJob: execution successful? " + success +", interrupted? "+_interrupted)
-        return [success:success,thread:execmap.thread]
+        return [success:success,execmap:execmap]
 
     }
 
-    def saveState(ExecutionService executionService,Execution execution, boolean success, boolean _interrupted, boolean isTemp, long scheduledExecutionId=-1,Collection<String> failedNodes=null) {
+    def saveState(ExecutionService executionService,Execution execution, boolean success, boolean _interrupted, boolean isTemp, long scheduledExecutionId=-1, Map execmap=null) {
+        Collection<String> failedNodes=extractFailedNodes(execmap)
         if(isTemp){
             executionService.saveExecutionState(
                             null,
@@ -194,8 +201,9 @@ class ExecutionJob implements InterruptableJob {
                                 status:String.valueOf(success),
                                 dateCompleted:new Date(),
                                 cancelled:_interrupted,
-                                failedNodes:failedNodes
-                                ]
+                                failedNodes:failedNodes,
+                                ],
+                            execmap
                             )
 
         }else{
@@ -206,8 +214,9 @@ class ExecutionJob implements InterruptableJob {
                     status:String.valueOf(success),
                     dateCompleted:new Date(),
                     cancelled:_interrupted,
-                    failedNodes:failedNodes
-                    ]
+                    failedNodes:failedNodes,
+                    ],
+                    execmap
                 )
 
         }

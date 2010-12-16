@@ -91,6 +91,9 @@ public class FailedNodesFilestore {
             this.failedNodesFile = failedNodesFile;
         }
 
+        public void matchedNodes(Collection<String> names) {
+            //noop
+        }
         public void nodesSucceeded() {
             if (null != failedNodesFile) {
                 //no nodes failed, so clear the file if it exists

@@ -885,7 +885,6 @@ table.executionList td.fail, table.executionInfo td.fail{
 }
 table.executionList td.succeed, table.executionInfo td.succeed{
     color: green;
-    font-weight:bold;
 }
 table.executionList td.duration, table.executionInfo td.duration{
 }
@@ -908,7 +907,6 @@ span.fail{
 }
 span.succeed{
     color: green;
-    font-weight:bold;
 }
 
 /* END execution listing */
@@ -1729,6 +1727,27 @@ tr.sectionhead.expanded td.right{
 tr.sectionhead.expanded td{
     border-top:1px solid #aaa;
     padding-top:3px;
+}
+tr.sectionhead td.eventtitle{
+    overflow:hidden;
+    white-space:nowrap;
+    width:50px;
+}
+tr.sectionhead td.eventtitle.job{
+}
+tr.sectionhead td.eventtitle.adhoc{
+    font-style:italic;
+    /*color: #888;*/
+}
+tr.sectionhead td.eventmessage{
+    overflow:hidden;
+    white-space:nowrap;
+}
+tr.sectionhead td.statusmessage.fail{
+    color:red;
+}
+tr.sectionhead td.statusmessage.succeed{
+    color:green;
 }
 
 tr.subsection span.title{

@@ -84,6 +84,9 @@ public class DefaultNodeDispatcher implements NodeDispatcher{
              if (null == project.getReference(STATUS_LISTENER_REF_ID)) {
                 project.addReference(STATUS_LISTENER_REF_ID, listener);
             }
+            if(null!=failedListener) {
+                failedListener.matchedNodes(nodeNames);
+            }
             final Parallel parallelTask = new Parallel();
             parallelTask.setProject(project);
             parallelTask.setThreadCount(threadcount);
@@ -128,6 +131,9 @@ public class DefaultNodeDispatcher implements NodeDispatcher{
             for (final Object node1 : nodes) {
                 final INodeEntry node = (INodeEntry) node1;
                 nodeNames.add(node.getNodename());
+            }
+            if (null != failedListener) {
+                failedListener.matchedNodes(nodeNames);
             }
             boolean interrupted=false;
             final Thread thread = Thread.currentThread();
