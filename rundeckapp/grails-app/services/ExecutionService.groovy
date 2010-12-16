@@ -41,7 +41,8 @@ import com.dtolabs.rundeck.execution.NodeRecorder
 import org.springframework.context.MessageSource
 import javax.servlet.http.HttpSession
 import org.springframework.web.context.request.RequestContextHolder
-import org.springframework.web.servlet.support.RequestContextUtils as RCU;
+import org.springframework.web.servlet.support.RequestContextUtils as RCU
+import java.text.MessageFormat;
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -1053,16 +1054,13 @@ class ExecutionService implements ApplicationContextAware, Executor{
                 final HashSet<String> failed = rec.getFailedNodes()
                 final HashSet<String> matched = rec.getMatchedNodes()
                 if(failed.size()>0){
-                    node = lookupMessage("event.nodes.failed.summary",[success.size(),failed.size(),matched.size()] as Object[])
+                    node = lookupMessage("event.nodes.failed.summary",[success.size(),failed.size(),matched.size()] as Object[],"{0}/{1}")
                 }else if(success.size()>1){
-                    node = lookupMessage("event.nodes.success.summary",[success.size(),failed.size(),matched.size()] as Object[])
+                    node = lookupMessage("event.nodes.success.summary",[success.size(),failed.size(),matched.size()] as Object[],"{0}/{1}")
                 }else if(success.size()>0){
-                    node = lookupMessage("event.nodes.success.single.summary",[matched.size(),success.iterator().next()] as Object[])
+                    node = lookupMessage("event.nodes.success.single.summary",[matched.size(),success.iterator().next()] as Object[],"{1}")
                 }else{
-                    node = lookupMessage("event.nodes.empty.summary",null)
-                    if(null==node){
-                        node="(none)"
-                    }
+                    node = lookupMessage("event.nodes.empty.summary",null,"(none)")
                 }
             }
             def Framework fw = frameworkService.getFramework()
@@ -1300,7 +1298,7 @@ class ExecutionService implements ApplicationContextAware, Executor{
        * @parameter key
        * @returns corresponding value from messages.properties
        */
-      def lookupMessage(String theKey, Object[] data) {
+      def lookupMessage(String theKey, Object[] data, String defaultMessage=null) {
           def locale = getLocale()
           def theValue = null
           MessageSource messageSource = applicationContext.getBean("messageSource")
@@ -1310,6 +1308,10 @@ class ExecutionService implements ApplicationContextAware, Executor{
               log.error "Missing message ${theKey}"
           } catch (java.lang.NullPointerException e) {
               log.error "Expression does not exist."
+          }
+          if(null==theValue && defaultMessage){
+              MessageFormat format = new MessageFormat(defaultMessage);
+              theValue=format.format(data)
           }
           return theValue
       }
