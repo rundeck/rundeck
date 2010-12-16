@@ -515,7 +515,7 @@ public class Framework extends FrameworkResourceParent {
      */
     NodeEntryImpl createFrameworkNode() {
         NodeEntryImpl node = new NodeEntryImpl(getFrameworkNodeHostname(), getFrameworkNodeName());
-        node.setUsername(getProperty("framework.server.username"));
+        node.setUsername(getProperty("framework.ssh.user"));
         node.setDescription("Rundeck server node");
         node.setType("Node");
         node.setOsArch(System.getProperty("os.arch"));
