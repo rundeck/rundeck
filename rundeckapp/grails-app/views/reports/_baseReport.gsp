@@ -23,7 +23,7 @@
         <col style="width:18px;"/>
         <col />
         <col style="width:60px;"/>
-        <col style="width:80px;"/>
+        <col style="width:100px;"/>
         <col style="width:10ex;"/>
     <thead>
 
@@ -37,7 +37,7 @@
         </g:if>
         <th><g:message code="jobquery.title.projFilter"/></th>
         <th><g:message code="jobquery.title.userFilter"/></th>
-        %{--<th><g:message code="jobquery.title.nodeFilter"/></th>--}%
+        <th><g:message code="jobquery.title.nodeFilter.plural"/></th>
         <th><g:message code="jobquery.title.endFilter"/></th>
     </tr>
     </thead>
@@ -100,11 +100,11 @@
                 ${it?.author.encodeAsHTML()}
             </td>
 
-            %{--<td>--}%
-                %{--<g:if test="${it instanceof ExecReport}">--}%
-                    %{--${it?.node.encodeAsHTML()}--}%
-                %{--</g:if>--}%
-            %{--</td>--}%
+            <td>
+                <g:if test="${it instanceof ExecReport}">
+                    ${it?.node.trim().encodeAsHTML()}
+                </g:if>
+            </td>
 
             <td style="white-space:nowrap" class="right">
                 <g:if test="${it.dateCompleted}">

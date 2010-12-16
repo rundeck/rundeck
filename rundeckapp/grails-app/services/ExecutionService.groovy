@@ -37,6 +37,11 @@ import org.apache.tools.ant.BuildEvent
 import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.core.execution.BaseExecutionResult
 import com.dtolabs.rundeck.core.execution.ExecutionServiceThread
+import com.dtolabs.rundeck.execution.NodeRecorder
+import org.springframework.context.MessageSource
+import javax.servlet.http.HttpSession
+import org.springframework.web.context.request.RequestContextHolder
+import org.springframework.web.servlet.support.RequestContextUtils as RCU;
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -396,7 +401,7 @@ class ExecutionService implements ApplicationContextAware, Executor{
     }
 
 
-    public static synchronized logExecution(uri,project,user,issuccess,framework,execId,Date startDate=null, jobExecId=null, jobSummary=null,iscancelled=false){
+    public static synchronized logExecution(uri,project,user,issuccess,framework,execId,Date startDate=null, jobExecId=null, jobSummary=null,iscancelled=false, nodesummary=null){
 
         def internalLog = org.apache.log4j.Logger.getLogger("ExecutionService")
         if(null==project || null==user  ){
@@ -404,15 +409,18 @@ class ExecutionService implements ApplicationContextAware, Executor{
             internalLog.error("could not send execution report: some required values were null: (project:${project},user:${user})")
             return
         }
+        String msg=""
 
         if(execId){
             org.apache.log4j.MDC.put('rundeckExecId',execId)
+            msg+="["+execId+"] "
         }
         if(startDate){
             org.apache.log4j.MDC.put('epochDateStarted',startDate.getTime().toString())
         }
         if(jobExecId){
             org.apache.log4j.MDC.put('rundeckJobId',jobExecId)
+            msg+="["+jobExecId+"] "
         }
         if(jobSummary){
             org.apache.log4j.MDC.put('rundeckJobName',jobSummary)
@@ -424,21 +432,15 @@ class ExecutionService implements ApplicationContextAware, Executor{
             org.apache.log4j.MDC.put(LogConstants.MDC_MAPREF_KEY,uri)
         }
         org.apache.log4j.MDC.put(LogConstants.MDC_AUTHOR_KEY,user)
-//        org.apache.log4j.MDC.put(LogConstants.MDC_ENT_NAME_KEY,null!=name?name:'')
-//        org.apache.log4j.MDC.put(LogConstants.MDC_ENT_TYPE_KEY,null!=type?type:'')
-//        org.apache.log4j.MDC.put(LogConstants.MDC_CMD_NAME_KEY,null!=command?command:'')
         org.apache.log4j.MDC.put(LogConstants.MDC_ACTION_KEY, jobSummary?jobSummary:"rundeck Job Execution")
         org.apache.log4j.MDC.put(LogConstants.MDC_ACTION_TYPE_KEY, issuccess ? LogConstants.ActionType.SUCCEED.toString():iscancelled?LogConstants.ActionType.CANCEL.toString():LogConstants.ActionType.FAIL.toString())
-        org.apache.log4j.MDC.put(LogConstants.MDC_NODENAME_KEY, framework.getFrameworkNodeName())
+        org.apache.log4j.MDC.put(LogConstants.MDC_NODENAME_KEY, null!=nodesummary?nodesummary: framework.getFrameworkNodeName())
         logger.info(issuccess?'Job completed successfully':iscancelled?'Job killed':'Job failed')
 
         org.apache.log4j.MDC.remove(LogConstants.MDC_ITEM_TYPE_KEY)
         org.apache.log4j.MDC.remove(LogConstants.MDC_PROJECT_KEY)
         org.apache.log4j.MDC.remove(LogConstants.MDC_MAPREF_KEY)
         org.apache.log4j.MDC.remove(LogConstants.MDC_AUTHOR_KEY)
-//        org.apache.log4j.MDC.remove(LogConstants.MDC_ENT_NAME_KEY)
-//        org.apache.log4j.MDC.remove(LogConstants.MDC_ENT_TYPE_KEY)
-//        org.apache.log4j.MDC.remove(LogConstants.MDC_CMD_NAME_KEY)
         org.apache.log4j.MDC.remove(LogConstants.MDC_CONTROLLER_KEY)
         org.apache.log4j.MDC.remove(LogConstants.MDC_ACTION_KEY)
         org.apache.log4j.MDC.remove(LogConstants.MDC_ACTION_TYPE_KEY)
@@ -485,15 +487,17 @@ class ExecutionService implements ApplicationContextAware, Executor{
 
             ExecutionItem item = createExecutionItemForExecutionContext(execution, framework, execution.user,jobcontext)
 
+            NodeRecorder recorder = new NodeRecorder();//TODO: use workflow-aware listener for nodes
+
             //create listener to handle log messages and Ant build events
-            ExecutionListener executionListener = new CLIExecutionListener(loghandler, null, loghandler);
+            ExecutionListener executionListener = new CLIExecutionListener(loghandler, recorder, loghandler);
 
             //create service object for the framework and listener
             com.dtolabs.rundeck.core.execution.ExecutionService service = ExecutionServiceFactory.instance().createExecutionService(framework, executionListener);
 
             ExecutionServiceThread thread = new ExecutionServiceThread(service,item)
             thread.start()
-            return [thread:thread, loghandler:loghandler]
+            return [thread:thread, loghandler:loghandler, noderecorder:recorder]
         }catch(Exception e){
             loghandler.publish(new LogRecord(Level.SEVERE, 'Failed to start execution: ' + e.getClass().getName() + ": " + e.message))
             sysThreadBoundOut.removeThreadStream()
@@ -634,7 +638,9 @@ class ExecutionService implements ApplicationContextAware, Executor{
      * @param framework the framework
      * @execMap map contains 'thread' and 'loghandler' keys, for Thread and LogHandler objects
      */
-    def boolean executeAsyncFinish(ExecutionServiceThread thread, LogHandler loghandler){
+    def boolean executeAsyncFinish(Map execMap){
+        def ExecutionServiceThread thread=execMap.thread
+        def LogHandler loghandler=execMap.loghandler
         if(!thread.isSuccessful() && thread.getException()){
             Exception exc = thread.getException()
             def errmsgs = []
@@ -999,7 +1005,7 @@ class ExecutionService implements ApplicationContextAware, Executor{
         return new HtTableLogger(namespace, new File(filepath), level,dometadatalogging,defaultData)
     }
 
-    def saveExecutionState( schedId, exId, Map props){
+    def saveExecutionState( schedId, exId, Map props, Map execmap){
         def ScheduledExecution scheduledExecution
         def Execution execution = Execution.get(exId)
         execution.properties=props
@@ -1039,8 +1045,28 @@ class ExecutionService implements ApplicationContextAware, Executor{
             }
         }
         if(execSaved) {
+            //summarize node success
+            String node=null
+            if (execmap.noderecorder && execmap.noderecorder instanceof NodeRecorder) {
+                NodeRecorder rec = (NodeRecorder) execmap.noderecorder
+                final HashSet<String> success = rec.getSuccessfulNodes()
+                final HashSet<String> failed = rec.getFailedNodes()
+                final HashSet<String> matched = rec.getMatchedNodes()
+                if(failed.size()>0){
+                    node = lookupMessage("event.nodes.failed.summary",[success.size(),failed.size(),matched.size()] as Object[])
+                }else if(success.size()>1){
+                    node = lookupMessage("event.nodes.success.summary",[success.size(),failed.size(),matched.size()] as Object[])
+                }else if(success.size()>0){
+                    node = lookupMessage("event.nodes.success.single.summary",[matched.size(),success.iterator().next()] as Object[])
+                }else{
+                    node = lookupMessage("event.nodes.empty.summary",null)
+                    if(null==node){
+                        node="(none)"
+                    }
+                }
+            }
             def Framework fw = frameworkService.getFramework()
-            logExecution(null, execution.project, execution.user, "true" == execution.status, fw, exId, execution.dateStarted, jobid, summarizeJob(scheduledExecution,execution), props.cancelled)
+            logExecution(null, execution.project, execution.user, "true" == execution.status, fw, exId, execution.dateStarted, jobid, summarizeJob(scheduledExecution, execution), props.cancelled, node)
             notificationService.triggerJobNotification(props.status == 'true' ? 'success' : 'failure', schedId, [execution: execution])
         }
     }
@@ -1264,6 +1290,53 @@ class ExecutionService implements ApplicationContextAware, Executor{
             throw new ExecutionException("Unsupported item type: " + executionItem.getClass().getName());
         }
     }
+
+
+      ///////////////
+      //for loading i18n messages
+      //////////////
+
+      /**
+       * @parameter key
+       * @returns corresponding value from messages.properties
+       */
+      def lookupMessage(String theKey, Object[] data) {
+          def locale = getLocale()
+          def theValue = null
+          MessageSource messageSource = applicationContext.getBean("messageSource")
+          try {
+              theValue =  messageSource.getMessage(theKey,data,locale )
+          } catch (org.springframework.context.NoSuchMessageException e){
+              log.error "Missing message ${theKey}"
+          } catch (java.lang.NullPointerException e) {
+              log.error "Expression does not exist."
+          }
+          return theValue
+      }
+
+
+      /**
+       * Get the locale
+       * @return locale
+       * */
+      def getLocale() {
+          def Locale locale = null
+          try {
+              locale = RCU.getLocale(getSession().request)
+          }
+          catch(java.lang.IllegalStateException e){
+              //log.debug "Running in console?"
+          }
+          //log.debug "locale: ${locale}"
+          return locale
+      }
+      /**
+       * Get the HTTP Session
+       * @return session
+       **/
+      private HttpSession getSession() {
+          return RequestContextHolder.currentRequestAttributes().getSession()
+      }
 }
 
 /**
