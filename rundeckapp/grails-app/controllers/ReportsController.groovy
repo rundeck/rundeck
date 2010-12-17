@@ -178,6 +178,12 @@ class ReportsController {
             }
         }
     }
+    def clearFragment={ ReportQuery query ->
+        params['Clear']='clear'
+        def results = index(query)
+        results.params=params
+        render(view:'eventsFragment',model:results)
+    }
     def eventsFragment={ ReportQuery query ->
         def results = index(query)
         results.params=params
