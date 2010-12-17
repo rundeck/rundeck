@@ -396,13 +396,13 @@ class ExecutionService implements ApplicationContextAware, Executor{
      */
     def cleanupRunningJobs(){
         Execution.findByDateCompleted(null).each{Execution e->
-            saveExecutionState(e.scheduledExecution?.id, e.id, [status: String.valueOf(false), dateCompleted: new Date(), cancelled: true])
+            saveExecutionState(e.scheduledExecution?.id, e.id, [status: String.valueOf(false), dateCompleted: new Date(), cancelled: true],null)
             log.error("Stale Execution cleaned up: [${e.id}]")
         }
     }
 
 
-    public static synchronized logExecution(uri,project,user,issuccess,framework,execId,Date startDate=null, jobExecId=null, jobSummary=null,iscancelled=false, nodesummary=null){
+    public static synchronized logExecution(uri,project,user,issuccess,framework,execId,Date startDate=null, jobExecId=null, jobName=null, jobSummary=null,iscancelled=false, nodesummary=null){
 
         def internalLog = org.apache.log4j.Logger.getLogger("ExecutionService")
         if(null==project || null==user  ){
@@ -423,8 +423,10 @@ class ExecutionService implements ApplicationContextAware, Executor{
             org.apache.log4j.MDC.put('rundeckJobId',jobExecId)
             msg+="["+jobExecId+"] "
         }
-        if(jobSummary){
-            org.apache.log4j.MDC.put('rundeckJobName',jobSummary)
+        if(jobName){
+            org.apache.log4j.MDC.put('rundeckJobName',jobName)
+        }else{
+            org.apache.log4j.MDC.put('rundeckJobName','adhoc')
         }
         def logger = org.apache.log4j.Logger.getLogger("com.dtolabs.rundeck.log.internal")
         org.apache.log4j.MDC.put(LogConstants.MDC_ITEM_TYPE_KEY,"commandExec")
@@ -1023,13 +1025,13 @@ class ExecutionService implements ApplicationContextAware, Executor{
             log.error("failed to save execution status")
         }
 
-        def jobname=null
+        def jobname="adhoc"
         def jobid=null
         if (schedId) {
             ScheduledExecution.withTransaction{
             scheduledExecution = ScheduledExecution.get(schedId)
             execution = execution.merge()
-            jobname=scheduledExecution.jobName
+            jobname=scheduledExecution.groupPath?scheduledExecution.generateFullName():scheduledExecution.jobName
             jobid=scheduledExecution.id
             if (scheduledExecution) {
 
@@ -1048,23 +1050,15 @@ class ExecutionService implements ApplicationContextAware, Executor{
         if(execSaved) {
             //summarize node success
             String node=null
-            if (execmap.noderecorder && execmap.noderecorder instanceof NodeRecorder) {
+            if (execmap && execmap.noderecorder && execmap.noderecorder instanceof NodeRecorder) {
                 NodeRecorder rec = (NodeRecorder) execmap.noderecorder
                 final HashSet<String> success = rec.getSuccessfulNodes()
                 final HashSet<String> failed = rec.getFailedNodes()
                 final HashSet<String> matched = rec.getMatchedNodes()
-                if(failed.size()>0){
-                    node = lookupMessage("event.nodes.failed.summary",[success.size(),failed.size(),matched.size()] as Object[],"{0}/{1}")
-                }else if(success.size()>1){
-                    node = lookupMessage("event.nodes.success.summary",[success.size(),failed.size(),matched.size()] as Object[],"{0}/{1}")
-                }else if(success.size()>0){
-                    node = lookupMessage("event.nodes.success.single.summary",[matched.size(),success.iterator().next()] as Object[],"{1}")
-                }else{
-                    node = lookupMessage("event.nodes.empty.summary",null,"(none)")
-                }
+                node = [success.size(),failed.size(),matched.size()].join("/")
             }
             def Framework fw = frameworkService.getFramework()
-            logExecution(null, execution.project, execution.user, "true" == execution.status, fw, exId, execution.dateStarted, jobid, summarizeJob(scheduledExecution, execution), props.cancelled, node)
+            logExecution(null, execution.project, execution.user, "true" == execution.status, fw, exId, execution.dateStarted, jobid, jobname, summarizeJob(scheduledExecution, execution), props.cancelled, node)
             notificationService.triggerJobNotification(props.status == 'true' ? 'success' : 'failure', schedId, [execution: execution])
         }
     }
