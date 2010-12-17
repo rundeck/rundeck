@@ -845,7 +845,7 @@ div.progressContainer{
     height:14px;
     border:1px solid #aaa;
     float:right;
-    
+
 }
 
 div.progressContainer.small{
@@ -853,7 +853,7 @@ div.progressContainer.small{
 }
 div.progressBar{
     width:0px;
-    background:white;
+    background:#88f;
     height:12px;
     color:black;
     text-shadow: 1px 1px 1px #fff;
@@ -861,6 +861,19 @@ div.progressBar{
     line-height:9px;
     padding:1px 3px;
     border-right: 1px solid #999;
+}
+div.progressContainer.nodes{
+    border: 0;
+}
+div.progressBar.nodes{
+    background:#5d5;
+}
+div.progressBar.full{
+    border-right:0;
+}
+div.progressBar.empty{
+    background:none;
+    border-right: 0;
 }
 
 /* END execution output table */
@@ -1733,11 +1746,16 @@ tr.sectionhead td.eventtitle{
     white-space:nowrap;
     width:50px;
 }
+tr.sectionhead td.eventsummary{
+    overflow:hidden;
+    white-space:nowrap;
+    width:50px;
+}
 tr.sectionhead td.eventtitle.job{
 }
 tr.sectionhead td.eventtitle.adhoc{
     font-style:italic;
-    /*color: #888;*/
+    color: #888;
 }
 tr.sectionhead td.eventmessage{
     overflow:hidden;

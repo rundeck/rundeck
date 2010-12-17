@@ -18,6 +18,9 @@ class ReportService implements ReportAcceptor {
                 if(fields['rundeckJobId']){
                     fields['jcJobId']=fields['rundeckJobId']
                 }
+                if(fields['rundeckJobName']){
+                    fields['reportId']=fields['rundeckJobName']
+                }
                 if (fields['rundeckEpochDateStarted']) {
                     def long dstart = Long.parseLong(fields['rundeckEpochDateStarted'])
                     if(dstart>0){
@@ -64,7 +67,7 @@ class ReportService implements ReportAcceptor {
         if (rep && !rep.save(flush: true)) {
             System.err.println("error saving report: ${fields}")
             rep.errors.allErrors.each {
-                System.err.println(g.message(error:it))
+                System.err.println(it)
             }
         }
     }
@@ -258,7 +261,8 @@ class ReportService implements ReportAcceptor {
             user: 'author',
             node: 'node',
             message: 'message',
-            job: 'title',
+            //job filter repurposed for reportId 
+            job: 'reportId',
             title: 'title',
             tags: 'tags',
         ]

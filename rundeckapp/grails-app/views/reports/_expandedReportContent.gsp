@@ -29,30 +29,9 @@
                         </span>
                     </g:if>
                     <div class="rptitem">
-                    <span class="jobname ${it?.status != 'succeed' ? 'fail' : ''}">
-
-
-
-
-                                <g:if test="${it.jcJobId}">
-                                    <g:set var="jobtitle" value="${it.title}"/>
-                                </g:if>
-                                <g:elseif test="${it?.adhocExecution}">
-                                    <g:if test="${it?.adhocExecution && it.adhocScript}">
-                                        <g:set var="jobtitle" value="${it.adhocScript}"/>
-                                    </g:if>
-                                    <g:elseif test="${it?.adhocExecution}">
-                                        <g:set var="jobtitle" value="run"/>
-                                    </g:elseif>
-                                </g:elseif>
-                                <g:else>
-                                    <g:set var="jobtitle" value="${it.ctxCommand}"/>
-                                </g:else>
-                            <g:if test="${it.jcJobId}">
-                                <g:link controller="scheduledExecution" action="show" id="${it.jcJobId}"><g:message code="domain.ScheduledExecution.title"/> Detail &raquo;</g:link>
-                            </g:if>
-
-                    </span>
+                        <g:if test="${it.jcJobId}">
+                            <g:link controller="scheduledExecution" action="show" id="${it.jcJobId}"><g:message code="domain.ScheduledExecution.title"/> Detail &raquo;</g:link>
+                        </g:if>
                     </div>
                     <g:if test="${it.jcExecId }">
                         <div class="rptitem">
@@ -88,15 +67,42 @@
                     </span>
                     </div>
                 </g:else>
+                <g:if test="${it instanceof ExecReport}">
+                    <g:if test="${it?.node=~/^\d+\/\d+\/\d+$/}">
+                        <g:set var="vals" value="${it.node.split('/')}"/>
+                        <g:if test="${vals.length>2 && vals[2]!='0'}">
+                            <g:set var="a" value="${Integer.parseInt(vals[0])}"/>
+                            <g:set var="den" value="${Integer.parseInt(vals[2])}"/>
+                            <g:set var="perc" value="${Math.floor((a/den)*100)}"/>
+                        </g:if>
+                        <g:else>
+                            <g:set var="perc" value="${0}"/>
+                        </g:else>
+                        <span class="title"><g:message code="events.history.title.Completed"/>:</span>
+                        <div class="rptitem">
+                            <g:message code="events.history.title.PercentCompleted"/>: ${perc}%
+                        
+                            <div class="rptitem">
+                                <div>
+                                    <g:message code="status.label.succeed"/>: ${vals[0]}
+                                </div>
+                                <div>
+                                    <g:message code="status.label.fail"/>: ${vals[1]}
+                                </div>
+                            </div>
+                        </div>
+                    </g:if>
+                </g:if>
 
-               <g:if test="${it.message}">
-               <span class="title">Message:</span>
-                   <div class="rptmsgx">
-                   <div class="rptmessage msgtext">
-                    ${it.message.encodeAsHTML()}
-                   </div>
-                   </div>
-               </g:if>
+
+               %{--<g:if test="${it.message}">--}%
+               %{--<span class="title">Message:</span>--}%
+                   %{--<div class="rptmsgx">--}%
+                   %{--<div class="rptmessage msgtext">--}%
+                    %{--${it.message.encodeAsHTML()}--}%
+                   %{--</div>--}%
+                   %{--</div>--}%
+               %{--</g:if>--}%
 
                <g:if test="${it.reportId}">
                    <span class="info note">Report ID: ${it.reportId}</span>

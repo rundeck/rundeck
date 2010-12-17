@@ -477,7 +477,11 @@ class UtilityTagLib{
         }
         def String text=otext
         if(text && text.size()>max && max>=0){
-            text=text.substring(0,max)+"&hellip;"
+            if(attrs.front =='true'){
+                text="&hellip;"+text.substring(text.length()-max)
+            }else{
+                text=text.substring(0,max)+"&hellip;"
+            }
         }else if(text){
             text=text
         }

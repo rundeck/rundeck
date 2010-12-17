@@ -39,7 +39,7 @@
                     </table>
 
                     <div style="text-align:right;">
-                        <g:submitToRemote  value="Clear" name="clearFilter" url="[controller:'reports',action:'clear']" update="${rkey}evtsForm" />
+                        <g:submitToRemote  value="Clear" name="clearFilter" url="[controller:'reports',action:'clearFragment']" update="${rkey}evtsForm" />
                         <g:submitToRemote  value="Filter Events" name="filterAll" url="[controller:'reports',action:'eventsFragment']" update="${rkey}evtsForm" />
                     </div>
                 </div>
