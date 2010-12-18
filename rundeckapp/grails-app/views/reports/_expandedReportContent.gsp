@@ -71,23 +71,25 @@
                     <g:if test="${it?.node=~/^\d+\/\d+\/\d+$/}">
                         <g:set var="vals" value="${it.node.split('/')}"/>
                         <g:if test="${vals.length>2 && vals[2]!='0'}">
-                            <g:set var="a" value="${Integer.parseInt(vals[0])}"/>
-                            <g:set var="den" value="${Integer.parseInt(vals[2])}"/>
-                            <g:set var="perc" value="${Math.floor((a/den)*100)}"/>
+                            <g:set var="suc" value="${Integer.parseInt(vals[0])}"/>
+                            <g:set var="fail" value="${Integer.parseInt(vals[1])}"/>
+                            <g:set var="tot" value="${Integer.parseInt(vals[2])}"/>
+                            <g:set var="sucperc" value="${Math.floor((suc/tot)*100)}"/>
+                            <g:set var="perc" value="${Math.floor((fail/tot)*100)}"/>
                         </g:if>
                         <g:else>
                             <g:set var="perc" value="${0}"/>
                         </g:else>
                         <span class="title"><g:message code="events.history.title.Completed"/>:</span>
                         <div class="rptitem">
-                            <g:message code="events.history.title.PercentCompleted"/>: ${perc}%
+                            <g:message code="events.history.title.PercentFailed"/>: ${perc}%
                         
                             <div class="rptitem">
                                 <div>
-                                    <g:message code="status.label.succeed"/>: ${vals[0]}
+                                    <g:message code="status.label.fail"/>: ${vals[1]}
                                 </div>
                                 <div>
-                                    <g:message code="status.label.fail"/>: ${vals[1]}
+                                    <g:message code="status.label.succeed"/>: ${vals[0]}
                                 </div>
                             </div>
                         </div>
@@ -104,9 +106,6 @@
                    %{--</div>--}%
                %{--</g:if>--}%
 
-               <g:if test="${it.reportId}">
-                   <span class="info note">Report ID: ${it.reportId}</span>
-               </g:if>
                </div>
                </div>
            </td>

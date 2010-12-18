@@ -66,9 +66,9 @@
                     </g:elseif>
 
                     <g:if test="${expanddetail}">
-                        <g:link  controller="reports" action="index" params="${[nodeFilter:node.nodename]}" title="View History for Node ${node.nodename}">
-                            &raquo; history
-                        </g:link>
+                        %{--<g:link  controller="reports" action="index" params="${[nodeFilter:node.nodename]}" title="View History for Node ${node.nodename}">--}%
+                            <!--&raquo; history-->
+                        %{--</g:link>--}%
                         <div id="${ukey}node_detail_${i}" class="detail_content nodedetail" style="display:none">
                             <g:render template="nodeDetailsSimple" model="[node:node,key:ukey+'_'+node.nodename+'_key',projects:nodedata.projects]"/>
                         </div>
