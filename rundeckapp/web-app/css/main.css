@@ -844,8 +844,7 @@ div.progressContainer{
     background: #ddd;
     height:14px;
     border:1px solid #aaa;
-    float:right;
-
+    position:relative;
 }
 
 div.progressContainer.small{
@@ -866,14 +865,30 @@ div.progressContainer.nodes{
     border: 0;
 }
 div.progressBar.nodes{
-    background:#5d5;
+    background:#ccf;
+    border-right:2px solid #aaf;
 }
-div.progressBar.full{
-    border-right:0;
+div.progressBar.nodes.failure{
+    background:#fcc;
+    border-right:2px solid #faa;
 }
-div.progressBar.empty{
+div.progressBar.full,div.progressBar.full.nodes{
+}
+div.progressBar.empty, div.progressBar.empty.failure{
     background:none;
     border-right: 0;
+}
+div.progressContainer.empty.nodes{
+    border-right: 0;
+}
+div.progressContainer div.progressContent{
+    padding-top:2px;
+    padding-left: 5px;
+    position: absolute;
+    left:0;
+    right:0;
+    top:0;
+    width: 100%;
 }
 
 /* END execution output table */
@@ -1766,6 +1781,15 @@ tr.sectionhead td.statusmessage.fail{
 }
 tr.sectionhead td.statusmessage.succeed{
     color:green;
+}
+tr.sectionhead td.nodecount.fail{
+    color:red;
+    font-weight:bold;
+    /*color:black;*/
+    /*background: #fcc;*/
+}
+tr.sectionhead td.nodecount.ok{
+    color: #555;
 }
 
 tr.subsection span.title{
