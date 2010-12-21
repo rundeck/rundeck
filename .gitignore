@@ -16,3 +16,4 @@ rundeckapp/env.bash
 rundeckapp/work
 rundeckapp/web-app/plugins
 packaging/dist
+core/junit*.properties

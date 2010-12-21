@@ -70,7 +70,7 @@ done
 PATH=$JAVA_HOME/bin:$RDECK_HOME/bin:/usr/bin:/bin:/usr/sbin:/sbin
 export PATH
 
-$JAVA_HOME/bin/java -Dant.home=$ANT_HOME \
+exec ${JAVA_CMD:-java} -Dant.home=$ANT_HOME \
                     -Duser.java_home=$JAVA_HOME \
                     -Drdeck.home=$RDECK_HOME \
                     -Drdeck.base=$RDECK_BASE \

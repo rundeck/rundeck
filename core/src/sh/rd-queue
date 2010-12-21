@@ -35,7 +35,7 @@ fi
 #
 # Launch the cmdline tool
 #
-exec $JAVA_HOME/bin/java ${RDECK_JVM} -classpath ${CLI_CP} \
+exec ${JAVA_CMD:-java} ${RDECK_JVM} -classpath ${CLI_CP} \
      -Duser.java_home=$JAVA_HOME \
      -Drdeck.base=$RDECK_BASE \
      -Drdeck.home=$RDECK_HOME \

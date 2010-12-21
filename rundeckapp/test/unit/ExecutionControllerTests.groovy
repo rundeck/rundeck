@@ -23,15 +23,16 @@ com.jcraft.jsch.JSchException: java.net.ConnectException: Operation timed out
 ^^^END^^^"""
         fos.close()
         def items = []
-        def result = ec.parseOutput(tf1, 0, 0) {
+        def result = ec.parseOutput(tf1, 0, 0,null) {
             assert null != it
             items << it
             true
         }
+        assertEquals "wrong items.size: "+items.size(), 9,items.size()
         def fsize = tf1.length()
         assertTrue "parsing should be completed", result.completed
         assertEquals "parsing should be completed", fsize, result.storeoffset
-        assert 9 == items.size()
+
         //test partial metadata
         //11:17:34|SEVERE|greg|||localhost|Test.|error updating resources.properties: java.net.ConnectException: Connection refused
         assertEquals "incorrect time", "11:17:34", items[0].time
@@ -81,12 +82,12 @@ Another line
 """
         fos.close()
         def items = []
-        def result = ec.parseOutput(tf1, 0, 0) {
+        def result = ec.parseOutput(tf1, 0, 0,null) {
             assert null != it
             items << it
             true
         }
-        assert 1 == items.size()
+        assertEquals "item size is not 1: " + items.size(), 1, items.size()
         assertFalse "parsing should not be completed", result.completed
         assertEquals "parsing should finish at start of second line", 87, result.storeoffset
         assertEquals "incorrect time", "11:17:49", items[0].time
@@ -109,7 +110,7 @@ Another line
 """
         fos.close()
         items = []
-        result = ec.parseOutput(tf1, 0, 0) {
+        result = ec.parseOutput(tf1, 0, 0,null) {
             assert null != it
             items << it
             true
@@ -130,7 +131,7 @@ Another line
 
         items = []
         //parse starting at offset point of 1 byte, which should cause jump to next valid line
-        result = ec.parseOutput(tf1, 1, 0) {
+        result = ec.parseOutput(tf1, 1, 0,null) {
             assert null != it
             items << it
             true
@@ -151,7 +152,7 @@ Another line
 
         items = []
         //parse starting at offset point of 87 bytes, at start of second message
-        result = ec.parseOutput(tf1, 87, 0) {
+        result = ec.parseOutput(tf1, 87, 0,null) {
             assert null != it
             items << it
             true
@@ -172,7 +173,7 @@ Another line
 
         items = []
         //parse starting at offset point of 88 bytes, which should cause no items to be parsed
-        result = ec.parseOutput(tf1, 88, 0) {
+        result = ec.parseOutput(tf1, 88, 0,null) {
             assert null != it
             items << it
             true
@@ -184,7 +185,7 @@ Another line
 
         items = []
         //parse with only 86 bytes buffer, which should cause the second line to not be parsed
-        result = ec.parseOutput(tf1, 0, 86) {
+        result = ec.parseOutput(tf1, 0, 86,null) {
             assert null != it
             items << it
             true
@@ -211,7 +212,7 @@ Another line
         fos << """^^^11:17:49|WARNING|greg|ATest|longTest|localhost|Test.ATest|One Line|extra^^^"""
         fos.close()
         def items = []
-        def result = ec.parseOutput(tf1, 0, 0) {
+        def result = ec.parseOutput(tf1, 0, 0,null) {
             assert null != it
             items << it
             true
@@ -231,7 +232,7 @@ Another line
         fos << """^^^11:17:49|WARNING|One Line|extra^^^"""
         fos.close()
         items = []
-        result = ec.parseOutput(tf1, 0, 0) {
+        result = ec.parseOutput(tf1, 0, 0,null) {
             assert null != it
             items << it
             true
@@ -259,7 +260,7 @@ Another line
         fos << """^^^11:17:49|WARNING|greg|ATest|longTest|localhost  |Test.ATest|Stuff^^^"""
         fos.close()
         def items = []
-        def result = ec.parseOutput(tf1, 0, 0) {
+        def result = ec.parseOutput(tf1, 0, 0,null) {
             assert null != it
             items << it
             true
@@ -279,7 +280,7 @@ Another line
         fos << """^^^11:17:49|WARNING|greg|ATest|longTest|  localhost|Test.ATest|Stuff^^^"""
         fos.close()
         items = []
-        result = ec.parseOutput(tf1, 0, 0) {
+        result = ec.parseOutput(tf1, 0, 0,null) {
             assert null != it
             items << it
             true
@@ -299,7 +300,7 @@ Another line
         fos << """^^^11:17:49|WARNING|greg|ATest|  longTest  |localhost|Test.ATest|Stuff^^^"""
         fos.close()
         items = []
-        result = ec.parseOutput(tf1, 0, 0) {
+        result = ec.parseOutput(tf1, 0, 0,null) {
             assert null != it
             items << it
             true
@@ -319,7 +320,7 @@ Another line
         fos << """^^^  11:17:49  |  WARNING | greg | ATest |  longTest  |   localhost | Test.ATest  |Stuff^^^"""
         fos.close()
         items = []
-        result = ec.parseOutput(tf1, 0, 0) {
+        result = ec.parseOutput(tf1, 0, 0,null) {
             assert null != it
             items << it
             true
@@ -334,4 +335,54 @@ Another line
         assertEquals "incorrect command", "longTest", items[0].command
         assertEquals "incorrect mesg:'${items[0].mesg}'", "Stuff\n", items[0].mesg
      }
+
+    void testParseOutputUTF8() {
+        def ec = new ExecutionController()
+        assert ec != null
+        def File tf1 = File.createTempFile("test.", "txt")
+        tf1.deleteOnExit()
+        def fos = new OutputStreamWriter(new FileOutputStream(tf1),"UTF-8")
+        //File content contains UTF8, assert that the read result is correct
+        fos << """^^^03:21:50|INFO|admin|||centos5||/bin/sh: httpd: ??????? ?? ???????^^^
+^^^03:21:51|SEVERE|Execution failed on the following 1 nodes: [centos5]^^^
+^^^END^^^"""
+        fos.close()
+        def items = []
+        def result = ec.parseOutput(tf1, 0, 0,"UTF-8") {
+            assert null != it
+            items << it
+            true
+        }
+        assertEquals "item size is not 1: " + items.size(), 2, items.size()
+        assertTrue "parsing should be completed", result.completed
+        assertEquals "parsing should finish with correct offset: "+result.storeoffset, 156, result.storeoffset
+        assertEquals "incorrect mesg:'${items[0].mesg}'", "/bin/sh: httpd: ??????? ?? ???????\n", items[0].mesg
+
+
+    }
+    void testParseOutputUTF16() {
+        def ec = new ExecutionController()
+        assert ec != null
+        def File tf1 = File.createTempFile("test.", "txt")
+        tf1.deleteOnExit()
+        def fos = new OutputStreamWriter(new FileOutputStream(tf1),"UTF-16")
+        //File content contains UTF8, assert that the read result is correct
+        fos << """^^^03:21:50|INFO|admin|||centos5||/bin/sh: httpd: ??????? ?? ???????^^^
+^^^03:21:51|SEVERE|Execution failed on the following 1 nodes: [centos5]^^^
+^^^END^^^"""
+        fos.close()
+        def items = []
+        def result = ec.parseOutput(tf1, 0, 0,"UTF-16") {
+            assert null != it
+            items << it
+            true
+        }
+        assertEquals "item size is not 1: " + items.size(), 2, items.size()
+        assertTrue "parsing should be completed", result.completed
+        assertEquals "parsing should finish with correct offset: "+result.storeoffset, 314, result.storeoffset
+        assertEquals "incorrect mesg:'${items[0].mesg}'", "/bin/sh: httpd: ??????? ?? ???????\n", items[0].mesg
+
+
+    }
+
 }
