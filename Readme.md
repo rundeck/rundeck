@@ -52,9 +52,11 @@ Requirements
 
 Java 5 (openjdk, sun)
 
-To build docs:
+To build docs (required for rpm, not required for launcher):
 
 [pandoc](http://johnmacfarlane.net/pandoc/)
+
+*Note, to build docs for launcher, do `make clean docs`, then `make`*
 
 Documentation
 ======
