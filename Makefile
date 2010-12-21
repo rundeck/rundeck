@@ -6,7 +6,7 @@ RELEASE=0
 GRAILSVERS=1.2.0
 JETTYVERS=6.1.21
 
-GRAILS_HOME=${BUILD_ROOT}/local/grails-$GRAILSVERS
+GRAILS_HOME=${PWD}/build/local/grails-${GRAILSVERS}
 #PATH=$PATH:$GRAILS_HOME/bin
 
 GARGS += -Dgrails.project.work.dir=${PWD}/rundeckapp/work
@@ -14,30 +14,30 @@ GARGS += -Dgrails.project.work.dir=${PWD}/rundeckapp/work
 GRAILS=$(GRAILS_HOME)/bin/grails $(GARGS)
 
 RUNDECK_FILES=$(shell find rundeckapp/{src,test,grails-app,scripts} -name "*.java" -o -name "*.groovy" -o -name "*.gsp")
-CORE_FILES=$(shell find core/src -name "*.java" -o name "*.templates" -o -path "*/src/sh/*")
+CORE_FILES=$(shell find core/src -name "*.java" -o -name "*.templates" -o -path "*/src/sh/*")
 
 core = core/target/rundeck-core-$(VERSION).jar
 war = rundeckapp/target/rundeck-$(VERSION).war
 launcher = rundeckapp/target/rundeck-launcher-$(VERSION).jar
 
-.PHONY: clean rundeck docs appdocs
+.PHONY: clean rundeck docs makedocs
 
 rundeck: $(war) $(launcher)
 	@echo $(VERSION)-$(RELEASE)
 
-rpm: $(war)
+rpm: docs $(war)
 	cd packaging; $(MAKE) clean rpm
 
-docs:
+makedocs:
 	$(MAKE) -C docs
 
 $(core): $(CORE_FILES)
 	./build.sh rundeck_core
 
-$(war): appdocs $(core) $(RUNDECK_FILES)
+$(war): $(core) $(RUNDECK_FILES)
 	./build.sh rundeckapp
 
-appdocs: docs
+docs: makedocs
 	-rm -rf ./rundeckapp/target/launcher-contents/docs ./rundeckapp/web-app/docs
 	mkdir -p ./rundeckapp/target/launcher-contents/docs/man/man1
 	mkdir -p ./rundeckapp/target/launcher-contents/docs/man/man5
@@ -47,7 +47,7 @@ appdocs: docs
 	cp docs/en/dist/man/man1/*.1 ./rundeckapp/target/launcher-contents/docs/man/man1
 	cp docs/en/dist/man/man5/*.5 ./rundeckapp/target/launcher-contents/docs/man/man5
 
-$(launcher): appdocs $(core) $(RUNDECK_FILES)
+$(launcher): $(core) $(RUNDECK_FILES)
 	./build.sh rundeckapp
 
 .PHONY: test
