@@ -12,7 +12,7 @@ Another benefit is that multiple aclpolicy files can be stored in the
 same directory, helping the management of each set of rules.  This
 reduces the complexity of each file.  The default path is
 
-* RPM install: `/etc/rundeck/client`
+* RPM install: `/etc/rundeck`
 * Launcher install: `$RDECK_BASE/etc`
 
 Policy files are parsed using XPath that is fairly liberal in what it
