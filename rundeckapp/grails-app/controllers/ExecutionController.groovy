@@ -190,7 +190,7 @@ class ExecutionController {
             isFormatted = "true"==params.formatted
         }
 
-        def Map result = parseOutput(file,0,-1){ Map msgbuf ->
+        def Map result = parseOutput(file,0,-1,null){ Map msgbuf ->
             response.outputStream << (isFormatted?"${msgbuf.time} [${msgbuf.user}@${msgbuf.node} ${msgbuf.context} ${msgbuf.command}][${msgbuf.level}] ${msgbuf.mesg}" : msgbuf.mesg)
             true
         }
@@ -337,7 +337,7 @@ class ExecutionController {
         if(bufsize<(25*1024)){
             bufsize=25*1024
         }
-        def Map result = parseOutput(file,offset,bufsize){ data ->
+        def Map result = parseOutput(file,offset,bufsize,null){ data ->
             entry << data
             (0==max || entry.size()<max)
         }
@@ -390,7 +390,7 @@ class ExecutionController {
      * @param callback a closure that has 1 parameter, the map of data to read.  if it returns false, reading will stop
      * @return Map containing two keys, 'storeoffset': next offset to start at, if buffersize is defined, and 'completed': boolean value if the log file has been completely read
      */
-     public Map parseOutput ( File file, Long offset, Long bufsize = -1 , Closure callback){
+     public Map parseOutput ( File file, Long offset, Long bufsize = -1 ,def String encoding=null, Closure callback){
 
 
         def initoffset=offset
@@ -405,16 +405,32 @@ class ExecutionController {
         def chars=0;
         def tot=file.length()
         //start at offset byte.
-        RandomAccessFile raf = new RandomAccessFile(file,"r")
-        def totsize = raf.getChannel().size()
-        def size = raf.getChannel().size()
+
+         //we use RandomAccessFile to call readLine and record the byte-oriented offset
+        RandomAccessFile raf = new RandomAccessFile(file,'r')
+
+         //we use InputStreamReader to read bytes to chars given encoding option
+         //in this case readLine may buffer bytes for decoding purposes, so the offset is not correct
+        final FileInputStream stream = new FileInputStream(file)
+        InputStreamReader fr
+         if(null!=encoding){
+             fr= new InputStreamReader(stream,encoding)
+         }else{
+             //use default encoding
+             fr= new InputStreamReader(stream)
+         }
+
+        def totsize = stream.getChannel().size()
+        def size = stream.getChannel().size()
         if(offset>0){
+            stream.getChannel().position(offset)
             raf.seek(offset)
         }
 //        log.info("starting tailExecutionOutput: offset: "+offset+", completed: "+completed)
         def String lSep = System.getProperty("line.separator");
         def tstart=System.currentTimeMillis();
-        def String line = raf.readLine()
+        def String line = fr.readLine()
+        def oline=raf.readLine() //discarded content
         def diff = System.currentTimeMillis()-tstart;
 
         if(bufsize > 0  && size-offset > bufsize){
@@ -518,11 +534,12 @@ class ExecutionController {
                 buf << line + lSep
             }
             tstart=System.currentTimeMillis();
-            line = raf.readLine()
+            line = fr.readLine()//kept
+            oline=raf.readLine()//discarded
             diff=System.currentTimeMillis()-tstart;
         }
+        fr.close()
         raf.close()
-
         if(msgbuf){
             //incomplete message entry.  We leave it until next time unless completed==true
             if(completed){
