@@ -10,6 +10,8 @@ export JAVA_HOME
 PATH=$JAVA_HOME/bin:$RDECK_HOME/tools/bin:$PATH
 export PATH
 
+export JAVA_CMD=$JAVA_HOME/bin/java
+
 if test -t 0 -a -z "$RUNDECK_CLI_TERSE"
 then
   RUNDECK_CLI_TERSE=true
