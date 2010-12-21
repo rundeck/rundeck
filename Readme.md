@@ -24,18 +24,28 @@ To build clean:
 Installation
 ======
 
+There are two install options, a self-contained jar file, or RPM.
+
 To start from the rundeck-launcher.jar, put it in a directory named ~/rundeck, then execute:
 
     java -jar rundeck-launcher-1.0.0.jar
 
-OR To install from Yum, simply execute:
+If you'd like to install via RPM, you can use Yum:
 
     rpm -Uvh http://rundeck.org/latest.rpm
     yum install rundeck
 
-OR directly from RPM:
+OR install directly from RPM:
 
     rpm -ivh rundeck-1.0.0.xxx.rpm
+
+Once the RPM is installed, execute:
+
+    sudo /etc/init.d/rundeckd start
+
+The server should launch on port 4440, with default username/password of `admin/admin`.
+
+* For more info and configuration information, see the [RunDeck Guide](http://rundeck.org/docs/RunDeck-Guide.html)
 
 Requirements
 =======
