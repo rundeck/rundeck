@@ -21,17 +21,15 @@
     <thead>
 
     <tr>
-        <th colspan="1"></th>
-        <th><g:message code="events.history.title.Name"/></th>
-        <th><g:message code="events.history.title.Nodes"/></th>
+        <th colspan="2"><g:message code="events.history.title.Name"/></th>
         <th colspan="1"><g:message code="events.history.title.Summary"/></th>
 
         <g:if test="${options.tags}">
             <th><g:message code="jobquery.title.tagsFilter"/></th>
         </g:if>
-        <th><g:message code="jobquery.title.projFilter"/></th>
+        <th colspan="2"><g:message code="events.history.title.NodeFailureCount"/></th>
         <th><g:message code="jobquery.title.userFilter"/></th>
-        <th><g:message code="events.history.title.FailureRate"/></th>
+        <th><g:message code="jobquery.title.projFilter"/></th>
         <th><g:message code="jobquery.title.endFilter"/></th>
     </tr>
     </thead>
@@ -62,14 +60,6 @@
                 %{--</g:elseif>--}%
                 <g:else>
                     <g:message code="events.history.jobname.adhoc"/>
-                </g:else>
-            </td>
-            <td style="white-space:nowrap;text-align:right;" class="${vals[1]!='0'?'fail':'ok'}  nodecount">
-                <g:if test="${vals[1]!='0'}">
-                    ${vals[1]} failed
-                </g:if>
-                <g:else>
-                    ${vals[0]} ok
                 </g:else>
             </td>
 
@@ -106,14 +96,16 @@
             </td>
             </g:if>
 
-            <td class="sepL project">
-                ${it?.ctxProject.encodeAsHTML()}
-            </td>
-            <td class=" user">
-                ${it?.author.encodeAsHTML()}
+            <td style="white-space:nowrap;text-align:right;" class="${vals[1]!='0'?'fail':'ok'}  nodecount sepL">
+                <g:if test="${vals[1]!='0'}">
+                    ${vals[1]} failed
+                </g:if>
+                <g:else>
+                    ${vals[0]} ok
+                </g:else>
             </td>
 
-            <td>
+            <td >
                 <g:if test="${it instanceof ExecReport}">
                     <g:if test="${it?.node=~/^\d+\/\d+\/\d+$/}">
                         <g:set var="vals" value="${it.node.split('/')}"/>
@@ -139,7 +131,15 @@
                 </g:if>
             </td>
 
-            <td style="white-space:nowrap" class="right">
+            <td class=" sepL user">
+                ${it?.author.encodeAsHTML()}
+            </td>
+
+            <td class="project">
+                ${it?.ctxProject.encodeAsHTML()}
+            </td>
+
+            <td style="white-space:nowrap" class="right sepL">
                 <g:if test="${it.dateCompleted}">
                     <span title="${it?.actionType ? it.actionType : it.status}: <g:relativeDate atDate='${it?.dateCompleted}'/>">
                         <g:relativeDate elapsed="${it?.dateCompleted}" />

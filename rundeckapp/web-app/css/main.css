@@ -1033,7 +1033,9 @@ table.executionList tr.fail a, table.jobsList tr.fail a{
     color:red;
 }
 
-
+table.jobsList td{
+    padding:2px 4px;
+}
 
 table.executionList tr.nowrunning a, table.jobsList tr.nowrunning a{
 }
