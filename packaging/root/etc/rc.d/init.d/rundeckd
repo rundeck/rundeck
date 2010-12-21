@@ -8,10 +8,10 @@
 
 # Source function library
 . /etc/rc.d/init.d/functions
-. /etc/rundeck/client/profile
+. /etc/rundeck/profile
 
 prog="rundeckd"
-rundeckd="${JAVA_HOME:-/usr}/bin/java ${RDECK_JVM} -cp ${BOOTSTRAP_CP}:/etc/rundeck/server com.dtolabs.rundeck.RunServer /etc/rundeck/client 4440"
+rundeckd="${JAVA_HOME:-/usr}/bin/java ${RDECK_JVM} -cp ${BOOTSTRAP_CP}:/etc/rundeck com.dtolabs.rundeck.RunServer /etc/rundeck 4440"
 RETVAL=0
 PID_FILE=/var/run/rundeckd.pid
 

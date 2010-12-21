@@ -39,21 +39,18 @@ fi
 %attr(755, root, root) /etc/rc.d/init.d/rundeckd
 
 %dir /etc/rundeck
-%dir /etc/rundeck/client
-%dir /etc/rundeck/server
 
 # Client Configuration
-%config /etc/rundeck/client/framework.properties
-%config /etc/rundeck/client/admin.aclpolicy
-%config /etc/rundeck/client/log4j.properties
-%config /etc/rundeck/client/profile
-%config /etc/rundeck/client/project.properties
+%config /etc/rundeck/framework.properties
+%config /etc/rundeck/admin.aclpolicy
+%config /etc/rundeck/log4j.properties
+%config /etc/rundeck/profile
+%config /etc/rundeck/project.properties
 
 # Server Configuration
-%config /etc/rundeck/server/jaas-loginmodule.conf
-%config /etc/rundeck/server/log4j.properties
-%config /etc/rundeck/server/realm.properties
-%config /etc/rundeck/server/rundeck-config.properties
+%config /etc/rundeck/jaas-loginmodule.conf
+%config /etc/rundeck/realm.properties
+%config /etc/rundeck/rundeck-config.properties
 
 %attr(6775, rundeck, rundeck) %dir /var/log/rundeck
 %dir /var/lib/rundeck
