@@ -106,7 +106,7 @@ runtime.
 The install process requires that the latest version of Java 1.6
 be installed. Both the [Open JDK](http://openjdk.java.net/) and [Sun/Oracle](http://java.com/) JVMs can be used.
 You must have the JAVA_HOME environment variable defined
-in your environment before running the installation. 
+in your environment before running the launcher.  The RPM will use the java found on your path. See [Setting JAVA_HOME](#setting-java_home) if you want to run a different version of java.
 
 Verify your Java version to check it meets the requirement:
 
