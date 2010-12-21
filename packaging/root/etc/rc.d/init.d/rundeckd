@@ -17,7 +17,7 @@ PID_FILE=/var/run/rundeckd.pid
 
 start() {
 	echo -n $"Starting $prog: "
-	nohup $rundeckd 2>&1 >>/var/log/rundeck/service.log &
+	nohup runuser -l rundeck -c "$rundeckd" 2>&1 >>/var/log/rundeck/service.log &
  	RETVAL=$?	
 	PID=$!
 	echo $PID > /var/run/rundeckd.pid

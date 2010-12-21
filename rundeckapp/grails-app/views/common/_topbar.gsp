@@ -121,7 +121,7 @@ function createProject(value){
         </g:ifPageProperty>
         </g:ifPageProperty>
         <g:link controller="framework" action="nodes" class=" toptab ${resselected}"  style="height:29px">
-           <g:message code="gui.menu.Resources"/>
+           <g:message code="gui.menu.Run"/>
         </g:link>
 
         <g:set var="eventsselected" value=""/>

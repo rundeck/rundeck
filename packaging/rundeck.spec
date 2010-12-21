@@ -1,6 +1,6 @@
 name: rundeck
 version: 1.0
-release: 0%{?_buildnumber:.%{_buildnumber}}%{?_alphatag:.%{_alphatag}}
+release: 1%{?_buildnumber:.%{_buildnumber}}%{?_alphatag:.%{_alphatag}}
 license: APL
 summary: It Slices, it Dices, it Takes Out Your Garbage
 group: System
@@ -12,6 +12,10 @@ requires: openssh
 %description
 RunDeck, is no ordinary wooden deck. You can build a bon fire on this deck.
 Rundeck provides a single console for dispatching commands across many resources.
+
+%changelog
+* Wed Dec 15 2010 Noah Campbell <noahcampbell@gmail.com> 1.0-1
+	- Run the service as the rundeck user.
 
 %pre
 getent group rundeck >/dev/null || groupadd rundeck
@@ -104,5 +108,3 @@ fi
 %attr(755, root, root) /usr/bin/rd-jobs
 %attr(755, root, root) /usr/bin/rd-project
 %attr(755, root, root) /usr/bin/rd-queue
-
-%changelog
