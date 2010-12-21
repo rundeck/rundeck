@@ -11,7 +11,7 @@ There are a few types of external integration:
 :   Provides a set of Nodes in XML format. E.g. a CMDB or hosted virtual machines service. RunDeck can be configured to use a different provider for each Project, and can refresh the Resources it uses from this provider.
 
 [*Resource Editor*](#resource-editor)
-:   Provides a web-based editor to manage the Node definitions. RunDeck can link to this editor from the Resources page, and has optional JavaScript interactions to make editing externally-managed Node resources integrated with the RunDeck GUI.
+:   Provides a web-based editor to manage the Node definitions. RunDeck can link to this editor from the Run page, and has optional JavaScript interactions to make editing externally-managed Node resources integrated with the RunDeck GUI.
 
 [*Option Model Provider*](#option-model-provider)
 :   Provides a dataset in JSON format, used as input option values for Jobs. Each Job Option can be configured to load the set of allowed input values from a remote service, and the RunDeck GUI will prompt the user to choose from those values when running a Job.
@@ -139,7 +139,7 @@ Finally, you should be able to do HTTP GET for the CGI (e.g. `http://myserver/sc
 
 Once you have the CGI producing valid XML, you can set the `project.resources.url` property in your project's project.properties file to be the URl to the CGI.  
 
-Finally, within RunDeck, you can Refresh the Nodes from within the Resources tab.  You should see a Node entry for each EC2 Instance that is available.
+Finally, within RunDeck, you can Refresh the Nodes from within the Run tab.  You should see a Node entry for each EC2 Instance that is available.
 
 You can easily manage the set of Nodes that gets returned from EC2 by organizing them by use of EC2 Tags, and applying query Filters to the EC2 API query.
 
@@ -399,7 +399,7 @@ selected, the Job will have the matching package versions.
 Resource Editor
 ------
 
-The Resource Editor integration is a way to link to a third-party system used for managing Node definitions from within the RunDeck Resources listing. Each Node entry in the resources.xml can define a URL to provide an "Edit" link that will appear in the RunDeck Resources listing for that Node.
+The Resource Editor integration is a way to link to a third-party system used for managing Node definitions from within RunDeck. Each Node entry in the resources.xml can define a URL to provide an "Edit" link that will appear in the RunDeck Run page for that Node.
 
 This allows you to make use of the Resource Model Provider in a more seamless way.  RunDeck will load the resource.xml from the third-party Provider system, and users of RunDeck can click straight to the Editor for those Nodes.  The Provider and the Editor could be the same system, or they could both be custom CGI scripts that integrate with a third system.
 

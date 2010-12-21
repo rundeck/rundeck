@@ -26,12 +26,13 @@ directory configuration.
 #### Navigation
 
 The RunDeck page header contains global navigation control to move
-between browsing Resources, History and Jobs. It also has links to
+between browsing Run, History and Jobs. It also has links to
 logout and view the user's profile.
 
-Resources
+Run
 
-:    The Resources page displays the Node resources configured in your
+:    The Run page is used to execute ad hoc commands. It
+     displays the Node resources configured in your
      Project resource model. Like the Jobs and History pages, a filter
      control can be used to limit the listing to just the Node resources
      matching the filter criteria.
@@ -120,7 +121,7 @@ or choosing the "Create a Project" item from the menu. A dialog window
 will open prompting you for a project name.
 
 After typing in your project name, RunDeck initializes it and returns
-you to the "Resources" view.
+you to the "Run" page.
 
 The `rd-project` shell tool can also be used to create a
 project.
@@ -143,7 +144,7 @@ a bootstrap resource model.
 The initial resource model generated during project setup will contain
 information just about the RunDeck server host and is useful just for
 running local commands on the RunDeck server. 
-You can browse the project resource model by going to the "Resources" page.
+You can browse the project resource model by going to the "Run" page.
 
 In the shell, you can list the Node resources in a resource
 model using the shell tool, `dispatch`. 
@@ -290,7 +291,7 @@ console or with the `dispatch` tool.
 
 #### Filtering nodes graphically  
 
-Node resources are displayed in the Resources page. Setting the
+Node resources are displayed in the Run page. Setting the
 project menu in the navigation bar will list just the Nodes
 in that project's resource model.
 
