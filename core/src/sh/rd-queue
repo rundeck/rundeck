@@ -21,8 +21,8 @@ PDIR=$(cd `dirname $0/`/../.. && pwd)
 
 if [ -r $RDECK_BASE/etc/framework.properties ]; then
 	. $RDECK_BASE/etc/profile
-elif [ -r /etc/rundeck/client/profile ]; then
-	. /etc/rundeck/client/profile
+elif [ -r /etc/rundeck/profile ]; then
+	. /etc/rundeck/profile
 elif [ -r "$PDIR/etc/profile" ]; then
 	. $PDIR/etc/profile
 fi

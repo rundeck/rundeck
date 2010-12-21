@@ -31,7 +31,7 @@ _/usr/sbin/alternatives_ and the processing of setting alternatives can be found
 
 If you have installed a JDK or JRE in a unique directory and do not want to alter the global system
 configuration, then simply setting JAVA_HOME before running any command will use the version of java
-found in JAVA_HOME/bin.  Updating /etc/rundeck/client/profile with JAVA_HOME is another option as 
+found in JAVA_HOME/bin.  Updating /etc/rundeck/profile with JAVA_HOME is another option as 
 well.
     
 ### Launcher
@@ -145,7 +145,7 @@ specifies the use of the [PropertyFileLoginModule]:
     RDpropertyfilelogin {
       org.mortbay.jetty.plus.jaas.spi.PropertyFileLoginModule required
       debug="true"
-      file="/etc/rundeck/server/config/realm.properties";
+      file="/etc/rundeck/realm.properties";
     };
 
 [JAAS]: http://docs.codehaus.org/display/JETTY/JAAS
