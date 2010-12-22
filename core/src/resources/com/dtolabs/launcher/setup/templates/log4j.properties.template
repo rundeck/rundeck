@@ -35,14 +35,6 @@ log4j.appender.file.layout=org.apache.log4j.PatternLayout
 log4j.appender.file.layout.ConversionPattern=%d{ISO8601} [%t] %-5p %c - %m%n
 
 #
-# Chainsaw - SocketAppender
-#
-log4j.appender.Chainsaw=org.apache.log4j.net.SocketAppender
-log4j.appender.Chainsaw.remoteHost=localhost
-log4j.appender.Chainsaw.port=4445
-log4j.appender.Chainsaw.locationInfo=true
-
-#
 # CommonLog - SocketAppender for remote logging of events
 #
 # uncomment these lines and configure them to log the report

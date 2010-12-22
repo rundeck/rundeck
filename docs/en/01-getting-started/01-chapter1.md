@@ -168,11 +168,13 @@ will also be generated.
 If you want to install RunDeck on Linux via a binary installer, you
 can generally do so through the RPM tool that comes with your distribution. 
 
-    $ rpm -i rundeck-1.0.0.noarch.rpm
+    # rpm -i rundeck-1.0.0.noarch.rpm
 
-To install it using yum:
-    
-    $ yum install rundeck
+To install it using yum, first install the yum repo package and then
+run yum install:
+
+    # rpm -Uvh http://rundeck.org/latest.rpm
+    # yum install rundeck
 
 ### Installing with Launcher
 

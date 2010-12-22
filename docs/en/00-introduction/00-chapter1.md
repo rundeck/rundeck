@@ -12,6 +12,10 @@ procedures in data center or cloud environments. RunDeck provides a number
 of features that will alleviate time-consuming grunt work and make it easy for
 you to scale up your scripting efforts.
 
+Already itching to install it? Jump ahead to
+[Installing RunDeck](#installing-rundeck).
+
+
 ### Who makes the RunDeck software?
 
 RunDeck is developed on GitHub as a project called
@@ -109,6 +113,10 @@ Two installation methods are supported:
 * Launcher: The launcher is intended for quick setup, to get you
   running right away.  Perfect for bootstrapping a project or trying
   a new feature.  
+
+## Feedback
+
+If you find problems with RunDeck, or if you have questions, remarks, or ideas about it, please mail to the RunDeck mailing list rundeck-discuss@groups.google.com. 
 
 ## What's next?
 

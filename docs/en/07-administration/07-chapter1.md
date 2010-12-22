@@ -31,7 +31,7 @@ _/usr/sbin/alternatives_ and the processing of setting alternatives can be found
 
 If you have installed a JDK or JRE in a unique directory and do not want to alter the global system
 configuration, then simply setting JAVA_HOME before running any command will use the version of java
-found in JAVA_HOME/bin.  Updating /etc/rundeck/client/profile with JAVA_HOME is another option as 
+found in JAVA_HOME/bin.  Updating /etc/rundeck/profile with JAVA_HOME is another option as 
 well.
     
 ### Launcher
@@ -62,17 +62,19 @@ installation methods. See [RPM layout](#rpm-layout) and
 #### RPM layout
 
     /etc/rundeck
-    |-- client
-    |   |-- admin.aclpolicy
-    |   |-- framework.properties
-    |   |-- log4j.properties
-    |   |-- profile
-    |   `-- project.properties
-    `-- server
-        |-- jaas-loginmodule.conf
-        |-- log4j.properties
-        |-- realm.properties
-        `-- rundeck-config.properties
+    |-- admin.aclpolicy
+    |-- framework.properties
+    |-- log4j.properties
+    |-- profile
+    |-- project.properties
+    |-- jaas-loginmodule.conf
+    |-- log4j.properties
+    |-- realm.properties
+    |-- rundeck-config.properties
+    `-- ssl
+        |-- ssl.properties
+        |-- keystore (not packaged)
+        `-- truststore (not packaged)
 
 #### Launcher layout
 
@@ -145,7 +147,7 @@ specifies the use of the [PropertyFileLoginModule]:
     RDpropertyfilelogin {
       org.mortbay.jetty.plus.jaas.spi.PropertyFileLoginModule required
       debug="true"
-      file="/etc/rundeck/server/config/realm.properties";
+      file="/etc/rundeck/realm.properties";
     };
 
 [JAAS]: http://docs.codehaus.org/display/JETTY/JAAS
@@ -675,7 +677,7 @@ a HERE document.
 Replace the first line "Venkman.local" with the hostname for your
 server, and use any other organizational values you like:
     
-        keytool -keystore etc/keystore -alias rundeck -genkey -keyalg RSA -keypass admin -storepass admin  <<!
+        keytool -keystore etc/keystore -alias rundeck -genkey -keyalg RSA -keypass adminadmin -storepass adminadmin  <<!
         Venkman.local
         devops
         My org
@@ -699,7 +701,15 @@ CLI tools:
 keystore and the appropriate passwords:
 
         vi server/config/ssl.properties
-    
+
+An example ssl.properties file (from the RPM package).
+
+        keystore=/etc/rundeck/ssl/keystore
+        keystore.password=adminadmin
+        key.password=adminadmin
+        truststore=/etc/rundeck/ssl/truststore
+        truststore.password=adminadmin
+        
 (5) Configure client properties.  Modify the file
 `$RDECK_BASE/etc/framework.properties` and change these properties: 
 
