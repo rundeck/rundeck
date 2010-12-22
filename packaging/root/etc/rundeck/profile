@@ -31,6 +31,13 @@ export RDECK_JVM="-Djava.security.auth.login.config=/etc/rundeck/jaas-loginmodul
 	-Drdeck.projects=/var/rundeck/projects \
 	-Drdeck.runlogs=/var/lib/rundeck/logs \
 	-Drundeck.config.name=/etc/rundeck/rundeck-config.properties"
+	
+#
+# SSL Configuration - Uncomment the following to enable.  Check SSL.properties for details.
+# 
+#export RDECK_JVM="$RDECK_JVM -Drundeck.ssl.config=/etc/rundeck/ssl/ssl.properties -Dserver.https.port=4443"
+
+export RDECK_SSL_OPTS="-Djavax.net.ssl.trustStore=$RDECK_BASE/ssl/truststore -Djavax.net.ssl.trustStoreType=jks -Djava.protocol.handler.pkgs=com.sun.net.ssl.internal.www.protocol"
 
 if test -t 0 -a -z "$RUNDECK_CLI_TERSE"
 then

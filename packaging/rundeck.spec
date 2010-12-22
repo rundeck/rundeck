@@ -41,16 +41,20 @@ fi
 %dir /etc/rundeck
 
 # Client Configuration
-%config /etc/rundeck/framework.properties
-%config /etc/rundeck/admin.aclpolicy
-%config /etc/rundeck/log4j.properties
-%config /etc/rundeck/profile
-%config /etc/rundeck/project.properties
+%config(noreplace) /etc/rundeck/framework.properties
+%config(noreplace) /etc/rundeck/admin.aclpolicy
+%config(noreplace) /etc/rundeck/log4j.properties
+%config(noreplace) /etc/rundeck/profile
+%config(noreplace) /etc/rundeck/project.properties
 
 # Server Configuration
-%config /etc/rundeck/jaas-loginmodule.conf
-%config /etc/rundeck/realm.properties
-%config /etc/rundeck/rundeck-config.properties
+%config(noreplace) /etc/rundeck/jaas-loginmodule.conf
+%config(noreplace) /etc/rundeck/realm.properties
+%config(noreplace) /etc/rundeck/rundeck-config.properties
+
+# SSL Configuration
+%dir /etc/rundeck/ssl
+%config /etc/rundeck/ssl/ssl.properties
 
 %attr(6775, rundeck, rundeck) %dir /var/log/rundeck
 %dir /var/lib/rundeck

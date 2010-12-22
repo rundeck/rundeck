@@ -62,17 +62,19 @@ installation methods. See [RPM layout](#rpm-layout) and
 #### RPM layout
 
     /etc/rundeck
-    |-- client
-    |   |-- admin.aclpolicy
-    |   |-- framework.properties
-    |   |-- log4j.properties
-    |   |-- profile
-    |   `-- project.properties
-    `-- server
-        |-- jaas-loginmodule.conf
-        |-- log4j.properties
-        |-- realm.properties
-        `-- rundeck-config.properties
+    |-- admin.aclpolicy
+    |-- framework.properties
+    |-- log4j.properties
+    |-- profile
+    |-- project.properties
+    |-- jaas-loginmodule.conf
+    |-- log4j.properties
+    |-- realm.properties
+    |-- rundeck-config.properties
+    `-- ssl
+        |-- ssl.properties
+        |-- keystore (not packaged)
+        `-- truststore (not packaged)
 
 #### Launcher layout
 
@@ -675,7 +677,7 @@ a HERE document.
 Replace the first line "Venkman.local" with the hostname for your
 server, and use any other organizational values you like:
     
-        keytool -keystore etc/keystore -alias rundeck -genkey -keyalg RSA -keypass admin -storepass admin  <<!
+        keytool -keystore etc/keystore -alias rundeck -genkey -keyalg RSA -keypass adminadmin -storepass adminadmin  <<!
         Venkman.local
         devops
         My org
@@ -699,7 +701,15 @@ CLI tools:
 keystore and the appropriate passwords:
 
         vi server/config/ssl.properties
-    
+
+An example ssl.properties file (from the RPM package).
+
+        keystore=/etc/rundeck/ssl/keystore
+        keystore.password=adminadmin
+        key.password=adminadmin
+        truststore=/etc/rundeck/ssl/truststore
+        truststore.password=adminadmin
+        
 (5) Configure client properties.  Modify the file
 `$RDECK_BASE/etc/framework.properties` and change these properties: 
 
