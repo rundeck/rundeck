@@ -68,6 +68,9 @@ class FrameworkController  {
             usedFilter=null
         }
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        if(query.nodeFilterIsEmpty()){
+            query.nodeIncludeName = framework.getFrameworkNodeName()
+        }
         FrameworkController.autosetSessionProject(session,framework)
         if(query && !query.project && session.project){
             query.project=session.project
@@ -96,7 +99,7 @@ class FrameworkController  {
             if(params.localNodeOnly){
                 nodes=[nodes1.getNode(framework.getFrameworkNodeName())]
             }
-            else if(nset && !(nset.include.blank && nset.exclude.blank)){
+            else if (nset && !(nset.include.blank && nset.exclude.blank)){
                 //match using nodeset unless all filters are blank
                 try {
                     nodes= nodes1.filterNodes(nset)
@@ -105,12 +108,12 @@ class FrameworkController  {
                     filterErrors['filter']='<pre>'+e.getMessage()+'</pre>'
                     nodes=[]
                 }
-            }else if("true"==params.defaultLocalNode){
-                //match only local node if filters are blank
-                nodes=[nodes1.getNode(framework.getFrameworkNodeName())]
-            }else{
+            }else if("true"==params.defaultAllNodes){
                 //match all nodes if filters are all blank
                 nodes = nodes1.listNodes()
+            }else{
+                //match only local node if filters are blank
+                nodes=[nodes1.getNode(framework.getFrameworkNodeName())]
             }
 //            nodes = nodes.sort { INodeEntry a, INodeEntry b -> return a.nodename.compareTo(b.nodename) }
             nodes.each{INodeEntry nd->
