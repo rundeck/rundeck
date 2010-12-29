@@ -399,18 +399,20 @@
 
                         <g:if test="${!params.compact}">
                             <span class="prompt">${total} Node${1!=total?'s':''}</span>
-                            matching filter:
                         </g:if>
 
-
-                        <g:if test="${filterset}">
-                            <g:render template="/common/selectFilter" model="[noSelection:'-All-',filterset:filterset,filterName:filterName,prefName:'nodes']"/>
-                        </g:if>
-                        
                         <g:if test="${!filterName}">
+                            matching filter input:
                             <span class="prompt action" onclick="['${rkey}filter','${rkey}filterdispbtn','${rkey}fsave','${rkey}fsavebtn'].each(Element.toggle);if(${isCompact}){$('${rkey}nodescontent').toggle();}" id="${rkey}fsavebtn" title="Click to save this filter with a name">
                                 save this filter&hellip;
                             </span>
+                        </g:if>
+                        <g:else>
+                            matching saved filter:
+                        </g:else>
+
+                        <g:if test="${filterset}">
+                            <g:render template="/common/selectFilter" model="[filterset:filterset,filterName:filterName,prefName:'nodes']"/>
                         </g:if>
 
                         <div style="margin:5px 0; padding:5px 0;">
@@ -431,7 +433,7 @@
                         <g:if test="${filterset}">
                             <span style="margin-left:10px;">
                                 <span class="info note">Filter:</span>
-                                <g:render template="/common/selectFilter" model="[noSelection:'-All-',filterset:filterset,filterName:filterName,prefName:'nodes']"/>
+                                <g:render template="/common/selectFilter" model="[filterset:filterset,filterName:filterName,prefName:'nodes']"/>
                             </span>
                         </g:if>
                     </g:else>
