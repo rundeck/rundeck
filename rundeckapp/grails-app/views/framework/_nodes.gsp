@@ -10,7 +10,7 @@
             <g:set var="resName" value="${node.nodename}"/>
             <g:set var="resHost" value="${node.hostname}"/>
 
-            <tr class="${i%2==1?'alternateRow':''} node_entry ">
+            <tr class="${i%2==1?'alternateRow':''} node_entry ${nodedata.islocal?'server':''}">
                 <td class="objIdent" colspan="3">
                     <g:if test="${expanddetail}">
                         <g:expander key="${ukey+'node_detail_'+i}" imgfirst="true">
