@@ -180,19 +180,12 @@ class UserController {
     }
 
     def addFilterPref={
-        def User u = userService.findOrCreateUser(session.user)
-        if(!u){
-            log.error("Couldn't find user: ${session.user}")
-            flash.error="Couldn't find user: ${session.user}"
+        def result = userService.storeFilterPref(session.user,params.filterpref)
+        if(result.error){
+            flash.error=result.error
             return render(template:"/common/error")
         }
-        def inpref = parseKeyValuePref(params.filterpref)
-        def storedpref=parseKeyValuePref(u.filterPref)
-        storedpref.putAll(inpref)
-        storedpref=storedpref.findAll{it.value!='!'}
-
-        u.filterPref=genKeyValuePref(storedpref)
-        u.save()
+        def storedpref=result.storedpref
 
         render(contentType:"text/json"){
             result("success")
@@ -200,34 +193,4 @@ class UserController {
         }
     }
 
-    /**
-     * Parse a "key=value,key=value" string and return a Map of string->String
-     */
-    public static Map parseKeyValuePref(String pref){
-
-
-        def inpref =[:]
-        if(pref){
-            def list=pref.split(",")
-            list.each{String item->
-                def p=item.split("=",2)
-                if(p[1]){
-                    inpref[p[0]]=p[1]
-                }
-            }
-        }
-        return inpref
-    }
-
-
-
-    /**
-    * Take a map of String->String and generate a string like "key=value,key2=value2"
-     */
-    public static String genKeyValuePref(Map map){
-        if(map){
-            return map.collect{item-> item.key+"="+item.value }.join(",")
-        }
-        return ""
-    }
 }

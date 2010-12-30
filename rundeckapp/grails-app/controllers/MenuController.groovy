@@ -43,7 +43,7 @@ class MenuController {
         User u = userService.findOrCreateUser(session.user)
         Map filterpref=[:] 
         if(u){
-            filterpref= UserController.parseKeyValuePref(u.filterPref)
+            filterpref= userService.parseKeyValuePref(u.filterPref)
         }
         model.boxfilters=filterpref
         return model
@@ -93,7 +93,7 @@ class MenuController {
         
         def User u = userService.findOrCreateUser(session.user)
         if(params.size()<1 && !params.filterName && u ){
-            Map filterpref = UserController.parseKeyValuePref(u.filterPref)
+            Map filterpref = userService.parseKeyValuePref(u.filterPref)
             if(filterpref['workflows']){
                 params.filterName=filterpref['workflows']
             }

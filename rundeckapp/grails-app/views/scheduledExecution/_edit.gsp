@@ -116,6 +116,7 @@ var applinks={
             });
         }
         function _menuDidSelectProject(value){
+            return true;
         }
 
         var wascancelled=false;
