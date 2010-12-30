@@ -65,7 +65,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-grep 'Nodes (1)' -q $DIR/curl.out 
+grep '>1 Node<' -q $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "nodes output didnt have right nodes count"
     exit 2
