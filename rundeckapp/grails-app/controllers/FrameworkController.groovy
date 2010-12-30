@@ -120,7 +120,7 @@ class FrameworkController  {
                 if(null!=nd){
                     if(!allnodes[project.getName()+"/"+nd.nodename]){
                         total++
-                        allnodes[project.getName()+"/"+nd.nodename]=[node:nd,projects:[project],project:project,executions:[],resources:[]]
+                        allnodes[project.getName()+"/"+nd.nodename]=[node:nd,projects:[project],project:project,executions:[],resources:[],islocal:nd.nodename==framework.getFrameworkNodeName()]
                     }else{
                         allnodes[project.getName()+"/"+nd.nodename].projects<<project
                     }

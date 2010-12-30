@@ -1593,6 +1593,14 @@ span.tag{
     -webkit-border-radius: 3px;
     border-radius: 3px;
 }
+span.tag.rundeckserver{
+    color:black;
+    font-weight:bold;
+    background:transparent;
+    border:0;
+    border-top:1px solid red;
+    border-bottom:1px solid red;
+}
 
 ul.jobGroups{
     list-style-type:none;
@@ -1903,6 +1911,19 @@ div.project_group a.project,tr.project_group a.project{
 }
 tr.node_entry td,tr.object_entry td{
     vertical-align:top;
+}
+tr.node_entry.server span.node_ident{
+    /*text-shadow: 1px 1px 2px #faa;*/
+    font-weight:bold;
+    background:transparent;
+    border:0;
+}
+tr.node_entry.server span.desc{
+
+}
+tr.node_entry.server span.desc:before{
+    color:#f66;
+    content: " server " "\2022";
 }
 
 .entry_list{
