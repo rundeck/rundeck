@@ -18,8 +18,9 @@ function selectProject(value){
         onSuccess:function(transport){
             $('projectSelect').loading(value?value:'All projects...');
             if(typeof(_menuDidSelectProject)=='function'){
-                _menuDidSelectProject(value);
-                loadProjectSelect();
+                if(_menuDidSelectProject(value)){
+                    loadProjectSelect();
+                }
             }else{
                 oopsEmbeddedLogin();
             }
@@ -27,34 +28,7 @@ function selectProject(value){
     });
 }
 function doCreateProject(){
-    var name = prompt("Enter a new project name");
-    if(name){
-        createProject(name);
-    }else{
-        selectProject('${session.project}');
-    }
-}
-function createProject(value){
-    new Ajax.Request('${createLink(controller:'framework',action:'createProject')}',{
-        evalScripts:true,
-        parameters:{project:value},
-        onFailure:function(response){
-            var data=eval("("+response.responseText+")");
-            if(data && data.error){
-                $('createErrormsg').innerHTML=data.error;
-                $('createErrormsg').show();
-            }
-        },
-        onSuccess:function(transport){
-            $('projectSelect').loading(value?value:'All projects...');
-            if(typeof(_menuDidCreateProject)=='function'){
-                _menuDidCreateProject(value);
-                loadProjectSelect();
-            }else{
-                oopsEmbeddedLogin();
-            }
-        }
-    });
+    document.location = "${createLink(controller:'framework',action:'createProject')}";
 }
 //-->
 </script>
@@ -144,22 +118,14 @@ function createProject(value){
            <g:message code="gui.menu.Workflows"/>
         </g:link>
 
+    <g:if test="${session?.project||session?.projects}">
        <span class="projects" style="font-size:9pt; line-height: 12px; margin-left:20px;">
-           <img src="${resource(dir:'images',file:'icon-tiny-rarrow-sep.png')}" alt="project: " width="7px" height="12px"/>
-           <span id="projectSelect">
-       <g:if test="${session?.project}">
-           <span class="action textbtn" onclick="loadProjectSelect();" title="Select project...">${session?.project}</span>
-       </g:if>
-       <g:elseif test="${session?.projects}">
-           <span class="action textbtn" onclick="loadProjectSelect();" title="Select project...">All Projects&hellip;</span>
-       </g:elseif>
-       <g:else>
-           <span class="action button icon" onclick="doCreateProject();" title="Create a project...">Create a new Project&hellip;</span>
-       </g:else></span></span>
-       <g:ifUserInAnyRoles roles="admin,user_admin">
-           %{--<span class="button " onclick="doCreateProject();">New Project&hellip;</span>--}%
-           <span id="createErrormsg" class="error message" style="display:none"></span>
-       </g:ifUserInAnyRoles>
+            <img src="${resource(dir:'images',file:'icon-tiny-rarrow-sep.png')}" alt="project: " width="7px" height="12px"/>
+            <span id="projectSelect">
+               <span class="action textbtn" onclick="loadProjectSelect();" title="Select project...">${session?.project?session.project:'Select project&hellip;'}</span>
+            </span>
+       </span>
+    </g:if>
 
 </span>
 

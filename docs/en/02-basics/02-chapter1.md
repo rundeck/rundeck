@@ -111,16 +111,12 @@ A Project can be set up either from the graphical console or using the
 `rd-project` shell tool.
 
 After logging into the graphical console, you will notice a Project
-menu in the top navigation bar. If no projects exist, the menu will be
-replaced by a single button. 
+menu in the top navigation bar. If no projects exist, you will be prompted to 
+create a new project.
 
-![Create project button](figures/fig0203.png)
+![Create project form](figures/fig0203.png)
 
-Create a new project by pressing that button
-or choosing the "Create a Project" item from the menu. A dialog window
-will open prompting you for a project name.
-
-After typing in your project name, RunDeck initializes it and returns
+After entering your project name, RunDeck initializes it and returns
 you to the "Run" page.
 
 The `rd-project` shell tool can also be used to create a

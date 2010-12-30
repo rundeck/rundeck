@@ -43,7 +43,7 @@ class FrameworkController  {
         def User u = userService.findOrCreateUser(session.user)
         def usedFilter=null
         if(!params.filterName && u && query.nodeFilterIsEmpty() && params.formInput!='true'){
-            Map filterpref = UserController.parseKeyValuePref(u.filterPref)
+            Map filterpref = userService.parseKeyValuePref(u.filterPref)
             if(filterpref['nodes']){
                 params.filterName=filterpref['nodes']
             }
@@ -315,22 +315,37 @@ class FrameworkController  {
         redirect(controller:'framework',action:params.fragment?'nodesFragment':'nodes',params:[compact:params.compact?'true':''])
     }
 
-
     def createProject={
         def project=params.project
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-        if(framework.getFrameworkProjectMgr().existsFrameworkProject(project)){
-            log.error("Project already exists: ${project}")
-            request.error="Project already exists: ${project}"
-            response.setStatus(500)
-            return render(contentType:"application/json"){
-//                 [error:"Project already exists: ${project}"].encodeAsJSON()
-                error("Project already exists: ${project}")
+        def error=null
+        if(request.method=='POST'){
+            //only attempt project create if form POST is used
+            if(!project){
+                error="Project name must be specified"
+            }else if (framework.getFrameworkProjectMgr().existsFrameworkProject(project)){
+                log.error("Project already exists: ${project}")
+                error="Project already exists: ${project}"
+            }else{
+                def proj
+                try {
+                    proj=framework.getFrameworkProjectMgr().createFrameworkProject(project)
+                } catch (Error e) {
+                    error= e.getMessage()
+                }
+                if(!error && proj){
+                    session.project=proj.name
+                    def result=userService.storeFilterPref(session.user, [project:proj.name])
+                    return redirect(controller:'menu',action:'index')
+                }
             }
-        }else{
-            def proj=framework.getFrameworkProjectMgr().createFrameworkProject(project)
         }
-        return selectProject()
+        if(error){
+            request.error=error
+        }
+        def projects=frameworkService.projects(framework)
+        session.projects=projects
+        return [projects:projects,project:session.project]
     }
 
     def projectSelect={
@@ -339,11 +354,20 @@ class FrameworkController  {
         session.projects=projects
         [projects:projects,project:session.project]
     }
-    def selectProject={
-        if(null!=params.project){
-            session.project=params.project
-        }else{
-            session.removeAttribute('project') 
+    def selectProject= {
+        if (null != params.project) {
+            session.project = params.project
+            //also set User project filter pref
+            def result=userService.storeFilterPref(session.user, [project:params.project])
+            if(result.error){
+                log.warn("Error saving user project preference: "+result.error)
+            }
+        } else {
+            session.removeAttribute('project')
+            def result=userService.storeFilterPref(session.user, [project:'!'])
+            if(result.error){
+                log.warn("Error saving user project preference: "+result.error)
+            }
         }
         render params.project
     }

@@ -2172,6 +2172,16 @@ span.badgeholder{
     
 }
 
+/** project chooser listing */
+
+table.projectselect{
+    margin:10px 0;
+}
+table.projectselect td{
+    font-size: 140%;
+    padding: 5px;
+}
+
 /** html5 form components */
 fieldset{
     border:0;

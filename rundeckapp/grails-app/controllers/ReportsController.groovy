@@ -14,7 +14,7 @@ class ReportsController {
         FrameworkController.autosetSessionProject(session,framework)
 
         def User u = userService.findOrCreateUser(session.user)
-        def filterPref= UserController.parseKeyValuePref(u.filterPref)
+        def filterPref= userService.parseKeyValuePref(u.filterPref)
         if(params.size()<1 && !params.filterName && u && params.formInput!='true' && actionName=='index'){
             if(filterPref['events']){
                 params.filterName=filterPref['events']
