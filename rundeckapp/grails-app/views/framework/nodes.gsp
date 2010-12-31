@@ -12,18 +12,6 @@
         }
 
         //set box filterselections
-        function setFilterz(name,value){
-            if(!value){
-                value="!";
-            }
-            var str=name+"="+value;
-            console.log("setFilterz: "+str);
-            var x = setFilter(name,value,_setFilterSuccess);
-            console.log("called: "+x);
-            console.log("typeof: "+typeof(setFilter));
-        }
-
-        //set box filterselections
         function _setFilterSuccess(response,name){
             console.log("callback");
             var data=eval("("+response.responseText+")"); // evaluate the JSON;
@@ -32,18 +20,6 @@
                 //reload page
                 document.location="${createLink(controller:'framework',action:'nodes')}"+(bfilters[name]?"?filterName="+encodeURIComponent(bfilters[name]):'');
             }
-        }
-
-        //set box filterselections
-        function setFiltern(name,value){
-            if(!value){
-                value="!";
-            }
-            var str=name+"="+value;
-            alert("setFilter: "+str);
-            new Ajax.Request("${createLink(controller:'user',action:'addFilterPref')}",{parameters:{filterpref:str}, evalJSON:true,onSuccess:function(response){
-                _setFilterSuccess(response,name);
-            }});
         }
 
         /*********
@@ -310,6 +286,7 @@
     </style>
 </head>
 <body>
+<g:timerStart key="nodes"/>
 
 <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
     <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
@@ -397,23 +374,6 @@
                 <div style="margin-bottom: 5px;" id="${rkey}nodesfilterholder">
                     <g:if test="${wasfiltered}">
 
-                        <g:if test="${!params.compact}">
-                            <span class="prompt">${total} Node${1!=total?'s':''}</span>
-                        </g:if>
-
-                        <g:if test="${!filterName}">
-                            matching filter input:
-                            <span class="prompt action" onclick="['${rkey}filter','${rkey}filterdispbtn','${rkey}fsave','${rkey}fsavebtn'].each(Element.toggle);if(${isCompact}){$('${rkey}nodescontent').toggle();}" id="${rkey}fsavebtn" title="Click to save this filter with a name">
-                                save this filter&hellip;
-                            </span>
-                        </g:if>
-                        <g:else>
-                            matching saved filter:
-                        </g:else>
-
-                        <g:if test="${filterset}">
-                            <g:render template="/common/selectFilter" model="[filterset:filterset,filterName:filterName,prefName:'nodes']"/>
-                        </g:if>
 
                         <div style="margin:5px 0; padding:5px 0;">
                             <span style="padding:5px 0;margin:5px 0;${!filtersOpen?'':'display:none;'} " id='${rkey}filterdispbtn' >
@@ -422,11 +382,20 @@
                                 <img src="${resource(dir:'images',file:'icon-tiny-disclosure.png')}" width="12px" height="12px"/></span>
                             </span>
 
+
+                        <g:if test="${!filterName}">
+                            <span class="prompt action" onclick="['${rkey}filter','${rkey}filterdispbtn','${rkey}fsave','${rkey}fsavebtn'].each(Element.toggle);if(${isCompact}){$('${rkey}nodescontent').toggle();}" id="${rkey}fsavebtn" title="Click to save this filter with a name">
+                                save this filter&hellip;
+                            </span>
+                        </g:if>
+
+                        <g:if test="${filterset}">
+                            <g:render template="/common/selectFilter" model="[filterset:filterset,filterName:filterName,prefName:'nodes',noSelection:filterName?'-Server Node-':null]"/>
+                        </g:if>
                         </div>
 
                     </g:if>
-                    <g:else>
-                        <span class="prompt">Nodes (${total})</span>
+                    %{--<g:else>
                         <span class="prompt action" onclick="['${rkey}filter','${rkey}filterdispbtn','runbox'].each(Element.toggle);if(${isCompact}){$('${rkey}nodescontent').toggle();}" id="${rkey}filterdispbtn"  style="${!filtersOpen?'':'display:none;'}">
                             Filter
                             <img src="${resource(dir:'images',file:'icon-tiny-disclosure.png')}" width="12px" height="12px"/></span>
@@ -436,15 +405,28 @@
                                 <g:render template="/common/selectFilter" model="[filterset:filterset,filterName:filterName,prefName:'nodes']"/>
                             </span>
                         </g:if>
-                    </g:else>
+                    </g:else>--}%
                 </div>
                 </g:if>
 
-                <div class="jobsReport clear">
-                    <g:if test="${allnodes}">
-                            <g:render template="nodes" model="${[nodes:allnodes,totalexecs:totalexecs,jobs:jobs,params:params,expanddetail:true]}"/>
-
+                <div class="nodesummary clear">
+                    <span class="match">${total}/${allcount} Node${1 != allcount ? 's' : ''}</span>
+                    <span class="type">
+                    <g:if test="${!filterName}">
+                        matching filter input
                     </g:if>
+                    <g:else>
+                        matching saved filter
+                    </g:else>
+                    </span>
+                    <g:set var="jsdata" value="${query.properties.findAll{it.key==~/^(node(In|Ex)clude.*|project)$/ &&it.value}}"/>
+                    <g:javascript>
+                        var nodeFilterData_${rkey}=${jsdata.encodeAsJSON()};
+                    </g:javascript>
+                </div>
+                <div class="presentation clear embed matchednodes" id="nodelist" >
+                    <span class="button action receiver" onclick="_updateMatchedNodes(nodeFilterData_${rkey},'nodelist','${query.project}',false)">Show ${total} Node${1 != total ? 's' : ''}...</span>
+                    %{--<g:render template="nodes" model="${[nodes:allnodes,totalexecs:totalexecs,jobs:jobs,params:params,expanddetail:true]}"/>--}%
                 </div>
 
                  </td>
@@ -464,5 +446,6 @@ $$('#${rkey}nodeForm input').each(function(elem){
     </div>
 </div>
 <div id="loaderror"></div>
+<g:timerEnd key="nodes"/>
 </body>
 </html>

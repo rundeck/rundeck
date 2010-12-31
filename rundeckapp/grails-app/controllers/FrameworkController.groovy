@@ -75,51 +75,51 @@ class FrameworkController  {
         if(query && !query.project && session.project){
             query.project=session.project
         }
+        if(!query.project){
+            request.error="No project selected"
+            return [allnodes: [],
+                nodesbyproject:[:],
+                params:params,
+                total:0,
+                query:query]
+        }
         def allnodes = [:]
         def nodesbyproject = [:]
         def totalexecs = [:]
         def total=0
+        def allcount=0
         NodeSet nset = ExecutionService.filtersAsNodeSet(query)
         def projects=[]
         def filterErrors=[:]
-        projects=frameworkService.projects(framework)
-        projects.each{FrameworkProject project->
-            if(query.project ){
-                try{
-                    if(!NodeSet.matchRegexOrEquals(query.project,project.name)){
-                        return
-                    }
-                }catch(PatternSyntaxException e){
-                    filterErrors['project']='<pre>'+e.getMessage()+'</pre>'
-                    return
-                }
+        def project = framework.getFrameworkProjectMgr().getFrameworkProject(query.project)
+        def nodes
+        final Nodes nodes1 = project.getNodes()
+        allcount=nodes1.countNodes()
+        if(params.localNodeOnly){
+            nodes=[nodes1.getNode(framework.getFrameworkNodeName())]
+        }
+        else if (nset && !(nset.include.blank && nset.exclude.blank)){
+            //match using nodeset unless all filters are blank
+            try {
+                nodes= nodes1.filterNodes(nset)
+            } catch (PatternSyntaxException e) {
+                request.error='<pre>'+e.getMessage()+'</pre>'
+                filterErrors['filter']='<pre>'+e.getMessage()+'</pre>'
+                nodes=[]
             }
-            def nodes
-            final Nodes nodes1 = project.getNodes()
-            if(params.localNodeOnly){
-                nodes=[nodes1.getNode(framework.getFrameworkNodeName())]
-            }
-            else if (nset && !(nset.include.blank && nset.exclude.blank)){
-                //match using nodeset unless all filters are blank
-                try {
-                    nodes= nodes1.filterNodes(nset)
-                } catch (PatternSyntaxException e) {
-                    request.error='<pre>'+e.getMessage()+'</pre>'
-                    filterErrors['filter']='<pre>'+e.getMessage()+'</pre>'
-                    nodes=[]
-                }
-            }else if("true"==params.defaultAllNodes){
-                //match all nodes if filters are all blank
-                nodes = nodes1.listNodes()
-            }else{
-                //match only local node if filters are blank
-                nodes=[nodes1.getNode(framework.getFrameworkNodeName())]
-            }
+        }else if("true"==params.defaultAllNodes){
+            //match all nodes if filters are all blank
+            nodes = nodes1.listNodes()
+        }else{
+            //match only local node if filters are blank
+            nodes=[nodes1.getNode(framework.getFrameworkNodeName())]
+        }
 //            nodes = nodes.sort { INodeEntry a, INodeEntry b -> return a.nodename.compareTo(b.nodename) }
+        total=nodes.size()
+        if(params.fullresults){
             nodes.each{INodeEntry nd->
                 if(null!=nd){
                     if(!allnodes[project.getName()+"/"+nd.nodename]){
-                        total++
                         allnodes[project.getName()+"/"+nd.nodename]=[node:nd,projects:[project],project:project,executions:[],resources:[],islocal:nd.nodename==framework.getFrameworkNodeName()]
                     }else{
                         allnodes[project.getName()+"/"+nd.nodename].projects<<project
@@ -180,6 +180,7 @@ class FrameworkController  {
             nodesbyproject:nodesbyproject,
             params:params,
             total:total,
+            allcount:allcount,
 //            totalexecs:totalexecs,
 //            jobs:runningset.jobs,
             resources:resources,

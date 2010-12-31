@@ -1,4 +1,4 @@
-<div id="${key}_tooltip" style="display:none;" class="detailpopup nodedetail" >
+<div id="${key}_tooltip" style="display:none;" class="detailpopup nodedetail ${islocal?'server':''}" >
     <span >
         <img src="${resource(dir:'images',file:'icon-small-Node.png')}" alt="Node" width="16px" height="16px"/>
         ${node.nodename}

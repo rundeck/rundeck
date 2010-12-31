@@ -70,7 +70,7 @@
         if(!project){
             return;
         }
-        var params ={project:project,embedded:true,declarenone:true};
+        var params ={project:project,embedded:true,declarenone:true,fullresults:true};
         if(localnodeonly){
             params['localNodeOnly']='true';
         }
