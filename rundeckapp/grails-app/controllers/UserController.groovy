@@ -188,7 +188,7 @@ class UserController {
         def storedpref=result.storedpref
 
         render(contentType:"text/json"){
-            result("success")
+            delegate.'result'("success")
             filterpref(storedpref)
         }
     }

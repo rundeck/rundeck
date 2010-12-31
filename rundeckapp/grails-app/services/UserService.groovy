@@ -67,7 +67,7 @@ class UserService {
         if(!u){
             return [error:"Couldn't find user: ${username}"]
         }
-        def inpref = pref instanceof String?parseKeyValuePref(prefstr):pref
+        def inpref = pref instanceof String?parseKeyValuePref(pref):pref
         def storedpref=parseKeyValuePref(u.filterPref)
         storedpref.putAll(inpref)
         storedpref=storedpref.findAll{it.value!='!'}
