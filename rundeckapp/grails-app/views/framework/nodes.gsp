@@ -30,7 +30,7 @@
             if(data){
                 var bfilters=data['filterpref'];
                 //reload page
-                document.location="${createLink(controller:'framework',action:'nodes')}"+(bfilters[name]?"?filterName="+bfilters[name]:'');
+                document.location="${createLink(controller:'framework',action:'nodes')}"+(bfilters[name]?"?filterName="+encodeURIComponent(bfilters[name]):'');
             }
         }
 
