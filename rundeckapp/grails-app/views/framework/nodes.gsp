@@ -286,7 +286,6 @@
     </style>
 </head>
 <body>
-<g:timerStart key="nodes"/>
 
 <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
     <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
@@ -446,6 +445,5 @@ $$('#${rkey}nodeForm input').each(function(elem){
     </div>
 </div>
 <div id="loaderror"></div>
-<g:timerEnd key="nodes"/>
 </body>
 </html>
