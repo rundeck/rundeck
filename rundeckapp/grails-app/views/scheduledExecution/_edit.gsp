@@ -263,6 +263,10 @@ var applinks={
     .filterkeyset{
         padding:3px 0;
     }
+
+    #matchednodes .allnodes{
+        width:600px;
+    }
 </style>
 <g:set var="wasSaved" value="${ (params?.saved=='true') || scheduledExecution?.id || scheduledExecution?.jobName || scheduledExecution?.scheduled}"/>
     
