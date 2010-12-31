@@ -6,7 +6,7 @@
   To change this template use File | Settings | File Templates.
 --%>
 <g:render template="/common/messages"/>
-<div>
+<div class="allnodes">
     <g:render template="${params.embedded?'nodesEmbed':'nodes'}" model="${[nodes:allnodes,totalexecs:totalexecs,jobs:jobs,params:params]}"/>
 </div>
 <g:render template="/common/boxinfo" model="${[name:'nodes',model:[title:'Nodes',total:total,linkUrl:createLink(controller:'framework',action:'nodes')]]}"/>
