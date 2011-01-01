@@ -10,3 +10,4 @@ rundeckapp/work
 rundeckapp/web-app/plugins
 packaging/dist
 core/.gradle
+*.DS_Store
