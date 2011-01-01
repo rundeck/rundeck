@@ -5,11 +5,15 @@
     <table width="300px">
         
         <g:each in="${['hostname','osFamily','osArch','osVersion','osName','type','username']}" var="key">
+            <g:if test="${!exclude || !exclude.contains(key)}">
             <tr><td class="key"><g:message code="${'node.metadata.'+key}"/></td>
                 <td class="value">${node[key]}</td></tr>
+            </g:if>
         </g:each>
+        <g:if test="${!exclude || !exclude.contains('tags')}">
         <tr><td class="key"><g:message code="node.metadata.tags"/></td>
             <td class="value">${node['tags']?node['tags'].join(','):''}</td></tr>
+        </g:if>
     </table>
 
             </td>

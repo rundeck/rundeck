@@ -66,11 +66,14 @@
       /** node filter preview code */
 
     var node_filter_keys=${['','Name','Type','Tags','OsName','OsFamily','OsArch','OsVersion'].encodeAsJSON()};
-    function _updateMatchedNodes(data,elem,project,localnodeonly){
+    function _updateMatchedNodes(data,elem,project,localnodeonly,inparams){
         if(!project){
             return;
         }
-        var params ={project:project,embedded:true,declarenone:true,fullresults:true};
+        var params ={project:project,view:'embed',declarenone:true,fullresults:true};
+        if(null!=inparams){
+            Object.extend(params,inparams);
+        }
         if(localnodeonly){
             params['localNodeOnly']='true';
         }
