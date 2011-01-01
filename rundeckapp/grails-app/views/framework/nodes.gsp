@@ -244,6 +244,18 @@
         /**
          * END remote edit code
          */
+        /**
+         * START node code
+         */
+        function setTagFilter(value){
+            if($('schedJobNodeIncludeTags').value){
+                $('schedJobNodeIncludeTags').value+=","+value;
+            }else{
+                $('schedJobNodeIncludeTags').value=value;
+
+            }
+            $('${rkey}filter').down('form').submit();
+        }
 
     </script>
     <style type="text/css">
@@ -421,11 +433,22 @@
                     <g:set var="jsdata" value="${query.properties.findAll{it.key==~/^(node(In|Ex)clude.*|project)$/ &&it.value}}"/>
                     <g:javascript>
                         var nodeFilterData_${rkey}=${jsdata.encodeAsJSON()};
+
+                        function expandResultNodes(){
+                            _updateMatchedNodes(nodeFilterData_${rkey},'nodelist','${query.project}',false,{view:'table',expanddetail:true});
+                        }
                     </g:javascript>
                 </div>
-                <div class="presentation clear embed matchednodes" id="nodelist" >
-                    <span class="button action receiver" onclick="_updateMatchedNodes(nodeFilterData_${rkey},'nodelist','${query.project}',false)">Show ${total} Node${1 != total ? 's' : ''}...</span>
+                <div class="presentation clear matchednodes" id="nodelist" >
+                    <span class="button action receiver" onclick="expandResultNodes();">Show ${total} Node${1 != total ? 's' : ''}...</span>
                     %{--<g:render template="nodes" model="${[nodes:allnodes,totalexecs:totalexecs,jobs:jobs,params:params,expanddetail:true]}"/>--}%
+                    <g:if test="${total<=30}">
+                        <g:javascript>
+
+                            fireWhenReady('nodelist',expandResultNodes);
+                        </g:javascript>
+                    </g:if>
+
                 </div>
 
                  </td>

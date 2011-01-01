@@ -1585,7 +1585,7 @@ div.commandFlowError{
     -webkit-border-radius: 3px;
     border-radius: 3px;
 }
-span.tag{
+span.tag,a.tag{
     padding:0 2px;
     background:#ccf;
     border:1px solid #ccc;
@@ -1593,7 +1593,7 @@ span.tag{
     -webkit-border-radius: 3px;
     border-radius: 3px;
 }
-span.tag.rundeckserver{
+span.tag.rundeckserver,a.tag.rundeckserver{
     color:black;
     font-weight:bold;
     background:transparent;
@@ -1923,7 +1923,13 @@ tr.node_entry.server span.desc,.node_entry.server span.desc{
 }
 tr.node_entry.server span.desc:before,.node_entry.server span.desc:before{
     color:#f66;
-    content: " server " "\2022";
+    content: " server " "\2022" " ";
+}
+td.username{
+    text-align:right;
+}
+td.username span.atsign{
+    color: #888;
 }
 
 .entry_list{
@@ -1948,10 +1954,10 @@ div.nodesummary span.type{
 /** class matchednodes.embed used when showing an embedded list of matched nodes 
 */
 .allnodes{
-width:800px;
+
 }
 .matchednodes.embed{
-
+    width:800px;
     line-height:20px;
 }
 .matchednodes.embed .node_entry{
