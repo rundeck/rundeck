@@ -78,13 +78,11 @@ class FrameworkController  {
         if(!query.project){
             request.error="No project selected"
             return [allnodes: [],
-                nodesbyproject:[:],
                 params:params,
                 total:0,
                 query:query]
         }
         def allnodes = [:]
-        def nodesbyproject = [:]
         def totalexecs = [:]
         def total=0
         def allcount=0
@@ -116,18 +114,27 @@ class FrameworkController  {
         }
 //            nodes = nodes.sort { INodeEntry a, INodeEntry b -> return a.nodename.compareTo(b.nodename) }
         total=nodes.size()
-        if(params.fullresults){
-            nodes.each{INodeEntry nd->
-                if(null!=nd){
-                    if(!allnodes[project.getName()+"/"+nd.nodename]){
-                        allnodes[project.getName()+"/"+nd.nodename]=[node:nd,projects:[project],project:project,executions:[],resources:[],islocal:nd.nodename==framework.getFrameworkNodeName()]
-                    }else{
-                        allnodes[project.getName()+"/"+nd.nodename].projects<<project
+        def tagsummary=[:]
+        
+        nodes.each{INodeEntry nd->
+            if(null!=nd){
+                if(params.fullresults){
+                    allnodes[nd.nodename]=[node:nd,projects:[project],project:project,executions:[],resources:[],islocal:nd.nodename==framework.getFrameworkNodeName()]
+                }
+                //summarize tags
+                def tags = nd.getTags()
+                if(tags){
+                    tags.each{ tag->
+                        if(!tagsummary[tag]){
+                            tagsummary[tag]=1
+                        }else{
+                            tagsummary[tag]++
+                        }
                     }
                 }
             }
-            nodesbyproject[project.name]=[nodes:nodes,executions:[:]]
         }
+
         if(filterErrors){
             request.filterErrors=filterErrors
         }
@@ -177,10 +184,10 @@ class FrameworkController  {
       
         def model=[
             allnodes: allnodes,
-            nodesbyproject:nodesbyproject,
             params:params,
             total:total,
             allcount:allcount,
+            tagsummary:tagsummary,
 //            totalexecs:totalexecs,
 //            jobs:runningset.jobs,
             resources:resources,
