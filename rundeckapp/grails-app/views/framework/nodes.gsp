@@ -353,6 +353,7 @@
         function onRunComplete(){
             enableRunBar();
             afterRun();
+            loadHistory();
         }
 
         /**
@@ -385,6 +386,26 @@
                 $('${rkey}nodescontent').hide();
             }
         }
+
+        /** START history
+         *
+         */
+        function loadHistory(){
+            new Ajax.Updater('histcontent',"${createLink(controller:'reports',action:'eventsFragment')}",{
+                parameters:{compact:true,nofilters:true,jobIdFilter:'null',recentFilter:'1d',userFilter:'${session.user}',projFilter:'${session.project}'},
+                evalScripts:true,
+                onComplete: function(transport) {
+                    if (transport.request.success()) {
+                        Element.show('histcontent');
+                    }
+                },
+            });
+        }
+
+        /**
+         * START page init
+         */
+
         function init() {
             $$('.obs_filtertoggle').each(function(e) {
                 Event.observe(e, 'click', filterToggle);
@@ -437,7 +458,27 @@
 
         #runcontent{
             overflow-x:auto;
-            margin-top:10px;
+            margin:10px 0;
+        }
+        div.header{
+            padding:3px 10px;
+            background: #eee;
+            border-top: 1px solid #ddd;
+            border-left: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+            color: black;
+            font-weight:bold;
+        }
+        #histcontent div.jobsreport{
+            margin:0;
+            padding:0;
+        }
+        #histcontent table.queryTable > tbody > tr > td{
+            padding:0;
+            margin:0;
+        }
+        #histcontent table{
+            width:100%;
         }
     </style>
 </head>
@@ -634,7 +675,11 @@
             </table>
 </div>
 <div id="runcontent"></div>
+
+<div class="header">History</div>
+<div id="histcontent"></div>
 <g:javascript>
+    fireWhenReady('histcontent',loadHistory);
 
 $$('#${rkey}nodeForm input').each(function(elem){
     if(elem.type=='text'){
