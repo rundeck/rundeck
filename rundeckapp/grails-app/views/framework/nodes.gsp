@@ -257,8 +257,23 @@
         function expandResultNodes(){
             _updateMatchedNodes(nodeFilterData_${rkey},'nodelist','${query.project}',false,{view:'table',expanddetail:true});
         }
+        function disableRunBar(){
+            $('runbox').down('input[type="text"]').disable();
+            $('runbox').down('button').disabled=true;
+        }
+        function enableRunBar(){
+            $('runbox').down('input[type="text"]').enable();
+            $('runbox').down('button').disabled=false;
+        }
+        function collapseNodeView(){
+
+        }
         function runFormSubmit(elem){
             var data = Form.serialize(elem);
+
+            disableRunBar();
+            collapseNodeView();
+
             new Ajax.Request("${createLink(controller:'scheduledExecution',action:'runAdhocInline')}",{
                 parameters:data,
                 evalScripts:true,
@@ -301,14 +316,15 @@
                 nodemode: ${followmode == 'node'},
                 execData: {node:"test"},
                  appLinks:appLinks,
-            %{--var totalDuration = 0 + ${scheduledExecution?.totalTime ? scheduledExecution.totalTime : -1};--}%
-            %{--var totalCount = 0 + ${scheduledExecution?.execCount ? scheduledExecution.execCount : -1};--}%
-            //        Event.observe(window, 'load', init);
+                 onComplete:onRunComplete,
             });
             followControl.beginFollowingOutput(data.id);
             }catch(e){
                 console.log(e.stack);
             }
+        }
+        function onRunComplete(){
+            enableRunBar();
         }
 
         /**
@@ -442,7 +458,6 @@
                                 </g:else>
                             </g:form>
                                 <button onclick="runFormSubmit('runbox');">Run</button>
-                                <div id="runboxstatus"></div>
                             </div>
                         </g:if>
                 <g:ifUserInAnyRoles roles="admin,nodes_admin">

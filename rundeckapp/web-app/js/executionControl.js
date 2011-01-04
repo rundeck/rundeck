@@ -982,6 +982,9 @@ var FollowControl = Class.create({
             $('execRetry').show();
         }
         $('execRerun').show();
+        if(typeof(this.onComplete)=='function'){
+            this.onComplete();
+        }
         this.jobFinishStatus(result);
     },
     jobFinishStatus: function(result) {
