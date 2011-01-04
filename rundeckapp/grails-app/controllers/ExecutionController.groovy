@@ -22,6 +22,9 @@ class ExecutionController {
     def follow ={
         return render(view:'show',model:show())
     }
+    def followFragment ={
+        return render(view:'showFragment',model:show())
+    }
     def show ={
         def Execution e = Execution.get(params.id)
         if(!e){

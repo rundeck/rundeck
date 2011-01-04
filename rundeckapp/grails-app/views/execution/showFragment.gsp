@@ -1,52 +1,40 @@
-<html>
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <meta name="tabpage" content="jobs"/>
-    <meta name="layout" content="base" />
-    <title><g:message code="main.app.name"/> - <g:if test="${null==execution?.dateCompleted}">Now Running - </g:if><g:if test="${scheduledExecution}">${scheduledExecution?.jobName.encodeAsHTML()} :  </g:if><g:else>Transient <g:message code="domain.ScheduledExecution.title"/> : </g:else> Execution at <g:relativeDate atDate="${execution.dateStarted}" /> by ${execution.user}</title>
     <g:set var="followmode" value="${params.mode in ['browse','tail','node']?params.mode:null==execution?.dateCompleted?'tail':'browse'}"/>
     <g:set var="executionResource" value="${ ['jobName': execution.scheduledExecution ? execution.scheduledExecution.jobName : 'adhoc', 'groupPath': execution.scheduledExecution ? execution.scheduledExecution.groupPath : 'adhoc'] }"/>
 
-      <g:javascript library="executionControl"/>
+      <g:javascript library="executionShow"/>
       <g:javascript>
-        var followControl = new FollowControl('${execution?.id}','commandPerform',{
-            appLinks:appLinks,
-            iconUrl: "${resource(dir: 'images', file: 'icon')}",
-            extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>",
-            lastlines: ${params.lastlines ? params.lastlines : 20},
+        var extraParams="<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>";
+        var applinks={
+            executionTailExecutionOutput:'${createLink(controller: "execution", action: "tailExecutionOutput")}'
+        };
+        var executionId='${execution?.id}';
 
-            tailmode: ${followmode == 'tail'},
-            browsemode: ${followmode == 'browse'},
-            nodemode: ${followmode == 'node'},
-            execData: {node:"${session.Framework.getFrameworkNodeHostname()}"},
-            <auth:allowed job="${executionResource}" name="${UserAuth.WF_KILL}">
-            killjobhtml: '<span class="action button textbtn" onclick="docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <img src="${resource(dir: 'images', file: 'icon-tiny-removex.png')}" alt="Kill" width="12px" height="12px"/></span>',
-            </auth:allowed>
-            <auth:allowed job="${executionResource}" name="${UserAuth.WF_KILL}" has="false">
-            killjobhtml: "",
-            </auth:allowed>
-            totalDuration : 0 + ${scheduledExecution?.totalTime ? scheduledExecution.totalTime : -1},
-            totalCount: 0 + ${scheduledExecution?.execCount ? scheduledExecution.execCount : -1},
-        });
+        var iconUrl = "${resource(dir: 'images', file: 'icon')}";
+        var lastlines =${params.lastlines ? params.lastlines : 20};
 
+        var refresh =${followmode == 'tail' ? "true" : "false"};
+        var tailmode = ${followmode == 'tail'};
+        var browsemode = ${followmode == 'browse'};
+        var nodemode = ${followmode == 'node'};
+        var execData = {id:executionId,project:"${execution.project}",node:"${session.Framework.getFrameworkNodeHostname()}"};
+
+        <auth:allowed job="${executionResource}" name="${UserAuth.WF_KILL}">
+          var killjobhtml = '<span class="action button textbtn" onclick="docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <img src="${resource(dir: 'images', file: 'icon-tiny-removex.png')}" alt="Kill" width="12px" height="12px"/></span>';
+        </auth:allowed>
+        <auth:allowed job="${executionResource}" name="${UserAuth.WF_KILL}" has="false">
+          var killjobhtml = "";
+        </auth:allowed>
 
 
         function init() {
-            followControl.beginFollowingOutput('${execution?.id}');
+          beginFollowingOutput(executionId);
         }
 
         Event.observe(window, 'load', init);
+        var totalDuration = 0 + ${scheduledExecution?.totalTime ? scheduledExecution.totalTime : -1};
+        var totalCount = 0 + ${scheduledExecution?.execCount ? scheduledExecution.execCount : -1};
 
       </g:javascript>
-  </head>
-
-  <body>
-    <div class="pageTop extra">
-        <div class="jobHead">
-            <g:render template="/scheduledExecution/showHead" model="[scheduledExecution:scheduledExecution,execution:execution,followparams:[mode:followmode,lastlines:params.lastlines]]"/>
-        </div>
-        <div class="clear"></div>
-    </div>
     <div class="pageBody">
 
         <table>
@@ -377,8 +365,5 @@
         style="display:none; margin: 0 20px; "></div>
     <div id="fileload" style="display:none;" class="outputdisplayopts"><img src="${resource(dir:'images',file:'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/> Loading Output... <span id="fileload2percent"></span></div>
     <div id="log"></div> 
-
-  </body>
-</html>
 
 

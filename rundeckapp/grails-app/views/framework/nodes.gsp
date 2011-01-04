@@ -5,6 +5,7 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="nodes"/>
     <title>Nodes</title>
+    <g:javascript library="executionControl"/>
     <script type="text/javascript">
         function showError(message) {
             $("error").innerHTML += message;
@@ -244,8 +245,74 @@
         /**
          * END remote edit code
          */
+
+
         /**
-         * START node code
+         * START run
+         */
+        <g:set var="jsdata" value="${query?.properties.findAll{it.key==~/^(node(In|Ex)clude.*|project)$/ &&it.value}}"/>
+
+        var nodeFilterData_${rkey}=${jsdata.encodeAsJSON()};
+
+        function expandResultNodes(){
+            _updateMatchedNodes(nodeFilterData_${rkey},'nodelist','${query.project}',false,{view:'table',expanddetail:true});
+        }
+        function runFormSubmit(elem){
+            var data = Form.serialize(elem);
+            new Ajax.Request("${createLink(controller:'scheduledExecution',action:'runAdhocInline')}",{
+                parameters:data,
+                evalScripts:true,
+                evalJSON:true,
+                onSuccess: function(transport) {
+                    var data =transport.responseJSON;
+//                    alert("data: "+data);
+                    startRunFollow(data);
+                },
+                onComplete: function(transport){
+//                    alert("complet: "+transport.responseText);
+                }
+            });
+            return false;
+        }
+        function startRunFollow(data){
+            //execute run with the given node set.
+            if(data.id){
+            //after callback, load execution output in runcontent section
+                new Ajax.Updater('runcontent',"${createLink(controller:'execution',action:'followFragment')}",{
+                parameters:{id:data.id},
+                evalScripts:true,
+                onComplete: function(transport) {
+                    if (transport.request.success()) {
+                        Element.show('runcontent');
+                        continueRunFollow(data);
+                    }
+                },
+            });
+            }
+        }
+        function continueRunFollow(data){
+            try{
+             var followControl = new FollowControl(data.id,'runcontent',{
+                extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>",
+                iconUrl: "${resource(dir: 'images', file: 'icon')}",
+                lastlines: ${params.lastlines ? params.lastlines : 20},
+                tailmode: true,
+                browsemode: ${followmode == 'browse'},
+                nodemode: ${followmode == 'node'},
+                execData: {node:"test"},
+                 appLinks:appLinks,
+            %{--var totalDuration = 0 + ${scheduledExecution?.totalTime ? scheduledExecution.totalTime : -1};--}%
+            %{--var totalCount = 0 + ${scheduledExecution?.execCount ? scheduledExecution.execCount : -1};--}%
+            //        Event.observe(window, 'load', init);
+            });
+            followControl.beginFollowingOutput(data.id);
+            }catch(e){
+                console.log(e.stack);
+            }
+        }
+
+        /**
+         * START tag filter link code
          */
         function setTagFilter(value){
             if($('schedJobNodeIncludeTags').value){
@@ -347,8 +414,8 @@
             <td style="text-align:left;vertical-align:top;" id="${rkey}nodescontent">
 
                         <g:if test="${session.project && total>0}">
-                            <div class=" runbox" id="runbox">
-                            <g:form action="execAndForget" controller="scheduledExecution" method="post" style="display:inline">
+                            <div class="runbox" id="runbox">
+                            <g:form action="execAndForget" controller="scheduledExecution" method="post" style="display:inline" onsubmit="runFormSubmit(this);">
                                 Command:
                                 <g:img file="icon-small-shell.png" width="16px" height="16px"/>
                                 <g:hiddenField name="project" value="${session.project}"/>
@@ -368,12 +435,14 @@
                                 <g:textField name="workflow.commands[0].adhocRemoteString" size="80" placeholder="Enter a shell command" autofocus="true" />
                                 <g:render template="nodeFiltersHidden" model="${[params:params,query:query]}"/>
                                 <g:if test="${auth.allowedTest(job:[jobName:'adhoc_run', groupPath:'ui'], action:UserAuth.WF_RUN)}">
-                                <input type="submit" value="Run"/>
+                                <!--<input type="submit" value="Run"/>-->
                                 </g:if>
                                 <g:else>
                                     <span class="button disabled" title="You are not authorized to run ad-hoc jobs">Run</span>
                                 </g:else>
                             </g:form>
+                                <button onclick="runFormSubmit('runbox');">Run</button>
+                                <div id="runboxstatus"></div>
                             </div>
                         </g:if>
                 <g:ifUserInAnyRoles roles="admin,nodes_admin">
@@ -430,14 +499,6 @@
                         matching saved filter
                     </g:else>
                     </span>
-                    <g:set var="jsdata" value="${query.properties.findAll{it.key==~/^(node(In|Ex)clude.*|project)$/ &&it.value}}"/>
-                    <g:javascript>
-                        var nodeFilterData_${rkey}=${jsdata.encodeAsJSON()};
-
-                        function expandResultNodes(){
-                            _updateMatchedNodes(nodeFilterData_${rkey},'nodelist','${query.project}',false,{view:'table',expanddetail:true});
-                        }
-                    </g:javascript>
                 </div>
 
                 <g:if test="${tagsummary}">
@@ -485,6 +546,7 @@
                 </tr>
             </table>
 </div>
+<div id="runcontent"></div>
 <g:javascript>
 
 $$('#${rkey}nodeForm input').each(function(elem){
