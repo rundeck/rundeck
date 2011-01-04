@@ -1,104 +1,6 @@
     <g:set var="followmode" value="${params.mode in ['browse','tail','node']?params.mode:null==execution?.dateCompleted?'tail':'browse'}"/>
     <g:set var="executionResource" value="${ ['jobName': execution.scheduledExecution ? execution.scheduledExecution.jobName : 'adhoc', 'groupPath': execution.scheduledExecution ? execution.scheduledExecution.groupPath : 'adhoc'] }"/>
 
-      <g:javascript library="executionShow"/>
-      <g:javascript>
-        var extraParams="<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>";
-        var applinks={
-            executionTailExecutionOutput:'${createLink(controller: "execution", action: "tailExecutionOutput")}'
-        };
-        var executionId='${execution?.id}';
-
-        var iconUrl = "${resource(dir: 'images', file: 'icon')}";
-        var lastlines =${params.lastlines ? params.lastlines : 20};
-
-        var refresh =${followmode == 'tail' ? "true" : "false"};
-        var tailmode = ${followmode == 'tail'};
-        var browsemode = ${followmode == 'browse'};
-        var nodemode = ${followmode == 'node'};
-        var execData = {id:executionId,project:"${execution.project}",node:"${session.Framework.getFrameworkNodeHostname()}"};
-
-        <auth:allowed job="${executionResource}" name="${UserAuth.WF_KILL}">
-          var killjobhtml = '<span class="action button textbtn" onclick="docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <img src="${resource(dir: 'images', file: 'icon-tiny-removex.png')}" alt="Kill" width="12px" height="12px"/></span>';
-        </auth:allowed>
-        <auth:allowed job="${executionResource}" name="${UserAuth.WF_KILL}" has="false">
-          var killjobhtml = "";
-        </auth:allowed>
-
-
-        function init() {
-          beginFollowingOutput(executionId);
-        }
-
-        Event.observe(window, 'load', init);
-        var totalDuration = 0 + ${scheduledExecution?.totalTime ? scheduledExecution.totalTime : -1};
-        var totalCount = 0 + ${scheduledExecution?.execCount ? scheduledExecution.execCount : -1};
-
-      </g:javascript>
-    <div class="pageBody">
-
-        <table>
-            <tr>
-                <td>
-
-        <table class="executionInfo">
-            <tr>
-                <td>User:</td>
-                <td>${execution?.user}</td>
-            </tr>
-            <g:if test="${null!=execution.dateCompleted && null!=execution.dateStarted}">
-
-                <tr>
-                    <td>Time:</td>
-                    <td><g:relativeDate start="${execution.dateStarted}" end="${execution.dateCompleted}" /></td>
-                </tr>
-            </g:if>
-            <g:if test="${null!=execution.dateStarted}">
-            <tr>
-                <td>Started:</td>
-                <td>
-                    <g:relativeDate elapsed="${execution.dateStarted}" agoClass="timeago"/>
-                </td>
-                <td><span class="timeabs">${execution.dateStarted}</span></td>
-            </tr>
-            </g:if>
-            <g:else>
-                <td>Started:</td>
-                <td>Just Now</td>
-            </g:else>
-
-        <g:if test="${null!=execution.dateCompleted}">
-                <tr>
-                    <td>Finished:</td>
-                    <td>
-                        <g:relativeDate elapsed="${execution.dateCompleted}" agoClass="timeago"/>
-                    </td>
-                    <td><span class="timeabs">${execution.dateCompleted}</span></td>
-                </tr>
-            </g:if>
-        </table>
-
-                </td>
-                <g:if test="${scheduledExecution}">
-                    <td style="vertical-align:top;" class="toolbar small">
-                        <g:render template="/scheduledExecution/actionButtons" model="${[scheduledExecution:scheduledExecution,objexists:objexists,jobAuthorized:jobAuthorized,execPage:true]}"/>
-                        <g:set var="lastrun" value="${scheduledExecution.id?Execution.findByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution,[max: 1, sort:'dateStarted', order:'desc']):null}"/>
-                        <g:set var="successcount" value="${scheduledExecution.id?Execution.countByScheduledExecutionAndStatus(scheduledExecution,'true'):0}"/>
-                        <g:set var="execCount" value="${scheduledExecution.id?Execution.countByScheduledExecution(scheduledExecution):0}"/>
-                        <g:set var="successrate" value="${execCount>0? (successcount/execCount) : 0}"/>
-                        <g:render template="/scheduledExecution/showStats" model="[scheduledExecution:scheduledExecution,lastrun:lastrun?lastrun:null, successrate:successrate]"/>
-                    </td>
-                </g:if>
-            </tr>
-        </table>
-
-        <g:expander key="schedExDetails${scheduledExecution?.id?scheduledExecution?.id:''}" imgfirst="true">Details</g:expander>
-        <div class="presentation" style="display:none" id="schedExDetails${scheduledExecution?.id}">
-            <g:render template="execDetails" model="[execdata:execution]"/>
-
-        </div>
-    </div>
-
 
     <div id="commandFlow" class="commandFlow">
         <table width="100%">
@@ -162,7 +64,7 @@
                     <span id="execRerun" style="${wdgt.styleVisible(if:null!=execution.dateCompleted)}" >
                         <g:set var="jobRunAuth" value="${ auth.allowedTest(job:executionResource, action:[UserAuth.WF_CREATE,UserAuth.WF_READ])}"/>
                         <g:if test="${jobRunAuth }">
-                            <g:link controller="scheduledExecution" action="createFromExecution" params="${[executionId:execution.id]}" class="action button" title="Rerun or Save this Execution&hellip;" ><img src="${resource(dir:'images',file:'icon-small-run.png')}"  alt="run" width="16px" height="16px"/> Rerun or Save &hellip;</g:link>
+                            <g:link controller="scheduledExecution" action="createFromExecution" params="${[executionId:execution.id]}" class="action button" title="Create a Job&hellip;" ><img src="${resource(dir:'images',file:'icon-small-add.png')}"  alt="run" width="14px" height="14px"/> Create a Job&hellip;</g:link>
                         </g:if>
                     </span>
                 </td>

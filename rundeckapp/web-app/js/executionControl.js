@@ -991,6 +991,10 @@ var FollowControl = Class.create({
         if (null != result && $('runstatus')) {
             $('runstatus').innerHTML = result == 'true' ? '<span class="succeed">Successful</span>'
                 : (result == 'cancelled' ? '<span class="fail">Killed</span>' : '<span class="fail">Failed</span>');
+            $$('.execstatus').each(function(e){
+                e.innerHTML = result == 'true' ? '<span class="succeed">Successful</span>'
+                : (result == 'cancelled' ? '<span class="fail">Killed</span>' : '<span class="fail">Failed</span>');
+            });
             if ($('jobInfo_' + this.executionId)) {
                 var img = $('jobInfo_' + this.executionId).down('img');
                 if (img) {

@@ -248,7 +248,7 @@
 
 
         /**
-         * START run
+         * START run execution code
          */
         <g:set var="jsdata" value="${query?.properties.findAll{it.key==~/^(node(In|Ex)clude.*|project)$/ &&it.value}}"/>
 
@@ -266,14 +266,34 @@
             $('runbox').down('button').disabled=false;
         }
         function collapseNodeView(){
-
+            $$('.obs_shownodes').each(Element.show);
+            $$('.nodeview').each(Element.hide);
+            $$('.nodeviewsummary').each(Element.show);
         }
+        function showNodeView(){
+            $$('.obs_shownodes').each(Element.hide);
+            $$('.nodeview').each(Element.show);
+            $$('.nodeviewsummary').each(Element.hide);
+        }
+        function runStarted(){
+            $$('.hiderun').each(Element.hide);
+            $$('.showrun').each(Element.show);
+            collapseNodeView();
+        }
+        function afterRun(){
+            $$('.showafterrun').each(Element.show);
+            $$('.hideafterrun').each(Element.hide);
+        }
+        /**
+         * Run the command
+         * @param elem
+         */
         function runFormSubmit(elem){
             var data = Form.serialize(elem);
 
             disableRunBar();
-            collapseNodeView();
-
+            runStarted();
+            $('runcontent').loading('Starting Execution&hellip;');
             new Ajax.Request("${createLink(controller:'scheduledExecution',action:'runAdhocInline')}",{
                 parameters:data,
                 evalScripts:true,
@@ -289,10 +309,13 @@
             });
             return false;
         }
+        /**
+         * Load content view to contain output
+         * @param data
+         */
         function startRunFollow(data){
-            //execute run with the given node set.
             if(data.id){
-            //after callback, load execution output in runcontent section
+                $('runcontent').loading('Loading Output&hellip;');
                 new Ajax.Updater('runcontent',"${createLink(controller:'execution',action:'followFragment')}",{
                 parameters:{id:data.id},
                 evalScripts:true,
@@ -305,6 +328,10 @@
             });
             }
         }
+        /**
+         * Start following the output
+         * @param data
+         */
         function continueRunFollow(data){
             try{
              var followControl = new FollowControl(data.id,'runcontent',{
@@ -312,11 +339,11 @@
                 iconUrl: "${resource(dir: 'images', file: 'icon')}",
                 lastlines: ${params.lastlines ? params.lastlines : 20},
                 tailmode: true,
-                browsemode: ${followmode == 'browse'},
-                nodemode: ${followmode == 'node'},
+                browsemode: false,
+                nodemode: false,
                 execData: {node:"test"},
-                 appLinks:appLinks,
-                 onComplete:onRunComplete,
+                appLinks:appLinks,
+                onComplete:onRunComplete,
             });
             followControl.beginFollowingOutput(data.id);
             }catch(e){
@@ -325,6 +352,7 @@
         }
         function onRunComplete(){
             enableRunBar();
+            afterRun();
         }
 
         /**
@@ -339,6 +367,36 @@
             }
             $('${rkey}filter').down('form').submit();
         }
+
+        /**
+         * filter toggle
+         */
+        <g:set var="isCompact" value="${params.compact?true:false}"/>
+        function filterToggle(evt) {
+            ['${rkey}filter','${rkey}filterdispbtn','runbox'].each(Element.toggle);
+            if (${isCompact}) {
+                $('${rkey}nodescontent').toggle();
+            }
+        }
+        function filterToggleSave(evt) {
+            ['${rkey}filter','${rkey}fsave'].each(Element.show);
+            ['${rkey}filterdispbtn','runbox','${rkey}fsavebtn'].each(Element.hide);
+            if (${isCompact}) {
+                $('${rkey}nodescontent').hide();
+            }
+        }
+        function init() {
+            $$('.obs_filtertoggle').each(function(e) {
+                Event.observe(e, 'click', filterToggle);
+            });
+            $$('.obs_filtersave').each(function(e) {
+                Event.observe(e, 'click', filterToggleSave);
+            });
+            $$('.obs_shownodes').each(function(e){
+                Event.observe(e, 'click', showNodeView);
+            });
+        }
+        Event.observe(window,'load',init);
 
     </script>
     <style type="text/css">
@@ -355,11 +413,11 @@
         }
 
         .node_entry .project{
-            
+
         }
         #remoteEditholder{
             margin: 0px 20px 0 20px;
-            
+
         }
         #remoteEditholder iframe{
             border:0;
@@ -369,7 +427,6 @@
         }
         .runbox{
             background: #ddd;
-            margin-bottom: 10px;
             padding:5px;
         }
         .runbox input[type='text']{
@@ -378,6 +435,10 @@
             font-family: Courier, monospace;
         }
 
+        #runcontent{
+            overflow-x:auto;
+            margin-top:10px;
+        }
     </style>
 </head>
 <body>
@@ -390,18 +451,17 @@
 <div class="pageBody solo">
 <g:render template="/common/messages"/>
 <div id="${rkey}nodeForm">
-    <g:set var="isCompact" value="${params.compact?true:false}"/>
     <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|project$/)||(query && !query.nodeFilterIsEmpty())}"/>
     <g:set var="filtersOpen" value="${params.createFilters||params.editFilters||params.saveFilter || filterErrors?true:false}"/>
 <table cellspacing="0" cellpadding="0" class="queryTable" width="100%">
         <tr>
         <g:if test="${!params.nofilters}">
-        <td style="text-align:left;vertical-align:top; width:400px; ${wdgt.styleVisible(if:filtersOpen)}" id="${rkey}filter" >
+        <td style="text-align:left;vertical-align:top; width:400px; ${wdgt.styleVisible(if:filtersOpen)}" id="${rkey}filter" class="hiderun">
             <g:form action="nodes" controller="framework" >
                 <g:if test="${params.compact}">
                     <g:hiddenField name="compact" value="${params.compact}"/>
                 </g:if>
-                <span class="prompt action" onclick="['${rkey}filter','${rkey}filterdispbtn','runbox'].each(Element.toggle); if (${isCompact}) { $('${rkey}nodescontent').toggle(); }">
+                <span class="prompt action obs_filtertoggle" >
                     Filter
                     <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-open.png')}" width="12px" height="12px"/>
                 </span>
@@ -459,6 +519,18 @@
                             </g:form>
                                 <button onclick="runFormSubmit('runbox');">Run</button>
                             </div>
+                            <div class="runbox nodesummary nodeviewsummary" style="display:none">
+                                <span class="match">${total} Node${1 != total ? 's' : ''}</span>
+                                <span class="type">
+                                <g:if test="${!filterName}">
+                                    matching filter input
+                                </g:if>
+                                <g:else>
+                                    matching filter '${filterName}'
+                                </g:else>
+                                </span>
+                                <span class="button obs_shownodes" >View Nodes&hellip;</span>
+                            </div>
                         </g:if>
                 <g:ifUserInAnyRoles roles="admin,nodes_admin">
                     <g:if test="${selectedProject && selectedProject.shouldUpdateNodesResourceFile()}">
@@ -466,20 +538,20 @@
                     </g:if>
                 </g:ifUserInAnyRoles>
                 <g:if test="${!params.nofilters}">
-                <div style="margin-bottom: 5px;" id="${rkey}nodesfilterholder">
+                <div style="margin: 10px 0 5px 0;" id="${rkey}nodesfilterholder" class="nodeview">
                     <g:if test="${wasfiltered}">
 
 
                         <div style="margin:5px 0; padding:5px 0;">
                             <span style="padding:5px 0;margin:5px 0;${!filtersOpen?'':'display:none;'} " id='${rkey}filterdispbtn' >
-                            <span title="Click to modify filter" class="info textbtn query action" onclick="['${rkey}filter','${rkey}filterdispbtn','runbox'].each(Element.toggle);if(${isCompact}){$('${rkey}nodescontent').toggle();}" >
+                            <span title="Click to modify filter" class="info textbtn query action obs_filtertoggle" >
                                 <g:render template="displayNodeFilters" model="${[displayParams:query]}"/>
                                 <img src="${resource(dir:'images',file:'icon-tiny-disclosure.png')}" width="12px" height="12px"/></span>
                             </span>
 
 
                         <g:if test="${!filterName}">
-                            <span class="prompt action" onclick="['${rkey}filter','${rkey}filterdispbtn','${rkey}fsave','${rkey}fsavebtn'].each(Element.toggle);if(${isCompact}){$('${rkey}nodescontent').toggle();}" id="${rkey}fsavebtn" title="Click to save this filter with a name">
+                            <span class="prompt action obs_filtersave" title="Click to save this filter with a name">
                                 save this filter&hellip;
                             </span>
                         </g:if>
@@ -504,7 +576,7 @@
                 </div>
                 </g:if>
 
-                <div class="nodesummary clear">
+                <div class="nodesummary clear nodeview">
                     <span class="match">${total}/${allcount} Node${1 != allcount ? 's' : ''}</span>
                     <span class="type">
                     <g:if test="${!filterName}">
@@ -517,34 +589,34 @@
                 </div>
 
                 <g:if test="${tagsummary}">
-                    <div class="presentation clear" >
-                    <g:set var="hidetop" value="${tagsummary.findAll {it.value>1}.size()>30}"/>
-                    <g:if test="${hidetop}">
-                    <span class="action button receiver" title="Show tag demographics" onclick="Element.show('tagdemo');Element.hide(this);">Show ${tagsummary.size()} tags&hellip;</span>
-                    </g:if>
-                    <span id="tagdemo" style="${wdgt.styleVisible(unless:hidetop)}">
-                        <span class="desc">${tagsummary.size()} tags:</span>
-                    <g:set var="singletag" value="${[]}"/>
-                    <g:each var="tag" in="${tagsummary.sort{a,b->a.value>b.value?-1:a.value<b.value?1:a.key<=>b.key}.keySet()}">
-                        <g:if test="${tagsummary[tag]>1 || tagsummary.size()<=30}">
-                        <span class="summary"><g:link class=" action" action="nodes" params="${[nodeIncludeTags:tag]}" title="Filter by tag: ${tag}">${tag}</g:link>:${tagsummary[tag]}</span>
+                    <div class="presentation clear nodeview" >
+                        <g:set var="hidetop" value="${tagsummary.findAll {it.value>1}.size()>30}"/>
+                        <g:if test="${hidetop}">
+                        <span class="action button receiver" title="Show tag demographics" onclick="Element.show('tagdemo');Element.hide(this);">Show ${tagsummary.size()} tags&hellip;</span>
                         </g:if>
-                        <g:else>
-                            %{singletag<<tag}%
-                        </g:else>
-                    </g:each>
-                    <g:if test="${singletag}">
-                        <span class="action button receiver" title="See all tags" onclick="Element.show('singletags');Element.hide(this);">Show All&hellip;</span>
-                        <span style="display:none" id="singletags">
-                            <g:each var="tag" in="${singletag}">
-                                <span class="summary"><g:link class=" action" action="nodes" params="${[nodeIncludeTags:tag]}" title="Filter by tag: ${tag}">${tag}</g:link>:${tagsummary[tag]}</span>
-                            </g:each>
+                        <span id="tagdemo" style="${wdgt.styleVisible(unless:hidetop)}">
+                            <span class="desc">${tagsummary.size()} tags:</span>
+                        <g:set var="singletag" value="${[]}"/>
+                        <g:each var="tag" in="${tagsummary.sort{a,b->a.value>b.value?-1:a.value<b.value?1:a.key<=>b.key}.keySet()}">
+                            <g:if test="${tagsummary[tag]>1 || tagsummary.size()<=30}">
+                            <span class="summary"><g:link class=" action" action="nodes" params="${[nodeIncludeTags:tag]}" title="Filter by tag: ${tag}">${tag}</g:link>:${tagsummary[tag]}</span>
+                            </g:if>
+                            <g:else>
+                                %{singletag<<tag}%
+                            </g:else>
+                        </g:each>
+                        <g:if test="${singletag}">
+                            <span class="action button receiver" title="See all tags" onclick="Element.show('singletags');Element.hide(this);">Show All&hellip;</span>
+                            <span style="display:none" id="singletags">
+                                <g:each var="tag" in="${singletag}">
+                                    <span class="summary"><g:link class=" action" action="nodes" params="${[nodeIncludeTags:tag]}" title="Filter by tag: ${tag}">${tag}</g:link>:${tagsummary[tag]}</span>
+                                </g:each>
+                            </span>
+                        </g:if>
                         </span>
-                    </g:if>
-                    </span>
                     </div>
                 </g:if>
-                <div class="presentation clear matchednodes" id="nodelist" >
+                <div class="presentation clear matchednodes nodeview" id="nodelist" >
                     <span class="button action receiver" onclick="expandResultNodes();">Show ${total} Node${1 != total ? 's' : ''}...</span>
                     %{--<g:render template="nodes" model="${[nodes:allnodes,totalexecs:totalexecs,jobs:jobs,params:params,expanddetail:true]}"/>--}%
                     <g:if test="${total<=30}">
