@@ -456,7 +456,7 @@
         }
         .runbox{
             background: #ddd;
-            padding:5px;
+            padding:10px ;
         }
         .runbox input[type='text']{
             font-size: 150%;
@@ -497,11 +497,65 @@
 </g:if>
 <div id="nodesContent">
 
+    <g:if test="${session.project }">
+        <div class="runbox" id="runbox">
+        <g:form action="execAndForget" controller="scheduledExecution" method="post" style="display:inline" onsubmit="runFormSubmit(this);">
+            Command:
+            <g:img file="icon-small-shell.png" width="16px" height="16px"/>
+            <g:if test="${total>0}">
+            <g:hiddenField name="project" value="${session.project}"/>
+            <g:hiddenField name="doNodedispatch" value="true"/>
+            <g:if test="${!wasfiltered}">
+                <g:hiddenField name="nodeIncludeName" value=".*"/>
+            </g:if>
+            <g:hiddenField name="nodeKeepgoing" value="true"/>
+            <g:hiddenField name="nodeThreadcount" value="1"/>
+            <g:hiddenField name="description" value=""/>
+
+            <g:hiddenField name="workflow.commands[0].adhocExecution" value="true"/>
+            <g:hiddenField name="workflow.threadcount" value="1"/>
+            <g:hiddenField name="workflow.keepgoing" value="false"/>
+            <g:hiddenField name="workflow.project" value="${session.project}"/>
+                <g:render template="nodeFiltersHidden" model="${[params:params,query:query]}"/>
+            </g:if>
+            <g:if test="${total>0}">
+                <g:textField name="workflow.commands[0].adhocRemoteString" size="80" placeholder="Enter a shell command" autofocus="true" />
+            </g:if>
+            <g:else>
+                <input type="text" name="workflow.commands[0].adhocRemoteString" size="80" placeholder="Enter a shell command" autofocus="true" disabled/>
+            </g:else>
+            <g:if test="${auth.allowedTest(job:[jobName:'adhoc_run', groupPath:'ui'], action:UserAuth.WF_RUN)}">
+            <!--<input type="submit" value="Run"/>-->
+            </g:if>
+            <g:else>
+                <span class="button disabled" title="You are not authorized to run ad-hoc jobs">Run</span>
+            </g:else>
+        </g:form>
+        <g:if test="${auth.allowedTest(job:[jobName:'adhoc_run', groupPath:'ui'], action:UserAuth.WF_RUN)}">
+            <button onclick="runFormSubmit('runbox');" ${total>0?'':'disabled'}>Run</button>
+        </g:if>
+
+        </div>
+        <div class="runbox nodesummary nodeviewsummary" style="display:none">
+            <span class="match">${total} Node${1 != total ? 's' : ''}</span>
+            <span class="type">
+            <g:if test="${!filterName}">
+                matching filter input
+            </g:if>
+            <g:else>
+                matching filter '${filterName}'
+            </g:else>
+            </span>
+            <span class="button obs_shownodes" >View Nodes&hellip;</span>
+        </div>
+    </g:if>
 <div class="pageBody solo">
+
 <g:render template="/common/messages"/>
 <div id="${rkey}nodeForm">
     <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|project$/)||(query && !query.nodeFilterIsEmpty())}"/>
     <g:set var="filtersOpen" value="${params.createFilters||params.editFilters||params.saveFilter || filterErrors?true:false}"/>
+
 <table cellspacing="0" cellpadding="0" class="queryTable" width="100%">
         <tr>
         <g:if test="${!params.nofilters}">
@@ -538,49 +592,6 @@
             </g:if>
             <td style="text-align:left;vertical-align:top;" id="${rkey}nodescontent">
 
-                        <g:if test="${session.project && total>0}">
-                            <div class="runbox" id="runbox">
-                            <g:form action="execAndForget" controller="scheduledExecution" method="post" style="display:inline" onsubmit="runFormSubmit(this);">
-                                Command:
-                                <g:img file="icon-small-shell.png" width="16px" height="16px"/>
-                                <g:hiddenField name="project" value="${session.project}"/>
-                                <g:hiddenField name="doNodedispatch" value="true"/>
-                                <g:if test="${!wasfiltered}">
-                                    <g:hiddenField name="nodeIncludeName" value=".*"/>
-                                </g:if>
-                                <g:hiddenField name="nodeKeepgoing" value="true"/>
-                                <g:hiddenField name="nodeThreadcount" value="1"/>
-                                <g:hiddenField name="description" value=""/>
-
-                                <g:hiddenField name="workflow.commands[0].adhocExecution" value="true"/>
-                                <g:hiddenField name="workflow.threadcount" value="1"/>
-                                <g:hiddenField name="workflow.keepgoing" value="false"/>
-                                <g:hiddenField name="workflow.project" value="${session.project}"/>
-
-                                <g:textField name="workflow.commands[0].adhocRemoteString" size="80" placeholder="Enter a shell command" autofocus="true" />
-                                <g:render template="nodeFiltersHidden" model="${[params:params,query:query]}"/>
-                                <g:if test="${auth.allowedTest(job:[jobName:'adhoc_run', groupPath:'ui'], action:UserAuth.WF_RUN)}">
-                                <!--<input type="submit" value="Run"/>-->
-                                </g:if>
-                                <g:else>
-                                    <span class="button disabled" title="You are not authorized to run ad-hoc jobs">Run</span>
-                                </g:else>
-                            </g:form>
-                                <button onclick="runFormSubmit('runbox');">Run</button>
-                            </div>
-                            <div class="runbox nodesummary nodeviewsummary" style="display:none">
-                                <span class="match">${total} Node${1 != total ? 's' : ''}</span>
-                                <span class="type">
-                                <g:if test="${!filterName}">
-                                    matching filter input
-                                </g:if>
-                                <g:else>
-                                    matching filter '${filterName}'
-                                </g:else>
-                                </span>
-                                <span class="button obs_shownodes" >View Nodes&hellip;</span>
-                            </div>
-                        </g:if>
                 <g:ifUserInAnyRoles roles="admin,nodes_admin">
                     <g:if test="${selectedProject && selectedProject.shouldUpdateNodesResourceFile()}">
                         <span class="floatr"><g:link action="reloadNodes" params="${[project:selectedProject.name]}" class="action button" title="Click to update the resources.xml file from the source URL, for project ${selectedProject.name}" onclick="\$(this.parentNode).loading();">Update Nodes for project ${selectedProject.name}</g:link></span>
