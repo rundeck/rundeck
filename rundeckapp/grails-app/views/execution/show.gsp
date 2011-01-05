@@ -194,14 +194,14 @@
             <tr>
                 <td class="buttonholder" style="padding:10px;">
                     <g:link class="tab ${followmode=='tail'?' selected':''}" style="padding:5px;"
-                        title="View the last lines of the output file"
-                        controller="execution"  action="show" id="${execution.id}" params="${[lastlines:params.lastlines,mode:'tail'].findAll{it.value}}">Tail Output</g:link>
+                        title="${g.message(code:'execution.show.mode.Tail.desc')}"
+                        controller="execution"  action="show" id="${execution.id}" params="${[lastlines:params.lastlines,mode:'tail'].findAll{it.value}}"><g:message code="execution.show.mode.Tail.title" default="Tail Output"/></g:link>
                     <g:link class="tab ${followmode=='browse'?' selected':''}" style="padding:5px;"
-                        title="Load the entire file in grouped contexts "
-                        controller="execution"  action="show" id="${execution.id}" params="[mode:'browse']">Annotated</g:link>
+                        title="${g.message(code:'execution.show.mode.Annotated.desc')}"
+                        controller="execution"  action="show" id="${execution.id}" params="[mode:'browse']"><g:message code="execution.show.mode.Annotated.title" default="Annotated"/></g:link>
                     <g:link class="tab ${followmode=='node'?' selected':''}" style="padding:5px;"
-                        title="Load the entire file in grouped contexts "
-                        controller="execution"  action="show" id="${execution.id}" params="[mode:'node']">Node Output</g:link>
+                        title="${g.message(code:'execution.show.mode.Compact.desc')}"
+                        controller="execution"  action="show" id="${execution.id}" params="[mode:'node']"><g:message code="execution.show.mode.Compact.title" default="Compact"/></g:link>
                     
             <span id="fullviewopts" style="${followmode!='browse'?'display:none':''}">
                     <input

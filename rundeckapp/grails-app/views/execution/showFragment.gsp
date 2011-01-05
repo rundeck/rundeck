@@ -62,14 +62,14 @@
             <tr>
                 <td class="buttonholder" style="padding:10px;">
                     <g:link class="tab ${followmode=='tail'?' selected':''} out_setmode_tail out_setmode" style="padding:5px;"
-                        title="View the last lines of the output file"
+                        title="${g.message(code:'execution.show.mode.Tail.desc')}"
                         controller="execution"  action="show" id="${execution.id}" params="${[lastlines:params.lastlines,mode:'tail'].findAll{it.value}}">Tail Output</g:link>
                     <g:link class="tab ${followmode=='browse'?' selected':''} out_setmode_browse  out_setmode" style="padding:5px;"
-                        title="Load the entire file in grouped contexts "
+                        title="${g.message(code:'execution.show.mode.Annotated.desc')}"
                         controller="execution"  action="show" id="${execution.id}" params="[mode:'browse']">Annotated</g:link>
                     <g:link class="tab ${followmode=='node'?' selected':''} out_setmode_node  out_setmode" style="padding:5px;"
-                        title="Load the entire file in grouped contexts "
-                        controller="execution"  action="show" id="${execution.id}" params="[mode:'node']">Node Output</g:link>
+                        title="${g.message(code:'execution.show.mode.Compact.desc')}"
+                        controller="execution"  action="show" id="${execution.id}" params="[mode:'node']"><g:message code="execution.show.mode.Compact.title" default="Compact"/></g:link>
                     
             <span id="fullviewopts" style="${followmode!='browse'?'display:none':''}" class="opt_mode_browse opt_mode">
                     <label
