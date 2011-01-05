@@ -64,7 +64,157 @@ var FollowControl = Class.create({
         this.targetElement=elem;
         Object.extend(this,params);
         this.refresh= this.tailmode;
-        console.log(this);
+        this._init();
+        if(this.dobind){
+            this.bindActions(elem);
+        }
+        this.readyMode();
+    },
+    _init: function(){
+        //clear and reset vars
+        this.cmdoutputtbl = null;
+        this.lastTBody = null;
+        this.ctxBodySet = new Array();
+        this.ctxBodyFinalSet = new Array();
+        this.ctxGroupSet = new Array();
+        this.runningcmd={count : 0, entries : new Array()};
+        this.lastrow = null;
+        this.contextIdCounter = 0;
+        this.contextStatus = new Object();
+        //node mode
+        this.ctxGroupTbodies={};
+    },
+    bindActions: function(elem){
+        var obj=this;
+        $(elem).select('a.out_setmode_tail').each(function(e){
+            Event.observe(e,'click',function(evt){Event.stop(evt);obj.setMode('tail');obj.reload();});
+        });
+        $(elem).select('a.out_setmode_browse').each(function(e){
+            Event.observe(e,'click',function(evt){Event.stop(evt);obj.setMode('browse');obj.reload();});
+        });
+        $(elem).select('a.out_setmode_node').each(function(e){
+            Event.observe(e,'click',function(evt){Event.stop(evt);obj.setMode('node');obj.reload();});
+        });
+        $(elem).select('.opt_append_top_true').each(function(e){
+            e.onclick=null;
+            Event.observe(e,'click',function(evt){obj.setOutputAppendTop(true);});
+        });
+        $(elem).select('.opt_append_top_false').each(function(e){
+            e.onclick=null;
+            Event.observe(e,'click',function(evt){obj.setOutputAppendTop(false);});
+        });
+        $(elem).select('.opt_auto_scroll_true').each(function(e){
+            e.onclick=null;
+            Event.observe(e,'click',function(evt){obj.setOutputAutoscroll(e.checked);});
+        });
+        $(elem).select('.opt_group_output').each(function(e){
+            e.onclick=null;
+            Event.observe(e,'click',function(evt){obj.setGroupOutput(e.checked);});
+        });
+        $(elem).select('.opt_collapse_ctx').each(function(e){
+            e.onclick=null;
+            Event.observe(e,'click',function(evt){obj.setCollapseCtx(e.checked);});
+        });
+        $(elem).select('.opt_show_final').each(function(e){
+            e.onclick=null;
+            Event.observe(e,'click',function(evt){obj.setShowFinalLine(e.checked);});
+        });
+        $(elem).select('.opt_last_lines_dec').each(function(e){
+            e.onmousedown=null;
+            Event.observe(e,'mousedown',function(evt){Event.stop(evt);obj.modifyLastlines(-5);});
+        });
+        $(elem).select('.opt_last_lines_inc').each(function(e){
+            e.onmousedown=null;
+            Event.observe(e,'mousedown',function(evt){Event.stop(evt);obj.modifyLastlines(5);});
+        });
+        $(elem).select('.opt_last_lines_val').each(function(e){
+            e.onchange=null;
+            Event.observe(e,'change',function(evt){obj.updateLastlines(e.value);});
+        });
+    },
+    setMode: function(mode){
+        this.tailmode=mode=="tail";
+        this.browsemode=mode=="browse";
+        this.nodemode=mode=="node";
+        this.tailmode=this.tailmode||!(this.browsemode||this.nodemode);
+        this.refresh=this.tailmode;
+        this.readyMode();
+    },
+    readyTail: function(){
+        var obj=this;
+        $(this.targetElement).select('.opt_mode_tail').each(Element.show);
+        $(this.targetElement).select('.out_setmode_tail').each(function(e){e.addClassName('selected');});
+
+        $(this.targetElement).select('.opt_last_lines_val').each(function(e){
+            e.value=obj.lastlines;
+        });
+    },
+    readyMode: function(){
+        var obj=this;
+        this.setGroupOutput(this.browsemode||this.nodemode);
+        if(this.targetElement){
+            $(this.targetElement).select('.opt_mode').each(Element.hide);
+            $(this.targetElement).select('.out_setmode').each(function(e){e.removeClassName('selected')});
+            if(this.tailmode){
+                this.readyTail();
+            }else if(this.browsemode){
+                $(this.targetElement).select('.opt_mode_browse').each(Element.show);
+                $(this.targetElement).select('.out_setmode_browse').each(function(e){e.addClassName('selected');});
+                //set form inputs to reflect state
+                $(this.targetElement).select('.opt_append_top_true').each(function(e){
+                    if(obj.appendtop.value){
+                        e.addClassName('selected');
+                    }else{
+                        e.removeClassName('selected');
+                    }
+                });
+                $(this.targetElement).select('.opt_append_top_false').each(function(e){
+                    if(!obj.appendtop.value){
+                        e.addClassName('selected');
+                    }else{
+                        e.removeClassName('selected');
+                    }
+                });
+                $(this.targetElement).select('.opt_auto_scroll_true').each(function(e){
+                    e.checked=obj.autoscroll;
+                    if(obj.autoscroll){
+                        e.up('label').addClassName('selected');
+                    }else{
+                        e.up('label').removeClassName('selected');
+                    }
+                });
+                $(this.targetElement).select('.opt_group_output').each(function(e){
+                    e.checked=obj.groupOutput.value;
+                    if(obj.groupOutput.value){
+                        e.up('label').addClassName('selected');
+                    }else{
+                        e.up('label').removeClassName('selected');
+                    }
+                });
+
+                $(this.targetElement).select('.opt_collapse_ctx').each(function(e){
+                    e.checked=obj.collapseCtx.value;
+                    if(obj.collapseCtx.value){
+                        e.up('label').addClassName('selected');
+                    }else{
+                        e.up('label').removeClassName('selected');
+                    }
+                });
+
+                $(this.targetElement).select('.opt_show_final').each(function(e){
+                    e.checked=obj.showFinalLine.value;
+                    if(obj.showFinalLine.value){
+                        e.up('label').addClassName('selected');
+                    }else{
+                        e.up('label').removeClassName('selected');
+                    }
+                });
+
+
+            }else if(this.nodemode){
+                $(this.targetElement).select('.out_setmode_node').each(function(e){e.addClassName('selected');});
+            }
+        }
     },
     appendCmdOutputError: function (message) {
         if ($('cmdoutputerror')) {
@@ -113,9 +263,10 @@ var FollowControl = Class.create({
         this.lastlines = val;
         $('lastlinesvalue').value = this.lastlines;
         if (!this.isrunning) {
+            this.isrunning = true;
             var obj=this;
             setTimeout(function() {
-                obj.loadMoreOutput(this.executionId, 0);
+                obj.loadMoreOutput(obj.executionId, 0);
             }, 50);
         }
         return false;
@@ -125,6 +276,7 @@ var FollowControl = Class.create({
         val = parseInt(val);
         oldval = oldval + val;
         this.updateLastlines(oldval);
+        this.readyTail();
     },
     isAppendTop: function() {
         return this.appendtop.value ? true : false;
@@ -173,13 +325,13 @@ var FollowControl = Class.create({
         if (this.groupOutput.value != val) {
             this.groupOutput.value = val;
         }
-        this.ctxGroupSet._each(this.groupOutput.value ? Element.show : Element.hide);
+        this.ctxGroupSet.each(this.groupOutput.value ? Element.show : Element.hide);
         if (this.groupOutput.value && this.collapseCtx.value) {
-            this.ctxBodySet._each(Element.hide);
-            this.ctxBodyFinalSet._each(this.showFinalLine.value ? Element.show : Element.hide);
+            this.ctxBodySet.each(Element.hide);
+            this.ctxBodyFinalSet.each(this.showFinalLine.value ? Element.show : Element.hide);
         } else {
-            this.ctxBodySet._each(Element.show);
-            this.ctxBodyFinalSet._each(Element.show);
+            this.ctxBodySet.each(Element.show);
+            this.ctxBodyFinalSet.each(Element.show);
         }
 
         if (!this.groupOutput.value) {
@@ -209,8 +361,9 @@ var FollowControl = Class.create({
             this.showFinalLine.changed = true;
             this.showFinalLine.value = val;
         }
+        var obj=this;
         this.ctxBodyFinalSet.each(function(elem, ndx) {
-            if (!this.showFinalLine.value && this.collapseCtx.value && this.ctxBodySet[ndx] && !Element.visible(this.ctxBodySet[ndx])) {
+            if (!obj.showFinalLine.value && obj.collapseCtx.value && obj.ctxBodySet[ndx] && !Element.visible(obj.ctxBodySet[ndx])) {
                 Element.hide(elem);
             } else {
                 Element.show(elem);
@@ -274,15 +427,7 @@ var FollowControl = Class.create({
             $('commandPerform').removeChild(tbl);
             this.cmdoutputtbl = null;
         }
-        this.lastTBody = null;
-        this.ctxBodySet = new Array();
-        this.ctxBodyFinalSet = new Array();
-        this.ctxGroupSet = new Array();
-        this.runningcmd.count = 0;
-        this.runningcmd.entries = new Array();
-        this.lastrow = null;
-        this.contextIdCounter = 0;
-        this.contextStatus = new Object();
+        this._init();
     },
 
     createTable: function() {
@@ -527,21 +672,30 @@ var FollowControl = Class.create({
         var url = this.appLinks.tailExecutionOutput;
         //    $('commandPerform').innerHTML+="id,offset: "+id+","+offset+"; runningcmd: "+this.runningcmd.id+","+this.runningcmd.offset;
         var obj=this;
-        new Ajax.Request(url, {
-            parameters: "id=" + id + "&offset=" + offset + ((this.tailmode && this.lastlines) ? "&lastlines=" + this.lastlines : "")
-                + this.extraParams ,
-            onSuccess: function(transport) {
-                try{
-                obj.appendCmdOutput(transport.responseText);
-                }catch(e){
-                    obj.appendCmdOutputError(e.stack);
+        if(this.isrunning){
+            new Ajax.Request(url, {
+                parameters: "id=" + id + "&offset=" + offset + ((this.tailmode && this.lastlines) ? "&lastlines=" + this.lastlines : "")
+                    + this.extraParams ,
+                onSuccess: function(transport) {
+                    try{
+                    obj.appendCmdOutput(transport.responseText);
+                    }catch(e){
+                        obj.appendCmdOutputError(e.stack);
+                    }
+                },
+                onFailure: function() {
+                    obj.appendCmdOutputError("Error performing request: " + url);
+                    obj.finishedExecution();
                 }
-            },
-            onFailure: function() {
-                obj.appendCmdOutputError("Error performing request: " + url);
-                obj.finishedExecution();
+            });
+        }else if(this._stop){
+            this._stop=null;
+            if(typeof(this._onStopCallback)=='function'){
+                var cb=this._onStopCallback;
+                this._onStopCallback=null;
+                cb();
             }
-        });
+        }
     },
     reverseOutputTable: function(tbl) {
         try {
@@ -627,10 +781,6 @@ var FollowControl = Class.create({
             tbl.appendChild(newtbod);
         }
         this.ctxGroupSet.push(newtbod);
-        if (!this.groupOutput.value) {
-            newtbod.hide();
-        }
-
 
         var tr = $(newtbod.insertRow(this.isAppendTop() ? 0 : -1));
         var iconcell = $(tr.insertCell(0));
@@ -954,11 +1104,11 @@ var FollowControl = Class.create({
 
         this.displayCompletion(0);
         $('progressContainer').show();
-        this.setOutputAppendTop($F('outputappendtop') == "top");
-        this.setOutputAutoscroll($F('outputautoscrolltrue') == "true");
-        this.setGroupOutput($F('ctxshowgroup') == 'true');
-        this.setCollapseCtx($F('ctxcollapse') == "true");
-        this.setShowFinalLine($F('ctxshowlastline') == "true");
+//        this.setOutputAppendTop($F('outputappendtop') == "top");
+//        this.setOutputAutoscroll($F('outputautoscrolltrue') == "true");
+//        this.setGroupOutput($F('ctxshowgroup') == 'true');
+//        this.setCollapseCtx($F('ctxcollapse') == "true");
+//        this.setShowFinalLine($F('ctxshowlastline') == "true");
         this.isrunning = true;
     },
 
@@ -1017,7 +1167,22 @@ var FollowControl = Class.create({
         this.starttime = new Date().getTime();
         this.loadMoreOutput(id, 0);
     },
-
+    stopFollowingOutput: function(callback){
+        if(this.isrunning){
+            this._onStopCallback=callback;
+            this._stop=true;
+            this.isrunning=false;
+        }else if(typeof(callback)=='function'){
+            callback();
+        }
+    },
+    reload: function(){
+        var obj=this;
+        this.stopFollowingOutput(function(){
+            obj.clearTable(obj.cmdoutputtbl);
+            obj.beginFollowingOutput(obj.executionId);
+        });
+    },
     updatecancel: function(data) {
 
         var orig = data;

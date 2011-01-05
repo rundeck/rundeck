@@ -242,7 +242,7 @@ a.action:hover, span.action.textbtn:hover{
     color: blue;
     text-decoration:underline;
 }
-a.button, span.button{
+a.button, span.button, label.button{
     padding: 3px;
     background: #eee;
     -moz-border-radius: 3px;
@@ -783,7 +783,7 @@ table.execoutput tr.alternateRow td.info{
 }
 table.execoutput td.data{
     border-left: 1px solid white;
-    white-space: pre;
+    /*white-space: pre;*/
     font-family: "Lucida Console",courier,monospace;
     padding: 1px 3px;
     vertical-align:top;

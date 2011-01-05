@@ -317,7 +317,7 @@
             if(data.id){
                 $('runcontent').loading('Loading Output&hellip;');
                 new Ajax.Updater('runcontent',"${createLink(controller:'execution',action:'followFragment')}",{
-                parameters:{id:data.id},
+                parameters:{id:data.id,mode:'tail'},
                 evalScripts:true,
                 onComplete: function(transport) {
                     if (transport.request.success()) {
@@ -339,11 +339,10 @@
                 iconUrl: "${resource(dir: 'images', file: 'icon')}",
                 lastlines: ${params.lastlines ? params.lastlines : 20},
                 tailmode: true,
-                browsemode: false,
-                nodemode: false,
                 execData: {node:"test"},
                 appLinks:appLinks,
                 onComplete:onRunComplete,
+                dobind:true
             });
             followControl.beginFollowingOutput(data.id);
             }catch(e){

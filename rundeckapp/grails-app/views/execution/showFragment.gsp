@@ -83,30 +83,35 @@
         <table width="100%">
             <tr>
                 <td class="buttonholder" style="padding:10px;">
-                    <g:link class="tab ${followmode=='tail'?' selected':''}" style="padding:5px;"
+                    <g:link class="tab ${followmode=='tail'?' selected':''} out_setmode_tail out_setmode" style="padding:5px;"
                         title="View the last lines of the output file"
                         controller="execution"  action="show" id="${execution.id}" params="${[lastlines:params.lastlines,mode:'tail'].findAll{it.value}}">Tail Output</g:link>
-                    <g:link class="tab ${followmode=='browse'?' selected':''}" style="padding:5px;"
+                    <g:link class="tab ${followmode=='browse'?' selected':''} out_setmode_browse  out_setmode" style="padding:5px;"
                         title="Load the entire file in grouped contexts "
                         controller="execution"  action="show" id="${execution.id}" params="[mode:'browse']">Annotated</g:link>
-                    <g:link class="tab ${followmode=='node'?' selected':''}" style="padding:5px;"
+                    <g:link class="tab ${followmode=='node'?' selected':''} out_setmode_node  out_setmode" style="padding:5px;"
                         title="Load the entire file in grouped contexts "
                         controller="execution"  action="show" id="${execution.id}" params="[mode:'node']">Node Output</g:link>
                     
-            <span id="fullviewopts" style="${followmode!='browse'?'display:none':''}">
+            <span id="fullviewopts" style="${followmode!='browse'?'display:none':''}" class="opt_mode_browse opt_mode">
+                    <label
+                        class="action textbtn button opt_append_top_true"
+                        title="Click to change"
+                            id="appendTopLabel"
+                        onclick="setOutputAppendTop(true);">
                     <input
                         type="radio"
                         name="outputappend"
                         id="outputappendtop"
                         value="top"
                         style="display: none;"/>
-                    <label for="outputappendtop">
-                        <span
-                        class="action textbtn button"
-                        title="Click to change"
-                            id="appendTopLabel"
-                        onclick="setOutputAppendTop(true);"
-                        >Top</span></label>
+                    Top</label>
+                    <label
+                            class="action textbtn button  opt_append_top_false"
+                            title="Click to change"
+                            id="appendBottomLabel"
+                            onclick="setOutputAppendTop(false);"
+                        >
                     <input
                         type="radio"
                         name="outputappend"
@@ -114,15 +119,8 @@
                         value="bottom"
                         checked="CHECKED"
                         style="display: none;"/>
-                    <label
-                        for="outputappendbottom">
-                        <span
-                            class="action textbtn button"
-                            title="Click to change"
-                            id="appendBottomLabel"
-                            onclick="setOutputAppendTop(false);"
-                        >Bottom</span></label>
-                    <span
+                    Bottom</label>
+                <label
                     class="action textbtn button"
                     title="Click to change"
                     id="autoscrollTrueLabel"
@@ -130,13 +128,14 @@
                 <input
                     type="checkbox"
                     name="outputautoscroll"
+                    class=" opt_auto_scroll_true"
                     id="outputautoscrolltrue"
                     value="true"
                     ${followmode=='tail'?'':'checked="CHECKED"'}
-                    onclick="setOutputAutoscroll($('outputautoscrolltrue').checked);"
+                    onclick="setOutputAutoscroll(this.checked);"
                     style=""/>
 
-                <label for="outputautoscrolltrue">Scroll</label></span>
+                Scroll</label>
 
                 <%--
                 <input
@@ -155,66 +154,73 @@
 <%--
             </td>
             <td>--%>
-                <span class="action textbtn button"
+                <label class="action textbtn button "
                       title="Click to change"
                       id="ctxshowgroupoption"
-                      onclick="setGroupOutput($('ctxshowgroup').checked);">
+                      >
                 <input
+                    class="opt_group_output"
+                    onclick="setGroupOutput($('ctxshowgroup').checked);"
                     type="checkbox"
                     name="ctxshowgroup"
                     id="ctxshowgroup"
                     value="true"
                     ${followmode=='tail'?'':'checked="CHECKED"'}
-                    style=""/>
-                    <label for="ctxshowgroup">Group commands</label>
-                </span>
+                    />
+                    Group commands</label>
 <%--
                 </td>
 
             <td >--%>
                 &nbsp;
-                <span
-                    class="action textbtn button"
+                <label
+                    class="action textbtn button "
                     title="Click to change"
                     id="ctxcollapseLabel"
-                    onclick="setCollapseCtx($('ctxcollapse').checked);">
+                    >
                 <input
+                    class="opt_collapse_ctx"
+                    onclick="setCollapseCtx($('ctxcollapse').checked);"
                     type="checkbox"
                     name="ctxcollapse"
                     id="ctxcollapse"
                     value="true"
                     ${followmode=='tail'?'':null==execution?.dateCompleted?'checked="CHECKED"':''}
-                    style=""/>
-                    <label for="ctxcollapse">Collapse</label>
-                </span>
+                    />
+                    Collapse</label>
 <%--
             </td>
             <td>--%>
                 &nbsp;
-                <span class="action textbtn button"
+                <label class="action textbtn button"
                       title="Click to change"
                       id="ctxshowlastlineoption"
-                      onclick="setShowFinalLine($('ctxshowlastline').checked);">
+                      >
                 <input
+                    class="opt_show_final"
+                    onclick="setShowFinalLine($('ctxshowlastline').checked);"
                     type="checkbox"
                     name="ctxshowlastline"
                     id="ctxshowlastline"
                     value="true"
                     checked="CHECKED"
-                    style=""/>
-                    <label for="ctxshowlastline">Show final line</label>
-                </span>
+                    />
+                    Show final line</label>
             </span>
-            <g:if test="${followmode=='tail'}">
+                <span class="opt_mode_tail opt_mode" style="${wdgt.styleVisible(if:followmode=='tail')}">
 <%---
                 </td>
                 <td>--%>
                     Show the last
-                    <span class="action textbtn button"
+                    <span class="action textbtn button opt_last_lines_dec"
                       title="Click to reduce"
                       onmousedown="modifyLastlines(-5);return false;">-</span>
                 <input
-                    type="text"
+                    class=" opt_last_lines_val"
+                    type="number"
+                    min="5"
+                    max="100"
+                    step="5"
                     name="lastlines"
                     id="lastlinesvalue"
                     value="${params.lastlines?params.lastlines:20}"
@@ -222,7 +228,7 @@
                     onchange="updateLastlines(this.value)"
                     onkeypress="var x= noenter();if(!x){this.blur();};return x;"
                     style=""/>
-                    <span class="action textbtn button"
+                    <span class="action textbtn button  opt_last_lines_inc"
                       title="Click to increase"
                       onmousedown="modifyLastlines(5);return false;">+</span>
 
@@ -248,7 +254,7 @@
 
                     seconds
                 </span>
-            </g:if>
+                </span>
                 </td>
                 <td align="right">
                     <span style="${execution.dateCompleted ? '' : 'display:none'}" class="sepL" id="viewoptionscomplete">
