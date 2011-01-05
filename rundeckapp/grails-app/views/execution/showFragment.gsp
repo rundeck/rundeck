@@ -33,7 +33,7 @@
                         </span>
                     <auth:allowed job="${executionResource}" name="${UserAuth.WF_KILL}">
                         <span id="cancelresult" style="margin-left:10px">
-                            <span class="action button textbtn" onclick="docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <img src="${resource(dir:'images',file:'icon-tiny-removex.png')}" alt="Kill" width="12px" height="12px"/></span>
+                            <span class="action button textbtn act_cancel" onclick="docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <img src="${resource(dir:'images',file:'icon-tiny-removex.png')}" alt="Kill" width="12px" height="12px"/></span>
                         </span>
                     </auth:allowed>
 
@@ -236,11 +236,15 @@
                     and update every
 
 
-                    <span class="action textbtn button"
+                    <span class="action textbtn button opt_update_every_dec"
                       title="Click to reduce"
                       onmousedown="modifyTaildelay(-1);return false;">-</span>
                 <input
-                    type="text"
+                    class=" opt_update_every_val"
+                    type="number"
+                    min="1"
+                    max="30"
+                    step="1"
                     name="taildelay"
                     id="taildelayvalue"
                     value="1"
@@ -248,7 +252,7 @@
                     onchange="updateTaildelay(this.value)"
                     onkeypress="var x= noenter();if(!x){this.blur();};return x;"
                     style=""/>
-                    <span class="action textbtn button"
+                    <span class="action textbtn button  opt_update_every_inc"
                       title="Click to increase"
                       onmousedown="modifyTaildelay(1);return false;">+</span>
 

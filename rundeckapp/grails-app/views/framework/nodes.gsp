@@ -301,7 +301,11 @@
                 onSuccess: function(transport) {
                     var data =transport.responseJSON;
 //                    alert("data: "+data);
+                    try{
                     startRunFollow(data);
+                    }catch(e){
+                        console.log(e.stack);
+                    }
                 },
                 onComplete: function(transport){
 //                    alert("complet: "+transport.responseText);
@@ -322,7 +326,11 @@
                 onComplete: function(transport) {
                     if (transport.request.success()) {
                         Element.show('runcontent');
+                        try{
                         continueRunFollow(data);
+                        }catch(e){
+                            console.log(e.stack);
+                        }
                     }
                 },
             });
@@ -339,6 +347,7 @@
                 iconUrl: "${resource(dir: 'images', file: 'icon')}",
                 lastlines: ${params.lastlines ? params.lastlines : 20},
                 tailmode: true,
+                 taildelay:1,
                 execData: {node:"test"},
                 appLinks:appLinks,
                 onComplete:onRunComplete,

@@ -131,6 +131,22 @@ var FollowControl = Class.create({
             e.onchange=null;
             Event.observe(e,'change',function(evt){obj.updateLastlines(e.value);});
         });
+        $(elem).select('.opt_update_every_dec').each(function(e){
+            e.onmousedown=null;
+            Event.observe(e,'mousedown',function(evt){Event.stop(evt);obj.modifyTaildelay(-1);});
+        });
+        $(elem).select('.opt_update_every_inc').each(function(e){
+            e.onmousedown=null;
+            Event.observe(e,'mousedown',function(evt){Event.stop(evt);obj.modifyTaildelay(1);});
+        });
+        $(elem).select('.opt_update_every_val').each(function(e){
+            e.onchange=null;
+            Event.observe(e,'change',function(evt){obj.updateTaildelay(e.value);});
+        });
+        $(elem).select('.act_cancel').each(function(e){
+            e.onclick=null;
+            Event.observe(e,'click',function(evt){obj.docancel();});
+        });
     },
     setMode: function(mode){
         this.tailmode=mode=="tail";
@@ -147,6 +163,9 @@ var FollowControl = Class.create({
 
         $(this.targetElement).select('.opt_last_lines_val').each(function(e){
             e.value=obj.lastlines;
+        });
+        $(this.targetElement).select('.opt_update_every_val').each(function(e){
+            e.value=obj.taildelay;
         });
     },
     readyMode: function(){
