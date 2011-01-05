@@ -7,38 +7,35 @@
     <g:set var="followmode" value="${params.mode in ['browse','tail','node']?params.mode:null==execution?.dateCompleted?'tail':'browse'}"/>
     <g:set var="executionResource" value="${ ['jobName': execution.scheduledExecution ? execution.scheduledExecution.jobName : 'adhoc', 'groupPath': execution.scheduledExecution ? execution.scheduledExecution.groupPath : 'adhoc'] }"/>
 
-      <g:javascript library="executionShow"/>
+      <g:javascript library="executionControl"/>
       <g:javascript>
-        var extraParams="<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>";
-        var applinks={
-            executionTailExecutionOutput:'${createLink(controller: "execution", action: "tailExecutionOutput")}'
-        };
-        var executionId='${execution?.id}';
+        var followControl = new FollowControl('${execution?.id}','commandPerform',{
+            appLinks:appLinks,
+            iconUrl: "${resource(dir: 'images', file: 'icon')}",
+            extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>",
+            lastlines: ${params.lastlines ? params.lastlines : 20},
 
-        var iconUrl = "${resource(dir: 'images', file: 'icon')}";
-        var lastlines =${params.lastlines ? params.lastlines : 20};
+            tailmode: ${followmode == 'tail'},
+            browsemode: ${followmode == 'browse'},
+            nodemode: ${followmode == 'node'},
+            execData: {node:"${session.Framework.getFrameworkNodeHostname()}"},
+            <auth:allowed job="${executionResource}" name="${UserAuth.WF_KILL}">
+            killjobhtml: '<span class="action button textbtn" onclick="docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <img src="${resource(dir: 'images', file: 'icon-tiny-removex.png')}" alt="Kill" width="12px" height="12px"/></span>',
+            </auth:allowed>
+            <auth:allowed job="${executionResource}" name="${UserAuth.WF_KILL}" has="false">
+            killjobhtml: "",
+            </auth:allowed>
+            totalDuration : 0 + ${scheduledExecution?.totalTime ? scheduledExecution.totalTime : -1},
+            totalCount: 0 + ${scheduledExecution?.execCount ? scheduledExecution.execCount : -1},
+        });
 
-        var refresh =${followmode == 'tail' ? "true" : "false"};
-        var tailmode = ${followmode == 'tail'};
-        var browsemode = ${followmode == 'browse'};
-        var nodemode = ${followmode == 'node'};
-        var execData = {id:executionId,project:"${execution.project}",node:"${session.Framework.getFrameworkNodeHostname()}"};
-
-        <auth:allowed job="${executionResource}" name="${UserAuth.WF_KILL}">
-          var killjobhtml = '<span class="action button textbtn" onclick="docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <img src="${resource(dir: 'images', file: 'icon-tiny-removex.png')}" alt="Kill" width="12px" height="12px"/></span>';
-        </auth:allowed>
-        <auth:allowed job="${executionResource}" name="${UserAuth.WF_KILL}" has="false">
-          var killjobhtml = "";
-        </auth:allowed>
 
 
         function init() {
-          beginFollowingOutput(executionId);
+            followControl.beginFollowingOutput('${execution?.id}');
         }
 
         Event.observe(window, 'load', init);
-        var totalDuration = 0 + ${scheduledExecution?.totalTime ? scheduledExecution.totalTime : -1};
-        var totalCount = 0 + ${scheduledExecution?.execCount ? scheduledExecution.execCount : -1};
 
       </g:javascript>
   </head>
@@ -197,14 +194,14 @@
             <tr>
                 <td class="buttonholder" style="padding:10px;">
                     <g:link class="tab ${followmode=='tail'?' selected':''}" style="padding:5px;"
-                        title="View the last lines of the output file"
-                        controller="execution"  action="show" id="${execution.id}" params="${[lastlines:params.lastlines,mode:'tail'].findAll{it.value}}">Tail Output</g:link>
+                        title="${g.message(code:'execution.show.mode.Tail.desc')}"
+                        controller="execution"  action="show" id="${execution.id}" params="${[lastlines:params.lastlines,mode:'tail'].findAll{it.value}}"><g:message code="execution.show.mode.Tail.title" default="Tail Output"/></g:link>
                     <g:link class="tab ${followmode=='browse'?' selected':''}" style="padding:5px;"
-                        title="Load the entire file in grouped contexts "
-                        controller="execution"  action="show" id="${execution.id}" params="[mode:'browse']">Annotated</g:link>
+                        title="${g.message(code:'execution.show.mode.Annotated.desc')}"
+                        controller="execution"  action="show" id="${execution.id}" params="[mode:'browse']"><g:message code="execution.show.mode.Annotated.title" default="Annotated"/></g:link>
                     <g:link class="tab ${followmode=='node'?' selected':''}" style="padding:5px;"
-                        title="Load the entire file in grouped contexts "
-                        controller="execution"  action="show" id="${execution.id}" params="[mode:'node']">Node Output</g:link>
+                        title="${g.message(code:'execution.show.mode.Compact.desc')}"
+                        controller="execution"  action="show" id="${execution.id}" params="[mode:'node']"><g:message code="execution.show.mode.Compact.title" default="Compact"/></g:link>
                     
             <span id="fullviewopts" style="${followmode!='browse'?'display:none':''}">
                     <input

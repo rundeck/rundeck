@@ -5,6 +5,7 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="nodes"/>
     <title>Nodes</title>
+    <g:javascript library="executionControl"/>
     <script type="text/javascript">
         function showError(message) {
             $("error").innerHTML += message;
@@ -244,8 +245,127 @@
         /**
          * END remote edit code
          */
+
+
         /**
-         * START node code
+         * START run execution code
+         */
+        <g:set var="jsdata" value="${query?.properties.findAll{it.key==~/^(node(In|Ex)clude.*|project)$/ &&it.value}}"/>
+
+        var nodeFilterData_${rkey}=${jsdata.encodeAsJSON()};
+
+        function expandResultNodes(){
+            _updateMatchedNodes(nodeFilterData_${rkey},'nodelist','${query.project}',false,{view:'table',expanddetail:true});
+        }
+        function disableRunBar(){
+            $('runbox').down('input[type="text"]').disable();
+            $('runbox').down('button').disabled=true;
+        }
+        function enableRunBar(){
+            $('runbox').down('input[type="text"]').enable();
+            $('runbox').down('button').disabled=false;
+        }
+        function collapseNodeView(){
+            $$('.obs_shownodes').each(Element.show);
+            $$('.nodeview').each(Element.hide);
+            $$('.nodeviewsummary').each(Element.show);
+        }
+        function showNodeView(){
+            $$('.obs_shownodes').each(Element.hide);
+            $$('.nodeview').each(Element.show);
+            $$('.nodeviewsummary').each(Element.hide);
+        }
+        function runStarted(){
+            $$('.hiderun').each(Element.hide);
+            $$('.showrun').each(Element.show);
+            collapseNodeView();
+        }
+        function afterRun(){
+            $$('.showafterrun').each(Element.show);
+            $$('.hideafterrun').each(Element.hide);
+        }
+        /**
+         * Run the command
+         * @param elem
+         */
+        function runFormSubmit(elem){
+            var data = Form.serialize(elem);
+
+            disableRunBar();
+            runStarted();
+            $('runcontent').loading('Starting Execution&hellip;');
+            new Ajax.Request("${createLink(controller:'scheduledExecution',action:'runAdhocInline')}",{
+                parameters:data,
+                evalScripts:true,
+                evalJSON:true,
+                onSuccess: function(transport) {
+                    var data =transport.responseJSON;
+//                    alert("data: "+data);
+                    try{
+                    startRunFollow(data);
+                    }catch(e){
+                        console.log(e.stack);
+                    }
+                },
+                onComplete: function(transport){
+//                    alert("complet: "+transport.responseText);
+                }
+            });
+            return false;
+        }
+        /**
+         * Load content view to contain output
+         * @param data
+         */
+        function startRunFollow(data){
+            if(data.id){
+                $('runcontent').loading('Loading Output&hellip;');
+                new Ajax.Updater('runcontent',"${createLink(controller:'execution',action:'followFragment')}",{
+                parameters:{id:data.id,mode:'tail'},
+                evalScripts:true,
+                onComplete: function(transport) {
+                    if (transport.request.success()) {
+                        Element.show('runcontent');
+                        try{
+                        continueRunFollow(data);
+                        }catch(e){
+                            console.log(e.stack);
+                        }
+                    }
+                },
+            });
+            }
+        }
+        /**
+         * Start following the output
+         * @param data
+         */
+        function continueRunFollow(data){
+            try{
+             var followControl = new FollowControl(data.id,'runcontent',{
+                extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>",
+                iconUrl: "${resource(dir: 'images', file: 'icon')}",
+                lastlines: ${params.lastlines ? params.lastlines : 20},
+                tailmode: true,
+                 taildelay:1,
+                execData: {node:"test"},
+                appLinks:appLinks,
+                onComplete:onRunComplete,
+                dobind:true
+            });
+            followControl.beginFollowingOutput(data.id);
+            }catch(e){
+                console.log(e.stack);
+            }
+        }
+        function onRunComplete(){
+            enableRunBar();
+            afterRun();
+            loadHistory();
+        }
+
+        /**
+         * START tag filter link code
          */
         function setTagFilter(value){
             if($('schedJobNodeIncludeTags').value){
@@ -256,6 +376,56 @@
             }
             $('${rkey}filter').down('form').submit();
         }
+
+        /**
+         * filter toggle
+         */
+        <g:set var="isCompact" value="${params.compact?true:false}"/>
+        function filterToggle(evt) {
+            ['${rkey}filter','${rkey}filterdispbtn','runbox'].each(Element.toggle);
+            if (${isCompact}) {
+                $('${rkey}nodescontent').toggle();
+            }
+        }
+        function filterToggleSave(evt) {
+            ['${rkey}filter','${rkey}fsave'].each(Element.show);
+            ['${rkey}filterdispbtn','runbox','${rkey}fsavebtn'].each(Element.hide);
+            if (${isCompact}) {
+                $('${rkey}nodescontent').hide();
+            }
+        }
+
+        /** START history
+         *
+         */
+        function loadHistory(){
+            new Ajax.Updater('histcontent',"${createLink(controller:'reports',action:'eventsFragment')}",{
+                parameters:{compact:true,nofilters:true,jobIdFilter:'null',recentFilter:'1d',userFilter:'${session.user}',projFilter:'${session.project}'},
+                evalScripts:true,
+                onComplete: function(transport) {
+                    if (transport.request.success()) {
+                        Element.show('histcontent');
+                    }
+                },
+            });
+        }
+
+        /**
+         * START page init
+         */
+
+        function init() {
+            $$('.obs_filtertoggle').each(function(e) {
+                Event.observe(e, 'click', filterToggle);
+            });
+            $$('.obs_filtersave').each(function(e) {
+                Event.observe(e, 'click', filterToggleSave);
+            });
+            $$('.obs_shownodes').each(function(e){
+                Event.observe(e, 'click', showNodeView);
+            });
+        }
+        Event.observe(window,'load',init);
 
     </script>
     <style type="text/css">
@@ -272,11 +442,11 @@
         }
 
         .node_entry .project{
-            
+
         }
         #remoteEditholder{
             margin: 0px 20px 0 20px;
-            
+
         }
         #remoteEditholder iframe{
             border:0;
@@ -286,8 +456,7 @@
         }
         .runbox{
             background: #ddd;
-            margin-bottom: 10px;
-            padding:5px;
+            padding:10px ;
         }
         .runbox input[type='text']{
             font-size: 150%;
@@ -295,6 +464,30 @@
             font-family: Courier, monospace;
         }
 
+        #runcontent{
+            overflow-x:auto;
+            margin:10px 0;
+        }
+        div.header{
+            padding:3px 10px;
+            background: #eee;
+            border-top: 1px solid #ddd;
+            border-left: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+            color: black;
+            font-weight:bold;
+        }
+        #histcontent div.jobsreport{
+            margin:0;
+            padding:0;
+        }
+        #histcontent table.queryTable > tbody > tr > td{
+            padding:0;
+            margin:0;
+        }
+        #histcontent table{
+            width:100%;
+        }
     </style>
 </head>
 <body>
@@ -304,21 +497,74 @@
 </g:if>
 <div id="nodesContent">
 
+    <g:if test="${session.project }">
+        <div class="runbox" id="runbox">
+        <g:form action="execAndForget" controller="scheduledExecution" method="post" style="display:inline" onsubmit="runFormSubmit(this);">
+            Command:
+            <g:img file="icon-small-shell.png" width="16px" height="16px"/>
+            <g:if test="${total>0}">
+            <g:hiddenField name="project" value="${session.project}"/>
+            <g:hiddenField name="doNodedispatch" value="true"/>
+            <g:if test="${!wasfiltered}">
+                <g:hiddenField name="nodeIncludeName" value=".*"/>
+            </g:if>
+            <g:hiddenField name="nodeKeepgoing" value="true"/>
+            <g:hiddenField name="nodeThreadcount" value="1"/>
+            <g:hiddenField name="description" value=""/>
+
+            <g:hiddenField name="workflow.commands[0].adhocExecution" value="true"/>
+            <g:hiddenField name="workflow.threadcount" value="1"/>
+            <g:hiddenField name="workflow.keepgoing" value="false"/>
+            <g:hiddenField name="workflow.project" value="${session.project}"/>
+                <g:render template="nodeFiltersHidden" model="${[params:params,query:query]}"/>
+            </g:if>
+            <g:if test="${total>0}">
+                <g:textField name="workflow.commands[0].adhocRemoteString" size="80" placeholder="Enter a shell command" autofocus="true" />
+            </g:if>
+            <g:else>
+                <input type="text" name="workflow.commands[0].adhocRemoteString" size="80" placeholder="Enter a shell command" autofocus="true" disabled/>
+            </g:else>
+            <g:if test="${auth.allowedTest(job:[jobName:'adhoc_run', groupPath:'ui'], action:UserAuth.WF_RUN)}">
+            <!--<input type="submit" value="Run"/>-->
+            </g:if>
+            <g:else>
+                <span class="button disabled" title="You are not authorized to run ad-hoc jobs">Run</span>
+            </g:else>
+        </g:form>
+        <g:if test="${auth.allowedTest(job:[jobName:'adhoc_run', groupPath:'ui'], action:UserAuth.WF_RUN)}">
+            <button onclick="runFormSubmit('runbox');" ${total>0?'':'disabled'}>Run</button>
+        </g:if>
+
+        </div>
+        <div class="runbox nodesummary nodeviewsummary" style="display:none">
+            <span class="match">${total} Node${1 != total ? 's' : ''}</span>
+            <span class="type">
+            <g:if test="${!filterName}">
+                matching filter input
+            </g:if>
+            <g:else>
+                matching filter '${filterName}'
+            </g:else>
+            </span>
+            <span class="button obs_shownodes" >View Nodes&hellip;</span>
+        </div>
+    </g:if>
 <div class="pageBody solo">
+
 <g:render template="/common/messages"/>
 <div id="${rkey}nodeForm">
-    <g:set var="isCompact" value="${params.compact?true:false}"/>
     <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|project$/)||(query && !query.nodeFilterIsEmpty())}"/>
     <g:set var="filtersOpen" value="${params.createFilters||params.editFilters||params.saveFilter || filterErrors?true:false}"/>
+
 <table cellspacing="0" cellpadding="0" class="queryTable" width="100%">
         <tr>
         <g:if test="${!params.nofilters}">
-        <td style="text-align:left;vertical-align:top; width:400px; ${wdgt.styleVisible(if:filtersOpen)}" id="${rkey}filter" >
+        <td style="text-align:left;vertical-align:top; width:400px; ${wdgt.styleVisible(if:filtersOpen)}" id="${rkey}filter" class="hiderun">
             <g:form action="nodes" controller="framework" >
                 <g:if test="${params.compact}">
                     <g:hiddenField name="compact" value="${params.compact}"/>
                 </g:if>
-                <span class="prompt action" onclick="['${rkey}filter','${rkey}filterdispbtn','runbox'].each(Element.toggle); if (${isCompact}) { $('${rkey}nodescontent').toggle(); }">
+                <span class="prompt action obs_filtertoggle" >
                     Filter
                     <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-open.png')}" width="12px" height="12px"/>
                 </span>
@@ -346,56 +592,26 @@
             </g:if>
             <td style="text-align:left;vertical-align:top;" id="${rkey}nodescontent">
 
-                        <g:if test="${session.project && total>0}">
-                            <div class=" runbox" id="runbox">
-                            <g:form action="execAndForget" controller="scheduledExecution" method="post" style="display:inline">
-                                Command:
-                                <g:img file="icon-small-shell.png" width="16px" height="16px"/>
-                                <g:hiddenField name="project" value="${session.project}"/>
-                                <g:hiddenField name="doNodedispatch" value="true"/>
-                                <g:if test="${!wasfiltered}">
-                                    <g:hiddenField name="nodeIncludeName" value=".*"/>
-                                </g:if>
-                                <g:hiddenField name="nodeKeepgoing" value="true"/>
-                                <g:hiddenField name="nodeThreadcount" value="1"/>
-                                <g:hiddenField name="description" value=""/>
-
-                                <g:hiddenField name="workflow.commands[0].adhocExecution" value="true"/>
-                                <g:hiddenField name="workflow.threadcount" value="1"/>
-                                <g:hiddenField name="workflow.keepgoing" value="false"/>
-                                <g:hiddenField name="workflow.project" value="${session.project}"/>
-
-                                <g:textField name="workflow.commands[0].adhocRemoteString" size="80" placeholder="Enter a shell command" autofocus="true" />
-                                <g:render template="nodeFiltersHidden" model="${[params:params,query:query]}"/>
-                                <g:if test="${auth.allowedTest(job:[jobName:'adhoc_run', groupPath:'ui'], action:UserAuth.WF_RUN)}">
-                                <input type="submit" value="Run"/>
-                                </g:if>
-                                <g:else>
-                                    <span class="button disabled" title="You are not authorized to run ad-hoc jobs">Run</span>
-                                </g:else>
-                            </g:form>
-                            </div>
-                        </g:if>
                 <g:ifUserInAnyRoles roles="admin,nodes_admin">
                     <g:if test="${selectedProject && selectedProject.shouldUpdateNodesResourceFile()}">
                         <span class="floatr"><g:link action="reloadNodes" params="${[project:selectedProject.name]}" class="action button" title="Click to update the resources.xml file from the source URL, for project ${selectedProject.name}" onclick="\$(this.parentNode).loading();">Update Nodes for project ${selectedProject.name}</g:link></span>
                     </g:if>
                 </g:ifUserInAnyRoles>
                 <g:if test="${!params.nofilters}">
-                <div style="margin-bottom: 5px;" id="${rkey}nodesfilterholder">
+                <div style="margin: 10px 0 5px 0;" id="${rkey}nodesfilterholder" class="nodeview">
                     <g:if test="${wasfiltered}">
 
 
                         <div style="margin:5px 0; padding:5px 0;">
                             <span style="padding:5px 0;margin:5px 0;${!filtersOpen?'':'display:none;'} " id='${rkey}filterdispbtn' >
-                            <span title="Click to modify filter" class="info textbtn query action" onclick="['${rkey}filter','${rkey}filterdispbtn','runbox'].each(Element.toggle);if(${isCompact}){$('${rkey}nodescontent').toggle();}" >
+                            <span title="Click to modify filter" class="info textbtn query action obs_filtertoggle" >
                                 <g:render template="displayNodeFilters" model="${[displayParams:query]}"/>
                                 <img src="${resource(dir:'images',file:'icon-tiny-disclosure.png')}" width="12px" height="12px"/></span>
                             </span>
 
 
                         <g:if test="${!filterName}">
-                            <span class="prompt action" onclick="['${rkey}filter','${rkey}filterdispbtn','${rkey}fsave','${rkey}fsavebtn'].each(Element.toggle);if(${isCompact}){$('${rkey}nodescontent').toggle();}" id="${rkey}fsavebtn" title="Click to save this filter with a name">
+                            <span class="prompt action obs_filtersave" title="Click to save this filter with a name">
                                 save this filter&hellip;
                             </span>
                         </g:if>
@@ -420,7 +636,7 @@
                 </div>
                 </g:if>
 
-                <div class="nodesummary clear">
+                <div class="nodesummary clear nodeview">
                     <span class="match">${total}/${allcount} Node${1 != allcount ? 's' : ''}</span>
                     <span class="type">
                     <g:if test="${!filterName}">
@@ -430,45 +646,37 @@
                         matching saved filter
                     </g:else>
                     </span>
-                    <g:set var="jsdata" value="${query.properties.findAll{it.key==~/^(node(In|Ex)clude.*|project)$/ &&it.value}}"/>
-                    <g:javascript>
-                        var nodeFilterData_${rkey}=${jsdata.encodeAsJSON()};
-
-                        function expandResultNodes(){
-                            _updateMatchedNodes(nodeFilterData_${rkey},'nodelist','${query.project}',false,{view:'table',expanddetail:true});
-                        }
-                    </g:javascript>
                 </div>
 
                 <g:if test="${tagsummary}">
-                    <div class="presentation clear" >
-                    <g:set var="hidetop" value="${tagsummary.findAll {it.value>1}.size()>30}"/>
-                    <g:if test="${hidetop}">
-                    <span class="action button receiver" title="Show tag demographics" onclick="Element.show('tagdemo');Element.hide(this);">Show ${tagsummary.size()} tags&hellip;</span>
-                    </g:if>
-                    <span id="tagdemo" style="${wdgt.styleVisible(unless:hidetop)}">
-                        <span class="desc">${tagsummary.size()} tags:</span>
-                    <g:set var="singletag" value="${[]}"/>
-                    <g:each var="tag" in="${tagsummary.sort{a,b->a.value>b.value?-1:a.value<b.value?1:a.key<=>b.key}.keySet()}">
-                        <g:if test="${tagsummary[tag]>1 || tagsummary.size()<=30}">
-                        <span class="summary"><g:link class=" action" action="nodes" params="${[nodeIncludeTags:tag]}" title="Filter by tag: ${tag}">${tag}</g:link>:${tagsummary[tag]}</span>
+                    <div class="presentation clear nodeview" >
+                        <g:set var="hidetop" value="${tagsummary.findAll {it.value>1}.size()>30}"/>
+                        <g:if test="${hidetop}">
+                        <span class="action button receiver" title="Show tag demographics" onclick="Element.show('tagdemo');Element.hide(this);">Show ${tagsummary.size()} tags&hellip;</span>
                         </g:if>
-                        <g:else>
-                            %{singletag<<tag}%
-                        </g:else>
-                    </g:each>
-                    <g:if test="${singletag}">
-                        <span class="action button receiver" title="See all tags" onclick="Element.show('singletags');Element.hide(this);">Show All&hellip;</span>
-                        <span style="display:none" id="singletags">
-                            <g:each var="tag" in="${singletag}">
-                                <span class="summary"><g:link class=" action" action="nodes" params="${[nodeIncludeTags:tag]}" title="Filter by tag: ${tag}">${tag}</g:link>:${tagsummary[tag]}</span>
-                            </g:each>
+                        <span id="tagdemo" style="${wdgt.styleVisible(unless:hidetop)}">
+                            <span class="desc">${tagsummary.size()} tags:</span>
+                        <g:set var="singletag" value="${[]}"/>
+                        <g:each var="tag" in="${tagsummary.sort{a,b->a.value>b.value?-1:a.value<b.value?1:a.key<=>b.key}.keySet()}">
+                            <g:if test="${tagsummary[tag]>1 || tagsummary.size()<=30}">
+                            <span class="summary"><g:link class=" action" action="nodes" params="${[nodeIncludeTags:tag]}" title="Filter by tag: ${tag}">${tag}</g:link>:${tagsummary[tag]}</span>
+                            </g:if>
+                            <g:else>
+                                %{singletag<<tag}%
+                            </g:else>
+                        </g:each>
+                        <g:if test="${singletag}">
+                            <span class="action button receiver" title="See all tags" onclick="Element.show('singletags');Element.hide(this);">Show All&hellip;</span>
+                            <span style="display:none" id="singletags">
+                                <g:each var="tag" in="${singletag}">
+                                    <span class="summary"><g:link class=" action" action="nodes" params="${[nodeIncludeTags:tag]}" title="Filter by tag: ${tag}">${tag}</g:link>:${tagsummary[tag]}</span>
+                                </g:each>
+                            </span>
+                        </g:if>
                         </span>
-                    </g:if>
-                    </span>
                     </div>
                 </g:if>
-                <div class="presentation clear matchednodes" id="nodelist" >
+                <div class="presentation clear matchednodes nodeview" id="nodelist" >
                     <span class="button action receiver" onclick="expandResultNodes();">Show ${total} Node${1 != total ? 's' : ''}...</span>
                     %{--<g:render template="nodes" model="${[nodes:allnodes,totalexecs:totalexecs,jobs:jobs,params:params,expanddetail:true]}"/>--}%
                     <g:if test="${total<=30}">
@@ -485,7 +693,12 @@
                 </tr>
             </table>
 </div>
+<div id="runcontent"></div>
+
+<div class="header">History</div>
+<div id="histcontent"></div>
 <g:javascript>
+    fireWhenReady('histcontent',loadHistory);
 
 $$('#${rkey}nodeForm input').each(function(elem){
     if(elem.type=='text'){

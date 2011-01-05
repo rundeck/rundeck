@@ -1092,10 +1092,23 @@ class ScheduledExecutionController  {
     /**
      * execute the job defined via input parameters, but do not store it.
      */
-    def execAndForget = {
-        log.info("ScheduledExecutionController: execAndForget : params: " + params)
-
-
+    def runAdhocInline = {
+        def results=runAdhoc()
+        if(results.failed){
+            results.error=results.message
+        } else {
+            log.info("ExecutionController: immediate execution scheduled (${results.id})")
+            return render(contentType:'application/json'){
+                if(results.error){
+                    delegate.'error'(results.error)
+                }else{
+                    success(true)
+                    id(results.id)
+                }
+            }
+        }
+    }
+    def runAdhoc={
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         params["user"] = (session?.user) ? session.user : "anonymous"
         params.request = request
@@ -1106,28 +1119,35 @@ class ScheduledExecutionController  {
         def ScheduledExecution scheduledExecution=result.scheduledExecution
         def failed=result.failed
         if(!failed){
-            def results = _transientExecute(scheduledExecution,params,framework,rolelist)
-            if(results.error){
-                if(results.error=='unauthorized'){
-                    log.error(results.message)
-                    flash.error=results.message
-                    render(view:"/common/execUnauthorized",model:[scheduledExecution:scheduledExecution])
-                    return
-                }else{
-                    log.error(results.message)
-                    flash.error=results.message
-                    render(view:"/common/error",model:[error:results.message])
-                    return
-                }
-            } else {
-                log.info("ExecutionController: immediate execution scheduled (${results.id})")
-                redirect(controller:"execution", action:"follow",id:results.id)
-            }
+            return _transientExecute(scheduledExecution,params,framework,rolelist)
         }else{
+            return [failed:true,message:'Job configuration was incorrect.',scheduledExecution:scheduledExecution,params:params]
+        }
+    }
+    /**
+     * execute the job defined via input parameters, but do not store it.
+     */
+    def execAndForget = {
+        def results = runAdhoc()
+        if(results.error=='unauthorized'){
+            log.error(results.message)
+            flash.error=results.message
+            render(view:"/common/execUnauthorized",model:[scheduledExecution:results.scheduledExecution])
+            return
+        }else if(results.error){
+            log.error(results.message)
+            flash.error=results.message
+            render(view:"/common/error",model:[error:results.message])
+            return
+        }else if(results.failed){
+            def scheduledExecution=results.scheduledExecution
             scheduledExecution.jobName = ''
             scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
-            flash.message="Job configuration was incorrect."
+            flash.message=results.message
             render(view:'create',model:[scheduledExecution:scheduledExecution,params:params])
+        } else {
+            log.info("ExecutionController: immediate execution scheduled (${results.id})")
+            redirect(controller:"execution", action:"follow",id:results.id)
         }
     }
     
