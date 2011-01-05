@@ -1147,7 +1147,7 @@ var FollowControl = Class.create({
         if ($('fileload2')) {
             $('fileload2').hide();
         }
-        if (this.runningcmd.failednodes) {
+        if (this.runningcmd.failednodes && $('execRetry')) {
             $('execRetry').show();
         }
         $('execRerun').show();
