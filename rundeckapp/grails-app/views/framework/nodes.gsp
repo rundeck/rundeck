@@ -276,21 +276,35 @@
             $$('.nodeviewsummary').each(Element.hide);
         }
         function runStarted(){
+            running=true;
             $$('.hiderun').each(Element.hide);
             $$('.showrun').each(Element.show);
             collapseNodeView();
         }
         function afterRun(){
+            running=false;
             $$('.showafterrun').each(Element.show);
             $$('.hideafterrun').each(Element.hide);
         }
+        function runError(msg){
+            $('runerror').innerHTML=msg;
+            $('runerror').show();
+            $('runcontent').hide();
+            onRunComplete();
+        }
+        function requestFailure(trans){
+            runError("Request failed: "+trans.statusText);
+        }
+        var running=false;
         /**
          * Run the command
          * @param elem
          */
         function runFormSubmit(elem){
+            if(running){
+                return false;
+            }
             var data = Form.serialize(elem);
-
             disableRunBar();
             runStarted();
             $('runcontent').loading('Starting Execution&hellip;');
@@ -304,12 +318,10 @@
                     try{
                     startRunFollow(data);
                     }catch(e){
-                        console.log(e.stack);
+                        runError(e);
                     }
                 },
-                onComplete: function(transport){
-//                    alert("complet: "+transport.responseText);
-                }
+                onFailure:requestFailure
             });
             return false;
         }
@@ -318,7 +330,11 @@
          * @param data
          */
         function startRunFollow(data){
-            if(data.id){
+            if(data.error){
+                runError(data.error);
+            }else if(!data.id){
+                runError("Server response was invalid: "+data.toString());
+            }else {
                 $('runcontent').loading('Loading Output&hellip;');
                 new Ajax.Updater('runcontent',"${createLink(controller:'execution',action:'followFragment')}",{
                 parameters:{id:data.id,mode:'tail'},
@@ -329,10 +345,11 @@
                         try{
                         continueRunFollow(data);
                         }catch(e){
-                            console.log(e.stack);
+                            runError(e);
                         }
                     }
                 },
+                onFailure:requestFailure
             });
             }
         }
@@ -341,7 +358,6 @@
          * @param data
          */
         function continueRunFollow(data){
-            try{
              var followControl = new FollowControl(data.id,'runcontent',{
                 extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>",
                 iconUrl: "${resource(dir: 'images', file: 'icon')}",
@@ -354,9 +370,6 @@
                 dobind:true
             });
             followControl.beginFollowingOutput(data.id);
-            }catch(e){
-                console.log(e.stack);
-            }
         }
         function onRunComplete(){
             enableRunBar();
@@ -415,6 +428,18 @@
          */
 
         function init() {
+            $$('#runbox input').each(function(elem){
+                if(elem.type=='text'){
+                    elem.observe('keypress',function(evt){
+                        if(!noenter(evt)){
+                            runFormSubmit('runbox');
+                            return false;
+                        }else{
+                            return true;
+                        }
+                    });
+                }
+            });
             $$('.obs_filtertoggle').each(function(e) {
                 Event.observe(e, 'click', filterToggle);
             });
@@ -463,6 +488,10 @@
             font-family: Monaco, 'Courier New', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
             font-family: Courier, monospace;
         }
+        #runerror{
+            color:red;
+            margin:5px 20px;
+        }
 
         #runcontent{
             overflow-x:auto;
@@ -496,45 +525,42 @@
     <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
 </g:if>
 <div id="nodesContent">
+    <g:set var="run_authorized" value="${auth.allowedTest(job:[jobName:'adhoc_run', groupPath:'ui'], action:UserAuth.WF_RUN)}"/>
+    <g:set var="run_enabled" value="${run_authorized && total>0}"/>
 
     <g:if test="${session.project }">
         <div class="runbox" id="runbox">
-        <g:form action="execAndForget" controller="scheduledExecution" method="post" style="display:inline" onsubmit="runFormSubmit(this);">
+        %{--<g:form action="execAndForget" controller="scheduledExecution" method="post" style="display:inline" onsubmit="return runFormSubmit(this);">--}%
             Command:
             <g:img file="icon-small-shell.png" width="16px" height="16px"/>
-            <g:if test="${total>0}">
-            <g:hiddenField name="project" value="${session.project}"/>
-            <g:hiddenField name="doNodedispatch" value="true"/>
-            <g:if test="${!wasfiltered}">
-                <g:hiddenField name="nodeIncludeName" value=".*"/>
-            </g:if>
-            <g:hiddenField name="nodeKeepgoing" value="true"/>
-            <g:hiddenField name="nodeThreadcount" value="1"/>
-            <g:hiddenField name="description" value=""/>
+            <g:if test="${run_enabled}">
+                <g:hiddenField name="project" value="${session.project}"/>
+                <g:hiddenField name="doNodedispatch" value="true"/>
+                <g:hiddenField name="nodeKeepgoing" value="true"/>
+                <g:hiddenField name="nodeThreadcount" value="1"/>
+                <g:hiddenField name="description" value=""/>
 
-            <g:hiddenField name="workflow.commands[0].adhocExecution" value="true"/>
-            <g:hiddenField name="workflow.threadcount" value="1"/>
-            <g:hiddenField name="workflow.keepgoing" value="false"/>
-            <g:hiddenField name="workflow.project" value="${session.project}"/>
+                <g:hiddenField name="workflow.commands[0].adhocExecution" value="true"/>
+                <g:hiddenField name="workflow.threadcount" value="1"/>
+                <g:hiddenField name="workflow.keepgoing" value="false"/>
+                <g:hiddenField name="workflow.project" value="${session.project}"/>
                 <g:render template="nodeFiltersHidden" model="${[params:params,query:query]}"/>
             </g:if>
-            <g:if test="${total>0}">
+            <g:if test="${run_enabled}">
                 <g:textField name="workflow.commands[0].adhocRemoteString" size="80" placeholder="Enter a shell command" autofocus="true" />
             </g:if>
             <g:else>
                 <input type="text" name="workflow.commands[0].adhocRemoteString" size="80" placeholder="Enter a shell command" autofocus="true" disabled/>
             </g:else>
-            <g:if test="${auth.allowedTest(job:[jobName:'adhoc_run', groupPath:'ui'], action:UserAuth.WF_RUN)}">
-            <!--<input type="submit" value="Run"/>-->
+        %{--</g:form>--}%
+            <g:if test="${run_authorized}">
+                <button onclick="runFormSubmit('runbox');" ${run_enabled?'':'disabled'}>Run</button>
             </g:if>
             <g:else>
                 <span class="button disabled" title="You are not authorized to run ad-hoc jobs">Run</span>
             </g:else>
-        </g:form>
-        <g:if test="${auth.allowedTest(job:[jobName:'adhoc_run', groupPath:'ui'], action:UserAuth.WF_RUN)}">
-            <button onclick="runFormSubmit('runbox');" ${total>0?'':'disabled'}>Run</button>
-        </g:if>
 
+            <div class="hiderun" id="runerror" style="display:none"></div>
         </div>
         <div class="runbox nodesummary nodeviewsummary" style="display:none">
             <span class="match">${total} Node${1 != total ? 's' : ''}</span>
@@ -699,12 +725,6 @@
 <div id="histcontent"></div>
 <g:javascript>
     fireWhenReady('histcontent',loadHistory);
-
-$$('#${rkey}nodeForm input').each(function(elem){
-    if(elem.type=='text'){
-        elem.observe('keypress',noenter);
-    }
-});
 </g:javascript>
 
     </div>
