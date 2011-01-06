@@ -266,12 +266,15 @@
             $('runbox').down('button').disabled=false;
         }
         function collapseNodeView(){
-            $$('.obs_shownodes').each(Element.show);
+//            $$('.obs_shownodes').each(Element.show);
+            $$('.obs_shownodes').each(function(e){Expander.close(e,null);});
+
             $$('.nodeview').each(Element.hide);
             $$('.nodeviewsummary').each(Element.show);
         }
         function showNodeView(){
-            $$('.obs_shownodes').each(Element.hide);
+//            $$('.obs_shownodes').each(Element.hide);
+            $$('.obs_shownodes').each(function(e){Expander.open(e,null);});
             $$('.nodeview').each(Element.show);
             $$('.nodeviewsummary').each(Element.hide);
         }
@@ -395,14 +398,14 @@
          */
         <g:set var="isCompact" value="${params.compact?true:false}"/>
         function filterToggle(evt) {
-            ['${rkey}filter','${rkey}filterdispbtn','runbox'].each(Element.toggle);
+            ['${rkey}filter','${rkey}filterdispbtn'].each(Element.toggle);
             if (${isCompact}) {
                 $('${rkey}nodescontent').toggle();
             }
         }
         function filterToggleSave(evt) {
             ['${rkey}filter','${rkey}fsave'].each(Element.show);
-            ['${rkey}filterdispbtn','runbox','${rkey}fsavebtn'].each(Element.hide);
+            ['${rkey}filterdispbtn','${rkey}fsavebtn'].each(Element.hide);
             if (${isCompact}) {
                 $('${rkey}nodescontent').hide();
             }
@@ -446,9 +449,9 @@
             $$('.obs_filtersave').each(function(e) {
                 Event.observe(e, 'click', filterToggleSave);
             });
-            $$('.obs_shownodes').each(function(e){
-                Event.observe(e, 'click', showNodeView);
-            });
+//            $$('.obs_shownodes').each(function(e){
+//                Event.observe(e, 'click', showNodeView);
+//            });
         }
         Event.observe(window,'load',init);
 
@@ -562,8 +565,13 @@
 
             <div class="hiderun" id="runerror" style="display:none"></div>
         </div>
-        <div class="runbox nodesummary nodeviewsummary" style="display:none">
+        <div class="runbox nodesummary ">
+            <g:expander classnames="button obs_shownodes" key="${rkey}nodeForm" open="true">
             <span class="match">${total} Node${1 != total ? 's' : ''}</span>
+            </g:expander>
+            <g:if test="${null!=allcount}">
+                (of ${allcount})
+            </g:if>
             <span class="type">
             <g:if test="${!filterName}">
                 matching filter input
@@ -572,20 +580,19 @@
                 matching filter '${filterName}'
             </g:else>
             </span>
-            <span class="button obs_shownodes" >View Nodes&hellip;</span>
         </div>
     </g:if>
-<div class="pageBody solo">
+<div class="pageBody">
 
 <g:render template="/common/messages"/>
-<div id="${rkey}nodeForm">
+<div id="${rkey}nodeForm" class="nodeview">
     <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|project$/)||(query && !query.nodeFilterIsEmpty())}"/>
     <g:set var="filtersOpen" value="${params.createFilters||params.editFilters||params.saveFilter || filterErrors?true:false}"/>
 
 <table cellspacing="0" cellpadding="0" class="queryTable" width="100%">
         <tr>
         <g:if test="${!params.nofilters}">
-        <td style="text-align:left;vertical-align:top; width:400px; ${wdgt.styleVisible(if:filtersOpen)}" id="${rkey}filter" class="hiderun">
+        <td style="text-align:left;vertical-align:top; width:400px; ${wdgt.styleVisible(if:filtersOpen)}" id="${rkey}filter">
             <g:form action="nodes" controller="framework" >
                 <g:if test="${params.compact}">
                     <g:hiddenField name="compact" value="${params.compact}"/>
@@ -624,7 +631,7 @@
                     </g:if>
                 </g:ifUserInAnyRoles>
                 <g:if test="${!params.nofilters}">
-                <div style="margin: 10px 0 5px 0;" id="${rkey}nodesfilterholder" class="nodeview">
+                <div style="margin: 10px 0 5px 0;" id="${rkey}nodesfilterholder" >
                     <g:if test="${wasfiltered}">
 
 
@@ -662,20 +669,20 @@
                 </div>
                 </g:if>
 
-                <div class="nodesummary clear nodeview">
-                    <span class="match">${total}/${allcount} Node${1 != allcount ? 's' : ''}</span>
-                    <span class="type">
-                    <g:if test="${!filterName}">
-                        matching filter input
-                    </g:if>
-                    <g:else>
-                        matching saved filter
-                    </g:else>
-                    </span>
-                </div>
+                %{--<div class="nodesummary clear nodeview">--}%
+                    %{--<span class="match">${total}/${allcount} Node${1 != allcount ? 's' : ''}</span>--}%
+                    %{--<span class="type">--}%
+                    %{--<g:if test="${!filterName}">--}%
+                        %{--matching filter input--}%
+                    %{--</g:if>--}%
+                    %{--<g:else>--}%
+                        %{--matching saved filter--}%
+                    %{--</g:else>--}%
+                    %{--</span>--}%
+                %{--</div>--}%
 
                 <g:if test="${tagsummary}">
-                    <div class="presentation clear nodeview" >
+                    <div class="presentation clear " >
                         <g:set var="hidetop" value="${tagsummary.findAll {it.value>1}.size()>30}"/>
                         <g:if test="${hidetop}">
                         <span class="action button receiver" title="Show tag demographics" onclick="Element.show('tagdemo');Element.hide(this);">Show ${tagsummary.size()} tags&hellip;</span>
@@ -702,7 +709,7 @@
                         </span>
                     </div>
                 </g:if>
-                <div class="presentation clear matchednodes nodeview" id="nodelist" >
+                <div class="presentation clear matchednodes " id="nodelist" >
                     <span class="button action receiver" onclick="expandResultNodes();">Show ${total} Node${1 != total ? 's' : ''}...</span>
                     %{--<g:render template="nodes" model="${[nodes:allnodes,totalexecs:totalexecs,jobs:jobs,params:params,expanddetail:true]}"/>--}%
                     <g:if test="${total<=30}">
@@ -721,12 +728,13 @@
 </div>
 <div id="runcontent"></div>
 
-<div class="header">History</div>
-<div id="histcontent"></div>
-<g:javascript>
-    fireWhenReady('histcontent',loadHistory);
-</g:javascript>
-
+    </div>
+    <div class="runbox">History</div>
+    <div class="pageBody">
+        <div id="histcontent"></div>
+        <g:javascript>
+            fireWhenReady('histcontent',loadHistory);
+        </g:javascript>
     </div>
 </div>
 <div id="loaderror"></div>
