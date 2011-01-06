@@ -1008,7 +1008,7 @@ class ExecutionService implements ApplicationContextAware, Executor{
         return new HtTableLogger(namespace, new File(filepath), level,dometadatalogging,defaultData)
     }
 
-    def saveExecutionState( schedId, exId, Map props, Map execmap){
+    def saveExecutionState( schedId, exId, Map props, Map execmap=null){
         def ScheduledExecution scheduledExecution
         def Execution execution = Execution.get(exId)
         execution.properties=props
