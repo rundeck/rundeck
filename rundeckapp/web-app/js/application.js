@@ -136,13 +136,63 @@ var Expander = {
                 holder=e.up(".expandComponentHolder");
             }
         }
+        var value=false;
         if (content) {
-            Element.toggle(content);
+            value=!Element.visible(content);
+        }else if(icnh){
+            var icn = icnh.down("img");
+            if(icn){
+                value=icn.src == AppImages.disclosure;
+            }
+        }
+        Expander.setOpen(elem,contain,value);
+    },
+    setOpen: function(elem, contain,value) {
+        var e = $(elem);
+        if (!e) {
+            return;
+        }
+        var content;
+        if ($(contain)) {
+            content = $(contain);
+        }
+        var holder;
+        var icnh;
+        if (!content) {
+            holder = e.up(".expandComponentHolder");
+            if (holder) {
+                content = holder.down(".expandComponent");
+                icnh = holder.down(".expandComponentControl");
+            }
+        }
+        if(!holder || !icnh){
+            if (e.hasClassName('expandComponentControl')) {
+                icnh = e;
+            }
+            if(e.hasClassName('expandComponentHolder')){
+                holder=e;
+                if(!icnh){
+                    icnh = holder.down(".expandComponentControl");
+                }
+            }else{
+                holder=e.up(".expandComponentHolder");
+            }
+        }
+        if (content) {
+            if(value){
+                Element.show(content);
+            }else{
+                Element.hide(content);
+            }
         }
         if(holder){
-            Element.toggleClassName(holder, "expanded");
+            if(value){
+                Element.addClassName(holder, "expanded");
+            }else{
+                Element.removeClassName(holder, "expanded");
+            }
         }else if(icnh && content){
-            if(Element.visible(content)){
+            if(value){
                 Element.addClassName(icnh, "expanded");
                 Element.removeClassName(icnh, "closed");
             }else{
@@ -153,15 +203,17 @@ var Expander = {
         if (icnh) {
             var icn = icnh.down("img");
             if(icn){
-                if (content) {
-                    icn.src = Element.visible(content) ? AppImages.disclosureOpen : AppImages.disclosure;
-                } else {
-                    icn.src = icn.src == AppImages.disclosure ? AppImages.disclosureOpen : AppImages.disclosure;
-                }
+                icn.src = value ? AppImages.disclosureOpen : AppImages.disclosure;
             }
         }
+    },
+    open: function(elem,contain){
+        Expander.setOpen(elem,contain,true);
+    },
+    close: function(elem,contain){
+        Expander.setOpen(elem,contain,false);
     }
-}
+};
 
 
 if(Prototype.Version=="1.6.0.2"  && Prototype.Browser.IE){
