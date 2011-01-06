@@ -64,12 +64,31 @@
                 document.location="${createLink(controller:'menu',action:'workflows')}"+(bfilters[name]?"?filterName="+encodeURIComponent(bfilters[name]):'');
             }
         }
+
+        //now running
+        var runupdate;
+        function loadNowRunning(){
+            runupdate=new Ajax.PeriodicalUpdater('nowrunning','${createLink(controller:"menu",action:"nowrunningFragment")}',{
+                evalScripts:true,
+                parameters:{},
+            });
+        }
+        function init(){
+            loadNowRunning();
+        }
+        Event.observe(window,'load',init);
     </script>
     <g:javascript library="yellowfade"/>
     <g:render template="/framework/remoteOptionValuesJS"/>
+    <style type="text/css">
+    #nowrunning{
+        max-height: 150px;
+        overflow-y: auto;
+        margin: 0 0 10px 0;
+    }
+    </style>
 </head>
 <body>
-<g:timerStart key="jobs.gsp"/>
 
 <div class="pageBody solo" id="indexMain">
     <g:if test="${flash.savedJob}">
@@ -81,8 +100,12 @@
         </div>
         <g:javascript>
             fireWhenReady('jobrow_${flash.savedJob.id}',doyft.curry('jobrow_${flash.savedJob.id}'));
+
         </g:javascript>
     </g:if>
+
+    <div id="nowrunning"></div>
+
     <g:render template="workflowsFull" model="${[jobgroups:jobgroups,wasfiltered:wasfiltered?true:false,nowrunning:nowrunning,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
 </div>
 <div id="execDiv" style="display:none">
@@ -93,6 +116,5 @@
 
     </div>
 </div>
-<g:timerEnd key="jobs.gsp"/>
 </body>
 </html>

@@ -46,13 +46,13 @@
                                     <g:if test="${scheduledExecution}">
                                         <td class="jobname">
                                             <g:link
-                                            title="${'View '+g.message(code:'domain.ScheduledExecution.title')}" controller="scheduledExecution" action="show" id="${scheduledExecution.id}">${scheduledExecution.jobName.encodeAsHTML()}</g:link >
+                                            title="${'View '+g.message(code:'domain.ScheduledExecution.title')}" controller="scheduledExecution" action="show" id="${scheduledExecution.id}">${scheduledExecution.jobName.encodeAsHTML()}</g:link>
                                         </td>
                                         <td class="jobdesc">${scheduledExecution.description.encodeAsHTML()}</td>
                                     </g:if>
                                     <g:else>
                                         <td class="jobname transient ">
-                                            job
+                                            <g:message code="events.history.jobname.adhoc"/>
                                         </td>
                                         <td class="jobdesc">
 
@@ -149,7 +149,7 @@
                 </table>
             </g:if>
             <g:else>
-                    <span class="note empty">None</span>
+                    <span class="note empty">${emptyText?emptyText:'None'}</span>
             </g:else>
 <script language="text/javascript">
     if(typeof(updateNowRunning)=='function'){
