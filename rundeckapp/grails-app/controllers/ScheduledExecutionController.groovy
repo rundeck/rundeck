@@ -1098,13 +1098,13 @@ class ScheduledExecutionController  {
             results.error=results.message
         } else {
             log.info("ExecutionController: immediate execution scheduled (${results.id})")
-            return render(contentType:'application/json'){
-                if(results.error){
-                    delegate.'error'(results.error)
-                }else{
-                    success(true)
-                    id(results.id)
-                }
+        }
+        return render(contentType:'application/json'){
+            if(results.error){
+                delegate.'error'(results.error)
+            }else{
+                success(true)
+                id(results.id)
             }
         }
     }
