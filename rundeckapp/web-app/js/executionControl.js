@@ -171,7 +171,7 @@ var FollowControl = Class.create({
     readyMode: function(){
         var obj=this;
         this.setGroupOutput(this.browsemode||this.nodemode);
-        if(this.targetElement){
+        if(this.targetElement && $(this.targetElement)){
             $(this.targetElement).select('.opt_mode').each(Element.hide);
             $(this.targetElement).select('.out_setmode').each(function(e){e.removeClassName('selected')});
             if(this.tailmode){
