@@ -5,6 +5,9 @@ class UrlMappings {
 			 // apply constraints here
 		  }
 	  }
+	  "/run/$id?"( controller:'framework',action:'nodes')
+	  "/history/$id?"( controller:'reports',action:'index')
+	  "/jobs/$id?"( controller:'menu',action:'jobs')
 	  "/job/$action?/$id?"( controller:'scheduledExecution')
 	  "/resources/$action?/$id?"( controller:'framework')
 	  "/events/$action?/$id?"( controller:'reports')
