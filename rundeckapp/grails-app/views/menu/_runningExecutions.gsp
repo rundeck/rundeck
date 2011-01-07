@@ -14,20 +14,6 @@
             <tr class=" ${j % 2 == 1 ? 'alternateRow' : ''}  ${!execution.dateCompleted ? 'nowrunning' : ''} execution ${execstatus} hilite link"
                 id="${upref}exec-${execution.id}-row" onclick="document.location='${execLink}';">
 
-                <td id="${upref}exec-${execution.id}-spinner" style="width:14px">
-                    <g:if test="${execution.dateCompleted}">
-
-                    </g:if>
-                    <g:else>
-                        <g:img file="icon-tiny-disclosure-waiting.gif"/>
-                        <%
-                            runcount++;
-                        %>
-
-                    </g:else>
-                </td>
-
-
                 <g:if test="${scheduledExecution}">
                     <td class="jobname">
                         %{--<g:link title="${'View '+g.message(code:'domain.ScheduledExecution.title')}" controller="scheduledExecution" action="show" id="${scheduledExecution.id}">${scheduledExecution.jobName.encodeAsHTML()}</g:link>--}%
@@ -80,21 +66,20 @@
                         <g:if test="${scheduledExecution && scheduledExecution.execCount>0 && scheduledExecution.totalTime > 0 && execution.dateStarted}">
                             <g:set var="avgTime" value="${(Long)(scheduledExecution.totalTime/scheduledExecution.execCount)}"/>
                             <g:set var="completePercent" value="${(int)Math.floor((double)(100 * (timeNow - execution.dateStarted.getTime())/(avgTime)))}"/>
-                            <g:set var="completeEstimate" value="${new Date(execution.dateStarted.getTime() + (long)avgTime)}"/>
+                            <g:set var="estEndTime" value="${(long)(execution.dateStarted.getTime() + (long)avgTime)}"/>
+                            <g:set var="completeEstimate" value="${new Date(estEndTime)}"/>
                             <g:set var="completeEstimateTime" value="${g.relativeDate(atDate:completeEstimate)}"/>
-                            <g:set var="completeRemaining" value="${g.timeDuration(start:new Date(timeNow),end:new Date(((long)execution.dateStarted.getTime()) + (long)avgTime))}"/>
-                            <div id="exec-${execution.id}-progressContainer" class="progressContainer small">
-                                <div
-                                    id="exec-${execution.id}-progressBar"
-                                    class="progressBar"
-                                    title="${completePercent < 100 ? 'Estimated completion time: ' + completeEstimateTime : ''}"
-                                    style="width:${completePercent > 100 ? '100' : completePercent}">${completePercent > 100 ? '100' : completePercent}%${completePercent < 100 ? '&nbsp;(' + completeRemaining + ')' : ''}</div>
-                            </div>
+                            <g:if test="${estEndTime>timeNow}">
+                                <g:set var="completeRemaining" value="${g.timeDuration(start:new Date(timeNow),end:completeEstimate)}"/>
+                            </g:if>
+                            <g:else>
+                                <g:set var="completeRemaining" value="${'+'+g.timeDuration(start:completeEstimate,end:new Date(timeNow))}"/>
+                            </g:else>
+                            <g:render template="/common/progressBar" model="${[completePercent:(int)completePercent,title:completePercent < 100 ? 'Estimated completion time: ' + completeEstimateTime : '',
+                                showpercent:true,showOverrun:true,remaining:' ('+completeRemaining+')']}"/>
                         </g:if>
                         <g:else>
-                            <span class="timenow">
-                                running
-                            </span>
+                            <g:render template="/common/progressBar" model="${[indefinite:true,title:'running',innerContent:'running']}"/>
                         </g:else>
                     </g:else>
                 </td>
@@ -118,6 +103,6 @@
 </g:else>
 <script language="text/javascript">
     if (typeof(updateNowRunning) == 'function') {
-        updateNowRunning(<%=runcount%>);
+        updateNowRunning(<%=executions?.size()%>);
     }
 </script>
