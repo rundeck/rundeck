@@ -27,9 +27,27 @@
             </auth:allowed>
             totalDuration : 0 + ${scheduledExecution?.totalTime ? scheduledExecution.totalTime : -1},
             totalCount: 0 + ${scheduledExecution?.execCount ? scheduledExecution.execCount : -1},
+            <g:if test="${scheduledExecution}">
+            onComplete:loadHistory
+            </g:if>
         });
 
-
+        <g:if test="${scheduledExecution}">
+        /** START history
+         *
+         */
+        function loadHistory(){
+            new Ajax.Updater('histcontent',"${createLink(controller:'reports',action:'eventsFragment')}",{
+                parameters:{compact:true,nofilters:true,jobIdFilter:'${scheduledExecution.id}',recentFilter:'1d',userFilter:'${session.user}',projFilter:'${session.project}'},
+                evalScripts:true,
+                onComplete: function(transport) {
+                    if (transport.request.success()) {
+                        Element.show('histcontent');
+                    }
+                },
+            });
+        }
+        </g:if>
 
         function init() {
             followControl.beginFollowingOutput('${execution?.id}');
@@ -38,6 +56,12 @@
         Event.observe(window, 'load', init);
 
       </g:javascript>
+      <style type="text/css">
+
+        #log{
+            margin-bottom:20px;
+        }
+      </style>
   </head>
 
   <body>
@@ -376,8 +400,16 @@
         id="commandPerform"
         style="display:none; margin: 0 20px; "></div>
     <div id="fileload" style="display:none;" class="outputdisplayopts"><img src="${resource(dir:'images',file:'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/> Loading Output... <span id="fileload2percent"></span></div>
-    <div id="log"></div> 
-
+    <div id="log"></div>
+    <g:if test="${scheduledExecution}">
+        <div class="runbox">History</div>
+        <div class="pageBody">
+            <div id="histcontent"></div>
+            <g:javascript>
+                fireWhenReady('histcontent',loadHistory);
+            </g:javascript>
+        </div>
+    </g:if>
   </body>
 </html>
 
