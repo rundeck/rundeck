@@ -1109,6 +1109,9 @@ tbody.section > tr:first-child > td{
 tr.hilite:hover, td.hilite:hover{
    background: #e3edfa;
 }
+tr.link, td.link{
+   cursor:pointer;
+}
 span.autohilite:hover{
     background: #ffffaa;
 }
