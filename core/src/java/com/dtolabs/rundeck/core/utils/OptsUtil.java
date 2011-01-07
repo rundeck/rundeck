@@ -65,7 +65,6 @@ public class OptsUtil {
                 //matched a quoted string with escapes
                 //replace all escaped chars with the regular versions
                 final String ms = match.group(1);
-                System.err.println("match: " + ms);
                 final String value = ms.replaceAll("\\\\([\\\\'])", "$1");
                 tokens.add(value);
             }
