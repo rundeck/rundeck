@@ -111,12 +111,19 @@
                 document.location="${createLink(controller:'menu',action:'workflows')}"+(bfilters[name]?"?filterName="+encodeURIComponent(bfilters[name]):'');
             }
         }
+        var savedcount=0;
+        function _pageUpdateNowRunning(count){
+            if(count!=savedcount){
+                savedcount=count;
+                loadHistory();
+            }
+        }
 
         /** START history
          *
          */
         function loadHistory(){
-            new Ajax.PeriodicalUpdater('histcontent',"${createLink(controller:'reports',action:'eventsFragment')}",{
+            new Ajax.Updater('histcontent',"${createLink(controller:'reports',action:'eventsFragment')}",{
                 parameters:{compact:true,nofilters:true,jobIdFilter:'!null',recentFilter:'1d',userFilter:'${session.user}',projFilter:'${session.project}'},
                 evalScripts:true,
                 frequency:5,
