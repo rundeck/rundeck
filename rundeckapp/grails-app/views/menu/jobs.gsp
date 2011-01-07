@@ -126,7 +126,6 @@
             new Ajax.Updater('histcontent',"${createLink(controller:'reports',action:'eventsFragment')}",{
                 parameters:{compact:true,nofilters:true,jobIdFilter:'!null',recentFilter:'1d',userFilter:'${session.user}',projFilter:'${session.project}'},
                 evalScripts:true,
-                frequency:5,
                 onComplete: function(transport) {
                     if (transport.request.success()) {
                         Element.show('histcontent');
