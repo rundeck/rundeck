@@ -106,6 +106,22 @@
             }
         }
 
+        /** START history
+         *
+         */
+        function loadHistory(){
+            new Ajax.PeriodicalUpdater('histcontent',"${createLink(controller:'reports',action:'eventsFragment')}",{
+                parameters:{compact:true,nofilters:true,jobIdFilter:'!null',recentFilter:'1d',userFilter:'${session.user}',projFilter:'${session.project}'},
+                evalScripts:true,
+                frequency:5,
+                onComplete: function(transport) {
+                    if (transport.request.success()) {
+                        Element.show('histcontent');
+                    }
+                },
+            });
+        }
+
         //now running
         var runupdate;
         function loadNowRunning(){
@@ -159,5 +175,12 @@
 
     </div>
 </div>
+<div class="runbox">History</div>
+    <div class="pageBody">
+        <div id="histcontent"></div>
+        <g:javascript>
+            fireWhenReady('histcontent',loadHistory);
+        </g:javascript>
+    </div>
 </body>
 </html>

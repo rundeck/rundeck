@@ -482,10 +482,6 @@
         #remoteEditholder .toolbar{
             margin:4px;
         }
-        .runbox{
-            background: #ddd;
-            padding:10px ;
-        }
         .runbox input[type='text']{
             font-size: 150%;
             font-family: Monaco, 'Courier New', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
