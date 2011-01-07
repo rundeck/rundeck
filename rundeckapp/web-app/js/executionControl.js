@@ -1249,9 +1249,9 @@ var FollowControl = Class.create({
             }
 
             if (duration < avg) {
-                displayCompletion(100 * (duration / avg));
+                this.displayCompletion(100 * (duration / avg));
             } else {
-                displayCompletion(100);
+                this.displayCompletion(100);
             }
         } else {
             if ($('execDuration')) {
