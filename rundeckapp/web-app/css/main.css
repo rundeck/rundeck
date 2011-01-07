@@ -1759,9 +1759,6 @@ tr.subsection > td > div.left > div.right{
 tr.subsection > td > div.right{
     padding: 5px 15px 5px 15px;
 }
-tr.sectionhead.expanded td.right{
-  padding-right:15px;
-}
 tr.sectionhead.expanded td{
     border-top:1px solid #aaa;
     padding-top:3px;

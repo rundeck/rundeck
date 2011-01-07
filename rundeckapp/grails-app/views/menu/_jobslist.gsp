@@ -58,7 +58,7 @@
                                 </div>
                             </td>
 
-                        <td class="jobrunning right" colspan="2">
+                        <td class="jobrunning " >
                             <g:if test="${nowrunning && nowrunning[scheduledExecution.id.toString()]}">
                                 <g:link class="timenow"
                                     controller="execution"
@@ -81,6 +81,9 @@
                             <g:else>&nbsp;
                             </g:else>
                         </td>
+                        <td style="width: 80px; vertical-align: top; white-space:nowrap; text-align:right" class="jobbuttons right">
+                            <g:render template="/scheduledExecution/actionButtons" model="${[scheduledExecution:scheduledExecution,authMap:authMap,jobauthorizations:jobauthorizations]}"/>
+                        </td>
 
                         </tr>
                             <g:timerEnd key="jobslistHead"/>
@@ -102,15 +105,11 @@
                                         <td style="width: 80px; vertical-align: top; white-space:nowrap;height:100%; text-align:right" class="jobbuttons ">
                                             <div class="right">
                                             <g:timerEnd key="detail"/>
-                                            <g:timerStart key="actions"/>
-                                            <g:render template="/scheduledExecution/actionButtons" model="${[scheduledExecution:scheduledExecution,authMap:authMap,jobauthorizations:jobauthorizations]}"/>
-                                            <g:timerEnd key="actions"/>
-                                            <g:timerStart key="stats"/>
+
                                             <g:set var="lastrun" value="${scheduledExecution.id?Execution.findByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution,[max: 1, sort:'dateStarted', order:'desc']):null}"/>
                                             <g:set var="successcount" value="${scheduledExecution.id?Execution.countByScheduledExecutionAndStatus(scheduledExecution,'true'):0}"/>
                                             <g:set var="successrate" value="${execCount>0? (successcount/execCount) : 0}"/>
                                             <g:render template="/scheduledExecution/showStats" model="[scheduledExecution:scheduledExecution,lastrun:lastrun?lastrun:null, successrate:successrate]"/>
-                                            <g:timerEnd key="stats"/>
                                             </div>
                                         </td>
                                     </tr>
