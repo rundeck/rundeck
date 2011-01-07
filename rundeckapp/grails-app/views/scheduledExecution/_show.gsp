@@ -4,7 +4,7 @@
          */
         function loadHistory(){
             new Ajax.Updater('histcontent',"${createLink(controller: 'reports', action: 'eventsFragment')}",{
-                parameters:{compact:true,nofilters:true,jobIdFilter:'${scheduledExecution.id}',recentFilter:'1d',userFilter:'${session.user}',projFilter:'${session.project}'},
+                parameters:{compact:true,nofilters:true,jobIdFilter:'${scheduledExecution.id}'},
                 evalScripts:true,
                 onComplete: function(transport) {
                     if (transport.request.success()) {
