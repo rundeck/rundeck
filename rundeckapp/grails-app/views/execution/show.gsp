@@ -20,7 +20,7 @@
             nodemode: ${followmode == 'node'},
             execData: {node:"${session.Framework.getFrameworkNodeHostname()}"},
             <auth:allowed job="${executionResource}" name="${UserAuth.WF_KILL}">
-            killjobhtml: '<span class="action button textbtn" onclick="docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <img src="${resource(dir: 'images', file: 'icon-tiny-removex.png')}" alt="Kill" width="12px" height="12px"/></span>',
+            killjobhtml: '<span class="action button textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <img src="${resource(dir: 'images', file: 'icon-tiny-removex.png')}" alt="Kill" width="12px" height="12px"/></span>',
             </auth:allowed>
             <auth:allowed job="${executionResource}" name="${UserAuth.WF_KILL}" has="false">
             killjobhtml: "",
@@ -167,7 +167,7 @@
                         </span>
                     <auth:allowed job="${executionResource}" name="${UserAuth.WF_KILL}">
                         <span id="cancelresult" style="margin-left:10px">
-                            <span class="action button textbtn" onclick="docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <img src="${resource(dir:'images',file:'icon-tiny-removex.png')}" alt="Kill" width="12px" height="12px"/></span>
+                            <span class="action button textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <img src="${resource(dir:'images',file:'icon-tiny-removex.png')}" alt="Kill" width="12px" height="12px"/></span>
                         </span>
                     </auth:allowed>
 
@@ -239,7 +239,7 @@
                         class="action textbtn button"
                         title="Click to change"
                             id="appendTopLabel"
-                        onclick="setOutputAppendTop(true);"
+                        onclick="followControl.setOutputAppendTop(true);"
                         >Top</span></label>
                     <input
                         type="radio"
@@ -254,7 +254,7 @@
                             class="action textbtn button"
                             title="Click to change"
                             id="appendBottomLabel"
-                            onclick="setOutputAppendTop(false);"
+                            onclick="followControl.setOutputAppendTop(false);"
                         >Bottom</span></label>
                     <span
                     class="action textbtn button"
@@ -267,7 +267,7 @@
                     id="outputautoscrolltrue"
                     value="true"
                     ${followmode=='tail'?'':'checked="CHECKED"'}
-                    onclick="setOutputAutoscroll($('outputautoscrolltrue').checked);"
+                    onclick="followControl.setOutputAutoscroll($('outputautoscrolltrue').checked);"
                     style=""/>
 
                 <label for="outputautoscrolltrue">Scroll</label></span>
@@ -292,7 +292,7 @@
                 <span class="action textbtn button"
                       title="Click to change"
                       id="ctxshowgroupoption"
-                      onclick="setGroupOutput($('ctxshowgroup').checked);">
+                      onclick="followControl.setGroupOutput($('ctxshowgroup').checked);">
                 <input
                     type="checkbox"
                     name="ctxshowgroup"
@@ -311,7 +311,7 @@
                     class="action textbtn button"
                     title="Click to change"
                     id="ctxcollapseLabel"
-                    onclick="setCollapseCtx($('ctxcollapse').checked);">
+                    onclick="followControl.setCollapseCtx($('ctxcollapse').checked);">
                 <input
                     type="checkbox"
                     name="ctxcollapse"
@@ -328,7 +328,7 @@
                 <span class="action textbtn button"
                       title="Click to change"
                       id="ctxshowlastlineoption"
-                      onclick="setShowFinalLine($('ctxshowlastline').checked);">
+                      onclick="followControl.setShowFinalLine($('ctxshowlastline').checked);">
                 <input
                     type="checkbox"
                     name="ctxshowlastline"
@@ -346,7 +346,7 @@
                     Show the last
                     <span class="action textbtn button"
                       title="Click to reduce"
-                      onmousedown="modifyLastlines(-5);return false;">-</span>
+                      onmousedown="followControl.modifyLastlines(-5);return false;">-</span>
                 <input
                     type="text"
                     name="lastlines"
@@ -358,7 +358,7 @@
                     style=""/>
                     <span class="action textbtn button"
                       title="Click to increase"
-                      onmousedown="modifyLastlines(5);return false;">+</span>
+                      onmousedown="followControl.modifyLastlines(5);return false;">+</span>
 
                     lines<span id="taildelaycontrol" style="${execution.dateCompleted?'display:none':''}">,
                     and update every
@@ -366,7 +366,7 @@
 
                     <span class="action textbtn button"
                       title="Click to reduce"
-                      onmousedown="modifyTaildelay(-1);return false;">-</span>
+                      onmousedown="followControl.modifyTaildelay(-1);return false;">-</span>
                 <input
                     type="text"
                     name="taildelay"
@@ -378,7 +378,7 @@
                     style=""/>
                     <span class="action textbtn button"
                       title="Click to increase"
-                      onmousedown="modifyTaildelay(1);return false;">+</span>
+                      onmousedown="followControl.modifyTaildelay(1);return false;">+</span>
 
                     seconds
                 </span>
