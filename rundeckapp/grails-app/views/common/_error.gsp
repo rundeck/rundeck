@@ -11,7 +11,7 @@
     <span class="welcomeMessage error">${flash.title?flash.title:'Error'}</span>
 </div>
 <div class="pageBody" id="execUnauthorized">
-    <g:render template="errorFragment"/>
+    <g:render template="/common/errorFragment" model="${[error:error,message:message]}"/>
 </div>
 </body>
 </html>
