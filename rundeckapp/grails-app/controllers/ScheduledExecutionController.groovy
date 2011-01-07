@@ -104,16 +104,6 @@ class ScheduledExecutionController  {
         }
     }
     def show = {
-        withFormat{
-            html{
-                redirect(controller:'menu',action:'jobs',params:[idlist:params.id])
-            }
-            xml{
-                showx.call()
-            }
-        }
-    }
-    def showx = {
         log.info("ScheduledExecutionController: show : params: " + params)
         def crontab = [:]
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
@@ -1923,7 +1913,7 @@ class ScheduledExecutionController  {
                 results.options=null
                 return render(view:'execute',model:results)
             }else{
-                return render(template:"/common/error",model:[error:results.error])
+                return render(template:"/common/error",model:results)
             }
         }else if (results.error){
             log.error(results.error)
