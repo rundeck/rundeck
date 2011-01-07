@@ -1815,6 +1815,13 @@ class ScheduledExecutionController  {
     }
     def executeFragment = {
         def model = execute()
+        if(params.dovalidate){
+            model.jobexecOptionErrors=session.jobexecOptionErrors
+            model.selectedoptsmap=session.selectedoptsmap
+            session.jobexecOptionErrors=null
+            session.selectedoptsmap=null
+            model.options=null
+        }
         render(template:'execOptionsForm',model:model)
     }
 
@@ -1883,32 +1890,19 @@ class ScheduledExecutionController  {
      */
     def runJobInline = {
         def results = runJob()
-        if(results.failed){
-            response.setHeader("X-RunDeck-Execution","failure")
-            log.error(results.message)
-            if(results.error=='unauthorized'){
-                return render(view:"/common/execUnauthorized",model:results)
 
-            }else if(results.error=='invalid'){
-                def model=execute.call()
-                results.jobexecOptionErrors=results.errors
-                results.selectedoptsmap=results.options
-                results.putAll(model)
-                results.options=null
-                return render(template:'execOptionsForm',model:results)
+        if(results.error=='invalid'){
+            session.jobexecOptionErrors=results.errors
+            session.selectedoptsmap=results.options
+        }
+        return render(contentType:'application/json'){
+            if(results.failed){
+                delegate.'error'(results.error)
+                message(results.message)
             }else{
-                return render(template:"/common/errorFragment",model:[error:results.error])
+                success(true)
+                id(results.id)
             }
-        }else if (results.error){
-            response.setHeader("X-RunDeck-Execution","failure")
-            log.error(results.error)
-            if(results.code){
-                response.setStatus (results.code)
-            }
-            return render(template:"/common/errorFragment",model:results)
-        }else{
-            response.setHeader("X-RunDeck-Execution","success")
-            render("Job started with ID: "+results.id)
         }
     }
     def runJobNow = {

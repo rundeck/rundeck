@@ -8,19 +8,25 @@
 
         function execSubmit(elem){
             var params=Form.serialize(elem);
-            new Ajax.Updater(
-                'execDivContent',
+            new Ajax.Request(
                 '${createLink(controller:"scheduledExecution",action:"runJobInline")}', {
                 parameters: params,
                 evalScripts:true,
                 onComplete: function(trans) {
-                    if (trans.request.success()) {
-                        var result=trans.getResponseHeader('X-RunDeck-Execution')=='success';
-                        if(result){
-                            unloadExec();
-                        }else{
-                            loadedFormSuccess();
-                        }
+                    var result={};
+                    if(trans.responseJSON){
+                        result=trans.responseJSON;
+                    }else if(trans.responseText){
+                        result=eval(trans.responseText);
+                    }
+                    if(result.id){
+                        unloadExec();
+                    }else if(result.error=='invalid'){
+                        //reload form for validation
+                        loadExec(null,params+"&dovalidate=true");
+                    }else{
+                        unloadExec();
+                        showError(result.message?result.message:result.error?result.error:"Failed request");
                     }
                 },
                 onFailure: requestError.curry("runJobInline")
