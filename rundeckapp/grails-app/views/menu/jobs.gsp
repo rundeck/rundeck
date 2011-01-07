@@ -6,30 +6,67 @@
     <title><g:message code="main.app.name"/></title>
     <script type="text/javascript">
 
-        function loadExec(id){
-            $('busy').innerHTML='<img src="'+ appLinks.iconSpinner+'" alt=""/> Loading...';
-            $('busy').show();
+        function execSubmit(elem){
+            var params=Form.serialize(elem);
             new Ajax.Updater(
                 'execDivContent',
-                '${createLink(controller:"scheduledExecution",action:"executeInline")}',{
-                parameters: "id="+id,
+                '${createLink(controller:"scheduledExecution",action:"runJobInline")}', {
+                parameters: params,
                 evalScripts:true,
-                 onComplete: function(transport) {
-
-                     if($('execFormCancelButton')){
-                         $('execFormCancelButton').onclick=function(){unloadExec();return false;};
-                     }
-                     $('indexMain').hide();
-                     $('execDiv').show();
-                     $('busy').hide();
-                 },
-                 onFailure: function() {
-                     $('busy').hide();
-                     $('indexMain').show();
-                     $('execDiv').hide();
-                     showError("Error performing request: execute for ["+id+"]");
-                 }
-                });
+                onComplete: function(trans) {
+                    if (trans.request.success()) {
+                        var result=trans.getResponseHeader('X-RunDeck-Execution')=='success';
+                        if(result){
+                            unloadExec();
+                        }else{
+                            loadedFormSuccess();
+                        }
+                    }
+                },
+                onFailure: requestError.curry("runJobInline")
+            });
+        }
+        function loadedFormSuccess(){
+            if ($('execFormCancelButton')) {
+                $('execFormCancelButton').onclick = function() {
+                    unloadExec();
+                    return false;
+                };
+                $('execFormCancelButton').name = "_x";
+            }else{
+                console.log("no");
+            }
+            if ($('execFormRunButton')) {
+                $('execFormRunButton').onclick = function(evt) {
+                    Event.stop(evt);
+                    execSubmit('execDivContent');
+                    return false;
+                };
+            }
+            $('indexMain').hide();
+            $('execDiv').show();
+            $('busy').hide();
+        }
+        function loadExec(id,eparams) {
+            $('busy').innerHTML = '<img src="' + appLinks.iconSpinner + '" alt=""/> Loading...';
+            $('busy').show();
+            $("error").hide();
+            var params=eparams;
+            if(!params){
+                params={id:id};
+            }
+            new Ajax.Updater(
+                'execDivContent',
+                '${createLink(controller:"scheduledExecution",action:"executeFragment")}', {
+                parameters: params,
+                evalScripts:true,
+                onComplete: function(transport) {
+                    if (transport.request.success()) {
+                        loadedFormSuccess();
+                    }
+                },
+                onFailure: requestError.curry("executeFragment for [" + id + "]")
+            });
 
         }
         function unloadExec(){
@@ -39,8 +76,12 @@
             $('busy').hide();
         }
 
+        function requestError(item,trans){
+            unloadExec();
+            showError("Failed request: "+item+" . Result: "+trans.getStatusText());
+        }
         function showError(message){
-             $("error").innerHTML+=message;
+             $('error').innerHTML+=message;
              $("error").show();
         }
        
@@ -86,9 +127,13 @@
         overflow-y: auto;
         margin: 0 0 10px 0;
     }
+    .error{
+        color:red;
+    }
     </style>
 </head>
 <body>
+
 
 <div class="pageBody solo" id="indexMain">
     <g:if test="${flash.savedJob}">
@@ -105,13 +150,11 @@
     </g:if>
 
     <div id="nowrunning"></div>
-
+    <div id="error" class="error" style="display:none;"></div>
     <g:render template="workflowsFull" model="${[jobgroups:jobgroups,wasfiltered:wasfiltered?true:false,nowrunning:nowrunning,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
 </div>
 <div id="execDiv" style="display:none">
 
-    <div id="error" class="error note" style="display:none;">
-    </div>
     <div id="execDivContent" >
 
     </div>

@@ -1813,7 +1813,7 @@ class ScheduledExecutionController  {
         }
         model
     }
-    def executeInline = {
+    def executeFragment = {
         def model = execute()
         render(template:'execOptionsForm',model:model)
     }
@@ -1878,36 +1878,87 @@ class ScheduledExecutionController  {
             }
         }
     }
+    /**
+     * Execute job specified by parameters, and return json results
+     */
+    def runJobInline = {
+        def results = runJob()
+        if(results.failed){
+            response.setHeader("X-RunDeck-Execution","failure")
+            log.error(results.message)
+            if(results.error=='unauthorized'){
+                return render(view:"/common/execUnauthorized",model:results)
+
+            }else if(results.error=='invalid'){
+                def model=execute.call()
+                results.jobexecOptionErrors=results.errors
+                results.selectedoptsmap=results.options
+                results.putAll(model)
+                results.options=null
+                return render(template:'execOptionsForm',model:results)
+            }else{
+                return render(template:"/common/errorFragment",model:[error:results.error])
+            }
+        }else if (results.error){
+            response.setHeader("X-RunDeck-Execution","failure")
+            log.error(results.error)
+            if(results.code){
+                response.setStatus (results.code)
+            }
+            return render(template:"/common/errorFragment",model:results)
+        }else{
+            response.setHeader("X-RunDeck-Execution","success")
+            render("Job started with ID: "+results.id)
+        }
+    }
     def runJobNow = {
         return executeNow()
     }
     def executeNow = {
+        def results = runJob()
+        if(results.failed){
+            log.error(results.message)
+            if(results.error=='unauthorized'){
+                return render(view:"/common/execUnauthorized",model:results)
+            }else if(results.error=='invalid'){
+                def model=execute.call()
+
+                results.jobexecOptionErrors=results.errors
+                results.selectedoptsmap=results.options
+                results.putAll(model)
+                results.options=null
+                return render(view:'execute',model:results)
+            }else{
+                return render(template:"/common/error",model:[error:results.error])
+            }
+        }else if (results.error){
+            log.error(results.error)
+            if(results.code){
+                response.setStatus (results.code)
+            }
+            return render(template:"/common/error",model:results)
+        }else{
+            redirect(controller:"execution", action:"follow",id:results.id)
+        }
+    }
+    def runJob = {
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         params["user"] = (session?.user) ? session.user : "anonymous"
         def rolelist = (session?.roles) ? session.roles : []
         def ScheduledExecution scheduledExecution = ScheduledExecution.get( params.id )
         if (!scheduledExecution) {
-            log.error("No Job found for id: " + params.id)
-            response.setStatus (404)
-            return render(template:"/common/error",model:[error:"No Job found for id: " + params.id])
+//            response.setStatus (404)
+            return [error:"No Job found for id: " + params.id,code:404]
         }
         def result = executeScheduledExecution(scheduledExecution,framework,rolelist,params)
-        if(result.error){
-            log.error(result.message)
-            if(result.error=='unauthorized'){
-                return render(view:"/common/execUnauthorized",model:[scheduledExecution:scheduledExecution,error:result.message,context:[scheduledExecution.project]])
-            }else if(result.error=='invalid'){
-                def model=execute.call()
-                model.jobexecOptionErrors=result.errors
-                model.selectedoptsmap=result.options
-                return render(view:'execute',model:model)
-            }else{
-                return render(template:"/common/error",model:[error:result.message])
-            }
-        }else{
 
+        if (result.error){
+            result.failed=true
+            return result
+        }else{
             log.info("ExecutionController: immediate execution scheduled")
-            redirect(controller:"execution", action:"follow",id:result.executionId)
+//            redirect(controller:"execution", action:"follow",id:result.executionId)
+            return [success:true, message:"immediate execution scheduled", id:result.executionId]
         }
     }
     def executeScheduledExecution = {ScheduledExecution scheduledExecution, Framework framework, List rolelist,params->

@@ -11,7 +11,7 @@
 </div>
 <div class="pageBody form">
     <g:form controller="scheduledExecution" method="post">
-        <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, options:options, command:command, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized]}"/>
+        <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, options:options, command:command, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized,jobexecOptionErrors:jobexecOptionErrors]}"/>
 
         <g:if test="${nodesetempty }">
             <div class="error note">
@@ -21,7 +21,7 @@
         <div class="buttons" id="formbuttons">
 
             <g:actionSubmit id="execFormCancelButton" value="Cancel"/>
-            <g:actionSubmit value="Run ${g.message(code:'domain.ScheduledExecution.title')} Now"/>
+            <g:actionSubmit value="Run ${g.message(code:'domain.ScheduledExecution.title')} Now" id="execFormRunButton"/>
 
         </div>
         <div class="error note" id="formerror" style="display:none">
