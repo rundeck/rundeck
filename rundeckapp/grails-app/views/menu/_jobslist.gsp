@@ -82,7 +82,7 @@
                             </g:else>
                         </td>
                         <td style="width: 80px; vertical-align: top; white-space:nowrap; text-align:right" class="jobbuttons right">
-                            <g:render template="/scheduledExecution/actionButtons" model="${[scheduledExecution:scheduledExecution,authMap:authMap,jobauthorizations:jobauthorizations]}"/>
+                            <g:render template="/scheduledExecution/actionButtons" model="${[scheduledExecution:scheduledExecution,authMap:authMap,jobauthorizations:jobauthorizations,small:true]}"/>
                         </td>
 
                         </tr>
