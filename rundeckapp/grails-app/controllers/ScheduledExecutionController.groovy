@@ -103,6 +103,38 @@ class ScheduledExecutionController  {
             }
         }
     }
+    def detailFragment = {
+//        def model=show()
+
+        log.info("ScheduledExecutionController: show : params: " + params)
+        def crontab = [:]
+        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        def ScheduledExecution scheduledExecution = ScheduledExecution.get( params.long('id') )
+        if (!scheduledExecution) {
+            log.error("No Job found for id: " + params.id)
+            flash.error="No Job found for id: " + params.id
+            response.setStatus (404)
+            return error.call()
+        }
+        crontab = scheduledExecution.timeAndDateAsBooleanMap()
+        def User user = User.findByLogin(session.user)
+        //list executions using query params and pagination params
+
+        def executions=Execution.findAllByScheduledExecution(scheduledExecution,[offset: params.offset?params.offset:0, max: params.max?params.max:10, sort:'dateStarted', order:'desc'])
+
+        def total = Execution.countByScheduledExecution(scheduledExecution)
+
+        //todo: authorize job for workflow_read
+
+
+
+        return render(view:'jobDetailFragment',model: [scheduledExecution:scheduledExecution, crontab:crontab, params:params,
+            executions:executions,
+            total:total,
+            nextExecution:scheduledExecutionService.nextExecutionTime(scheduledExecution),
+            max: params.max?params.max:10,
+            offset:params.offset?params.offset:0])
+    }
     def show = {
         log.info("ScheduledExecutionController: show : params: " + params)
         def crontab = [:]

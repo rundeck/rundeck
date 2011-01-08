@@ -104,7 +104,7 @@
             }});
         }
         function _setFilterSuccess(response,name){
-            var data=eval("("+response.responseText+")") // evaluate the JSON;
+            var data=eval("("+response.responseText+")"); // evaluate the JSON;
             if(data){
                 var bfilters=data['filterpref'];
                 //reload page
@@ -142,8 +142,144 @@
                 parameters:{},
             });
         }
+
+
+        /////////////
+        // Job context detail popup code
+        /////////////
+
+        var doshow=false;
+        var popvis=false;
+        var lastHref;
+        var targetLink;
+        function popJobDetails(elem){
+            if(doshow && $('jobIdDetailHolder')){
+                new MenuController().showRelativeTo(elem,$('jobIdDetailHolder'),-20,16);
+                popvis=true;
+                if(targetLink){
+                    $(targetLink).removeClassName('glow');
+                    targetLink=null;
+                }
+                $(elem).addClassName('glow');
+                targetLink=elem;
+            }
+        }
+        function showJobDetails(elem){
+            //get url
+            var href=elem.href;
+            var match=href.match(/\/job\/show\/(.+)$/);
+            if(!match){
+                return;
+            }
+            lastHref=href;
+            doshow=true;
+            //match is id
+            var matchId=match[1];
+            var viewdom=$('jobIdDetailHolder');
+            var bcontent=$('jobIdDetailContent');
+            if(!viewdom){
+                viewdom = $(document.createElement('div'));
+                viewdom.addClassName('bubblewrap');
+                viewdom.setAttribute('id','jobIdDetailHolder');
+                viewdom.setAttribute('style','display:none;');
+
+                var btop = document.createElement('div');
+                btop.addClassName('bubbletop');
+                viewdom.appendChild(btop);
+                bcontent = $(document.createElement('div'));
+                bcontent.addClassName('bubblecontent');
+                bcontent.setAttribute('id','jobIdDetailContent');
+                viewdom.appendChild(bcontent);
+                document.body.appendChild(viewdom);
+                Event.observe(viewdom,'mouseover',bubbleMouseover);
+                Event.observe(viewdom,'mouseout',jobLinkMouseout.curry(viewdom));
+            }
+            bcontent.loading();
+
+
+            new Ajax.Updater('jobIdDetailContent','${createLink(controller:'scheduledExecution',action:'detailFragment')}',{
+                parameters:{id:matchId},
+                evalScripts:true,
+                onComplete: function(trans){
+                    if(trans.request.success()){
+                        popJobDetails(elem);
+                    }
+                },
+                onFailure: function(trans){
+                    bcontent.innerHTML='';
+                    viewdom.hide();
+                }
+            });
+        }
+        var motimer;
+        function bubbleMouseover(evt){
+            if(mltimer){
+                clearTimeout(mltimer);
+                mltimer=null;
+            }
+        }
+        function jobLinkMouseover(elem,evt){
+            if(mltimer){
+                clearTimeout(mltimer);
+                mltimer=null;
+            }
+            if(motimer){
+                clearTimeout(motimer);
+                motimer=null;
+            }
+            if(popvis && lastHref==elem.href){
+                return;
+            }
+            var delay=500;
+            if(popvis){
+                delay=50;
+            }
+            motimer=setTimeout(showJobDetails.curry(elem),delay);
+        }
+        var mltimer;
+        function jobLinkMouseout(elem,evt){
+            //hide job details
+            if(motimer){
+                clearTimeout(motimer);
+                motimer=null;
+            }
+            doshow=false;
+            mltimer=setTimeout(doMouseout,3000);
+        }
+        function doMouseout(){
+            if(popvis && $('jobIdDetailHolder')){
+                popvis=false;
+                $('jobIdDetailHolder').hide();
+            }
+            if(targetLink){
+                $(targetLink).removeClassName('glow');
+                targetLink=null;
+            }
+        }
+        function initJobIdLinks(){
+            $$('a.jobIdLink').each(function(e){
+                Event.observe(e,'mouseover',jobLinkMouseover.curry(e));
+                Event.observe(e,'mouseout',jobLinkMouseout.curry(e));
+            });
+        }
         function init(){
             loadNowRunning();
+            initJobIdLinks();
+            Event.observe(document.body,'click',function(evt){
+                //click outside of popup bubble hides it
+                var t = $(evt.element()).up('#jobIdDetailHolder');
+                if(!t && !evt.element().onclick && !evt.element().onmousedown){
+                    doMouseout();
+                }
+                return true;
+            },false);
+            Event.observe(document.body,'keydown',function(evt){
+                //escape key hides popup bubble
+                if(evt.keyCode==27 ){
+                    doMouseout();
+                }
+                return true;
+            },false);
         }
         Event.observe(window,'load',init);
     </script>
@@ -157,6 +293,35 @@
     }
     .error{
         color:red;
+    }
+    a.glow{
+        background: #cfc;
+        border-radius:3px;
+        -moz-border-radius:3px;
+        -webkit-border-radius:3px;
+    }
+    .bubblewrap{
+        position:absolute;
+        width: 500px;
+        height: 250px;
+    }
+    .bubbletop{
+        height:16px;
+        background: transparent url(${resource(dir:'images',file:'bubble-bg.png')}) top 10px no-repeat;
+        z-index: 1;
+    }
+    .bubblecontent{
+        position:relative;
+        border:1px solid #aaa;
+        background:white;
+        padding: 10px;
+        margin-top:-1px;
+        z-index: -1;
+        border-radius:10px;
+        -moz-border-radius:10px;
+        -webkit-border-radius:10px;
+        -moz-box-shadow:#aaa 2px 2px 7px;
+        -webkit-box-shadow:#aaa 2px 2px 7px;
     }
     </style>
 </head>
