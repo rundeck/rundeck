@@ -33,22 +33,12 @@
         var eventsparams=${eventsparams.encodeAsJSON()};
         var pageparams=${pageparams.encodeAsJSON()};
         var links = {
-            nowrunning:'${createLink(controller:"menu",action:"nowrunningFragment")}',
             events:'${createLink(controller:"reports",action:"eventsFragment")}',
         };
         var boxctl ;
         function _pageInit() {
             try{
-            boxctl = new WBoxController({views:{db1:'db1',db2:'evtsholder'},key:'nowrunning'});
-            boxctl.addBox('db1', new WBox('box1', {noTitle:true,noTabs:true,tabs:[
-                {
-                    name:'nowrunning',
-                    url:links['nowrunning'],
-                    reload:10,
-                    notitle:true,
-                    params:{}
-                }
-            ]}));
+            boxctl = new WBoxController({views:{db2:'evtsholder'},key:'nowrunning'});
             //eventsparams.filterName=bfilters['events'];
             if(pageparams && pageparams.offset){
                 Object.extend(eventsparams,pageparams);
@@ -70,9 +60,13 @@
         function _updateBoxInfo(name, data) {
             if(boxctl){
                 try{
+                    if(data.url && data.url.indexOf("?")>0){
+                        //remove params
+                        data.params={};
+                    }
                 boxctl.updateDataForTab(name, data);
                 }catch(e){
-                
+
                 }
             }
             if(name=='events' && data.checkUpdatedUrl){
@@ -191,25 +185,7 @@
     <a title="RSS 2.0" class="floatr" href="${createLink(controller:"feed",action:"index",params:paginateParams)}" id="rsslink"><img src="${resource(dir:'images',file:'feed.png')}" width="14px" height="14px" alt=""/> RSS</a>
     <g:render template="/common/messages"/>
 
-
-    <div class="expanderwrap"><g:expander key="dashholder" imgfirst="true" classnames="" open="false">Now Running <span class="nowrunningcount"></span></g:expander></div>
-     <div id="dashholder" style="display:none">
-        <table cellspacing="0" cellpadding="0"  class="dashboxes">
-
-            <tr>
-                <td class="dashbox wide" colspan="2">
-                    <div id="db1">
-                        <span class="loading">Loading</span>
-                    </div>
-                </td>
-            </tr>
-        </table>
-     </div>
-
-    <div class="expanderwrap">
-        <g:expander key="evtsholder" imgfirst="true" classnames="" open="true">History</g:expander>
-        <span class="badgeholder"  id="eventsCountBadge" style="display:none"><span class="badge newcontent active" id="eventsCountContent" onclick="boxctl.reloadTabForName('events');" title="click to load new events"></span></span>
-    </div>
+    <span class="badgeholder"  id="eventsCountBadge" style="display:none"><span class="badge newcontent active" id="eventsCountContent" onclick="boxctl.reloadTabForName('events');" title="click to load new events"></span></span>
     <div id="evtsholder">
     <g:render template="eventsFragment" model="${[paginateParams:paginateParams,params:params,reports:reports,filterName:filterName]}"/>
     </div>

@@ -19,7 +19,6 @@
                         </g:if>
                     <% def j=0 %>
                     <g:each in="${jobslist}" var="scheduledExecution">
-                        <g:timerStart key="jobslistHead"/>
                         <g:set var="execCount" value="${scheduledExecution.id?Execution.countByScheduledExecution(scheduledExecution):0}"/>
                         <g:set var="nextExecution"
                                value="${ (nextExecutions)? nextExecutions[scheduledExecution.id] : null}"/>
@@ -37,14 +36,11 @@
                         </g:if>
                         <g:else>
                         <tr class="sectionhead expandComponentHolder ${paginateParams?.idlist==scheduledExecution.id.toString()?'expanded':''}" id="jobrow_${scheduledExecution.id}">
-
-
-
-
-
                             <td class="jobname">
                                 <div style="overflow:hidden; text-overflow: ellipsis; height:16px;">
-                                <g:expander key="${ukey+'jobDisplay'+scheduledExecution.id}" open="${paginateParams?.idlist==scheduledExecution.id.toString()?'true':'false'}" imgfirst="true">${scheduledExecution.jobName.encodeAsHTML()}</g:expander>
+                                %{--<g:expander key="${ukey+'jobDisplay'+scheduledExecution.id}" open="${paginateParams?.idlist==scheduledExecution.id.toString()?'true':'false'}" imgfirst="true">${scheduledExecution.jobName.encodeAsHTML()}</g:expander>--}%
+                                <g:link action="show" controller="scheduledExecution" id="${scheduledExecution.id}" class="jobIdLink">
+                                    ${scheduledExecution.jobName.encodeAsHTML()}</g:link>
 
                                 <g:if test="${!session.project}">
                                 <span class="project">
@@ -58,7 +54,7 @@
                                 </div>
                             </td>
 
-                        <td class="jobrunning right" colspan="2">
+                        <td class="jobrunning " >
                             <g:if test="${nowrunning && nowrunning[scheduledExecution.id.toString()]}">
                                 <g:link class="timenow"
                                     controller="execution"
@@ -81,44 +77,10 @@
                             <g:else>&nbsp;
                             </g:else>
                         </td>
+                        <td style="width: 80px; vertical-align: top; white-space:nowrap; text-align:right" class="jobbuttons right">
+                            <g:render template="/scheduledExecution/actionButtons" model="${[scheduledExecution:scheduledExecution,authMap:authMap,jobauthorizations:jobauthorizations,small:true]}"/>
+                        </td>
 
-                        </tr>
-                            <g:timerEnd key="jobslistHead"/>
-                            <g:timerStart key="jobslistBody"/>
-                            <g:timerStart key="detail"/>
-                        <tr id="${ukey}jobDisplay${scheduledExecution.id}" style="${wdgt.styleVisible('if':paginateParams?.idlist==scheduledExecution.id.toString())}" class=" subsection">
-                            <td colspan="3" class="extended jobDetail ">
-
-                                <!--Display job details-->
-                                <div class="left">
-                                <div class="right">
-                                <table width="100%" cellpadding="0" cellspacing="0">
-                                    <tr>
-                                        <td>
-                                <g:render template="/scheduledExecution/showDetail" model="[scheduledExecution:scheduledExecution]"/>
-
-
-                                        </td>
-                                        <td style="width: 80px; vertical-align: top; white-space:nowrap;height:100%; text-align:right" class="jobbuttons ">
-                                            <div class="right">
-                                            <g:timerEnd key="detail"/>
-                                            <g:timerStart key="actions"/>
-                                            <g:render template="/scheduledExecution/actionButtons" model="${[scheduledExecution:scheduledExecution,authMap:authMap,jobauthorizations:jobauthorizations]}"/>
-                                            <g:timerEnd key="actions"/>
-                                            <g:timerStart key="stats"/>
-                                            <g:set var="lastrun" value="${scheduledExecution.id?Execution.findByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution,[max: 1, sort:'dateStarted', order:'desc']):null}"/>
-                                            <g:set var="successcount" value="${scheduledExecution.id?Execution.countByScheduledExecutionAndStatus(scheduledExecution,'true'):0}"/>
-                                            <g:set var="successrate" value="${execCount>0? (successcount/execCount) : 0}"/>
-                                            <g:render template="/scheduledExecution/showStats" model="[scheduledExecution:scheduledExecution,lastrun:lastrun?lastrun:null, successrate:successrate]"/>
-                                            <g:timerEnd key="stats"/>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </table>
-                                </div>
-                                </div>
-                                <g:timerEnd key="jobslistBody"/>
-                            </td>
                         </tr>
                         </g:else>
                         <% j++ %>

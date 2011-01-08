@@ -850,6 +850,10 @@ div.progressContainer{
 div.progressContainer.small{
     width:106px;
 }
+div.progressContainer.indefinite{
+    background: #eee;
+    border:1px solid #ccc;
+}
 div.progressBar{
     width:0px;
     background:#88f;
@@ -860,6 +864,17 @@ div.progressBar{
     line-height:9px;
     padding:1px 3px;
     border-right: 1px solid #999;
+}
+div.progressContainer.indefinite div.progressBar{
+    background:none;
+    width:100%;
+    height:12px;
+    color:#555;
+    text-shadow: 1px 1px 1px #fff;
+    font-size:9px;
+    line-height:9px;
+    padding:1px 3px;
+    border:0;
 }
 div.progressContainer.nodes{
     border: 0;
@@ -1108,6 +1123,9 @@ tbody.section > tr:first-child > td{
 
 tr.hilite:hover, td.hilite:hover{
    background: #e3edfa;
+}
+tr.link, td.link{
+   cursor:pointer;
 }
 span.autohilite:hover{
     background: #ffffaa;
@@ -1759,9 +1777,6 @@ tr.subsection > td > div.left > div.right{
 tr.subsection > td > div.right{
     padding: 5px 15px 5px 15px;
 }
-tr.sectionhead.expanded td.right{
-  padding-right:15px;
-}
 tr.sectionhead.expanded td{
     border-top:1px solid #aaa;
     padding-top:3px;
@@ -2213,4 +2228,11 @@ table.projectselect td{
 fieldset{
     border:0;
     padding:0;
+}
+
+/** run box */
+
+.runbox{
+    background: #ddd;
+    padding:10px ;
 }

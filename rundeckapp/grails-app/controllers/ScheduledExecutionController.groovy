@@ -103,17 +103,39 @@ class ScheduledExecutionController  {
             }
         }
     }
-    def show = {
-        withFormat{
-            html{
-                redirect(controller:'menu',action:'jobs',params:[idlist:params.id])
-            }
-            xml{
-                showx.call()
-            }
+    def detailFragment = {
+//        def model=show()
+
+        log.info("ScheduledExecutionController: show : params: " + params)
+        def crontab = [:]
+        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        def ScheduledExecution scheduledExecution = ScheduledExecution.get( params.long('id') )
+        if (!scheduledExecution) {
+            log.error("No Job found for id: " + params.id)
+            flash.error="No Job found for id: " + params.id
+            response.setStatus (404)
+            return error.call()
         }
+        crontab = scheduledExecution.timeAndDateAsBooleanMap()
+        def User user = User.findByLogin(session.user)
+        //list executions using query params and pagination params
+
+        def executions=Execution.findAllByScheduledExecution(scheduledExecution,[offset: params.offset?params.offset:0, max: params.max?params.max:10, sort:'dateStarted', order:'desc'])
+
+        def total = Execution.countByScheduledExecution(scheduledExecution)
+
+        //todo: authorize job for workflow_read
+
+
+
+        return render(view:'jobDetailFragment',model: [scheduledExecution:scheduledExecution, crontab:crontab, params:params,
+            executions:executions,
+            total:total,
+            nextExecution:scheduledExecutionService.nextExecutionTime(scheduledExecution),
+            max: params.max?params.max:10,
+            offset:params.offset?params.offset:0])
     }
-    def showx = {
+    def show = {
         log.info("ScheduledExecutionController: show : params: " + params)
         def crontab = [:]
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
@@ -1813,8 +1835,15 @@ class ScheduledExecutionController  {
         }
         model
     }
-    def executeInline = {
+    def executeFragment = {
         def model = execute()
+        if(params.dovalidate){
+            model.jobexecOptionErrors=session.jobexecOptionErrors
+            model.selectedoptsmap=session.selectedoptsmap
+            session.jobexecOptionErrors=null
+            session.selectedoptsmap=null
+            model.options=null
+        }
         render(template:'execOptionsForm',model:model)
     }
 
@@ -1878,36 +1907,74 @@ class ScheduledExecutionController  {
             }
         }
     }
+    /**
+     * Execute job specified by parameters, and return json results
+     */
+    def runJobInline = {
+        def results = runJob()
+
+        if(results.error=='invalid'){
+            session.jobexecOptionErrors=results.errors
+            session.selectedoptsmap=results.options
+        }
+        return render(contentType:'application/json'){
+            if(results.failed){
+                delegate.'error'(results.error)
+                message(results.message)
+            }else{
+                success(true)
+                id(results.id)
+            }
+        }
+    }
     def runJobNow = {
         return executeNow()
     }
     def executeNow = {
+        def results = runJob()
+        if(results.failed){
+            log.error(results.message)
+            if(results.error=='unauthorized'){
+                return render(view:"/common/execUnauthorized",model:results)
+            }else if(results.error=='invalid'){
+                def model=execute.call()
+
+                results.jobexecOptionErrors=results.errors
+                results.selectedoptsmap=results.options
+                results.putAll(model)
+                results.options=null
+                return render(view:'execute',model:results)
+            }else{
+                return render(template:"/common/error",model:results)
+            }
+        }else if (results.error){
+            log.error(results.error)
+            if(results.code){
+                response.setStatus (results.code)
+            }
+            return render(template:"/common/error",model:results)
+        }else{
+            redirect(controller:"execution", action:"follow",id:results.id)
+        }
+    }
+    def runJob = {
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         params["user"] = (session?.user) ? session.user : "anonymous"
         def rolelist = (session?.roles) ? session.roles : []
         def ScheduledExecution scheduledExecution = ScheduledExecution.get( params.id )
         if (!scheduledExecution) {
-            log.error("No Job found for id: " + params.id)
-            response.setStatus (404)
-            return render(template:"/common/error",model:[error:"No Job found for id: " + params.id])
+//            response.setStatus (404)
+            return [error:"No Job found for id: " + params.id,code:404]
         }
         def result = executeScheduledExecution(scheduledExecution,framework,rolelist,params)
-        if(result.error){
-            log.error(result.message)
-            if(result.error=='unauthorized'){
-                return render(view:"/common/execUnauthorized",model:[scheduledExecution:scheduledExecution,error:result.message,context:[scheduledExecution.project]])
-            }else if(result.error=='invalid'){
-                def model=execute.call()
-                model.jobexecOptionErrors=result.errors
-                model.selectedoptsmap=result.options
-                return render(view:'execute',model:model)
-            }else{
-                return render(template:"/common/error",model:[error:result.message])
-            }
-        }else{
 
+        if (result.error){
+            result.failed=true
+            return result
+        }else{
             log.info("ExecutionController: immediate execution scheduled")
-            redirect(controller:"execution", action:"follow",id:result.executionId)
+//            redirect(controller:"execution", action:"follow",id:result.executionId)
+            return [success:true, message:"immediate execution scheduled", id:result.executionId]
         }
     }
     def executeScheduledExecution = {ScheduledExecution scheduledExecution, Framework framework, List rolelist,params->
