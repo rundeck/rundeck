@@ -342,7 +342,7 @@
         </g:javascript>
     </g:if>
     <span class="prompt">Now running <span class="nowrunningcount">(0)</span></span>
-    <div id="nowrunning"></div>
+    <div id="nowrunning"><span class="note empty">No running Jobs</span></div>
     <div id="error" class="error" style="display:none;"></div>
     <g:render template="workflowsFull" model="${[jobgroups:jobgroups,wasfiltered:wasfiltered?true:false,nowrunning:nowrunning,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
 </div>
