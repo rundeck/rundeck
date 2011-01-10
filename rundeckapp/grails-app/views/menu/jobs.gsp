@@ -124,7 +124,7 @@
          */
         function loadHistory(){
             new Ajax.Updater('histcontent',"${createLink(controller:'reports',action:'eventsFragment')}",{
-                parameters:{compact:true,nofilters:true,jobIdFilter:'!null',recentFilter:'1d',projFilter:'${session.project}'},
+                parameters:{compact:true,nofilters:true,recentFilter:'1d',projFilter:'${session.project}'},
                 evalScripts:true,
                 onComplete: function(transport) {
                     if (transport.request.success()) {
@@ -342,7 +342,7 @@
         </g:javascript>
     </g:if>
     <span class="prompt">Now running <span class="nowrunningcount">(0)</span></span>
-    <div id="nowrunning"></div>
+    <div id="nowrunning"><span class="note empty">No running Jobs</span></div>
     <div id="error" class="error" style="display:none;"></div>
     <g:render template="workflowsFull" model="${[jobgroups:jobgroups,wasfiltered:wasfiltered?true:false,nowrunning:nowrunning,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
 </div>

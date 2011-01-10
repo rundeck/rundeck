@@ -416,7 +416,7 @@
          */
         function loadHistory(){
             new Ajax.Updater('histcontent',"${createLink(controller:'reports',action:'eventsFragment')}",{
-                parameters:{compact:true,nofilters:true,jobIdFilter:'null',recentFilter:'1d',projFilter:'${session.project}'},
+                parameters:{compact:true,nofilters:true,recentFilter:'1d',projFilter:'${session.project}'},
                 evalScripts:true,
                 onComplete: function(transport) {
                     if (transport.request.success()) {
@@ -427,10 +427,30 @@
         }
 
         /**
+         * now running
+         */
+        var savedcount=0;
+        function _pageUpdateNowRunning(count){
+            if(count!=savedcount){
+                savedcount=count;
+                loadHistory();
+            }
+        }
+
+        var runupdate;
+        function loadNowRunning(){
+            runupdate=new Ajax.PeriodicalUpdater('nowrunning','${createLink(controller:"menu",action:"nowrunningFragment")}',{
+                evalScripts:true,
+                parameters:{},
+            });
+        }
+
+        /**
          * START page init
          */
 
         function init() {
+            loadNowRunning();
             $$('#runbox input').each(function(elem){
                 if(elem.type=='text'){
                     elem.observe('keypress',function(evt){
@@ -520,6 +540,12 @@
 </head>
 <body>
 
+<div class="pageBody">
+    <span class="prompt">Now running <span class="nowrunningcount">(0)</span></span>
+    <div id="nowrunning">
+        <span class="note empty">No running Jobs</span>
+    </div>
+</div>
 <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
     <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
 </g:if>
