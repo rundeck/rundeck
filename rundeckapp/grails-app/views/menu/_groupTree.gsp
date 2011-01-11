@@ -6,7 +6,7 @@
   To change this template use File | Settings | File Templates.
 --%>
 <g:timerStart key="gtx"/>
-<div class="jobGroups ${subtree?' subdirs':''} expandComponent" ${subtree && !expanded && !(wasfiltered) ?'style="display:none"':''}>
+<div class="jobGroups ${subtree?' subdirs':'topgroup'} expandComponent" ${subtree && !expanded && !(wasfiltered) ?'style="display:none"':''}>
 <g:if test="${!prefix && wasfiltered && paginateParams.groupPath}">
     <div>
         <a class=" groupname" href="${createLink(controller:'menu',action:'jobs')}" title="Top level"><img src="${resource(dir:'images',file:'icon-small-folder-up.png')}" width="16px" height="15px" alt="dir"/> Top</a>

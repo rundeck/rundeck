@@ -138,7 +138,11 @@ code{
 .topbar a.home{
     padding: 10px;
 }
+.topbar #top_tabs + a.home{
+    margin-left: 20px;
+}
 a.toptab{
+    /*border-left: 1px solid #ccc;*/
     border-right: 1px solid #ccc;
     padding: 8px 10px;
     margin:0;
@@ -2235,4 +2239,37 @@ fieldset{
 .runbox{
     background: #ddd;
     padding:10px ;
+}
+.runbox.sepT{
+    border-top:1px solid #bbb;
+    margin:0;
+}
+.runbox.jobs{
+    padding:0;
+}
+.runbox.jobs .jobscontent, .runbox.jobs .wffilter{
+    padding:  10px;
+}
+.runbox.jobs .wfcontent{
+    padding:  0;
+}
+div.jobscontent{
+    margin-bottom: 5px;
+}
+.runbox.jobs .jobscontent{
+    margin-bottom: 0;
+}
+.runbox div.jobGroups.topgroup{
+    background: #fff;
+    padding: 20px;
+}
+.runbox table.list tr{
+    /*background: #ddd;*/
+}
+
+/** now running content */
+#nowrunning{
+    max-height: 150px;
+    overflow-y: auto;
+    margin:0;
 }
