@@ -50,7 +50,7 @@
     <table cellspacing="0" cellpadding="0" width="100%">
         <tr>
 
-            <td style="text-align:left;vertical-align:top;width:200px; ${wdgt.styleVisible(if:filtersOpen)}" id="${rkey}filter" >
+            <td style="text-align:left;vertical-align:top;width:200px; ${wdgt.styleVisible(if:filtersOpen)}" id="${rkey}filter" class="wffilter" >
             <g:form action="jobs" method="get">
                 <g:if test="${params.compact}">
                     <g:hiddenField name="compact" value="${params.compact}"/>
@@ -96,9 +96,9 @@
             </g:form>
 
             </td>
-            <td style="text-align:left;vertical-align:top;" id="${rkey}wfcontent">
+            <td style="text-align:left;vertical-align:top;" id="${rkey}wfcontent" class="wfcontent">
 
-                <div style="margin-bottom: 5px;">
+                <div class="jobscontent head">
 
                 <g:if test="${wasfiltered}">
 

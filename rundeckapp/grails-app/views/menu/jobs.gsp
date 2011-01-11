@@ -286,11 +286,6 @@
     <g:javascript library="yellowfade"/>
     <g:render template="/framework/remoteOptionValuesJS"/>
     <style type="text/css">
-    #nowrunning{
-        max-height: 150px;
-        overflow-y: auto;
-        margin: 0 0 10px 0;
-    }
     .error{
         color:red;
     }
@@ -344,6 +339,8 @@
     <span class="prompt">Now running <span class="nowrunningcount">(0)</span></span>
     <div id="nowrunning"><span class="note empty">No running Jobs</span></div>
     <div id="error" class="error" style="display:none;"></div>
+</div>
+<div class="runbox jobs">
     <g:render template="workflowsFull" model="${[jobgroups:jobgroups,wasfiltered:wasfiltered?true:false,nowrunning:nowrunning,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
 </div>
 <div id="execDiv" style="display:none">
