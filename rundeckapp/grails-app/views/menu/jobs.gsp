@@ -323,7 +323,7 @@
 <body>
 
 
-<div class="pageBody solo" id="indexMain">
+<div class="pageBody solo" >
     <g:if test="${flash.savedJob}">
         <div style="margin-bottom:10px;">
         <span class="popout message note" style="background:white">
@@ -340,7 +340,7 @@
     <div id="nowrunning"><span class="note empty">No running Jobs</span></div>
     <div id="error" class="error" style="display:none;"></div>
 </div>
-<div class="runbox jobs">
+<div class="runbox jobs" id="indexMain">
     <g:render template="workflowsFull" model="${[jobgroups:jobgroups,wasfiltered:wasfiltered?true:false,nowrunning:nowrunning,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
 </div>
 <div id="execDiv" style="display:none">
