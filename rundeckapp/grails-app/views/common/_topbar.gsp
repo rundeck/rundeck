@@ -32,7 +32,53 @@ function doCreateProject(){
 }
 //-->
 </script>
-<div  class="topbar ${session?.user?'':'solo'}" >
+<div  class="topbar solo" >
+<g:if test="${session?.user}">
+<!--<div class="secondbar">-->
+
+   <span id="top_tabs">
+
+        <g:set var="resselected" value=""/>
+        <g:ifPageProperty name='meta.tabpage' >
+        <g:ifPageProperty name='meta.tabpage' equals='nodes'>
+           <g:set var="resselected" value="selected"/>
+        </g:ifPageProperty>
+        </g:ifPageProperty>
+        <g:link controller="framework" action="nodes" class=" toptab ${resselected}"  style="height:29px">
+           <g:message code="gui.menu.Run"/>
+        </g:link>
+
+        <g:set var="wfselected" value=""/>
+        <g:ifPageProperty name='meta.tabpage' >
+        <g:ifPageProperty name='meta.tabpage' equals='jobs'>
+           <g:set var="wfselected" value="selected"/>
+        </g:ifPageProperty>
+        </g:ifPageProperty>
+        <g:link controller="menu" action="jobs" class=" toptab ${wfselected}" style="height:29px">
+           <g:message code="gui.menu.Workflows"/>
+        </g:link>
+
+        <g:set var="eventsselected" value=""/>
+        <g:ifPageProperty name='meta.tabpage' >
+        <g:ifPageProperty name='meta.tabpage' equals='events'>
+            <g:set var="eventsselected" value="selected"/>
+        </g:ifPageProperty>
+        </g:ifPageProperty>
+        <g:link controller="reports"  action="index" class=" toptab ${eventsselected}"  style="height:29px">
+            <g:message code="gui.menu.Events"/>
+        </g:link>
+
+    <g:if test="${session?.project||session?.projects}">
+       <span class="projects" style="font-size:9pt; line-height: 12px; margin-left:20px;">
+            <img src="${resource(dir:'images',file:'icon-tiny-rarrow-sep.png')}" alt="project: " width="7px" height="12px"/>
+            <span id="projectSelect">
+               <span class="action textbtn" onclick="loadProjectSelect();" title="Select project...">${session?.project?session.project:'Select project&hellip;'}</span>
+            </span>
+       </span>
+    </g:if>
+
+</span>
+</g:if>
     <a href="${grailsApplication.config.rundeck.gui.titleLink?grailsApplication.config.rundeck.gui.titleLink:'/'}"
         title="Home" class="home" style="height:29px;">
         <g:set var="appTitle" value="${grailsApplication.config.rundeck.gui.title?grailsApplication.config.rundeck.gui.title:g.message(code:'main.app.name')}"/>
@@ -43,6 +89,7 @@ function doCreateProject(){
         ${appTitle}
     </a>
 
+<!--</div>-->
     %{--<g:if test="${session?.project}">
         <img src="${resource(dir:'images',file:'icon-tiny-rarrow-sep.png')}" alt="project: " width="7px" height="12px"/>
         <span class="projectinfo">
@@ -83,52 +130,5 @@ function doCreateProject(){
         </span>
     </g:else>
 </div>
-<g:if test="${session?.user}">
-<div class="secondbar">
 
-   <span id="top_tabs">
-
-        <g:set var="resselected" value=""/>
-        <g:ifPageProperty name='meta.tabpage' >
-        <g:ifPageProperty name='meta.tabpage' equals='nodes'>
-           <g:set var="resselected" value="selected"/>
-        </g:ifPageProperty>
-        </g:ifPageProperty>
-        <g:link controller="framework" action="nodes" class=" toptab ${resselected}"  style="height:29px">
-           <g:message code="gui.menu.Run"/>
-        </g:link>
-
-        <g:set var="eventsselected" value=""/>
-        <g:ifPageProperty name='meta.tabpage' >
-        <g:ifPageProperty name='meta.tabpage' equals='events'>
-            <g:set var="eventsselected" value="selected"/>
-        </g:ifPageProperty>
-        </g:ifPageProperty>
-        <g:link controller="reports"  action="index" class=" toptab ${eventsselected}"  style="height:29px">
-            <g:message code="gui.menu.Events"/>
-        </g:link>
-
-        <g:set var="wfselected" value=""/>
-        <g:ifPageProperty name='meta.tabpage' >
-        <g:ifPageProperty name='meta.tabpage' equals='jobs'>
-           <g:set var="wfselected" value="selected"/>
-        </g:ifPageProperty>
-        </g:ifPageProperty>
-        <g:link controller="menu" action="jobs" class=" toptab ${wfselected}" style="height:29px">
-           <g:message code="gui.menu.Workflows"/>
-        </g:link>
-
-    <g:if test="${session?.project||session?.projects}">
-       <span class="projects" style="font-size:9pt; line-height: 12px; margin-left:20px;">
-            <img src="${resource(dir:'images',file:'icon-tiny-rarrow-sep.png')}" alt="project: " width="7px" height="12px"/>
-            <span id="projectSelect">
-               <span class="action textbtn" onclick="loadProjectSelect();" title="Select project...">${session?.project?session.project:'Select project&hellip;'}</span>
-            </span>
-       </span>
-    </g:if>
-
-</span>
-
-</div>
-</g:if>
 
