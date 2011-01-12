@@ -1050,16 +1050,22 @@ class ExecutionService implements ApplicationContextAware, Executor{
         if(execSaved) {
             //summarize node success
             String node=null
+            int sucCount=-1;
+            int failedCount=-1;
+            int totalCount=0;
             if (execmap && execmap.noderecorder && execmap.noderecorder instanceof NodeRecorder) {
                 NodeRecorder rec = (NodeRecorder) execmap.noderecorder
                 final HashSet<String> success = rec.getSuccessfulNodes()
                 final HashSet<String> failed = rec.getFailedNodes()
                 final HashSet<String> matched = rec.getMatchedNodes()
                 node = [success.size(),failed.size(),matched.size()].join("/")
+                sucCount=success.size()
+                failedCount=failed.size()
+                totalCount=matched.size()
             }
             def Framework fw = frameworkService.getFramework()
             logExecution(null, execution.project, execution.user, "true" == execution.status, fw, exId, execution.dateStarted, jobid, jobname, summarizeJob(scheduledExecution, execution), props.cancelled, node)
-            notificationService.triggerJobNotification(props.status == 'true' ? 'success' : 'failure', schedId, [execution: execution])
+            notificationService.triggerJobNotification(props.status == 'true' ? 'success' : 'failure', schedId, [execution: execution,nodestatus:[succeeded:sucCount,failed:failedCount,total:totalCount]])
         }
     }
     def summarizeJob(ScheduledExecution job=null,Execution exec){

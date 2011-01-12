@@ -24,7 +24,7 @@
 <g:if test="${workflow && workflow?.commands}">
 <g:each in="${workflow.commands}" var="item" status="i">
     <li class="${i%2==1?'alternate':''}" id="wfli_${i}" wfitemNum="${i}">
-        <g:render template="/execution/wflistitemContent" model="${[i:i,item:item,workflow:workflow,edit:edit,highlight:highlight]}"/>
+        <g:render template="/execution/wflistitemContent" model="${[i:i,item:item,workflow:workflow,edit:edit,highlight:highlight,noimgs:noimgs]}"/>
     </li>
 </g:each>
 </g:if>

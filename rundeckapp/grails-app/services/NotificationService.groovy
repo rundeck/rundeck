@@ -45,13 +45,13 @@ public class NotificationService {
             //sending notification of a status trigger for the Job
             def Execution exec = content.execution
             def destarr=n.content.split(",") as List
-            def subjectmsg="[rundeck] ${source.jobName}: ${exec.status == 'true' ? 'Succeeded' : 'Failed'}"
+            def subjectmsg="${exec.status == 'true' ? 'SUCCESS' : 'FAILURE'} [${exec.project}] ${source.groupPath?source.groupPath+'/':''}${source.jobName}${exec.argString?' '+exec.argString:''}"
             destarr.each{recipient->
                 try{
                     mailService.sendMail{
                       to recipient
                       subject subjectmsg
-                      body( view:"/execution/mailNotification/status", model: [execution: exec,scheduledExecution:source, msgtitle:subjectmsg])
+                      body( view:"/execution/mailNotification/status", model: [execution: exec,scheduledExecution:source, msgtitle:subjectmsg,nodestatus:content.nodestatus])
                     }
                 }catch(Exception e){
                     System.err.println("Error sending notification email: "+e.getMessage());
