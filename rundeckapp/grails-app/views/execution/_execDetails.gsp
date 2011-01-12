@@ -47,7 +47,7 @@
         <tr>
             <td>Workflow:</td>
             <td>
-                <g:render template="/execution/execDetailsWorkflow" model="${[workflow:execdata.workflow,context:execdata]}"/>
+                <g:render template="/execution/execDetailsWorkflow" model="${[workflow:execdata.workflow,context:execdata,noimgs:noimgs]}"/>
             </td>
         </tr>
     </g:if>
@@ -104,6 +104,7 @@
             </table>
         </td>
     </tr>
+    <g:if test="${!nomatchednodes}">
         <tr>
             <td>Matched Nodes:</td>
             <td id="matchednodes_${rkey}" class="matchednodes embed">
@@ -116,9 +117,11 @@
             </td>
 
         </tr>
+        </g:if>
     </tbody>
     </g:if>
     <g:else>
+        <g:if test="${!nomatchednodes}">
         <tbody class="section">
         <tr>
             <td>Node:</td>
@@ -128,6 +131,7 @@
             </td>
         </tr>
         </tbody>
+        </g:if>
     </g:else>
     <g:if test="${execdata?.doNodedispatch}">
 

@@ -21,17 +21,18 @@
     Created: Jul 26, 2010 5:12:38 PM
     $Id$
  --%>
-            <span class="${edit?'autohilite autoedit':''}" title="${edit?'Click to edit':''}">
+            <g:set var="jobitem" value="${item instanceof JobExec || (item instanceof java.util.Map && item.jobName)}"/>
+            <span class="${edit?'autohilite autoedit':''} wfitem ${jobitem?'jobtype':'exectype'}" title="${edit?'Click to edit':''}">
 
-            <g:if test="${item instanceof JobExec || (item instanceof java.util.Map && item.jobName)}">
-                <g:img file="icon-small-job.png" width="16px" height="16px"/>
+            <g:if test="${jobitem}">
+                <g:if test="${!noimgs}"><g:img file="icon-small-job.png" width="16px" height="16px"/></g:if>
                 ${item.jobGroup?item.jobGroup.encodeAsHTML()+'/':''}${item.jobName.encodeAsHTML()}
                 <g:if test="${item.argString}">
                    <span class="argString"><g:truncate max="50"  showtitle="true">${item.argString.encodeAsHTML()}</g:truncate></span>
                 </g:if>
             </g:if>
             <g:else>
-                <g:img file="icon-small-shell.png" width="16px" height="16px"/>
+                <g:if test="${!noimgs}"><g:img file="icon-small-shell.png" width="16px" height="16px"/></g:if>
                 <g:if test="${item.adhocRemoteString}">
                     <span class="argString"><g:truncate max="60" showtitle="true">${item.adhocRemoteString.encodeAsHTML()}</g:truncate></span>
                 </g:if>
