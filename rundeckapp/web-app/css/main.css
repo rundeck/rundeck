@@ -1058,7 +1058,9 @@ table.jobsList td{
 
 table.executionList tr.nowrunning a, table.jobsList tr.nowrunning a{
 }
-
+table.jobsList.history tr.fail td.eventtitle{
+    color:red;
+}
 div.buttons span.group {
     white-space:nowrap;
 }

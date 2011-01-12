@@ -17,7 +17,7 @@
 %>
 <g:set var="maxmsgsize" value="${options.evtmaxsize?options.evtmaxsize:options.msgsplitsize?options.msgsplitsize:-1}"/>
 <g:set var="maxtitlesize" value="${20}"/>
-<table cellpadding="0" cellspacing="0" class="jobsList list" >
+<table cellpadding="0" cellspacing="0" class="jobsList list history" >
     <thead>
 
     <tr>
