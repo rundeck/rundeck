@@ -104,6 +104,7 @@ public class TestResourceXMLGenerator extends TestCase {
             assertEquals(1, root.selectNodes("node").size());
             assertEquals("test1name", root.selectSingleNode("node/@name").getStringValue());
             assertEquals("test1", root.selectSingleNode("node/@hostname").getStringValue());
+            assertEquals("", root.selectSingleNode("node/@tags").getStringValue());
             assertEquals("Node", root.selectSingleNode("node/@type").getStringValue());
             assertEquals("", root.selectSingleNode("node/@description").getStringValue());
             assertEquals("", root.selectSingleNode("node/@osArch").getStringValue());
@@ -224,6 +225,7 @@ public class TestResourceXMLGenerator extends TestCase {
             assertEquals("testSetting", root.selectSingleNode("setting/@name").getStringValue());
             assertEquals("Setting", root.selectSingleNode("setting/@type").getStringValue());
             assertEquals("testValue", root.selectSingleNode("setting/@settingValue").getStringValue());
+            assertNull(root.selectSingleNode("setting/@tags"));
         }
     }
 }

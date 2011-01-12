@@ -309,7 +309,7 @@ public class ResourceXMLGenerator {
         tag.addAttribute(COMMON_NAME, entity.getName());
         tag.addAttribute(COMMON_TYPE, entity.getType());
         tag.addAttribute(COMMON_DESCRIPTION, notNull(entity.getProperty(COMMON_DESCRIPTION)));
-        if (null != entity.getProperty(COMMON_TAGS)) {
+        if(!SETTING_ENTITY_TAG.equals(entity.getResourceType())){
             tag.addAttribute(COMMON_TAGS, notNull(entity.getProperty(COMMON_TAGS)));
         }
         return tag;
