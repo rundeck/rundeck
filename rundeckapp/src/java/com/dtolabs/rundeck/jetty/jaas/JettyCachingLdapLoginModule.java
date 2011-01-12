@@ -94,6 +94,11 @@ import org.mortbay.log.Log;
 public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
     /**
+     * Provider URL
+     */
+    private String _providerUrl;
+    
+    /**
      * Role prefix to remove from ldap group name.
      */
     private String _rolePrefix = "";
@@ -565,6 +570,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         _hostname = (String) options.get("hostname");
         _port = Integer.parseInt((String) options.get("port"));
+        _providerUrl = (String) options.get("providerUrl");
         _contextFactory = (String) options.get("contextFactory");
         _bindDn = (String) options.get("bindDn");
         _bindPassword = (String) options.get("bindPassword");
@@ -651,15 +657,20 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         Properties env = new Properties();
 
         env.put(Context.INITIAL_CONTEXT_FACTORY, _contextFactory);
-
-        if (_hostname != null) {
-            if (_port != 0) {
-                env.put(Context.PROVIDER_URL, "ldap://" + _hostname + ":" + _port + "/");
-            } else {
-                env.put(Context.PROVIDER_URL, "ldap://" + _hostname + "/");
+        if(_providerUrl != null) {
+            env.put(Context.PROVIDER_URL, _providerUrl);
+        } else {
+            if (_hostname != null) {
+                String url = "ldap://" + _hostname + "/";
+                if (_port != 0) {
+                    url += ":" + _port + "/";
+                } 
+            
+                Log.warn("Using hostname and port.  Use providerUrl instead: " + url);
+                env.put(Context.PROVIDER_URL, url);
             }
         }
-
+        
         if (_authenticationMethod != null) {
             env.put(Context.SECURITY_AUTHENTICATION, _authenticationMethod);
         }
