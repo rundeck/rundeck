@@ -284,7 +284,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                                          final NodeSet nodeSet) throws
         WorkflowAction.WorkflowStepFailureException {
         boolean workflowsuccess=true;
-        int c=0;
+        int c=1;
         for (final IWorkflowCmdItem cmd : iWorkflowCmdItems) {
             if(!executeWFItem(item, executionService, listener, workflow, failedList,
                 resultList, c, cmd, nodeSet)) {
