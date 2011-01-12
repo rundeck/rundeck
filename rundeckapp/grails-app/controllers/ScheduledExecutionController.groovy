@@ -1275,6 +1275,8 @@ class ScheduledExecutionController  {
         if(params['_sessionwf']=='true' && session.editWF && session.editWF['_new']){
             //use session-stored workflow
             def Workflow wf = session.editWF['_new']
+            wf.keepgoing=params.workflow.keepgoing=='true'
+            wf.strategy=params.workflow.strategy
             if(!wf.commands || wf.commands.size()<1){
                 failed=true
                 scheduledExecution.errors.rejectValue('workflow','scheduledExecution.workflow.empty.message')
