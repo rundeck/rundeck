@@ -162,10 +162,16 @@ public class DefaultNodeDispatcher implements NodeDispatcher{
                     if (keepgoing) {
                         project.log("Failed execution for node: " + node.getNodename() + ": " + e.getMessage(),
                             Project.MSG_ERR);
-                    } else if (e instanceof BuildException) {
-                        throw (BuildException) e;
-                    } else {
-                        throw new CoreException("Error dispatching execution", e);
+                    } else{
+                        if (nodeNames.size() > 0 && null != failedListener) {
+                            //tell listener of failed node list
+                            failedListener.nodesFailed(nodeNames);
+                        }
+                        if (e instanceof BuildException) {
+                            throw (BuildException) e;
+                        } else {
+                            throw new CoreException("Error dispatching execution", e);
+                        }
                     }
                 }
             }
