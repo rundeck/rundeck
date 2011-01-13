@@ -1,4 +1,4 @@
 
-<g:if test="${ groupTree}">
-    <g:render template="groupTree" model="${[small:params.compact?true:false,groupTree:groupTree.subs,currentJobs:groupTree['jobs']?groupTree['jobs']:[],wasfiltered:wasfiltered?true:false,nowrunning:nowrunning,nextExecutions:nextExecutions,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,jobsjscallback:jobsjscallback]}"/>
+<g:if test="${ jobgroups}">
+    <g:render template="groupTree" model="${[small:params.compact?true:false,jobgroups:jobgroups,currentJobs:jobgroups['']?jobgroups['']:[],wasfiltered:wasfiltered?true:false,jobauthorizations:jobauthorizations,nowrunning:nowrunning,nextExecutions:nextExecutions,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,jobsjscallback:jobsjscallback]}"/>
 </g:if>
