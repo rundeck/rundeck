@@ -49,8 +49,11 @@
             <g:set var="vals" value="${['?','?','?']}"/>
             <g:if test="${it instanceof ExecReport}">
                 <g:if test="${it?.node=~/^\d+\/\d+\/\d+$/}">
-                    <g:set var="vals" value="${it.node.split('/')}"/>
+                    <g:set var="vals" value="${it.node.split('/') as List}"/>
                 </g:if>
+                <g:else>
+                    <g:set var="vals" value="${[it?.status=='succeed'?'1':'0',it?.status=='succeed'?'0':'1','1']}"/>
+                </g:else>
             </g:if>
 
 
@@ -110,27 +113,24 @@
             </td>
 
             <td >
-                <g:if test="${it instanceof ExecReport}">
-                    <g:if test="${it?.node=~/^\d+\/\d+\/\d+$/}">
-                        <g:set var="vals" value="${it.node.split('/')}"/>
-                        <g:set var="summary" value=""/>
-                        <g:if test="${vals.length>2 && vals[2]!='0'}">
-                            <g:set var="a" value="${Integer.parseInt(vals[0])}"/>
-                            <g:set var="den" value="${Integer.parseInt(vals[2])}"/>
-                            <g:set var="fai" value="${Integer.parseInt(vals[1])}"/>
-                            <g:set var="sucperc" value="${(int)Math.floor((a/den)*100)}"/>
-                            <g:set var="perc" value="${(int)Math.floor((fai/den)*100)}"/>
-                            <g:if test="${vals[0] && vals[2]}">
-                            <g:set var="sucsummary" value="${vals[0]+' of '+vals[2]}"/>
-                            <g:set var="summary" value="${vals[1]+' of '+vals[2]}"/>
-                            </g:if>
+                <g:if test="${it instanceof ExecReport && vals}">
+                    <g:set var="summary" value=""/>
+                    <g:if test="${vals.size()>2 && vals[2]!='0'}">
+                        <g:set var="a" value="${Integer.parseInt(vals[0])}"/>
+                        <g:set var="den" value="${Integer.parseInt(vals[2])}"/>
+                        <g:set var="fai" value="${Integer.parseInt(vals[1])}"/>
+                        <g:set var="sucperc" value="${(int)Math.floor((a/den)*100)}"/>
+                        <g:set var="perc" value="${(int)Math.floor((fai/den)*100)}"/>
+                        <g:if test="${vals[0] && vals[2]}">
+                        <g:set var="sucsummary" value="${vals[0]+' of '+vals[2]}"/>
+                        <g:set var="summary" value="${vals[1]+' of '+vals[2]}"/>
                         </g:if>
-                        <g:else>
-                            <g:set var="perc" value="${0}"/>
-                        </g:else>
-                        <g:if test="${perc>0}">
-                        <g:render template="/common/progressBar" model="${[completePercent:(int)perc,title:'Completed nodes',className:'nodes failure',showpercent:false,innerContent:summary]}"/>
-                        </g:if>
+                    </g:if>
+                    <g:else>
+                        <g:set var="perc" value="${0}"/>
+                    </g:else>
+                    <g:if test="${perc>0}">
+                    <g:render template="/common/progressBar" model="${[completePercent:(int)perc,title:'Completed nodes',className:'nodes failure',showpercent:false,innerContent:summary]}"/>
                     </g:if>
                 </g:if>
             </td>
