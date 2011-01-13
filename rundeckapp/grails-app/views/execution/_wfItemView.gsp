@@ -26,7 +26,13 @@
 
             <g:if test="${jobitem}">
                 <g:if test="${!noimgs}"><g:img file="icon-small-job.png" width="16px" height="16px"/></g:if>
+                <g:set var="foundjob" value="${edit?null:ScheduledExecution.findByJobNameAndGroupPath(item.jobName,item.jobGroup?item.jobGroup:null)}"/>
+                <g:if test="${foundjob}">
+                <g:link controller="scheduledExecution" action="show" id="${foundjob.id}">${item.jobGroup?item.jobGroup.encodeAsHTML()+'/':''}${item.jobName.encodeAsHTML()}</g:link>
+                </g:if>
+                <g:else>
                 ${item.jobGroup?item.jobGroup.encodeAsHTML()+'/':''}${item.jobName.encodeAsHTML()}
+                </g:else>
                 <g:if test="${item.argString}">
                    <span class="argString"><g:truncate max="50"  showtitle="true">${item.argString.encodeAsHTML()}</g:truncate></span>
                 </g:if>
