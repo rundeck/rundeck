@@ -18,8 +18,11 @@
     <g:if test="${page==0 && (page+1*max<total)}">
         <div id="nodesPaging">
             %{--${nodes.size()}/${allcount} (page ${page} in ${max})--}%
-            <span class="action button" onclick="_loadNextNodesPageTable(${max},${total},'nodesTable','nodesPaging');" title="Load next ${max} nodes...">Next ${max}&hellip;</span>
-            <span class="action button" onclick="_loadNextNodesPageTable(${max},-1,'nodesTable','nodesPaging');" title="Load all remaining nodes...">Load all <span id="moreCount">${total - (page+1*max)}</span>&hellip;</span>
+            <g:set var="remainCount" value="${total - (page+1*max)}"/>
+            <g:if test="${remainCount>max}">
+            <span id="nextPageButton" class="action button" onclick="_loadNextNodesPageTable(${max},${total},'nodesTable','nodesPaging');" title="Load next ${max} nodes...">Next ${max}&hellip;</span>
+            </g:if>
+            <span class="action button" onclick="_loadNextNodesPageTable(${max},-1,'nodesTable','nodesPaging');" title="Load all remaining nodes...">Load all <span id="moreCount">${remainCount}</span>&hellip;</span>
         </div>
     </g:if>
 

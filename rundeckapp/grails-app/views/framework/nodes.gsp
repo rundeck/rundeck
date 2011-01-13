@@ -288,6 +288,9 @@
             }else{
                 //update moreCount
                 $('moreCount').innerHTML=total-loadCount;
+                if(total-loadCount<max){
+                    $('nextPageButton').hide();
+                }
             }
         }
         function disableRunBar(){
