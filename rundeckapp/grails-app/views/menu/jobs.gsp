@@ -4,6 +4,8 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="jobs"/>
     <title><g:message code="main.app.name"/></title>
+    <g:javascript library="yellowfade"/>
+    <g:javascript library="pagehistory"/>
     <script type="text/javascript">
 
         function execSubmit(elem){
@@ -119,19 +121,21 @@
             }
         }
 
+
         /** START history
          *
          */
+        var histControl = new HistoryControl('histcontent',{compact:true,nofilters:true,recentFilter:'1d',projFilter:'${session.project}'});
         function loadHistory(){
-            new Ajax.Updater('histcontent',"${createLink(controller:'reports',action:'eventsFragment')}",{
-                parameters:{compact:true,nofilters:true,recentFilter:'1d',projFilter:'${session.project}'},
-                evalScripts:true,
-                onComplete: function(transport) {
-                    if (transport.request.success()) {
-                        Element.show('histcontent');
-                    }
-                },
-            });
+            histControl.loadHistory();
+        }
+        /**
+         * Handle embedded content updates
+         */
+        function _updateBoxInfo(name,data){
+            if(name=='events' && data.lastDate){
+                histControl.setHiliteSince(data.lastDate);
+            }
         }
 
         //now running

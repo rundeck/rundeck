@@ -94,7 +94,7 @@
 
                 <div class="jobsReport clear">
                     <g:if test="${reports}">
-                        <g:render template="baseReport" model="['reports':reports,options:params.compact?[tags:false,msgmaxsize:30,evtmaxsize:30]:[:]]"/>
+                        <g:render template="baseReport" model="['reports':reports,options:params.compact?[tags:false,msgmaxsize:30,evtmaxsize:30]:[:],hiliteSince:params.hiliteSince]"/>
 
                             <g:if test="${total && max && total.toInteger() > max.toInteger()}">
                                 <span class="info note">Showing ${reports.size()} of ${total}</span>
@@ -133,6 +133,6 @@ $$('#${rkey}evtsForm input').each(function(elem){
 </g:if>
 <g:set var="refreshUrl" value="${g.createLink(action:'eventsFragment',params:filterName?[filterName:filterName]:paginateParams)}"/>
 <g:set var="rssUrl" value="${g.createLink(controller:'feed',action:'index',params:filterName?[filterName:filterName]:paginateParams)}"/>
-<g:render template="/common/boxinfo" model="${[name:'events',model:[title:'History',total:total,url:refreshUrl,checkUpdatedUrl:checkUpdatedUrl,rssUrl:rssUrl]]}"/>
+<g:render template="/common/boxinfo" model="${[name:'events',model:[title:'History',total:total,url:refreshUrl,checkUpdatedUrl:checkUpdatedUrl,rssUrl:rssUrl,lastDate:lastDate]]}"/>
 
 </div>
