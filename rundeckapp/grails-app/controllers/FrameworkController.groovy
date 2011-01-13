@@ -116,8 +116,31 @@ class FrameworkController  {
         total=nodes.size()
         def tagsummary=[:]
         
+        def page=-1;
+        def max=-1;
+        def remaining=false;
+        if(params.page){
+            page=Integer.parseInt(params.page)
+            if(params.max){
+                max=Integer.parseInt(params.max)
+            }else{
+                max=20
+            }
+            if(page<0){
+                //if page is negative, load all remaining values starting at page -1*page
+                remaining=true;
+                page=page*-1;
+            }
+        }
+
+        def count=0;
         nodes.each{INodeEntry nd->
             if(null!=nd){
+                if(page>=0 && (count<(page*max) || count >=((page+1)*max) && !remaining)){
+                    count++;
+                    return
+                }
+                count++;
                 if(params.fullresults){
                     allnodes[nd.nodename]=[node:nd,projects:[project],project:project,executions:[],resources:[],islocal:nd.nodename==framework.getFrameworkNodeName()]
                 }
@@ -132,9 +155,9 @@ class FrameworkController  {
                         }
                     }
                 }
+
             }
         }
-
         if(filterErrors){
             request.filterErrors=filterErrors
         }
@@ -188,6 +211,8 @@ class FrameworkController  {
             total:total,
             allcount:allcount,
             tagsummary:tagsummary,
+            page:page,
+            max:max,
 //            totalexecs:totalexecs,
 //            jobs:runningset.jobs,
             resources:resources,
