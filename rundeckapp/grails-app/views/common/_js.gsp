@@ -8,7 +8,8 @@
         iconTinyRemoveX: '${resource(dir:"images",file:"icon-tiny-removex.png")}',
         iconSpinner: '${resource(dir:"images",file:"icon-tiny-disclosure-waiting.gif")}',
         executionCancelExecution: '${createLink(controller:"execution",action:"cancelExecution")}.json',
-        tailExecutionOutput: '${createLink(controller: "execution", action: "tailExecutionOutput")}'
+        tailExecutionOutput: '${createLink(controller: "execution", action: "tailExecutionOutput")}',
+        reportsEventsFragment:"${createLink(controller:'reports',action:'eventsFragment')}"
     } ;
     //compatibility with WB javascript:
     var AppImages = {

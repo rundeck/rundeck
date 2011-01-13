@@ -33,9 +33,13 @@
         <th><g:message code="jobquery.title.endFilter"/></th>
     </tr>
     </thead>
+    <g:set var="sincetime" value="${0}"/>
+    <g:if test="${hiliteSince}">
+        <g:set var="sincetime" value="${hiliteSince instanceof String? Long.parseLong(hiliteSince) : hiliteSince}"/>
+    </g:if>
     <g:each in="${reports}">
         <g:set var="rpt" value="${it}"/>
-        <tr class="  ${it?.status != 'succeed' ? 'fail' : ''}  ${!it.dateCompleted ? 'nowrunning' : ''} hilite expandComponentHolder sectionhead" onclick="Expander.toggle(this,'${rkey}subsect_${it.id}');">
+        <tr class="  ${it?.status != 'succeed' ? 'fail' : ''}  ${!it.dateCompleted ? 'nowrunning' : ''} ${sincetime && it.dateCompleted.time>sincetime?'newitem':''} hilite expandComponentHolder sectionhead" onclick="Expander.toggle(this,'${rkey}subsect_${it.id}');">
             <td style="width:12px;">
                 <span class="action textbtn expandComponentControl" >
                     <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure.png')}" title="Toggle extra information" alt="" width="12px" height="12px"/>
