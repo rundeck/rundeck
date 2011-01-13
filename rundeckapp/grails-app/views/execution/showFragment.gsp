@@ -42,7 +42,7 @@
                     <span id="execRerun" style="${wdgt.styleVisible(if:null!=execution.dateCompleted)}" >
                         <g:set var="jobRunAuth" value="${ auth.allowedTest(job:executionResource, action:[UserAuth.WF_CREATE,UserAuth.WF_READ])}"/>
                         <g:if test="${jobRunAuth }">
-                            <g:link controller="scheduledExecution" action="createFromExecution" params="${[executionId:execution.id]}" class="action button" title="Create a Job&hellip;" ><img src="${resource(dir:'images',file:'icon-small-add.png')}"  alt="run" width="14px" height="14px"/> Create a Job&hellip;</g:link>
+                            <g:link controller="scheduledExecution" action="createFromExecution" params="${[executionId:execution.id]}" class="action button" title="${g.message(code:'execution.action.saveAsJob', default:'Save as Job')}&hellip;" ><img src="${resource(dir:'images',file:'icon-small-add.png')}"  alt="run" width="14px" height="14px"/> <g:message code="execution.action.saveAsJob" default="Save as Job" />&hellip;</g:link>
                         </g:if>
                     </span>
                 </td>
