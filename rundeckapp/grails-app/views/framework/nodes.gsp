@@ -255,9 +255,40 @@
         <g:set var="jsdata" value="${query?.properties.findAll{it.key==~/^(node(In|Ex)clude.*|project)$/ &&it.value}}"/>
 
         var nodeFilterData_${rkey}=${jsdata.encodeAsJSON()};
-
-        function expandResultNodes(){
-            _updateMatchedNodes(nodeFilterData_${rkey},'nodelist','${query.project}',false,{view:'table',expanddetail:true});
+        var nodespage=0;
+        var pagingMax=20;
+        function expandResultNodes(page,elem){
+            if(!page){
+                page=0;
+            }
+            nodespage=page;
+            if(!elem){
+                elem='nodelist';
+            }
+            console.log("page: "+page);
+            _updateMatchedNodes(nodeFilterData_${rkey},elem,'${query.project}',false,{view:page>0?'tableContent':'table',expanddetail:true,inlinepaging:true,page:page,max:pagingMax});
+        }
+        function _loadNextNodesPageTable(max,total,tbl,elem){
+            if(!nodespage){
+                nodespage=0;
+            }
+            var next=nodespage+1;
+            if(total<0 || max*next<total){
+                //create sibling of elem
+                var div= new Element('tbody');
+                $(tbl).insert({bottom:div});
+                //total < 0 means load all remaining, so invert next page
+                expandResultNodes(next* (total<0?-1:1),Element.identify(div));
+            }
+//            console.log("next: "+(max*(next+1))+", total: "+total);
+            var loadCount = max*(next+1);
+            if(loadCount>=total || total<0){
+                //hide pager button area
+                $(elem).hide();
+            }else{
+                //update moreCount
+                $('moreCount').innerHTML=total-loadCount;
+            }
         }
         function disableRunBar(){
             $('runbox').down('input[type="text"]').disable();
@@ -736,12 +767,10 @@
                 <div class="presentation clear matchednodes " id="nodelist" >
                     <span class="button action receiver" onclick="expandResultNodes();">Show ${total} Node${1 != total ? 's' : ''}...</span>
                     %{--<g:render template="nodes" model="${[nodes:allnodes,totalexecs:totalexecs,jobs:jobs,params:params,expanddetail:true]}"/>--}%
-                    <g:if test="${total<=30}">
-                        <g:javascript>
+                    <g:javascript>
 
-                            fireWhenReady('nodelist',expandResultNodes);
-                        </g:javascript>
-                    </g:if>
+                        fireWhenReady('nodelist',expandResultNodes);
+                    </g:javascript>
 
                 </div>
 
