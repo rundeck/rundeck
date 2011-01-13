@@ -1,6 +1,6 @@
 name: rundeck
-version: 1.0
-release: 1%{?_buildnumber:.%{_buildnumber}}%{?_alphatag:.%{_alphatag}}
+version: %{_version}
+release: %{_release}%{?_buildnumber:.%{_buildnumber}}%{?_alphatag:.%{_alphatag}}
 license: APL
 summary: It Slices, it Dices, it Takes Out Your Garbage
 group: System
@@ -14,6 +14,8 @@ RunDeck, is no ordinary wooden deck. You can build a bon fire on this deck.
 Rundeck provides a single console for dispatching commands across many resources.
 
 %changelog
+* Thu Jan 13 2011 Greg Schueler <greg@dtosolutions.com> 1.1-0
+	- Soft-coded version numbers
 * Wed Dec 15 2010 Noah Campbell <noahcampbell@gmail.com> 1.0-1
 	- Run the service as the rundeck user.
 
@@ -80,7 +82,7 @@ fi
 /var/lib/rundeck/bootstrap/jetty-naming-6.1.21.jar
 /var/lib/rundeck/bootstrap/jetty-plus-6.1.21.jar
 /var/lib/rundeck/bootstrap/jetty-util-6.1.21.jar
-/var/lib/rundeck/bootstrap/rundeck-server-1.0.0.jar
+/var/lib/rundeck/bootstrap/rundeck-server-%{version}.jar
 /var/lib/rundeck/bootstrap/servlet-api-2.5-20081211.jar
 
 # CLI Lib Support
@@ -99,7 +101,7 @@ fi
 /var/lib/rundeck/cli/jaxen-1.1.jar
 /var/lib/rundeck/cli/jsch-0.1.42.jar
 /var/lib/rundeck/cli/log4j-1.2.15.jar
-/var/lib/rundeck/cli/rundeck-core-1.0.0.jar
+/var/lib/rundeck/cli/rundeck-core-%{version}.jar
 /var/lib/rundeck/cli/xerces-2.6.0.jar
 /var/lib/rundeck/cli/xml-apis-2.6.0.jar
 

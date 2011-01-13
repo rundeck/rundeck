@@ -1,7 +1,7 @@
 SHELL=/bin/bash
 
-VERSION=1.0.0
-RELEASE=0
+VERSION=$(shell grep version.number= ${PWD}/version.properties | cut -d= -f 2)
+RELEASE=$(shell grep version.release.number= ${PWD}/version.properties | cut -d= -f 2)
 
 GRAILSVERS=1.2.0
 JETTYVERS=6.1.21
@@ -26,7 +26,7 @@ rundeck: $(war) $(launcher)
 	@echo $(VERSION)-$(RELEASE)
 
 rpm: docs $(war)
-	cd packaging; $(MAKE) clean rpm
+	cd packaging; $(MAKE) VERSION=$(VERSION) RELEASE=$(RELEASE) clean rpm
 
 makedocs:
 	$(MAKE) -C docs
