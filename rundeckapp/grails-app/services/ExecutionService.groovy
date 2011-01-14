@@ -486,6 +486,7 @@ class ExecutionService implements ApplicationContextAware, Executor{
                 jobcontext.name=scheduledExecution.jobName
                 jobcontext.group=scheduledExecution.groupPath
             }
+            jobcontext.username=execution.user
             jobcontext.project=execution.project
 
             ExecutionItem item = createExecutionItemForExecutionContext(execution, framework, execution.user,jobcontext)
@@ -1281,6 +1282,7 @@ class ExecutionService implements ApplicationContextAware, Executor{
             jobcontext.name=se.jobName
             jobcontext.group=se.groupPath
             jobcontext.project=se.project
+            jobcontext.username=jitem.getUser()
             def ExecutionItem newExecItem =createExecutionItemForExecutionContext(se,framework,jitem.getUser(),jobcontext,[args:newargs])
 
             return service.executeItem(newExecItem)
