@@ -25,7 +25,9 @@
 var node_filter_map =${NODE_FILTER_MAP.encodeAsJSON()};
 var node_filter_keys =${NODE_FILTERS_ALL.encodeAsJSON()};
 var curSEID =${editSchedExecId?editSchedExecId:"null"};
-
+function getCurSEID(){
+    return curSEID;
+}
 var applinks={
     frameworkTestScriptAuth:'${createLink(controller:"framework",action:"testScriptAuth")}',
     frameworkNodesFragment:"${createLink(controller:'framework',action:'nodesFragment')}",
@@ -48,7 +50,7 @@ var applinks={
     editOptsRemove:'${createLink(controller:"editOpts",action:"remove")}',
     editOptsUndo:'${createLink(controller:"editOpts",action:"undo")}',
     editOptsRedo:'${createLink(controller:"editOpts",action:"redo")}',
-    editOptsRevert:'${createLink(controller:"editOpts",action:"revert")}',
+    editOptsRevert:'${createLink(controller:"editOpts",action:"revert")}'
 };
 
 //]>
