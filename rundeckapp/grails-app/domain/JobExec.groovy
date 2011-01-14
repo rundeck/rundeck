@@ -40,7 +40,7 @@ public class JobExec extends CommandExec implements IWorkflowJobItem{
     }
 
     public String summarize() {
-        return "job: ${jobGroup}/${jobName}${argString?' -- '+argString:''}"
+        return "job: ${this.getJobIdentifier()}${argString?' -- '+argString:''}"
     }
 
 
