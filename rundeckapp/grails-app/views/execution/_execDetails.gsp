@@ -110,9 +110,9 @@
             <td id="matchednodes_${rkey}" class="matchednodes embed">
                 <g:set var="jsdata" value="${execdata.properties.findAll{it.key==~/^node(In|Ex)clude.*$/ &&it.value}}"/>
                 <g:javascript>
-                    var nodeFilterData_${rkey}=${jsdata.encodeAsJSON()};
+                    _g_nodeFilterData['${rkey}']=${jsdata.encodeAsJSON()};
                 </g:javascript>
-                <span class="action textbtn depress2 receiver" title="Display matching nodes" onclick="_updateMatchedNodes(nodeFilterData_${rkey},'matchednodes_${rkey}','${execdata?.project}')">Show Matches</span>
+                <span class="action textbtn depress2 receiver" title="Display matching nodes" onclick="_updateMatchedNodes(_g_nodeFilterData['${rkey}'],'matchednodes_${rkey}','${execdata?.project}');">Show Matches</span>
 
             </td>
 

@@ -35,7 +35,7 @@
                     onSuccess: function(transport) {
                         $(elem).show();
 
-                    },
+                    }
                 }
             );
         }

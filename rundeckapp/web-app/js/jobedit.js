@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-
 function showError(message) {
     $("editerror").innerHTML += message;
     $("editerror").show();
 }
 function showRowSelected(elem, tbl, classname) {
+    var i;
     var elems = document.getElementsByClassName(classname, tbl);
-    for (var i = 0 ; i < elems.length ; i++) {
+    for (i = 0 ; i < elems.length ; i++) {
         var e = elems[i];
         $(e).removeClassName('selected');
     }
@@ -35,6 +35,13 @@ function _editFormSelectProject(value){
 
 }
 
+function prepJobType(data) {
+    if (data.authorized) {
+        $('scriptAuthWarn').hide();
+    } else {
+        $('scriptAuthWarn').show();
+    }
+}
 function testScriptAuth(project) {
     if (!project) {
         selFrameworkProject = '';
@@ -47,7 +54,7 @@ function testScriptAuth(project) {
         onSuccess: function(transport) {
             var data = transport.responseText;
             var orig = data;
-            if (typeof(data) == "string") {
+            if (typeof(data) === "string") {
                 eval("data=" + data);
                 prepJobType(data);
             }
@@ -57,56 +64,18 @@ function testScriptAuth(project) {
         }
     });
 }
-function prepJobType(data) {
-    if (data.authorized) {
-        $('scriptAuthWarn').hide();
-    } else {
-        $('scriptAuthWarn').show();
-    }
-}
-function addFilter(name, isinclude, label) {
-    var prefix = (isinclude ? 'Include' : 'Exclude');
-    if ($('nodeFilter' + prefix + name)) {
-        $('nodeFilter' + prefix + name).show();
-        if ($('filterAdd' + prefix + name)) {
-            $('filterAdd' + prefix + name).hide();
-        }
-        return;
-    }
-}
-
-function setFilter(name, isinclude, value) {
-    var prefix = (isinclude ? 'Include' : 'Exclude');
-    if ($('schedJobNode' + prefix + name)) {
-        $('schedJobNode' + prefix + name).setValue(value);
-        _matchNodes();
-    }
-}
-function removeFilter(name, isinclude) {
-    var prefix = (isinclude ? 'Include' : 'Exclude');
-    if ($('nodeFilter' + prefix + name)) {
-        $('nodeFilter' + prefix + name).hide();
-        if ($('schedJobNode' + prefix + name)) {
-            $('schedJobNode' + prefix + name).setValue('');
-            if ($('filterAdd' + prefix + name)) {
-                $('filterAdd' + prefix + name).show();
-            }
-            _matchNodes();
-            return;
-        }
-    }
-}
 
 /** Nodeset matching */
 var mnodetimer = null;
 function _formUpdateMatchedNodes() {
+    var i;
     var project = $('schedEditFrameworkProject').value;
     if (!project) {
         $('mnodeswait').hide();
         return;
     }
     var params = {project:project,view:'embed',declarenone:true,defaultLocalNode:true,fullresults:true,formInput:true};
-    for (var i in node_filter_keys) {
+    for (i in node_filter_keys) {
         var key = node_filter_keys[i];
         if ($('schedJobNodeInclude' + key) && $F('schedJobNodeInclude' + key)) {
             params['nodeInclude' + key] = $F('schedJobNodeInclude' + key);
@@ -116,9 +85,9 @@ function _formUpdateMatchedNodes() {
         }
     }
     if ($('nodeExcludePrecedenceTrue').checked) {
-        params['nodeExcludePrecedence'] = "true";
+        params.nodeExcludePrecedence = "true";
     } else {
-        params['nodeExcludePrecedence'] = "false";
+        params.nodeExcludePrecedence = "false";
     }
     if ($('mnodeswait')) {
         $('mnodeswait').show();
@@ -149,14 +118,45 @@ function _matchNodesKeyPress(e) {
 
 /** end Nodeset matching */
 
+function addFilter(name, isinclude, label) {
+    var prefix = (isinclude ? 'Include' : 'Exclude');
+    if ($('nodeFilter' + prefix + name)) {
+        $('nodeFilter' + prefix + name).show();
+        if ($('filterAdd' + prefix + name)) {
+            $('filterAdd' + prefix + name).hide();
+        }
+        return;
+    }
+}
+
+function setFilter(name, isinclude, value) {
+    var prefix = (isinclude ? 'Include' : 'Exclude');
+    if ($('schedJobNode' + prefix + name)) {
+        $('schedJobNode' + prefix + name).setValue(value);
+        _matchNodes();
+    }
+}
+function removeFilter(name, isinclude) {
+    var prefix = (isinclude ? 'Include' : 'Exclude');
+    if ($('nodeFilter' + prefix + name)) {
+        $('nodeFilter' + prefix + name).hide();
+        if ($('schedJobNode' + prefix + name)) {
+            $('schedJobNode' + prefix + name).setValue('');
+            if ($('filterAdd' + prefix + name)) {
+                $('filterAdd' + prefix + name).show();
+            }
+            _matchNodes();
+        }
+    }
+}
 
 /** begin wf edit code */
 
 
 function _wfiedit(num) {
     var params = {num:num};
-    if (curSEID) {
-        params['scheduledExecutionId'] = curSEID;
+    if (getCurSEID()) {
+        params.scheduledExecutionId = getCurSEID();
     }
     new Ajax.Updater($('wfli_' + num),
         applinks.workflowEdit, {
@@ -169,7 +169,7 @@ function _wfiedit(num) {
             if (transport.request.success()) {
 
                 $('wfli_' + num).select('input').each(function(elem) {
-                    if (elem.type == 'text') {
+                    if (elem.type === 'text') {
                         elem.observe('keypress', noenter);
                     }
                 });
@@ -180,8 +180,8 @@ function _wfiedit(num) {
 
 function _wfiview(num) {
     var params = {num:num,edit:true};
-    if (curSEID) {
-        params['scheduledExecutionId'] = curSEID;
+    if (getCurSEID()) {
+        params['scheduledExecutionId'] = getCurSEID();
     }
     new Ajax.Updater($('wfli_' + num),
         applinks.workflowRender, {
@@ -194,8 +194,8 @@ function _wfiview(num) {
 }
 function _wfisave(num, formelem) {
     var params = {num:num};
-    if (curSEID) {
-        params['scheduledExecutionId'] = curSEID;
+    if (getCurSEID()) {
+        params['scheduledExecutionId'] = getCurSEID();
     }
     new Ajax.Updater($('wfli_' + num),
         applinks.workflowSave, {
@@ -213,8 +213,8 @@ function _wfisave(num, formelem) {
 var newitemli;
 function _wfiaddnew(type) {
     var params = {newitemtype:type};
-    if (curSEID) {
-        params['scheduledExecutionId'] = curSEID;
+    if (getCurSEID()) {
+        params.scheduledExecutionId = getCurSEID();
     }
     $('wfnewitem').innerHTML = '';
     $('wfnewtypes').hide();
@@ -222,13 +222,13 @@ function _wfiaddnew(type) {
     var olist = $('workflowContent').down('ol');
     var litems = $$('#workflowContent ol li');
     var num = litems.length;
-    newitemli = document.createElement('li');
+    newitemli = new Element('li');
     if (num % 2 == 1) {
         newitemli.addClassName('alternate');
     }
     newitemli.setAttribute('id', 'wfli_' + num);
     newitemli.setAttribute('wfitemNum', num);
-    var createElement = document.createElement('div');
+    var createElement = new Element('div');
     createElement.setAttribute('id','wfivis_' + num);
     newitemli.appendChild(createElement);
     olist.appendChild(newitemli);
@@ -295,8 +295,8 @@ function _showWFItemControls() {
 
 function _doMoveItem(from, to) {
     var params = {fromnum:from,tonum:to,edit:true};
-    if (curSEID) {
-        params['scheduledExecutionId'] = curSEID;
+    if (getCurSEID()) {
+        params['scheduledExecutionId'] = getCurSEID();
     }
 
     new Ajax.Updater($('workflowContent').down('ol'),
@@ -314,8 +314,8 @@ function _doMoveItem(from, to) {
 }
 function _doRemoveItem(num) {
     var params = {delnum:num,edit:true};
-    if (curSEID) {
-        params['scheduledExecutionId'] = curSEID;
+    if (getCurSEID()) {
+        params['scheduledExecutionId'] = getCurSEID();
     }
     Effect.Fade($('wfivis_' + num), {duration:0.2,afterFinish:
         function(f) {
@@ -336,8 +336,8 @@ function _doRemoveItem(num) {
 }
 function _doUndoWFAction() {
     var params = {edit:true};
-    if (curSEID) {
-        params['scheduledExecutionId'] = curSEID;
+    if (getCurSEID()) {
+        params['scheduledExecutionId'] = getCurSEID();
     }
 
     new Ajax.Updater($('workflowContent').down('ol'),
@@ -355,8 +355,8 @@ function _doUndoWFAction() {
 }
 function _doRedoWFAction() {
     var params = {edit:true};
-    if (curSEID) {
-        params['scheduledExecutionId'] = curSEID;
+    if (getCurSEID()) {
+        params['scheduledExecutionId'] = getCurSEID();
     }
 
     new Ajax.Updater($('workflowContent').down('ol'),
@@ -374,8 +374,8 @@ function _doRedoWFAction() {
 }
 function _doResetWFAction() {
     var params = {edit:true};
-    if (curSEID) {
-        params['scheduledExecutionId'] = curSEID;
+    if (getCurSEID()) {
+        params['scheduledExecutionId'] = getCurSEID();
     }
 
     new Ajax.Updater($('workflowContent').down('ol'),
@@ -393,8 +393,8 @@ function _doResetWFAction() {
 }
 function _updateWFUndoRedo() {
     var params = {};
-    if (curSEID) {
-        params['scheduledExecutionId'] = curSEID;
+    if (getCurSEID()) {
+        params['scheduledExecutionId'] = getCurSEID();
     }
     new Ajax.Updater($('wfundoredo'), applinks.workflowRenderUndo, {parameters:params});
 }
@@ -507,8 +507,8 @@ function _hideOptControls() {
 }
 function _updateOptsUndoRedo() {
     var params = {};
-    if (curSEID) {
-        params['scheduledExecutionId'] = curSEID;
+    if (getCurSEID()) {
+        params['scheduledExecutionId'] = getCurSEID();
     }
     new Ajax.Updater($('optundoredo'), applinks.editOptsRenderUndo, {parameters:params});
 }
@@ -528,8 +528,8 @@ function _configureInputRestrictions(target) {
 
 function _optedit(name, elem) {
     var params = {name:name};
-    if (curSEID) {
-        params['scheduledExecutionId'] = curSEID;
+    if (getCurSEID()) {
+        params['scheduledExecutionId'] = getCurSEID();
     }
     $('optsload').loading();
     new Ajax.Updater(elem,
@@ -552,8 +552,8 @@ function _optedit(name, elem) {
 
 function _optview(name, target) {
     var params = {name:name,edit:true};
-    if (curSEID) {
-        params['scheduledExecutionId'] = curSEID;
+    if (getCurSEID()) {
+        params['scheduledExecutionId'] = getCurSEID();
     }
     new Ajax.Updater(target,
         applinks.editOptsRender, {
@@ -594,19 +594,19 @@ function _optaddnewIfNone() {
 }
 function _optaddnew() {
     var params = {newoption:true};
-    if (curSEID) {
-        params['scheduledExecutionId'] = curSEID;
+    if (getCurSEID()) {
+        params['scheduledExecutionId'] = getCurSEID();
     }
     _hideOptControls();
     var olist = $('optionsContent').down('ul');
     var litems = $$('#optionsContent ul li');
     var num = litems.length;
-    newoptli = document.createElement('li');
+    newoptli = new Element('li');
     if (num % 2 == 1) {
         newoptli.addClassName('alternate');
     }
     newoptli.addClassName('optEntry');
-    var createElement = document.createElement('div');
+    var createElement = new Element('div');
     createElement.setAttribute('id','optvis_' + num);
     newoptli.appendChild(createElement);
     olist.appendChild(newoptli);
@@ -634,8 +634,8 @@ function _optcancelnew() {
 
 function _reloadOpts() {
     var params = {newoption:true,edit:true};
-    if (curSEID) {
-        params['scheduledExecutionId'] = curSEID;
+    if (getCurSEID()) {
+        params['scheduledExecutionId'] = getCurSEID();
     }
     var optslist = $('optionsContent').down('ul.options');
     $('optsload').loading();
@@ -654,8 +654,8 @@ function _reloadOpts() {
 
 function _summarizeOpts() {
     var params = {newoption:true,edit:true};
-    if (curSEID) {
-        params['scheduledExecutionId'] = curSEID;
+    if (getCurSEID()) {
+        params['scheduledExecutionId'] = getCurSEID();
     }
     var optssummary = $('optssummary');
     $('optsload').loading();
@@ -694,8 +694,8 @@ function _optsavenew(formelem) {
 
 function _doRemoveOption(name, elem) {
     var params = {name:name,edit:true};
-    if (curSEID) {
-        params['scheduledExecutionId'] = curSEID;
+    if (getCurSEID()) {
+        params['scheduledExecutionId'] = getCurSEID();
     }
     $('optsload').loading();
     Effect.Fade($(elem), {duration:0.2,afterFinish:
@@ -716,8 +716,8 @@ function _doRemoveOption(name, elem) {
 
 function _doUndoOptsAction() {
     var params = {edit:true};
-    if (curSEID) {
-        params['scheduledExecutionId'] = curSEID;
+    if (getCurSEID()) {
+        params['scheduledExecutionId'] = getCurSEID();
     }
 
     new Ajax.Updater($('optionsContent').down('ul'),
@@ -733,8 +733,8 @@ function _doUndoOptsAction() {
 }
 function _doRedoOptsAction() {
     var params = {edit:true};
-    if (curSEID) {
-        params['scheduledExecutionId'] = curSEID;
+    if (getCurSEID()) {
+        params['scheduledExecutionId'] = getCurSEID();
     }
 
     new Ajax.Updater($('optionsContent').down('ul'),
@@ -750,8 +750,8 @@ function _doRedoOptsAction() {
 }
 function _doRevertOptsAction() {
     var params = {edit:true};
-    if (curSEID) {
-        params['scheduledExecutionId'] = curSEID;
+    if (getCurSEID()) {
+        params['scheduledExecutionId'] = getCurSEID();
     }
 
     new Ajax.Updater($('optionsContent').down('ul'),

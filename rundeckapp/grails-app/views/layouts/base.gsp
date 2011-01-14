@@ -6,14 +6,14 @@
     <title>
         <g:layoutTitle default="${g.message(code:'main.app.name')}"/>
     </title>
-
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" >
     <link rel="SHORTCUT ICON" href="${resource(dir:'images',file:'app-logo-small.png')}"/>
     <link rel="favicon" href="${resource(dir:'images',file:'app-logo-small.png')}"/>
     <link rel="icon" href="${resource(dir:'images',file:'app-logo-small.png')}" type="image/x-icon" />
     <link rel="shortcut icon" href="${resource(dir:'images',file:'app-logo-small.png')}" type="image/x-icon" />
     <link rel="stylesheet" href="${resource(dir:'css',file:'main.css')}"/>
     <link rel="stylesheet" href="${resource(dir:'css',file:'menus.css')}"/>
-    <g:javascript library="prototype-1.6.1"/>
+    <g:javascript library="prototype-1.7.0.0"/>
     <g:render template="/common/js"/>
     <g:render template="/common/css"/>
     <!--[if IE 7]>
