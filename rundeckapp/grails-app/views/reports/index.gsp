@@ -33,7 +33,7 @@
         var eventsparams=${eventsparams.encodeAsJSON()};
         var pageparams=${pageparams.encodeAsJSON()};
         var links = {
-            events:'${createLink(controller:"reports",action:"eventsFragment")}',
+            events:'${createLink(controller:"reports",action:"eventsFragment")}'
         };
         var boxctl ;
         function _pageInit() {

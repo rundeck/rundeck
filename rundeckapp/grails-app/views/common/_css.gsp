@@ -100,28 +100,7 @@
     th.sorted.desc a::after{
         content: " " url(<g:resource dir='images' file='icon-mini-down-arrow1.png'/>);
     }
-    /* IE specific */
-    img {
-       behavior: url(<g:resource dir='css' file='pngbehavior.htc'/>);
-    }
-    input{
-       behavior: url(<g:resource dir='css' file='pngbehavior.htc'/>);
-    }
-
-    /* compbutton */
-    .compbutton{
-        %{--background: #eee url(<g:resource dir='images' file='bggrad1.png'/>) repeat-x 0px 0px;--}%
-    }
-    .compbutton.select{
-        %{--background: #eee url(<g:resource dir='images' file='bggrad1.png'/>) repeat-x 0px -30px;--}%
-    }
-    .compbutton:hover{
-        %{--background: #eee url(<g:resource dir='images' file='bggrad1.png'/>) repeat-x 0px -32px;--}%
-    }
-    span.compbutton:hover{
-        %{--background: #eee url(<g:resource dir='images' file='bggrad1.png'/>) repeat-x 0px -32px;--}%
-    }
-
+    
     /* process flow view backgrounds */
 
     div.pflow.running {

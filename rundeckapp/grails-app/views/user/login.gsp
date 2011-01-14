@@ -4,6 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
     <title><g:message code="main.app.name"/> - Login</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" >
     <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
     <META HTTP-EQUIV="Expires" CONTENT="-1">
 
@@ -14,12 +15,12 @@
     <link rel="stylesheet" href="${resource(dir:'css',file:'main.css')}"/>
     <link rel="stylesheet" href="${resource(dir:'css',file:'menus.css')}"/>
 
+    <g:javascript library="prototype-1.7.0.0"/>
     <g:render template="/common/js"/>
     <g:render template="/common/css"/>
     <!--[if IE 7]>
     <link rel="stylesheet" type="text/css" href="${resource(dir:'css',file:'ie7css.css')}" />
     <![endif]-->
-    <g:javascript library="prototype-1.6.0.2"/>
     <script type="text/javascript" src="${resource(dir:'js',file:'application.js')}"></script>
     <script type="text/javascript" src="${resource(dir:'js',file:'menus.js')}"></script>
     <script language="javascript">

@@ -9,6 +9,22 @@
 
       <g:javascript library="executionControl"/>
       <g:javascript>
+        <g:if test="${scheduledExecution}">
+        /** START history
+         *
+         */
+        function loadHistory(){
+            new Ajax.Updater('histcontent',"${createLink(controller:'reports',action:'eventsFragment')}",{
+                parameters:{compact:true,nofilters:true,jobIdFilter:'${scheduledExecution.id}'},
+                evalScripts:true,
+                onComplete: function(transport) {
+                    if (transport.request.success()) {
+                        Element.show('histcontent');
+                    }
+                }
+            });
+        }
+        </g:if>
         var followControl = new FollowControl('${execution?.id}','commandPerform',{
             appLinks:appLinks,
             iconUrl: "${resource(dir: 'images', file: 'icon')}",
@@ -26,28 +42,12 @@
             killjobhtml: "",
             </auth:allowed>
             totalDuration : 0 + ${scheduledExecution?.totalTime ? scheduledExecution.totalTime : -1},
-            totalCount: 0 + ${scheduledExecution?.execCount ? scheduledExecution.execCount : -1},
+            totalCount: 0 + ${scheduledExecution?.execCount ? scheduledExecution.execCount : -1}
             <g:if test="${scheduledExecution}">
-            onComplete:loadHistory
+            , onComplete:loadHistory
             </g:if>
         });
 
-        <g:if test="${scheduledExecution}">
-        /** START history
-         *
-         */
-        function loadHistory(){
-            new Ajax.Updater('histcontent',"${createLink(controller:'reports',action:'eventsFragment')}",{
-                parameters:{compact:true,nofilters:true,jobIdFilter:'${scheduledExecution.id}'},
-                evalScripts:true,
-                onComplete: function(transport) {
-                    if (transport.request.success()) {
-                        Element.show('histcontent');
-                    }
-                },
-            });
-        }
-        </g:if>
 
         function init() {
             followControl.beginFollowingOutput('${execution?.id}');

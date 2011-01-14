@@ -15,15 +15,14 @@
         }
 
         //set box filterselections
-        function _setFilterSuccess(response,name){
-            console.log("callback");
+        var _setFilterSuccess=function(response,name){
             var data=eval("("+response.responseText+")"); // evaluate the JSON;
             if(data){
                 var bfilters=data['filterpref'];
                 //reload page
                 document.location="${createLink(controller:'framework',action:'nodes')}"+(bfilters[name]?"?filterName="+encodeURIComponent(bfilters[name]):'');
             }
-        }
+        };
 
         /*********
          *  remote editor
@@ -477,7 +476,7 @@
         function loadNowRunning(){
             runupdate=new Ajax.PeriodicalUpdater('nowrunning','${createLink(controller:"menu",action:"nowrunningFragment")}',{
                 evalScripts:true,
-                parameters:{},
+                parameters:{}
             });
         }
 

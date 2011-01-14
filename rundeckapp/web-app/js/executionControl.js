@@ -450,7 +450,7 @@ var FollowControl = Class.create({
     },
 
     createTable: function() {
-        var tbl = $(document.createElement("table"));
+        var tbl = new Element("table");
         tbl.setAttribute("border", "0");
         tbl.setAttribute("width", "100%");
         tbl.setAttribute("height", "auto");
@@ -460,17 +460,17 @@ var FollowControl = Class.create({
         tbl.setAttribute('id', 'cmdoutputtbl');
         var th = tbl.createTHead();
         var thr1 = th.insertRow(-1);
-        var thi = document.createElement("th");
+        var thi = new Element("th");
         thi.setAttribute("width", "20px");
         thr1.appendChild(thi);
-        var th1 = document.createElement("th");
+        var th1 = new Element("th");
         th1.innerHTML = "Time";
         thr1.appendChild(th1);
-        var th2 = document.createElement("th");
+        var th2 = new Element("th");
         th2.innerHTML = "Message";
         th2.setAttribute('colspan', '2');
         thr1.appendChild(th2);
-        var tbod = document.createElement("tbody");
+        var tbod = new Element("tbody");
         tbl.appendChild(tbod);
 
         $('commandPerform').appendChild(tbl);
@@ -481,6 +481,7 @@ var FollowControl = Class.create({
     appendCmdOutput: function(data) {
         var orig = data;
         var needsScroll = false;
+        try{
         if (!this.isAppendTop() && this.isAtBottom()) {
             needsScroll = true;
         }
@@ -492,6 +493,10 @@ var FollowControl = Class.create({
             }
         }
         if (typeof(data) == "string" && data == "") {
+            return;
+        }
+        }catch(e){
+            this.appendCmdOutputError("appendCmdOutput1 "+e);
             return;
         }
         try {
@@ -507,11 +512,11 @@ var FollowControl = Class.create({
                 this.runningcmd.entries = new Array();
             }
         } catch (e) {
-            this.appendCmdOutputError(e);
+            this.appendCmdOutputError("appendCmdOutput,eval "+e);
             return;
         }
         if (data.error) {
-            this.appendCmdOutputError(data.error);
+            this.appendCmdOutputError("data error "+data.error);
             this.finishedExecution();
             return;
         }
@@ -524,6 +529,7 @@ var FollowControl = Class.create({
         this.runningcmd.jobcancelled = data.jobcancelled;
         this.runningcmd.failednodes = data.failednodes;
         this.runningcmd.percent = data.percentLoaded;
+
         var entries = $A(data.entries);
         if (null != data.duration) {
             this.updateDuration(data.duration);
@@ -534,6 +540,7 @@ var FollowControl = Class.create({
                 var e = entries[i];
                 this.runningcmd.entries.push(e);
                 this.genDataRow(e, this.cmdoutputtbl);
+
             }
         }
 
@@ -604,7 +611,7 @@ var FollowControl = Class.create({
             try {
                 var lastcell = this.lastTBody.rows[this.isAppendTop() ? 0 : this.lastTBody.rows.length - 1];
                 this.lastTBody.removeChild(lastcell);
-                var temptbod = document.createElement("tbody");
+                var temptbod = new Element("tbody");
                 temptbod.setAttribute('id', 'final' + this.lastTBody.getAttribute('id'));
                 if (this.isAppendTop()) {
                     this.cmdoutputtbl.insertBefore(temptbod, this.lastTBody);
@@ -635,7 +642,7 @@ var FollowControl = Class.create({
                     }
                 }
             } catch(e) {
-                this.appendCmdOutputError(e);
+                this.appendCmdOutputError("finishDataOutput"+e);
             }
         }
         try {
@@ -646,7 +653,7 @@ var FollowControl = Class.create({
                 if (typeof(status) != "undefined") {
                     iconname = "-small-" + status + ".png";
                 }
-                var img = document.createElement('img');
+                var img = new Element('img');
                 img.setAttribute('alt', '');
                 //                 img.setAttribute('title',status);
                 img.setAttribute('width', '16');
@@ -657,7 +664,7 @@ var FollowControl = Class.create({
             }
 
         } catch(e) {
-            this.appendCmdOutputError(e);
+            this.appendCmdOutputError("finishDataOutput2"+e);
         }
     },
     toggleDataBody: function(ctxid) {
@@ -696,14 +703,11 @@ var FollowControl = Class.create({
                 parameters: "id=" + id + "&offset=" + offset + ((this.tailmode && this.lastlines) ? "&lastlines=" + this.lastlines : "")
                     + this.extraParams ,
                 onSuccess: function(transport) {
-                    try{
                     obj.appendCmdOutput(transport.responseText);
-                    }catch(e){
-                        obj.appendCmdOutputError(e.stack);
-                    }
+//                        obj.appendCmdOutputError("loadMoreOutputTail "+e);
                 },
                 onFailure: function() {
-                    obj.appendCmdOutputError("Error performing request: " + url);
+                    obj.appendCmdOutputError("Error performing request (loadMoreOutputTail): " + url);
                     obj.finishedExecution();
                 }
             });
@@ -753,7 +757,7 @@ var FollowControl = Class.create({
                 this.appendtop.changed = false;
             }
         } catch(e) {
-            this.appendCmdOutputError(e);
+            this.appendCmdOutputError("reverseOutputTable "+e);
         }
     },
     isAtBottom: function()
@@ -791,7 +795,7 @@ var FollowControl = Class.create({
     },
     createNewNodeTbody: function(data, tbl, ctxid) {
         //create new Table body
-        var newtbod = $(document.createElement("tbody"));
+        var newtbod = new Element("tbody");
 
         newtbod.setAttribute('id', 'ctxgroup' + ctxid);
         if (this.isAppendTop()) {
@@ -847,7 +851,7 @@ var FollowControl = Class.create({
             tr.addClassName('console');
             cell.innerHTML += " <span class='console'>[console]</span>";
         }
-        var countspan = document.createElement('span');
+        var countspan = new Element('span');
         countspan.setAttribute('id', 'ctxCount' + ctxid);
         countspan.setAttribute('count', '0');
         countspan.addClassName('ctxcounter');
@@ -863,7 +867,7 @@ var FollowControl = Class.create({
         };
 
         //create new tablebody for data rows
-        var datatbod = $(document.createElement("tbody"));
+        var datatbod = new Element("tbody");
         datatbod.setAttribute('id', 'databody' + ctxid);
         tbl.appendChild(datatbod);
 
@@ -879,7 +883,7 @@ var FollowControl = Class.create({
         try {
             var lastcell = this.lastTBody.rows[this.isAppendTop() ? 0 : this.lastTBody.rows.length - 1];
             this.lastTBody.removeChild(lastcell);
-            var temptbod = document.createElement("tbody");
+            var temptbod = new Element("tbody");
             temptbod.setAttribute('id', 'final' + this.lastTBody.getAttribute('id'));
             if (this.isAppendTop()) {
                 tbl.insertBefore(temptbod, this.lastTBody);
@@ -914,7 +918,7 @@ var FollowControl = Class.create({
                 }
             }
         } catch(e) {
-            this.appendCmdOutputError(e);
+            this.appendCmdOutputError("createFinalContextTbody "+e);
         }
 
         if (null != $('ctxIcon' + (ctxid))) {
@@ -923,7 +927,7 @@ var FollowControl = Class.create({
             if (typeof(status) != "undefined") {
                 iconname = "-small-" + status + ".png";
             }
-            var img = document.createElement('img');
+            var img = new Element('img');
             img.setAttribute('alt', '');
             //                 img.setAttribute('title',status);
             img.setAttribute('width', '16');
@@ -936,7 +940,7 @@ var FollowControl = Class.create({
     },
     createNewContextTbody: function(data, tbl, ctxid) {
         //create new Table body
-        var newtbod = $(document.createElement("tbody"));
+        var newtbod = new Element("tbody");
 
         newtbod.setAttribute('id', 'ctxgroup' + ctxid);
         if (this.isAppendTop()) {
@@ -1008,7 +1012,7 @@ var FollowControl = Class.create({
         };
 
         //create new tablebody for data rows
-        var datatbod = $(document.createElement("tbody"));
+        var datatbod = new Element("tbody");
         if (this.isAppendTop()) {
             tbl.insertBefore(datatbod, newtbod);
         } else {
@@ -1073,7 +1077,7 @@ var FollowControl = Class.create({
         tdicon.addClassName('info');
         tdicon.setAttribute('style', 'vertical-align:top');
         if (data.level == 'ERROR' || data.level == 'SEVERE') {
-            var img = document.createElement('img');
+            var img = new Element('img');
             img.setAttribute('alt', data.level);
             img.setAttribute('title', data.level);
             img.setAttribute('width', '16');
@@ -1109,7 +1113,7 @@ var FollowControl = Class.create({
         this.cmdoutspinner = null;
         this.runningcmd = null;
 
-        var d2 = document.createElement("div");
+        var d2 = new Element("div");
         $(d2).addClassName("commandFlowError");
         $(d2).setAttribute("style", "display: none;");
         $(d2).setAttribute("id", "cmdoutputerror");
