@@ -1,8 +1,17 @@
 SHELL=/bin/bash
 
+ifndef VERSION
+VERSION=$(shell grep version.number= ${PWD}/../version.properties | cut -d= -f 2)
+endif
+ifndef RELEASE
+RELEASE=$(shell grep version.release.number= ${PWD}/../version.properties | cut -d= -f 2)
+endif
+
 TAG?=snapshot
 
 RPMBUILD_DEFINES = --define "_topdir ${PWD}/dist" 
+RPMBUILD_DEFINES+= --define "_version ${VERSION}"
+RPMBUILD_DEFINES+= --define "_release ${RELEASE}"
 
 ifndef BUILD_NUMBER
 ALPHATAG?=$(shell date "+%Y%m%d%H%M")$(TAG)
@@ -38,7 +47,7 @@ rpm:
 	@cp ../core/build/libs/rundeck-core-*.jar dist/SOURCES/var/lib/rundeck/cli
 	@cp ../rundeckapp/target/rundeck-server-*.jar dist/SOURCES/var/lib/rundeck/bootstrap	
 	@find ../core/src/resources/com/dtolabs/rundeck/core/cli/templates ! -regex ".*.bat$$" -and -type f | sed -e /rd-check/d -e /rd-setup/d | xargs -I Z cp Z dist/SOURCES/usr/bin
-	@unzip -oq ../rundeckapp/target/rundeck-1.0.0.war -d dist/SOURCES/var/lib/rundeck/exp/webapp/
+	@unzip -oq ../rundeckapp/target/rundeck-$(VERSION).war -d dist/SOURCES/var/lib/rundeck/exp/webapp/
 	@ln -s /var/lib/rundeck/exp/webapp/WEB-INF/classes/log4j.properties; mv log4j.properties dist/SOURCES/var/lib/rundeck/exp/webapp/WEB-INF/classes
 	rpmbuild -bb --target=noarch-linux $(RPMBUILD_DEFINES) --buildroot ${PWD}/dist/SOURCES rundeck.spec 
     
