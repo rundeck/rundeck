@@ -358,7 +358,7 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
         if (envelope.isErrorResult()) {
             final StringBuffer sb = new StringBuffer();
             final StringBuffer buffer = envelope.errorMessages();
-            if(sb.length()>0){
+            if(buffer.length()>0){
                 sb.append(buffer);
             }else{
                 sb.append("Server reported an error");

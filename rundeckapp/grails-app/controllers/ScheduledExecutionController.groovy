@@ -1270,7 +1270,7 @@ class ScheduledExecutionController  {
 
         if(!frameworkService.existsFrameworkProject(scheduledExecution.project,framework)){
             failed=true
-            scheduledExecution.errors.rejectValue('project','scheduledExecution.project.invalid.message',[scheduledExecution.project].toArray(),'Project was not found: {0}')
+            scheduledExecution.errors.rejectValue('project','scheduledExecution.project.invalid.message',[scheduledExecution.project].toArray(),'Project does not exist: {0}')
         }
         if(params['_sessionwf']=='true' && session.editWF && session.editWF['_new']){
             //use session-stored workflow

@@ -108,7 +108,11 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
      * @return
      */
     public FrameworkProject getFrameworkProject(final String name) {
-        return (FrameworkProject)getChild(name);
+        try {
+            return (FrameworkProject)getChild(name);
+        } catch (NoSuchResourceException e) {
+            throw new NoSuchResourceException("Project does not exist: " + name, this);
+        }
     }
 
     /**
