@@ -455,7 +455,6 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
             }
             result = framework.getCentralDispatcherMgr().queueDispatcherScript(this);
         } catch (CentralDispatcherException e) {
-            error("Unable to queue the execution: " + e.getMessage());
             throw new CoreException("Unable to queue the execution: " + e.getMessage(), e);
         }
         if (null != result && result.isSuccessful()) {
