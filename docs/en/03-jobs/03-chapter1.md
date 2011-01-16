@@ -11,7 +11,7 @@ Here are some issues that might arise over time:
   perhaps, represent what has become a routine procedure. 
 * Another user in your group needs a simple self-service interface to
   run a procedure across a set of nodes.
-* Routine procedures need to be encapsulated and be the basis for
+* Routine procedures need to be encapsulated and become the basis for
   other routine procedures.  
 
 Jobs provide a means to encapsulate a procedure in a logically
@@ -71,9 +71,7 @@ Click the "Filter" link to show the filter options:
 
 ![Job filter form](figures/fig0317.png)
 
-This will show the Filter fields:
-
-Enter a value in any of the filter fields:
+This will show the Filter fields. Enter a value in any of the filter fields:
 
 * Job Name: the name of the job
 * Group: the name of the job group
@@ -93,18 +91,36 @@ and change the filter fields.
 To reset the filter and go back to the full job page, click the
 "Clear" button in the Filter fields.
 
+## Viewing Job detail
+
+From a filtered job listing, a Job's detail  can be previewed by hovering 
+the mouse pointer over the Job's name. A popup view contains the Job's detail.
+Click outside the popup to close it.
+
+![Job detail popup](figures/fig0320.png)
+
+Pressing the link for the Job name will navigate to  a separate
+page where job detail and a button control bar is displayed. These
+buttons enable users to delete, copy, edit export or run the Job.
+
+![Job detail page](figures/fig0321.png)
+
+The buttons displayed on the control bar reflect the
+[authorization policy](#authorization-1) enforced for the user.
+
+The information in the Job detail view includes:
+
+* Name, description and group
+* Execution statistics like when the job was last run, it's average success rate, and duration 
+* Details including project name and workflow steps, and log level
+
+Pressing the "Show Matches" link will display the list of Nodes where the Job will run.
 
 ## Running a Job
 
-Any stored job can be started from the Job page by pressing the green
-"Run" icon in the Job control bar. If you do not see the Run icon, it
-means your login does not have "run" privileges.
+Jobs can be run from the shell or from the graphical console.
 
-![Job run button](figures/fig0319.png)
-
-Jobs can also be started from the command line using the
-<code>run</code> shell tool.
-
+From the command line, use the [run](run.html) shell tool.
 Here's an example that starts a hypothetical job named "restart"
 belonging in the "apps/web" Job group:
 
@@ -112,8 +128,22 @@ belonging in the "apps/web" Job group:
     Job execution started:
     [51] restart <http://strongbad:4440/execution/follow/51>
 
-After the Run button has been pressed the page will be directed to
-choose execution options.
+From the graphical console, any stored job can be started 
+from the Jobs page. Navigate to the desired Job
+from the filtered listing and then press the green
+"Run" icon to immediatly queue and run the Job. 
+If you do not see the Run icon, it
+means your login does not have "run" privileges.
+
+![Job run button](figures/fig0319.png)
+
+If you navigated to the Job's detail page, you press
+the "Run" button from there.
+
+![Job run button](figures/fig0319-b.png)
+
+After the Run button has been pressed, a dialog will
+open where you can choose execution options.
 
 ### Choose execution options
 
@@ -128,37 +158,30 @@ acceptable.
 If there are any such Job options, you can change them here before
 proceeding with the execution.
 
-When you are ready press "Run Job Now" page and you will be directed
-to page where you can follow the progress of the Job. You can press
-the "Cancel" button 
+When you are ready, press "Run Job Now". The job will enter
+the execution queue and you can track its execution in the 
+[Now running](#now-running) section.
 
 ### Following Running Jobs
-Once you have started running a Job, you can follow the output of the
-job in the Execution Follow page. 
 
-Depending where you are in the RunDeck console, you can track a
-running Job starting from several locations:
-
-* If you have just pressed the Run button for a Job and chose its
-  execution options and pressed "Run Job Now" you will automatically
-  be directed to this page.
+Once you have started running a Job, you can follow the Job's output
+in the Execution Follow page. 
    
-* From the Jobs page, you can click to the Job you are interested in
-  tracking and click the spinning cursor icon labeled "now".
-
-* From the History page, open the "Now Running" area adn then click
-  on the "output »" link for the running  execution.  
+On the Jobs page, look in the "Now running" section
+and click the "output >>" link in the row with the desired Job name.
   
-  
+If you pressed the "run" button from the Job's detail page, your
+browser will already have been directed to the Execution Follow page.
+ 
 ## Creating Jobs
 
-With RunDeck you can define two kinds of Jobs.
+RunDeck allows you to define two kinds of Jobs.
 
-* Temporary: A temporary Job defines a set of commands to execute and
-  a node filter configuration. 
-* Saved: Saved jobs also define a set of commands to execute and
-  dispatcher options but can be given a name and stored in a
-  group. Additionally, saved Jobs can be given an execution schedule.
+* Temporary: A *temporary Job* defines a set of commands to execute and
+   a node filter configuration. 
+* Saved: A *saved job* also defines a set of commands to execute and
+   dispatcher options but can be given a name and stored in a
+   group. Additionally, saved Jobs can be given an execution schedule.
 
 From the Jobs, page press the "New Job" button to begin creating a Job.
 
@@ -167,8 +190,8 @@ From the Jobs, page press the "New Job" button to begin creating a Job.
 ### Temporary Jobs
 
 A temporary job is a bit like an ad-hoc command except you get more
-controls about how the commands will execute plus the execution can be
-tracked within the RunDeck webapp.
+control over how the commands will execute plus the execution can be
+better tracked within the RunDeck webapp.
 
 To create a temporary job, begin by logging in to the RunDeck
 graphical console, and press the "Jobs" tab.
@@ -187,8 +210,8 @@ dispatch.
 ### Saved Jobs
 
 Running ad hoc commands and temporary jobs are a typical part of day
-to day administrative tasks. Occasionally, ad-hoc commands become
-routine procedures and if were reusable, would become valuable as they
+to day administrative work. Occasionally, ad-hoc commands become
+routine procedures and if were reusable, would become more valuable. These jobs
 could be handed off to others in the team or invoked from within other
 Jobs. RunDeck provides an interface to declare and save jobs, both
 graphically or declared with an XML file.
@@ -213,14 +236,15 @@ For the first saved Job example, create a Job that calls the info script.
      -   Press the "Create" button at the bottom of the page.
      ![Simple saved job form](figures/fig0303.png)
 1.   After the the job is created, the browser is directed to the Jobs page. The folder structure reflecting the group naming will show one Job.
-     -    Press through the folders and then to the job itself
-1.   Notice the button bar with controls for editing and running the
-job.
-     -    Press the green arrow icon to run the Job.
+     -    Navigate through the folders buttons to the new job 
+1.   Notice the green arrow button.
+     -    Press the button to run the Job.
      ![Simple saved job](figures/fig0304.png)
 
 1.   Press the "Run Job Now" button to begin execution.
-     -    Output from the script execution from the target Nodes will be displayed on the subsequent page.
+     -    The job will be queued and executed. 
+1.   Look in the "Now running" section.
+     -    Press the "output >>" link to go to the execution follow page.
      ![Simple saved job output](figures/fig0305.png)
 
 
@@ -264,6 +288,8 @@ any past execution in the list to see the full execution state.
 
 ![Job executions matches](figures/fig0310.png)
 
+From the Job detail page, one can also see previous execution history.
+
 ## Killing Jobs
 
 Jobs that are currently running can be Killed immediately.
@@ -280,9 +306,11 @@ When prompted "Really kill this job?" Click the "Yes" button.
 
 The Job will terminate with a "Killed" completion status.
 
+See also: [rd-queue](rd-queue.html).
+
 ## Deleting Jobs
 
-In the Jobs, click the red "X" icon for the Job you want to delete.
+In the Job detail page, click the red "X" icon for to delete the Job.
 
 ![Job delete button](figures/fig0311.png)
 
@@ -291,16 +319,15 @@ Click "Yes" when it says "Really delete this Job?"
 ## Updating and copying Jobs
 
 All of the data you set when creating a job can be modified. To edit a
-Job, you can click the Pencil icon in the Job list:
+Job, you can click the Pencil icon:
 
 ![Job edit button](figures/fig0312.png)
 
-Similarly, to Copy a Job definition to a new Job, choose the Copy icon
-or the Copy button.
+Similarly, to Copy a Job definition to a new Job, press the Copy button.
 
 ![Job copy button](figures/fig0313.png)
 
-## Exporting Jobs as XML
+## Exporting Job definitions
 
 Job definitions created inside the RunDeck graphical console can be
 exported to an XML file format and be used for later import. 
@@ -308,8 +335,7 @@ exported to an XML file format and be used for later import.
 Two methods exist to retrieve the XML definition one inside RunDeck's
 graphical interface and the other using the <code>rd-jobs</code> shell tool.
 
-From RunDeck's Job page navigate to the Job you wish to export. 
-Locate the icon with an XML symbol in the toolbar. It is labeled
+In the Job detail page, locate the icon with an XML symbol in the toolbar. It is labeled
 "Download XML"  in the mouse tool tip. 
 
 ![Job export button](figures/fig0314.png)
@@ -319,17 +345,17 @@ browser. Depending on your browser, it will be stored in your
 downloads directory.
 
 If you prefer the command line open a shell on the RunDeck server.
-Run the <code>rd-jobs</code> command to write it to disk. By default,
+Run the ``rd-jobs`` command to write it to disk. By default,
 rd-jobs will dump all Job definitions to one file. To limit it to just
 a single Job specify its name:
 
     rd-jobs -n "job-name" -f job.xml
 
-This will store the results in the "job.xml" file (job-v20(5)).
+This will store the results in the "job.xml" file [job-v20(5)](job-v20.html).
 
-Consult the "rd-jobs(1)" manual page for additional command usage.
+Consult the [rd-jobs(1)](rd-jobs.html) manual page for additional command usage.
 
-## Importing Jobs as XML
+## Importing Jobs definitions
 
 If you have a "job.xml" file (See above) and want to upload it via
 the GUI web interface, you can do so.

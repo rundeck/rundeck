@@ -12,6 +12,12 @@ procedures in data center or cloud environments. RunDeck provides a number
 of features that will alleviate time-consuming grunt work and make it easy for
 you to scale up your scripting efforts.
 
+RunDeck allows you to run tasks on any number of nodes from a web-based 
+or command-line interface. RunDeck also includes other features that make 
+it easy to scale up your scripting efforts including: access control, workflow 
+building, scheduling, logging, and integration with external sources for node and 
+option data.
+
 Already itching to install it? Jump ahead to
 [Installing RunDeck](#installing-rundeck).
 
@@ -42,9 +48,10 @@ RunDeck is free software and is public under the [Apache Software License].
 
 * distributed command execution via SSH
 * multi-step workflows 
-* job definition
+* job definition and on demand or scheduled runs
 * graphical console for command and job execution
-* access control policy with support for LDAP/ActiveDirectory
+* role-based access control policy with support for LDAP/ActiveDirectory
+* history and auditing logs
 * open integration to external host inventory tools
 * command line interface 
 
@@ -80,10 +87,10 @@ a central administrative control point. Internally, RunDeck stores job
 definitions and execution history in a relational database. Output
 from command and job executions is saved on disk. 
 
-RunDeck distributed command execution is performed using SSH. Either
-key-based or username/password authentication is supported. The
+RunDeck distributed command execution is performed using SSH. 
+SSH connections are made using key-based authentication.
 RunDeck server configuration includes settings to define the outbound
-user that must also be allowed by the remote hosts. Remote machines
+user allowed by the remote hosts. Remote machines
 are not required to make SSH connections back to the server.
 
 ![RunDeck architecture](figures/fig0001.png)
@@ -116,7 +123,9 @@ Two installation methods are supported:
 
 ## Feedback
 
-If you find problems with RunDeck, or if you have questions, remarks, or ideas about it, please mail to the RunDeck mailing list rundeck-discuss@groups.google.com. 
+If you find problems with RunDeck, or if you have questions, remarks, or 
+ideas about it, please send an email to the RunDeck mailing list,
+[rundeck-discuss@groups.google.com](mailto:rundeck-discuss@groups.google.com). 
 
 ## What's next?
 

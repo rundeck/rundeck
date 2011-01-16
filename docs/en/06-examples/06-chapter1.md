@@ -44,17 +44,20 @@ The administrator chooses a machine with access to the servers in
 the live environment and installs the RunDeck software there.
 
 A project called "anvils" is created to manage the application support
-activites.
+activites . 
 
 The administrator creates the project using the
-<code>rd-project</code> shell tool (though this could be done with the
-RunDeck GUI). After logging into the RunDeck server, the command is run:
+[rd-project](rd-project.html) shell tool though this could be done with the
+RunDeck GUI (see ([project setup](#project-setup)). 
+After logging into the RunDeck server, the command is run:
 
     rd-project -p anvils -a create
 
 This initialized the "anvils" project in RunDeck so it only
 contains information about the server node. Adding information about
-the nodes deployed in the live environment is the next step.
+the nodes deployed in the live environment is the next step 
+(see [resource model](#resource-model)).
+
 The environment has five nodes: anv1-anv5. Anvils is a three tier
 application and has web, application and database components installed
 across the five nodes.
@@ -66,8 +69,9 @@ as the "www" user while the app and database components run as user
 "anvils".  
 
 With this information in hand, the administrator prepares the project
-resource model using an XML file. The file listing
-below contains the node definitions for the five nodes - 
+resource model using the [resource-v10](resource-v10.html) 
+document format. The file listing
+below contains the node definitions for the five nodes -- 
 anv1, anv2, anv3, anv4, anv5:
 
 File listing: resources.xml
@@ -95,25 +99,29 @@ File listing: resources.xml
 
 Reviewing the XML content one sees the XML tag set represent
 the host information described above. A logical name for each node is defined
-with the <code>name</code> attribute (eg name="anv1"). 
+with the ``name`` attribute (eg name="anv1"). 
 The address used by SSH is set with
-<code>hostname</code> (eg hostname="anv1.acme.com") while the login
+``hostname`` (eg hostname="anv1.acme.com") while the login
 used to execute SSH commands has been specified with the
-<code>username</code> attribute (username="www" vs
-username="anvils"). The value for the <code>tags</code> attribute
+``username`` attribute (username="www" vs
+username="anvils"). The value for the ``tags`` attribute
 reflects the node function  (tags="web" vs tags="app").
 
 The administrator saves the file and places it in a path of his
 choice. To make RunDeck aware of it, the administrator modifies the
 project configuration file,
 $RDECK_BASE/projects/anvils/etc/project.properties, modifying the
-<code>project.resources.file</code> setting :
+``project.resources.file`` setting :
 
     project.resources.file = /etc/rundeck/projects/anvils/resources.xml
    
 With the resources file in place and the project configuration updated, the
 administrator has finished with the resource model preparation and can begin
 dispatching commands.
+
+List all the nodes in the anvils project by opening the Filter and
+typing ``.*`` in the *Name* field and then press "Filter". 
+You should see a listing of 6 nodes.
 
 ![Anvils resources](figures/fig0601.png)
 
@@ -122,10 +130,10 @@ dispatching commands.
 With tags that describe application role, commands can be targeted
 to specific sub sets of nodes without hard coding any
 hostnames. 
-The <code>dispatch</code> command's listing feature illustrates
+The [dispatch](dispatch.html) command's listing feature illustrates
 how tag filtering selects particular node sets in the shell:
 
-Use the <code>tags</code> keyword to list the web nodes:
+Use the ``tags`` keyword to list the web nodes:
 
     dispatch -p anvils -I tags=web
     anv1 anv2
@@ -256,7 +264,7 @@ The administrator chooses to create a top level group named
         |-- start
         `-- stop
 
-Users logging into the RunDeck graphical console, will see this
+After choosing the "anvils" project users will see this
 grouping of jobs.
 
 ![Anvils job group](figures/fig0604.png)
@@ -311,7 +319,7 @@ Value referenced as an environment variable:
 * Bash: $CT\_OPTION\_METHOD
 
 Value passed in the argument vector to the executed script or command
-via the <code>scriptargs</code> tag:
+via the ``scriptargs`` tag:
 
 * Commandline Arguments: ${option.method}
 
@@ -329,7 +337,7 @@ definitions.
 
 While each job can be defined graphically in RunDeck, each can
 succinctly be defined using an XML file comforming to the
-"job-v20(5)" document format. This XML 
+[job-v20(5)](job-v20.html) document format. This 
 document contains a set of tags corresponding to the choices seen in
 the RunDeck GUI form.
 
@@ -375,8 +383,8 @@ File listing: stop.xml
 
 
 Defines Job, /anvils/web/stop, and executes the shell script to
-Nodes tagged "web". Using the <code>scriptargs</code> tag, the shell
-script is passed a single argument, <code>${option.method}</code>,
+Nodes tagged "web". Using the ``scriptargs`` tag, the shell
+script is passed a single argument, ``${option.method}``,
 containing the value chosen in the Job run form.
 
 File listing: start.xml
@@ -415,7 +423,7 @@ File listing: start.xml
 
 Defines Job, /anvils/web/start, that also executes a shell script to
 Nodes tagged "web". The shell script is passed a single argument,
-<code>${option.method}</code>, containing the value chosen in the Job run form.
+``${option.method}``, containing the value chosen in the Job run form.
 
 
 File listing: restart.xml
@@ -459,18 +467,18 @@ File listing: restart.xml
 
 
 Defines Job, /anvils/web/Restart, that executes a sequence of Job calls,
-using the <code>jobref</code> tag.
+using the ``jobref`` tag.
 
 Saving the XML definitions files located on the RunDeck server,
-one can load them using the <code>rd-jobs</code> command.
+one can load them using the [rd-jobs](rd-jobs.html) command.
 
-Run the <code>rd-jobs load</code> command for each job definition file:
+Run the ``rd-jobs load`` command for each job definition file:
 
     rd-jobs load -f start.xml
     rd-jobs load -f stop.xml
     rd-jobs load -f restart.xml
 
-The <code>rd-jobs list</code> command queries RunDeck and prints out the list of
+The ``rd-jobs list`` command queries RunDeck and prints out the list of
 defined jobs:
 
     rd-jobs list
@@ -479,14 +487,14 @@ defined jobs:
 	- start [10] <http://strongbad:4440/scheduledExecution/show/10>
 	- stop [11] <http://strongbad:4440/scheduledExecution/show/11>
 
-Of course, the jobs can be viewed inside RunDeck's UI by going to
-the Jobs page.
+Of course, the jobs can be viewed inside the RunDeck graphical console by going to
+the Jobs page. Hovering over the "Restart" job name reveals job detail.
 
 ![Anvils restart jobs](figures/fig0607.png)
 
 You will see the composition of the "Restart" job as a workflow
 calling the jobs: stop and start. The "Restart" job passes the
-"method" option value to the lower level stop and start Jobs.
+``-method`` option value to the lower level stop and start Jobs.
 
 ## Running the job
 
@@ -503,7 +511,7 @@ with the restriction "enforced from allowed values".
 ![Restart run page](figures/fig0608.png)
 
 The jobs can also be started from the command line using the
-<code>run</code> shell tool. The job group and name are specified
+[run](run.html) shell tool. The job group and name are specified
 using the "-j" parameter. Any options the Job supports are supplied
 after the "--" (double dash) parameter.
 
@@ -519,7 +527,7 @@ Run Restart specifying the method, "kill":
 ## Job access control
 
 Access to running or modifying Jobs is managed in an access control
-policy defined using the aclpolicy XML format (aclpolicy-v10(5)). 
+policy defined using the aclpolicy document format ([aclpolicy-v10(5)](aclpolicy-v10.html)). 
 This file contains a number of policy elements that describe what user
 group is allowed to perform which actions. The
 [Authorization](#authorization) section of the Administration chapter
@@ -563,9 +571,9 @@ $ cat $RDECK_BASE/etc/user.aclpolicy
 </policies>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Restart jetty so RunDeck loads the new policy file.
+Restart RunDeck to load the new policy file (see [startup and shutdown](#startup-and-shutdown)).
 
-    jetty.sh restart
+    rundeckd restart
 
 Once the RunDeck webapp has started, login as the "user" user (the
 password is probably "user"). Just the Jobs in the "anvils" group are

@@ -1,5 +1,4 @@
-Integration with External Data Providers
-====
+# Integration with External Data Providers
 
 RunDeck can integrate with external data by configuring the use of *Providers*.  Providers are third-party services or systems that export data that RunDeck can import. Additionally, RunDeck supports an external Editor for Node data.
 
@@ -16,8 +15,7 @@ There are a few types of external integration:
 [*Option Model Provider*](#option-model-provider)
 :   Provides a dataset in JSON format, used as input option values for Jobs. Each Job Option can be configured to load the set of allowed input values from a remote service, and the RunDeck GUI will prompt the user to choose from those values when running a Job.
 
-Resource Model Provider
--------------
+## Resource Model Provider
 
 The Resource model provider is a way to transfer Node definitions from other systems, tools or services into RunDeck. The means of providing the Resource model data can be done in whichever way suits your environment best.
 
@@ -149,9 +147,13 @@ Then modify the URL used as your project.resources.url, to specify a query param
 
 More configuration is available for the [java-ec2-nodes project](https://github.com/dtolabs/java-ec2-nodes).
 
+#### Third party resource model providers
 
-Option model provider
--------
+Resource model providers can be developed by third parties to integrate RunDeck with their tools. 
+
+Check the list on our wiki: [https://github.com/dtolabs/rundeck/wiki/Resource-model-providers](https://github.com/dtolabs/rundeck/wiki/Resource-model-providers).
+
+## Option model provider
 
 The Option model provider is a mechanism to allow the Options defined for a Job to have some of the possible input values provided by a remote service or database.  
 

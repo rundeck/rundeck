@@ -26,16 +26,25 @@ directory configuration.
 #### Navigation
 
 The RunDeck page header contains global navigation control to move
-between browsing Run, History and Jobs. It also has links to
-logout and view the user's profile.
+between tabbed pages: Run,  Jobs and History. It also has links to
+logout, view your user profile and a link to this online help.
+
+![Top navigation bar](figures/fig0201.png)
 
 Run
 
 :    The Run page is used to execute ad hoc commands. It
-     displays the Node resources configured in your
-     Project resource model. Like the Jobs and History pages, a filter
-     control can be used to limit the listing to just the Node resources
+     displays filtered Node resources configured in your
+     Project resource model. A filter  control can be used to 
+     limit the listing to just the Node resources
      matching the filter criteria.
+
+Jobs
+
+:    From the Jobs page, one can list, create and run Jobs. A
+     configurable filter allows a user to limit the Job listing to those
+     Jobs matching the filtering criteria. These filter settings can be
+     saved to a Users profile. Only authorized jobs will be visible.
 
 History
 
@@ -46,13 +55,12 @@ History
      filter settings also configure an RSS link, found in the top right of
      the page.
 
-Jobs
+Project menu
 
-:    From the Jobs page, one can list, create and run Jobs. A
-     configurable filter allows a user to limit the Job listing to those
-     Jobs matching the filtering criteria. These filter settings can be
-     saved to a Users profile. Only authorized jobs will be visible.
-
+:    The top navigation bar contains a menu to select the
+     desired project. If only one project exists, the menu will
+     automatically be defaulted.
+     
 Admin
 
 :    If your login belongs to the "admin" group and therefore granted
@@ -60,17 +68,31 @@ Admin
      name. This page allows the admin to view group memberships for all
      users, as well as, edit their profile data.
 
-Project menu
+User profile
 
-:    By default information about all projects is displayed. It is
-     sometimes preferable to limit this information to just a particular
-     project. The top navigation bar contains a menu to select the
-     desired project. If only one project exists, the menu will
-     automatically be defaulted.
+:    Shows a page showing group memberships.
 
-![Top navigation bar](figures/fig0201.png)
+Logout
+
+:    Pressing this link ends the login session and will require a subsequent login.
+
+Help
+
+:    Opens a page to the online help system.
 
 
+#### Now running
+
+The "Now running" section appears at the top of the Run and Jobs pages
+and provides a view into the execution queue.
+Any currently executing ad hoc command or Job will be listed
+and include information like the name of the job, when it started,
+who ran it, and a link to the execution output.
+
+![Now running](figures/fig0215.png)
+
+Jobs that have been run before also have a progress bar approximating 
+duration.
 
 ### Shell Tools 
 
@@ -114,10 +136,15 @@ After logging into the graphical console, you will notice a Project
 menu in the top navigation bar. If no projects exist, you will be prompted to 
 create a new project.
 
-![Create project form](figures/fig0203.png)
+![Create project prompt](figures/fig0203-a.png)
 
 After entering your project name, RunDeck initializes it and returns
 you to the "Run" page.
+
+Projects can be created at any time by going back to the Project menu 
+and selecting the "Create a new project..." item.
+
+![Create project menu](figures/fig0203.png)
 
 The `rd-project` shell tool can also be used to create a
 project.
@@ -133,7 +160,10 @@ and see the new project in the project menu.
 The project setup process generates Project configuration in the server, and
 a bootstrap resource model.
 
-![New project resources](figures/fig0204.png)
+![Run page after new project](figures/fig0204.png)
+
+One node will be listed, the RunDeck server host. The server host is 
+distinguished with the word "server" in red text.
 
 ### Resource model
 
@@ -231,10 +261,10 @@ the tool's format to the one RunDeck understands.
 Of course, a rudimentary alternative is to maintain this information
 as an XML document, storing it in a source repository that is
 periodically exported to Rundeck. This method could be practical if
-your host infrastructure rarely changes.
+your host infrastructure infrequently changes.
 
-The "resource-v10(5)" manual contains reference information about the
-RunDeck resources document content and structure.
+The [resource-v10(5)](resource-v10.html) manual contains 
+reference information about the RunDeck resources document content and structure.
 
 Check the RunDeck web site for resource model providers. If you are
 interested in creating your own, see the
@@ -287,12 +317,13 @@ console or with the `dispatch` tool.
 
 #### Filtering nodes graphically  
 
-Node resources are displayed in the Run page. Setting the
-project menu in the navigation bar will list just the Nodes
-in that project's resource model.
+A project's Node resources are displayed in the Run page. Use the
+project menu in the navigation bar to change to the desired project.
+After choosing a project, the server node will be filtered by default.
 
 Nodes can be filtered using include and exclude patterns by using
-the Filter form. The form can be opened by pressing the "Filter" link.
+the Filter form. The form can be opened by pressing the "Filter" button.
+Press the triangular disclosure icon to display the form.
 
 ![Resource filter link](figures/fig0205.png)
 
@@ -308,6 +339,11 @@ listing. Pressing "Clear" resets the form.
 The Include and Exclude filters allow for filtering nodes based on the
 following keywords: Name, Tags, Hostname, OS Name, OS Family, OS
 Architecture, OS Version and Type.
+
+Regular expressions can be used for any of the keywords. The ``.*`` pattern
+will match any text.
+
+If more than 20 nodes match the filter, the UI will page the results.
   
 #### Filtering nodes in the shell
 
@@ -337,7 +373,7 @@ case an error occurs :
 
     dispatch -p examples -I tags=web -K -C 10 -- sudo apachectl restart 
 
-Consult the "rd-options(1)" manual page for the complete reference on
+Consult the [rd-options(1)](rd-options.html) manual page for the complete reference on
 available dispatcher options.
   
 ### Ad-hoc commands 
@@ -355,9 +391,24 @@ Here `dispatch` is used to run the Unix `uptime` command to
 print system status:
 
     $ dispatch -I os-family=unix -- uptime
+    Succeeded queueing Workflow execution: Workflow:(threadcount:1){ [command( exec: uptime)] }
+    Queued job ID: 7 <http://strongbad:4440/execution/follow/7>
+
+The ``uptime`` command is queued and executed. The output can be followed by
+going to the URL returned in the output (eg, http://strongbad:4440/execution/follow/7). 
+
+Sometimes it is desirable to execute the command
+directly, and not queue it [^noqueue]. Use the ``--noqueue`` option to execute
+and follow the output from the console.
+
+    $ dispatch -I os-family=unix  --noqueue -- uptime
     [ctier@centos54 dispatch][INFO]  10:34:54 up 46 min,  2 users,  load average: 0.00, 0.00, 0.00
     [alexh@strongbad dispatch][INFO] 10:34  up 2 days, 18:51, 2 users, load averages: 0.55 0.80 0.75
     [examples@ubuntu dispatch][INFO]  10:35:01 up 2 days, 18:40,  2 users,  load average: 0.00, 0.01, 0.00
+
+[^noqueue]: The "--noqueue" flag is useful for testing and debugging execution
+but undermines visibility since execution is not managed through the central execution
+queue.
 
 Notice, the `dispatch` command prepends the message output
 with a header that helps understand from where the output originates. The header
@@ -367,7 +418,7 @@ occurred.
 Execute the Unix `whomi` command to see what user ID is
 used by that Node to run dispatched commands:
 
-    $ dispatch -I os-family=unix -- whoami
+    $ dispatch -I os-family=unix --noqueue -- whoami
     [ctier@centos54 dispatch][INFO] ctier
     [alexh@strongbad dispatch][INFO] alexh
     [examples@ubuntu dispatch][INFO] examples
@@ -376,7 +427,7 @@ You can see that the resource model defines each Node to use a
 different login to execute `dispatch` commands.  That
 feature can be handy when Nodes serve different roles and therefore,
 use different logins to manage processes. See the
-`username` attribute in "resource-v10(5)" manual page.
+`username` attribute in [resource-v10(5)](resource-v10.html) manual page.
 
 The `dispatch` command can also execute shell
 scripts. Here's a trivial script that generates a bit of system info:
@@ -405,41 +456,46 @@ But before running any commands, you need to select the project
 containing the Nodes you wish to dispatch. Use the project
 menu to select the desired project name. After the project has been
 selected you will see a long horizontal textfield labeled
-"Command". This is the RunDeck command prompt tool bar.
+"Command". This is the RunDeck ad hoc command prompt.
 
-![Resource command prompt](figures/fig0207.png)
+![Ad hoc command prompt](figures/fig0207.png)
 
 To use the command prompt, type the desired ad-hoc command string into
 the textfield and press the "Run" button. The command will be
 dispatched to all the Node resources currently listed below the
-command prompt tool bar.
+command prompt tool bar. The command prompt also becomes disabled until
+the execution completes. Output from the command execution will be shown
+below (see [output](#following-execution-output)).
 
-If the project selection menu was just chosen, then all Node resources
-in that project resource model will be listed. You will most likely
-want to limit the execution of your ad-hoc command to a subset of
-these.
+![Ad hoc execution output](figures/fig0208.png)
 
-Use the filter control to refine the list of Nodes to target for your
-ad-hoc command. Press the "Filter" link to open the filter control
-form. Inside the filter form you will see an area to define an include
-filter expression and a link to "Extended Filters..." where an exclusion
-expression can also be defined. Many simple cases can use either a
-regex pattern on Node name or a tag expression. Type in the desired
-filter expression and press the "Filter" button to refine the Node
-listing and redisplay the command prompt tool bar. 
+You will also notice the ad hoc execution listed in the "Now running" 
+part of the page, located above the command prompt.
+All running executions are listed there. Each running execution
+is listed, showing the start time, the user running it, and a link
+to follow execution output on a separate page.
 
-Once you are satisifed with the Node listing, input the ad-hoc command
-string, then press the "Run" button to begin execution. The browser
-will be directed to a page where execution output can be followed. 
+![Now running ad hoc command](figures/fig0207-b.png)
+
+At the bottom of the page, you will see a "History" section containing
+all executions in the selected project for the last 24 hours. After the execution
+completes, a new event will be added to the history. A yellow highlight
+indicates when the command leaves the Now running section and enters
+the history table.
+
+![Run history](figures/fig0207-c.png)
+
+History is organized in summary form using a table layout. The "Summary" column
+shows the command or script executed. The "Node Failure Count" contains
+the number of nodes where an error in execution occurred. If no errors occurred,
+"ok" will be displayed. The "User" and "Time" columns show the user that executed
+the command and when.
 
 ##### Following execution output
 
-Command execution is displayed on a spearate page. 
+Ad hoc command execution output is displayed below the command prompt.
 
-![Execution follow page](figures/fig0208.png)
-
-This page provides
-several views to read the output using different formats.
+This page section provides several views to read the output using different formats.
 
 Tail Output
 
@@ -448,6 +504,7 @@ Tail Output
     By default, only the last 20 lines of output is displayed but this
     can be expanded or reduced by pressing the "-" or "+" buttons. You
     can also type in an exact number into the textfield.
+    ![Ad hoc execution output](figures/fig0208.png)
 
 Annotated
 
@@ -458,12 +515,19 @@ Annotated
     completely collapsed to hide the textual detail.    
     ![Annotated output](figures/fig0209.png)
 
-Node Output
+Compact
 
 :   Output messages are sorted into Node specific sections and are not
     interlaced. By default, the messages are collapsed but can be
     revealed by pressing the disclosure icon to the right. 
     ![Node output](figures/fig0210.png)
+
+###### Separate exeuction follow page
+
+Sometimes it is useful to have a page where just the execution output
+is displayed separately. One purpose is to share a link to others 
+interested in following the output messages. Click the "output >>"
+link in the "Now running" section to go to the execution follow page.
 
 Also, notice the URL in the location bar of your browser. This URL can
 be shared to others interested in the progress of execution. The URL
@@ -479,15 +543,13 @@ After execution completes, the command will have a status:
   an error is displayed. The page will also contain a link "Retry
   Failed Nodes..." in case you would like to retry the command.
 
-
 You can download the entire output as a text file from this
 page. Press the "Download" link to retrieve the file to your desk top.
-
 
 ### Controlling command execution
 
 Parallel execution is managed using thread count via "-C" option. The
-"-C" option specifies to the number of execution threads. Here's an
+"-C" option specifies the number of execution threads. Here's an
 example that runs the uptime command across the Linux hosts with two
 threads:
 
@@ -509,7 +571,7 @@ exit with code 1.
 Commands or scripts that exit with a non-zero exit code will cause the
 dispatch to fail unless the keepgoing flag is set.
 
-    $ dispatch -I os-family=unix -s /tmp/listening.sh
+    $ dispatch -I os-family=unix -s /tmp/listening.sh --noqueue
     [alexh@strongbad dispatch][INFO] Connecting to centos54:22
     [alexh@strongbad dispatch][INFO] done.
     [ctier@centos54 dispatch][INFO] not listening on 4440
@@ -521,7 +583,7 @@ Running the command again, but this time with the "-K" keepgoing flag
 will cause dispatch to continue and print on which nodes the script
 failed:
 
-    $ dispatch -K -I tags=web -s /tmp/listening.sh
+    $ dispatch  --noqueue -K -I tags=web -s /tmp/listening.sh
     [alexh@strongbad dispatch][INFO] Connecting to centos54:22
     [alexh@strongbad dispatch][INFO] done.
     [ctier@centos54 dispatch][INFO] not listening on 4440
@@ -538,8 +600,8 @@ failed:
 	
 ### Queuing commands to RunDeck
 
-Commands or scripts executed on the command line by `dispatch` can also
-be queued as temporary jobs in RunDeck. The `dispatch` command
+By default, commands or scripts executed on the command line by `dispatch` are
+queued as temporary jobs in RunDeck. The `dispatch` command
 is equivalent to a "Run and Forget" action in the graphical console.
 
 The script below is a long running check that will conduct a check periodically
@@ -578,27 +640,20 @@ dash):
 ### Tracking execution
 
 Queued ad-hoc command and temporary or saved Job executions can be
-tracked from the "History" page in the "Now Running" area at the top of
+tracked from the "Run" page in the "[Now Running](#now-running)" area at the top of
 the page.
 
-This page provides a listing of all running executions, when they
-started, who started them and an approximation of their completion
-progress.
-
-Users with "workflow_kill" privilege, will also see a link to kill the
-Job in case they want to stop it immediatly.
-
-Execution can also be tracked using the `rd-queue` shell tool.
+Execution can also be tracked using the [rd-queue](rd-queue.html) shell tool.
 
     $ rd-queue
     Queue: 1 items
-    [5] workflow:
-    Workflow:(threadcount:1){[command( scriptfile: /Users/alexh/bin/checkagain.sh)]
-    } <http://strongbad:4440/execution/follow/5>
+    [5] workflow: Workflow:(threadcount:1){[command( scriptfile: /Users/alexh/bin/checkagain.sh)]} <http://strongbad:4440/execution/follow/5>
 
-Running jobs can also be killed via the `rd-queue kill` command. The
-rd-queue command includes the execution ID for each running
-job. Specify execution ID using the "-e" option:
+Each job in the execution queue has an execution ID. The example above
+shows one item with the ID, 5.
+
+Running jobs can also be killed via `rd-queue kill`. 
+Specify execution ID using the "-e" option:
 
     $ rd-queue kill -e 5
     rd-queue kill: success. [5] Job status: killed
@@ -607,8 +662,7 @@ job. Specify execution ID using the "-e" option:
 
 History for queued ad-hoc commands, as well as, temporary and
 saved Job executions  is stored by the RunDeck server. History data
-can be filtered and viewed inside the "History" page of the graphical
-console.
+can be filtered and viewed inside the "History" page.
 
 ![History page](figures/fig0211.png)
 
@@ -622,14 +676,10 @@ The filter form contains a number of fields to limit search:
 
 * Within: Time range. Choices include 1 day, 1 week, 1 month or other
   (given a start after/before to ended after/before).
-* Job Name: Job title name.
+* Name: Job title name.
 * Project: Project name. This may be set if the project menu was used.
-* Resource: Name of project resource.
 * User: User initiating action.
-* Node: Node name.
-* Tags: Event tag name.
-* Report ID: Report identifier.
-* Message: Message text.
+* Summary: Message text.
 * Result: Success or failure status.
 
 ![History filter form](figures/fig0212.png)
@@ -648,6 +698,12 @@ dispatcher options, success status and a link to a file containing all
 the output messages.
 
 ![Event view](figures/fig0213.png)
+
+If any errors occurred, the "Node Failure Count" column will show
+the number of nodes in red text. A bar chart indicates the percent
+failed.
+
+![Event view](figures/fig0216.png)
 
 ### RSS link
 
@@ -672,7 +728,7 @@ script you can enable. Add this to your `.bashrc` file:
 
     source $RDECK_BASE/etc/bash_completion.bash
   
-Press the Tab key when you're writing a Git command, and it should
+Press the Tab key when you're writing a dispatch command, and it should
 return a set of suggestions for you to pick from:
 
     $ dispatch <tab><tab>

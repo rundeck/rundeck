@@ -27,7 +27,8 @@ The script is located here: `/etc/init.d/rundeckd`
 
 When using the RPM, by default rundeck will use _java_ found in your path.  Various RPM based 
 distributions provide ways of managing which version of java is found.  CentOS uses 
-_/usr/sbin/alternatives_ and the processing of setting alternatives can be found here: http://wiki.centos.org/HowTos/JavaOnCentOS
+_/usr/sbin/alternatives_ and the processing of setting alternatives can be found here: 
+[http://wiki.centos.org/HowTos/JavaOnCentOS](http://wiki.centos.org/HowTos/JavaOnCentO).
 
 If you have installed a JDK or JRE in a unique directory and do not want to alter the global system
 configuration, then simply setting JAVA_HOME before running any command will use the version of java
@@ -234,21 +235,32 @@ or
 
 ### SSH key generation
 
-* By default, the RunDeck framework is configured to use DSA _not_ RSA
-  type keys (however, it can be configured to use RSA, if required).
+* By default, the RunDeck installation is configured to use RSA _not_ DSA
+  type keys (however, it can be configured to use DSA, if required).
   
-Here's an example of SSH DSA key generation on a Linux system:
+Here's an example of SSH RSA key generation on a Linux system:
 
-    $ ssh-keygen -t dsa
-    Generating public/private dsa key pair.
-    Enter file in which to save the key (/home/demo/.ssh/id_dsa): 
+    $ ssh-keygen -t rsa
+    Generating public/private rsa key pair.
+    Enter file in which to save the key (/home/demo/.ssh/id_rsa): 
     Enter passphrase (empty for no passphrase): 
     Enter same passphrase again: 
-    Your identification has been saved in /home/demo/.ssh/id_dsa.
-    Your public key has been saved in /home/demo/.ssh/id_dsa.pub.
+    Your identification has been saved in /home/demo/.ssh/id_rsa.
+    Your public key has been saved in /home/demo/.ssh/id_rsa.pub.
     The key fingerprint is:
-    37:d6:3a:b6:17:db:e2:2f:84:ca:b2:ed:7a:43:0d:26 
-
+    a7:31:01:ca:f0:62:42:9d:ab:c8:b7:9c:d1:80:76:c6 demo@ubuntu
+    The key's randomart image is:
+    +--[ RSA 2048]----+
+    | .o . .          |
+    |.  * . .         |
+    |. = =   .        |
+    | = E     .       |
+    |+ + o   S .      |
+    |.o o .   =       |
+    |  o +   .        |
+    |   +             |
+    |                 |
+    +-----------------+
 
 ### Configuring remote machine for SSH 
 
@@ -259,7 +271,7 @@ Follow the steps given below to enable ssh to remote machines.
 
 The ssh public key should be copied to the `authorized_keys` file of
 the remote machine. The public key will be available in
-`~/etc/id_dsa.pub` file.
+`~/etc/id_rsa.pub` file.
   
 The `authorized_keys` file should be created in the `.ssh` directory of
 the remote machine.
@@ -288,9 +300,11 @@ below.
     drwx------   2 raj  staff    68 Nov 22 18:19 .ssh
 
 If you are running RunDeck on Windows, we heartily recommend using
-Cygwin on Windows as it includes SSH and a number of
+[Cygwin] on Windows as it includes SSH and a number of
 Unix-like tools that are useful when you work in a command line
 environment.
+
+[Cygwin]: http://www.cygwin.org
 
 #### Passing environment variables through remote command
 
@@ -657,7 +671,7 @@ launcher.
 (1) Before beginning, do a first-run of the launcher, as it will create
 the base directory for Rundeck and generate configuration files.
 
-        cd $RDECK_BASE;  java -jar rundeck-launcher-1.0.0.jar
+        cd $RDECK_BASE;  java -jar rundeck-launcher-1.1.0.jar
 
 This will start the server and generate necessary config files.  Press
 control-c to shut down the server.
@@ -723,11 +737,11 @@ configuration property.
 
 (6) Launch the rundeck launcher and tell it where to read the ssl.properties
 
-        java -Drundeck.ssl.config=$RDECK_BASE/server/config/ssl.properties -jar rundeck-launcher-1.0.0.jar
+        java -Drundeck.ssl.config=$RDECK_BASE/server/config/ssl.properties -jar rundeck-launcher-1.1.0.jar
     
 You can change port by adding `-Dserver.https.port`:
     
-        java -Drundeck.ssl.config=$RDECK_BASE/server/config/ssl.properties -Dserver.https.port=1234 rundeck-launcher-1.0.0.jar
+        java -Drundeck.ssl.config=$RDECK_BASE/server/config/ssl.properties -Dserver.https.port=1234 rundeck-launcher-1.1.0.jar
     
 If successful, you will see a line indicating the SSl connector has started:
 

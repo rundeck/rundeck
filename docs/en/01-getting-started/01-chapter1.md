@@ -51,7 +51,7 @@ document requirement.
 
 A *resource model provider* is an external service
 accesible via the HTTP GET method that returns data conforming to the
-RunDeck resource model document format (resource-v10(5)). 
+RunDeck resource model document format [resource-v10(5)](resource-v10.html). 
 
 
 ### Authorization
@@ -168,7 +168,7 @@ will also be generated.
 If you want to install RunDeck on Linux via a binary installer, you
 can generally do so through the RPM tool that comes with your distribution. 
 
-    # rpm -i rundeck-1.0.0.noarch.rpm
+    # rpm -i rundeck-1.1.0.noarch.rpm
 
 To install it using yum, first install the yum repo package and then
 run yum install:
@@ -196,14 +196,14 @@ Use the launcher as an alternative to a system package:
 1. Copy the launcher jar to the installation directory.
 
     ~~~~~~~
-    cp rundeck-launcher-1.0.0.jar $RDECK_BASE
+    cp rundeck-launcher-1.1.0.jar $RDECK_BASE
     ~~~~~~~
 
 1. Change directory and run the jar.
 
     ~~~~~~~
     cd $RDECK_BASE    
-    java -jar rundeck-launcher-1.0.0.jar
+    java -jar rundeck-launcher-1.1.0.jar
     ~~~~~~~
 
 1. Wait for the Started message.
@@ -224,6 +224,10 @@ If you get an error message that resembles the one below, you probably
 are using an unupported Java version.
 
     Exception in thread "main" java.lang.UnsupportedClassVersionError: Bad version number in .class file
+
+See the [startup and shutdown](#startup-and-shutdown) section for
+instructions on using the ``rundeckd`` shell tool to manage the 
+rundeck launcher process.
 
 ## First-Time Setup
 

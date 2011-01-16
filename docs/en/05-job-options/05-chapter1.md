@@ -2,7 +2,7 @@
 
 Any command or script can be wrapped as a Job. Creating a Job for
 every use case will proliferate a large number of Jobs differing only
-by how the Job jobs calls the scripts. These
+by how the Job calls the scripts. These
 differences are often environment or application version
 related. Other times only the person running the Job can provide the
 needed information to run the Job correctly. 
@@ -37,7 +37,7 @@ The obvious effect from defining Job options is their appearance to
 the user running the Job. Users will be presented a page called "Choose
 Execution Options..." where input and menu choices must be configured.
 
-Command line users executing Jobs via the <code>run</code> shell
+Command line users executing Jobs via the `run` shell
 tool also will specify options as an argument string.
 
 It is worth spending a moment to consider how options become
@@ -82,7 +82,8 @@ Clicking the "edit" link opens a new form that lets you modify all
 aspects of that option.
 
 Options can also be defined as part of an XML job definition and later
-loaded to the RunDeck server. See "job-v10(1)" and "rd-jobs(1)" manual
+loaded to the RunDeck server. See [job-v20(5)](job-v20.html) and 
+[rd-jobs(1)](rd-jobs.html) manual
 pages if you prefer using an XML Job definition.
 
 ## Defining an option
@@ -134,7 +135,8 @@ A model of option values can be retrieved from an external source.
 When the `valuesUrl` is specified for an Option, then the model of
 allowed values is retrieved from the specified URL. 
 
-This is useful in a couple of scenarios when RunDeck is used to coordinate process that depend on other systems:
+This is useful in a couple of scenarios when RunDeck is used to 
+coordinate process that depend on other systems:
 
 * Deploying packages or artifacts produced by a build or CI server, e.g. Hudson.
     * A list of recent Hudson build artifacts can be imported as Options data, so that a User can pick an appropriate package name to deploy from a list.
@@ -160,7 +162,8 @@ Value referenced as a replacement token inside the script:
 
 A single example helps illustrate these methods. Imagine a trivial script
 is wrapped in a Job named "hello" and has an option named "message".
-The "hello" Job option signature would be "-message <>".
+
+The "hello" Job option signature would be: `-message <>`.
 
 ![Option usage](figures/fig0504.png)
 
@@ -233,14 +236,14 @@ environment variables.
 
 ## Calling a Job with options
 
-Jobs can be invoked from the command line using the <code>run</code>
+Jobs can be invoked from the command line using the `run`
 shell tool or as a step in another Job's workflow.
 
-Using the <code>run</code> command pass them after the double hyphen:
+Using the `run` command pass them after the double hyphen:
 
     run -j jobId -- -paramA valA -paramB valB
 
-Inside an XML definition, insert them as an <code>arg</code> element:
+Inside an XML definition, insert them as an `arg` element:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.xml}
 <command>
@@ -250,7 +253,7 @@ Inside an XML definition, insert them as an <code>arg</code> element:
 </command>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
-Consult the "run(1)" and "job-v20(5)" manual pages for additional
+Consult the [run(1)](run.html) and [job-v20(5)](job-v20.html) manual pages for additional
 information.
      
 ## Summary
