@@ -62,7 +62,7 @@ import org.mortbay.log.Log;
  * 
  * <pre>
  * ldaploginmodule {
- *    org.mortbay.jetty.plus.jaas.spi.LdapLoginModule required
+ *    com.dtolabs.rundeck.jetty.jaas.JettyCachingLdapLoginModule required
  *    debug="true"
  *    contextFactory="com.sun.jndi.ldap.LdapCtxFactory"
  *    hostname="ldap.example.com"
