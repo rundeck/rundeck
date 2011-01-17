@@ -6,6 +6,7 @@
     <title><g:message code="main.app.name"/></title>
     <g:javascript library="yellowfade"/>
     <g:javascript library="pagehistory"/>
+    <g:javascript library="prototype/effects"/>
     <script type="text/javascript">
 
         function showError(message){
@@ -199,7 +200,10 @@
         function doMouseout(){
             if(popvis && $('jobIdDetailHolder')){
                 popvis=false;
-                $('jobIdDetailHolder').hide();
+                Try.these(
+                    function(){Effect.Fade($('jobIdDetailHolder'),{duration:0.5});},
+                    function(){$('jobIdDetailHolder').hide();}
+                    );
             }
             if(targetLink){
                 $(targetLink).removeClassName('glow');
@@ -233,6 +237,10 @@
                 viewdom.addClassName('bubblewrap');
                 viewdom.setAttribute('id','jobIdDetailHolder');
                 viewdom.setAttribute('style','display:none;');
+
+                Event.observe(viewdom,'click',function(evt){
+                    evt.stopPropagation();
+                },false);
 
                 var btop = new Element('div');
                 btop.addClassName('bubbletop');
@@ -273,11 +281,7 @@
             initJobIdLinks();
             Event.observe(document.body,'click',function(evt){
                 //click outside of popup bubble hides it
-                var t = $(evt.element()).up('#jobIdDetailHolder');
-                if(!t && !evt.element().onclick && !evt.element().onmousedown){
-                    doMouseout();
-                }
-                return true;
+                doMouseout();
             },false);
             Event.observe(document.body,'keydown',function(evt){
                 //escape key hides popup bubble
@@ -303,7 +307,7 @@
     }
     .bubblewrap{
         position:absolute;
-        width: 500px;
+        width: 600px;
         height: 250px;
     }
     .bubbletop{
