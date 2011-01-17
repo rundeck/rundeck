@@ -330,18 +330,6 @@
 
 
 <div class="pageBody solo" >
-    <g:if test="${flash.savedJob}">
-        <div style="margin-bottom:10px;">
-        <span class="popout message note" style="background:white">
-            ${flash.savedJobMessage?flash.savedJobMessage:'Saved changes to Job'}:
-            <g:link controller="scheduledExecution" action="show" id="${flash.savedJob.id}">${flash.savedJob.jobName}</g:link>
-        </span>
-        </div>
-        <g:javascript>
-            fireWhenReady('jobrow_${flash.savedJob.id}',doyft.curry('jobrow_${flash.savedJob.id}'));
-
-        </g:javascript>
-    </g:if>
     <span class="prompt">Now running <span class="nowrunningcount">(0)</span></span>
     <div id="nowrunning"><span class="note empty">No running Jobs</span></div>
     <div id="error" class="error" style="display:none;"></div>
