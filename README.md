@@ -28,7 +28,7 @@ There are two install options, a self-contained jar file, or RPM.
 
 To start from the rundeck-launcher.jar, put it in a directory named ~/rundeck, then execute:
 
-    java -jar rundeck-launcher-1.0.0.jar
+    java -jar rundeck-launcher-1.1.0.jar
 
 If you'd like to install via RPM, you can use Yum:
 
@@ -37,7 +37,7 @@ If you'd like to install via RPM, you can use Yum:
 
 OR install directly from RPM:
 
-    rpm -ivh rundeck-1.0.0.xxx.rpm
+    rpm -ivh rundeck-1.1.0-xxx.rpm
 
 Once the RPM is installed, execute:
 
