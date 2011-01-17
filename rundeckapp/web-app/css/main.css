@@ -2265,6 +2265,10 @@ div.jobscontent{
     background: #fff;
     padding: 20px;
 }
+.runbox div.newjob{
+    background: #fff;
+    padding: 20px 20px 0px 20px;
+}
 .runbox table.list tr{
     /*background: #ddd;*/
 }

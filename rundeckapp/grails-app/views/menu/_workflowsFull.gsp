@@ -161,6 +161,18 @@
     </g:if>
                 </div>
 
+                <g:if test="${flash.savedJob}">
+                    <div class="newjob">
+                    <span class="popout message note" style="background:white">
+                        ${flash.savedJobMessage?flash.savedJobMessage:'Saved changes to Job'}:
+                        <g:link controller="scheduledExecution" action="show" id="${flash.savedJob.id}">${flash.savedJob.generateFullName()}</g:link>
+                    </span>
+                    </div>
+                    <g:javascript>
+                        fireWhenReady('jobrow_${flash.savedJob.id}',doyft.curry('jobrow_${flash.savedJob.id}'));
+
+                    </g:javascript>
+                </g:if>
 
                 <span id="busy" style="display:none"></span>
 <g:timerEnd key="head"/>
