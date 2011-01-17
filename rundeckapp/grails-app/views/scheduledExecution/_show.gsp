@@ -58,7 +58,7 @@
 
     %{--<g:expander key="schedExDetails${scheduledExecution?.id?scheduledExecution?.id:''}" imgfirst="true">Details</g:expander>--}%
     <span class="prompt">Details</span>
-    <div class="presentation"  id="schedExDetails${scheduledExecution?.id}">
+    <div class="presentation"  id="schedExDetails${scheduledExecution?.id}" style="max-width:600px;">
         <g:render template="showDetail" model="[scheduledExecution:scheduledExecution]"/>
 
     </div>

@@ -673,7 +673,7 @@ div.datasection{
     background:none;
     color:red;
 }
-table.simpleForm > tr > td:first-child,table.simpleForm > tbody > tr > td:first-child {
+table.simpleForm > tr > td:first-child,table.simpleForm > tbody > tr > td:first-child , table.simpleForm td.displabel{
     text-align: right;
     padding: 5px 10px 5px 5px;
     vertical-align: top;
@@ -832,6 +832,9 @@ table.execoutput .ctxcounter.SEVERE, table.execoutput .ctxcounter.ERROR{
     color: #999;
 }
 div.optslist{
+}
+span.optgroup{
+    white-space:nowrap;
 }
 .singlelabel{
     font-family: courier,monospace;

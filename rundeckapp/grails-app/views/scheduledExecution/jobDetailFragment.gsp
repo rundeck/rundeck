@@ -27,9 +27,12 @@
         <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
                 <td>
-                    <g:render template="/scheduledExecution/showDetail" model="[scheduledExecution:scheduledExecution]"/>
+                    <g:render template="/execution/execDetails" model="[execdata:scheduledExecution]"/>
                 </td>
-                <td style="width: 80px; vertical-align: top; white-space:nowrap;height:100%; text-align:right" class="jobbuttons ">
+            </tr>
+            <tbody class="section">
+            <tr>
+                <td style="" class="jobbuttons ">
                     <div class="right">
 
                         <g:set var="lastrun" value="${scheduledExecution.id?Execution.findByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution,[max: 1, sort:'dateStarted', order:'desc']):null}"/>
@@ -39,6 +42,7 @@
                     </div>
                 </td>
             </tr>
+            </tbody>
         </table>
     </div>
 </div>
