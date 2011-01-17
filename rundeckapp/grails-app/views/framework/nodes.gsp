@@ -166,7 +166,7 @@
                         }
                     },
                     onFailure:function(e){
-                        console.log(e);
+                        //console.log(e);
                     }
                 });
             }
@@ -264,7 +264,6 @@
             if(!elem){
                 elem='nodelist';
             }
-            console.log("page: "+page);
             _updateMatchedNodes(nodeFilterData_${rkey},elem,'${query.project}',false,{view:page>0?'tableContent':'table',expanddetail:true,inlinepaging:true,page:page,max:pagingMax});
         }
         function _loadNextNodesPageTable(max,total,tbl,elem){
