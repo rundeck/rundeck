@@ -5,6 +5,7 @@ Date: 1/18/2011
 
 Closed Issues:
 
+* [#177 - Configurable start tab](http://rundeck.lighthouseapp.com/projects/59277/tickets/177)
 * [#120 - Fix command line completion](http://rundeck.lighthouseapp.com/projects/59277/tickets/120)
 * [#176 - rundeckd script under solaris](http://rundeck.lighthouseapp.com/projects/59277/tickets/176)
 * [#175 - Update user manual to reflect recent interface design changes](http://rundeck.lighthouseapp.com/projects/59277/tickets/175)
