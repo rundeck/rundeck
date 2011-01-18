@@ -73,7 +73,8 @@
         }
         function loadedFormSuccess(){
             if ($('execFormCancelButton')) {
-                Event.observe($('execFormCancelButton'),'click',function() {
+                Event.observe($('execFormCancelButton'),'click',function(evt) {
+                    Event.stop(evt);
                     unloadExec();
                     return false;
                 },false);
