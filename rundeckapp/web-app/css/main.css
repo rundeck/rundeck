@@ -871,6 +871,9 @@ div.progressBar{
     line-height:9px;
     padding:1px 3px;
     border-right: 1px solid #999;
+    white-space:nowrap;
+    overflow-x:hidden;
+    overflow-y:hidden;
 }
 div.progressContainer.indefinite div.progressBar{
     background:none;
@@ -1060,6 +1063,14 @@ table.jobsList td{
 }
 
 table.executionList tr.nowrunning a, table.jobsList tr.nowrunning a{
+}
+table.jobsList.history td.eventtitle span{
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+table.jobsList.history td.eventsummary span{
+    white-space:nowrap;
+    text-overflow:ellipsis;
 }
 table.jobsList.history tr.fail td.eventtitle{
     color:red;

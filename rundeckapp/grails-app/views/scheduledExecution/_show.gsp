@@ -20,7 +20,7 @@
         <g:render template="/scheduledExecution/showHead" model="[scheduledExecution:scheduledExecution,execution:execution,followparams:[mode:followmode,lastlines:params.lastlines]]"/>
     </div>
 
-    <div style="vertical-align:top;" class="toolbar small floatl">
+    <div style="vertical-align:top;width: 200px;" class="toolbar small">
         <g:render template="/scheduledExecution/actionButtons" model="${[scheduledExecution:scheduledExecution,objexists:objexists,jobAuthorized:jobAuthorized]}"/>
         <g:set var="lastrun" value="${scheduledExecution.id?Execution.findByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution,[max: 1, sort:'dateStarted', order:'desc']):null}"/>
         <g:set var="successcount" value="${scheduledExecution.id?Execution.countByScheduledExecutionAndStatus(scheduledExecution,'true'):0}"/>
@@ -58,7 +58,7 @@
 
     %{--<g:expander key="schedExDetails${scheduledExecution?.id?scheduledExecution?.id:''}" imgfirst="true">Details</g:expander>--}%
     <span class="prompt">Details</span>
-    <div class="presentation"  id="schedExDetails${scheduledExecution?.id}" style="max-width:600px;">
+    <div class="presentation"  id="schedExDetails${scheduledExecution?.id}" style="max-width:600px; width:600px;">
         <g:render template="showDetail" model="[scheduledExecution:scheduledExecution]"/>
 
     </div>
