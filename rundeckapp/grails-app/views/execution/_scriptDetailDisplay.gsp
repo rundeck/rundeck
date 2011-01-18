@@ -22,5 +22,7 @@
     $Id$
  --%>
 <g:set var="rkey" value="${g.rkey()}"/>
-<g:expander key="${rkey}">${label?label:''}${script.split('(\r\n|[\r\n])').length} lines</g:expander>
-<div class="scriptContent expanded" id="${rkey}" style="display:none">${script.encodeAsHTML()}</div>
+<g:set var="split" value="${script.split('(\r?\n)') as List}"/>
+<g:expander key="${rkey}">${label?label:''}${split.size()} lines</g:expander>
+<g:set var="encoded" value="${split.collect{it.encodeAsHTML()}}"/>
+<div class="scriptContent expanded" id="${rkey}" style="display:none">${ encoded.join('&nbsp;<br>') }</div>
