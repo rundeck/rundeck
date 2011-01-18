@@ -56,13 +56,13 @@
 
                         <td class="jobrunning " >
                             <g:if test="${nowrunning && nowrunning[scheduledExecution.id.toString()]}">
-                                <g:link class="timenow"
+                                %{--<g:link class="timenow"
                                     controller="execution"
                                     action="show"
                                     id="${nowrunning[scheduledExecution.id.toString()]}">
                                         <img src="${resource(dir:'images',file:'icon-tiny-disclosure-waiting.gif')}" alt=""/>
                                         now
-                                </g:link>
+                                </g:link>--}%
                             </g:if>
                             <g:elseif test="${nextExecution}">
                                     <img src="${resource(dir:'images',file:'icon-clock-small.png')}" alt=""  width="16px" height="16px"/>
