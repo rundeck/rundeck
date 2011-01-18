@@ -58,6 +58,7 @@
 
 
             <td class="eventtitle ${rpt?.jcJobId?'job':'adhoc'}">
+            <span>
                 <g:if test="${rpt?.reportId }">
                     <g:truncate max="${maxtitlesize}" front="true">${rpt?.reportId.encodeAsHTML()}</g:truncate>
                 </g:if>
@@ -68,6 +69,7 @@
                 <g:else>
                     <g:message code="events.history.jobname.adhoc"/>
                 </g:else>
+                </span>
             </td>
 
             <td style="" class="eventsummary ${rpt?.jcJobId?'job':'adhoc'}">
