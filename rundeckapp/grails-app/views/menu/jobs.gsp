@@ -328,6 +328,9 @@
         -moz-box-shadow:#aaa 2px 2px 7px;
         -webkit-box-shadow:#aaa 2px 2px 7px;
     }
+        #histcontent table{
+            width:100%;
+        }
     </style>
 </head>
 <body>
