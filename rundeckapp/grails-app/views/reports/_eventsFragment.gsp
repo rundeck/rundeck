@@ -94,7 +94,7 @@
 
                 <div class="jobsReport clear">
                     <g:if test="${reports}">
-                        <g:render template="baseReport" model="['reports':reports,options:params.compact?[tags:false,msgmaxsize:30,evtmaxsize:30]:[:],hiliteSince:params.hiliteSince]"/>
+                        <g:render template="baseReport" model="['reports':reports,options:params.compact?[tags:false]:[:],hiliteSince:params.hiliteSince]"/>
 
                             <g:if test="${total && max && total.toInteger() > max.toInteger()}">
                                 <span class="info note">Showing ${reports.size()} of ${total}</span>
