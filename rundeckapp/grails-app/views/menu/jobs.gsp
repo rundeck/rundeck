@@ -73,20 +73,18 @@
         }
         function loadedFormSuccess(){
             if ($('execFormCancelButton')) {
-                $('execFormCancelButton').onclick = function() {
+                Event.observe($('execFormCancelButton'),'click',function() {
                     unloadExec();
                     return false;
-                };
+                },false);
                 $('execFormCancelButton').name = "_x";
-            }else{
-                console.log("no");
             }
             if ($('execFormRunButton')) {
-                $('execFormRunButton').onclick = function(evt) {
+                Event.observe($('execFormRunButton'),'click', function(evt) {
                     Event.stop(evt);
                     execSubmit('execDivContent');
                     return false;
-                };
+                },false);
             }
             $('indexMain').hide();
             $('execDiv').show();
