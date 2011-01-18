@@ -18,7 +18,7 @@ class MenuController {
         def results = index(params)
         render(view:"index",model:results)
     }
-    
+
     def nowrunning={ QueueQuery query->
         //find currently running executions
         
@@ -83,7 +83,22 @@ class MenuController {
     
     
     def index ={
-        redirect(controller:'framework',action:'nodes')
+        /**
+        * redirect to configured start page, or default to Run page
+         */
+        def startpage='run'
+        if(grailsApplication.config.gui.startpage){
+            startpage=grailsApplication.config.gui.startpage
+        }
+        switch (startpage){
+            case 'run':
+                return redirect(controller:'framework',action:'nodes')
+            case 'jobs':
+                return redirect(controller:'menu',action:'jobs')
+            case 'history':
+                return redirect(controller:'reports',action:'index')
+        }
+        return redirect(controller:'framework',action:'nodes')
     }
     
     def workflows = {ScheduledExecutionQuery query ->
