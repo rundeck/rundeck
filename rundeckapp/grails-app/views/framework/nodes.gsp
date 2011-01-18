@@ -765,7 +765,7 @@
                         </span>
                     </div>
                 </g:if>
-                <div class="presentation clear matchednodes " id="nodelist" >
+                <div class=" clear matchednodes " id="nodelist" >
                     <span class="button action receiver" onclick="expandResultNodes();">Show ${total} Node${1 != total ? 's' : ''}...</span>
                     %{--<g:render template="nodes" model="${[nodes:allnodes,totalexecs:totalexecs,jobs:jobs,params:params,expanddetail:true]}"/>--}%
                     <g:javascript>
