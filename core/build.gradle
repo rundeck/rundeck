@@ -33,6 +33,7 @@ dependencies {
         [group: 'commons-cli', name: 'commons-cli', version: '1.0',ext:'jar'],
         [group: 'ant-jsch', name: 'ant-jsch', version: '1.8.1',ext:'jar'],
         [group: 'jsch', name: 'jsch', version: '0.1.42',ext:'jar'],
+        [group: 'org.yaml',name:'snakeyaml',version:'1.7']
     )
     testCompile(
         [group: 'junit', name: 'junit', version: '3.8.1',ext:'jar']

@@ -170,6 +170,15 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/snakeyaml/jars/snakeyaml-1.7.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <javadoc-paths>
       <root url="file://$MODULE_DIR$/../../pkgs/apache-ant-1.8.1/docs/manual/api" />
     </javadoc-paths>
