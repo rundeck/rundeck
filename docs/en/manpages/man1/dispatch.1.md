@@ -1,4 +1,4 @@
-% DISPATCH(1) RunDeck User Manuals | Version 1.0
+% DISPATCH(1) RunDeck User Manuals | Version 1.1
 % Alex Honor
 % November 20, 2010
 
