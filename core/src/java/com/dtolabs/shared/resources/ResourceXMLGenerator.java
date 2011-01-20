@@ -24,6 +24,7 @@
 package com.dtolabs.shared.resources;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.NodesFileGenerator;
 import static com.dtolabs.shared.resources.ResourceXMLConstants.*;
 import org.apache.log4j.Logger;
 import org.dom4j.Document;
@@ -46,7 +47,7 @@ import java.util.TreeSet;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ResourceXMLGenerator {
+public class ResourceXMLGenerator implements NodesFileGenerator {
     static Logger log4j = Logger.getLogger(ResourceXMLGenerator.class.getName());
 
     private File file;

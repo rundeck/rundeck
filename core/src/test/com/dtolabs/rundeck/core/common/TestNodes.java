@@ -68,7 +68,7 @@ public class TestNodes extends AbstractBaseTest {
         final FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
                 new File(getFrameworkProjectsBase()),
                 getFrameworkInstance().getFrameworkProjectMgr());
-        nodes = new Nodes(project, xmlfile1, Nodes.Format.projectxml);
+        nodes = new Nodes(project, xmlfile1, Nodes.Format.resourcexml);
         assertNotNull(nodes);
         assertEquals("incorrect number of parsed nodes: " + nodes.listNodes().size(), 2, nodes.listNodes().size());
         assertTrue("nodes did not parse test1", nodes.hasNode("test1"));
@@ -121,7 +121,7 @@ public class TestNodes extends AbstractBaseTest {
         FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
             new File(getFrameworkProjectsBase()),
             getFrameworkInstance().getFrameworkProjectMgr());
-        nodes = new Nodes(project, xmlfile1, Nodes.Format.projectxml);
+        nodes = new Nodes(project, xmlfile1, Nodes.Format.resourcexml);
 
         assertNotNull(nodes);
         ArrayList nodeDescs = new ArrayList();
@@ -246,7 +246,7 @@ public class TestNodes extends AbstractBaseTest {
             new File(getFrameworkProjectsBase()),
             getFrameworkInstance().getFrameworkProjectMgr());
         //test multipl filters
-        Nodes nodes2 = new Nodes(project, xmlfile2, Nodes.Format.projectxml);
+        Nodes nodes2 = new Nodes(project, xmlfile2, Nodes.Format.resourcexml);
         assertNotNull(nodes2);
         ArrayList nodeDescs2 = new ArrayList();
         INodeBase nodeDesc3 = new NodeEntryImpl("testnode3", "testnode3");
@@ -289,7 +289,7 @@ public class TestNodes extends AbstractBaseTest {
         final FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
             new File(getFrameworkProjectsBase()),
             getFrameworkInstance().getFrameworkProjectMgr());
-        nodes = new Nodes(project, xmlfile1, Nodes.Format.projectxml);
+        nodes = new Nodes(project, xmlfile1, Nodes.Format.resourcexml);
 
         INodeEntry node1 = nodes.getNodeByHostname("host1.local");
         assertNotNull(node1);
@@ -307,7 +307,7 @@ public class TestNodes extends AbstractBaseTest {
         final FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
                 new File(getFrameworkProjectsBase()),
                 getFrameworkInstance().getFrameworkProjectMgr());
-        nodes = new Nodes(project, xmlfile1, Nodes.Format.projectxml);
+        nodes = new Nodes(project, xmlfile1, Nodes.Format.resourcexml);
         assertTrue(nodes.hasNodeByHostname("host1.local"));
         assertTrue(nodes.hasNodeByHostname("testnode2"));
         assertFalse(nodes.hasNodeByHostname("test1"));
@@ -317,7 +317,7 @@ public class TestNodes extends AbstractBaseTest {
         final FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
                 new File(getFrameworkProjectsBase()),
                 getFrameworkInstance().getFrameworkProjectMgr());
-        nodes = new Nodes(project, xmlfile1, Nodes.Format.projectxml);
+        nodes = new Nodes(project, xmlfile1, Nodes.Format.resourcexml);
 
         INodeEntry node1 = nodes.getNode("test1");
         assertNotNull(node1);
@@ -334,7 +334,7 @@ public class TestNodes extends AbstractBaseTest {
         final FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
                 new File(getFrameworkProjectsBase()),
                 getFrameworkInstance().getFrameworkProjectMgr());
-        nodes = new Nodes(project, xmlfile1, Nodes.Format.projectxml);
+        nodes = new Nodes(project, xmlfile1, Nodes.Format.resourcexml);
         assertTrue(nodes.hasNode("test1"));
         assertTrue(nodes.hasNode("testnode2"));
         assertFalse(nodes.hasNode("host1.local"));
@@ -344,7 +344,7 @@ public class TestNodes extends AbstractBaseTest {
         FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
                 new File(getFrameworkProjectsBase()),
                 getFrameworkInstance().getFrameworkProjectMgr());
-        nodes = new Nodes(project, xmlfile1, Nodes.Format.projectxml);
+        nodes = new Nodes(project, xmlfile1, Nodes.Format.resourcexml);
 
         assertNotNull(nodes);
         final ArrayList<INodeBase> nodelist = new ArrayList<INodeBase>();
