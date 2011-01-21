@@ -24,6 +24,9 @@
 package com.dtolabs.rundeck.core.common;
 
 import java.util.*;
+import java.lang.reflect.InvocationTargetException;
+
+import org.apache.commons.beanutils.BeanUtils;
 
 
 /**
@@ -48,9 +51,21 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
     private Map<String, String> attributes;
     private Map<String, String> settings;
 
-    private NodeEntryImpl(String nodename) {
+    public NodeEntryImpl() {
+        super();
+        this.tags = new HashSet();
+    }
+
+    public NodeEntryImpl(String nodename) {
         super(nodename);
         this.tags = new HashSet();
+    }
+
+    private static String notNull(String in) {
+        if (null == in) {
+            return "";
+        }
+        return in;
     }
 
 
@@ -187,9 +202,9 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
 
     /**
      * Gets the username for remote connections. The following logic is used: If the username property is set then the
-     * username value is returned. If the username is not set and the hostname contains a "user@" prefix then the
-     * "user" substring is returned If the hostname contains a substring that looks like a port (eg, :22) the port is
-     * stripped off
+     * username value is returned. If the username is not set and the hostname contains a "user@" prefix then the "user"
+     * substring is returned If the hostname contains a substring that looks like a port (eg, :22) the port is stripped
+     * off
      *
      * @return Gets the username for remote connections
      */

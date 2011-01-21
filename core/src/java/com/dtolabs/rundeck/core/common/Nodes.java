@@ -43,7 +43,8 @@ public class Nodes implements NodeReceiver {
      * Parsing format options
      */
     public static enum Format{
-        projectxml
+        resourcexml,
+        resourceyaml
     }
     final private Format format;
     
@@ -189,8 +190,10 @@ public class Nodes implements NodeReceiver {
      */
     protected NodeFileParser createParser(final FrameworkProject project, final File propfile) {
         switch(format){
-            case projectxml:
+            case resourcexml:
                 return new NodesXMLParser(propfile, this);
+            case resourceyaml:
+                return new NodesYamlParser(propfile,this);
             default:
                 throw new IllegalArgumentException("Nodes resource file format not valid: " + format);
         }

@@ -115,11 +115,21 @@ public class FrameworkProject extends FrameworkResourceParent {
         final Framework framework = projectResourceMgr.getFramework();
         final NodeEntryImpl node = framework.createFrameworkNode();
         node.setFrameworkProject(getName());
-        final ResourceXMLGenerator xmlGenerator = new ResourceXMLGenerator(resfile);
-        xmlGenerator.addNode(node);
+        final NodesFileGenerator generator;
+        if(resfile.getName().endsWith(".xml")){
+            generator = new ResourceXMLGenerator(resfile);
+        }else if(resfile.getName().endsWith(".yaml")){
+            generator = new NodesYamlGenerator(resfile);
+        }else{
+            getLogger().error("Unable to generate resources file. Unrecognized extension for dest file: "+resfile.getAbsolutePath());
+            return;
+        }
+        generator.addNode(node);
         try {
-            xmlGenerator.generate();
+            generator.generate();
         } catch (IOException e) {
+            getLogger().error("Unable to generate resources file: " + e.getMessage(), e);
+        } catch (NodesGeneratorException e) {
             getLogger().error("Unable to generate resources file: " + e.getMessage(), e);
         }
 
@@ -239,7 +249,9 @@ public class FrameworkProject extends FrameworkResourceParent {
     public Nodes getNodes(final File nodesFile) throws NodeFileParserException {
         final Nodes.Format format;
         if (nodesFile.getName().endsWith(".xml")) {
-            format = Nodes.Format.projectxml;
+            format = Nodes.Format.resourcexml;
+        }else if (nodesFile.getName().endsWith(".yaml")) {
+            format = Nodes.Format.resourceyaml;
         }else {
             throw new NodeFileParserException("Unable to determine file format for file: " + nodesFile.getAbsolutePath());
         }
