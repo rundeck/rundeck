@@ -56,4 +56,9 @@ public class Workflow {
     public static CommandExec createItem(CommandExec item){
         return item.createClone()
     }
+
+    /** create canonical map representation */
+    public Map toMap(){
+        return [/*threadcount:threadcount,*/keepgoing:keepgoing,strategy:strategy,commands:commands.collect{it.toMap()}]
+    }
 }

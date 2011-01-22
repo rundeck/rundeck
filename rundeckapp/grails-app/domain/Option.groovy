@@ -61,6 +61,35 @@ public class Option implements Comparable{
     }
 
     /**
+     * Return canonical map representation
+     */
+    public Map toMap(){
+        final Map map = [:]
+        if(enforced){
+            map.enforced=enforced
+        }
+        if(required){
+            map.required=required
+        }
+        if(description){
+            map.description=description
+        }
+        if(defaultValue){
+            map.value=defaultValue
+        }
+        //valuesUrl: valuesUrl.toExternalForm(), regex: regex, values: values
+        if(valuesUrl){
+            map.valuesUrl=valuesUrl.toExternalForm()
+        }
+        if(regex){
+            map.regex=regex
+        }
+        if(values){
+            map.values=values as List
+        }
+        return map
+    }
+    /**
      * Return the string equivalent of the values set member
      */
     public String produceValuesList(){

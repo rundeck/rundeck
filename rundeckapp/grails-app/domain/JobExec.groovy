@@ -55,4 +55,14 @@ public class JobExec extends CommandExec implements IWorkflowJobItem{
         JobExec ce = new JobExec(this.properties)
         return ce
     }
+    /**
+    * Return canonical map representation
+     */
+    public Map toMap(){
+        final Map map = [jobref: [group: jobGroup ? jobGroup : '', name: jobName]]
+        if(argString){
+            map.jobref.args=argString
+        }
+        return map
+    }
 }

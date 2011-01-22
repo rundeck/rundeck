@@ -72,6 +72,68 @@ class ScheduledExecution extends ExecutionContext {
     public static final monthsofyearlist = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 
     String toString() { "$jobName - $description" }
+    Map toMap(){
+        HashMap map = new HashMap()
+        map.name=jobName
+        if(groupPath){
+            map.group=groupPath
+        }
+        map.id=id
+        map.description=description
+        map.loglevel=loglevel
+        map.project=project
+
+        //TODO: options
+
+        if(options){
+            map.options=[:]
+            options.each{Option option->
+                map.options[option.name]=option.toMap()
+            }
+        }
+
+        //TODO: workflow
+        map.sequence=workflow.toMap()
+
+        if(scheduled){
+            map.schedule=[time:[hour:hour,minute:minute],month:month]
+            if(dayOfMonth!='?'){
+                map.schedule.dayofmonth=[day:dayOfMonth ]
+            }else{
+                map.schedule.weekday=[day:dayOfWeek ]
+            }
+        }
+        if(doNodedispatch){
+            def yfilters=["":"hostname"]
+            map.nodefilters=[dispatch:[threadcount:nodeThreadcount,keepgoing:nodeKeepgoing,excludePrecedence:nodeExcludePrecedence]]
+            final Collection inclFilters = BaseNodeFilters.filterKeys.keySet().findAll {this["nodeInclude"+filterKeys[it]]}
+            System.err.println("inclFilters: "+inclFilters);
+            if(inclFilters){
+                map.nodefilters.include=[:]
+                inclFilters.each{ ek->
+                    map.nodefilters.include[yfilters[ek]?:ek]=this["nodeInclude${filterKeys[ek]}"]
+                }
+            }
+            final Collection exclFilters = BaseNodeFilters.filterKeys.keySet().findAll {this["nodeExclude"+filterKeys[it]]}
+            System.err.println("exclFilters: "+exclFilters);
+            if(exclFilters){
+                map.nodefilters.exclude=[:]
+                exclFilters.each{ ek->
+                    map.nodefilters.exclude[yfilters[ek]?:ek]=this["nodeExclude${filterKeys[ek]}"]
+                }
+            }
+        }
+        if(notifySuccessRecipients || notifyFailureRecipients){
+            map.notification=[:]
+            if(notifySuccessRecipients){
+                map.notification.onsuccess=[recipients:notifySuccessRecipients]
+            }
+            if(notifyFailureRecipients){
+                map.notification.onfailure=[recipients:notifyFailureRecipients]
+            }
+        }
+        return map
+    }
 
     public setUserRoles(List l){
         setUserRoleList(l.join(","))

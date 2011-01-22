@@ -167,6 +167,9 @@ class ScheduledExecutionController  {
             offset:params.offset?params.offset:0]
 
             }
+            yaml{
+                render(text:JobsYAMLCodec.encode([scheduledExecution] as List),contentType:"text/yaml",encoding:"UTF-8")
+            }
 
             xml{
                 def fname=scheduledExecution.jobName.replaceAll(' ','_')

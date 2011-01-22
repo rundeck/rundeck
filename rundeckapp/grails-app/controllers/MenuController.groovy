@@ -117,6 +117,9 @@ class MenuController {
         def results = jobsFragment(query)
         
         withFormat{
+            yaml{
+                render(text:results.nextScheduled.encodeAsYAML(),contentType:"text/yaml",encoding:"UTF-8")
+            }
             html{ results
             }
             xml{
