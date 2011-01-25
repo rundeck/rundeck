@@ -2353,25 +2353,21 @@ class JobsXMLCodecTests extends GroovyTestCase {
     void testEncodeBasic(){
          def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
                         project:'test1',
-                        type:'MyService',
-                        name:'anobject',
-                        command:'doSomething',
-                        argString:'-delay 12 -monkey cheese -particle',
+                        workflow: new Workflow([keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]]),
+                        options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
-                ]
+                        doNodedispatch:true
+                )
         ]
-
-        try{
-            def xmlstr = JobsXMLCodec.encode(jobs1)
+        def  xmlstr = JobsXMLCodec.encode(jobs1)
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
-
 
             def doc = parser.parse(new StringReader(xmlstr))
             assertNotNull doc
@@ -2383,9 +2379,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNotNull "missing context",doc.job[0].context
             assertEquals "incorrect context size",1,doc.job[0].context.size()
             assertEquals "incorrect context project",'test1',doc.job[0].context[0].project[0].text()
-            assertEquals "incorrect context type",'MyService',doc.job[0].context[0].type[0].text()
-            assertEquals "incorrect context object",'anobject',doc.job[0].context[0].object[0].text()
-            assertEquals "incorrect context command",'doSomething',doc.job[0].context[0].command[0].text()
             assertEquals "incorrect context options size",3,doc.job[0].context[0].options[0].option.size()
             assertEquals "incorrect context options option 1 name",'delay',doc.job[0].context[0].options[0].option[0]['@name'].text()
             assertEquals "incorrect context options option 1 value",'12',doc.job[0].context[0].options[0].option[0]['@value'].text()
@@ -2396,39 +2389,36 @@ class JobsXMLCodecTests extends GroovyTestCase {
 
             assertEquals "incorrect dispatch threadcount",'1',doc.job[0].dispatch[0].threadcount[0].text()
             assertEquals "incorrect dispatch keepgoing",'true',doc.job[0].dispatch[0].keepgoing[0].text()
-        }catch (Exception e){
-            fail "caught exception during encode or parse: "+e
-        }
+
 
     }
 
     void testEncodeScheduled(){
          def XmlParser parser = new XmlParser()
         def jobs1 = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
                         project:'test1',
-                        type:'MyService',
-                        name:'anobject',
-                        command:'doSomething',
-                        argString:'-delay 12 -monkey cheese -particle',
+                        workflow: new Workflow([keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]]),
+                        options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
+                        doNodedispatch:true,
                         scheduled:true,
                         hour:'12',
                         minute:'42',
                         dayOfWeek:'*',
                         month:'*'
-                ]
+                        )
         ]
 
-        try{
+        if(true){
             def xmlstr = JobsXMLCodec.encode(jobs1)
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
-
+            System.err.println("xmlstr: ${xmlstr}");
 
             def doc = parser.parse(new StringReader(xmlstr))
             assertNotNull doc
@@ -2443,19 +2433,15 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect schedule/weekday/@day",'*',doc.job[0].schedule[0].weekday[0]['@day']
             assertEquals "missing schedule/month",1,doc.job[0].schedule[0].month.size()
             assertEquals "incorrect schedule/month/@month",'*',doc.job[0].schedule[0].month[0]['@month']
-        }catch (Exception e){
-            fail "caught exception during encode or parse: "+e
         }
         def jobs2 = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
                         project:'test1',
-                        type:'MyService',
-                        name:'anobject',
-                        command:'doSomething',
-                        argString:'-delay 12 -monkey cheese -particle',
+                        workflow: new Workflow([keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]]),
+                        options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
                         scheduled:true,
@@ -2463,10 +2449,10 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         minute:'42',
                         dayOfWeek:'Mon,Tue,Wed,Sat',
                         month:'Jan,Feb,Mar,Jun,Jul'
-                ]
+                )
         ]
 
-        try{
+        if(true){
             def xmlstr = JobsXMLCodec.encode(jobs2)
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
@@ -2485,23 +2471,19 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect schedule/weekday/@day",'Mon,Tue,Wed,Sat',doc.job[0].schedule[0].weekday[0]['@day']
             assertEquals "missing schedule/month",1,doc.job[0].schedule[0].month.size()
             assertEquals "incorrect schedule/month/@month",'Jan,Feb,Mar,Jun,Jul',doc.job[0].schedule[0].month[0]['@month']
-        }catch (Exception e){
-            fail "caught exception during encode or parse: "+e
         }
 
         //use extended schedule properties: year, seconds, dayOfMonth//
 
         //use dayOfMonth
         def jobs3 = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
                         project:'test1',
-                        type:'MyService',
-                        name:'anobject',
-                        command:'doSomething',
-                        argString:'-delay 12 -monkey cheese -particle',
+                        workflow: new Workflow([keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]]),
+                        options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
                         scheduled:true,
@@ -2510,10 +2492,10 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         dayOfWeek:'?',
                         dayOfMonth:'20',
                         month:'Jan,Feb,Mar,Jun,Jul'
-                ]
+                )
         ]
 
-        try{
+        if(true){
             def xmlstr = JobsXMLCodec.encode(jobs3)
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
@@ -2532,20 +2514,17 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "missing schedule/month",1,doc.job[0].schedule[0].month.size()
             assertEquals "incorrect schedule/month/@month",'Jan,Feb,Mar,Jun,Jul',doc.job[0].schedule[0].month[0]['@month']
             assertEquals "incorrect schedule/month/@day",'20',doc.job[0].schedule[0].month[0]['@day']
-        }catch (Exception e){
-            fail "caught exception during encode or parse: "+e
         }
         //use year
         def jobs4 = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
                         project:'test1',
-                        type:'MyService',
-                        name:'anobject',
-                        command:'doSomething',
-                        argString:'-delay 12 -monkey cheese -particle',
+                        workflow: new Workflow([keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]]),
+                        options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
+
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
                         scheduled:true,
@@ -2555,10 +2534,10 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         dayOfMonth:'20',
                         month:'Jan,Feb,Mar,Jun,Jul',
                         year:'2010'
-                ]
+                )
         ]
 
-        try{
+        if(true){
             def xmlstr = JobsXMLCodec.encode(jobs4)
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
@@ -2579,20 +2558,17 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect schedule/month/@day",'20',doc.job[0].schedule[0].month[0]['@day']
             assertEquals "missing schedule/year",1,doc.job[0].schedule[0].year.size()
             assertEquals "incorrect schedule/year/@year",'2010',doc.job[0].schedule[0].year[0]['@year']
-        }catch (Exception e){
-            fail "caught exception during encode or parse: "+e
         }
         //use seconds
         def jobs5 = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
                         project:'test1',
-                        type:'MyService',
-                        name:'anobject',
-                        command:'doSomething',
-                        argString:'-delay 12 -monkey cheese -particle',
+                        workflow: new Workflow([keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]]),
+                        options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
+
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
                         scheduled:true,
@@ -2603,10 +2579,10 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         dayOfMonth:'20',
                         month:'Jan,Feb,Mar,Jun,Jul',
                         year:'2010'
-                ]
+                )
         ]
 
-        try{
+        if(true){
             def xmlstr = JobsXMLCodec.encode(jobs5)
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
@@ -2628,8 +2604,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect schedule/month/@day",'20',doc.job[0].schedule[0].month[0]['@day']
             assertEquals "missing schedule/year",1,doc.job[0].schedule[0].year.size()
             assertEquals "incorrect schedule/year/@year",'2010',doc.job[0].schedule[0].year[0]['@year']
-        }catch (Exception e){
-            fail "caught exception during encode or parse: "+e
         }
 
     }

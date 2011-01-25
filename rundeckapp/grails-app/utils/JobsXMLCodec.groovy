@@ -43,6 +43,75 @@ class JobsXMLCodec {
 
 
 //        def NodeBuilder xml = new NodeBuilder(writer)
+        BuilderUtil bu = new BuilderUtil()
+        xml.joblist() {
+            list.each{ ScheduledExecution jobi->
+                job{
+                    bu.mapToDom(JobsXMLCodec.convertJobMap(jobi.toMap()),delegate)
+                }
+            }
+        }
+        return xml
+    }
+    /**
+     * Convert structure returned by job.toMap into correct structure for jobs xml
+     */
+    static convertJobMap={Map map->
+        map.context=[project:map.remove('project')]
+        final Map opts = map.remove('options')
+        if(null!=opts){
+            def optslist=[]
+            opts.keySet().each{
+                def x = opts[it]
+                x.'@name'=it
+                def v = x.remove('value')
+                if(null!=v){
+                    x.'@value'=v
+                }
+                optslist<<x
+            }
+            map.context.options=optslist
+        }
+        if(map.nodefilters?.dispatch){
+            map.dispatch=map.nodefilters.remove('dispatch')
+        }
+        if(map.schedule){
+            if(map.schedule.time.seconds){
+                map.schedule.time['@seconds']=map.schedule.time.remove('seconds')
+            }
+            if(map.schedule.time.minute){
+                map.schedule.time['@minute']=map.schedule.time.remove('minute')
+            }
+            if(map.schedule.time.hour){
+                map.schedule.time['@hour']=map.schedule.time.remove('hour')
+            }
+            if(map.schedule.weekday?.day){
+                map.schedule.weekday.'@day'=map.schedule.weekday.remove('day')
+            }
+            if(map.schedule.month){
+                map.schedule.month=['@month':map.schedule.remove('month')]
+            }
+
+            if(map.schedule.dayofmonth?.day){
+                def val=map.schedule.dayofmonth.remove('day')
+                if(map.schedule.month){
+                    map.schedule.month.'@day'=val
+                }else{
+                    map.schedule.month=['@day':val]
+                }
+            }
+
+            if(map.schedule.year){
+                map.schedule.year=['@year':map.schedule.remove('year')]
+            }
+        }
+        return map
+    }
+
+    static encodeWithBuilderx={ list,xml ->
+
+
+//        def NodeBuilder xml = new NodeBuilder(writer)
         xml.joblist() {
             list.each{ jobi->
                 job{
