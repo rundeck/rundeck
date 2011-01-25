@@ -95,4 +95,19 @@ public class CommandExec extends ExecutionContext implements IWorkflowCmdItem {
         }
         return map
     }
+
+    static CommandExec fromMap(Map data){
+        CommandExec ce = new CommandExec()
+        if(data.exec){
+            ce.adhocRemoteString=data.exec
+        }else if(data.script){
+            ce.adhocLocalString=data.script
+        }else if(data.scriptfile){
+            ce.adhocFilepath=data.scriptfile
+        }
+        if(data.args){
+            ce.argString=data.args
+        }
+        return ce
+    }
 }

@@ -89,6 +89,33 @@ public class Option implements Comparable{
         }
         return map
     }
+
+    public static Option fromMap(String name,Map data){
+        Option opt = new Option()
+        opt.name=name
+        if(data.enforced){
+            opt.enforced=true
+        }
+        if(data.required){
+            opt.required=true
+        }
+        if(data.description){
+            opt.description=data.description
+        }
+        if(data.value){
+            opt.defaultValue = data.value
+        }
+        if(data.valuesUrl){
+            opt.valuesUrl=new URL(data.valuesUrl)
+        }
+        if(null!=data.regex){
+            opt.regex=data.regex
+        }
+        if(data.values){
+            opt.values=new TreeSet(data.values)
+        }
+        return opt
+    }
     /**
      * Return the string equivalent of the values set member
      */
@@ -130,4 +157,19 @@ public class Option implements Comparable{
         }
         return opt
     }
+
+    public String toString ( ) {
+        return "Option{" +
+        "name='" + name + '\'' +
+        ", description='" + description + '\'' +
+        ", defaultValue='" + defaultValue + '\'' +
+        ", enforced=" + enforced +
+        ", required=" + required +
+        ", values=" + values +
+        ", valuesUrl=" + valuesUrl +
+        ", regex='" + regex + '\'' +
+        '}' ;
+    }
+
+
 }

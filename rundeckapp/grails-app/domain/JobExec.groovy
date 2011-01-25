@@ -65,4 +65,14 @@ public class JobExec extends CommandExec implements IWorkflowJobItem{
         }
         return map
     }
+
+    static JobExec jobExecFromMap(Map map){
+        JobExec exec = new JobExec()
+        exec.jobGroup=map.jobref.group
+        exec.jobName=map.jobref.name
+        if(map.jobref.args){
+            exec.argString=map.jobref.args
+        }
+        return exec
+    }
 }

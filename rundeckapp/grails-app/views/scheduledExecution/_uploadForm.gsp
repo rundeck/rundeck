@@ -181,8 +181,22 @@
         </g:else>
         <div id="uploadFormDiv" style="${(didupload && errjobs?.size()<1)?'display:none':''}">
             <div class="presentation">
-                <p><span class="info note">Choose the XML formatted <g:message code="domain.ScheduledExecution.title"/>s definition file.</span></p>
+                <p><span class="info note">Choose the XML/YAML formatted <g:message code="domain.ScheduledExecution.title"/>s definition file.</span></p>
                 <input type="file" name="xmlBatch"/>
+            </div>
+            <span class="prompt">File format:</span>
+            <div class="presentation">
+                <div>
+                    <label>
+                    <g:radio name="fileformat" value="xml"  checked="${params.fileformat?params.fileformat=='xml':true}"/>
+                    XML</label>
+                </div>
+                <div>
+                    <label>
+                    <g:radio name="fileformat" value="yaml"  checked="${params.fileformat?params.fileformat=='yaml':false}"/>
+                    YAML</label>
+                </div>
+
             </div>
             <span class="prompt">When a <g:message code="domain.ScheduledExecution.title"/> with the same name already exists:</span>
             <div class="presentation">

@@ -96,7 +96,7 @@ class ScheduledExecution extends ExecutionContext {
         map.sequence=workflow.toMap()
 
         if(scheduled){
-            map.schedule=[time:[hour:hour,minute:minute],month:month]
+            map.schedule=[time:[hour:hour,minute:minute,seconds:seconds],month:month,year:year]
             if(dayOfMonth!='?'){
                 map.schedule.dayofmonth=[day:dayOfMonth ]
             }else{
@@ -107,7 +107,6 @@ class ScheduledExecution extends ExecutionContext {
             def yfilters=["":"hostname"]
             map.nodefilters=[dispatch:[threadcount:nodeThreadcount,keepgoing:nodeKeepgoing,excludePrecedence:nodeExcludePrecedence]]
             final Collection inclFilters = BaseNodeFilters.filterKeys.keySet().findAll {this["nodeInclude"+filterKeys[it]]}
-            System.err.println("inclFilters: "+inclFilters);
             if(inclFilters){
                 map.nodefilters.include=[:]
                 inclFilters.each{ ek->
@@ -115,7 +114,6 @@ class ScheduledExecution extends ExecutionContext {
                 }
             }
             final Collection exclFilters = BaseNodeFilters.filterKeys.keySet().findAll {this["nodeExclude"+filterKeys[it]]}
-            System.err.println("exclFilters: "+exclFilters);
             if(exclFilters){
                 map.nodefilters.exclude=[:]
                 exclFilters.each{ ek->
@@ -133,6 +131,69 @@ class ScheduledExecution extends ExecutionContext {
             }
         }
         return map
+    }
+    static ScheduledExecution fromMap(Map data){
+        ScheduledExecution se = new ScheduledExecution()
+        se.jobName=data.name
+        se.groupPath=data['group']?data['group']:null
+        se.description=data.description?data.description:null
+        se.loglevel=data.loglevel?data.loglevel:'INFO'
+        se.project=data.project
+        if(data.options){
+            TreeSet options=new TreeSet()
+            data.options.keySet().each{optname->
+                Option opt = Option.fromMap(optname,data.options[optname])
+                options<<opt
+            }
+            se.options=options
+        }
+        if(data.sequence){
+            Workflow wf = Workflow.fromMap(data.sequence as Map)
+            se.workflow=wf
+        }
+        if(data.schedule){
+            se.scheduled=true
+            se.seconds=data.schedule.time.seconds?:'*'
+            se.minute=data.schedule.time.minute?:'*'
+            se.hour=data.schedule.time.hour?:'*'
+            se.month=data.schedule.month?:'*'
+            se.year=data.schedule.year?:'*'
+            if(data.schedule.dayofmonth){
+                se.dayOfMonth = data.schedule.dayofmonth.day
+                se.dayOfWeek = '?'
+            }else if(data.schedule.weekday){
+                se.dayOfWeek=data.schedule.weekday.day
+                se.dayOfMonth = '?'
+            }
+        }
+        if(data.nodefilters){
+            se.doNodedispatch = true
+            se.nodeThreadcount = data.nodefilters.dispatch.threadcount
+            se.nodeKeepgoing = data.nodefilters.dispatch.keepgoing?true:false
+            se.nodeExcludePrecedence = data.nodefilters.dispatch.excludePrecedence?true:false
+            if(data.nodefilters.include){
+                data.nodefilters.include.keySet().each{ inf->
+                    if(null!=filterKeys[inf]){
+                        se["nodeInclude${filterKeys[inf]}"]=data.nodefilters.include[inf]
+                    }
+                }
+
+            }
+            if(data.nodefilters.exclude){
+                data.nodefilters.exclude.keySet().each{ inf->
+                    if(null!=filterKeys[inf]){
+                        se["nodeExclude${filterKeys[inf]}"]=data.nodefilters.exclude[inf]
+                    }
+                }
+            }
+        }
+        if(data.notification?.onsuccess?.recipients){
+            se.notifySuccessRecipients=data.notification.onsuccess.recipients
+        }
+        if(data.notification?.onfailure?.recipients){
+            se.notifyFailureRecipients=data.notification.onfailure.recipients
+        }
+        return se
     }
 
     public setUserRoles(List l){

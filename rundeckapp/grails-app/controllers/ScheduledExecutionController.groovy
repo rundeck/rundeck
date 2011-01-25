@@ -796,6 +796,213 @@ class ScheduledExecutionController  {
         }
 
     }
+    def _doupdateJob = {id, ScheduledExecution params ->
+        log.debug("ScheduledExecutionController: update : attempting to update: "+id +
+                 ". params: " + params)
+        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        def user = (session?.user) ? session.user : "anonymous"
+        def rolelist = (session?.roles) ? session.roles : []
+
+        if(params.groupPath ){
+            def re = /^\/*(.+?)\/*$/
+            def matcher = params.groupPath =~ re
+            if(matcher.matches()){
+                params.groupPath=matcher.group(1);
+                log.debug("params.groupPath updated: ${params.groupPath}")
+            }else{
+                log.debug("params.groupPath doesn't match: ${params.groupPath}")
+            }
+        }
+        boolean failed=false
+        def ScheduledExecution scheduledExecution = ScheduledExecution.get( id )
+
+        def crontab = [:]
+        if(!scheduledExecution) {
+            return [false,null]
+        }
+        def oldjobname = scheduledExecution.generateJobScheduledName()
+        def oldjobgroup = scheduledExecution.generateJobGroupName()
+        def oldsched = scheduledExecution.scheduled
+        scheduledExecution.properties = params.properties.subMap(params.properties.keySet().findAll{it!='lastUpdated' && it!='dateCreated'})
+
+        //clear old mode job properties
+        scheduledExecution.adhocExecution=false;
+        scheduledExecution.adhocRemoteString=null
+        scheduledExecution.adhocLocalString=null
+        scheduledExecution.adhocFilepath=null
+
+        if(!scheduledExecution.validate()){
+            failed=true
+        }
+        if(scheduledExecution.scheduled){
+//            scheduledExecution.populateTimeDateFields(params)
+//                if(!scheduledExecution.user){
+                scheduledExecution.user = user
+                scheduledExecution.userRoles = rolelist
+//                }else{/
+                //TODO: determine rolelist for selected user
+//                    if(params.user==user){
+//                        scheduledExecution.userRoles=rolelist
+//                    }else{
+//                        scheduledExecution.userRoles=[]
+//                    }
+//                }
+            if(!CronExpression.isValidExpression(scheduledExecution.generateCrontabExression())){
+                failed=true;
+                scheduledExecution.errors.rejectValue('crontabString','scheduledExecution.crontabString.invalid.message')
+            }else{
+                //test for valid schedule
+                CronExpression c = new CronExpression(scheduledExecution.generateCrontabExression())
+                def next=c.getNextValidTimeAfter(new Date());
+                if(!next){
+                    failed=true;
+                    scheduledExecution.errors.rejectValue('crontabString','scheduledExecution.crontabString.noschedule.message')
+                }
+            }
+        }else{
+            //set nextExecution of non-scheduled job to be far in the future so that query results can sort correctly
+            scheduledExecution.nextExecution=new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
+        }
+
+        def boolean renamed = oldjobname!=scheduledExecution.generateJobScheduledName() || oldjobgroup!=scheduledExecution.generateJobGroupName()
+
+
+        if(!frameworkService.existsFrameworkProject(scheduledExecution.project,framework)){
+            failed=true
+            scheduledExecution.errors.rejectValue('project','scheduledExecution.project.invalid.message',[scheduledExecution.project].toArray(),'Project was not found: {0}')
+        }
+
+        if(params.workflow ){
+            //use the input params to define the workflow
+            //create workflow and CommandExecs
+            def Workflow workflow = new Workflow(params.workflow)
+            def i=0;
+            def wfitemfailed=false
+            workflow.commands.each{CommandExec cmdparams->
+                if(!cmdparams.project){
+                    cmdparams.project=scheduledExecution.project
+                }
+                WorkflowController._validateCommandExec(cmdparams)
+                if(cmdparams.errors.hasErrors()){
+                    wfitemfailed=true
+                }
+                i++
+            }
+            scheduledExecution.workflow=workflow
+
+            if(wfitemfailed){
+                failed=true
+                scheduledExecution.errors.rejectValue('workflow','scheduledExecution.workflow.invalid.message')
+            }
+            if(!workflow.commands || workflow.commands.size()<1){
+                failed=true
+                scheduledExecution.errors.rejectValue('workflow','scheduledExecution.workflow.empty.message')
+            }
+        }else if(!scheduledExecution.workflow || !scheduledExecution.workflow.commands || scheduledExecution.workflow.commands.size()<1){
+            failed=true
+            scheduledExecution.errors.rejectValue('workflow','scheduledExecution.workflow.empty.message')
+        }
+        if(scheduledExecution.options){
+            def todelete=[]
+            scheduledExecution.options.each{
+                todelete<<it
+            }
+            todelete.each{
+                it.delete()
+                scheduledExecution.removeFromOptions(it)
+            }
+            scheduledExecution.options=null
+        }
+        if (params.options){
+
+            //set user options:
+            def i=0;
+            params.options.each{Option theopt->
+                scheduledExecution.addToOptions(theopt)
+                if (!theopt.validate()) {
+                    failed = true
+                    theopt.discard()
+                    def errmsg = optdefparams.name + ": " + theopt.errors.allErrors.collect {g.message(error: it)}.join(";")
+                    scheduledExecution.errors.rejectValue(
+                           'options',
+                           'scheduledExecution.options.invalid.message',
+                           [errmsg] as Object[],
+                           'Invalid Option definition: {0}'
+                     )
+                }
+                theopt.scheduledExecution=scheduledExecution
+                i++
+            }
+
+        }
+
+        def todiscard=[]
+        if(params.notifications && scheduledExecution.notifications){
+            def todelete=[]
+            scheduledExecution.notifications.each{Notification note->
+                todelete<<note
+            }
+            todelete.each{
+                it.delete()
+                scheduledExecution.removeFromNotifications(it)
+                todiscard<<it
+            }
+            scheduledExecution.notifications=null
+        }
+        if(params.notifications){
+            //create notifications
+            failed=_updateNotifications(params, scheduledExecution)
+        }
+
+        //try to save workflow
+        if(!failed && null!=scheduledExecution.workflow){
+            if(!scheduledExecution.workflow.validate()){
+                log.error("unable to save workflow: "+scheduledExecution.workflow.errors.allErrors.collect{g.message(error:it)}.join("\n"))
+                failed=true;
+            }else{
+                scheduledExecution.workflow.save(flush:true)
+            }
+        }
+        if(!failed){
+            if(!scheduledExecution.validate()){
+                failed=true
+            }
+        }
+        if(!failed && scheduledExecution.save(true)) {
+
+            if(scheduledExecution.scheduled){
+                def nextdate=null
+                try{
+                    nextdate=scheduledExecutionService.scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
+                }catch (SchedulerException e){
+                    log.error("Unable to schedule job: ${scheduledExecution.id}: ${e.message}")
+                }
+                def newsched = ScheduledExecution.get(scheduledExecution.id)
+                newsched.nextExecution=nextdate
+                if(!newsched.save()){
+                    log.error("Unable to save second change to scheduledExec.")
+                }
+            }else if(oldsched && oldjobname && oldjobgroup){
+                scheduledExecutionService.deleteJob(oldjobname,oldjobgroup)
+            }
+            log.info("update : save operation succeeded. redirecting to show...")
+            session.editOPTS?.remove(scheduledExecution.id.toString())
+            session.undoOPTS?.remove(scheduledExecution.id.toString())
+            session.redoOPTS?.remove(scheduledExecution.id.toString())
+
+            session.editWF?.remove(scheduledExecution.id.toString())
+            session.undoWF?.remove(scheduledExecution.id.toString())
+            session.redoWF?.remove(scheduledExecution.id.toString())
+            return [true,scheduledExecution]
+        } else {
+            todiscard.each{
+                it.discard()
+            }
+            scheduledExecution.discard()
+            return [false, scheduledExecution]
+        }
+
+    }
 
     def copy = {
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
@@ -957,7 +1164,7 @@ class ScheduledExecutionController  {
         }
         def results
         try{
-            results= _parseJobsFile(file);
+            results= _parseJobsXMLFile(file);
         }catch(Exception e){
             if(!params.xmlreq){
                 render(view:'upload')
@@ -1077,7 +1284,7 @@ class ScheduledExecutionController  {
      * Parse an uploaded file and return the Collection of jobs data as parsed.
      * @throws Exception if an error occurs, and sets the flash.error message
      */
-    def _parseJobsFile={file->
+    def _parseJobsXMLFile={file->
 
         def XmlSlurper parser = new XmlSlurper()
         def  doc
@@ -1301,6 +1508,30 @@ class ScheduledExecutionController  {
                     scheduledExecution.errors.rejectValue('workflow','scheduledExecution.workflow.invalid.message')
                 }
             }
+        }else if (params.workflow && params.workflow instanceof Workflow){
+            def Workflow workflow = new Workflow(params.workflow)
+            def i=0;
+            def wfitemfailed=false
+            workflow.commands.each{CommandExec cmdparams ->
+                if(!cmdparams.project){
+                    cmdparams.project=scheduledExecution.project
+                }
+                WorkflowController._validateCommandExec(cmdparams)
+                if(cmdparams.errors.hasErrors()){
+                    wfitemfailed=true
+                }
+                i++
+            }
+            scheduledExecution.workflow=workflow
+
+            if(wfitemfailed){
+                failed=true
+                scheduledExecution.errors.rejectValue('workflow','scheduledExecution.workflow.invalid.message')
+            }
+            if(!workflow.commands || workflow.commands.size()<1){
+                failed=true
+                scheduledExecution.errors.rejectValue('workflow','scheduledExecution.workflow.empty.message')
+            }
         }else if (params.workflow){
             //use input parameters to define workflow
             //create workflow and CommandExecs
@@ -1377,23 +1608,41 @@ class ScheduledExecutionController  {
         }else if (params.options){
             //set user options:
             def i=0;
-            while(params.options["options[${i}]"]){
-                def Map optdefparams=params.options["options[${i}]"]
-                def Option theopt = new Option(optdefparams)
-                scheduledExecution.addToOptions(theopt)
-                if (!theopt.validate()) {
-                    failed = true
-                    theopt.discard()
-                    def errmsg = optdefparams.name + ": " + theopt.errors.allErrors.collect {g.message(error: it)}.join(";")
-                    scheduledExecution.errors.rejectValue(
-                           'options',
-                           'scheduledExecution.options.invalid.message',
-                           [errmsg] as Object[],
-                           'Invalid Option definition: {0}'
-                     )
+            if(params.options instanceof Collection ){
+                params.options.each{ theopt->
+                    if (!theopt.validate()) {
+                        failed = true
+                        theopt.discard()
+                        def errmsg = optdefparams.name + ": " + theopt.errors.allErrors.collect {g.message(error: it)}.join(";")
+                        scheduledExecution.errors.rejectValue(
+                               'options',
+                               'scheduledExecution.options.invalid.message',
+                               [errmsg] as Object[],
+                               'Invalid Option definition: {0}'
+                         )
+                    }
+                    theopt.scheduledExecution=scheduledExecution
+                    i++
                 }
-                theopt.scheduledExecution=scheduledExecution
-                i++
+            }else if (params.options instanceof Map){
+                while(params.options["options[${i}]"]){
+                    def Map optdefparams=params.options["options[${i}]"]
+                    def Option theopt = new Option(optdefparams)
+                    scheduledExecution.addToOptions(theopt)
+                    if (!theopt.validate()) {
+                        failed = true
+                        theopt.discard()
+                        def errmsg = optdefparams.name + ": " + theopt.errors.allErrors.collect {g.message(error: it)}.join(";")
+                        scheduledExecution.errors.rejectValue(
+                               'options',
+                               'scheduledExecution.options.invalid.message',
+                               [errmsg] as Object[],
+                               'Invalid Option definition: {0}'
+                         )
+                    }
+                    theopt.scheduledExecution=scheduledExecution
+                    i++
+                }
             }
         }
         if(!params.notifications && (params.notifyOnsuccess || params.notifyOnfailure)){
@@ -1449,6 +1698,52 @@ class ScheduledExecutionController  {
             def notif = params.notifications[trigger]
             if (notif && notif.email) {
                 def arr=notif.email.split(",")
+                arr.each{email->
+                    if(email && !org.apache.commons.validator.EmailValidator.getInstance().isValid(email)){
+                        failed=true
+                         scheduledExecution.errors.rejectValue(
+                            fieldNames[trigger],
+                            'scheduledExecution.notifications.invalidemail.message',
+                            [email] as Object[],
+                            'Invalid email address: {0}'
+                        )
+                    }
+                }
+                if(failed){
+                    return
+                }
+                def addrs = arr.findAll{it.trim()}.join(",")
+                Notification n = new Notification(eventTrigger: trigger, type: 'email', content: addrs)
+                scheduledExecution.addToNotifications(n)
+                if (!n.validate()) {
+                    failed = true
+                    n.discard()
+                    def errmsg = trigger + " notification: " + n.errors.allErrors.collect {g.message(error: it)}.join(";")
+                    scheduledExecution.errors.rejectValue(
+                        fieldNames[trigger],
+                        'scheduledExecution.notifications.invalid.message',
+                        [errmsg] as Object[],
+                        'Invalid notification definition: {0}'
+                    )
+                }
+                n.scheduledExecution = scheduledExecution
+            }
+        }
+        return failed
+    }
+
+    /**
+     * Update ScheduledExecution notification definitions based on input params.
+     *
+     * expected params: [notifications: [<eventTrigger>:[email:<content>]]]
+     */
+    private boolean _updateNotifications(ScheduledExecution params,ScheduledExecution scheduledExecution) {
+        boolean failed=false
+        def fieldNames=[onsuccess:'notifySuccessRecipients',onfailure:'notifyFailureRecipients']
+        ['onsuccess', 'onfailure'].each {trigger ->
+            def notif = params.notifications.find{it.eventTrigger==trigger}
+            if (notif && notif.type=='email' && notif.content) {
+                def arr=notif.content.split(",")
                 arr.each{email->
                     if(email && !org.apache.commons.validator.EmailValidator.getInstance().isValid(email)){
                         failed=true
@@ -1557,7 +1852,7 @@ class ScheduledExecutionController  {
                 params.jobName="Inline Script Job"
             }
         }
-        def result= _dovalidate(params)
+        def result= _dovalidate(params instanceof ScheduledExecution?params.properties:params)
         def scheduledExecution=result.scheduledExecution
         failed=result.failed
         //try to save workflow
@@ -1614,57 +1909,43 @@ class ScheduledExecutionController  {
             return
         }
         def file = request.getFile("xmlBatch")
-
+        def fileformat=params.fileformat?:'xml'
+        def jobset
         if(!file){
             flash.message="No file was uploaded."
             return
         }
-        def XmlSlurper parser = new XmlSlurper()
-        def  doc
-        try{
-            doc = parser.parse(file.getInputStream())
-        }catch(Exception e){
-            flash.message="Unable to parse file: ${e}"
-            flash.error="Unable to parse file: ${e}"
-            if(!params.xmlreq){
-                render(view:'upload')
-                return;
-            }else{
-                return xmlerror.call();
+        if('xml'==fileformat){
+            try{
+                jobset= _parseJobsXMLFile(file);
+            }catch(Exception e){
+                if(!params.xmlreq){
+                    render(view:'upload')
+                    return;
+                }else{
+                    return xmlerror.call();
+                }
             }
-        }
-        if(!doc){
-            flash.message="XML Document could not be parsed."
-            render(view:'upload')
-            return;
-        }
+        }else if ('yaml'==fileformat){
 
-        if(!doc.job){
-            flash.error="Jobs XML Document was not valid: 'job' element not found."
-            flash.message="Jobs XML Document was not valid: 'job' element not found."
-            if(!params.xmlreq){
-                render(view:'upload')
-                return;
-            }else{
-                return xmlerror.call();
-            }
-        }
-        def jobset
-        try{
-            jobset = doc.decodeJobsXML()
-        }catch (JobXMLException e){
-            flash.error="Jobs XML Document was not valid: ${e}"
-            flash.message="Jobs XML Document was not valid: ${e}"
-            if(!params.xmlreq){
-                render(view:'upload')
-                return;
-            }else{
-                return xmlerror.call();
+            try{
+                //load file into string
+//                jobset = JobsYAMLCodec.decodeFromStream(file.getInputStream())
+                jobset = file.getInputStream().decodeJobsYAML()
+            }catch (Exception e){
+                flash.error="Jobs YAML Document was not valid: ${e}"
+                flash.message="Jobs YAML Document was not valid: ${e}"
+                if(!params.xmlreq){
+                    render(view:'upload')
+                    return;
+                }else{
+                    return xmlerror.call();
+                }
             }
         }
         if(null==jobset){
-            flash.error="Jobs XML Document was not valid"
-            flash.message="Jobs XML Document was not valid"
+            flash.error="Jobs Document was not valid"
+            flash.message="Jobs Document was not valid"
             if(!params.xmlreq){
                 render(view:'upload')
                 return;
@@ -1696,11 +1977,16 @@ class ScheduledExecutionController  {
                 skipjobs <<[scheduledExecution:jobdata,entrynum:i,errmsg:"A Job named '${jobdata.jobName}' already exists"]
             }
             else if(params.dupeOption == "update" && scheduledExecution){
-                jobdata.id=scheduledExecution.id
                 def success=false
                 def errmsg
                 try{
-                    def result = _doupdate(jobdata)
+                    def result
+                    if(jobdata instanceof ScheduledExecution){
+                        result = _doupdateJob(scheduledExecution.id,jobdata)
+                    }else{
+                        jobdata.id=scheduledExecution.id
+                        result = _doupdate(jobdata)
+                    }
 
                     success = result[0]
                     scheduledExecution=result[1]
@@ -1709,6 +1995,8 @@ class ScheduledExecutionController  {
                     }
                 }catch(Exception e){
                     errmsg=e.getMessage()
+                    System.err.println("caught exception: "+errmsg);
+                    e.printStackTrace()
                 }
                 if(!success){
                     errjobs<<[scheduledExecution:scheduledExecution,entrynum:i,errmsg:errmsg]
@@ -1747,7 +2035,7 @@ class ScheduledExecutionController  {
         }else{
             //TODO: update commander's jobs upload task to submit XML content directly instead of via uploaded file, and use proper
             //TODO: grails content negotiation
-            response.setHeader(Constants.X_RUNDECK_RESULT_HEADER,"Jobs XML Uploaded. Succeeded: ${jobs.size()}, Failed: ${errjobs.size()}, Skipped: ${skipjobs.size()}")
+            response.setHeader(Constants.X_RUNDECK_RESULT_HEADER,"Jobs Uploaded. Succeeded: ${jobs.size()}, Failed: ${errjobs.size()}, Skipped: ${skipjobs.size()}")
                 render(contentType:"text/xml"){
                     result(error:false){
                         succeeded(count:jobs.size()){

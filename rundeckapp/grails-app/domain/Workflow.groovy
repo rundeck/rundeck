@@ -61,4 +61,26 @@ public class Workflow {
     public Map toMap(){
         return [/*threadcount:threadcount,*/keepgoing:keepgoing,strategy:strategy,commands:commands.collect{it.toMap()}]
     }
+
+    static Workflow fromMap(Map data){
+        Workflow wf = new Workflow()
+        if(data.keepgoing){
+            wf.keepgoing=true
+        }
+        wf.strategy=data.strategy?data.strategy:'node-first'
+        if(data.commands){
+            ArrayList commands = new ArrayList()
+            data.commands.each{map->
+                if(map.jobref){
+                    JobExec exec = JobExec.jobExecFromMap(map)
+                    commands <<exec
+                }else{
+                    CommandExec exec=CommandExec.fromMap(map)
+                    commands<<exec
+                }
+            }
+            wf.commands=commands
+        }
+        return wf
+    }
 }
