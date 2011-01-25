@@ -78,7 +78,9 @@ class ScheduledExecution extends ExecutionContext {
         if(groupPath){
             map.group=groupPath
         }
-        map.id=id
+        if(id){
+            map.id=id
+        }
         map.description=description
         map.loglevel=loglevel
         map.project=project
