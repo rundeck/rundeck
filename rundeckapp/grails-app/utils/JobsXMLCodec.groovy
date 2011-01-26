@@ -177,17 +177,6 @@ class JobsXMLCodec {
                                     attrset['equals']=cexec.equalsString
                                 }
                                 boolean isJobExec = (cexec instanceof Map && cexec.jobName || cexec instanceof JobExec)
-                                if(!cexec.adhocExecution && !isJobExec){
-                                    if(cexec.name){
-                                        attrset['resource']=cexec.name
-                                    }
-                                    if(cexec.command){
-                                        attrset['name']=cexec.command
-                                    }
-                                    if(cexec.type){
-                                        attrset['module']=cexec.type
-                                    }
-                                }
                                 command(attrset){
                                     if(cexec.adhocExecution){
                                         if(cexec.adhocRemoteString){

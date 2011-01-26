@@ -598,11 +598,15 @@ class ScheduledExecutionController  {
                 scheduledExecution.errors.rejectValue('workflow','scheduledExecution.workflow.empty.message')
             }else{
                 def wfitemfailed=false
+                def failedlist=[]
+                def i=1;
                 wf.commands.each{cexec->
                     WorkflowController._validateCommandExec(cexec)
                     if(cexec.errors.hasErrors()){
                         wfitemfailed=true
+                       failedlist<<i
                     }
+                    i++
                 }
                 if(!wfitemfailed){
                     def oldwf=scheduledExecution.workflow
@@ -614,7 +618,7 @@ class ScheduledExecutionController  {
                     wf.discard()
                 }else{
                     failed=true
-                    scheduledExecution.errors.rejectValue('workflow','scheduledExecution.workflow.invalid.message')
+                    scheduledExecution.errors.rejectValue('workflow','scheduledExecution.workflow.invalidstepslist.message',[failedlist.toString()].toArray(),"Invalid workflow steps: {0}")
                 }
 
             }
@@ -624,6 +628,7 @@ class ScheduledExecutionController  {
             def Workflow workflow = new Workflow(threadcount:params.workflow.threadcount?params.workflow.threadcount:1,keepgoing:null!=params.workflow.keepgoing?params.workflow.keepgoing:false,scheduledExecution:scheduledExecution)
             def i=0;
             def wfitemfailed=false
+            def failedlist=[]
             while(params.workflow["commands[${i}]"]){
                 def Map cmdparams=params.workflow["commands[${i}]"]
                 def cexec
@@ -640,6 +645,7 @@ class ScheduledExecutionController  {
                 WorkflowController._validateCommandExec(cexec)
                 if(cexec.errors.hasErrors()){
                     wfitemfailed=true
+                    failedlist<<(i+1)
                 }
                 i++
             }
@@ -647,7 +653,7 @@ class ScheduledExecutionController  {
 
             if(wfitemfailed){
                 failed=true
-                scheduledExecution.errors.rejectValue('workflow','scheduledExecution.workflow.invalid.message')
+                scheduledExecution.errors.rejectValue('workflow','scheduledExecution.workflow.invalidstepslist.message',[failedlist.toString()].toArray(),"Invalid workflow steps: {0}")
             }
             if(!workflow.commands || workflow.commands.size()<1){
                 failed=true
@@ -878,6 +884,7 @@ class ScheduledExecutionController  {
             def Workflow workflow = new Workflow(params.workflow)
             def i=0;
             def wfitemfailed=false
+            def failedlist=[]
             workflow.commands.each{CommandExec cmdparams->
                 if(!cmdparams.project){
                     cmdparams.project=scheduledExecution.project
@@ -885,6 +892,7 @@ class ScheduledExecutionController  {
                 WorkflowController._validateCommandExec(cmdparams)
                 if(cmdparams.errors.hasErrors()){
                     wfitemfailed=true
+                    failedlist<<(i+1)
                 }
                 i++
             }
@@ -892,7 +900,7 @@ class ScheduledExecutionController  {
 
             if(wfitemfailed){
                 failed=true
-                scheduledExecution.errors.rejectValue('workflow','scheduledExecution.workflow.invalid.message')
+                scheduledExecution.errors.rejectValue('workflow','scheduledExecution.workflow.invalidstepslist.message',[failedlist.toString()].toArray(),"Invalid workflow steps: {0}")
             }
             if(!workflow.commands || workflow.commands.size()<1){
                 failed=true
@@ -1493,11 +1501,15 @@ class ScheduledExecutionController  {
             }else{
 
                 def wfitemfailed=false
+                def i=1
+                def failedlist=[]
                 wf.commands.each{cexec->
                     WorkflowController._validateCommandExec(cexec)
                     if(cexec.errors.hasErrors()){
                         wfitemfailed=true
+                        failedlist<<i
                     }
+                    i++
                 }
                 if(!wfitemfailed){
                     final Workflow workflow = new Workflow(wf)
@@ -1505,13 +1517,14 @@ class ScheduledExecutionController  {
                     wf.discard()
                 }else{
                     failed=true
-                    scheduledExecution.errors.rejectValue('workflow','scheduledExecution.workflow.invalid.message')
+                    scheduledExecution.errors.rejectValue('workflow','scheduledExecution.workflow.invalidstepslist.message',[failedlist.toString()].toArray(),"Invalid workflow steps: {0}")
                 }
             }
         }else if (params.workflow && params.workflow instanceof Workflow){
             def Workflow workflow = new Workflow(params.workflow)
             def i=0;
             def wfitemfailed=false
+            def failedlist=[]
             workflow.commands.each{CommandExec cmdparams ->
                 if(!cmdparams.project){
                     cmdparams.project=scheduledExecution.project
@@ -1519,6 +1532,7 @@ class ScheduledExecutionController  {
                 WorkflowController._validateCommandExec(cmdparams)
                 if(cmdparams.errors.hasErrors()){
                     wfitemfailed=true
+                    failedlist<<(i+1)
                 }
                 i++
             }
@@ -1526,7 +1540,7 @@ class ScheduledExecutionController  {
 
             if(wfitemfailed){
                 failed=true
-                scheduledExecution.errors.rejectValue('workflow','scheduledExecution.workflow.invalid.message')
+                scheduledExecution.errors.rejectValue('workflow','scheduledExecution.workflow.invalidstepslist.message',[failedlist.toString()].toArray(),"Invalid workflow steps: {0}")
             }
             if(!workflow.commands || workflow.commands.size()<1){
                 failed=true
@@ -1538,6 +1552,7 @@ class ScheduledExecutionController  {
             def Workflow workflow = new Workflow(threadcount:params.workflow.threadcount,keepgoing:params.workflow.keepgoing,scheduledExecution:scheduledExecution)
             def i=0;
             def wfitemfailed=false
+            def failedlist=[]
             while(params.workflow["commands[${i}]"]){
                 def Map cmdparams=params.workflow["commands[${i}]"]
                 def cexec
@@ -1555,6 +1570,7 @@ class ScheduledExecutionController  {
                 WorkflowController._validateCommandExec(cexec)
                 if(cexec.errors.hasErrors()){
                     wfitemfailed=true
+                    failedlist<<(i+1)
                 }
                 i++
             }
@@ -1562,7 +1578,7 @@ class ScheduledExecutionController  {
 
             if(wfitemfailed){
                 failed=true
-                scheduledExecution.errors.rejectValue('workflow','scheduledExecution.workflow.invalid.message')
+                scheduledExecution.errors.rejectValue('workflow','scheduledExecution.workflow.invalidstepslist.message',[failedlist.toString()].toArray(),"Invalid workflow steps: {0}")
             }
             if(!workflow.commands || workflow.commands.size()<1){
                 failed=true

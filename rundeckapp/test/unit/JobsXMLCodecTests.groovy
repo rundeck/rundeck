@@ -3150,17 +3150,23 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         doNodedispatch:true,
                         workflow:[threadcount:1,keepgoing:true,commands:[
                                 [
-                                    name:'aname',
-                                    command:'acommand',
-                                    type:'atype',
+                                    adhocExecution:true,
+                                    adhocRemoteString:'aname',
                                 ]
                         ]
                         ]
                 ]
         ]
 
-        try{
-            def xmlstr = JobsXMLCodec.encode(jobs1)
+        if(true){
+            def xmlstr
+            try{
+                xmlstr = JobsXMLCodec.encode(jobs1)
+                System.err.println("xmlstr: "+xmlstr);
+            }catch (Exception e){
+                e.printStackTrace(System.err)
+                fail "caught exception during encode or parse: "+e
+            }
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
 
@@ -3176,19 +3182,14 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "wrong keepgoing","true",doc.job[0].sequence[0]['@keepgoing']
             assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
             assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
-            assertEquals "wrong command @resource","aname",doc.job[0].sequence[0].command[0]['@resource']
-            assertEquals "wrong command @name","acommand",doc.job[0].sequence[0].command[0]['@name']
-            assertEquals "wrong command @module","atype",doc.job[0].sequence[0].command[0]['@module']
+            assertEquals "wrong command/exec size",1, doc.job[0].sequence[0].command[0].exec.size()
+            assertEquals "wrong command/exec","aname", doc.job[0].sequence[0].command[0].exec[0].text()
             assertNull "wrong command @return",doc.job[0].sequence[0].command[0]['@return']
             assertNull "wrong command @if",doc.job[0].sequence[0].command[0]['@if']
             assertNull "wrong command @unless",doc.job[0].sequence[0].command[0]['@unless']
             assertNull "wrong command @equals",doc.job[0].sequence[0].command[0]['@equals']
-
-
-        }catch (Exception e){
-            e.printStackTrace(System.err)
-            fail "caught exception during encode or parse: "+e
         }
+
         //encode basic workflow with one command call, change threadcount
         def jobs1b = [
                 [
@@ -3203,17 +3204,23 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         doNodedispatch:true,
                         workflow:[threadcount:2,commands:[
                                 [
-                                    name:'aname',
-                                    command:'acommand',
-                                    type:'atype',
+                                    adhocExecution:true,
+                                    adhocRemoteString:'aname',
                                 ]
                         ]
                         ]
                 ]
         ]
 
-        try{
-            def xmlstr = JobsXMLCodec.encode(jobs1b)
+        if(true){
+            def xmlstr
+            try{
+                xmlstr= JobsXMLCodec.encode(jobs1b)
+
+            }catch (Exception e){
+                e.printStackTrace(System.err)
+                fail "caught exception during encode or parse: "+e
+            }
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
 
@@ -3229,18 +3236,13 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "wrong keepgoing","false",doc.job[0].sequence[0]['@keepgoing']
             assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
             assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
-            assertEquals "wrong command @resource","aname",doc.job[0].sequence[0].command[0]['@resource']
-            assertEquals "wrong command @name","acommand",doc.job[0].sequence[0].command[0]['@name']
-            assertEquals "wrong command @module","atype",doc.job[0].sequence[0].command[0]['@module']
+            assertEquals "wrong command/exec size",1, doc.job[0].sequence[0].command[0].exec.size()
+            assertEquals "wrong command/exec","aname", doc.job[0].sequence[0].command[0].exec[0].text()
             assertNull "wrong command @return",doc.job[0].sequence[0].command[0]['@return']
             assertNull "wrong command @if",doc.job[0].sequence[0].command[0]['@if']
             assertNull "wrong command @unless",doc.job[0].sequence[0].command[0]['@unless']
             assertNull "wrong command @equals",doc.job[0].sequence[0].command[0]['@equals']
 
-
-        }catch (Exception e){
-            e.printStackTrace(System.err)
-            fail "caught exception during encode or parse: "+e
         }
         //add conditional attributes
         def jobs2 = [
@@ -3256,9 +3258,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         doNodedispatch:true,
                         workflow:[threadcount:1,commands:[
                                 [
-                                    name:'aname',
-                                    command:'acommand',
-                                    type:'atype',
+                                    adhocExecution:true,
+                                    adhocRemoteString:'aname',
                                     returnProperty:'returnproptest',
                                     ifString:'ifstringtest',
                                     unlessString:'unlessstringtest',
@@ -3285,9 +3286,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "wrong threadcount","1",doc.job[0].sequence[0]['@threadcount']
             assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
             assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
-            assertEquals "wrong command @resource","aname",doc.job[0].sequence[0].command[0]['@resource']
-            assertEquals "wrong command @name","acommand",doc.job[0].sequence[0].command[0]['@name']
-            assertEquals "wrong command @module","atype",doc.job[0].sequence[0].command[0]['@module']
+            assertEquals "wrong command/exec size",1, doc.job[0].sequence[0].command[0].exec.size()
+            assertEquals "wrong command/exec","aname", doc.job[0].sequence[0].command[0].exec[0].text()
             assertEquals "wrong command @return",'returnproptest',doc.job[0].sequence[0].command[0]['@return']
             assertEquals "wrong command @if",'ifstringtest',doc.job[0].sequence[0].command[0]['@if']
             assertEquals "wrong command @unless",'unlessstringtest',doc.job[0].sequence[0].command[0]['@unless']

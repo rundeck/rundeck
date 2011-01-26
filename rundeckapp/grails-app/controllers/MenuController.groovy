@@ -118,7 +118,8 @@ class MenuController {
         
         withFormat{
             yaml{
-                render(text:results.nextScheduled.encodeAsYAML(),contentType:"text/yaml",encoding:"UTF-8")
+                final def encoded = JobsYAMLCodec.encode(results.nextScheduled as List)
+                render(text:encoded,contentType:"text/yaml",encoding:"UTF-8")
             }
             html{ results
             }

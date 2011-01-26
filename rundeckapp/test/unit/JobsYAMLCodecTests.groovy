@@ -37,7 +37,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [new CommandExec([adhocRemoteString: 'test script']),
                 new CommandExec([adhocLocalString: 'test bash']),
                 new CommandExec([adhocFilepath: 'some file path']),
-                new JobExec([jobName: 'another job',jobGroup:'agroup']),
+                new JobExec([jobName: 'another job', jobGroup: 'agroup']),
             ]]),
             options: [new Option(name: 'opt1', description: "an opt", defaultValue: "xyz", enforced: true, required: true, values: new TreeSet(["a", "b"]))] as TreeSet,
             nodeThreadcount: 1,
@@ -45,14 +45,14 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             doNodedispatch: true,
             nodeInclude: "testhost1",
             nodeExcludeName: "x1",
-            scheduled:true,
-            seconds:'*',
-            minute:'0',
+            scheduled: true,
+            seconds: '*',
+            minute: '0',
             hour: '2',
             month: '3',
-            dayOfMonth:'?',
-            dayOfWeek:'4',
-            year:'2011'
+            dayOfMonth: '?',
+            dayOfWeek: '4',
+            year: '2011'
         ])
         def jobs1 = [se]
 
@@ -75,7 +75,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             assertFalse "wrong wf keepgoing", doc[0].sequence.keepgoing
             assertEquals "wrong wf strategy", "node-first", doc[0].sequence.strategy
             assertNotNull "missing commands", doc[0].sequence.commands
-            assertEquals "missing commands", 4,doc[0].sequence.commands.size()
+            assertEquals "missing commands", 4, doc[0].sequence.commands.size()
             assertEquals "missing command exec", "test script", doc[0].sequence.commands[0].exec
             assertEquals "missing command script", "test bash", doc[0].sequence.commands[1].script
             assertEquals "missing command scriptfile", "some file path", doc[0].sequence.commands[2].scriptfile
@@ -100,14 +100,14 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             assertEquals "wrong nodefilters include hostname", "testhost1", doc[0].nodefilters.include.hostname
             assertEquals "missing nodefilters exclude name", "x1", doc[0].nodefilters.exclude.name
 
-            assertNotNull "not scheduled",doc[0].schedule
-            assertNotNull "not scheduled.time",doc[0].schedule.time
-            assertEquals "not scheduled.time","*",doc[0].schedule.time.seconds
-            assertEquals "not scheduled.time","0",doc[0].schedule.time.minute
-            assertEquals "not scheduled.time","2",doc[0].schedule.time.hour
-            assertEquals "not scheduled.time","3",doc[0].schedule.month
-            assertEquals "not scheduled.time","4",doc[0].schedule.weekday.day
-            assertEquals "not scheduled.time","2011",doc[0].schedule.year
+            assertNotNull "not scheduled", doc[0].schedule
+            assertNotNull "not scheduled.time", doc[0].schedule.time
+            assertEquals "not scheduled.time", "*", doc[0].schedule.time.seconds
+            assertEquals "not scheduled.time", "0", doc[0].schedule.time.minute
+            assertEquals "not scheduled.time", "2", doc[0].schedule.time.hour
+            assertEquals "not scheduled.time", "3", doc[0].schedule.month
+            assertEquals "not scheduled.time", "4", doc[0].schedule.weekday.day
+            assertEquals "not scheduled.time", "2011", doc[0].schedule.year
         } catch (Exception e) {
             e.printStackTrace(System.err)
             fail "caught exception during encode or parse: " + e
@@ -116,7 +116,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
     }
 
     void testDecodeBasic() {
-        def ymlstr1="""- id: null
+        def ymlstr1 = """- id: null
   project: test1
   loglevel: INFO
   sequence:
@@ -156,66 +156,67 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
       - a
       - b
 """
-        try{
-            def list=JobsYAMLCodec.decode(ymlstr1)
+        try {
+            def list = JobsYAMLCodec.decode(ymlstr1)
             assertNotNull list
-            assertEquals(1,list.size())
+            assertEquals(1, list.size())
             def obj = list[0]
             assertTrue(obj instanceof ScheduledExecution)
             ScheduledExecution se = (ScheduledExecution) list[0]
-            assertEquals "wrong name","test job 1",se.jobName
-            assertEquals "wrong description","test descrip",se.description
-            assertEquals "wrong groupPath","my group",se.groupPath
-            assertEquals "wrong project","test1",se.project
-            assertEquals "wrong loglevel","INFO",se.loglevel
-            assertTrue "wrong doNodedispatch",se.doNodedispatch
-            assertEquals "wrong nodeThreadcount",1,se.nodeThreadcount
-            assertTrue "wrong nodeKeepgoing",se.nodeKeepgoing
-            assertTrue "wrong nodeExcludePrecedence",se.nodeExcludePrecedence
-            assertEquals "wrong nodeInclude","testhost1",se.nodeInclude
-            assertEquals "wrong nodeExcludeName","x1",se.nodeExcludeName
-
+            assertEquals "wrong name", "test job 1", se.jobName
+            assertEquals "wrong description", "test descrip", se.description
+            assertEquals "wrong groupPath", "my group", se.groupPath
+            assertEquals "wrong project", "test1", se.project
+            assertEquals "wrong loglevel", "INFO", se.loglevel
+            assertTrue "wrong doNodedispatch", se.doNodedispatch
+            assertEquals "wrong nodeThreadcount", 1, se.nodeThreadcount
+            assertTrue "wrong nodeKeepgoing", se.nodeKeepgoing
+            assertTrue "wrong nodeExcludePrecedence", se.nodeExcludePrecedence
+            assertEquals "wrong nodeInclude", "testhost1", se.nodeInclude
+            assertEquals "wrong nodeExcludeName", "x1", se.nodeExcludeName
 
             //schedule
-            assertTrue "wrong scheduled",se.scheduled
-            assertEquals "wrong seconds","9",se.seconds
-            assertEquals "wrong minute","5",se.minute
-            assertEquals "wrong minute","8",se.hour
-            assertEquals "wrong minute","11",se.month
-            assertEquals "wrong minute","0",se.dayOfWeek
-            assertEquals "wrong minute","?",se.dayOfMonth
-            assertEquals "wrong minute","2011",se.year
+            assertTrue "wrong scheduled", se.scheduled
+            assertEquals "wrong seconds", "9", se.seconds
+            assertEquals "wrong minute", "5", se.minute
+            assertEquals "wrong minute", "8", se.hour
+            assertEquals "wrong minute", "11", se.month
+            assertEquals "wrong minute", "0", se.dayOfWeek
+            assertEquals "wrong minute", "?", se.dayOfMonth
+            assertEquals "wrong minute", "2011", se.year
 
             //workflow
-            assertNotNull "missing workflow",se.workflow
-            assertNotNull "missing workflow",se.workflow.commands
-            assertFalse "wrong workflow.keepgoing",se.workflow.keepgoing
-            assertEquals "wrong workflow.strategy","node-first",se.workflow.strategy
-            assertEquals "wrong workflow size",2,se.workflow.commands.size()
-            assertEquals "wrong workflow item","test script",se.workflow.commands[0].adhocRemoteString
-            assertEquals "wrong workflow item","A Monkey returns",se.workflow.commands[1].adhocLocalString
+            assertNotNull "missing workflow", se.workflow
+            assertNotNull "missing workflow", se.workflow.commands
+            assertFalse "wrong workflow.keepgoing", se.workflow.keepgoing
+            assertEquals "wrong workflow.strategy", "node-first", se.workflow.strategy
+            assertEquals "wrong workflow size", 2, se.workflow.commands.size()
+            assertEquals "wrong workflow item", "test script", se.workflow.commands[0].adhocRemoteString
+            assertTrue "wrong workflow item", se.workflow.commands[0].adhocExecution
+            assertEquals "wrong workflow item", "A Monkey returns", se.workflow.commands[1].adhocLocalString
+            assertTrue "wrong workflow item", se.workflow.commands[1].adhocExecution
 
             //options
-            assertNotNull "missing options",se.options
-            assertEquals "wrong options size",1,se.options.size()
-            def opt1=se.options.iterator().next()
-            assertEquals "wrong option name","opt1",opt1.name
-            assertEquals "wrong option description","an opt",opt1.description
-            assertEquals "wrong option defaultValue","xyz",opt1.defaultValue
-            assertTrue "wrong option name",opt1.enforced
-            assertTrue "wrong option name",opt1.required
-            assertNotNull "wrong option values",opt1.values
-            assertEquals "wrong option values size",2,opt1.values.size()
+            assertNotNull "missing options", se.options
+            assertEquals "wrong options size", 1, se.options.size()
+            def opt1 = se.options.iterator().next()
+            assertEquals "wrong option name", "opt1", opt1.name
+            assertEquals "wrong option description", "an opt", opt1.description
+            assertEquals "wrong option defaultValue", "xyz", opt1.defaultValue
+            assertTrue "wrong option name", opt1.enforced
+            assertTrue "wrong option name", opt1.required
+            assertNotNull "wrong option values", opt1.values
+            assertEquals "wrong option values size", 2, opt1.values.size()
             ArrayList valuesList = new ArrayList(opt1.values)
-            assertEquals "wrong option values[0]",'a',valuesList[0]
-            assertEquals "wrong option values[1]",'b',valuesList[1]
+            assertEquals "wrong option values[0]", 'a', valuesList[0]
+            assertEquals "wrong option values[1]", 'b', valuesList[1]
 
         } catch (Exception e) {
             e.printStackTrace(System.err)
             fail "caught exception during decode: " + e
         }
 
-        def ymlstr2="""
+        def ymlstr2 = """
 -
   project: zamp
   loglevel: ERR
@@ -275,89 +276,92 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
       regex: '\\d+'
       valuesUrl: http://something.com
 """
-               def list
-               try{
-                   list=JobsYAMLCodec.decode(ymlstr2)
+        def list
+        try {
+            list = JobsYAMLCodec.decode(ymlstr2)
 
-               } catch (Exception e) {
-                   e.printStackTrace(System.err)
-                   fail "caught exception during decode: " + e
-               }
-               assertNotNull list
-               assertEquals(1,list.size())
-               def obj = list[0]
-               assertTrue(obj instanceof ScheduledExecution)
-               ScheduledExecution se = (ScheduledExecution) list[0]
-               assertEquals "wrong name","test job 1",se.jobName
-               assertEquals "wrong description","test descrip",se.description
-               assertEquals "wrong groupPath","group/1/2/3",se.groupPath
-               assertEquals "wrong project","zamp",se.project
-               assertEquals "wrong loglevel","ERR",se.loglevel
-               assertTrue "wrong doNodedispatch",se.doNodedispatch
-               assertEquals "wrong nodeThreadcount",3,se.nodeThreadcount
-               assertFalse "wrong nodeKeepgoing",se.nodeKeepgoing
-               assertFalse "wrong nodeExcludePrecedence",se.nodeExcludePrecedence
-               assertEquals "wrong nodeInclude",".*",se.nodeIncludeName
-               assertEquals "wrong nodeExcludeName","shampoo.*",se.nodeExclude
-               assertEquals "wrong nodeExcludeName","monkey",se.nodeExcludeTags
-               assertEquals "wrong nodeExcludeName","unix",se.nodeExcludeOsFamily
-               assertEquals "wrong nodeExcludeName","x86",se.nodeExcludeOsArch
-               assertEquals "wrong nodeExcludeName","Linux",se.nodeExcludeOsName
-               assertEquals "wrong nodeExcludeName","10.5.*",se.nodeExcludeOsVersion
+        } catch (Exception e) {
+            e.printStackTrace(System.err)
+            fail "caught exception during decode: " + e
+        }
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+        assertEquals "wrong name", "test job 1", se.jobName
+        assertEquals "wrong description", "test descrip", se.description
+        assertEquals "wrong groupPath", "group/1/2/3", se.groupPath
+        assertEquals "wrong project", "zamp", se.project
+        assertEquals "wrong loglevel", "ERR", se.loglevel
+        assertTrue "wrong doNodedispatch", se.doNodedispatch
+        assertEquals "wrong nodeThreadcount", 3, se.nodeThreadcount
+        assertFalse "wrong nodeKeepgoing", se.nodeKeepgoing
+        assertFalse "wrong nodeExcludePrecedence", se.nodeExcludePrecedence
+        assertEquals "wrong nodeInclude", ".*", se.nodeIncludeName
+        assertEquals "wrong nodeExcludeName", "shampoo.*", se.nodeExclude
+        assertEquals "wrong nodeExcludeName", "monkey", se.nodeExcludeTags
+        assertEquals "wrong nodeExcludeName", "unix", se.nodeExcludeOsFamily
+        assertEquals "wrong nodeExcludeName", "x86", se.nodeExcludeOsArch
+        assertEquals "wrong nodeExcludeName", "Linux", se.nodeExcludeOsName
+        assertEquals "wrong nodeExcludeName", "10.5.*", se.nodeExcludeOsVersion
 
+        //schedule
+        assertTrue "wrong scheduled", se.scheduled
+        assertEquals "wrong seconds", "0", se.seconds
+        assertEquals "wrong minute", "0,5,10,35", se.minute
+        assertEquals "wrong minute", "8/2", se.hour
+        assertEquals "wrong minute", "*", se.month
+        assertEquals "wrong minute", "?", se.dayOfWeek
+        assertEquals "wrong minute", "*", se.dayOfMonth
+        assertEquals "wrong minute", "2001,2010,2012", se.year
 
-               //schedule
-               assertTrue "wrong scheduled",se.scheduled
-               assertEquals "wrong seconds","0",se.seconds
-               assertEquals "wrong minute","0,5,10,35",se.minute
-               assertEquals "wrong minute","8/2",se.hour
-               assertEquals "wrong minute","*",se.month
-               assertEquals "wrong minute","?",se.dayOfWeek
-               assertEquals "wrong minute","*",se.dayOfMonth
-               assertEquals "wrong minute","2001,2010,2012",se.year
+        //workflow
+        assertNotNull "missing workflow", se.workflow
+        assertNotNull "missing workflow", se.workflow.commands
+        assertTrue "wrong workflow.keepgoing", se.workflow.keepgoing
+        assertEquals "wrong workflow.strategy", "step-first", se.workflow.strategy
+        assertEquals "wrong workflow size", 4, se.workflow.commands.size()
+        assertEquals "wrong workflow item", "test script", se.workflow.commands[0].adhocRemoteString
+        assertEquals "wrong workflow item", "this is redic", se.workflow.commands[0].argString
+        assertTrue "wrong workflow item", se.workflow.commands[0].adhocExecution
+        assertEquals "wrong workflow item", "A Monkey returns", se.workflow.commands[1].adhocLocalString
+        assertEquals "wrong workflow item", "whatever", se.workflow.commands[1].argString
+        assertTrue "wrong workflow item", se.workflow.commands[1].adhocExecution
+        assertEquals "wrong workflow item", "/path/to/file", se.workflow.commands[2].adhocFilepath
+        assertEquals "wrong workflow item", "-whatever something -else", se.workflow.commands[2].argString
+        assertTrue "wrong workflow item", se.workflow.commands[2].adhocExecution
+        assertTrue "wrong exec type", se.workflow.commands[3] instanceof JobExec
+        assertEquals "wrong workflow item", "some job", se.workflow.commands[3].jobName
+        assertEquals "wrong workflow item", "another group", se.workflow.commands[3].jobGroup
+        assertEquals "wrong workflow item", "yankee doodle", se.workflow.commands[3].argString
+        assertFalse "wrong workflow item", se.workflow.commands[3].adhocExecution
 
-               //workflow
-               assertNotNull "missing workflow",se.workflow
-               assertNotNull "missing workflow",se.workflow.commands
-               assertTrue "wrong workflow.keepgoing",se.workflow.keepgoing
-               assertEquals "wrong workflow.strategy","step-first",se.workflow.strategy
-               assertEquals "wrong workflow size",4,se.workflow.commands.size()
-               assertEquals "wrong workflow item","test script",se.workflow.commands[0].adhocRemoteString
-               assertEquals "wrong workflow item","this is redic",se.workflow.commands[0].argString
-               assertEquals "wrong workflow item","A Monkey returns",se.workflow.commands[1].adhocLocalString
-               assertEquals "wrong workflow item","whatever",se.workflow.commands[1].argString
-               assertEquals "wrong workflow item","/path/to/file",se.workflow.commands[2].adhocFilepath
-               assertEquals "wrong workflow item","-whatever something -else",se.workflow.commands[2].argString
-               assertTrue "wrong exec type",se.workflow.commands[3] instanceof JobExec
-               assertEquals "wrong workflow item","some job",se.workflow.commands[3].jobName
-               assertEquals "wrong workflow item","another group",se.workflow.commands[3].jobGroup
-               assertEquals "wrong workflow item","yankee doodle",se.workflow.commands[3].argString
-
-               //options
-               assertNotNull "missing options",se.options
-               assertEquals "wrong options size",2,se.options.size()
-               final Iterator iterator = se.options.iterator()
-               def opt1=iterator.next()
-               assertEquals "wrong option name","opt1",opt1.name
-               assertEquals "wrong option description","an opt",opt1.description
-               assertEquals "wrong option defaultValue","xyz",opt1.defaultValue
-               assertTrue "wrong option name",opt1.enforced
-               assertTrue "wrong option name",opt1.required
-               assertNotNull "wrong option values",opt1.values
-               assertEquals "wrong option values size",2,opt1.values.size()
-               ArrayList valuesList = new ArrayList(opt1.values)
-               assertEquals "wrong option values[0]",'a',valuesList[0]
-               assertEquals "wrong option values[1]",'b',valuesList[1]
-               def opt2=iterator.next()
-               assertEquals "wrong option name","opt2",opt2.name
-               assertEquals "wrong option description","whatever",opt2.description
-               assertNull "wrong option defaultValue",opt2.defaultValue
-               assertFalse "wrong option name",opt2.enforced!=null && opt2.enforced
-               assertFalse "wrong option name",opt2.required!=null && opt2.required
-               assertNull "wrong option values",opt2.values
-               assertNotNull "missing valuesUrl ",opt2.valuesUrl
-               assertEquals "missing valuesUrl ","http://something.com",opt2.valuesUrl.toExternalForm()
-               assertEquals "wrong option regex","\\d+",opt2.regex
+        //options
+        assertNotNull "missing options", se.options
+        assertEquals "wrong options size", 2, se.options.size()
+        final Iterator iterator = se.options.iterator()
+        def opt1 = iterator.next()
+        assertEquals "wrong option name", "opt1", opt1.name
+        assertEquals "wrong option description", "an opt", opt1.description
+        assertEquals "wrong option defaultValue", "xyz", opt1.defaultValue
+        assertTrue "wrong option name", opt1.enforced
+        assertTrue "wrong option name", opt1.required
+        assertNotNull "wrong option values", opt1.values
+        assertEquals "wrong option values size", 2, opt1.values.size()
+        ArrayList valuesList = new ArrayList(opt1.values)
+        assertEquals "wrong option values[0]", 'a', valuesList[0]
+        assertEquals "wrong option values[1]", 'b', valuesList[1]
+        def opt2 = iterator.next()
+        assertEquals "wrong option name", "opt2", opt2.name
+        assertEquals "wrong option description", "whatever", opt2.description
+        assertNull "wrong option defaultValue", opt2.defaultValue
+        assertFalse "wrong option name", opt2.enforced != null && opt2.enforced
+        assertFalse "wrong option name", opt2.required != null && opt2.required
+        assertNull "wrong option values", opt2.values
+        assertNotNull "missing valuesUrl ", opt2.valuesUrl
+        assertEquals "missing valuesUrl ", "http://something.com", opt2.valuesUrl.toExternalForm()
+        assertEquals "wrong option regex", "\\d+", opt2.regex
 
     }
 
