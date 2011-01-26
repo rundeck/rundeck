@@ -754,7 +754,8 @@ public class TestExecTool extends AbstractBaseTest {
             return null;
         }
 
-        public Collection<IStoredJobLoadResult> loadJobs(ILoadJobsRequest request, File input) throws
+        public Collection<IStoredJobLoadResult> loadJobs(ILoadJobsRequest request, File input,
+                                                         JobDefinitionFileFormat format) throws
             CentralDispatcherException {
             loadJobsCalled=true;
             return null;
@@ -775,7 +776,8 @@ public class TestExecTool extends AbstractBaseTest {
             assertFalse("listStoredJobs should not have been called: " + this, listStoredJobsCalled);
             assertFalse("loadJobs should not have been called: " + this, loadJobsCalled);
         }
-        public Collection<IStoredJob> listStoredJobs(IStoredJobsQuery query, OutputStream output) throws
+        public Collection<IStoredJob> listStoredJobs(IStoredJobsQuery query, OutputStream output,
+                                                     JobDefinitionFileFormat format) throws
             CentralDispatcherException {
             listStoredJobsCalled=true;
             return null;

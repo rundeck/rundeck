@@ -130,12 +130,14 @@ public class TestCentralDispatcherMgrFactory extends AbstractBaseTest {
             return null;
         }
 
-        public Collection<IStoredJob> listStoredJobs(IStoredJobsQuery query, OutputStream output) throws
+        public Collection<IStoredJob> listStoredJobs(IStoredJobsQuery query, OutputStream output,
+                                                     JobDefinitionFileFormat format) throws
             CentralDispatcherException {
             return null;
         }
 
-        public Collection<IStoredJobLoadResult> loadJobs(ILoadJobsRequest request, java.io.File input) throws
+        public Collection<IStoredJobLoadResult> loadJobs(ILoadJobsRequest request, java.io.File input,
+                                                         JobDefinitionFileFormat format) throws
             CentralDispatcherException {
             return null;
         }
@@ -164,12 +166,14 @@ public class TestCentralDispatcherMgrFactory extends AbstractBaseTest {
             return null;
         }
 
-        public Collection<IStoredJobLoadResult> loadJobs(ILoadJobsRequest request, java.io.File input) throws
+        public Collection<IStoredJobLoadResult> loadJobs(ILoadJobsRequest request, java.io.File input,
+                                                         JobDefinitionFileFormat format) throws
             CentralDispatcherException {
             return null;
         }
 
-        public Collection<IStoredJob> listStoredJobs(IStoredJobsQuery query, OutputStream output) throws
+        public Collection<IStoredJob> listStoredJobs(IStoredJobsQuery query, OutputStream output,
+                                                     JobDefinitionFileFormat format) throws
             CentralDispatcherException {
             return null;
         }
