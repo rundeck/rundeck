@@ -27,7 +27,7 @@ cp $DIR/test.jobs.xml $DIR/test.jobs.expanded.xml
 sed -i '' "s#@DIRNAME@#$DIR#" $DIR/test.jobs.expanded.xml
 
 #load jobs
-$RDECK_BASE/tools/bin/rd-jobs load -f $DIR/test.jobs.xml > $DIR/load.out
+$RDECK_BASE/tools/bin/rd-jobs load -f $DIR/test.jobs.expanded.xml > $DIR/load.out
 if [ 0 != $? ] ; then
 	echo Failed to load jobs: $!
 	exit 2
@@ -71,6 +71,29 @@ if [ 0 != $? ] ; then
 fi
 
 rm $DIR/exec.out
+
+#try loading yaml jobs
+
+echo "Loading some jobs via yaml"
+cp $DIR/test.jobs.yaml $DIR/test.jobs.expanded.yaml
+
+sed -i '' "s#@DIRNAME@#$DIR#" $DIR/test.jobs.expanded.yaml
+
+$RDECK_BASE/tools/bin/rd-jobs load -F yaml -f $DIR/test.jobs.expanded.yaml > $DIR/load.out
+if [ 0 != $? ] ; then
+	echo Failed to load jobs: $!
+	exit 2
+fi
+cat $DIR/load.out
+
+grep -q Failed $DIR/load.out
+if [ 0 == $? ] ; then
+	echo Failed to load some job : $!
+	exit 2
+fi
+
+rm $DIR/load.out
+rm $DIR/test.jobs.expanded.yaml
 
 egrep 'https://' $RDECK_BASE/etc/framework.properties > /dev/null
 if [ 0 = $? ] ; then
