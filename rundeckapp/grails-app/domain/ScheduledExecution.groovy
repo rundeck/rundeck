@@ -72,6 +72,136 @@ class ScheduledExecution extends ExecutionContext {
     public static final monthsofyearlist = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 
     String toString() { "$jobName - $description" }
+    Map toMap(){
+        HashMap map = new HashMap()
+        map.name=jobName
+        if(groupPath){
+            map.group=groupPath
+        }
+        if(id){
+            map.id=id
+        }
+        map.description=description
+        map.loglevel=loglevel
+        map.project=project
+
+        //TODO: options
+
+        if(options){
+            map.options=[:]
+            options.each{Option option->
+                map.options[option.name]=option.toMap()
+            }
+        }
+
+        //TODO: workflow
+        map.sequence=workflow.toMap()
+
+        if(scheduled){
+            map.schedule=[time:[hour:hour,minute:minute,seconds:seconds],month:month,year:year]
+            if(dayOfMonth!='?'){
+                map.schedule.dayofmonth=[day:dayOfMonth ]
+            }else{
+                map.schedule.weekday=[day:dayOfWeek ]
+            }
+        }
+        if(doNodedispatch){
+            def yfilters=["":"hostname"]
+            map.nodefilters=[dispatch:[threadcount:nodeThreadcount,keepgoing:nodeKeepgoing,excludePrecedence:nodeExcludePrecedence]]
+            final Collection inclFilters = BaseNodeFilters.filterKeys.keySet().findAll {this["nodeInclude"+filterKeys[it]]}
+            if(inclFilters){
+                map.nodefilters.include=[:]
+                inclFilters.each{ ek->
+                    map.nodefilters.include[yfilters[ek]?:ek]=this["nodeInclude${filterKeys[ek]}"]
+                }
+            }
+            final Collection exclFilters = BaseNodeFilters.filterKeys.keySet().findAll {this["nodeExclude"+filterKeys[it]]}
+            if(exclFilters){
+                map.nodefilters.exclude=[:]
+                exclFilters.each{ ek->
+                    map.nodefilters.exclude[yfilters[ek]?:ek]=this["nodeExclude${filterKeys[ek]}"]
+                }
+            }
+        }
+        if(notifySuccessRecipients || notifyFailureRecipients){
+            map.notification=[:]
+            if(notifySuccessRecipients){
+                map.notification.onsuccess=[recipients:notifySuccessRecipients]
+            }
+            if(notifyFailureRecipients){
+                map.notification.onfailure=[recipients:notifyFailureRecipients]
+            }
+        }
+        return map
+    }
+    static ScheduledExecution fromMap(Map data){
+        ScheduledExecution se = new ScheduledExecution()
+        se.jobName=data.name
+        se.groupPath=data['group']?data['group']:null
+        se.description=data.description?data.description:null
+        se.loglevel=data.loglevel?data.loglevel:'INFO'
+        se.project=data.project
+        if(data.options){
+            TreeSet options=new TreeSet()
+            data.options.keySet().each{optname->
+                Option opt = Option.fromMap(optname,data.options[optname])
+                options<<opt
+            }
+            se.options=options
+        }
+        if(data.sequence){
+            Workflow wf = Workflow.fromMap(data.sequence as Map)
+            se.workflow=wf
+        }
+        if(data.schedule){
+            se.scheduled=true
+            if(data.schedule.crontab){
+                    //
+                se.crontabString = data.schedule.crontab
+            }else{
+                se.seconds=data.schedule.time.seconds?:'*'
+                se.minute=data.schedule.time.minute?:'*'
+                se.hour=data.schedule.time.hour?:'*'
+                se.month=data.schedule.month?:'*'
+                se.year=data.schedule.year?:'*'
+                if(data.schedule.dayofmonth){
+                    se.dayOfMonth = data.schedule.dayofmonth.day
+                    se.dayOfWeek = '?'
+                }else if(data.schedule.weekday){
+                    se.dayOfWeek=data.schedule.weekday.day
+                    se.dayOfMonth = '?'
+                }
+            }
+        }
+        if(data.nodefilters){
+            se.doNodedispatch = true
+            se.nodeThreadcount = data.nodefilters.dispatch.threadcount
+            se.nodeKeepgoing = data.nodefilters.dispatch.keepgoing?true:false
+            se.nodeExcludePrecedence = data.nodefilters.dispatch.excludePrecedence?true:false
+            if(data.nodefilters.include){
+                data.nodefilters.include.keySet().each{ inf->
+                    if(null!=filterKeys[inf]){
+                        se["nodeInclude${filterKeys[inf]}"]=data.nodefilters.include[inf]
+                    }
+                }
+
+            }
+            if(data.nodefilters.exclude){
+                data.nodefilters.exclude.keySet().each{ inf->
+                    if(null!=filterKeys[inf]){
+                        se["nodeExclude${filterKeys[inf]}"]=data.nodefilters.exclude[inf]
+                    }
+                }
+            }
+        }
+        if(data.notification?.onsuccess?.recipients){
+            se.notifySuccessRecipients=data.notification.onsuccess.recipients
+        }
+        if(data.notification?.onfailure?.recipients){
+            se.notifyFailureRecipients=data.notification.onfailure.recipients
+        }
+        return se
+    }
 
     public setUserRoles(List l){
         setUserRoleList(l.join(","))

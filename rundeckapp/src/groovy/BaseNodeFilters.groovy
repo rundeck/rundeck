@@ -69,4 +69,8 @@ public class BaseNodeFilters {
                nodeIncludeTags || nodeExcludeTags|| nodeIncludeOsName || nodeExcludeOsName || nodeIncludeOsFamily ||
             nodeExcludeOsFamily || nodeIncludeOsArch||nodeExcludeOsArch || nodeIncludeOsVersion||nodeExcludeOsVersion)
     }
+
+
+    static filterKeys = [hostname: '', type: 'Type', tags: 'Tags', 'os-name': 'OsName', 'os-family': 'OsFamily',
+    'os-arch': 'OsArch', 'os-version': 'OsVersion','name':'Name']
 }

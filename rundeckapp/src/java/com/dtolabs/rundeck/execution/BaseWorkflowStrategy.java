@@ -64,7 +64,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                                           final int loglevel, final Map<String, Map<String, String>> dataContext) throws
         FileNotFoundException {
         final UserContext userContext = UserContext.create(user);
-        if (cmd.getAdhocExecution()) {
+        if (null!=cmd.getAdhocFilepath() || null!=cmd.getAdhocLocalString() || null!=cmd.getAdhocRemoteString()) {
             final IDispatchedScript script = createScriptContext(cmd, project, nodeset, loglevel, dataContext);
             return new DispatchedScriptExecutionItem() {
 

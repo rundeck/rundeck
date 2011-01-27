@@ -34,11 +34,11 @@ import org.dom4j.Document;
 import org.dom4j.Node;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.error.YAMLException;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.StringWriter;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
@@ -68,7 +68,7 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
     /**
      * Webservice endpoint for listing stored jobs.
      */
-    public static final String RUNDECK_LIST_STORED_JOBS_PATH = "/menu/workflows.xml";
+    public static final String RUNDECK_LIST_STORED_JOBS_PATH = "/menu/workflows";
     /**
      * Webservice link prefix for a stored job.
      */
@@ -417,18 +417,23 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
 
     }
 
-    public Collection<IStoredJob> listStoredJobs(final IStoredJobsQuery iStoredJobsQuery,
-                                                 final OutputStream output) throws CentralDispatcherException {
+    public Collection<IStoredJob> listStoredJobs(final IStoredJobsQuery iStoredJobsQuery, final OutputStream output,
+                                                 final JobDefinitionFileFormat fformat) throws
+        CentralDispatcherException {
         final HashMap<String, String> params = new HashMap<String, String>();
-        params.put("xmlreq", "true");
         final String nameMatch = iStoredJobsQuery.getNameMatch();
-         String groupMatch = iStoredJobsQuery.getGroupMatch();
+        String groupMatch = iStoredJobsQuery.getGroupMatch();
         final String projectFilter = iStoredJobsQuery.getProjectFilter();
         final String commandFilter = iStoredJobsQuery.getCommand();
         final String idlistFilter = iStoredJobsQuery.getIdlist();
         final String typeFilter = iStoredJobsQuery.getType();
         final String resourceFilter = iStoredJobsQuery.getResource();
 
+        if (null != output && null != fformat) {
+            params.put("format", fformat.getName());
+        } else {
+            params.put("format", JobDefinitionFileFormat.xml.getName());
+        }
         if (null != nameMatch) {
             params.put("jobFilter", nameMatch);
         }
@@ -449,14 +454,12 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
         if (null != typeFilter) {
             params.put("typeFilter", typeFilter);
         }
-        if (null != commandFilter   ) {
+        if (null != commandFilter) {
             params.put("cmdFilter", commandFilter);
         }
-        if (null != idlistFilter   ) {
+        if (null != idlistFilter) {
             params.put("idlist", idlistFilter);
         }
-
-        params.put("xmlreq", "true");
 
         //2. send request via ServerService
         final WebserviceResponse response;
@@ -466,48 +469,130 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
             throw new CentralDispatcherServerRequestException("Failed to make request", e);
         }
 
-        validateJobsResponse(response);
+        //if xml, do local validation and listing
+        if(null==fformat || fformat== JobDefinitionFileFormat.xml){
+            validateJobsResponse(response);
 
-        ////////////////////
-        //parse result list of queued items, return the collection of QueuedItems
-        ///////////////////
+            ////////////////////
+            //parse result list of queued items, return the collection of QueuedItems
+            ///////////////////
 
-        final Document resultDoc = response.getResultDoc();
+            final Document resultDoc = response.getResultDoc();
 
-        final Node node = resultDoc.selectSingleNode("/joblist");
-        final ArrayList<IStoredJob> list = new ArrayList<IStoredJob>();
-        if (null == node) {
+            final Node node = resultDoc.selectSingleNode("/joblist");
+            final ArrayList<IStoredJob> list = new ArrayList<IStoredJob>();
+            if (null == node) {
+                return list;
+            }
+            final List items = node.selectNodes("job");
+            if (null != items && items.size() > 0) {
+                for (final Object o : items) {
+                    final Node node1 = (Node) o;
+                    final String id = node1.selectSingleNode("id").getStringValue();
+                    final String name = node1.selectSingleNode("name").getStringValue();
+                    final String url = createJobURL(id);
+
+                    final Node gnode = node1.selectSingleNode("group");
+                    final String group = null != gnode ? gnode.getStringValue() : null;
+                    final String description = node1.selectSingleNode("description").getStringValue();
+                    list.add(StoredJobImpl.create(id, name, url, group, description));
+                }
+            }
+
+            if (null != output) {
+                //write output doc to the outputstream
+                final OutputFormat format = OutputFormat.createPrettyPrint();
+                try {
+                    final XMLWriter writer = new XMLWriter(output, format);
+                    writer.write(resultDoc);
+                    writer.flush();
+                } catch (IOException e) {
+                    throw new CentralDispatcherServerRequestException(e);
+                }
+            }
+            return list;
+        }else if(fformat==JobDefinitionFileFormat.yaml){
+            //do rought yaml parse
+            final Collection<Map> mapCollection = validateJobsResponseYAML(response);
+            final ArrayList<IStoredJob> list = new ArrayList<IStoredJob>();
+
+            if (null == mapCollection || mapCollection.size() < 1) {
+                return list;
+            }
+            for (final Map map : mapCollection) {
+                final String id = map.get("id").toString();
+                final String name = (String) map.get("name");
+                final String group = map.containsKey("group") ? (String) map.get("group") : null;
+                final String desc = map.containsKey("description") ? (String) map.get("description") : "";
+                final String url = createJobURL(id);
+                list.add(StoredJobImpl.create(id, name, url, group, desc));
+            }
+
+            if (null != output) {
+                //write output doc to the outputstream
+                try {
+                    final Writer writer = new OutputStreamWriter(output);
+                    writer.write(response.getResults());
+                    writer.flush();
+                } catch (IOException e) {
+                    throw new CentralDispatcherServerRequestException(e);
+                }
+            }
             return list;
         }
-        final List items = node.selectNodes("job");
-        if (null != items && items.size() > 0) {
-            for (final Object o : items) {
-                final Node node1 = (Node) o;
-                final String id = node1.selectSingleNode("id").getStringValue();
-                final String name = node1.selectSingleNode("name").getStringValue();
-                final String url = createJobURL(id);
-
-                final Node gnode = node1.selectSingleNode("group");
-                final String group = null != gnode ? gnode.getStringValue() : null;
-                final String description = node1.selectSingleNode("description").getStringValue();
-                list.add(StoredJobImpl.create(id, name, url, group, description));
-            }
-        }
-
-        if (null != output) {
-            //write output doc to the outputstream
-            final OutputFormat format = OutputFormat.createPrettyPrint();
-            try {
-                final XMLWriter writer = new XMLWriter(output, format);
-                writer.write(resultDoc);
-                writer.flush();
-            } catch (IOException e) {
-                throw new CentralDispatcherServerRequestException(e);
-            }
-        }
-
-        return list;
+        return null;
     }
+
+
+    /**
+     * Validate the response is in expected yaml format
+     *
+     * @param response response
+     *
+     * @return Collection of job data maps if format is correct and there is no error
+     *
+     * @throws CentralDispatcherServerRequestException
+     *          if the format is incorrect, or the response indicates an error response.
+     */
+    private Collection<Map> validateJobsResponseYAML(final WebserviceResponse response) throws
+        CentralDispatcherServerRequestException {
+        if (null == response) {
+            throw new CentralDispatcherServerRequestException("Response was null");
+        }
+
+        if (null != response.getResponseMessage()) {
+            logger.info("Response: " + response.getResponseMessage());
+        }
+        String resultContentType = response.getResultContentType();
+        if (resultContentType.contains(";")) {
+            resultContentType = resultContentType.substring(0, resultContentType.indexOf(";"));
+        }
+        if (!resultContentType.endsWith("/yaml")) {
+            throw new CentralDispatcherServerRequestException(
+                "Expected YAML response, unexpected content type: " + response.getResultContentType());
+        }
+        ArrayList<Map> dataset = new ArrayList<Map>();
+        Object resobj;
+        try {
+            Yaml yaml = new Yaml(new SafeConstructor());
+            resobj = yaml.load(response.getResults());
+        } catch (YAMLException e) {
+            throw new CentralDispatcherServerRequestException("Failed to parse YAML: " + e.getMessage(), e);
+        }
+        if (resobj instanceof Collection) {
+            dataset.addAll((Collection) resobj);
+        } else {
+            throw new CentralDispatcherServerRequestException("Response had unexpected content type: " + resobj);
+        }
+
+        for (final Map map : dataset) {
+            if (!map.containsKey("name") || !map.containsKey("id")) {
+                throw new CentralDispatcherServerRequestException("Response had unexpected dataset: " + resobj);
+            }
+        }
+        return dataset;
+    }
+
 
     public QueuedItemResult queueDispatcherJob(final IDispatchedJob dispatchedJob) throws CentralDispatcherException {
         final HashMap<String,String> params = new HashMap<String, String>();
@@ -634,11 +719,17 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
 
     }
 
-    public Collection<IStoredJobLoadResult> loadJobs(ILoadJobsRequest iLoadJobsRequest, File input) throws
+    public Collection<IStoredJobLoadResult> loadJobs(final ILoadJobsRequest iLoadJobsRequest, final File input,
+                                                     final JobDefinitionFileFormat format) throws
+
         CentralDispatcherException {
         final HashMap params = new HashMap();
         params.put("dupeOption", iLoadJobsRequest.getDuplicateOption().toString());
         params.put("xmlreq", "true");
+
+        if (null != format) {
+            params.put("fileformat", format.getName());
+        }
 
         /*
          * Send the request bean and the file as a multipart request.

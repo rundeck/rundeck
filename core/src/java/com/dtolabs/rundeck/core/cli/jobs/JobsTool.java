@@ -262,6 +262,7 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
     private String argProject;
     private boolean argVerbose;
     private File argFile;
+    private JobDefinitionFileFormat format= JobDefinitionFileFormat.xml;
     private CLIToolLogger clilogger;
     /**
      * short option string for query parameter: group
@@ -332,6 +333,16 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
      * long option string for load option: duplicate
      */
     public static final String DUPLICATE_OPTION_LONG = "duplicate";
+
+    /**
+     * short option string for load option: format
+     */
+    public static final String FORMAT_OPTION = "F";
+
+    /**
+     * long option string for load option: format
+     */
+    public static final String FORMAT_OPTION_LONG = "format";
 
 
     /**
@@ -423,6 +434,8 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
             options.addOption(FILE_OPTION, FILE_OPTION_LONG, true,
                 "File path. For list action, path to store the job definitions found in XML.  For load action, path to an XML file to upload.");
             options.addOption(VERBOSE_OPTION, VERBOSE_OPTION_LONG, false, "Enable verbose output");
+            options.addOption(FORMAT_OPTION, FORMAT_OPTION_LONG, true,
+                "Format for input/output file. One of: " + Arrays.toString(JobDefinitionFileFormat.values()));
         }
 
         public void parseArgs(final CommandLine cli, final String[] original) throws CLIToolOptionsException {
@@ -431,6 +444,15 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
             }
             if (cli.hasOption(FILE_OPTION)) {
                 argFile = new File(cli.getOptionValue(FILE_OPTION));
+            }
+            if(cli.hasOption(FORMAT_OPTION)) {
+                try {
+                    format = JobDefinitionFileFormat.valueOf(cli.getOptionValue(FORMAT_OPTION));
+                } catch (IllegalArgumentException e) {
+                    throw new CLIToolOptionsException(
+                        "Invalid format: " + cli.getOptionValue(FORMAT_OPTION) + ", must be one of: " + Arrays.toString(
+                            JobDefinitionFileFormat.values()));
+                }
             }
         }
 
@@ -577,8 +599,10 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
                + "rd-jobs [list] [query options] : list jobs matching the query, or all available\n"
                + "rd-jobs [list] --name <name> : Match jobs with the given name\n"
                + "rd-jobs [list] [query options] --file <output> : Save matched Jobs to output file as XML\n"
+               + "rd-jobs [list] [query options] --file <output> --format <xml|yaml> : Save matched Jobs to output file as XML or YAML\n"
                + "\tLoad action:\n"
-               + "rd-jobs load --file <file> : load jobs stored in XML file";
+               + "rd-jobs load --file <file> : load jobs stored in XML file\n"
+               + "rd-jobs load --file <file> -F yaml : load jobs stored in YAML file";
     }
 
     /**
@@ -589,7 +613,7 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
     private void loadAction() throws JobsToolException {
         final Collection<IStoredJobLoadResult> result;
         try {
-            result = framework.getCentralDispatcherMgr().loadJobs(this, argFile);
+            result = framework.getCentralDispatcherMgr().loadJobs(this, argFile,format);
         } catch (CentralDispatcherException e) {
             final String msg = "Failed request to load jobs: " + e.getMessage();
             throw new JobsToolException(msg, e);
@@ -644,7 +668,7 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
         final Collection<IStoredJob> result;
         try {
             result = framework.getCentralDispatcherMgr().listStoredJobs(this, null != argFile ? new FileOutputStream(
-                argFile) : null);
+                argFile) : null, format);
         } catch (CentralDispatcherException e) {
             final String msg = "Failed request to list the queue: " + e.getMessage();
             throw new JobsToolException(msg, e);
@@ -663,7 +687,7 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
             throw new JobsToolException("List request returned null");
         }
         if (null != argFile) {
-            log("Wrote XML to file: " + argFile.getAbsolutePath());
+            log("Wrote "+ format+" to file: " + argFile.getAbsolutePath());
         }
 
 

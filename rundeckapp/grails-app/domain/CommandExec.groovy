@@ -75,4 +75,42 @@ public class CommandExec extends ExecutionContext implements IWorkflowCmdItem {
         CommandExec ce = new CommandExec(this.properties)
         return ce
     }
+
+
+
+    /**
+    * Return canonical map representation
+     */
+    public Map toMap(){
+        def map=[:]
+        if(adhocRemoteString){
+            map.exec=adhocRemoteString
+        }else if(adhocLocalString){
+            map.script=adhocLocalString
+        }else {
+            map.scriptfile=adhocFilepath
+        }
+        if(argString){
+            map.args=argString
+        }
+        return map
+    }
+
+    static CommandExec fromMap(Map data){
+        CommandExec ce = new CommandExec()
+        if(data.exec){
+            ce.adhocExecution = true
+            ce.adhocRemoteString=data.exec
+        }else if(data.script){
+            ce.adhocExecution = true
+            ce.adhocLocalString=data.script
+        }else if(data.scriptfile){
+            ce.adhocExecution = true
+            ce.adhocFilepath=data.scriptfile
+        }
+        if(data.args){
+            ce.argString=data.args
+        }
+        return ce
+    }
 }

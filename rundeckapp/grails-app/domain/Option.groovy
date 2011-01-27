@@ -61,6 +61,62 @@ public class Option implements Comparable{
     }
 
     /**
+     * Return canonical map representation
+     */
+    public Map toMap(){
+        final Map map = [:]
+        if(enforced){
+            map.enforced=enforced
+        }
+        if(required){
+            map.required=required
+        }
+        if(description){
+            map.description=description
+        }
+        if(defaultValue){
+            map.value=defaultValue
+        }
+        //valuesUrl: valuesUrl.toExternalForm(), regex: regex, values: values
+        if(valuesUrl){
+            map.valuesUrl=valuesUrl.toExternalForm()
+        }
+        if(regex){
+            map.regex=regex
+        }
+        if(values){
+            map.values=values as List
+        }
+        return map
+    }
+
+    public static Option fromMap(String name,Map data){
+        Option opt = new Option()
+        opt.name=name
+        if(data.enforced){
+            opt.enforced=true
+        }
+        if(data.required){
+            opt.required=true
+        }
+        if(data.description){
+            opt.description=data.description
+        }
+        if(data.value){
+            opt.defaultValue = data.value
+        }
+        if(data.valuesUrl){
+            opt.valuesUrl=new URL(data.valuesUrl)
+        }
+        if(null!=data.regex){
+            opt.regex=data.regex
+        }
+        if(data.values){
+            opt.values=new TreeSet(data.values)
+        }
+        return opt
+    }
+    /**
      * Return the string equivalent of the values set member
      */
     public String produceValuesList(){
@@ -101,4 +157,19 @@ public class Option implements Comparable{
         }
         return opt
     }
+
+    public String toString ( ) {
+        return "Option{" +
+        "name='" + name + '\'' +
+        ", description='" + description + '\'' +
+        ", defaultValue='" + defaultValue + '\'' +
+        ", enforced=" + enforced +
+        ", required=" + required +
+        ", values=" + values +
+        ", valuesUrl=" + valuesUrl +
+        ", regex='" + regex + '\'' +
+        '}' ;
+    }
+
+
 }

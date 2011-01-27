@@ -36,6 +36,9 @@ import java.util.Collection;
  */
 public interface CentralDispatcher {
 
+    public static final String FORMAT_XML = "xml";
+    public static final String FORMAT_YAML = "yaml";
+
     /**
      * Add a script dispatch to the dispatcher queue
      *
@@ -88,7 +91,7 @@ public interface CentralDispatcher {
      *
      * @throws CentralDispatcherException if an error occurs
      */
-    public Collection<IStoredJob> listStoredJobs(IStoredJobsQuery query, OutputStream output) throws
+    public Collection<IStoredJob> listStoredJobs(IStoredJobsQuery query, OutputStream output, JobDefinitionFileFormat format) throws
         CentralDispatcherException;
 
     /**
@@ -101,6 +104,7 @@ public interface CentralDispatcher {
      *
      * @throws CentralDispatcherException if an error occurs
      */
-    public Collection<IStoredJobLoadResult> loadJobs(ILoadJobsRequest request, java.io.File input) throws
+    public Collection<IStoredJobLoadResult> loadJobs(ILoadJobsRequest request, java.io.File input,
+                                                     JobDefinitionFileFormat format) throws
         CentralDispatcherException;
 }

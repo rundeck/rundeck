@@ -69,6 +69,8 @@ public class TestJobsTool extends AbstractBaseTest {
         OutputStream listStoredJobsOutput;
         Collection<IStoredJob> listJobsResult;
         Collection<IStoredJobLoadResult> loadJobsResult;
+        JobDefinitionFileFormat loadFormat;
+        JobDefinitionFileFormat listFormat;
 
 
         public QueuedItemResult queueDispatcherJob(IDispatchedJob job) throws CentralDispatcherException {
@@ -93,19 +95,23 @@ public class TestJobsTool extends AbstractBaseTest {
             return null;
         }
 
-        public Collection<IStoredJobLoadResult> loadJobs(ILoadJobsRequest request, java.io.File input) throws
+        public Collection<IStoredJobLoadResult> loadJobs(ILoadJobsRequest request, java.io.File input,
+                                                         JobDefinitionFileFormat format) throws
             CentralDispatcherException {
             this.loadJobsCalled = true;
             this.loadRequest = request;
             this.loadInput = input;
+            this.loadFormat=format;
             return loadJobsResult;
         }
 
-        public Collection<IStoredJob> listStoredJobs(IStoredJobsQuery query, OutputStream output) throws
+        public Collection<IStoredJob> listStoredJobs(IStoredJobsQuery query, OutputStream output,
+                                                     JobDefinitionFileFormat format) throws
             CentralDispatcherException {
             this.listStoredJobsCalled = true;
             this.listStoredJobsQuery = query;
             this.listStoredJobsOutput = output;
+            this.listFormat=format;
             return listJobsResult;
         }
     }
@@ -143,6 +149,7 @@ public class TestJobsTool extends AbstractBaseTest {
             assertFalse("load action should not be called", centralDispatcher1.loadJobsCalled);
             assertNotNull(centralDispatcher1.listStoredJobsQuery);
             assertNull(centralDispatcher1.listStoredJobsOutput);
+            assertEquals(JobDefinitionFileFormat.xml,centralDispatcher1.listFormat);
         }
         {
             //test list action with output file
@@ -162,6 +169,28 @@ public class TestJobsTool extends AbstractBaseTest {
             assertFalse("load action should not be called", centralDispatcher1.loadJobsCalled);
             assertNotNull(centralDispatcher1.listStoredJobsQuery);
             assertNotNull(centralDispatcher1.listStoredJobsOutput);
+            assertEquals(JobDefinitionFileFormat.xml, centralDispatcher1.listFormat);
+        }
+        {
+            //test list action with output file, yaml format
+            //test 0 items result
+
+            final JobsTool tool = new JobsTool(framework);
+            final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
+            framework.setCentralDispatcherMgr(centralDispatcher1);
+            File t = File.createTempFile("TestJobsTool", "xml");
+            t.deleteOnExit();
+
+            final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
+            centralDispatcher1.listJobsResult = jobs;
+
+            tool.run(new String[]{"list", "-f", t.getAbsolutePath(), "-" + JobsTool.FORMAT_OPTION,
+                JobDefinitionFileFormat.yaml.getName()});
+            assertTrue("list action was not called", centralDispatcher1.listStoredJobsCalled);
+            assertFalse("load action should not be called", centralDispatcher1.loadJobsCalled);
+            assertNotNull(centralDispatcher1.listStoredJobsQuery);
+            assertNotNull(centralDispatcher1.listStoredJobsOutput);
+            assertEquals(JobDefinitionFileFormat.yaml, centralDispatcher1.listFormat);
         }
         {
             //test list action with query params, -n
@@ -179,6 +208,7 @@ public class TestJobsTool extends AbstractBaseTest {
             assertNull(centralDispatcher1.listStoredJobsOutput);
             assertNotNull(centralDispatcher1.listStoredJobsQuery);
             assertEquals("name1", centralDispatcher1.listStoredJobsQuery.getNameMatch());
+            assertEquals(JobDefinitionFileFormat.xml, centralDispatcher1.listFormat);
         }
         {
             //test list action with query params, --name
@@ -196,6 +226,7 @@ public class TestJobsTool extends AbstractBaseTest {
             assertNull(centralDispatcher1.listStoredJobsOutput);
             assertNotNull(centralDispatcher1.listStoredJobsQuery);
             assertEquals("name1", centralDispatcher1.listStoredJobsQuery.getNameMatch());
+            assertEquals(JobDefinitionFileFormat.xml, centralDispatcher1.listFormat);
         }
         {
             //test list action with query params, -g
@@ -213,6 +244,7 @@ public class TestJobsTool extends AbstractBaseTest {
             assertNull(centralDispatcher1.listStoredJobsOutput);
             assertNotNull(centralDispatcher1.listStoredJobsQuery);
             assertEquals("group1", centralDispatcher1.listStoredJobsQuery.getGroupMatch());
+            assertEquals(JobDefinitionFileFormat.xml, centralDispatcher1.listFormat);
         }
         {
             //test list action with query params, --group
@@ -230,6 +262,7 @@ public class TestJobsTool extends AbstractBaseTest {
             assertNull(centralDispatcher1.listStoredJobsOutput);
             assertNotNull(centralDispatcher1.listStoredJobsQuery);
             assertEquals("group2", centralDispatcher1.listStoredJobsQuery.getGroupMatch());
+            assertEquals(JobDefinitionFileFormat.xml, centralDispatcher1.listFormat);
         }
         {
             //test list action with query params, -i
@@ -251,6 +284,7 @@ public class TestJobsTool extends AbstractBaseTest {
             assertNull( centralDispatcher1.listStoredJobsQuery.getType());
             assertNull( centralDispatcher1.listStoredJobsQuery.getResource());
             assertEquals("1,2", centralDispatcher1.listStoredJobsQuery.getIdlist());
+            assertEquals(JobDefinitionFileFormat.xml, centralDispatcher1.listFormat);
         }
         {
             //test list action with query params, --idlist
@@ -272,6 +306,7 @@ public class TestJobsTool extends AbstractBaseTest {
             assertNull( centralDispatcher1.listStoredJobsQuery.getType());
             assertNull( centralDispatcher1.listStoredJobsQuery.getResource());
             assertEquals("3,4", centralDispatcher1.listStoredJobsQuery.getIdlist());
+            assertEquals(JobDefinitionFileFormat.xml, centralDispatcher1.listFormat);
         }
     }
 
@@ -363,6 +398,42 @@ public class TestJobsTool extends AbstractBaseTest {
             final JobsTool tool = new JobsTool(getFrameworkInstance());
             try {
                 final String[] args = {"list"};
+                final CommandLine line = tool.parseArgs(args);
+                tool.validateOptions(line, args);
+            } catch (CLIToolOptionsException e) {
+                fail("unexpected exception: " + e.getMessage());
+            }
+
+        }
+        {
+            //test invalid format
+            final JobsTool tool = new JobsTool(getFrameworkInstance());
+            try {
+                final String[] args = {"-F","zamlx"};
+                final CommandLine line = tool.parseArgs(args);
+                tool.validateOptions(line, args);
+                fail("invalid format should have failed");
+            } catch (CLIToolOptionsException e) {
+                assertNotNull(e);
+            }
+        }
+        {
+            //test valid format xml
+            final JobsTool tool = new JobsTool(getFrameworkInstance());
+            try {
+                final String[] args = {"list","-f","test.out","-F","xml"};
+                final CommandLine line = tool.parseArgs(args);
+                tool.validateOptions(line, args);
+            } catch (CLIToolOptionsException e) {
+                fail("unexpected exception: " + e.getMessage());
+            }
+
+        }
+        {
+            //test valid format yaml
+            final JobsTool tool = new JobsTool(getFrameworkInstance());
+            try {
+                final String[] args = {"list","-f","test.out","-F","yaml"};
                 final CommandLine line = tool.parseArgs(args);
                 tool.validateOptions(line, args);
             } catch (CLIToolOptionsException e) {

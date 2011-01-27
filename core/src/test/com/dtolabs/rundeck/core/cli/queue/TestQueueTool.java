@@ -138,53 +138,63 @@ public class TestQueueTool extends AbstractBaseTest {
         }
     }
 
+
     /**
      * Test run method
      *
      * @throws Exception if exception
      */
     public void testRun() throws Exception {
+        class FailDispatcher implements CentralDispatcher{
+
+            public QueuedItemResult queueDispatcherJob(IDispatchedJob job) throws CentralDispatcherException {
+                fail("unexpected call to queueDispatcherJob");
+                return null;
+            }
+
+            public QueuedItemResult queueDispatcherScript(final IDispatchedScript dispatch) throws
+                CentralDispatcherException {
+                fail("unexpected call to queueDispatcherScript");
+                return null;
+            }
+
+            public Collection<QueuedItem> listDispatcherQueue() throws CentralDispatcherException {
+                //
+                fail("unexpected call to listDispatcherQueue");
+                return null;
+            }
+
+            public DispatcherResult killDispatcherExecution(final String id) throws CentralDispatcherException {
+                fail("unexpected call to killDispatcherExecution");
+                return null;
+            }
+
+            public Collection<IStoredJobLoadResult> loadJobs(ILoadJobsRequest request, java.io.File input, JobDefinitionFileFormat format) throws
+                CentralDispatcherException {
+                fail("unexpected call to loadJobs");
+                return null;
+            }
+
+            public Collection<IStoredJob> listStoredJobs(IStoredJobsQuery query, OutputStream output,
+                                                         JobDefinitionFileFormat format) throws
+                CentralDispatcherException {
+                fail("unexpected call to listStoredJobs");
+                return null;
+            }
+        }
         final Framework framework = getFrameworkInstance();
         {
             //test list action
 
             final QueueTool tool = new QueueTool(framework);
             final boolean[] actionCalled = new boolean[]{false};
-            framework.setCentralDispatcherMgr(new CentralDispatcher() {
-
-                public QueuedItemResult queueDispatcherJob(IDispatchedJob job) throws CentralDispatcherException {
-                    fail("unexpected call to queueDispatcherJob");
-                    return null;
-                }
-
-                public QueuedItemResult queueDispatcherScript(final IDispatchedScript dispatch) throws
-                    CentralDispatcherException {
-                    fail("unexpected call to queueDispatcherScript");
-                    return null;
-                }
-
+            framework.setCentralDispatcherMgr(new FailDispatcher(){
                 public Collection<QueuedItem> listDispatcherQueue() throws CentralDispatcherException {
                     //
                     actionCalled[0] = true;
                     return new ArrayList<QueuedItem>();
                 }
 
-                public DispatcherResult killDispatcherExecution(final String id) throws CentralDispatcherException {
-                    fail("unexpected call to killDispatcherExecution");
-                    return null;
-                }
-
-                public Collection<IStoredJobLoadResult> loadJobs(ILoadJobsRequest request, java.io.File input) throws
-                    CentralDispatcherException {
-                    fail("unexpected call to loadJobs");
-                    return null;
-                }
-
-                public Collection<IStoredJob> listStoredJobs(IStoredJobsQuery query, OutputStream output) throws
-                    CentralDispatcherException {
-                    fail("unexpected call to listStoredJobs");
-                    return null;
-                }
             });
 
             //exec the dispatch
@@ -198,24 +208,7 @@ public class TestQueueTool extends AbstractBaseTest {
             final QueueTool tool = new QueueTool(framework);
             final boolean[] actionCalled = new boolean[]{false};
             final String[] idCalled = new String[]{"wrong"};
-            framework.setCentralDispatcherMgr(new CentralDispatcher() {
-
-                public QueuedItemResult queueDispatcherJob(IDispatchedJob job) throws CentralDispatcherException {
-                    fail("unexpected call to queueDispatcherJob");
-                    return null;
-                }
-
-                public QueuedItemResult queueDispatcherScript(final IDispatchedScript dispatch) throws
-                    CentralDispatcherException {
-                    fail("unexpected call to queueDispatcherScript");
-                    return null;
-                }
-
-                public Collection<QueuedItem> listDispatcherQueue() throws CentralDispatcherException {
-                    fail("unexpected call to listDispatcherQueue");
-                    return null;
-                }
-
+            framework.setCentralDispatcherMgr(new FailDispatcher() {
                 public DispatcherResult killDispatcherExecution(final String id) throws CentralDispatcherException {
                     actionCalled[0] = true;
                     idCalled[0] = id;
@@ -230,17 +223,6 @@ public class TestQueueTool extends AbstractBaseTest {
                     };
                 }
 
-                public Collection<IStoredJob> listStoredJobs(IStoredJobsQuery query, OutputStream output) throws
-                    CentralDispatcherException {
-                    fail("unexpected call to listStoredJobs");
-                    return null;
-                }
-
-                public Collection<IStoredJobLoadResult> loadJobs(ILoadJobsRequest request, java.io.File input) throws
-                    CentralDispatcherException {
-                    fail("unexpected call to loadJobs");
-                    return null;
-                }
             });
 
             //test kill action without required argument -e

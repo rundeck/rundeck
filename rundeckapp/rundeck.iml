@@ -104,9 +104,6 @@
           <root url="file://$MODULE_DIR$/lib" />
           <root url="file://$MODULE_DIR$/../../../.grails/1.2.0/projects/rundeckapp/plugins/mail-0.9/lib" />
           <root url="file://$MODULE_DIR$/../../../.grails/1.2.0/projects/rundeckapp/plugins/quartz-0.4.2/lib" />
-          <root url="jar://$MODULE_DIR$/../maven/repository/jetty-util/jars/jetty-util-6.1.21.jar!/" />
-          <root url="jar://$MODULE_DIR$/../maven/repository/jetty-plus/jars/jetty-plus-6.1.21.jar!/" />
-          <root url="jar://$MODULE_DIR$/../maven/repository/jetty/jars/jetty-6.1.21.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -129,6 +126,15 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../maven/repository/jetty/jars/jetty-6.1.21.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/snakeyaml/jars/snakeyaml-1.7.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

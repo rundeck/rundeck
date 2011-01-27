@@ -65,13 +65,15 @@ public final class NoCentralDispatcher implements CentralDispatcher {
                                              + Framework.CENTRALDISPATCHER_CLS_PROP);
     }
 
-    public Collection<IStoredJob> listStoredJobs(final IStoredJobsQuery query, final OutputStream output) throws
+    public Collection<IStoredJob> listStoredJobs(final IStoredJobsQuery query, final OutputStream output,
+                                                 JobDefinitionFileFormat format) throws
         CentralDispatcherException {
         throw new CentralDispatcherException("Operation unsupported: No central dispatcher class is configured: "
                                              + Framework.CENTRALDISPATCHER_CLS_PROP);
     }
 
-    public Collection<IStoredJobLoadResult> loadJobs(final ILoadJobsRequest request, final java.io.File input) throws
+    public Collection<IStoredJobLoadResult> loadJobs(final ILoadJobsRequest request, final java.io.File input,
+                                                     JobDefinitionFileFormat format) throws
         CentralDispatcherException {
         throw new CentralDispatcherException("Operation unsupported: No central dispatcher class is configured: "
                                              + Framework.CENTRALDISPATCHER_CLS_PROP);
