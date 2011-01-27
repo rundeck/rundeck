@@ -39,7 +39,11 @@ class JobsYAMLCodec {
             //iterate through list of jobs
             data.each {jobobj ->
                 if (jobobj instanceof Map) {
-                    list << ScheduledExecution.fromMap(jobobj)
+                    try {
+                        list << ScheduledExecution.fromMap(jobobj)
+                    } catch (Exception e) {
+                        throw new JobXMLException("Unable to create Job: " + e.getMessage(),e)
+                    }
                 } else {
                     throw new JobXMLException("Unexpected data type: " + jobobj.class.name)
                 }

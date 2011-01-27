@@ -116,6 +116,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
     }
 
     void testDecodeBasic() {
+        if(true){
         def ymlstr1 = """- id: null
   project: test1
   loglevel: INFO
@@ -156,7 +157,6 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
       - a
       - b
 """
-        try {
             def list = JobsYAMLCodec.decode(ymlstr1)
             assertNotNull list
             assertEquals(1, list.size())
@@ -211,11 +211,9 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             assertEquals "wrong option values[0]", 'a', valuesList[0]
             assertEquals "wrong option values[1]", 'b', valuesList[1]
 
-        } catch (Exception e) {
-            e.printStackTrace(System.err)
-            fail "caught exception during decode: " + e
         }
 
+        if(true){
         def ymlstr2 = """
 -
   project: zamp
@@ -276,14 +274,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
       regex: '\\d+'
       valuesUrl: http://something.com
 """
-        def list
-        try {
-            list = JobsYAMLCodec.decode(ymlstr2)
-
-        } catch (Exception e) {
-            e.printStackTrace(System.err)
-            fail "caught exception during decode: " + e
-        }
+        def list = JobsYAMLCodec.decode(ymlstr2)
         assertNotNull list
         assertEquals(1, list.size())
         def obj = list[0]
@@ -362,6 +353,36 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertNotNull "missing valuesUrl ", opt2.valuesUrl
         assertEquals "missing valuesUrl ", "http://something.com", opt2.valuesUrl.toExternalForm()
         assertEquals "wrong option regex", "\\d+", opt2.regex
+        }
+
+    }
+
+    void testShouldPassthruCrontabString() {
+        def ymlstr2 = """
+-
+  project: zamp
+  loglevel: ERR
+  sequence:
+    keepgoing: true
+    strategy: step-first
+    commands:
+    - exec: test script
+  description: test descrip
+  name: test job 1
+  group: group/1/2/3
+  schedule:
+    crontab: 0 0,5,10,35 8/2 * * ? 2001,2010,2012
+"""
+        def list = JobsYAMLCodec.decode(ymlstr2)
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+
+        //schedule
+        assertTrue "wrong scheduled", se.scheduled
+        assertEquals "wrong crontabstring", "0 0,5,10,35 8/2 * * ? 2001,2010,2012", se.crontabString
 
     }
 

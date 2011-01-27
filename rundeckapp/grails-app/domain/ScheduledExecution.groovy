@@ -155,17 +155,22 @@ class ScheduledExecution extends ExecutionContext {
         }
         if(data.schedule){
             se.scheduled=true
-            se.seconds=data.schedule.time.seconds?:'*'
-            se.minute=data.schedule.time.minute?:'*'
-            se.hour=data.schedule.time.hour?:'*'
-            se.month=data.schedule.month?:'*'
-            se.year=data.schedule.year?:'*'
-            if(data.schedule.dayofmonth){
-                se.dayOfMonth = data.schedule.dayofmonth.day
-                se.dayOfWeek = '?'
-            }else if(data.schedule.weekday){
-                se.dayOfWeek=data.schedule.weekday.day
-                se.dayOfMonth = '?'
+            if(data.schedule.crontab){
+                    //
+                se.crontabString = data.schedule.crontab
+            }else{
+                se.seconds=data.schedule.time.seconds?:'*'
+                se.minute=data.schedule.time.minute?:'*'
+                se.hour=data.schedule.time.hour?:'*'
+                se.month=data.schedule.month?:'*'
+                se.year=data.schedule.year?:'*'
+                if(data.schedule.dayofmonth){
+                    se.dayOfMonth = data.schedule.dayofmonth.day
+                    se.dayOfWeek = '?'
+                }else if(data.schedule.weekday){
+                    se.dayOfWeek=data.schedule.weekday.day
+                    se.dayOfMonth = '?'
+                }
             }
         }
         if(data.nodefilters){
