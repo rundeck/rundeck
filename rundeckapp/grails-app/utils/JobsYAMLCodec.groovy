@@ -1,12 +1,13 @@
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.constructor.SafeConstructor
+import com.dtolabs.rundeck.core.utils.snakeyaml.ForceMultilineLiteralOptions
 
 class JobsYAMLCodec {
 
     static encode = {list ->
         def writer = new StringWriter()
-        final DumperOptions dumperOptions = new DumperOptions();
+        final DumperOptions dumperOptions = new ForceMultilineLiteralOptions();
         dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         Yaml yaml = new Yaml(dumperOptions)
 
