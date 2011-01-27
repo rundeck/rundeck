@@ -829,7 +829,10 @@ class ScheduledExecutionController  {
         def oldjobname = scheduledExecution.generateJobScheduledName()
         def oldjobgroup = scheduledExecution.generateJobGroupName()
         def oldsched = scheduledExecution.scheduled
-        scheduledExecution.properties = params.properties.subMap(params.properties.keySet().findAll{it!='lastUpdated' && it!='dateCreated'})
+        scheduledExecution.properties =null
+        final Collection foundprops = params.properties.keySet().findAll {it != 'lastUpdated' && it != 'dateCreated' && (params.properties[it] instanceof String || params.properties[it] instanceof Boolean) }
+        final Map newprops = foundprops ? params.properties.subMap(foundprops) : [:]
+        scheduledExecution.properties = newprops
 
         //clear old mode job properties
         scheduledExecution.adhocExecution=false;
@@ -853,6 +856,11 @@ class ScheduledExecutionController  {
 //                        scheduledExecution.userRoles=[]
 //                    }
 //                }
+            if(scheduledExecution.crontabString && (!CronExpression.isValidExpression(scheduledExecution.crontabString)
+                                                    || !scheduledExecution.parseCrontabString(scheduledExecution.crontabString))){
+                failed=true;
+                scheduledExecution.errors.rejectValue('crontabString','scheduledExecution.crontabString.invalid.message')
+            }
             if(!CronExpression.isValidExpression(scheduledExecution.generateCrontabExression())){
                 failed=true;
                 scheduledExecution.errors.rejectValue('crontabString','scheduledExecution.crontabString.invalid.message')
@@ -873,7 +881,7 @@ class ScheduledExecutionController  {
         def boolean renamed = oldjobname!=scheduledExecution.generateJobScheduledName() || oldjobgroup!=scheduledExecution.generateJobGroupName()
 
 
-        if(!frameworkService.existsFrameworkProject(scheduledExecution.project,framework)){
+        if(scheduledExecution.project && !frameworkService.existsFrameworkProject(scheduledExecution.project,framework)){
             failed=true
             scheduledExecution.errors.rejectValue('project','scheduledExecution.project.invalid.message',[scheduledExecution.project].toArray(),'Project was not found: {0}')
         }
@@ -1486,7 +1494,7 @@ class ScheduledExecutionController  {
             scheduledExecution.nextExecution=new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
         }
 
-        if(!frameworkService.existsFrameworkProject(scheduledExecution.project,framework)){
+        if(scheduledExecution.project && !frameworkService.existsFrameworkProject(scheduledExecution.project,framework)){
             failed=true
             scheduledExecution.errors.rejectValue('project','scheduledExecution.project.invalid.message',[scheduledExecution.project].toArray(),'Project does not exist: {0}')
         }
@@ -1858,11 +1866,7 @@ class ScheduledExecutionController  {
         }
         if(!params.jobName){
             //TODO: finalize format
-            if(params.name){
-                params.jobName=params.name+" - "+params.command+" Job"
-            }else if(params.command){
-                params.jobName=params.command+" Job"
-            }else if(params.adhocRemoteString){
+            if(params.adhocRemoteString){
                 params.jobName="Remote Script Job"
             }else if(params.adhocLocalString){
                 params.jobName="Inline Script Job"
@@ -2073,7 +2077,7 @@ class ScheduledExecutionController  {
                                     }
                                     name(job.scheduledExecution.jobName)
                                     StringBuffer sb = new StringBuffer()
-                                    job.scheduledExecution.errors.allErrors.each{err->
+                                    job.scheduledExecution?.errors?.allErrors?.each{err->
                                         if(sb.size()>0){
                                             sb<<"\n"
                                         }
