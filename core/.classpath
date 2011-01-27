@@ -2,7 +2,6 @@
 <classpath>
 	<classpathentry kind="src" path="src/java"/>
 	<classpathentry kind="src" path="src/test"/>
-	<classpathentry kind="lib" path="target/rundeck-core-1.0.0.jar"/>
 	<classpathentry kind="lib" path="target/tools/lib/ant-1.8.1.jar"/>
 	<classpathentry kind="lib" path="target/tools/lib/ant-jsch-1.8.1.jar"/>
 	<classpathentry kind="lib" path="target/tools/lib/ant-launcher-1.8.1.jar"/>
@@ -17,10 +16,10 @@
 	<classpathentry kind="lib" path="target/tools/lib/jaxen-1.1.jar"/>
 	<classpathentry kind="lib" path="target/tools/lib/jsch-0.1.42.jar"/>
 	<classpathentry kind="lib" path="target/tools/lib/log4j-1.2.15.jar"/>
-	<classpathentry kind="lib" path="target/tools/lib/rundeck-core-1.0.0.jar"/>
 	<classpathentry kind="lib" path="target/tools/lib/xerces-2.6.0.jar"/>
 	<classpathentry kind="lib" path="target/tools/lib/xml-apis-2.6.0.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
+	<classpathentry kind="lib" path="target/rundeck-core-1.1.0.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
