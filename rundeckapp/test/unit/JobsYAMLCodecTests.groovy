@@ -35,7 +35,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             loglevel: 'INFO',
             project: 'test1',
             workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [new CommandExec([adhocRemoteString: 'test script']),
-                new CommandExec([adhocLocalString: 'test bash']),
+                new CommandExec([adhocLocalString: "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n"]),
                 new CommandExec([adhocFilepath: 'some file path']),
                 new JobExec([jobName: 'another job', jobGroup: 'agroup']),
             ]]),
@@ -55,9 +55,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             year: '2011'
         ])
         def jobs1 = [se]
-
-        try {
-            def ymlstr = JobsYAMLCodec.encode(jobs1)
+        def  ymlstr = JobsYAMLCodec.encode(jobs1)
             assertNotNull ymlstr
             assertTrue ymlstr instanceof String
 
@@ -77,7 +75,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             assertNotNull "missing commands", doc[0].sequence.commands
             assertEquals "missing commands", 4, doc[0].sequence.commands.size()
             assertEquals "missing command exec", "test script", doc[0].sequence.commands[0].exec
-            assertEquals "missing command script", "test bash", doc[0].sequence.commands[1].script
+            assertEquals "missing command script", "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", doc[0].sequence.commands[1].script
             assertEquals "missing command scriptfile", "some file path", doc[0].sequence.commands[2].scriptfile
             assertNotNull "missing command jobref", doc[0].sequence.commands[3].jobref
             assertEquals "missing command jobref.name", "another job", doc[0].sequence.commands[3].jobref.name
@@ -108,10 +106,6 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             assertEquals "not scheduled.time", "3", doc[0].schedule.month
             assertEquals "not scheduled.time", "4", doc[0].schedule.weekday.day
             assertEquals "not scheduled.time", "2011", doc[0].schedule.year
-        } catch (Exception e) {
-            e.printStackTrace(System.err)
-            fail "caught exception during encode or parse: " + e
-        }
 
     }
 
