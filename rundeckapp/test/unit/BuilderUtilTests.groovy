@@ -51,6 +51,7 @@ public class BuilderUtilTests extends GroovyTestCase{
     }
     void testColls(){
         def map = ['as':['b','c','d']]
+        BuilderUtil.makePlural(map,'as')
         final StringWriter writer = new StringWriter()
         def builder = new MarkupBuilder(new IndentPrinter(new PrintWriter(writer),"",false))
         def bu = new BuilderUtil()
@@ -94,7 +95,8 @@ public class BuilderUtilTests extends GroovyTestCase{
         assertEquals("<test><a><script>test</script><args>blah</args></a></test>",string)
     }
     void testAttributes(){
-        def map = [a:['@b':'c','@d':'e','f':'g']]
+        def map = [a:['f':'g']]
+        BuilderUtil.addAttribute(map.a,'b','c')
         final StringWriter writer = new StringWriter()
         def builder = new MarkupBuilder(new IndentPrinter(new PrintWriter(writer),"",false))
         def bu = new BuilderUtil()
@@ -102,7 +104,7 @@ public class BuilderUtilTests extends GroovyTestCase{
         final String string = writer.toString()
         assertNotNull(string)
         System.err.println("string: ${string}");
-        assertEquals("<test><a b='c' d='e'><f>g</f></a></test>",string)
+        assertEquals("<test><a b='c'><f>g</f></a></test>",string)
     }
 
 
