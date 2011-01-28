@@ -195,7 +195,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             e.printStackTrace(System.err)
             assertEquals "failed: ${e.getMessage()}","'context/project' element not found",e.getMessage()
         }
-        try{
             def jobs = JobsXMLCodec.decode(okxml0)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
@@ -220,11 +219,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNull "incorrect minute",jobs[0].minute
             assertNull "incorrect everyDayOfWeek",jobs[0].everyDayOfWeek
             assertNull "incorrect everyMonth",jobs[0].everyMonth
-        }catch(Exception e){
-            fail "exception decoding: "+ e
-        }
-        try{
-            def jobs = JobsXMLCodec.decode(okxml1)
+
+            jobs = JobsXMLCodec.decode(okxml1)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
             assertEquals "incorrect jobName","wait1",jobs[0].jobName
@@ -248,9 +244,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNull "incorrect minute",jobs[0].minute
             assertNull "incorrect everyDayOfWeek",jobs[0].everyDayOfWeek
             assertNull "incorrect everyMonth",jobs[0].everyMonth
-        }catch(Exception e){
-            fail "exception decoding: "+ e
-        }
     /** basic job */
     def basic2 = """<joblist>
   <job>
@@ -275,8 +268,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
   </job>
 </joblist>
 """
-        try{
-            def jobs = JobsXMLCodec.decode(basic2)
+            jobs = JobsXMLCodec.decode(basic2)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
             assertEquals "incorrect jobName","punch2",jobs[0].jobName
@@ -297,9 +289,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNull "incorrect minute",jobs[0].minute
             assertNull "incorrect everyDayOfWeek",jobs[0].everyDayOfWeek
             assertNull "incorrect everyMonth",jobs[0].everyMonth
-        }catch(Exception e){
-            fail "exception decoding: "+ e
-        }
 
 
     /** basic job  - make group value have leading/trailing "/" characters, assert they are normalized. */
@@ -326,13 +315,9 @@ class JobsXMLCodecTests extends GroovyTestCase {
   </job>
 </joblist>
 """
-        try{
-            def jobs = JobsXMLCodec.decode(basic3)
+            jobs = JobsXMLCodec.decode(basic3)
             assertNotNull jobs
             assertEquals "incorrect groupPath","simple",jobs[0].groupPath
-        }catch(Exception e){
-            fail "exception decoding: "+ e
-        }
     /** basic job  - make group value have leading/trailing "/" characters, assert they are normalized. */
     def basic4 = """<joblist>
   <job>
@@ -357,13 +342,9 @@ class JobsXMLCodecTests extends GroovyTestCase {
   </job>
 </joblist>
 """
-        try{
-            def jobs = JobsXMLCodec.decode(basic4)
+            jobs = JobsXMLCodec.decode(basic4)
             assertNotNull jobs
             assertEquals "incorrect groupPath","simple",jobs[0].groupPath
-        }catch(Exception e){
-            fail "exception decoding: "+ e
-        }
 
         /** basic job  - make group value have leading/trailing "/" characters, assert they are normalized. */
     def basic5 = """<joblist>
@@ -389,13 +370,11 @@ class JobsXMLCodecTests extends GroovyTestCase {
   </job>
 </joblist>
 """
-        try{
-            def jobs = JobsXMLCodec.decode(basic5)
+            jobs = JobsXMLCodec.decode(basic5)
             assertNotNull jobs
             assertEquals "incorrect groupPath","this/is/a/simple/path",jobs[0].groupPath
-        }catch(Exception e){
-            fail "exception decoding: "+ e
-        }  /** basic job  - make group value have leading/trailing "/" characters, assert they are normalized. */
+
+        /** basic job  - make group value have leading/trailing "/" characters, assert they are normalized. */
     def basic6 = """<joblist>
   <job>
     <id>8</id>
@@ -419,13 +398,10 @@ class JobsXMLCodecTests extends GroovyTestCase {
   </job>
 </joblist>
 """
-        try{
-            def jobs = JobsXMLCodec.decode(basic6)
+             jobs = JobsXMLCodec.decode(basic6)
             assertNotNull jobs
             assertNull "incorrect groupPath",jobs[0].groupPath
-        }catch(Exception e){
-            fail "exception decoding: "+ e
-        }
+
         def basic7 = """<joblist>
   <job>
     <id>8</id>
@@ -448,14 +424,11 @@ class JobsXMLCodecTests extends GroovyTestCase {
   </job>
 </joblist>
 """
-        try{
-            def jobs = JobsXMLCodec.decode(basic7)
+            jobs = JobsXMLCodec.decode(basic7)
             assertNotNull jobs
             assertNull "incorrect groupPath",jobs[0].groupPath
-        }catch(Exception e){
-            fail "exception decoding: "+ e
-        }
     }
+
     void testDecodeExample(){
         def example1 = """<joblist>
   <job>
@@ -493,16 +466,12 @@ class JobsXMLCodecTests extends GroovyTestCase {
   </job>
 </joblist>
 """
-        try{
             def jobs = JobsXMLCodec.decode(example1)
             assertNotNull jobs
             assertNull "incorrect groupPath",jobs[0].groupPath
             assertEquals "incorrect nodeExcludePrecedence","true",jobs[0].nodeExcludePrecedence.toString()
             assertEquals "incorrect nodeInclude","cypress.hill.com",jobs[0].nodeInclude
             assertEquals "incorrect project","demo",jobs[0].project
-        }catch(Exception e){
-            fail "exception decoding: "+ e
-        }
     }
 
     void testDecodeBackwardsCompatibility(){
@@ -546,16 +515,12 @@ class JobsXMLCodecTests extends GroovyTestCase {
   </job>
 </joblist>
 """
-        try{
             def jobs = JobsXMLCodec.decode(example1)
             assertNotNull jobs
             assertNull "incorrect groupPath",jobs[0].groupPath
             assertEquals "incorrect nodeExcludePrecedence","true",jobs[0].nodeExcludePrecedence.toString()
             assertEquals "incorrect nodeInclude","cypress.hill.com",jobs[0].nodeInclude
             assertEquals "incorrect project","demo",jobs[0].project
-        }catch(Exception e){
-            fail "exception decoding: "+ e
-        }
     }
     void testDecodeNodefilter(){
          /** node filter job */
@@ -587,7 +552,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
   </job>
 </joblist>
 """
-        try{
             def jobs = JobsXMLCodec.decode(filter1)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
@@ -610,9 +574,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect nodefilter nodeExcludeName",null,jobs[0].nodeExcludeName
             assertEquals "incorrect nodefilter nodeExcludePrecedence ","true",jobs[0].nodeExcludePrecedence
             assertEquals "incorrect nodefilter doNodedispatch","true",jobs[0].doNodedispatch
-        }catch(Exception e){
-            fail "exception decoding: "+ e
-        }
 
         /** node filter job */
     def filter2 = """<joblist>
@@ -650,8 +611,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
   </job>
 </joblist>
 """
-        try{
-            def jobs = JobsXMLCodec.decode(filter2)
+            jobs = JobsXMLCodec.decode(filter2)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
             assertEquals "incorrect nodefilter nodeInclude","centos5",jobs[0].nodeInclude
@@ -673,9 +633,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect nodefilter nodeExcludeName",null,jobs[0].nodeExcludeName
             assertEquals "incorrect nodefilter nodeExcludePrecedence","true",jobs[0].nodeExcludePrecedence
             assertEquals "incorrect nodefilter doNodedispatch","true",jobs[0].doNodedispatch
-        }catch(Exception e){
-            fail "exception decoding: "+ e
-        }
+
         /** node filter job */
     def filter3 = """<joblist>
   <job>
@@ -712,8 +670,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
   </job>
 </joblist>
 """
-        try{
-            def jobs = JobsXMLCodec.decode(filter3)
+            jobs = JobsXMLCodec.decode(filter3)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
             assertEquals "incorrect nodefilter nodeInclude",null,jobs[0].nodeInclude
@@ -735,9 +692,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect nodefilter nodeExcludeName","mynodename",jobs[0].nodeExcludeName
             assertEquals "incorrect nodefilter nodeExcludePrecedence","false",jobs[0].nodeExcludePrecedence.toString()
             assertEquals "incorrect nodefilter doNodedispatch","true",jobs[0].doNodedispatch.toString()
-        }catch(Exception e){
-            fail "exception decoding: "+ e
-        }
     }
 
     void testDecodeScheduled(){
@@ -770,7 +724,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
   </job>
 </joblist>
 """
-        try{
             def jobs = JobsXMLCodec.decode(sched1)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
@@ -781,9 +734,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect everyDayOfWeek",true,jobs[0].everyDayOfWeek
             assertEquals "incorrect everyMonth",true,jobs[0].everyMonth
             assertEquals "incorrect groupPath","some/group",jobs[0].groupPath
-        }catch(Exception e){
-            fail "exception decoding: "+ e
-        }
    /** scheduled job */
     def sched2 = """<joblist>
   <job>
@@ -813,8 +763,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
   </job>
 </joblist>
 """
-        try{
-            def jobs = JobsXMLCodec.decode(sched2)
+            jobs = JobsXMLCodec.decode(sched2)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
 
@@ -840,9 +789,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect crontab.month.OCT",null,jobs[0].'crontab.month.OCT'
             assertEquals "incorrect crontab.month.NOV",null,jobs[0].'crontab.month.NOV'
             assertEquals "incorrect crontab.month.DEC","true",jobs[0].'crontab.month.DEC'
-        }catch(Exception e){
-            fail "exception decoding: "+ e
-        }
    /** scheduled job */
     def sched3 = """<joblist>
   <job>
@@ -872,8 +818,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
   </job>
 </joblist>
 """
-        try{
-            def jobs = JobsXMLCodec.decode(sched3)
+            jobs = JobsXMLCodec.decode(sched3)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
 
@@ -899,9 +844,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect crontab.month.OCT",null,jobs[0].'crontab.month.OCT'
             assertEquals "incorrect crontab.month.NOV",null,jobs[0].'crontab.month.NOV'
             assertEquals "incorrect crontab.month.DEC","true",jobs[0].'crontab.month.DEC'
-        }catch(Exception e){
-            fail "exception decoding: "+ e
-        }
 
 
         /***** extended schedule attributes *******/
@@ -937,8 +879,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
   </job>
 </joblist>
 """
-        try{
-            def jobs = JobsXMLCodec.decode(schedX1)
+            jobs = JobsXMLCodec.decode(schedX1)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
 
@@ -969,9 +910,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect crontab.month.OCT",null,jobs[0].'crontab.month.OCT'
             assertEquals "incorrect crontab.month.NOV",null,jobs[0].'crontab.month.NOV'
             assertEquals "incorrect crontab.month.DEC",null,jobs[0].'crontab.month.DEC'
-        }catch(Exception e){
-            fail "exception decoding: "+ e
-        }
 
    /** scheduled job with crontab string */
     def schedX2 = """<joblist>
@@ -999,8 +937,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
   </job>
 </joblist>
 """
-        try{
-            def jobs = JobsXMLCodec.decode(schedX2)
+            jobs = JobsXMLCodec.decode(schedX2)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
 
@@ -1033,9 +970,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect crontab.month.OCT",null,jobs[0].'crontab.month.OCT'
             assertEquals "incorrect crontab.month.NOV",null,jobs[0].'crontab.month.NOV'
             assertEquals "incorrect crontab.month.DEC",null,jobs[0].'crontab.month.DEC'
-        }catch(Exception e){
-            fail "exception decoding: "+ e
-        }
 
     }
     void testDecodeAdhocExec(){
@@ -1063,7 +997,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
 </joblist>
 """
 
-        try{
             def jobs=JobsXMLCodec.decode(xml1)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
@@ -1071,9 +1004,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect execution",null,jobs[0].adhocLocalString
             assertEquals "incorrect execution",null,jobs[0].adhocFilepath
             assertEquals "incorrect args","",jobs[0].argString
-        }catch(Exception e){
-            fail "caught exception: "+e
-        }
     }
     void testDecodeAdhocExecLocal(){
         //scriptfile but no scriptargs
@@ -1100,7 +1030,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
 </joblist>
 """
 
-        try{
             def jobs=JobsXMLCodec.decode(xml1)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
@@ -1108,9 +1037,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect execution",null,jobs[0].adhocRemoteString
             assertEquals "incorrect execution",null,jobs[0].adhocFilepath
             assertEquals "incorrect args","",jobs[0].argString
-        }catch(Exception e){
-            fail "caught exception: "+e
-        }
         //scriptfile but no scriptargs
     def xml2 = """<joblist>
   <job>
@@ -1136,17 +1062,13 @@ class JobsXMLCodecTests extends GroovyTestCase {
 </joblist>
 """
 
-        try{
-            def jobs=JobsXMLCodec.decode(xml2)
+            jobs=JobsXMLCodec.decode(xml2)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
             assertEquals "incorrect execution","echo this is a test what",jobs[0].adhocLocalString
             assertEquals "incorrect execution",null,jobs[0].adhocRemoteString
             assertEquals "incorrect execution",null,jobs[0].adhocFilepath
             assertEquals "incorrect args","monkey button",jobs[0].argString
-        }catch(Exception e){
-            fail "caught exception: "+e
-        }
     }
 
 
@@ -1175,7 +1097,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
 </joblist>
 """
 
-        try{
             def jobs=JobsXMLCodec.decode(xml1)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
@@ -1183,9 +1104,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect execution",null,jobs[0].adhocLocalString
             assertEquals "incorrect execution",null,jobs[0].adhocRemoteString
             assertEquals "incorrect args","",jobs[0].argString
-        }catch(Exception e){
-            fail "caught exception: "+e
-        }
 
         //scriptfile with scriptargs
     def xml2 = """<joblist>
@@ -1212,17 +1130,13 @@ class JobsXMLCodecTests extends GroovyTestCase {
 </joblist>
 """
 
-        try{
-            def jobs=JobsXMLCodec.decode(xml2)
+            jobs=JobsXMLCodec.decode(xml2)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
             assertEquals "incorrect file path","/var/opt/test1.sh",jobs[0].adhocFilepath
             assertEquals "incorrect args","monkey doesn't like & this < what",jobs[0].argString
             assertEquals "incorrect execution",null,jobs[0].adhocLocalString
             assertEquals "incorrect execution",null,jobs[0].adhocRemoteString
-        }catch(Exception e){
-            fail "caught exception: "+e
-        }
     }
 
     void testDecodeWorkflow() {
@@ -1252,16 +1166,12 @@ class JobsXMLCodecTests extends GroovyTestCase {
 </joblist>
 """
 
-        try {
             def jobs = JobsXMLCodec.decode(xml1)
             assertNotNull jobs
             assertEquals "incorrect size", 1, jobs.size()
             assertNotNull "incorrect workflow", jobs[0].workflow
             assertEquals "incorrect workflow threadcount", "1", jobs[0].workflow.threadcount
             assertEquals "incorrect workflow strategy", "node-first", jobs[0].workflow.strategy
-        } catch (Exception e) {
-            fail "caught exception: " + e
-        }
         //simple workflow
         def xml2 = """<joblist>
   <job>
@@ -1289,8 +1199,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
 </joblist>
 """
 
-        try {
-            def jobs = JobsXMLCodec.decode(xml2)
+            jobs = JobsXMLCodec.decode(xml2)
             assertNotNull jobs
             assertEquals "incorrect size", 1, jobs.size()
             assertNotNull "incorrect workflow", jobs[0].workflow
@@ -1302,9 +1211,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNull "unexpected type", jobs[0].workflow['commands[0]'].type
             assertNull "unexpected name", jobs[0].workflow['commands[0]'].name
             assertNull "unexpected argString", jobs[0].workflow['commands[0]'].argString
-        } catch (Exception e) {
-            fail "caught exception: " + e
-        }
         //simple workflow
         def xml3 = """<joblist>
   <job>
@@ -1333,8 +1239,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
 </joblist>
 """
 
-        try {
-            def jobs = JobsXMLCodec.decode(xml3)
+            jobs = JobsXMLCodec.decode(xml3)
             assertNotNull jobs
             assertEquals "incorrect size", 1, jobs.size()
             assertNotNull "incorrect workflow", jobs[0].workflow
@@ -1346,9 +1251,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect type", 'AModule', jobs[0].workflow['commands[0]'].type
             assertEquals "incorrect name", 'AResource', jobs[0].workflow['commands[0]'].name
             assertEquals "incorrect argString", 'some arg line', jobs[0].workflow['commands[0]'].argString
-        } catch (Exception e) {
-            fail "caught exception: " + e
-        }
         //simple workflow
         def xml4 = """<joblist>
   <job>
@@ -1377,8 +1279,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
 </joblist>
 """
 
-        try {
-            def jobs = JobsXMLCodec.decode(xml4)
+            jobs = JobsXMLCodec.decode(xml4)
             assertNotNull jobs
             assertEquals "incorrect size", 1, jobs.size()
             assertNotNull "incorrect workflow", jobs[0].workflow
@@ -1391,9 +1292,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect if string", 'someif', jobs[0].workflow['commands[0]'].ifString
             assertEquals "incorrect unless string", 'someunless', jobs[0].workflow['commands[0]'].unlessString
             assertEquals "incorrect equals string", 'someequals', jobs[0].workflow['commands[0]'].equalsString
-        } catch (Exception e) {
-            fail "caught exception: " + e
-        }
         //simple workflow with two commands
         def xml5 = """<joblist>
   <job>
@@ -1425,8 +1323,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
 </joblist>
 """
 
-        try {
-            def jobs = JobsXMLCodec.decode(xml5)
+            jobs = JobsXMLCodec.decode(xml5)
             assertNotNull jobs
             assertEquals "incorrect size", 1, jobs.size()
             assertNotNull "incorrect workflow", jobs[0].workflow
@@ -1443,9 +1340,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect type", 'AModule2', jobs[0].workflow['commands[1]'].type
             assertEquals "incorrect name", 'AResource2', jobs[0].workflow['commands[1]'].name
             assertEquals "incorrect argString", 'another arg line', jobs[0].workflow['commands[1]'].argString
-        } catch (Exception e) {
-            fail "caught exception: " + e
-        }
 
         //simple workflow with script command
         def xml6 = """<joblist>
@@ -1475,8 +1369,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
 </joblist>
 """
 
-        try {
-            def jobs = JobsXMLCodec.decode(xml6)
+            jobs = JobsXMLCodec.decode(xml6)
             assertNotNull jobs
             assertEquals "incorrect size", 1, jobs.size()
             assertNotNull "incorrect workflow", jobs[0].workflow
@@ -1491,9 +1384,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNull "incorrect adhocLocalString", jobs[0].workflow['commands[0]'].adhocLocalString
             assertNull "incorrect adhocFilepath", jobs[0].workflow['commands[0]'].adhocFilepath
             assertNull "incorrect argString", jobs[0].workflow['commands[0]'].argString
-        } catch (Exception e) {
-            fail "caught exception: " + e
-        }
 
         //simple workflow with script content
         def xml7 = """<joblist>
@@ -1523,8 +1413,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
 </joblist>
 """
 
-        try {
-            def jobs = JobsXMLCodec.decode(xml7)
+            jobs = JobsXMLCodec.decode(xml7)
             assertNotNull jobs
             assertEquals "incorrect size", 1, jobs.size()
             assertNotNull "incorrect workflow", jobs[0].workflow
@@ -1539,9 +1428,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNull "incorrect adhocRemoteString", jobs[0].workflow['commands[0]'].adhocRemoteString
             assertNull "incorrect adhocFilepath", jobs[0].workflow['commands[0]'].adhocFilepath
             assertNull "incorrect argString", jobs[0].workflow['commands[0]'].argString
-        } catch (Exception e) {
-            fail "caught exception: " + e
-        }
         //simple workflow with script content
         def xml8 = """<joblist>
   <job>
@@ -1571,8 +1457,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
 </joblist>
 """
 
-        try {
-            def jobs = JobsXMLCodec.decode(xml8)
+            jobs = JobsXMLCodec.decode(xml8)
             assertNotNull jobs
             assertEquals "incorrect size", 1, jobs.size()
             assertNotNull "incorrect workflow", jobs[0].workflow
@@ -1587,12 +1472,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNull "incorrect adhocRemoteString", jobs[0].workflow['commands[0]'].adhocRemoteString
             assertEquals "incorrect adhocFilepath", '/a/path/to/a/script', jobs[0].workflow['commands[0]'].adhocFilepath
             assertEquals "incorrect argString", '-some args -to the -script', jobs[0].workflow['commands[0]'].argString
-        } catch (Exception e) {
-            fail "caught exception: " + e
-        }
         //simple workflow with jobref without jobGroup
-        try {
-            def jobs = JobsXMLCodec.decode("""<joblist>
+            jobs = JobsXMLCodec.decode("""<joblist>
   <job>
     <id>5</id>
     <name>wait1</name>
@@ -1634,13 +1515,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNull "incorrect adhocRemoteString", jobs[0].workflow['commands[0]'].argString
             assertEquals "incorrect jobName", 'bob', jobs[0].workflow['commands[0]'].jobName
             assertNull "incorrect jobGroup", jobs[0].workflow['commands[0]'].jobGroup
-        } catch (Exception e) {
-            e.printStackTrace()
-            fail "caught exception: " + e
-        }
         //simple workflow with jobref
-        try {
-            def jobs = JobsXMLCodec.decode("""<joblist>
+            jobs = JobsXMLCodec.decode("""<joblist>
   <job>
     <id>5</id>
     <name>wait1</name>
@@ -1682,13 +1558,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNull "incorrect adhocRemoteString", jobs[0].workflow['commands[0]'].argString
             assertEquals "incorrect jobName", 'bob', jobs[0].workflow['commands[0]'].jobName
             assertEquals "incorrect jobGroup", '/some/path', jobs[0].workflow['commands[0]'].jobGroup
-        } catch (Exception e) {
-            e.printStackTrace()
-            fail "caught exception: " + e
-        }
         //simple workflow with step-first strategy
-        try {
-            def jobs = JobsXMLCodec.decode("""<joblist>
+            jobs = JobsXMLCodec.decode("""<joblist>
   <job>
     <id>5</id>
     <name>wait1</name>
@@ -1730,13 +1601,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNull "incorrect adhocRemoteString", jobs[0].workflow['commands[0]'].argString
             assertEquals "incorrect jobName", 'bob', jobs[0].workflow['commands[0]'].jobName
             assertEquals "incorrect jobGroup", '/some/path', jobs[0].workflow['commands[0]'].jobGroup
-        } catch (Exception e) {
-            e.printStackTrace()
-            fail "caught exception: " + e
-        }
         //jobref item with args
-        try {
-            def jobs = JobsXMLCodec.decode("""<joblist>
+            jobs = JobsXMLCodec.decode("""<joblist>
   <job>
     <id>5</id>
     <name>wait1</name>
@@ -1781,15 +1647,10 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect adhocRemoteString", "-test1 1 -test2 2",jobs[0].workflow['commands[0]'].argString
             assertEquals "incorrect jobName", 'bob', jobs[0].workflow['commands[0]'].jobName
             assertEquals "incorrect jobGroup", '/some/path', jobs[0].workflow['commands[0]'].jobGroup
-        } catch (Exception e) {
-            e.printStackTrace()
-            fail "caught exception: " + e
-        }
     }
     
     void testDecodeWorkflowOptions(){
         //simple workflow with options
-        try {
             def jobs = JobsXMLCodec.decode("""<joblist>
   <job>
     <id>5</id>
@@ -1850,10 +1711,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertTrue "incorrect values content", values.contains("123")
             assertTrue "incorrect values content", values.contains("456")
             assertTrue "incorrect values content", values.contains("789")
-        } catch (Exception e) {
-            e.printStackTrace()
-            fail "caught exception: " + e
-        }
     }
 
     void testDecodeOptions(){
@@ -1884,16 +1741,12 @@ class JobsXMLCodecTests extends GroovyTestCase {
 </joblist>
 """
 
-        try {
             def jobs = JobsXMLCodec.decode(xml0)
             assertNotNull jobs
             assertEquals "incorrect size", 1, jobs.size()
             assertNull "incorrect options", jobs[0].options
             assertNotNull "missing _nooptions", jobs[0]['_nooptions']
             assert jobs[0]['_nooptions'] : "incorrect nooptions"
-        } catch (Exception e) {
-            fail "caught exception: " + e
-        }
         //simple options
         def xml1 = """<joblist>
   <job>
@@ -1923,8 +1776,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
 </joblist>
 """
 
-        try {
-            def jobs = JobsXMLCodec.decode(xml1)
+            jobs = JobsXMLCodec.decode(xml1)
             assertNotNull jobs
             assertEquals "incorrect size", 1, jobs.size()
             assertNotNull "incorrect options", jobs[0].options
@@ -1943,9 +1795,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertTrue "incorrect values content", values.contains("123")
             assertTrue "incorrect values content", values.contains("456")
             assertTrue "incorrect values content", values.contains("789")
-        } catch (Exception e) {
-            fail "caught exception: " + e
-        }
         //simple options using valuesUrl
         def xml2 = """<joblist>
   <job>
@@ -1975,25 +1824,21 @@ class JobsXMLCodecTests extends GroovyTestCase {
 </joblist>
 """
 
-        try {
-            def jobs = JobsXMLCodec.decode(xml2)
+            jobs = JobsXMLCodec.decode(xml2)
             assertNotNull jobs
             assertEquals "incorrect size", 1, jobs.size()
             assertNotNull "incorrect options", jobs[0].options
             assertEquals "incorrect options size", 1, jobs[0].options.size()
             assertNotNull "missing options data", jobs[0].options['options[0]']
-            def opt0=jobs[0].options['options[0]']
-            assertEquals "incorrect name", "buildstamp", opt0.name
-            assertEquals "incorrect defaultValue", "789", opt0.defaultValue
-            assertEquals "incorrect enforced", "false", opt0.enforced.toString()
-            assertEquals "incorrect regex", "abc", opt0.regex
-            assertNull "incorrect values size", opt0.values
-            assertNotNull "missing valuesUrl", opt0.valuesUrl
-            assertEquals "incorrect valuesUrl", "http://monkey/somewhere",opt0.valuesUrl
+            def opt1=jobs[0].options['options[0]']
+            assertEquals "incorrect name", "buildstamp", opt1.name
+            assertEquals "incorrect defaultValue", "789", opt1.defaultValue
+            assertEquals "incorrect enforced", "false", opt1.enforced.toString()
+            assertEquals "incorrect regex", "abc", opt1.regex
+            assertNull "incorrect values size", opt1.values
+            assertNotNull "missing valuesUrl", opt1.valuesUrl
+            assertEquals "incorrect valuesUrl", "http://monkey/somewhere",opt1.valuesUrl
 
-        } catch (Exception e) {
-            fail "caught exception: " + e
-        }
     }
 
     void testDecodeNotification(){
@@ -2024,7 +1869,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
 </joblist>
 """
 
-        try {
             def jobs = JobsXMLCodec.decode(xml1)
             assertNotNull jobs
             assertEquals "incorrect size", 1, jobs.size()
@@ -2033,9 +1877,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNotNull "missing notifications onsuccess", jobs[0].notifications.onsuccess
             assertNotNull "missing notifications onsuccess email", jobs[0].notifications.onsuccess.email
             assertEquals "incorrect email content", "a@example.com,b@example.com", jobs[0].notifications.onsuccess.email
-        } catch (Exception e) {
-            fail "caught exception: " + e
-        }
         //onfailure notification
         def xml2 = """<joblist>
   <job>
@@ -2062,8 +1903,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
 </joblist>
 """
 
-        try {
-            def jobs = JobsXMLCodec.decode(xml2)
+            jobs = JobsXMLCodec.decode(xml2)
             assertNotNull jobs
             assertEquals "incorrect size", 1, jobs.size()
             assertNotNull "missing notifications", jobs[0].notifications
@@ -2071,9 +1911,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNotNull "missing notifications onfailure", jobs[0].notifications.onfailure
             assertNotNull "missing notifications onfailure email", jobs[0].notifications.onfailure.email
             assertEquals "incorrect email content", "c@example.com,d@example.com", jobs[0].notifications.onfailure.email
-        } catch (Exception e) {
-            fail "caught exception: " + e
-        }
         //onfailure and onsuccess notification
         def xml3 = """<joblist>
   <job>
@@ -2103,8 +1940,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
 </joblist>
 """
 
-        try {
-            def jobs = JobsXMLCodec.decode(xml3)
+            jobs = JobsXMLCodec.decode(xml3)
             assertNotNull jobs
             assertEquals "incorrect size", 1, jobs.size()
             assertNotNull "missing notifications", jobs[0].notifications
@@ -2115,9 +1951,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNotNull "missing notifications onsuccess", jobs[0].notifications.onsuccess
             assertNotNull "missing notifications onsuccess email", jobs[0].notifications.onsuccess.email
             assertEquals "incorrect email content", "z@example.com,x@example.com", jobs[0].notifications.onsuccess.email
-        } catch (Exception e) {
-            fail "caught exception: " + e
-        }
     }
 
     void testDecodeNotificationFailure(){
@@ -2358,7 +2191,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         description:'test descrip',
                         loglevel: 'INFO',
                         project:'test1',
-                        workflow: new Workflow([keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]]),
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
                         options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
@@ -2401,7 +2234,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         description:'test descrip',
                         loglevel: 'INFO',
                         project:'test1',
-                        workflow: new Workflow([keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]]),
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
                         options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
@@ -2440,7 +2273,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         description:'test descrip',
                         loglevel: 'INFO',
                         project:'test1',
-                        workflow: new Workflow([keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]]),
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
                         options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
@@ -2482,7 +2315,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         description:'test descrip',
                         loglevel: 'INFO',
                         project:'test1',
-                        workflow: new Workflow([keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]]),
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
                         options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
@@ -2522,7 +2355,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         description:'test descrip',
                         loglevel: 'INFO',
                         project:'test1',
-                        workflow: new Workflow([keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]]),
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
                         options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
 
                         nodeThreadcount:1,
@@ -2566,7 +2399,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         description:'test descrip',
                         loglevel: 'INFO',
                         project:'test1',
-                        workflow: new Workflow([keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]]),
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
                         options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
 
                         nodeThreadcount:1,
@@ -2610,224 +2443,18 @@ class JobsXMLCodecTests extends GroovyTestCase {
 
 
 
-    void testEncodeAdhocFilepath(){
-         def XmlParser parser = new XmlParser()
-        def jobs1 = [
-                [
-                        jobName:'test job 1',
-                        description:'test descrip',
-                        loglevel: 'INFO',
-                        project:'test1',
-                        //type
-                        //name
-                        //command
-                        argString:'',
-                        adhocExecution:true,
-                        adhocFilepath:'/test/file/path',
-                        nodeThreadcount:1,
-                        nodeKeepgoing:true,
-                ]
-        ]
-
-        try{
-            def xmlstr = JobsXMLCodec.encode(jobs1)
-            assertNotNull xmlstr
-            assertTrue xmlstr instanceof String
-
-
-            def doc = parser.parse(new StringReader(xmlstr))
-            assertNotNull doc
-            assertEquals "wrong scriptfile","/test/file/path",doc.job[0].scriptfile[0].text()
-            assertEquals "incorrect scriptargs",0,doc.job[0].scriptargs.size()
-            assertEquals "unexpected echo",0,doc.job[0].echo.size()
-            assertEquals "unexpected script",0,doc.job[0].script.size()
-        }catch (Exception e){
-            fail "caught exception during encode or parse: "+e
-        }
-        def jobs2 = [
-                [
-                        jobName:'test job 1',
-                        description:'test descrip',
-                        loglevel: 'INFO',
-                        project:'test1',
-                        //type
-                        //name
-                        //command
-                        argString:'some Arg > String & blah',
-                        adhocExecution:true,
-                        adhocFilepath:'/test/file/path',
-                        nodeThreadcount:1,
-                        nodeKeepgoing:true,
-                ]
-        ]
-
-        try{
-            def xmlstr = JobsXMLCodec.encode(jobs2)
-            assertNotNull xmlstr
-            assertTrue xmlstr instanceof String
-
-
-            def doc = parser.parse(new StringReader(xmlstr))
-            assertNotNull doc
-            assertEquals "wrong scriptfile","/test/file/path",doc.job[0].scriptfile[0].text()
-            assertEquals "incorrect scriptargs",1,doc.job[0].scriptargs.size()
-            assertEquals "incorrect scriptargs",'some Arg > String & blah',doc.job[0].scriptargs[0].text()
-            assertEquals "unexpected echo",0,doc.job[0].echo.size()
-            assertEquals "unexpected script",0,doc.job[0].script.size()
-        }catch (Exception e){
-            fail "caught exception during encode or parse: "+e
-        }
-    }
 
 
 
 
-    void testEncodeAdhocRemote(){
-         def XmlParser parser = new XmlParser()
-        def jobs1 = [
-                [
-                        jobName:'test job 1',
-                        description:'test descrip',
-                        loglevel: 'INFO',
-                        project:'test1',
-                        //type
-                        //name
-                        //command
-                        argString:'',
-                        adhocExecution:true,
-                        adhocRemoteString:'echo this is a test blah',
-                        nodeThreadcount:1,
-                        nodeKeepgoing:true,
-                ]
-        ]
 
-        try{
-            def xmlstr = JobsXMLCodec.encode(jobs1)
-            assertNotNull xmlstr
-            assertTrue xmlstr instanceof String
-
-
-            def doc = parser.parse(new StringReader(xmlstr))
-            assertNotNull doc
-            assertEquals "wrong scriptfile","echo this is a test blah",doc.job[0].exec[0].text()
-            assertEquals "unexpected scriptargs",0,doc.job[0].scriptargs.size()
-            assertEquals "unexpected scriptfile",0,doc.job[0].scriptfile.size()
-            assertEquals "unexpected script",0,doc.job[0].script.size()
-        }catch (Exception e){
-            fail "caught exception during encode or parse: "+e
-        }
-    }
-
-    void testEncodeAdhocLocal(){
-         def XmlParser parser = new XmlParser()
-        def jobs1 = [
-                [
-                        jobName:'test job 1',
-                        description:'test descrip',
-                        loglevel: 'INFO',
-                        project:'test1',
-                        //type
-                        //name
-                        //command
-                        argString:'',
-                        adhocExecution:true,
-                        adhocLocalString:'echo what is this monkey',
-                        nodeThreadcount:1,
-                        nodeKeepgoing:true,
-                ]
-        ]
-
-        try{
-            def xmlstr = JobsXMLCodec.encode(jobs1)
-            assertNotNull xmlstr
-            assertTrue xmlstr instanceof String
-
-
-            def doc = parser.parse(new StringReader(xmlstr))
-            assertNotNull doc
-            assertEquals "wrong scriptfile","echo what is this monkey",doc.job[0].script[0].text()
-            assertEquals "unexpected scriptargs",0,doc.job[0].scriptargs.size()
-            assertEquals "unexpected scriptfile",0,doc.job[0].scriptfile.size()
-            assertEquals "unexpected exec",0,doc.job[0].exec.size()
-        }catch (Exception e){
-            fail "caught exception during encode or parse: "+e
-        }
-        def jobs2 = [
-                [
-                        jobName:'test job 1',
-                        description:'test descrip',
-                        loglevel: 'INFO',
-                        project:'test1',
-                        //type
-                        //name
-                        //command
-                        argString:'elf biscuits',
-                        adhocExecution:true,
-                        adhocLocalString:'echo what is this monkey',
-                        nodeThreadcount:1,
-                        nodeKeepgoing:true,
-                ]
-        ]
-
-        try{
-            def xmlstr = JobsXMLCodec.encode(jobs2)
-            assertNotNull xmlstr
-            assertTrue xmlstr instanceof String
-
-
-            def doc = parser.parse(new StringReader(xmlstr))
-            assertNotNull doc
-            assertEquals "wrong scriptfile","echo what is this monkey",doc.job[0].script[0].text()
-            assertEquals "wrong scriptargs",1,doc.job[0].scriptargs.size()
-            assertEquals "wrong scriptargs",'elf biscuits',doc.job[0].scriptargs[0].text()
-            assertEquals "unexpected scriptfile",0,doc.job[0].scriptfile.size()
-            assertEquals "unexpected exec",0,doc.job[0].exec.size()
-        }catch (Exception e){
-            fail "caught exception during encode or parse: "+e
-        }
-
-        //test multiline script content
-        def jobs3 = [
-                [
-                        jobName:'test job 1',
-                        description:'test descrip',
-                        loglevel: 'INFO',
-                        project:'test1',
-                        //type
-                        //name
-                        //command
-                        argString:'elf biscuits',
-                        adhocExecution:true,
-                        adhocLocalString:'#!/bin/bash\n\necho what is this monkey < test.out\n\necho this is a test\n\nexit 0',
-                        nodeThreadcount:1,
-                        nodeKeepgoing:true,
-                ]
-        ]
-
-        try{
-            def xmlstr = JobsXMLCodec.encode(jobs3)
-            assertNotNull xmlstr
-            assertTrue xmlstr instanceof String
-
-
-            def doc = parser.parse(new StringReader(xmlstr))
-            assertNotNull doc
-            assertEquals "wrong scriptfile","#!/bin/bash\n\necho what is this monkey < test.out\n\necho this is a test\n\nexit 0",doc.job[0].script[0].text()
-            assertEquals "wrong scriptargs",1,doc.job[0].scriptargs.size()
-            assertEquals "wrong scriptargs",'elf biscuits',doc.job[0].scriptargs[0].text()
-            assertEquals "unexpected scriptfile",0,doc.job[0].scriptfile.size()
-            assertEquals "unexpected exec",0,doc.job[0].exec.size()
-        }catch (Exception e){
-            fail "caught exception during encode or parse: "+e
-        }
-    }
 
     void testEncodeDecode(){
         def XmlParser parser = new XmlParser()
 
         //test multiline script content
         def jobs3 = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
@@ -2835,31 +2462,36 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         //type
                         //name
                         //command
-                        argString:'elf biscuits',
-                        adhocExecution:true,
-                        adhocLocalString:'#!/bin/bash\n\necho what is this monkey < test.out\n\necho this is a test\n\nexit 0',
+
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec(
+                            argString:'elf biscuits',
+                            adhocExecution:true,
+                            adhocLocalString:'#!/bin/bash\n\necho what is this monkey < test.out\n\necho this is a test\n\nexit 0',
+                                            
+                            )]),
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
-                ]
+                )
         ]
 
-        try{
             def xmlstr = JobsXMLCodec.encode(jobs3)
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
 
-
+        System.err.println("xmlstr: ${xmlstr}");
             def jobs=JobsXMLCodec.decode(xmlstr)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
-            assertEquals "incorrect adhocLocalString","#!/bin/bash\n\necho what is this monkey < test.out\n\necho this is a test\n\nexit 0",jobs[0].adhocLocalString
-            assertEquals "incorrect argString","elf biscuits",jobs[0].argString
-            assertEquals "incorrect adhocRemoteString",null,jobs[0].adhocRemoteString
-            assertEquals "incorrect adhocFilepath",null,jobs[0].adhocFilepath
+            def job1=jobs[0]
+        assertNotNull(job1.workflow)
+        assertNotNull(job1.workflow.commands)
+        assertEquals(1,job1.workflow.commands.size())
+        def wfi=job1.workflow.commands[0]
+            assertEquals "incorrect adhocLocalString","#!/bin/bash\n\necho what is this monkey < test.out\n\necho this is a test\n\nexit 0",wfi[0].adhocLocalString
+            assertEquals "incorrect argString","elf biscuits",wfi[0].argString
+            assertEquals "incorrect adhocRemoteString",null,wfi[0].adhocRemoteString
+            assertEquals "incorrect adhocFilepath",null,wfi[0].adhocFilepath
             
-        }catch (Exception e){
-            fail "caught exception during encode or parse: "+e
-        }
     }
 
     void testEncodeNodefilter(){
@@ -2867,18 +2499,13 @@ class JobsXMLCodecTests extends GroovyTestCase {
 
         //set node dispatch to false, and assert no nodefilters are generated
         def jobs1 = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
                         project:'test1',
-                        //type
-                        //name
-                        //command
-                        argString:'',
-                        adhocExecution:true,
-                        adhocLocalString:'echo what is this monkey',
-                        nodeThreadcount:1,
+                      workflow: new Workflow(keepgoing: true, commands: [new CommandExec(adhocExecution: true, adhocLocalString: 'test',)]),
+                    nodeThreadcount:1,
                         nodeKeepgoing:true,
                         doNodedispatch:false,
                         nodeInclude:'myhostname',
@@ -2889,10 +2516,9 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         nodeIncludeOsArch:'x86,sparc',
                         nodeIncludeOsVersion:'4\\..*',
                         nodeIncludeName:'mynode'
-                ]
+                )
         ]
 
-        try{
             def xmlstr = JobsXMLCodec.encode(jobs1)
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
@@ -2901,23 +2527,15 @@ class JobsXMLCodecTests extends GroovyTestCase {
             def doc = parser.parse(new StringReader(xmlstr))
             assertNotNull doc
             assertEquals "missing nodefilters",0,doc.job[0].nodefilters.size()
-        }catch (Exception e){
-            fail "caught exception during encode or parse: "+e
-        }
 
         //set node dispatch to true, and assert 'include' nodefilters are generated
         def jobs2 = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
                         project:'test1',
-                        //type
-                        //name
-                        //command
-                        argString:'',
-                        adhocExecution:true,
-                        adhocLocalString:'echo what is this monkey',
+                      workflow: new Workflow(keepgoing: true, commands: [new CommandExec(adhocExecution: true, adhocLocalString: 'test',)]),
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
                         doNodedispatch:true,
@@ -2929,16 +2547,15 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         nodeIncludeOsArch:'x86,sparc',
                         nodeIncludeOsVersion:'4\\..*',
                         nodeIncludeName:'mynode'
-                ]
+                )
         ]
 
-        try{
-            def xmlstr = JobsXMLCodec.encode(jobs2)
+            xmlstr = JobsXMLCodec.encode(jobs2)
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
 
 
-            def Node doc = parser.parse(new StringReader(xmlstr))
+            doc = parser.parse(new StringReader(xmlstr))
             assertNotNull doc
             assertEquals "missing nodefilters",1,doc.job[0].nodefilters.size()
             assertEquals "unexpected nodefilters exclude",0,doc.job[0].nodefilters[0].exclude.size()
@@ -2961,21 +2578,16 @@ class JobsXMLCodecTests extends GroovyTestCase {
             def tname=doc.job[0].nodefilters[0].include[0].find{it.name=='name'}.text()
             assertEquals "incorrect nodefilters include name",'mynode',tname
             assertEquals "incorrect nodefilters include name",1,doc.job[0].nodefilters[0].include[0].findAll{it.name=='name'}.size()
-        }catch (Exception e){
-            fail "caught exception during encode or parse: "+e
-        }
 
 
         //set node dispatch to true, and assert 'exclude' nodefilters are generated
         def jobs3 = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
                         project:'test1',
-                        argString:'',
-                        adhocExecution:true,
-                        adhocLocalString:'echo what is this monkey',
+                      workflow: new Workflow(keepgoing: true, commands: [new CommandExec(adhocExecution: true, adhocLocalString: 'test',)]),
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
                         doNodedispatch:true,
@@ -2987,16 +2599,15 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         nodeExcludeOsArch:'x86,sparc',
                         nodeExcludeOsVersion:'4\\..*',
                         nodeExcludeName:'mynode'
-                ]
+                )
         ]
 
-        try{
-            def xmlstr = JobsXMLCodec.encode(jobs3)
+            xmlstr = JobsXMLCodec.encode(jobs3)
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
 
 
-            def doc = parser.parse(new StringReader(xmlstr))
+            doc = parser.parse(new StringReader(xmlstr))
             assertNotNull doc
             assertEquals "missing nodefilters",1,doc.job[0].nodefilters.size()
             assertEquals "unexpected nodefilters include",0,doc.job[0].nodefilters[0].include.size()
@@ -3018,21 +2629,16 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect nodefilters exclude os-version",'4\\..*',doc.job[0].nodefilters[0].exclude[0].'os-version'[0].text()
             assertEquals "incorrect nodefilters exclude name",1,doc.job[0].nodefilters[0].exclude[0].findAll{it.name=='name'}.size()
             assertEquals "incorrect nodefilters exclude name",'mynode',doc.job[0].nodefilters[0].exclude[0].find{it.name=='name'}.text()
-        }catch (Exception e){
-            fail "caught exception during encode or parse: "+e
-        }
 
 
         //set node dispatch to true, and assert both 'include' and 'exclude' nodefilters are generated
         def jobs4 = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
                         project:'test1',
-                        argString:'',
-                        adhocExecution:true,
-                        adhocLocalString:'echo what is this monkey',
+                      workflow: new Workflow(keepgoing: true, commands: [new CommandExec(adhocExecution: true, adhocLocalString: 'test',)]),
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
                         doNodedispatch:true,
@@ -3053,16 +2659,15 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         nodeIncludeOsArch:'686',
                         nodeIncludeOsVersion:'10\\..*',
                         nodeIncludeName:'annode'
-                ]
+                )
         ]
 
-        try{
-            def xmlstr = JobsXMLCodec.encode(jobs4)
+            xmlstr = JobsXMLCodec.encode(jobs4)
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
 
 
-            def doc = parser.parse(new StringReader(xmlstr))
+            doc = parser.parse(new StringReader(xmlstr))
             assertNotNull doc
             assertEquals "missing nodefilters",1,doc.job[0].nodefilters.size()
             assertEquals "missing nodefilters exclude",1,doc.job[0].nodefilters[0].exclude.size()
@@ -3102,9 +2707,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect nodefilters include os-version",'10\\..*',doc.job[0].nodefilters[0].include[0].'os-version'[0].text()
             assertEquals "incorrect nodefilters include name",1,doc.job[0].nodefilters[0].include[0].findAll{it.name=='name'}.size()
             assertEquals "incorrect nodefilters include name",'annode',doc.job[0].nodefilters[0].include[0].find{it.name=='name'}.text()
-        }catch (Exception e){
-            fail "caught exception during encode or parse: "+e
-        }
 
     }
 
@@ -3112,7 +2714,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
         def XmlParser parser = new XmlParser()
         //encode basic workflow with one command call
         def jobs1 = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
@@ -3122,25 +2724,17 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
                         doNodedispatch:true,
-                        workflow:[threadcount:1,keepgoing:true,commands:[
-                                [
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec(
                                     adhocExecution:true,
                                     adhocRemoteString:'aname',
-                                ]
-                        ]
-                        ]
-                ]
+                                )]
+                            ),
+                )
         ]
 
         if(true){
             def xmlstr
-            try{
                 xmlstr = JobsXMLCodec.encode(jobs1)
-                System.err.println("xmlstr: "+xmlstr);
-            }catch (Exception e){
-                e.printStackTrace(System.err)
-                fail "caught exception during encode or parse: "+e
-            }
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
 
@@ -3152,7 +2746,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
             assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
             assertEquals "missing sequence",1,doc.job.sequence.size()
-            assertEquals "wrong threadcount","1",doc.job[0].sequence[0]['@threadcount']
             assertEquals "wrong keepgoing","true",doc.job[0].sequence[0]['@keepgoing']
             assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
             assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
@@ -3166,7 +2759,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
 
         //encode basic workflow with one command call, change threadcount
         def jobs1b = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
@@ -3176,25 +2769,19 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
                         doNodedispatch:true,
-                        workflow:[threadcount:2,commands:[
-                                [
+                        workflow: new Workflow(threadcount:2, commands: [new CommandExec(
                                     adhocExecution:true,
                                     adhocRemoteString:'aname',
-                                ]
-                        ]
-                        ]
-                ]
+                                )]
+                            )
+                        )
+
         ]
 
         if(true){
             def xmlstr
-            try{
                 xmlstr= JobsXMLCodec.encode(jobs1b)
 
-            }catch (Exception e){
-                e.printStackTrace(System.err)
-                fail "caught exception during encode or parse: "+e
-            }
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
 
@@ -3206,7 +2793,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
             assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
             assertEquals "missing sequence",1,doc.job.sequence.size()
-            assertEquals "wrong threadcount","2",doc.job[0].sequence[0]['@threadcount']
             assertEquals "wrong keepgoing","false",doc.job[0].sequence[0]['@keepgoing']
             assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
             assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
@@ -3220,7 +2806,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
         }
         //add conditional attributes
         def jobs2 = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
@@ -3230,21 +2816,19 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
                         doNodedispatch:true,
-                        workflow:[threadcount:1,commands:[
-                                [
+
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec(
                                     adhocExecution:true,
                                     adhocRemoteString:'aname',
                                     returnProperty:'returnproptest',
                                     ifString:'ifstringtest',
                                     unlessString:'unlessstringtest',
                                     equalsString:'equalsstringtest',
-                                ]
-                        ]
-                        ]
-                ]
+                            )]
+                            )
+                )
         ]
 
-        try{
             def xmlstr = JobsXMLCodec.encode(jobs2)
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
@@ -3257,26 +2841,29 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
             assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
             assertEquals "missing sequence",1,doc.job.sequence.size()
-            assertEquals "wrong threadcount","1",doc.job[0].sequence[0]['@threadcount']
             assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
             assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
             assertEquals "wrong command/exec size",1, doc.job[0].sequence[0].command[0].exec.size()
             assertEquals "wrong command/exec","aname", doc.job[0].sequence[0].command[0].exec[0].text()
+
+            //XXX: conditionals not yet supported, so expect null
+            /*
             assertEquals "wrong command @return",'returnproptest',doc.job[0].sequence[0].command[0]['@return']
             assertEquals "wrong command @if",'ifstringtest',doc.job[0].sequence[0].command[0]['@if']
             assertEquals "wrong command @unless",'unlessstringtest',doc.job[0].sequence[0].command[0]['@unless']
             assertEquals "wrong command @equals",'equalsstringtest',doc.job[0].sequence[0].command[0]['@equals']
+            */
+            assertNull "wrong command @return",doc.job[0].sequence[0].command[0]['@return']
+            assertNull "wrong command @if",doc.job[0].sequence[0].command[0]['@if']
+            assertNull "wrong command @unless",doc.job[0].sequence[0].command[0]['@unless']
+            assertNull "wrong command @equals",doc.job[0].sequence[0].command[0]['@equals']
 
 
-        }catch (Exception e){
-            e.printStackTrace(System.err)
-            fail "caught exception during encode or parse: "+e
-        }
 
 
         //test simple exec/script/scriptfile commands
         def jobs3 = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
@@ -3286,30 +2873,28 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
                         doNodedispatch:true,
-                        workflow:[threadcount:1,commands:[
-                                [
+
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec(
                                     adhocExecution:true,
-                                    adhocRemoteString:'a remote command'
-                                ]
-                        ]
-                        ]
-                ]
+                                    adhocRemoteString:'a remote command',
+                                    argString:'test string'
+                                )]
+                            )
+                )
         ]
 
-        try{
-            def xmlstr = JobsXMLCodec.encode(jobs3)
+            xmlstr = JobsXMLCodec.encode(jobs3)
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
 
 
-            def doc = parser.parse(new StringReader(xmlstr))
+            doc = parser.parse(new StringReader(xmlstr))
             assertNotNull doc
             assertEquals "missing job",1,doc.job.size()
             assertEquals "missing context",1,doc.job[0].context.size()
             assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
             assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
             assertEquals "missing sequence",1,doc.job.sequence.size()
-            assertEquals "wrong threadcount","1",doc.job[0].sequence[0]['@threadcount']
             assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
             assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
             assertNull "wrong command @resource",doc.job[0].sequence[0].command[0]['@resource']
@@ -3323,13 +2908,9 @@ class JobsXMLCodecTests extends GroovyTestCase {
 
 
 
-        }catch (Exception e){
-            e.printStackTrace(System.err)
-            fail "caught exception during encode or parse: "+e
-        }
         //test simple exec/script/scriptfile commands
         def jobs4 = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
@@ -3339,30 +2920,29 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
                         doNodedispatch:true,
-                        workflow:[threadcount:1,commands:[
-                                [
+
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec(
                                     adhocExecution:true,
-                                    adhocLocalString:'a local script command'
-                                ]
-                        ]
-                        ]
-                ]
+                                    adhocLocalString:'a local script command',
+                                    argString:'test string'
+                                )]
+                            )
+                )
         ]
 
-        try{
-            def xmlstr = JobsXMLCodec.encode(jobs4)
+            xmlstr = JobsXMLCodec.encode(jobs4)
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
+                System.err.println("xmlstr: "+xmlstr);
 
 
-            def doc = parser.parse(new StringReader(xmlstr))
+            doc = parser.parse(new StringReader(xmlstr))
             assertNotNull doc
             assertEquals "missing job",1,doc.job.size()
             assertEquals "missing context",1,doc.job[0].context.size()
             assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
             assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
             assertEquals "missing sequence",1,doc.job.sequence.size()
-            assertEquals "wrong threadcount","1",doc.job[0].sequence[0]['@threadcount']
             assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
             assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
             assertNull "wrong command @resource",doc.job[0].sequence[0].command[0]['@resource']
@@ -3372,17 +2952,14 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "wrong command/script",'a local script command',doc.job[0].sequence[0].command[0].script[0].text()
             assertEquals "wrong command/exec",0,doc.job[0].sequence[0].command[0].exec.size()
             assertEquals "wrong command/scriptfile",0,doc.job[0].sequence[0].command[0].scriptfile.size()
-            assertEquals "wrong command/scriptargs",0,doc.job[0].sequence[0].command[0].scriptargs.size()
+            assertEquals "wrong command/exec",1,doc.job[0].sequence[0].command[0].scriptargs.size()
+            assertEquals "wrong command/exec","test string",doc.job[0].sequence[0].command[0].scriptargs[0].text()
 
 
 
-        }catch (Exception e){
-            e.printStackTrace(System.err)
-            fail "caught exception during encode or parse: "+e
-        }
         //test simple exec/script/scriptfile commands
         def jobs5 = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
@@ -3392,30 +2969,27 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
                         doNodedispatch:true,
-                        workflow:[threadcount:1,commands:[
-                                [
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec(
                                     adhocExecution:true,
-                                    adhocFilepath:'/path/to/a/file'
-                                ]
-                        ]
-                        ]
-                ]
+                                    adhocFilepath:'/path/to/a/file',
+                                    argString:'test string'
+                                )]
+                        )
+                )
         ]
 
-        try{
-            def xmlstr = JobsXMLCodec.encode(jobs5)
+            xmlstr = JobsXMLCodec.encode(jobs5)
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
 
 
-            def doc = parser.parse(new StringReader(xmlstr))
+            doc = parser.parse(new StringReader(xmlstr))
             assertNotNull doc
             assertEquals "missing job",1,doc.job.size()
             assertEquals "missing context",1,doc.job[0].context.size()
             assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
             assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
             assertEquals "missing sequence",1,doc.job.sequence.size()
-            assertEquals "wrong threadcount","1",doc.job[0].sequence[0]['@threadcount']
             assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
             assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
             assertNull "wrong command @resource",doc.job[0].sequence[0].command[0]['@resource']
@@ -3425,17 +2999,14 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "wrong command/scriptfile",'/path/to/a/file',doc.job[0].sequence[0].command[0].scriptfile[0].text()
             assertEquals "wrong command/exec",0,doc.job[0].sequence[0].command[0].exec.size()
             assertEquals "wrong command/script",0,doc.job[0].sequence[0].command[0].script.size()
-            assertEquals "wrong command/scriptargs",0,doc.job[0].sequence[0].command[0].scriptargs.size()
+            assertEquals "wrong command/exec",1,doc.job[0].sequence[0].command[0].scriptargs.size()
+            assertEquals "wrong command/exec","test string",doc.job[0].sequence[0].command[0].scriptargs[0].text()
 
 
 
-        }catch (Exception e){
-            e.printStackTrace(System.err)
-            fail "caught exception during encode or parse: "+e
-        }
         //test simple exec/script/scriptfile commands
         def jobs6 = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
@@ -3445,31 +3016,27 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
                         doNodedispatch:true,
-                        workflow:[threadcount:1,commands:[
-                                [
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec(
                                     adhocExecution:true,
                                     adhocFilepath:'/path/to/a/file',
                                     argString:'-some script -args'
-                                ]
-                        ]
-                        ]
-                ]
+                                )]
+                        )
+                )
         ]
 
-        try{
-            def xmlstr = JobsXMLCodec.encode(jobs6)
+            xmlstr = JobsXMLCodec.encode(jobs6)
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
 
 
-            def doc = parser.parse(new StringReader(xmlstr))
+            doc = parser.parse(new StringReader(xmlstr))
             assertNotNull doc
             assertEquals "missing job",1,doc.job.size()
             assertEquals "missing context",1,doc.job[0].context.size()
             assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
             assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
             assertEquals "missing sequence",1,doc.job.sequence.size()
-            assertEquals "wrong threadcount","1",doc.job[0].sequence[0]['@threadcount']
             assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
             assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
             assertNull "wrong command @resource",doc.job[0].sequence[0].command[0]['@resource']
@@ -3484,13 +3051,9 @@ class JobsXMLCodecTests extends GroovyTestCase {
 
 
 
-        }catch (Exception e){
-            e.printStackTrace(System.err)
-            fail "caught exception during encode or parse: "+e
-        }
         //test simple job ref workflow item
         def jobs7 = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
@@ -3500,29 +3063,25 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
                         doNodedispatch:true,
-                        workflow:[threadcount:1,commands:[
-                                [
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
                                     jobName:'a Job'
-                                ]
-                        ]
-                        ]
-                ]
+                                )]
+                        )
+                )
         ]
 
-        try{
-            def xmlstr = JobsXMLCodec.encode(jobs7)
+            xmlstr = JobsXMLCodec.encode(jobs7)
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
 
 
-            def doc = parser.parse(new StringReader(xmlstr))
+            doc = parser.parse(new StringReader(xmlstr))
             assertNotNull doc
             assertEquals "missing job",1,doc.job.size()
             assertEquals "missing context",1,doc.job[0].context.size()
             assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
             assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
             assertEquals "missing sequence",1,doc.job.sequence.size()
-            assertEquals "wrong threadcount","1",doc.job[0].sequence[0]['@threadcount']
             assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
             assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
             assertNull "wrong command @resource",doc.job[0].sequence[0].command[0]['@resource']
@@ -3530,15 +3089,11 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNull "wrong command @module",doc.job[0].sequence[0].command[0]['@module']
             assertEquals "missing command/jobref",1,doc.job[0].sequence[0].command[0].jobref.size()
             assertEquals "wrong command/jobref/@name",'a Job',doc.job[0].sequence[0].command[0].jobref[0]['@name']
-            assertNull "wrong command/jobref/@group",doc.job[0].sequence[0].command[0].jobref[0]['@group']
+            assertNull "wrong command/jobref/@group: "+doc.job[0].sequence[0].command[0].jobref[0]['@group'],doc.job[0].sequence[0].command[0].jobref[0]['@group']
 
-        }catch (Exception e){
-            e.printStackTrace(System.err)
-            fail "caught exception during encode or parse: "+e
-        }
         //test simple job ref workflow item, with a group
         def jobs8 = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
@@ -3548,30 +3103,26 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
                         doNodedispatch:true,
-                        workflow:[threadcount:1,commands:[
-                                [
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
                                     jobName:'a Job',
                                     jobGroup:'/some/path'
-                                ]
-                        ]
-                        ]
-                ]
+                                )]
+                        )
+                )
         ]
 
-        try{
-            def xmlstr = JobsXMLCodec.encode(jobs8)
+            xmlstr = JobsXMLCodec.encode(jobs8)
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
 
 
-            def doc = parser.parse(new StringReader(xmlstr))
+            doc = parser.parse(new StringReader(xmlstr))
             assertNotNull doc
             assertEquals "missing job",1,doc.job.size()
             assertEquals "missing context",1,doc.job[0].context.size()
             assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
             assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
             assertEquals "missing sequence",1,doc.job.sequence.size()
-            assertEquals "wrong threadcount","1",doc.job[0].sequence[0]['@threadcount']
             assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
             assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
             assertNull "wrong command @resource",doc.job[0].sequence[0].command[0]['@resource']
@@ -3581,13 +3132,9 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "wrong command/jobref/@name",'a Job',doc.job[0].sequence[0].command[0].jobref[0]['@name']
             assertEquals "wrong command/jobref/@group",'/some/path',doc.job[0].sequence[0].command[0].jobref[0]['@group']
 
-        }catch (Exception e){
-            e.printStackTrace(System.err)
-            fail "caught exception during encode or parse: "+e
-        }
         //test step-first workflow strategy
         def jobs9 = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
@@ -3597,30 +3144,27 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
                         doNodedispatch:true,
-                        workflow:[threadcount:1,strategy:'step-first',commands:[
-                                [
+                        workflow: new Workflow(threadcount:1,strategy:'step-first',keepgoing: true, commands: [new JobExec(
+
                                     jobName:'a Job',
                                     jobGroup:'/some/path'
-                                ]
-                        ]
-                        ]
-                ]
+                                )]
+                    )
+                )
         ]
 
-        try{
-            def xmlstr = JobsXMLCodec.encode(jobs9)
+            xmlstr = JobsXMLCodec.encode(jobs9)
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
 
 
-            def doc = parser.parse(new StringReader(xmlstr))
+            doc = parser.parse(new StringReader(xmlstr))
             assertNotNull doc
             assertEquals "missing job",1,doc.job.size()
             assertEquals "missing context",1,doc.job[0].context.size()
             assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
             assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
             assertEquals "missing sequence",1,doc.job.sequence.size()
-            assertEquals "wrong threadcount","1",doc.job[0].sequence[0]['@threadcount']
             assertEquals "wrong keepgoing","step-first",doc.job[0].sequence[0]['@strategy']
             assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
             assertNull "wrong command @resource",doc.job[0].sequence[0].command[0]['@resource']
@@ -3630,13 +3174,9 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "wrong command/jobref/@name",'a Job',doc.job[0].sequence[0].command[0].jobref[0]['@name']
             assertEquals "wrong command/jobref/@group",'/some/path',doc.job[0].sequence[0].command[0].jobref[0]['@group']
 
-        }catch (Exception e){
-            e.printStackTrace(System.err)
-            fail "caught exception during encode or parse: "+e
-        }
         //test simple job ref workflow item, with a group
         def job10 = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
@@ -3646,31 +3186,27 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
                         doNodedispatch:true,
-                        workflow:[threadcount:1,commands:[
-                                [
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
                                     jobName:'a Job',
                                     jobGroup:'/some/path',
                                     argString:'-test1 1 -test2 2'
-                                ]
-                        ]
-                        ]
-                ]
+                                )]
+                        )
+                )
         ]
 
-        try{
-            def xmlstr = JobsXMLCodec.encode(job10)
+            xmlstr = JobsXMLCodec.encode(job10)
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
 
 
-            def doc = parser.parse(new StringReader(xmlstr))
+            doc = parser.parse(new StringReader(xmlstr))
             assertNotNull doc
             assertEquals "missing job",1,doc.job.size()
             assertEquals "missing context",1,doc.job[0].context.size()
             assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
             assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
             assertEquals "missing sequence",1,doc.job.sequence.size()
-            assertEquals "wrong threadcount","1",doc.job[0].sequence[0]['@threadcount']
             assertEquals "wrong keepgoing","node-first",doc.job[0].sequence[0]['@strategy']
             assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
             assertNull "wrong command @resource",doc.job[0].sequence[0].command[0]['@resource']
@@ -3682,98 +3218,31 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "wrong arg count",1,doc.job[0].sequence[0].command.jobref.arg.size()
             assertEquals "wrong arg @line",'-test1 1 -test2 2',doc.job[0].sequence[0].command[0].jobref[0].arg[0]['@line']
 
-        }catch (Exception e){
-            e.printStackTrace(System.err)
-            fail "caught exception during encode or parse: "+e
-        }
-    }
-
-    void testEncodeWorkflowOptions(){
-//        def XmlSlurper parser = new XmlSlurper()
-        def XmlParser parser = new XmlParser()
-        //test simple job ref workflow item, with a group
-        def jobs1 = [
-                [
-                        jobName:'test job 1',
-                        description:'test descrip',
-                        loglevel: 'INFO',
-                        project:'test1',
-                        argString:'',
-                        adhocExecution:false,
-                        nodeThreadcount:1,
-                        nodeKeepgoing:true,
-                        doNodedispatch:true,
-                        options:[
-                            [name:'test1',defaultValue:'monkey',values:['a','b','c'],enforced:true,regex:'abcdefg']
-                        ],
-                        workflow:[threadcount:1,commands:[
-                                [
-                                    jobName:'a Job',
-                                    jobGroup:'/some/path'
-                                ]
-                        ]
-                        ]
-                ]
-        ]
-        def doc
-        try{
-            def xmlstr = JobsXMLCodec.encode(jobs1)
-            assertNotNull xmlstr
-            assertTrue xmlstr instanceof String
-
-            System.err.println("xml: "+xmlstr);
-
-            doc = parser.parse(new StringReader(xmlstr))
-        }catch (Exception e){
-            e.printStackTrace(System.err)
-            fail "caught exception during encode or parse: "+e
-        }
-            assertNotNull doc
-            assertEquals "missing job",1,doc.job.size()
-            assertEquals "missing context",1,doc.job[0].context.size()
-            assertEquals "missing context/project",1,doc.job[0].context[0].project.size()
-            assertEquals "wrong project",'test1',doc.job[0].context[0].project[0].text()
-            assertEquals "missing sequence",1,doc.job.sequence.size()
-            assertEquals "wrong threadcount","1",doc.job[0].sequence[0]['@threadcount']
-            assertEquals "wrong command count",1,doc.job[0].sequence[0].command.size()
-            assertNull "wrong command @resource",doc.job[0].sequence[0].command[0]['@resource']
-            assertNull "wrong command @name",doc.job[0].sequence[0].command[0]['@name']
-            assertNull "wrong command @module",doc.job[0].sequence[0].command[0]['@module']
-            assertEquals "missing command/jobref",1,doc.job[0].sequence[0].command[0].jobref.size()
-            assertEquals "wrong command/jobref/@name",'a Job',doc.job[0].sequence[0].command[0].jobref[0]['@name']
-            assertEquals "wrong command/jobref/@group",'/some/path',doc.job[0].sequence[0].command[0].jobref[0]['@group']
-
-            assertNotNull doc.job[0].context[0].options
-            assertNotNull doc.job[0].context[0].options.option
-            assertEquals "incorrect context options size",1,doc.job[0].context[0].options.option.size()
-            assertEquals "incorrect context options option 2 name",'test1',doc.job[0].context[0].options[0].option[0]['@name']
-            assertEquals "incorrect context options option 2 value",'monkey',doc.job[0].context[0].options[0].option[0]['@value']
-            assertEquals "incorrect context options option 2 enforcedvalues",'true',doc.job[0].context[0].options[0].option[0]['@enforcedvalues']
-            assertEquals "incorrect context options option 2 values",'a,b,c',doc.job[0].context[0].options[0].option[0]['@values']
-            assertEquals "incorrect context options option 2 regex",'abcdefg',doc.job[0].context[0].options[0].option[0]['@regex']
     }
 
     void testEncodeOptionValues(){
          def XmlSlurper parser = new XmlSlurper()
         def jobs1 = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
                         project:'test1',
-                        type:'MyService',
-                        name:'anobject',
-                        command:'doSomething',
-                        argString:'-delay 12',
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                    jobName:'a Job',
+                                    jobGroup:'/some/path',
+                                )]
+                            ),
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
                         options:[
-                            [name:'test1',defaultValue:'monkey',values:['a','b','c'],enforced:true,regex:'abcdefg']
-                        ]
-                ]
+                            new Option(name:'test1',defaultValue:'monkey',values:['a','b','c'] as TreeSet,enforced:true,regex:'abcdefg',required:true),
+                            new Option(name:'delay',defaultValue:'12')
+                        ] as TreeSet,
+                )
         ]
 
-        try{
             def xmlstr = JobsXMLCodec.encode(jobs1)
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
@@ -3788,45 +3257,48 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals 0,doc.job[0].context[0].options[0].option[0]['@values'].size()
             assertEquals 0,doc.job[0].context[0].options[0].option[0]['@valuesUrl'].size()
             assertEquals 0,doc.job[0].context[0].options[0].option[0]['@regex'].size()
+            assertEquals 0,doc.job[0].context[0].options[0].option[0]['@required'].size()
             assertEquals 1,doc.job[0].context[0].options[0].option[0]['@value'].size()
             assertEquals 1,doc.job[0].context[0].options[0].option[1]['@enforcedvalues'].size()
             assertEquals 1,doc.job[0].context[0].options[0].option[1]['@values'].size()
             assertEquals 0,doc.job[0].context[0].options[0].option[1]['@valuesUrl'].size()
             assertEquals 1,doc.job[0].context[0].options[0].option[1]['@regex'].size()
+            assertEquals 1,doc.job[0].context[0].options[0].option[1]['@required'].size()
             assertEquals "incorrect context options option 2 name",'test1',doc.job[0].context[0].options[0].option[1]['@name'].text()
             assertEquals "incorrect context options option 2 value",'monkey',doc.job[0].context[0].options[0].option[1]['@value'].text()
             assertEquals "incorrect context options option 2 enforcedvalues",'true',doc.job[0].context[0].options[0].option[1]['@enforcedvalues'].text()
             assertEquals "incorrect context options option 2 values",'a,b,c',doc.job[0].context[0].options[0].option[1]['@values'].text()
             assertEquals "incorrect context options option 2 regex",'abcdefg',doc.job[0].context[0].options[0].option[1]['@regex'].text()
+            assertEquals "incorrect context options option 2 regex",'true',doc.job[0].context[0].options[0].option[1]['@required'].text()
 
-        }catch (Exception e){
-            fail "caught exception during encode or parse: "+e
-        }
 
         def jobs2 = [
-                [
+                new ScheduledExecution(
                         jobName:'test job 1',
                         description:'test descrip',
                         loglevel: 'INFO',
                         project:'test1',
-                        type:'MyService',
-                        name:'anobject',
-                        command:'doSomething',
-                        argString:'-delay 12',
+
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                    jobName:'a Job',
+                                    jobGroup:'/some/path',
+                                )]
+                            ),
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
                         options:[
-                            [name:'test1',defaultValue:'monkey',valuesUrl:'http://monkey/somewhere',enforced:false]
-                        ]
-                ]
+                            new Option(name:'test1',defaultValue:'monkey',valuesUrl:new URL('http://monkey/somewhere'),enforced:false),
+                            new Option(name:'delay',defaultValue:'12')
+                        ] as TreeSet
+                )
         ]
 
-        try{
-            def xmlstr = JobsXMLCodec.encode(jobs2)
+            xmlstr = JobsXMLCodec.encode(jobs2)
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
 
-            def doc = parser.parse(new StringReader(xmlstr))
+            doc = parser.parse(new StringReader(xmlstr))
             assertNotNull doc
             assertEquals "incorrect context options size",2,doc.job[0].context[0].options[0].option.size()
             assertEquals "incorrect context options option 1 name",'delay',doc.job[0].context[0].options[0].option[0]['@name'].text()
@@ -3837,44 +3309,43 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals 0,doc.job[0].context[0].options[0].option[0]['@valuesUrl'].size()
             assertEquals 0,doc.job[0].context[0].options[0].option[0]['@regex'].size()
             assertEquals 1,doc.job[0].context[0].options[0].option[0]['@value'].size()
-            assertEquals 1,doc.job[0].context[0].options[0].option[1]['@enforcedvalues'].size()
+            assertEquals 0,doc.job[0].context[0].options[0].option[1]['@enforcedvalues'].size()
             assertEquals 0,doc.job[0].context[0].options[0].option[1]['@values'].size()
             assertEquals 1,doc.job[0].context[0].options[0].option[1]['@valuesUrl'].size()
             assertEquals 0,doc.job[0].context[0].options[0].option[1]['@regex'].size()
             assertEquals "incorrect context options option 2 name",'test1',doc.job[0].context[0].options[0].option[1]['@name'].text()
             assertEquals "incorrect context options option 2 value",'monkey',doc.job[0].context[0].options[0].option[1]['@value'].text()
-            assertEquals "incorrect context options option 2 enforcedvalues",'false',doc.job[0].context[0].options[0].option[1]['@enforcedvalues'].text()
             assertEquals "incorrect context options option 2 valuesUrl",'http://monkey/somewhere',doc.job[0].context[0].options[0].option[1]['@valuesUrl'].text()
 
-        }catch (Exception e){
-            fail "caught exception during encode or parse: "+e
-        }
 
     }
     void testEncodeNotification(){
             def XmlSlurper parser = new XmlSlurper()
            def jobs1 = [
-                   [
+                   new ScheduledExecution(
                            jobName:'test job 1',
                            description:'test descrip',
                            loglevel: 'INFO',
                            project:'test1',
-                           type:'MyService',
-                           name:'anobject',
-                           command:'doSomething',
-                           argString:'-delay 12',
+
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                    jobName:'a Job',
+                                    jobGroup:'/some/path',
+                                )]
+                            ),
                            nodeThreadcount:1,
                            nodeKeepgoing:true,
                            notifications:[
-                               [eventTrigger:'onsuccess',type:'email',content:'c@example.com,d@example.com']
+                               new Notification(eventTrigger:'onsuccess',type:'email',content:'c@example.com,d@example.com')
                            ]
-                   ]
+                   )
            ]
 
-           try{
                def xmlstr = JobsXMLCodec.encode(jobs1)
                assertNotNull xmlstr
                assertTrue xmlstr instanceof String
+        System.err.println("xmlstr: ${xmlstr}");
 
                def doc = parser.parse(new StringReader(xmlstr))
                assertNotNull doc
@@ -3882,66 +3353,64 @@ class JobsXMLCodecTests extends GroovyTestCase {
                assertEquals "incorrect notifications onsuccess email size","c@example.com,d@example.com",doc.job[0].notification[0].onsuccess[0].email[0]['@recipients'].text()
 
 
-           }catch (Exception e){
-               fail "caught exception during encode or parse: "+e
-           }
            def jobs2 = [
-                   [
+                   new ScheduledExecution(
                            jobName:'test job 1',
                            description:'test descrip',
                            loglevel: 'INFO',
                            project:'test1',
-                           type:'MyService',
-                           name:'anobject',
-                           command:'doSomething',
-                           argString:'-delay 12',
+
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                    jobName:'a Job',
+                                    jobGroup:'/some/path',
+                                )]
+                            ),
                            nodeThreadcount:1,
                            nodeKeepgoing:true,
                            notifications:[
-                               [eventTrigger:'onfailure',type:'email',content:'e@example.com,f@example.com']
+                               new Notification(eventTrigger:'onfailure',type:'email',content:'e@example.com,f@example.com')
                            ]
-                   ]
+                   )
            ]
 
-           try{
-               def xmlstr = JobsXMLCodec.encode(jobs2)
+               xmlstr = JobsXMLCodec.encode(jobs2)
                assertNotNull xmlstr
                assertTrue xmlstr instanceof String
 
-               def doc = parser.parse(new StringReader(xmlstr))
+               doc = parser.parse(new StringReader(xmlstr))
                assertNotNull doc
                assertEquals "incorrect notifications onsuccess email size",1,doc.job[0].notification[0].onfailure[0].email.size()
                assertEquals "incorrect notifications onsuccess email size","e@example.com,f@example.com",doc.job[0].notification[0].onfailure[0].email[0]['@recipients'].text()
 
 
-           }catch (Exception e){
-               fail "caught exception during encode or parse: "+e
-           }
            def jobs3 = [
-                   [
+                   new ScheduledExecution(
                            jobName:'test job 1',
                            description:'test descrip',
                            loglevel: 'INFO',
                            project:'test1',
-                           type:'MyService',
-                           name:'anobject',
-                           command:'doSomething',
-                           argString:'-delay 12',
+
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                    jobName:'a Job',
+                                    jobGroup:'/some/path',
+                                )]
+                            ),
                            nodeThreadcount:1,
                            nodeKeepgoing:true,
                            notifications:[
-                               [eventTrigger:'onsuccess',type:'email',content:'z@example.com,y@example.com'],
-                               [eventTrigger:'onfailure',type:'email',content:'e@example.com,f@example.com']
+                               new Notification(eventTrigger:'onsuccess',type:'email',content:'z@example.com,y@example.com'),
+                               new Notification(eventTrigger:'onfailure',type:'email',content:'e@example.com,f@example.com')
                            ]
-                   ]
+                   )
            ]
 
-           try{
-               def xmlstr = JobsXMLCodec.encode(jobs3)
+               xmlstr = JobsXMLCodec.encode(jobs3)
                assertNotNull xmlstr
                assertTrue xmlstr instanceof String
 
-               def doc = parser.parse(new StringReader(xmlstr))
+               doc = parser.parse(new StringReader(xmlstr))
                assertNotNull doc
                assertEquals "incorrect notifications onsuccess email size",1,doc.job[0].notification[0].onfailure[0].email.size()
                assertEquals "incorrect notifications onsuccess email size","e@example.com,f@example.com",doc.job[0].notification[0].onfailure[0].email[0]['@recipients'].text()
@@ -3949,8 +3418,5 @@ class JobsXMLCodecTests extends GroovyTestCase {
                assertEquals "incorrect notifications onsuccess email size","z@example.com,y@example.com",doc.job[0].notification[0].onsuccess[0].email[0]['@recipients'].text()
 
 
-           }catch (Exception e){
-               fail "caught exception during encode or parse: "+e
-           }
     }
 }

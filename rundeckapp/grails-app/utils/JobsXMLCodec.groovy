@@ -61,48 +61,87 @@ class JobsXMLCodec {
         final Map opts = map.remove('options')
         if(null!=opts){
             def optslist=[]
-            opts.keySet().each{
+            //xml expects sorted option names
+            opts.keySet().sort().each{
                 def x = opts[it]
-                x.'@name'=it
-                def v = x.remove('value')
-                if(null!=v){
-                    x.'@value'=v
+                //add 'name' attribute
+                BuilderUtil.addAttribute(x,'name',it)
+                //convert to attributes: 'value','regex','valuesUrl'
+                BuilderUtil.makeAttribute(x,'value')
+                BuilderUtil.makeAttribute(x,'regex')
+                BuilderUtil.makeAttribute(x,'valuesUrl')
+                //convert 'values' list to comma-separated attribute value @values
+                if(x.values){
+                    BuilderUtil.addAttribute(x,'values',x.remove('values').join(","))
+                }
+                if(x.enforced){
+                    //convert 'enforced' to @enforcedvalues
+                    BuilderUtil.addAttribute(x,'enforcedvalues',x.remove('enforced'))
+                }else{
+                    x.remove('enforced')
+                }
+                if(x.required){
+                    //convert 'required' to attribute
+                    BuilderUtil.makeAttribute(x,'required')
+                }else{
+                    x.remove('required')
                 }
                 optslist<<x
             }
-            map.context.options=optslist
+            map.context[BuilderUtil.pluralize('option')]=optslist
         }
         if(map.nodefilters?.dispatch){
             map.dispatch=map.nodefilters.remove('dispatch')
         }
         if(map.schedule){
-            if(map.schedule.time.seconds){
-                map.schedule.time['@seconds']=map.schedule.time.remove('seconds')
-            }
-            if(map.schedule.time.minute){
-                map.schedule.time['@minute']=map.schedule.time.remove('minute')
-            }
-            if(map.schedule.time.hour){
-                map.schedule.time['@hour']=map.schedule.time.remove('hour')
-            }
-            if(map.schedule.weekday?.day){
-                map.schedule.weekday.'@day'=map.schedule.weekday.remove('day')
-            }
+            BuilderUtil.makeAttribute(map.schedule.time,'seconds')
+            BuilderUtil.makeAttribute(map.schedule.time,'minute')
+            BuilderUtil.makeAttribute(map.schedule.time,'hour')
+            BuilderUtil.makeAttribute(map.schedule.weekday,'day')
             if(map.schedule.month){
-                map.schedule.month=['@month':map.schedule.remove('month')]
+                map.schedule.month=BuilderUtil.toAttrMap('month',map.schedule.remove('month'))
             }
 
             if(map.schedule.dayofmonth?.day){
                 def val=map.schedule.dayofmonth.remove('day')
                 if(map.schedule.month){
-                    map.schedule.month.'@day'=val
+                    BuilderUtil.addAttribute(map.schedule.month,'day',val)
                 }else{
-                    map.schedule.month=['@day':val]
+                    map.schedule.month=BuilderUtil.toAttrMap('day',val)
                 }
             }
 
             if(map.schedule.year){
-                map.schedule.year=['@year':map.schedule.remove('year')]
+                map.schedule.year=BuilderUtil.toAttrMap('year',map.schedule.remove('year'))
+            }
+        }
+        //sequence(threadcount:jobi.workflow.threadcount,keepgoing:jobi.workflow.keepgoing?Boolean.toString(true):Boolean.toString(false),strategy:jobi.workflow.strategy?jobi.workflow.strategy:'node-first'){
+        BuilderUtil.makeAttribute(map.sequence,'keepgoing')
+        BuilderUtil.makeAttribute(map.sequence,'strategy')
+        map.sequence.command=map.sequence.remove('commands')
+        //convert script args values to idiosyncratic label
+        map.sequence.command.each{ cmd ->
+            if(cmd.scriptfile || cmd.script){
+                cmd.scriptargs=cmd.remove('args')
+            }else if(cmd.jobref){
+                BuilderUtil.makeAttribute(cmd.jobref,'name')
+                if(cmd.jobref.group){
+                    BuilderUtil.makeAttribute(cmd.jobref,'group')
+                }else{
+                    cmd.jobref.remove('group')
+                }
+                final def remove = cmd.jobref.remove('args')
+                if(null!=remove){
+                    cmd.jobref.arg=BuilderUtil.toAttrMap('line',remove)
+                }
+            }
+        }
+        if(map.notification){
+            if(map.notification.onsuccess?.recipients){
+                map.notification.onsuccess=[email:BuilderUtil.toAttrMap('recipients',map.notification.onsuccess.remove('recipients'))]
+            }
+            if(map.notification.onfailure?.recipients){
+                map.notification.onfailure=[email:BuilderUtil.toAttrMap('recipients',map.notification.onfailure.remove('recipients'))]
             }
         }
         return map
