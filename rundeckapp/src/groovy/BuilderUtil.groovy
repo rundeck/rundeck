@@ -30,14 +30,20 @@
  *       &lt;myvalue&gt;3&lt;myvalue&gt;
  *    &lt;/myvalues&gt;
  * </pre>
- *
+ * 
  * The original key can be configured this way using the {@link BuilderUtil#makePlural(Map, String) method.
+ *
+ * The contents of an element can be serialized as a CDATA by another mechanism.  If the key ends with "<cdata>"
+ * then the "<cdata>" suffix is removed, and the string contents serialized in a CDATA section.  {@link BuilderUtil#asCDATAName(String) }
+ * will return the correct cdata key name from the original key.
+ *
  */
 class BuilderUtil{
 
     public static ATTR_PREFIX="@attr:"
     public static PLURAL_SUFFIX="[s]"
     public static PLURAL_REPL="s"
+    public static CDATA_SUFFIX="<cdata>"
     ArrayList context
     public BuilderUtil(){
         context=new ArrayList()
@@ -80,13 +86,9 @@ class BuilderUtil{
                     attrmap[x]=map.remove(s)
                 }
             }
-            System.err.println("attrmap: ${attrmap}, map: ${map}");
             builder."${key}"(attrmap){
                 this.mapToDom(map,delegate)
             }
-        }else if(obj instanceof String){
-            String os=(String)obj
-            builder."${key}"(os)
         }else if(obj.metaClass.respondsTo(obj,'toMap')){
             def map = obj.toMap()
             builder."${key}"(){
@@ -94,7 +96,13 @@ class BuilderUtil{
             }
         }else {
             String os=obj.toString()
-            builder."${key}"(os)
+            if(key.endsWith(CDATA_SUFFIX)){
+                builder."${key-CDATA_SUFFIX}"(){
+                    mkp.yieldUnescaped("<![CDATA["+os.replaceAll(']]>',']]]]><![CDATA[>')+"]]>")
+                }
+            }else{
+                builder."${key}"(os)
+            }
         }
     }
 
@@ -159,5 +167,12 @@ class BuilderUtil{
     public static Map makePlural(Map map, String key){
         map[pluralize(key)]=map.remove(key)
         return map
+    }
+
+    /**
+     * Return the key name for use as a CDATA section
+     */
+    public static String asCDATAName(String key){
+        return key+CDATA_SUFFIX
     }
 }

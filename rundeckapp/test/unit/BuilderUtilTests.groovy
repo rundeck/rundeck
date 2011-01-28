@@ -106,6 +106,39 @@ public class BuilderUtilTests extends GroovyTestCase{
         System.err.println("string: ${string}");
         assertEquals("<test><a b='c'><f>g</f></a></test>",string)
     }
+    void testShouldOutputCdata(){
+        def map = ["a<cdata>":"data"]
+        final StringWriter writer = new StringWriter()
+        def builder = new MarkupBuilder(new IndentPrinter(new PrintWriter(writer),"",false))
+        def bu = new BuilderUtil()
+        bu.objToDom('test',map,builder)
+        final String string = writer.toString()
+        assertNotNull(string)
+        System.err.println("string: ${string}");
+        assertEquals("<test><a><![CDATA[data]]></a></test>",string)
+    }
+    void testShouldOutputUnescapedCdata(){
+        def map = ["a<cdata>":"<monkey>donut</monkey>"]
+        final StringWriter writer = new StringWriter()
+        def builder = new MarkupBuilder(new IndentPrinter(new PrintWriter(writer),"",false))
+        def bu = new BuilderUtil()
+        bu.objToDom('test',map,builder)
+        final String string = writer.toString()
+        assertNotNull(string)
+        System.err.println("string: ${string}");
+        assertEquals("<test><a><![CDATA[<monkey>donut</monkey>]]></a></test>",string)
+    }
+    void testShouldOutputMultipleCdataIfNecessary(){
+        def map = ["a<cdata>":"<monkey>donut]]></monkey>"]
+        final StringWriter writer = new StringWriter()
+        def builder = new MarkupBuilder(new IndentPrinter(new PrintWriter(writer),"",false))
+        def bu = new BuilderUtil()
+        bu.objToDom('test',map,builder)
+        final String string = writer.toString()
+        assertNotNull(string)
+        System.err.println("string: ${string}");
+        assertEquals("<test><a><![CDATA[<monkey>donut]]]]><![CDATA[></monkey>]]></a></test>",string)
+    }
 
 
 }
