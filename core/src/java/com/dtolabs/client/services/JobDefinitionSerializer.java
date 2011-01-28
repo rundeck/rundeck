@@ -92,10 +92,12 @@ public class JobDefinitionSerializer {
         final Element ctx = job.addElement("context");
         ctx.addElement("project").addText(dispatchdef.getFrameworkProject());
         final InputStream stream = dispatchdef.getScriptAsStream();
+        final Element seq = job.addElement("sequence");
+        final Element cmd = seq.addElement("command");
         if (null != dispatchdef.getScript() || null != stream) {
 
             //full script
-            final Element script = job.addElement("script");
+            final Element script = cmd.addElement("script");
             if(null!= dispatchdef.getScript()){
                 script.addCDATA(dispatchdef.getScript());
             }else{
@@ -106,20 +108,20 @@ public class JobDefinitionSerializer {
                 script.addCDATA(sw.toString());
             }
             if (null != dispatchdef.getArgs() && dispatchdef.getArgs().length > 0) {
-                final Element argstring = job.addElement("scriptargs");
+                final Element argstring = cmd.addElement("scriptargs");
                 argstring.addText(CLIUtils.generateArgline(null, dispatchdef.getArgs()));
             }
         } else if (null != dispatchdef.getServerScriptFilePath()) {
             //server-local script filepath
-            final Element filepath = job.addElement("scriptfile");
+            final Element filepath = cmd.addElement("scriptfile");
             filepath.addText(dispatchdef.getServerScriptFilePath());
             if (null != dispatchdef.getArgs() && dispatchdef.getArgs().length>0) {
-                final Element argstring = job.addElement("scriptargs");
+                final Element argstring = cmd.addElement("scriptargs");
                 argstring.addText(CLIUtils.generateArgline(null, dispatchdef.getArgs()));
             }
         } else if (null != dispatchdef.getArgs() && dispatchdef.getArgs().length > 0) {
             //shell command
-            final Element exec = job.addElement("exec");
+            final Element exec = cmd.addElement("exec");
             exec.addText(CLIUtils.generateArgline(null, dispatchdef.getArgs()));
         } else {
             throw new IllegalArgumentException("Dispatched script did not specify a command, script or filepath");

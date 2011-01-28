@@ -242,11 +242,11 @@ public class JobDefinitionSerializerTest extends TestCase {
             assertNotNull("missing /joblist/job element", jobs);
             assertEquals("wrong size for /joblist/job", 1, jobs.size());
 
-            assertNotNull(document.selectSingleNode("/joblist/job/exec"));
-            assertEquals("some shell command", document.selectSingleNode("/joblist/job/exec").getText());
-            assertNull(document.selectSingleNode("/joblist/job/script"));
-            assertNull(document.selectSingleNode("/joblist/job/scriptfile"));
-            assertNull(document.selectSingleNode("/joblist/job/scriptargs"));
+            assertNotNull(document.selectSingleNode("/joblist/job/sequence/command/exec"));
+            assertEquals("some shell command", document.selectSingleNode("/joblist/job/sequence/command/exec").getText());
+            assertNull(document.selectSingleNode("/joblist/job/sequence/command/script"));
+            assertNull(document.selectSingleNode("/joblist/job/sequence/command/scriptfile"));
+            assertNull(document.selectSingleNode("/joblist/job/sequence/command/scriptargs"));
         }
 
         {
@@ -279,14 +279,14 @@ public class JobDefinitionSerializerTest extends TestCase {
             assertNotNull("missing /joblist/job element", jobs);
             assertEquals("wrong size for /joblist/job", 1, jobs.size());
 
-            assertNull(document.selectSingleNode("/joblist/job/exec"));
-            assertNotNull(document.selectSingleNode("/joblist/job/script"));
+            assertNull(document.selectSingleNode("/joblist/job/sequence/command/exec"));
+            assertNotNull(document.selectSingleNode("/joblist/job/sequence/command/script"));
             assertEquals("#!/bin/bash\n"
                          + "\n"
                          + "echo this is a test\n"
-                         + "uptime\n", document.selectSingleNode("/joblist/job/script").getText());
-            assertNull(document.selectSingleNode("/joblist/job/scriptfile"));
-            assertNull(document.selectSingleNode("/joblist/job/scriptargs"));
+                         + "uptime\n", document.selectSingleNode("/joblist/job/sequence/command/script").getText());
+            assertNull(document.selectSingleNode("/joblist/job/sequence/command/scriptfile"));
+            assertNull(document.selectSingleNode("/joblist/job/sequence/command/scriptargs"));
         }
         {
             IDispatchedScript script = new testScript() {
@@ -317,14 +317,14 @@ public class JobDefinitionSerializerTest extends TestCase {
             assertNotNull("missing /joblist/job element", jobs);
             assertEquals("wrong size for /joblist/job", 1, jobs.size());
 
-            assertNull(document.selectSingleNode("/joblist/job/exec"));
-            assertNotNull(document.selectSingleNode("/joblist/job/script"));
+            assertNull(document.selectSingleNode("/joblist/job/sequence/command/exec"));
+            assertNotNull(document.selectSingleNode("/joblist/job/sequence/command/script"));
             assertEquals("#!/bin/bash\n"
                          + "\n"
                          + "echo this is a test\n"
-                         + "uptime\n", document.selectSingleNode("/joblist/job/script").getText());
-            assertNull(document.selectSingleNode("/joblist/job/scriptfile"));
-            assertEquals("this is args", document.selectSingleNode("/joblist/job/scriptargs").getText());
+                         + "uptime\n", document.selectSingleNode("/joblist/job/sequence/command/script").getText());
+            assertNull(document.selectSingleNode("/joblist/job/sequence/command/scriptfile"));
+            assertEquals("this is args", document.selectSingleNode("/joblist/job/sequence/command/scriptargs").getText());
         }
         {
             IDispatchedScript script = new testScript() {
@@ -352,11 +352,11 @@ public class JobDefinitionSerializerTest extends TestCase {
             assertNotNull("missing /joblist/job element", jobs);
             assertEquals("wrong size for /joblist/job", 1, jobs.size());
 
-            assertNull(document.selectSingleNode("/joblist/job/exec"));
-            assertNull(document.selectSingleNode("/joblist/job/script"));
-            assertNotNull(document.selectSingleNode("/joblist/job/scriptfile"));
-            assertEquals("/usr/local/scripts/test1.sh", document.selectSingleNode("/joblist/job/scriptfile").getText());
-            assertNull(document.selectSingleNode("/joblist/job/scriptargs"));
+            assertNull(document.selectSingleNode("/joblist/job/sequence/command/exec"));
+            assertNull(document.selectSingleNode("/joblist/job/sequence/command/script"));
+            assertNotNull(document.selectSingleNode("/joblist/job/sequence/command/scriptfile"));
+            assertEquals("/usr/local/scripts/test1.sh", document.selectSingleNode("/joblist/job/sequence/command/scriptfile").getText());
+            assertNull(document.selectSingleNode("/joblist/job/sequence/command/scriptargs"));
         }
         {
             IDispatchedScript script = new testScript() {
@@ -385,12 +385,12 @@ public class JobDefinitionSerializerTest extends TestCase {
             assertNotNull("missing /joblist/job element", jobs);
             assertEquals("wrong size for /joblist/job", 1, jobs.size());
 
-            assertNull(document.selectSingleNode("/joblist/job/exec"));
-            assertNull(document.selectSingleNode("/joblist/job/script"));
-            assertNotNull(document.selectSingleNode("/joblist/job/scriptfile"));
-            assertEquals("/usr/local/scripts/test1.sh", document.selectSingleNode("/joblist/job/scriptfile").getText());
-            assertNotNull("expected not null scriptargs",document.selectSingleNode("/joblist/job/scriptargs"));
-            assertEquals("-this arg -is here", document.selectSingleNode("/joblist/job/scriptargs").getText());
+            assertNull(document.selectSingleNode("/joblist/job/sequence/command/exec"));
+            assertNull(document.selectSingleNode("/joblist/job/sequence/command/script"));
+            assertNotNull(document.selectSingleNode("/joblist/job/sequence/command/scriptfile"));
+            assertEquals("/usr/local/scripts/test1.sh", document.selectSingleNode("/joblist/job/sequence/command/scriptfile").getText());
+            assertNotNull("expected not null scriptargs",document.selectSingleNode("/joblist/job/sequence/command/scriptargs"));
+            assertEquals("-this arg -is here", document.selectSingleNode("/joblist/job/sequence/command/scriptargs").getText());
         }
     }
 
