@@ -217,7 +217,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
     strategy: step-first
     commands:
     - exec: test script
-      args: this is redic
+      args: this is redic # IGNORED for exec
     - script: A Monkey returns
       args: whatever
     - scriptfile: /path/to/file
@@ -308,7 +308,8 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertEquals "wrong workflow.strategy", "step-first", se.workflow.strategy
         assertEquals "wrong workflow size", 4, se.workflow.commands.size()
         assertEquals "wrong workflow item", "test script", se.workflow.commands[0].adhocRemoteString
-        assertEquals "wrong workflow item", "this is redic", se.workflow.commands[0].argString
+            //exec doesn't support arguments
+        assertNull "wrong workflow item", se.workflow.commands[0].argString
         assertTrue "wrong workflow item", se.workflow.commands[0].adhocExecution
         assertEquals "wrong workflow item", "A Monkey returns", se.workflow.commands[1].adhocLocalString
         assertEquals "wrong workflow item", "whatever", se.workflow.commands[1].argString

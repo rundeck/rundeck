@@ -132,6 +132,12 @@ class ScheduledExecution extends ExecutionContext {
                 map.notification.onfailure=[recipients:notifyFailureRecipients]
             }
         }
+        if(notifications){
+            map.notification=[:]
+            notifications.each{
+                map.notification[it.eventTrigger]=it.toMap()
+            }
+        }
         return map
     }
     static ScheduledExecution fromMap(Map data){
@@ -194,11 +200,12 @@ class ScheduledExecution extends ExecutionContext {
                 }
             }
         }
-        if(data.notification?.onsuccess?.recipients){
-            se.notifySuccessRecipients=data.notification.onsuccess.recipients
-        }
-        if(data.notification?.onfailure?.recipients){
-            se.notifyFailureRecipients=data.notification.onfailure.recipients
+        if(data.notification){
+            def nots=[]
+            data.notification.keySet().each{
+                nots<<Notification.fromMap(it,data.notification[it])
+            }
+            se.notifications=nots
         }
         return se
     }

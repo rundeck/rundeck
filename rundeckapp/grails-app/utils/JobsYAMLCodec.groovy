@@ -34,11 +34,11 @@ class JobsYAMLCodec {
         return createJobs(data);
     }
 
-    static createJobs (data){
+    public static createJobs (data){
         ArrayList list = new ArrayList()
         if (data instanceof Collection) {
             //iterate through list of jobs
-            data.each {jobobj ->
+            data.each{ jobobj ->
                 if (jobobj instanceof Map) {
                     try {
                         list << ScheduledExecution.fromMap(jobobj)

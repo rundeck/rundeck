@@ -90,7 +90,7 @@ public class CommandExec extends ExecutionContext implements IWorkflowCmdItem {
         }else {
             map.scriptfile=adhocFilepath
         }
-        if(argString){
+        if(argString && !adhocRemoteString){
             map.args=argString
         }
         return map
@@ -108,7 +108,7 @@ public class CommandExec extends ExecutionContext implements IWorkflowCmdItem {
             ce.adhocExecution = true
             ce.adhocFilepath=data.scriptfile
         }
-        if(data.args){
+        if(data.args && !ce.adhocRemoteString){
             ce.argString=data.args
         }
         return ce
