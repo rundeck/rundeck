@@ -85,8 +85,6 @@ class ScheduledExecution extends ExecutionContext {
         map.loglevel=loglevel
         map.project=project
 
-        //TODO: options
-
         if(options){
             map.options=[:]
             options.each{Option option->
@@ -94,7 +92,6 @@ class ScheduledExecution extends ExecutionContext {
             }
         }
 
-        //TODO: workflow
         map.sequence=workflow.toMap()
 
         if(scheduled){
@@ -165,11 +162,21 @@ class ScheduledExecution extends ExecutionContext {
                     //
                 se.crontabString = data.schedule.crontab
             }else{
-                se.seconds=data.schedule.time.seconds?:'*'
-                se.minute=data.schedule.time.minute?:'*'
-                se.hour=data.schedule.time.hour?:'*'
-                se.month=data.schedule.month?:'*'
-                se.year=data.schedule.year?:'*'
+                if(null!=data.schedule.time.seconds){
+                    se.seconds=data.schedule.time.seconds
+                }
+                if(null!=data.schedule.time.minute){
+                    se.minute=data.schedule.time.minute
+                }
+                if(null!=data.schedule.time.hour){
+                    se.hour=data.schedule.time.hour
+                }
+                if(null!=data.schedule.month){
+                    se.month=data.schedule.month
+                }
+                if(null!=data.schedule.year){
+                    se.year=data.schedule.year
+                }
                 if(data.schedule.dayofmonth){
                     se.dayOfMonth = data.schedule.dayofmonth.day
                     se.dayOfWeek = '?'
@@ -180,11 +187,16 @@ class ScheduledExecution extends ExecutionContext {
             }
         }
         if(data.nodefilters){
-            se.doNodedispatch = true
+
             se.nodeThreadcount = data.nodefilters.dispatch.threadcount
-            se.nodeKeepgoing = data.nodefilters.dispatch.keepgoing?true:false
-            se.nodeExcludePrecedence = data.nodefilters.dispatch.excludePrecedence?true:false
+            if(data.nodefilters.dispatch.containsKey('keepgoing')){
+                se.nodeKeepgoing = data.nodefilters.dispatch.keepgoing
+            }
+            if(data.nodefilters.dispatch.containsKey('excludePrecedence')){
+                se.nodeExcludePrecedence = data.nodefilters.dispatch.excludePrecedence
+            }
             if(data.nodefilters.include){
+                se.doNodedispatch = true
                 data.nodefilters.include.keySet().each{ inf->
                     if(null!=filterKeys[inf]){
                         se["nodeInclude${filterKeys[inf]}"]=data.nodefilters.include[inf]
@@ -193,6 +205,7 @@ class ScheduledExecution extends ExecutionContext {
 
             }
             if(data.nodefilters.exclude){
+                se.doNodedispatch = true
                 data.nodefilters.exclude.keySet().each{ inf->
                     if(null!=filterKeys[inf]){
                         se["nodeExclude${filterKeys[inf]}"]=data.nodefilters.exclude[inf]
@@ -202,8 +215,8 @@ class ScheduledExecution extends ExecutionContext {
         }
         if(data.notification){
             def nots=[]
-            data.notification.keySet().each{
-                nots<<Notification.fromMap(it,data.notification[it])
+            data.notification.keySet().each{ name->
+                nots<<Notification.fromMap(name,data.notification[name])
             }
             se.notifications=nots
         }
@@ -397,31 +410,94 @@ class ScheduledExecution extends ExecutionContext {
             return result
         }
 
+
+        def parseRangeForList = {String input, List list, key ->
+            def rangpat = /^(.+)-(.+)$/
+            def aprop = [:]
+            def inputl = Arrays.asList(input.split(','))
+            def uplist = list.collect {it.toUpperCase()}
+            inputl.each {String dayv ->
+                def mat = dayv =~ rangpat
+                if (mat.matches()) {
+                    String m1 = mat.group(1)
+                    String m2 = mat.group(2)
+
+                    def a = uplist.indexOf(m1.toUpperCase())
+                    def b = uplist.indexOf(m2.toUpperCase())
+                    //increment index if found
+                    if(a>=0){
+                        a++
+                    }
+                    if(b>=0){
+                        b++
+                    }
+
+                    if(a<0 || b<0){
+                        try{
+                            a=m1.toInteger()
+                            b=m2.toInteger()
+                        }catch(NumberFormatException){
+
+                        }
+                    }
+                    if(a>0 && b>0 && a<=list.size() && b<=list.size()){
+                        def rang = a..b
+                        rang.each {
+                            def name = list[it - 1]
+                            aprop["${key}.${name}"] = "true"
+                        }
+                    }
+                } else {
+                    def a = uplist.indexOf(dayv.toUpperCase())
+                    //increment index if found
+                    if(a>=0){
+                        a++
+                    }
+                    if(a<0){
+                        try{
+                        a = dayv.toInteger()
+                        }catch(NumberFormatException e){
+
+                        }
+                    }
+                    if (a > 0 && a <= list.size()) {
+                        def name = list[a - 1]
+                        aprop["${key}.${name}"] = "true"
+                    }
+                }
+            }
+            return aprop
+        }
+    
   def Map timeAndDateAsBooleanMap() {
       def result = [ : ]
-      if (!this.month.equals("*") && !crontabSpecialValue(this.month)) {
-          this.month.split(",").each {
-              if(monthsofyearlist.contains(it.toUpperCase())){
-                result["month."+it.toUpperCase()]="true"
-              }else if(it=~/^\d+$/){
-                  def i=Integer.parseInt(it)
-                  if(i>=0&&i<monthsofyearlist.size()){
-                      result["month."+monthsofyearlist[i]]="true"
-                  }
-              }
-          }
+      if (!this.month.equals("*") && !crontabSpecialValue(this.month.replaceAll(/-/,''))) {
+          def map = parseRangeForList(this.month,monthsofyearlist,"month")
+          result.putAll(map)
+//          this.month.split(",").each {
+//              if(monthsofyearlist.contains(it.toUpperCase())){
+//                result["month."+it.toUpperCase()]="true"
+//              }else if(it=~/^\d+$/){
+//                  def i=Integer.parseInt(it)
+//                  if(i>=0&&i<monthsofyearlist.size()){
+//                      result["month."+monthsofyearlist[i]]="true"
+//                  }
+//              }
+//          }
       }
-      if (!this.dayOfWeek.equals("*") && !crontabSpecialValue(this.dayOfWeek)) {
-          this.dayOfWeek.split(",").each {
-              if(daysofweeklist.contains(it.toUpperCase())){
-                result["dayOfWeek."+it.toUpperCase()]="true"
-              }else if(it=~/^\d+$/){
-                  def i=Integer.parseInt(it)
-                  if(i>=0&&i<daysofweeklist.size()) {
-                      result["month." + daysofweeklist[i]] = "true"
-                  }
-              }
-          }
+      if (!this.dayOfWeek.equals("*") && !crontabSpecialValue(this.dayOfWeek.replaceAll(/-/,''))) {
+          def map = parseRangeForList(this.dayOfWeek,daysofweeklist,"dayOfWeek")
+          result.putAll(map)
+//          this.dayOfWeek.split(",").each {
+//              if(daysofweeklist.contains(it.toUpperCase())){
+//                result["dayOfWeek."+it.toUpperCase()]="true"
+//              }else if(it=~/^\d+$/){
+//                  def i=Integer.parseInt(it)
+//                  if(i>=0&&i<daysofweeklist.size()) {
+//                      result["dayOfWeek." + daysofweeklist[i]] = "true"
+//                  }
+//              }
+//          }
       }
       return result;
   }
