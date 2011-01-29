@@ -47,6 +47,19 @@ public class Notification {
         content(nullable:true,blank:true)
     }
 
+    public static Notification fromMap(String key,Map data){
+        Notification n = new Notification(eventTrigger:key)
+        n.type='email'
+        n.content=data.recipients
+        return n;
+    }
+    public Map toMap(){
+        if(type=='email'){
+            return [recipients:content]
+        }else{
+            return null
+        }
+    }
 
 
     public String toString ( ) {

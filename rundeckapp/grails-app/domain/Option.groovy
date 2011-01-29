@@ -93,12 +93,8 @@ public class Option implements Comparable{
     public static Option fromMap(String name,Map data){
         Option opt = new Option()
         opt.name=name
-        if(data.enforced){
-            opt.enforced=true
-        }
-        if(data.required){
-            opt.required=true
-        }
+        opt.enforced=data.enforced?true:false
+        opt.required=data.required?true:false
         if(data.description){
             opt.description=data.description
         }
@@ -112,7 +108,7 @@ public class Option implements Comparable{
             opt.regex=data.regex
         }
         if(data.values){
-            opt.values=new TreeSet(data.values)
+            opt.values=data.values instanceof Collection?new TreeSet(data.values):new TreeSet([data.values])
         }
         return opt
     }
