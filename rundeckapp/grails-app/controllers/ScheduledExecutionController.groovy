@@ -1180,8 +1180,9 @@ class ScheduledExecutionController  {
         }
         def results
         try{
-            results= _parseJobsXMLFile(file);
+            results= file.getInputStream().decodeJobsXML()
         }catch(Exception e){
+            flash.error=e.toString()
             if(!params.xmlreq){
                 render(view:'upload')
                 return;
@@ -1214,7 +1215,7 @@ class ScheduledExecutionController  {
             def errmsg
             def failed
             try{
-                def result= _dovalidate(jobdata)
+                def result= _dovalidate(jobdata instanceof ScheduledExecution?jobdata.properties:jobdata)
                 scheduledExecution=result.scheduledExecution
                 failed=result.failed
                 if(failed){
@@ -1296,47 +1297,7 @@ class ScheduledExecutionController  {
         }
 
     }
-    /**
-     * Parse an uploaded file and return the Collection of jobs data as parsed.
-     * @throws Exception if an error occurs, and sets the flash.error message
-     */
-    def _parseJobsXMLFile={file->
-
-        def XmlSlurper parser = new XmlSlurper()
-        def  doc
-        try{
-            doc = parser.parse(file.getInputStream())
-        }catch(Exception e){
-            flash.error="Unable to parse file: ${e}"
-            throw e
-        }
-        if(!doc){
-            final String errmsg = "XML Document could not be parsed."
-            flash.error=errmsg
-            throw new Exception(errmsg)
-        }
-
-        if(!doc.job){
-            final String errmsg = "Jobs XML Document was not valid: 'job' element not found."
-            flash.error=errmsg
-            throw new Exception(errmsg)
-        }
-        def jobset
-        try{
-            jobset = doc.decodeJobsXML()
-        }catch (JobXMLException e){
-            final String errmsg = "Jobs XML Document was not valid: ${e}"
-            flash.error=errmsg
-            throw new Exception(errmsg)
-        }
-        if(null==jobset){
-            final String errmsg = "Jobs XML Document was not valid"
-            flash.error=errmsg
-            throw new Exception(errmsg)
-        }
-
-        return jobset
-    }
+    
     /**
      * execute the job defined via input parameters, but do not store it.
      */
@@ -1937,8 +1898,10 @@ class ScheduledExecutionController  {
         }
         if('xml'==fileformat){
             try{
-                jobset= _parseJobsXMLFile(file);
+                jobset= file.getInputStream().decodeJobsXML()
             }catch(Exception e){
+                flash.error="Jobs XML Document was not valid: ${e}"
+                flash.message="Jobs XML Document was not valid: ${e}"
                 if(!params.xmlreq){
                     render(view:'upload')
                     return;
