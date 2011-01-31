@@ -36,7 +36,7 @@ public class ForceMultilineLiteralOptions extends DumperOptions {
     @Override
     public DumperOptions.ScalarStyle calculateScalarStyle(final ScalarAnalysis analysis,
                                                           final DumperOptions.ScalarStyle style) {
-        if (analysis.multiline && analysis.allowBlock) {
+        if (analysis.multiline) {
             return ScalarStyle.LITERAL;
         }
         return super.calculateScalarStyle(analysis, style);
