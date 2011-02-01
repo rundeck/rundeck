@@ -31,6 +31,7 @@ import org.apache.log4j.PropertyConfigurator;
 import org.apache.tools.ant.BuildEvent;
 import org.apache.tools.ant.BuildListener;
 import org.apache.tools.ant.Project;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
 import java.util.*;
@@ -123,6 +124,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
      */
     private Framework framework;
     private String baseDir;
+    protected NodeFormatter nodeFormatter;
 
     void setFramework(Framework framework) {
         this.framework = framework;
@@ -163,6 +165,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
      */
     public ExecTool(Framework framework) {
         this.framework = framework;
+        this.nodeFormatter = new NodeYAMLFormatter();
     }
 
     /**
@@ -433,12 +436,19 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
      */
     public static final int NODESET_EMPTY_EXIT_CODE = 3;
 
-    private void listAction() {
+    void listAction() {
         /**
                  * List the nodes
          */
-        IAction action = createListAction(getNodeSet());
-        action.doAction();
+        try {
+            log((argVerbose ? getNodeFormatter() : new DefaultNodeFormatter()).formatNodes(filterNodes()).toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    NodeFormatter getNodeFormatter() {
+        return nodeFormatter;
     }
 
     /**
@@ -1036,167 +1046,143 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
         return parseMultiNodeArgs(keys, strings);
     }
 
+
     /**
-     * Defines generic action methods
-     * @deprecated no longer public, only used for relic list code, should be refactored out
+     * Looks up node registrations in nodes.properties
+     *
+     * @return Nodes object
      */
-    interface IAction  {
-        void doAction();
+    private Nodes readNodesFile() {
+        FrameworkProject project = framework.getFrameworkProjectMgr().getFrameworkProject(argProject);
 
-    }
+        final Nodes n;
 
-    abstract class AbstractAction implements IAction {
-        public String getFrameworkProject() {
-            return argProject;
-        }
-
-        public InputStream getScriptAsStream() throws IOException {
-            return null;
-        }
-
-        public String getCommand() {
-            return null;
-        }
-
-        public boolean hasScript() {
-            return false;
-        }
-
-        public String getScript() {
-            return null;
-        }
-
-        public String getServerScriptFilePath() {
-            return null;
-        }
-
-        public String[] getArgs() {
-            return argsDeferred;
-        }
-
-        public int getLoglevel() {
-            return getAntLoglevel();
-        }
-
-        AbstractAction(NodeSet nodeset) {
-            this.nodeset = nodeset;
-        }
-
-        NodeSet nodeset;
-
-        public NodeSet getNodeSet() {
-            return nodeset;
-        }
-
-        /**
-         * Looks up node registrations in nodes.properties
-         *
-         * @return Nodes object
-         */
-        Nodes readNodesFile() {
-            FrameworkProject project = framework.getFrameworkProjectMgr().getFrameworkProject(argProject);
-
-            final Nodes n;
-
-            try {
-                if (null != argNodesFile) {
-                    n = project.getNodes(new File(argNodesFile));
-                } else {
-                    n = project.getNodes();
-                }
-            } catch (NodeFileParserException e) {
-                throw new CoreException("Error parsing nodes resource file: " + e.getMessage(), e);
+        try {
+            if (null != argNodesFile) {
+                n = project.getNodes(new File(argNodesFile));
+            } else {
+                n = project.getNodes();
             }
-            return n;
+        } catch (NodeFileParserException e) {
+            throw new CoreException("Error parsing nodes resource file: " + e.getMessage(), e);
         }
+        return n;
+    }
 
-        public Collection<INodeEntry> filterNodes() {
-            /**
-             * Read the nodes.properties file
-             */
-            final Nodes n = readNodesFile();
-            debug("total unfiltered nodes=" + n.countNodes());
-            if (0 == n.countNodes()) {
-                verbose("Empty node list");
-            } else if (null != getNodeSet() && !(getNodeSet().getExclude().isBlank() && getNodeSet().getInclude()
-                .isBlank())) {
-                /**
-                 * Apply the include/exclude filters to the list
-                 */
-                debug("applying nodeset filter... " + getNodeSet().toString());
-                /**
-                 * Reset collection to filter results
-                 */
-                return n.filterNodes(getNodeSet());
-            }else{
-                //list action defaults to listing all nodes when no filter is supplied, so fallthrough to list all nodes
-            }
-            /**
-             * Retrieve the complete list of node entries
-             */
-
-            return n.listNodes();
-        }
-
+    Collection<INodeEntry> filterNodes() {
         /**
-         * do the action
+         * Read the nodes.properties file
          */
-        public abstract void doAction();
+        final Nodes n = readNodesFile();
+        debug("total unfiltered nodes=" + n.countNodes());
+        if (0 == n.countNodes()) {
+            verbose("Empty node list");
+        } else if (null != getNodeSet() && !(getNodeSet().getExclude().isBlank() && getNodeSet().getInclude()
+            .isBlank())) {
+            /**
+             * Apply the include/exclude filters to the list
+             */
+            debug("applying nodeset filter... " + getNodeSet().toString());
+            /**
+             * Reset collection to filter results
+             */
+            return n.filterNodes(getNodeSet());
+        } else {
+            //list action defaults to listing all nodes when no filter is supplied, so fallthrough to list all nodes
+        }
+        /**
+         * Retrieve the complete list of node entries
+         */
+
+        return n.listNodes();
     }
 
-    ListAction createListAction(NodeSet nodeset) {
-        return new ListAction(nodeset);
+    void setNodeFormatter(final NodeFormatter nodeFormatter) {
+        this.nodeFormatter = nodeFormatter;
     }
+
 
     /**
      * Action to display matching nodes
      */
-    class ListAction extends AbstractAction {
-        ListAction(NodeSet nodeset) {
-            super(nodeset);
+    static class DefaultNodeFormatter implements NodeFormatter {
+
+        public StringBuffer formatNodes(Collection nodes) throws Exception {
+            return formatResults(nodes);
         }
 
-        public void doAction() {
-            final Collection c = filterNodes();
-            log(formatResults(c, argVerbose).toString());
-        }
-
-
-        StringBuffer formatResults(Collection c, boolean verbose) {
+        StringBuffer formatResults(Collection c) {
             StringBuffer sb = new StringBuffer();
             int i = 0;
-            for (Iterator iter = c.iterator() ; iter.hasNext() ;) {
-                INodeEntry node = (INodeEntry) iter.next();
-                if (verbose) {
-                    String lineSep = System.getProperty("line.separator");
-                    sb.append(node.getNodename()).append(":").append(lineSep);
-                    sb.append("   ").append("hostname: ").append(node.getHostname()).append(lineSep);
-                    sb.append("   ").append("os-arch: ").append(node.getOsArch()).append(lineSep);
-                    sb.append("   ").append("os-family: ").append(node.getOsFamily()).append(lineSep);
-                    sb.append("   ").append("os-name: ").append(node.getOsName()).append(lineSep);
-                    sb.append("   ").append("os-version: ").append(node.getOsVersion()).append(lineSep);
-                    sb.append("   ").append("tags: ").append(node.getTags());
-                    final Map<String, String> attributes = node.getAttributes();
-                    if (null != attributes && attributes.size() > 0) {
-                        sb.append(lineSep);
-                        sb.append("   ---- Attributes ---- ").append(lineSep);
-                        for (String attr : attributes.keySet()) {
-                            sb.append("   ").append(attr).append(": ").append(attributes.get(attr)).append(lineSep);
-                        }
-                    }
-                    if (i < c.size() - 1) {
-                        sb.append(lineSep);
-                    }
-                } else {
-                    sb.append(node.getNodename());
-                    if (i < c.size() - 1) {
-                        sb.append(" ");
-                    }
+            for (Object aC : c) {
+                INodeEntry node = (INodeEntry) aC;
+                sb.append(node.getNodename());
+                if (i < c.size() - 1) {
+                    sb.append(" ");
                 }
                 i++;
             }
 
             return sb;
+        }
+    }
+    public static interface NodeFormatter {
+        public StringBuffer formatNodes(Collection nodes) throws Exception;
+    }
+    /**
+     * Action to display matching nodes
+     */
+    static class NodeYAMLFormatter implements NodeFormatter {
+
+        public StringBuffer formatNodes(final Collection nodes) throws Exception{
+            return generate(nodes);
+        }
+
+
+        StringBuffer generate(final Collection c) throws NodesGeneratorException, IOException {
+            final StringWriter writer = new StringWriter();
+            NodesYamlGenerator gen = new NodesYamlGenerator(writer);
+            for (Object aC : c) {
+                gen.addNode((INodeEntry) aC);
+            }
+            gen.generate();
+            return writer.getBuffer();
+        }
+    }
+    /**
+     * Action to display matching nodes
+     */
+    static class NodeYAMLFormatter2 implements NodeFormatter {
+
+        public StringBuffer formatNodes(final Collection nodes) throws Exception {
+            return formatResults(nodes);
+        }
+
+
+        StringBuffer formatResults(final Collection c) {
+            ArrayList items = new ArrayList();
+            int i = 0;
+            for (Object aC : c) {
+                INodeEntry node = (INodeEntry) aC;
+                HashMap<String, Object> hm = new HashMap<String, Object>();
+                hm.put("hostname", node.getHostname());
+                hm.put("os-arch", node.getOsArch());
+                hm.put("os-family", node.getOsFamily());
+                hm.put("os-name", node.getOsName());
+                hm.put("os-version", node.getOsVersion());
+                hm.put("tags", new ArrayList(node.getTags()));
+                final Map<String, String> attributes = node.getAttributes();
+                if (null != attributes && attributes.size() > 0) {
+                    hm.put("attributes", attributes);
+                }
+                i++;
+            }
+
+            //serialize yaml
+            Yaml yaml = new Yaml();
+            StringWriter sw = new StringWriter();
+            yaml.dump(items, sw);
+            return sw.getBuffer();
         }
     }
 
