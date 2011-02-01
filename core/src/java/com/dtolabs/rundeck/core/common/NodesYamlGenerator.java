@@ -25,15 +25,15 @@ package com.dtolabs.rundeck.core.common;
 
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.JavaBeanDumper;
 import org.yaml.snakeyaml.introspector.Property;
+import org.yaml.snakeyaml.introspector.GenericProperty;
 import org.yaml.snakeyaml.nodes.*;
 import org.yaml.snakeyaml.representer.Representer;
-import org.yaml.snakeyaml.representer.Represent;
 
 import java.util.*;
 import java.io.*;
 import java.beans.IntrospectionException;
+import java.lang.reflect.Type;
 
 /**
  * NodesYamlGenerator produces YAML formatted output from a set of {@link INodeEntry} data.  Nodes should be added
@@ -117,11 +117,48 @@ public class NodesYamlGenerator implements NodesFileGenerator {
      */
     private static HashSet<String> notNullProperties=new HashSet<String>();
     static{
-        skipProperties.add("editUrl");
-        skipProperties.add("remoteUrl");
+//        skipProperties.add("editUrl");
+//        skipProperties.add("remoteUrl");
     }
 
+    private class AttributesProp extends Property {
+        public AttributesProp(String s) {
+            super(s, NodeEntryImpl.class);
+        }
+
+        public Class<?>[] getActualTypeArguments() {
+            final Class<?>[] classes = new Class<?>[1];
+            classes[0] = String.class;
+            return classes;
+        }
+
+        public void set(Object o, Object o1) throws Exception {
+            NodeEntryImpl obj = (NodeEntryImpl) o;
+            if(null==obj.getAttributes()){
+                obj.setAttributes(new HashMap<String, String>());
+            }
+            obj.getAttributes().put(getName(),(String) o);
+        }
+
+        public Object get(Object o) {
+            NodeEntryImpl obj = (NodeEntryImpl) o;
+            return null != obj.getAttributes() ? obj.getAttributes().get(getName()) : null;
+        }
+    }
     private class MyRepresenter extends Representer {
+
+        @Override
+        protected Set<Property> getProperties(Class<? extends Object> aClass) throws IntrospectionException {
+//            if (NodeEntryImpl.class.isAssignableFrom(aClass)) {
+                //inject artificial "editUrl" and "remoteUrl" properties
+                final Set<Property> set = super.getProperties(aClass);
+                set.add(new AttributesProp("editUrl"));
+                set.add(new AttributesProp("remoteUrl"));
+                return set;
+//            } else {
+//                return super.getProperties(aClass);
+//            }
+        }
 
         @Override
         protected NodeTuple representJavaBeanProperty(Object javaBean, Property property,

@@ -436,10 +436,10 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
      */
     public static final int NODESET_EMPTY_EXIT_CODE = 3;
 
+    /**
+     * List the nodes
+     */
     void listAction() {
-        /**
-                 * List the nodes
-         */
         try {
             log((argVerbose ? getNodeFormatter() : new DefaultNodeFormatter()).formatNodes(filterNodes()).toString());
         } catch (Exception e) {
@@ -1147,42 +1147,6 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
             }
             gen.generate();
             return writer.getBuffer();
-        }
-    }
-    /**
-     * Action to display matching nodes
-     */
-    static class NodeYAMLFormatter2 implements NodeFormatter {
-
-        public StringBuffer formatNodes(final Collection nodes) throws Exception {
-            return formatResults(nodes);
-        }
-
-
-        StringBuffer formatResults(final Collection c) {
-            ArrayList items = new ArrayList();
-            int i = 0;
-            for (Object aC : c) {
-                INodeEntry node = (INodeEntry) aC;
-                HashMap<String, Object> hm = new HashMap<String, Object>();
-                hm.put("hostname", node.getHostname());
-                hm.put("os-arch", node.getOsArch());
-                hm.put("os-family", node.getOsFamily());
-                hm.put("os-name", node.getOsName());
-                hm.put("os-version", node.getOsVersion());
-                hm.put("tags", new ArrayList(node.getTags()));
-                final Map<String, String> attributes = node.getAttributes();
-                if (null != attributes && attributes.size() > 0) {
-                    hm.put("attributes", attributes);
-                }
-                i++;
-            }
-
-            //serialize yaml
-            Yaml yaml = new Yaml();
-            StringWriter sw = new StringWriter();
-            yaml.dump(items, sw);
-            return sw.getBuffer();
         }
     }
 

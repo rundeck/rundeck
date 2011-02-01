@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.util.HashSet;
+import java.util.HashMap;
 
 import org.yaml.snakeyaml.representer.Representer;
 
@@ -225,4 +226,47 @@ public class TestNodesYamlGenerator extends TestCase {
         }
     }
 
+    public void testShouldOutputEditUrl() throws Exception{
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        NodesYamlGenerator nodesYamlGenerator = new NodesYamlGenerator(baos);
+        final NodeEntryImpl nodeEntry = new NodeEntryImpl();
+        nodeEntry.setNodename("strongbad");
+        nodeEntry.setHostname("strongbad");
+        nodeEntry.setAttributes(new HashMap<String, String>());
+        nodeEntry.getAttributes().put("editUrl","http://some.com/test/url");
+
+        nodesYamlGenerator.addNode(nodeEntry);
+
+        nodesYamlGenerator.generate();
+        final String outputString = baos.toString();
+        assertNotNull(outputString);
+        assertEquals("strongbad:\n"
+                     + "  editUrl: http://some.com/test/url\n"
+                     + "  hostname: strongbad\n"
+                     + "  nodename: strongbad\n"
+                     + "  tags: ''\n"
+            , outputString);
+    }
+    
+    public void testShouldOutputRemoteUrl() throws Exception{
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        NodesYamlGenerator nodesYamlGenerator = new NodesYamlGenerator(baos);
+        final NodeEntryImpl nodeEntry = new NodeEntryImpl();
+        nodeEntry.setNodename("strongbad");
+        nodeEntry.setHostname("strongbad");
+        nodeEntry.setAttributes(new HashMap<String, String>());
+        nodeEntry.getAttributes().put("remoteUrl", "http://somez.com/test/other/url");
+
+        nodesYamlGenerator.addNode(nodeEntry);
+
+        nodesYamlGenerator.generate();
+        final String outputString = baos.toString();
+        assertNotNull(outputString);
+        assertEquals("strongbad:\n"
+                     + "  hostname: strongbad\n"
+                     + "  nodename: strongbad\n"
+                     + "  remoteUrl: http://somez.com/test/other/url\n"
+                     + "  tags: ''\n"
+            , outputString);
+    }
 }
