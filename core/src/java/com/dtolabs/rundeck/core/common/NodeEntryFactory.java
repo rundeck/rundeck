@@ -28,6 +28,8 @@ import org.apache.commons.beanutils.BeanUtils;
 import java.util.*;
 import java.lang.reflect.InvocationTargetException;
 
+import com.dtolabs.shared.resources.ResourceXMLConstants;
+
 /**
  * NodeEntryFactory creates NodeEntryImpls
  *
@@ -90,6 +92,23 @@ public class NodeEntryFactory {
         if (null == nodeEntry.getHostname()) {
             throw new IllegalArgumentException("hostname was not specified");
         }
+
+        //XXX: node entry refactor will change this
+        //populate attributes "editUrl" and "remoteUrl" manually
+        if (null != map.get(ResourceXMLConstants.NODE_EDIT_URL) || null != map.get(ResourceXMLConstants.NODE_REMOTE_URL)) {
+            if(null==nodeEntry.getAttributes()){
+                nodeEntry.setAttributes(new HashMap<String, String>());
+            }
+            if(null != map.get(ResourceXMLConstants.NODE_EDIT_URL)) {
+                nodeEntry.getAttributes().put(ResourceXMLConstants.NODE_EDIT_URL, (String) map.get(
+                    ResourceXMLConstants.NODE_EDIT_URL));
+            }
+            if(null != map.get(ResourceXMLConstants.NODE_REMOTE_URL)) {
+                nodeEntry.getAttributes().put(ResourceXMLConstants.NODE_REMOTE_URL, (String) map.get(
+                    ResourceXMLConstants.NODE_REMOTE_URL));
+            }
+        }
+
         return nodeEntry;
     }
 }

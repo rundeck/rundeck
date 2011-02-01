@@ -211,6 +211,54 @@ public class TestNodesYamlParser extends TestCase {
         }
 
     }
+    public void testShouldReadEditUrls() throws Exception{
+
+        {
+            testReceiver recv = new testReceiver();
+            ByteArrayInputStream is = new ByteArrayInputStream(
+                ("test: \n"
+                 + "  hostname: test\n"
+                 + "  description: a description\n"
+                 + "  tags: a, b, c\n"
+                 + "  osArch: x86_64\n"
+                 + "  osFamily: unix\n"
+                 + "  osVersion: 10.6.5\n"
+                 + "  osName: Mac OS X\n"
+                 + "  username: a user\n"
+                 + "  editUrl: http://a.com/url\n"
+                 + "  remoteUrl: http://b.com/aurl\n").getBytes());
+
+            NodesYamlParser nodesYamlParser = new NodesYamlParser(is, recv);
+            nodesYamlParser.parse();
+            assertEquals(1, recv.nodes.size());
+            assertTrue(recv.nodes.containsKey("test"));
+            INodeEntry entry = recv.nodes.get("test");
+            assertNotNull(entry);
+            assertEquals("test", entry.getNodename());
+            assertEquals("test", entry.getHostname());
+            assertNotNull(entry.getTags());
+            assertEquals(3, entry.getTags().size());
+            assertTrue(entry.getTags().contains("a"));
+            assertTrue(entry.getTags().contains("b"));
+            assertTrue(entry.getTags().contains("c"));
+            assertEquals("x86_64", entry.getOsArch());
+            assertEquals("unix", entry.getOsFamily());
+            assertEquals("10.6.5", entry.getOsVersion());
+            assertEquals("Mac OS X", entry.getOsName());
+            assertEquals("a description", entry.getDescription());
+            assertEquals("a user", entry.getUsername());
+            //null values should be ignored
+            assertNull(entry.getSettings());
+            assertNull(entry.getType());
+            assertNull(entry.getFrameworkProject());
+
+            assertNotNull(entry.getAttributes());
+            assertNotNull(entry.getAttributes().get("editUrl"));
+            assertNotNull(entry.getAttributes().get("remoteUrl"));
+            assertEquals("http://a.com/url",entry.getAttributes().get("editUrl"));
+            assertEquals("http://b.com/aurl",entry.getAttributes().get("remoteUrl"));
+        }
+    }
     public void testParseInvalid() throws Exception {
         {
             //no hostname value
