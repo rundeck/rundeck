@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.common.NodesYamlGenerator;
 import java.io.File;
 import java.io.IOException;
 import java.io.ByteArrayOutputStream;
+import java.io.OutputStreamWriter;
 import java.util.HashSet;
 
 import org.yaml.snakeyaml.representer.Representer;
@@ -55,6 +56,58 @@ public class TestNodesYamlGenerator extends TestCase {
     }
 
 
+    public void testShouldSupportOutputStream() throws Exception{
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        NodesYamlGenerator nodesYamlGenerator = new NodesYamlGenerator(baos);
+        final NodeEntryImpl nodeEntry = new NodeEntryImpl();
+        nodeEntry.setNodename("test1");
+        nodeEntry.setHostname("testhostname");
+        nodesYamlGenerator.addNode(nodeEntry);
+        nodesYamlGenerator.generate();
+        final byte[] bytes = baos.toByteArray();
+        assertNotNull(bytes);
+        assertTrue(bytes.length > 0);
+    }
+    public void testShouldSupportWriter() throws Exception{
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        NodesYamlGenerator nodesYamlGenerator = new NodesYamlGenerator(new OutputStreamWriter(baos));
+        final NodeEntryImpl nodeEntry = new NodeEntryImpl();
+        nodeEntry.setNodename("test1");
+        nodeEntry.setHostname("testhostname");
+        nodesYamlGenerator.addNode(nodeEntry);
+        nodesYamlGenerator.generate();
+        final byte[] bytes = baos.toByteArray();
+        assertNotNull(bytes);
+        assertTrue(bytes.length > 0);
+    }
+    public void testShouldSupportFile() throws Exception{
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        File tempfile = File.createTempFile("out", "temp");
+        tempfile.deleteOnExit();
+
+        NodesYamlGenerator nodesYamlGenerator = new NodesYamlGenerator(tempfile);
+        final NodeEntryImpl nodeEntry = new NodeEntryImpl();
+        nodeEntry.setNodename("test1");
+        nodeEntry.setHostname("testhostname");
+        nodesYamlGenerator.addNode(nodeEntry);
+        nodesYamlGenerator.generate();
+        assertTrue(tempfile.length() > 0);
+    }
+    public void testGenerateShouldFailOnNullOutput() throws Exception{
+        NodesYamlGenerator nodesYamlGenerator = new NodesYamlGenerator((File)null);
+        final NodeEntryImpl nodeEntry = new NodeEntryImpl();
+        nodeEntry.setNodename("test1");
+        nodeEntry.setHostname("testhostname");
+        nodesYamlGenerator.addNode(nodeEntry);
+        try {
+            nodesYamlGenerator.generate();
+            fail("Should have failed");
+        } catch (NullPointerException e) {
+            assertNotNull(e);
+        }
+    }
     public void testGenerate() throws Exception {
         {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();

@@ -44,6 +44,7 @@ import java.beans.IntrospectionException;
 public class NodesYamlGenerator implements NodesFileGenerator {
     private File destfile;
     private OutputStream outputStream;
+    private Writer writer;
     private HashMap<String,INodeEntry> entities;
 
     /**
@@ -64,30 +65,41 @@ public class NodesYamlGenerator implements NodesFileGenerator {
         entities = new HashMap<String, INodeEntry>();
     }
 
+    /**
+     * Serialize nodes data as yaml to a writer.
+     * @param destfile
+     */
+    public NodesYamlGenerator(final Writer writer) {
+        this.writer = writer;
+        entities = new HashMap<String, INodeEntry>();
+    }
+
     public void addNode(final INodeEntry node) {
         entities.put(node.getNodename(), node);
 
     }
 
     public void generate() throws IOException, NodesGeneratorException {
-        if(null==destfile && null== outputStream) {
+        if(null==destfile && null== outputStream && null==writer) {
             throw new NullPointerException("destfile or outputstream was not set");
         }
         if(null==entities || entities.size()<1) {
             throw new NodesGeneratorException("Node set is empty");
         }
-        Writer writer;
-        if(null!=destfile){
-            writer = new FileWriter(destfile);
+        final Writer writeout;
+        if(null!=writer){
+            writeout=writer;
+        }else if (null!=destfile){
+            writeout = new FileWriter(destfile);
         }else {
-            writer = new OutputStreamWriter(outputStream);
+            writeout = new OutputStreamWriter(outputStream);
         }
         final DumperOptions dumperOptions = new DumperOptions();
         dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         final Representer representer = new MyRepresenter();
         representer.addClassTag(NodeEntryImpl.class, Tag.MAP);
         Yaml yaml = new Yaml(representer, dumperOptions);
-        yaml.dump(entities,writer);
+        yaml.dump(entities,writeout);
     }
 
     /**

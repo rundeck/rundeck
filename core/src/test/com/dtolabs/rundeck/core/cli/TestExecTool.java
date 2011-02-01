@@ -222,15 +222,48 @@ public class TestExecTool extends AbstractBaseTest {
         }
     }
 
-    public void testListAction() {
+    public void testFilterNodes() {
         {
             ExecTool main = new ExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT});
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
-            ExecTool.ListAction action = main.createListAction(main.createNodeSet(incmap, exmap));
-            final Collection c = action.filterNodes();
-            final String result = action.formatResults(c, false).toString();
+            final Collection c = main.filterNodes();
+            assertEquals("wrong size", 4, c.size());
+        }
+        {
+            ExecTool main = new ExecTool();
+            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-X", "homestar", "-I", "os-name=Testux"});
+            Map exmap = main.parseExcludeArgs(nodeKeys);
+            Map incmap = main.parseIncludeArgs(nodeKeys);
+            NodeSet nodeset = main.createNodeSet(incmap, exmap);
+            assertTrue(nodeset.getExclude().isDominant());
+            assertFalse(nodeset.getInclude().isDominant());
+            final Collection c = main.filterNodes();
+            assertEquals("wrong size", 1, c.size());
+        }
+
+        {
+            ExecTool main = new ExecTool();
+            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-X", "strongbad,homestar",
+                "-I", "os-family=unix"});
+            Map exmap = main.parseExcludeArgs(nodeKeys);
+            Map incmap = main.parseIncludeArgs(nodeKeys);
+            final Collection c = main.filterNodes();
+            assertEquals("wrong size", 2, c.size());
+        }
+    }
+
+
+
+    public void testDefaultNodeFormatter() {
+        {
+            ExecTool main = new ExecTool();
+            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT});
+            Map exmap = main.parseExcludeArgs(nodeKeys);
+            Map incmap = main.parseIncludeArgs(nodeKeys);
+            final Collection c = main.filterNodes();
+            final String result = new ExecTool.DefaultNodeFormatter().formatResults(c).toString();
             System.out.println("TEST-DEBUG: result='" + result + "'");
             assertNotNull(result);
             assertEquals("doesn't contain correct result", "cheat homestar strongbad test1", result);
@@ -243,10 +276,9 @@ public class TestExecTool extends AbstractBaseTest {
             NodeSet nodeset = main.createNodeSet(incmap, exmap);
             assertTrue(nodeset.getExclude().isDominant());
             assertFalse(nodeset.getInclude().isDominant());
-            ExecTool.ListAction action = main.createListAction(nodeset);
-            final Collection c = action.filterNodes();
+            final Collection c = main.filterNodes();
             assertEquals("wrong size", 1, c.size());
-            final String result = action.formatResults(c, false).toString();
+            final String result = new ExecTool.DefaultNodeFormatter().formatResults(c).toString();
             assertNotNull(result);
             assertEquals("doesn't contain correct result", "cheat", result);
         }
@@ -257,16 +289,66 @@ public class TestExecTool extends AbstractBaseTest {
                 "-I", "os-family=unix"});
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
-            ExecTool.ListAction action = main.createListAction(main.createNodeSet(incmap, exmap));
-            final Collection c = action.filterNodes();
+            final Collection c = main.filterNodes();
             assertEquals("wrong size", 2, c.size());
-            final String result = action.formatResults(c, false).toString();
+            final String result = new ExecTool.DefaultNodeFormatter().formatResults(c).toString();
             assertNotNull(result);
             assertEquals("doesn't contain correct result", "cheat test1", result);
         }
     }
 
-   
+    static class TestFormatter implements ExecTool.NodeFormatter{
+        Collection nodes;
+        public StringBuffer formatNodes(Collection nodes) throws Exception {
+            this.nodes=nodes;
+            return new StringBuffer();
+        }
+    }
+    public void testListAction() {
+        {
+            ExecTool main = new ExecTool();
+            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-v"});
+            Map exmap = main.parseExcludeArgs(nodeKeys);
+            Map incmap = main.parseIncludeArgs(nodeKeys);
+            final Collection c = main.filterNodes();
+            final TestFormatter formatter = new TestFormatter();
+            main.setNodeFormatter(formatter);
+            main.listAction();
+            assertNotNull(formatter.nodes);
+            assertEquals(4, formatter.nodes.size());
+        }
+        {
+            ExecTool main = new ExecTool();
+            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-v", "-X", "homestar", "-I", "os-name=Testux"});
+            Map exmap = main.parseExcludeArgs(nodeKeys);
+            Map incmap = main.parseIncludeArgs(nodeKeys);
+            NodeSet nodeset = main.createNodeSet(incmap, exmap);
+            assertTrue(nodeset.getExclude().isDominant());
+            assertFalse(nodeset.getInclude().isDominant());
+            final Collection c = main.filterNodes();
+            final TestFormatter formatter = new TestFormatter();
+            main.setNodeFormatter(formatter);
+            main.listAction();
+            assertNotNull(formatter.nodes);
+            assertEquals(1, formatter.nodes.size());
+        }
+
+        {
+            ExecTool main = new ExecTool();
+            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-v", "-X", "strongbad,homestar",
+                "-I", "os-family=unix"});
+            Map exmap = main.parseExcludeArgs(nodeKeys);
+            Map incmap = main.parseIncludeArgs(nodeKeys);
+            final Collection c = main.filterNodes();
+            final TestFormatter formatter = new TestFormatter();
+            main.setNodeFormatter(formatter);
+            main.listAction();
+            assertNotNull(formatter.nodes);
+            assertEquals(2, formatter.nodes.size());
+        }
+    }
+
+
     /*public void testScriptFileActionArgs() throws Exception {
 
         {
