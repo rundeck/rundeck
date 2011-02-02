@@ -29,6 +29,7 @@ class ScheduledExecutionController  {
     def static allowedMethods = [delete:'POST',
         save:'POST',
         update:'POST',
+        apiJobsImport:'POST',
         deleteBulk:'DELETE'
     ]
 
@@ -1884,60 +1885,37 @@ class ScheduledExecutionController  {
             render(view:'create',model:[scheduledExecution:scheduledExecution,params:params])
         }
     }
-    def upload ={
-        log.info("ScheduledExecutionController: upload " + params)
-        if(!(request instanceof MultipartHttpServletRequest)){
-            return
-        }
-        def file = request.getFile("xmlBatch")
-        def fileformat=params.fileformat?:'xml'
+    /**
+     * Parse an uploaded file multipart request using the specified format
+     */
+    private def parseUploadedFile={ file , fileformat->
         def jobset
-        if(!file){
-            flash.message="No file was uploaded."
-            return
-        }
         if('xml'==fileformat){
             try{
                 jobset= file.getInputStream().decodeJobsXML()
             }catch(Exception e){
-                flash.error="Jobs XML Document was not valid: ${e}"
-                flash.message="Jobs XML Document was not valid: ${e}"
-                if(!params.xmlreq){
-                    render(view:'upload')
-                    return;
-                }else{
-                    return xmlerror.call();
-                }
+                return [error:"${e}"]
             }
         }else if ('yaml'==fileformat){
 
             try{
                 //load file into string
-//                jobset = JobsYAMLCodec.decodeFromStream(file.getInputStream())
                 jobset = file.getInputStream().decodeJobsYAML()
             }catch (Exception e){
-                flash.error="Jobs YAML Document was not valid: ${e}"
-                flash.message="Jobs YAML Document was not valid: ${e}"
-                if(!params.xmlreq){
-                    render(view:'upload')
-                    return;
-                }else{
-                    return xmlerror.call();
-                }
+                return [error:"${e}"]
             }
+        }else{
+            return [error:g.message(code:'api.error.jobs.import.format.unsupported',args:[fileformat])]
         }
         if(null==jobset){
-            flash.error="Jobs Document was not valid"
-            flash.message="Jobs Document was not valid"
-            if(!params.xmlreq){
-                render(view:'upload')
-                return;
-            }else{
-                return xmlerror.call();
-            }
-
+            return [error:g.message(code:'api.error.jobs.import.empty')]
         }
-
+        return [jobset:jobset]
+    }
+    /**
+     * Given list of imported jobs, create, update or skip them as defined by the dupeOption parameter.
+     */
+    private def loadJobs={ jobset, option ->
         def jobs=[]
         def jobsi=[]
         def i=1
@@ -1947,7 +1925,7 @@ class ScheduledExecutionController  {
         jobset.each{ jobdata ->
             log.debug("saving job data: ${jobdata}")
             def ScheduledExecution scheduledExecution
-            if(params.dupeOption=="update" || params.dupeOption=="skip"){
+            if(option=="update" || option=="skip"){
                 //look for dupe by name and group path and project
                 def c = ScheduledExecution.createCriteria()
                 def schedlist = c.list{
@@ -1961,11 +1939,11 @@ class ScheduledExecutionController  {
                     scheduledExecution=schedlist[0]
                 }
             }
-            if(params.dupeOption == "skip" && scheduledExecution){
+            if(option == "skip" && scheduledExecution){
                 jobdata.id=scheduledExecution.id
                 skipjobs <<[scheduledExecution:jobdata,entrynum:i,errmsg:"A Job named '${jobdata.jobName}' already exists"]
             }
-            else if(params.dupeOption == "update" && scheduledExecution){
+            else if(option == "update" && scheduledExecution){
                 def success=false
                 def errmsg
                 try{
@@ -1993,7 +1971,7 @@ class ScheduledExecutionController  {
                     jobs<<scheduledExecution
                     jobsi<<[scheduledExecution:scheduledExecution, entrynum:i]
                 }
-            }else if(params.dupeOptions=="create" || !scheduledExecution){
+            }else if(option=="create" || !scheduledExecution){
                 def errmsg
                 try{
                     scheduledExecution = _dosave(jobdata)
@@ -2019,69 +1997,53 @@ class ScheduledExecutionController  {
 
 
         }
+        return [jobs:jobs,jobsi:jobsi,msgs:msgs,errjobs:errjobs,skipjobs:skipjobs]
+    }
+    def upload ={
+        log.info("ScheduledExecutionController: upload " + params)
+        if(!(request instanceof MultipartHttpServletRequest)){
+            return
+        }
+        def file = request.getFile("xmlBatch")
+        def fileformat=params.fileformat?:'xml'
+        def jobset
+        if(!file){
+            flash.message="No file was uploaded."
+            return
+        }
+
+        def parseresult=parseUploadedFile(file,fileformat)
+        if(parseresult.error){
+            flash.error=parseresult.error
+            if(params.xmlreq){
+                return xmlerror()
+            }else{
+                render(view:'upload')
+                return
+            }
+        }
+        jobset=parseresult.jobset
+
+        def loadresults = loadJobs(jobset,params.dupeOption)
+
+        def jobs = loadresults.jobs
+        def jobsi = loadresults.jobsi
+        def msgs = loadresults.msgs
+        def errjobs = loadresults.errjobs
+        def skipjobs = loadresults.skipjobs
+
         if(!params.xmlreq){
-            return [jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
+            return [jobs: jobs, errjobs: errjobs, skipjobs: skipjobs,
+                nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), 
+                messages: msgs,
+                didupload: true]
         }else{
             //TODO: update commander's jobs upload task to submit XML content directly instead of via uploaded file, and use proper
             //TODO: grails content negotiation
             response.setHeader(Constants.X_RUNDECK_RESULT_HEADER,"Jobs Uploaded. Succeeded: ${jobs.size()}, Failed: ${errjobs.size()}, Skipped: ${skipjobs.size()}")
                 render(contentType:"text/xml"){
                     result(error:false){
-                        succeeded(count:jobs.size()){
-                            jobsi.each{ Map job ->
-                                delegate.'job'(index:job.entrynum){
-                                    id(job.scheduledExecution.id.toString())
-                                    name(job.scheduledExecution.jobName)
-                                    url(g.createLink(action:'show',id:job.scheduledExecution.id))
-                                }
-                            }
-                        }
-                        failed(count:errjobs.size()){
-
-                            errjobs.each{ Map job ->
-                                delegate.'job'(index:job.entrynum){
-                                    if(job.scheduledExecution.id){
-                                        id(job.scheduledExecution.id.toString())
-                                        url(g.createLink(action:'show',id:job.scheduledExecution.id))
-                                    }
-                                    name(job.scheduledExecution.jobName)
-                                    StringBuffer sb = new StringBuffer()
-                                    job.scheduledExecution?.errors?.allErrors?.each{err->
-                                        if(sb.size()>0){
-                                            sb<<"\n"
-                                        }
-                                        sb << g.message(error:err)
-                                    }
-                                    if(job.errmsg){
-                                        if(sb.size()>0){
-                                            sb<<"\n"
-                                        }
-                                        sb<<job.errmsg
-                                    }
-                                    delegate.'error'(sb.toString())
-                                }
-                            }
-                        }
-                        skipped(count:skipjobs.size()){
-
-                            skipjobs.each{ Map job ->
-                                delegate.'job'(index:job.entrynum){
-                                    if(job.scheduledExecution.id){
-                                        id(job.scheduledExecution.id.toString())
-                                        url(g.createLink(action:'show',id:job.scheduledExecution.id))
-                                    }
-                                    name(job.scheduledExecution.jobName)
-                                    StringBuffer sb = new StringBuffer()
-                                    if(job.errmsg){
-                                        if(sb.size()>0){
-                                            sb<<"\n"
-                                        }
-                                        sb<<job.errmsg
-                                    }
-                                    delegate.'error'(sb.toString())
-                                }
-                            }
-                        }
+                        renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
                     }
                 }
         }
@@ -2346,6 +2308,111 @@ class ScheduledExecutionController  {
             return trigger.getNextFireTime()
         }else{
             return null;
+        }
+    }
+
+
+    /**
+    * API Actions
+     */
+
+    /**
+     * Utility, render content for jobs/import response
+     */
+    def renderJobsImportApiXML={jobs,jobsi,errjobs,skipjobs, delegate->
+        delegate.'succeeded'(count:jobs.size()){
+            jobsi.each{ Map job ->
+                delegate.'job'(index:job.entrynum){
+                    id(job.scheduledExecution.id.toString())
+                    name(job.scheduledExecution.jobName)
+                    group(job.scheduledExecution.groupPath?:'')
+                    url(g.createLink(action:'show',id:job.scheduledExecution.id))
+                }
+            }
+        }
+        delegate.failed(count:errjobs.size()){
+            errjobs.each{ Map job ->
+                delegate.'job'(index:job.entrynum){
+                    if(job.scheduledExecution.id){
+                        id(job.scheduledExecution.id.toString())
+                        url(g.createLink(action:'show',id:job.scheduledExecution.id))
+                    }
+                    name(job.scheduledExecution.jobName)
+                    group(job.scheduledExecution.groupPath?:'')
+                    StringBuffer sb = new StringBuffer()
+                    job.scheduledExecution?.errors?.allErrors?.each{err->
+                        if(sb.size()>0){
+                            sb<<"\n"
+                        }
+                        sb << g.message(error:err)
+                    }
+                    if(job.errmsg){
+                        if(sb.size()>0){
+                            sb<<"\n"
+                        }
+                        sb<<job.errmsg
+                    }
+                    delegate.'error'(sb.toString())
+                }
+            }
+        }
+        delegate.skipped(count:skipjobs.size()){
+
+            skipjobs.each{ Map job ->
+                delegate.'job'(index:job.entrynum){
+                    if(job.scheduledExecution.id){
+                        id(job.scheduledExecution.id.toString())
+                        url(g.createLink(action:'show',id:job.scheduledExecution.id))
+                    }
+                    name(job.scheduledExecution.jobName)
+                    group(job.scheduledExecution.groupPath?:'')
+                    StringBuffer sb = new StringBuffer()
+                    if(job.errmsg){
+                        if(sb.size()>0){
+                            sb<<"\n"
+                        }
+                        sb<<job.errmsg
+                    }
+                    delegate.'error'(sb.toString())
+                }
+            }
+        }
+    }
+    /**
+     * API: /jobs/import, version 1.2
+     */
+    def apiJobsImport= {
+        log.info("ScheduledExecutionController: upload " + params)
+        if (!(request instanceof MultipartHttpServletRequest)) {
+            flash.errorCode = "api.error.jobs.import.wrong-contenttype"
+            return chain(controller: 'api', action: 'renderError')
+        }
+        def file = request.getFile("xmlBatch")
+        def fileformat = params.format ?: 'xml'
+        def jobset
+        if (!file) {
+            flash.errorCode = "api.error.jobs.import.missing-file"
+            return chain(controller: 'api', action: 'renderError')
+        }
+
+        def parseresult = parseUploadedFile(file, fileformat)
+        if (parseresult.error) {
+            flash.error = parseresult.error
+            return chain(controller: 'api', action: 'error')
+        }
+        jobset = parseresult.jobset
+
+        def loadresults = loadJobs(jobset,params.dupeOption)
+
+        def jobs = loadresults.jobs
+        def jobsi = loadresults.jobsi
+        def msgs = loadresults.msgs
+        def errjobs = loadresults.errjobs
+        def skipjobs = loadresults.skipjobs
+
+
+        return new ApiController().success {delegate ->
+            renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
         }
     }
 }

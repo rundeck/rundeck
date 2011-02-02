@@ -8,7 +8,7 @@ class UrlMappings {
       //1.2 api url paths
         "/api/jobs" (controller: 'menu', action: 'apiJobsList')
         "/api/jobs/export" (controller: 'menu', action: 'apiJobsExport')
-        "/api/jobs/import" (controller: 'scheduledExecution', action: 'upload')
+        "/api/jobs/import" (controller: 'scheduledExecution', action: 'apiJobsImport')
 
         "/api/job/$id/run" (controller: 'scheduledExecution', action: 'runJobByName')
         "/api/job/$id" (controller: 'scheduledExecution', action: 'show')
