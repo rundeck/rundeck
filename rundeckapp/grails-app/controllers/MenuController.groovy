@@ -411,5 +411,46 @@ class MenuController {
             }
         }
     }
+
+    /**
+     * API Actions
+     */
+
+    /**
+     * API: /jobs/export, version 1.2
+     */
+    def apiJobsExport = {ScheduledExecutionQuery query ->
+
+        if(params.project){
+            query.projFilter=params.project
+        }else{
+            flash.error=g.message(code:'api.error.parameter.required',args:['project'])
+            return chain(controller:'api',action:'error')
+        }
+        //test valid project
+        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+
+        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        if(!exists){
+            flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
+            return chain(controller:'api',action:'error')
+        }
+        def results = jobsFragment(query)
+
+        withFormat{
+            xml{
+                response.setHeader(Constants.X_RUNDECK_RESULT_HEADER,"Jobs found: ${results.nextScheduled?.size()}")
+                def writer = new StringWriter()
+                def xml = new MarkupBuilder(writer)
+                JobsXMLCodec.encodeWithBuilder(results.nextScheduled,xml)
+                writer.flush()
+                render(text:writer.toString(),contentType:"text/xml",encoding:"UTF-8")
+            }
+            yaml{
+                final def encoded = JobsYAMLCodec.encode(results.nextScheduled as List)
+                render(text:encoded,contentType:"text/yaml",encoding:"UTF-8")
+            }
+        }
+    }
 }
 
