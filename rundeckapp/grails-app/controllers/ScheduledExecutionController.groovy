@@ -30,6 +30,7 @@ class ScheduledExecutionController  {
         save:'POST',
         update:'POST',
         apiJobsImport:'POST',
+        apiJobDelete:'DELETE',
         deleteBulk:'DELETE'
     ]
 
@@ -2413,6 +2414,63 @@ class ScheduledExecutionController  {
 
         return new ApiController().success {delegate ->
             renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
+        }
+    }
+
+    /**
+     * API: export job definition: /job/{id}, version 1.2
+     */
+    def apiJobExport={
+        log.info("ScheduledExecutionController: show : params: " + params)
+        def ScheduledExecution scheduledExecution = ScheduledExecution.get( params.long('id') )
+        if (!scheduledExecution) {
+            flash.errorCode = "api.error.item.doesnotexist"
+            flash.errorArgs = ['Job ID',params.id]
+            return chain(controller: 'api', action: 'renderError')
+        }
+
+        withFormat{
+            xml{
+                def writer = new StringWriter()
+                def xml = new MarkupBuilder(writer)
+                JobsXMLCodec.encodeWithBuilder([scheduledExecution],xml)
+                writer.flush()
+                render(text:writer.toString(),contentType:"text/xml",encoding:"UTF-8")
+            }
+            yaml{
+                render(text:JobsYAMLCodec.encode([scheduledExecution] as List),contentType:"text/yaml",encoding:"UTF-8")
+            }
+        }
+    }
+    /**
+     * API: DELETE job definition: /job/{id}, version 1.2
+     */
+    def apiJobDelete={
+        log.info("ScheduledExecutionController: show : params: " + params)
+        def ScheduledExecution scheduledExecution = ScheduledExecution.get( params.long('id') )
+        if (!scheduledExecution) {
+            flash.error = g.message(code:"api.error.item.doesnotexist",args:['Job ID',params.id])
+            return chain(controller: 'api', action: 'error')
+        }
+        def jobname = scheduledExecution.generateJobScheduledName()
+        def groupname = scheduledExecution.generateJobGroupName()
+        def jobtitle="["+params.id+"] "+scheduledExecution.generateFullName()
+        //unlink any Execution records
+        def torem=[]
+        def execs = scheduledExecution.executions
+        execs.each{Execution exec->
+            torem<<exec
+        }
+        torem.each{Execution exec->
+            scheduledExecution.removeFromExecutions(exec)
+            exec.scheduledExecution=null
+        }
+        scheduledExecution.delete(flush:true)
+        scheduledExecutionService.deleteJob(jobname,groupname)
+        def resmsg= g.message(code:'api.success.job.delete.message',args:[jobtitle])
+
+        return new ApiController().success{ delegate->
+            delegate.'message'(resmsg)
         }
     }
 }

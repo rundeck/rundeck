@@ -11,7 +11,9 @@ class UrlMappings {
         "/api/jobs/import" (controller: 'scheduledExecution', action: 'apiJobsImport')
 
         "/api/job/$id/run" (controller: 'scheduledExecution', action: 'runJobByName')
-        "/api/job/$id" (controller: 'scheduledExecution', action: 'show')
+        "/api/job/$id" (controller: 'scheduledExecution'){
+            action = [GET:"apiJobExport", DELETE:"apiJobDelete"]
+        }
 
         "/api/executions/running" (controller: 'menu', action: 'nowRunning')
 

@@ -439,7 +439,6 @@ class MenuController {
 
         withFormat{
             xml{
-                response.setHeader(Constants.X_RUNDECK_RESULT_HEADER,"Jobs found: ${results.nextScheduled?.size()}")
                 def writer = new StringWriter()
                 def xml = new MarkupBuilder(writer)
                 JobsXMLCodec.encodeWithBuilder(results.nextScheduled,xml)
