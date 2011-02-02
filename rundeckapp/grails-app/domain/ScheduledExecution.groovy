@@ -141,7 +141,7 @@ class ScheduledExecution extends ExecutionContext {
         ScheduledExecution se = new ScheduledExecution()
         se.jobName=data.name
         se.groupPath=data['group']?data['group']:null
-        se.description=data.description?data.description:null
+        se.description=data.description
         se.loglevel=data.loglevel?data.loglevel:'INFO'
         se.project=data.project
         if(data.options){

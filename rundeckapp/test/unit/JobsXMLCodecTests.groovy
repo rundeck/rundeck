@@ -121,7 +121,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
   <job>
     <id>5</id>
     <name>wait1</name>
-    <description>a simple desc</description>
+    <description></description>
     <loglevel>INFO</loglevel>
     <context>
       <project>test1</project>
@@ -196,7 +196,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
             assertEquals "incorrect jobName","wait1",jobs[0].jobName
-            assertEquals "incorrect description","a simple desc",jobs[0].description
+            assertEquals "incorrect description","",jobs[0].description
             assertEquals "incorrect loglevel","INFO",jobs[0].loglevel
             assertEquals "incorrect project","test1",jobs[0].project
             assertNotNull jobs[0].options

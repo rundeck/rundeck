@@ -120,7 +120,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
     commands:
     - exec: test script
     - script: A Monkey returns
-  description: test descrip
+  description: ''
   name: test job 1
   group: my group
   nodefilters:
@@ -158,7 +158,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             assertTrue(obj instanceof ScheduledExecution)
             ScheduledExecution se = (ScheduledExecution) list[0]
             assertEquals "wrong name", "test job 1", se.jobName
-            assertEquals "wrong description", "test descrip", se.description
+            assertEquals "wrong description", "", se.description
             assertEquals "wrong groupPath", "my group", se.groupPath
             assertEquals "wrong project", "test1", se.project
             assertEquals "wrong loglevel", "INFO", se.loglevel
