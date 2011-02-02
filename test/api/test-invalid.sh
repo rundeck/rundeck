@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#test api version in request parameter
+#test output from invalid api request path: /api/dnexist
 
 errorMsg() {
    echo "$*" 1>&2
@@ -14,7 +14,7 @@ if [ "-" == "$1" ] ; then
     url='http://localhost:4440/api'
 fi
 apiurl="${url}/api"
-loginurl="${url}/j_security_check"
+VERSHEADER="X-RUNDECK-API-VERSION: 1.2"
 
 # curl opts to use a cookie jar, and follow redirects, showing only errors
 CURLOPTS="-s -S -L -c $DIR/cookies -b $DIR/cookies"
@@ -24,13 +24,14 @@ CURL="curl $CURLOPTS"
 XMLSTARLET=xml
 
 # now submit req
-runurl="${apiurl}/projects"
+runurl="${apiurl}/dnexist"
 
-echo "TEST: API Version in parameter..."
+echo "TEST: api request to invalid api path"
+
+params="project=test"
 
 # get listing
-params="api_version=1.2"
-$CURL ${runurl}?${params} > $DIR/curl.out
+$CURL --header "$VERSHEADER" -D $DIR/headers.out ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -50,22 +51,17 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-# job list query doesn't wrap result in common result wrapper
-#If <result error="true"> then an error occured.
+#test result error message
 waserror=$($XMLSTARLET sel -T -t -v "/result/@error" $DIR/curl.out)
-if [ "true" == "$waserror" ] ; then
-    errorMsg "Server reported an error: "
-    $XMLSTARLET sel -T -t -v "/result/error/message" -n  $DIR/curl.out
-    exit 2
-fi
-wassuccess=$($XMLSTARLET sel -T -t -v "/result/@success" $DIR/curl.out)
-
-if [ "true" == "$wassuccess" ] ; then
+errmsg=$($XMLSTARLET sel -T -t -v "/result/error/message" $DIR/curl.out)
+substr=${errmsg#Invalid API Request:}
+if [ "true" == "$waserror" -a "$substr" != "$errmsg" ] ; then
     echo "OK"
 else
-    errorMsg "FAIL: Server did not report success"
-    $XMLSTARLET sel -T -t -v "/result/error/message" -n  $DIR/curl.out
+    errorMsg "TEST FAILED: nonexistent project message expected: $errmsg"
     exit 2
 fi
 
 rm $DIR/curl.out
+rm $DIR/headers.out
+

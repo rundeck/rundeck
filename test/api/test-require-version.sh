@@ -15,29 +15,10 @@ if [ "-" == "$1" ] ; then
     url='http://localhost:4440/api'
 fi
 apiurl="${url}/api"
-loginurl="${url}/j_security_check"
 
 # curl opts to use a cookie jar, and follow redirects, showing only errors
 CURLOPTS="-s -S -L -c $DIR/cookies -b $DIR/cookies"
 CURL="curl $CURLOPTS"
-
-# get main page for login
-RDUSER=default
-RDPASS=default
-echo "Login..."
-$CURL -d j_username=$RDUSER -d j_password=$RDPASS $loginurl > $DIR/curl.out 
-if [ 0 != $? ] ; then
-    errorMsg "failed login request to ${loginurl}"
-    exit 2
-fi
-
-grep 'j_security_check' -q $DIR/curl.out 
-if [ 0 == $? ] ; then
-    errorMsg "login was not successful"
-    exit 2
-fi
-
-echo "Login OK"
 
 XMLSTARLET=xml
 
@@ -51,7 +32,7 @@ runurl="${apiurl}/projects"
 echo "TEST: require version header"
 
 # get listing
-$CURL ${runurl}?${params} > $DIR/curl.out
+$CURL -D $DIR/headers.out ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -130,6 +111,5 @@ else
 fi
 
 
-#rm $DIR/curl.out
-rm $DIR/cookies
+rm $DIR/curl.out
 
