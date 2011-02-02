@@ -25,13 +25,14 @@
 
 public class ApiRequestFilters {
     def supported_versions=["1.2"]
+    def allowed_actions=["renderError","invalid"]
     def filters = {
             /**
              * Require api version request header or parameter
              */
             apiVersion(uri:'/api/**') {
                 before = {
-                    if(actionName=='renderError' && controllerName=='api'){
+                    if(controllerName=='api' && allowed_actions.contains(actionName)){
                         return true
                     }
                     final def header = request.getHeader('X-RUNDECK-API-VERSION')
@@ -40,22 +41,8 @@ public class ApiRequestFilters {
                     if(!reqversion){
                         flash.errorCode='api.error.api-version.required'
                         redirect(controller:'api',action:'renderError')
-//                        render(contentType:"text/xml",encoding:"UTF-8"){
-//                            result(error:'true'){
-//                                error{
-//                                    message(g.message(code:'api.error.api-version.required'))
-//                                }
-//                            }
-//                        }
                         return false
                     }else if (!supported_versions.contains(reqversion)) {
-//                        render(contentType:"text/xml",encoding:"UTF-8"){
-//                            result(error: 'true') {
-//                                error {
-//                                    message(g.message(code:'api.error.api-version.unsupported',args:[reqversion]))
-//                                }
-//                            }
-//                        }
                         flash.errorCode='api.error.api-version.unsupported'
                         flash.errorArgs=[reqversion]
                         redirect(controller:'api',action:'renderError')
