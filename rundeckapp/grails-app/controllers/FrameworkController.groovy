@@ -414,5 +414,52 @@ class FrameworkController  {
             session.removeAttribute('project')
         }
     }
+
+    /*******
+     * API actions
+     */
+
+    def listProjects={
+        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        def projlist=frameworkService.projects(framework)
+        session.projects=projlist
+        return new ApiController().success{ delegate->
+                delegate.'projects'(count:projlist.size()){
+                    projlist.each{ pject ->
+                        renderApiProject(pject,delegate)
+                    }
+                }
+
+        }
+    }
+    def renderApiProject={ pject, delegate ->
+        delegate.project{
+            name(pject.name)
+            description(pject.hasProperty('project.description')?pject.getProperty('project.description'):'')
+            if(pject.hasProperty("project.resources.url")){
+                resources{
+                    providerURL(pject.getProperty("project.resources.url"))
+                }
+            }
+        }
+    }
+    def getProject={
+        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        if(!params.project){
+            flash.error=g.message(code:'api.error.parameter.required',args:['project'])
+            return chain(controller:'api',action:'error')
+        }
+        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        if(!exists){
+            flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
+            return chain(controller:'api',action:'error')
+        }
+        def pject=frameworkService.getFrameworkProject(params.project,framework)
+        return new ApiController().success{ delegate->
+            delegate.'projects'(count:1){
+                renderApiProject(pject,delegate)
+            }
+        }
+    }
 }
 
