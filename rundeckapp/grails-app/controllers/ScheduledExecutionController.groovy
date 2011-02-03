@@ -2443,6 +2443,44 @@ class ScheduledExecutionController  {
         }
     }
     /**
+     * API: Run a job immediately: /job/{id}/run, version 1.2
+     */
+    def apiJobRun= {
+        def ScheduledExecution scheduledExecution = ScheduledExecution.get(params.long('id'))
+        if (!scheduledExecution) {
+            flash.errorCode = "api.error.item.doesnotexist"
+            flash.errorArgs = ['Job ID', params.id]
+            return chain(controller: 'api', action: 'renderError')
+        }
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        params["user"] = (session?.user) ? session.user : "anonymous"
+        def rolelist = (session?.roles) ? session.roles : []
+
+        //TODO: convert input parameter names for node filters?
+        //XXX: arguments are supposed to be "extra.argString"
+        if(params.argString){
+            params.extra.argString=params.argString
+        }
+
+        def result = executeScheduledExecution(scheduledExecution, framework, rolelist, params)
+        if (result.error) {
+            flash.error = result.message
+            return chain(controller: "api", action: "error")
+        }
+        return new ApiController().success {delegate ->
+            delegate.'success' {
+                message("Execution started: ${result.executionId}")
+            }
+            delegate.'succeeded'(count: 1) {
+                execution(index: 0) {
+                    id(result.executionId)
+                    name(result.name)
+                    url(g.createLink(controller: 'execution', action: 'follow', id: result.executionId))
+                }
+            }
+        }
+    }
+    /**
      * API: DELETE job definition: /job/{id}, version 1.2
      */
     def apiJobDelete={
