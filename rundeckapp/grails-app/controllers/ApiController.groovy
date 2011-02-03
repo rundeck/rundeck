@@ -53,4 +53,20 @@ class ApiController {
             }
         }
     }
+
+    /**
+     * Pass through to ScheduledExecutionController.
+     * this prevents automatic link generation caused by UrlMappings file to generate links to /api in the GUI
+     */
+    def apiJobExport={
+        return chain(controller:'scheduledExecution',action:'apiJobExport',params:params)
+    }
+
+    /**
+     * Pass through to ScheduledExecutionController.
+     * this prevents automatic link generation caused by UrlMappings file to generate links to /api in the GUI
+     */
+    def apiJobDelete={
+        return chain(controller:'scheduledExecution',action:'apiJobDelete',params:params)
+    }
 }
