@@ -150,7 +150,7 @@ fi
 #expect success
 waserror=$($XMLSTARLET sel -T -t -v "/result/@error" $DIR/curl.out)
 wassucc=$($XMLSTARLET sel -T -t -v "/result/@success" $DIR/curl.out)
-sucmsg=$($XMLSTARLET sel -T -t -v "/result/message" $DIR/curl.out)
+sucmsg=$($XMLSTARLET sel -T -t -v "/result/success/message" $DIR/curl.out)
 if [ "true" == "$waserror" ] ; then
     errorMsg "FAIL: error result"
     $XMLSTARLET sel -T -t -v "/result/error/message" -n  $DIR/curl.out

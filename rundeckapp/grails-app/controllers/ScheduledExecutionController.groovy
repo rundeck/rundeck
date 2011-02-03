@@ -2470,7 +2470,9 @@ class ScheduledExecutionController  {
         def resmsg= g.message(code:'api.success.job.delete.message',args:[jobtitle])
 
         return new ApiController().success{ delegate->
-            delegate.'message'(resmsg)
+            delegate.'success'{
+                message(resmsg)
+            }
         }
     }
 }
