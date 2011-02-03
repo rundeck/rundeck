@@ -451,5 +451,47 @@ class MenuController {
             }
         }
     }
+
+    /**
+     * API: /executions/running, version 1.2
+     */
+    def apiExecutionsRunning = {
+
+        if(!params.project){
+            flash.error=g.message(code:'api.error.parameter.required',args:['project'])
+            return chain(controller:'api',action:'error')
+        }
+        //test valid project
+        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+
+        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        if(!exists){
+            flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
+            return chain(controller:'api',action:'error')
+        }
+
+        QueueQuery query = new QueueQuery(runningFilter:'running',projFilter:params.project)
+        def results = nowrunning(query)
+        return new ApiController().success{ delegate->
+            delegate.'executions'(count:results.nowrunning.size()){
+                results.nowrunning.each{ Execution e->
+                    execution(id: e.id, href:g.createLink(controller:'execution',action:'follow',id:e.id,absolute:true)){
+                        status(null==e.dateCompleted?'running':e.status)
+                        user(e.user)
+                        started(epoch:e.dateStarted.time,e.dateStarted.toString())
+                        if(e.scheduledExecution && results.jobs[e.scheduledExecution.id.toString()]){
+                            job(id:e.scheduledExecution.id){
+                                name(e.scheduledExecution.jobName)
+                                group(e.scheduledExecution.groupPath?:'')
+                                description(e.scheduledExecution.description)
+                            }
+                        }else{
+                            description(e.toString())
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 

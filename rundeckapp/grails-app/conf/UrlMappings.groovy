@@ -16,13 +16,13 @@ class UrlMappings {
             action = [GET:"apiJobExport", DELETE:"apiJobDelete"]
         }
 
-        "/api/executions/running" (controller: 'menu', action: 'nowRunning')
+        "/api/executions/running" (controller: 'menu', action: 'apiExecutionsRunning')
 
-        "/api/execution/$id" (controller: 'execution', action: 'show')
-        "/api/execution/$id/abort" (controller: 'execution', action: 'kill')
+//        "/api/execution/$id" (controller: 'execution', action: 'show')
+//        "/api/execution/$id/abort" (controller: 'execution', action: 'kill')
 
-        "/api/run/command" (controller: 'scheduledExecution', action: 'runAndForget')
-        "/api/run/script" (controller: 'scheduledExecution', action: 'runAndForget')
+//        "/api/run/command" (controller: 'scheduledExecution', action: 'runAndForget')
+//        "/api/run/script" (controller: 'scheduledExecution', action: 'runAndForget')
 
         "/api/projects" (controller: 'framework', action: 'listProjects')
         "/api/project/$project?" (controller: 'framework', action: 'getProject')
