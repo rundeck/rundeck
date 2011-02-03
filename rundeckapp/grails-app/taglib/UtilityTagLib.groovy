@@ -5,7 +5,7 @@ class UtilityTagLib{
     def static  daysofweekkey = [Calendar.MONDAY,Calendar.TUESDAY,Calendar.WEDNESDAY,Calendar.THURSDAY,Calendar.FRIDAY,Calendar.SATURDAY,Calendar.SUNDAY];
     def public static daysofweekord = ScheduledExecution.daysofweeklist;
     def public static monthsofyearord = ScheduledExecution.monthsofyearlist;
-	static returnObjectForTags = ['rkey','isUserInRoleTest']
+	static returnObjectForTags = ['rkey','isUserInRoleTest','w3cDateValue']
     def frameworkService
     def roleService
 
@@ -455,10 +455,16 @@ class UtilityTagLib{
      */
     def w3cDate = {attrs,body ->
         if(attrs.date){
-            SimpleDateFormat dateFormater = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'",Locale.US);
-            dateFormater.setTimeZone(TimeZone.getTimeZone("GMT"));
-            out<< dateFormater.format(attrs.date);
+            out<< w3cDateValue(attrs,body)
         }
+    }
+    /**
+     * renders a java date as the W3C format used by dc:date in RSS feed
+     */
+    def w3cDateValue = {attrs,body ->
+        SimpleDateFormat dateFormater = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'",Locale.US);
+        dateFormater.setTimeZone(TimeZone.getTimeZone("GMT"));
+        return dateFormater.format(attrs.date);
     }
 
     def truncate={attrs,body ->

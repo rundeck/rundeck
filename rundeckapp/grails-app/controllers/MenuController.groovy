@@ -472,26 +472,27 @@ class MenuController {
 
         QueueQuery query = new QueueQuery(runningFilter:'running',projFilter:params.project)
         def results = nowrunning(query)
-        return new ApiController().success{ delegate->
-            delegate.'executions'(count:results.nowrunning.size()){
-                results.nowrunning.each{ Execution e->
-                    execution(id: e.id, href:g.createLink(controller:'execution',action:'follow',id:e.id,absolute:true)){
-                        status(null==e.dateCompleted?'running':e.status)
-                        user(e.user)
-                        started(epoch:e.dateStarted.time,e.dateStarted.toString())
-                        if(e.scheduledExecution && results.jobs[e.scheduledExecution.id.toString()]){
-                            job(id:e.scheduledExecution.id){
-                                name(e.scheduledExecution.jobName)
-                                group(e.scheduledExecution.groupPath?:'')
-                                description(e.scheduledExecution.description)
-                            }
-                        }else{
-                            description(e.toString())
-                        }
-                    }
-                }
-            }
-        }
+        return new ExecutionController().renderApiExecutionListResultXML(results.nowrunning)
+//        return new ApiController().success{ delegate->
+//            delegate.'executions'(count:results.nowrunning.size()){
+//                results.nowrunning.each{ Execution e->
+//                    execution(id: e.id, href:g.createLink(controller:'execution',action:'follow',id:e.id,absolute:true)){
+//                        status(null==e.dateCompleted?'running':e.status)
+//                        user(e.user)
+//                        started(epoch:e.dateStarted.time,e.dateStarted.toString())
+//                        if(e.scheduledExecution && results.jobs[e.scheduledExecution.id.toString()]){
+//                            job(id:e.scheduledExecution.id){
+//                                name(e.scheduledExecution.jobName)
+//                                group(e.scheduledExecution.groupPath?:'')
+//                                description(e.scheduledExecution.description)
+//                            }
+//                        }else{
+//                            description(e.toString())
+//                        }
+//                    }
+//                }
+//            }
+//        }
     }
 }
 
