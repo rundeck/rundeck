@@ -2513,6 +2513,59 @@ class ScheduledExecutionController  {
             }
         }
     }
+
+
+
+    /**
+     * API: run simple exec: /api/run/command, version 1.2
+     */
+    def apiRunCommand={
+
+        if(!params.project){
+            flash.error=g.message(code:'api.error.parameter.required',args:['project'])
+            return chain(controller:'api',action:'error')
+        }
+        if(!params.exec){
+            flash.error=g.message(code:'api.error.parameter.required',args:['exec'])
+            return chain(controller:'api',action:'error')
+        }
+        //test valid project
+        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+
+        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        if(!exists){
+            flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
+            return chain(controller:'api',action:'error')
+        }
+
+        //remote any input parameters that should not be used when creating the execution
+        ['options','scheduled'].each{params.remove(it)}
+        params.workflow=new Workflow(commands:[new CommandExec(adhocRemoteString:params.remove('exec'), adhocExecution:true)])
+        params.description=params.description?:""
+
+
+        def results=runAdhoc()
+        if(results.failed){
+            results.error=results.message
+        }
+        if(results.error){
+            flash.error=results.error
+            if(results.scheduledExecution){
+                flash.errors=[]
+                results.scheduledExecution.errors.allErrors.each{
+                    flash.errors<<g.message(error:it)
+                }
+            }
+            return chain(controller:'api',action:'error')
+        }else{
+            return new ApiController().success{ delegate ->
+                delegate.'success'{
+                    message("Immediate execution scheduled (${results.id})")
+                }
+                delegate.'execution'(id:results.id)
+            }
+        }
+    }
 }
 
 class JobXMLException extends Exception{

@@ -21,12 +21,13 @@ class UrlMappings {
         "/api/execution/$id" (controller: 'execution', action: 'apiExecution')
         "/api/execution/$id/abort" (controller: 'execution', action: 'apiExecutionAbort')
 
-//        "/api/run/command" (controller: 'scheduledExecution', action: 'runAndForget')
+        "/api/run/command" (controller: 'scheduledExecution', action: 'apiRunCommand')
 //        "/api/run/script" (controller: 'scheduledExecution', action: 'runAndForget')
 
         "/api/projects" (controller: 'framework', action: 'listProjects')
         "/api/project/$project?" (controller: 'framework', action: 'getProject')
         "/api/renderError" (controller: 'api', action: 'renderError')
+        "/api/error" (controller: 'api', action: 'error')
         "/api/$action?" (controller: 'api', action: 'invalid')
 
 	  "/run/$id?"( controller:'framework',action:'nodes')
