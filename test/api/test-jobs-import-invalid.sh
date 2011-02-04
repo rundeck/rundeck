@@ -62,7 +62,7 @@ END
 # now submit req
 runurl="${apiurl}/jobs/import"
 
-echo "TEST: import RunDeck Jobs in jobs.xml format"
+echo "TEST: /jobs/import with invalid format"
 
 #specify incorrect format
 params="format=DNEformat"
@@ -70,91 +70,27 @@ params="format=DNEformat"
 # specify the file for upload with curl, named "xmlBatch"
 ulopts="-F xmlBatch=@$DIR/temp.out"
 
-# get listing
-$CURL $ulopts --header "$VERSHEADER" ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
-
-#test curl.out for valid xml
-$XMLSTARLET val -w $DIR/curl.out > /dev/null 2>&1
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: Response was not valid xml"
-    exit 2
-fi
-
-#test for expected /joblist element
-$XMLSTARLET el $DIR/curl.out | grep -e '^result' -q
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: Response did not contain expected result"
-    exit 2
-fi
-
-#expect unsupported format error message
-waserror=$($XMLSTARLET sel -T -t -v "/result/@error" $DIR/curl.out)
-errmsg=$($XMLSTARLET sel -T -t -v "/result/error/message" $DIR/curl.out)
-if [ "true" == "$waserror" -a "The specified format is not supported: DNEformat" == "$errmsg" ] ; then
-    echo "OK"
-else
-    errorMsg "TEST FAILED: unsupported format message expected: $errmsg"
-    exit 2
-fi
+CURL_REQ_OPTS=$ulopts sh $DIR/api-expect-error.sh "${runurl}" "${params}" "The specified format is not supported: DNEformat" || exit 2
+echo "OK"
 
 ##
 # try to make GET request without import file content
 ##
+echo "TEST: /jobs/import with wrong http Method"
 
-# import
-$CURL -D $DIR/headers.out --header "$VERSHEADER" ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
+sh $DIR/api-expect-code.sh 405 "${runurl}" "${params}" || exit 2
+echo "OK"
 
-grep 'HTTP/1.1 405 Method Not Allowed' -q $DIR/headers.out
-if [ 0 != $? ] ; then
-    errorMsg "FAIL: Expected 405 HTTP response"
-    exit 2
-fi
 
 ##
 # try to make POST request without import file content
 ##
 
-# import
-$CURL -D $DIR/headers.out -F x=y --header "$VERSHEADER" ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
+echo "TEST: /jobs/import without expected file content"
 
-#test curl.out for valid xml
-$XMLSTARLET val -w $DIR/curl.out > /dev/null 2>&1
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: Response was not valid xml"
-    exit 2
-fi
-
-#test for expected /joblist element
-$XMLSTARLET el $DIR/curl.out | grep -e '^result' -q
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: Response did not contain expected result"
-    exit 2
-fi
-
-#expect unsupported format error message
-waserror=$($XMLSTARLET sel -T -t -v "/result/@error" $DIR/curl.out)
-errmsg=$($XMLSTARLET sel -T -t -v "/result/error/message" $DIR/curl.out)
-if [ "true" == "$waserror" -a "No file was uploaded" == "$errmsg" ] ; then
-    echo "OK"
-else
-    errorMsg "TEST FAILED: no file included message expected: $errmsg"
-    exit 2
-fi
-
+CURL_REQ_OPTS="-F x=y" sh $DIR/api-expect-error.sh "${runurl}" "${params}" "No file was uploaded" || exit 2
+echo "OK"
 
 rm $DIR/curl.out
 rm $DIR/temp.out
-rm $DIR/headers.out
 

@@ -41,35 +41,14 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-#test curl.out for valid xml
-$XMLSTARLET val -w $DIR/curl.out > /dev/null 2>&1
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: Response was not valid xml"
-    exit 2
-fi
-
-#test for expected /joblist element
-$XMLSTARLET el $DIR/curl.out | grep -e '^result' -q
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: Response did not contain expected result"
-    exit 2
-fi
-
-# job list query doesn't wrap result in common result wrapper
-#If <result error="true"> then an error occured.
-waserror=$($XMLSTARLET sel -T -t -v "/result/@error" $DIR/curl.out)
-if [ "true" == "$waserror" ] ; then
-    errorMsg "Server reported an error: "
-    $XMLSTARLET sel -T -t -v "/result/error/message" -n  $DIR/curl.out
-    exit 2
-fi
+sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
 itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
-echo "$itemcount Jobs"    
-if [ "0" != "$itemcount" ] ; then
-    #echo all on one line
-    $XMLSTARLET sel -T -t -m "/result/jobs/job" -o "[" -v "@id" -o "] " -v "name" -o " (" -v "group" -o ") " -o ": &quot;" -v "description" -o '&quot;'  -n $DIR/curl.out
+
+if [ "" == "$itemcount" ] ; then
+    errorMsg "Wrong count:"
+    exit 2
 fi
 echo "OK"
 

@@ -30,36 +30,8 @@ echo "TEST:  project parameter invalid for /api/jobs..."
 
 params="project=DNEProject"
 
-# get listing
-$CURL --header "$VERSHEADER" ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
-
-#test curl.out for valid xml
-$XMLSTARLET val -w $DIR/curl.out > /dev/null 2>&1
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: Response was not valid xml"
-    exit 2
-fi
-
-#test for expected /joblist element
-$XMLSTARLET el $DIR/curl.out | grep -e '^result' -q
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: Response did not contain expected result"
-    exit 2
-fi
-
-
-waserror=$($XMLSTARLET sel -T -t -v "/result/@error" $DIR/curl.out)
-errmsg=$($XMLSTARLET sel -T -t -v "/result/error/message" $DIR/curl.out)
-if [ "true" == "$waserror" -a "project does not exist: DNEProject" == "$errmsg" ] ; then
-    echo "OK"
-else
-    errorMsg "TEST FAILED: nonexistent project message expected: $errmsg"
-    exit 2
-fi
+sh $DIR/api-expect-error.sh "${runurl}" "${params}" "project does not exist: DNEProject" || exit 2
+echo "OK"
 
 rm $DIR/curl.out
 

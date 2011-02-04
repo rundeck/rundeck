@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # usage:
-#  api-expect-success.sh <file.xml>
-# expects success response for the file.xml
+#  api-test-success.sh <file.xml> [message]
+# expects success response for the file.xml, optionally expects a certain message
 
 errorMsg() {
    echo "$*" 1>&2
@@ -12,6 +12,8 @@ DIR=$(cd `dirname $0` && pwd)
 
 file="$1"
 shift
+
+message="$*"
 
 XMLSTARLET=xml
 
@@ -41,6 +43,13 @@ if [ "true" != "$wassucc" ] ; then
     errorMsg "FAIL: Server did not report success: "
     $XMLSTARLET sel -T -t -m "/result/error/message" -v "." -n  ${file}
     exit 2
+fi
+if [ "" != "${message}" ] ; then 
+    sucmsg=$($XMLSTARLET sel -T -t -v "/result/success/message" ${file})
+    if [ "${sucmsg}" != "${message}" ] ; then
+        errorMsg "FAIL: wrong success message: \"${sucmsg}\", expected \"${message}\""
+        exit 2
+    fi
 fi
 
 exit 0

@@ -32,40 +32,14 @@ runurl="${apiurl}/projects"
 echo "TEST: require version header"
 
 # get listing
-$CURL -D $DIR/headers.out ${runurl}?${params} > $DIR/curl.out
+$CURL ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
 fi
 
-#test curl.out for valid xml
-$XMLSTARLET val -w $DIR/curl.out > /dev/null 2>&1
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: Response was not valid xml"
-    exit 2
-fi
-
-#test for expected /joblist element
-$XMLSTARLET el $DIR/curl.out | grep -e '^result' -q
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: Response did not contain expected result"
-    exit 2
-fi
-
-#
-# EXPECT message: "RunDeck API Version not specified"
-#
-
-# job list query doesn't wrap result in common result wrapper
-#If <result error="true"> then an error occured.
-waserror=$($XMLSTARLET sel -T -t -v "/result/@error" $DIR/curl.out)
-errmsg=$($XMLSTARLET sel -T -t -v "/result/error/message" $DIR/curl.out)
-if [ "true" == "$waserror" -a "RunDeck API Version not specified" == "$errmsg" ] ; then
-    echo "OK"
-else
-    errorMsg "TEST FAILED: Version required message was expected"
-    exit 2
-fi
+sh $DIR/api-test-error.sh $DIR/curl.out "RunDeck API Version not specified" || exit 2
+echo "OK"
 
 #
 # TEST: request with wrong version number
@@ -80,35 +54,8 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-#test curl.out for valid xml
-$XMLSTARLET val -w $DIR/curl.out > /dev/null 2>&1
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: Response was not valid xml"
-    exit 2
-fi
-
-#test for expected /joblist element
-$XMLSTARLET el $DIR/curl.out | grep -e '^result' -q
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: Response did not contain expected result"
-    exit 2
-fi
-
-#
-# EXPECT message: "RunDeck API Version not supported"
-#
-
-# job list query doesn't wrap result in common result wrapper
-#If <result error="true"> then an error occured.
-waserror=$($XMLSTARLET sel -T -t -v "/result/@error" $DIR/curl.out)
-errmsg=$($XMLSTARLET sel -T -t -v "/result/error/message" $DIR/curl.out)
-if [ "true" == "$waserror" -a "RunDeck API Version is not supported: 1.3" == "$errmsg" ] ; then
-    echo "OK"
-    exit 0
-else
-    errorMsg "TEST FAILED: Version invalid message was expected: $errmsg"
-    exit 2
-fi
+sh $DIR/api-test-error.sh $DIR/curl.out "RunDeck API Version is not supported: 1.3" || exit 2
+echo "OK"
 
 
 rm $DIR/curl.out

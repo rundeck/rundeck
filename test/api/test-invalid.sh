@@ -37,28 +37,16 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-#test curl.out for valid xml
-$XMLSTARLET val -w $DIR/curl.out > /dev/null 2>&1
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: Response was not valid xml"
-    exit 2
-fi
-
-#test for expected /joblist element
-$XMLSTARLET el $DIR/curl.out | grep -e '^result' -q
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: Response did not contain expected result"
-    exit 2
-fi
+sh $DIR/api-test-error.sh $DIR/curl.out || exit 2
 
 #test result error message
-waserror=$($XMLSTARLET sel -T -t -v "/result/@error" $DIR/curl.out)
+
 errmsg=$($XMLSTARLET sel -T -t -v "/result/error/message" $DIR/curl.out)
 substr=${errmsg#Invalid API Request:}
-if [ "true" == "$waserror" -a "$substr" != "$errmsg" ] ; then
+if [  "Invalid API Request:$substr" == "$errmsg" ] ; then
     echo "OK"
 else
-    errorMsg "TEST FAILED: nonexistent project message expected: $errmsg"
+    errorMsg "TEST FAILED: Invalid API Request message expected: $errmsg"
     exit 2
 fi
 

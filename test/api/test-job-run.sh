@@ -80,28 +80,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-#test curl.out for valid xml
-$XMLSTARLET val -w $DIR/curl.out > /dev/null 2>&1
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: Response was not valid xml"
-    exit 2
-fi
-
-#test for expected /joblist element
-$XMLSTARLET el $DIR/curl.out | grep -e '^result' -q
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: Response did not contain expected result"
-    exit 2
-fi
-
-# job list query doesn't wrap result in common result wrapper
-#If <result error="true"> then an error occured.
-waserror=$($XMLSTARLET sel -T -t -v "/result/@error" $DIR/curl.out)
-if [ "true" == "$waserror" ] ; then
-    errorMsg "Server reported an error: "
-    $XMLSTARLET sel -T -t -v "/result/error/message" -n  $DIR/curl.out
-    exit 2
-fi
+sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #result will contain list of failed and succeeded jobs, in this
 #case there should only be 1 failed or 1 succeeded since we submit only 1
@@ -133,37 +112,12 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-#test curl.out for valid xml
-$XMLSTARLET val -w $DIR/curl.out > /dev/null 2>&1
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: Response was not valid xml"
-    exit 2
-fi
-
-#test for expected /result element
-$XMLSTARLET el $DIR/curl.out | grep -e '^result' -q
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: Response did not contain expected result"
-    exit 2
-fi
-
-#expect success
-waserror=$($XMLSTARLET sel -T -t -v "/result/@error" $DIR/curl.out)
-wassucc=$($XMLSTARLET sel -T -t -v "/result/@success" $DIR/curl.out)
-sucmsg=$($XMLSTARLET sel -T -t -v "/result/success/message" $DIR/curl.out)
-if [ "true" == "$waserror" ] ; then
-    errorMsg "FAIL: error result"
-    $XMLSTARLET sel -T -t -v "/result/error/message" -n  $DIR/curl.out
-    exit 2
-fi
-if [ "true" != "$wassucc" ] ; then
-    errorMsg "FAIL: expected success"
-    exit 2
-fi
+sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #get execid
 
 execid=$($XMLSTARLET sel -T -t -v "/result/succeeded/execution/id" $DIR/curl.out)
+sucmsg=$($XMLSTARLET sel -T -t -v "/result/success/message" $DIR/curl.out)
 
 if [ "" != "${execid}" -a "Execution started: ${execid}" == "$sucmsg" ] ; then
     echo "OK"
