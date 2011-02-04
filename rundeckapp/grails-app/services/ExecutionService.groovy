@@ -1069,7 +1069,7 @@ class ExecutionService implements ApplicationContextAware, Executor{
             notificationService.triggerJobNotification(props.status == 'true' ? 'success' : 'failure', schedId, [execution: execution,nodestatus:[succeeded:sucCount,failed:failedCount,total:totalCount]])
         }
     }
-    def summarizeJob(ScheduledExecution job=null,Execution exec){
+    public static String summarizeJob(ScheduledExecution job=null,Execution exec){
 //        if(job){
 //            return job.groupPath?job.generateFullName():job.jobName
 //        }else{

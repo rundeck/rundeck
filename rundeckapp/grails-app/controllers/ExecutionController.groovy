@@ -594,7 +594,7 @@ class ExecutionController {
                                 description(e.scheduledExecution.description)
                             }
                         }
-                        description(executionService.summarizeJob(e.scheduledExecution, e))
+                        description(ExecutionService.summarizeJob(e.scheduledExecution, e))
                     }
                 }
             }
