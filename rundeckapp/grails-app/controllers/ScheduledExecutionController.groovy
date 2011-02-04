@@ -14,6 +14,7 @@ import org.codehaus.groovy.grails.web.json.JSONElement
 import com.dtolabs.rundeck.core.utils.NodeSet
 import groovy.xml.MarkupBuilder
 import com.dtolabs.client.utils.Constants
+import com.dtolabs.utils.Streams
 
 class ScheduledExecutionController  {
     def Scheduler quartzScheduler
@@ -31,6 +32,7 @@ class ScheduledExecutionController  {
         update:'POST',
         apiJobsImport:'POST',
         apiJobDelete:'DELETE',
+        apiRunScript:'POST',
         deleteBulk:'DELETE'
     ]
 
@@ -2541,6 +2543,67 @@ class ScheduledExecutionController  {
         //remote any input parameters that should not be used when creating the execution
         ['options','scheduled'].each{params.remove(it)}
         params.workflow=new Workflow(commands:[new CommandExec(adhocRemoteString:params.remove('exec'), adhocExecution:true)])
+        params.description=params.description?:""
+
+
+        def results=runAdhoc()
+        if(results.failed){
+            results.error=results.message
+        }
+        if(results.error){
+            flash.error=results.error
+            if(results.scheduledExecution){
+                flash.errors=[]
+                results.scheduledExecution.errors.allErrors.each{
+                    flash.errors<<g.message(error:it)
+                }
+            }
+            return chain(controller:'api',action:'error')
+        }else{
+            return new ApiController().success{ delegate ->
+                delegate.'success'{
+                    message("Immediate execution scheduled (${results.id})")
+                }
+                delegate.'execution'(id:results.id)
+            }
+        }
+    }
+
+
+    /**
+     * API: run script: /api/run/script, version 1.2
+     */
+    def apiRunScript={
+
+        if(!params.project){
+            flash.error=g.message(code:'api.error.parameter.required',args:['project'])
+            return chain(controller:'api',action:'error')
+        }
+        if(!params.scriptFile){
+            flash.error=g.message(code:'api.error.parameter.required',args:['scriptFile'])
+            return chain(controller:'api',action:'error')
+        }
+        //test valid project
+        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+
+        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        if(!exists){
+            flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
+            return chain(controller:'api',action:'error')
+        }
+
+        //read attached script content
+        def file = request.getFile("scriptFile")
+        if(file.empty) {
+            flash.error=g.message(code:'api.error.run-script.upload.is-empty')
+            return chain(controller:'api',action:'error')
+        }
+
+        def script=new String(file.bytes)
+
+        //remote any input parameters that should not be used when creating the execution
+        ['options','scheduled'].each{params.remove(it)}
+        params.workflow=new Workflow(commands:[new CommandExec(adhocLocalString:script, adhocExecution:true, argString:params.argString)])
         params.description=params.description?:""
 
 

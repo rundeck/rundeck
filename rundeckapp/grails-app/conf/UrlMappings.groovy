@@ -22,7 +22,7 @@ class UrlMappings {
         "/api/execution/$id/abort" (controller: 'execution', action: 'apiExecutionAbort')
 
         "/api/run/command" (controller: 'scheduledExecution', action: 'apiRunCommand')
-//        "/api/run/script" (controller: 'scheduledExecution', action: 'runAndForget')
+        "/api/run/script" (controller: 'scheduledExecution', action: 'apiRunScript')
 
         "/api/projects" (controller: 'framework', action: 'listProjects')
         "/api/project/$project?" (controller: 'framework', action: 'getProject')
