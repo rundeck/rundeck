@@ -26,6 +26,7 @@ class UrlMappings {
 
         "/api/projects" (controller: 'framework', action: 'listProjects')
         "/api/project/$project?" (controller: 'framework', action: 'getProject')
+        "/api/history" (controller: 'reports', action: 'apiHistory')
         "/api/renderError" (controller: 'api', action: 'renderError')
         "/api/error" (controller: 'api', action: 'error')
         "/api/$action?" (controller: 'api', action: 'invalid')

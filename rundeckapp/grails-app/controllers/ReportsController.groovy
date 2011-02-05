@@ -1,6 +1,9 @@
 import org.springframework.web.servlet.ModelAndView
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.core.common.Framework
+import java.util.regex.Matcher
+import java.text.SimpleDateFormat
+import java.text.ParseException
 
 class ReportsController {
     def reportService
@@ -419,5 +422,108 @@ class ReportsController {
                 render(contentType: "text/xml", encoding: "UTF-8", xmlclos)
         }
 
+    }
+
+    /**
+     * API actions
+     *
+     */
+
+    /**
+     * Utility: parse string into Date, as either unix millisecond, or W3C date format.
+     */
+    public static Date parseDate(String input){
+        long endtime=-1
+        try{
+            endtime=Long.parseLong(input)
+        }catch(Exception e){
+
+        }
+        if(endtime>0){
+            return new Date(endtime)
+        }
+        //attempt to parse w3c dateTime format:
+        final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+        format.setTimeZone(TimeZone.getTimeZone("GMT"));
+        return format.parse(input)
+    }
+
+
+    /**
+     * API, /api/history, version 1.2
+     */
+    def apiHistory={ReportQuery query->
+        if(!params.project){
+            flash.error=g.message(code:'api.error.parameter.required',args:['project'])
+            return chain(controller:'api',action:'error')
+        }
+        //test valid project
+        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+
+        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        if(!exists){
+            flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
+            return chain(controller:'api',action:'error')
+        }
+
+        params.projFilter=params.project
+        query.projFilter = params.project
+
+
+        //attempt to parse/bind "end" and "begin" parameters
+        if(params.begin){
+            try{
+                query.endafterFilter=parseDate(params.begin)
+                query.doendafterFilter=true
+            }catch(ParseException e){
+                flash.error=g.message(code:'api.error.history.date-format',args:['begin',params.begin])
+                return chain(controller:'api',action:'error')
+            }
+        }
+        if(params.end){
+            try{
+                query.endbeforeFilter=parseDate(params.end)
+                query.doendbeforeFilter=true
+            }catch(ParseException e){
+                flash.error=g.message(code:'api.error.history.date-format',args:['end',params.end])
+                return chain(controller:'api',action:'error')
+            }
+        }
+
+        if(null!=query){
+            query.configureFilter()
+        }
+        def model=reportService.getCombinedReports(query)
+        model = reportService.finishquery(query,params,model)
+
+        return new ApiController().success{ delegate->
+            delegate.'events'(count:model.reports.size(),total:model.total, max: model.max, offset: model.offset){
+                model.reports.each{  rpt->
+                    def nodes=rpt.node
+                    final Matcher matcher = nodes =~ /^(\d+)\/(\d+)\/(\d+)$/
+                    def nodesum=[rpt.status =='succeed'?1:0,rpt.status =='succeed'?0:1,1]
+                    if(matcher.matches()){
+                        nodesum[0]=matcher.group(1)
+                        nodesum[1]=matcher.group(2)
+                        nodesum[2]=matcher.group(3)
+                    }
+                    event(starttime:rpt.dateStarted.time,endtime:rpt.dateCompleted.time){
+                        title(rpt.reportId?:'adhoc')
+                        summary(rpt.adhocScript?:rpt.title)
+                        delegate.'node-summary'(succeeded:nodesum[0],failed:nodesum[1],total:nodesum[2])
+                        user(rpt.author)
+                        project(rpt.ctxProject)
+                        delegate.'date-started'(g.w3cDateValue(date:rpt.dateStarted))
+                        delegate.'date-ended'(g.w3cDateValue(date:rpt.dateCompleted))
+                        if(rpt.jcJobId){
+                            job(id:rpt.jcJobId)
+                        }
+                        if(rpt.jcExecId){
+                            execution(id:rpt.jcExecId)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
