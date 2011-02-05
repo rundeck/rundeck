@@ -34,7 +34,7 @@ fi
 #If <result error="true"> then an error occured.
 waserror=$($XMLSTARLET sel -T -t -v "/result/@error" ${file})
 if [ "true" != "$waserror" ] ; then
-    errorMsg "FAIL: expected error result: ${message}"
+    errorMsg "FAIL: expected error result but was successful: ${message}"
     exit 2
 fi
 if [ "" != "${message}" ] ; then 
