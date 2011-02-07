@@ -24,8 +24,8 @@ class UrlMappings {
         "/api/run/command" (controller: 'scheduledExecution', action: 'apiRunCommand')
         "/api/run/script" (controller: 'scheduledExecution', action: 'apiRunScript')
 
-        "/api/projects" (controller: 'framework', action: 'listProjects')
-        "/api/project/$project?" (controller: 'framework', action: 'getProject')
+        "/api/projects" (controller: 'framework', action: 'apiProjects')
+        "/api/project/$project?" (controller: 'framework', action: 'apiProject')
         "/api/history" (controller: 'reports', action: 'apiHistory')
         "/api/renderError" (controller: 'api', action: 'renderError')
         "/api/error" (controller: 'api', action: 'error')

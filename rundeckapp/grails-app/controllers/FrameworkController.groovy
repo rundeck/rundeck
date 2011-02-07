@@ -419,7 +419,10 @@ class FrameworkController  {
      * API actions
      */
 
-    def listProjects={
+    /**
+     * API: /api/projects, version 1.2
+     */
+    def apiProjects={
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         def projlist=frameworkService.projects(framework)
         session.projects=projlist
@@ -443,7 +446,10 @@ class FrameworkController  {
             }
         }
     }
-    def getProject={
+    /**
+     * API: /api/project/NAME, version 1.2
+     */
+    def apiProject={
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         if(!params.project){
             flash.error=g.message(code:'api.error.parameter.required',args:['project'])
