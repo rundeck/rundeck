@@ -5,6 +5,10 @@ import com.dtolabs.rundeck.core.common.Nodes
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.utils.NodeSet
 import java.util.regex.PatternSyntaxException
+import com.dtolabs.shared.resources.ResourceXMLGenerator
+import com.dtolabs.rundeck.core.common.NodesYamlGenerator
+import com.dtolabs.rundeck.core.common.NodesFileGenerator
+import com.dtolabs.rundeck.core.common.NodesGeneratorException
 
 class FrameworkController  {
     FrameworkService frameworkService
@@ -464,6 +468,95 @@ class FrameworkController  {
         return new ApiController().success{ delegate->
             delegate.'projects'(count:1){
                 renderApiProject(pject,delegate)
+            }
+        }
+    }
+
+    /**
+     * API: /api/resource/$name, version 1.2
+     */
+    def apiResource={
+        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        if(!params.project){
+            flash.error=g.message(code:'api.error.parameter.required',args:['project'])
+            return chain(controller:'api',action:'error')
+        }
+        if(!params.name){
+            flash.error=g.message(code:'api.error.parameter.required',args:['name'])
+            return chain(controller:'api',action:'error')
+        }
+        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        if(!exists){
+            flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
+            return chain(controller:'api',action:'error')
+        }
+
+        NodeSet nset = new NodeSet()
+        nset.setSingleNodeName(params.name)
+        def pject=frameworkService.getFrameworkProject(params.project,framework)
+        final Collection nodes = pject.getNodes().filterNodes(nset)
+        if(!nodes || nodes.size()<1 ){
+            flash.error=g.message(code:'api.error.item.doesnotexist',args:['Node Name',params.name])
+            return chain(controller:'api',action:'error')
+        }
+        return apiRenderNodeResult(nodes)
+    }
+    /**
+     * API: /api/resources, version 1.2
+     */
+    def apiResources={ExtNodeFilters query->
+        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        if(!params.project){
+            flash.error=g.message(code:'api.error.parameter.required',args:['project'])
+            return chain(controller:'api',action:'error')
+        }
+        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        if(!exists){
+            flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
+            return chain(controller:'api',action:'error')
+        }
+
+        //convert api parameters to node filter parameters
+        BaseNodeFilters.filterKeys.each{k,v->
+            if(params[k]){
+                query["nodeInclude${v}"]=params.remove(k)
+            }
+            if(params["exclude-"+k]){
+                query["nodeExclude${v}"]=params.remove("exclude-"+k)
+            }
+        }
+
+        if(query.nodeFilterIsEmpty()){
+            query.nodeIncludeName = framework.getFrameworkNodeName()
+        }
+        def pject=frameworkService.getFrameworkProject(params.project,framework)
+        final Collection nodes = pject.getNodes().filterNodes(ExecutionService.filtersAsNodeSet(query))
+        return apiRenderNodeResult(nodes)
+    }
+    def apiRenderNodeResult={nodes->
+
+        withFormat{
+            xml{
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                final NodesFileGenerator generator = new ResourceXMLGenerator(baos)
+                nodes.each {INodeEntry node->
+                    generator.addNode(node)
+                }
+                generator.generate()
+                return render(contentType:"text/xml",encoding:"UTF-8",text:baos.toString())
+            }
+            yaml{
+                if(nodes.size()>0){
+                    StringWriter sw = new StringWriter()
+                    final NodesFileGenerator generator = new NodesYamlGenerator(sw)
+                    nodes.each {INodeEntry node->
+                        generator.addNode(node)
+                    }
+                    generator.generate()
+                    return render(contentType:"text/yaml",encoding:"UTF-8",text:sw.toString())
+                }else{
+                    return render(contentType:"text/yaml",encoding:"UTF-8",text:"# 0 results for query\n")
+                }
             }
         }
     }
