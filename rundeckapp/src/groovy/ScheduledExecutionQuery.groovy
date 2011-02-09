@@ -37,7 +37,6 @@ public class ScheduledExecutionQuery extends BaseQuery{
      */
     public final static TEXT_FILTERS = [
                 job:'jobName',
-                proj:'project',
                 desc:'description',
             ]
     /**
@@ -45,6 +44,7 @@ public class ScheduledExecutionQuery extends BaseQuery{
      */
     public final static EQ_FILTERS=[
                 loglevel:'loglevel',
+                proj:'project',
             ]
     /**
      * Boolean filters
