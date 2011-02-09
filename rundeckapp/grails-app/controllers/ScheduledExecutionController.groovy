@@ -1948,15 +1948,21 @@ class ScheduledExecutionController  {
             log.debug("saving job data: ${jobdata}")
             def ScheduledExecution scheduledExecution
             if(params.dupeOption=="update" || params.dupeOption=="skip"){
-                //look for dupe by name and group path
-                def sched = ScheduledExecution.findByJobNameAndGroupPath(jobdata.jobName,jobdata.groupPath)
-                if(sched){
-                    scheduledExecution=sched
+                //look for dupe by name and group path and project
+                def c = ScheduledExecution.createCriteria()
+                def schedlist = c.list{
+                    and{
+                        eq('jobName',jobdata.jobName)
+                        eq('groupPath',jobdata.groupPath)
+                        eq('project',jobdata.project)
+                    }
+                }
+                if(schedlist && 1==schedlist.size()){
+                    scheduledExecution=schedlist[0]
                 }
             }
             if(params.dupeOption == "skip" && scheduledExecution){
                 jobdata.id=scheduledExecution.id
-                jobdata.origDescription=scheduledExecution.description
                 skipjobs <<[scheduledExecution:jobdata,entrynum:i,errmsg:"A Job named '${jobdata.jobName}' already exists"]
             }
             else if(params.dupeOption == "update" && scheduledExecution){
