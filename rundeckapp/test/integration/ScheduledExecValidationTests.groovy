@@ -15,6 +15,8 @@
  */
 import grails.test.GrailsUnitTestCase
 import com.dtolabs.rundeck.core.common.Framework
+import org.springframework.mock.web.MockMultipartHttpServletRequest
+import org.springframework.mock.web.MockMultipartFile
 
 /*
  * ScheduledExecValidationTests.java
@@ -30,6 +32,447 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         super.setUp();
     }
 
+    public void testUploadShouldCreate(){
+        def sec = new ScheduledExecutionController()
+
+		sec.metaClass.request = new MockMultipartHttpServletRequest()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
+        fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
+        fwkControl.demand.existsFrameworkProject{project,framework-> return true }
+        sec.frameworkService=fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.nextExecutionTimes{joblist-> return [] }
+        sec.scheduledExecutionService=mock2.createMock()
+
+        def xml = '''
+<joblist>
+    <job>
+        <name>test1</name>
+        <group>testgroup</group>
+        <description>desc</description>
+        <context>
+            <project>project1</project>
+        </context>
+        <sequence>
+            <command><exec>echo test</exec></command>
+        </sequence>
+    </job>
+</joblist>
+'''
+        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
+        def result = sec.upload()
+        //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
+        assertNotNull result
+        assertTrue result.didupload
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        assertEquals "shouldn't have error jobs: ${result.errjobs}",0,result.errjobs.size()
+        assertEquals "shouldn't have skipped jobs: ${result.skipjobs}",0,result.skipjobs.size()
+        assertEquals 1,result.jobs.size()
+        assertTrue result.jobs[0] instanceof ScheduledExecution
+        def ScheduledExecution job=result.jobs[0]
+        assertEquals "test1",job.jobName
+        assertEquals "testgroup",job.groupPath
+        assertEquals "desc",job.description
+        assertEquals "project1",job.project
+    }
+    public void testUploadShouldUpdateSameNameDupeOptionUpdate(){
+        def sec = new ScheduledExecutionController()
+
+		sec.metaClass.request = new MockMultipartHttpServletRequest()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
+        fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
+        fwkControl.demand.existsFrameworkProject{project,framework-> return true }
+        sec.frameworkService=fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.nextExecutionTimes{joblist-> return [] }
+        sec.scheduledExecutionService=mock2.createMock()
+
+        //create original job
+        final CommandExec exec = new CommandExec(adhocExecution: true, adhocRemoteString: "echo original test")
+        exec.save()
+        def wf=new Workflow(commands:[exec])
+        wf.save()
+        def se = new ScheduledExecution(jobName:'test1',groupPath:"testgroup",project:'project1',description:'new desc',
+            workflow:wf
+        )
+        se.save()
+        assertNotNull se.id
+
+        def xml = '''
+<joblist>
+    <job>
+        <name>test1</name>
+        <group>testgroup</group>
+        <description>desc</description>
+        <context>
+            <project>project1</project>
+        </context>
+        <sequence>
+            <command><exec>echo test</exec></command>
+        </sequence>
+    </job>
+</joblist>
+'''
+        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
+        //set update
+        sec.params.dupeOption='update'
+        def result = sec.upload()
+        //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
+        assertNotNull result
+        assertTrue result.didupload
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        assertEquals "shouldn't have error jobs: ${result.errjobs}",0,result.errjobs.size()
+        assertEquals "shouldn't have skipped jobs: ${result.skipjobs}",0,result.skipjobs.size()
+        assertEquals 1,result.jobs.size()
+        assertTrue result.jobs[0] instanceof ScheduledExecution
+        def ScheduledExecution job=result.jobs[0]
+        assertEquals "test1",job.jobName
+        assertEquals "testgroup",job.groupPath
+        assertEquals "desc",job.description
+        assertEquals "project1",job.project
+        assertEquals "echo test",job.workflow.commands[0].adhocRemoteString
+        assertEquals se.id,job.id
+    }
+    public void testUploadShouldSkipSameNameDupeOptionSkip(){
+        def sec = new ScheduledExecutionController()
+
+		sec.metaClass.request = new MockMultipartHttpServletRequest()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
+        fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
+        fwkControl.demand.existsFrameworkProject{project,framework-> return true }
+        sec.frameworkService=fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.nextExecutionTimes{joblist-> return [] }
+        sec.scheduledExecutionService=mock2.createMock()
+
+        //create original job
+        final CommandExec exec = new CommandExec(adhocExecution: true, adhocRemoteString: "echo original test")
+        exec.save()
+        def wf=new Workflow(commands:[exec])
+        wf.save()
+        def se = new ScheduledExecution(jobName:'test1',groupPath:"testgroup",project:'project1',description:'original desc',
+            workflow:wf
+        )
+        se.save()
+        assertNotNull se.id
+
+        def xml = '''
+<joblist>
+    <job>
+        <name>test1</name>
+        <group>testgroup</group>
+        <description>desc</description>
+        <context>
+            <project>project1</project>
+        </context>
+        <sequence>
+            <command><exec>echo test</exec></command>
+        </sequence>
+    </job>
+</joblist>
+'''
+        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
+        //set update
+        sec.params.dupeOption='skip'
+        def result = sec.upload()
+        //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
+        assertNotNull result
+        assertTrue result.didupload
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        assertEquals "shouldn't have error jobs: ${result.errjobs}",0,result.errjobs.size()
+        assertEquals "shouldn't have success jobs: ${result.jobs}",0,result.jobs.size()
+        assertEquals 1,result.skipjobs.size()
+
+        //get original job and test values
+        ScheduledExecution test = ScheduledExecution.get(se.id)
+        assertNotNull test
+        assertEquals "original desc",test.description
+        assertEquals "echo original test",test.workflow.commands[0].adhocRemoteString
+    }
+    public void testUploadShouldCreateSameNameDupeOptionCreate(){
+        def sec = new ScheduledExecutionController()
+
+		sec.metaClass.request = new MockMultipartHttpServletRequest()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
+        fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
+        fwkControl.demand.existsFrameworkProject{project,framework-> return true }
+        sec.frameworkService=fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.nextExecutionTimes{joblist-> return [] }
+        sec.scheduledExecutionService=mock2.createMock()
+
+        //create original job
+        final CommandExec exec = new CommandExec(adhocExecution: true, adhocRemoteString: "echo original test")
+        exec.save()
+        def wf=new Workflow(commands:[exec])
+        wf.save()
+        def se = new ScheduledExecution(jobName:'test1',groupPath:"testgroup",project:'project1',description:'original desc',
+            workflow:wf
+        )
+        se.save()
+        assertNotNull se.id
+
+        def xml = '''
+<joblist>
+    <job>
+        <name>test1</name>
+        <group>testgroup</group>
+        <description>desc</description>
+        <context>
+            <project>project1</project>
+        </context>
+        <sequence>
+            <command><exec>echo test</exec></command>
+        </sequence>
+    </job>
+</joblist>
+'''
+        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
+        //set update
+        sec.params.dupeOption='create'
+        def result = sec.upload()
+        //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
+        assertNotNull result
+        assertTrue result.didupload
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        assertEquals "shouldn't have error jobs: ${result.errjobs}",0,result.errjobs.size()
+        assertEquals "shouldn't have skipped jobs: ${result.skipjobs}",0,result.skipjobs.size()
+        assertEquals 1,result.jobs.size()
+        assertTrue result.jobs[0] instanceof ScheduledExecution
+        def ScheduledExecution job=result.jobs[0]
+        assertEquals "test1",job.jobName
+        assertEquals "testgroup",job.groupPath
+        assertEquals "desc",job.description
+        assertEquals "project1",job.project
+        assertEquals "echo test",job.workflow.commands[0].adhocRemoteString
+        assertFalse se.id==job.id
+
+        //get original job and test values
+        ScheduledExecution test = ScheduledExecution.get(se.id)
+        assertNotNull test
+        assertEquals "original desc",test.description
+        assertEquals "echo original test",test.workflow.commands[0].adhocRemoteString
+    }
+    public void testUploadJobIdentityShouldRequireJobName(){
+        def sec = new ScheduledExecutionController()
+
+		sec.metaClass.request = new MockMultipartHttpServletRequest()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
+        fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
+        fwkControl.demand.existsFrameworkProject{project,framework-> return true }
+        sec.frameworkService=fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.nextExecutionTimes{joblist-> return [] }
+        sec.scheduledExecutionService=mock2.createMock()
+
+        //create original job
+        final CommandExec exec = new CommandExec(adhocExecution: true, adhocRemoteString: "echo original test")
+        exec.save()
+        def wf=new Workflow(commands:[exec])
+        wf.save()
+        def se = new ScheduledExecution(jobName:'test1',groupPath:"testgroup",project:'project1',description:'original desc',
+            workflow:wf
+        )
+        se.save()
+        assertNotNull se.id
+
+        //test different name
+
+        def xml = '''
+<joblist>
+    <job>
+        <name>test2</name>
+        <group>testgroup</group>
+        <description>desc</description>
+        <context>
+            <project>project1</project>
+        </context>
+        <sequence>
+            <command><exec>echo test</exec></command>
+        </sequence>
+    </job>
+</joblist>
+'''
+        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
+        //set update
+        sec.params.dupeOption='skip'
+        def result = sec.upload()
+        //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
+        assertNotNull result
+        assertTrue result.didupload
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        assertEquals "shouldn't have skipped jobs: ${result.skipjobs}",0,result.skipjobs.size()
+        assertEquals "shouldn't have error jobs: ${result.errjobs}",0,result.errjobs.size()
+        assertEquals "should have success jobs: ${result.jobs}",1,result.jobs.size()
+        assertFalse se.id==result.jobs[0].id
+
+        //get original job and test values
+        ScheduledExecution test = ScheduledExecution.get(se.id)
+        assertNotNull test
+        assertEquals "original desc",test.description
+        assertEquals "echo original test",test.workflow.commands[0].adhocRemoteString
+    }
+    public void testUploadJobIdentityShouldRequireGroupPath(){
+        def sec = new ScheduledExecutionController()
+
+		sec.metaClass.request = new MockMultipartHttpServletRequest()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
+        fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
+        fwkControl.demand.existsFrameworkProject{project,framework-> return true }
+        sec.frameworkService=fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.nextExecutionTimes{joblist-> return [] }
+        sec.scheduledExecutionService=mock2.createMock()
+
+        //create original job
+        final CommandExec exec = new CommandExec(adhocExecution: true, adhocRemoteString: "echo original test")
+        exec.save()
+        def wf=new Workflow(commands:[exec])
+        wf.save()
+        def se = new ScheduledExecution(jobName:'test1',groupPath:"testgroup",project:'project1',description:'original desc',
+            workflow:wf
+        )
+        se.save()
+        assertNotNull se.id
+
+        //test different group
+
+        def xml = '''
+<joblist>
+    <job>
+        <name>test1</name>
+        <group>testgroup1</group>
+        <description>desc</description>
+        <context>
+            <project>project1</project>
+        </context>
+        <sequence>
+            <command><exec>echo test</exec></command>
+        </sequence>
+    </job>
+</joblist>
+'''
+        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
+        //set update
+        sec.params.dupeOption='skip'
+        def result = sec.upload()
+        //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
+        assertNotNull result
+        assertTrue result.didupload
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        assertEquals "shouldn't have skipped jobs: ${result.skipjobs}",0,result.skipjobs.size()
+        assertEquals "shouldn't have error jobs: ${result.errjobs}",0,result.errjobs.size()
+        assertEquals "should have success jobs: ${result.jobs}",1,result.jobs.size()
+        assertFalse se.id==result.jobs[0].id
+
+        //get original job and test values
+        ScheduledExecution test = ScheduledExecution.get(se.id)
+        assertNotNull test
+        assertEquals "original desc",test.description
+        assertEquals "echo original test",test.workflow.commands[0].adhocRemoteString
+    }
+
+    public void testUploadJobIdentityShouldRequireProject(){
+        def sec = new ScheduledExecutionController()
+
+		sec.metaClass.request = new MockMultipartHttpServletRequest()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
+        fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
+        fwkControl.demand.existsFrameworkProject{project,framework-> return true }
+        sec.frameworkService=fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.nextExecutionTimes{joblist-> return [] }
+        sec.scheduledExecutionService=mock2.createMock()
+
+        //create original job
+        final CommandExec exec = new CommandExec(adhocExecution: true, adhocRemoteString: "echo original test")
+        exec.save()
+        def wf=new Workflow(commands:[exec])
+        wf.save()
+        def se = new ScheduledExecution(jobName:'test1',groupPath:"testgroup",project:'project1',description:'original desc',
+            workflow:wf
+        )
+        se.save()
+        assertNotNull se.id
+
+        //test different project
+
+        def xml = '''
+<joblist>
+    <job>
+        <name>test1</name>
+        <group>testgroup</group>
+        <description>desc</description>
+        <context>
+            <project>project2</project>
+        </context>
+        <sequence>
+            <command><exec>echo test</exec></command>
+        </sequence>
+    </job>
+</joblist>
+'''
+        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
+        //set update
+        sec.params.dupeOption='skip'
+        def result = sec.upload()
+        //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
+        assertNotNull result
+        assertTrue result.didupload
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        assertEquals "shouldn't have skipped jobs: ${result.skipjobs}",0,result.skipjobs.size()
+        assertEquals "shouldn't have error jobs: ${result.errjobs}",0,result.errjobs.size()
+        assertEquals "should have success jobs: ${result.jobs}",1,result.jobs.size()
+        assertFalse se.id==result.jobs[0].id
+
+        //get original job and test values
+        ScheduledExecution test = ScheduledExecution.get(se.id)
+        assertNotNull test
+        assertEquals "original desc",test.description
+        assertEquals "echo original test",test.workflow.commands[0].adhocRemoteString
+    }
     public void testDoValidate(){
         def sec = new ScheduledExecutionController()
 
