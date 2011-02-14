@@ -5,6 +5,13 @@
 errorMsg() {
    echo "$*" 1>&2
 }
+assert(){
+    # assert expected, actual
+    if [ "$1" != "$2" ] ; then
+        errorMsg "FAIL: Expected value \"$1\" but saw: \"$2\" ${3}"
+        exit 2
+    fi
+}
 
 DIR=$(cd `dirname $0` && pwd)
 
@@ -23,17 +30,43 @@ CURL="curl $CURLOPTS"
 
 XMLSTARLET=xml
 
-execid=$2
-if [ "" == "$2" ] ; then
-    execid="1"
+####
+# Setup: create simple adhoc command execution to provide execution ID.
+####
+
+runurl="${apiurl}/run/command"
+proj="test"
+params="project=${proj}&exec=echo+testing+execution+api"
+
+# get listing
+$CURL --header "$VERSHEADER" ${runurl}?${params} > $DIR/curl.out
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: failed query request"
+    exit 2
 fi
+
+sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+
+#select id
+
+execid=$($XMLSTARLET sel -T -t -v "/result/execution/@id" $DIR/curl.out)
+
+if [ -z "$execid" ] ; then
+    errorMsg "FAIL: expected execution id"
+    exit 2
+fi
+
+
+####
+# Test:
+####
 
 # now submit req
 runurl="${apiurl}/execution/${execid}"
 
 echo "TEST: /api/execution/${execid} ..."
 
-params="project=${proj}"
+params=""
 
 # get listing
 $CURL --header "$VERSHEADER" ${runurl}?${params} > $DIR/curl.out
@@ -46,11 +79,8 @@ sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
 itemcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
-echo "$itemcount executions"
-if [ "1" != "$itemcount" ] ; then
-    errorMsg "FAIL: execution count should be 1"
-    exit 2
-fi
+assert "1" "$itemcount" "execution count should be 1"
+
 echo "OK"
 
 
