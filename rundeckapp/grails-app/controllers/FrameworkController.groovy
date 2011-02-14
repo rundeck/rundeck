@@ -439,6 +439,9 @@ class FrameworkController  {
 
         }
     }
+    /**
+     * Render project info result using a builder
+     */
     def renderApiProject={ pject, delegate ->
         delegate.project{
             name(pject.name)
@@ -450,6 +453,29 @@ class FrameworkController  {
             }
         }
     }
+
+    /**
+     * Convert input node filter parameters into specific property names used by
+     * domain objects
+     */
+    public static Map extractApiNodeFilterParams(Map params){
+        def result=[:]
+
+        //convert api parameters to node filter parameters
+        BaseNodeFilters.filterKeys.each{k,v->
+            if(params[k]){
+                result["nodeInclude${v}"]=params[k]
+            }
+            if(params["exclude-"+k]){
+                result["nodeExclude${v}"]=params["exclude-"+k]
+            }
+        }
+        if(params.'exclude-precedence'){
+            result.nodeExcludePrecedence=params['exclude-precedence']=='true'
+        }
+        return result
+    }
+
     /**
      * API: /api/project/NAME, version 1.2
      */
@@ -517,17 +543,16 @@ class FrameworkController  {
         }
 
         //convert api parameters to node filter parameters
-        BaseNodeFilters.filterKeys.each{k,v->
-            if(params[k]){
-                query["nodeInclude${v}"]=params.remove(k)
-            }
-            if(params["exclude-"+k]){
-                query["nodeExclude${v}"]=params.remove("exclude-"+k)
+        def filters=extractApiNodeFilterParams(params)
+        if(filters){
+            filters.each{k,v->
+                query[k]=v
             }
         }
 
         if(query.nodeFilterIsEmpty()){
-            query.nodeIncludeName = framework.getFrameworkNodeName()
+            //return all results
+            query.nodeInclude=".*"
         }
         def pject=frameworkService.getFrameworkProject(params.project,framework)
         final Collection nodes = pject.getNodes().filterNodes(ExecutionService.filtersAsNodeSet(query))

@@ -31,10 +31,20 @@ file=$DIR/curl.out
 
 XMLSTARLET=xml
 
+###
+# Setup: acquire local node name from RDECK_BASE/etc/framework.properties#node.name
+####
+localnode=$(grep 'framework.node.name' $RDECK_BASE/etc/framework.properties | sed 's/framework.node.name = //')
+
+if [ -z "${localnode}" ] ; then
+    errorMsg "FAIL: Unable to determine framework.node.name from $RDECK_BASE/etc/framework.properties"
+    exit 2
+fi
+
 # now submit req
 runurl="${apiurl}/resources"
 
-echo "TEST: /api/resources, basic XML response with no query: 1 result"
+echo "TEST: /api/resources, basic XML response with all nodes: >0 result"
 
 project="test"
 params="project=${project}"
@@ -45,6 +55,7 @@ if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
 fi
+
 #test curl.out for valid xml
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
 validxml=$?
@@ -76,11 +87,11 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-#Check projects list
+#Check results list
 itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
 echo "$itemcount Nodes"
-if [ "1" != "$itemcount" ] ; then
-    errorMsg "FAIL: expected single /project/node element"
+if [ "0" == "$itemcount" ] ; then
+    errorMsg "FAIL: expected multiple /project/node element"
     exit 2
 fi
 
@@ -89,7 +100,7 @@ echo "OK"
 #test yaml output
 params="project=${project}&format=yaml"
 
-echo "TEST: /api/resources, basic YAML response with no query: 1 result"
+echo "TEST: /api/resources, basic YAML response with no query: >0 result"
 
 # get listing
 $CURL --header "$VERSHEADER" ${runurl}?${params} > ${file}
@@ -100,7 +111,7 @@ fi
 #test curl.out for valid xml
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
 validxml=$?
-if [ 0 == $validxml ] ; then 
+if [ 0 == $validxml ] ; then
     #test for error message
     #If <result error="true"> then an error occured.
     waserror=$($XMLSTARLET sel -T -t -v "/result/@error" ${file})
@@ -111,8 +122,8 @@ fi
 
 itemcount=$(grep 'hostname: ' ${file} | wc -l | sed  's/^[ ]*//g')
 
-if [ "1" != "$itemcount" ] ; then 
-    errorMsg "FAIL: Expected single yaml result, was \"${itemcount}\""
+if [ "0" == "$itemcount" ] ; then
+    errorMsg "FAIL: Expected multiple yaml result, was \"${itemcount}\""
     exit 2
 fi
 
@@ -154,7 +165,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-#Check projects list
+#Check results list
 itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
 if [ "1" != "$itemcount" ] ; then
     errorMsg "FAIL: expected single /project/node element"
@@ -185,7 +196,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-#Check projects list
+#Check results list
 itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
 if [ "1" != "$itemcount" ] ; then
     errorMsg "FAIL: expected single /project/node element"
@@ -216,13 +227,106 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-#Check projects list
+#Check results list
 itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
 assert "2" $itemcount "Expected two /project/node results"
 itemname=$($XMLSTARLET sel -T -t -v "/project/node[@name='test1']/@name" ${file})
 assert "test1" "$itemname" "Query for first item"
 itemname=$($XMLSTARLET sel -T -t -v "/project/node[@name='test2']/@name" ${file})
 assert "test2" "$itemname" "Query for second item"
+
+echo "OK"
+
+####
+#exclude both nodes node
+####
+
+query="exclude-tags=testboth"
+params="project=${project}&format=xml&${query}"
+
+echo "TEST: query result for /etc/resources&$query"
+
+$CURL --header "$VERSHEADER" ${runurl}?${params} > ${file}
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: failed query request"
+    exit 2
+fi
+$XMLSTARLET val -w ${file} > /dev/null 2>&1
+if [ 0 != $? ] ; then 
+    errorMsg "FAIL: result was not valid xml"
+    exit 2
+fi
+
+#Check results list
+itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
+assert "1" $itemcount "Expected two /project/node results"
+itemname=$($XMLSTARLET sel -T -t -v "/project/node[@name='test1']/@name" ${file})
+assert "" "$itemname" "Query for first item"
+itemname=$($XMLSTARLET sel -T -t -v "/project/node[@name='test2']/@name" ${file})
+assert "" "$itemname" "Query for second item"
+
+echo "OK"
+
+
+####
+#query mixed filters
+####
+
+query="tags=testboth&exclude-name=test2"
+params="project=${project}&format=xml&${query}"
+
+echo "TEST: query result for /etc/resources, using mixed include/exclude filters"
+
+$CURL --header "$VERSHEADER" ${runurl}?${params} > ${file}
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: failed query request"
+    exit 2
+fi
+$XMLSTARLET val -w ${file} > /dev/null 2>&1
+if [ 0 != $? ] ; then 
+    errorMsg "FAIL: result was not valid xml"
+    exit 2
+fi
+
+#Check results list
+itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
+if [ "1" != "$itemcount" ] ; then
+    errorMsg "FAIL: expected single /project/node element"
+    exit 2
+fi
+itemname=$($XMLSTARLET sel -T -t -v "/project/node/@name" ${file})
+assert "test1" $itemname "Query result"
+
+echo "OK"
+
+####
+#query mixed filters, change exclude-precedence=false
+####
+
+query="tags=test1&exclude-tags=testboth&exclude-precedence=false"
+params="project=${project}&format=xml&${query}"
+
+echo "TEST: /etc/resources, using mixed include/exclude filters, exclude-precedence=false"
+
+$CURL --header "$VERSHEADER" ${runurl}?${params} > ${file}
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: failed query request"
+    exit 2
+fi
+$XMLSTARLET val -w ${file} > /dev/null 2>&1
+if [ 0 != $? ] ; then 
+    errorMsg "FAIL: result was not valid xml"
+    exit 2
+fi
+
+
+#Check results list
+itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
+assert "2" $itemcount "Expected two /project/node results"
+itemname=$($XMLSTARLET sel -T -t -v "/project/node[@name='test1']/@name" ${file})
+assert "test1" "$itemname" "Query for first item"
+itemname=$($XMLSTARLET sel -T -t -v "/project/node[@name='${localnode}']/@name" ${file})
+assert "$localnode" "$itemname" "Query for local item"
 
 echo "OK"
 

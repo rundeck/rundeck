@@ -32,61 +32,17 @@ file=$DIR/curl.out
 XMLSTARLET=xml
 
 ###
-# Setup: acquire local node name
+# Setup: acquire local node name from RDECK_BASE/etc/framework.properties#node.name
 ####
+localnode=$(grep 'framework.node.name' $RDECK_BASE/etc/framework.properties | sed 's/framework.node.name = //')
 
-runurl="${apiurl}/resources"
-
-project="test"
-params="project=${project}"
-
-# get listing
-$CURL --header "$VERSHEADER" ${runurl}?${params} > ${file}
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
+if [ -z "${localnode}" ] ; then
+    errorMsg "FAIL: Unable to determine framework.node.name from $RDECK_BASE/etc/framework.properties"
     exit 2
 fi
-#test curl.out for valid xml
-$XMLSTARLET val -w ${file} > /dev/null 2>&1
-validxml=$?
-if [ 0 == $validxml ] ; then 
-    #test for for possible result error message
-    $XMLSTARLET el ${file} | grep -e '^result' -q
-    if [ 0 == $? ] ; then
-        #test for error message
-        #If <result error="true"> then an error occured.
-        waserror=$($XMLSTARLET sel -T -t -v "/result/@error" ${file})
-        errmsg=$($XMLSTARLET sel -T -t -v "/result/error/message" ${file})
-        if [ "" != "$waserror" -a "true" == $waserror ] ; then
-            errorMsg "ERROR: expected resource.xml content but received error result: $errmsg"
-            exit 2
-        fi
-    fi
-fi
-
-#test curl.out for valid xml
-if [ 0 != $validxml ] ; then
-    errorMsg "ERROR: Response was not valid xml"
-    exit 2
-fi
-
-#test for expected /joblist element
-$XMLSTARLET el ${file} | grep -e '^project' -q
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: Response did not contain expected result"
-    exit 2
-fi
-
-#Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
-if [ "1" != "$itemcount" ] ; then
-    errorMsg "FAIL: expected single /project/node element"
-    exit 2
-fi
-
-localnode=$($XMLSTARLET sel -T -t -v "/project/node/@name" ${file})
 
 runurl="${apiurl}/resource/$localnode"
+project="test"
 params="project=${project}"
 
 echo "TEST: /api/resource/$localnode"
