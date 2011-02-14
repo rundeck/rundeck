@@ -5,6 +5,14 @@
 errorMsg() {
    echo "$*" 1>&2
 }
+assert(){
+    # assert expected, actual
+    if [ "$1" != "$2" ] ; then
+        errorMsg "FAIL: Expected value \"$1\" but saw: \"$2\" ${3}"
+        exit 2
+    fi
+}
+
 
 DIR=$(cd `dirname $0` && pwd)
 
@@ -88,11 +96,24 @@ skipcount=$($XMLSTARLET sel -T -t -v "/result/skipped/@count" $DIR/curl.out)
 if [ "1" != "$succount" ] ; then
     errorMsg  "Upload was not successful."
     exit 2
-else
-    echo "OK"
 fi
 
+# verify results
+jid=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/id" $DIR/curl.out)
+jname=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/name" $DIR/curl.out)
+jgroup=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/group" $DIR/curl.out)
+jproj=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/project" $DIR/curl.out)
+
+assert "cli job" "$jname" "Wrong job name: $jname"
+assert "api-test" "$jgroup" "Wrong job group: $jgroup"
+assert "$project" "$jproj" "Wrong job project: $jproj"
+
+if [ -z "$jid" ] ; then
+    errorMsg "Expected job id in result: $jid"
+    exit 2
+fi
+
+echo "OK"
 
 rm $DIR/curl.out
 rm $DIR/temp.out
-

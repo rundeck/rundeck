@@ -2329,6 +2329,7 @@ class ScheduledExecutionController  {
                     id(job.scheduledExecution.id.toString())
                     name(job.scheduledExecution.jobName)
                     group(job.scheduledExecution.groupPath?:'')
+                    project(job.scheduledExecution.project)
                     url(g.createLink(action:'show',id:job.scheduledExecution.id))
                 }
             }
@@ -2342,6 +2343,7 @@ class ScheduledExecutionController  {
                     }
                     name(job.scheduledExecution.jobName)
                     group(job.scheduledExecution.groupPath?:'')
+                    project(job.scheduledExecution.project)
                     StringBuffer sb = new StringBuffer()
                     job.scheduledExecution?.errors?.allErrors?.each{err->
                         if(sb.size()>0){
@@ -2369,6 +2371,7 @@ class ScheduledExecutionController  {
                     }
                     name(job.scheduledExecution.jobName)
                     group(job.scheduledExecution.groupPath?:'')
+                    project(job.scheduledExecution.project)
                     StringBuffer sb = new StringBuffer()
                     if(job.errmsg){
                         if(sb.size()>0){
