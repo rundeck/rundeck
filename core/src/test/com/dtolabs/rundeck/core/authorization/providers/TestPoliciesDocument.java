@@ -85,7 +85,7 @@ public class TestPoliciesDocument extends TestCase {
     public void testPoliciesDocument() throws Exception {
         final Document document = builder.parse(test1);
         PoliciesDocument doc = new PoliciesDocument(document, test1);
-        assertEquals(5.0, doc.countPolicies());
+        assertEquals(5, doc.countPolicies());
         final Collection<String> groupNames = doc.groupNames();
         assertEquals(6, groupNames.size());
     }

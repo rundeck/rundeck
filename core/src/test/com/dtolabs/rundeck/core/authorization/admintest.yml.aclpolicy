@@ -1,0 +1,58 @@
+# Original
+#<policies>
+#  <policy description="All roles, access to any Module command at any time.">
+#    
+#    <context project="*"> <!-- What they have access to -->        
+#        <command module="^Module$" name="*"/>
+#    </context>
+#    
+#    <by>
+#        <user name="*"/>
+#    </by>
+#    
+#    <when>
+#        <timeandday day="*" hour="*" minute="*"/>
+#    </when>
+#</policy>
+#</policies>
+
+
+description: Yaml Policy 1
+id: a4c072fd-1d02-4341-96a7-51038dc5b557
+rules:
+  ^$:
+    actions: 'foobar'
+    
+  /yml:
+    actions: 'exact_match'
+    
+  /yml.*: 
+    actions: pattern_match
+  /listAction/.*:
+    actions: [action_list_1,action_list_2]
+
+by:
+    username: 'yml_usr_1'
+    group: 'yml_group_1'
+    
+---
+
+description: Yaml Policy 2
+id: F76EACCC-1DFC-447B-9E72-CC06905A2924
+
+rules:
+  /noactions/.*:
+    foobar: dingbat
+    
+by:
+    username: 'yml_usr_2'
+    group: 'broken'
+    
+---
+
+description: Yaml Policy 3
+id: d5e598ae-403b-45c4-8f91-36c255101091
+
+by:
+    username: yml_usr_3
+    group: missing_rules

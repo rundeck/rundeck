@@ -23,6 +23,7 @@
 */
 package com.dtolabs.rundeck.core.authorization.providers;
 
+import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -34,20 +35,27 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 /**
  * PoliciesCache retains PolicyDocument objects for inserted Files, and reloads them if file modification time changes.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class PoliciesCache implements Iterable<PoliciesDocument> {
+public class PoliciesCache implements Iterable<PolicyCollection> {
+    
+    private final static Logger logger = Logger.getLogger(PoliciesCache.class);
+    
     static final FilenameFilter filenameFilter = new FilenameFilter() {
         public boolean accept(File dir, String name) {
             return name.endsWith(".aclpolicy");
         }
     };
-    private HashMap<File, PoliciesDocument> cache = new HashMap<File, PoliciesDocument>();
+    
+    private Set<File> warned = new HashSet<File>();
+    private HashMap<File, PolicyCollection> cache = new HashMap<File, PolicyCollection>();
     private HashMap<File, Long> expiry = new HashMap<File, Long>();
     private DocumentBuilder builder;
     private File rootDir;
@@ -64,21 +72,29 @@ public class PoliciesCache implements Iterable<PoliciesDocument> {
     }
 
     public synchronized void add(final File file) throws PoliciesParseException {
-        PoliciesDocument doc = getDocument(file);
+        PolicyCollection doc = getDocument(file);
     }
 
-    private PoliciesDocument createEntry(final File file) throws PoliciesParseException {
+    private PolicyCollection createEntry(final File file) throws PoliciesParseException {
         try {
             final Document document = builder.parse(file);
+            if(warned.add(file)) {
+                logger.warn("Deprecated ACLPOLICY format (XML): " + file.getAbsolutePath());
+            }
             return new PoliciesDocument(document,file);
+            
         } catch (SAXException e) {
-            throw new PoliciesParseException(e);
+            try {
+                return new PoliciesYaml(file);
+            } catch (Exception e1) {
+                throw new PoliciesParseException(e1);
+            }
         } catch (IOException e) {
             throw new PoliciesParseException(e);
-        }
+        } 
     }
 
-    public synchronized PoliciesDocument getDocument(final File file) throws PoliciesParseException {
+    public synchronized PolicyCollection getDocument(final File file) throws PoliciesParseException {
         if(!file.exists()) {
             expiry.remove(file);
             cache.remove(file);
@@ -86,7 +102,7 @@ public class PoliciesCache implements Iterable<PoliciesDocument> {
         }
         final long lastmod = file.lastModified();
         final Long cachetime = expiry.get(file);
-        final PoliciesDocument entry;
+        final PolicyCollection entry;
         if (null == cachetime || lastmod > cachetime) {
             entry = createEntry(file);
             if (null != entry) {
@@ -99,7 +115,7 @@ public class PoliciesCache implements Iterable<PoliciesDocument> {
         return entry;
     }
 
-    public Iterator<PoliciesDocument> iterator() {
+    public Iterator<PolicyCollection> iterator() {
         return new cacheIterator(Arrays.asList(listDirFiles()).iterator());
     }
 
@@ -107,10 +123,10 @@ public class PoliciesCache implements Iterable<PoliciesDocument> {
      * Iterator over the PoliciesDocuments for the cache's files.  It skips
      * files that cannot be loaded.
      */
-    private class cacheIterator implements Iterator<PoliciesDocument> {
+    private class cacheIterator implements Iterator<PolicyCollection> {
         Iterator<File> intIter;
         private File nextFile;
-        private PoliciesDocument nextDocument;
+        private PolicyCollection nextDocument;
 
         public cacheIterator(final Iterator<File> intIter) {
             this.intIter = intIter;
@@ -120,10 +136,13 @@ public class PoliciesCache implements Iterable<PoliciesDocument> {
 
         private void loadNextDocument() {
             while (hasNextFile() && null == nextDocument) {
+                File nextFile2 = getNextFile();
                 try {
-                    nextDocument = getDocument(getNextFile());
+                    nextDocument = getDocument(nextFile2);
                 } catch (PoliciesParseException e) {
-
+                    // TODO: Better Error messaging.  Or put nextFile2 in a cool off collection.
+                    logger.warn("Unable to parse aclpolicy: " + nextFile2 + ". Reason " + e.getMessage(), e);
+                    e.printStackTrace();
                 }
             }
         }
@@ -134,8 +153,8 @@ public class PoliciesCache implements Iterable<PoliciesDocument> {
             return next;
         }
 
-        private PoliciesDocument getNextDocument() {
-            PoliciesDocument doc = nextDocument;
+        private PolicyCollection getNextDocument() {
+            PolicyCollection doc = nextDocument;
             nextDocument=null;
             loadNextDocument();
             return doc;
@@ -149,7 +168,7 @@ public class PoliciesCache implements Iterable<PoliciesDocument> {
             return null != nextDocument;
         }
 
-        public PoliciesDocument next() {
+        public PolicyCollection next() {
             return getNextDocument();
         }
 

@@ -24,8 +24,7 @@ import com.dtolabs.rundeck.core.authorization.Authorization;
 import com.dtolabs.rundeck.core.authorization.Decision;
 import com.dtolabs.rundeck.core.authorization.Explanation;
 import com.dtolabs.rundeck.core.authorization.Explanation.Code;
-import com.dtolabs.rundeck.core.authorization.providers.Policies.Context;
-import com.dtolabs.rundeck.core.authorization.providers.Policies.ContextDecision;
+import com.dtolabs.rundeck.core.authorization.providers.PoliciesXml.Context;
 import org.apache.log4j.Logger;
 
 import javax.security.auth.Subject;
@@ -46,7 +45,7 @@ public class SAREAuthorization implements Authorization {
     
     private final static Logger logger = Logger.getLogger(SAREAuthorization.class);
     
-    private final Policies policies;
+    private final PoliciesXml policies;
     private final File baseDirectory;
     private long decisionsMade;
     
@@ -59,7 +58,7 @@ public class SAREAuthorization implements Authorization {
      * @throws PoliciesParseException
      */
     public SAREAuthorization(File directory) throws IOException, PoliciesParseException {
-        policies = Policies.load(directory);
+        policies = PoliciesXml.load(directory);
         baseDirectory = directory;
     }
     
@@ -111,7 +110,7 @@ public class SAREAuthorization implements Authorization {
         this.decisionsMade++;
         
         long narrowStart = System.currentTimeMillis();
-        List<Context> contexts = policies.narrowContext(subject, environment);
+        List<AclContext> contexts = policies.narrowContext(subject, environment);
         long narrowDuration = System.currentTimeMillis() - narrowStart;
         
         if(contexts.size() <= 0) {
@@ -121,7 +120,7 @@ public class SAREAuthorization implements Authorization {
         ContextDecision contextDecision = null;
         
         long contextIncludeStart = System.currentTimeMillis();
-        for(Context ctx : contexts) {
+        for(AclContext ctx : contexts) {
             contextDecision = ctx.includes(resource, action);
             if(contextDecision.granted()) {
                 return createAuthorize(true, contextDecision, resource, subject, action, environment, System.currentTimeMillis() - start);

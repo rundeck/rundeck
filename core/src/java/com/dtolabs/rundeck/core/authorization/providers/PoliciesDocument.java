@@ -41,16 +41,16 @@ import java.util.*;
 
 
 /**
- * PoliciesDocument wraps a Document and
+ * PoliciesDocument wraps a Document and squeezes lemons.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class PoliciesDocument {
+public class PoliciesDocument implements PolicyCollection {
     private Document document;
     private File file;
     private ArrayList<String> groupNames;
     private ArrayList<Policy> policies;
-    private Double count=null;
+    private long count = Long.MIN_VALUE;
     private static final XPath xpath = XPathFactory.newInstance().newXPath();
 
     public static final XPathExpression countXpath;
@@ -73,9 +73,9 @@ public class PoliciesDocument {
 
             public String getNamespaceURI(String prefix) {
                 if (prefix.equals("ldap")) {
-                    return Policies.NS_LDAP;
+                    return PoliciesXml.NS_LDAP;
                 } else if (prefix.equals("ActiveDirectory")) {
-                    return Policies.NS_AD;
+                    return PoliciesXml.NS_AD;
                 } else {
                     return ""; // 1.6 = XMLConstants.NULL_NS_URI;
                 }
@@ -98,12 +98,21 @@ public class PoliciesDocument {
         this.file=file;
     }
 
-    public Collection<String> groupNames() throws XPathExpressionException {
+    /**
+     * @see com.dtolabs.rundeck.core.authorization.providers.PolicyCollection#groupNames()
+     */
+    @Override
+    public Collection<String> groupNames() throws InvalidCollection {
         if (null != groupNames) {
             return groupNames;
         }
         groupNames = new ArrayList<String>();
-        NodeList groups = (NodeList) allGroups.evaluate(document, XPathConstants.NODESET);
+        NodeList groups;
+        try {
+            groups = (NodeList) allGroups.evaluate(document, XPathConstants.NODESET);
+        } catch (XPathExpressionException e) {
+            throw new InvalidCollection(e);
+        }
         for (int i = 0 ; i < groups.getLength() ; i++) {
             String result = groups.item(i).getNodeValue();
             if (result == null || result.length() <= 0) {
@@ -114,12 +123,21 @@ public class PoliciesDocument {
         return groupNames;
     }
 
-    public Double countPolicies() throws XPathExpressionException {
-        if (null != count) {
+    /**
+     * @see com.dtolabs.rundeck.core.authorization.providers.PolicyCollection#countPolicies()
+     */
+    @Override
+    public long countPolicies() throws InvalidCollection {
+        if (count != Long.MIN_VALUE) {
             return count;
         }
-        count = (Double) countXpath.evaluate(document, XPathConstants.NUMBER);
-        return count;
+        try {
+            Double xpathCount = (Double) countXpath.evaluate(document, XPathConstants.NUMBER);
+            count = xpathCount.longValue();
+            return count;
+        } catch (XPathExpressionException e) {
+            throw new InvalidCollection(e);
+        }
     }
 
     private Collection<Policy> listPolicies() throws XPathExpressionException {
@@ -137,11 +155,29 @@ public class PoliciesDocument {
         return policies;
     }
 
-    public Collection<Policies.Context> matchedContexts(Subject subject, Set<Attribute> environment) throws
-        XPathExpressionException {
-        ArrayList<Policies.Context> matchedContexts = new ArrayList<Policies.Context>();
+    /**
+     * @see com.dtolabs.rundeck.core.authorization.providers.PolicyCollection#matchedContexts(javax.security.auth.Subject, java.util.Set)
+     */
+    @Override
+    public Collection<AclContext> matchedContexts(Subject subject, Set<Attribute> environment) throws
+        InvalidCollection {
+        try {
+            return policyMatcher(subject, listPolicies());
+        } catch (Exception e) {
+            throw new InvalidCollection(e);
+        }
+    }
+
+    /**
+     * @param subject
+     * @return
+     * @throws XPathExpressionException
+     */
+    static Collection<AclContext> policyMatcher(Subject subject, Collection<? extends Policy> policyLister)
+            throws InvalidCollection {
+        ArrayList<AclContext> matchedContexts = new ArrayList<AclContext>();
         int i = 0;
-        for (final Policy policy : listPolicies()) {
+        for (final Policy policy : policyLister) {
 
 
             // What constitutes a match?

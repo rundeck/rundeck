@@ -156,6 +156,44 @@ public class TestSAREAuthorization extends TestCase {
         
     }
     
+    public void testActionAuthorizationYml() throws Exception {
+        Map<String,String> resource = declareScript("myScript", "/yml/bar/baz/boo");
+        Subject subject = createSubject("yml_user_1", "yml_group_1");
+        
+        /* Check that workflow_run is actually a matching action */
+        Decision decision = authorization.evaluate(resource, subject, "pattern_match", null);      
+        assertEquals("Decision for successful authoraztion for action: pattern_match does not match, but should.",
+                Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
+        assertTrue("Action not granted authorization.", decision.isAuthorized());
+        
+        resource = declareScript("Script2", "/listAction");
+        decision = authorization.evaluate(resource, subject, "action_list_2", null);
+        assertEquals("Decision for successful authoraztion for action: action_list_2 does not match, but should.",
+                Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
+        assertTrue("Action not granted authorization.", decision.isAuthorized());
+        
+        
+        
+    }
+    
+    public void testActionAuthorizationYmlInvalid() throws Exception {
+        Map<String,String> resource = declareScript("Script3", "/noactions");
+        Subject subject = createSubject("yml_usr_2", "broken");
+        
+        Decision decision = authorization.evaluate(resource, subject, "none", null);
+        assertEquals("Decision for authoraztion for action: none is not REJECTED_NO_ACTIONS_DECLARED.",
+                Code.REJECTED, decision.explain().getCode());
+        assertTrue("Action granted authorization.", !decision.isAuthorized());
+        
+        subject = createSubject("yml_usr_3", "missing_rules");
+        
+        decision = authorization.evaluate(resource, subject, "none", null);
+        assertEquals("Decision for authoraztion for action: none is not REJECTED_NO_RULES_DEFINED.",
+                Code.REJECTED_NO_RULES_DECLARED, decision.explain().getCode());
+        assertTrue("Action granted authorization.", !decision.isAuthorized());
+        
+    }
+    
     public void testActionAuthorization() throws Exception {
         Map<String,String> resource = declareScript("myScript", "bar/baz/boo");
         Subject subject = createSubject("testActionAuthorization", "admin-action");

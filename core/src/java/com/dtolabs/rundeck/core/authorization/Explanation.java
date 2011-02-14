@@ -35,6 +35,7 @@ public interface Explanation {
         REJECTED_COMMAND_NOT_MATCHED, 
         REJECTED_NO_RESOURCE_PROPERTY_PROVIDED, 
         REJECTED_RESOURCE_PROPERTY_NOT_MATCHED, 
+        REJECTED_NO_RULES_DECLARED, 
     };
     
     Code getCode();

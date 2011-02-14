@@ -17,7 +17,6 @@
 package com.dtolabs.rundeck.core.authorization.providers;
 
 import com.dtolabs.rundeck.core.authorization.Attribute;
-import com.dtolabs.rundeck.core.authorization.Explanation;
 import com.dtolabs.rundeck.core.authorization.Explanation.Code;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -29,7 +28,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.*;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -38,7 +36,7 @@ import java.util.regex.Pattern;
  * 
  * @author noahcampbell
  */
-public class Policies {
+public class PoliciesXml {
     
     static final String NS_AD = "http://dtolabs.com/rundeck/activedirectory";
     static final String NS_LDAP = "http://dtolabs.com/rundeck/ldap";
@@ -53,7 +51,7 @@ public class Policies {
     private PoliciesCache cache;
 
     
-    public Policies(final PoliciesCache cache) {
+    public PoliciesXml(final PoliciesCache cache) {
         this.cache = cache;
         xpath.setNamespaceContext(new NamespaceContext() {
 
@@ -84,12 +82,11 @@ public class Policies {
     
     public int count() {
         int count = 0;
-        for(PoliciesDocument f : cache) {
+        for(PolicyCollection f : cache) {
 
             try {
-                Double n = f.countPolicies();
-                count += n;
-            } catch (XPathExpressionException e) {
+                count += f.countPolicies();
+            } catch (InvalidCollection e) {
                 // TODO squash
             }
         }
@@ -102,11 +99,11 @@ public class Policies {
      * @return
      * @throws PoliciesParseException Thrown when there is a problem parsing a file.
      */
-    public static Policies load(File rootPath) throws IOException, PoliciesParseException {
+    public static PoliciesXml load(File rootPath) throws IOException, PoliciesParseException {
 
-        Policies p = null;
+        PoliciesXml p = null;
         try {
-            p = new Policies(new PoliciesCache(rootPath));
+            p = new PoliciesXml(new PoliciesCache(rootPath));
         } catch (ParserConfigurationException e) {
             throw new PoliciesParseException(e);
         }
@@ -114,13 +111,13 @@ public class Policies {
         return p;
     }
 
-    public List<Context> narrowContext(Subject subject, Set<Attribute> environment) {
+    public List<AclContext> narrowContext(Subject subject, Set<Attribute> environment) {
         
-        List<Context> matchedContexts = new ArrayList<Context>();
-        for(final PoliciesDocument f : cache) {
+        List<AclContext> matchedContexts = new ArrayList<AclContext>();
+        for(final PolicyCollection f : cache) {
             try {
                 matchedContexts.addAll(f.matchedContexts(subject, environment));
-            } catch (XPathExpressionException e) {
+            } catch (InvalidCollection e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             } 
@@ -128,55 +125,9 @@ public class Policies {
         return matchedContexts;
     }
     
-    public static class ContextEvaluation {
-        private ContextEvaluation(Code id, String command) {
-            this.id = id;
-            this.command = command;
-        }
-        public final Code id;
-        public final String command;
-        
-        @Override
-        public String toString() {
-            return command + " => " + id;
-        }
-    }
-    
-    public static class ContextDecision implements Explanation {
-        
-        private final Code id;
-        private final boolean granted;
-        private final List<ContextEvaluation> evaluations;
-        
-        public ContextDecision(Code id, boolean granted, List<ContextEvaluation> evaluations) {
-            this.id = id;
-            this.granted = granted;
-            this.evaluations = evaluations;
-        }
-        
-        public ContextDecision(Code id, boolean granted) {
-            this(id, granted, new ArrayList<ContextEvaluation>());
-        }
-        
-        public boolean granted() {
-            return this.granted;
-        }
-        
-        public Code getCode() {
-            return this.id;
-        }
-
-        public void describe(PrintStream out) {
-            for(ContextEvaluation ce : this.evaluations) {
-                out.println("\t" + ce);
-            }
-        }
-        
-    }
-    
     final static private Map<String, XPathExpression> commandFilterCache = new HashMap<String, XPathExpression>();
     
-    public static class Context {
+    public static class Context implements AclContext {
         public Context(Node policy) {
             super();
             this.policy = policy;
@@ -185,6 +136,10 @@ public class Policies {
         final private Node policy;
         
 
+        /* (non-Javadoc)
+         * @see com.dtolabs.rundeck.core.authorization.providers.AclContext#includes(java.util.Map, java.lang.String)
+         */
+        @Override
         public ContextDecision includes(Map<String, String> resource, String action) {
             // keep track of each context and the the resulting grant or rejection
             List<ContextEvaluation> evaluations = new ArrayList<ContextEvaluation>();
@@ -368,11 +323,11 @@ public class Policies {
     @Deprecated
     public List<String> listAllRoles() {
         List<String> results = new ArrayList<String>();
-        for(PoliciesDocument f: cache) {
+        for(PolicyCollection f: cache) {
             try {
                 results.addAll(f.groupNames());
                 
-            } catch (XPathExpressionException e) {
+            } catch (InvalidCollection e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             } 

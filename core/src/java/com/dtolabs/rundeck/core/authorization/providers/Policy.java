@@ -33,7 +33,7 @@ import java.util.Set;
 public interface Policy {
     public Set<String> getUsernames();
 
-    Policies.Context getContext();
+    AclContext getContext();
 
     public Set<Object> getGroups();
 }

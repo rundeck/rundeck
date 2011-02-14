@@ -19,8 +19,9 @@ package com.dtolabs.rundeck.core.authorization;
 import com.dtolabs.rundeck.core.authentication.Group;
 import com.dtolabs.rundeck.core.authentication.LdapGroup;
 import com.dtolabs.rundeck.core.authentication.Username;
-import com.dtolabs.rundeck.core.authorization.providers.Policies;
-import com.dtolabs.rundeck.core.authorization.providers.Policies.Context;
+import com.dtolabs.rundeck.core.authorization.providers.AclContext;
+import com.dtolabs.rundeck.core.authorization.providers.PoliciesXml;
+import com.dtolabs.rundeck.core.authorization.providers.PoliciesXml.Context;
 import junit.framework.TestCase;
 
 import javax.security.auth.Subject;
@@ -34,11 +35,11 @@ import java.util.Set;
 
 public class TestPolicies extends TestCase {
 
-    private Policies policies;
+    private PoliciesXml policies;
     
     public void setUp() throws Exception {
 
-        policies = Policies.load(getPath("com/dtolabs/rundeck/core/authorization"));
+        policies = PoliciesXml.load(getPath("com/dtolabs/rundeck/core/authorization"));
     }
 
     /**
@@ -57,10 +58,10 @@ public class TestPolicies extends TestCase {
     }
     
     public void testPoliciesStructural() throws Exception {
-        assertEquals("Policy count mismatch", 6, policies.count());
+        assertEquals("Policy count mismatch", 9, policies.count());
     }
     
-    public void testSelectOnUsers() throws Exception {
+    public void testSelectOnPrincipal() throws Exception {
         
         Subject formalSubject = new Subject();
         formalSubject.getPrincipals().add(new Username("johnwayne"));
@@ -69,10 +70,16 @@ public class TestPolicies extends TestCase {
         formalSubject.getPrincipals().add(new LdapGroup("OU=Foo,dc=example,dc=com"));
         
         Set<Attribute> environment = new HashSet<Attribute>();
-        List<Context> contexts = policies.narrowContext(formalSubject, environment);
+        List<AclContext> contexts = policies.narrowContext(formalSubject, environment);
         assertNotNull("Context is null.", contexts);
         assertEquals("Incorrect number of contexts returned when matching on username.", 1, contexts.size());
          
+        formalSubject = new Subject();
+        formalSubject.getPrincipals().add(new Username("yml_usr_1"));
+        contexts = policies.narrowContext(formalSubject, environment);
+        assertNotNull("Context is null.", contexts);
+        assertEquals("Incorrect number of contexts returned when matching on group.", 1, contexts.size());
+        
         formalSubject = new Subject();
         formalSubject.getPrincipals().add(new Group("admin")); // <-- will match on group membership.
         contexts = policies.narrowContext(formalSubject, environment);
@@ -89,7 +96,7 @@ public class TestPolicies extends TestCase {
     
     public void testListAllRoles() throws Exception {
         List<String> results = policies.listAllRoles();
-        assertEquals("Results did not return the correct number of policies.", 6, results.size());
+        assertEquals("Results did not return the correct number of policies.", 9, results.size());
         results.containsAll(Arrays.asList(new String[]{"admin","foo","admin-environment","ou=Foo,dn=example,dn=com"}));
     }
 }

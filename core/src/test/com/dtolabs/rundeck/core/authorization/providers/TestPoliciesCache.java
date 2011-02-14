@@ -74,15 +74,15 @@ public class TestPoliciesCache extends TestCase {
 
 
     public void testIterator() throws Exception {
-        final Iterator<PoliciesDocument> iterator = policiesCache.iterator();
+        final Iterator<PolicyCollection> iterator = policiesCache.iterator();
         assertNotNull(iterator);
         assertTrue(iterator.hasNext());
-        ArrayList<PoliciesDocument> docs = new ArrayList<PoliciesDocument>();
+        ArrayList<PolicyCollection> docs = new ArrayList<PolicyCollection>();
         while(iterator.hasNext()) {
-            final PoliciesDocument policiesDocument = iterator.next();
+            final PolicyCollection policiesDocument = iterator.next();
             assertNotNull(policiesDocument);
             docs.add(policiesDocument);
         }
-        assertEquals(2, docs.size());
+        assertEquals(3, docs.size());
     }
 }
