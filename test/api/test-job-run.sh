@@ -116,13 +116,13 @@ sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #get execid
 
-execid=$($XMLSTARLET sel -T -t -v "/result/succeeded/execution/id" $DIR/curl.out)
-sucmsg=$($XMLSTARLET sel -T -t -v "/result/success/message" $DIR/curl.out)
+execcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
+execid=$($XMLSTARLET sel -T -t -v "/result/executions/execution/@id" $DIR/curl.out)
 
-if [ "" != "${execid}" -a "Execution started: ${execid}" == "$sucmsg" ] ; then
+if [ "1" == "${execcount}" -a "" != "${execid}" ] ; then
     echo "OK"
 else
-    errorMsg "FAIL: expected delete success message"
+    errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
     exit 2
 fi
 

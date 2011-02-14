@@ -2246,7 +2246,7 @@ class ScheduledExecutionController  {
         try{
             e= executionService.createExecution(scheduledExecution,framework,params.user,extra)
             eid=scheduledExecutionService.scheduleTempJob(scheduledExecution,params.user,rolelist,e);
-            return [executionId:eid,name:scheduledExecution.jobName]
+            return [executionId:eid,name:scheduledExecution.jobName, execution:e]
         }catch(ExecutionServiceValidationException exc){
             return [error:'invalid',message:exc.getMessage(),options:exc.getOptions(),errors:exc.getErrors()]
         }catch(ExecutionServiceException exc){
@@ -2458,10 +2458,15 @@ class ScheduledExecutionController  {
         params["user"] = (session?.user) ? session.user : "anonymous"
         def rolelist = (session?.roles) ? session.roles : []
 
-        //TODO: convert input parameter names for node filters?
-        //XXX: arguments are supposed to be "extra.argString"
         if(params.argString){
             params.extra.argString=params.argString
+        }
+        //convert api parameters to node filter parameters
+        def filters=FrameworkController.extractApiNodeFilterParams(params)
+        if(filters){
+            filters.each{k,v->
+                extra['extra.'+k]=v
+            }
         }
 
         def result = executeScheduledExecution(scheduledExecution, framework, rolelist, params)
@@ -2469,18 +2474,7 @@ class ScheduledExecutionController  {
             flash.error = result.message
             return chain(controller: "api", action: "error")
         }
-        return new ApiController().success {delegate ->
-            delegate.'success' {
-                message("Execution started: ${result.executionId}")
-            }
-            delegate.'succeeded'(count: 1) {
-                execution(index: 0) {
-                    id(result.executionId)
-                    name(result.name)
-                    url(g.createLink(controller: 'execution', action: 'follow', id: result.executionId))
-                }
-            }
-        }
+        return new ExecutionController().renderApiExecutionListResultXML([result.execution])
     }
     /**
      * API: DELETE job definition: /job/{id}, version 1.2
@@ -2545,6 +2539,13 @@ class ScheduledExecutionController  {
         params.workflow=new Workflow(commands:[new CommandExec(adhocRemoteString:params.remove('exec'), adhocExecution:true)])
         params.description=params.description?:""
 
+        //convert api parameters to node filter parameters
+        def filters=FrameworkController.extractApiNodeFilterParams(params)
+        if(filters){
+            filters.each{k,v->
+                params[k]=v
+            }
+        }
 
         def results=runAdhoc()
         if(results.failed){
@@ -2606,6 +2607,13 @@ class ScheduledExecutionController  {
         params.workflow=new Workflow(commands:[new CommandExec(adhocLocalString:script, adhocExecution:true, argString:params.argString)])
         params.description=params.description?:""
 
+        //convert api parameters to node filter parameters
+        def filters=FrameworkController.extractApiNodeFilterParams(params)
+        if(filters){
+            filters.each{k,v->
+                params[k]=v
+            }
+        }
 
         def results=runAdhoc()
         if(results.failed){
