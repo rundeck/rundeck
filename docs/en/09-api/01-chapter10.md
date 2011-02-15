@@ -1,7 +1,7 @@
-RunDeck API 1.2
+RunDeck API
 ===========
 
-RunDeck provides a Web API for use with your application.  This describes the RunDeck API version 1.2.
+RunDeck provides a Web API for use with your application.  This describes the RunDeck API version `1`.
 
 URLs
 ----
@@ -10,9 +10,9 @@ The RunDeck server has a "Base URL", where you access the server. Your RunDeck S
 
 The root URL path for all calls to the API in this version is:
 
-    $RUNDECK_SERVER_URL/api
+    $RUNDECK_SERVER_URL/api/1
 
-In this document we will leave off the `$RUNDECK_SERVER_URL` and simply display URLs as `/api/...`.
+In this document we will leave off the `$RUNDECK_SERVER_URL/api/1` and simply display URLs as `/...`.
 
 XML
 ----
@@ -44,14 +44,10 @@ The response should set a cookie named `JSESSIONID`.
 API Version Number
 ------
 
-The API Version Number is required to be included in all API calls. 
+The API Version Number is required to be included in all API calls within the URL.
 
-You can include this number in two ways:
+If the version number is not included or if the requested version number is unsupported, then the API call will fail.
 
-* HTTP Request Header: `X-RUNDECK-API-VERSION: 1.2`
-* Request Parameter: `api_version=1.2`
-
-If the version number is not included the API call will fail.
 
 Response Format
 ------
@@ -100,7 +96,7 @@ List the jobs that exist for a project.
 
 URL:
 
-    /api/jobs
+    /jobs
 
 Required parameters:
 
@@ -127,7 +123,7 @@ Run a job specified by ID.
 
 URL:
     
-    /api/job/[ID]/run
+    /job/[ID]/run
 
 Optional parameters:
 
@@ -142,7 +138,7 @@ Export the job definitions for in XML or YAML formats.
 
 URL:
 
-    /api/jobs/export
+    /jobs/export
 
 Required parameters:
 
@@ -172,7 +168,7 @@ Import job definitions in XML or YAML formats.
 
 URL:
 
-    /api/jobs/import
+    /jobs/import
 
 Method: `POST`
 
@@ -219,7 +215,7 @@ Export a single job definition in XML or YAML formats.
 
 URL:
 
-    /api/job/[ID]
+    /job/[ID]
 
 Optional parameters:
 
@@ -239,7 +235,7 @@ Delete a single job definition.
 
 URL:
 
-    /api/job/[ID]
+    /job/[ID]
 
 Method: `DELETE`
 
@@ -259,7 +255,7 @@ List the currently running executions for a project
 
 URL:
 
-    /api/executions/running
+    /executions/running
 
 Required Parameters:
 
@@ -307,7 +303,7 @@ Get the status for an execution by ID.
 
 URL:
 
-    /api/execution/[ID]
+    /execution/[ID]
 
 Result: an Item List of `executions` with a single item. See [Running Executions](#running-executions).
 
@@ -318,7 +314,7 @@ Abort a running execution by ID.
 
 URL:
 
-    /api/execution/[ID]/abort
+    /execution/[ID]/abort
 
 Result:  The result will contain a `success/message` element will contain a descriptive message.  The status of the abort action will be included as an element:
 
@@ -334,7 +330,7 @@ Run a command string.
 
 URL:
 
-    /api/run/command
+    /run/command
 
 Required Parameters:
 
@@ -354,7 +350,7 @@ Run a script.
 
 URL:
 
-    /api/run/script
+    /run/script
 
 Method: `POST`
 
@@ -382,7 +378,7 @@ List the existing projects on the server.
 
 URL:
 
-    /api/projects
+    /projects
 
 Result:  An Item List of `projects`, each `project` of the form specified in the [Getting Project Info](#getting-project-info) section.
 
@@ -392,7 +388,7 @@ Get information about a project.
 
 URL:
 
-    /api/project/NAME
+    /project/NAME
 
 Result:  An Item List of `projects` with one `project`.  The `project` is of the form:
 
@@ -414,7 +410,7 @@ List the event history for a project.
 
 URL:
 
-    /api/history
+    /history
 
 Required Parameters:
 
@@ -476,7 +472,7 @@ List or query the resources for a project.
 
 URL:
 
-    /api/resources
+    /resources
 
 Required Parameters:
 
@@ -537,7 +533,7 @@ Get a specific resource within a project.
 
 URL:
 
-    /api/resource/[name]
+    /resource/[name]
 
 Required Parameters:
 

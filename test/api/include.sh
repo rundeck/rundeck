@@ -24,7 +24,7 @@ xmlsel(){
     $XMLSTARLET sel -T -t -v "$1" $2
 }
 
-VERSHEADER="X-RUNDECK-API-VERSION: 1.2"
+API_VERSION="1"
 
 # curl opts to use a cookie jar, and follow redirects, showing only errors
 CURLOPTS="-s -S -L -c $DIR/cookies -b $DIR/cookies"
@@ -37,4 +37,4 @@ if [ "-" == "$1" ] ; then
 fi
 shift
 
-APIURL="${RDURL}/api"
+APIURL="${RDURL}/api/${API_VERSION}"

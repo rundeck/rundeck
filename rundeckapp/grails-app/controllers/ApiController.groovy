@@ -6,7 +6,7 @@ class ApiController {
     
     def invalid = {
         response.setStatus(404)
-        request['error']="Invalid API Request: ${request.forwardURI}"
+        request['error']=g.message(code:'api.error.invalid.request',args:[request.forwardURI])
         return error()
     }
     def renderError={
@@ -20,7 +20,7 @@ class ApiController {
 
     public def success={ recall->
         return render(contentType:"text/xml",encoding:"UTF-8"){
-            result(success:"true"){
+            result(success:"true", apiversion:ApiRequestFilters.API_CURRENT_VERSION){
                 recall(delegate)
             }
         }
@@ -28,7 +28,7 @@ class ApiController {
 
     def error={
         return render(contentType:"text/xml",encoding:"UTF-8"){
-            result(error:"true"){
+            result(error:"true", apiversion:ApiRequestFilters.API_CURRENT_VERSION){
                 delegate.'error'{
                     if(flash.error){
                         message(flash.error)
@@ -47,7 +47,7 @@ class ApiController {
                         }
                     }
                     if(!flash.error && !flash.errors && !request.error && !request.errors){
-                        message("Unknown error")
+                        message(g.message(code:"api.error.unknown"))
                     }
                 }
             }

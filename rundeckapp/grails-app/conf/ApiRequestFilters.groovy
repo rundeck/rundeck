@@ -24,27 +24,42 @@
  */
 
 public class ApiRequestFilters {
-    def supported_versions=["1.2"]
+
+    public final static int API_CURRENT_VERSION=1
+    public final static int API_MIN_VERSION=API_CURRENT_VERSION
+    public final static int API_MAX_VERSION=API_CURRENT_VERSION
+
     def allowed_actions=["renderError","invalid"]
     def filters = {
             /**
-             * Require api version request header or parameter
+             * Require valid api version in request path /api/version/...
              */
             apiVersion(uri:'/api/**') {
                 before = {
-                    if(controllerName=='api' && allowed_actions.contains(actionName)){
+                    if(controllerName=='api' && allowed_actions.contains(actionName) || request.api_version){
                         return true
                     }
-                    final def header = request.getHeader('X-RUNDECK-API-VERSION')
-                    final def apiversion = params.api_version
-                    def reqversion = header?:apiversion
-                    if(!reqversion){
+
+                    if(!params.api_version){
                         flash.errorCode='api.error.api-version.required'
                         redirect(controller:'api',action:'renderError')
                         return false
-                    }else if (!supported_versions.contains(reqversion)) {
+                    }
+                    final def reqversion
+                    def unsupported=!(params.api_version==~/^[1-9][0-9]*$/)
+                    if(!unsupported){
+                        try{
+                            reqversion = Integer.parseInt(params.api_version)
+                            if (reqversion < API_MIN_VERSION || reqversion > API_MAX_VERSION) {
+                                unsupported = true
+                            }
+                        }catch (NumberFormatException e){
+                            unsupported=true
+                        }
+                    }
+                    if(unsupported){
                         flash.errorCode='api.error.api-version.unsupported'
-                        flash.errorArgs=[reqversion]
+                        flash.errorArgs=[params.api_version,API_CURRENT_VERSION]
                         redirect(controller:'api',action:'renderError')
                         return false
                     }
