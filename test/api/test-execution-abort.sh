@@ -2,39 +2,14 @@
 
 #test aborting execution from /api/execution/{id}/abort
 
-errorMsg() {
-   echo "$*" 1>&2
-}
-assert(){
-    # assert expected, actual
-    if [ "$1" != "$2" ] ; then
-        errorMsg "FAIL: Expected value \"$1\" but saw: \"$2\" ${3}"
-        exit 2
-    fi
-}
-
 DIR=$(cd `dirname $0` && pwd)
-
-# accept url argument on commandline, if '-' use default
-url="$1"
-if [ "-" == "$1" ] ; then
-    url='http://localhost:4440'
-fi
-apiurl="${url}/api"
-VERSHEADER="X-RUNDECK-API-VERSION: 1.2"
-
-# curl opts to use a cookie jar, and follow redirects, showing only errors
-CURLOPTS="-s -S -L -c $DIR/cookies -b $DIR/cookies"
-CURL="curl $CURLOPTS"
-
-
-XMLSTARLET=xml
+source $DIR/include.sh
 
 ####
 # Setup: create simple adhoc command execution to provide execution ID.
 ####
 
-runurl="${apiurl}/run/command"
+runurl="${APIURL}/run/command"
 proj="test"
 params="project=${proj}&exec=echo+testing+execution+api%3Bsleep+120"
 
@@ -62,7 +37,7 @@ fi
 ####
 
 # now submit req
-runurl="${apiurl}/execution/${execid}"
+runurl="${APIURL}/execution/${execid}"
 
 echo "TEST: /api/execution/${execid} ..."
 
@@ -90,7 +65,7 @@ echo "OK"
 # test /abort
 ####
 
-runurl="${apiurl}/execution/${execid}/abort"
+runurl="${APIURL}/execution/${execid}/abort"
 
 echo "TEST: /api/execution/${execid}/abort ..."
 

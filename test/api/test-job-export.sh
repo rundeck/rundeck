@@ -2,27 +2,8 @@
 
 #test output from /api/job/{id}
 
-errorMsg() {
-   echo "$*" 1>&2
-}
-
 DIR=$(cd `dirname $0` && pwd)
-
-# accept url argument on commandline, if '-' use default
-url="$1"
-if [ "-" == "$1" ] ; then
-    url='http://localhost:4440/api'
-fi
-apiurl="${url}/api"
-
-VERSHEADER="X-RUNDECK-API-VERSION: 1.2"
-
-# curl opts to use a cookie jar, and follow redirects, showing only errors
-CURLOPTS="-s -S -L -c $DIR/cookies -b $DIR/cookies"
-CURL="curl $CURLOPTS"
-
-
-XMLSTARLET=xml
+source $DIR/include.sh
 
 ###
 # setup: create a new job and acquire the ID
@@ -66,7 +47,7 @@ cat > $DIR/temp.out <<END
 END
 
 # now submit req
-runurl="${apiurl}/jobs/import"
+runurl="${APIURL}/jobs/import"
 
 params=""
 
@@ -103,7 +84,7 @@ echo "TEST: export single job in jobs.xml format"
 
 
 # now submit req
-runurl="${apiurl}/job/${jobid}"
+runurl="${APIURL}/job/${jobid}"
 params=""
 
 # get listing
@@ -147,7 +128,7 @@ echo "TEST: export single job in jobs.yaml format"
 
 
 # now submit req
-runurl="${apiurl}/job/${jobid}"
+runurl="${APIURL}/job/${jobid}"
 params="format=yaml"
 
 # get listing

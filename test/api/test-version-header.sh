@@ -2,28 +2,11 @@
 
 #test api version in header
 
-errorMsg() {
-   echo "$*" 1>&2
-}
-
 DIR=$(cd `dirname $0` && pwd)
-
-# accept url argument on commandline, if '-' use default
-url="$1"
-if [ "-" == "$1" ] ; then
-    url='http://localhost:4440/api'
-fi
-apiurl="${url}/api"
-
-
-# curl opts to use a cookie jar, and follow redirects, showing only errors
-CURLOPTS="-s -S -L -c $DIR/cookies -b $DIR/cookies"
-CURL="curl $CURLOPTS"
-
-XMLSTARLET=xml
+source $DIR/include.sh
 
 # now submit req
-runurl="${apiurl}/projects"
+runurl="${APIURL}/projects"
 
 echo "TEST: API Version in header..."
 

@@ -2,34 +2,10 @@
 
 #test /api/resources output.
 
-errorMsg() {
-   echo "$*" 1>&2
-}
-assert(){
-    # assert expected, actual
-    if [ "$1" != "$2" ] ; then
-        errorMsg "FAIL: Expected value \"$1\" but saw: \"$2\" ${3}"
-        exit 2
-    fi
-}
-
 DIR=$(cd `dirname $0` && pwd)
-
-# accept url argument on commandline, if '-' use default
-url="$1"
-if [ "-" == "$1" ] ; then
-    url='http://localhost:4440/api'
-fi
-apiurl="${url}/api"
-VERSHEADER="X-RUNDECK-API-VERSION: 1.2"
-
-# curl opts to use a cookie jar, and follow redirects, showing only errors
-CURLOPTS="-s -S -L -c $DIR/cookies -b $DIR/cookies"
-CURL="curl $CURLOPTS"
+source $DIR/include.sh
 
 file=$DIR/curl.out
-
-XMLSTARLET=xml
 
 ###
 # Setup: acquire local node name from RDECK_BASE/etc/framework.properties#node.name
@@ -42,7 +18,7 @@ if [ -z "${localnode}" ] ; then
 fi
 
 # now submit req
-runurl="${apiurl}/resources"
+runurl="${APIURL}/resources"
 
 echo "TEST: /api/resources, basic XML response with all nodes: >0 result"
 
