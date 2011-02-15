@@ -371,8 +371,10 @@ class MenuController {
 
     /**
     * API Actions
-     *
-     *
+     */
+
+    /**
+     * API: /api/jobs, version 1.2
      */
     def apiJobsList = {ScheduledExecutionQuery query ->
         if(params.project){
@@ -392,10 +394,6 @@ class MenuController {
         def results = jobsFragment(query)
 
         withFormat{
-//            yaml{
-//                final def encoded = JobsYAMLCodec.encode(results.nextScheduled as List)
-//                render(text:encoded,contentType:"text/yaml",encoding:"UTF-8")
-//            }
             xml{
                 new ApiController().success{ delegate->
                     delegate.'jobs'(count:results.nextScheduled.size()){
@@ -403,6 +401,7 @@ class MenuController {
                             job(id:se.id){
                                 name(se.jobName)
                                 group(se.groupPath)
+                                project(se.project)
                                 description(se.description)
                             }
                         }
@@ -411,10 +410,6 @@ class MenuController {
             }
         }
     }
-
-    /**
-     * API Actions
-     */
 
     /**
      * API: /jobs/export, version 1.2
@@ -473,26 +468,6 @@ class MenuController {
         QueueQuery query = new QueueQuery(runningFilter:'running',projFilter:params.project)
         def results = nowrunning(query)
         return new ExecutionController().renderApiExecutionListResultXML(results.nowrunning)
-//        return new ApiController().success{ delegate->
-//            delegate.'executions'(count:results.nowrunning.size()){
-//                results.nowrunning.each{ Execution e->
-//                    execution(id: e.id, href:g.createLink(controller:'execution',action:'follow',id:e.id,absolute:true)){
-//                        status(null==e.dateCompleted?'running':e.status)
-//                        user(e.user)
-//                        started(epoch:e.dateStarted.time,e.dateStarted.toString())
-//                        if(e.scheduledExecution && results.jobs[e.scheduledExecution.id.toString()]){
-//                            job(id:e.scheduledExecution.id){
-//                                name(e.scheduledExecution.jobName)
-//                                group(e.scheduledExecution.groupPath?:'')
-//                                description(e.scheduledExecution.description)
-//                            }
-//                        }else{
-//                            description(e.toString())
-//                        }
-//                    }
-//                }
-//            }
-//        }
     }
 }
 
