@@ -591,6 +591,7 @@ class ExecutionController {
                             job(id: e.scheduledExecution.id) {
                                 name(e.scheduledExecution.jobName)
                                 group(e.scheduledExecution.groupPath ?: '')
+                                project(e.scheduledExecution.project)
                                 description(e.scheduledExecution.description)
                             }
                         }
