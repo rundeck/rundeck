@@ -554,6 +554,124 @@ class ExecutionController {
         long parsetime=System.currentTimeMillis()
         return [storeoffset:storeoffset, completed:completed]
     }
+
+
+
+    /**
+    * API actions
+     */
+
+    public static String EXECUTION_RUNNING = "running"
+    public static String EXECUTION_SUCCEEDED = "succeeded"
+    public static String EXECUTION_FAILED = "failed"
+    public static String EXECUTION_ABORTED = "aborted"
+    public String getExecutionState(Execution e){
+        return null==e.dateCompleted?EXECUTION_RUNNING:"true"==e.status?EXECUTION_SUCCEEDED:e.cancelled?EXECUTION_ABORTED:EXECUTION_FAILED
+    }
+    /**
+     * Utility, render xml response for a list of executions
+     */
+    public def renderApiExecutionListResultXML={execlist ->
+        return new ApiController().success{ delegate->
+            delegate.'executions'(count:execlist.size()){
+                execlist.each {Execution e ->
+                    execution(
+                        /** attributes  **/
+                        id: e.id,
+                        href: g.createLink(controller: 'execution', action: 'follow', id: e.id, absolute: true),
+                        status: getExecutionState(e)
+                    ) {
+                        /** elements  */
+                        user(e.user)
+                        delegate.'date-started'(unixtime: e.dateStarted.time, g.w3cDateValue(date: e.dateStarted))
+                        if (null != e.dateCompleted) {
+                            delegate.'date-ended'(unixtime: e.dateCompleted.time, g.w3cDateValue(date: e.dateCompleted))
+                        }
+                        if (e.scheduledExecution) {
+                            job(id: e.scheduledExecution.id) {
+                                name(e.scheduledExecution.jobName)
+                                group(e.scheduledExecution.groupPath ?: '')
+                                project(e.scheduledExecution.project)
+                                description(e.scheduledExecution.description)
+                            }
+                        }
+                        description(ExecutionService.summarizeJob(e.scheduledExecution, e))
+                    }
+                }
+            }
+        }
+    }
+    /**
+     * API: /api/execution/{id} , version 1
+     */
+    def apiExecution={
+        def Execution e = Execution.get(params.id)
+        if (!e) {
+            flash.errorCode = "api.error.item.doesnotexist"
+            flash.errorArgs = ['Execution ID',params.id]
+            return chain(controller: 'api', action: 'renderError')
+        }
+        def filesize=-1
+        if(null!=e.outputfilepath){
+            def file = new File(e.outputfilepath)
+            if (file.exists()) {
+                filesize = file.length()
+            }
+        }
+        return renderApiExecutionListResultXML([e])
+    }
+
+    public static String ABORT_PENDING="pending"
+    public static String ABORT_ABORTED="aborted"
+    public static String ABORT_FAILED="failed"
+    /**
+     * API: /api/execution/{id}/abort, version 1
+     */
+    def apiExecutionAbort={
+        def Execution e = Execution.get(params.id)
+        if (!e) {
+            flash.errorCode = "api.error.item.doesnotexist"
+            flash.errorArgs = ['Execution ID',params.id]
+            return chain(controller: 'api', action: 'renderError')
+        }
+        def ScheduledExecution se = e.scheduledExecution
+
+        def ident = scheduledExecutionService.getJobIdent(se,e)
+        def statusStr
+        def abortstate
+        def jobstate
+        if(scheduledExecutionService.existsJob(ident.jobname, ident.groupname)){
+            def didcancel=scheduledExecutionService.interruptJob(ident.jobname, ident.groupname)
+            abortstate=didcancel?ABORT_PENDING:ABORT_FAILED
+            jobstate=EXECUTION_RUNNING
+        }else if(null==e.dateCompleted){
+            executionService.saveExecutionState(
+                se?se.id:null,
+                e.id,
+                    [
+                    status:String.valueOf(false),
+                    dateCompleted:new Date(),
+                    cancelled:true
+                    ]
+                )
+            abortstate=ABORT_ABORTED
+            jobstate=EXECUTION_ABORTED
+        }else{
+            jobstate=getExecutionState(e)
+            statusStr='previously '+jobstate
+            abortstate=ABORT_FAILED
+        }
+        return new ApiController().success{ delegate->
+            delegate.'success'{
+                message("Execution status: ${statusStr?statusStr:jobstate}")
+            }
+            delegate.'abort'(status:abortstate){
+                execution(id:params.id, status: jobstate)
+            }
+
+        }
+    }
+
 }
 
     

@@ -366,5 +366,108 @@ class MenuController {
         }
         redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:[compact:params.compact?'true':''])
     }
+
+
+
+    /**
+    * API Actions
+     */
+
+    /**
+     * API: /api/jobs, version 1
+     */
+    def apiJobsList = {ScheduledExecutionQuery query ->
+        if(params.project){
+            query.projFilter=params.project
+        }else{
+            flash.error=g.message(code:'api.error.parameter.required',args:['project'])
+            return chain(controller:'api',action:'error')
+        }
+        //test valid project
+        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+
+        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        if(!exists){
+            flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
+            return chain(controller:'api',action:'error')
+        }
+        def results = jobsFragment(query)
+
+        withFormat{
+            xml{
+                new ApiController().success{ delegate->
+                    delegate.'jobs'(count:results.nextScheduled.size()){
+                        results.nextScheduled.each{ ScheduledExecution se->
+                            job(id:se.id){
+                                name(se.jobName)
+                                group(se.groupPath)
+                                project(se.project)
+                                description(se.description)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * API: /jobs/export, version 1
+     */
+    def apiJobsExport = {ScheduledExecutionQuery query ->
+
+        if(params.project){
+            query.projFilter=params.project
+        }else{
+            flash.error=g.message(code:'api.error.parameter.required',args:['project'])
+            return chain(controller:'api',action:'error')
+        }
+        //test valid project
+        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+
+        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        if(!exists){
+            flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
+            return chain(controller:'api',action:'error')
+        }
+        def results = jobsFragment(query)
+
+        withFormat{
+            xml{
+                def writer = new StringWriter()
+                def xml = new MarkupBuilder(writer)
+                JobsXMLCodec.encodeWithBuilder(results.nextScheduled,xml)
+                writer.flush()
+                render(text:writer.toString(),contentType:"text/xml",encoding:"UTF-8")
+            }
+            yaml{
+                final def encoded = JobsYAMLCodec.encode(results.nextScheduled as List)
+                render(text:encoded,contentType:"text/yaml",encoding:"UTF-8")
+            }
+        }
+    }
+
+    /**
+     * API: /executions/running, version 1
+     */
+    def apiExecutionsRunning = {
+
+        if(!params.project){
+            flash.error=g.message(code:'api.error.parameter.required',args:['project'])
+            return chain(controller:'api',action:'error')
+        }
+        //test valid project
+        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+
+        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        if(!exists){
+            flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
+            return chain(controller:'api',action:'error')
+        }
+
+        QueueQuery query = new QueueQuery(runningFilter:'running',projFilter:params.project)
+        def results = nowrunning(query)
+        return new ExecutionController().renderApiExecutionListResultXML(results.nowrunning)
+    }
 }
 

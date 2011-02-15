@@ -75,6 +75,7 @@ public class AuthorizationFilters {
             '_dosave': _wf_create,
             //read
             'show': _wf_read,
+            'apiJobExport': _wf_read,
             //update
             'update': _wf_update,
             '_doupdate': _wf_update,
@@ -83,16 +84,21 @@ public class AuthorizationFilters {
             //delete
             'delete': _wf_delete,
             'deleteBulk': _wf_delete,
+            'apiJobDelete': _wf_delete,
 
             //run
             'execute': _wf_run,
             'executeInline': _wf_run,
             'runJobNow': _wf_run,
             'executeNow': _wf_run,
+            'apiJobRun': _wf_run,
+            'apiRunCommand': _wf_run,
+            'apiRunScript': _wf_run,
 
             //combinations//
             //create+update
             'upload': _wf_create_update,
+            'apiJobsImport': _wf_create_update,
 
             //create+run//
             'uploadAndExec': _wf_create_run,
@@ -103,11 +109,13 @@ public class AuthorizationFilters {
             //read
             'follow': _wf_read,
             'show': _wf_read,
+            'apiExecution': _wf_read,
             'downloadOutput': _wf_read,
             'tailExecutionOutput': _wf_read,
 
             //kill
             'cancelExecution': _wf_kill,
+            'apiExecutionAbort': _wf_kill,
         ],
 
         /*
@@ -122,7 +130,10 @@ public class AuthorizationFilters {
             'nowrunning': _wf_read,
             'nowrunningFragment': _wf_read,
             'nowrunningData': _wf_read,
+            'apiExecutionsRunning': _wf_read,
             'queueFragment': _wf_read,
+            'apiJobsList': _wf_read,
+            'apiJobsExport': _wf_read,
         ],
         /*
             ReportsController authorizations
@@ -135,6 +146,7 @@ public class AuthorizationFilters {
             'commands': _ev_read,
             'jobs': _ev_read,
             'query': _ev_read,
+            'apiHistory': _ev_read,
         ],
         /*
             FrameworkController authorizations
@@ -146,6 +158,8 @@ public class AuthorizationFilters {
             'nodesData': _rs_read,
             'nodesFragment': _rs_read,
             'listFrameworkResourceInstances': _rs_read,
+            'apiProjects': _rs_read,
+            'apiProject': _rs_read,
         ],
         /*
             ReportsController authorizations
@@ -206,6 +220,13 @@ public class AuthorizationFilters {
                     def roletest = admintest || roleService.isUserInAllRoles(request,authReq)
                     if (!roletest ) {
                         log.error("User ${session.user} UNAUTHORIZED for ${controllerName}/${actionName}");
+                        if(request.api_version){
+                            //api request
+                            flash.errorCode="api.error.user-unauthorized"
+                            flash.errorArgs=[session.user,request.forwardURI]
+                            redirect(controller: 'api', action: 'renderError')
+                            return false
+                        }
                         flash.title = "Unauthorized"
                         flash.error = "User: ${session.user} is not authorized"
                         response.setHeader(Constants.X_RUNDECK_ACTION_UNAUTHORIZED_HEADER,flash.error)

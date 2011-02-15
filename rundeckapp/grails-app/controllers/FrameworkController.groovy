@@ -5,6 +5,10 @@ import com.dtolabs.rundeck.core.common.Nodes
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.utils.NodeSet
 import java.util.regex.PatternSyntaxException
+import com.dtolabs.shared.resources.ResourceXMLGenerator
+import com.dtolabs.rundeck.core.common.NodesYamlGenerator
+import com.dtolabs.rundeck.core.common.NodesFileGenerator
+import com.dtolabs.rundeck.core.common.NodesGeneratorException
 
 class FrameworkController  {
     FrameworkService frameworkService
@@ -412,6 +416,173 @@ class FrameworkController  {
             session.project=projects[0].name
         }else if(0==projects.size()){
             session.removeAttribute('project')
+        }
+    }
+
+    /*******
+     * API actions
+     */
+
+    /**
+     * API: /api/projects, version 1
+     */
+    def apiProjects={
+        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        def projlist=frameworkService.projects(framework)
+        session.projects=projlist
+        return new ApiController().success{ delegate->
+                delegate.'projects'(count:projlist.size()){
+                    projlist.each{ pject ->
+                        renderApiProject(pject,delegate)
+                    }
+                }
+
+        }
+    }
+    /**
+     * Render project info result using a builder
+     */
+    def renderApiProject={ pject, delegate ->
+        delegate.project{
+            name(pject.name)
+            description(pject.hasProperty('project.description')?pject.getProperty('project.description'):'')
+            if(pject.hasProperty("project.resources.url")){
+                resources{
+                    providerURL(pject.getProperty("project.resources.url"))
+                }
+            }
+        }
+    }
+
+    /**
+     * Convert input node filter parameters into specific property names used by
+     * domain objects
+     */
+    public static Map extractApiNodeFilterParams(Map params){
+        def result=[:]
+
+        //convert api parameters to node filter parameters
+        BaseNodeFilters.filterKeys.each{k,v->
+            if(params[k]){
+                result["nodeInclude${v}"]=params[k]
+            }
+            if(params["exclude-"+k]){
+                result["nodeExclude${v}"]=params["exclude-"+k]
+            }
+        }
+        if(params.'exclude-precedence'){
+            result.nodeExcludePrecedence=params['exclude-precedence']=='true'
+        }
+        return result
+    }
+
+    /**
+     * API: /api/project/NAME, version 1
+     */
+    def apiProject={
+        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        if(!params.project){
+            flash.error=g.message(code:'api.error.parameter.required',args:['project'])
+            return chain(controller:'api',action:'error')
+        }
+        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        if(!exists){
+            flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
+            return chain(controller:'api',action:'error')
+        }
+        def pject=frameworkService.getFrameworkProject(params.project,framework)
+        return new ApiController().success{ delegate->
+            delegate.'projects'(count:1){
+                renderApiProject(pject,delegate)
+            }
+        }
+    }
+
+    /**
+     * API: /api/resource/$name, version 1
+     */
+    def apiResource={
+        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        if(!params.project){
+            flash.error=g.message(code:'api.error.parameter.required',args:['project'])
+            return chain(controller:'api',action:'error')
+        }
+        if(!params.name){
+            flash.error=g.message(code:'api.error.parameter.required',args:['name'])
+            return chain(controller:'api',action:'error')
+        }
+        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        if(!exists){
+            flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
+            return chain(controller:'api',action:'error')
+        }
+
+        NodeSet nset = new NodeSet()
+        nset.setSingleNodeName(params.name)
+        def pject=frameworkService.getFrameworkProject(params.project,framework)
+        final Collection nodes = pject.getNodes().filterNodes(nset)
+        if(!nodes || nodes.size()<1 ){
+            flash.error=g.message(code:'api.error.item.doesnotexist',args:['Node Name',params.name])
+            return chain(controller:'api',action:'error')
+        }
+        return apiRenderNodeResult(nodes)
+    }
+    /**
+     * API: /api/resources, version 1
+     */
+    def apiResources={ExtNodeFilters query->
+        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        if(!params.project){
+            flash.error=g.message(code:'api.error.parameter.required',args:['project'])
+            return chain(controller:'api',action:'error')
+        }
+        def exists=frameworkService.existsFrameworkProject(params.project,framework)
+        if(!exists){
+            flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
+            return chain(controller:'api',action:'error')
+        }
+
+        //convert api parameters to node filter parameters
+        def filters=extractApiNodeFilterParams(params)
+        if(filters){
+            filters.each{k,v->
+                query[k]=v
+            }
+        }
+
+        if(query.nodeFilterIsEmpty()){
+            //return all results
+            query.nodeInclude=".*"
+        }
+        def pject=frameworkService.getFrameworkProject(params.project,framework)
+        final Collection nodes = pject.getNodes().filterNodes(ExecutionService.filtersAsNodeSet(query))
+        return apiRenderNodeResult(nodes)
+    }
+    def apiRenderNodeResult={nodes->
+
+        withFormat{
+            xml{
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                final NodesFileGenerator generator = new ResourceXMLGenerator(baos)
+                nodes.each {INodeEntry node->
+                    generator.addNode(node)
+                }
+                generator.generate()
+                return render(contentType:"text/xml",encoding:"UTF-8",text:baos.toString())
+            }
+            yaml{
+                if(nodes.size()>0){
+                    StringWriter sw = new StringWriter()
+                    final NodesFileGenerator generator = new NodesYamlGenerator(sw)
+                    nodes.each {INodeEntry node->
+                        generator.addNode(node)
+                    }
+                    generator.generate()
+                    return render(contentType:"text/yaml",encoding:"UTF-8",text:sw.toString())
+                }else{
+                    return render(contentType:"text/yaml",encoding:"UTF-8",text:"# 0 results for query\n")
+                }
+            }
         }
     }
 }
