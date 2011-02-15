@@ -450,7 +450,7 @@ class ReportsController {
 
 
     /**
-     * API, /api/history, version 1.2
+     * API, /api/history, version 1
      */
     def apiHistory={ReportQuery query->
         if(!params.project){

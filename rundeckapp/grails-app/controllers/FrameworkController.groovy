@@ -424,7 +424,7 @@ class FrameworkController  {
      */
 
     /**
-     * API: /api/projects, version 1.2
+     * API: /api/projects, version 1
      */
     def apiProjects={
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
@@ -477,7 +477,7 @@ class FrameworkController  {
     }
 
     /**
-     * API: /api/project/NAME, version 1.2
+     * API: /api/project/NAME, version 1
      */
     def apiProject={
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
@@ -499,7 +499,7 @@ class FrameworkController  {
     }
 
     /**
-     * API: /api/resource/$name, version 1.2
+     * API: /api/resource/$name, version 1
      */
     def apiResource={
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
@@ -528,7 +528,7 @@ class FrameworkController  {
         return apiRenderNodeResult(nodes)
     }
     /**
-     * API: /api/resources, version 1.2
+     * API: /api/resources, version 1
      */
     def apiResources={ExtNodeFilters query->
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)

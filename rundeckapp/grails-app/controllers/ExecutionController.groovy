@@ -602,7 +602,7 @@ class ExecutionController {
         }
     }
     /**
-     * API: /api/execution/{id} , version 1.2
+     * API: /api/execution/{id} , version 1
      */
     def apiExecution={
         def Execution e = Execution.get(params.id)
@@ -625,7 +625,7 @@ class ExecutionController {
     public static String ABORT_ABORTED="aborted"
     public static String ABORT_FAILED="failed"
     /**
-     * API: /api/execution/{id}/abort, version 1.2
+     * API: /api/execution/{id}/abort, version 1
      */
     def apiExecutionAbort={
         def Execution e = Execution.get(params.id)

@@ -374,7 +374,7 @@ class MenuController {
      */
 
     /**
-     * API: /api/jobs, version 1.2
+     * API: /api/jobs, version 1
      */
     def apiJobsList = {ScheduledExecutionQuery query ->
         if(params.project){
@@ -412,7 +412,7 @@ class MenuController {
     }
 
     /**
-     * API: /jobs/export, version 1.2
+     * API: /jobs/export, version 1
      */
     def apiJobsExport = {ScheduledExecutionQuery query ->
 
@@ -448,7 +448,7 @@ class MenuController {
     }
 
     /**
-     * API: /executions/running, version 1.2
+     * API: /executions/running, version 1
      */
     def apiExecutionsRunning = {
 

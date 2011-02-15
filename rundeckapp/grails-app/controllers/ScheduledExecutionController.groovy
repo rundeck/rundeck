@@ -2385,7 +2385,7 @@ class ScheduledExecutionController  {
         }
     }
     /**
-     * API: /jobs/import, version 1.2
+     * API: /jobs/import, version 1
      */
     def apiJobsImport= {
         log.info("ScheduledExecutionController: upload " + params)
@@ -2423,7 +2423,7 @@ class ScheduledExecutionController  {
     }
 
     /**
-     * API: export job definition: /job/{id}, version 1.2
+     * API: export job definition: /job/{id}, version 1
      */
     def apiJobExport={
         log.info("ScheduledExecutionController: show : params: " + params)
@@ -2448,7 +2448,7 @@ class ScheduledExecutionController  {
         }
     }
     /**
-     * API: Run a job immediately: /job/{id}/run, version 1.2
+     * API: Run a job immediately: /job/{id}/run, version 1
      */
     def apiJobRun= {
         def ScheduledExecution scheduledExecution = ScheduledExecution.get(params.long('id'))
@@ -2480,7 +2480,7 @@ class ScheduledExecutionController  {
         return new ExecutionController().renderApiExecutionListResultXML([result.execution])
     }
     /**
-     * API: DELETE job definition: /job/{id}, version 1.2
+     * API: DELETE job definition: /job/{id}, version 1
      */
     def apiJobDelete={
         log.info("ScheduledExecutionController: show : params: " + params)
@@ -2516,7 +2516,7 @@ class ScheduledExecutionController  {
 
 
     /**
-     * API: run simple exec: /api/run/command, version 1.2
+     * API: run simple exec: /api/run/command, version 1
      */
     def apiRunCommand={
 
@@ -2575,7 +2575,7 @@ class ScheduledExecutionController  {
 
 
     /**
-     * API: run script: /api/run/script, version 1.2
+     * API: run script: /api/run/script, version 1
      */
     def apiRunScript={
 
