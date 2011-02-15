@@ -11,9 +11,9 @@ class ApiController {
     }
     def renderError={
         if(flash.errorCode||request.errorCode){
-            flash.error=g.message(code:flash.errorCode?:request.errorCode,args:flash.errorArgs?:request.errorArgs)
+            request.error=g.message(code:flash.errorCode?:request.errorCode,args:flash.errorArgs?:request.errorArgs)
         }else{
-            flash.error=g.message(code:"api.error.unknown")
+            request.error=g.message(code:"api.error.unknown")
         }
         return error()
     }
