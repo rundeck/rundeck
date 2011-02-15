@@ -59,7 +59,7 @@ public class ApiRequestFilters {
                     }
                     if(unsupported){
                         flash.errorCode='api.error.api-version.unsupported'
-                        flash.errorArgs=[params.api_version,API_CURRENT_VERSION]
+                        flash.errorArgs=[params.api_version,request.forwardURI,"Current version: "+API_CURRENT_VERSION]
                         redirect(controller:'api',action:'renderError')
                         return false
                     }

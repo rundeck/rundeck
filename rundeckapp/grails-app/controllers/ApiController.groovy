@@ -26,6 +26,25 @@ class ApiController {
         }
     }
 
+    /**
+     * Utility to require specific min or max api version for an action.
+     */
+    public def requireVersion={min,max=0->
+        if(request.api_version < min){
+            request.error=g.message(code:'api.error.api-version.unsupported',
+                args:[request.api_version,request.forwardURI,"Minimum supported version: "+min])
+            error()
+            return false
+        }
+        if(max>0 && request.api_version > max){
+            request.error=g.message(code:'api.error.api-version.unsupported',
+                args:[request.api_version,request.forwardURI,"Maximum supported version: "+max])
+            error()
+            return false
+        }
+        return true
+    }
+
     def error={
         return render(contentType:"text/xml",encoding:"UTF-8"){
             result(error:"true", apiversion:ApiRequestFilters.API_CURRENT_VERSION){
