@@ -10,6 +10,7 @@ class Execution extends ExecutionContext {
     String status
     String outputfilepath
     String failedNodeList
+    String abortedby
     boolean cancelled
 
     static constraints = {
@@ -46,6 +47,7 @@ class Execution extends ExecutionContext {
         adhocLocalString(nullable:true, blank:true)
         adhocFilepath(nullable:true, blank:true)
         failedNodeList(nullable:true, blank:true)
+        abortedby(nullable:true, blank:true)
     }
 
 

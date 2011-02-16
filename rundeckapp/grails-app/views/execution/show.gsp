@@ -149,7 +149,7 @@
                             Successful
                         </g:if>
                         <g:elseif test="${execution.cancelled}">
-                            Killed
+                            Killed<g:if test="${execution.abortedby}"> by: ${execution.abortedby.encodeAsHTML()}</g:if>
                         </g:elseif>
                         <g:else>
                             Failed

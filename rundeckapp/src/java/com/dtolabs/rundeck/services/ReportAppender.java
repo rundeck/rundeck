@@ -67,6 +67,7 @@ public class ReportAppender extends AppenderSkeleton {
         map.put("rundeckExecId", event.getMDC("rundeckExecId"));
         map.put("rundeckJobId", event.getMDC("rundeckJobId"));
         map.put("rundeckJobName", event.getMDC("rundeckJobName"));
+        map.put("rundeckAbortedBy", event.getMDC("rundeckAbortedBy"));
         map.put("epochDateStarted", event.getMDC(Constants.MDC_EPOCHSTART_KEY));
         map.put("epochDateEnded", event.getMDC(Constants.MDC_EPOCHEND_KEY));
         if (null!=event.getMDC("adhocScript")) {
