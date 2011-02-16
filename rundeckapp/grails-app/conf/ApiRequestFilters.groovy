@@ -29,7 +29,7 @@ public class ApiRequestFilters {
     public final static int API_MIN_VERSION=API_CURRENT_VERSION
     public final static int API_MAX_VERSION=API_CURRENT_VERSION
 
-    def allowed_actions=["renderError","invalid"]
+    def allowed_actions=["renderError","invalid","error"]
     def filters = {
             /**
              * Require valid api version in request path /api/version/...

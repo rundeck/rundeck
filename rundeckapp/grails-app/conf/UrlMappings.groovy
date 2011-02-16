@@ -8,7 +8,6 @@ class UrlMappings {
         /*******
         * API url paths, v1
         */
-        "/api/$api_version/$action?"(controller: 'api', action: 'invalid')
         "/api/$api_version/error"(controller: 'api', action: 'error')
         "/api/$api_version/execution/$id"(controller: 'execution', action: 'apiExecution')
         "/api/$api_version/execution/$id/abort"(controller: 'execution', action: 'apiExecutionAbort')
@@ -25,10 +24,12 @@ class UrlMappings {
         "/api/$api_version/project/$project?"(controller: 'framework', action: 'apiProject')
         "/api/$api_version/projects"(controller: 'framework', action: 'apiProjects')
         "/api/renderError"(controller: 'api', action: 'renderError')
+        "/api/error"(controller: 'api', action: 'error')
         "/api/$api_version/resources"(controller: 'framework', action: 'apiResources')
         "/api/$api_version/resource/$name"(controller: 'framework', action: 'apiResource')
         "/api/$api_version/run/command"(controller: 'scheduledExecution', action: 'apiRunCommand')
         "/api/$api_version/run/script"(controller: 'scheduledExecution', action: 'apiRunScript')
+        "/api/$api_version/$action?"(controller: 'api', action: 'invalid')
 
         //simplified url mappings for link generation
         "/run/$id?"(controller: 'framework', action: 'nodes')
