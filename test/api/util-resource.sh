@@ -1,43 +1,18 @@
 #!/bin/bash
 
 #Usage: 
-#    util-resources.sh <project> <URL> <format> [param=value [param=value] .. ]
+#    util-resource.sh <URL> <project> <format> <name>
 
 if [ $# -lt 4 ] ; then 
-    echo "Usage: util-resources.sh <project> <URL> <format> <name>"
+    echo "Usage: util-resource.sh <URL> <project>  <format> <name>"
     exit 2
 fi
 
-errorMsg() {
-   echo "$*" 1>&2
-}
-
 DIR=$(cd `dirname $0` && pwd)
+source $DIR/include.sh
 
-proj=$1
-if [ "" == "$1" ] ; then
-    proj="test"
-fi
+proj=${1}
 shift
-# accept url argument on commandline, if '-' use default
-url="$1"
-if [ "-" == "$1" ] ; then
-    url='http://localhost:4440'
-fi
-shift
-apiurl="${url}/api"
-VERSHEADER="X-RUNDECK-API-VERSION: 1.2"
-
-# curl opts to use a cookie jar, and follow redirects, showing only errors
-CURLOPTS="-s -S -L -c $DIR/cookies -b $DIR/cookies"
-CURL="curl $CURLOPTS"
-
-if [ ! -f $DIR/cookies ] ; then 
-    # call rundecklogin.sh
-    sh $DIR/rundecklogin.sh $url
-fi
-
-XMLSTARLET=xml
 
 format=${1}
 shift
@@ -45,7 +20,7 @@ shift
 name=$1
 
 # now submit req
-runurl="${apiurl}/resource/${name}"
+runurl="${APIURL}/resource/${name}"
 
 echo "# Getting RunDeck Resource in project ${proj} named ${name}..."
 
@@ -54,11 +29,8 @@ params="project=${proj}&format=${format}"
 file=$DIR/curl.out
 
 # get listing
-$CURL --header "$VERSHEADER" ${runurl}?${params} > ${file}
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
+$CURL  ${runurl}?${params} > ${file}|| fail "failed request: ${runurl}"
+
 #test curl.out for valid xml
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
 validxml=$?
@@ -92,7 +64,7 @@ if [ "xml" == "$format" ] ; then
     fi
     
     #Check projects list
-    itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
+    itemcount=$(xmlsel "count(/project/node)" ${file})
     echo "$itemcount Nodes"
     if [ "0" != "$itemcount" ] ; then
         #echo all on one line

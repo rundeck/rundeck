@@ -7,11 +7,14 @@ DIR=$(cd `dirname $0` && pwd)
 errorMsg() {
    echo "$*" 1>&2
 }
+fail(){
+    errorMsg "FAIL: $@"
+    exit 2
+}
 assert(){
     # assert expected, actual
     if [ "$1" != "$2" ] ; then
-        errorMsg "FAIL: Expected value \"$1\" but saw: \"$2\" ${3}"
-        exit 2
+        fail "Expected value \"$1\" but saw: \"$2\" ${3}"
     fi
 }
 
@@ -21,7 +24,9 @@ XMLSTARLET=xml
 # xmlstarlet select xpath
 # usage: xmlsel XPATH file
 xmlsel(){
-    $XMLSTARLET sel -T -t -v "$1" $2
+    xpath=$1
+    shift
+    $XMLSTARLET sel -T -t -v "$xpath" $*
 }
 
 API_VERSION="1"
