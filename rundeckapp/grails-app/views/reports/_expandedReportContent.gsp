@@ -21,8 +21,11 @@
 
 
                 <g:if test="${it.jcJobId || it.jcExecId}">
-                    <span class="title"><g:message code="domain.ScheduledExecution.title"/> <g:message code="status.label.${it.status}"/>.
+                    <span class="title"><g:message code="domain.ScheduledExecution.title"/> <g:message code="status.label.${it.status}"/>
                     </span>
+                    <g:if test="${(it.status == 'cancel') }">
+                        by: ${it.abortedByUser}
+                    </g:if>
                     <g:if test="${it.dateCompleted}">
                         <span class="date">
                             <g:formatDate date="${it?.dateCompleted}" formatName="jobslist.date.format"/>
