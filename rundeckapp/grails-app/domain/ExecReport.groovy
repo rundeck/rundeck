@@ -6,6 +6,7 @@ class ExecReport extends BaseReport{
     String jcJobId
     Boolean adhocExecution
     String adhocScript
+    String abortedByUser
 
     static constraints = {
         adhocExecution(nullable:true)
@@ -14,5 +15,6 @@ class ExecReport extends BaseReport{
         jcExecId(nullable:true,blank:false)
         jcJobId(nullable:true,blank:false)
         adhocScript(nullable:true,blank:true)
+        abortedByUser(nullable:true,blank:true)
     }
 }

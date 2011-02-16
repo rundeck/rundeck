@@ -106,39 +106,22 @@ class ExecutionController {
             }
         }
         def ScheduledExecution se = e.scheduledExecution
-        
-        def ident = scheduledExecutionService.getJobIdent(se,e)
-        def didcancel
-        def statusStr
-        if(scheduledExecutionService.existsJob(ident.jobname, ident.groupname)){
-            didcancel=scheduledExecutionService.interruptJob(ident.jobname, ident.groupname)
-        }else if(null==e.dateCompleted){
-            executionService.saveExecutionState(
-                se?se.id:null,
-                e.id,
-                    [
-                    status:String.valueOf(false),
-                    dateCompleted:new Date(),
-                    cancelled:true
-                    ]
-                )
-            didcancel=true
-        }else{
-            didcancel=e.cancelled || 'true'!=e.status
-            statusStr='previously '+('true'==e.status?'success':e.cancelled?'killed':'failed')
-        }
+
+        def abortresult=executionService.abortExecution(se,e,session.user)
+
+        def didcancel=abortresult.abortstate in [ABORT_ABORTED,ABORT_PENDING]
         withFormat{
             json{
                 render(contentType:"text/json"){
                     delegate.cancelled(didcancel)
-                    delegate.status(statusStr?statusStr:(didcancel?'killed':'failed'))
+                    delegate.status(abortresult.statusStr?abortresult.statusStr:(didcancel?'killed':'failed'))
                 }
             }
             xml {
                 render(contentType:"text/xml",encoding:"UTF-8"){
                     result(error:false,success:didcancel){
                         success{
-                            message("Job status: ${statusStr?statusStr:(didcancel?'killed': 'failed')}")
+                            message("Job status: ${abortresult.statusStr?abortresult.statusStr:(didcancel?'killed': 'failed')}")
                         }
                     }
                 }
@@ -565,7 +548,7 @@ class ExecutionController {
     public static String EXECUTION_SUCCEEDED = "succeeded"
     public static String EXECUTION_FAILED = "failed"
     public static String EXECUTION_ABORTED = "aborted"
-    public String getExecutionState(Execution e){
+    public static String getExecutionState(Execution e){
         return null==e.dateCompleted?EXECUTION_RUNNING:"true"==e.status?EXECUTION_SUCCEEDED:e.cancelled?EXECUTION_ABORTED:EXECUTION_FAILED
     }
     /**
@@ -586,6 +569,9 @@ class ExecutionController {
                         delegate.'date-started'(unixtime: e.dateStarted.time, g.w3cDateValue(date: e.dateStarted))
                         if (null != e.dateCompleted) {
                             delegate.'date-ended'(unixtime: e.dateCompleted.time, g.w3cDateValue(date: e.dateCompleted))
+                        }
+                        if(e.cancelled){
+                            abortedby(e.abortedby?e.abortedby:e.user)
                         }
                         if (e.scheduledExecution) {
                             job(id: e.scheduledExecution.id) {
@@ -636,37 +622,14 @@ class ExecutionController {
         }
         def ScheduledExecution se = e.scheduledExecution
 
-        def ident = scheduledExecutionService.getJobIdent(se,e)
-        def statusStr
-        def abortstate
-        def jobstate
-        if(scheduledExecutionService.existsJob(ident.jobname, ident.groupname)){
-            def didcancel=scheduledExecutionService.interruptJob(ident.jobname, ident.groupname)
-            abortstate=didcancel?ABORT_PENDING:ABORT_FAILED
-            jobstate=EXECUTION_RUNNING
-        }else if(null==e.dateCompleted){
-            executionService.saveExecutionState(
-                se?se.id:null,
-                e.id,
-                    [
-                    status:String.valueOf(false),
-                    dateCompleted:new Date(),
-                    cancelled:true
-                    ]
-                )
-            abortstate=ABORT_ABORTED
-            jobstate=EXECUTION_ABORTED
-        }else{
-            jobstate=getExecutionState(e)
-            statusStr='previously '+jobstate
-            abortstate=ABORT_FAILED
-        }
+        def abortresult=executionService.abortExecution(se,e,session.user)
+
         return new ApiController().success{ delegate->
             delegate.'success'{
-                message("Execution status: ${statusStr?statusStr:jobstate}")
+                message("Execution status: ${abortresult.statusStr?abortresult.statusStr:abortresult.jobstate}")
             }
-            delegate.'abort'(status:abortstate){
-                execution(id:params.id, status: jobstate)
+            delegate.'abort'(status:abortresult.abortstate){
+                execution(id:params.id, status: abortresult.jobstate)
             }
 
         }

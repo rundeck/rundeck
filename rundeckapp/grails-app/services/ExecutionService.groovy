@@ -402,7 +402,7 @@ class ExecutionService implements ApplicationContextAware, Executor{
     }
 
 
-    public static synchronized logExecution(uri,project,user,issuccess,framework,execId,Date startDate=null, jobExecId=null, jobName=null, jobSummary=null,iscancelled=false, nodesummary=null){
+    public static synchronized logExecution(uri,project,user,issuccess,framework,execId,Date startDate=null, jobExecId=null, jobName=null, jobSummary=null,iscancelled=false, nodesummary=null, abortedby=null){
 
         def internalLog = org.apache.log4j.Logger.getLogger("ExecutionService")
         if(null==project || null==user  ){
@@ -431,14 +431,17 @@ class ExecutionService implements ApplicationContextAware, Executor{
         def logger = org.apache.log4j.Logger.getLogger("com.dtolabs.rundeck.log.internal")
         org.apache.log4j.MDC.put(LogConstants.MDC_ITEM_TYPE_KEY,"commandExec")
         org.apache.log4j.MDC.put(LogConstants.MDC_PROJECT_KEY,project)
-        if(uri){
-            org.apache.log4j.MDC.put(LogConstants.MDC_MAPREF_KEY,uri)
+
+        if(iscancelled && abortedby){
+            org.apache.log4j.MDC.put('rundeckAbortedBy',abortedby)
+        }else if(iscancelled){
+            org.apache.log4j.MDC.put('rundeckAbortedBy',user)
         }
         org.apache.log4j.MDC.put(LogConstants.MDC_AUTHOR_KEY,user)
         org.apache.log4j.MDC.put(LogConstants.MDC_ACTION_KEY, jobSummary?jobSummary:"rundeck Job Execution")
         org.apache.log4j.MDC.put(LogConstants.MDC_ACTION_TYPE_KEY, issuccess ? LogConstants.ActionType.SUCCEED.toString():iscancelled?LogConstants.ActionType.CANCEL.toString():LogConstants.ActionType.FAIL.toString())
         org.apache.log4j.MDC.put(LogConstants.MDC_NODENAME_KEY, null!=nodesummary?nodesummary: framework.getFrameworkNodeName())
-        logger.info(issuccess?'Job completed successfully':iscancelled?'Job killed':'Job failed')
+        logger.info(issuccess?'Job completed successfully':iscancelled?('Job killed by: '+(abortedby?:user)):'Job failed')
 
         org.apache.log4j.MDC.remove(LogConstants.MDC_ITEM_TYPE_KEY)
         org.apache.log4j.MDC.remove(LogConstants.MDC_PROJECT_KEY)
@@ -449,6 +452,7 @@ class ExecutionService implements ApplicationContextAware, Executor{
         org.apache.log4j.MDC.remove(LogConstants.MDC_ACTION_TYPE_KEY)
         org.apache.log4j.MDC.remove(LogConstants.MDC_NODENAME_KEY)
         org.apache.log4j.MDC.remove(LogConstants.MDC_ADHOCEXEC_KEY)
+        org.apache.log4j.MDC.remove('rundeckAbortedBy')
         org.apache.log4j.MDC.remove('rundeckJobName')
         org.apache.log4j.MDC.remove('rundeckJobId')
         org.apache.log4j.MDC.remove('rundeckExecId')
@@ -675,6 +679,39 @@ class ExecutionService implements ApplicationContextAware, Executor{
         return thread.isSuccessful()
     }
 
+    def abortExecution(ScheduledExecution se, Execution e, String user){
+        def ident = scheduledExecutionService.getJobIdent(se,e)
+        def statusStr
+        def abortstate
+        def jobstate
+        if(scheduledExecutionService.existsJob(ident.jobname, ident.groupname)){
+            if(!e.abortedby){
+                e.abortedby=user
+                e.save()
+            }
+            def didcancel=scheduledExecutionService.interruptJob(ident.jobname, ident.groupname)
+            abortstate=didcancel?ExecutionController.ABORT_PENDING:ExecutionController.ABORT_FAILED
+            jobstate=ExecutionController.EXECUTION_RUNNING
+        }else if(null==e.dateCompleted){
+            saveExecutionState(
+                se?se.id:null,
+                e.id,
+                    [
+                    status:String.valueOf(false),
+                    dateCompleted:new Date(),
+                    cancelled:true,
+                    abortedby:user
+                    ]
+                )
+            abortstate=ExecutionController.ABORT_ABORTED
+            jobstate=ExecutionController.EXECUTION_ABORTED
+        }else{
+            jobstate=ExecutionController.getExecutionState(e)
+            statusStr='previously '+jobstate
+            abortstate=ExecutionController.ABORT_FAILED
+        }
+        return [abortstate:abortstate,jobstate:jobstate,statusStr:statusStr]
+    }
 
     /**
      * Return a map of include filters as used by the NodeSet type
@@ -1065,7 +1102,9 @@ class ExecutionService implements ApplicationContextAware, Executor{
                 totalCount=matched.size()
             }
             def Framework fw = frameworkService.getFramework()
-            logExecution(null, execution.project, execution.user, "true" == execution.status, fw, exId, execution.dateStarted, jobid, jobname, summarizeJob(scheduledExecution, execution), props.cancelled, node)
+            logExecution(null, execution.project, execution.user, "true" == execution.status, fw, exId,
+                execution.dateStarted, jobid, jobname, summarizeJob(scheduledExecution, execution), props.cancelled,
+                node, execution.abortedby)
             notificationService.triggerJobNotification(props.status == 'true' ? 'success' : 'failure', schedId, [execution: execution,nodestatus:[succeeded:sucCount,failed:failedCount,total:totalCount]])
         }
     }

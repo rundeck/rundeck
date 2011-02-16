@@ -3,6 +3,11 @@ import com.dtolabs.rundeck.services.ReportAcceptor
 class ReportService implements ReportAcceptor {
     def grailsApplication
     public void makeReport(Map fields) {
+        /**
+         * allowed fields are specified
+         *  in the {@link com.dtolabs.rundeck.services.ReportAppender} class
+         */
+
         fields['title'] = fields['evtAction']
         if(!fields['node'] && fields['evtRemoteHost']){
             fields['node']=fields['evtRemoteHost']
@@ -45,6 +50,9 @@ class ReportService implements ReportAcceptor {
                 }
                 if(fields['rundeckAdhocScript']){
                     fields['adhocScript']=fields['rundeckAdhocScript']
+                }
+                if(fields['rundeckAbortedBy']){
+                    fields['abortedByUser']=fields['rundeckAbortedBy']
                 }
 
                 if(!fields['ctxController']){
@@ -263,6 +271,7 @@ class ReportService implements ReportAcceptor {
             proj: 'ctxProject',
             cmd: 'ctxCommand',
             user: 'author',
+            abortedBy: 'abortedByUser',
             node: 'node',
             message: 'message',
             //job filter repurposed for reportId 

@@ -408,6 +408,9 @@ class ReportsController {
                         delegate.'node-summary'(succeeded:nodesum[0],failed:nodesum[1],total:nodesum[2])
                         user(rpt.author)
                         project(rpt.ctxProject)
+                        if(rpt.status=='cancel' && rpt.abortedByUser){
+                            abortedby(rpt.abortedByUser)
+                        }
                         delegate.'date-started'(g.w3cDateValue(date:rpt.dateStarted))
                         delegate.'date-ended'(g.w3cDateValue(date:rpt.dateCompleted))
                         if(rpt.jcJobId){
