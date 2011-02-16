@@ -11,29 +11,21 @@ source $DIR/include.sh
 
 runurl="${APIURL}/run/command"
 proj="test"
-params="project=${proj}&exec=echo+testing+execution+api%3Bsleep+120"
+params="project=${proj}&exec=echo+testing+execution+abort+api%3Bsleep+120"
 
 # get listing
-$CURL --header "$VERSHEADER" ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
+$CURL ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #select id
 
-execid=$($XMLSTARLET sel -T -t -v "/result/execution/@id" $DIR/curl.out)
+execid=$(xmlsel "/result/execution/@id" $DIR/curl.out)
 
-if [ -z "$execid" ] ; then
-    errorMsg "FAIL: expected execution id"
-    exit 2
-fi
-
+[ -z "$execid" ]  && fail "expected execution id"
 
 ####
-# Test:
+# Test: get execution info
 ####
 
 # now submit req
@@ -44,19 +36,15 @@ echo "TEST: /api/execution/${execid} ..."
 params=""
 
 # get listing
-$CURL --header "$VERSHEADER" ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
+$CURL ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
+itemcount=$(xmlsel "/result/executions/@count" $DIR/curl.out)
 assert "1" "$itemcount" "execution count should be 1"
 
-assert "running" $($XMLSTARLET sel -T -t -v "/result/executions/execution/@status" $DIR/curl.out) "execution was not running"
+assert "running" $(xmlsel "/result/executions/execution/@status" $DIR/curl.out) "execution was not running"
 
 echo "OK"
 
@@ -75,18 +63,14 @@ params=""
 sleep 4
 
 # get listing
-$CURL --header "$VERSHEADER" ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
+$CURL ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-astatus=$($XMLSTARLET sel -T -t -v "/result/abort/@status" $DIR/curl.out)
-aexecid=$($XMLSTARLET sel -T -t -v "/result/abort/execution/@id" $DIR/curl.out)
-aexecstatus=$($XMLSTARLET sel -T -t -v "/result/abort/execution/@status" $DIR/curl.out)
+astatus=$(xmlsel "/result/abort/@status" $DIR/curl.out)
+aexecid=$(xmlsel "/result/abort/execution/@id" $DIR/curl.out)
+aexecstatus=$(xmlsel "/result/abort/execution/@status" $DIR/curl.out)
 
 assert "pending" "$astatus" "Abort status should be pending"
 assert "$execid" "$aexecid" "Wrong execution id in abort status"
@@ -94,6 +78,35 @@ assert "running" "$aexecstatus" "Wrong execution status in abort status"
 
 echo "OK"
 
+# pause
+sleep 4
+
+####
+# test result of /execution info
+#### 
+
+# now submit req
+runurl="${APIURL}/execution/${execid}"
+
+echo "TEST: /api/execution/${execid} ..."
+
+params=""
+
+# get listing
+$CURL ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+
+sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+
+#Check projects list
+itemcount=$(xmlsel "/result/executions/@count" $DIR/curl.out)
+assert "1" "$itemcount" "execution count should be 1"
+
+assert "aborted" $(xmlsel "/result/executions/execution/@status" $DIR/curl.out) "execution should be aborted"
+auser=$(xmlsel "/result/executions/execution/abortedby" $DIR/curl.out)
+
+[ -z "$auser" ] && fail "execution did not have abortedby info"
+
+echo "OK"
 
 rm $DIR/curl.out
 
