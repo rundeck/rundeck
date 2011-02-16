@@ -282,6 +282,9 @@ Result: An Item List of `executions`.  Each `execution` of the form:
         <!-- the completion time of the execution -->
         <date-ended unixtime="[unixtime]">[datetime]</date-ended> 
         
+        <!-- if the execution was aborted, the username who aborted it: -->
+        <abortedby>[username]</abortedby>
+        
     </execution>
 
 The `[status]` value indicates the execution status.  It is one of:
@@ -449,6 +452,8 @@ Result:  an Item List of `events`.  Each `event` has this form:
       <project>[project]</project>
       <date-started>[start date]</date-started>
       <date-ended>[end date]</date-ended>
+      <!-- if the execution was aborted, the username who aborted it: -->
+      <abortedby>[username]</abortedby>
       <!-- if associated with an Execution, include the execution id: -->
       <execution id="[execid]"/>
       <!-- if associated with a Job, include the Job ID: -->
