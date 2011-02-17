@@ -73,7 +73,11 @@ class FrameworkController  {
         }
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         if(query.nodeFilterIsEmpty()){
-            query.nodeIncludeName = framework.getFrameworkNodeName()
+            if(params.formInput=='true'){
+                query.nodeIncludeName = '.*'
+            }else{
+                query.nodeIncludeName = framework.getFrameworkNodeName()
+            }
         }
         FrameworkController.autosetSessionProject(session,framework)
         if(query && !query.project && session.project){

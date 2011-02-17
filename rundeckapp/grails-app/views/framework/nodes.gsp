@@ -24,6 +24,17 @@
             }
         };
 
+        //method called by _nodeFilterInputs
+        function _matchNodes(){
+
+        }
+        function _clearNodeFilters(){
+            $$('.nfilteritem').each(Element.hide);
+            $$('.filterAdd').each(Element.show);
+            $$('.nfilteritem input').each(function(e){e.value='';});
+            return false;
+        }
+
         /*********
          *  remote editor
          *********/
@@ -666,13 +677,12 @@
                     <table class="simpleForm">
                         <g:render template="nodeFilterInputs" model="${[params:params,query:query]}"/>
                     </table>
-
                     <div>
 
                         <div class=" " style="text-align:right;">
                             <g:submitButton  name="Filter" />
 
-                            <g:submitButton name="Clear" />
+                            <g:submitButton name="Clear" onclick="return _clearNodeFilters();"/>
                         </div>
                     </div>
                 </div>
@@ -688,7 +698,7 @@
                 </g:ifUserInAnyRoles>
                 <g:if test="${!params.nofilters}">
                 <div style="margin: 10px 0 5px 0;" id="${rkey}nodesfilterholder" >
-                    <g:if test="${wasfiltered}">
+                    %{--<g:if test="${wasfiltered}">--}%
 
 
                         <div style="margin:5px 0; padding:5px 0;">
@@ -710,7 +720,7 @@
                         </g:if>
                         </div>
 
-                    </g:if>
+                    %{--</g:if>--}%
                     %{--<g:else>
                         <span class="prompt action" onclick="['${rkey}filter','${rkey}filterdispbtn','runbox'].each(Element.toggle);if(${isCompact}){$('${rkey}nodescontent').toggle();}" id="${rkey}filterdispbtn"  style="${!filtersOpen?'':'display:none;'}">
                             Filter

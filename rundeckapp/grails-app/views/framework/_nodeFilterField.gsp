@@ -21,7 +21,7 @@
     Created: Oct 27, 2010 5:04:24 PM
  --%>
 <g:set var="type" value="${include?'Include':'Exclude'}"/>
-<div id="nodeFilter${type}${key}"  style="${query?.('node'+type+key)?'':'display:none;'}">
+<div id="nodeFilter${type}${key}"  style="${query?.('node'+type+key)?'':'display:none;'}" class="nfilteritem">
 <span class="input">
     ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}:
     <input type='text' name="node${type}${key}"
