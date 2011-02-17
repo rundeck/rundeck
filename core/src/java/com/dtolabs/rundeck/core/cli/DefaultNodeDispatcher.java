@@ -93,7 +93,15 @@ public class DefaultNodeDispatcher implements NodeDispatcher{
             parallelTask.setFailOnAny(!keepgoing);
             for (final Object node1 : nodes) {
                 final INodeEntry node = (INodeEntry) node1;
-                final Callable tocall= factory.createCallable(node);
+                final Callable tocall;
+                nodeNames.add(node.getNodename());
+                try {
+                    tocall = factory.createCallable(node);
+                } catch (Throwable e) {
+                    project.log("Failed execution for node: " + node.getNodename() + ": " + e.getMessage(),
+                        Project.MSG_ERR);
+                    continue;
+                }
                 project.log("dispatching to proxy on node: " + node.getNodename(), Project.MSG_DEBUG);
                 if(tocall instanceof TaskCallable) {
                     final Task nestedTask = ((TaskCallable) tocall).getTask();
@@ -103,19 +111,17 @@ public class DefaultNodeDispatcher implements NodeDispatcher{
                     final Task callableWrapperTask = createWrappedCallableTask(project, tocall, node);
                     parallelTask.addTask(callableWrapperTask);
                 }
-                nodeNames.add(node.getNodename());
             }
             try {
                 parallelTask.execute();
             } catch (BuildException e) {
-                if(keepgoing){
-                    project.log(e.getMessage(), Project.MSG_ERR);
-                }else{
+                project.log(e.getMessage(), Project.MSG_ERR);
+                if(!keepgoing){
                     throw e;
                 }
             }
             //evaluate the failed nodes
-            if (keepgoing && nodeNames.size() > 0) {
+            if (nodeNames.size() > 0) {
                 if (null != failedListener) {
                     //tell listener of failed node list
                     failedListener.nodesFailed(nodeNames);
@@ -146,23 +152,20 @@ public class DefaultNodeDispatcher implements NodeDispatcher{
                 final INodeEntry node = (INodeEntry) node1;
                 project.log("Executing command on node: " + node.getNodename() + ", " + node.toString(),
                     Project.MSG_DEBUG);
-
-                final Callable task = factory.createCallable(node);
-                project.log("dispatching to proxy on node: " + node.getNodename(), Project.MSG_DEBUG);
-
-                if (thread.isInterrupted()
-                    || thread instanceof ExecutionServiceThread && ((ExecutionServiceThread) thread).isAborted()) {
-                    interrupted = true;
-                    break;
-                }
                 try {
+                    final Callable task = factory.createCallable(node);
+
+                    if (thread.isInterrupted()
+                        || thread instanceof ExecutionServiceThread && ((ExecutionServiceThread) thread).isAborted()) {
+                        interrupted = true;
+                        break;
+                    }
                     task.call();
                     nodeNames.remove(node.getNodename());
                 } catch (Throwable e) {
-                    if (keepgoing) {
-                        project.log("Failed execution for node: " + node.getNodename() + ": " + e.getMessage(),
-                            Project.MSG_ERR);
-                    } else{
+                    project.log("Failed execution for node: " + node.getNodename() + ": " + e.getMessage(),
+                        Project.MSG_ERR);
+                    if (!keepgoing) {
                         if (nodeNames.size() > 0 && null != failedListener) {
                             //tell listener of failed node list
                             failedListener.nodesFailed(nodeNames);

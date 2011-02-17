@@ -111,8 +111,7 @@ public class SSHTaskBuilder {
             String sshKeypath = framework.getProperty(Constants.SSH_KEYPATH_PROP);
             boolean keyFileExists = null != sshKeypath && !"".equals(sshKeypath) && new File(sshKeypath).exists();
             if (!keyFileExists) {
-                throw new BuilderException(
-                    "SSH Keyfile, " + sshKeypath + ", does not exist and is needed: " + sshKeypath);
+                throw new BuilderException("SSH Keyfile does not exist: " + sshKeypath);
             }
             project.log("Using ssh keyfile: " + sshKeypath, Project.MSG_DEBUG);
             sshexecTask.setKeyfile(sshKeypath);
