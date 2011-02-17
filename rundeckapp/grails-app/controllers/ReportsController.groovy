@@ -391,6 +391,9 @@ class ReportsController {
         def model=reportService.getCombinedReports(query)
         model = reportService.finishquery(query,params,model)
 
+        def statusMap=[succeed:ExecutionController.EXECUTION_SUCCEEDED,
+            cancel:ExecutionController.EXECUTION_ABORTED,
+            fail:ExecutionController.EXECUTION_FAILED]
         return new ApiController().success{ delegate->
             delegate.'events'(count:model.reports.size(),total:model.total, max: model.max, offset: model.offset){
                 model.reports.each{  rpt->
@@ -404,6 +407,7 @@ class ReportsController {
                     }
                     event(starttime:rpt.dateStarted.time,endtime:rpt.dateCompleted.time){
                         title(rpt.reportId?:'adhoc')
+                        status(statusMap[rpt.status]?:rpt.status)
                         summary(rpt.adhocScript?:rpt.title)
                         delegate.'node-summary'(succeeded:nodesum[0],failed:nodesum[1],total:nodesum[2])
                         user(rpt.author)

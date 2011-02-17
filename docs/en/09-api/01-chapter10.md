@@ -446,6 +446,7 @@ Result:  an Item List of `events`.  Each `event` has this form:
 
     <event starttime="[unixtime]" endtime="[unixtime]">
       <title>[job title, or "adhoc"]</title>
+      <status>[status]</status>
       <summary>[summary text]</summary>
       <node-summary succeeded="[X]" failed="[Y]" total="[Z]"/>
       <user>[user]</user>

@@ -15,20 +15,21 @@ echo "TEST: output from /api/history should be valid"
 params="project=${proj}"
 
 # get listing
-$CURL --header "$VERSHEADER" ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
+$CURL ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/events/@count" $DIR/curl.out)
-if [ "" == "$itemcount" ] ; then
-    errorMsg "FAIL: expected events count"
-    exit 2
-fi
+itemcount=$(xmlsel "/result/events/@count" $DIR/curl.out)
+[ "" == "$itemcount" ] && fail "expected events count"
+
+EXPECTED="title summary user status @starttime @endtime node-summary/@succeeded node-summary/@failed node-summary/@total user project date-started date-ended"
+for i in $EXPECTED ; do
+    evalue=$($XMLSTARLET sel -T -t -m "/result/events/event[1]" -v "$i" $DIR/curl.out)
+    [ "" == "$evalue" ] && fail "expected $i"
+    evalue=""
+done
+
 
 echo "OK"
 
@@ -54,11 +55,7 @@ echo "OK"
 echo "TEST: /api/history using valid \"end\" date format parameter"
 params="project=${proj}&end=2011-02-04T21:38:02Z"
 
-$CURL --header "$VERSHEADER" ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
+$CURL ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 echo "OK"
@@ -67,14 +64,10 @@ echo "OK"
 echo "TEST: /api/history using valid \"begin\" date format parameter"
 params="project=${proj}&begin=2011-02-04T21:03:34Z"
 
-$CURL --header "$VERSHEADER" ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
+$CURL ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 echo "OK"
 
-#rm $DIR/curl.out
+rm $DIR/curl.out
 
