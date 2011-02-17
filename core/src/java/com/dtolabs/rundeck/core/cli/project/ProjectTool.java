@@ -136,10 +136,7 @@ public class ProjectTool implements ActionMaker, CLITool {
                 options,
                 "Examples:\n"
                 + "\trd-project -p project --action create; # Initialize project\n"
-                + "\trd-project -p project --action install; # Install resources and their modules\n"
-                + "\trd-project -p project --action install --pview; # Install resources and their modules and process view files\n"
-                + "\trd-project -p project --action pview; # Install process view files for deployed resources\n"
-                + "\trd-project -p project --action purge ; # purges all resources\n"
+                + "\trd-project -p project --action remove ; # Remove the project\n"
                 + "\n");
     }
 
