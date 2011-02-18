@@ -28,11 +28,11 @@
 <g:each var="key" in="${NODE_FILTERS}">
     <g:if test="${query?.('nodeInclude'+key)}">
         <input type='hidden' name="nodeInclude${key}"
-            value="${query?.('nodeInclude'+key)?.encodeAsHTML()}" id="schedJobNodeInclude${key}" />
+            value="${query?.('nodeInclude'+key)?.encodeAsHTML()}" />
     </g:if>
     <g:if test="${query?.('nodeExclude'+key)}">
             <input type='hidden' name="nodeExclude${key}"
-                value="${query?.('nodeExclude'+key)?.encodeAsHTML()}" id="schedJobNodeExclude${key}"/>
+                value="${query?.('nodeExclude'+key)?.encodeAsHTML()}" />
     </g:if>
 </g:each>
-<input type="hidden" name="nodeExcludePrecedence" value="${query?.nodeExcludePrecedence}" id="nodeExcludePrecedenceFalse"/>
+<input type="hidden" name="nodeExcludePrecedence" value="${query?.nodeExcludePrecedence}" />
