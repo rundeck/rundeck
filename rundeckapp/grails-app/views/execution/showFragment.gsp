@@ -98,37 +98,7 @@
                         checked="CHECKED"
                         style="display: none;"/>
                     Bottom</label>
-                <label
-                    class="action textbtn button"
-                    title="Click to change"
-                    id="autoscrollTrueLabel"
-                >
-                <input
-                    type="checkbox"
-                    name="outputautoscroll"
-                    class=" opt_auto_scroll_true"
-                    id="outputautoscrolltrue"
-                    value="true"
-                    ${followmode=='tail'?'':'checked="CHECKED"'}
-                    onclick="setOutputAutoscroll(this.checked);"
-                    style=""/>
 
-                Scroll</label>
-
-                <%--
-                <input
-                    type="radio"
-                    name="outputautoscroll"
-                    id="outputautoscrollfalse"
-                    value="false"
-                    style="display:none;"/>
-                <label for="outputautoscrollfalse"><span
-                    class="action textbtn button"
-                    title="Click to change"
-                    id="autoscrollFalseLabel"
-                    onclick="setOutputAutoscroll(false);"
-                >no</span></label>
-                --%>
 <%--
             </td>
             <td>--%>
