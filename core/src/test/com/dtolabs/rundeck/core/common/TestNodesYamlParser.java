@@ -264,6 +264,22 @@ public class TestNodesYamlParser extends TestCase {
             //no hostname value
             testReceiver recv = new testReceiver();
             ByteArrayInputStream is = new ByteArrayInputStream(
+                "- \n  hostname: bill\n  blah: test\n".getBytes());
+
+            NodesYamlParser nodesYamlParser = new NodesYamlParser(is, recv);
+            try {
+                nodesYamlParser.parse();
+                fail("parsing should fail");
+            } catch (NodeFileParserException e) {
+                assertTrue(e.getCause() instanceof IllegalArgumentException);
+                assertEquals("Required property 'nodename' was not specified", e.getCause().getMessage());
+            }
+
+        }
+        {
+            //no hostname value
+            testReceiver recv = new testReceiver();
+            ByteArrayInputStream is = new ByteArrayInputStream(
                 "test: \n  nodename: bill\n  blah: test\n".getBytes());
 
             NodesYamlParser nodesYamlParser = new NodesYamlParser(is, recv);
@@ -272,7 +288,7 @@ public class TestNodesYamlParser extends TestCase {
                 fail("parsing should fail");
             } catch (NodeFileParserException e) {
                 assertTrue(e.getCause() instanceof IllegalArgumentException);
-                assertEquals("hostname was not specified", e.getCause().getMessage());
+                assertEquals("Required property 'hostname' was not specified", e.getCause().getMessage());
             }
 
         }

@@ -25,10 +25,7 @@ package com.dtolabs.rundeck.core.common;
 
 
 import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.error.YAMLException;
-import org.yaml.snakeyaml.nodes.Tag;
-import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 import java.util.*;
@@ -58,7 +55,7 @@ public class NodesYamlParser implements NodeFileParser {
     /**
      * Create parser for an inputstream, and send parsed nodes to the nodes receiver
      *
-     * @param propfile
+     * @param inputStream input stream
      * @param nodes
      */
     public NodesYamlParser(final InputStream inputStream, final NodeReceiver nodes) {
@@ -87,10 +84,20 @@ public class NodesYamlParser implements NodeFileParser {
                 if (o instanceof Map) {
 
                     //name->{node data} map
-                    Map<String, Map<String, Object>> map = (Map<String, Map<String, Object>>) o;
+                    final Map<String, Map<String, Object>> map = (Map<String, Map<String, Object>>) o;
                     for (final String nodename : map.keySet()) {
-                        final Map<String, Object> nodemap = map.get(nodename);
-                        HashMap<String, Object> newmap = new HashMap<String, Object>(nodemap);
+                        final Object obj = map.get(nodename);
+                        if (null == obj) {
+                            throw new NodeFileParserException("Empty node entry for: " + nodename);
+                        }
+                        if(!(obj instanceof Map)) {
+                            throw new NodeFileParserException(
+                                "Expected map data for node entry '" + nodename + "', but saw: " + obj.getClass()
+                                    .getName());
+                        }
+                        final Map<String, Object> entry = map.get(nodename);
+
+                        final HashMap<String, Object> newmap = new HashMap<String, Object>(entry);
                         newmap.put("nodename", nodename);
                         final NodeEntryImpl iNodeEntry;
                         try {
@@ -104,7 +111,7 @@ public class NodesYamlParser implements NodeFileParser {
                 } else if (o instanceof Collection) {
 
                     //list of {node data} maps
-                    Collection<Map<String, Object>> map = (Collection<Map<String, Object>>) o;
+                    final Collection<Map<String, Object>> map = (Collection<Map<String, Object>>) o;
                     for (final Map<String, Object> nodemap : map) {
                         final NodeEntryImpl iNodeEntry;
                         try {
@@ -116,7 +123,7 @@ public class NodesYamlParser implements NodeFileParser {
                     }
                 }
             }
-        } catch (YAMLException e) {
+        } catch (Exception e) {
             throw new NodeFileParserException(e);
         }
     }
