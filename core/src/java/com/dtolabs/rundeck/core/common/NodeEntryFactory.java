@@ -87,10 +87,10 @@ public class NodeEntryFactory {
             e.printStackTrace();
         }
         if (null == nodeEntry.getNodename()) {
-            throw new IllegalArgumentException("nodename was not specified");
+            throw new IllegalArgumentException("Required property 'nodename' was not specified");
         }
         if (null == nodeEntry.getHostname()) {
-            throw new IllegalArgumentException("hostname was not specified");
+            throw new IllegalArgumentException("Required property 'hostname' was not specified");
         }
 
         //XXX: node entry refactor will change this
