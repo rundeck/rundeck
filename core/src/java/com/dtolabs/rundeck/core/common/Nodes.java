@@ -38,6 +38,25 @@ public class Nodes implements NodeReceiver {
     private final HashMap<String, INodeEntry> nodesByHostname;
 
     final private FrameworkProject project;
+    private boolean valid;
+    private NodeFileParserException parserException;
+
+    /**
+     * Return true if file was parsed correctly
+     * @return
+     */
+    public boolean isValid() {
+        return valid;
+    }
+
+    /**
+     * Return any exception thrown by parser if it is not valid, otherwise return false
+     * @return
+     */
+    public NodeFileParserException getParserException() {
+        return parserException;
+    }
+
 
     /**
      * Parsing format options
@@ -63,11 +82,18 @@ public class Nodes implements NodeReceiver {
         nodesFile = nodesDataFile;
         nodes=new HashMap<String, INodeEntry>();
         nodesByHostname=new HashMap<String, INodeEntry>();
+        valid=false;
         if(!nodesFile.exists()){
             logger.warn("nodes resource file doesn't exist: " + nodesFile.getAbsolutePath());
         }else{
             final NodeFileParser parser = createParser(this.project, nodesFile);
-            parser.parse();
+            try {
+                parser.parse();
+                valid=true;
+            } catch (NodeFileParserException e) {
+                this.parserException=e;
+                logger.error(e.getMessage(), e);
+            }
         }
         //add local node if it does not exist
         final String fwkNode = project.getFrameworkProjectMgr().getFramework().getFrameworkNodeName();
