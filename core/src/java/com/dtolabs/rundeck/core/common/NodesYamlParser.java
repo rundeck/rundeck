@@ -123,6 +123,8 @@ public class NodesYamlParser implements NodeFileParser {
                     }
                 }
             }
+        } catch (NodeFileParserException e) {
+            throw e;
         } catch (Exception e) {
             throw new NodeFileParserException(e);
         }
