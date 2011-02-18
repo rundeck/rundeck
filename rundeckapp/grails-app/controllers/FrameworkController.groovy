@@ -212,9 +212,12 @@ class FrameworkController  {
         }
 */
         def resources=[:]
-      
+
         def model=[
             allnodes: allnodes,
+            nodesvalid:nodes1.valid,
+            nodeserror:nodes1.parserException,
+            nodesfile:nodes1.file,
             params:params,
             total:total,
             allcount:allcount,
@@ -241,6 +244,9 @@ class FrameworkController  {
      */
     def nodesFragment = {ExtNodeFilters query->
         def result = nodes(query)
+        if(!result.nodesvalid){
+            request.error="Error parsing file \"${result.nodesfile}\": "+result.nodeserror.message
+        }
         render(template:"allnodes",model: result)
     }
     /**
