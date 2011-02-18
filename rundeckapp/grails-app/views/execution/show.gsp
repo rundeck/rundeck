@@ -256,36 +256,6 @@
                             id="appendBottomLabel"
                             onclick="followControl.setOutputAppendTop(false);"
                         >Bottom</span></label>
-                    <span
-                    class="action textbtn button"
-                    title="Click to change"
-                    id="autoscrollTrueLabel"
-                >
-                <input
-                    type="checkbox"
-                    name="outputautoscroll"
-                    id="outputautoscrolltrue"
-                    value="true"
-                    ${followmode=='tail'?'':'checked="CHECKED"'}
-                    onclick="followControl.setOutputAutoscroll($('outputautoscrolltrue').checked);"
-                    style=""/>
-
-                <label for="outputautoscrolltrue">Scroll</label></span>
-
-                <%--
-                <input
-                    type="radio"
-                    name="outputautoscroll"
-                    id="outputautoscrollfalse"
-                    value="false"
-                    style="display:none;"/>
-                <label for="outputautoscrollfalse"><span
-                    class="action textbtn button"
-                    title="Click to change"
-                    id="autoscrollFalseLabel"
-                    onclick="setOutputAutoscroll(false);"
-                >no</span></label>
-                --%>
 <%--
             </td>
             <td>--%>

@@ -26,7 +26,6 @@ var FollowControl = Class.create({
     collapseCtx: {value:true,changed:false},
     showFinalLine: {value:true,changed:false},
     groupOutput: {value: true},
-    autoscroll: true,
 
     lastrow:null,
     contextIdCounter: 0,
@@ -192,14 +191,6 @@ var FollowControl = Class.create({
                         e.addClassName('selected');
                     }else{
                         e.removeClassName('selected');
-                    }
-                });
-                $(this.targetElement).select('.opt_auto_scroll_true').each(function(e){
-                    e.checked=obj.autoscroll;
-                    if(obj.autoscroll){
-                        e.up('label').addClassName('selected');
-                    }else{
-                        e.up('label').removeClassName('selected');
                     }
                 });
                 $(this.targetElement).select('.opt_group_output').each(function(e){
@@ -397,23 +388,6 @@ var FollowControl = Class.create({
             }
         }
     },
-    setOutputAutoscroll: function(val) {
-        this.autoscroll = val;
-        if ($('autoscrollTrueLabel')) {
-            if (val) {
-                $('autoscrollTrueLabel').addClassName('selected');
-            } else {
-                $('autoscrollTrueLabel').removeClassName('selected');
-            }
-        }
-        if ($('autoscrollFalseLabel')) {
-            if (val) {
-                $('autoscrollFalseLabel').removeClassName('selected');
-            } else {
-                $('autoscrollFalseLabel').addClassName('selected');
-            }
-        }
-    },
     setOutputAppendTop: function(istop) {
         if (this.appendtop.value != istop) {
             this.appendtop.changed = !this.appendtop.changed;
@@ -544,14 +518,6 @@ var FollowControl = Class.create({
             }
         }
 
-        if (needsScroll && this.autoscroll && $('commandPerform')) {
-            if (document.body.scrollHeight) {
-                window.scrollTo(0, document.body.scrollHeight);
-            }
-            else if (screen.height) { // IE5
-                window.scrollTo(0, screen.height);
-            }
-        }
 
         if (this.runningcmd.completed && this.runningcmd.jobcompleted) {
             //halt timer
