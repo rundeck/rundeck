@@ -44,7 +44,7 @@
 
                                 <g:if test="${!session.project}">
                                 <span class="project">
-                                    &bull; <span class="action textbtn" onclick="selectProject('${scheduledExecution.project.encodeAsJavaScript()}');" title="Select this project">${scheduledExecution.project}</span> 
+                                    &bull; <span class="action textbtn" onclick="selectProject('${scheduledExecution.project.encodeAsJavaScript()}');" title="Select this project">${scheduledExecution.project.encodeAsHTML()}</span> 
                                 </span>
                                 </g:if>
                                 <span class="jobdesc" title="${scheduledExecution.description.encodeAsHTML()}">${scheduledExecution.description.encodeAsHTML()}</span>

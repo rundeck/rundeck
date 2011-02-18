@@ -36,31 +36,31 @@
                         <g:expander key="${ukey+'node_detail_'+i}" imgfirst="true">
                         <span class="node_ident" id="${ukey}_${node.nodename}_key">
                             <img src="${resource(dir:'images',file:'icon-small-Node.png')}" alt="Node" width="16px" height="16px"/>
-                            ${resName}
+                            ${resName.encodeAsHTML()}
                         </span>
                         </g:expander>
                     </g:if>
                     <g:else>
                         <span class="node_ident" id="${ukey}_${node.nodename}_key">
                             <img src="${resource(dir:'images',file:'icon-small-Node.png')}" alt="Node" width="16px" height="16px"/>
-                            ${resName}
+                            ${resName.encodeAsHTML()}
                         </span>
                     </g:else>
 
                     <g:if test="${!session.project}">
                     <span class="project">
-                        &bull; <span class="action textbtn" onclick="selectProject('${nodedata.project.name.encodeAsJavaScript()}');" title="Select this project">${nodedata.project.name}</span>
+                        &bull; <span class="action textbtn" onclick="selectProject('${nodedata.project.name.encodeAsJavaScript()}');" title="Select this project">${nodedata.project.name.encodeAsHTML()}</span>
                     </span>
                     </g:if>
                     </td>
                 <td class="desc"  title="Description">
-                        <span class="desc">${node.description}</span>
+                        <span class="desc">${node.description?.encodeAsHTML()}</span>
                 </td>
                 <td  title="Tags">
                     <g:if test="${node.tags}">
                         <span class="nodetags">
                             <g:each var="tag" in="${node.tags}">
-                                <g:link class="tag action" action="nodes" params="${[nodeIncludeTags:tag]}" title="Filter by tag: ${tag}">${tag}</g:link>
+                                <g:link class="tag action" action="nodes" params="${[nodeIncludeTags:tag]}" title="Filter by tag: ${tag.encodeAsHTML()}">${tag.encodeAsHTML()}</g:link>
                                 %{--<span class="action textbtn" onclick="setTagFilter('${tag.encodeAsJavaScript()}');" title="Add to existing filter">+</span>--}%
                             </g:each>
                         </span>
@@ -68,10 +68,10 @@
                 </td>
 
                 <td class="username"  title="Username">
-                        ${node.username} <span class="atsign">@</span>
+                        ${node.username?.encodeAsHTML()} <span class="atsign">@</span>
                 </td>
                 <td class="hostname"  title="Hostname">
-                        ${node.hostname}
+                        ${node.hostname.encodeAsHTML()}
                 </td>
                 <td>
                     <g:if test="${node.attributes?.remoteUrl}">
@@ -88,7 +88,7 @@
                             nodecontextdata.project=nodedata.project.name
                         %>
                         <g:set var="editUrl" value="${DataContextUtils.replaceDataReferences(node.attributes?.editUrl,[node:nodecontextdata])}" />
-                        <a href="${editUrl}" target="_blank" title="Opens a link to edit this node at a remote site.">Edit</a>
+                        <a href="${editUrl.encodeAsHTML()}" target="_blank" title="Opens a link to edit this node at a remote site.">Edit</a>
                     </g:elseif>
 
                 </td>
