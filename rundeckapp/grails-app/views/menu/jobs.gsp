@@ -1,5 +1,6 @@
 <html>
 <head>
+    <g:set var="rkey" value="${g.rkey()}" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="jobs"/>
@@ -275,6 +276,15 @@
                 Event.observe(e,'mouseout',jobLinkMouseout.curry(e));
             });
         }
+         function filterToggle(evt) {
+            ['${rkey}filter','${rkey}filter-toggle'].each(Element.toggle);
+            ['outsidefiltersave'].each($('${rkey}filter').visible()?Element.hide:Element.show);
+        }
+        function filterToggleSave(evt) {
+            ['${rkey}filter','${rkey}fsave'].each(Element.show);
+            ['${rkey}filter-toggle','${rkey}fsavebtn'].each(Element.hide);
+            ['outsidefiltersave'].each($('${rkey}filter').visible()?Element.hide:Element.show);
+        }
         function init(){
             loadNowRunning();
             initJobIdLinks();
@@ -289,6 +299,13 @@
                 }
                 return true;
             },false);
+
+            $$('.obs_filtertoggle').each(function(e) {
+                Event.observe(e, 'click', filterToggle);
+            });
+            $$('.obs_filtersave').each(function(e) {
+                Event.observe(e, 'click', filterToggleSave);
+            });
         }
         Event.observe(window,'load',init);
     </script>
@@ -341,7 +358,7 @@
     <div id="error" class="error" style="display:none;"></div>
 </div>
 <div class="runbox jobs" id="indexMain">
-    <g:render template="workflowsFull" model="${[jobgroups:jobgroups,wasfiltered:wasfiltered?true:false,nowrunning:nowrunning,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
+    <g:render template="workflowsFull" model="${[jobgroups:jobgroups,wasfiltered:wasfiltered?true:false,nowrunning:nowrunning,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,rkey:rkey]}"/>
 </div>
 <div id="execDiv" style="display:none">
 
