@@ -441,19 +441,14 @@
         /**
          * filter toggle
          */
-        <g:set var="isCompact" value="${params.compact?true:false}"/>
         function filterToggle(evt) {
             ['${rkey}filter','${rkey}filterdispbtn'].each(Element.toggle);
-            if (${isCompact}) {
-                $('${rkey}nodescontent').toggle();
-            }
+            ['outsidefiltersave'].each($('${rkey}filter').visible()?Element.hide:Element.show);
         }
         function filterToggleSave(evt) {
             ['${rkey}filter','${rkey}fsave'].each(Element.show);
             ['${rkey}filterdispbtn','${rkey}fsavebtn'].each(Element.hide);
-            if (${isCompact}) {
-                $('${rkey}nodescontent').hide();
-            }
+            ['outsidefiltersave'].each($('${rkey}filter').visible()?Element.hide:Element.show);
         }
 
         /** START history
@@ -710,7 +705,7 @@
 
 
                         <g:if test="${!filterName}">
-                            <span class="prompt action obs_filtersave" title="Click to save this filter with a name">
+                            <span class="prompt action obs_filtersave" title="Click to save this filter with a name" id="outsidefiltersave">
                                 save this filter&hellip;
                             </span>
                         </g:if>

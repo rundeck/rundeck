@@ -25,9 +25,8 @@
 <g:timerStart key="_workflowsFull.gsp"/>
 <g:timerStart key="head"/>
 <%-- define form display conditions --%>
-<g:set var="isCompact" value="${params.compact?true:false}"/>
 
-<g:set var="rkey" value="${g.rkey()}"/>
+<g:set var="rkey" value="${rkey?:g.rkey()}"/>
 
 <g:if test="${session.user && User.findByLogin(session.user)?.jobfilters}">
     <g:set var="filterset" value="${User.findByLogin(session.user)?.jobfilters}"/>
@@ -55,7 +54,7 @@
                 <g:if test="${params.compact}">
                     <g:hiddenField name="compact" value="${params.compact}"/>
                 </g:if>
-                <span class="prompt action" onclick="['${rkey}filter','${rkey}filter-toggle'].each(Element.toggle);if(${isCompact}){$('${rkey}wfcontent').toggle();}">
+                <span class="prompt action obs_filtertoggle">
                     Filter
                     <img src="${resource(dir:'images',file:'icon-tiny-disclosure-open.png')}" width="12px" height="12px"/>
                 </span>
@@ -119,12 +118,12 @@
                         <!--<span class="info note">Filter:</span>-->
                     </g:if>
                     <g:if test="${!filterName}">
-                        <span class="prompt action " onclick="['${rkey}filter','${rkey}filter-toggle','${rkey}fsave','${rkey}fsavebtn'].each(Element.toggle);if(${isCompact}){$('${rkey}wfcontent').toggle();}" id="${rkey}fsavebtn" title="Click to save this filter with a name">
+                        <span class="prompt action obs_filtersave" id="outsidefiltersave" title="Click to save this filter with a name">
                             save this filter&hellip;
                         </span>
                     </g:if>
                     <div style="padding:5px 0;margin:5px 0;" id='${rkey}filter-toggle'>
-                            <span title="Click to modify filter" class="info textbtn query action" onclick="['${rkey}filter','${rkey}filter-toggle'].each(Element.toggle);if(${isCompact}){$('${rkey}wfcontent').toggle();}" >
+                            <span title="Click to modify filter" class="info textbtn query action obs_filtertoggle"  >
                                 <g:each in="${wasfiltered.sort()}" var="qparam">
                                     <span class="querykey"><g:message code="jobquery.title.${qparam}"/></span>:
 
@@ -149,7 +148,7 @@
                     <span class="prompt"><g:message code="domain.ScheduledExecution.title"/>s (${total})</span>
                     </g:if>
 
-                    <span class="prompt action" onclick="['${rkey}filter','${rkey}filter-toggle'].each(Element.toggle);if(${isCompact}){$('${rkey}wfcontent').toggle();}" id="${rkey}filter-toggle">
+                    <span class="prompt action obs_filtertoggle"  id="${rkey}filter-toggle">
                         Filter
                         <img src="${resource(dir:'images',file:'icon-tiny-disclosure'+(wasfiltered?'-open':'')+'.png')}"  width="12px" height="12px"/></span>
                     <g:if test="${filterset}">
