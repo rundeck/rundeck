@@ -99,6 +99,13 @@
             <td style="text-align:left;vertical-align:top;" id="${rkey}wfcontent" class="wfcontent">
 
                 <div class="jobscontent head">
+    <g:if test="${!params.compact}">
+        <auth:allowed job="[jobName:'create',groupPath:'ui']" name="${UserAuth.WF_CREATE}">
+        <div class=" floatr" >
+            <g:link controller="scheduledExecution" action="create" class="button ">New <g:message code="domain.ScheduledExecution.title"/>&hellip;</g:link>
+        </div>
+        </auth:allowed>
+    </g:if>
 
                 <g:if test="${wasfiltered}">
 
@@ -152,13 +159,6 @@
                         </span>
                     </g:if>
                 </g:else>
-    <g:if test="${!params.compact}">
-        <auth:allowed job="[jobName:'create',groupPath:'ui']" name="${UserAuth.WF_CREATE}">
-        <div class=" floatr" >
-            <g:link controller="scheduledExecution" action="create" class="button ">New <g:message code="domain.ScheduledExecution.title"/>&hellip;</g:link>
-        </div>
-        </auth:allowed>
-    </g:if>
                 </div>
 
                 <g:if test="${flash.savedJob}">
