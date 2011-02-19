@@ -36,12 +36,29 @@ public class ScheduledExecutionFilter {
     static belongsTo = [user:User]
     static constraints={
         idlist(nullable:true)
+        jobFilter(nullable:true)
         projFilter(nullable:true)
+        groupPath(nullable:true)
+        descFilter(nullable:true)
+        loglevelFilter(nullable:true)
     }
 
     public ScheduledExecutionQuery createQuery(){
         ScheduledExecutionQuery query = new ScheduledExecutionQuery(this.properties.findAll{it.key=~/(.*Filter|groupPath|idlist)$/})
         return query
+    }
+
+    public static ScheduledExecutionFilter fromQuery(ScheduledExecutionQuery query){
+        final ScheduledExecutionFilter filter = new ScheduledExecutionFilter(query.properties.findAll{it.key=~/(.*Filter|groupPath|idlist)$/})
+        filter.fix()
+        return filter
+    }
+    public void fix(){
+        ['idlist','jobFilter','projFilter','groupPath', 'descFilter', 'loglevelFilter'].each{
+            if(!this[it]){
+                this[it]=''
+            }
+        }
     }
 
 }
