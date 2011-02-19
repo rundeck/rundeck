@@ -25,6 +25,6 @@
     <g:if test="${displayParams[qparam]}">
     <span class="querykey ${qparam=~/Exclude/?'exclude':'include'}"><g:message code="BaseNodeFilters.title.${qparam}"/></span>:
     <span class="queryvalue text ${qparam=~/Exclude/?'exclude':'include'}">
-        <g:message code="${'BaseNodeFilters.title.'+qparam+'.'+displayParams[qparam]}" default="${displayParams[qparam].toString()}"/></span>
+        <g:truncate max="50" title="${displayParams[qparam].toString().encodeAsHTML()}"><g:message code="${'BaseNodeFilters.title.'+qparam+'.'+displayParams[qparam]}" default="${displayParams[qparam].toString().encodeAsHTML()}"/></g:truncate></span>
     </g:if>
 </g:each>
