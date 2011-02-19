@@ -58,7 +58,7 @@
                     Filter
                     <img src="${resource(dir:'images',file:'icon-tiny-disclosure-open.png')}" width="12px" height="12px"/>
                 </span>
-                <g:render template="/common/queryFilterManager" model="${[rkey:rkey,filterName:filterName,filterset:filterset,update:rkey+'wffilterform',deleteActionSubmitRemote:[controller:'menu',action:'deleteJobfilter',params:[fragment:true]],storeActionSubmitRemote:[controller:'menu',action:'storeJobfilter',params:[fragment:true]]]}"/>
+                <g:render template="/common/queryFilterManager" model="${[rkey:rkey,filterName:filterName,filterset:filterset,update:rkey+'wffilterform',deleteActionSubmit:'deleteJobfilter',storeActionSubmit:'storeJobfilter']}"/>
                 
                 <div class="filter">
 
@@ -86,8 +86,8 @@
 
                             <tr>
                                 <td colspan="2">
-                                    <g:submitToRemote  value="Filter" name="filterAll" url="[controller:'menu',action:'workflowsFragment']" update="${rkey}wffilterform" />
-                                    <g:submitToRemote  value="Clear" name="clearFilter" url="[controller:'menu',action:'workflowsFragment',params:[Clear:'Clear']]" update="${rkey}wffilterform" />
+                                    <g:actionSubmit  value="Filter" name="filterAll" controller='menu' action='workflows'  />
+                                    <g:actionSubmit  value="Clear" name="clearFilter" controller='menu' action='workflows' />
                                 </td>
                             </tr>
                             </table>
@@ -107,7 +107,7 @@
     </g:if>
 
                 <g:if test="${wasfiltered}">
-
+                    <div>
                     <g:if test="${!params.compact}">
                         <span class="prompt">${total} <g:message code="domain.ScheduledExecution.title"/>s</span>
                             matching filter:
@@ -121,9 +121,9 @@
                         <span class="prompt action obs_filtersave" id="outsidefiltersave" title="Click to save this filter with a name">
                             save this filter&hellip;
                         </span>
-                    </g:if>
-                    <div style="padding:5px 0;margin:5px 0;" id='${rkey}filter-toggle'>
-                            <span title="Click to modify filter" class="info textbtn query action obs_filtertoggle"  >
+                    </g:if></div>
+
+                            <span title="Click to modify filter" class="info textbtn query action obs_filtertoggle"  id='${rkey}filter-toggle'>
                                 <g:each in="${wasfiltered.sort()}" var="qparam">
                                     <span class="querykey"><g:message code="jobquery.title.${qparam}"/></span>:
 
@@ -134,14 +134,13 @@
                                     </g:if>
                                     <g:else>
                                         <span class="queryvalue text">
-                                            ${g.message(code:'jobquery.title.'+qparam+'.label.'+paginateParams[qparam].toString(),default:paginateParams[qparam].toString())}
+                                            ${g.message(code:'jobquery.title.'+qparam+'.label.'+paginateParams[qparam].toString(),default:paginateParams[qparam].toString().encodeAsHTML())}
                                         </span>
                                     </g:else>
 
                                 </g:each>
                                 <img src="${resource(dir:'images',file:'icon-tiny-disclosure.png')}" width="12px" height="12px"/>
                             </span>
-                        </div>
                 </g:if>
                 <g:else>
                     <g:if test="${!params.compact}">
@@ -158,13 +157,14 @@
                         </span>
                     </g:if>
                 </g:else>
+                    <div class="clear"></div>
                 </div>
 
                 <g:if test="${flash.savedJob}">
                     <div class="newjob">
                     <span class="popout message note" style="background:white">
                         ${flash.savedJobMessage?flash.savedJobMessage:'Saved changes to Job'}:
-                        <g:link controller="scheduledExecution" action="show" id="${flash.savedJob.id}">${flash.savedJob.generateFullName()}</g:link>
+                        <g:link controller="scheduledExecution" action="show" id="${flash.savedJob.id}">${flash.savedJob.generateFullName().encodeAsHTML()}</g:link>
                     </span>
                     </div>
                     <g:javascript>

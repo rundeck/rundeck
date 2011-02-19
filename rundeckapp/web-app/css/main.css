@@ -1503,6 +1503,8 @@ span.query span.queryvalue.date,a.query span.queryvalue.date{
 }
 span.query.textbtn,a.query.textbtn{
     border:1px solid blue;
+    display:block;float:left;
+    margin: 5px 5px 5px 0;
 }
 span.query.textbtn span.querykey,a.query.textbtn span.querykey{
     color: #555;
