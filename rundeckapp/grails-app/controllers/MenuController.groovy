@@ -322,7 +322,7 @@ class MenuController {
             filter.name=params.newFilterName
             filter.user=u
             if(!filter.validate()){
-                flash.error=filter.errors.allErrors.collect { g.message(error:it) }.join("<br>")
+                flash.error=filter.errors.allErrors.collect { g.message(error:it).encodeAsHTML()}.join("<br>")
                 params.saveFilter=true
                 return redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:params)
             }
@@ -349,8 +349,7 @@ class MenuController {
             if(!u.save(flush:true)){
                 //                u.errors.allErrors.each { log.error(g.message(error:it)) }
                 //                flash.error="Unable to save filter for user"
-                flash.error=u.errors.allErrors.collect { g.message(error:it)
-                }.join("\n")
+                flash.error=filter.errors.allErrors.collect { g.message(error:it).encodeAsHTML()}.join("\n")
                 return render(template:"/common/error")
             }
         }
@@ -369,7 +368,7 @@ class MenuController {
         final def ffilter = ScheduledExecutionFilter.findByNameAndUser(filtername, u)
         if(ffilter){
             ffilter.delete(flush:true)
-            flash.message="Filter deleted: ${filtername}"
+            flash.message="Filter deleted: ${filtername.encodeAsHTML()}"
         }
         redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:[compact:params.compact?'true':''])
     }
