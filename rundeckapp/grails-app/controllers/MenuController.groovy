@@ -318,32 +318,38 @@ class MenuController {
         def ScheduledExecutionFilter filter
         def boolean saveuser=false
         if(params.newFilterName && !params.existsFilterName){
-            filter= new ScheduledExecutionFilter(query.properties)
+            filter= ScheduledExecutionFilter.fromQuery(query)
             filter.name=params.newFilterName
+            filter.user=u
+            if(!filter.validate()){
+                flash.error=filter.errors.allErrors.collect { g.message(error:it).encodeAsHTML()}.join("<br>")
+                params.saveFilter=true
+                return redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:params)
+            }
             u.addToJobfilters(filter)
             saveuser=true
         }else if(params.existsFilterName){
             filter = ScheduledExecutionFilter.findByNameAndUser(params.existsFilterName,u)
             if(filter){
                 filter.properties=query.properties
+                filter.fix()
             }
         }else if(!params.newFilterName && !params.existsFilterName){
             flash.error="Filter name not specified"
             params.saveFilter=true
-            chain(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:params)
+            return redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:params)
         }
         if(!filter.save(flush:true)){
             flash.error=filter.errors.allErrors.collect { g.message(error:it)
             }.join("<br>")
             params.saveFilter=true
-            chain(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:params)
+            return redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:params)
         }
         if(saveuser){
             if(!u.save(flush:true)){
                 //                u.errors.allErrors.each { log.error(g.message(error:it)) }
                 //                flash.error="Unable to save filter for user"
-                flash.error=u.errors.allErrors.collect { g.message(error:it)
-                }.join("\n")
+                flash.error=filter.errors.allErrors.collect { g.message(error:it).encodeAsHTML()}.join("\n")
                 return render(template:"/common/error")
             }
         }
@@ -362,7 +368,7 @@ class MenuController {
         final def ffilter = ScheduledExecutionFilter.findByNameAndUser(filtername, u)
         if(ffilter){
             ffilter.delete(flush:true)
-            flash.message="Filter deleted: ${filtername}"
+            flash.message="Filter deleted: ${filtername.encodeAsHTML()}"
         }
         redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:[compact:params.compact?'true':''])
     }

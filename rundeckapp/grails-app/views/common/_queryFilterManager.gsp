@@ -50,7 +50,7 @@
 </g:if>
 <g:if test="${filterName}">
     <div class="filterdef saved">
-        <span class="prompt">${filterName}</span>
+        <span class="prompt">${filterName.encodeAsHTML()}</span>
         <span class="prompt action floatr" onclick="['${rkey}fdel','${rkey}fdelbtn'].each(Element.toggle);" id="${rkey}fdelbtn" title="Click to delete this saved filter">
             delete&hellip;
         </span>
