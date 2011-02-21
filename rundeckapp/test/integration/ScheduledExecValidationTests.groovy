@@ -473,6 +473,167 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         assertEquals "original desc",test.description
         assertEquals "echo original test",test.workflow.commands[0].adhocRemoteString
     }
+
+    public void testUploadShouldOverwriteFilters(){
+        def sec = new ScheduledExecutionController()
+
+		sec.metaClass.request = new MockMultipartHttpServletRequest()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
+        fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
+        fwkControl.demand.existsFrameworkProject{project,framework-> return true }
+        sec.frameworkService=fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.nextExecutionTimes{joblist-> return [] }
+        sec.scheduledExecutionService=mock2.createMock()
+
+        //create original job
+        final CommandExec exec = new CommandExec(adhocExecution: true, adhocRemoteString: "echo original test")
+        exec.save()
+        def wf=new Workflow(commands:[exec])
+        wf.save()
+        def se = new ScheduledExecution(jobName:'testUploadOverwritesFilters',groupPath:"testgroup",project:'project1',description:'original desc',
+            doNodedispatch:true,nodeInclude:"monkey.*",nodeExcludeOsFamily:'windows',nodeIncludeTags:'something',
+            workflow:wf
+        )
+        se.save()
+        assertNotNull se.id
+
+        //test updating filters
+
+        def xml = '''
+<joblist>
+    <job>
+        <name>testUploadOverwritesFilters</name>
+        <group>testgroup</group>
+        <description>desc</description>
+        <context>
+            <project>project1</project>
+        </context>
+        <dispatch threadcount="1" keepgoing="true"/>
+        <nodefilters excludeprecedence="true">
+          <include>
+             <hostname>asuka</hostname>
+             <name>test</name>
+          </include>
+          <exclude>
+             <hostname>testo</hostname>
+             <tags>dev</tags>
+          </exclude>
+        </nodefilters>
+        <sequence>
+            <command><exec>echo test</exec></command>
+        </sequence>
+    </job>
+</joblist>
+'''
+        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
+        //set update
+        sec.params.dupeOption='update'
+        def result = sec.upload()
+        //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
+        assertNull sec.response.redirectedUrl
+        assertNull "Result had an error: ${sec.flash.error}",sec.flash.error
+        assertNotNull result
+        assertTrue result.didupload
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        assertEquals "shouldn't have skipped jobs: ${result.skipjobs}",0,result.skipjobs.size()
+        assertEquals "shouldn't have error jobs: ${result.errjobs}",0,result.errjobs.size()
+        assertEquals "should have success jobs: ${result.jobs}",1,result.jobs.size()
+        assertEquals se.id,result.jobs[0].id
+
+        //get original job and test values
+        ScheduledExecution test = ScheduledExecution.get(se.id)
+        assertNotNull test
+        assertTrue test.doNodedispatch
+        assertEquals "asuka",test.nodeInclude
+        assertEquals "test",test.nodeIncludeName
+        assertNull "wrong value",test.nodeIncludeTags
+        assertEquals "testo",test.nodeExclude
+        assertEquals "dev",test.nodeExcludeTags
+        assertNull "wrong value",test.nodeExcludeOsFamily
+    }
+
+    public void testUploadShouldRemoveFilters(){
+        def sec = new ScheduledExecutionController()
+
+		sec.metaClass.request = new MockMultipartHttpServletRequest()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
+        fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
+        fwkControl.demand.existsFrameworkProject{project,framework-> return true }
+        sec.frameworkService=fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.nextExecutionTimes{joblist-> return [] }
+        sec.scheduledExecutionService=mock2.createMock()
+
+        //create original job
+        final CommandExec exec = new CommandExec(adhocExecution: true, adhocRemoteString: "echo original test")
+        exec.save()
+        def wf=new Workflow(commands:[exec])
+        wf.save()
+        def se = new ScheduledExecution(jobName:'testUploadOverwritesFilters',groupPath:"testgroup",project:'project1',description:'original desc',
+            doNodedispatch:true,nodeInclude:"monkey.*",nodeExcludeOsFamily:'windows',nodeIncludeTags:'something',
+            workflow:wf
+        )
+        se.save()
+        assertNotNull se.id
+
+        //test removing filters
+
+        def xml = '''
+<joblist>
+    <job>
+        <name>testUploadOverwritesFilters</name>
+        <group>testgroup</group>
+        <description>desc</description>
+        <context>
+            <project>project1</project>
+        </context>
+
+
+        <sequence>
+            <command><exec>echo test</exec></command>
+        </sequence>
+    </job>
+</joblist>
+'''
+        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
+        //set update
+        sec.params.dupeOption='update'
+        def result = sec.upload()
+        //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
+        assertNull sec.response.redirectedUrl
+        assertNull "Result had an error: ${sec.flash.error}",sec.flash.error
+        assertNotNull result
+        assertTrue result.didupload
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        assertEquals "shouldn't have skipped jobs: ${result.skipjobs}",0,result.skipjobs.size()
+        assertEquals "shouldn't have error jobs: ${result.errjobs}",0,result.errjobs.size()
+        assertEquals "should have success jobs: ${result.jobs}",1,result.jobs.size()
+        assertEquals se.id,result.jobs[0].id
+
+        //get original job and test values
+        ScheduledExecution test = ScheduledExecution.get(se.id)
+        assertNotNull test
+        assertTrue !test.doNodedispatch
+        assertNull "wrong value",test.nodeInclude
+        assertNull "wrong value",test.nodeIncludeName
+        assertNull "wrong value",test.nodeIncludeTags
+        assertNull "wrong value",test.nodeExclude
+        assertNull "wrong value",test.nodeExcludeTags
+        assertNull "wrong value",test.nodeExcludeOsFamily
+    }
     public void testDoValidate(){
         def sec = new ScheduledExecutionController()
 
@@ -1655,6 +1816,56 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             assertNull execution.notifications
             assertNull execution.options
+        }
+    }
+    public void testDoUpdateJobShouldReplaceFilters(){
+        def sec = new ScheduledExecutionController()
+        if(true){//test update basic job details
+            def se = new ScheduledExecution(jobName:'monkey1',project:'testProject',description:'',
+                doNodedispatch:true, nodeInclude:"hostname",
+                workflow: new Workflow(commands:[new CommandExec(adhocRemoteString:'test command',adhocExecution:true)])
+            )
+            se.save()
+
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
+            fwkControl.demand.existsFrameworkProject{project,framework->
+                assertEquals 'testProject2',project
+                return true
+            }
+            fwkControl.demand.getCommand{project,type,command,framework->
+                assertEquals 'testProject2',project
+                assertEquals 'aType2',type
+                assertEquals 'aCommand2',command
+                return null
+            }
+            sec.frameworkService=fwkControl.createMock()
+
+            def params=new ScheduledExecution(jobName:'monkey2',project:'testProject2',description:'',
+                doNodedispatch:true, nodeIncludeName:"nodename",
+                workflow: new Workflow(commands:[new CommandExec(adhocRemoteString:'test command',adhocExecution:true)])
+            )
+            def results=sec._doupdateJob(se.id.toString(),params)
+            def succeeded=results[0]
+            def scheduledExecution=results[1]
+            if(scheduledExecution && scheduledExecution.errors.hasErrors()){
+                scheduledExecution.errors.allErrors.each{
+                    System.err.println(it);
+                }
+            }
+            assertTrue succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = scheduledExecution
+            assertNotNull(execution)
+            assertNotNull(execution.errors)
+            assertFalse(execution.errors.hasErrors())
+            assertTrue execution.doNodedispatch
+            assertEquals "nodename",execution.nodeIncludeName
+            assertNull "Filters should have been replaced, but hostname was: ${execution.nodeInclude}", execution.nodeInclude
         }
     }
 
