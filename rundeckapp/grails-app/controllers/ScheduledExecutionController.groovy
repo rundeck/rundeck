@@ -836,6 +836,8 @@ class ScheduledExecutionController  {
         scheduledExecution.properties =null
         final Collection foundprops = params.properties.keySet().findAll {it != 'lastUpdated' && it != 'dateCreated' && (params.properties[it] instanceof String || params.properties[it] instanceof Boolean) }
         final Map newprops = foundprops ? params.properties.subMap(foundprops) : [:]
+        //clear filter params
+        scheduledExecution.clearFilterFields()
         scheduledExecution.properties = newprops
 
         //clear old mode job properties
