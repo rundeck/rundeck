@@ -73,7 +73,7 @@ class FrameworkController  {
         }
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         if(query.nodeFilterIsEmpty()){
-            if(params.formInput=='true'){
+            if(params.formInput=='true' && 'true'!=params.defaultLocalNode){
                 query.nodeIncludeName = '.*'
             }else{
                 query.nodeIncludeName = framework.getFrameworkNodeName()
