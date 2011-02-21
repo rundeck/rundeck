@@ -4,7 +4,7 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="events"/>
     <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="${createLink(controller:"feed",action:"index",params:paginateParams?paginateParams:[:])}"/>
-    <title><g:message code="main.app.name"/></title>
+    <title><g:message code="gui.menu.Events"/></title>
     <g:javascript>
                 
 
