@@ -198,5 +198,9 @@
         background: white url("${resource(dir:'images',file:'icon-small-Node.png')}") no-repeat 2px top;
         padding-left: 20px;
     }
+    .embed .node_entry.glow{
+        background: #cfc url("${resource(dir:'images',file:'icon-small-Node.png')}") no-repeat 2px top;
+        padding-left: 20px;
+    }
 
 </style>

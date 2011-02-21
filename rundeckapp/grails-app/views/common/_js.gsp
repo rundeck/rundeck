@@ -49,6 +49,14 @@
         return element;
     };
 
+    var _tooltipElemSelector=null;
+
+    var tooltipMouseOut=function(){
+        if(_tooltipElemSelector){
+            $$('.tooltipcontent').each(Element.hide);
+            $$(_tooltipElemSelector).each(function(e){$(e).removeClassName('glow');});
+        }
+    };
     /**
      * initialize a tooltip detail view for the matching elements.
      * The tooltipe element is identified by the 'id' of the matching element
@@ -59,15 +67,17 @@
      * @param selector a selector expression to identify a set of elements
      */
     var initTooltipForElements=function(selector){
+        _tooltipElemSelector=selector;
         $$(selector).each(function(elem){
             var ident=elem.identify();
             if($(ident+'_tooltip')){
                 elem.onmouseover=function(){
+                    tooltipMouseOut();
+
+                    $(elem).addClassName('glow');
                     new MenuController().showRelativeTo(elem,ident+'_tooltip');
                 };
-                elem.onmouseout=function(){
-                    $(ident+'_tooltip').hide();
-                };
+                elem.onmouseout=tooltipMouseOut;
             }
         });
     };

@@ -1949,16 +1949,15 @@ div.project_group a.project,tr.project_group a.project{
 tr.node_entry td,tr.object_entry td{
     vertical-align:top;
 }
-tr.node_entry.server span.node_ident,.node_entry.server span.node_ident{
+tr.node_entry.server span.node_ident,.node_entry.server.node_ident,.node_entry.server span.node_ident{
     /*text-shadow: 1px 1px 2px #faa;*/
     font-weight:bold;
-    background:transparent;
     border:0;
 }
 tr.node_entry.server span.desc,.node_entry.server span.desc{
 
 }
-tr.node_entry.server span.desc:before,.node_entry.server span.desc:before{
+tr.node_entry.server span.desc:before,.node_entry.server span.desc:before,.nodedetail.server span.desc:before{
     color:#f66;
     content: " server " "\2022" " ";
 }
