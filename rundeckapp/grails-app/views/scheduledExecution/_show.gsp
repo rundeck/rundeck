@@ -33,29 +33,6 @@
 
 <div class="pageBody" id="schedExecPage">
 
-    <table class="simpleForm">
-        <g:if test="${scheduledExecution!=null && scheduledExecution.id && scheduledExecution.scheduled}">
-            <tr>
-                <td class="label">Schedule:</td>
-                <td>
-                    <tmpl:showCrontab scheduledExecution="${scheduledExecution}" crontab="${crontab}"/>
-                </td>
-            </tr>
-            <tr>
-                <td></td>
-                <td>
-                    <g:if test="${nextExecution}">
-                        <div>Next execution
-                        <g:relativeDate elapsed="${nextExecution}" untilClass="timeuntil"/>
-                        at <span class="timeabs">${nextExecution}</span>
-                        </div>
-                    </g:if>
-                </td>
-            </tr>
-        </g:if>
-
-    </table>
-
     %{--<g:expander key="schedExDetails${scheduledExecution?.id?scheduledExecution?.id:''}" imgfirst="true">Details</g:expander>--}%
     <span class="prompt">Details</span>
     <div class="presentation"  id="schedExDetails${scheduledExecution?.id}" style="max-width:600px; width:600px;">
