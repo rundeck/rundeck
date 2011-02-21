@@ -10,17 +10,14 @@
             <g:set var="resources" value="${nodedata.resources}"/>
             <g:set var="resName" value="${node.nodename}"/>
             <g:set var="resHost" value="${node.hostname}"/>
-            <span class="${i%2==1?'alternateRow':''} node_entry ${nodedata.islocal?'server':''}" >
-                <span class="node_ident" id="${node.nodename}_key">
-                    %{--<img src="${resource(dir:'images',file:'icon-small-Node.png')}" alt="Node" width="16px" height="16px"/>--}%
-                    ${node.nodename.encodeAsHTML()}
-                </span>
-                <g:render template="nodeTooltipView" model="[node:node,key:node.nodename+'_key',islocal:nodedata.islocal]"/>
+            <span class="${i%2==1?'alternateRow':''} node_entry ${nodedata.islocal?'server':''} node_ident" id="${node.nodename}_key" >
+                ${node.nodename.encodeAsHTML()}
             </span>
+            <g:render template="nodeTooltipView" model="[node:node,key:node.nodename+'_key',islocal:nodedata.islocal]"/>
             <% i++ %>
         </g:each>
         <g:javascript>
             if(typeof(initTooltipForElements)=='function'){
-                initTooltipForElements('span.node_entry span.node_ident');
+                initTooltipForElements('span.node_entry.node_ident');
             }
         </g:javascript>

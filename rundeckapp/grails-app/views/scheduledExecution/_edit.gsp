@@ -137,8 +137,22 @@ var applinks={
              }
              return true;
          }
+        function pageinit(){
+            _enableDragdrop();
+            Event.observe(document.body,'click',function(evt){
+                //click outside of popup bubble hides it
+                tooltipMouseOut();
+            },false);
+            Event.observe(document.body,'keydown',function(evt){
+                //escape key hides popup bubble
+                if(evt.keyCode===27 ){
+                    tooltipMouseOut();
+                }
+                return true;
+            },false);
+        }
 
-        Event.observe(window,'load',_enableDragdrop);
+        Event.observe(window,'load',pageinit);
 //]>
 </script>
 <style lang="text/css">
