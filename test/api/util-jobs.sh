@@ -1,15 +1,17 @@
 #!/bin/bash
 
 #Usage: 
-#    util-jobs.sh <URL> <project> [param=value [param=value] .. ]
+#    util-jobs.sh <URL> <project> [param=value&...]
+
+if [ $# -lt 2 ] ; then
+    echo "Usage: util-jobs.sh <URL> <project> [param=value&..]"
+    exit 2
+fi
 
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
 
 proj=$1
-if [ "" == "$1" ] ; then
-    proj="test"
-fi
 shift
 
 # now submit req
@@ -17,7 +19,8 @@ runurl="${APIURL}/jobs"
 
 echo "# Listing RunDeck Jobs for project ${proj}..."
 
-params="project=${proj}"
+args=$@
+params="project=${proj}&$args"
 
 
 # get listing
