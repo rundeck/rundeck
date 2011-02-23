@@ -275,7 +275,8 @@
             if(!elem){
                 elem='nodelist';
             }
-            _updateMatchedNodes(nodeFilterData_${rkey},elem,'${query.project}',false,{view:page>0?'tableContent':'table',expanddetail:true,inlinepaging:true,page:page,max:pagingMax});
+            var view=page==0?'table':'tableContent';
+            _updateMatchedNodes(nodeFilterData_${rkey},elem,'${query.project}',false,{view:view,expanddetail:true,inlinepaging:true,page:page,max:pagingMax});
         }
         function _loadNextNodesPageTable(max,total,tbl,elem){
             if(!nodespage){
@@ -575,6 +576,9 @@
         }
         #histcontent table{
             width:100%;
+        }
+        #nodesPaging{
+            margin-top:5px;
         }
     </style>
 </head>
