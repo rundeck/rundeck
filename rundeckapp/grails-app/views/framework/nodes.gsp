@@ -577,6 +577,9 @@
         #histcontent table{
             width:100%;
         }
+        #nodesPaging{
+            margin-top:5px;
+        }
     </style>
 </head>
 <body>
