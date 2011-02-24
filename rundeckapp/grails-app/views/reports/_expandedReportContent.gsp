@@ -44,12 +44,7 @@
                 </g:if>
                 <g:else>
                     <span class="title">
-                        <g:if test="${it?.ctxCommand}">
-                            ${it?.ctxCommand} Command
-                        </g:if>
-                        <g:else>
-                            ${it.title.encodeAsHTML()}
-                        </g:else>
+                        ${(it.reportId?it.reportId:it.title).encodeAsHTML()}
                     <g:message code="status.label.${it.status}"/>.</span>
 
                     <g:if test="${it.dateCompleted}">
@@ -63,7 +58,7 @@
                             <g:set var="jobtitle" value="${it.adhocScript}"/>
                         </g:if>
                         <g:else >
-                            <g:set var="jobtitle" value="run"/>
+                            <g:set var="jobtitle" value="${it.title}"/>
                         </g:else>
                         ${jobtitle.encodeAsHTML()}
 

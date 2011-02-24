@@ -25,6 +25,7 @@ class UrlMappings {
         "/api/$api_version/projects"(controller: 'framework', action: 'apiProjects')
         "/api/renderError"(controller: 'api', action: 'renderError')
         "/api/error"(controller: 'api', action: 'error')
+        "/api/$api_version/report/create"(controller: 'reports', action: 'apiReportCreate')
         "/api/$api_version/resources"(controller: 'framework', action: 'apiResources')
         "/api/$api_version/resource/$name"(controller: 'framework', action: 'apiResource')
         "/api/$api_version/run/command"(controller: 'scheduledExecution', action: 'apiRunCommand')
