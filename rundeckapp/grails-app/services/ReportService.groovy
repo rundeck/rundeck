@@ -1,82 +1,55 @@
-import com.dtolabs.rundeck.services.ReportAcceptor
 
-class ReportService implements ReportAcceptor {
+class ReportService  {
+
     def grailsApplication
-    public void makeReport(Map fields) {
+
+    public Map reportExecutionResult(Map fields) {
         /**
          * allowed fields are specified
-         *  in the {@link com.dtolabs.rundeck.services.ReportAppender} class
          */
 
-        fields['title'] = fields['evtAction']
-        if(!fields['node'] && fields['evtRemoteHost']){
-            fields['node']=fields['evtRemoteHost']
+        if (fields['rundeckEpochDateStarted']) {
+            def long dstart = Long.parseLong(fields['rundeckEpochDateStarted'])
+            if (dstart > 0) {
+                fields['dateStarted'] = new Date(dstart)
+            }
+        } else if (fields['epochDateStarted']) {
+            def long dstart = Long.parseLong(fields['epochDateStarted'])
+            if (dstart > 0) {
+                fields['dateStarted'] = new Date(dstart)
+            }
         }
-        def rep
-        switch (fields['evtItemType']) {
-            case 'commandExec':
-                fields['status'] = fields['evtActionType']=='succeed'?'succeed':fields['evtActionType']=='cancel'?'cancel':'fail'
-                fields['actionType'] = fields['status']
-                if(fields['rundeckExecId']){
-                    fields['jcExecId']=fields['rundeckExecId']
-                }
-                if(fields['rundeckJobId']){
-                    fields['jcJobId']=fields['rundeckJobId']
-                }
-                if(fields['rundeckJobName']){
-                    fields['reportId']=fields['rundeckJobName']
-                }
-                if (fields['rundeckEpochDateStarted']) {
-                    def long dstart = Long.parseLong(fields['rundeckEpochDateStarted'])
-                    if(dstart>0){
-                        fields['dateStarted'] =new Date(dstart)
-                    }
-                }else if(fields['epochDateStarted']){
-                    def long dstart = Long.parseLong(fields['epochDateStarted'])
-                    if(dstart>0){
-                        fields['dateStarted'] =new Date(dstart)
-                    }
-                }
-                if (fields['rundeckEpochDateEnded']) {
-                    def long dstart = Long.parseLong(fields['rundeckEpochDateEnded'])
-                    if(dstart>0){
-                        fields['dateEnded'] =new Date(dstart)
-                    }
-                }else if (fields['epochDateEnded']) {
-                    def long dstart = Long.parseLong(fields['epochDateEnded'])
-                    if(dstart>0){
-                        fields['dateEnded'] =new Date(dstart)
-                    }
-                }
-                if(fields['rundeckAdhocScript']){
-                    fields['adhocScript']=fields['rundeckAdhocScript']
-                }
-                if(fields['rundeckAbortedBy']){
-                    fields['abortedByUser']=fields['rundeckAbortedBy']
-                }
-
-                if(!fields['ctxController']){
-                    fields['ctxController']=fields['ctxType']
-                }
-                rep = new ExecReport()
-                break
-            default:
-                fields['status'] = 'succeed'
-                rep = new BaseReport()
-
+        if (fields['rundeckEpochDateEnded']) {
+            def long dstart = Long.parseLong(fields['rundeckEpochDateEnded'])
+            if (dstart > 0) {
+                fields['dateCompleted'] = new Date(dstart)
+            }
+        } else if (fields['epochDateEnded']) {
+            def long dstart = Long.parseLong(fields['epochDateEnded'])
+            if (dstart > 0) {
+                fields['dateCompleted'] = new Date(dstart)
+            }
         }
+
         if (!fields['dateStarted']) {
             fields['dateStarted'] = fields['dateCompleted']
         }
-        rep.properties = fields
+        if(!fields.message){
+            fields.message="[no message]"
+        }
+        fields.actionType=fields.status in ['succeed','fail','cancel'] ? fields.status : 'fail'
+        def rep = new ExecReport(fields)
 
         //TODO: authorize event creation?
 
         if (rep && !rep.save(flush: true)) {
-            System.err.println("error saving report: ${fields}")
-            rep.errors.allErrors.each {
-                System.err.println(it)
-            }
+//            System.err.println("error saving report: ${fields}")
+//            rep.errors.allErrors.each {
+//                System.err.println(it)
+//            }
+            return [error:true,report:rep]
+        }else{
+            return [success:true]
         }
     }
 
