@@ -30,6 +30,7 @@ import junit.framework.TestSuite;
 
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.Date;
 
 public class TestCentralDispatcherMgrFactory extends AbstractBaseTest {
     CentralDispatcherMgrFactory centralDispatcherMgrFactory;
@@ -141,6 +142,11 @@ public class TestCentralDispatcherMgrFactory extends AbstractBaseTest {
             CentralDispatcherException {
             return null;
         }
+
+        public void reportExecutionStatus(String project, String name, String status, int totalNodeCount,
+                                          int successNodeCount, String tags, String script, String summary, Date start,
+                                          Date end) throws CentralDispatcherException {
+        }
     }
 
     /**
@@ -176,6 +182,11 @@ public class TestCentralDispatcherMgrFactory extends AbstractBaseTest {
                                                      JobDefinitionFileFormat format) throws
             CentralDispatcherException {
             return null;
+        }
+
+        public void reportExecutionStatus(String project, String name, String status, int totalNodeCount,
+                                          int successNodeCount, String tags, String script, String summary, Date start,
+                                          Date end) throws CentralDispatcherException {
         }
     }
 }

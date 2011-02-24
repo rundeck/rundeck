@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.cli.CLIToolOptionsException;
 
 import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Date;
 import java.io.OutputStream;
 
 /**
@@ -180,6 +181,13 @@ public class TestQueueTool extends AbstractBaseTest {
                 CentralDispatcherException {
                 fail("unexpected call to listStoredJobs");
                 return null;
+            }
+
+            public void reportExecutionStatus(String project, String name, String status, int totalNodeCount,
+                                              int successNodeCount, String tags, String script, String summary,
+                                              Date start,
+                                              Date end) throws CentralDispatcherException {
+                fail("unexpected call to reportExecutionStatus");
             }
         }
         final Framework framework = getFrameworkInstance();

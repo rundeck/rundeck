@@ -36,10 +36,7 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class TestExecTool extends AbstractBaseTest {
     ExecTool main;
@@ -863,6 +860,11 @@ public class TestExecTool extends AbstractBaseTest {
             CentralDispatcherException {
             listStoredJobsCalled=true;
             return null;
+        }
+
+        public void reportExecutionStatus(String project, String name, String status, int totalNodeCount,
+                                          int successNodeCount, String tags, String script, String summary, Date start,
+                                          Date end) throws CentralDispatcherException {
         }
 
         @Override

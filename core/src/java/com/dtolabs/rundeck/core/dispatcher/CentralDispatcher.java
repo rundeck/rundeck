@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.dispatcher;
 
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.Date;
 
 /**
  * CentralDispatcher interface provides methods for accessing central dispatcher of the app server.
@@ -106,5 +107,23 @@ public interface CentralDispatcher {
      */
     public Collection<IStoredJobLoadResult> loadJobs(ILoadJobsRequest request, java.io.File input,
                                                      JobDefinitionFileFormat format) throws
+        CentralDispatcherException;
+
+    /**
+     * Report execution status
+     * @param project project
+     * @param name execution title
+     * @param status result status, either 'succeed','cancel','fail'
+     * @param failedNodeCount count of failed nodes
+     * @param successNodeCount count of successful nodes
+     * @param tags
+     * @param script script content (can be null if summary specified)
+     * @param summary summary of execution (can be null if script specified)
+     * @param start start date (can be null)
+     * @param end end date (can be null)
+     * @throws com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException
+     */
+    void reportExecutionStatus(String project, String name, String status, int failedNodeCount, int successNodeCount,
+                                   String tags, String script, String summary, Date start, Date end) throws
         CentralDispatcherException;
 }
