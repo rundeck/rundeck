@@ -10,7 +10,6 @@ import java.util.logging.Logger;
 import java.util.logging.LogRecord
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.core.Constants
-import com.dtolabs.shared.reports.Constants as LogConstants
 import com.dtolabs.rundeck.core.utils.NodeSet
 import org.springframework.beans.BeansException
 import org.springframework.context.ApplicationContext
@@ -53,6 +52,7 @@ class ExecutionService implements ApplicationContextAware, Executor{
     def FrameworkService frameworkService
     def notificationService
     def ScheduledExecutionService scheduledExecutionService
+    def ReportService reportService
 
     def ThreadBoundOutputStream sysThreadBoundOut
     def ThreadBoundOutputStream sysThreadBoundErr
@@ -402,62 +402,50 @@ class ExecutionService implements ApplicationContextAware, Executor{
     }
 
 
-    public static synchronized logExecution(uri,project,user,issuccess,framework,execId,Date startDate=null, jobExecId=null, jobName=null, jobSummary=null,iscancelled=false, nodesummary=null, abortedby=null){
+    public logExecution(uri,project,user,issuccess,framework,execId,Date startDate=null, jobExecId=null, jobName=null, jobSummary=null,iscancelled=false, nodesummary=null, abortedby=null){
 
+        def reportMap=[:]
         def internalLog = org.apache.log4j.Logger.getLogger("ExecutionService")
         if(null==project || null==user  ){
             //invalid
             internalLog.error("could not send execution report: some required values were null: (project:${project},user:${user})")
             return
         }
-        String msg=""
 
         if(execId){
-            org.apache.log4j.MDC.put('rundeckExecId',execId)
-            msg+="["+execId+"] "
+            reportMap.jcExecId=execId
         }
         if(startDate){
-            org.apache.log4j.MDC.put('epochDateStarted',startDate.getTime().toString())
+            reportMap.dateStarted=startDate
         }
         if(jobExecId){
-            org.apache.log4j.MDC.put('rundeckJobId',jobExecId)
-            msg+="["+jobExecId+"] "
+            reportMap.jcJobId=jobExecId
         }
         if(jobName){
-            org.apache.log4j.MDC.put('rundeckJobName',jobName)
+            reportMap.reportId=jobName
         }else{
-            org.apache.log4j.MDC.put('rundeckJobName','adhoc')
+            reportMap.reportId='adhoc'
         }
-        def logger = org.apache.log4j.Logger.getLogger("com.dtolabs.rundeck.log.internal")
-        org.apache.log4j.MDC.put(LogConstants.MDC_ITEM_TYPE_KEY,"commandExec")
-        org.apache.log4j.MDC.put(LogConstants.MDC_PROJECT_KEY,project)
+        reportMap.ctxProject=project
 
         if(iscancelled && abortedby){
-            org.apache.log4j.MDC.put('rundeckAbortedBy',abortedby)
+            reportMap.abortedByUser=abortedby
         }else if(iscancelled){
-            org.apache.log4j.MDC.put('rundeckAbortedBy',user)
+            reportMap.abortedByUser=user
         }
-        org.apache.log4j.MDC.put(LogConstants.MDC_AUTHOR_KEY,user)
-        org.apache.log4j.MDC.put(LogConstants.MDC_ACTION_KEY, jobSummary?jobSummary:"rundeck Job Execution")
-        org.apache.log4j.MDC.put(LogConstants.MDC_ACTION_TYPE_KEY, issuccess ? LogConstants.ActionType.SUCCEED.toString():iscancelled?LogConstants.ActionType.CANCEL.toString():LogConstants.ActionType.FAIL.toString())
-        org.apache.log4j.MDC.put(LogConstants.MDC_NODENAME_KEY, null!=nodesummary?nodesummary: framework.getFrameworkNodeName())
-        logger.info(issuccess?'Job completed successfully':iscancelled?('Job killed by: '+(abortedby?:user)):'Job failed')
+        reportMap.author=user
+        reportMap.title= jobSummary?jobSummary:"RunDeck Job Execution"
+        reportMap.status= issuccess ? "succeed":iscancelled?"cancel":"fail"
+        reportMap.node= null!=nodesummary?nodesummary: framework.getFrameworkNodeName()
 
-        org.apache.log4j.MDC.remove(LogConstants.MDC_ITEM_TYPE_KEY)
-        org.apache.log4j.MDC.remove(LogConstants.MDC_PROJECT_KEY)
-        org.apache.log4j.MDC.remove(LogConstants.MDC_MAPREF_KEY)
-        org.apache.log4j.MDC.remove(LogConstants.MDC_AUTHOR_KEY)
-        org.apache.log4j.MDC.remove(LogConstants.MDC_CONTROLLER_KEY)
-        org.apache.log4j.MDC.remove(LogConstants.MDC_ACTION_KEY)
-        org.apache.log4j.MDC.remove(LogConstants.MDC_ACTION_TYPE_KEY)
-        org.apache.log4j.MDC.remove(LogConstants.MDC_NODENAME_KEY)
-        org.apache.log4j.MDC.remove(LogConstants.MDC_ADHOCEXEC_KEY)
-        org.apache.log4j.MDC.remove('rundeckAbortedBy')
-        org.apache.log4j.MDC.remove('rundeckJobName')
-        org.apache.log4j.MDC.remove('rundeckJobId')
-        org.apache.log4j.MDC.remove('rundeckExecId')
-        org.apache.log4j.MDC.remove('epochDateStarted')
+        reportMap.message=(issuccess?'Job completed successfully':iscancelled?('Job killed by: '+(abortedby?:user)):'Job failed')
+        reportMap.dateCompleted=new Date()
+        def result=reportService.reportExecutionResult(reportMap)
+        if(result.error){
+            log.error("Failed to create report: "+result.report.errors.allErrors.collect{it.toString()}).join("; ")
+        }
     }
+
 
     /**
      * starts an execution in a separate thread, returning a map of [thread:Thread, loghandler:LogHandler]

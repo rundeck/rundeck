@@ -53,6 +53,9 @@ import java.util.regex.Pattern;
  * @version $Revision$
  */
 public class RundeckCentralDispatcher implements CentralDispatcher {
+    /********
+     *  Legacy endpoints
+     ********/
     /**
      * Webservice endpoint for queuing job executions
      */
@@ -81,6 +84,23 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
      * Webservice endpoint for running job by name or id
      */
     public static final String RUNDECK_JOBS_RUN = "/scheduledExecution/runJobByName.xml";
+
+    /*******************
+     * API v1 endpoints
+     *******************/
+
+    /**
+     * RUNDECK API Version
+     */
+    public static final String RUNDECK_API_VERSION= "1";
+    /**
+     * RUNDECK API base path
+     */
+    public static final String RUNDECK_API_BASE= "/api/"+RUNDECK_API_VERSION;
+    /**
+     * API endpoint for execution report
+     */
+    public static final String RUNDECK_API_EXECUTION_REPORT = RUNDECK_API_BASE + "/report/create";
     /**
      * logger
      */
@@ -96,6 +116,53 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
         serverService = new ServerService(framework);
     }
 
+    /**
+     * Report execution status
+     * @param project project
+     * @param title execution title
+     * @param status result status, either 'succeed','cancel','fail'
+     * @param failedNodeCount total node count
+     * @param successNodeCount count of successful nodes
+     * @param tags
+     * @param script script content (can be null if summary specified)
+     * @param summary summary of execution (can be null if script specified)
+     * @param start start date (can be null)
+     * @param end end date (can be null)
+     * @throws CentralDispatcherException
+     */
+    public void reportExecutionStatus(final String project, final String title, final String status, final int failedNodeCount, final int successNodeCount,
+                                   final String tags, final String script, final String summary, final Date start, final Date end) throws
+        CentralDispatcherException {
+        final HashMap<String, String> params = new HashMap<String, String>();
+        params.put("project", project);
+        params.put("title", title);
+        params.put("status", status);
+        params.put("nodesuccesscount", Integer.toString(successNodeCount));
+        params.put("nodefailcount", Integer.toString(failedNodeCount));
+        if(null!=tags){
+            params.put("tags", tags);
+        }
+        if(null!=script){
+            params.put("script", script);
+        }
+        params.put("summary", summary);
+        if(null!=start){
+            params.put("start", Long.toString(start.getTime()));
+        }
+        if(null!=end){
+            params.put("end", Long.toString(end.getTime()));
+        }
+
+        final WebserviceResponse response;
+        try {
+            response = serverService.makeRundeckRequest(RUNDECK_API_EXECUTION_REPORT, params, null, null);
+        } catch (MalformedURLException e) {
+            throw new CentralDispatcherServerRequestException("Failed to make request", e);
+        }
+
+        validateResponse(response);
+
+    }
 
 
     public QueuedItemResult queueDispatcherScript(final IDispatchedScript iDispatchedScript) throws

@@ -25,7 +25,6 @@ import com.dtolabs.rundeck.core.dispatcher.QueuedItemResult;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.utils.*;
-import com.dtolabs.shared.reports.ReportAgent;
 import org.apache.commons.cli.*;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.tools.ant.BuildEvent;
@@ -185,7 +184,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
      * @return a new instance of CommandLine
      */
     public CommandLine parseArgs(String[] args) {
-
+        inputArgs = args;
         int lastArg = -1;
         for (int i = 0 ; i < args.length ; i++) {
             if ("--".equals(args[i])) {
@@ -388,7 +387,6 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
      * @param args the cli arg vector
      */
     public void run(String[] args) {
-        inputArgs=args;
         int exitCode = 1; //pessimistic initial value
         ThreadBoundOutputStream.bindSystemOut();
         ThreadBoundOutputStream.bindSystemErr();
@@ -556,39 +554,44 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
             tags = null;
         }
         final String script = CLIUtils.generateArgline("dispatch", inputArgs);
+        final Collection<INodeEntry> nodeEntryCollection = filterNodes();
         if (null != result && result.isSuccess()) {
             debug("Finished execution: " + result.getResultObject());
             final String resultString =
                 null != result.getResultObject() ?  result.getResultObject().toString() : "dispatch succeeded" ;
-            ReportAgent.logExecInfo(
-                executionItem.getDispatchedScript().getFrameworkProject(),
-                user,
-                "dispatch",
-                com.dtolabs.shared.reports.Constants.ActionType.SUCCEED,getFramework().getFrameworkNodeName(),
-                null,
-                resultString,
-                tags,
-                script,
-                startDate,
-                new Date());
+
+            try {
+                framework.getCentralDispatcherMgr().reportExecutionStatus(
+                    executionItem.getDispatchedScript().getFrameworkProject(), "dispatch", "succeeded",
+                    0, nodeEntryCollection.size(), tags, script, resultString, startDate, new Date());
+            } catch (CentralDispatcherException e) {
+                e.printStackTrace();
+            }
             return;
         }
         //log failure
 
-        final String failureString = null!=result?(null != result.getResultObject() ? result.getResultObject().toString()
-                                                                      : null != result && result.getException() != null
-                                                                        ? result.getException().getMessage() : ""):"action failed: result was null";
-        ReportAgent.logExecInfo(
-            executionItem.getDispatchedScript().getFrameworkProject(),
-            user,
-            "dispatch",
-            com.dtolabs.shared.reports.Constants.ActionType.FAIL, getFramework().getFrameworkNodeName(),
-            null,
-            failureString,
-            tags,
-            script,
-            startDate,
-            new Date());
+        final String failureString =
+            null != result ? (null != result.getResultObject() ? result.getResultObject().toString()
+                                                               : null != result && result.getException() != null
+                                                                 ? result.getException().getMessage() : "")
+                           : "action failed: result was null";
+        //look for nodeset failure exception
+        int failednodes = nodeEntryCollection.size();
+        if(null!=result && null!=result.getException() && result.getException() instanceof NodesetFailureException) {
+            NodesetFailureException failure = (NodesetFailureException) result.getException();
+            if(null!=failure.getNodeset()){
+                failednodes = failure.getNodeset().size();
+            }
+        }
+        try {
+            framework.getCentralDispatcherMgr().reportExecutionStatus(
+                executionItem.getDispatchedScript().getFrameworkProject(), "dispatch", "failed",
+                failednodes, nodeEntryCollection.size() - failednodes, tags, script,
+                failureString, startDate, new Date());
+        } catch (CentralDispatcherException e) {
+            e.printStackTrace();
+        }
         if(null!=result && null!=result.getException()) {
             throw result.getException();
         }else{

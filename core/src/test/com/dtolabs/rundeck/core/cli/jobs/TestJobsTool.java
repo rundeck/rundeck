@@ -35,6 +35,7 @@ import java.io.File;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 
 public class TestJobsTool extends AbstractBaseTest {
     JobsTool jobsTool;
@@ -95,6 +96,11 @@ public class TestJobsTool extends AbstractBaseTest {
             return null;
         }
 
+        public void reportExecutionStatus(String project, String title, String status, int totalNodeCount,
+                                          int successNodeCount, String tags, String script, String summary, Date start,
+                                          Date end) throws CentralDispatcherException {
+            fail("unexpected call to reportExecutionStatus");
+        }
         public Collection<IStoredJobLoadResult> loadJobs(ILoadJobsRequest request, java.io.File input,
                                                          JobDefinitionFileFormat format) throws
             CentralDispatcherException {

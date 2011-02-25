@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.Date;
 
 /**
  * NoCentralDispatcher is an implementation of the {@link com.dtolabs.rundeck.core.dispatcher.CentralDispatcher} which throws
@@ -75,6 +76,13 @@ public final class NoCentralDispatcher implements CentralDispatcher {
     public Collection<IStoredJobLoadResult> loadJobs(final ILoadJobsRequest request, final java.io.File input,
                                                      JobDefinitionFileFormat format) throws
         CentralDispatcherException {
+        throw new CentralDispatcherException("Operation unsupported: No central dispatcher class is configured: "
+                                             + Framework.CENTRALDISPATCHER_CLS_PROP);
+    }
+
+    public void reportExecutionStatus(String project, String title, String status, int totalNodeCount,
+                                      int successNodeCount, String tags, String script, String summary, Date start,
+                                      Date end) throws CentralDispatcherException {
         throw new CentralDispatcherException("Operation unsupported: No central dispatcher class is configured: "
                                              + Framework.CENTRALDISPATCHER_CLS_PROP);
     }

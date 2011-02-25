@@ -36,10 +36,7 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class TestExecTool extends AbstractBaseTest {
     ExecTool main;
@@ -421,13 +418,177 @@ public class TestExecTool extends AbstractBaseTest {
 
     }
 
+    static class noopDispatcher implements CentralDispatcher{
+        public QueuedItemResult queueDispatcherScript(IDispatchedScript dispatch) throws CentralDispatcherException {
+            return null;
+        }
+
+        public QueuedItemResult queueDispatcherJob(IDispatchedJob job) throws CentralDispatcherException {
+            return null;
+        }
+
+        public Collection<QueuedItem> listDispatcherQueue() throws CentralDispatcherException {
+            return null;
+        }
+
+        public DispatcherResult killDispatcherExecution(String id) throws CentralDispatcherException {
+            return null;
+        }
+
+        public Collection<IStoredJob> listStoredJobs(IStoredJobsQuery query, OutputStream output,
+                                                     JobDefinitionFileFormat format) throws CentralDispatcherException {
+            return null;
+        }
+
+        public Collection<IStoredJobLoadResult> loadJobs(ILoadJobsRequest request, File input,
+                                                         JobDefinitionFileFormat format) throws
+            CentralDispatcherException {
+            return null;
+        }
+
+        public void reportExecutionStatus(String project, String title, String status, int failedNodeCount,
+                                          int successNodeCount, String tags, String script, String summary, Date start,
+                                          Date end) throws CentralDispatcherException {
+        }
+    }
+    static class testDispatcher extends noopDispatcher{
+        boolean wascalled;
+        String project;
+        String name;
+        String status;
+        int failedNodeCount;
+        int successNodeCount;
+        String tags;
+        String script;
+        String summary;
+        Date start;
+        Date end;
+
+        @Override
+        public void reportExecutionStatus(String project, String title, String status, int failedNodeCount,
+                                          int successNodeCount, String tags, String script, String summary, Date start,
+                                          Date end) throws CentralDispatcherException {
+            wascalled=true;
+            this.project=project;
+            this.name= title;
+            this.status = status;
+            this.failedNodeCount = failedNodeCount;
+            this.successNodeCount=successNodeCount;
+            this.tags=tags;
+            this.script = script;
+            this.summary=summary;
+            this.start=start;
+            this.end=end;
+        }
+    }
+
+    public void testRunActionShouldLogResult() throws Exception {
+        //set up test Executors
+        ExecutionServiceFactory.setDefaultExecutorClass(DispatchedScriptExecutionItem.class, testExecutor1.class);
+
+        //set return result
+        testExecutor1.returnResult = new ExecutionResult() {
+            public boolean isSuccess() {
+                return true;
+            }
+
+            public Exception getException() {
+                return null;
+            }
+
+            public Object getResultObject() {
+                return "testResult1";
+            }
+        };
+
+        final Framework framework = getFrameworkInstance();
+
+        final testDispatcher test1 = new testDispatcher();
+        framework.setCentralDispatcherMgr(test1);
+
+        { //test dispatch shell script
+            ExecTool main = new ExecTool(framework);
+            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "--", "uptime", "for", "ever"});
+
+            main.runAction(null);
+            assertTrue(test1.wascalled);
+            assertEquals(TEST_EXEC_TOOL_PROJECT, test1.project);
+            assertEquals("dispatch", test1.name);
+            assertEquals("succeeded", test1.status);
+            assertEquals(0, test1.failedNodeCount);
+            assertEquals(4, test1.successNodeCount);
+            assertEquals("", test1.tags);
+            assertEquals("dispatch -p " + TEST_EXEC_TOOL_PROJECT + " -- uptime for ever", test1.script);
+            assertEquals("testResult1", test1.summary);
+            assertNotNull(test1.start);
+            assertNotNull(test1.end);
+
+
+            testExecutor1.reset();
+        }
+    }
+    
+    public void testRunActionShouldLogResultFailure() throws Exception {
+        //set up test Executors
+        ExecutionServiceFactory.setDefaultExecutorClass(DispatchedScriptExecutionItem.class, testExecutor1.class);
+
+        //set return result
+        testExecutor1.returnResult = new ExecutionResult() {
+            public boolean isSuccess() {
+                return false;
+            }
+
+            public Exception getException() {
+                return null;
+            }
+
+            public Object getResultObject() {
+                return "test failure result";
+            }
+        };
+
+        final Framework framework = getFrameworkInstance();
+
+        final testDispatcher test1 = new testDispatcher();
+        framework.setCentralDispatcherMgr(test1);
+
+        { //test dispatch shell script
+            ExecTool main = new ExecTool(framework);
+            main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "--", "uptime", "for", "ever"});
+
+            try {
+                main.runAction(null);
+                fail("should have thrown exception");
+            } catch (Exception e) {
+                assertEquals("action failed: result was null", e.getMessage());
+            }
+            assertTrue(test1.wascalled);
+            assertEquals(TEST_EXEC_TOOL_PROJECT, test1.project);
+            assertEquals("dispatch", test1.name);
+            assertEquals("failed", test1.status);
+            assertEquals(4, test1.failedNodeCount);
+            assertEquals(0, test1.successNodeCount);
+            assertEquals("", test1.tags);
+            assertEquals("dispatch -p " + TEST_EXEC_TOOL_PROJECT + " -- uptime for ever", test1.script);
+            assertEquals("test failure result", test1.summary);
+            assertNotNull(test1.start);
+            assertNotNull(test1.end);
+
+
+            testExecutor1.reset();
+        }
+    }
     public void testRunAction() throws Exception{
         //set up test Executors
         ExecutionServiceFactory.setDefaultExecutorClass(DispatchedScriptExecutionItem.class, testExecutor1.class);
         testExecutor1.returnResult=null;
 
+        final Framework framework = getFrameworkInstance();
+
+        framework.setCentralDispatcherMgr(new noopDispatcher());
+
         {//test null result
-            ExecTool main = new ExecTool();
+            ExecTool main = new ExecTool(framework);
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-s", testScriptFile.getAbsolutePath()});
 
             try {
@@ -461,7 +622,7 @@ public class TestExecTool extends AbstractBaseTest {
         };
 
         { //test dispatch shell script
-            ExecTool main = new ExecTool();
+            ExecTool main = new ExecTool(framework);
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "--", "uptime","for","ever"});
 
             main.runAction(null);
@@ -487,7 +648,7 @@ public class TestExecTool extends AbstractBaseTest {
             testExecutor1.reset();
         }
         { //now test the script detail: script file path
-            ExecTool main = new ExecTool();
+            ExecTool main = new ExecTool(framework);
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-s", testScriptFile.getAbsolutePath()});
 
             main.runAction(null);
@@ -508,7 +669,7 @@ public class TestExecTool extends AbstractBaseTest {
             testExecutor1.reset();
         }
         {//: script file path with args
-            ExecTool main = new ExecTool();
+            ExecTool main = new ExecTool(framework);
             main.parseArgs(
                 new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-s", testScriptFile.getAbsolutePath(), "--", "test", "args"});
 
@@ -536,7 +697,7 @@ public class TestExecTool extends AbstractBaseTest {
 
         }
         { //: script file path: with args with a space
-            ExecTool main = new ExecTool();
+            ExecTool main = new ExecTool(framework);
             main.parseArgs(
                 new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-s", testScriptFile.getAbsolutePath(), "--", "test", "args",
                     "with a space"});
@@ -564,7 +725,7 @@ public class TestExecTool extends AbstractBaseTest {
             testExecutor1.reset();
         }
         { //inline script content
-            ExecTool main = new ExecTool();
+            ExecTool main = new ExecTool(framework);
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-S", "--", "test", "args"});
             main.setInlineScriptContent("test content");
 
@@ -863,6 +1024,11 @@ public class TestExecTool extends AbstractBaseTest {
             CentralDispatcherException {
             listStoredJobsCalled=true;
             return null;
+        }
+
+        public void reportExecutionStatus(String project, String title, String status, int totalNodeCount,
+                                          int successNodeCount, String tags, String script, String summary, Date start,
+                                          Date end) throws CentralDispatcherException {
         }
 
         @Override

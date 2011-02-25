@@ -8,8 +8,6 @@ import org.apache.log4j.Logger
 import org.apache.log4j.LogManager
 import org.apache.log4j.Level
 import org.apache.log4j.net.SocketAppender
-import com.dtolabs.rundeck.services.InputServer
-import com.dtolabs.rundeck.services.ReportAppender
 import grails.util.GrailsUtil
 import com.dtolabs.rundeck.execution.WorkflowExecutionItem
 import com.dtolabs.rundeck.execution.WorkflowExecutor
@@ -19,12 +17,9 @@ import com.dtolabs.launcher.Setup
 
 class BootStrap {
 
-     def reportService
     def grailsApplication
     def scheduledExecutionService
     def executionService
-
-     static InputServer inputServer
 
      def init = { servletContext ->
          def String rdeckBase
@@ -181,52 +176,11 @@ class BootStrap {
              scheduledExecutionService.convertNonWorkflowJobs()
          }
 
-         /****************************************
-          * Transplanted Reportcenter init content
-          ****************************************/
-
-         //get the  common Logger, and configure the level and report appender
-         Logger commonLogger = LogManager.getLoggerRepository().getLogger("com.dtolabs.rundeck.log.common")
-         Logger commonLogger2 = LogManager.getLoggerRepository().getLogger("com.dtolabs.rundeck.log.internal")
-         ReportAppender appender = new ReportAppender(reportService)
-         commonLogger.addAppender(appender)
-         commonLogger.setLevel(Level.INFO)
-         commonLogger2.addAppender(appender)
-         commonLogger2.setLevel(Level.INFO)
+        
          if (GrailsUtil.environment == "development") {
              
          }
 
-         //start the report server if port is set and is not disabled
-         if ("true" != grailsApplication.config.reportservice.log4j.disabled.toString()) {
-             int port = -1
-             if (!grailsApplication.config.reportservice.log4j.port) {
-                 port = 4435
-                 log.warn("'reportservice.log4j.port' configuration property not set: using default listen port (4435)")
-             } else {
-                 def t = grailsApplication.config.reportservice.log4j.port
-                 port = Integer.parseInt(t.toString())
-             }
-
-             if("test"!=GrailsUtil.environment){
-                 inputServer = new InputServer(port)
-
-                 if (servletContext['inputServer']) {
-                     servletContext['inputServer'].finish()
-                     servletContext['inputServer'] = null
-                 }
-                 servletContext['inputServer'] = inputServer
-                 try {
-                     inputServer.begin()
-                     log.error("Started log4j report input server on port: ${port}")
-                 } catch (IOException e) {
-                     log.error("FAILED to start log4j report input server on port: ${port}: " + e.getMessage())
-                 }
-
-             }
-         } else {
-             System.err.println("log4j report input server is disabled.")
-         }
      }
 
      def destroy = {
