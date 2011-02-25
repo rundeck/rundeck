@@ -795,7 +795,111 @@ var WBox = Class.create({
 
 });
 
+/**
+ * BubbleController
+ */
+var BubbleController = Class.create({
+    _popClickHandler:null,
+    _popTypeHandler:null,
+    _target:null,
+    _elem:null,
+    _offx:null,
+    _offy:null,
 
+    initialize: function(target, elem, options) {
+        if (null == elem) {
+            elem = $(target).identify() + "_popup";
+        }
+        this._target = target;
+        this._elem = elem;
+        if (null != options) {
+            this._offx = options.offx;
+            this._offy = options.offy;
+        }
+    },
+
+    hide: function () {
+        if ($(this._target)) {
+            $(this._target).removeClassName('glow');
+        }
+        var bubble = this._getTargetBubble();
+        if ($(bubble)) {
+            Try.these(
+                function() {
+                    Effect.Fade($(bubble), {duration:0.5});
+                },
+                function() {
+                    $(bubble).hide()
+                }
+                );
+        }
+
+        Event.stopObserving(document.body, 'click', this._popClickHandler, false);
+        Event.stopObserving(document.body, 'keydown', this._popTypeHandler, false);
+        this._popClickHandler = null;
+        this._popTypeHandler = null;
+    },
+
+    _getTargetBubble: function() {
+        //prepare content element
+        var bubble;
+        if (!$(this._elem).hasClassName('bubblewrap')) {
+            var found = $(this._elem).up('.bubblewrap');
+            if (found) {
+                bubble = found;
+            } else {
+                bubble = $(document.createElement('div'));
+                bubble.addClassName('bubblewrap');
+                bubble.setStyle({display:'none'});
+
+                Event.observe(bubble, 'click', function(evt) {
+                    evt.stopPropagation();
+                }, false);
+
+                var btop = new Element('div');
+                btop.addClassName('bubbletop');
+                bubble.appendChild(btop);
+                var bcontent = new Element('div');
+                bcontent.addClassName('bubblecontent');
+                var removed = $(this._elem).parentNode.removeChild($(this._elem));
+                bcontent.appendChild(removed);
+                $(removed).show();
+                bubble.appendChild(bcontent);
+                document.body.appendChild(bubble);
+            }
+        } else {
+            bubble = this._elem;
+        }
+        return bubble;
+    },
+    show: function (evt) {
+        if ($(this._target) && $(this._elem)) {
+            var bubble = this._getTargetBubble();
+
+            new MenuController().showRelativeTo(this._target, $(bubble), this._offx, this._offy);
+            $(this._target).addClassName('glow');
+            evt.stopPropagation();
+
+            var hidefunc = this.hide.bind(this);
+            this._popClickHandler = function(evt) {
+                hidefunc();
+            };
+            this._popTypeHandler = function(evt) {
+                if (evt.keyCode === 27) {
+                    hidefunc();
+                }
+                return true;
+            };
+
+            Event.observe(document.body, 'click', this._popClickHandler, false);
+            Event.observe(document.body, 'keydown', this._popTypeHandler, false);
+        }
+    },
+    startObserving: function() {
+        Event.observe(this._target, 'click', this.show.bind(this));
+    }
+
+});
 /**
  * keypress handler which disallows Return key
  * @param e event

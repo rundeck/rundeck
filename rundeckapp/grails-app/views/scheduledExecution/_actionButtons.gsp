@@ -51,8 +51,14 @@
                 </g:if>
                 </g:if>
                 <g:if test="${jobAuths[UserAuth.WF_READ]?.contains(idKey) }">
-                    <g:link controller="scheduledExecution" title="Download XML" action="show" id="${scheduledExecution.id}.xml" class="icon button floatl"><img src="${resource(dir:'images',file:'icon-small-file-xml.png')}" alt="Download XML" width="13px" height="16px"/></g:link>
-                    <g:link controller="scheduledExecution" title="Download YAML" action="show" id="${scheduledExecution.id}.yaml" class="icon button floatl">yaml</g:link>
+                    <span class="icon action button textbtn floatl obs_bubblepopup" id="downloadlink" title="Download Job definition file"><img src="${resource(dir: 'images', file: 'icon-small-file.png')}" alt="download" width="13px" height="16px"/></span>
+                    <div  id="downloadlink_popup" style="display:none;">
+                        <span class="prompt">Select a format:</span>
+                        <ul>
+                            <li><g:link controller="scheduledExecution" title="Download XML" action="show" id="${scheduledExecution.id}.xml">XML</g:link></li>
+                            <li><g:link controller="scheduledExecution" title="Download YAML" action="show" id="${scheduledExecution.id}.yaml">YAML</g:link></li>
+                        </ul>
+                    </div>
                 </g:if>
             </g:if>
             <g:if test="${jobAuthorized || jobAuths[UserAuth.WF_RUN]?.contains(idKey) }">

@@ -1134,6 +1134,32 @@ tr.execution.failed td.outputlink a,tr.execution.killed td.outputlink a{
     white-space:pre;
 }
 
+/** bubble popup */
+a.glow, span.glow {
+    background: #cfc;
+    border-radius: 3px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+}
+
+.bubblewrap {
+    position: absolute;
+}
+
+.bubblecontent {
+    position: relative;
+    border: 1px solid #aaa;
+    background: white;
+    padding: 10px;
+    margin-top: -1px;
+    z-index: -1;
+    border-radius: 10px;
+    -moz-border-radius: 10px;
+    -webkit-border-radius: 10px;
+    -moz-box-shadow: #aaa 2px 2px 7px;
+    -webkit-box-shadow: #aaa 2px 2px 7px;
+}
+
 /* job edit form page */
 tbody.section > tr:first-child > td{
     border-top: 1px solid #ccc;

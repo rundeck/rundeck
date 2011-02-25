@@ -56,9 +56,11 @@ var MenuController = Class.create({
         Element.absolutize(menu);
         menu.setStyle({'zIndex':100});
         var h = menuLink.offsetHeight;
-        var cw = menuLink.offsetWidth;
-        if(null!=offx && null!=offy){
+        var cw = 0;//menuLink.offsetWidth;
+        if (null != offy) {
             h=offy;
+        }
+        if (null != offx) {
             cw=offx;
         }
         var pos = menuLink.viewportOffset();
@@ -66,15 +68,12 @@ var MenuController = Class.create({
         var page = document.viewport.getWidth();
         var pt = document.viewport.getScrollOffsets();
         var w = menu.getWidth();
-        var t = page - (pos.left + (w + 16));
-        if (t > 0) {
-            t = 0;
-        }
+        var t = page - (pos.left + (w + 16 + cw) );
         if (t < 0 && w > cw) {
-            t = cw - w;
+            cw = cw - w;
         }
 
-        Element.clonePosition(menu, menuLink, { setWidth:   false, setHeight:  false,offsetTop:h,offsetLeft:t});
+        Element.clonePosition(menu, menuLink, { setWidth:   false, setHeight:  false,offsetTop:h,offsetLeft:cw});
         Try.these(function(){Effect.Appear(menu,{duration: 0.3});},Element.show.curry(menu));
     },
     doMenuHide: function(menu, time) {

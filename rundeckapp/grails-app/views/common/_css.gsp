@@ -203,4 +203,10 @@
         padding-left: 20px;
     }
 
+    .bubbletop {
+        height: 16px;
+        background: transparent url(${resource(dir:'images',file:'bubble-bg.png')}) top 10px no-repeat;
+        z-index: 1;
+    }
+
 </style>

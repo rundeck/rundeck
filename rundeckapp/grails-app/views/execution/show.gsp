@@ -8,6 +8,7 @@
     <g:set var="executionResource" value="${ ['jobName': execution.scheduledExecution ? execution.scheduledExecution.jobName : 'adhoc', 'groupPath': execution.scheduledExecution ? execution.scheduledExecution.groupPath : 'adhoc'] }"/>
 
       <g:javascript library="executionControl"/>
+      <g:javascript library="prototype/effects"/>
       <g:javascript>
         <g:if test="${scheduledExecution}">
         /** START history
@@ -51,6 +52,9 @@
 
         function init() {
             followControl.beginFollowingOutput('${execution?.id}');
+            $$('.obs_bubblepopup').each(function(e) {
+                new BubbleController(e,null,{offx:-14,offy:null}).startObserving();
+            });
         }
 
         Event.observe(window, 'load', init);

@@ -161,7 +161,7 @@
         var targetLink;
         function popJobDetails(elem){
             if(doshow && $('jobIdDetailHolder')){
-                new MenuController().showRelativeTo(elem,$('jobIdDetailHolder'),-20,16);
+                new MenuController().showRelativeTo(elem,$('jobIdDetailHolder'));
                 popvis=true;
                 if(targetLink){
                     $(targetLink).removeClassName('glow');
@@ -315,34 +315,11 @@
     .error{
         color:red;
     }
-    a.glow{
-        background: #cfc;
-        border-radius:3px;
-        -moz-border-radius:3px;
-        -webkit-border-radius:3px;
-    }
-    .bubblewrap{
-        position:absolute;
+
+    .bubblewrap {
+        position: absolute;
         width: 600px;
         height: 250px;
-    }
-    .bubbletop{
-        height:16px;
-        background: transparent url(${resource(dir:'images',file:'bubble-bg.png')}) top 10px no-repeat;
-        z-index: 1;
-    }
-    .bubblecontent{
-        position:relative;
-        border:1px solid #aaa;
-        background:white;
-        padding: 10px;
-        margin-top:-1px;
-        z-index: -1;
-        border-radius:10px;
-        -moz-border-radius:10px;
-        -webkit-border-radius:10px;
-        -moz-box-shadow:#aaa 2px 2px 7px;
-        -webkit-box-shadow:#aaa 2px 2px 7px;
     }
         #histcontent table{
             width:100%;
