@@ -14,4 +14,5 @@ rundeckapp/.project
 rundeckapp/.settings/
 packaging/dist
 core/.gradle
+docs/en/manpages/**/*.gz
 *.DS_Store
