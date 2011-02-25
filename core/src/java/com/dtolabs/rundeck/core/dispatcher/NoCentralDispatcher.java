@@ -80,7 +80,7 @@ public final class NoCentralDispatcher implements CentralDispatcher {
                                              + Framework.CENTRALDISPATCHER_CLS_PROP);
     }
 
-    public void reportExecutionStatus(String project, String name, String status, int totalNodeCount,
+    public void reportExecutionStatus(String project, String title, String status, int totalNodeCount,
                                       int successNodeCount, String tags, String script, String summary, Date start,
                                       Date end) throws CentralDispatcherException {
         throw new CentralDispatcherException("Operation unsupported: No central dispatcher class is configured: "

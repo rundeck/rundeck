@@ -112,7 +112,7 @@ public interface CentralDispatcher {
     /**
      * Report execution status
      * @param project project
-     * @param name execution title
+     * @param title execution title
      * @param status result status, either 'succeed','cancel','fail'
      * @param failedNodeCount count of failed nodes
      * @param successNodeCount count of successful nodes
@@ -123,7 +123,7 @@ public interface CentralDispatcher {
      * @param end end date (can be null)
      * @throws com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException
      */
-    void reportExecutionStatus(String project, String name, String status, int failedNodeCount, int successNodeCount,
+    void reportExecutionStatus(String project, String title, String status, int failedNodeCount, int successNodeCount,
                                    String tags, String script, String summary, Date start, Date end) throws
         CentralDispatcherException;
 }

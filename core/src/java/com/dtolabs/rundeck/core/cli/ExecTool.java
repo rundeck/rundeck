@@ -563,8 +563,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
             try {
                 framework.getCentralDispatcherMgr().reportExecutionStatus(
                     executionItem.getDispatchedScript().getFrameworkProject(), "dispatch", "succeeded",
-                    0, nodeEntryCollection.size(), tags, script,
-                    null != script ? resultString : null, startDate, new Date());
+                    0, nodeEntryCollection.size(), tags, script, resultString, startDate, new Date());
             } catch (CentralDispatcherException e) {
                 e.printStackTrace();
             }
@@ -589,7 +588,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
             framework.getCentralDispatcherMgr().reportExecutionStatus(
                 executionItem.getDispatchedScript().getFrameworkProject(), "dispatch", "failed",
                 failednodes, nodeEntryCollection.size() - failednodes, tags, script,
-                null != script ? failureString : null, startDate, new Date());
+                failureString, startDate, new Date());
         } catch (CentralDispatcherException e) {
             e.printStackTrace();
         }

@@ -119,7 +119,7 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
     /**
      * Report execution status
      * @param project project
-     * @param name execution title
+     * @param title execution title
      * @param status result status, either 'succeed','cancel','fail'
      * @param failedNodeCount total node count
      * @param successNodeCount count of successful nodes
@@ -130,12 +130,12 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
      * @param end end date (can be null)
      * @throws CentralDispatcherException
      */
-    public void reportExecutionStatus(final String project, final String name, final String status, final int failedNodeCount, final int successNodeCount,
+    public void reportExecutionStatus(final String project, final String title, final String status, final int failedNodeCount, final int successNodeCount,
                                    final String tags, final String script, final String summary, final Date start, final Date end) throws
         CentralDispatcherException {
         final HashMap<String, String> params = new HashMap<String, String>();
         params.put("project", project);
-        params.put("name", name);
+        params.put("title", title);
         params.put("status", status);
         params.put("nodesuccesscount", Integer.toString(successNodeCount));
         params.put("nodefailcount", Integer.toString(failedNodeCount));
@@ -145,9 +145,7 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
         if(null!=script){
             params.put("script", script);
         }
-        if(null!=summary){
-            params.put("summary", summary);
-        }
+        params.put("summary", summary);
         if(null!=start){
             params.put("start", Long.toString(start.getTime()));
         }

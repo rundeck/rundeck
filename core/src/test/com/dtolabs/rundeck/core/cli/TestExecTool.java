@@ -446,7 +446,7 @@ public class TestExecTool extends AbstractBaseTest {
             return null;
         }
 
-        public void reportExecutionStatus(String project, String name, String status, int failedNodeCount,
+        public void reportExecutionStatus(String project, String title, String status, int failedNodeCount,
                                           int successNodeCount, String tags, String script, String summary, Date start,
                                           Date end) throws CentralDispatcherException {
         }
@@ -465,12 +465,12 @@ public class TestExecTool extends AbstractBaseTest {
         Date end;
 
         @Override
-        public void reportExecutionStatus(String project, String name, String status, int failedNodeCount,
+        public void reportExecutionStatus(String project, String title, String status, int failedNodeCount,
                                           int successNodeCount, String tags, String script, String summary, Date start,
                                           Date end) throws CentralDispatcherException {
             wascalled=true;
             this.project=project;
-            this.name=name;
+            this.name= title;
             this.status = status;
             this.failedNodeCount = failedNodeCount;
             this.successNodeCount=successNodeCount;
@@ -1026,7 +1026,7 @@ public class TestExecTool extends AbstractBaseTest {
             return null;
         }
 
-        public void reportExecutionStatus(String project, String name, String status, int totalNodeCount,
+        public void reportExecutionStatus(String project, String title, String status, int totalNodeCount,
                                           int successNodeCount, String tags, String script, String summary, Date start,
                                           Date end) throws CentralDispatcherException {
         }

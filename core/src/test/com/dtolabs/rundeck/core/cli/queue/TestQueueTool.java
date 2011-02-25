@@ -183,7 +183,7 @@ public class TestQueueTool extends AbstractBaseTest {
                 return null;
             }
 
-            public void reportExecutionStatus(String project, String name, String status, int totalNodeCount,
+            public void reportExecutionStatus(String project, String title, String status, int totalNodeCount,
                                               int successNodeCount, String tags, String script, String summary,
                                               Date start,
                                               Date end) throws CentralDispatcherException {
