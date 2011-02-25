@@ -420,13 +420,17 @@ Define defaults for the "port" option.
 
 #### valuesUrl JSON 
 
-The data returned from the valuesUrl can be formatted as a map:
+The data returned from the valuesUrl can be formatted as a list of values:
 
-    {"x label":"X value","y label":"Y value", "z label":"Z value"}
+    ["x value","y value"]
 
-or as array:
+or as Name-value list:
 
-    ["x value","y value", "z value"]
+    [
+      {name:"X Label", value:"x value"},
+      {name:"Y Label", value:"y value"},
+      {name:"A Label", value:"a value"}
+    ] 
 
 ## dispatch 
 

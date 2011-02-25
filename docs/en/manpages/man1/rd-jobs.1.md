@@ -12,7 +12,7 @@ rd-jobs [*action*] [*action options*]...
 
 # DESCRIPTION
 
-The rd-jobs command lists Jobs stored on the server and optionally downloads them as XML, or uploads Job XML to the server from a file.
+The rd-jobs command lists Jobs stored on the server and optionally downloads them as XML or Yaml, or uploads Job XML/Yaml to the server from a file.
 
 The tool works in one of two *ACTION* modes:
 
@@ -20,7 +20,7 @@ The tool works in one of two *ACTION* modes:
 : list the stored Jobs on the server (default action)
 
 * load
-: upload XML job definitions up to the server
+: upload job definitions up to the server
 
 # OPTIONS
 
@@ -46,7 +46,10 @@ The tool works in one of two *ACTION* modes:
 : Project name. List jobs within this project.
 
 -f, \--file *FILE*
-: File path. For list action, path to store the job definitions found in XML.
+: File path. For list action, path to store the job definitions found in XML/Yaml.
+
+-F, \--format *FORMAT*
+: File Format. For list action, format for the output document. Values: "xml" or "yaml". Default: "xml".
 
 # LOAD ACTION OPTIONS
 
@@ -54,8 +57,10 @@ The tool works in one of two *ACTION* modes:
 : Duplicate job behavior option. When loading jobs, treat definitions that already exist on the server in the given manner: 'update' existing jobs,'skip' the uploaded definitions, or 'create' them anyway. (load action. default: update)
 
 -f, \--file *FILE*
-: File path. For load action, path to an XML FILE to upload.
+: File path. For load action, path to a FILE to upload.
 
+-F, \--format *FORMAT*
+: File Format. For load action, format for the input document. Values: "xml" or "yaml". Default: "xml".
 
 # LIST ACTION 
 
@@ -76,9 +81,13 @@ List only a single job by ID:
 
     rd-jobs -i 123
 
-List a set of jobs by ID and store them in a file:
+List a set of jobs by ID and store them in a XML file:
 
     rd-jobs -i 1,23,4 --file out.xml
+    
+List a set of jobs by ID and store them in a Yaml file:
+
+    rd-jobs -i 1,23,4 --file out.yaml --format yaml
 
 List all jobs in the project "demo"
 
@@ -107,9 +116,10 @@ with the uploaded definition (hence making the Group+Name non-unique).
 
 *Examples*
 
-Load a file to the server:
+Load a file to the server in XML or Yaml format:
 
     rd-jobs load -f jobs.xml
+    rd-jobs load -f jobs.yaml -F yaml
 
 Output:
 
