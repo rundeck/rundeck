@@ -2,12 +2,12 @@
 
 RunDeck can integrate with external data by configuring the use of *Providers*.  Providers are third-party services or systems that export data that RunDeck can import. Additionally, RunDeck supports an external Editor for Node data.
 
-RunDeck makes use of common data formats (XML & JSON).  Third-party software may produce these formats natively, however it is typical to have to massage the output of one system into the appropriate format to be consumed by RunDeck.  Since URLs and HTTP are a lowest-common-denominator for communication, RunDeck only requires that the data Providers make this data available as a file at a URL or on the local disk.
+RunDeck makes use of common data formats (XML, JSON & YAML).  Third-party software may produce these formats natively, however it is typical to have to massage the output of one system into the appropriate format to be consumed by RunDeck.  Since URLs and HTTP are a lowest-common-denominator for communication, RunDeck only requires that the data Providers make this data available as a file at a URL or on the local disk.
 
 There are a few types of external integration:
 
 [*Resource Model Provider*](#resource-model-provider)
-:   Provides a set of Nodes in XML format. E.g. a CMDB or hosted virtual machines service. RunDeck can be configured to use a different provider for each Project, and can refresh the Resources it uses from this provider.
+:   Provides a set of Nodes in XML or YAML format. E.g. a CMDB or hosted virtual machines service. RunDeck can be configured to use a different provider for each Project, and can refresh the Resources it uses from this provider.
 
 [*Resource Editor*](#resource-editor)
 :   Provides a web-based editor to manage the Node definitions. RunDeck can link to this editor from the Run page, and has optional JavaScript interactions to make editing externally-managed Node resources integrated with the RunDeck GUI.
@@ -21,15 +21,17 @@ The Resource model provider is a way to transfer Node definitions from other sys
 
 Resource model data is a set of Node descriptors, each with a uniquely identifying name.  In addition to Name, some pieces of metadata are required (like `hostname`, and `username`), and some are optional.
 
-(See [resource.xml - node](resource-v10.html#node) for more detail about the `node` entry.)
+(See [resource.xml - node](resource-v10.html#node) and [resource-yaml-v12](resource-yaml-v12.html) for more information.)
 
-The Resource model data, commonly referred to as resources.xml, is stored on the server as a file.  Each Project in RunDeck has its own resources.xml file, and this file is used to determine what Nodes are available and how to connect to those Nodes and run commands. The Resource model data is assumed to be a static file, unless a Provider URL is configured, in which case an admin can tell the RunDeck server to refresh the Resource model from the URL.
+The Resource model data, commonly referred to as resources.xml or resources.yaml, is stored on the server as a file.  Each Project in RunDeck has its own Resources file, and this file is used to determine what Nodes are available and how to connect to those Nodes and run commands. The Resource model data is assumed to be a static file, unless a Provider URL is configured, in which case an admin can tell the RunDeck server to refresh the Resource model from the URL.
 
 ### Requirements ###
 
 In order to provide the Resource model data to RunDeck:
 
-1. The data must be stored in XML in the specific [resource-v10.xml format](resource-v10.html). ^[Currently XML is required, but JSON support is planned.]
+1. The data must be either:
+    * XML in [resource-v10 format](resource-v10.html)
+    * YAML in [resource-yaml-v12 format](resource-yaml-v12.html)
 2. Each Node entry must have a unique `name` value. You may have to convert the external system's identifier to be unique, or create one yourself.
 3. The data must be *either*: 
     * accessible on-disk from the RunDeck server, 
@@ -37,12 +39,12 @@ In order to provide the Resource model data to RunDeck:
 
 This means you can provide the data in the way that best suits your specific use-case.  Some examples:
 
-* Hand-crafted XML data, which you could store in a version control system.  The URL for the file in the VCS repository would be provided to RunDeck.
+* Hand-crafted XML/YAML data, which you could store in a version control system.  The URL for the file in the VCS repository would be provided to RunDeck.
     * To update the data you would commit changes to your VCS, and then tell RunDeck to refresh.
-* XML generated from a custom CMDB or other software, and stored on disk.
-    * You could do this with a cron-job, or via some external trigger.  RunDeck will simply read the resource.xml file identified in the configuration file.
-* XML generated from a simple CGI script which interfaces with another third-party or external service.
-    * You could run Apache and host a simple CGI script.  The CGI script would communicate to some other system and then return the XML content.  You could tell RunDeck to refresh the Resource model, which would in turn cause the CGI to access the external data and return the reformatted content.
+* Data generated from a custom CMDB or other software, and stored on disk.
+    * You could do this with a cron-job, or via some external trigger.  RunDeck will simply read the resource.xml/resource.yaml file identified in the configuration file.
+* Data generated from a simple CGI script which interfaces with another third-party or external service.
+    * You could run Apache and host a simple CGI script.  The CGI script would communicate to some other system and then return the XML/YAML content.  You could tell RunDeck to refresh the Resource model, which would in turn cause the CGI to access the external data and return the reformatted content.
 
 The Resource model data does not have to include the RunDeck server Node, as it is implicitly included.
 
@@ -54,11 +56,11 @@ Define the file where the resource.xml will be stored on-disk.  Each new project
 
     project.resources.file = ..
     
-This file path is where RunDeck will read the XML contents from, and also where it will store it to if refreshing from a remote URL.
+This file path is where RunDeck will read the contents from, and also where it will store it to if refreshing from a remote URL.  If you specify a file ending in ".xml" then the format is [resource-v10 XML](resource-v10.html).  If you specify a file ending in ".yaml" then the format is [resource-yaml-v12 YAML](resource-yaml-v12.html).
 
     project.resources.url = http://...
     
-This configures the remote URL for loading the resources.xml.  
+This configures the remote URL for loading the Resources model data.
 
 ### Implementations and Examples ###
 
@@ -70,7 +72,7 @@ This configures the remote URL for loading the resources.xml.
 
 #### Simple VCS resource model provider
 
-Putting the resources.xml file under the control of a source code
+Putting the resources.xml/resources.yaml file under the control of a source code
 management tool is a simple solution to controlling and tracking
 change to the resources.xml file. 
 Any changes will be committed and the commit messages become an audit
@@ -401,9 +403,9 @@ selected, the Job will have the matching package versions.
 Resource Editor
 ------
 
-The Resource Editor integration is a way to link to a third-party system used for managing Node definitions from within RunDeck. Each Node entry in the resources.xml can define a URL to provide an "Edit" link that will appear in the RunDeck Run page for that Node.
+The Resource Editor integration is a way to link to a third-party system used for managing Node definitions from within RunDeck. Each Node entry in the resources.xml or resources.yaml can define a URL to provide an "Edit" link that will appear in the RunDeck Run page for that Node.
 
-This allows you to make use of the Resource Model Provider in a more seamless way.  RunDeck will load the resource.xml from the third-party Provider system, and users of RunDeck can click straight to the Editor for those Nodes.  The Provider and the Editor could be the same system, or they could both be custom CGI scripts that integrate with a third system.
+This allows you to make use of the Resource Model Provider in a more seamless way.  RunDeck will load the Resource model from the third-party Provider system, and users of RunDeck can click straight to the Editor for those Nodes.  The Provider and the Editor could be the same system, or they could both be custom CGI scripts that integrate with a third system.
 
 Some teams have acquired or developed tools to manage information
 about the hosts deployed in their networks. These tools have
@@ -414,8 +416,7 @@ of these tools, it is possible to map the data to meet the needs of
 
 ### Definition ###
 
-The [RunDeck resource model document format](resource-v10.html) provides two attributes belonging to
-the <code>node</code> tag that help connect the dots between the
+The [RunDeck resource model document format](resource-v10.html) and the [resource-yaml-v12](resource-yaml-v12.html) format provide two attributes that help connect the dots between the
 RunDeck UI and the editing interface provided by the external data
 management tool. They can use `editUrl` or `remoteUrl` attributes to specify the remote URL.  The URLs can embed properties about the node to expand prior to being loaded, which allows you to e.g. submit query parameters using the node name.
 
@@ -500,7 +501,7 @@ TODO: The JavaScript code to communicate back to RunDeck could be bundled into a
 
 ### Examples ###
 
-Here are some examples of using the `editUrl` and `remoteUrl` in a resources.xml file:
+Here are some examples of using the `editUrl` and `remoteUrl` in a resources.xml/resources.yaml file:
 
 Specify a simple URL for editing, which will simply produce a link:
 
@@ -517,6 +518,20 @@ Specify a remote URL with embedded "name" and "project" properties as parameters
 Specify a remote URL with embedded "name" property as part of the path:
 
     <node name="venkman" remoteUrl="http://mycmdb:8080/node/edit/${node.name}"  ... />
+
+In YAML, some examples:
+
+Specify a remote URL with embedded "name" and "project" properties as parameters:
+
+    venkman:
+      nodename: venkman
+      remoteUrl: http://mycmdb:8080/node/edit?name=${node.name}&amp;project=${node.project}
+
+Specify a remote URL with embedded "name" property as part of the path:
+
+    venkman:
+      nodename: venkman
+      remoteUrl: "http://mycmdb:8080/node/edit/${node.name}
 
 #### Simple site integration ####
 
