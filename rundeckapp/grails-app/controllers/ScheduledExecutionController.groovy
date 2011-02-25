@@ -1600,7 +1600,10 @@ class ScheduledExecutionController  {
             //set user options:
             def i=0;
             if(params.options instanceof Collection ){
-                params.options.each{ theopt->
+                params.options.each{ origopt->
+                    def Option theopt = origopt.createClone()
+                    scheduledExecution.addToOptions(theopt)
+                    theopt.scheduledExecution = scheduledExecution
                     if (!theopt.validate()) {
                         failed = true
                         theopt.discard()
@@ -1612,7 +1615,6 @@ class ScheduledExecutionController  {
                                'Invalid Option definition: {0}'
                          )
                     }
-                    theopt.scheduledExecution=scheduledExecution
                     i++
                 }
             }else if (params.options instanceof Map){

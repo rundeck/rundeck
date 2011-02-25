@@ -32,6 +32,122 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         super.setUp();
     }
 
+    public void testUploadOptions() {
+        def sec = new ScheduledExecutionController()
+
+        sec.metaClass.request = new MockMultipartHttpServletRequest()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.existsFrameworkProject {project, framework -> return true }
+        sec.frameworkService = fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.nextExecutionTimes {joblist -> return [] }
+        sec.scheduledExecutionService = mock2.createMock()
+
+        def xml = '''
+<joblist>
+    <job>
+        <name>test1</name>
+        <group>testgroup</group>
+        <description>desc</description>
+        <context>
+            <project>project1</project>
+             <options>
+                <option name='testopt' value='`ls -t1 /* | head -n1`' values="a,b,c" />
+              </options>
+        </context>
+        <sequence>
+            <command><exec>echo test</exec></command>
+        </sequence>
+    </job>
+</joblist>
+'''
+        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
+        def result = sec.upload()
+        //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
+        assertNotNull result
+        assertTrue result.didupload
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
+        assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
+        assertEquals 1, result.jobs.size()
+        assertTrue result.jobs[0] instanceof ScheduledExecution
+        def ScheduledExecution job = result.jobs[0]
+        assertNotNull job.options
+        assertEquals 1,job.options.size()
+        Option opt = job.options.iterator().next()
+        assertEquals "testopt",opt.name
+        assertEquals "`ls -t1 /* | head -n1`",opt.defaultValue
+        assertNotNull opt.values
+        assertEquals 3, opt.values.size()
+        assertTrue opt.values.contains("a")
+        assertTrue opt.values.contains("b")
+        assertTrue opt.values.contains("c")
+    }
+    public void testUploadOptions2() {
+        def sec = new ScheduledExecutionController()
+
+        sec.metaClass.request = new MockMultipartHttpServletRequest()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.existsFrameworkProject {project, framework -> return true }
+        sec.frameworkService = fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.nextExecutionTimes {joblist -> return [] }
+        sec.scheduledExecutionService = mock2.createMock()
+        def xml = '''
+-
+  project: project1
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - exec: echo test
+  description: desc
+  name: test1
+  group: testgroup
+  options:
+    testopt:
+      value: '`ls -t1 /* | head -n1`'
+      values: [a,b,c]
+
+'''
+        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/yaml', xml as byte[]))
+        sec.params.fileformat="yaml"
+        def result = sec.upload()
+        //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
+        assertNotNull result
+        assertTrue result.didupload
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
+        assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
+        assertEquals 1, result.jobs.size()
+        assertTrue result.jobs[0] instanceof ScheduledExecution
+        def ScheduledExecution job = result.jobs[0]
+        assertNotNull job.options
+        assertEquals 1,job.options.size()
+        Option opt = job.options.iterator().next()
+        assertEquals "testopt",opt.name
+        assertEquals "`ls -t1 /* | head -n1`",opt.defaultValue
+        assertNotNull opt.values
+        assertEquals 3, opt.values.size()
+        assertTrue opt.values.contains("a")
+        assertTrue opt.values.contains("b")
+        assertTrue opt.values.contains("c")
+    }
     public void testUploadShouldCreate(){
         def sec = new ScheduledExecutionController()
 
