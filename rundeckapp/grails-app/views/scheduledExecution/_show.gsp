@@ -13,6 +13,14 @@
                 }
             });
         }
+
+    function init(){
+        $$('.obs_bubblepopup').each(function(e) {
+            new BubbleController(e,null,{offx:-14,offy:null}).startObserving();
+        });
+    }
+    Event.observe(window,'load',init);
+
 </g:javascript>
 
 <div class="pageTop extra">
