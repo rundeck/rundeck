@@ -1936,7 +1936,14 @@ class ScheduledExecutionController  {
                 def schedlist = c.list{
                     and{
                         eq('jobName',jobdata.jobName)
-                        eq('groupPath',jobdata.groupPath)
+                        if(!jobdata.groupPath){
+                            or{
+                                eq('groupPath', '')
+                                isNull('groupPath')
+                            }
+                        }else{
+                            eq('groupPath',jobdata.groupPath)
+                        }
                         eq('project',jobdata.project)
                     }
                 }
