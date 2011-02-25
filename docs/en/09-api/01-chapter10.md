@@ -472,9 +472,9 @@ The `events` element will also have `max`, `offset`, and `total` attributes, to 
 `max` is the paging size as specified in the request, or with the default value of 20.
 `offset` is the offset specified, or default value of 0.
 
-### Reporting execution status
+### Creating History Event Reports
 
-Create a history report entry for an external process.
+Create a history event report for any external process.
 
 URL:
 
@@ -484,8 +484,8 @@ Required Parameters:
 
 * `project` : project name
 * `status` : report status, one of "succeeded", "failed" or "aborted"
-* `title` : Title of the report. This should be a short string identifying the process that was run.  E.g. RunDeck jobs use the Job Group and Job Name, and adhoc execution use the string "adhoc".
-* `summary` : Summary of process, a descriptive summary of the result.
+* `title` : Title of the report. This should be a short string identifying the process that was run.  E.g. RunDeck jobs use the Job Group and Job Name, and adhoc commands use the string "adhoc".
+* `summary` : A descriptive summary of the result.
 * `nodesuccesscount`:  number of successful nodes: how many nodes the process succeeded on.
 * `nodefailedcount`: number of failed nodes: how many nodes the process failed on.
 
@@ -496,7 +496,6 @@ Optional Parameters:
 * `script`: Full adhoc command or script that was run, if applicable.
 * `jobID`: Any associated RunDeck Job ID
 * `execID`: Any associated RunDeck Execution ID.
-
 
 The format for the `end`, and `start` values is either:  a unix millisecond timestamp, or a W3C dateTime string in the format "yyyy-MM-ddTHH:mm:ssZ".
 
