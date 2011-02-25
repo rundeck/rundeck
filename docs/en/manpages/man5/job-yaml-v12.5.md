@@ -32,16 +32,31 @@ Each Job definition is a Map consisting of some required and some optional entri
 
 Each Job definition requires these values:
 
-* `name`: the job name
-* `description`: the job description (can be blank)
-* `project`: the Project name
-* `loglevel`: the loglevel to use for the job, the value must be one of:
-    * DEBUG
-    * VERBOSE
-    * INFO
-    * WARN
-    * ERR
-* [`sequence`](#sequence): The workflow sequence definition
+`name`
+
+:    the job name
+
+`description`
+
+:    the job description (can be blank)
+
+`project`
+
+:    the Project name
+
+`loglevel`
+
+:    the loglevel to use for the job, the value must be one of:
+
+    * `DEBUG`
+    * `VERBOSE`
+    * `INFO`
+    * `WARN`
+    * `ERR`
+
+[`sequence`](#sequence)
+
+:    The workflow sequence definition
 
 A minimal job definition example:
 
@@ -54,11 +69,25 @@ A minimal job definition example:
 
 In addition, these optional entries can be present:
 
-* `group`: Job group name
-* [`options`](#options): Set of Options for the Job
-* [`schedule`](#schedule): Job schedule
-* [`nodefilters`](#nodefilters): Node filter definition
-* [`notification`](#notification): Job result notifications
+`group`
+
+:    Job group name
+
+[`options`](#options)
+
+:    Set of Options for the Job
+
+[`schedule`](#schedule)
+
+:    Job schedule
+
+[`nodefilters`](#nodefilters)
+
+:    Node filter definition
+
+[`notification`](#notification)
+
+:    Job result notifications
 
 ### Sequence
 
@@ -82,9 +111,17 @@ Example:
 
 The sequence has these required entries:
 
-* `keepgoing`: "true/false" - whether the sequence should keep going if an error occurs
-* `strategy`: "node-first" or "step-first".  Determines the strategy for executing the sequence across a set of nodes.  See the [RunDeck Guide](RunDeck-Guide.html#workflow-control-settings) for more info.
-* `commands`: This is a Sequence of:
+`keepgoing`
+
+:    "true/false" - whether the sequence should keep going if an error occurs
+
+`strategy`
+
+:    "node-first" or "step-first".  Determines the strategy for executing the sequence across a set of nodes.  See the [RunDeck Guide](RunDeck-Guide.html#workflow-control-settings) for more info.
+
+`commands`
+
+:    This is a Sequence of:
     * One or more [Command Definitions](#command)
 
 ### Command
@@ -100,14 +137,21 @@ Each command in the [Sequence](#sequence) can be of these different types:
 
 This [Command](#command) consists of a single entry:
 
-* `exec`:  the command to execute
+`exec`
+
+:    the command to execute
 
 #### Script Execution Entry
 
 This [Command](#command) executes the script content specified.
 
-* `script`: The script content.  It is useful to use the YAML "literal" scalar syntax shown below
-* `args`: Optional string defining arguments to pass to the script.
+`script`
+
+:     The script content.  It is useful to use the YAML "literal" scalar syntax shown below
+
+`args`
+
+:     Optional string defining arguments to pass to the script.
 
 Example:
 
@@ -122,8 +166,13 @@ Example:
 
 This [Command](#command) executes a script file stored on the server.
 
-* `scriptfile`: path to the script file
-* `args`: optional arguments to the script
+`scriptfile`
+
+:    path to the script file
+
+`args`
+
+:     optional arguments to the script
 
 Example:
 
@@ -134,10 +183,21 @@ Example:
 
 This [Command](#command) executes another RunDeck Job.
 
-* `jobref`: map  consisting of these entries:
-    * `name`: Name of the Job
-    * `group`: Group of the Job (optional)
-    * `args`: Arguments to pass to the job when executed
+`jobref`
+
+:    map  consisting of these entries:
+
+    `name`
+
+    :    Name of the Job
+
+    `group`
+
+    :    Group of the Job (optional)
+
+    `args`
+
+    :    Arguments to pass to the job when executed
 
 Example:
 
@@ -164,13 +224,33 @@ An option definition has no required entries, so it could be empty:
 
 Optional map entries are:
 
-* `description`: description of the option
-* `value`: a default value for the option
-* `values`: A set of possible values for the option. This must be a YAML Sequence of strings.
-* `required`: "true/false" - whether the option is required or not
-* `enforced`: "true/false" - whether the option value must be one of the specified possible values
-* `regex`: A regular expression defining what option values are acceptable
-* `valuesUrl`: A URL to an endpoint that will return a JSON-formatted set of values for the option.
+`description`
+
+:    description of the option
+
+`value`
+
+:    a default value for the option
+
+`values`
+
+:    A set of possible values for the option. This must be a YAML Sequence of strings.
+
+`required`
+
+:    "true/false" - whether the option is required or not
+
+`enforced`
+
+:    "true/false" - whether the option value must be one of the specified possible values
+
+`regex`
+
+:    A regular expression defining what option values are acceptable
+
+`valuesUrl`
+
+:    A URL to an endpoint that will return a JSON-formatted set of values for the option.
 
 Example:
 
@@ -208,15 +288,41 @@ Define a schedule for repeated execution of the Job.  The schedule can be define
 
 Or use a structure of explicit components. All of these are optional, but likely you want to change them:
 
-* `time`: a map containing:
-    * `seconds`:  seconds value (default: "0")
-    * `minute`:  minutes value (default: "0")
-    * `hour`:  hour value (default: "0")
-* `month`: Month value (default: "*")
-* `year`: Year value (default "*")
-* `dayofmonth`: day of month value. (mutually exclusive with `weekday`)
-* `weekday`: Map containing:
-    * `day`: Weekday value. (mutually exclusive with `dayofmonth`) (default: "*")
+`time`
+
+:    a map containing:
+
+    `seconds`
+
+    :    seconds value (default: "0")
+
+    `minute`
+
+    :    minutes value (default: "0")
+
+    `hour`
+
+    :    hour value (default: "0")
+
+`month`
+
+:    Month value (default: "*")
+
+`year`
+
+:    Year value (default "*")
+
+`dayofmonth`
+
+:    day of month value. (mutually exclusive with `weekday`)
+
+`weekday`
+
+:    Map containing:
+
+    `day`
+
+    :    Weekday value. (mutually exclusive with `dayofmonth`) (default: "*")
 
 Example using crontab string:
 
@@ -239,21 +345,55 @@ Example using structure:
 
 Specifies the Nodes to use for the job,  and the node-dispatch options.  Contains the following entries:
 
-* `dispatch`: a Map containing:
-    * `keepgoing`: "true/false" - whether to keepgoing on remaining nodes if a node fails
-    * `excludePrecedence`: "true/false" (default "true") - determines precedence for filters
-    * `threadcount`: Number of threads to use for parallel dispatch (default "1")
+`dispatch`
+
+:    a Map containing:
+
+    `keepgoing`
+
+    :    "true/false" - whether to keepgoing on remaining nodes if a node fails
+
+    `excludePrecedence`
+
+    :    "true/false" (default "true") - determines precedence for filters
+
+    `threadcount`
+
+    :    Number of threads to use for parallel dispatch (default "1")
 
 The `nodefilters` must also contain ONE of `include` or `exclude` filter specifiers.
 
-* `include`/`exclude`: A Map containing filter entries:
-    * `hostname`: Hostname filter
-    * `name`: Node name filter
-    * `tags`: Tags filter.  Supports boolean operators AND ("+") and OR (",").
-    * `os-name`: OS name filter
-    * `os-family`: OS Family filter
-    * `os-arch`: OS Arch filter
-    * `os-version`: OS Version filter
+`include`/`exclude`
+
+:    A Map containing filter entries:
+
+    `hostname`
+
+    :    Hostname filter
+
+    `name`
+
+    :    Node name filter
+
+    `tags`
+
+    :    Tags filter.  Supports boolean operators AND ("+") and OR (",").
+
+    `os-name`
+
+    :    OS name filter
+
+    `os-family`
+
+    :    OS Family filter
+
+    `os-arch`
+
+    :    OS Arch filter
+
+    `os-version`
+
+    :    OS Version filter
 
 Example:
 
@@ -272,8 +412,13 @@ Example:
 
 Defines result notification for the job.  You can include one or both of `onsuccess` or `onfailure` notifications.
 
-* `onsuccess`/`onfailure`: A Map containing:
-    * `recipients`: A comma-separated list of Email addresses
+`onsuccess`/`onfailure`
+
+:    A Map containing:
+
+    `recipients`
+
+    :    A comma-separated list of Email addresses
 
 Example:
 

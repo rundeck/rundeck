@@ -36,22 +36,53 @@ A Node definition consists of a Map with some required and some optional entries
 
 Required Entries:
 
-* `nodename`: Name of the node, this must be a unique Identifier across nodes within a project
-* `hostname`: Hostname of the node.  This can be any IP Address or hostname to address the node.
-* `username`: User name to connect to the node via SSH.
+`nodename`
+
+:    Name of the node, this must be a unique Identifier across nodes within a project
+
+`hostname`
+
+:    Hostname of the node.  This can be any IP Address or hostname to address the node.
+
+`username`
+
+:    User name to connect to the node via SSH.
 
 Optional Entries:
 
-* `description`: A description of the Node
-* `tags`: A literal with comma-separated tag strings, or a Sequence of literals
-* `osFamily`: OS Family
-* `osArch`: OS Architecture
-* `osName`: OS Name
-* `osVersion`: OS Version
-* `editUrl`: URL to an external resource model service.
-* `remoteUrl`: URL to an external resource model editor service.
+`description`
 
-For more information about using the `editUrl`/`remoteUrl` see the [RunDeck Guide](RunDeck-Guide.html#resource-editor).
+:    A description of the Node
+
+`tags`
+
+:    A literal with comma-separated tag strings, or a Sequence of literals
+
+`osFamily`
+
+:    OS Family
+
+`osArch`
+
+:    OS Architecture
+
+`osName`
+
+:    OS Name
+
+`osVersion`
+
+:    OS Version
+
+`editUrl`
+
+:    URL to an external resource model service.
+
+`remoteUrl`
+
+:    URL to an external resource model editor service.
+
+* For more information about using the `editUrl`/`remoteUrl` see the [RunDeck Guide](RunDeck-Guide.html#resource-editor).
 
 ## Examples
 
