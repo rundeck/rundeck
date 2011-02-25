@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="web" name="GrailsWeb">
+      <configuration>
+        <webroots>
+          <root url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/mail-0.9/grails-app/views" relative="/" />
+        </webroots>
+        <sourceRoots />
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/hibernate-1.2.0">
+      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/hibernate-1.2.0/target/classes" />
+      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/hibernate-1.2.0/target/test-classes" />
+      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/hibernate-1.2.0/web-app/plugins" />
+    </content>
+    <content url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT">
+      <sourceFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT/src/groovy" isTestSource="false" />
+      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT/target/classes" />
+      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT/target/test-classes" />
+      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT/web-app/plugins" />
+    </content>
+    <content url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/mail-0.9">
+      <sourceFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/mail-0.9/src/groovy" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/mail-0.9/grails-app/services" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/mail-0.9/grails-app/taglib" isTestSource="false" />
+      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/mail-0.9/target/classes" />
+      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/mail-0.9/target/test-classes" />
+      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/mail-0.9/web-app/plugins" />
+    </content>
+    <content url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/quartz-0.4.2">
+      <sourceFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/quartz-0.4.2/src/java" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/quartz-0.4.2/src/groovy" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/quartz-0.4.2/grails-app/services" isTestSource="false" />
+      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/quartz-0.4.2/target/classes" />
+      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/quartz-0.4.2/target/test-classes" />
+      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/quartz-0.4.2/web-app/plugins" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="Grails User Library">
+        <CLASSES>
+          <root url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/mail-0.9/lib" />
+          <root url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/quartz-0.4.2/lib" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <jarDirectory url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/mail-0.9/lib" recursive="false" />
+        <jarDirectory url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/quartz-0.4.2/lib" recursive="false" />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" scope="PROVIDED" name="grails-1.2.0" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="dispatch-build" level="project" />
+  </component>
+  <component name="POM File Configuration" pomFile="" />
+</module>
+

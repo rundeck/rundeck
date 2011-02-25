@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="Spring" name="Spring">
+      <configuration>
+        <fileset id="Grails" name="Grails" removed="false">
+          <file>file://$MODULE_DIR$/webrealms/web-app/WEB-INF/applicationContext.xml</file>
+        </fileset>
+      </configuration>
+    </facet>
+    <facet type="web" name="GrailsWeb">
+      <configuration>
+        <webroots>
+          <root url="file://$MODULE_DIR$/webrealms/web-app" relative="/" />
+        </webroots>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/webrealms">
+      <excludeFolder url="file://$MODULE_DIR$/webrealms/target/classes" />
+      <excludeFolder url="file://$MODULE_DIR$/webrealms/target/test-classes" />
+      <excludeFolder url="file://$MODULE_DIR$/webrealms/web-app/plugins" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library name="Grails User Library">
+        <CLASSES />
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="rundeck-grailsPlugins" />
+    <orderEntry type="library" scope="PROVIDED" name="grails-1.2.0" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="dispatch-build" level="project" />
+  </component>
+  <component name="POM File Configuration" pomFile="" />
+</module>
+

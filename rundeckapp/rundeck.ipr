@@ -1,11 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project relativePaths="false" version="4">
+<project version="4">
   <component name="AntConfiguration">
     <defaultAnt bundledAnt="true" />
   </component>
   <component name="Archetypes.Configuration">
     <option name="archetypesFileLocation" value="archetypes.xml" />
     <option name="workingDirectory" value="" />
+  </component>
+  <component name="ArtifactManager">
+    <artifact type="exploded-war" name="rundeck:Web exploded">
+      <root id="root">
+        <element id="javaee-facet-resources" facet="rundeck/web/Web" />
+      </root>
+    </artifact>
   </component>
   <component name="BuildJarProjectSettings">
     <option name="BUILD_JARS_ON_MAKE" value="false" />
@@ -28,13 +35,8 @@
     <option name="PROJECT_PROFILE" />
     <option name="USE_PROJECT_LEVEL_SETTINGS" value="false" />
   </component>
-  <component name="CodeStyleSettingsManager">
-    <option name="PER_PROJECT_SETTINGS" />
-    <option name="USE_PER_PROJECT_SETTINGS" value="false" />
-  </component>
   <component name="CompilerConfiguration">
     <option name="DEFAULT_COMPILER" value="Javac" />
-    <option name="DEPLOY_AFTER_MAKE" value="0" />
     <resourceExtensions>
       <entry name=".+\.(properties|xml|html|dtd|tld)" />
       <entry name=".+\.(gif|png|jpeg|jpg)" />
@@ -50,11 +52,13 @@
       <entry name="?*.jpeg" />
       <entry name="?*.jpg" />
     </wildcardResourcePatterns>
+    <annotationProcessing enabled="false" useClasspath="true" />
   </component>
   <component name="CopyrightManager" default="dtolabs-apache2">
     <copyright>
       <option name="notice" value="Copyright &amp;#36;today.year DTO Labs, Inc. (http://dtolabs.com)&#10;&#10;Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);&#10;you may not use this file except in compliance with the License.&#10;You may obtain a copy of the License at&#10;&#10;       http://www.apache.org/licenses/LICENSE-2.0&#10;&#10;Unless required by applicable law or agreed to in writing, software&#10;distributed under the License is distributed on an &quot;AS IS&quot; BASIS,&#10;WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.&#10;See the License for the specific language governing permissions and&#10;limitations under the License." />
       <option name="keyword" value="Copyright" />
+      <option name="allowReplaceKeyword" value="" />
       <option name="myName" value="dtolabs-apache2" />
       <option name="myLocal" value="true" />
     </copyright>
@@ -70,11 +74,8 @@
     <option name="SKIP_IMPORT_STATEMENTS" value="false" />
   </component>
   <component name="EclipseCompilerSettings">
-    <option name="DEBUGGING_INFO" value="true" />
     <option name="GENERATE_NO_WARNINGS" value="true" />
     <option name="DEPRECATION" value="false" />
-    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
-    <option name="MAXIMUM_HEAP_SIZE" value="128" />
   </component>
   <component name="EclipseEmbeddedCompilerSettings">
     <option name="DEBUGGING_INFO" value="true" />
@@ -99,38 +100,42 @@
   </component>
   <component name="FacetAutodetectingManager">
     <autodetection-disabled>
+      <facet-type id="Groovy">
+        <modules>
+          <module name="rundeck">
+            <files>
+              <file url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT/src/groovy/org/grails/jetty/JettyServer.groovy" />
+              <file url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT/src/groovy/org/grails/jetty/JettyServerFactory.groovy" />
+            </files>
+          </module>
+        </modules>
+      </facet-type>
       <facet-type id="web">
         <modules>
           <module name="rundeck" />
         </modules>
       </facet-type>
-      <facet-type id="Groovy">
-        <modules>
-          <module name="rundeck">
-            <files>
-              <file url="file:///Users/greg/.grails/1.2.0/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT/src/groovy/org/grails/jetty/JettyServer.groovy" />
-              <file url="file:///Users/greg/.grails/1.2.0/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT/src/groovy/org/grails/jetty/JettyServerFactory.groovy" />
-            </files>
-          </module>
-        </modules>
-      </facet-type>
     </autodetection-disabled>
+  </component>
+  <component name="GradleUISettings">
+    <setting name="root" />
+  </component>
+  <component name="GradleUISettings2">
+    <setting name="root" />
   </component>
   <component name="IdProvider" IDEtalkID="1F42079055FB278C9E12947B04B98725" />
   <component name="InspectionProjectProfileManager">
-    <option name="PROJECT_PROFILE" value="Project Default" />
-    <option name="USE_PROJECT_LEVEL_SETTINGS" value="false" />
-    <scopes />
     <profiles>
       <profile version="1.0" is_locked="false">
         <option name="myName" value="Project Default" />
         <option name="myLocal" value="false" />
-        <inspection_tool class="CanBeFinal" level="WARNING" enabled="true">
+        <inspection_tool class="CanBeFinal" enabled="true" level="WARNING" enabled_by_default="true">
           <option name="REPORT_CLASSES" value="true" />
           <option name="REPORT_METHODS" value="true" />
           <option name="REPORT_FIELDS" value="true" />
         </inspection_tool>
-        <inspection_tool class="JavaDoc" level="WARNING" enabled="true">
+        <inspection_tool class="EqualsAndHashcode" enabled="true" level="WARNING" enabled_by_default="true" />
+        <inspection_tool class="JavaDoc" enabled="true" level="WARNING" enabled_by_default="true">
           <option name="TOP_LEVEL_CLASS_OPTIONS">
             <value>
               <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="public" />
@@ -157,17 +162,25 @@
           </option>
           <option name="IGNORE_DEPRECATED" value="false" />
           <option name="IGNORE_JAVADOC_PERIOD" value="true" />
+          <option name="IGNORE_DUPLICATED_THROWS" value="false" />
+          <option name="IGNORE_POINT_TO_ITSELF" value="false" />
           <option name="myAdditionalJavadocTags" value="" />
         </inspection_tool>
-        <inspection_tool class="EqualsAndHashcode" level="WARNING" enabled="true" />
-        <inspection_tool class="LocalCanBeFinal" level="WARNING" enabled="true">
+        <inspection_tool class="JavadocReference" enabled="true" level="WARNING" enabled_by_default="true" />
+        <inspection_tool class="LocalCanBeFinal" enabled="true" level="WARNING" enabled_by_default="true">
           <option name="REPORT_VARIABLES" value="true" />
           <option name="REPORT_PARAMETERS" value="true" />
         </inspection_tool>
-        <inspection_tool class="JavadocReference" level="WARNING" enabled="true" />
+        <inspection_tool class="SpellCheckingInspection" enabled="true" level="TYPO" enabled_by_default="true">
+          <option name="processCode" value="false" />
+          <option name="processLiterals" value="true" />
+          <option name="processComments" value="true" />
+        </inspection_tool>
       </profile>
     </profiles>
-    <list size="0" />
+    <option name="PROJECT_PROFILE" value="Project Default" />
+    <option name="USE_PROJECT_PROFILE" value="true" />
+    <version value="1.0" />
   </component>
   <component name="IssueNavigationConfiguration">
     <option name="links">
@@ -178,13 +191,6 @@
         </IssueNavigationLink>
       </list>
     </option>
-  </component>
-  <component name="JavacSettings">
-    <option name="DEBUGGING_INFO" value="true" />
-    <option name="GENERATE_NO_WARNINGS" value="false" />
-    <option name="DEPRECATION" value="true" />
-    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
-    <option name="MAXIMUM_HEAP_SIZE" value="128" />
   </component>
   <component name="JavadocGenerationManager">
     <option name="OUTPUT_DIRECTORY" />
@@ -202,14 +208,6 @@
     <option name="HEAP_SIZE" />
     <option name="LOCALE" />
     <option name="OPEN_IN_BROWSER" value="true" />
-  </component>
-  <component name="JikesSettings">
-    <option name="JIKES_PATH" value="" />
-    <option name="DEBUGGING_INFO" value="true" />
-    <option name="DEPRECATION" value="true" />
-    <option name="GENERATE_NO_WARNINGS" value="false" />
-    <option name="IS_EMACS_ERRORS_MODE" value="true" />
-    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
   </component>
   <component name="LogConsolePreferences">
     <option name="FILTER_ERRORS" value="false" />
@@ -230,7 +228,7 @@
         <option name="downloadSourcesEnabled" value="false" />
         <option name="downloadJavadocEnabled" value="false" />
         <option name="generateSourcesEnabled" value="false" />
-        <option name="settingsPath" value="/Users/greg/.m2/settings.xml" />
+        <option name="settingsPath" value="$USER_HOME$/.m2/settings.xml" />
         <option name="searchFilter" value="" />
         <option name="disabledPoms">
           <value>
@@ -248,7 +246,7 @@
   </component>
   <component name="MavenBuildProjectComponent">
     <option name="mavenExecutable" value="" />
-    <option name="Settings File" value="/Users/greg/.m2/settings.xml" />
+    <option name="Settings File" value="$USER_HOME$/.m2/settings.xml" />
     <option name="mavenCommandLineParams" value="" />
     <option name="vmOptions" value="" />
     <option name="useMavenEmbedder" value="false" />
@@ -400,14 +398,18 @@
   <component name="ProjectDetails">
     <option name="projectName" value="rundeck" />
   </component>
-  <component name="ProjectFileVersion" converted="true" />
   <component name="ProjectKey">
     <option name="state" value="project:///Users/greg/devel/rundeckdev2/rundeckapp/rundeck.ipr" />
   </component>
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/rundeck.iml" filepath="$PROJECT_DIR$/rundeck.iml" />
+      <module fileurl="file://$PROJECT_DIR$/rundeck-grailsPlugins.iml" filepath="$PROJECT_DIR$/rundeck-grailsPlugins.iml" />
+      <module fileurl="file://$PROJECT_DIR$/webrealms-inplacePlugin.iml" filepath="$PROJECT_DIR$/webrealms-inplacePlugin.iml" />
     </modules>
+  </component>
+  <component name="ProjectResources">
+    <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
   </component>
   <component name="ProjectRootConfigurable.UI">
     <option name="proportions">
@@ -423,13 +425,6 @@
         <list size="0" />
       </value>
     </option>
-  </component>
-  <component name="RmicSettings">
-    <option name="IS_EANABLED" value="false" />
-    <option name="DEBUGGING_INFO" value="true" />
-    <option name="GENERATE_NO_WARNINGS" value="false" />
-    <option name="GENERATE_IIOP_STUBS" value="false" />
-    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
   </component>
   <component name="ScopeChooserConfigurable.UI">
     <option name="proportions">
@@ -474,7 +469,7 @@
     <option name="SHOW_FILE_HISTORY_AS_TREE" value="true" />
   </component>
   <component name="VcsDirectoryMappings">
-    <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/.." vcs="Git" />
   </component>
   <component name="WebServicesPlugin" addRequiredLibraries="true" />
   <component name="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable" proportions="" version="1">
@@ -495,6 +490,13 @@
     <option name="myLastEditedConfigurable" />
   </component>
   <component name="libraryTable">
+    <library name="dispatch-build">
+      <CLASSES>
+        <root url="jar://$PROJECT_DIR$/lib/rundeck-core-1.0.0.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
     <library name="temp library (plugins)">
       <CLASSES>
         <root url="file://$PROJECT_DIR$/tlib" />
@@ -502,13 +504,6 @@
       <JAVADOC />
       <SOURCES />
       <jarDirectory url="file://$PROJECT_DIR$/tlib" recursive="false" />
-    </library>
-    <library name="dispatch-build">
-      <CLASSES>
-        <root url="jar://$PROJECT_DIR$/lib/rundeck-core-1.0.0.jar!/" />
-      </CLASSES>
-      <JAVADOC />
-      <SOURCES />
     </library>
   </component>
 </project>
