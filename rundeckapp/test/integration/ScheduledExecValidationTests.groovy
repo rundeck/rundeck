@@ -742,7 +742,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         //get original job and test values
         ScheduledExecution test = ScheduledExecution.get(se.id)
         assertNotNull test
-        assertTrue !test.doNodedispatch
+        assertTrue(!test.doNodedispatch)
         assertNull "wrong value",test.nodeInclude
         assertNull "wrong value",test.nodeIncludeName
         assertNull "wrong value",test.nodeIncludeTags
