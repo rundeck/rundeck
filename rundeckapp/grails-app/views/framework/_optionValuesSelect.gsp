@@ -46,8 +46,15 @@
         <g:set var="valuesMap" value="${values && values instanceof Map?values:null}"/>
 
         <g:if test="${labelsSet && 1==labelsSet.size() && optionSelect.enforced}">
-            <g:set var="sellabel" value="${labelsSet.iterator().next()}"/>
-            <g:set var="selvalue" value="${valuesMap?valuesMap[sellabel]:sellabel}"/>
+            <g:set var="selentry" value="${labelsSet.iterator().next()}"/>
+            <g:if test="${selentry instanceof Map}">
+                <g:set var="sellabel" value="${selentry.name}"/>
+                <g:set var="selvalue" value="${selentry.value}"/>
+            </g:if>
+            <g:else>
+                <g:set var="sellabel" value="${selentry}"/>
+                <g:set var="selvalue" value="${valuesMap?valuesMap[sellabel]:sellabel}"/>
+            </g:else>
             <g:hiddenField name="${realFieldName}" value="${selvalue.encodeAsHTML()}"/>
             <span class="singlelabel">${sellabel.encodeAsHTML()}</span>
         </g:if>
@@ -79,7 +86,7 @@
     </g:if>
 </g:if>
 <g:if test="${err}">
-    <g:expander key="${rkey}_error_detail" classnames="error label">${err.message}</g:expander>
+    <g:expander key="${rkey}_error_detail" classnames="error label">${err.message.encodeAsHTML()}</g:expander>
     
     <span class="error note" style="display:none" id="${rkey}_error_detail">
         <g:if test="${err.exception}">

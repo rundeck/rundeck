@@ -253,6 +253,33 @@ class ScheduledExecutionController  {
                     err.srcUrl = srcUrl
                     log.error("getRemoteJSON error: URL ${srcUrl} : ${e.message}");
                 }
+                //validate result contents
+                boolean valid = true;
+                def validationerrors=[]
+                if(result && result instanceof Collection){
+                    result.eachWithIndex { entry,i->
+                        if(entry instanceof org.codehaus.groovy.grails.web.json.JSONObject){
+                            if(!entry.name){
+                                validationerrors<<"Item: ${i} has no 'name' entry"
+                                valid=false;
+                            }
+                            if(!entry.value){
+                                validationerrors<<"Item: ${i} has no 'value' entry"
+                                valid = false;
+                            }
+                        }else if(!(entry instanceof String)){
+                            valid = false;
+                            validationerrors << "Item: ${i} expected string or map like {name:\"..\",value:\"..\"}"
+                        }
+                    }
+                }else{
+                    validationerrors << "Expected top-level list with format: [{name:\"..\",value:\"..\"},..], or ['value','value2',..]"
+                    valid=false
+                }
+                if(!valid){
+                    result=null
+                    err.message="Failed parsing remote option values: ${validationerrors.join('\n')}"
+                }
                 return render(template: "/framework/optionValuesSelect", model: [optionSelect: opt, values: result, srcUrl: srcUrl, err: err,fieldPrefix:params.fieldPrefix,selectedvalue:params.selectedvalue]);
             } else {
                 return error.call()
