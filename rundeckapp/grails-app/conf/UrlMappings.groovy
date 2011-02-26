@@ -5,6 +5,7 @@ class UrlMappings {
                 // apply constraints here
             }
         }
+        "/"(controller: 'menu', action: 'index')
         /*******
         * API url paths, v1
         */
