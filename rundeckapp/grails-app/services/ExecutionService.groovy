@@ -1,7 +1,4 @@
 import com.dtolabs.rundeck.core.common.*
-import com.dtolabs.rundeck.core.types.controller.Arg
-
-import org.apache.commons.logging.Log
 
 import java.text.SimpleDateFormat;
 import java.util.logging.Handler;
@@ -21,27 +18,28 @@ import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.ExecutionServiceFactory
 import com.dtolabs.rundeck.core.cli.CLIExecutionListener
 import com.dtolabs.rundeck.core.cli.CLIToolLogger
-import com.dtolabs.rundeck.core.common.context.UserContext
+
 import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript
 import com.dtolabs.rundeck.core.dispatcher.DispatchedScriptImpl
-import com.dtolabs.rundeck.execution.WorkflowExecutionItem
+
 import com.dtolabs.rundeck.execution.WorkflowExecutionItemImpl
 import com.dtolabs.rundeck.execution.WorkflowImpl
-import com.dtolabs.rundeck.core.execution.DispatchedScriptExecutionItem
+
 import com.dtolabs.rundeck.core.execution.Executor
 import org.apache.tools.ant.BuildException
 import org.apache.tools.ant.BuildLogger
 import org.apache.tools.ant.Project
 import org.apache.tools.ant.BuildEvent
 import com.dtolabs.rundeck.execution.JobExecutionItem
-import com.dtolabs.rundeck.core.execution.BaseExecutionResult
+
 import com.dtolabs.rundeck.core.execution.ExecutionServiceThread
 import com.dtolabs.rundeck.execution.NodeRecorder
 import org.springframework.context.MessageSource
 import javax.servlet.http.HttpSession
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
-import java.text.MessageFormat;
+import java.text.MessageFormat
+import com.dtolabs.rundeck.core.cli.CLIUtils;
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -815,7 +813,8 @@ class ExecutionService implements ApplicationContextAware, Executor{
                                     nodeExcludePrecedence:params.nodeExcludePrecedence,
                                     nodeThreadcount:params.nodeThreadcount,
                                     nodeKeepgoing:params.nodeKeepgoing,
-                                    workflow:params.workflow
+                                    workflow:params.workflow,
+                                    argString:params.argString
             )
 
 
@@ -897,6 +896,11 @@ class ExecutionService implements ApplicationContextAware, Executor{
         props.putAll(extra)
 
         //evaluate embedded Job options for Regex match against input values
+
+        def optparams = ExecutionService.filterOptParams(props)
+        if(!optparams){
+            props.argString=addArgStringOptionDefaults(scheduledExec, props.argString)
+        }
         validateInputOptionValues(scheduledExec, props)
 
         //find any currently running executions for this job, and if so, throw exception
@@ -956,6 +960,38 @@ class ExecutionService implements ApplicationContextAware, Executor{
             throw new ExecutionServiceException("unable to save scheduledExecution")
         }
         return execution
+    }
+
+    /**
+     * evaluate the options in the input argString, and if any Options defined for the Job have required=true, have a
+     * defaultValue, and have null value in the input properties, then append the default option value to the argString
+     */
+    def String addArgStringOptionDefaults(ScheduledExecution scheduledExecution, args) throws ExecutionServiceException {
+        def StringBuffer sb = new StringBuffer()
+        def optparams = [:]
+        if(args && args instanceof String){
+            optparams = args?frameworkService.parseOptsFromString(args):[:]
+            sb.append(args?:"")
+        }else if(args && args instanceof String[]){
+            optparams = frameworkService.parseOptsFromArray(args)
+            sb.append(args?args.join(" "):'')
+        }
+
+        if (scheduledExecution.options) {
+            def defaultoptions=[:]
+            scheduledExecution.options.each {Option opt ->
+                if (opt.required && null==optparams[opt.name] && opt.defaultValue) {
+                    defaultoptions[opt.name]=opt.defaultValue
+                }
+            }
+            if(defaultoptions){
+                if(sb.size()>0){
+                    sb.append(" ")
+                }
+                sb.append( generateArgline(defaultoptions))
+            }
+        }
+        return sb.toString()
     }
 
     /**
@@ -1301,6 +1337,11 @@ class ExecutionService implements ApplicationContextAware, Executor{
             }
             //replace data context within arg string
             String[] newargs=jitem.args
+            //try to set defaults for any missing args
+            def newargstring = addArgStringOptionDefaults(se, newargs)
+            final List<String> stringList = CLIUtils.splitArgLine(newargstring);
+            newargs = stringList.toArray(new String[stringList.size()]);
+
             if(null!=jitem.dataContext && null!=jitem.args){
                 newargs=com.dtolabs.rundeck.core.dispatcher.DataContextUtils.replaceDataReferences(jitem.args,jitem.getDataContext())
             }
