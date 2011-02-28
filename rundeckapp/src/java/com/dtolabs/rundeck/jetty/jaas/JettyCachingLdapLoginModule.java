@@ -116,7 +116,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     /**
      * port of the ldap server
      */
-    private int _port;
+    private int _port = 389;
 
     /**
      * Context.SECURITY_AUTHENTICATION
@@ -569,7 +569,9 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         super.initialize(subject, callbackHandler, sharedState, options);
 
         _hostname = (String) options.get("hostname");
-        _port = Integer.parseInt((String) options.get("port"));
+        if(options.containsKey("port")) {
+            _port = Integer.parseInt((String) options.get("port"));   
+        }
         _providerUrl = (String) options.get("providerUrl");
         _contextFactory = (String) options.get("contextFactory");
         _bindDn = (String) options.get("bindDn");
