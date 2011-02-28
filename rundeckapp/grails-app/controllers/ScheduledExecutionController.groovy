@@ -2488,7 +2488,7 @@ class ScheduledExecutionController  {
     /**
      * API: Run a job immediately: /job/{id}/run, version 1
      */
-    def apiJobRun= {
+    def apiJobRun = {
         def ScheduledExecution scheduledExecution = ScheduledExecution.get(params.long('id'))
         if (!scheduledExecution) {
             flash.errorCode = "api.error.item.doesnotexist"
@@ -2496,27 +2496,29 @@ class ScheduledExecutionController  {
             return chain(controller: 'api', action: 'renderError')
         }
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        params["user"] = (session?.user) ? session.user : "anonymous"
+        def inparams = [:]
+        inparams["user"] = (session?.user) ? session.user : "anonymous"
         def rolelist = (session?.roles) ? session.roles : []
 
-        if(params.argString){
-            params.extra.argString=params.argString
+        if (params.argString) {
+            inparams["extra.argString"] = params.argString
         }
         //convert api parameters to node filter parameters
-        def filters=FrameworkController.extractApiNodeFilterParams(params)
-        if(filters){
-            filters.each{k,v->
-                extra['extra.'+k]=v
+        def filters = FrameworkController.extractApiNodeFilterParams(params)
+        if (filters) {
+            filters.each {k, v ->
+                inparams['extra.' + k] = v
             }
         }
 
-        def result = executeScheduledExecution(scheduledExecution, framework, rolelist, params)
+        def result = executeScheduledExecution(scheduledExecution, framework, rolelist, inparams)
         if (result.error) {
             flash.error = result.message
             return chain(controller: "api", action: "error")
         }
         return new ExecutionController().renderApiExecutionListResultXML([result.execution])
     }
+
     /**
      * API: DELETE job definition: /job/{id}, version 1
      */

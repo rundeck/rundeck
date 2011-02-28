@@ -31,6 +31,10 @@ cat > $DIR/temp.out <<END
       <loglevel>INFO</loglevel>
       <context>
           <project>$xmlproj</project>
+          <options>
+              <option name="opt1" value="testvalue" required="true"/>
+              <option name="opt2" values="a,b,c" required="true"/>
+          </options>
       </context>
       <dispatch>
         <threadcount>1</threadcount>
@@ -55,7 +59,7 @@ params=""
 ulopts="-F xmlBatch=@$DIR/temp.out"
 
 # get listing
-$CURL $ulopts --header "$VERSHEADER" ${runurl}?${params} > $DIR/curl.out
+$CURL $ulopts  ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -85,13 +89,10 @@ echo "TEST: job/id/run should succeed"
 # now submit req
 runurl="${APIURL}/job/${jobid}/run"
 params=""
+execargs="-opt2 a"
 
 # get listing
-$CURL --header "$VERSHEADER"  ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
+$CURL  --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
@@ -106,6 +107,26 @@ else
     errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
     exit 2
 fi
+
+
+###
+# Run the chosen id, leave off required option value
+###
+
+echo "TEST: job/id/run without required opt should fail"
+
+
+# now submit req
+runurl="${APIURL}/job/${jobid}/run"
+params=""
+execargs=""
+
+# get listing
+$CURL  --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+
+sh $DIR/api-test-error.sh $DIR/curl.out "Option 'opt2' is required." || exit 2
+
+echo "OK"
 
 rm $DIR/curl.out
 
