@@ -232,16 +232,16 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             assertNotNull(se2.options)
             assertEquals(2,se2.options.size())
 
-            assertTrue testService.validateInputOptionValues(se2,['command.option.test1':'some value'])
+            assertTrue testService.validateInputOptionValues(se2,['option.test1':'some value'])
             assertTrue testService.validateInputOptionValues(se2,[argString:'-test1 \'some value\''])
-            assertTrue testService.validateInputOptionValues(se2,['command.option.test1':'some value','command.option.test2':'abc'])
+            assertTrue testService.validateInputOptionValues(se2,['option.test1':'some value','option.test2':'abc'])
             assertTrue testService.validateInputOptionValues(se2,[argString:'-test1 \'some value\' -test2 abc'])
-            assertTrue testService.validateInputOptionValues(se2,['command.option.test1':'some value','command.option.test2':'abcdefg'])
+            assertTrue testService.validateInputOptionValues(se2,['option.test1':'some value','option.test2':'abcdefg'])
             assertTrue testService.validateInputOptionValues(se2,[argString:'-test1 \'some value\' -test2 abcdefg'])
-            assertTrue testService.validateInputOptionValues(se2,['command.option.test1':'some value','command.option.test2':'xyzabcdefg'])
+            assertTrue testService.validateInputOptionValues(se2,['option.test1':'some value','option.test2':'xyzabcdefg'])
             assertTrue testService.validateInputOptionValues(se2,[argString:'-test1 \'some value\' -test2 xyzabcdefg'])
             try{
-                testService.validateInputOptionValues(se2,['command.option.test1':'some value','command.option.test2':'xyz'])
+                testService.validateInputOptionValues(se2,['option.test1':'some value','option.test2':'xyz'])
                 fail("Should have thrown exception")
             }catch (Exception e){
                 assertNotNull(e)
@@ -255,7 +255,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
                 assertTrue( e.message.contains("'test2' doesn't match regular expression"))
             }
             try{
-                testService.validateInputOptionValues(se2,['command.option.test1':'some value','command.option.test2':'xyzab'])
+                testService.validateInputOptionValues(se2,['option.test1':'some value','option.test2':'xyzab'])
                 fail("Should have thrown exception")
             }catch (Exception e){
                 assertNotNull(e)
@@ -270,17 +270,17 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             }
             se2.addToOptions(new Option(name:'test3',enforced:false,regex:'shampoo[abc].*'))
 
-            assertTrue testService.validateInputOptionValues(se2,['command.option.test3':'shampooa'])
-            assertTrue testService.validateInputOptionValues(se2,['command.option.test3':'shampoob'])
-            assertTrue testService.validateInputOptionValues(se2,['command.option.test3':'shampooc'])
-            assertTrue testService.validateInputOptionValues(se2,['command.option.test3':'shampoocxyz234'])
+            assertTrue testService.validateInputOptionValues(se2,['option.test3':'shampooa'])
+            assertTrue testService.validateInputOptionValues(se2,['option.test3':'shampoob'])
+            assertTrue testService.validateInputOptionValues(se2,['option.test3':'shampooc'])
+            assertTrue testService.validateInputOptionValues(se2,['option.test3':'shampoocxyz234'])
             assertTrue testService.validateInputOptionValues(se2,[argString:'-test3 shampooa'])
             assertTrue testService.validateInputOptionValues(se2,[argString:'-test3 shampoob'])
             assertTrue testService.validateInputOptionValues(se2,[argString:'-test3 shampooc'])
             assertTrue testService.validateInputOptionValues(se2,[argString:'-test3 shampoocxyz234'])
 
             try{
-                testService.validateInputOptionValues(se2,['command.option.test3':'shampooz'])
+                testService.validateInputOptionValues(se2,['option.test3':'shampooz'])
                 fail("Should have thrown exception")
             }catch (Exception e){
                 assertNotNull(e)
@@ -294,7 +294,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
                 assertTrue( e.message.contains("'test3' doesn't match regular expression"))
             }
             try{
-                testService.validateInputOptionValues(se2,['command.option.test3':'zshampooa'])
+                testService.validateInputOptionValues(se2,['option.test3':'zshampooa'])
                 fail("Should have thrown exception")
             }catch (Exception e){
                 assertNotNull(e)
@@ -321,14 +321,14 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             assertNotNull(se2.options)
             assertEquals(1,se2.options.size())
 
-            assertTrue testService.validateInputOptionValues(se2,['command.option.test1':'a'])
-            assertTrue testService.validateInputOptionValues(se2,['command.option.test1':'b'])
-            assertTrue testService.validateInputOptionValues(se2,['command.option.test1':'abc'])
+            assertTrue testService.validateInputOptionValues(se2,['option.test1':'a'])
+            assertTrue testService.validateInputOptionValues(se2,['option.test1':'b'])
+            assertTrue testService.validateInputOptionValues(se2,['option.test1':'abc'])
             assertTrue testService.validateInputOptionValues(se2,[argString:'-test1 a'])
             assertTrue testService.validateInputOptionValues(se2,[argString:'-test1 b'])
             assertTrue testService.validateInputOptionValues(se2,[argString:'-test1 abc'])
             try{
-                testService.validateInputOptionValues(se2,['command.option.test1':'some value'])
+                testService.validateInputOptionValues(se2,['option.test1':'some value'])
                 fail("Should have thrown exception")
             }catch (Exception e){
                 assertNotNull(e)
@@ -344,7 +344,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
                 assertTrue( e.message.contains("was not in the allowed values"))
             }
             try{
-                testService.validateInputOptionValues(se2,['command.option.test1':'abd'])
+                testService.validateInputOptionValues(se2,['option.test1':'abd'])
                 fail("Should have thrown exception")
             }catch (Exception e){
                 assertNotNull(e)
@@ -393,6 +393,176 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
                 assertNotNull(e)
                 assertTrue( e.message.contains("'test1' is required"))
             }
+        }
+
+        t:{
+            //test non-multi-valued and list input
+            assertTrue testService.validateInputOptionValues(se,[:])
+            ScheduledExecution se2 = new ScheduledExecution()
+            final Option option = new Option(name: 'test1', required:false, enforced: true, multivalued: false)
+            option.addToValues('a')
+            option.addToValues('b')
+            option.addToValues('abc')
+            se2.addToOptions(option)
+            assertNotNull(se2.options)
+            assertEquals(1,se2.options.size())
+            //valid single value input
+            assertTrue testService.validateInputOptionValues(se2, ['option.test1': 'abc'])
+            try{
+                //should fail with list input
+                testService.validateInputOptionValues(se2,['option.test1':['blah']])
+                fail("Should have thrown exception")
+            }catch (Exception e){
+                assertNotNull(e)
+                assertTrue(e.message, e.message.contains("Option 'test1' value: [blah] does not allow multiple values"))
+            }
+            try{
+                //should fail with list input
+                testService.validateInputOptionValues(se2, ['option.test1': ['abc']])
+                fail("Should have thrown exception")
+            }catch (Exception e){
+                assertNotNull(e)
+                assertTrue(e.message, e.message.contains("Option 'test1' value: [abc] does not allow multiple values"))
+            }
+            try{
+                //should fail with list input
+                testService.validateInputOptionValues(se2, ['option.test1': ['abc','a']])
+                fail("Should have thrown exception")
+            }catch (Exception e){
+                assertNotNull(e)
+                assertTrue(e.message, e.message.contains("does not allow multiple values"))
+            }
+        }
+        t:{
+            //test multi-valued and list input
+            assertTrue testService.validateInputOptionValues(se,[:])
+            ScheduledExecution se2 = new ScheduledExecution()
+            final Option option = new Option(name: 'test1', required:false, enforced: true, multivalued: true, delimiter: ' ')
+            option.addToValues('a')
+            option.addToValues('b')
+            option.addToValues('abc')
+            se2.addToOptions(option)
+            assertNotNull(se2.options)
+            assertEquals(1,se2.options.size())
+            assertTrue testService.validateInputOptionValues(se2, ['option.test1': 'abc'])
+            assertTrue testService.validateInputOptionValues(se2, ['option.test1': ['abc']])
+            try{
+                //should fail with invalid value input
+                testService.validateInputOptionValues(se2, ['option.test1': ['blah']])
+                fail("Should have thrown exception")
+            }catch (Exception e){
+                assertNotNull(e)
+                assertTrue(e.message, e.message.contains("were not all in the allowed values"))
+            }
+            try{
+                //should fail with invalid value input
+                testService.validateInputOptionValues(se2, ['option.test1': ['abc','blah']])
+                fail("Should have thrown exception")
+            }catch (Exception e){
+                assertNotNull(e)
+                assertTrue(e.message, e.message.contains("were not all in the allowed values"))
+            }
+        }
+        t: {
+            //test multi-valued list with regex validation
+            assertTrue testService.validateInputOptionValues(se, [:])
+            ScheduledExecution se2 = new ScheduledExecution()
+            final Option option = new Option(name: 'test1', required: false, enforced: false, multivalued: true, delimiter: ' ',regex:'^[abc]+$')
+            se2.addToOptions(option)
+            assertNotNull(se2.options)
+            assertEquals(1, se2.options.size())
+            assertTrue testService.validateInputOptionValues(se2, ['option.test1': 'abc'])
+            assertTrue testService.validateInputOptionValues(se2, ['option.test1': ['abc']])
+            try {
+                //should fail with invalid regex value
+                testService.validateInputOptionValues(se2, ['option.test1': 'zabc'])
+                fail("Should have thrown exception")
+            } catch (Exception e) {
+                assertNotNull(e)
+                assertTrue(e.message,e.message.contains("did not all match regular expression"))
+            }
+            try {
+                //should fail with invalid regex value
+                testService.validateInputOptionValues(se2, ['option.test1': ['blah']])
+                fail("Should have thrown exception")
+            } catch (Exception e) {
+                assertNotNull(e)
+                assertTrue(e.message,e.message.contains("did not all match regular expression"))
+            }
+            try {
+                //should fail with invalid regex value
+                testService.validateInputOptionValues(se2, ['option.test1': ['abc', 'blah']])
+                fail("Should have thrown exception")
+            } catch (Exception e) {
+                assertNotNull(e)
+                assertTrue(e.message,e.message.contains("did not all match regular expression"))
+            }
+        }
+    }
+
+    void testParseJobOptsFromString() {
+        mockDomain(ScheduledExecution)
+        mockDomain(Option)
+        ScheduledExecution se = new ScheduledExecution()
+        def testService = new ExecutionService()
+        def frameworkService = new FrameworkService()
+        testService.frameworkService = frameworkService
+
+        t: {
+            //test regex and optional value
+            assertTrue testService.validateInputOptionValues(se, [:])
+            ScheduledExecution se2 = new ScheduledExecution()
+            se2.addToOptions(new Option(name: 'test1', enforced: false, multivalued: true, delimiter: ","))
+            final opt2 = new Option(name: 'test2', enforced: true, multivalued: true, delimiter: ' ')
+            opt2.addToValues('a')
+            opt2.addToValues('b')
+            opt2.addToValues('abc')
+            se2.addToOptions(opt2)
+            assertNotNull(se2.options)
+            assertEquals(2, se2.options.size())
+
+            final map = testService.parseJobOptsFromString(se2, "-test1 blah")
+            assertNotNull map
+            assertNotNull map['test1']
+            assertTrue map['test1'] instanceof Collection
+            assertEquals 1, map.size()
+            assertEquals "wrong value: ${map['test1']}",1, map['test1'].size()
+            assertEquals ("Wrong value: ${map.get('test1')}",["blah"], map.get('test1'))
+
+            final map2 = testService.parseJobOptsFromString(se2, "-test1 blah,zah")
+            assertNotNull map2
+            assertNotNull map2['test1']
+            assertTrue map2['test1'] instanceof Collection
+            assertEquals 1, map2.size()
+            assertEquals 2, map2['test1'].size()
+            assertEquals (['blah','zah'], map2.get('test1'))
+        }
+    }
+
+    void testGenerateJobArgline() {
+        mockDomain(ScheduledExecution)
+        mockDomain(Option)
+        ScheduledExecution se = new ScheduledExecution()
+        def testService = new ExecutionService()
+        def frameworkService = new FrameworkService()
+        testService.frameworkService = frameworkService
+
+        t: {
+            //test regex and optional value
+            ScheduledExecution se2 = new ScheduledExecution()
+            se2.addToOptions(new Option(name: 'test1', enforced: false, multivalued: true,delimiter: "+"))
+            se2.addToOptions(new Option(name: 'test2', enforced: false, multivalued: true))
+            se2.addToOptions(new Option(name: 'test3', enforced: false, multivalued: false))
+            assertNotNull(se2.options)
+            assertEquals(3, se2.options.size())
+
+            assertEquals "-test3 'some value'", ExecutionService.generateJobArgline(se2, ['test3': 'some value'])
+            assertEquals "-test2 'some value'", ExecutionService.generateJobArgline(se2, ['test2': 'some value'])
+            assertEquals "-test1 'some value'", ExecutionService.generateJobArgline(se2, ['test1': 'some value'])
+            //multivalue
+            assertEquals "-test1 'some value+another value'", ExecutionService.generateJobArgline(se2, ['test1': ['some value','another value']])
+            assertEquals "-test2 'some value,another value'", ExecutionService.generateJobArgline(se2, ['test2': ['some value','another value']])
+            assertEquals "-test3 'some value,another value'", ExecutionService.generateJobArgline(se2, ['test3': ['some value','another value']])
         }
     }
 }

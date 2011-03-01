@@ -1693,7 +1693,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             sec.frameworkService=fwkControl.createMock()
 
             def params=[jobName:'monkey1',project:'testProject',description:'',adhocExecution:true,adhocRemoteString:'test command',
-                'command.option.test3':'val3', options: ["options[0]":[name: 'test3', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"]]
+                'option.test3':'val3', options: ["options[0]":[name: 'test3', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"]]
             ]
             def results=sec._dovalidate(params)
             if(results.scheduledExecution.errors.hasErrors()){
@@ -4084,7 +4084,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertFalse("wrong option name", next.enforced)
 
         }
-        if (true) {//test update: set options to replace options, use old-style command.option.name to set argString of workflow item
+        if (true) {//test update: set options to replace options, use old-style option.name to set argString of workflow item
 
             def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: '', adhocExecution:true,adhocRemoteString:'test command',)
             def opt1 = new Option(name: 'test1', defaultValue: 'val1', enforced: false, valuesUrl: "http://test.com/test")
@@ -4107,7 +4107,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             sec.frameworkService = fwkControl.createMock()
 
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: '', adhocExecution:true,adhocRemoteString:'test command',
-                'command.option.test3':'val3',options:["options[0]":[name: 'test3', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"]]
+                'option.test3':'val3',options:["options[0]":[name: 'test3', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"]]
             ]
             def results = sec._doupdate(params)
             def succeeded = results[0]
