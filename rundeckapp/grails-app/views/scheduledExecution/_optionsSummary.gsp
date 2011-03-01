@@ -24,7 +24,7 @@
 <g:if test="${options}">
 <span class="argstring">
 <g:each in="${options}" var="optionsel" status="i">
-    <span title="${optionsel.description?.encodeAsHTML()}"><span class="optgroup">-${optionsel.name}</span> &lt;${optionsel.defaultValue}&gt;</span>
+    <span title="${optionsel.description?.encodeAsHTML()}"><span class="optgroup">-${optionsel.name}</span> &lt;${optionsel.defaultValue}&gt;${optionsel.multivalued?'+':''}</span>
 </g:each>
 </span>
 </g:if>

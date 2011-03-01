@@ -109,6 +109,23 @@
                 </div>
             </div>
         </div>
+        <div>
+            <span class="prompt">Multi-valued</span>
+            <div class="presentation">
+                <div>
+                    <label><g:radio name="multivalued" value="false" checked="${!option || !option.multivalued}"/> No</label>
+                    <label><g:radio name="multivalued" value="true" checked="${option?.multivalued}" id="cdelimiter_${rkey}"/> Yes</label>
+                </div>
+                <div>
+                    <input type="text" name="delimiter" value="${option?.delimiter}" size="5" placeholder="Value delimiter string" id="vdelimiter_${rkey}"/>
+                    <wdgt:eventHandler for="vdelimiter_${rkey}" state="unempty" target="cdelimiter_${rkey}" check="true" inline="true" action="keydown"/>
+                    <wdgt:eventHandler for="cdelimiter_${rkey}" state="unempty" target="vdelimiter_${rkey}" focus="true" inline="true"/>
+                </div>
+                <div>
+                    <span class="info note">Enter the delimiter to separate multiple values. E.g.: "," (comma) or " " (space)</span>
+                </div>
+            </div>
+        </div>
         <div id="preview_${rkey}" style="${wdgt.styleVisible(if:option?.name)}">
             <span class="prompt">Usage</span>
             <div class="presentation">

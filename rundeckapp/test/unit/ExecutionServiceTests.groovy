@@ -536,6 +536,14 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             assertEquals 1, map2.size()
             assertEquals 2, map2['test1'].size()
             assertEquals (['blah','zah'], map2.get('test1'))
+
+            final map3 = testService.parseJobOptsFromString(se2, "-test2 'blah zah nah'")
+            assertNotNull map3
+            assertNotNull map3['test2']
+            assertTrue map3['test2'] instanceof Collection
+            assertEquals 1, map3.size()
+            assertEquals 3, map3['test2'].size()
+            assertEquals (['blah','zah','nah'], map3.get('test2'))
         }
     }
 

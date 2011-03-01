@@ -23,7 +23,7 @@
  --%>
 
 <g:set var="rkey" value="${g.rkey()}"/>
-<g:set var="realFieldName" value="${(fieldPrefix?fieldPrefix:'')+(fieldName?fieldName:'command.option.'+optionSelect.name)}"/>
+<g:set var="realFieldName" value="${(fieldPrefix?fieldPrefix:'')+(fieldName?fieldName:'option.'+optionSelect.name)}"/>
 <g:if test="${optionSelect}">
     <g:set var="optName" value="${optionSelect.name}"/>
     
@@ -59,21 +59,38 @@
             <span class="singlelabel">${sellabel.encodeAsHTML()}</span>
         </g:if>
         <g:else>
- 
-            <select class="optionvalues" id="${rkey}_sel" ${optionSelect.enforced?'name="'+realFieldName.encodeAsHTML()+'"':''}>
-                <g:if test="${!optionSelect.enforced}">
-                    <option value="" >-choose-</option>
-                </g:if>
-                
+
+            <g:if test="${optionSelect.multivalued}">
+                <!-- use checkboxes -->
+                <div style="overflow-y:auto; max-height:8em;border:1px solid #ddd;">
                 <g:each in="${labelsSet}" var="sellabel">
                     <g:set var="entry" value="${sellabel instanceof Map?sellabel:[name:sellabel,value:sellabel]}"/>
-                    <option value="${entry.value.encodeAsHTML()}" ${selectedvalue && entry.value==selectedvalue || entry.value==optionSelect.defaultValue || selectedoptsmap && entry.value == selectedoptsmap[optName]?'selected':''}>${entry.name.encodeAsHTML()}</option>
+                    <div style="margin:2px 0;">
+                        <label>
+                            <input type="checkbox" name="${realFieldName.encodeAsHTML()}" value="${entry.value.encodeAsHTML()}" ${selectedvalue && entry.value == selectedvalue || entry.value == optionSelect.defaultValue || selectedoptsmap && entry.value == selectedoptsmap[optName] ? 'checked' : ''}/> ${entry.name.encodeAsHTML()}
+                        </label>
+                    </div>
+
                 </g:each>
-            </select>
-            <g:if test="${!optionSelect.enforced || err}">
-                <%-- event handler: when select popup value is changed, copy the value to the textfield --%>
-                <wdgt:eventHandler for="${rkey}_sel" notequals="" copy="value" target="${rkey}"  inline='true' />
+                </div>
             </g:if>
+            <g:else>
+                <select class="optionvalues" id="${rkey}_sel" ${optionSelect.enforced ? 'name="' + realFieldName.encodeAsHTML() + '"' : ''}>
+                    <g:if test="${!optionSelect.enforced && !optionSelect.multivalued}">
+                        <option value="">-choose-</option>
+                    </g:if>
+
+                    <g:each in="${labelsSet}" var="sellabel">
+                        <g:set var="entry" value="${sellabel instanceof Map?sellabel:[name:sellabel,value:sellabel]}"/>
+                        <option value="${entry.value.encodeAsHTML()}" ${selectedvalue && entry.value == selectedvalue || entry.value == optionSelect.defaultValue || selectedoptsmap && entry.value == selectedoptsmap[optName] ? 'selected' : ''}>${entry.name.encodeAsHTML()}</option>
+                    </g:each>
+                </select>
+                <g:if test="${!optionSelect.enforced || err}">
+                <%-- event handler: when select popup value is changed, copy the value to the textfield --%>
+                    <wdgt:eventHandler for="${rkey}_sel" notequals="" copy="value" target="${rkey}" inline='true' multivaluedelimiter="${optionSelect.multivalued?optionSelect.delimiter:null}"/>
+                </g:if>
+            </g:else>
+
         </g:else>
         <g:if test="${optionSelect.enforced}">
             <g:javascript>
