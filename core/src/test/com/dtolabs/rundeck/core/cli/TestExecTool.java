@@ -1125,7 +1125,7 @@ public class TestExecTool extends AbstractBaseTest {
             assertNull("unexpected value: ", test.passedinScript.getArgs());
             assertNull("unexpected value: "+ test.passedinScript.getScript(), test.passedinScript.getScript());
             assertEquals("unexpected value: " + test.passedinScript.getServerScriptFilePath(),
-                "src/test/com/dtolabs/rundeck/core/cli/test-dispatch-script.txt", test.passedinScript.getServerScriptFilePath());
+                new File("src/test/com/dtolabs/rundeck/core/cli/test-dispatch-script.txt").getAbsolutePath(), test.passedinScript.getServerScriptFilePath());
             assertNull(test.passedinScript.getScriptAsStream());
             assertEquals("testProject", test.passedinScript.getFrameworkProject());
         }
