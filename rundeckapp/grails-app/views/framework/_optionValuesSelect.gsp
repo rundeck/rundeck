@@ -28,7 +28,7 @@
     <g:set var="optName" value="${optionSelect.name}"/>
     
     <%-- Print out the input box for random input --%>
-    <g:if test="${!optionSelect.enforced || err}">
+    <g:if test="${!optionSelect.enforced && !optionSelect.multivalued || err}">
         <g:textField name="${realFieldName}"
             class="optionvaluesfield"
             value="${selectedvalue?selectedvalue:selectedoptsmap && selectedoptsmap[optName]?selectedoptsmap[optName]:optionSelect.defaultValue?optionSelect.defaultValue:''}"
@@ -62,17 +62,46 @@
 
             <g:if test="${optionSelect.multivalued}">
                 <!-- use checkboxes -->
-                <div style="overflow-y:auto; max-height:8em;border:1px solid #ddd;">
-                <g:each in="${labelsSet}" var="sellabel">
-                    <g:set var="entry" value="${sellabel instanceof Map?sellabel:[name:sellabel,value:sellabel]}"/>
-                    <div style="margin:2px 0;">
-                        <label>
-                            <input type="checkbox" name="${realFieldName.encodeAsHTML()}" value="${entry.value.encodeAsHTML()}" ${selectedvalue && entry.value == selectedvalue || entry.value == optionSelect.defaultValue || selectedoptsmap && entry.value == selectedoptsmap[optName] ? 'checked' : ''}/> ${entry.name.encodeAsHTML()}
-                        </label>
-                    </div>
+                <div class="optionmultiarea" id="${rkey}multiarea">
+                    <g:if test="${!optionSelect.enforced}">
+                        <%-- variable input text fields --%>
+                        <div class="optionvaluemulti ">
+                            <span class="action button obs_addvar" style="margin-left:20px" onclick="ExecutionOptions.addMultivarValue('${optName.encodeAsJavaScript()}','${rkey}varinput');">
+                                New Value&hellip;
+                            </span>
+                        </div>
+                        <div id="${rkey}varinput">
 
-                </g:each>
+                        </div>
+                        <g:set var="newvals" value="${selectedoptsmap?selectedoptsmap[optName].findAll {optionSelect.values && !optionSelect.values.contains(it)}:null}"/>
+                        <g:if test="${newvals}">
+                            <g:javascript>
+                                fireWhenReady('${rkey}varinput', function(){
+                                <g:each in="${newvals}" var="nvalue">
+                                    ExecutionOptions.addMultivarValue('${optName.encodeAsJavaScript()}','${rkey}varinput','${nvalue.encodeAsJavaScript()}');
+                                </g:each>
+                                }
+                                );
+                            </g:javascript>
+                        </g:if>
+                    </g:if>
+                    <g:each in="${labelsSet}" var="sellabel">
+                        <g:set var="entry" value="${sellabel instanceof Map?sellabel:[name:sellabel,value:sellabel]}"/>
+                        <div class="optionvaluemulti">
+                            <label>
+                                <input type="checkbox" name="${realFieldName.encodeAsHTML()}" value="${entry.value.encodeAsHTML()}" ${selectedvalue && entry.value == selectedvalue || entry.value == optionSelect.defaultValue || selectedoptsmap && entry.value in selectedoptsmap[optName] ? 'checked' : ''} /> ${entry.name.encodeAsHTML()}
+                            </label>
+                        </div>
+
+                    </g:each>
                 </div>
+                <g:javascript>
+                    fireWhenReady('${rkey}multiarea',
+                        function(){$$('#${rkey}multiarea input[type="checkbox"]').each(function(e){
+                            Event.observe(e,'change',ExecutionOptions.multiVarCheckboxChangeWarningHandler.curry('${optName.encodeAsHTML()}'));
+                        });}
+                    );
+                </g:javascript>
             </g:if>
             <g:else>
                 <select class="optionvalues" id="${rkey}_sel" ${optionSelect.enforced ? 'name="' + realFieldName.encodeAsHTML() + '"' : ''}>

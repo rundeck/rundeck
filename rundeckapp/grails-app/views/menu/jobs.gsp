@@ -8,6 +8,7 @@
     <g:javascript library="yellowfade"/>
     <g:javascript library="pagehistory"/>
     <g:javascript library="prototype/effects"/>
+    <g:javascript library="executionOptions"/>
     <script type="text/javascript">
 
         function showError(message){

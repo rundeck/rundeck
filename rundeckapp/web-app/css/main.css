@@ -312,6 +312,15 @@ h1 {
 .optname.required{
     font-weight:bold;
 }
+.optionvaluemulti{
+    margin:4px 0;
+}
+.optionmultiarea{
+    overflow-y: auto;
+    max-height: 8em;
+    border: 1px solid #ddd;
+    padding: 4px;
+}
 .enforceSet{
     text-align:center;
 }
