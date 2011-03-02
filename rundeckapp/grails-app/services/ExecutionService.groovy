@@ -1388,9 +1388,9 @@ class ExecutionService implements ApplicationContextAware, Executor{
             if (matcher.matches()) {
                 def optname = matcher.group(1)
                 if(val instanceof Collection){
-                    result[optname] = new ArrayList(val)
+                    result[optname] = new ArrayList(val).grep{it}
                 }else if (val instanceof String[]){
-                    result[optname] = new ArrayList(Arrays.asList(val))
+                    result[optname] = new ArrayList(Arrays.asList(val)).grep{it}
                 }else if(val instanceof String){
                     result[optname]=val
                 }else{
