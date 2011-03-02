@@ -252,6 +252,14 @@ Optional map entries are:
 
 :    A URL to an endpoint that will return a JSON-formatted set of values for the option.
 
+`multivalued`
+
+:    "true/false" - whether the option supports multiple input values
+
+`delimiter`
+
+:    A string used to conjoin multiple input values.  (Required if `multivalued` is "true")
+
 Example:
 
     test:
@@ -263,6 +271,8 @@ Example:
       - avalue
       - bvalue
       - cvalue
+      multivalued: true
+      delimiter: ','
 
 #### valuesUrl JSON 
 
