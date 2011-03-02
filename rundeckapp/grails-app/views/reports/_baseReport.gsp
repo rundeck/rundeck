@@ -76,18 +76,13 @@
 
                 <span class="actiontitle ${it?.status != 'succeed' ? '' : ''} ">
                     <g:if test="${it.jcJobId || it.jcExecId}">
-                        <g:if test="${it.jcJobId}">
-                            <g:truncate max="${maxmsgsize}">${rpt.title.encodeAsHTML()}</g:truncate>
-                        </g:if>
-                        <g:else>
-                            <g:truncate max="${maxmsgsize}">${rpt.title}</g:truncate>
-                        </g:else>
+                        <g:truncate max="${maxmsgsize}">${rpt.title.encodeAsHTML()}</g:truncate>
                     </g:if>
                     <g:elseif test="${it instanceof ExecReport && it.adhocScript}">
                         <g:truncate max="${maxmsgsize}">${rpt.adhocScript.encodeAsHTML()}</g:truncate>
                     </g:elseif>
                     <g:else>
-                        <g:truncate max="${maxmsgsize}">${rpt.title}</g:truncate>
+                        <g:truncate max="${maxmsgsize}">${rpt.title.encodeAsHTML()}</g:truncate>
                     </g:else>
                 </span>
             </td>

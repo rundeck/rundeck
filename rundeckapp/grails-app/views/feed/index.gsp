@@ -11,38 +11,28 @@
             item.title=(report.status=='succeed'?'SUCCESS':'FAILURE')
             if(report.jcExecId || report.jcJobId){
                 if(report.jcJobId){
-                    item.link=createLink(controller:'reports',action:'jobs',params:paginateParams)
-                    item.title+=": "+report.title
-                }else if(report.adhocExecution && report.adhocScript){
-                    if(report.adhocScript.size()>30){
-                        item.title+=": "+report.adhocScript.substring(0,30)
-                    }else{
-                        item.title+=": "+report.adhocScript
-                    }
-                }else if(report.adhocExecution){
-                    item.title+=": run"
+                    item.link = createLink(controller: 'execution', action: 'show', params: [id: report.jcExecId], absolute:true)
                 }else if (report.jcExecId){
-                    item.link=createLink(controller:'execution', action:'show',params:[id:report.jcExecId])
-                    item.title+=": "+report.ctxCommand
-                }
-            }else{
-                item.link=createLink(controller:'reports',action:'commands',id:report.id,params:paginateParams)
-                if(report.adhocExecution && report.adhocScript){
-                    if(report.adhocScript.size()>30){
-                        item.title+=": "+report.adhocScript.substring(0,30)
-                    }else{
-                        item.title+=": "+report.adhocScript
-                    }
-                }else if(report.adhocExecution){
-                    item.title+=": run"
-                }else {
-                    item.title+=": "+report.ctxCommand
+                    item.link=createLink(controller:'execution', action:'show',params:[id:report.jcExecId], absolute: true)
                 }
             }
+            if(report.reportId){
+                item.title+=": "+ report.reportId
+            }else {
+                item.title+=": adhoc"
+            }
+            if (report.jcExecId || report.jcJobId) {
+                item.title+=" - "+report.title
+            }else if(report.adhocExecution && report.adhocScript){
+                item.title += " - " + report.adhocScript
+            }else{
+                item.title += " - " + report.title
+            }
         }else{
-            item.link=createLink(controller:'reports',action:'index',id:report.id,params:paginateParams)
+            item.link=createLink(controller:'reports',action:'index',id:report.id,params:paginateParams, absolute: true)
         }
-        item.templateName="/feed/basereportItem"
+
+        item.templateName="/feed/jobreportItem"
         item.model=[report:report]
         item.date=report.dateCompleted
         items<<item

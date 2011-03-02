@@ -45,7 +45,7 @@
                 <g:else>
                     <span class="title">
                         ${(it.reportId?it.reportId:it.title).encodeAsHTML()}
-                    <g:message code="status.label.${it.status}"/>.</span>
+                    <g:message code="status.label.${it.status}"/></span>
 
                     <g:if test="${it.dateCompleted}">
                         <span class="date">
