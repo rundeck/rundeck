@@ -4227,6 +4227,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertEquals '-test3 ${option.test3}',exec.argString
 
         }
+    }
+    public void testDoUpdateOptionsShouldModify(){
+        def sec = new ScheduledExecutionController()
         if (true) {//test update: set options to modify existing options
 
             def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand')
@@ -4251,7 +4254,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand',
                 options:["options[0]":[name: 'test1', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"],
-                "options[1]":[name: 'test2', defaultValue: 'val2', enforced: true, values:['a','b','c','d']]]
+                "options[1]":[name: 'test2', defaultValue: 'd', enforced: true, values:['a','b','c','d']]]
             ]
             def results = sec._doupdate(params)
             def succeeded = results[0]
@@ -4282,9 +4285,72 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             final Option next2 = iterator.next()
             assertNotNull(next2)
             assertEquals("wrong option name", "test2", next2.name)
-            assertEquals("wrong option name", "val2", next2.defaultValue)
+            assertEquals("wrong option name", "d", next2.defaultValue)
             assertNull("wrong option name", next2.valuesUrl)
             assertTrue("wrong option name", next2.enforced)
+
+        }
+    }
+
+    public void testDoUpdateShouldValidateOption() {
+
+        def sec = new ScheduledExecutionController()
+        if (true) {//test update: set options to validate multivalued options
+
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand')
+            def opt1 = new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c'])
+            def opt2 = new Option(name: 'test2', enforced: false, valuesUrl: "http://test.com/test2")
+            se.addToOptions(opt1)
+            se.addToOptions(opt2)
+            se.save()
+
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.existsFrameworkProject {project, framework ->
+                return true
+            }
+            fwkControl.demand.getCommand {project, type, command, framework ->
+                return null
+            }
+            sec.frameworkService = fwkControl.createMock()
+
+            def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand',
+                options: ["options[0]": [name: 'test1', defaultValue: 'val3', enforced: false,multivalued:true],
+                    "options[1]": [name: 'test2', defaultValue: 'val2', enforced: false, values: ['a', 'b', 'c', 'd'], multivalued:true, delimiter:"testdelim"]]
+            ]
+            def results = sec._doupdate(params)
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            assertFalse succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = scheduledExecution
+            assertNotNull(execution)
+            assertNotNull(execution.errors)
+            assertTrue(execution.errors.hasErrors())
+            assertNotNull execution.options
+            assertLength(2, execution.options as Object[])
+            final Iterator iterator = execution.options.iterator()
+            assert iterator.hasNext()
+            final Option next = iterator.next()
+            assertNotNull(next)
+            assertEquals("wrong option name", "test1", next.name)
+            assertTrue(next.errors.hasFieldErrors())
+            assertTrue(next.errors.hasFieldErrors('delimiter'))
+            final Option next2 = iterator.next()
+            assertNotNull(next2)
+            assertFalse(next2.errors.hasFieldErrors())
+            assertEquals("wrong option name", "test2", next2.name)
+            assertTrue(next2.multivalued)
+            assertEquals("testdelim", next2.delimiter)
 
         }
     }
@@ -4423,7 +4489,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                     workflow: new Workflow(commands:[new CommandExec(adhocRemoteString:'test command',adhocExecution:true)]),
                     options:[
                         new Option(name: 'test1', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"),
-                        new Option(name: 'test2', defaultValue: 'val2', enforced: true, values:['a','b','c','d'])
+                        new Option(name: 'test2', defaultValue: 'd', enforced: true, values:['a','b','c','d'])
                     ]
              )
             def results = sec._doupdateJob(se.id,params)
@@ -4455,9 +4521,67 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             final Option next2 = iterator.next()
             assertNotNull(next2)
             assertEquals("wrong option name", "test2", next2.name)
-            assertEquals("wrong option name", "val2", next2.defaultValue)
+            assertEquals("wrong option name", "d", next2.defaultValue)
             assertNull("wrong option name", next2.valuesUrl)
             assertTrue("wrong option name", next2.enforced)
+
+        }
+        if (true) {//test update invalid: multivalued true without delimiter
+
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand')
+            def opt1 = new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c'])
+            def opt2 = new Option(name: 'test2', enforced: false, valuesUrl:"http://test.com/test2")
+            se.addToOptions(opt1)
+            se.addToOptions(opt2)
+            se.save()
+
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.existsFrameworkProject {project, framework ->
+                return true
+            }
+            fwkControl.demand.getCommand {project, type, command, framework ->
+                return null
+            }
+            sec.frameworkService = fwkControl.createMock()
+
+            def params = new ScheduledExecution( jobName: 'monkey1', project: 'testProject', description: '',
+                    workflow: new Workflow(commands:[new CommandExec(adhocRemoteString:'test command',adhocExecution:true)]),
+                    options:[
+                        new Option(name: 'test1', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3",multivalued:true),
+                        new Option(name: 'test2', defaultValue: 'd', enforced: true, values:['a','b','c','d'], multivalued:true, delimiter:"testdelim")
+                    ]
+             )
+            def results = sec._doupdateJob(se.id,params)
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            assertFalse succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = scheduledExecution
+            assertNotNull(execution)
+            assertNotNull(execution.errors)
+            assertTrue(execution.errors.hasErrors())
+            assertNotNull execution.options
+            assertLength(2, execution.options as Object[])
+            final Iterator iterator = execution.options.iterator()
+            assert iterator.hasNext()
+            final Option next = iterator.next()
+            assertNotNull(next)
+            assertTrue next.errors.hasFieldErrors('delimiter')
+            final Option next2 = iterator.next()
+            assertNotNull(next2)
+            assertFalse next2.errors.hasFieldErrors()
+            assertTrue next2.multivalued
+            assertEquals "testdelim",next2.delimiter
 
         }
     }

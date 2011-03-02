@@ -739,7 +739,8 @@ class ScheduledExecutionController  {
                 def Map optdefparams=params.options["options[${i}]"]
                 def Option theopt = new Option(optdefparams)
                 scheduledExecution.addToOptions(theopt)
-                if (!theopt.validate()) {
+                EditOptsController._validateOption(theopt)
+                if (theopt.errors.hasErrors() || !theopt.validate() ) {
                     failed = true
                     theopt.discard()
                     def errmsg = optdefparams.name + ": " + theopt.errors.allErrors.collect {g.message(error: it)}.join(";")
@@ -968,10 +969,11 @@ class ScheduledExecutionController  {
             def i=0;
             params.options.each{Option theopt->
                 scheduledExecution.addToOptions(theopt)
-                if (!theopt.validate()) {
+                EditOptsController._validateOption(theopt)
+                if (theopt.errors.hasErrors()|| !theopt.validate()) {
                     failed = true
                     theopt.discard()
-                    def errmsg = optdefparams.name + ": " + theopt.errors.allErrors.collect {g.message(error: it)}.join(";")
+                    def errmsg = theopt.name + ": " + theopt.errors.allErrors.collect {g.message(error: it)}.join(";")
                     scheduledExecution.errors.rejectValue(
                            'options',
                            'scheduledExecution.options.invalid.message',
@@ -1632,10 +1634,7 @@ class ScheduledExecutionController  {
                     scheduledExecution.addToOptions(theopt)
                     EditOptsController._validateOption(theopt)
 
-                    if (theopt.errors.hasErrors()) {
-                        failed = true
-                    }
-                    if (failed || !theopt.validate()) {
+                    if (theopt.errors.hasErrors() || !theopt.validate()) {
                         failed = true
                         theopt.discard()
                         def errmsg = optdefparams.name + ": " + theopt.errors.allErrors.collect {g.message(error: it)}.join(";")
@@ -1654,10 +1653,7 @@ class ScheduledExecutionController  {
                     def Option theopt = new Option(optdefparams)
                     scheduledExecution.addToOptions(theopt)
                     EditOptsController._validateOption(theopt)
-                    if (theopt.errors.hasErrors()) {
-                        failed = true
-                    }
-                    if (failed || !theopt.validate()) {
+                    if (theopt.errors.hasErrors() || !theopt.validate()) {
                         failed = true
                         theopt.discard()
                         def errmsg = optdefparams.name + ": " + theopt.errors.allErrors.collect {g.message(error: it)}.join(";")
