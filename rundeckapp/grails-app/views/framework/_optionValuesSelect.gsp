@@ -39,7 +39,7 @@
     </g:if>
 
     <%-- The Dropdown list --%>
-    <g:if test="${(values || optionSelect.values) && !err}">
+    <g:if test="${(values || optionSelect.values || optionSelect.multivalued) && !err}">
         
     
         <g:set var="labelsSet" value="${values && values instanceof Map?values.keySet():values?values:optionSelect.values?optionSelect.values:[]}"/>
@@ -82,6 +82,11 @@
                                 </g:each>
                                 }
                                 );
+                            </g:javascript>
+                        </g:if>
+                        <g:if test="${!labelsSet && !newvals}">
+                            <g:javascript>
+                                fireWhenReady('${rkey}varinput', function(){ ExecutionOptions.addMultivarValue('${optName.encodeAsJavaScript()}','${rkey}varinput'); } );
                             </g:javascript>
                         </g:if>
                     </g:if>
