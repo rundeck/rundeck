@@ -234,7 +234,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
         }
 
         if (cli.hasOption("s")) {
-            scriptpath = cli.getOptionValue("s");
+            scriptpath = new File(cli.getOptionValue("s")).getAbsolutePath();
         }
 
         if (cli.hasOption("S")) {
