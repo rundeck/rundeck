@@ -319,6 +319,9 @@ class EditOptsController {
                 }
             }
         }
+        if(opt.multivalued && !opt.delimiter){
+            opt.errors.rejectValue('delimiter', 'option.delimiter.blank.message')
+        }
         return result
     }
 
@@ -350,6 +353,9 @@ class EditOptsController {
         }
         if(null==params.required){
             params.required=false
+        }
+        if(null==params.multivalued){
+            params.multivalued=false
         }
         opt.properties = params
         if(params.valuesType == 'list'){

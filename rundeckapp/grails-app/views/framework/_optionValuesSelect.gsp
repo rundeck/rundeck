@@ -23,12 +23,12 @@
  --%>
 
 <g:set var="rkey" value="${g.rkey()}"/>
-<g:set var="realFieldName" value="${(fieldPrefix?fieldPrefix:'')+(fieldName?fieldName:'command.option.'+optionSelect.name)}"/>
+<g:set var="realFieldName" value="${(fieldPrefix?fieldPrefix:'')+(fieldName?fieldName:'option.'+optionSelect.name)}"/>
 <g:if test="${optionSelect}">
     <g:set var="optName" value="${optionSelect.name}"/>
     
     <%-- Print out the input box for random input --%>
-    <g:if test="${!optionSelect.enforced || err}">
+    <g:if test="${!optionSelect.enforced && !optionSelect.multivalued || err}">
         <g:textField name="${realFieldName}"
             class="optionvaluesfield"
             value="${selectedvalue?selectedvalue:selectedoptsmap && selectedoptsmap[optName]?selectedoptsmap[optName]:optionSelect.defaultValue?optionSelect.defaultValue:''}"
@@ -59,21 +59,67 @@
             <span class="singlelabel">${sellabel.encodeAsHTML()}</span>
         </g:if>
         <g:else>
- 
-            <select class="optionvalues" id="${rkey}_sel" ${optionSelect.enforced?'name="'+realFieldName.encodeAsHTML()+'"':''}>
-                <g:if test="${!optionSelect.enforced}">
-                    <option value="" >-choose-</option>
-                </g:if>
-                
-                <g:each in="${labelsSet}" var="sellabel">
-                    <g:set var="entry" value="${sellabel instanceof Map?sellabel:[name:sellabel,value:sellabel]}"/>
-                    <option value="${entry.value.encodeAsHTML()}" ${selectedvalue && entry.value==selectedvalue || entry.value==optionSelect.defaultValue || selectedoptsmap && entry.value == selectedoptsmap[optName]?'selected':''}>${entry.name.encodeAsHTML()}</option>
-                </g:each>
-            </select>
-            <g:if test="${!optionSelect.enforced || err}">
-                <%-- event handler: when select popup value is changed, copy the value to the textfield --%>
-                <wdgt:eventHandler for="${rkey}_sel" notequals="" copy="value" target="${rkey}"  inline='true' />
+
+            <g:if test="${optionSelect.multivalued}">
+                <!-- use checkboxes -->
+                <div class="optionmultiarea" id="${rkey}multiarea">
+                    <g:if test="${!optionSelect.enforced}">
+                        <%-- variable input text fields --%>
+                        <div class="optionvaluemulti ">
+                            <span class="action button obs_addvar" style="margin-left:20px" onclick="ExecutionOptions.addMultivarValue('${optName.encodeAsJavaScript()}','${rkey}varinput');">
+                                New Value&hellip;
+                            </span>
+                        </div>
+                        <div id="${rkey}varinput">
+
+                        </div>
+                        <g:set var="newvals" value="${selectedoptsmap?selectedoptsmap[optName].findAll {optionSelect.values && !optionSelect.values.contains(it)}:null}"/>
+                        <g:if test="${newvals}">
+                            <g:javascript>
+                                fireWhenReady('${rkey}varinput', function(){
+                                <g:each in="${newvals}" var="nvalue">
+                                    ExecutionOptions.addMultivarValue('${optName.encodeAsJavaScript()}','${rkey}varinput','${nvalue.encodeAsJavaScript()}');
+                                </g:each>
+                                }
+                                );
+                            </g:javascript>
+                        </g:if>
+                    </g:if>
+                    <g:each in="${labelsSet}" var="sellabel">
+                        <g:set var="entry" value="${sellabel instanceof Map?sellabel:[name:sellabel,value:sellabel]}"/>
+                        <div class="optionvaluemulti">
+                            <label>
+                                <input type="checkbox" name="${realFieldName.encodeAsHTML()}" value="${entry.value.encodeAsHTML()}" ${selectedvalue && entry.value == selectedvalue || entry.value == optionSelect.defaultValue || selectedoptsmap && entry.value in selectedoptsmap[optName] ? 'checked' : ''} /> ${entry.name.encodeAsHTML()}
+                            </label>
+                        </div>
+
+                    </g:each>
+                </div>
+                <g:javascript>
+                    fireWhenReady('${rkey}multiarea',
+                        function(){$$('#${rkey}multiarea input[type="checkbox"]').each(function(e){
+                            Event.observe(e,'change',ExecutionOptions.multiVarCheckboxChangeWarningHandler.curry('${optName.encodeAsHTML()}'));
+                        });}
+                    );
+                </g:javascript>
             </g:if>
+            <g:else>
+                <select class="optionvalues" id="${rkey}_sel" ${optionSelect.enforced ? 'name="' + realFieldName.encodeAsHTML() + '"' : ''}>
+                    <g:if test="${!optionSelect.enforced && !optionSelect.multivalued}">
+                        <option value="">-choose-</option>
+                    </g:if>
+
+                    <g:each in="${labelsSet}" var="sellabel">
+                        <g:set var="entry" value="${sellabel instanceof Map?sellabel:[name:sellabel,value:sellabel]}"/>
+                        <option value="${entry.value.encodeAsHTML()}" ${selectedvalue && entry.value == selectedvalue || entry.value == optionSelect.defaultValue || selectedoptsmap && entry.value == selectedoptsmap[optName] ? 'selected' : ''}>${entry.name.encodeAsHTML()}</option>
+                    </g:each>
+                </select>
+                <g:if test="${!optionSelect.enforced || err}">
+                <%-- event handler: when select popup value is changed, copy the value to the textfield --%>
+                    <wdgt:eventHandler for="${rkey}_sel" notequals="" copy="value" target="${rkey}" inline='true' multivaluedelimiter="${optionSelect.multivalued?optionSelect.delimiter:null}"/>
+                </g:if>
+            </g:else>
+
         </g:else>
         <g:if test="${optionSelect.enforced}">
             <g:javascript>

@@ -39,7 +39,8 @@ import javax.servlet.http.HttpSession
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import java.text.MessageFormat
-import com.dtolabs.rundeck.core.cli.CLIUtils;
+import com.dtolabs.rundeck.core.cli.CLIUtils
+import java.util.regex.Pattern;
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -820,10 +821,6 @@ class ExecutionService implements ApplicationContextAware, Executor{
 
             
             //parse options
-            def optsmap = filterOptParams(params)
-            if(optsmap){
-                execution.argString=generateArgline(optsmap)
-            }
             if(!execution.loglevel){
                 execution.loglevel=defaultLogLevel
             }
@@ -883,6 +880,17 @@ class ExecutionService implements ApplicationContextAware, Executor{
         def ScheduledExecution scheduledExec = ScheduledExecution.get(se.id)
         se = scheduledExec
         se.refresh()
+
+        //find any currently running executions for this job, and if so, throw exception
+        def c = Execution.createCriteria()
+        def found = c.get {
+            scheduledExecution {
+                eq('id', se.id)
+            }
+            isNotNull('dateStarted')
+            isNull('dateCompleted')
+        }
+
         log.info("createExecution for ScheduledExecution: ${se.id}")
         def props =[:]
         props.putAll(se.properties)
@@ -902,15 +910,8 @@ class ExecutionService implements ApplicationContextAware, Executor{
             props.argString=addArgStringOptionDefaults(scheduledExec, props.argString)
         }
         validateInputOptionValues(scheduledExec, props)
-
-        //find any currently running executions for this job, and if so, throw exception
-        def c=Execution.createCriteria()
-        def found=c.get{
-            scheduledExecution{
-                eq('id',se.id)    
-            }
-            isNotNull('dateStarted')
-            isNull('dateCompleted')
+        if (optparams) {
+            props.argString = generateJobArgline(scheduledExec, optparams)
         }
 
         if(found){
@@ -1004,39 +1005,86 @@ class ExecutionService implements ApplicationContextAware, Executor{
         def StringBuffer sb = new StringBuffer()
         def optparams = ExecutionService.filterOptParams(props)
         if(!optparams && props.argString){
-            optparams = frameworkService.parseOptsFromString(props.argString)
+            optparams = parseJobOptsFromString(scheduledExecution,props.argString)
         }
         def failedkeys=[:]
         if (scheduledExecution.options) {
             scheduledExecution.options.each {Option opt ->
-                if (opt.regex && !opt.enforced && optparams[opt.name]) {
-                    if (!(optparams[opt.name] ==~ opt.regex)) {
+                if (!opt.multivalued && optparams[opt.name] && !(optparams[opt.name] instanceof String)) {
+                    fail = true
+                    if (!failedkeys[opt.name]) {
+                        failedkeys[opt.name] = ''
+                    }
+                    final String msg = "Option '${opt.name}' value: ${optparams[opt.name]} does not allow multiple values.\n"
+                    sb << msg
+                    failedkeys[opt.name] += msg
+                    return
+                }
+                if (opt.required && !optparams[opt.name]) {
+                    fail = true
+                    if (!failedkeys[opt.name]) {
+                        failedkeys[opt.name] = ''
+                    }
+                    final String msg = "Option '${opt.name}' is required.\n"
+                    sb << msg
+                    failedkeys[opt.name] += msg
+                    return
+                }
+                if(opt.multivalued){
+                    if (opt.regex && !opt.enforced && optparams[opt.name]) {
+                        def val = [optparams[opt.name]].flatten()
+                        val.each{value->
+                            if (!(value ==~ opt.regex)) {
+                                fail = true
+                                if (!failedkeys[opt.name]) {
+                                    failedkeys[opt.name] = ''
+                                }
+
+                            }
+                        }
+                        if (fail) {
+                            final String msg = "Option '${opt.name}' values: ${optparams[opt.name]} did not all match regular expression: '${opt.regex}'\n"
+                            sb << msg
+                            failedkeys[opt.name] += msg
+                            return
+                        }
+                    }
+                    if (opt.enforced && opt.values && optparams[opt.name]) {
+                        def val = [optparams[opt.name]].flatten();
+                        if (!opt.values.containsAll(val.grep{it})) {
+                            fail = true
+                            if (!failedkeys[opt.name]) {
+                                failedkeys[opt.name] = ''
+                            }
+                            final String msg = "Option '${opt.name}' values: ${optparams[opt.name]} were not all in the allowed values: ${opt.values}\n"
+                            sb << msg
+                            failedkeys[opt.name] += msg
+                            return
+                        }
+                    }
+                }else{
+                    if (opt.regex && !opt.enforced && optparams[opt.name]) {
+                        if (!(optparams[opt.name] ==~ opt.regex)) {
+                            fail = true
+                            if (!failedkeys[opt.name]) {
+                                failedkeys[opt.name] = ''
+                            }
+                            final String msg = "Option '${opt.name}' doesn't match regular expression: '${opt.regex}', value: ${optparams[opt.name]}\n"
+                            sb << msg
+                            failedkeys[opt.name] += msg
+                            return
+                        }
+                    }
+                    if (opt.enforced && opt.values && optparams[opt.name] && optparams[opt.name] instanceof String && !opt.values.contains(optparams[opt.name])){
                         fail=true
                         if(!failedkeys[opt.name]){
                             failedkeys[opt.name]=''
                         }
-                        final String msg = "Option '${opt.name}' doesn't match regular expression: '${opt.regex}', value: ${optparams[opt.name]}\n"
+                        final String msg = "Option '${opt.name}' value: ${optparams[opt.name]} was not in the allowed values: ${opt.values}\n"
                         sb << msg
                         failedkeys[opt.name]+=msg
+                        return
                     }
-                }
-                if(opt.required && !optparams[opt.name]){
-                    fail=true
-                    if(!failedkeys[opt.name]){
-                        failedkeys[opt.name]=''
-                    }
-                    final String msg = "Option '${opt.name}' is required.\n"
-                    sb << msg
-                    failedkeys[opt.name]+=msg
-                }
-                if(opt.enforced && opt.values && optparams[opt.name] && !opt.values.contains(optparams[opt.name])){
-                    fail=true
-                    if(!failedkeys[opt.name]){
-                        failedkeys[opt.name]=''
-                    }
-                    final String msg = "Option '${opt.name}' value: ${optparams[opt.name]} was not in the allowed values: ${opt.values}\n"
-                    sb << msg
-                    failedkeys[opt.name]+=msg
                 }
             }
         }
@@ -1045,6 +1093,26 @@ class ExecutionService implements ApplicationContextAware, Executor{
             throw new ExecutionServiceValidationException(msg,optparams,failedkeys)
         }
         return !fail
+    }
+
+    /**
+     *  Parse an argString for a Job, treating multi-valued options as delimiter-separated and converting to a List of values
+     * @param scheduledExecution
+     * @param argString
+     * @return map of option name to value, where value is a String or a List of Strings
+     */
+    def Map parseJobOptsFromString(ScheduledExecution scheduledExecution, String argString){
+        def optparams = frameworkService.parseOptsFromString(argString)
+        if(optparams){
+            //look for multi-valued options and try to split on delimiters
+            scheduledExecution.options.each{Option opt->
+                if(opt.multivalued && optparams[opt.name]){
+                    def arr = optparams[opt.name].split(Pattern.quote(opt.delimiter))
+                    optparams[opt.name]=arr as List
+                }
+            }
+        }
+        return optparams
     }
 
     def static loglevels=['ERR':Project.MSG_ERR,'ERROR':Project.MSG_ERR,'WARN':Project.MSG_WARN,'INFO':Project.MSG_INFO,'VERBOSE':Project.MSG_VERBOSE,'DEBUG':Project.MSG_DEBUG]
@@ -1283,19 +1351,50 @@ class ExecutionService implements ApplicationContextAware, Executor{
         }
         return sb.toString()
     }
+
+    /**
+    * Generate an argString from a map of options and values
+     */
+    public static String generateJobArgline(ScheduledExecution sched,Map<String,Object> opts){
+        HashMap<String,String> newopts = new HashMap<String,String>();
+        for (String key: opts.keySet().sort()) {
+            Object obj=opts.get(key)
+            String val
+            if (obj instanceof String[] || obj instanceof Collection) {
+                //join with delimiter
+                def opt = sched.options.find {it.name == key}
+                if (opt && opt.delimiter) {
+                    val = obj.grep {it}.join(opt.delimiter)
+                } else {
+                    val = obj.grep {it}.join(",")
+                }
+            }else{
+                val = (String) obj
+            }
+            newopts[key]=val
+        }
+        return generateArgline(newopts)
+    }
+    /**
+     * Returns a map of option names to values, from input parameters of the form "option.NAME"
+     * @param params
+     * @return
+     */
     public static Map filterOptParams(Map params) {
         def result = [ : ]
-        def optpatt = '^command.option.(.*)$'
+        def optpatt = '^option\\.(.*)$'
         params.each { key, val ->
             def matcher = key =~ optpatt
             if (matcher.matches()) {
-                def optname = matcher[0][1]
-                if(val instanceof List){
-                    result[optname] = val[0] // val seems to be a one element list
+                def optname = matcher.group(1)
+                if(val instanceof Collection){
+                    result[optname] = new ArrayList(val).grep{it}
+                }else if (val instanceof String[]){
+                    result[optname] = new ArrayList(Arrays.asList(val)).grep{it}
                 }else if(val instanceof String){
                     result[optname]=val
                 }else{
-                    log.warn("unable to determine parameter value type: "+val + " ("+val.getClass.getName()+")")
+                    System.err.println("unable to determine parameter value type: "+val + " ("+val.getClass().getName()+")")
                 }
             }
         }

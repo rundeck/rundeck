@@ -109,6 +109,27 @@
                 </div>
             </div>
         </div>
+        <div>
+            <span class="prompt">Multi-valued</span>
+            <div class="presentation">
+                <div>
+                    <span class="info note"><g:message code="form.option.multivalued.description"/></span>
+                </div>
+                <div>
+                    <label><g:radio name="multivalued" value="false" checked="${!option || !option.multivalued}"/> No</label>
+                    <label><g:radio name="multivalued" value="true" checked="${option?.multivalued}" id="cdelimiter_${rkey}"/>
+                    Yes
+                    </label>
+                    with
+                    <label class="${hasErrors(bean: option, field: 'delimiter', 'fieldError')}">delimiter
+                        <input type="text" name="delimiter" value="${option?.delimiter}" size="5" id="vdelimiter_${rkey}"/>
+                        <span class="info note"><g:message code="form.option.delimiter.description"/></span>
+                    </label>
+                    <wdgt:eventHandler for="vdelimiter_${rkey}" state="unempty" target="cdelimiter_${rkey}" check="true" inline="true" action="keydown"/>
+                    <wdgt:eventHandler for="cdelimiter_${rkey}" state="unempty" target="vdelimiter_${rkey}" focus="true" inline="true"/>
+                </div>
+            </div>
+        </div>
         <div id="preview_${rkey}" style="${wdgt.styleVisible(if:option?.name)}">
             <span class="prompt">Usage</span>
             <div class="presentation">

@@ -543,8 +543,8 @@ class ScheduledExecutionController  {
         def oldjobname = scheduledExecution.generateJobScheduledName()
         def oldjobgroup = scheduledExecution.generateJobGroupName()
         def oldsched = scheduledExecution.scheduled
-        def optparams = params.findAll { it.key.startsWith("command.option.")}
-        def nonopts = params.findAll { !it.key.startsWith("command.option.") && it.key!='workflow' && it.key!='options'&& it.key!='notifications'}
+        def optparams = params.findAll { it.key.startsWith("option.")}
+        def nonopts = params.findAll { !it.key.startsWith("option.") && it.key!='workflow' && it.key!='options'&& it.key!='notifications'}
         scheduledExecution.properties = nonopts
         
         final Map oldopts = params.findAll{it.key=~/^(name|command|type|adhocExecution|adhocFilepath|adhoc.*String)$/}
@@ -739,7 +739,8 @@ class ScheduledExecutionController  {
                 def Map optdefparams=params.options["options[${i}]"]
                 def Option theopt = new Option(optdefparams)
                 scheduledExecution.addToOptions(theopt)
-                if (!theopt.validate()) {
+                EditOptsController._validateOption(theopt)
+                if (theopt.errors.hasErrors() || !theopt.validate() ) {
                     failed = true
                     theopt.discard()
                     def errmsg = optdefparams.name + ": " + theopt.errors.allErrors.collect {g.message(error: it)}.join(";")
@@ -968,10 +969,11 @@ class ScheduledExecutionController  {
             def i=0;
             params.options.each{Option theopt->
                 scheduledExecution.addToOptions(theopt)
-                if (!theopt.validate()) {
+                EditOptsController._validateOption(theopt)
+                if (theopt.errors.hasErrors()|| !theopt.validate()) {
                     failed = true
                     theopt.discard()
-                    def errmsg = optdefparams.name + ": " + theopt.errors.allErrors.collect {g.message(error: it)}.join(";")
+                    def errmsg = theopt.name + ": " + theopt.errors.allErrors.collect {g.message(error: it)}.join(";")
                     scheduledExecution.errors.rejectValue(
                            'options',
                            'scheduledExecution.options.invalid.message',
@@ -1425,8 +1427,8 @@ class ScheduledExecutionController  {
         def rolelist = (session?.roles) ? session.roles : []
         boolean failed=false;
         def scheduledExecution = new ScheduledExecution()
-        def optparams = params.findAll {it.key.startsWith("command.option.")}
-        final Map nonopts = params.findAll {!it.key.startsWith("command.option.") && it.key != 'workflow'&& it.key != 'options'&& it.key != 'notifications'}
+        def optparams = params.findAll {it.key.startsWith("option.")}
+        final Map nonopts = params.findAll {!it.key.startsWith("option.") && it.key != 'workflow'&& it.key != 'options'&& it.key != 'notifications'}
         final Map oldopts = params.findAll{it.key=~/^(name|command|type|adhocExecution|adhocFilepath|adhoc.*String)$/}
         scheduledExecution.properties = nonopts
         if(oldopts && !params.workflow){
@@ -1630,8 +1632,9 @@ class ScheduledExecutionController  {
                 params.options.each{ origopt->
                     def Option theopt = origopt.createClone()
                     scheduledExecution.addToOptions(theopt)
-                    theopt.scheduledExecution = scheduledExecution
-                    if (!theopt.validate()) {
+                    EditOptsController._validateOption(theopt)
+
+                    if (theopt.errors.hasErrors() || !theopt.validate()) {
                         failed = true
                         theopt.discard()
                         def errmsg = optdefparams.name + ": " + theopt.errors.allErrors.collect {g.message(error: it)}.join(";")
@@ -1649,7 +1652,8 @@ class ScheduledExecutionController  {
                     def Map optdefparams=params.options["options[${i}]"]
                     def Option theopt = new Option(optdefparams)
                     scheduledExecution.addToOptions(theopt)
-                    if (!theopt.validate()) {
+                    EditOptsController._validateOption(theopt)
+                    if (theopt.errors.hasErrors() || !theopt.validate()) {
                         failed = true
                         theopt.discard()
                         def errmsg = optdefparams.name + ": " + theopt.errors.allErrors.collect {g.message(error: it)}.join(";")
@@ -2271,19 +2275,11 @@ class ScheduledExecutionController  {
             return [error:'unauthorized',message:msg]
         }
 
-        def extra = [:]
+        def extra = params.extra
 
-        params.each{ key, value ->
-            def matcher= key =~ /^extra\.(.*)$/
-            if(matcher.matches()){
-                extra[matcher.group(1)]=value
-            }
-        }
-        def Execution e
-        def eid
         try{
-            e= executionService.createExecution(scheduledExecution,framework,params.user,extra)
-            eid=scheduledExecutionService.scheduleTempJob(scheduledExecution,params.user,rolelist,e);
+            def Execution e= executionService.createExecution(scheduledExecution,framework,params.user,extra)
+            def eid=scheduledExecutionService.scheduleTempJob(scheduledExecution,params.user,rolelist,e);
             return [executionId:eid,name:scheduledExecution.jobName, execution:e]
         }catch(ExecutionServiceValidationException exc){
             return [error:'invalid',message:exc.getMessage(),options:exc.getOptions(),errors:exc.getErrors()]
@@ -2496,18 +2492,18 @@ class ScheduledExecutionController  {
             return chain(controller: 'api', action: 'renderError')
         }
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        def inparams = [:]
+        def inparams = [extra:[:]]
         inparams["user"] = (session?.user) ? session.user : "anonymous"
         def rolelist = (session?.roles) ? session.roles : []
 
         if (params.argString) {
-            inparams["extra.argString"] = params.argString
+            inparams.extra["argString"] = params.argString
         }
         //convert api parameters to node filter parameters
         def filters = FrameworkController.extractApiNodeFilterParams(params)
         if (filters) {
             filters.each {k, v ->
-                inparams['extra.' + k] = v
+                inparams.extra[k] = v
             }
         }
 

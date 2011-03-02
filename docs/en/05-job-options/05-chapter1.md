@@ -100,6 +100,8 @@ Identification
 :    Here you provide the option's name and description. The name
      becomes part of acceptable arguments to the Job while the
      description will be provided as help text to users running the Job.
+     
+     The Default Value will be pre-selected in the GUI when the option is presented.
 
 Allowed values
 
@@ -124,6 +126,12 @@ Requirement
 :    Indicates if the Job can only run if a choice is provided for
      that Option. Choosing "No" states the option is not required
      Choose "Yes" to state the option is required.
+     
+     If a Default Value is set for the option, then this value will automatically be set for the option if it is Required, even if not specified among the arguments when executing a job via the command-line or API.
+
+Multi-valued
+
+:    Defines if the user input can consist of multiple values. Choosing "No" states that only a single value can chosen as input. Choosing "Yes" states that the user may select multiple input values from the Allowed values and/or enter multiple values of their own.  The delimiter string will be used to separate the multiple values when the Job is run.
 
 Once satisfied with the option definition, press the "Save" button to
 add it to the Job definition. Pressing the "Cancel" button will

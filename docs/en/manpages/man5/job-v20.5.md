@@ -410,12 +410,28 @@ required
 
 :    Boolean specifying that the option is required
 
+multivalued
+
+:    "true/false" - whether the option supports multiple input values
+
+delimiter
+
+:    A string used to conjoin multiple input values.  (Required if `multivalued` is "true")
+
 
 *Example*
 
-Define defaults for the "port" option. 
+Define defaults for the "port" option, requiring regex match. 
 
-    <option name="port" value="80" values="80,8080,8888" enforcedvalues="true" regex="\d+"/>
+    <option name="port" value="80" values="80,8080,8888" regex="\d+"/>
+
+Define defaults for the "port" option, enforcing the values list.
+
+    <option name="port" value="80" values="80,8080,8888" enforcedvalues="true" />
+
+Define defaults for the "ports" option, allowing multple values separated by ",".
+
+    <option name="port" value="80" values="80,8080,8888" enforcedvalues="true" multivalued="true" delimiter="," />
 
 
 #### valuesUrl JSON 

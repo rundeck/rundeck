@@ -2,25 +2,15 @@
 used by _editOptions.gsp template
 --%>
 <g:set var="rkey" value="${g.rkey()}"/>
-<g:if test="${options?.size()>0 || optionSelections}">
+<g:if test="${ optionSelections}">
     <g:set var="usePrefix" value="${paramsPrefix?paramsPrefix:''}"/>
     <g:set var="showDTFormat" value="${false}"/>
     <g:hiddenField name="${usePrefix+'argString'}" value=""/>
-    <%-- create joint set of options from cmd options and optionSelections --%>
     <%
         def optsmap=[:]
-        if(options?.size()>0){
-            options.each{
-                optsmap[it.parameter]=[cmdopt:it]
-            }
-        }
         if(optionSelections){
             optionSelections.each{
-                if(optsmap[it.name]){
-                    optsmap[it.name]['selopt']=it
-                }else{
-                    optsmap[it.name]=[selopt:it]
-                }
+                optsmap[it.name]=[selopt:it]
             }
         }
     %>
@@ -29,48 +19,30 @@ used by _editOptions.gsp template
             <td style="vertical-align:top">
     <table class="simpleForm">
         <g:each var="optName" in="${optsmap.keySet().sort()}">
-            <g:set var="opt" value="${optsmap[optName].cmdopt}"/>
-            <g:set var="optsel" value="${optionSelections ? optionSelections.find {it.name==optName} : null}"/>
-            <g:set var="optType" value="${opt?opt.getType():'string'}"/>
-            <g:set var="optDefault" value="${opt?.getDefault()}"/>
-            <g:set var="optRequired" value="${opt?opt.getRequired():optsel?.required}"/>
-            <g:set var="optDescription" value="${opt?opt.getDescription():optsel?.description}"/>
-            <g:set var="fieldName" value="${usePrefix+'command.option.'+optName}"/>
-            <g:set var="optionHasValue" value="${(optDefault||(selectedoptsmap && selectedoptsmap[optName]))?true:false}"/>
+            <g:set var="optionSelect" value="${optsmap[optName].selopt }"/>
+            <g:set var="optRequired" value="${optionSelect.required}"/>
+            <g:set var="optDescription" value="${optionSelect.description}"/>
+            <g:set var="fieldName" value="${usePrefix+'option.'+optName}"/>
+            <g:set var="optionHasValue" value="${optionSelect.defaultValue || selectedoptsmap && selectedoptsmap[optName]}"/>
             <g:set var="hasError" value="${jobexecOptionErrors?jobexecOptionErrors[optName]:null}"/>
             <tr>
                 <td class="${hasError?'fieldError':''}">${optName}:</td>
                 <td>
-                    <g:if test="${optsel}">
-                        <g:set var="optionSelect" value="${optsel}"/>
-                        <g:set var="optionHasValue" value="${optionSelect.defaultValue?true:optionHasValue}"/>
-                        <g:if test="${optionSelect.valuesUrl !=null}">
-                            <g:set var="holder" value="${rkey+'_'+optName+'_hold'}"/>
-                            <span id="${holder}" >
-                            </span>
-                            <g:javascript>
-                                _loadRemoteOptionValues("${holder}",'${scheduledExecutionId}','${optName}','${usePrefix}','${selectedoptsmap?selectedoptsmap[optName]:''}');
-                            </g:javascript>
-                        </g:if>
-                        <g:else>
-                            <g:render template="/framework/optionValuesSelect"
-                                model="${[elemTarget:rkey+'_'+optName,optionSelect:optionSelect, fieldPrefix:usePrefix,fieldName:'command.option.'+optName,selectedoptsmap:selectedoptsmap]}"/>
-                        </g:else>
+                    <g:if test="${optionSelect.valuesUrl !=null}">
+                        <g:set var="holder" value="${rkey+'_'+optName+'_hold'}"/>
+                        <span id="${holder}" >
+                        </span>
+                        <g:javascript>
+                            _loadRemoteOptionValues("${holder}",'${scheduledExecutionId}','${optName}','${usePrefix}','${selectedoptsmap?selectedoptsmap[optName]:''}');
+                        </g:javascript>
                     </g:if>
-                    <g:elseif test="${opt && optType =~ 'string'}">
-                        <g:set var="showDTFormat" value="${true}"/>
-                        <g:textField name="${fieldName}" value="${selectedoptsmap && selectedoptsmap[optName]?selectedoptsmap[optName]:optDefault?optDefault:''}"
-                                     maxlength="256" size="40" id="${rkey}_${optName}_field"/>
-                        <%-- event handler: when text field is empty, show required option value warning icon if it exists--%>
-                        <wdgt:eventHandler for="${rkey}_${optName}_field" state="empty" visible="true" targetSelector="${'#'+optName.encodeAsHTML()+'_state span.reqwarning'}" frequency="1"  inline='true'/>
-                    </g:elseif>
                     <g:else>
-                        <g:radio name="${fieldName}" value="true" checked="${selectedoptsmap && selectedoptsmap[optName]?true:false}"/>yes
-                        <g:radio name="${fieldName}" value="false" checked="${selectedoptsmap && selectedoptsmap[optName]?false:true}"/>no
+                        <g:render template="/framework/optionValuesSelect"
+                            model="${[elemTarget:rkey+'_'+optName,optionSelect:optionSelect, fieldPrefix:usePrefix,fieldName:'option.'+optName,selectedoptsmap:selectedoptsmap]}"/>
                     </g:else>
 
                     <span id="${optName.encodeAsHTML()+'_state'}">
-                        <g:if test="${ optRequired && 'string'==optType}">
+                        <g:if test="${ optRequired }">
                             <span class="reqwarning" style="${wdgt.styleVisible(unless:optionHasValue)}">
                             <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" class="warnimg"
                                  alt="Required Option" title="Required Option"  width="16px" height="16px" />
@@ -81,11 +53,6 @@ used by _editOptions.gsp template
                         </g:if>
                         <g:if test="${hasError && !hasError.contains('required')}">
                             <span class="error label">${hasError}</span>
-                        </g:if>
-
-                        <g:if test="${opt?.getDefaultproperty()}">
-                            <img src="${resource( dir:'images',file:'icon-small-info.png' )}"
-                                 alt="Default Property" title="default property: ${opt?.getDefaultproperty()}"  width="16px" height="16px"/>
                         </g:if>
                     </span>
                     <div class="info note">${optDescription}</div>
