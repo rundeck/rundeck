@@ -1630,8 +1630,12 @@ class ScheduledExecutionController  {
                 params.options.each{ origopt->
                     def Option theopt = origopt.createClone()
                     scheduledExecution.addToOptions(theopt)
-                    theopt.scheduledExecution = scheduledExecution
-                    if (!theopt.validate()) {
+                    EditOptsController._validateOption(theopt)
+
+                    if (theopt.errors.hasErrors()) {
+                        failed = true
+                    }
+                    if (failed || !theopt.validate()) {
                         failed = true
                         theopt.discard()
                         def errmsg = optdefparams.name + ": " + theopt.errors.allErrors.collect {g.message(error: it)}.join(";")
@@ -1649,7 +1653,11 @@ class ScheduledExecutionController  {
                     def Map optdefparams=params.options["options[${i}]"]
                     def Option theopt = new Option(optdefparams)
                     scheduledExecution.addToOptions(theopt)
-                    if (!theopt.validate()) {
+                    EditOptsController._validateOption(theopt)
+                    if (theopt.errors.hasErrors()) {
+                        failed = true
+                    }
+                    if (failed || !theopt.validate()) {
                         failed = true
                         theopt.discard()
                         def errmsg = optdefparams.name + ": " + theopt.errors.allErrors.collect {g.message(error: it)}.join(";")

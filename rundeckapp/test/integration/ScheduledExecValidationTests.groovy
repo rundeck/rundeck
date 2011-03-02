@@ -1813,6 +1813,90 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertTrue(rejopt.errors.hasErrors())
             assertTrue(rejopt.errors.hasFieldErrors('valuesUrl'))
         }
+        if(true){//valid multi option
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
+            fwkControl.demand.existsFrameworkProject{project,framework->
+                assertEquals 'testProject',project
+                return true
+            }
+            fwkControl.demand.getCommand{project,type,command,framework->
+                assertEquals 'testProject',project
+                assertEquals 'aType',type
+                assertEquals 'aCommand',command
+                return null
+            }
+            sec.frameworkService=fwkControl.createMock()
+
+            def params=[jobName:'monkey1',project:'testProject',description:'',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand',
+                   options:["options[0]":[name:'opt3', defaultValue: 'val3', enforced: false, multivalued:true, delimiter:' ']]
+            ]
+            def results=sec._dovalidate(params)
+            if(results.scheduledExecution.errors.hasErrors()){
+                results.scheduledExecution.errors.allErrors.each{
+                    System.err.println(it);
+                }
+            }
+            assertFalse results.failed
+            assertNotNull(results.scheduledExecution)
+            assertTrue(results.scheduledExecution instanceof ScheduledExecution)
+            ScheduledExecution execution=results.scheduledExecution
+            assertNotNull(execution)
+            assertNotNull(execution.errors)
+            assertFalse(execution.errors.hasErrors())
+            assertNotNull execution.options
+            assertLength(1, execution.options as Object[])
+            final Iterator iterator = execution.options.iterator()
+            assert iterator.hasNext()
+            final Option next = iterator.next()
+            assertNotNull(next)
+            assertEquals("wrong option name", "opt3", next.name)
+            assertEquals("wrong option name", "val3", next.defaultValue)
+            assertNull("wrong option name", next.valuesUrl)
+            assertFalse("wrong option name", next.enforced)
+            assertTrue("wrong option name", next.multivalued)
+            assertEquals("wrong option name", ' ',next.delimiter)
+        }
+        if(true){//invalid multi option, no delimiter
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
+            fwkControl.demand.existsFrameworkProject{project,framework->
+                assertEquals 'testProject',project
+                return true
+            }
+            fwkControl.demand.getCommand{project,type,command,framework->
+                assertEquals 'testProject',project
+                assertEquals 'aType',type
+                assertEquals 'aCommand',command
+                return null
+            }
+            sec.frameworkService=fwkControl.createMock()
+
+            def params=[jobName:'monkey1',project:'testProject',description:'',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand',
+                   options:["options[0]":[name:'opt3', defaultValue: 'val3', enforced: false, multivalued:true]]
+            ]
+            def results=sec._dovalidate(params)
+            if(results.scheduledExecution.errors.hasErrors()){
+                results.scheduledExecution.errors.allErrors.each{
+                    System.err.println(it);
+                }
+            }
+            assertTrue results.failed
+            assertNotNull(results.scheduledExecution)
+            assertTrue(results.scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = results.scheduledExecution
+            assertNotNull(execution)
+            final def org.springframework.validation.Errors errors = execution.errors
+            assertNotNull(errors)
+            assertTrue(errors.hasErrors())
+            assertTrue(errors.hasFieldErrors('options'))
+            final Object rejset = errors.getFieldError('options').getRejectedValue()
+            assertNotNull(rejset)
+            assertLength(1, rejset as Object[])
+            final Option rejopt = rejset.iterator().next()
+            assertTrue(rejopt.errors.hasErrors())
+            assertTrue(rejopt.errors.hasFieldErrors('delimiter'))
+        }
     }
     public void testDoUpdate(){
         def sec = new ScheduledExecutionController()

@@ -319,6 +319,9 @@ class EditOptsController {
                 }
             }
         }
+        if(opt.multivalued && !opt.delimiter){
+            opt.errors.rejectValue('delimiter', 'option.delimiter.blank.message')
+        }
         return result
     }
 
