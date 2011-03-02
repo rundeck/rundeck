@@ -513,7 +513,7 @@ class ScheduledExecutionController  {
         }else{
             flash.savedJob=scheduledExecution
             flash.savedJobMessage="Saved changes to Job"
-            redirect(controller:'menu',action:'jobs')
+            redirect(controller: 'scheduledExecution', action: 'show', params: [id: scheduledExecution.id])
         }
     }
     def _doupdate = { params ->
@@ -1916,7 +1916,7 @@ class ScheduledExecutionController  {
         if(scheduledExecution.id){
             flash.savedJob=scheduledExecution
             flash.savedJobMessage="Created new Job"
-            redirect(controller:'menu',action:'jobs')
+            redirect(controller:'scheduledExecution',action:'show',params:[id:scheduledExecution.id])
         }else{
             scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
             request.message=g.message(code:'ScheduledExecutionController.save.failed')
