@@ -208,6 +208,12 @@ public class WidgetTagLib {
                 out<<"new Form.Element.Observer('${forElem}',${obsfreq},"+funcstr+");"
             }else{
                 out<<"Event.observe('${forElem}','${evt}',"+funcstr+");"
+                if(evt=='change'){
+                    // fix for IE's bad onchange event
+                    out<<"if(Prototype.Browser.IE && \$('${forElem}').tagName.toLowerCase()=='input' && (\$('${forElem}').type.toLowerCase()=='radio'||\$('${forElem}').type.toLowerCase()=='checkbox')){"
+                    out << "Event.observe('${forElem}','click'," + funcstr + ");"
+                    out<<"}"
+                }
             }
         }else if(forSelector){
             out<<'$$(\''+forSelector.encodeAsJavaScript()+'\').each(function(elem){'
@@ -216,6 +222,12 @@ public class WidgetTagLib {
                 out<<"new Form.Element.Observer(elem,${obsfreq},"+funcstr+");"
             }else{
                 out<<"Event.observe(elem,'${evt}',"+funcstr+");"
+                if (evt == 'change') {
+                    // fix for IE's bad onchange event
+                    out << "if(Prototype.Browser.IE && \$(elem).tagName.toLowerCase()=='input' && (\$(elem).type.toLowerCase()=='radio'||\$(elem).type.toLowerCase()=='checkbox')){"
+                    out << "Event.observe(elem,'click'," + funcstr + ");"
+                    out << "}"
+                }
             }
             out<<"});"
         }
