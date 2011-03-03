@@ -6,70 +6,87 @@
   To change this template use File | Settings | File Templates.
 --%>
 <g:timerStart key="gtx"/>
+<g:set var="indentpx" value="${16}"/>
+<style type="text/css">
+    .jobGroups.subjobs, .expandComponent.sub_group{
+        margin-left:${indentpx}px;
+    }
+</style>
 <div class="jobGroups ${subtree?' subdirs':'topgroup'} expandComponent" ${subtree && !expanded && !(wasfiltered) ?'style="display:none"':''}>
 <g:if test="${!prefix && wasfiltered && paginateParams.groupPath}">
-    <div>
-        <a class=" groupname" href="${createLink(controller:'menu',action:'jobs')}" title="Top level"><img src="${resource(dir:'images',file:'icon-small-folder-up.png')}" width="16px" height="15px" alt="dir"/> Top</a>
+    <div style="margin-bottom:4px">
         <g:if test="${paginateParams.groupPath.indexOf('/')>0}">
             <g:set var="uplevel" value="${paginateParams.groupPath.substring(0,paginateParams.groupPath.lastIndexOf('/'))}"/>
             <g:set var="newparams" value="${paginateParams}"/>
             %{
                 newparams['groupPath']=uplevel
             }%
-            <a class=" groupname" href="${createLink(controller:'menu',action:'jobs',params:newparams)}" title="Previous level"><img src="${resource(dir:'images',file:'icon-small-folder-up.png')}" width="16px" height="15px" alt="dir"/> Up</a>
+            <g:link controller="menu" action="jobs" class="groupname" title="Previous level" params="${newparams}">
+                <g:img file="icon-small-folder-up.png" width="16px" height="15px"/>
+                Up
+            </g:link>
         </g:if>
+        <g:else>
+            <g:link controller="menu" action="jobs" class="groupname" title="Top level">
+                <g:img file="icon-small-folder-up.png" width="16px" height="15px"/>
+                Top
+            </g:link>
+        </g:else>
     </div>
 </g:if>
 <g:set var="gkeys" value="${jobgroups.sort{a,b->a.key<=>b.key}.grep{it.key!=''}}"/>
 <g:timerEnd key="gtx"/>
-<g:set var="indentpx" value="${16}"/>
 <g:set var="prevkey" value="${null}"/>
 <g:set var="indent" value="${0}"/>
+<g:set var="divcount" value="${[]}"/>
 
 <g:each in="${gkeys}" var="group">
     <g:timerStart key="_groupTree2.gsp-loop"/>
     <g:timerStart key="prepare"/>
     <g:set var="displaygroup" value="${group.key}"/>
+    <g:set var="currkey" value="${g.rkey()}"/>
     <g:if test="${prevkey && group.key.startsWith(prevkey+'/')}">
         %{
-            indent++
+            indent++;
         }%
         <g:set var="displaygroup" value="${group.key.substring(prevkey.length()+1)}"/>
     </g:if>
     <g:else>
+        ${divcount.join('<!--rend-->')}
         <g:set var="indent" value="${0}"/>
+        <g:set var="divcount" value="${[]}"/>
     </g:else>
     <g:set var="prevkey" value="${group.key}"/>
-
-    <div class="expandComponentHolder" style="${indent>0? 'margin-left: '+(indent*indentpx)+'px;':''}">
-        <g:if test="${jobgroups[group.key]}">
-            <g:expander open="${group.value?.size()==0||wasfiltered?'true':'false'}"/><!--
-        --></g:if>
-        <g:else><!--
-            --><img src="${resource(dir:'images',file:'blank.gif')}" width="16px" height="12px"/><!--
-        --></g:else><!--
-           --><span class="expandComponentControl textbtn action groupname" onclick="${jscallback?jscallback+'(\''+(prefix?prefix+'/'+group.key:group.key)+'\');return false;':'Expander.toggle(this)'}" title="${jscallback?'Select this group':'Expand/Collapse this group'}"><!--
-            --><img src="${resource(dir:'images',file:'icon-small-folder.png')}" width="16px" height="15px" alt="dir"/><!--
-            --><g:if test="${jscallback || jobsjscallback}">
-                ${displaygroup}
-            </g:if><!--
-        --></span>
-        <g:if test="${!jscallback && !jobsjscallback}">
-            <a class=" groupname" href="${createLink(controller:'menu',action:'jobs',params:[groupPath:prefix?prefix+'/'+group.key:group.key])}">${displaygroup}</a>
+    <g:set var="groupopen" value="${(wasfiltered)}"/>
+    ${"<"}div class="expandComponentHolder ${groupopen ? 'expanded' : ''} " ${">"}
+        %{divcount<<'</div>'}%
+        <div style="margin-bottom:4px;">
+            <g:set var="jsfunc" value="Expander.toggle(this,null,'.expandComponentHolder.sub_${currkey}_group');"/>
+            <g:expander open="${groupopen?'true':'false'}" jsfunc="${jsfunc}" imgfirst="true" style="padding-left:4px;" classnames="jobgroupexpand">
+                <span class="foldertoggle">&nbsp;</span>
+            </g:expander>
+        <g:if test="${jscallback}">
+            <span class="expandComponentControl textbtn action groupname jobgroupexpand" onclick="${jscallback + '(\'' + (prefix ? prefix + '/' + group.key : group.key) + '\');return false;' }" title="${jscallback ? 'Select this group' : 'Expand/Collapse this group'}" style="padding-left:4px;"><%--
+            --%>${displaygroup}<%--
+        --%></span>
         </g:if>
-        <g:if test="${group.value?.size()>0}">
-            (${group.value.size()})
-        </g:if>
+        <g:else>
+            <a class=" groupname" href="${createLink(controller: 'menu', action: 'jobs', params: [groupPath: prefix ? prefix + '/' + group.key : group.key])}">${displaygroup}</a>
+        </g:else>
+        </div>
+        
         <g:timerEnd key="prepare"/>
+        ${"<"}div class="expandComponent sub_${currkey}_group sub_group" style="${wdgt.styleVisible(if: groupopen)}"${">"}
+        %{ divcount << '</div>' }%
         <g:if test="${jobgroups[group.key]}">
-            <div class="jobGroups subdirs expandComponent" style="margin-left: ${(indentpx-2)}px; ${wdgt.styleVisible(unless:group.value?.size()>0 && !(wasfiltered) )}" >
+            <div class="jobGroups subjobs">
             <g:render template="jobslist" model="[jobslist:jobgroups[group.key],total:jobgroups[group.key]?.size(),nowrunning:nowrunning,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,headers:false,wasfiltered:wasfiltered,small:small?true:false,jobsjscallback:jobsjscallback]"/>
             </div>
         </g:if>
-    </div>
+
     <g:timerEnd key="_groupTree2.gsp-loop"/>
 </g:each>
-
+    ${divcount.join('<!--rlast-->')}
 
     <g:if test="${currentJobs}">
         <g:timerStart key="_groupTree2.gsp-jobslist"/>

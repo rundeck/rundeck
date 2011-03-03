@@ -1689,7 +1689,7 @@ ul.jobGroups li.sub{
     padding-left:20px;
 }
 ul.jobGroups li span.textbtn,ul.jobGroups li a.textbtn{
-    
+
 }
 ul.jobGroups li a.currentdir{
     font-weight:bold;
@@ -1702,6 +1702,12 @@ ul.jobGroups li a.alljobs{
     padding:10px;
     background: #eee;
     border:1px solid #ddd;
+}
+
+.expandComponentHolder.expanded  > div > span.expandComponentControl.jobgroupexpand span.foldertoggle{
+}
+
+.expandComponentHolder > div > span.expandComponentControl.jobgroupexpand span.foldertoggle{
 }
 
 /** Process Flow view styles **/

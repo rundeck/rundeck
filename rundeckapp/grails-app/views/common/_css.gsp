@@ -209,4 +209,19 @@
         z-index: 1;
     }
 
+    .expandComponentHolder.expanded  > div > span.expandComponentControl.jobgroupexpand span.foldertoggle {
+        width: 16px;
+        /*padding-bottom:14px;*/
+        height: 14px;
+        display: inline-block;
+        background: transparent url(${resource(dir:'images',file:'icon-small-folder-open.png')}) top left no-repeat;
+    }
+
+    .expandComponentHolder > div > span.expandComponentControl.jobgroupexpand span.foldertoggle {
+        width: 16px;
+        height:14px;
+        display: inline-block;
+        background: transparent url(${resource(dir:'images',file:'icon-small-folder.png')}) top left no-repeat;
+    }
+
 </style>
