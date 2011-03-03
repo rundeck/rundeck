@@ -276,6 +276,11 @@ var applinks={
     .nodefilterfield{
         margin-bottom: 5px;
     }
+    .nodefilterfield label span.text{
+        text-align:right;
+        width: 10em;
+        display:inline-block;
+    }
     .filterkeyset{
         padding:3px 0;
     }
@@ -683,9 +688,18 @@ var applinks={
                     <g:each var="key" in="${NODE_FILTERS_ALL}">
                             <div id="nodeFilterInclude${key}"  style="${wdgt.styleVisible(if:scheduledExecution?.('nodeInclude'+key))}"  class="nodefilterfield">
                             <span class="input">
-                                ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}:
-                                <input type='text' name="nodeInclude${key}" class="filterIncludeText"
-                                    value="${scheduledExecution?.('nodeInclude'+key)?.encodeAsHTML()}" id="schedJobNodeInclude${key}" onchange="_matchNodes();" />
+                                <label ><span class="text">${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}:</span>
+                                <g:set var="filtvalue" value="${scheduledExecution?.('nodeInclude'+key)?.encodeAsHTML()}"/>
+                                <g:if test="${filtvalue && filtvalue.length()>30}">
+                                    <textarea  name="nodeInclude${key}" id="schedJobNodeInclude${key}" onchange="_matchNodes();"
+                                        style="vertical-align:top;"
+                                        rows="6" cols="40">${filtvalue}</textarea>
+                                </g:if>
+                                <g:else>
+                                    <input type='text' name="nodeInclude${key}" class="filterIncludeText"
+                                            value="${filtvalue}" id="schedJobNodeInclude${key}" onchange="_matchNodes();" />
+                                </g:else>
+                                </label>
                                 <span title="Remove filter for ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}"
                                     class="filterRemove action"
                                     onclick="removeFilter('${key}',true);"
@@ -757,9 +771,18 @@ var applinks={
                     <g:each var="key" in="${NODE_FILTERS_ALL}">
                             <div id="nodeFilterExclude${key}" style="${wdgt.styleVisible(if:scheduledExecution?.('nodeExclude'+key))}" class="nodefilterfield">
                             <span class="input">
-                                ${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}:
-                                <input type='text' name="nodeExclude${key}"
-                                    value="${scheduledExecution?.('nodeExclude'+key)?.encodeAsHTML()}" id="schedJobNodeExclude${key}" onchange="_matchNodes();"/>
+                                <label><span class="text">${NODE_FILTER_MAP[key]?NODE_FILTER_MAP[key]:key}:</span>
+                                <g:set var="filtvalue" value="${scheduledExecution?.('nodeExclude'+key)?.encodeAsHTML()}"/>
+                                <g:if test="${filtvalue && filtvalue.length()>30}">
+                                    <textarea name="nodeExclude${key}" id="schedJobNodeExclude${key}" onchange="_matchNodes();"
+                                        style="vertical-align:top;"
+                                        rows="6" cols="40">${filtvalue}</textarea>
+                                </g:if>
+                                <g:else>
+                                    <input type='text' name="nodeExclude${key}"
+                                        value="${filtvalue}" id="schedJobNodeExclude${key}" onchange="_matchNodes();"/>
+                                </g:else>
+                                </label>
                                 <span class="filterRemove action"
                                     onclick="removeFilter('${key}',false);"
                                     ><img src="${resource( dir:'images',file:'icon-tiny-removex.png' )}" alt="remove" width="12px" height="12px"/></span>
