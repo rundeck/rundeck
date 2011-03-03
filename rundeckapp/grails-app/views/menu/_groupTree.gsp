@@ -57,20 +57,20 @@
         <g:set var="divcount" value="${[]}"/>
     </g:else>
     <g:set var="prevkey" value="${group.key}"/>
-    <g:set var="groupopen" value="${(wasfiltered)}"/>
+    <g:set var="groupopen" value="${(wasfiltered || jscallback)}"/>
     ${"<"}div class="expandComponentHolder ${groupopen ? 'expanded' : ''} " ${">"}
         %{divcount<<'</div>'}%
         <div style="margin-bottom:4px;">
+        <g:if test="${jscallback}">
+            <span class="expandComponentControl textbtn action groupname jobgroupexpand" onclick="${jscallback + '(\'' + (prefix ? prefix + '/' + group.key : group.key) + '\');return false;' }" title="${jscallback ? 'Select this group' : 'Expand/Collapse this group'}" style="padding-left:4px;"><%--
+            --%><g:img file="icon-small-folder-open.png" width="16px" height="14px"/> ${displaygroup}<%--
+        --%></span>
+        </g:if>
+        <g:else>
             <g:set var="jsfunc" value="Expander.toggle(this,null,'.expandComponentHolder.sub_${currkey}_group');"/>
             <g:expander open="${groupopen?'true':'false'}" jsfunc="${jsfunc}" imgfirst="true" style="padding-left:4px;" classnames="jobgroupexpand">
                 <span class="foldertoggle">&nbsp;</span>
             </g:expander>
-        <g:if test="${jscallback}">
-            <span class="expandComponentControl textbtn action groupname jobgroupexpand" onclick="${jscallback + '(\'' + (prefix ? prefix + '/' + group.key : group.key) + '\');return false;' }" title="${jscallback ? 'Select this group' : 'Expand/Collapse this group'}" style="padding-left:4px;"><%--
-            --%>${displaygroup}<%--
-        --%></span>
-        </g:if>
-        <g:else>
             <a class=" groupname" href="${createLink(controller: 'menu', action: 'jobs', params: [groupPath: prefix ? prefix + '/' + group.key : group.key])}">${displaygroup}</a>
         </g:else>
         </div>
