@@ -1698,6 +1698,10 @@ ul.jobGroups li a.alljobs{
     font-weight:bold;
     font-style:italic;
 }
+
+div.jobGroups.subjobs, div.expandComponent.sub_group {
+    margin-left: 16px;
+}
 #groupChooser{
     padding:10px;
     background: #eee;

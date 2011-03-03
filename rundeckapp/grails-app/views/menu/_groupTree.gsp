@@ -6,12 +6,6 @@
   To change this template use File | Settings | File Templates.
 --%>
 <g:timerStart key="gtx"/>
-<g:set var="indentpx" value="${16}"/>
-<style type="text/css">
-    .jobGroups.subjobs, .expandComponent.sub_group{
-        margin-left:${indentpx}px;
-    }
-</style>
 <div class="jobGroups ${subtree?' subdirs':'topgroup'} expandComponent" ${subtree && !expanded && !(wasfiltered) ?'style="display:none"':''}>
 <g:if test="${!prefix && wasfiltered && paginateParams.groupPath}">
     <div style="margin-bottom:4px">
