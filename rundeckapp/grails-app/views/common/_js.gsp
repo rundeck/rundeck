@@ -80,6 +80,10 @@
                 elem.onmouseout=tooltipMouseOut;
             }
         });
+        Event.observe(document.body, 'click', function(evt) {
+            //click outside of popup bubble hides it
+            tooltipMouseOut();
+        }, false);
     };
     Element.addMethods( {
       loading: _setLoading

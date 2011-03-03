@@ -44,8 +44,8 @@
             <g:message code="Workflow.strategy.label.step-first"/>
         </label>
 
-        <span class=" action" onmouseover="new MenuController().showRelativeTo(this,'nodeStratHelp');" onmouseout="$('nodeStratHelp').hide();"><g:img file="icon-small-help.png" width="16px" height="16px"/> Explain </span>
-        <div class="popout" id="nodeStratHelp" style="display:none; background:white; position:absolute;">
+        <span class=" action obs_tooltip" id="nodeStratHelp"><g:img file="icon-small-help.png" width="16px" height="16px"/> Explain </span>
+        <div class="popout tooltipcontent" id="nodeStratHelp_tooltip" style="display:none; background:white; position:absolute;">
             <style type="text/css">
                 td.nodea{
                     color:blue;
@@ -88,6 +88,9 @@
             </table>
             </td></tr></table>
         </div>
+        <g:javascript>
+            fireWhenReady('nodeStratHelp', initTooltipForElements.curry('.obs_tooltip'));
+        </g:javascript>
     </g:if>
     <g:else>
         <g:message code="Workflow.strategy.label.${workflow?.strategy}"/>
