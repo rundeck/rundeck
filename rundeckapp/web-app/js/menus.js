@@ -69,10 +69,13 @@ var MenuController = Class.create({
         var pt = document.viewport.getScrollOffsets();
         var w = menu.getWidth();
         var t = page - (pos.left + (w + 16 + cw) );
-        if (t < 0 && w > cw) {
+        if (t < 0 && page>w) {
             cw = cw - w;
         }
-
+        if(Prototype.Browser.IE){
+            h+=pt[1];
+            cw+=pt[0];
+        }
         Element.clonePosition(menu, menuLink, { setWidth:   false, setHeight:  false,offsetTop:h,offsetLeft:cw});
         Try.these(function(){Effect.Appear(menu,{duration: 0.3});},Element.show.curry(menu));
     },

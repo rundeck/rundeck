@@ -106,7 +106,7 @@ function cancelJobError(mesg,elem,id){
 }
 
 var Expander = {
-    toggle: function(elem, contain) {
+    toggle: function(elem, contain,expression) {
         var e = $(elem);
         if (!e) {
             return;
@@ -145,9 +145,10 @@ var Expander = {
                 value=icn.src == AppImages.disclosure;
             }
         }
-        Expander.setOpen(elem,contain,value);
+        Expander.setOpen(elem,contain,value,expression);
+        return value;
     },
-    setOpen: function(elem, contain,value) {
+    setOpen: function(elem, contain,value,expression) {
         var e = $(elem);
         if (!e) {
             return;
@@ -183,6 +184,16 @@ var Expander = {
                 Element.show(content);
             }else{
                 Element.hide(content);
+            }
+            if (null != expression) {
+                //also set open related expression match
+                $$(expression).each(function(e) {
+                    if(value){
+                        Element.show(e);
+                    }else{
+                        Element.hide(e);
+                    }
+                });
             }
         }
         if(holder){
