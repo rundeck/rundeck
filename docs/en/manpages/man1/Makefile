@@ -17,7 +17,7 @@ rundeck-guide.1:
 	gzip < $< > $@
 
 %.1:
-	pandoc -s -w man $@.md -o $@
+	sed "s/@VERSION@/$(VERSION)/" $@.md | pandoc -s -w man -o $@
 
 PAGES = dispatch.1 rd-jobs.1 rd-options.1 rd-setup.1 rd-queue.1 run.1 
 
@@ -26,12 +26,12 @@ publish : roff html
 roff : 
 	$(ECHO) Generating system man pages
 	mkdir -p $(DIST)/man/man1
-	-for f in $(PAGES); do ( $(PANDOC) -s -w man $$f.md -o $(DIST)/man/man1/$$f; ); done
+	-for f in $(PAGES); do ( sed "s/@VERSION@/$(VERSION)/" $$f.md | $(PANDOC) -s -w man -o $(DIST)/man/man1/$$f; ); done
 
 html :
 	$(ECHO) Generating html for system man pages
 	mkdir -p $(DIST)/html
-	-for f in $(PAGES); do ( $(PANDOC) -s  --css=$(CSS) --template=$(TEMPLATES)/html.template --include-before=$(TEMPLATES)/before.html --include-after=$(TEMPLATES)/after.html $$f.md -o $(DIST)/html/$${f%.1}.html; ); done
+	-for f in $(PAGES); do ( sed "s/@VERSION@/$(VERSION)/" $$f.md | $(PANDOC) -s  --css=$(CSS) --template=$(TEMPLATES)/html.template --include-before=$(TEMPLATES)/before.html --include-after=$(TEMPLATES)/after.html -o $(DIST)/html/$${f%.1}.html); done
 
 clean :
 	rm -f *.1 *.1.gz

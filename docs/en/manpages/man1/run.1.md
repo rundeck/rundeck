@@ -1,4 +1,4 @@
-% RUN(1) RunDeck User Manuals | Version 1.1
+% RUN(1) RunDeck User Manuals | Version @VERSION@
 % Alex Honor
 % November 20, 2010
 

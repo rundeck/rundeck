@@ -1,4 +1,4 @@
-% RD-QUEUE(1) RunDeck User Manuals | Version 1.1
+% RD-QUEUE(1) RunDeck User Manuals | Version @VERSION@
 % Greg Schueler; Alex Honor
 % November 20, 2010
 

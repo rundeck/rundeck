@@ -1,4 +1,4 @@
-% JOB-V20(5) RunDeck User Manuals | Version 1.0
+% JOB-V20(5) RunDeck User Manuals | Version 2.0
 % Alex Honor
 % November 20, 2010
 

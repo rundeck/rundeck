@@ -13,7 +13,7 @@ all: subdirs htmlindex
 subdirs: $(DIRS)
 
 $(DIRS) : 
-	$(MAKE) -C $@
+	$(MAKE) VERSION=$(VERSION) -C $@
 
 clean : $(DIRS)
 	$(MAKE) -C $< clean
@@ -32,6 +32,8 @@ htmlindex: subdirs
 		f=$$(basename $$i); \
 		echo "* [$${f%.5.md}]($${f%.5.md}.html) " >> man5.index.md; \
 	done;
+	# set version in index file
+	sed "s/@VERSION@/$(VERSION)/" index.md.template > index.md
 	#concat md files and generate index.html
 	$(PANDOC) -s index.md man1.index.md man5.index.md  --css=$(CSS) --template=$(TEMPLATES)/html.template --include-before=$(TEMPLATES)/before.html --include-after=$(TEMPLATES)/after.html -o $(DIST)/html/index.html;
-	-rm  -f man1.index.md man5.index.md
+	-rm  -f man1.index.md man5.index.md index.md
