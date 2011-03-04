@@ -46,11 +46,24 @@ public class ProjectSelectFilters {
     def frameworkService
     def filters = {
         /**
+         * check api request and bypass the project defaulting/selection if so.  Filters are not applied in
+         * determinate order, so ApiRequestFilters might not have been called yet.
+         */
+        testApi(uri: '/api/**') {
+            before={
+                request.is_api_req=true
+            }
+        }
+        /**
          * on first user login, set the session.project if it is not set, to the last user project selected, or
          * to the first project in the available list 
          */
         projectSelection(controller: 'framework', action: '(createProject|selectProject|projectSelect)',invert:true) {
             before = {
+                if (request.api_version || request.is_api_req) {
+                    //only default the project if not an api request
+                    return
+                }
                 if (session && session.user) {
                     //get user authorizations
                     session.projectSelectFilterApplied = true
