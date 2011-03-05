@@ -97,21 +97,6 @@ rm $DIR/test.jobs.expanded.yaml
 
 egrep 'https://' $RDECK_BASE/etc/framework.properties > /dev/null
 https=$?
-if [ 0 = $https ] ; then
-    # call testweb and use -k curl option to ignore server certificate
-    sh $DIR/testweb.sh "https://localhost:4443" -k
-    #################
-    # alternate args to curl to use a pem formatted cert to verify server cert:
-    #sh $DIR/testweb.sh "https://localhost:4443" "--cacert $RDECK_BASE/etc/rundeck.server.pem"
-    ################
-else
-    sh $DIR/testweb.sh "http://localhost:4440"
-fi
-
-if [ 0 != $? ] ; then
-	echo Failed to run testweb.sh : $!
-	exit 2
-fi
 
 if [ 0 = $https ] ; then
     # call api/testall.sh and use -k curl option to ignore server certificate
