@@ -2676,6 +2676,49 @@ class ScheduledExecutionController  {
             }
         }
     }
+    /**
+     * API: /api/job/{id}/executions , version 1
+     */
+    def apiJobExecutions = {
+        if (!params.id) {
+            flash.error = g.message(code: 'api.error.parameter.required', args: ['id'])
+            return chain(controller: 'api', action: 'error')
+        }
+        def ScheduledExecution scheduledExecution = ScheduledExecution.get(params.long('id'))
+        if (!scheduledExecution) {
+            flash.errorCode = "api.error.item.doesnotexist"
+            flash.errorArgs = ['Job ID', params.id]
+            return chain(controller: 'api', action: 'renderError')
+        }
+
+        def state=params['status']
+        final statusList = [ExecutionController.EXECUTION_RUNNING, ExecutionController.EXECUTION_ABORTED, ExecutionController.EXECUTION_FAILED, ExecutionController.EXECUTION_SUCCEEDED]
+        final domainStatus=[(ExecutionController.EXECUTION_FAILED):'false',
+            (ExecutionController.EXECUTION_SUCCEEDED):'true']
+        if(state && !(state in statusList)){
+            flash.errorCode = "api.error.parameter.not.inList"
+            flash.errorArgs = [params.status, 'status',statusList]
+            return chain(controller: 'api', action: 'renderError')
+        }
+        def c = Execution.createCriteria()
+        def result=c.list{
+            delegate.'scheduledExecution'{
+                eq('id', params.long('id'))
+            }
+            if(state== ExecutionController.EXECUTION_RUNNING){
+                isNull('dateCompleted')
+            }else if(state==ExecutionController.EXECUTION_ABORTED){
+                isNotNull('dateCompleted')
+                eq('cancelled',true)
+            }else if(state){
+                isNotNull('dateCompleted')
+                eq('cancelled', false)
+                eq('status',domainStatus[state])
+            }
+        }
+
+        return new ExecutionController().renderApiExecutionListResultXML(result)
+    }
 }
 
 class JobXMLException extends Exception{

@@ -249,6 +249,20 @@ If successful, then the `result` will contain a `success/message` element with t
     <message>Job was successfully deleted: ... </message>
     </success>
 
+### Getting Executions for a Job
+
+Get the list of executions for a Job.
+
+URL:
+
+    /job/[ID]/executions
+
+Optional Query Parameters:
+
+* `status`: the status of executions you want to be returned.  Must be one of "succeeded", "failed", "aborted", or "running".  If this parameter is blank or unset, include all executions.
+
+Result: an Item List of `executions`.  See [Running Executions](#running-executions).
+
 ### Listing Running Executions
 
 List the currently running executions for a project
