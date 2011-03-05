@@ -897,11 +897,13 @@ class ExecutionService implements ApplicationContextAware, Executor{
         if(!props.user){
             props.user=user
         }
-        if('true' == extra['_replaceNodeFilters']){
+        if(extra && 'true' == extra['_replaceNodeFilters']){
             //remove all existing node filters to replace with input filters
             props = props.findAll {!(it.key=~/^node(Include|Exclude).*$/)}
         }
-        props.putAll(extra)
+        if(extra){
+            props.putAll(extra)
+        }
 
         //evaluate embedded Job options for Regex match against input values
 
