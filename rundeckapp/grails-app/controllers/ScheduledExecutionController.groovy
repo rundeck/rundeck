@@ -2715,6 +2715,17 @@ class ScheduledExecutionController  {
                 eq('cancelled', false)
                 eq('status',domainStatus[state])
             }
+
+            if(params.offset){
+                firstResult(params.int('offset'))
+            }
+            if(params.max){
+                maxResults(params.int('max'))
+            }
+            and {
+                order('dateCompleted', 'desc')
+                order('dateStarted', 'desc')
+            }
         }
 
         return new ExecutionController().renderApiExecutionListResultXML(result)

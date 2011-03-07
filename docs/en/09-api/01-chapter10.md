@@ -260,6 +260,9 @@ URL:
 Optional Query Parameters:
 
 * `status`: the status of executions you want to be returned.  Must be one of "succeeded", "failed", "aborted", or "running".  If this parameter is blank or unset, include all executions.
+* Paging parameters:
+    * `max`: indicate the maximum number of results to return. If unspecified, all results will be returned.
+    * `offset`: indicate the 0-indexed offset for the first result to return.
 
 Result: an Item List of `executions`.  See [Running Executions](#running-executions).
 

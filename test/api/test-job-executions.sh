@@ -168,6 +168,106 @@ assert "${execid}" $(xmlsel "/result/executions/execution/@id" $DIR/curl.out) "W
 echo "OK"
 
 
+#####
+# execute again
+#####
+
+origexecid=$execid
+
+echo "TEST: job/id/run should succeed"
+
+# now submit req
+runurl="${APIURL}/job/${jobid}/run"
+params=""
+execargs="-opt2 a"
+
+# get listing
+$CURL  --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+
+sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+
+#get execid
+
+execcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
+execid=$($XMLSTARLET sel -T -t -v "/result/executions/execution/@id" $DIR/curl.out)
+
+if [ "1" == "${execcount}" -a "" != "${execid}" ] ; then
+    echo "OK"
+else
+    errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
+    exit 2
+fi
+
+sleep 2
+
+###
+# Test result of /job/ID/executions paging params
+###
+
+echo "TEST: job/id/executions all results"
+
+# now submit req
+runurl="${APIURL}/job/${jobid}/executions"
+params=""
+
+# get listing
+$CURL  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+
+sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+
+#verify 1 results
+
+assert "2" $(xmlsel "/result/executions/@count" $DIR/curl.out) "Wrong number of executions"
+echo "OK"
+
+
+###
+# Test result of /job/ID/executions paging params
+###
+
+echo "TEST: job/id/executions max param"
+
+# now submit req
+runurl="${APIURL}/job/${jobid}/executions"
+params="max=1"
+
+# get listing
+$CURL  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+
+sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+
+#verify 1 results
+
+assert "1" $(xmlsel "/result/executions/@count" $DIR/curl.out) "Wrong number of executions"
+assert "$execid" $(xmlsel "/result/executions/execution/@id" $DIR/curl.out) "Wrong exec id"
+echo "OK"
+
+
+###
+# Test result of /job/ID/executions paging params
+###
+
+echo "TEST: job/id/executions offset param"
+
+# now submit req
+runurl="${APIURL}/job/${jobid}/executions"
+params="max=1&offset=1"
+
+# get listing
+$CURL  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+
+sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
+
+#verify 1 results
+
+assert "1" $(xmlsel "/result/executions/@count" $DIR/curl.out) "Wrong number of executions"
+assert "$origexecid" $(xmlsel "/result/executions/execution/@id" $DIR/curl.out) "Wrong exec id"
+echo "OK"
+
+#############
+
+
+
 ###
 # Test result of /job/ID/executions bad status param
 ###
