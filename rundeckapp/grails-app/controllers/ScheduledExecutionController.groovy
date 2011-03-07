@@ -1184,7 +1184,7 @@ class ScheduledExecutionController  {
         if(scheduledExecution.id){
             params.id=scheduledExecution.id
             if(!scheduledExecution.scheduled){
-                return redirect(action:executeNow,id:scheduledExecution.id)
+                return redirect(action:execute,id:scheduledExecution.id)
             }else{
                 return redirect(action:show,id:scheduledExecution.id)
             }
