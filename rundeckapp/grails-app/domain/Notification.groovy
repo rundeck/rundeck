@@ -52,9 +52,9 @@ public class Notification {
         if(data.recipients){
             n.type='email'
             n.content=data.recipients
-        }else if(data.url){
+        }else if(data.urls){
             n.type='url'
-            n.content=data.url
+            n.content=data.urls
         }
         return n;
     }
@@ -62,7 +62,7 @@ public class Notification {
         if(type=='email'){
             return [recipients:content]
         }else if(type=='url'){
-            return [url:content]
+            return [urls:content]
         }else{
             return null
         }

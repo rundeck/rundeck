@@ -122,19 +122,13 @@ class ScheduledExecution extends ExecutionContext {
                 }
             }
         }
-        if(notifySuccessRecipients || notifyFailureRecipients){
-            map.notification=[:]
-            if(notifySuccessRecipients){
-                map.notification.onsuccess=[recipients:notifySuccessRecipients]
-            }
-            if(notifyFailureRecipients){
-                map.notification.onfailure=[recipients:notifyFailureRecipients]
-            }
-        }
         if(notifications){
             map.notification=[:]
             notifications.each{
-                map.notification[it.eventTrigger]=it.toMap()
+                if(!map.notification[it.eventTrigger]){
+                    map.notification[it.eventTrigger]=[:]
+                }
+                map.notification[it.eventTrigger].putAll(it.toMap())
             }
         }
         return map
@@ -217,8 +211,14 @@ class ScheduledExecution extends ExecutionContext {
         }
         if(data.notification){
             def nots=[]
-            data.notification.keySet().each{ name->
-                nots<<Notification.fromMap(name,data.notification[name])
+            ['onsuccess','onfailure'].each{ name->
+                if(data.notification[name]){
+                    ['urls','recipients'].each{ subkey->
+                        if(data.notification[name][subkey]){
+                            nots << Notification.fromMap(name, [(subkey):data.notification[name][subkey]])
+                        }
+                    }
+                }
             }
             se.notifications=nots
         }

@@ -1354,7 +1354,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             sec.frameworkService=fwkControl.createMock()
 
             def params=[jobName:'monkey1',project:'testProject',description:'',adhocExecution:true,adhocRemoteString:"test command",
-                notifications:[onsuccess:[email:'c@example.com,d@example.com']]                
+                notifications: [[eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com']]
             ]
             def results=sec._dovalidate(params)
             if(results.scheduledExecution.errors.hasErrors()){
@@ -1409,7 +1409,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             sec.frameworkService=fwkControl.createMock()
 
             def params=[jobName:'monkey1',project:'testProject',description:'',adhocExecution:true,adhocRemoteString:'test command',
-                notifications:[onsuccess:[email:'c@example.com,d@example.com'],onfailure:[email:'monkey@example.com']]
+                notifications: [[eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com'], [eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com']]
             ]
             def results=sec._dovalidate(params)
             if(results.scheduledExecution.errors.hasErrors()){
@@ -1611,7 +1611,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             sec.frameworkService=fwkControl.createMock()
 
             def params=[jobName:'monkey1',project:'testProject',description:'',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand',
-                   notifications:[onsuccess:[email:'c@example.comd@example.com'],onfailure:[email:'monkey@ example.com']]
+                   notifications: [[eventTrigger: 'onsuccess', type: 'email', content: 'c@example.comd@example.com'], [eventTrigger: 'onfailure', type: 'email', content: 'monkey@ example.com']]
             ]
             def results=sec._dovalidate(params)
             if(results.scheduledExecution.errors.hasErrors()){
@@ -1628,6 +1628,40 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertTrue(execution.errors.hasErrors())
             assertTrue(execution.errors.hasFieldErrors('notifyFailureRecipients'))
             assertTrue(execution.errors.hasFieldErrors('notifySuccessRecipients'))
+        }
+        if (true) {//test job with notifications, invalid urls
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.existsFrameworkProject {project, framework ->
+                assertEquals 'testProject', project
+                return true
+            }
+            fwkControl.demand.getCommand {project, type, command, framework ->
+                assertEquals 'testProject', project
+                assertEquals 'aType', type
+                assertEquals 'aCommand', command
+                return null
+            }
+            sec.frameworkService = fwkControl.createMock()
+
+            def params = [jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand',
+                notifications: [[eventTrigger: 'onsuccess', type: 'url', content: 'c@example.comd@example.com'], [eventTrigger: 'onfailure', type: 'url', content: 'monkey@ example.com']]
+            ]
+            def results = sec._dovalidate(params)
+            if (results.scheduledExecution.errors.hasErrors()) {
+                results.scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            assertTrue results.failed
+            assertNotNull(results.scheduledExecution)
+            assertTrue(results.scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = results.scheduledExecution
+            assertNotNull(execution)
+            assertNotNull(execution.errors)
+            assertTrue(execution.errors.hasErrors())
+            assertTrue(execution.errors.hasFieldErrors('notifyFailureUrl'))
+            assertTrue(execution.errors.hasFieldErrors('notifySuccessUrl'))
         }
     }
     public void testDoValidateOptions(){
@@ -3469,7 +3503,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             sec.frameworkService=fwkControl.createMock()
 
             def params=[id:se.id.toString(),jobName:'monkey1',project:'testProject',description:'',adhocExecution:true,adhocRemoteString:'test command',
-                notifications:[onsuccess:[email:'spaghetti@nowhere.com'],onfailure:[email:'milk@store.com']]
+                notifications:[[eventTrigger:'onsuccess',type:'email',content:'spaghetti@nowhere.com'],[eventTrigger:'onfailure',type:'email',content:'milk@store.com']]
             ]
             def results=sec._doupdate(params)
             def succeeded=results[0]
