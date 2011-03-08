@@ -24,7 +24,9 @@ class ScheduledExecution extends ExecutionContext {
     Date lastUpdated
     String notifySuccessRecipients
     String notifyFailureRecipients
-    static transients = ['adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients','crontabString']
+    String notifySuccessUrl
+    String notifyFailureUrl
+    static transients = ['adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients', 'notifySuccessUrl', 'notifyFailureUrl','crontabString']
 
     static constraints = {
         workflow(nullable:true)
@@ -512,9 +514,9 @@ class ScheduledExecution extends ExecutionContext {
       return result;
   }
 
-    def Notification findNotification(String trigger){
+    def Notification findNotification(String trigger, String type){
         if(this.id){
-            return Notification.findByScheduledExecutionAndEventTrigger(this,trigger)
+            return this.notifications.find{it.eventTrigger==trigger && it.type==type}
         }else{
             return null
         }

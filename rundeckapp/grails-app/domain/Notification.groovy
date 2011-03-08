@@ -31,11 +31,11 @@ public class Notification {
      */
     String eventTrigger
     /**
-     * type is the type of notification to initiate, e.g. "email" to send an email
+     * type is the type of notification to initiate, e.g. "email" to send an email, "url" to POST to a url
      */
     String type
     /**
-     * content contains data to use for the notification, e.g. a list of email addresses
+     * content contains data to use for the notification, e.g. a list of email addresses, or a list of URLs
      */
     String content
 
@@ -49,13 +49,20 @@ public class Notification {
 
     public static Notification fromMap(String key,Map data){
         Notification n = new Notification(eventTrigger:key)
-        n.type='email'
-        n.content=data.recipients
+        if(data.recipients){
+            n.type='email'
+            n.content=data.recipients
+        }else if(data.url){
+            n.type='url'
+            n.content=data.url
+        }
         return n;
     }
     public Map toMap(){
         if(type=='email'){
             return [recipients:content]
+        }else if(type=='url'){
+            return [url:content]
         }else{
             return null
         }
