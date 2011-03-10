@@ -1,12 +1,10 @@
-import com.sun.xml.internal.stream.XMLBufferListener
 import groovy.xml.MarkupBuilder
-import org.apache.commons.httpclient.methods.GetMethod
-import org.apache.commons.httpclient.HttpMethod
+
 import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.params.HttpClientParams
 import org.apache.commons.httpclient.methods.PostMethod
 import org.apache.commons.httpclient.Header
-import org.apache.commons.httpclient.methods.RequestEntity
+
 import org.apache.commons.httpclient.methods.StringRequestEntity
 import grails.util.GrailsWebUtil
 import org.springframework.web.context.support.WebApplicationContextUtils
@@ -108,16 +106,18 @@ public class NotificationService {
                     }
                     def webhookfailure=false
                     urlarr.each{String urlstr->
+                        //perform token expansion within URL.
+                        String newurlstr=expandWebhookNotificationUrl(urlstr,exec,source,trigger)
                         try{
-                            if(!postDataUrl(urlstr,xmlStr,n.eventTrigger, state,exec.id.toString())){
+                            if(!postDataUrl(newurlstr,xmlStr,trigger, state,exec.id.toString())){
                                 webhookfailure=true
-                                log.trace("Notification failed; URL ${urlstr}")
+                                log.trace("Notification failed [${n.eventTrigger},${state},${exec.id}]; URL ${newurlstr}")
                             }else if (log.traceEnabled) {
-                                log.trace("Notification succeeded; URL ${urlstr}")
+                                log.trace("Notification succeeded [${n.eventTrigger},${state},${exec.id}]; URL ${newurlstr}")
                             }
                         } catch (Throwable t) {
                             webhookfailure=true
-                            System.err.println("Notification failed; URL ${urlstr}: " + t.message);
+                            System.err.println("Notification failed [${n.eventTrigger},${state},${exec.id}]; URL ${newurlstr}: " + t.message);
                             if (log.traceEnabled) {
                                 log.trace("Notification failed", t)
                             }
@@ -138,8 +138,37 @@ public class NotificationService {
 
         return didsend
     }
+    String expandWebhookNotificationUrl(String url,Execution exec, ScheduledExecution job, String trigger){
+        def state=ExecutionController.getExecutionState(exec)
+        /**
+         * Expand the URL string's embedded property references of the form
+         * ${job.PROPERTY} and ${execution.PROPERTY}.  available properties are
+         * limited
+         */
+        def props=[
+            job:[id:job.id,name:job.jobName,group:job.groupPath?:'',project:job.project],
+            execution:[id:exec.id,status:state,user:exec.user],
+            notification:[trigger:trigger]
+        ]
+        def invalid = []
+        def keys= props.keySet().join('|')
+        String srcUrl = url.replaceAll("(\\\$\\{(${keys})\\.(.+?)\\})",
+            {Object[] group ->
+                if (props.containsKey(group[2])&& props[group[2]].containsKey(group[3])) {
+                    props[group[2]][group[3]]?.toString()?.encodeAsURL()
+                } else {
+                    invalid << group[0]
+                    group[0]
+                }
+            }
+        )
+        if (invalid) {
+            log.error("invalid expansion: " + invalid);
+        }
+        return srcUrl
+    }
 
-    static boolean postDataUrl(String url, String xmlstr, String notificationtype, String status, String id, rptCount=1, backoff=2){
+    static boolean postDataUrl(String url, String xmlstr, String trigger, String status, String id, rptCount=1, backoff=2){
         int count=0;
         int wait=1000;
         int timeout=15
@@ -161,9 +190,9 @@ public class NotificationService {
             params.setSoTimeout(timeout * 1000)
             def HttpClient client = new HttpClient(params)
             def PostMethod method = new PostMethod(url)
-            method.setRequestHeader(new Header("X-RunDeck-Notification-Type", notificationtype))
-            method.setRequestHeader(new Header("X-RunDeck-Notification-Execution-Status", status))
+            method.setRequestHeader(new Header("X-RunDeck-Notification-Trigger", trigger))
             method.setRequestHeader(new Header("X-RunDeck-Notification-Execution-ID", id))
+            method.setRequestHeader(new Header("X-RunDeck-Notification-Execution-Status", status))
             method.setRequestEntity(new StringRequestEntity(xmlstr, "text/xml", "UTF-8"))
             try {
                 resultCode = client.executeMethod(method);
@@ -185,7 +214,7 @@ public class NotificationService {
 
         }
         if(!complete){
-            System.err.println("Unable to POST notification after ${count} tries: ${notificationtype} for execution ${id} (${status}) to ${url}: ${error}");
+            System.err.println("Unable to POST notification after ${count} tries: ${trigger} for execution ${id} (${status}) to ${url}: ${error}");
         }
         return complete
     }
