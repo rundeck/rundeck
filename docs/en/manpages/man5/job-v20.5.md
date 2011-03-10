@@ -82,7 +82,7 @@ element is allowed.
 
 [notification](#notification)
 
-:    email noticfications
+:    notifications of execution success/failure, via email or webhook
 
 [nodefilters](#nodefilters)
 
@@ -686,7 +686,7 @@ Example passing arguments to the job:
 
 ## notification 
 
-Defines email notifications for Job success and failure, with in a
+Defines email and webhook notifications for Job success and failure, with in a
 [job](#job) definition.
 
 *Nested elements*
@@ -707,6 +707,7 @@ Defines email notifications for Job success and failure, with in a
         </onfailure>
         <onsuccess>
             <email recipients="test@example.com" />
+            <webhook urls="http://example.com?id=${execution.id}" />
        </onsuccess>
     </notification>      
 
@@ -716,10 +717,16 @@ Defines email notifications for Job success and failure, with in a
 Embed an [email](#email) element to send email on success, within
 [notification](#notification).
 
+Embed an [webhook](#webhook) element to perform a HTTP POST to some URLs, within
+[notification](#notification).
+
 ### onfailure 
 
 Embed an [email](#email) element to send email on failure or kill,
 within [notification](#notification).
+
+Embed an [webhook](#webhook) element to perform a HTTP POST to some URLs, within
+[notification](#notification).
 
 ### email 
 
@@ -735,6 +742,23 @@ recipients
 *Example*
 
             <email recipients="test@example.com,dev@example.com" />
+
+### webhook
+
+Define URLs to submit a HTTP POST to containing the job execution result, within [onsuccess](#onsuccess) or [onfailure](#onfailure).
+
+*Attributes*
+
+urls
+
+:   comma-separated list of URLs
+
+
+*Example*
+
+        <webhook urls="http://server/callback?id=${execution.id}&status=${execution.status}&trigger=${notification.trigger}"/>
+
+* For more information about the Webhook mechanism used, see the chapter [Integration - Webhooks](RunDeck-Guide.html#webhooks).
 
 # SEE ALSO
 

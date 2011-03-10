@@ -420,15 +420,19 @@ Example:
 
 ### Notification
 
-Defines result notification for the job.  You can include one or both of `onsuccess` or `onfailure` notifications.
+Defines result notification for the job.  You can include one or both of `onsuccess` or `onfailure` notifications. Each type of notification can include a list of email addresses and/or a list of URLs to use as a webhook.
 
 `onsuccess`/`onfailure`
 
-:    A Map containing:
+:    A Map containing either or both of:
 
     `recipients`
 
     :    A comma-separated list of Email addresses
+    
+    `urls`
+    
+    :    A comma-separated list of URLs to use as webhooks
 
 Example:
 
@@ -436,8 +440,9 @@ Example:
       onfailure:
         recipients: tom@example.com,shirley@example.com
       onsuccess:
-        recipients: bob@example.com
+        urls: 'http://server/callback?id=${execution.id}&status=${execution.status}&trigger=${notification.trigger}'
 
+* For more information about the Webhook mechanism used, see the chapter [Integration - Webhooks](RunDeck-Guide.html#webhooks).
 
 # SEE ALSO
 
