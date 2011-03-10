@@ -575,7 +575,17 @@ var applinks={
                     <label for="notifyOnsuccessUrl">Webhook</label>
                 </span>
                 <span id="notifSuccessholder2" style="${wdgt.styleVisible(if: isSuccessUrl)}">
-                    <label>POST to URLs: <g:textField name="notifySuccessUrl"  cols="70" rows="3"  value="${defSuccessUrl?defSuccessUrl.content:params.notifySuccessUrl}" size="60"/></label>
+                    <label>POST to URLs:
+                        <g:set var="notifsuccessurlcontent" value="${defSuccessUrl?defSuccessUrl.content:params.notifySuccessUrl}"/>
+                        <g:if test="${notifsuccessurlcontent && notifsuccessurlcontent.length()>30}">
+                            <textarea name="notifySuccessUrl"
+                                style="vertical-align:top;"
+                                rows="6" cols="40">${notifsuccessurlcontent?.encodeAsHTML()}</textarea>
+                        </g:if>
+                        <g:else>
+                            <g:textField name="notifySuccessUrl"  cols="70" rows="3"  value="${notifsuccessurlcontent?.encodeAsHTML()}" size="60"/>
+                        </g:else>
+                    </label>
                     <div class="info note">comma-separated URLs</div>
                     <g:hasErrors bean="${scheduledExecution}" field="notifySuccessUrl">
                         <div class="fieldError">
@@ -619,8 +629,18 @@ var applinks={
                     <label for="notifyOnfailureUrl">Webhook</label>
                 </span>
                 <span id="notifFailureholder2" style="${wdgt.styleVisible(if:isFailureUrl)}">
-                    <label>POST to URLs: <g:textField name="notifyFailureUrl"  cols="70" rows="3" value="${defFailureUrl?defFailureUrl.content:params.notifyFailureUrl}" size="60"/></label>
-                    <div class="info note">comma-separated email addresses</div>
+                    <label>POST to URLs:
+                        <g:set var="notiffailureurlcontent" value="${defFailureUrl?defFailureUrl.content:params.notifyFailureUrl}"/>
+                        <g:if test="${notiffailureurlcontent && notiffailureurlcontent.length()>30}">
+                            <textarea name="notifyFailureUrl"
+                                style="vertical-align:top;"
+                                rows="6" cols="40">${notiffailureurlcontent?.encodeAsHTML()}</textarea>
+                        </g:if>
+                        <g:else>
+                            <g:textField name="notifyFailureUrl" cols="70" rows="3" value="${notiffailureurlcontent?.encodeAsHTML()}" size="60"/>
+                        </g:else>
+                    </label>
+                    <div class="info note">comma-separated URLs</div>
                     <g:hasErrors bean="${scheduledExecution}" field="notifyFailureUrl">
                         <div class="fieldError">
                             <g:renderErrors bean="${scheduledExecution}" as="list" field="notifyFailureUrl"/>
