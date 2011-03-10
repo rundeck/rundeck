@@ -264,7 +264,7 @@ Optional Query Parameters:
     * `max`: indicate the maximum number of results to return. If unspecified, all results will be returned.
     * `offset`: indicate the 0-indexed offset for the first result to return.
 
-Result: an Item List of `executions`.  See [Running Executions](#running-executions).
+Result: an Item List of `executions`.  See [Listing Running Executions](#listing-running-executions).
 
 ### Listing Running Executions
 
@@ -325,7 +325,7 @@ URL:
 
     /execution/[ID]
 
-Result: an Item List of `executions` with a single item. See [Running Executions](#running-executions).
+Result: an Item List of `executions` with a single item. See [Listing Running Executions](#listing-running-executions).
 
 
 ### Aborting Executions
