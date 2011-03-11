@@ -772,8 +772,11 @@ class ScheduledExecutionController  {
             }
             params.notifications=nots
         }
+        if(!params.notifications){
+            params.notified='false'
+        }
         def todiscard=[]
-        if(params.notifications && scheduledExecution.notifications){
+        if(scheduledExecution.notifications){
             def todelete=[]
             scheduledExecution.notifications.each{Notification note->
                 todelete<<note
@@ -785,7 +788,7 @@ class ScheduledExecutionController  {
             }
             scheduledExecution.notifications=null
         }
-        if(params.notifications){
+        if(params.notifications && 'false'!=params.notified){
             //create notifications
             failed=_updateNotifications(params, scheduledExecution)
         }
@@ -993,7 +996,7 @@ class ScheduledExecutionController  {
         }
 
         def todiscard=[]
-        if(params.notifications && scheduledExecution.notifications){
+        if(scheduledExecution.notifications){
             def todelete=[]
             scheduledExecution.notifications.each{Notification note->
                 todelete<<note
