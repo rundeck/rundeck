@@ -196,27 +196,27 @@ class JobsXMLCodec {
             if(!map.notification || null==map.notification.onsuccess && null==map.notification.onfailure){
                 throw new JobXMLException("notification section had no onsuccess or onfailure element")
             }
-            if(null!=map.notification.onsuccess){
+            ['onsuccess','onfailure'].each{trigger->
+                if(null!=map.notification[trigger]){
 
-                if(!map.notification.onsuccess || null==map.notification.onsuccess.email ){
-                    throw new JobXMLException("notification 'onsuccess' element had missing 'email' element")
+                    if(!map.notification[trigger] || null==map.notification[trigger].email && null == map.notification[trigger].webhook){
+                        throw new JobXMLException("notification '${trigger}' element had missing 'email' or 'webhook' element")
+                    }
+                    if(null!=map.notification[trigger].email && (!map.notification[trigger].email || !map.notification[trigger].email.recipients)){
+                        throw new JobXMLException("${trigger} email had blank or missing 'recipients' attribute")
+                    }
+                    if(null !=map.notification[trigger].webhook && (!map.notification[trigger].webhook || !map.notification[trigger].webhook.urls)){
+                        throw new JobXMLException("${trigger} webhook had blank or missing 'urls' attribute")
+                    }
+                    if(map.notification[trigger].email){
+                        map.notification[trigger].recipients=map.notification[trigger].email.remove('recipients')
+                        map.notification[trigger].remove('email')
+                    }
+                    if(map.notification[trigger].webhook){
+                        map.notification[trigger].urls = map.notification[trigger].webhook.remove('urls')
+                        map.notification[trigger].remove('webhook')
+                    }
                 }
-                if(!map.notification.onsuccess.email || !map.notification.onsuccess.email.recipients){
-                    throw new JobXMLException("onsuccess handler had blank or missing 'recipients' attribute")
-                }
-                map.notification.onsuccess.recipients=map.notification.onsuccess.email.remove('recipients')
-                map.notification.onsuccess.remove('email')
-            }
-            if(null!=map.notification.onfailure){
-
-                if(!map.notification.onfailure || null==map.notification.onfailure.email ){
-                    throw new JobXMLException("notification 'onfailure' element had missing 'email' element")
-                }
-                if(!map.notification.onfailure.email || !map.notification.onfailure.email.recipients){
-                    throw new JobXMLException("onfailure handler had blank or missing 'recipients' attribute")
-                }
-                map.notification.onfailure.recipients=map.notification.onfailure.email.remove('recipients')
-                map.notification.onfailure.remove('email')
             }
         }
         return map
@@ -308,11 +308,15 @@ class JobsXMLCodec {
             }
         }
         if(map.notification){
-            if(map.notification.onsuccess?.recipients){
-                map.notification.onsuccess=[email:BuilderUtil.toAttrMap('recipients',map.notification.onsuccess.remove('recipients'))]
-            }
-            if(map.notification.onfailure?.recipients){
-                map.notification.onfailure=[email:BuilderUtil.toAttrMap('recipients',map.notification.onfailure.remove('recipients'))]
+            ['onsuccess','onfailure'].each{trigger->
+                if(map.notification[trigger]){
+                    if(map.notification[trigger]?.recipients){
+                        map.notification[trigger].email=BuilderUtil.toAttrMap('recipients',map.notification[trigger].remove('recipients'))
+                    }
+                    if(map.notification[trigger]?.urls){
+                        map.notification[trigger].webhook=BuilderUtil.toAttrMap('urls',map.notification[trigger].remove('urls'))
+                    }
+                }
             }
         }
         return map

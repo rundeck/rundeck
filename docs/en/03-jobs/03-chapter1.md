@@ -276,6 +276,24 @@ will be displayed when the Job is listed:
 
 ![Scheduled job icon](figures/fig0308.png)
 
+## Job Notifications
+
+You can configure notifications to occur when a Job Execution finishes with either success or failure.
+
+If you want to receive notifications, click Yes under "Send Notification?".
+
+![Notification form](figures/fig0322.png)
+
+You can enable notifications for either Success or Failure, and either notification by email, or by webhooks.  Click the checkbox next to the type of notification to enable.
+
+![Notifications enabled](figures/fig0323.png)
+
+Enter either comma-separated email addresses for email notification, or comma-separated URLs for webhook notification.
+
+When the Job finishes executing, all "success" notifications will be triggered if the Job is successful.  Otherwise, all "failure" notifications will be triggered if the Job fails or is cancelled.
+
+* For more information about the Webhook mechanism used, see the chapter [Integration - Webhooks](RunDeck-Guide.html#webhooks).
+
 ## Job history
 
 In the Jobs page, you can see the outcome of previous executions of

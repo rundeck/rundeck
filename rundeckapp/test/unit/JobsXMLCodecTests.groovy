@@ -1637,7 +1637,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             def jobs = JobsXMLCodec.decode(xml1)
             fail "parsing should have failed"
         } catch (Exception e) {
-            assertEquals ("notification 'onsuccess' element had missing 'email' element",e.message)
+            assertEquals ("notification 'onsuccess' element had missing 'email' or 'webhook' element",e.message)
         }
         //missing email attribute
         def xml2 = """<joblist>
@@ -1667,7 +1667,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             def jobs = JobsXMLCodec.decode(xml2)
             fail "parsing should have failed"
         } catch (Exception e) {
-            assertEquals ("onsuccess handler had blank or missing 'recipients' attribute",e.message)
+            assertEquals ("onsuccess email had blank or missing 'recipients' attribute",e.message)
         }
         //onfailure and onsuccess notification
         def xml3 = """<joblist>
@@ -1698,7 +1698,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             def jobs = JobsXMLCodec.decode(xml3)
             fail "parsing should have failed"
         } catch (Exception e) {
-            assertEquals ("onsuccess handler had blank or missing 'recipients' attribute",e.message)
+            assertEquals ("onsuccess email had blank or missing 'recipients' attribute",e.message)
         }
 
 
@@ -1730,7 +1730,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             def jobs = JobsXMLCodec.decode(xml4)
             fail "parsing should have failed"
         } catch (Exception e) {
-            assertEquals ("notification 'onfailure' element had missing 'email' element",e.message)
+            assertEquals ("notification 'onfailure' element had missing 'email' or 'webhook' element",e.message)
         }
         //missing email attribute
         def xml5 = """<joblist>
@@ -1760,7 +1760,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             def jobs = JobsXMLCodec.decode(xml5)
             fail "parsing should have failed"
         } catch (Exception e) {
-            assertEquals ("onfailure handler had blank or missing 'recipients' attribute",e.message)
+            assertEquals ("onfailure email had blank or missing 'recipients' attribute",e.message)
         }
         //onfailure and onsuccess notification
         def xml6 = """<joblist>
@@ -1791,7 +1791,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             def jobs = JobsXMLCodec.decode(xml6)
             fail "parsing should have failed"
         } catch (Exception e) {
-            assertEquals ("onfailure handler had blank or missing 'recipients' attribute",e.message)
+            assertEquals ("onfailure email had blank or missing 'recipients' attribute",e.message)
         }
     }
 
@@ -3031,5 +3031,83 @@ class JobsXMLCodecTests extends GroovyTestCase {
                assertEquals "incorrect notifications onsuccess email size","z@example.com,y@example.com",doc.job[0].notification[0].onsuccess[0].email[0]['@recipients'].text()
 
 
+    }
+    void testEncodeNotificationUrl(){
+
+        def XmlSlurper parser = new XmlSlurper()
+
+
+        def jobs1 = [
+            new ScheduledExecution(
+                jobName: 'test job 1',
+                description: 'test descrip',
+                loglevel: 'INFO',
+                project: 'test1',
+
+
+                workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                    jobName: 'a Job',
+                    jobGroup: '/some/path',
+                )]
+                ),
+                nodeThreadcount: 1,
+                nodeKeepgoing: true,
+                notifications: [
+                    new Notification(eventTrigger: 'onsuccess', type: 'url', content: 'http://example.com'),
+                    new Notification(eventTrigger: 'onfailure', type: 'url', content: 'http://2.example.com'),
+                ]
+            )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "incorrect notifications onsuccess webhook size", 1, doc.job[0].notification[0].onsuccess[0].webhook.size()
+        assertEquals "incorrect notifications onsuccess webhook/@urls", "http://example.com", doc.job[0].notification[0].onsuccess[0].webhook[0]['@urls'].text()
+        assertEquals "incorrect notifications onfailure webhook size", 1, doc.job[0].notification[0].onfailure[0].webhook.size()
+        assertEquals "incorrect notifications onfailure webhook/@urls value", "http://2.example.com", doc.job[0].notification[0].onfailure[0].webhook[0]['@urls'].text()
+
+
+        def jobs2 = [
+            new ScheduledExecution(
+                jobName: 'test job 1',
+                description: 'test descrip',
+                loglevel: 'INFO',
+                project: 'test1',
+
+
+                workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                    jobName: 'a Job',
+                    jobGroup: '/some/path',
+                )]
+                ),
+                nodeThreadcount: 1,
+                nodeKeepgoing: true,
+                notifications: [
+                    new Notification(eventTrigger: 'onsuccess', type: 'url', content: 'http://example.com'),
+                    new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'test@example.com'),
+                    new Notification(eventTrigger: 'onfailure', type: 'url', content: 'http://2.example.com'),
+                    new Notification(eventTrigger: 'onfailure', type: 'email', content: 'test2@example.com'),
+                ]
+            )
+        ]
+
+        xmlstr = JobsXMLCodec.encode(jobs2)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "incorrect notifications onsuccess webhook size", 1, doc.job[0].notification[0].onsuccess[0].webhook.size()
+        assertEquals "incorrect notifications onsuccess webhook/@urls", "http://example.com", doc.job[0].notification[0].onsuccess[0].webhook[0]['@urls'].text()
+        assertEquals "incorrect notifications onfailure webhook size", 1, doc.job[0].notification[0].onfailure[0].webhook.size()
+        assertEquals "incorrect notifications onfailure webhook/@urls value", "http://2.example.com", doc.job[0].notification[0].onfailure[0].webhook[0]['@urls'].text()
+        assertEquals "incorrect notifications onsuccess email size", 1, doc.job[0].notification[0].onsuccess[0].email.size()
+        assertEquals "incorrect notifications onsuccess email size", "test@example.com", doc.job[0].notification[0].onsuccess[0].email[0]['@recipients'].text()
+        assertEquals "incorrect notifications onsuccess email size", 1, doc.job[0].notification[0].onfailure[0].email.size()
+        assertEquals "incorrect notifications onsuccess email size", "test2@example.com", doc.job[0].notification[0].onfailure[0].email[0]['@recipients'].text()
     }
 }

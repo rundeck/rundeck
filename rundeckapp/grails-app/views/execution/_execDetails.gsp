@@ -153,9 +153,17 @@
     </g:if>
     <g:if test="${execdata instanceof ScheduledExecution && execdata.notifications}">
         <tr>
-        <g:each var="notify" in="${execdata.notifications}">
+        <g:each var="notify" in="${execdata.notifications}" status="i">
                 <td class="displabel">Notify <g:message code="notification.event.${notify.eventTrigger}"/>:</td>
-                <td>${notify.content.encodeAsHTML()}</td>
+                <td>
+                    <g:if test="${notify.type=='url'}">
+                        <g:expander key="webhook${rkey}_${i}">Webhook</g:expander>
+                        <span class="webhooklink note" id="webhook${rkey}_${i}" style="display:none;" title="URLs: ${notify.content.encodeAsHTML()}">${notify.content.encodeAsHTML()}</span>
+                    </g:if>
+                    <g:else>
+                        ${notify.content.encodeAsHTML()}
+                    </g:else>
+                </td>
 
         </g:each>
         </tr>
