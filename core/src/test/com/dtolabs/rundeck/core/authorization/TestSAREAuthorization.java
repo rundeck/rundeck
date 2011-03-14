@@ -172,6 +172,11 @@ public class TestSAREAuthorization extends TestCase {
                 Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
         assertTrue("Action not granted authorization.", decision.isAuthorized());
         
+        resource = declareScript("Script3", "/wldcrd");
+        decision = authorization.evaluate(resource, subject, "action_list_not_in_list_and_shouldn't_be", null);
+        assertEquals("Decision for successful authoraztion for action: action_list_not_in_list_and_shouldn't_be does not match, but should.",
+                Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
+        assertTrue("Action not granted authorization.", decision.isAuthorized());
         
         
     }

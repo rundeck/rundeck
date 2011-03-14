@@ -30,6 +30,9 @@ rules:
     actions: pattern_match
   /listAction/.*:
     actions: [action_list_1,action_list_2]
+  
+  /wldcrd/.*:
+    actions: '*'
 
 by:
     username: 'yml_usr_1'

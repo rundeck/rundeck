@@ -143,6 +143,9 @@ public class PoliciesYaml implements PolicyCollection {
                             
                             if(actionsKey instanceof String) {
                                 String actions = (String) actionsKey;
+                                if("*".equals(actions)) {
+                                    return new ContextDecision(Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, true, evaluations);
+                                }
                                 if(actions.contains(action)) {
                                     return new ContextDecision(Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, true, evaluations);
                                 }
