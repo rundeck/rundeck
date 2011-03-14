@@ -100,7 +100,7 @@ public class RunServer {
     }
 
     private void warnNoSSLConfig() {
-        System.err.println("WARNING: HTTPS is not enabled, specify -Drundeck.ssl.config="+basedir+"/server/config/ssl.properties to enable.");
+        System.err.println("WARNING: HTTPS is not enabled, specify -Drundeck.ssl.config="+(basedir.getAbsolutePath().replaceAll("\\\\","/"))+"/server/config/ssl.properties to enable.");
     }
 
     private boolean isSSLEnabled() {

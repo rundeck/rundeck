@@ -8,7 +8,6 @@
 # ----------------------------------------------------------------
 
 java.home = @user.java_home@
-file.separator = @file.separator@
 rdeck.base =@rdeck.base@
 rdeck.home =@rdeck.home@
 user.home =@user.home@
@@ -85,17 +84,12 @@ framework.rdeck.dir = ${rdeck.home}
 #
 framework.rdeck.base = @rdeck.base@
 
-#
-# Base directory of the installed functional modules
-#
-framework.modules.dir = @rdeck.base@@file.separator@modules
-
 
 #
 # project spaces containing resources
 #
-framework.projects.dir= @rdeck.base@@file.separator@projects
-framework.depots.dir= @rdeck.base@@file.separator@projects
+framework.projects.dir= @rdeck.base@/projects
+framework.depots.dir= @rdeck.base@/projects
 
 #
 # directory containing instance based property files
@@ -110,12 +104,12 @@ framework.var.dir= @framework.var.dir@
 #
 # Framework tmp dir
 #
-framework.tmp.dir= ${framework.var.dir}@file.separator@tmp
+framework.tmp.dir= ${framework.var.dir}/tmp
 
 #
 # Base directory where logs are kept
 #
-framework.logs.dir=${framework.var.dir}@file.separator@logs
+framework.logs.dir=${framework.var.dir}/logs
 
 #
 # Date/time stamp format used in logs. See java.text.SimpleDateFormat
