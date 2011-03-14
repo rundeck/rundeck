@@ -234,7 +234,7 @@ public class ExpandRunServer {
             System.err.println( "Parsing failed.  Reason: " + e.getMessage() );
             return;
         }
-        debug = cl.hasOption('d');
+        debug = debug || cl.hasOption('d');
         DEBUG("Debugging is turned on.");
         
         this.basedir = cl.getOptionValue("basedir", new File(thisJar.getAbsolutePath()).getParentFile().getAbsolutePath());  // TODO: is the first getAbsolutePath required?
@@ -248,12 +248,10 @@ public class ExpandRunServer {
         
         initArgs();
         this.coreJarName = "rundeck-core-" + versionString + ".jar";
-//        serverdir = new File(basedir + "/server");
 
         if (null != basedir) {
-            System.setProperty("rdeck.base", basedir);
+            System.setProperty("rdeck.base", forwardSlashPath(basedir));
         }
-//        configDir = new File(serverdir, "config");
 
         final Properties defaults = loadDefaults(CONFIG_DEFAULTS_PROPERTIES);
         Properties configuration = new Properties();
@@ -275,7 +273,7 @@ public class ExpandRunServer {
             
             configuration = createConfiguration(defaults);
 
-            configuration.put("realm.properties.location", configDir.getAbsolutePath() + "/realm.properties");
+            configuration.put("realm.properties.location", forwardSlashPath(configDir.getAbsolutePath()) + "/realm.properties");
 
             DEBUG("Runtime configuration properties: " + configuration);
      
@@ -284,8 +282,9 @@ public class ExpandRunServer {
             extractDocs(new File(basedir, "docs"));
         } else {
             configuration.putAll(defaults);
-            configuration.put(SERVER_DATASTORE_PATH, cl.getOptionValue("datadir", serverdir.getAbsolutePath()));
-            configuration.put(RUNDECK_SERVER_CONFIG_DIR, this.configDir.getAbsoluteFile());
+            configuration.put(SERVER_DATASTORE_PATH, forwardSlashPath(cl.getOptionValue("datadir",
+                serverdir.getAbsolutePath())));
+            configuration.put(RUNDECK_SERVER_CONFIG_DIR, forwardSlashPath(this.configDir.getAbsolutePath()));
         }
         
         if(cl.hasOption('p')) {
@@ -512,17 +511,23 @@ public class ExpandRunServer {
         if (null != localhostname) {
             properties.put("server.hostname", localhostname);
         }
-        properties.put("rdeck.base", basedir);
-        properties.put(SERVER_DATASTORE_PATH, serverdir + "/data/grailsdb");
-        properties.put("rundeck.log.dir", serverdir + "/logs");
-        properties.put("rundeck.launcher.jar.location", thisJar.getAbsolutePath());
+        properties.put("rdeck.base", forwardSlashPath(basedir));
+        properties.put(SERVER_DATASTORE_PATH, forwardSlashPath(serverdir.getAbsolutePath()) + "/data/grailsdb");
+        properties.put("rundeck.log.dir", forwardSlashPath(serverdir.getAbsolutePath()) + "/logs");
+        properties.put("rundeck.launcher.jar.location", forwardSlashPath(thisJar.getAbsolutePath()));
         for (final String configProperty : configProperties) {
             if (null != System.getProperty(configProperty)) {
-                properties.put(configProperty, System.getProperty(configProperty));
+                properties.put(configProperty, forwardSlashPath(System.getProperty(configProperty)));
             }
         }
 
         return properties;
+    }
+    public static String forwardSlashPath(String input) {
+        if (System.getProperties().get("file.separator").equals("\\")) {
+            return input.replaceAll("\\\\", "/");
+        }
+        return input;
     }
 
     private String getHostname() {
