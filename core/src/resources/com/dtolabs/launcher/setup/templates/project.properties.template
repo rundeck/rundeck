@@ -6,16 +6,16 @@
 #
 # The base directory for this project's instances
 #
-project.dir = @rdeck.base@@file.separator@projects@file.separator@${project.name}
+project.dir = @rdeck.base@/projects/${project.name}
 #
 # The base directory of project specific configuration files
 #
-project.etc.dir = @rdeck.base@@file.separator@projects@file.separator@${project.name}@file.separator@etc
+project.etc.dir = @rdeck.base@/projects/${project.name}/etc
 
 #
 # The resources registration file
 #
-project.resources.file = @rdeck.base@@file.separator@projects@file.separator@${project.name}@file.separator@etc@file.separator@resources.xml
+project.resources.file = @rdeck.base@/projects/${project.name}/etc/resources.xml
 
 #
 # The project description
