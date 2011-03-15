@@ -183,21 +183,22 @@ a verbose listing that includes more detail:
     $ dispatch -p examples -v	
      strongbad:
         hostname: strongbad
-        os-arch: x86_64
-        os-family: unix
-        os-name: Mac OS X
-        os-version: 10.6.2
-        tags: []
+        osArch: x86_64
+        osFamily: unix
+        osName: Mac OS X
+        osVersion: 10.6.2
+        tags: ''
        ---- Attributes ----
 
 Node resources have standard properties, such as "hostname" but these
 can be extended via attributes. One of the more useful properties
 is the "tags" property. A *tag* is a text label that you give to the
 Node, perhaps denoting a classification, a role the node plays in the
-environment, or group membership. 
+environment, or group membership. Multiple tags can be defined for
+a given node. 
 
 The output above shows the "strongbad" node currently has an empty
-tags property: `tags: []`.
+tags property: `tags: ''`. 
 
 It is important to start thinking about node tagging for the nodes you manage
 because you will use them later when specifying filtering
@@ -238,6 +239,10 @@ You'll notice the root node is called `project` and there is a single
 node descriptor for "strongbad". The `node` tag has a number of
 required and optional attributes. Additional node descriptors can be
 added by defining new `node` elements inside the `project` tag. 
+
+The strongbad host does not have any tags defined for it. One or
+more tags can be defined. Use comma for the delimiter (e.g, `tags="tag1,tag2"`).
+
 Here's an example of a node called "homestar" with just the required
 attributes: 
 
