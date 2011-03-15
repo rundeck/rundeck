@@ -1,7 +1,7 @@
 description: Admin Access ACL
 
 rules: 
-  ^$:
+  .*:
       actions: '*'
   
 by:
