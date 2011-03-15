@@ -57,6 +57,9 @@ var ExecutionOptions = {
         div.addClassName('optionvaluemulti');
         div.setStyle({'opacity':'0'});
 
+        var divwrap = new Element('div');
+        divwrap.addClassName('varinput');
+
         var inpu = new Element('input');
         inpu.setAttribute("type", "checkbox");
         inpu.setAttribute("name", "extra.option." + name);
@@ -75,8 +78,9 @@ var ExecutionOptions = {
         Event.observe(inpu2, 'change', ExecutionOptions.multiVarInputChangeHandler.curry(inpu));
         Event.observe(inpu2, 'keydown', ExecutionOptions.multiVarInputKeydownHandler.curry(inpu));
 
-        $(div).appendChild(inpu);
-        $(div).appendChild(inpu2);
+        $(divwrap).appendChild(inpu);
+        $(divwrap).appendChild(inpu2);
+        $(div).appendChild(divwrap);
         $(inputarea).insert({top:div});
         $$('#' + name + '_state span.reqwarning').each(Element.hide);
         Try.these(

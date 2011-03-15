@@ -312,14 +312,29 @@ h1 {
 .optname.required{
     font-weight:bold;
 }
-.optionvaluemulti{
-    margin:4px 0;
+.optionvaluemulti label{
+    padding: 2px 4px;
+}
+.optionvaluemulti label{
+    display:block;
+}
+.optionvaluemulti label:hover{
+    background: #e3edfa;
+}
+
+.optionvaluemulti span.action {
+    display:block;
+    margin:4px;
+}
+.optionvaluemulti div.varinput {
+    margin:4px;
 }
 .optionmultiarea{
     overflow-y: auto;
-    max-height: 8em;
+    max-height: 11em;
     border: 1px solid #ddd;
-    padding: 4px;
+    padding: 0;
+    min-width: 200px;
 }
 .enforceSet{
     text-align:center;

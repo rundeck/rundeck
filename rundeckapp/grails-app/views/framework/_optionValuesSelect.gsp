@@ -66,7 +66,7 @@
                     <g:if test="${!optionSelect.enforced}">
                         <%-- variable input text fields --%>
                         <div class="optionvaluemulti ">
-                            <span class="action button obs_addvar" style="margin-left:20px" onclick="ExecutionOptions.addMultivarValue('${optName.encodeAsJavaScript()}','${rkey}varinput');">
+                            <span class="action button obs_addvar" onclick="ExecutionOptions.addMultivarValue('${optName.encodeAsJavaScript()}','${rkey}varinput');">
                                 New Value&hellip;
                             </span>
                         </div>
