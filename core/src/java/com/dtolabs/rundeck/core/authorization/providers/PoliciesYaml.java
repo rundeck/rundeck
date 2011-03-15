@@ -103,7 +103,7 @@ public class PoliciesYaml implements PolicyCollection {
                     String resource = defineResource(resourceMap);
                     List<ContextEvaluation> evaluations = new ArrayList<ContextEvaluation>();
                     Object descriptionValue = rawInput.get("description");
-                    if( descriptionValue == null || !(descriptionValue instanceof String)) ) {
+                    if( descriptionValue == null || !(descriptionValue instanceof String)) {
                         evaluations.add(new ContextEvaluation(Code.REJECTED_NO_DESCRIPTION_PROVIDED, "Policy is missing a description."));
                         return new ContextDecision(Code.REJECTED_NO_DESCRIPTION_PROVIDED, false, evaluations);
                     }
