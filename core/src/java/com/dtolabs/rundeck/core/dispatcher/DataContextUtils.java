@@ -349,7 +349,7 @@ public class DataContextUtils {
      * @return env var name
      */
     public static String generateEnvVarName(final String key) {
-        return ENV_VAR_PREFIX + key.toUpperCase().replaceAll("\\.", "_");
+        return ENV_VAR_PREFIX + key.toUpperCase().replaceAll("[^a-zA-Z0-9_]", "_");
     }
 
 
