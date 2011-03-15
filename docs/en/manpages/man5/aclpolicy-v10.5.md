@@ -1,6 +1,6 @@
-% ACLPOLICY(5) RunDeck User Manuals | Version 1.0
+% ACLPOLICY(5) RunDeck User Manuals | Version 1.2
 % Noah Campbell
-% November 30, 2010
+% March 11, 2011
 
 # Overview
 
@@ -15,87 +15,108 @@ reduces the complexity of each file.  The default path is
 * RPM install: `/etc/rundeck`
 * Launcher install: `$RDECK_BASE/etc`
 
-Policy files are parsed using XPath that is fairly liberal in what it
-excepts.  So creating arbitrary blocks for documentation or
-organizational purposes is gracefully parsed.  The resulting file must
-be a valid xml file.
+Policy files are parsed using YAML and while the structure is ridgid, 
+additional information can be added and safely ignored.  So creating arbitrary 
+elements for documentation or organizational purposes is gracefully parsed.  
+The resulting file must be a valid yaml file.
+
+In addition, existing XML formats are still supported to provide a transition.  
+A warning is given only once for each file that is detected to be xml in the
+log file.
 
 ## The aclpolicy markup by example
 
-Default policy file contains this content:
+An example policy document.
 
-    <policies>
-      <policy description="Administrative group that has access to execute all jobs and modules in any project.">
-        <context project="*">
-          <command group="*" job="*" actions="*"/>
-          <command name="*" module="*" actions="*"/>
-        </context>
-        <by>
-          <group name="admin"/>
-        </by>
-      </policy>
-    </policies>
+    description: Yaml Policy 1
+    rules:
+      ^$:
+        actions: 'foobar'
+    
+      /yml:
+        actions: 'exact_match'
+    
+      /yml.*: 
+        actions: pattern_match
+        
+      /listAction/.*:
+        actions: [action_list_1,action_list_2]
 
-The top level element of every policy file is `<policies>`.  This is a
-container elements that can contain one or more `<policy>` elements.
-The `<policy>` element contains a single attribute, description that
-used in the audit log.  It's recommended that this description be
-short and descriptive.
-    
-## `<policy>` Element    
-    
-For each `<policy` there is a `<by>` element.  The by element helps
-narrow the search for policies based on the credentials of the subject
-that authenticated to RunDeck.  In the example above, the `<by>`
-element comes after a `<context>` element.  This is by convention
-only.  The `<by>` element needs to be a child to the `<policy>`.
+    by:
+        username: 'yml_usr_1'
+        group: 'yml_group_1'
 
+An .aclpolicy supports multiple policy definitions in the form of YAML 
+documents usign the `---` separator.  There are three elements that make a 
+policy definition: `decription`, `rules`, `by`.  
+
+It's recommended that this description be short and descriptive as it appears
+in the log output.
     
-## `<by>` Element
+## `by` Element
     
-Within a `<by>` can be any number of `<user>` and `<group>` elements.
-These elements must all match in order for this policy to be consider
-for further evaluation.  `<user>` elements are evaluated first as they
-are typically more restrictive.  `<group>` elements are evaluated
-second.  Order is not important within this element.
+Within a `by` can be any number of `username` and `group` elements.
+A single match will result in further evaluation of the policy.  
+`username` elements are evaluated first as they are typically more restrictive.  
+`group` elements are evaluated second.  Ordering is not important within 
+this element.
 
     
-## `<command>` Element
+## `rules` Element
 
-The `<command>` element will match modules or jobs.  For example:
-`<command group="*" job="*" actions="*"/>` says for any job in any
-group with any action, grant access to the Subject in the `<by>`
-clauses.  the group, attribute and action elements can use regular
-expressions (java regex).  The exception is the * which is shorthand
-for '^.*$'.
+The `rules` element contains a map of resource paths to `actions`.  The key in
+each rule, for example:
 
-Known actions are:
+    /path:
+       actions: 'an_action'
 
-* admin
-* user_admin
-* workflow_read
-* workflow_create
-* workflow_update
-* workflow_delete
-* workflow_kill
-* workflow_run
-* events_read
-* events_create
-* events_update
-* events_delete
-* resources_read
-* resources_create
-* resources_update
-* resources_delete
+`/path` is evaluated against the resource being evaluated.  See below for a 
+complete list of paths that can have ACLs applied.  The path is evaluated
+as a java regex expression.  If a match is successful, then a final check
+against `actions` element is performed.
+
+## `actions` element
+
+The actions element can be either a single value, or a list of values.  A 
+single value takes the form:
+
+    actions: 'an_action'
+    
+And a list takes the form:
+
+    actions: ['an_action1','an_action2']
+
+Note that the single tick marks are optional according to the yaml 
+specification.
+
+Known path/actions combinations are:
+
+-------------------------------------------------------------------------------
+Group     Job               Actions
+--------  ----------------- ----------------------------------------------
+adhoc      Temporary_Job    workflow_read
+
+adhoc       adhoc           workflow_read, workflow_kill, workflow_read
+
+ui          adhoc_run       workflow_run
+
+ui          create          workflow_create, workflow_run
+
+ui          run_and_forget  workflow_run
+
+*           *               workflow_read, workflow_create, workflow_update, 
+                            workflow_delete, workflow_kill, workflow_run, 
+                            events_read, events_create, events_update, 
+                            events_delete, resources_read, resources_create, 
+                            resources_update, resources_delete
+
+-------------------------------------------------------------------------------                           
 
 Possible values are limitless so it requires an understanding of the
 job definition you're trying to run.  The best way to understand what
 the actions are is to look at the rundeck-audit.log.
 This will show all the options as they're being evaluated.
 
-## `<context>` Element
-
-...is currently ignored.
 
 The RunDeck source code and all documentation may be downloaded from
 <https://github.com/dtolabs/rundeck/>.

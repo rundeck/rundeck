@@ -226,6 +226,7 @@ the remote hosts.
   ssh commands to the client machines. 
 * SSH is assumed to be installed and configured appropriately to allow
   this access.   
+* No passphrase should be set.
 * SSH should not prompt for a password. There are many resources
 available on how to configure ssh to use public key authentication
 instead of passwords such as:
@@ -235,8 +236,8 @@ or
 
 ### SSH key generation
 
-* By default, the RunDeck installation is configured to use RSA _not_ DSA
-  type keys (however, it can be configured to use DSA, if required).
+* The RunDeck installation can be configured to use RSA _or_ DSA
+  type keys.
   
 Here's an example of SSH RSA key generation on a Linux system:
 
@@ -271,7 +272,7 @@ Follow the steps given below to enable ssh to remote machines.
 
 The ssh public key should be copied to the `authorized_keys` file of
 the remote machine. The public key will be available in
-`~/etc/id_rsa.pub` file.
+`~/.ssh/id_rsa.pub` file.
   
 The `authorized_keys` file should be created in the `.ssh` directory of
 the remote machine.

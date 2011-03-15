@@ -434,10 +434,10 @@ public class Setup implements CLIToolLogger {
                 homeDir = baseDir;
             }
 
-            System.out.println("Using basedir: " + baseDir);
-            properties.setProperty("rdeck.base", baseDir);
-            System.out.println("Using homedir: " + homeDir);
-            properties.setProperty("rdeck.home", homeDir);
+            System.out.println("Using basedir: " + Preferences.forwardSlashPath(baseDir));
+            properties.setProperty("rdeck.base", Preferences.forwardSlashPath(baseDir));
+            System.out.println("Using homedir: " + Preferences.forwardSlashPath(homeDir));
+            properties.setProperty("rdeck.home", Preferences.forwardSlashPath(homeDir));
             properties.setProperty("framework.node.name", nodeArg);
             properties.setProperty("framework.node.hostname", nodeHostnameArg);
             if (null != serverHostname) {

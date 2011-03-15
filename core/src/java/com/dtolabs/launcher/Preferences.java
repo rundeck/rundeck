@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.utils.PropertyUtil;
 
 import java.io.*;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Properties;
 
 
@@ -95,29 +96,35 @@ public class Preferences {
         if(null==jhome) {
             jhome = JAVA_HOME;
         }
-        defaultProperties.setProperty("user.java_home", jhome);
-        defaultProperties.setProperty("java.home", jhome);
-        defaultProperties.setProperty("rdeck.home", homedir);
-        defaultProperties.setProperty("rdeck.base", base);
+        defaultProperties.setProperty("user.java_home", forwardSlashPath(jhome));
+        defaultProperties.setProperty("java.home", forwardSlashPath(jhome));
+        defaultProperties.setProperty("rdeck.home", forwardSlashPath(homedir));
+        defaultProperties.setProperty("rdeck.base", forwardSlashPath(base));
 
         //
         // additional properties needed for successful rdeck setup, based on above
         // bootstrapping properties
         //
-        defaultProperties.setProperty("framework.projects.dir", Constants.getFrameworkDepotsDir(base));
-        defaultProperties.setProperty("framework.rdeck.base", base);
+        defaultProperties.setProperty("framework.projects.dir", forwardSlashPath(Constants.getFrameworkProjectsDir(
+            base)));
+        defaultProperties.setProperty("framework.rdeck.base", forwardSlashPath(base));
         final String configDir = Constants.getFrameworkConfigDir(base);
-        defaultProperties.setProperty("framework.etc.dir", configDir);
-        defaultProperties.setProperty("framework.var.dir", Constants.getBaseVar(base));
-        defaultProperties.setProperty("framework.logs.dir", Constants.getFrameworkLogsDir(base));
+        defaultProperties.setProperty("framework.etc.dir", forwardSlashPath(configDir));
+        defaultProperties.setProperty("framework.var.dir", forwardSlashPath(Constants.getBaseVar(base)));
+        defaultProperties.setProperty("framework.logs.dir", forwardSlashPath(Constants.getFrameworkLogsDir(base)));
 
         Enumeration propEnum = systemProperties.propertyNames();
+        //list of path properties to convert slashes on
+        HashSet<String> paths=new HashSet<String>();
+        paths.add("user.home");
         while (propEnum.hasMoreElements()) {
             String propName = (String) propEnum.nextElement();
             String propType = propName.split("\\.")[0];
-            //if (Arrays.binarySearch(PREFS_ALLOWED_PROP_TYPES, propType) > -1) {
-                defaultProperties.setProperty(propName, systemProperties.getProperty(propName));
-            //}
+            String value = systemProperties.getProperty(propName);
+            if(paths.contains(propName)) {
+                value = forwardSlashPath(value);
+            }
+            defaultProperties.setProperty(propName, value);
         }
 
         // load the default properties
@@ -265,4 +272,10 @@ public class Preferences {
 
     }
 
+    public static String forwardSlashPath(String input) {
+        if (System.getProperties().get("file.separator").equals("\\")) {
+            return input.replaceAll("\\\\", "/");
+        }
+        return input;
+    }
 }
