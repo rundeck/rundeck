@@ -71,13 +71,7 @@ public class PoliciesYaml implements PolicyCollection {
     }
     
     public static final class YamlPolicy implements Policy {
-        
-        private final static Set<String> excludes = new HashSet<String>();
-        static {
-            excludes.add("id");
-            excludes.add("description");
-            excludes.add("by");
-        }
+
         public Map rawInput;
         
         private Set<String> usernames = new HashSet<String>();
@@ -108,9 +102,18 @@ public class PoliciesYaml implements PolicyCollection {
                 public ContextDecision includes(Map<String, String> resourceMap, String action) {
                     String resource = defineResource(resourceMap);
                     List<ContextEvaluation> evaluations = new ArrayList<ContextEvaluation>();
+                    Object descriptionValue = rawInput.get("description");
+                    if( descriptionValue == null || !(descriptionValue instanceof String)) ) {
+                        evaluations.add(new ContextEvaluation(Code.REJECTED_NO_DESCRIPTION_PROVIDED, "Policy is missing a description."));
+                        return new ContextDecision(Code.REJECTED_NO_DESCRIPTION_PROVIDED, false, evaluations);
+                    }
+                    
+                    String description = (String)descriptionValue;
+                    
                     Object rulesValue = rawInput.get("rules");
                     if( !(rulesValue instanceof Map) ) {
-                        return new ContextDecision(Code.REJECTED_NO_RULES_DECLARED, false);
+                        evaluations.add(new ContextEvaluation(Code.REJECTED_NO_RULES_DECLARED, "No rules declared on policy"));
+                        return new ContextDecision(Code.REJECTED_NO_RULES_DECLARED, false, evaluations);
                     }
                     Map rules = (Map)rulesValue;
                     
@@ -143,12 +146,14 @@ public class PoliciesYaml implements PolicyCollection {
                             
                             if(actionsKey instanceof String) {
                                 String actions = (String) actionsKey;
-                                if(actions.contains(action)) {
+                                if("*".equals(actions) || actions.contains(action)) {
+                                    evaluations.add(new ContextEvaluation(Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, description + ": rule: " + rule + " action: " + actions));
                                     return new ContextDecision(Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, true, evaluations);
                                 }
                             } else if(actionsKey instanceof List) {
                                 List actions = (List) actionsKey;
                                 if(actions.contains(action)) {
+                                    evaluations.add(new ContextEvaluation(Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, description + ": rule: " + rule + " action: " + actions));
                                     return new ContextDecision(Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, true, evaluations);
                                 }
                             } else {
@@ -157,7 +162,6 @@ public class PoliciesYaml implements PolicyCollection {
                             }
                             
                             evaluations.add(new ContextEvaluation(Code.REJECTED_NO_ACTIONS_MATCHED, "No actions matched"));
-                            
                         }
                     }
                     return new ContextDecision(Code.REJECTED, false, evaluations);
