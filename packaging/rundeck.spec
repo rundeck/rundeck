@@ -8,6 +8,7 @@ requires(post): chkconfig
 requires(postun): chkconfig
 requires: java-1.6.0-openjdk
 requires: openssh
+requires: rundeck-config
 
 %description
 RunDeck, is no ordinary wooden deck. You can build a bon fire on this deck.
@@ -41,22 +42,6 @@ fi
 %attr(755, root, root) /etc/rc.d/init.d/rundeckd
 
 %dir /etc/rundeck
-
-# Client Configuration
-%config(noreplace) /etc/rundeck/framework.properties
-%config(noreplace) /etc/rundeck/admin.aclpolicy
-%config(noreplace) /etc/rundeck/log4j.properties
-%config(noreplace) /etc/rundeck/profile
-%config(noreplace) /etc/rundeck/project.properties
-
-# Server Configuration
-%config(noreplace) /etc/rundeck/jaas-loginmodule.conf
-%config(noreplace) /etc/rundeck/realm.properties
-%config(noreplace) /etc/rundeck/rundeck-config.properties
-
-# SSL Configuration
-%dir /etc/rundeck/ssl
-%config /etc/rundeck/ssl/ssl.properties
 
 %attr(6775, rundeck, rundeck) %dir /var/log/rundeck
 %dir /var/lib/rundeck
@@ -112,3 +97,28 @@ fi
 %attr(755, root, root) /usr/bin/rd-jobs
 %attr(755, root, root) /usr/bin/rd-project
 %attr(755, root, root) /usr/bin/rd-queue
+
+%package config
+summary: RunDeck configuration package
+group: System
+requires: rundeck
+
+%description config
+All configuration related artifacts are stored in this package.
+
+%files config
+# Client Configuration
+%config(noreplace) /etc/rundeck/framework.properties
+%config(noreplace) /etc/rundeck/admin.aclpolicy
+%config(noreplace) /etc/rundeck/log4j.properties
+%config(noreplace) /etc/rundeck/profile
+%config(noreplace) /etc/rundeck/project.properties
+
+# Server Configuration
+%config(noreplace) /etc/rundeck/jaas-loginmodule.conf
+%config(noreplace) /etc/rundeck/realm.properties
+%config(noreplace) /etc/rundeck/rundeck-config.properties
+
+# SSL Configuration
+%dir /etc/rundeck/ssl
+%config /etc/rundeck/ssl/ssl.properties
