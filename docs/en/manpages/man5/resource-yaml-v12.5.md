@@ -42,7 +42,9 @@ Required Entries:
 
 `hostname`
 
-:    Hostname of the node.  This can be any IP Address or hostname to address the node.
+:    Hostname of the node.  This can be any IP Address or hostname to address the node. 
+     Since hostname is used to make SSH connections, it is possible to overload the value
+     to include port number. (eg, hostname:port).
 
 `username`
 

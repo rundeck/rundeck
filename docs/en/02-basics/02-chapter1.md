@@ -252,7 +252,9 @@ attributes:
 
 The `hostname` and `username` values are used for the SSH connection
 while the `name` and `type` are used to define Node identity in the
-resource model.
+resource model. It is possible to overload the hostname value to include
+port information (eg, hostname="somehost:2022"). 
+This is useful if your run SSH on a different port. 
 	  
 Chances are you maintain information about your hosts within
 another tool, perhaps Chef, Puppet, Nagios, Amazon EC2, RightScale or
