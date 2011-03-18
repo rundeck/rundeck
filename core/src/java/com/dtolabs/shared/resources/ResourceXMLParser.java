@@ -24,10 +24,8 @@
 package com.dtolabs.shared.resources;
 
 import static com.dtolabs.shared.resources.ResourceXMLConstants.*;
-import org.dom4j.Document;
-import org.dom4j.DocumentException;
-import org.dom4j.Element;
-import org.dom4j.Node;
+
+import org.dom4j.*;
 import org.dom4j.io.SAXReader;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
@@ -62,8 +60,7 @@ public class ResourceXMLParser {
     private boolean validate;
     private File file;
     private ResourceXMLReceiver receiver;
-    public static final String DEFAULT_ENTITY_XPATH =
-        NODE_ENTITY_TAG + "|" + SETTING_ENTITY_TAG + "|" + PACKAGE_ENTITY_TAG + "|" + DEPLOYMENT_ENTITY_TAG;
+    public static final String DEFAULT_ENTITY_XPATH = NODE_ENTITY_TAG ;
     private String entityXpath = DEFAULT_ENTITY_XPATH;
 
     /**
@@ -86,7 +83,7 @@ public class ResourceXMLParser {
      */
     public void parse() throws ResourceXMLParserException, FileNotFoundException {
         final EntityResolver resolver = createEntityResolver();
-        final SAXReader reader = new SAXReader(validate);
+        final SAXReader reader = new SAXReader(false);
         reader.setEntityResolver(resolver);
 
         try {
@@ -117,7 +114,7 @@ public class ResourceXMLParser {
     public static EntityResolver createEntityResolver() {
         return new EntityResolver() {
             public InputSource resolveEntity(final String publicId, final String systemId) {
-                if (publicId.equals(DTD_PROJECT_DOCUMENT_1_0_EN)) {
+                if (publicId.equals(DTD_PROJECT_DOCUMENT_2_0_EN)) {
                     final InputStream in = ResourceXMLParser.class.getClassLoader().getResourceAsStream(
                         PROJECT_DTD_RESOURCE_PATH);
                     if (null != in) {
@@ -154,86 +151,12 @@ public class ResourceXMLParser {
      */
     private Entity parseEnt(final Node node, final EntitySet set) throws ResourceXMLParserException {
         final Entity ent = parseResourceRef(set, node);
-        if (ent.wasParsed) {
-            log4j.warn("Parsed duplicate resource definition (" + ent.getId() + "): " + reportNodeErrorLocation(node)
-                    +". file: "+file.getAbsolutePath());
-        }
         ent.setResourceType(node.getName());
         parseEntProperties(ent, node);
-        ent.wasParsed = true;
-        parseEntResources(ent, set, node);
-        if (DEPLOYMENT_ENTITY_TAG.equals(node.getName())) {
-            parseTransforms(ent, node);
-        }
+        parseEntSubAttributes(ent, node);
         return ent;
     }
 
-    /**
-     * Parse the transforms content for a deployment entity
-     *
-     * @param ent  the Entity object
-     * @param node the entity DOM node
-     *
-     * @throws ResourceXMLParserException if an error occurs
-     */
-    private void parseTransforms(final Entity ent, final Node node) throws ResourceXMLParserException {
-        final Node transforms = node.selectSingleNode(TRANSFORMS_GROUP_TAG);
-        if (null != transforms) {
-            final Node replnode = transforms.selectSingleNode("@" + COMMON_REPLACE);
-            if (null != replnode) {
-                ent.properties.put("transforms.replace", Boolean.valueOf(replnode.getStringValue()));
-            }
-            for (final Object o : transforms.selectNodes(TRANSFORM_TAG)) {
-                final Node n = (Node) o;
-                final Properties props = new Properties();
-                parseProperties(props, n, TRANSFORM_ATTRIBUTES);
-                ent.addTransform(props);
-
-            }
-        }
-    }
-
-    /**
-     * Go through the resources/referrers elements, parsing references and adding them to the entity
-     *
-     * @param ent  current entity
-     * @param set  entity set
-     * @param node current entity DOM node
-     *
-     * @throws ResourceXMLParserException if an error occurs
-     */
-    private void parseEntResources(final Entity ent, final EntitySet set, final Node node) throws
-        ResourceXMLParserException {
-        final Node resourcesnode = node.selectSingleNode(RESOURCES_GROUP_TAG);
-        if (null != resourcesnode && !SETTING_ENTITY_TAG.equals(node.getName())) {
-            final Node replnode = resourcesnode.selectSingleNode("@" + COMMON_REPLACE);
-            if (null != replnode) {
-                ent.properties.put(RESOURCES_REPLACE_PROP, replnode.getStringValue());
-            }
-            for (final Object o : resourcesnode.selectNodes(RESOURCE_REF_TAG)) {
-                final Node n = (Node) o;
-
-                final Entity rent = parseResourceRef(set, n);
-                ent.addResource(rent);
-                rent.addReferrer(ent);
-
-            }
-        }
-        final Node refsnode = node.selectSingleNode(REFERRERS_GROUP_TAG);
-        if (null != refsnode) {
-            final Node replnode = refsnode.selectSingleNode("@" + COMMON_REPLACE);
-            if (null != replnode) {
-                ent.properties.put(REFERRERS_REPLACE_PROP, replnode.getStringValue());
-            }
-            for (final Object o : refsnode.selectNodes(RESOURCE_REF_TAG)) {
-                final Node n = (Node) o;
-
-                final Entity rent = parseResourceRef(set, n);
-                ent.addReferrer(rent);
-                rent.addResource(ent);
-            }
-        }
-    }
 
     /**
      * Parse a simple resource/entity node for the type/name attributes, returning a new or existing Entity
@@ -246,26 +169,18 @@ public class ResourceXMLParser {
      * @throws ResourceXMLParserException if the ndoe is missing the required attributes
      */
     private Entity parseResourceRef(final EntitySet set, final Node n) throws ResourceXMLParserException {
-        final Node node1 = n.selectSingleNode("@" + COMMON_TYPE);
         final Node node2 = n.selectSingleNode("@" + COMMON_NAME);
-        if (null == node1) {
-            throw new ResourceXMLParserException("@" + COMMON_TYPE + " required: " + reportNodeErrorLocation(n));
-        }
         if (null == node2) {
             throw new ResourceXMLParserException("@" + COMMON_NAME + " required: " + reportNodeErrorLocation(n));
         }
-        final String rtype = node1.getStringValue();
         final String rname = node2.getStringValue();
-        return set.getOrCreateEntity(rtype, rname);
+        return set.getOrCreateEntity( rname);
     }
 
     private static final HashMap<String, String[]> entityProperties = new HashMap<String, String[]>();
 
     static {
         entityProperties.put(NODE_ENTITY_TAG, nodeProps);
-        entityProperties.put(SETTING_ENTITY_TAG, settingProps);
-        entityProperties.put(PACKAGE_ENTITY_TAG, packageProps);
-        entityProperties.put(DEPLOYMENT_ENTITY_TAG, deploymentProps);
     }
 
     /**
@@ -281,27 +196,50 @@ public class ResourceXMLParser {
             throw new ResourceXMLParserException(
                 "Unexpected entity declaration: " + node.getName() + ": " + reportNodeErrorLocation(node));
         }
-        parseProperties(ent.properties, node, commonProps);
-        parseProperties(ent.properties, node, entityProperties.get(node.getName()));
-
-    }
-
-    /**
-     * Parse attributes of a Node into a Properties object, using a set of predetermined keys.
-     *
-     * @param properties the Properties object to write to
-     * @param node       a node
-     * @param props      the set of attribute names to parse into properties
-     */
-    private void parseProperties(final Properties properties, final Node node, final String[] props) {
-        for (final String prop : props) {
-            final Node node1 = node.selectSingleNode("@" + prop);
-            if (null != node1) {
-                properties.setProperty(prop, node1.getStringValue());
-            }
+        final Element node1 = (Element) node;
+        //load all element attributes as properties
+        for (final Object o : node1.attributes()) {
+            final Attribute attr = (Attribute) o;
+            ent.properties.setProperty(attr.getName(), attr.getStringValue());
         }
     }
 
+    /**
+     * Parse the DOM attributes as properties for the particular entity node type
+     *
+     * @param ent  Entity object
+     * @param node entity DOM node
+     *
+     * @throws ResourceXMLParserException if the DOM node is an unexpected tag name
+     */
+    private void parseEntSubAttributes(final Entity ent, final Node node) throws ResourceXMLParserException {
+        final Element node1 = (Element) node;
+        //load all sub elements called "attribute" as properties
+        for (final Object attribute : node1.selectNodes(ATTRIBUTE_TAG)) {
+            Element attr=(Element) attribute;
+            if(null==attr.selectSingleNode("@" + ATTRIBUTE_NAME_ATTR)) {
+                throw new ResourceXMLParserException(
+                    ATTRIBUTE_TAG + " element has no '" + ATTRIBUTE_NAME_ATTR + "' attribute: "
+                    + reportNodeErrorLocation(attr));
+            }
+            String attrname = attr.selectSingleNode("@" + ATTRIBUTE_NAME_ATTR).getStringValue();
+
+            String attrvalue;
+            //look for "value" attribute
+            if(null!=attr.selectSingleNode("@"+ATTRIBUTE_VALUE_ATTR)) {
+                attrvalue = attr.selectSingleNode("@" + ATTRIBUTE_VALUE_ATTR).getStringValue();
+            }else if(null!= attr.getText()) {
+                //look for text content
+                attrvalue = attr.getText();
+            }else {
+                throw new ResourceXMLParserException(
+                    ATTRIBUTE_TAG + " element has no '" + ATTRIBUTE_VALUE_ATTR + "' attribute or text content: "
+                    + reportNodeErrorLocation(attr));
+            }
+
+            ent.properties.setProperty(attrname, attrvalue);
+        }
+    }
 
     /**
      * Return a String describing the DOM node's location and parent type name
@@ -314,25 +252,6 @@ public class ResourceXMLParser {
         return "at xpath " + e.getUniquePath();
     }
 
-    /**
-     * Return the entityXpath property
-     *
-     * @return entityXpath property
-     */
-    public String getEntityXpath() {
-        return entityXpath;
-    }
-
-    /**
-     * Set the entityXpath property, the XPATH string used for selecting entity definitions in the target document
-     * during the {@link #parse()} method.  The default value is {@link #DEFAULT_ENTITY_XPATH} and selects all entity
-     * definitions.
-     *
-     * @param entityXpath new XPATH string
-     */
-    public void setEntityXpath(final String entityXpath) {
-        this.entityXpath = entityXpath;
-    }
 
     /**
      * Return the ResourceXMLReceiver
@@ -367,24 +286,23 @@ public class ResourceXMLParser {
             entcache.put(ent.getId(), ent);
         }
 
-        boolean containsEntity(final String type, final String name) {
-            return entcache.containsKey(Entity.entityId(type, name));
+        boolean containsEntity(final String name) {
+            return entcache.containsKey(name);
         }
 
-        Entity createEntity(final String type, final String name) {
+        Entity createEntity( final String name) {
             final Entity ent = new Entity();
-            ent.setType(type);
             ent.setName(name);
             ent.set = this;
             addEntity(ent);
             return ent;
         }
 
-        Entity getOrCreateEntity(final String type, final String name) {
-            if (containsEntity(type, name)) {
-                return entcache.get(Entity.entityId(type, name));
+        Entity getOrCreateEntity(final String name) {
+            if (containsEntity(name)) {
+                return entcache.get(name);
             }
-            return createEntity(type, name);
+            return createEntity(name);
         }
 
         /**
@@ -414,39 +332,21 @@ public class ResourceXMLParser {
      */
     public static class Entity {
         private EntitySet set;
-        private boolean wasParsed = false;
 
-        private HashSet<Entity> resources;
-        private HashSet<Entity> referrers;
-        private ArrayList<Properties> transforms;
 
         Entity() {
             this.properties = new Properties();
-            this.resources = new HashSet<Entity>();
-            this.referrers = new HashSet<Entity>();
         }
 
         private Properties properties;
 
         private String name;
-        private String type;
         private String resourceType;
 
         public String getId() {
-            return entityId(type, name);
+            return name;
         }
 
-        static String entityId(final String type, final String name) {
-            return type + ":" + name;
-        }
-
-        void addResource(final Entity ent) {
-            resources.add(ent);
-        }
-
-        void addReferrer(final Entity ent) {
-            referrers.add(ent);
-        }
 
         public String getName() {
             return name;
@@ -456,47 +356,6 @@ public class ResourceXMLParser {
             this.name = name;
         }
 
-        public String getType() {
-            return type;
-        }
-
-        void setType(final String type) {
-            this.type = type;
-        }
-
-        /**
-         * Return resources
-         *
-         * @return
-         */
-        public HashSet<Entity> getResources() {
-            return resources;
-        }
-
-        /**
-         * Return referrers
-         *
-         * @return
-         */
-        public HashSet<Entity> getReferrers() {
-            return referrers;
-        }
-
-        /**
-         * Return transforms
-         *
-         * @return
-         */
-        public ArrayList<Properties> getTransforms() {
-            return transforms;
-        }
-
-        void addTransform(final Properties props) {
-            if (null == transforms) {
-                this.transforms = new ArrayList<Properties>();
-            }
-            transforms.add(props);
-        }
 
         @Override
         public boolean equals(final Object o) {
@@ -512,7 +371,7 @@ public class ResourceXMLParser {
             if (name != null ? !name.equals(entity.name) : entity.name != null) {
                 return false;
             }
-            return !(type != null ? !type.equals(entity.type) : entity.type != null);
+            return true;
 
         }
 
@@ -521,7 +380,6 @@ public class ResourceXMLParser {
             int result = set != null ? set.hashCode() : 0;
             result = 31 * result + (properties != null ? properties.hashCode() : 0);
             result = 31 * result + (name != null ? name.hashCode() : 0);
-            result = 31 * result + (type != null ? type.hashCode() : 0);
             return result;
         }
 

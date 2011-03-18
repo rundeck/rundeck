@@ -72,7 +72,6 @@ public class NodeSet extends ProjectComponent {
 
         F_HOSTNAME ("hostname"){public String value(SetSelector set) { return set.getHostname(); }},
         F_NAME ("name"){public String value(SetSelector set) { return set.getName(); }},
-        F_TYPE ("type"){public String value(SetSelector set) { return set.getType(); }},
         F_TAGS ("tags"){public String value(SetSelector set) { return set.getTags(); }},
         F_OS_NAME ("os-name"){public String value(SetSelector set) { return set.getOsname(); }},
         F_OS_FAMILY("os-family"){public String value(SetSelector set) { return set.getOsfamily(); }},
@@ -370,8 +369,6 @@ public class NodeSet extends ProjectComponent {
                 setselector.setName((String) map.get(key));
             } else if (TAGS.equals(key)) {
                 setselector.setTags((String) map.get(key));
-            } else if (TYPE.equals(key)) {
-                setselector.setType((String) map.get(key));
             }else {
                 attrs.put(key, (String) map.get(key));
             }
@@ -413,7 +410,6 @@ public class NodeSet extends ProjectComponent {
         private String tags = "";
         private String osversion = "";
         private String name = "";
-        private String type = "";
         private Collection<Attribute> attributes;
         private AttributeSet attributeSet;
         private Map<String,String> attributesMap;
@@ -451,9 +447,6 @@ public class NodeSet extends ProjectComponent {
             if (!isBlank(name)) {
                 builder.append("name=").append(getName()).append(", ");
             }
-            if (!isBlank(type)) {
-                builder.append("type=").append(getType()).append(", ");
-            }
             builder.append("dominant=").append(isDominant()).append(", ");
 
             if (null != getAttributes() && getAttributes().size() > 0) {
@@ -480,7 +473,6 @@ public class NodeSet extends ProjectComponent {
                    && isBlank(tags)
                    && isBlank(osversion)
                    && isBlank(name)
-                   && isBlank(type)
                    && (null== attributes ||0== attributes.size())
                    && isBlank(getAttributesMap())
                 ;
@@ -502,7 +494,6 @@ public class NodeSet extends ProjectComponent {
         public boolean matches(INodeEntry entry) {
             return !isBlank() && matchOrBlank(hostname, entry.getHostname()) &&
                    matchOrBlank(name, entry.getNodename()) &&
-                   matchOrBlank(type, entry.getType()) &&
                    matchOrBlank(tags, entry.getTags()) &&
                    matchOrBlank(osfamily, entry.getOsFamily()) &&
                    matchOrBlank(osarch, entry.getOsArch()) &&
@@ -560,14 +551,6 @@ public class NodeSet extends ProjectComponent {
 
         public void setName(String name) {
             this.name = name;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public void setType(String type) {
-            this.type = type;
         }
 
         public boolean isDominant() {

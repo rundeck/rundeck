@@ -87,7 +87,6 @@ public class TestNodesXMLParser extends TestCase {
             INodeEntry node1 = receiver.map.get("test1");
             assertNotNull(node1);
             assertEquals("test1", node1.getNodename());
-            assertEquals("SubNode", node1.getType());
             assertEquals("this is the test1 node", node1.getDescription());
             assertNotNull(node1.getTags());
             assertEquals(new HashSet<String>(Arrays.asList("boring", "priority1")), node1.getTags());
@@ -101,7 +100,6 @@ public class TestNodesXMLParser extends TestCase {
             INodeEntry node2 = receiver.map.get("testnode2");
             assertNotNull(node2);
             assertEquals("testnode2", node2.getNodename());
-            assertEquals("Node", node2.getType());
             assertEquals("registered Node asdf", node2.getDescription());
             assertNotNull(node2.getTags());
             assertEquals(new HashSet<String>(Arrays.asList("boring")), node2.getTags());
@@ -121,7 +119,6 @@ public class TestNodesXMLParser extends TestCase {
             assertEquals("wrong number of nodes parsed", 3, receiver.map.size());
             INodeEntry node1 = receiver.map.get("testnode3");
             assertEquals("testnode3", node1.getNodename());
-            assertEquals("Node", node1.getType());
             assertEquals("This is the third test node", node1.getDescription());
             assertNotNull(node1.getTags());
             assertEquals(new HashSet<String>(Arrays.asList("priority1", "elf")), node1.getTags());
@@ -137,37 +134,6 @@ public class TestNodesXMLParser extends TestCase {
             assertNotNull(node2.getTags());
             assertEquals(0, node2.getTags().size());
             assertNull(node2.getFrameworkProject());
-        }
-    }
-    public void testParseSettings() throws Exception {
-
-        {
-            final nodeReceiver receiver = new nodeReceiver();
-            nodesXMLParser = new NodesXMLParser(xmlfile3, receiver);
-            nodesXMLParser.parse();
-            assertEquals("wrong number of nodes parsed", 3, receiver.map.size());
-
-            INodeEntry node0 = receiver.map.get("test1");
-            assertEquals("test1", node0.getNodename());
-            assertEquals("SubNode", node0.getType());
-            assertNull(node0.getSettings());
-
-            INodeEntry node1 = receiver.map.get("testnode2");
-            assertEquals("testnode2", node1.getNodename());
-            assertEquals("Node", node1.getType());
-            assertNotNull(node1.getSettings());
-            assertEquals(2, node1.getSettings().size());
-            assertEquals("set1val", node1.getSettings().get("set1"));
-            assertEquals("set2val", node1.getSettings().get("set2"));
-
-            INodeEntry node2 = receiver.map.get("testnode3");
-            assertEquals("testnode3", node2.getNodename());
-            assertEquals("Node", node2.getType());
-            assertNotNull(node2.getSettings());
-            assertEquals(3, node2.getSettings().size());
-            assertEquals("set2val", node2.getSettings().get("set2"));
-            assertEquals("set3val", node2.getSettings().get("set3"));
-            assertEquals("set4val", node2.getSettings().get("set4"));
         }
     }
     public void testParseEditRemoteUrl() throws Exception {

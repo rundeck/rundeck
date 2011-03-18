@@ -47,7 +47,6 @@ public class TestExecTool extends AbstractBaseTest {
     String[] nodeKeys = {
         "hostname",
         "entity-name",
-        "type",
         "tags",
         "os-name",
         "os-family",

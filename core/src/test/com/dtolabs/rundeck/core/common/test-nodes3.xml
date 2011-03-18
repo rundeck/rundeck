@@ -14,8 +14,6 @@
   ~  limitations under the License.
   -->
 
-<!DOCTYPE project PUBLIC
-    "-//DTO Labs Inc.//DTD Resources Document 1.0//EN" "project.dtd">
 <project>
   <node name="test1" type="SubNode" description="this is the test1 node" tags="boring,priority1"
         hostname="host1.local"
@@ -36,10 +34,6 @@
         osVersion="5.1"
         remoteUrl="TestRemoteUrl2"
       >
-    <resources>
-        <resource name="set1" type="Setting"/>
-        <resource name="set2" type="Setting"/>
-    </resources>
   </node>
   <node name="testnode3" type="Node" description="This is the third test node" tags="priority1,elf"
         hostname="testnode3.local"
@@ -51,14 +45,5 @@
         remoteUrl="TestRemoteUrl3"
       >
 
-    <resources>
-        <resource name="set2" type="Setting"/>
-        <resource name="set3" type="SomeSetting"/>
-        <resource name="set4" type="SubSetting"/>
-    </resources>
   </node>
-    <setting name="set1" settingValue="set1val" type="Setting"/>
-    <setting name="set2" settingValue="set2val" type="Setting"/>
-    <setting name="set3" settingValue="set3val" type="SomeSetting"/>
-    <setting name="set4" settingValue="set4val" type="SubSetting"/>
 </project>

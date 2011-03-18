@@ -61,7 +61,6 @@ public class TestNodeSet extends TestCase {
         tags1.add("devenv");
         tags1.add("serverbox");
         nodeimp1.setTags(tags1);
-        nodeimp1.setType("Node");
 
         nodeimp2 = new NodeEntryImpl("testnode2", "testnode2");
         nodeimp2.setOsArch("x386");
@@ -73,7 +72,6 @@ public class TestNodeSet extends TestCase {
         tags2.add("devenv");
         tags2.add("workstation");
         nodeimp2.setTags(tags2);
-        nodeimp2.setType("SubNode");
         HashMap<String, String> attrs2 = new HashMap<String, String>();
         attrs2.put("testattribute1", "testvalue1");
         attrs2.put("testattribute2", "testvalue2");
@@ -89,7 +87,6 @@ public class TestNodeSet extends TestCase {
         tags3.add("priority1");
         tags3.add("workstation");
         nodeimp3.setTags(tags3);
-        nodeimp3.setType("Node");
         HashMap<String, String> attrs3 = new HashMap<String, String>();
         attrs3.put("testattribute1", "testvalue1");
         attrs3.put("testattribute2", "testvalue2redux");
@@ -190,12 +187,6 @@ public class TestNodeSet extends TestCase {
             assertTrue("should be blank", sel.isBlank());
             assertNull("value should be null", sel.getTags());
 
-            sel.setType("blah");
-            assertFalse("should not be blank", sel.isBlank());
-            assertEquals("incorrect value", "blah", sel.getType());
-            sel.setType(null);
-            assertTrue("should be blank", sel.isBlank());
-            assertNull("value should be null", sel.getType());
         }
         //test single attribute
         {
@@ -1023,84 +1014,6 @@ public class TestNodeSet extends TestCase {
 
             exc.setTags("devenv");
             inc.setTags("priority1");
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-        }
-        {
-            //test type
-            set = new NodeSet();
-            NodeSet.SetSelector inc = set.createInclude();
-            NodeSet.SetSelector exc = set.createExclude();
-            inc.setType("Node");
-            assertFalse(set.shouldExclude(nodeimp1));
-            assertTrue(set.shouldExclude(nodeimp2));
-            inc.setType(null);
-            exc.setType("Node");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-            inc.setType(null);
-            exc.setType("SubNode");
-            assertFalse(set.shouldExclude(nodeimp1));
-            assertTrue(set.shouldExclude(nodeimp2));
-
-            inc.setType("SubNode");
-            exc.setType("Node");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            inc.setType(".*");
-            exc.setType(null);
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-
-            exc.setType(".*");
-            inc.setType(null);
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            //exclude is dominant, so when both match the node will not be included
-            exc.setType("SubNode");
-            inc.setType(".*");
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-
-            exc.setType("Node");
-            inc.setType(".*");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            //include is not dominant, so SubNode will be excluded
-            exc.setType(".*");
-            inc.setType("SubNode");
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            exc.setType(".*");
-            inc.setType("Node");
-            assertTrue(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            //include is dominant, so when both match the node will be included
-            exc.setDominant(false);
-            inc.setDominant(true);
-            exc.setType("SubNode");
-            inc.setType(".*");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-
-            exc.setType("Node");
-            inc.setType(".*");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertFalse(set.shouldExclude(nodeimp1));
-
-            //exclude is not dominant, so SubNode will not be excluded
-            exc.setType(".*");
-            inc.setType("SubNode");
-            assertFalse(set.shouldExclude(nodeimp2));
-            assertTrue(set.shouldExclude(nodeimp1));
-
-            exc.setType(".*");
-            inc.setType("Node");
             assertTrue(set.shouldExclude(nodeimp2));
             assertFalse(set.shouldExclude(nodeimp1));
         }

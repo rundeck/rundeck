@@ -26,13 +26,15 @@ package com.dtolabs.rundeck.core.common;
 import junit.framework.*;
 import com.dtolabs.rundeck.core.common.NodesYamlGenerator;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStreamWriter;
+import java.io.*;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.HashMap;
+import java.util.Map;
 
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
+import org.yaml.snakeyaml.events.Event;
 import org.yaml.snakeyaml.representer.Representer;
 
 public class TestNodesYamlGenerator extends TestCase {
@@ -133,10 +135,14 @@ public class TestNodesYamlGenerator extends TestCase {
             nodesYamlGenerator.generate();
             final String outputString = baos.toString();
             assertNotNull(outputString);
-            assertEquals("test1:\n"
-                         + "  hostname: testhostname\n"
-                         + "  nodename: test1\n"
-                         + "  tags: ''\n", outputString);
+            //convert via yaml
+            Map parsed = parseYamlMap(outputString);
+            assertNotNull(parsed.get("test1"));
+            assertTrue(parsed.get("test1") instanceof Map);
+            Map node1 = (Map) parsed.get("test1");
+            assertEquals("testhostname", node1.get("hostname"));
+            assertEquals("test1", node1.get("nodename"));
+            assertEquals("", node1.get("tags"));
         }
         {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -150,7 +156,6 @@ public class TestNodesYamlGenerator extends TestCase {
             nodeEntry.setOsName("an os name");
             nodeEntry.setOsVersion("an os vers");
             nodeEntry.setUsername("someUser");
-            nodeEntry.setType("a type");
             nodeEntry.setTags(new HashSet());
 
             nodesYamlGenerator.addNode(nodeEntry);
@@ -158,18 +163,20 @@ public class TestNodesYamlGenerator extends TestCase {
             nodesYamlGenerator.generate();
             final String outputString = baos.toString();
             assertNotNull(outputString);
-            assertEquals("test1:\n"
-                         + "  description: test description\n"
-                         + "  hostname: testhostname\n"
-                         + "  nodename: test1\n"
-                         + "  osArch: an os arch\n"
-                         + "  osFamily: an os fam\n"
-                         + "  osName: an os name\n"
-                         + "  osVersion: an os vers\n"
-                         + "  tags: ''\n"
-//                         + "  type: a type\n"
-+ "  username: someUser\n"
-                , outputString);
+            //convert via yaml
+            Map parsed = parseYamlMap(outputString);
+            assertNotNull(parsed.get("test1"));
+            assertTrue(parsed.get("test1") instanceof Map);
+            Map node1 = (Map) parsed.get("test1");
+            assertEquals("test description", node1.get("description"));
+            assertEquals("testhostname", node1.get("hostname"));
+            assertEquals("test1", node1.get("nodename"));
+            assertEquals("an os arch", node1.get("osArch"));
+            assertEquals("an os fam", node1.get("osFamily"));
+            assertEquals("an os name", node1.get("osName"));
+            assertEquals("an os vers", node1.get("osVersion"));
+            assertEquals("someUser", node1.get("username"));
+            assertEquals("", node1.get("tags"));
         }
         {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -183,7 +190,6 @@ public class TestNodesYamlGenerator extends TestCase {
             nodeEntry.setOsName("Mac OS X");
             nodeEntry.setOsVersion("10.6.5");
             nodeEntry.setUsername("alexh");
-            nodeEntry.setType("ignored");
             nodeEntry.setFrameworkProject("ignored");
             final HashSet tags = new HashSet();
             tags.add("rundeck");
@@ -211,19 +217,29 @@ public class TestNodesYamlGenerator extends TestCase {
             nodesYamlGenerator.generate();
             final String outputString = baos.toString();
             assertNotNull(outputString);
-            assertEquals("strongbad:\n"
-                         + "  description: Rundeck server node\n"
-                         + "  hostname: strongbad\n"
-                         + "  nodename: strongbad\n"
-                         + "  osArch: x86_64\n"
-                         + "  osFamily: unix\n"
-                         + "  osName: Mac OS X\n"
-                         + "  osVersion: 10.6.5\n"
-                         + "  tags: dev, rundeck, ops\n"
-//                         + "  type: a type\n"
-+ "  username: alexh\n"
-                , outputString);
+            //convert via yaml
+            Map parsed = parseYamlMap(outputString);
+            assertNotNull(parsed.get("strongbad"));
+            assertTrue(parsed.get("strongbad") instanceof Map);
+            Map node1 = (Map) parsed.get("strongbad");
+            assertEquals("Rundeck server node", node1.get("description"));
+            assertEquals("strongbad", node1.get("hostname"));
+            assertEquals("strongbad", node1.get("nodename"));
+            assertEquals("x86_64", node1.get("osArch"));
+            assertEquals("unix", node1.get("osFamily"));
+            assertEquals("Mac OS X", node1.get("osName"));
+            assertEquals("10.6.5", node1.get("osVersion"));
+            assertEquals("alexh", node1.get("username"));
+            assertEquals("dev, ops, rundeck", node1.get("tags"));
         }
+    }
+
+    private Map parseYamlMap(String outputString) {
+        Yaml yaml = new Yaml(new SafeConstructor());
+        final Object load = yaml.load(new StringReader(outputString));
+        assertNotNull(load);
+        assertTrue(load instanceof Map);
+        return (Map) load;
     }
 
     public void testShouldOutputEditUrl() throws Exception{
@@ -240,12 +256,17 @@ public class TestNodesYamlGenerator extends TestCase {
         nodesYamlGenerator.generate();
         final String outputString = baos.toString();
         assertNotNull(outputString);
-        assertEquals("strongbad:\n"
-                     + "  editUrl: http://some.com/test/url\n"
-                     + "  hostname: strongbad\n"
-                     + "  nodename: strongbad\n"
-                     + "  tags: ''\n"
-            , outputString);
+
+        //convert via yaml
+        Map parsed = parseYamlMap(outputString);
+        assertNotNull(parsed.get("strongbad"));
+        assertTrue(parsed.get("strongbad") instanceof Map);
+        Map node1 = (Map) parsed.get("strongbad");
+        assertEquals("strongbad", node1.get("hostname"));
+        assertEquals("strongbad", node1.get("nodename"));
+        assertEquals("http://some.com/test/url", node1.get("editUrl"));
+        assertEquals("", node1.get("tags"));
+
     }
     
     public void testShouldOutputRemoteUrl() throws Exception{
@@ -262,11 +283,37 @@ public class TestNodesYamlGenerator extends TestCase {
         nodesYamlGenerator.generate();
         final String outputString = baos.toString();
         assertNotNull(outputString);
-        assertEquals("strongbad:\n"
-                     + "  hostname: strongbad\n"
-                     + "  nodename: strongbad\n"
-                     + "  remoteUrl: http://somez.com/test/other/url\n"
-                     + "  tags: ''\n"
-            , outputString);
+        //convert via yaml
+        Map parsed = parseYamlMap(outputString);
+        assertNotNull(parsed.get("strongbad"));
+        assertTrue(parsed.get("strongbad") instanceof Map);
+        Map node1 = (Map) parsed.get("strongbad");
+        assertEquals("strongbad", node1.get("hostname"));
+        assertEquals("strongbad", node1.get("nodename"));
+        assertEquals("http://somez.com/test/other/url", node1.get("remoteUrl"));
+        assertEquals("", node1.get("tags"));
+    }
+
+    public void testShouldOutputAnyAttribtue() throws Exception{
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        NodesYamlGenerator nodesYamlGenerator = new NodesYamlGenerator(baos);
+        final NodeEntryImpl nodeEntry = new NodeEntryImpl();
+        nodeEntry.setNodename("strongbad");
+        nodeEntry.setHostname("strongbad");
+        nodeEntry.setAttributes(new HashMap<String, String>());
+        nodeEntry.getAttributes().put("test-attribute", "some value");
+
+        nodesYamlGenerator.addNode(nodeEntry);
+
+        nodesYamlGenerator.generate();
+        final String outputString = baos.toString();
+        assertNotNull(outputString);
+        //convert via yaml
+        Map parsed = parseYamlMap(outputString);
+        assertNotNull(parsed.get("strongbad"));
+        assertTrue(parsed.get("strongbad") instanceof Map);
+        Map node1 = (Map) parsed.get("strongbad");
+        assertEquals("strongbad", node1.get("nodename"));
+        assertEquals("some value", node1.get("test-attribute"));
     }
 }

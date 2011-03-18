@@ -24,6 +24,8 @@
 package com.dtolabs.rundeck.core.common;
 
 import static com.dtolabs.shared.resources.ResourceXMLConstants.*;
+
+import com.dtolabs.shared.resources.ResourceXMLConstants;
 import com.dtolabs.shared.resources.ResourceXMLParser;
 import com.dtolabs.shared.resources.ResourceXMLParserException;
 import com.dtolabs.shared.resources.ResourceXMLReceiver;
@@ -62,7 +64,6 @@ public class NodesXMLParser implements NodeFileParser, ResourceXMLReceiver {
     public void parse() throws NodeFileParserException {
         final ResourceXMLParser resourceXMLParser = new ResourceXMLParser(false, file);
         //parse both node and settings
-        resourceXMLParser.setEntityXpath(NODE_ENTITY_TAG + "|" + SETTING_ENTITY_TAG);
         resourceXMLParser.setReceiver(this);
 //        long start = System.currentTimeMillis();
         try {
@@ -102,33 +103,19 @@ public class NodesXMLParser implements NodeFileParser, ResourceXMLReceiver {
             tags1 = new HashSet();
         }
         node.setTags(tags1);
-        //parse embedded setting resources
-        for (final ResourceXMLParser.Entity setting : entity.getResources()) {
-            if (SETTING_ENTITY_TAG.equals(setting.getResourceType())) {
-                if (null == node.getSettings()) {
-                    node.setSettings(new HashMap<String, String>());
+
+        if (null == node.getAttributes()) {
+            node.setAttributes(new HashMap<String, String>());
+        }
+        if (null != entity.getProperties()) {
+            for (String key : entity.getProperties().stringPropertyNames()) {
+                if (!ResourceXMLConstants.allPropSet.contains(key)) {
+                    node.getAttributes().put(key, entity.getProperty(key));
                 }
-                node.getSettings().put(setting.getName(), setting.getProperty(SETTING_VALUE));
             }
+
         }
-
-        if(null!=entity.getProperty(NODE_EDIT_URL)){
-            //use attributes for other node data
-
-            if (null == node.getAttributes()) {
-                node.setAttributes(new HashMap<String, String>());
-            }
-            node.getAttributes().put(NODE_EDIT_URL, entity.getProperty(NODE_EDIT_URL));
-        }
-        if(null != entity.getProperty(NODE_REMOTE_URL)){
-            //use attributes for other node data
-
-            if (null == node.getAttributes()) {
-                node.setAttributes(new HashMap<String, String>());
-            }
-            node.getAttributes().put(NODE_REMOTE_URL, entity.getProperty(NODE_REMOTE_URL));
-        }
-
+        //parse embedded attribute elements
     }
 
     public void resourcesParsed(final ResourceXMLParser.EntitySet entities) {
@@ -142,7 +129,6 @@ public class NodesXMLParser implements NodeFileParser, ResourceXMLReceiver {
             * Create a INodeEntry from the parsed entity and put it into the Nodes object
             */
             final NodeEntryImpl node = new NodeEntryImpl(entity.getProperty("hostname"), entity.getName());
-            node.setType(entity.getType());
             fillNode(entity, node);
             if (null != nodeReceiver) {
                 nodeReceiver.putNode(node);

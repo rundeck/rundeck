@@ -460,14 +460,13 @@ public class TestDataContextUtils extends AbstractBaseTest {
             final NodeEntryImpl nodeentry = new NodeEntryImpl("testhost", "test1");
             final Map<String, String> stringMap = DataContextUtils.nodeData(nodeentry);
             assertNotNull(stringMap);
-            assertEquals(10, stringMap.size());
+            assertEquals(9, stringMap.size());
             assertEquals("test1", stringMap.get("name"));
             assertEquals("testhost", stringMap.get("hostname"));
             assertEquals("", stringMap.get("os-name"));
             assertEquals("", stringMap.get("os-family"));
             assertEquals("", stringMap.get("os-arch"));
             assertEquals("", stringMap.get("os-version"));
-            assertEquals("", stringMap.get("type"));
             assertEquals("", stringMap.get("tags"));
             assertEquals("", stringMap.get("username"));
             assertEquals("", stringMap.get("description"));
@@ -480,19 +479,17 @@ public class TestDataContextUtils extends AbstractBaseTest {
             nodeentry.setOsFamily("osfamily");
             nodeentry.setOsName("osname");
             nodeentry.setOsVersion("osversion");
-            nodeentry.setType("nodetype");
             nodeentry.setTags(new HashSet());
 
             final Map<String, String> stringMap = DataContextUtils.nodeData(nodeentry);
             assertNotNull(stringMap);
-            assertEquals(10, stringMap.size());
+            assertEquals(9, stringMap.size());
             assertEquals("test1", stringMap.get("name"));
             assertEquals("testhost", stringMap.get("hostname"));
             assertEquals("osname", stringMap.get("os-name"));
             assertEquals("osfamily", stringMap.get("os-family"));
             assertEquals("osarch", stringMap.get("os-arch"));
             assertEquals("osversion", stringMap.get("os-version"));
-            assertEquals("nodetype", stringMap.get("type"));
             assertEquals("", stringMap.get("tags"));
             assertEquals("username", stringMap.get("username"));
             assertEquals("testdesc", stringMap.get("description"));
@@ -505,7 +502,7 @@ public class TestDataContextUtils extends AbstractBaseTest {
 
             final Map<String, String> stringMap = DataContextUtils.nodeData(nodeentry);
             assertNotNull(stringMap);
-            assertEquals(10, stringMap.size());
+            assertEquals(9, stringMap.size());
             assertEquals("test1", stringMap.get("name"));
             assertEquals("testhost", stringMap.get("hostname"));
             assertEquals("tag1", stringMap.get("tags"));
@@ -520,7 +517,7 @@ public class TestDataContextUtils extends AbstractBaseTest {
 
             final Map<String, String> stringMap = DataContextUtils.nodeData(nodeentry);
             assertNotNull(stringMap);
-            assertEquals(10, stringMap.size());
+            assertEquals(9, stringMap.size());
             assertEquals("test1", stringMap.get("name"));
             assertEquals("testhost", stringMap.get("hostname"));
             assertEquals("tag1,tag2,xyz", stringMap.get("tags"));
