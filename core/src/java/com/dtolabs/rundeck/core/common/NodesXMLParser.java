@@ -62,7 +62,7 @@ public class NodesXMLParser implements NodeFileParser, ResourceXMLReceiver {
      * Parse the project.xml formatted file and fill in the nodes found
      */
     public void parse() throws NodeFileParserException {
-        final ResourceXMLParser resourceXMLParser = new ResourceXMLParser(false, file);
+        final ResourceXMLParser resourceXMLParser = new ResourceXMLParser(file);
         //parse both node and settings
         resourceXMLParser.setReceiver(this);
 //        long start = System.currentTimeMillis();

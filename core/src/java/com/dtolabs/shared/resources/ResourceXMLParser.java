@@ -57,7 +57,6 @@ import java.util.*;
 public class ResourceXMLParser {
     static Logger log4j = Logger.getLogger(ResourceXMLParser.class.getName());
 
-    private boolean validate;
     private File file;
     private ResourceXMLReceiver receiver;
     public static final String DEFAULT_ENTITY_XPATH = NODE_ENTITY_TAG ;
@@ -66,11 +65,9 @@ public class ResourceXMLParser {
     /**
      * Constructor for the ResourceXMLParser
      *
-     * @param validate if true, perform DTD validation. If false, do not.
      * @param file     source file
      */
-    public ResourceXMLParser(final boolean validate, final File file) {
-        this.validate = validate;
+    public ResourceXMLParser(final File file) {
         this.file = file;
     }
 
@@ -114,7 +111,7 @@ public class ResourceXMLParser {
     public static EntityResolver createEntityResolver() {
         return new EntityResolver() {
             public InputSource resolveEntity(final String publicId, final String systemId) {
-                if (publicId.equals(DTD_PROJECT_DOCUMENT_2_0_EN)) {
+                if (publicId.equals(DTD_PROJECT_DOCUMENT_1_0_EN)) {
                     final InputStream in = ResourceXMLParser.class.getClassLoader().getResourceAsStream(
                         PROJECT_DTD_RESOURCE_PATH);
                     if (null != in) {

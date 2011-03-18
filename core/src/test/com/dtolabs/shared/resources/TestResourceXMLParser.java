@@ -30,8 +30,6 @@ import junit.framework.TestSuite;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Properties;
-import java.util.HashSet;
 
 public class TestResourceXMLParser extends TestCase {
     File dnefile1;
@@ -67,7 +65,7 @@ public class TestResourceXMLParser extends TestCase {
     public void testParse() throws Exception {
         {//test file that does not exist
             try {
-                ResourceXMLParser resourceXMLParser= new ResourceXMLParser(true,dnefile1);
+                ResourceXMLParser resourceXMLParser= new ResourceXMLParser(dnefile1);
                 resourceXMLParser.parse();
                 fail("Should have thrown an Exception");
             } catch (FileNotFoundException e) {
@@ -75,11 +73,11 @@ public class TestResourceXMLParser extends TestCase {
             }
         }
         { //test basic file without receiver
-            ResourceXMLParser resourceXMLParser= new ResourceXMLParser(false,testfile1);
+            ResourceXMLParser resourceXMLParser= new ResourceXMLParser(testfile1);
             resourceXMLParser.parse();
         }
         { //test basic file with receiver
-            ResourceXMLParser resourceXMLParser= new ResourceXMLParser(false,testfile1);
+            ResourceXMLParser resourceXMLParser= new ResourceXMLParser(testfile1);
             final ArrayList<ResourceXMLParser.Entity> items = new ArrayList<ResourceXMLParser.Entity>();
             final boolean[] resourceParsedCalled = new boolean[]{false};
             final boolean[] resourcesParsed = new boolean[]{false};
@@ -100,7 +98,7 @@ public class TestResourceXMLParser extends TestCase {
             assertEquals("Wrong size", 1, items.size());
         }
         { //test basic file with receiver, return false from resourceParsed
-            ResourceXMLParser resourceXMLParser = new ResourceXMLParser(true, testfile1);
+            ResourceXMLParser resourceXMLParser = new ResourceXMLParser(testfile1);
             final ArrayList<ResourceXMLParser.Entity> items = new ArrayList<ResourceXMLParser.Entity>();
             final boolean[] resourceParsedCalled = new boolean[]{false};
             final boolean[] resourcesParsed = new boolean[]{false};
@@ -127,7 +125,7 @@ public class TestResourceXMLParser extends TestCase {
          ***************/
 
         { //test attributes of node
-            ResourceXMLParser resourceXMLParser = new ResourceXMLParser(false, testfile2);
+            ResourceXMLParser resourceXMLParser = new ResourceXMLParser(testfile2);
             final ArrayList<ResourceXMLParser.Entity> items = new ArrayList<ResourceXMLParser.Entity>();
             final boolean[] resourceParsedCalled = new boolean[]{false};
             final boolean[] resourcesParsed = new boolean[]{false};

@@ -38,12 +38,12 @@ public class ResourceXMLConstants {
     /**
      * Public identifier for Project document 1.0 dtd
      */
-    public static final String DTD_PROJECT_DOCUMENT_2_0_EN =
-        "-//DTO Labs Inc.//DTD Resources Document 2.0//EN";
+    public static final String DTD_PROJECT_DOCUMENT_1_0_EN =
+        "-//DTO Labs Inc.//DTD Resources Document 1.0//EN";
     /**
      * resources path to project.dtd file
      */
-    public static final String PROJECT_DTD_RESOURCE_PATH = "com/dtolabs/shared/resources/project20.dtd";
+    public static final String PROJECT_DTD_RESOURCE_PATH = "com/dtolabs/shared/resources/project.dtd";
     public static final String COMMON_DESCRIPTION = "description";
     public static final String COMMON_NAME = "name";
     public static final String COMMON_TAGS = "tags";
