@@ -18,10 +18,10 @@
 
             </td>
             <td style="vertical-align:top">
-                <g:if test="${node.settings}">
+                <g:if test="${node.attributes}">
                     <table width="300px">
-                        <tr><th colspan="2" style="font-size:9pt;">Attributes</th></tr>
-                        <g:each var="setting" in="${node.attributes.keySet()}">
+                        %{--<tr><th colspan="2" style="font-size:9pt;">Attributes</th></tr>--}%
+                        <g:each var="setting" in="${node.attributes.keySet().grep{node.attributes[it]}.sort()}">
                             <tr>
                                 <td class="key setting">${setting.encodeAsHTML()}:</td>
                                 <td class="setting Value">${node.attributes[setting]?.encodeAsHTML()}</td>
