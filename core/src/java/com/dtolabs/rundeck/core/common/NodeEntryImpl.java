@@ -46,10 +46,8 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
     private String osFamily;
     private String osVersion;
     private String hostname;
-    private String type;
     private String description;
     private Map<String, String> attributes;
-    private Map<String, String> settings;
 
     public NodeEntryImpl() {
         super();
@@ -128,14 +126,6 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
         this.hostname = hostname;
     }
 
-    public String getType() {
-        return type;
-    }
-
-    public void setType(final String type) {
-        this.type = type;
-    }
-
     public String getOsArch() {
         return osArch;
     }
@@ -163,7 +153,6 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
         return "NodeEntryImpl{" +
                "nodename=" + nodename +
                ",hostname=" + hostname +
-               ",type=" + type +
                ",osName=" + osName +
                ",osArch=" + osArch +
                ",osFamily=" + osFamily +
@@ -292,13 +281,5 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
 
     public String getDescription() {
         return description;
-    }
-
-    public Map<String, String> getSettings() {
-        return settings;
-    }
-
-    public void setSettings(Map<String, String> settings) {
-        this.settings = settings;
     }
 }

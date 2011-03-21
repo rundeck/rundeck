@@ -83,7 +83,6 @@ public class TestNodes extends AbstractBaseTest {
             assertEquals("unix", node1.getOsFamily());
             assertEquals("Mac OS X", node1.getOsName());
             assertEquals("10.5.1", node1.getOsVersion());
-            assertEquals("SubNode", node1.getType());
             assertEquals("username1", node1.getUsername());
             assertEquals("tags were incorrect size for test1: " + node1.getTags().size(),
                     2,
@@ -101,7 +100,6 @@ public class TestNodes extends AbstractBaseTest {
             assertEquals("windows", node1.getOsFamily());
             assertEquals("Windows XP", node1.getOsName());
             assertEquals("5.1", node1.getOsVersion());
-            assertEquals("Node", node1.getType());
             assertNull( node1.getUsername());
             assertEquals("tags were incorrect size for test1: " + node1.getTags().size(),
                     1,

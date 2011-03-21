@@ -53,7 +53,7 @@
             ${execdata?.loglevel}
         </td>
     </tr>
-    <g:set var="NODE_FILTERS" value="${['','Name','Type','Tags','OsName','OsFamily','OsArch','OsVersion']}"/>
+    <g:set var="NODE_FILTERS" value="${['','Name','Tags','OsName','OsFamily','OsArch','OsVersion']}"/>
     <g:set var="NODE_FILTER_MAP" value="${['':'Hostname','OsName':'OS Name','OsFamily':'OS Family','OsArch':'OS Architecture','OsVersion':'OS Version']}"/>
 
     <g:if test="${execdata?.doNodedispatch}">

@@ -30,8 +30,6 @@ public class BaseNodeFilters {
     String nodeExclude
     String nodeIncludeName
     String nodeExcludeName
-    String nodeIncludeType
-    String nodeExcludeType
     String nodeIncludeTags
     String nodeExcludeTags
     String nodeIncludeOsName
@@ -49,8 +47,6 @@ public class BaseNodeFilters {
         nodeExclude(nullable: true)
         nodeIncludeName(nullable: true)
         nodeExcludeName(nullable: true)
-        nodeIncludeType(nullable: true)
-        nodeExcludeType(nullable: true)
         nodeIncludeTags(nullable: true)
         nodeExcludeTags(nullable: true)
         nodeIncludeOsName(nullable: true)
@@ -65,12 +61,12 @@ public class BaseNodeFilters {
     }
 
     public boolean nodeFilterIsEmpty(){
-        return !(nodeInclude||nodeExclude||nodeIncludeName||nodeExcludeName||nodeIncludeType||nodeExcludeType||
+        return !(nodeInclude||nodeExclude||nodeIncludeName||nodeExcludeName||
                nodeIncludeTags || nodeExcludeTags|| nodeIncludeOsName || nodeExcludeOsName || nodeIncludeOsFamily ||
             nodeExcludeOsFamily || nodeIncludeOsArch||nodeExcludeOsArch || nodeIncludeOsVersion||nodeExcludeOsVersion)
     }
 
 
-    static filterKeys = [hostname: '', type: 'Type', tags: 'Tags', 'os-name': 'OsName', 'os-family': 'OsFamily',
+    static filterKeys = [hostname: '',  tags: 'Tags', 'os-name': 'OsName', 'os-family': 'OsFamily',
     'os-arch': 'OsArch', 'os-version': 'OsVersion','name':'Name']
 }

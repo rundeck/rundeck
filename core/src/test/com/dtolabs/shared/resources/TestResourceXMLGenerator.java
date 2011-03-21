@@ -55,13 +55,12 @@ public class TestResourceXMLGenerator extends TestCase {
         new File("build/test-target").mkdirs();
         test1 = new File("build/test-target/TestResourceXMLGenerator-test1.xml");
         test2 = new File("build/test-target/doesnotexist/test.xml");
-        reader = new SAXReader(true);
-        reader.setEntityResolver(ResourceXMLParser.createEntityResolver());
+        reader = new SAXReader(false);
     }
 
     protected void tearDown() throws Exception {
         if(test1.exists()){
-            test1.deleteOnExit();
+//            test1.deleteOnExit();
         }
     }
 
@@ -105,7 +104,6 @@ public class TestResourceXMLGenerator extends TestCase {
             assertEquals("test1name", root.selectSingleNode("node/@name").getStringValue());
             assertEquals("test1", root.selectSingleNode("node/@hostname").getStringValue());
             assertEquals("", root.selectSingleNode("node/@tags").getStringValue());
-            assertEquals("Node", root.selectSingleNode("node/@type").getStringValue());
             assertEquals("", root.selectSingleNode("node/@description").getStringValue());
             assertEquals("", root.selectSingleNode("node/@osArch").getStringValue());
             assertEquals("", root.selectSingleNode("node/@osFamily").getStringValue());
@@ -127,7 +125,6 @@ public class TestResourceXMLGenerator extends TestCase {
             tags.add("a");
             tags.add("d");
             node.setTags(tags);
-            node.setType("TestNode");
             node.setUsername("test user");
 
             gen.addNode(node);
@@ -144,7 +141,6 @@ public class TestResourceXMLGenerator extends TestCase {
             assertEquals("test1name", root.selectSingleNode("node/@name").getStringValue());
             assertEquals("test1", root.selectSingleNode("node/@hostname").getStringValue());
             assertEquals("a,d", root.selectSingleNode("node/@tags").getStringValue());
-            assertEquals("TestNode", root.selectSingleNode("node/@type").getStringValue());
             assertEquals("test desc", root.selectSingleNode("node/@description").getStringValue());
             assertEquals("test arch", root.selectSingleNode("node/@osArch").getStringValue());
             assertEquals("test fam", root.selectSingleNode("node/@osFamily").getStringValue());
@@ -166,7 +162,6 @@ public class TestResourceXMLGenerator extends TestCase {
             tags.add("a");
             tags.add("d");
             node.setTags(tags);
-            node.setType("TestNode");
             node.setUsername("test user");
 
             gen.addNode(node);
@@ -183,7 +178,6 @@ public class TestResourceXMLGenerator extends TestCase {
             assertEquals("test1name", root.selectSingleNode("node/@name").getStringValue());
             assertEquals("test1", root.selectSingleNode("node/@hostname").getStringValue());
             assertEquals("a,d", root.selectSingleNode("node/@tags").getStringValue());
-            assertEquals("TestNode", root.selectSingleNode("node/@type").getStringValue());
             assertEquals("test desc", root.selectSingleNode("node/@description").getStringValue());
             assertEquals("test arch", root.selectSingleNode("node/@osArch").getStringValue());
             assertEquals("test fam", root.selectSingleNode("node/@osFamily").getStringValue());
@@ -191,20 +185,18 @@ public class TestResourceXMLGenerator extends TestCase {
             assertEquals("test vers", root.selectSingleNode("node/@osVersion").getStringValue());
             assertEquals("test user", root.selectSingleNode("node/@username").getStringValue());
         }
-    }
-
-    public void testSettings() throws Exception{
+        assertTrue(test1.delete());
         {
+            //test arbitrary attributes
             final ResourceXMLGenerator gen = new ResourceXMLGenerator(test1);
             //add a node
             final NodeEntryImpl node = new NodeEntryImpl("test1", "test1name");
             node.setDescription("test desc");
-            node.setOsArch("test arch");
-            node.setOsFamily("test fam");
-            node.setOsName("test osname");
-            node.setOsVersion("test vers");
-            node.setSettings(new HashMap<String, String>());
-            node.getSettings().put("testSetting", "testValue");
+            node.setUsername("test user");
+            final HashMap<String, String> attributes = new HashMap<String, String>();
+            attributes.put("myattr", "myattrvalue");
+            attributes.put("-asdf", "test value");
+            node.setAttributes(attributes);
 
             gen.addNode(node);
             gen.generate();
@@ -215,17 +207,15 @@ public class TestResourceXMLGenerator extends TestCase {
             assertNotNull(d);
             final Element root = d.getRootElement();
             assertEquals("project", root.getName());
-            assertEquals(2, root.selectNodes("/project/*").size());
+            assertEquals(1, root.selectNodes("/project/*").size());
             assertEquals(1, root.selectNodes("node").size());
-            assertEquals(1, root.selectNodes("setting").size());
-            assertEquals(1, root.selectNodes("node/resources/resource").size());
-            assertEquals("testSetting", root.selectSingleNode("node/resources/resource/@name").getStringValue());
-            assertEquals("Setting", root.selectSingleNode("node/resources/resource/@type").getStringValue());
-            
-            assertEquals("testSetting", root.selectSingleNode("setting/@name").getStringValue());
-            assertEquals("Setting", root.selectSingleNode("setting/@type").getStringValue());
-            assertEquals("testValue", root.selectSingleNode("setting/@settingValue").getStringValue());
-            assertNull(root.selectSingleNode("setting/@tags"));
+            assertEquals("myattrvalue", root.selectSingleNode("node/@myattr").getStringValue());
+            //weird attr name will be set as attribute subelement
+            assertNotNull( root.selectSingleNode("node/attribute"));
+            assertEquals(1, root.selectNodes("node/attribute").size());
+            assertEquals("-asdf", root.selectSingleNode("node/attribute/@name").getStringValue());
+            assertEquals("test value", root.selectSingleNode("node/attribute/@value").getStringValue());
         }
     }
+
 }

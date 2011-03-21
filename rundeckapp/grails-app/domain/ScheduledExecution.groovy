@@ -40,8 +40,6 @@ class ScheduledExecution extends ExecutionContext {
         nodeExclude(nullable:true)
         nodeIncludeName(nullable:true)
         nodeExcludeName(nullable:true)
-        nodeIncludeType(nullable:true)
-        nodeExcludeType(nullable:true)
         nodeIncludeTags(nullable:true)
         nodeExcludeTags(nullable:true)
         nodeIncludeOsName(nullable:true)

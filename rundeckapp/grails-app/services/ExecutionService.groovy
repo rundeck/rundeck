@@ -707,7 +707,6 @@ class ExecutionService implements ApplicationContextAware, Executor{
         def nodeIncludeMap = [:]
         if (econtext.nodeInclude || econtext.nodeExclude
                                || econtext.nodeIncludeName || econtext.nodeExcludeName
-                               || econtext.nodeIncludeType || econtext.nodeExcludeType
                                || econtext.nodeIncludeTags || econtext.nodeExcludeTags
                                || econtext.nodeIncludeOsName || econtext.nodeExcludeOsName
                                || econtext.nodeIncludeOsFamily || econtext.nodeExcludeOsFamily
@@ -717,7 +716,6 @@ class ExecutionService implements ApplicationContextAware, Executor{
 
             nodeIncludeMap[NodeSet.HOSTNAME] = econtext.nodeInclude
             nodeIncludeMap[NodeSet.NAME] = econtext.nodeIncludeName
-            nodeIncludeMap[NodeSet.TYPE] = econtext.nodeIncludeType
             nodeIncludeMap[NodeSet.TAGS] = econtext.nodeIncludeTags
             nodeIncludeMap[NodeSet.OS_NAME] = econtext.nodeIncludeOsName
             nodeIncludeMap[NodeSet.OS_FAMILY] = econtext.nodeIncludeOsFamily
@@ -735,7 +733,6 @@ class ExecutionService implements ApplicationContextAware, Executor{
         def nodeExcludeMap = [:]
         if (econtext.nodeInclude || econtext.nodeExclude
                                || econtext.nodeIncludeName || econtext.nodeExcludeName
-                               || econtext.nodeIncludeType || econtext.nodeExcludeType
                                || econtext.nodeIncludeTags || econtext.nodeExcludeTags
                                || econtext.nodeIncludeOsName || econtext.nodeExcludeOsName
                                || econtext.nodeIncludeOsFamily || econtext.nodeExcludeOsFamily
@@ -744,7 +741,6 @@ class ExecutionService implements ApplicationContextAware, Executor{
             ) {
             nodeExcludeMap[NodeSet.HOSTNAME] = econtext.nodeExclude
             nodeExcludeMap[NodeSet.NAME] = econtext.nodeExcludeName
-            nodeExcludeMap[NodeSet.TYPE] = econtext.nodeExcludeType
             nodeExcludeMap[NodeSet.TAGS] = econtext.nodeExcludeTags
             nodeExcludeMap[NodeSet.OS_NAME] = econtext.nodeExcludeOsName
             nodeExcludeMap[NodeSet.OS_FAMILY] = econtext.nodeExcludeOsFamily
@@ -799,8 +795,6 @@ class ExecutionService implements ApplicationContextAware, Executor{
                                     nodeExclude:params.nodeExclude,
                                     nodeIncludeName:params.nodeIncludeName,
                                     nodeExcludeName:params.nodeExcludeName,
-                                    nodeIncludeType:params.nodeIncludeType,
-                                    nodeExcludeType:params.nodeExcludeType,
                                     nodeIncludeTags:params.nodeIncludeTags,
                                     nodeExcludeTags:params.nodeExcludeTags,
                                     nodeIncludeOsName:params.nodeIncludeOsName,

@@ -42,9 +42,8 @@ public class NodeEntryFactory {
      */
     private static String[] excludeProps = {
         "attributes",
-        "settings",
-        "type",
-        "frameworkProject"
+        "frameworkProject",
+        "class"
     };
 
     /**
@@ -92,23 +91,62 @@ public class NodeEntryFactory {
         if (null == nodeEntry.getHostname()) {
             throw new IllegalArgumentException("Required property 'hostname' was not specified");
         }
+        if (null == nodeEntry.getAttributes()) {
+            nodeEntry.setAttributes(new HashMap<String, String>());
+        }
 
-        //XXX: node entry refactor will change this
-        //populate attributes "editUrl" and "remoteUrl" manually
-        if (null != map.get(ResourceXMLConstants.NODE_EDIT_URL) || null != map.get(ResourceXMLConstants.NODE_REMOTE_URL)) {
-            if(null==nodeEntry.getAttributes()){
-                nodeEntry.setAttributes(new HashMap<String, String>());
-            }
-            if(null != map.get(ResourceXMLConstants.NODE_EDIT_URL)) {
-                nodeEntry.getAttributes().put(ResourceXMLConstants.NODE_EDIT_URL, (String) map.get(
-                    ResourceXMLConstants.NODE_EDIT_URL));
-            }
-            if(null != map.get(ResourceXMLConstants.NODE_REMOTE_URL)) {
-                nodeEntry.getAttributes().put(ResourceXMLConstants.NODE_REMOTE_URL, (String) map.get(
-                    ResourceXMLConstants.NODE_REMOTE_URL));
+        //populate attributes with any keys outside of nodeprops
+        for (final String key : map.keySet()) {
+            if (!ResourceXMLConstants.allPropSet.contains(key)) {
+                nodeEntry.getAttributes().put(key, (String) map.get(key));
             }
         }
 
         return nodeEntry;
+    }
+
+    public static Map<String,String> toMap(final INodeEntry node) {
+        HashMap<String, String> map = new HashMap<String, String>();
+        if(null!=node.getAttributes()) {
+            map.putAll(node.getAttributes());
+        }
+        try {
+            final Map describe = BeanUtils.describe(node);
+            map.putAll(describe);
+            /*for (final String s : ResourceXMLConstants.allPropSet) {
+
+            }*/
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        if (null!=node.getTags()) {
+            //convert Set of tag strings into comma-separated scalar
+            String valueString = "";
+            Set values = node.getTags();
+            StringBuffer sb = new StringBuffer();
+            for (final Object tagValue : new TreeSet(values)) {
+                if (sb.length() > 0) {
+                    sb.append(", ");
+                }
+                sb.append(tagValue);
+            }
+            valueString = sb.toString();
+            map.put("tags", valueString);
+        }
+        HashSet<String> toremove = new HashSet<String>();
+        toremove.addAll(Arrays.asList(excludeProps));
+        for (final String s : map.keySet()) {
+            if(null==map.get(s)) {
+                toremove.add(s);
+            }
+        }
+        for (final String s : toremove) {
+            map.remove(s);
+        }
+        return map;
     }
 }

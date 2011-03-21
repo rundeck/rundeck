@@ -1702,8 +1702,6 @@ class ScheduledExecutionController  {
                 && !scheduledExecution.nodeExclude
              && !scheduledExecution.nodeIncludeName
                 && !scheduledExecution.nodeExcludeName
-             && !scheduledExecution.nodeIncludeType
-                && !scheduledExecution.nodeExcludeType
              && !scheduledExecution.nodeIncludeTags
                 && !scheduledExecution.nodeExcludeTags
              && !scheduledExecution.nodeIncludeOsName
