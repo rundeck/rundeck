@@ -1,10 +1,10 @@
-% RESOURCE-YAML-V12(5) RunDeck User Manuals | Version 1.2
+% RESOURCE-YAML-V13(5) RunDeck User Manuals | Version 1.3
 % Greg Schueler
 % February 25, 2011
 
 # NAME
 
-resource-yaml-v12 - describes the RunDeck resource model document Yaml format
+resource-yaml-v13 - describes the RunDeck resource model document Yaml format
 
 The `resource` YAML document declares a resource model used by a RunDeck Project to define the set of Nodes that are available.
 
@@ -42,7 +42,7 @@ Required Entries:
 
 `hostname`
 
-:    Hostname of the node.  This can be any IP Address or hostname to address the node. 
+:    Hostname of the node.  This can be any IP Address or hostname to address the node.
      Since hostname is used to make SSH connections, it is possible to overload the value
      to include port number. (eg, hostname:port).
 
@@ -84,6 +84,10 @@ Optional Entries:
 
 :    URL to an external resource model editor service.
 
+*Anything*
+
+:    Specify any custom attributes about node using a string value.
+
 * For more information about using the `editUrl`/`remoteUrl` see the [RunDeck Guide](RunDeck-Guide.html#resource-editor).
 
 ## Examples
@@ -99,6 +103,16 @@ Optional Entries:
       tags: ''
       username: greg
 
+Specify some custom attributes:
+
+    bartholemew:
+      description: Webapp node
+      hostname: bartholemew
+      nodename: bartholemew
+      tags: 'web,app'
+      username: greg
+      app-port: 550
+      https-port: 553
 
 The RunDeck source code and all documentation may be downloaded from
 <https://github.com/dtolabs/rundeck/>.

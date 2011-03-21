@@ -21,7 +21,7 @@ The Resource model provider is a way to transfer Node definitions from other sys
 
 Resource model data is a set of Node descriptors, each with a uniquely identifying name.  In addition to Name, some pieces of metadata are required (like `hostname`, and `username`), and some are optional.
 
-(See [resource.xml - node](resource-v10.html#node) and [resource-yaml-v12](resource-yaml-v12.html) for more information.)
+(See [resource.xml - node](resource-v13.html#node) and [resource-yaml-v13](resource-yaml-v13.html) for more information.)
 
 The Resource model data, commonly referred to as resources.xml or resources.yaml, is stored on the server as a file.  Each Project in RunDeck has its own Resources file, and this file is used to determine what Nodes are available and how to connect to those Nodes and run commands. The Resource model data is assumed to be a static file, unless a Provider URL is configured, in which case an admin can tell the RunDeck server to refresh the Resource model from the URL.
 
@@ -30,8 +30,8 @@ The Resource model data, commonly referred to as resources.xml or resources.yaml
 In order to provide the Resource model data to RunDeck:
 
 1. The data must be either:
-    * XML in [resource-v10 format](resource-v10.html)
-    * YAML in [resource-yaml-v12 format](resource-yaml-v12.html)
+    * XML in [resource-v13 format](resource-v13.html)
+    * YAML in [resource-yaml-v13 format](resource-yaml-v13.html)
 2. Each Node entry must have a unique `name` value. You may have to convert the external system's identifier to be unique, or create one yourself.
 3. The data must be *either*: 
     * accessible on-disk from the RunDeck server, 
@@ -56,7 +56,7 @@ Define the file where the resource.xml will be stored on-disk.  Each new project
 
     project.resources.file = ..
     
-This file path is where RunDeck will read the contents from, and also where it will store it to if refreshing from a remote URL.  If you specify a file ending in ".xml" then the format is [resource-v10 XML](resource-v10.html).  If you specify a file ending in ".yaml" then the format is [resource-yaml-v12 YAML](resource-yaml-v12.html).
+This file path is where RunDeck will read the contents from, and also where it will store it to if refreshing from a remote URL.  If you specify a file ending in ".xml" then the format is [resource-v13 XML](resource-v13.html).  If you specify a file ending in ".yaml" then the format is [resource-yaml-v13 YAML](resource-yaml-v13.html).
 
     project.resources.url = http://...
     
@@ -416,7 +416,7 @@ of these tools, it is possible to map the data to meet the needs of
 
 ### Definition ###
 
-The [RunDeck resource model document format](resource-v10.html) and the [resource-yaml-v12](resource-yaml-v12.html) format provide two attributes that help connect the dots between the
+The [RunDeck resource model document format](resource-v13.html) and the [resource-yaml-v13](resource-yaml-v13.html) format provide two attributes that help connect the dots between the
 RunDeck UI and the editing interface provided by the external data
 management tool. They can use `editUrl` or `remoteUrl` attributes to specify the remote URL.  The URLs can embed properties about the node to expand prior to being loaded, which allows you to e.g. submit query parameters using the node name.
 
@@ -436,7 +436,7 @@ Properties of the Node can be embedded in the URL and expanded prior to use.  Th
 
 Available properties are:
 
-`name`, `hostname`, `os-name`, `os-version`, `os-family`, `os-arch`, `username`, `description`, `tags`, `type`, `project`
+`name`, `hostname`, `os-name`, `os-version`, `os-family`, `os-arch`, `username`, `description`, `tags`, `project`
 
 You can embed these properties within the url like this:
 
