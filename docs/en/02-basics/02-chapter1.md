@@ -270,8 +270,9 @@ as an XML document, storing it in a source repository that is
 periodically exported to Rundeck. This method could be practical if
 your host infrastructure infrequently changes.
 
-The [resource-v10(5)](resource-v10.html) manual contains 
-reference information about the RunDeck resources document content and structure.
+The [resource-v13(5) XML](resource-v13.html) or
+[resource-v13(5) YAML](resource-yaml-v13.html) manuals contain reference
+information about the RunDeck resources document syntax.
 
 Check the RunDeck web site for resource model providers. If you are
 interested in creating your own, see the
@@ -434,7 +435,7 @@ You can see that the resource model defines each Node to use a
 different login to execute `dispatch` commands.  That
 feature can be handy when Nodes serve different roles and therefore,
 use different logins to manage processes. See the
-`username` attribute in [resource-v10(5)](resource-v10.html) manual page.
+`username` attribute in [resource-v13(5) XML](resource-v13.html) or [resource-v13(5) YAML](resource-yaml-v13.html) manual page.
 
 The `dispatch` command can also execute shell
 scripts. Here's a trivial script that generates a bit of system info:

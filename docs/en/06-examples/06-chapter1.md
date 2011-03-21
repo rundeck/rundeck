@@ -69,15 +69,14 @@ as the "www" user while the app and database components run as user
 "anvils".  
 
 With this information in hand, the administrator prepares the project
-resource model using the [resource-v10](resource-v10.html) 
-document format. The file listing
+resource model using the [resource-v13(5) XML](resource-v13.html) or
+[resource-v13(5) YAML](resource-yaml-v13.html) document format. The file listing
 below contains the node definitions for the five nodes -- 
 anv1, anv2, anv3, anv4, anv5:
 
 File listing: resources.xml
 
     <?xml version="1.0" encoding="UTF-8"?>
-    <!DOCTYPE project PUBLIC "-//DTO Labs Inc.//DTD Resources Document 1.0//EN" "project.dtd">
 
     <project>
       <node name="anv1" type="Node"

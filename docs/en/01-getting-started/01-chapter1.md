@@ -51,7 +51,7 @@ document requirement.
 
 A *resource model provider* is an external service
 accesible via the HTTP GET method that returns data conforming to the
-RunDeck resource model document format [resource-v10(5)](resource-v10.html). 
+RunDeck resource model document formats: [resource-v13(5) XML](resource-v13.html) or [resource-v13(5) YAML](resource-yaml-v13.html). 
 
 
 ### Authorization

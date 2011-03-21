@@ -1,35 +1,33 @@
-% PROJECT-V10(5) RunDeck User Manuals | Version 1.0
+% RESOURCE-V13(5) RunDeck User Manuals | Version 1.3
 % Alex Honor
 % November 20, 2010
 
 # NAME
 
-project-v10 - describes the RunDeck resource model document
+resource-v13 - describes the RunDeck resource model document
 
-The `project` XML document declares a resource model that can also be
-uploaded to a project hosted on the RunDeck server. This is a
-demonstration document using all possible elements.
+The Resource Model XML document declares a resource model that can also be
+uploaded to a project hosted on the RunDeck server. This document describes the
+format and necessary elements.
 
 # Elements
 
+The root (aka "top-level") element of the resource file is called `project`.
+
 ## project
 
-The root (aka "top-level") element of the project.xml file. 
+Project defines all the resources.
+
 Can contain the following elements:
 
 [node](#node)
 
 :   A node resource element.
 
-[setting](#setting)
-
-:   A setting resource element.
-
 *Example*
 
     <project>
       <node .../>
-      <setting ...  />
     </project>
 
 ## node
@@ -41,10 +39,6 @@ The node element defines a Node resource.
 name
 
 :   The node name. This is a logical identifier from the node. (required)
-
-type
-
-:   The node type, such as "Node". (required)
 
 description
 
@@ -82,14 +76,39 @@ remoteUrl
 
 :   URL to an external resource model service.  (optional)
 
+*anything*
+
+:   Any user-supplied attributes can be specifed to add additional metadata about a node.
+
 *Nested Elements*
 
-[resources](#resources)
+[attribute](#attribute)
 
-:   Associated resources.
+:   Further user defined attributes.
 
+## attribute
 
-*Examples*
+Defines a single metadata attribute for the node, as an alternative to specifying it as a XML attribute on the `<node>` element itself.
+
+*Attributes*
+
+name
+
+:   The name of the attribute
+
+value
+
+:   The value of the attribute
+
+Alternatively, the value can be specified as nested text content.
+
+Examples:
+
+    <attribute name="server-path" value="/var/myapp"/>
+
+    <attribute name="server-port">9010</attribute>
+
+## Examples
 
 Define a node named "strongbad":
 
@@ -99,14 +118,12 @@ Define a node named "strongbad":
         osArch="i386" osFamily="unix" osName="Darwin" osVersion="9.2.2"
         username="alexh"/>
 
-Define a node of the type LinuxNode that has a Port as a resource:
+Define a node of the type LinuxNode that has a `https-port` attribute:
 
     <node type="LinuxNode" name="centos54" hostname="centos54.local"
-          description="Sample Linux node" tags="sample,linux"	  
+          description="Sample Linux node" tags="sample,linux"
           >
-        <resources>
-          <resource type="Port" name="httpd"/>
-        </resources>
+        <attribute name="https-port" value="435"/>
     </node>
 
 Define a node named that uses a non standard SSH port. The "hostname"
@@ -115,85 +132,22 @@ value is overloaded to include the port (192.168.1.106:4022):
     <node name="centos54" type="Node"
         description="a centos host"
         hostname="192.168.1.106:4022"
-        username="deploy"/>
-	
+        username="deploy"
+        />
+
 An example using just the required attributes:
 
     <node name="centos54" type="Node"
         hostname="192.168.1.106:4022"
         username="deploy"/>
-		
-## setting
 
-The setting element defines a Setting resource.
+An example with a custom attribute "appname" specified in the `<node>` element:
 
-*Attributes*
-
-type	
-
-:    the resource type.
-
-name
-
-:    the setting name (required).
-
-description
-
-:    brief description.
-
-settingType
-
-:     the value type.
-
-settingValue
-
-:     the setting value (required).
-
-
-*Example*
-
-    <setting type="Port" name=""tomcatListenPort"" 
-           description="The port tomcat listens" 
-           settingValue="8080" />
-
-## resources
-
-The resources tag defines a set of resource relationships. Each
-related resource is referenced via a [resource](#resource) element.
-
-*Nested elements*
-
-[resource](#resource)
-
-:	An associated resource.
-
-*Example*
-
-    <resources>
-       <resource type="Port" name="tomcatListenPort" />
-    </resources>
-
-## resource
-
-A resource element is used to reference another resource in the
-project model by type and name.
-
-*Attributes*
-
-type
-
-:    the resource type.
-
-name	
-
-:    the resource name.
-
-*Example*
-
-Reference a Port setting named "tomcatListenPort".
-
-    <resource type="Port" name="tomcatListenPort" />
-
+    <node name="centos54" type="Node"
+        hostname="192.168.1.106:4022"
+        username="deploy"
+        appname="CoolApp"
+        />
 
 
 The RunDeck source code and all documentation may be downloaded from
