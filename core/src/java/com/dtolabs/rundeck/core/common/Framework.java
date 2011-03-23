@@ -29,6 +29,13 @@ import com.dtolabs.rundeck.core.dispatcher.CentralDispatcher;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherMgrFactory;
 import com.dtolabs.rundeck.core.dispatcher.NoCentralDispatcher;
+import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.commands.CommandInterpreter;
+import com.dtolabs.rundeck.core.execution.commands.CommandInterpreterService;
+import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
+import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcherService;
+import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.NodeSet;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
@@ -40,6 +47,7 @@ import org.apache.tools.ant.input.InputHandler;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -72,6 +80,7 @@ public class Framework extends FrameworkResourceParent {
     private boolean allowUserInput = true;
     private static final String FRAMEWORK_USERINPUT_DISABLED = "framework.userinput.disabled";
 
+    final HashMap<String,FrameworkSupportService> services;
     /**
      * This is the root. Does not return a parent.
      *
@@ -191,9 +200,8 @@ public class Framework extends FrameworkResourceParent {
      * @param projects_base_dir  path name to the projects base
      */
     private Framework(final String rdeck_base_dir,
-                      final String module_base_dir,
                       final String projects_base_dir) {
-        this(rdeck_base_dir, module_base_dir, projects_base_dir, null, null);
+        this(rdeck_base_dir, projects_base_dir, null, null);
     }
 
     /**
@@ -204,7 +212,6 @@ public class Framework extends FrameworkResourceParent {
      * @param projects_base_dir  path name to the projects base
      */
     private Framework(final String rdeck_base_dir,
-                      final String module_base_dir,
                       final String projects_base_dir,
                       final Authenticator authentication,
                       final LegacyAuthorization authorization) {
@@ -264,6 +271,41 @@ public class Framework extends FrameworkResourceParent {
         if(logger.isDebugEnabled()) {
             logger.debug("Framework.initialize() time: " + (end - start) + "ms");
         }
+
+        services=new HashMap<String, FrameworkSupportService>();
+        //todo initialize services via plugin manager
+        CommandInterpreterService.getInstanceForFramework(this);
+        NodeExecutorService.getInstanceForFramework(this);
+        FileCopierService.getInstanceForFramework(this);
+        NodeDispatcherService.getInstanceForFramework(this);
+
+    }
+
+    public FrameworkSupportService getService(String name) {
+        return services.get(name);
+    }
+    public void setService(String name, FrameworkSupportService service){
+        synchronized (services){
+            if(null==services.get(name) && null!=service) {
+                services.put(name, service);
+            }else if(null==service) {
+                services.remove(name);
+            }
+        }
+    }
+
+    public FileCopier getFileCopierForNode(INodeEntry node) throws ExecutionServiceException {
+        return FileCopierService.getInstanceForFramework(this).getProviderForNode(node);
+    }
+
+    public NodeExecutor getNodeExecutorForNode(INodeEntry node) throws ExecutionServiceException {
+        return NodeExecutorService.getInstanceForFramework(this).getProviderForNode(node);
+    }
+    public CommandInterpreter getCommandInterpreterForItem(ExecutionItem item) throws ExecutionServiceException {
+        return CommandInterpreterService.getInstanceForFramework(this).getInterpreterForExecutionItem(item);
+    }
+    public NodeDispatcher getNodeDispatcherForContext(ExecutionContext context) throws ExecutionServiceException {
+        return NodeDispatcherService.getInstanceForFramework(this).getNodeDispatcher(context);
     }
 
     /**
@@ -276,10 +318,9 @@ public class Framework extends FrameworkResourceParent {
      * @return a Framework instance
      */
     public static Framework getInstance(final String rdeck_base_dir,
-                                        final String module_base_dir,
                                         final String projects_base_dir) {
 
-        return new Framework(rdeck_base_dir, module_base_dir, projects_base_dir);
+        return new Framework(rdeck_base_dir, projects_base_dir);
     }
 
     /**
@@ -325,7 +366,6 @@ public class Framework extends FrameworkResourceParent {
         }
         if (null != project && null == fw && null != project.getProperty("rdeck.base")) {
             fw = Framework.getInstance(project.getProperty("rdeck.base"),
-                                       project.getProperty("modules.dir"),
                                        project.getProperty("projects.dir"));
             fw.configureFromProject(project);
             fw.configureProject(project);
@@ -369,7 +409,6 @@ public class Framework extends FrameworkResourceParent {
                 "Unable to determine rdeck base directory: system property rdeck.base is not set");
         }
         Framework instance = new Framework(rdeck_base_dir,
-                                           null,
                                            Constants.getFrameworkProjectsDir(rdeck_base_dir),
                                            authenticator,
                                            authorization);
@@ -385,7 +424,7 @@ public class Framework extends FrameworkResourceParent {
      */
     public static Framework getInstance() {
         logger.debug("creating new Framework using info from com.dtolabs.rundeck.core.Constants");
-        return Framework.getInstance((String) null, (String) null, (String) null);
+        return Framework.getInstance((String) null, (String) null);
     }
 
     /**

@@ -15,38 +15,33 @@
  */
 
 /*
-* DefaultDispatchedScriptExecutionItem.java
+* InterpreterException.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Mar 10, 2010 11:13:02 AM
-* $Id$
+* Created: 3/21/11 6:20 PM
+* 
 */
-package com.dtolabs.rundeck.core.execution;
-
-import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
+package com.dtolabs.rundeck.core.execution.commands;
 
 /**
- * DefaultDispatchedScriptExecutionItem is ...
+ * InterpreterException is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @version $Revision$
  */
-class DispatchedScriptExecutionItemImpl implements DispatchedScriptExecutionItem{
-    private IDispatchedScript dispatchedScript;
-
-    public DispatchedScriptExecutionItemImpl(final IDispatchedScript dispatchedScript) {
-        this.dispatchedScript = dispatchedScript;
+public class InterpreterException extends Exception {
+    public InterpreterException() {
+        super();
     }
 
-    public IDispatchedScript getDispatchedScript() {
-        return dispatchedScript;
+    public InterpreterException(String msg) {
+        super(msg);
     }
 
-    public void setDispatchedScript(final IDispatchedScript dispatchedScript) {
-        this.dispatchedScript = dispatchedScript;
+    public InterpreterException(Exception cause) {
+        super(cause);
     }
 
-    public String getType() {
-        return null;
+    public InterpreterException(String msg, Exception cause) {
+        super(msg, cause);
     }
 }

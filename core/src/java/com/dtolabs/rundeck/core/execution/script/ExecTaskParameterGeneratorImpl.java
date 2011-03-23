@@ -26,7 +26,7 @@ import java.io.File;
  * This class takes the input objects, and synthesizes the executable string and arguments string for the Ant Exec task
  */
 
-class ExecTaskParameterGeneratorImpl implements ExecTaskParameterGenerator {
+public class ExecTaskParameterGeneratorImpl implements ExecTaskParameterGenerator {
 
     /**
      * Create the generator

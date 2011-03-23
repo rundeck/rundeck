@@ -15,38 +15,20 @@
  */
 
 /*
-* DefaultDispatchedScriptExecutionItem.java
+* FrameworkSupportService.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Mar 10, 2010 11:13:02 AM
-* $Id$
+* Created: 3/21/11 5:47 PM
+* 
 */
-package com.dtolabs.rundeck.core.execution;
-
-import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
+package com.dtolabs.rundeck.core.common;
 
 /**
- * DefaultDispatchedScriptExecutionItem is ...
+ * FrameworkSupportService common interface for services that can be registered with and
+ * retrieved from a Framework instance
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @version $Revision$
  */
-class DispatchedScriptExecutionItemImpl implements DispatchedScriptExecutionItem{
-    private IDispatchedScript dispatchedScript;
-
-    public DispatchedScriptExecutionItemImpl(final IDispatchedScript dispatchedScript) {
-        this.dispatchedScript = dispatchedScript;
-    }
-
-    public IDispatchedScript getDispatchedScript() {
-        return dispatchedScript;
-    }
-
-    public void setDispatchedScript(final IDispatchedScript dispatchedScript) {
-        this.dispatchedScript = dispatchedScript;
-    }
-
-    public String getType() {
-        return null;
-    }
+public interface FrameworkSupportService {
+    public String getName();
 }

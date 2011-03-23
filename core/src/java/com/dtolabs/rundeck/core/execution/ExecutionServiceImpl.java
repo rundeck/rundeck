@@ -44,7 +44,7 @@ class ExecutionServiceImpl extends BaseExecutionService{
     }
 
 
-    public ExecutionResult executeItem(final ExecutionItem item) throws ExecutionException {
+    public ExecutionResult executeItem(ExecutionContext context,final ExecutionItem item) throws ExecutionException {
         final Executor exec = executorForItem(item);
         return  exec.executeItem(item,getListener(),this,framework);
     }

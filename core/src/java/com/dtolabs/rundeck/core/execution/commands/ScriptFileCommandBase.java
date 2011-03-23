@@ -15,38 +15,32 @@
  */
 
 /*
-* DefaultDispatchedScriptExecutionItem.java
+* ScriptFileCommandBase.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Mar 10, 2010 11:13:02 AM
-* $Id$
+* Created: 3/22/11 5:40 PM
+* 
 */
-package com.dtolabs.rundeck.core.execution;
+package com.dtolabs.rundeck.core.execution.commands;
 
-import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
+import java.io.InputStream;
+import java.util.*;
 
 /**
- * DefaultDispatchedScriptExecutionItem is ...
+ * ScriptFileCommandBase is a base implementation that returns null for all accessors.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @version $Revision$
  */
-class DispatchedScriptExecutionItemImpl implements DispatchedScriptExecutionItem{
-    private IDispatchedScript dispatchedScript;
-
-    public DispatchedScriptExecutionItemImpl(final IDispatchedScript dispatchedScript) {
-        this.dispatchedScript = dispatchedScript;
+public class ScriptFileCommandBase extends ScriptFileCommand {
+    public String getScript() {
+        return null;
     }
 
-    public IDispatchedScript getDispatchedScript() {
-        return dispatchedScript;
+    public InputStream getScriptAsStream() {
+        return null;
     }
 
-    public void setDispatchedScript(final IDispatchedScript dispatchedScript) {
-        this.dispatchedScript = dispatchedScript;
-    }
-
-    public String getType() {
+    public String getServerScriptFilePath() {
         return null;
     }
 }

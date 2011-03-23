@@ -15,38 +15,33 @@
  */
 
 /*
-* DefaultDispatchedScriptExecutionItem.java
+* ProviderCreationError.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Mar 10, 2010 11:13:02 AM
-* $Id$
+* Created: 3/22/11 3:15 PM
+* 
 */
-package com.dtolabs.rundeck.core.execution;
-
-import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
+package com.dtolabs.rundeck.core.execution.service;
 
 /**
- * DefaultDispatchedScriptExecutionItem is ...
+ * ProviderCreationError is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @version $Revision$
  */
-class DispatchedScriptExecutionItemImpl implements DispatchedScriptExecutionItem{
-    private IDispatchedScript dispatchedScript;
-
-    public DispatchedScriptExecutionItemImpl(final IDispatchedScript dispatchedScript) {
-        this.dispatchedScript = dispatchedScript;
+public class ProviderCreationException extends ServiceProviderException {
+    public ProviderCreationException(String serviceName, String providerName) {
+        super(serviceName, providerName);
     }
 
-    public IDispatchedScript getDispatchedScript() {
-        return dispatchedScript;
+    public ProviderCreationException(String msg, String serviceName, String providerName) {
+        super(msg, serviceName, providerName);
     }
 
-    public void setDispatchedScript(final IDispatchedScript dispatchedScript) {
-        this.dispatchedScript = dispatchedScript;
+    public ProviderCreationException(Exception cause, String serviceName, String providerName) {
+        super(cause, serviceName, providerName);
     }
 
-    public String getType() {
-        return null;
+    public ProviderCreationException(String msg, Exception cause, String serviceName, String providerName) {
+        super(msg, cause, serviceName, providerName);
     }
 }

@@ -15,38 +15,24 @@
  */
 
 /*
-* DefaultDispatchedScriptExecutionItem.java
+* DispatcherResult.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Mar 10, 2010 11:13:02 AM
-* $Id$
+* Created: 3/22/11 7:05 PM
+* 
 */
-package com.dtolabs.rundeck.core.execution;
+package com.dtolabs.rundeck.core.execution.dispatch;
 
-import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
+import com.dtolabs.rundeck.core.execution.StatusResult;
+import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
+
+import java.util.Map;
 
 /**
- * DefaultDispatchedScriptExecutionItem is ...
+ * DispatcherResult is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @version $Revision$
  */
-class DispatchedScriptExecutionItemImpl implements DispatchedScriptExecutionItem{
-    private IDispatchedScript dispatchedScript;
-
-    public DispatchedScriptExecutionItemImpl(final IDispatchedScript dispatchedScript) {
-        this.dispatchedScript = dispatchedScript;
-    }
-
-    public IDispatchedScript getDispatchedScript() {
-        return dispatchedScript;
-    }
-
-    public void setDispatchedScript(final IDispatchedScript dispatchedScript) {
-        this.dispatchedScript = dispatchedScript;
-    }
-
-    public String getType() {
-        return null;
-    }
+public interface DispatcherResult extends StatusResult {
+    public Map<String, InterpreterResult> getResults();
 }

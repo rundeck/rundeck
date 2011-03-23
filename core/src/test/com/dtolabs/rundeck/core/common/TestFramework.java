@@ -66,14 +66,13 @@ public class TestFramework extends AbstractBaseTest {
      */
     public void testConstruction() {
         try {
-            Framework.getInstance(getBaseDir(), getModulesBase(),
-                    getFrameworkProjectsBase());
-            assertTrue("Framework.getInstance should have thrown an exception for missing framework.properties", true);
+            Framework.getInstance(getBaseDir()+"/test", getFrameworkProjectsBase());
+            fail("Framework.getInstance should have thrown an exception for missing framework.properties");
         } catch (Exception e) {
             assertNotNull(e);
         }
 
-        final Framework framework = Framework.getInstance(getBaseDir(), getModulesBase(), getFrameworkProjectsBase());
+        final Framework framework = Framework.getInstance(getBaseDir(), getFrameworkProjectsBase());
         assertNotNull("Framework.getInstance returned null", framework);
         assertTrue("framework.node.hostname property was not set", framework.existsProperty("framework.node.hostname"));
         assertEquals("basedir did not match: " + framework.getBaseDir().getAbsolutePath(), new File(
@@ -82,6 +81,30 @@ public class TestFramework extends AbstractBaseTest {
         assertNotNull("authorization manager was null", framework.getAuthorizationMgr());
         assertNotNull("authentication manager was null", framework.getAuthenticationMgr());
         assertNotNull("FrameworkProjectMgr was null", framework.getFrameworkProjectMgr());
+    }
+
+    public void testServices() {
+        final Framework fw = Framework.getInstance(getBaseDir(), getFrameworkProjectsBase());
+        //test default service implementations
+        assertNotNull(fw.services);
+        assertNotNull(fw.getService("CommandInterpreter"));
+        assertNotNull(fw.getService("NodeExecutor"));
+        assertNotNull(fw.getService("FileCopier"));
+        assertNotNull(fw.getService("NodeDispatcher"));
+    }
+    public void testSetService() {
+        final Framework fw = Framework.getInstance(getBaseDir(), getFrameworkProjectsBase());
+        //test removing services
+        assertNotNull(fw.services);
+        final FrameworkSupportService commandInterpreter = fw.getService("CommandInterpreter");
+        assertNotNull(commandInterpreter);
+        fw.setService("CommandInterpreter", null);
+        assertNull(fw.getService("CommandInterpreter"));
+        fw.setService("CommandInterpreter", commandInterpreter);
+        assertNotNull(fw.getService("CommandInterpreter"));
+        final FrameworkSupportService commandInterpreter2 = fw.getService("CommandInterpreter");
+        assertEquals(commandInterpreter, commandInterpreter2);
+
     }
 
     /**

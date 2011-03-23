@@ -15,38 +15,23 @@
  */
 
 /*
-* DefaultDispatchedScriptExecutionItem.java
+* ExecCommandBase.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Mar 10, 2010 11:13:02 AM
-* $Id$
+* Created: 3/22/11 5:41 PM
+* 
 */
-package com.dtolabs.rundeck.core.execution;
+package com.dtolabs.rundeck.core.execution.commands;
 
-import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
+import java.util.*;
 
 /**
- * DefaultDispatchedScriptExecutionItem is ...
+ * ExecCommandBase is a concrete implementation of ExecCommand that
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @version $Revision$
  */
-class DispatchedScriptExecutionItemImpl implements DispatchedScriptExecutionItem{
-    private IDispatchedScript dispatchedScript;
-
-    public DispatchedScriptExecutionItemImpl(final IDispatchedScript dispatchedScript) {
-        this.dispatchedScript = dispatchedScript;
-    }
-
-    public IDispatchedScript getDispatchedScript() {
-        return dispatchedScript;
-    }
-
-    public void setDispatchedScript(final IDispatchedScript dispatchedScript) {
-        this.dispatchedScript = dispatchedScript;
-    }
-
-    public String getType() {
+public class ExecCommandBase extends ExecCommand{
+    public String[] getCommand() {
         return null;
     }
 }

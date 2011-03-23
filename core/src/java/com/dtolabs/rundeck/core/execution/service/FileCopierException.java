@@ -15,38 +15,33 @@
  */
 
 /*
-* DefaultDispatchedScriptExecutionItem.java
+* FileCopierException.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Mar 10, 2010 11:13:02 AM
-* $Id$
+* Created: 3/22/11 2:33 PM
+* 
 */
-package com.dtolabs.rundeck.core.execution;
-
-import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
+package com.dtolabs.rundeck.core.execution.service;
 
 /**
- * DefaultDispatchedScriptExecutionItem is ...
+ * FileCopierException is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @version $Revision$
  */
-class DispatchedScriptExecutionItemImpl implements DispatchedScriptExecutionItem{
-    private IDispatchedScript dispatchedScript;
-
-    public DispatchedScriptExecutionItemImpl(final IDispatchedScript dispatchedScript) {
-        this.dispatchedScript = dispatchedScript;
+public class FileCopierException extends Exception {
+    public FileCopierException() {
+        super();
     }
 
-    public IDispatchedScript getDispatchedScript() {
-        return dispatchedScript;
+    public FileCopierException(String msg) {
+        super(msg);
     }
 
-    public void setDispatchedScript(final IDispatchedScript dispatchedScript) {
-        this.dispatchedScript = dispatchedScript;
+    public FileCopierException(Exception cause) {
+        super(cause);
     }
 
-    public String getType() {
-        return null;
+    public FileCopierException(String msg, Exception cause) {
+        super(msg, cause);
     }
 }

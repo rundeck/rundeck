@@ -35,22 +35,6 @@ import java.util.*;
  * @version $Revision$
  */
 public class ExecutionServiceFactory {
-    final static HashMap<Class<? extends ExecutionItem>, Class<? extends Executor>> defaultExecutorClasses =
-        new HashMap<Class<? extends ExecutionItem>, Class<? extends Executor>>();
-    final static HashMap<Class<? extends ExecutionItem>, Executor> defaultExecutors =
-        new HashMap<Class<? extends ExecutionItem>, Executor>();
-
-    /**
-     * Reset default executor classes
-     */
-    public static void resetDefaultExecutorClasses() {
-        //register default executors
-        defaultExecutorClasses.put(DispatchedScriptExecutionItem.class, DispatchedScriptExecutor.class);
-    }
-
-    static {
-        resetDefaultExecutorClasses();
-    }
 
     /**
      * Constructor uses default executor classes to create registration.
@@ -75,30 +59,6 @@ public class ExecutionServiceFactory {
     }
 
     /**
-     * Set a default Executor subclass for an ExecutionItem subclass
-     *
-     * @param execItemClass class
-     * @param executorClass class
-     */
-    public static void setDefaultExecutorClass(final Class<? extends ExecutionItem> execItemClass,
-                                               final Class<? extends Executor> executorClass) {
-        defaultExecutorClasses.put(execItemClass, executorClass);
-    }
-
-
-    /**
-     * Set a default Executor instance for an ExecutionItem subclass
-     *
-     * @param execItemClass class
-     * @param executor instance
-     */
-    public static void setDefaultExecutor(final Class<? extends ExecutionItem> execItemClass,
-                                               final Executor executor) {
-        defaultExecutors.put(execItemClass, executor);
-    }
-
-
-    /**
      * Create an ExecutionService implementation
      *
      * @param framework framework
@@ -106,7 +66,7 @@ public class ExecutionServiceFactory {
      * @return ExecutionService
      */
     public ExecutionService createExecutionService(final Framework framework) {
-        return new ExecutionServiceImpl(defaultExecutorClasses, defaultExecutors, framework);
+        return new NewExecutionServiceImpl(framework);
     }
 
     /**
@@ -118,7 +78,7 @@ public class ExecutionServiceFactory {
      * @return ExecutionService
      */
     public ExecutionService createExecutionService(final Framework framework, final ExecutionListener listener) {
-        final ExecutionServiceImpl service = new ExecutionServiceImpl(defaultExecutorClasses, defaultExecutors, framework);
+        final NewExecutionServiceImpl service = new NewExecutionServiceImpl(framework);
         service.setListener(listener);
         return service;
     }

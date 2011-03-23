@@ -15,38 +15,33 @@
  */
 
 /*
-* DefaultDispatchedScriptExecutionItem.java
+* DispatcherException.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Mar 10, 2010 11:13:02 AM
-* $Id$
+* Created: 3/22/11 11:51 AM
+* 
 */
-package com.dtolabs.rundeck.core.execution;
-
-import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
+package com.dtolabs.rundeck.core.execution.dispatch;
 
 /**
- * DefaultDispatchedScriptExecutionItem is ...
+ * DispatcherException is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @version $Revision$
  */
-class DispatchedScriptExecutionItemImpl implements DispatchedScriptExecutionItem{
-    private IDispatchedScript dispatchedScript;
-
-    public DispatchedScriptExecutionItemImpl(final IDispatchedScript dispatchedScript) {
-        this.dispatchedScript = dispatchedScript;
+public class DispatcherException extends Exception {
+    public DispatcherException() {
+        super();
     }
 
-    public IDispatchedScript getDispatchedScript() {
-        return dispatchedScript;
+    public DispatcherException(String msg) {
+        super(msg);
     }
 
-    public void setDispatchedScript(final IDispatchedScript dispatchedScript) {
-        this.dispatchedScript = dispatchedScript;
+    public DispatcherException(Throwable cause) {
+        super(cause);
     }
 
-    public String getType() {
-        return null;
+    public DispatcherException(String msg, Throwable cause) {
+        super(msg, cause);
     }
 }

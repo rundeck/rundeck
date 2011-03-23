@@ -15,38 +15,30 @@
  */
 
 /*
-* DefaultDispatchedScriptExecutionItem.java
+* RemoteFileCopier.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Mar 10, 2010 11:13:02 AM
-* $Id$
+* Created: 3/21/11 4:47 PM
+* 
 */
-package com.dtolabs.rundeck.core.execution;
+package com.dtolabs.rundeck.core.execution.service;
 
-import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
+import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.ExecutionContext;
+
+import java.io.File;
+import java.io.InputStream;
 
 /**
- * DefaultDispatchedScriptExecutionItem is ...
+ * RemoteFileCopier is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @version $Revision$
  */
-class DispatchedScriptExecutionItemImpl implements DispatchedScriptExecutionItem{
-    private IDispatchedScript dispatchedScript;
+public interface FileCopier {
+    public String copyFileStream(final ExecutionContext context, InputStream input, INodeEntry node) throws
+        FileCopierException;
 
-    public DispatchedScriptExecutionItemImpl(final IDispatchedScript dispatchedScript) {
-        this.dispatchedScript = dispatchedScript;
-    }
+    public String copyFile(final ExecutionContext context, File file, INodeEntry node) throws FileCopierException;
 
-    public IDispatchedScript getDispatchedScript() {
-        return dispatchedScript;
-    }
-
-    public void setDispatchedScript(final IDispatchedScript dispatchedScript) {
-        this.dispatchedScript = dispatchedScript;
-    }
-
-    public String getType() {
-        return null;
-    }
+    public String copyScriptContent(final ExecutionContext context, String script, INodeEntry node) throws FileCopierException;
 }

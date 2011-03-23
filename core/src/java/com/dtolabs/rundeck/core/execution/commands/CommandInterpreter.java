@@ -15,38 +15,25 @@
  */
 
 /*
-* DefaultDispatchedScriptExecutionItem.java
+* CommandInterpreter.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Mar 10, 2010 11:13:02 AM
-* $Id$
+* Created: 3/21/11 4:09 PM
+* 
 */
-package com.dtolabs.rundeck.core.execution;
+package com.dtolabs.rundeck.core.execution.commands;
 
-import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
+import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.ExecutionResult;
 
 /**
- * DefaultDispatchedScriptExecutionItem is ...
+ * CommandInterpreter is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @version $Revision$
  */
-class DispatchedScriptExecutionItemImpl implements DispatchedScriptExecutionItem{
-    private IDispatchedScript dispatchedScript;
-
-    public DispatchedScriptExecutionItemImpl(final IDispatchedScript dispatchedScript) {
-        this.dispatchedScript = dispatchedScript;
-    }
-
-    public IDispatchedScript getDispatchedScript() {
-        return dispatchedScript;
-    }
-
-    public void setDispatchedScript(final IDispatchedScript dispatchedScript) {
-        this.dispatchedScript = dispatchedScript;
-    }
-
-    public String getType() {
-        return null;
-    }
+public interface CommandInterpreter {
+    public InterpreterResult interpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node) throws
+        InterpreterException;
 }

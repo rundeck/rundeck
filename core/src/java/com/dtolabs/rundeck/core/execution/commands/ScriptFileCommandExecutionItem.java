@@ -15,31 +15,45 @@
  */
 
 /*
-* ExecutionService.java
+* ScriptFileCommandExecutionItem.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Mar 3, 2010 11:07:14 AM
-* $Id$
+* Created: 3/22/11 5:43 PM
+* 
 */
-package com.dtolabs.rundeck.core.execution;
+package com.dtolabs.rundeck.core.execution.commands;
+
+import com.dtolabs.rundeck.core.execution.ExecutionItem;
+
+import java.io.InputStream;
 
 /**
- * ExecutionService is ...
+ * ScriptFileCommandExecutionItem is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @version $Revision$
  */
-public interface ExecutionService {
-    /**
-     * Execute the item and return the result.
-     * @param item item
-     * @return result
-     */
-    public ExecutionResult executeItem(ExecutionContext context, ExecutionItem item) throws ExecutionException;
+public interface ScriptFileCommandExecutionItem extends ExecutionItem {
 
     /**
-     * Return the execution listener if any
-     * @return
+     * Get the full script
+     *
+     * @return the script string
      */
-    public ExecutionListener getListener();
+    public abstract String getScript();
+
+    /**
+     * Get an InputStream that can provide the full script
+     *
+     * @return the inputstream
+     *
+     * @throws java.io.IOException if an error occurs reading or getting the input stream
+     */
+    public abstract InputStream getScriptAsStream();
+
+    /**
+     * Get the server-local script path
+     *
+     * @return server-side script path
+     */
+    public abstract String getServerScriptFilePath();
 }

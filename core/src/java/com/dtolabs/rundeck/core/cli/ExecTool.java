@@ -23,6 +23,9 @@ import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException;
 import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
 import com.dtolabs.rundeck.core.dispatcher.QueuedItemResult;
 import com.dtolabs.rundeck.core.execution.*;
+import com.dtolabs.rundeck.core.execution.commands.ExecCommand;
+import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
+import com.dtolabs.rundeck.core.execution.commands.ScriptFileCommand;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.utils.*;
 import org.apache.commons.cli.*;
@@ -39,7 +42,7 @@ import java.util.*;
  * Main class for <code>dispatch</code> command line tool. This command will dispatch the command either locally or
  * remotely.
  */
-public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
+public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, ExecutionContext {
 
     /**
      * Short option value for filter exclude precedence option
@@ -486,6 +489,22 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
 
     public static final String DEFAULT_LOG_FORMAT = "[%user@%node %command][%level] %message";
     public static final String FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT = "framework.log.dispatch.console.format";
+
+    public ExecutionListener getExecutionListener() {
+        return getExecutionListener(null);
+    }
+    public ExecutionListener getExecutionListener(BuildListener blistener) {
+
+        final String logformat;
+        if (getFramework().existsProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT)) {
+            logformat = getFramework().getProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT);
+        } else {
+            logformat = null;
+        }
+        return new CLIExecutionListener(blistener,
+            FailedNodesFilestore.createListener(getFailedNodes()), this, this, argTerse, logformat);
+    }
+
     /**
      *
      * Execute the script with the ExecutionService layer, using a build listener
@@ -494,10 +513,9 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
      */
     void runAction(final BuildListener listener) throws Exception {
         ExecutionResult result=null;
-        final DispatchedScriptExecutionItem executionItem =
-            ExecutionServiceFactory.createDispatchedScriptExecutionItem(this);
+        Exception exception=null;
         final Date startDate=new Date();
-        final String user = getFramework().getAuthenticationMgr().getUserInfoWithoutPrompt().getUsername();
+        final String user = getUser();
         try {
             //set up build listener
             final BuildListener blistener;
@@ -524,32 +542,24 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
             }else if(null!=scriptpath){
                 setScriptAsStream(new FileInputStream(getScriptpath()));
             }
-            final String logformat;
-            if (getFramework().existsProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT)) {
-                logformat = getFramework().getProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT);
-            }else{
-                logformat=null;
-            }
             //configure execution listener
-            final ExecutionListener executionListener = new CLIExecutionListener(blistener,
-                FailedNodesFilestore.createListener(getFailedNodes()), this, this, argTerse, logformat);
+            final ExecutionListener executionListener = getExecutionListener(blistener);
 
             //acquire ExecutionService object
             final ExecutionService service = ExecutionServiceFactory.instance().createExecutionService(framework,
                 executionListener);
             
             //submit the execution request to the service layer
-            result = service.executeItem(executionItem);
+            result = service.executeItem(this, createExecutionItem());
         } catch (ExecutionException e) {
             error("Unable to perform the execution: " + e.getMessage());
+            exception = e;
         }
 
 
         final String tags;
-        if (null != executionItem.getDispatchedScript().getNodeSet()
-            && null != executionItem.getDispatchedScript().getNodeSet().getInclude()
-            && executionItem.getDispatchedScript().getNodeSet().getInclude().getTags() != null) {
-            tags = executionItem.getDispatchedScript().getNodeSet().getInclude().getTags();
+        if (null != getNodeSet() && null != getNodeSet().getInclude() && getNodeSet().getInclude().getTags() != null) {
+            tags = getNodeSet().getInclude().getTags();
         } else {
             tags = null;
         }
@@ -562,7 +572,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
 
             try {
                 framework.getCentralDispatcherMgr().reportExecutionStatus(
-                    executionItem.getDispatchedScript().getFrameworkProject(), "dispatch", "succeeded",
+                    getFrameworkProject(), "dispatch", "succeeded",
                     0, nodeEntryCollection.size(), tags, script, resultString, startDate, new Date());
             } catch (CentralDispatcherException e) {
                 e.printStackTrace();
@@ -583,10 +593,17 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
             if(null!=failure.getNodeset()){
                 failednodes = failure.getNodeset().size();
             }
+        }else if(null!=result && null!=result.getResultObject() && null!=result.getResultObject().getResults()){
+            for (final String node : result.getResultObject().getResults().keySet()) {
+                final InterpreterResult interpreterResult = result.getResultObject().getResults().get(node);
+                if(interpreterResult.isSuccess()){
+                    failednodes--;
+                }
+            }
         }
         try {
             framework.getCentralDispatcherMgr().reportExecutionStatus(
-                executionItem.getDispatchedScript().getFrameworkProject(), "dispatch", "failed",
+                getFrameworkProject(), "dispatch", "failed",
                 failednodes, nodeEntryCollection.size() - failednodes, tags, script,
                 failureString, startDate, new Date());
         } catch (CentralDispatcherException e) {
@@ -594,10 +611,41 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
         }
         if(null!=result && null!=result.getException()) {
             throw result.getException();
-        }else{
-            throw new CoreException("action failed: result was null" );
+        }else if(null!=exception){
+            throw exception;
+        }else {
+            throw new CoreException(failureString);
         }
 
+    }
+
+    ExecutionItem createExecutionItem() {
+        if(null!=getScript() || null!=getServerScriptFilePath() || null!=getScriptAsStream()){
+            return new ScriptFileCommand() {
+                public String getScript() {
+                    return ExecTool.this.getScript();
+                }
+
+                public InputStream getScriptAsStream() {
+                    return ExecTool.this.getScriptAsStream();
+                }
+
+                public String getServerScriptFilePath() {
+                    return ExecTool.this.getServerScriptFilePath();
+                }
+            };
+        }else{
+            return new ExecCommand() {
+                public String[] getCommand(){
+                    return ExecTool.this.getArgs();
+                }
+            };
+        }
+
+    }
+
+    public String getUser() {
+        return getFramework().getAuthenticationMgr().getUserInfoWithoutPrompt().getUsername();
     }
 
 

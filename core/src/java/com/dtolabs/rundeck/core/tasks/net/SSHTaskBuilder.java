@@ -57,7 +57,7 @@ public class SSHTaskBuilder {
      * @param dataContext
      * @return task
      */
-    public static Task build(final INodeEntry nodeentry, final String[] args, final Project project,
+    public static ExtSSHExec build(final INodeEntry nodeentry, final String[] args, final Project project,
                              final Framework framework, final long timeout, final Map<String, Map<String, String>> dataContext) throws
         BuilderException {
         final INodeAuthResolutionStrategy nodeAuth = framework.getNodeAuthResolutionStrategy();

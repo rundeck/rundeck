@@ -15,38 +15,28 @@
  */
 
 /*
-* DefaultDispatchedScriptExecutionItem.java
+* ScriptFileExecutionItem.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Mar 10, 2010 11:13:02 AM
-* $Id$
+* Created: 3/21/11 4:37 PM
+* 
 */
-package com.dtolabs.rundeck.core.execution;
+package com.dtolabs.rundeck.core.execution.commands;
 
-import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
+import com.dtolabs.rundeck.core.execution.ExecutionItem;
+
+import java.io.InputStream;
+import java.util.*;
 
 /**
- * DefaultDispatchedScriptExecutionItem is ...
+ * ScriptFileExecutionItem is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @version $Revision$
  */
-class DispatchedScriptExecutionItemImpl implements DispatchedScriptExecutionItem{
-    private IDispatchedScript dispatchedScript;
-
-    public DispatchedScriptExecutionItemImpl(final IDispatchedScript dispatchedScript) {
-        this.dispatchedScript = dispatchedScript;
-    }
-
-    public IDispatchedScript getDispatchedScript() {
-        return dispatchedScript;
-    }
-
-    public void setDispatchedScript(final IDispatchedScript dispatchedScript) {
-        this.dispatchedScript = dispatchedScript;
-    }
+public abstract class ScriptFileCommand implements ScriptFileCommandExecutionItem {
 
     public String getType() {
-        return null;
+        return ScriptFileCommandInterpreter.SERVICE_IMPLEMENTATION_NAME;
     }
+
 }

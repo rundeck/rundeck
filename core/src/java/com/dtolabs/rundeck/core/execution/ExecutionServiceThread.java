@@ -49,11 +49,14 @@ public class ExecutionServiceThread extends Thread {
     }
 
     public void run() {
+        if(true){
+            throw new RuntimeException("todo; fix ExecutionServiceThread");
+        }
         if (null == this.eservice || null == this.eitem) {
             throw new IllegalStateException("project or execution detail not instantiated");
         }
         try {
-            result = eservice.executeItem(eitem);
+            result = eservice.executeItem(null, eitem);
             success = result.isSuccess();
             if (null != result.getException()) {
                 thrown = result.getException();
