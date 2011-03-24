@@ -33,7 +33,6 @@ import org.apache.log4j.PropertyConfigurator;
 import org.apache.tools.ant.BuildEvent;
 import org.apache.tools.ant.BuildListener;
 import org.apache.tools.ant.Project;
-import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
 import java.util.*;
@@ -491,7 +490,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
     public static final String FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT = "framework.log.dispatch.console.format";
 
     public ExecutionListener getExecutionListener() {
-        return getExecutionListener(null);
+        return getExecutionListener(createExecToolCommandLogger(getAntLoglevel(), null));
     }
     public ExecutionListener getExecutionListener(BuildListener blistener) {
 
@@ -527,6 +526,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
                 map.put(Project.MSG_INFO, Project.MSG_WARN);
                 blistener=new LogLevelConvertBuildListener(listener, map);
             }else {
+                //XXX need this in exec listener?
                 blistener = createExecToolCommandLogger(getAntLoglevel(), null);
             }
             //store inline script content (via STDIN or script property) to a temp file
@@ -542,12 +542,8 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
             }else if(null!=scriptpath){
                 setScriptAsStream(new FileInputStream(getScriptpath()));
             }
-            //configure execution listener
-            final ExecutionListener executionListener = getExecutionListener(blistener);
-
             //acquire ExecutionService object
-            final ExecutionService service = ExecutionServiceFactory.instance().createExecutionService(framework,
-                executionListener);
+            final ExecutionService service = framework.getExecutionService();
             
             //submit the execution request to the service layer
             result = service.executeItem(this, createExecutionItem());

@@ -29,7 +29,7 @@ import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
 import java.util.Map;
 
 /**
- * DispatcherResult is ...
+ * DispatcherResult can return a map of Node names to respective InterpreterResults.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */

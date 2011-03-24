@@ -37,26 +37,28 @@ package com.dtolabs.rundeck.core.execution;
 public class ExecutionServiceThread extends Thread {
     ExecutionService eservice;
     ExecutionItem eitem;
+    ExecutionContext econtext;
     volatile boolean success = false;
     private volatile boolean aborted = false;
     volatile Exception thrown;
     volatile Object resultObject;
     volatile ExecutionResult result;
 
-    public ExecutionServiceThread(final ExecutionService eservice, final ExecutionItem eitem) {
+    public ExecutionServiceThread(ExecutionService eservice, ExecutionItem eitem, ExecutionContext econtext) {
         this.eservice = eservice;
         this.eitem = eitem;
+        this.econtext = econtext;
     }
 
     public void run() {
-        if(true){
-            throw new RuntimeException("todo; fix ExecutionServiceThread");
-        }
-        if (null == this.eservice || null == this.eitem) {
+//        if(true){
+//            throw new RuntimeException("todo; fix ExecutionServiceThread");
+//        }
+        if (null == this.eservice || null == this.eitem || null==this.econtext) {
             throw new IllegalStateException("project or execution detail not instantiated");
         }
         try {
-            result = eservice.executeItem(null, eitem);
+            result = eservice.executeItem(econtext, eitem);
             success = result.isSuccess();
             if (null != result.getException()) {
                 thrown = result.getException();

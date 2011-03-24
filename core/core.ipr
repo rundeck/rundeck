@@ -80,7 +80,20 @@
     <setting name="root" />
   </component>
   <component name="GradleUISettings2">
-    <setting name="root" />
+    <setting name="root">
+      <setting name="task-tab">
+        <setting name="show-description" value="true" />
+      </setting>
+      <setting name="favorites-tab" />
+      <setting name="command_line-tab" />
+      <setting name="setup-tab">
+        <setting name="setup">
+          <setting name="custom-gradle-executor" />
+          <setting name="current-directory" value="$PROJECT_DIR$" />
+          <setting name="log-level" value="LIFECYCLE" />
+        </setting>
+      </setting>
+    </setting>
   </component>
   <component name="IdProvider" IDEtalkID="48BED7A3BBCF3323B91068465D3FF55D" />
   <component name="InspectionProjectProfileManager">
@@ -136,6 +149,11 @@
         </inspection_tool>
         <inspection_tool class="RequiredAttributes" enabled="true" level="WARNING" enabled_by_default="true">
           <option name="myAdditionalRequiredHtmlAttributes" value="type" />
+        </inspection_tool>
+        <inspection_tool class="SpellCheckingInspection" enabled="false" level="TYPO" enabled_by_default="false">
+          <option name="processCode" value="true" />
+          <option name="processLiterals" value="true" />
+          <option name="processComments" value="true" />
         </inspection_tool>
       </profile>
     </profiles>

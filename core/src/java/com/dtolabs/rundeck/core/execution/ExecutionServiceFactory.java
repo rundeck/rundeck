@@ -26,8 +26,6 @@ package com.dtolabs.rundeck.core.execution;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
 
-import java.util.*;
-
 /**
  * ExecutionServiceFactory creates ExecutionServices.
  *
@@ -36,64 +34,16 @@ import java.util.*;
  */
 public class ExecutionServiceFactory {
 
-    /**
-     * Constructor uses default executor classes to create registration.
-     */
     private ExecutionServiceFactory() {
     }
 
-
-    /**
-     * Singleton instance of the factory
-     */
-    private static final ExecutionServiceFactory instance = new ExecutionServiceFactory();
-
-
-    /**
-     * Return the factory instance
-     *
-     * @return instance
-     */
-    public static ExecutionServiceFactory instance() {
-        return instance;
+    public static ExecutionService getInstanceForFramework(final Framework framework) {
+        if (null == framework.getService(ExecutionService.SERVICE_NAME)) {
+            final ExecutionService service = new NewExecutionServiceImpl(framework);
+            framework.setService(ExecutionService.SERVICE_NAME, service);
+            return service;
+        }
+        return (ExecutionService) framework.getService(ExecutionService.SERVICE_NAME);
     }
 
-    /**
-     * Create an ExecutionService implementation
-     *
-     * @param framework framework
-     *
-     * @return ExecutionService
-     */
-    public ExecutionService createExecutionService(final Framework framework) {
-        return new NewExecutionServiceImpl(framework);
-    }
-
-    /**
-     * Create an ExecutionService implementation with a Listener
-     *
-     * @param framework framework
-     * @param listener  listener
-     *
-     * @return ExecutionService
-     */
-    public ExecutionService createExecutionService(final Framework framework, final ExecutionListener listener) {
-        final NewExecutionServiceImpl service = new NewExecutionServiceImpl(framework);
-        service.setListener(listener);
-        return service;
-    }
-
-
-    /**
-     * Construct a DispatchedScriptExecutionItem
-     *
-     * @param dispatchedScript dispatched script
-     *
-     * @return item
-     */
-    public static DispatchedScriptExecutionItem createDispatchedScriptExecutionItem(
-        final IDispatchedScript dispatchedScript) {
-        return new DispatchedScriptExecutionItemImpl(dispatchedScript);
-
-    }
 }

@@ -42,7 +42,6 @@ import java.util.*;
  */
 public class NewExecutionServiceImpl implements ExecutionService{
     private final Framework framework;
-    private ExecutionListener listener;
 
     public NewExecutionServiceImpl(Framework framework) {
         this.framework = framework;
@@ -82,11 +81,7 @@ public class NewExecutionServiceImpl implements ExecutionService{
         return new BaseExecutionResult(result, success, exception);
     }
 
-    public ExecutionListener getListener() {
-        return null;
-    }
-
-    void setListener(ExecutionListener listener) {
-        this.listener = listener;
+    public String getName() {
+        return SERVICE_NAME;
     }
 }

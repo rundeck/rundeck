@@ -23,13 +23,16 @@
 */
 package com.dtolabs.rundeck.core.execution;
 
+import com.dtolabs.rundeck.core.common.FrameworkSupportService;
+
 /**
  * ExecutionService is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public interface ExecutionService {
+public interface ExecutionService extends FrameworkSupportService{
+    public static final String SERVICE_NAME = "ExecutionService";
     /**
      * Execute the item and return the result.
      * @param item item
@@ -37,9 +40,4 @@ public interface ExecutionService {
      */
     public ExecutionResult executeItem(ExecutionContext context, ExecutionItem item) throws ExecutionException;
 
-    /**
-     * Return the execution listener if any
-     * @return
-     */
-    public ExecutionListener getListener();
 }
