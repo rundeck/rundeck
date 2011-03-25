@@ -36,8 +36,8 @@ import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor;
 public class NodeExecutorService extends NodeSpecifiedService<NodeExecutor> {
     private static final String SERVICE_NAME = "NodeExecutor";
     private static final String SERVICE_FILECOPIER_DEFAULT_TYPE = "service.nodeexec.default.type";
-    private static final String NODE_SERVICE_SPECIFIER_ATTRIBUTE = "exec-service";
-    private static final String LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "local-exec-service";
+    public static final String NODE_SERVICE_SPECIFIER_ATTRIBUTE = "exec-service";
+    public static final String LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "local-exec-service";
 
     public String getName() {
         return SERVICE_NAME;

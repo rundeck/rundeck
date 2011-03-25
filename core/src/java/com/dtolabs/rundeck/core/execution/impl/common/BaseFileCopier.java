@@ -86,7 +86,7 @@ public class BaseFileCopier {
         return tempfile;
     }
 
-    protected String appendRemoteFileExtensionForNode(INodeEntry node, String remoteFilename) {
+    public String appendRemoteFileExtensionForNode(INodeEntry node, String remoteFilename) {
         if ("windows".equalsIgnoreCase(node.getOsFamily().trim())) {
             remoteFilename += (remoteFilename.endsWith(".bat") ? "" : ".bat");
         } else {
@@ -95,7 +95,7 @@ public class BaseFileCopier {
         return remoteFilename;
     }
 
-    protected String getRemoteDirForNode(INodeEntry node) {
+    public String getRemoteDirForNode(INodeEntry node) {
         //TODO: allow set temp dir via node attribute
         String remotedir = "/tmp/";
         if ("windows".equalsIgnoreCase(node.getOsFamily().trim())) {

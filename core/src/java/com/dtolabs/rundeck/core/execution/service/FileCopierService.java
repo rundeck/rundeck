@@ -36,8 +36,8 @@ import com.dtolabs.rundeck.core.execution.impl.local.LocalFileCopier;
 public class FileCopierService extends NodeSpecifiedService<FileCopier> {
     private static final String SERVICE_NAME = "FileCopier";
     private static final String SERVICE_FILECOPIER_DEFAULT_TYPE = "service.filecopier.default.type";
-    private static final String REMOTE_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "remote-file-copy-service";
-    private static final String LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "local-file-copy-service";
+    public static final String REMOTE_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "remote-file-copy-service";
+    public static final String LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "local-file-copy-service";
 
     public String getName() {
         return SERVICE_NAME;

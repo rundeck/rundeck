@@ -78,8 +78,6 @@ public class ScriptFileCommandInterpreter implements CommandInterpreter {
 
 
         try {
-            ///TODO: set executable bit if necessary???
-
             /**
              * TODO: Avoid this horrific hack. Discover how to get SCP task to preserve the execute bit.
              */
