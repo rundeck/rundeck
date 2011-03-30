@@ -62,7 +62,7 @@ clean:
 
 	@echo "Cleaning..."
 	#clean localrepo of build artifacts
-	#rm -r ${BUILD_ROOT}/localrepo/rundeck*
+	-rm -r build/localrepo/rundeck*
 
 	#remove rundeckapp lib dir which may contain previously built jars
 	-rm rundeckapp/lib/rundeck*.jar
