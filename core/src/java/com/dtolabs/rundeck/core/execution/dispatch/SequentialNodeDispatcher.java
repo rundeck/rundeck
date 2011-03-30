@@ -23,14 +23,12 @@
 */
 package com.dtolabs.rundeck.core.execution.dispatch;
 
+import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.NodesetFailureException;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.NodeFileParserException;
-import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
-import com.dtolabs.rundeck.core.execution.ExecutionServiceThread;
-import com.dtolabs.rundeck.core.execution.FailedNodesListener;
+import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.commands.CommandInterpreter;
 import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
 import com.dtolabs.rundeck.core.utils.NodeSet;
@@ -49,7 +47,20 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
         this.framework = framework;
     }
 
-    public DispatcherResult dispatch(ExecutionContext context, CommandInterpreter interpreter, ExecutionItem item) throws
+    public DispatcherResult dispatch(final ExecutionContext context,
+                                     final ExecutionItem item) throws
+        DispatcherException {
+        return dispatch(context, item, null);
+    }
+
+    public DispatcherResult dispatch(final ExecutionContext context,
+                                     final Dispatchable item) throws
+        DispatcherException {
+        return dispatch(context, null, item);
+    }
+
+    public DispatcherResult dispatch(final ExecutionContext context,
+                                     final ExecutionItem item, final Dispatchable toDispatch) throws
         DispatcherException {
         final NodeSet nodeset = context.getNodeSet();
         Collection<INodeEntry> nodes = null;
@@ -60,7 +71,7 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
         }
         boolean keepgoing = nodeset.isKeepgoing();
 
-//        project.log("preparing for sequential execution...", Project.MSG_DEBUG);
+        context.getExecutionListener().log(4, "preparing for sequential execution on " + nodes.size() + " nodes");
         final HashSet<String> nodeNames = new HashSet<String>();
         for (final Object node1 : nodes) {
             final INodeEntry node = (INodeEntry) node1;
@@ -72,8 +83,8 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
         }
         boolean interrupted = false;
         final Thread thread = Thread.currentThread();
-        boolean success=true;
-        final HashMap<String, InterpreterResult> resultMap=new HashMap<String, InterpreterResult>();
+        boolean success = true;
+        final HashMap<String, StatusResult> resultMap = new HashMap<String, StatusResult>();
         for (final Object node1 : nodes) {
             if (thread.isInterrupted()
                 || thread instanceof ExecutionServiceThread && ((ExecutionServiceThread) thread).isAborted()) {
@@ -81,22 +92,33 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                 break;
             }
             final INodeEntry node = (INodeEntry) node1;
-//                project.log("Executing command on node: " + node.getNodename() + ", " + node.toString(), Project.MSG_DEBUG);
+            context.getExecutionListener().log(4,
+                "Executing command on node: " + node.getNodename() + ", " + node.toString());
             try {
-//                final Callable task = factory.createCallable(node);
 
                 if (thread.isInterrupted()
                     || thread instanceof ExecutionServiceThread && ((ExecutionServiceThread) thread).isAborted()) {
                     interrupted = true;
                     break;
                 }
-//                task.call();
-                final InterpreterResult interpreterResult = interpreter.interpretCommand(context, item, node);
-                if(null!=interpreterResult){
-                    resultMap.put(node.getNodename(), interpreterResult);
+                final StatusResult result;
+                ExecutionContext interimcontext = ExecutionContextImpl.createExecutionContextImpl(context, node);
+                if (null != item) {
+                    final InterpreterResult interpreterResult = framework.getExecutionService().interpretCommand(
+                        interimcontext, item, node);
+                    result = interpreterResult;
+                } else {
+                    result = toDispatch.dispatch(interimcontext, node);
+
                 }
-                if (null == interpreterResult || !interpreterResult.isSuccess()) {
+
+                if (null != result) {
+                    resultMap.put(node.getNodename(), result);
+                }
+                if (null == result || !result.isSuccess()) {
                     success = false;
+                    context.getExecutionListener().log(Constants.ERR_LEVEL,
+                        "Failed execution for node: " + node.getNodename() + ": " + result);
                     if (!keepgoing) {
                         break;
                     }
@@ -104,7 +126,7 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                     nodeNames.remove(node.getNodename());
                 }
             } catch (Throwable e) {
-                success=false;
+                success = false;
                 if (!keepgoing) {
                     if (nodeNames.size() > 0 && null != failedListener) {
                         //tell listener of failed node list
@@ -113,11 +135,12 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
 //                    if (e instanceof BuildException) {
 //                        throw (BuildException) e;
 //                    } else {
-                    throw new DispatcherException("Error dispatching execution", e);
+                    throw new DispatcherException("Error dispatching execution: "+e.getMessage(), e);
 //                    }
-                }else{
+                } else {
                     //TODO: need to report failure of node
-//                    project.log("Failed execution for node: " + node.getNodename() + ": " + e.getMessage(), Project.MSG_ERR);
+                    context.getExecutionListener().log(Constants.ERR_LEVEL,
+                        "Failed execution for node: " + node.getNodename() + ": " + e.getMessage());
                 }
             }
         }
@@ -136,9 +159,9 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
             throw new DispatcherException("Node dispatch interrupted");
         }
 
-        final boolean status=success;
+        final boolean status = success;
         return new DispatcherResult() {
-            public Map<String, InterpreterResult> getResults() {
+            public Map<String, ? extends StatusResult> getResults() {
                 return resultMap;
             }
 

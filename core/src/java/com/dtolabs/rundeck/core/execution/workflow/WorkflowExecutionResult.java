@@ -15,24 +15,36 @@
  */
 
 /*
-* IWorkflowJobItem.java
+* WorkflowExecutionResult.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Mar 17, 2010 1:04:41 PM
-* $Id$
+* Created: 3/23/11 2:06 PM
+* 
 */
-package com.dtolabs.rundeck.execution;
+package com.dtolabs.rundeck.core.execution.workflow;
+
+import com.dtolabs.rundeck.core.execution.StatusResult;
+import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
- * IWorkflowJobItem is ...
+ * WorkflowExecutionResult contains a map of Node names to workflow item results, and
+ * node names to failure messages.
+ *
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @version $Revision$
  */
-public interface IWorkflowJobItem extends IWorkflowCmdItem{
+public interface WorkflowExecutionResult extends StatusResult {
     /**
-     * Return a string identifying the job to execute
-     * @return identifier string
+     * Return map of workflow item results, keyed by node name with a list of results ordered by workflow step
      */
-    public String getJobIdentifier();
+    public Map<String,List<StatusResult>> getResultSet();
+    /**
+     * Return map of workflow item failures, keyed by node name
+     */
+    public Map<String, Collection<String>> getFailureMessages();
+    public Exception getException();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+ * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,34 +15,24 @@
  */
 
 /*
-* ExecutionServiceMgr.java
+* WorkflowStrategy.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Mar 3, 2010 11:06:47 AM
+* Created: Aug 26, 2010 2:13:06 PM
 * $Id$
 */
-package com.dtolabs.rundeck.core.execution;
+package com.dtolabs.rundeck.core.execution.workflow;
 
-import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.execution.*;
 
 /**
- * ExecutionServiceFactory creates ExecutionServices.
+ * WorkflowStrategy interface performs the workflow execution and returns an ExecutionResult
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public class ExecutionServiceFactory {
-
-    private ExecutionServiceFactory() {
-    }
-
-    public static ExecutionService getInstanceForFramework(final Framework framework) {
-        if (null == framework.getService(ExecutionService.SERVICE_NAME)) {
-            final ExecutionService service = new ExecutionServiceImpl(framework);
-            framework.setService(ExecutionService.SERVICE_NAME, service);
-            return service;
-        }
-        return (ExecutionService) framework.getService(ExecutionService.SERVICE_NAME);
-    }
+public interface WorkflowStrategy extends WorkflowExecutor{
+    public static final String NODE_FIRST = "node-first";
+    public static final String STEP_FIRST = "step-first";
 
 }

@@ -85,6 +85,10 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                     return PROJ_NAME;
                 }
 
+                public Framework getFramework() {
+                    return frameworkInstance;
+                }
+
                 public String getUser() {
                     return "blah";
                 }
@@ -124,6 +128,10 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
             final ExecutionContext context = new ExecutionContext() {
                 public String getFrameworkProject() {
                     return PROJ_NAME;
+                }
+
+                public Framework getFramework() {
+                    return frameworkInstance;
                 }
 
                 public String getUser() {
@@ -167,6 +175,10 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                     return PROJ_NAME;
                 }
 
+                public Framework getFramework() {
+                    return frameworkInstance;
+                }
+
                 public String getUser() {
                     return "blah";
                 }
@@ -206,6 +218,10 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
             final ExecutionContext context = new ExecutionContext() {
                 public String getFrameworkProject() {
                     return PROJ_NAME;
+                }
+
+                public Framework getFramework() {
+                    return frameworkInstance;
                 }
 
                 public String getUser() {

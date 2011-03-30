@@ -142,6 +142,7 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
      * filepath
      */
     public void testInterpretCommandScriptContentLocalUnix() throws Exception {
+        final Framework frameworkInstance = getFrameworkInstance();
         ScriptFileCommandInterpreter interpret = new ScriptFileCommandInterpreter(getFrameworkInstance());
 
         //setup nodeexecutor for local node
@@ -159,6 +160,10 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
         final ExecutionContext context = new ExecutionContext() {
             public String getFrameworkProject() {
                 return PROJ_NAME;
+            }
+
+            public Framework getFramework() {
+                return frameworkInstance;
             }
 
             public String getUser() {
@@ -199,6 +204,10 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
 
             public String getServerScriptFilePath() {
                 return null;
+            }
+
+            public String[] getArgs() {
+                return new String[0];
             }
         };
         {
@@ -255,12 +264,10 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
     }
 
     /**
-     * Unix target node will copy using file copier, then exec "chmod +x [destfile]", then execute the
-     * filepath.
-     *
-     * test result if chmod fails.
+     * Unix target node will copy using file copier, then exec "chmod +x [destfile]", then execute the filepath
      */
-    public void testInterpretCommandScriptContentLocalUnixChmodFailure() throws Exception {
+    public void testInterpretCommandScriptContentWithArgs() throws Exception {
+        final Framework frameworkInstance = getFrameworkInstance();
         ScriptFileCommandInterpreter interpret = new ScriptFileCommandInterpreter(getFrameworkInstance());
 
         //setup nodeexecutor for local node
@@ -278,6 +285,10 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
         final ExecutionContext context = new ExecutionContext() {
             public String getFrameworkProject() {
                 return PROJ_NAME;
+            }
+
+            public Framework getFramework() {
+                return frameworkInstance;
             }
 
             public String getUser() {
@@ -318,6 +329,141 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
 
             public String getServerScriptFilePath() {
                 return null;
+            }
+
+            public String[] getArgs() {
+                return new String[]{"some","args"};
+            }
+        };
+        {
+            final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>();
+            nodeExecutorResults.add(new NodeExecutorResult() {
+                public int getResultCode() {
+                    return 1;
+                }
+
+                public boolean isSuccess() {
+                    return true;
+                }
+            });
+            nodeExecutorResults.add(new NodeExecutorResult() {
+                public int getResultCode() {
+                    return 2;
+                }
+
+                public boolean isSuccess() {
+                    return true;
+                }
+            });
+            testexec.testResult = nodeExecutorResults;
+            testcopier.testResult = "/test/file/path";
+            final InterpreterResult interpreterResult = interpret.interpretCommand(context, command, test1);
+
+            assertNotNull(interpreterResult);
+            assertTrue(interpreterResult.isSuccess());
+            assertEquals(interpreterResult, nodeExecutorResults.get(1));
+
+            assertEquals(context, testcopier.testContext);
+            assertEquals(testScript, testcopier.testScript);
+            assertEquals(test1, testcopier.testNode);
+
+            //test nodeexecutor was called twice
+            assertEquals(2, testexec.index);
+            //first call is chmod +x filepath
+            final String[] strings = testexec.testCommand.get(0);
+            assertEquals(3, strings.length);
+            assertEquals("chmod", strings[0]);
+            assertEquals("+x", strings[1]);
+            assertEquals("/test/file/path", strings[2]);
+            assertEquals(context, testexec.testContext.get(0));
+            assertEquals(test1, testexec.testNode.get(0));
+
+            //second call is to exec the filepath
+            final String[] strings2 = testexec.testCommand.get(1);
+            assertEquals(3, strings2.length);
+            assertEquals(strings2[0], strings[2]);
+            assertEquals("/test/file/path", strings2[0]);
+            assertEquals("some", strings2[1]);
+            assertEquals("args", strings2[2]);
+            assertEquals(context, testexec.testContext.get(1));
+            assertEquals(test1, testexec.testNode.get(1));
+        }
+    }
+
+    /**
+     * Unix target node will copy using file copier, then exec "chmod +x [destfile]", then execute the
+     * filepath.
+     *
+     * test result if chmod fails.
+     */
+    public void testInterpretCommandScriptContentLocalUnixChmodFailure() throws Exception {
+        final Framework frameworkInstance = getFrameworkInstance();
+        ScriptFileCommandInterpreter interpret = new ScriptFileCommandInterpreter(frameworkInstance);
+
+        //setup nodeexecutor for local node
+        multiTestNodeExecutor testexec = new multiTestNodeExecutor();
+        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(getFrameworkInstance());
+        service.registerInstance("local", testexec);
+
+        testFileCopier testcopier = new testFileCopier();
+        FileCopierService copyservice = FileCopierService.getInstanceForFramework(getFrameworkInstance());
+        copyservice.registerInstance("local", testcopier);
+
+        //execute command interpreter on local node
+        final NodeEntryImpl test1 = new NodeEntryImpl("test1");
+        test1.setOsFamily("unix");
+        final ExecutionContext context = new ExecutionContext() {
+            public String getFrameworkProject() {
+                return PROJ_NAME;
+            }
+
+            public Framework getFramework() {
+                return frameworkInstance;
+            }
+
+
+            public String getUser() {
+                return "blah";
+            }
+
+            public NodeSet getNodeSet() {
+
+                return null;
+            }
+
+            public String[] getArgs() {
+                return new String[0];
+            }
+
+            public int getLoglevel() {
+                return 0;
+            }
+
+            public Map<String, Map<String, String>> getDataContext() {
+                return null;
+            }
+
+            public ExecutionListener getExecutionListener() {
+                return null;
+            }
+        };
+        final String testScript = "a script";
+
+        ScriptFileCommand command = new ScriptFileCommand() {
+            public String getScript() {
+                return testScript;
+            }
+
+            public InputStream getScriptAsStream() {
+                return null;
+            }
+
+            public String getServerScriptFilePath() {
+                return null;
+            }
+
+            public String[] getArgs() {
+                return new String[0];
             }
         };
         {
@@ -363,7 +509,8 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
      * filepath
      */
     public void testInterpretCommandScriptContentLocalWindows() throws Exception {
-        ScriptFileCommandInterpreter interpret = new ScriptFileCommandInterpreter(getFrameworkInstance());
+        final Framework frameworkInstance = getFrameworkInstance();
+        ScriptFileCommandInterpreter interpret = new ScriptFileCommandInterpreter(frameworkInstance);
 
         //setup nodeexecutor for local node
         multiTestNodeExecutor testexec = new multiTestNodeExecutor();
@@ -380,6 +527,10 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
         final ExecutionContext context = new ExecutionContext() {
             public String getFrameworkProject() {
                 return PROJ_NAME;
+            }
+
+            public Framework getFramework() {
+                return frameworkInstance;
             }
 
             public String getUser() {
@@ -420,6 +571,10 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
 
             public String getServerScriptFilePath() {
                 return null;
+            }
+
+            public String[] getArgs() {
+                return new String[0];
             }
         };
         {
@@ -462,7 +617,8 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
      * Use script file specifier in execution item
      */
     public void testInterpretCommandScriptFileLocal() throws Exception {
-        ScriptFileCommandInterpreter interpret = new ScriptFileCommandInterpreter(getFrameworkInstance());
+        final Framework frameworkInstance = getFrameworkInstance();
+        ScriptFileCommandInterpreter interpret = new ScriptFileCommandInterpreter(frameworkInstance);
 
         //setup nodeexecutor for local node
         multiTestNodeExecutor testexec = new multiTestNodeExecutor();
@@ -480,6 +636,11 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
             public String getFrameworkProject() {
                 return PROJ_NAME;
             }
+
+            public Framework getFramework() {
+                return frameworkInstance;
+            }
+
 
             public String getUser() {
                 return "blah";
@@ -520,6 +681,10 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
 
             public String getServerScriptFilePath() {
                 return testScriptFile.getAbsolutePath();
+            }
+
+            public String[] getArgs() {
+                return new String[0];
             }
         };
         {
@@ -581,7 +746,8 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
      * Test inputstream
      */
     public void testInterpretCommandScriptInputLocal() throws Exception {
-        ScriptFileCommandInterpreter interpret = new ScriptFileCommandInterpreter(getFrameworkInstance());
+        final Framework frameworkInstance = getFrameworkInstance();
+        ScriptFileCommandInterpreter interpret = new ScriptFileCommandInterpreter(frameworkInstance);
 
         //setup nodeexecutor for local node
         multiTestNodeExecutor testexec = new multiTestNodeExecutor();
@@ -599,6 +765,11 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
             public String getFrameworkProject() {
                 return PROJ_NAME;
             }
+
+            public Framework getFramework() {
+                return frameworkInstance;
+            }
+
 
             public String getUser() {
                 return "blah";
@@ -639,6 +810,10 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
 
             public String getServerScriptFilePath() {
                 return null;
+            }
+
+            public String[] getArgs() {
+                return new String[0];
             }
         };
         {
@@ -698,7 +873,8 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
 
 
     public void testInterpretCommandCopyFailure() throws Exception {
-        ScriptFileCommandInterpreter interpret = new ScriptFileCommandInterpreter(getFrameworkInstance());
+        final Framework frameworkInstance = getFrameworkInstance();
+        ScriptFileCommandInterpreter interpret = new ScriptFileCommandInterpreter(frameworkInstance);
 
         //setup nodeexecutor for local node
         multiTestNodeExecutor testexec = new multiTestNodeExecutor();
@@ -716,6 +892,11 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
             public String getFrameworkProject() {
                 return PROJ_NAME;
             }
+
+            public Framework getFramework() {
+                return frameworkInstance;
+            }
+
 
             public String getUser() {
                 return "blah";
@@ -756,6 +937,10 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
 
             public String getServerScriptFilePath() {
                 return null;
+            }
+
+            public String[] getArgs() {
+                return new String[0];
             }
         };
         {

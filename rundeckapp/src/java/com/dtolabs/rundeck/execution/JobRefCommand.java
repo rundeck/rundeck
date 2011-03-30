@@ -15,31 +15,23 @@
  */
 
 /*
-* JobExecutionItem.java
+* JobRefCommand.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Mar 22, 2010 4:28:34 PM
-* $Id$
+* Created: 3/23/11 1:56 PM
+* 
 */
 package com.dtolabs.rundeck.execution;
 
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
-import com.dtolabs.rundeck.core.utils.NodeSet;
-
-import java.util.Map;
+import java.util.*;
 
 /**
- * This interface represents an execution of a particular stored Job definition, identified by a string, and including
- * node filters (NodeSet), CLI arguments (args), loglevel.  The Executor for this interface is the grails
- * ExecutionService, which will look up the stored job by the identifier string, and then create and submit the
- * appropriate ExecutionItem for that job to the Execution Service.
+ * JobRefCommand is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @version $Revision$
  */
-public interface JobExecutionItem extends ExecutionItem {
-    public final static String COMMAND_TYPE = "rundeck-jobref";
-    public String getJobIdentifier();
-    public String[] getArgs();
+public abstract class JobRefCommand implements JobExecutionItem{
+    public String getType() {
+        return COMMAND_TYPE;
+    }
 }

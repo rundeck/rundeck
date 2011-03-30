@@ -94,10 +94,10 @@ class CommandAction extends AbstractAction {
      *
      */
     public void doAction() {
-        if (null != listener && null != listener.getBuildListener()) {
-            project.addBuildListener(listener.getBuildListener());
-            debug("added build listener");
-        }
+//        if (null != listener && null != listener.getBuildListener()) {
+//            project.addBuildListener(listener.getBuildListener());
+//            debug("added build listener");
+//        }
         final Collection<INodeEntry> c;
         try {
             c = getFramework().filterNodes(getContext().getNodeSet(),getContext().getFrameworkProject());

@@ -591,7 +591,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
             }
         }else if(null!=result && null!=result.getResultObject() && null!=result.getResultObject().getResults()){
             for (final String node : result.getResultObject().getResults().keySet()) {
-                final InterpreterResult interpreterResult = result.getResultObject().getResults().get(node);
+                final StatusResult interpreterResult = result.getResultObject().getResults().get(node);
                 if(interpreterResult.isSuccess()){
                     failednodes--;
                 }
@@ -628,6 +628,10 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
 
                 public String getServerScriptFilePath() {
                     return ExecTool.this.getServerScriptFilePath();
+                }
+
+                public String[] getArgs() {
+                    return ExecTool.this.getArgs();
                 }
             };
         }else{
@@ -985,7 +989,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
         this.argNoQueue = argNoQueue;
     }
 
-    Framework getFramework() {
+    public Framework getFramework() {
         return framework;
     }
 

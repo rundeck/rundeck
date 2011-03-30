@@ -15,31 +15,46 @@
  */
 
 /*
-* JobExecutionItem.java
+* WorkflowExecutionItem.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Mar 22, 2010 4:28:34 PM
+* Created: Mar 16, 2010 9:43:26 AM
 * $Id$
 */
-package com.dtolabs.rundeck.execution;
+package com.dtolabs.rundeck.core.execution.workflow;
 
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.execution.ExecutionItem;
 import com.dtolabs.rundeck.core.utils.NodeSet;
 
 import java.util.Map;
 
 /**
- * This interface represents an execution of a particular stored Job definition, identified by a string, and including
- * node filters (NodeSet), CLI arguments (args), loglevel.  The Executor for this interface is the grails
- * ExecutionService, which will look up the stored job by the identifier string, and then create and submit the
- * appropriate ExecutionItem for that job to the Execution Service.
+ * WorkflowExecutionItem is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public interface JobExecutionItem extends ExecutionItem {
-    public final static String COMMAND_TYPE = "rundeck-jobref";
-    public String getJobIdentifier();
-    public String[] getArgs();
+public interface WorkflowExecutionItem extends ExecutionItem {
+    /**
+     * Node first strategy name
+     */
+    public static final String NODE_FIRST = "node-first";
+    /**
+     * Step first strategy nae
+     */
+    public static final String STEP_FIRST = "step-first";
+    /**
+     * Provider name for node first provider implementation
+     */
+    public static final String COMMAND_TYPE_NODE_FIRST = "rundeck-workflow-" + NODE_FIRST;
+    /**
+     * Provider name for step first provider implementation
+     */
+    public static final String COMMAND_TYPE_STEP_FIRST = "rundeck-workflow-" + STEP_FIRST;
+    /**
+     * Return the workflow definition
+     * @return workflow
+     */
+    public IWorkflow getWorkflow();
+
 }

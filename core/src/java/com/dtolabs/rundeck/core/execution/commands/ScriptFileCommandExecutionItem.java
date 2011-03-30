@@ -56,4 +56,9 @@ public interface ScriptFileCommandExecutionItem extends ExecutionItem {
      * @return server-side script path
      */
     public abstract String getServerScriptFilePath();
+    
+    /**
+     * Return arguments to the script
+     */
+    public abstract String[] getArgs();
 }

@@ -31,7 +31,9 @@ import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
+import com.dtolabs.rundeck.core.execution.ExecutionListenerBuildLogger;
 import com.dtolabs.rundeck.core.execution.dispatch.ParallelNodeDispatcher;
+import com.dtolabs.rundeck.core.execution.impl.common.AntSupport;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.tasks.net.ExtSSHExec;
@@ -71,68 +73,23 @@ public class JschNodeExecutor implements NodeExecutor {
                 "Username must be set to connect to remote node '" + node.getNodename() + "'");
         }
 
+        
         final ExecutionListener listener = context.getExecutionListener();
         final Project project = new Project();
-        final LogReformatter gen;
-        if (null != listener && listener.isTerse()) {
-            gen = null;
-        } else {
-            String logformat = ExecTool.DEFAULT_LOG_FORMAT;
-            if (null != listener && null != listener.getLogFormat()) {
-                logformat = listener.getLogFormat();
-            }
-            final HashMap<String, String> contextData = new HashMap<String, String>();
-            //discover node name and username
-            contextData.put("node", node.getNodename());
-            contextData.put("user", node.extractUserName());
-            gen = new LogReformatter(logformat, contextData);
-        }
-
-        //bind System printstreams to the thread
-        final ThreadBoundOutputStream threadBoundSysOut = ThreadBoundOutputStream.bindSystemOut();
-        final ThreadBoundOutputStream threadBoundSysErr = ThreadBoundOutputStream.bindSystemErr();
-
-        //get outputstream for reformatting destination
-        final OutputStream origout = threadBoundSysOut.getThreadStream();
-        final OutputStream origerr = threadBoundSysErr.getThreadStream();
-
-        //replace any existing logreformatter
-        final FormattedOutputStream outformat;
-        if (origout instanceof FormattedOutputStream) {
-            final OutputStream origsink = ((FormattedOutputStream) origout).getOriginalSink();
-            outformat = new FormattedOutputStream(gen, origsink);
-        } else {
-            outformat = new FormattedOutputStream(gen, origout);
-        }
-        outformat.setContext("level", "INFO");
-
-        final FormattedOutputStream errformat;
-        if (origerr instanceof FormattedOutputStream) {
-            final OutputStream origsink = ((FormattedOutputStream) origerr).getOriginalSink();
-            errformat = new FormattedOutputStream(gen, origsink);
-        } else {
-            errformat = new FormattedOutputStream(gen, origerr);
-        }
-        errformat.setContext("level", "ERROR");
-
-        //install the OutputStreams for the thread
-        threadBoundSysOut.installThreadStream(outformat);
-        threadBoundSysErr.installThreadStream(errformat);
-
+        AntSupport.addAntBuildListener(listener, project);
         boolean success = false;
         final ExtSSHExec sshexec;
         try {
             //perform jsch sssh command
             sshexec = buildSSHTask(context, node, command, project, framework);
             final Task taskSequence = createRemoteTaskSequence(node, project, sshexec);
-
+//            project.log("JschNodeExecutor log",Project.MSG_ERR);
+//            System.err.println("JschNodeExecutor sys.err");
+//            System.out.println("JschNodeExecutor sys.out");
             taskSequence.execute();
             success = true;
         } catch (SSHTaskBuilder.BuilderException e) {
             throw new ExecutionException(e);
-        } finally {
-            threadBoundSysOut.removeThreadStream();
-            threadBoundSysErr.removeThreadStream();
         }
         final int resultCode = sshexec.getExitStatus();
         final boolean status = success;
@@ -145,8 +102,15 @@ public class JschNodeExecutor implements NodeExecutor {
             public boolean isSuccess() {
                 return status;
             }
+
+            @Override
+            public String toString() {
+                return "[jsch-ssh] result was " + (isSuccess() ? "success" : "failure") + ", resultcode: "
+                       + getResultCode();
+            }
         };
     }
+
 
 
     /**

@@ -23,6 +23,7 @@
 */
 package com.dtolabs.rundeck.core.execution.commands;
 
+import com.dtolabs.rundeck.core.cli.ExecTool;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.*;
@@ -30,6 +31,12 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.utils.FormattedOutputStream;
+import com.dtolabs.rundeck.core.utils.LogReformatter;
+import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream;
+
+import java.io.OutputStream;
+import java.util.HashMap;
 
 /**
  * ExecCommandInterpreter is ...
@@ -49,18 +56,67 @@ public class ExecCommandInterpreter implements CommandInterpreter {
     public InterpreterResult interpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node) throws
         InterpreterException {
         final ExecCommand cmd = (ExecCommand) item;
-        final NodeExecutor nodeExecutorForNode;
-        try {
-            nodeExecutorForNode = framework.getNodeExecutorForNode(node);
-        } catch (ExecutionServiceException e) {
-            throw new InterpreterException(e);
-        }
         NodeExecutorResult result;
+        final ExecutionListener listener = context.getExecutionListener();
+        final LogReformatter gen;
+        gen = createLogReformatter(node, listener);
+        //bind System printstreams to the thread
+        final ThreadBoundOutputStream threadBoundSysOut = ThreadBoundOutputStream.bindSystemOut();
+        final ThreadBoundOutputStream threadBoundSysErr = ThreadBoundOutputStream.bindSystemErr();
+
+        //get outputstream for reformatting destination
+        final OutputStream origout = threadBoundSysOut.getThreadStream();
+        final OutputStream origerr = threadBoundSysErr.getThreadStream();
+
+        //replace any existing logreformatter
+        final FormattedOutputStream outformat;
+        if (origout instanceof FormattedOutputStream) {
+            final OutputStream origsink = ((FormattedOutputStream) origout).getOriginalSink();
+            outformat = new FormattedOutputStream(gen, origsink);
+        } else {
+            outformat = new FormattedOutputStream(gen, origout);
+        }
+        outformat.setContext("level", "INFO");
+
+        final FormattedOutputStream errformat;
+        if (origerr instanceof FormattedOutputStream) {
+            final OutputStream origsink = ((FormattedOutputStream) origerr).getOriginalSink();
+            errformat = new FormattedOutputStream(gen, origsink);
+        } else {
+            errformat = new FormattedOutputStream(gen, origerr);
+        }
+        errformat.setContext("level", "ERROR");
+
+        //install the OutputStreams for the thread
+        threadBoundSysOut.installThreadStream(outformat);
+        threadBoundSysErr.installThreadStream(errformat);
         try {
-            result = nodeExecutorForNode.executeCommand(context, cmd.getCommand(), node);
+            result = framework.getExecutionService().executeCommand(context, cmd.getCommand(), node);
         } catch (ExecutionException e) {
             throw new InterpreterException(e);
+        } finally {
+            threadBoundSysOut.removeThreadStream();
+            threadBoundSysErr.removeThreadStream();
         }
         return result;
+    }
+
+    public static  LogReformatter createLogReformatter(INodeEntry node, ExecutionListener listener) {
+        LogReformatter gen;
+        if (null != listener && listener.isTerse()) {
+            gen = null;
+        } else {
+            String logformat = ExecTool.DEFAULT_LOG_FORMAT;
+            if (null != listener && null != listener.getLogFormat()) {
+                logformat = listener.getLogFormat();
+            }
+            final HashMap<String, String> contextData = new HashMap<String, String>();
+            //discover node name and username
+            contextData.put("node", node.getNodename());
+            contextData.put("user", node.extractUserName());
+            contextData.put("command", "test");
+            gen = new LogReformatter(logformat, contextData);
+        }
+        return gen;
     }
 }

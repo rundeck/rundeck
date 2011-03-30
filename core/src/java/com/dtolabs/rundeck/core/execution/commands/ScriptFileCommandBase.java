@@ -43,4 +43,8 @@ public class ScriptFileCommandBase extends ScriptFileCommand {
     public String getServerScriptFilePath() {
         return null;
     }
+
+    public String[] getArgs() {
+        return new String[0];
+    }
 }

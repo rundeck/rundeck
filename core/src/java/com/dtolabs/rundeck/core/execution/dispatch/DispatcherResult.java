@@ -34,5 +34,5 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface DispatcherResult extends StatusResult {
-    public Map<String, InterpreterResult> getResults();
+    public Map<String, ? extends StatusResult> getResults();
 }

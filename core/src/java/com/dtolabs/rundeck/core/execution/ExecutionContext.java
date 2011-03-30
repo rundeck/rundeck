@@ -43,6 +43,11 @@ public interface ExecutionContext {
     public String getFrameworkProject();
 
     /**
+     * Get the framework
+     */
+    public Framework getFramework();
+
+    /**
      * username
      */
     public String getUser();

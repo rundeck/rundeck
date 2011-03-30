@@ -31,10 +31,11 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.NodeFileParserException;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionItem;
-import com.dtolabs.rundeck.core.execution.ExecutionServiceThread;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
+import com.dtolabs.rundeck.core.execution.StatusResult;
 import com.dtolabs.rundeck.core.execution.commands.CommandInterpreter;
 import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
+import com.dtolabs.rundeck.core.execution.impl.common.AntSupport;
 import com.dtolabs.rundeck.core.tasks.dispatch.NodeExecutionStatusTask;
 import com.dtolabs.rundeck.core.utils.NodeSet;
 import org.apache.tools.ant.BuildException;
@@ -65,8 +66,21 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         this.framework = framework;
     }
 
-    public DispatcherResult dispatch(final ExecutionContext context, final CommandInterpreter interpreter,
-                         final ExecutionItem item) throws DispatcherException {
+    public DispatcherResult dispatch(final ExecutionContext context,
+                                     final ExecutionItem item) throws
+        DispatcherException {
+        return dispatch(context, item, null);
+    }
+
+    public DispatcherResult dispatch(final ExecutionContext context,
+                                     final Dispatchable item) throws
+        DispatcherException {
+        return dispatch(context, null, item);
+    }
+
+    public DispatcherResult dispatch(final ExecutionContext context,
+                                     final ExecutionItem item, final Dispatchable toDispatch) throws
+        DispatcherException {
         final NodeSet nodeset = context.getNodeSet();
         Collection<INodeEntry> nodes = null;
         try {
@@ -76,9 +90,6 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         }
         boolean keepgoing = nodeset.isKeepgoing();
 
-//            project.log(
-//                "preparing for parallel execution...(keepgoing? " + keepgoing + ", threads: " + threadcount + ")",
-//                Project.MSG_DEBUG);
         final HashSet<String> nodeNames = new HashSet<String>();
         final NodeDispatchStatusListener listener = new NodeDispatchStatusListener() {
             public void reportSuccess(final String nodename) {
@@ -92,36 +103,41 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
             failedListener.matchedNodes(nodeNames);
         }
         Project project = new Project();
-        if (null != context.getExecutionListener().getBuildListener() ) {
-            project.addBuildListener(context.getExecutionListener().getBuildListener());
-        }
+//        if (null != context.getExecutionListener().getBuildListener() ) {
+//            project.addBuildListener(context.getExecutionListener().getBuildListener());
+//        }
         project.addReference(STATUS_LISTENER_REF_ID, listener);
+        AntSupport.addAntBuildListener(context.getExecutionListener(), project);
+
+        project.log(
+            "preparing for parallel execution...(keepgoing? " + keepgoing + ", threads: " + nodeset.getThreadCount()
+            + ")",
+            Project.MSG_DEBUG);
         configureNodeContextThreadLocalsForProject(project);
         final Parallel parallelTask = new Parallel();
         parallelTask.setProject(project);
         parallelTask.setThreadCount(nodeset.getThreadCount());
         parallelTask.setFailOnAny(!keepgoing);
-        boolean success=false;
-        final HashMap<String,InterpreterResult> resultMap=new HashMap<String, InterpreterResult>();
+        boolean success = false;
+        final HashMap<String, StatusResult> resultMap = new HashMap<String, StatusResult>();
         for (final Object node1 : nodes) {
             final INodeEntry node = (INodeEntry) node1;
-            final Callable tocall = new Callable() {
-                public Object call() throws Exception {
-                    final InterpreterResult interpreterResult = interpreter.interpretCommand(context, item, node);
-                    resultMap.put(node.getNodename(), interpreterResult);
-                    return interpreterResult;
-                }
-            };
+            final Callable tocall;
+            if (null != item) {
+                tocall = execItemCallable(context, item, resultMap, node);
+            } else {
+                tocall = dispatchableCallable(context, toDispatch, resultMap, node);
+            }
             nodeNames.add(node.getNodename());
-//                project.log("dispatching to proxy on node: " + node.getNodename(), Project.MSG_DEBUG);
+            project.log("Create task for node: " + node.getNodename(), Project.MSG_DEBUG);
             final Task callableWrapperTask = createWrappedCallableTask(project, tocall, node);
             parallelTask.addTask(callableWrapperTask);
         }
         try {
             parallelTask.execute();
-            success=true;
+            success = true;
         } catch (BuildException e) {
-//                project.log(e.getMessage(), Project.MSG_ERR);
+            project.log(e.getMessage(), Project.MSG_ERR);
             if (!keepgoing) {
                 throw new DispatcherException(e);
             }
@@ -139,15 +155,43 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
             failedListener.nodesSucceeded();
         }
 
-        final boolean status=success;
+        final boolean status = success;
 
         return new DispatcherResult() {
-            public Map<String, InterpreterResult> getResults() {
+            public Map<String, StatusResult> getResults() {
                 return resultMap;
             }
 
             public boolean isSuccess() {
                 return status;
+            }
+
+            @Override
+            public String toString() {
+                return "Parallel dispatch: (" + isSuccess() + ") " + resultMap;
+            }
+        };
+    }
+
+    private Callable dispatchableCallable(final ExecutionContext context, final Dispatchable toDispatch,
+                                          final HashMap<String, StatusResult> resultMap, final INodeEntry node) {
+        return new Callable() {
+            public Object call() throws Exception {
+                final StatusResult dispatch = toDispatch.dispatch(context, node);
+                resultMap.put(node.getNodename(), dispatch);
+                return dispatch;
+            }
+        };
+    }
+
+    private Callable execItemCallable(final ExecutionContext context, final ExecutionItem item,
+                                      final HashMap<String, StatusResult> resultMap, final INodeEntry node) {
+        return new Callable() {
+            public Object call() throws Exception {
+                final InterpreterResult interpreterResult = framework.getExecutionService().interpretCommand(
+                    context, item, node);
+                resultMap.put(node.getNodename(), interpreterResult);
+                return interpreterResult;
             }
         };
     }
@@ -185,6 +229,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         }
         return thrNode;
     }
+
     /**
      * Add tasks to the Sequential to set threadlocal values for the node name and username
      *

@@ -15,24 +15,29 @@
  */
 
 /*
-* IWorkflowJobItem.java
+* AntSupport.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Mar 17, 2010 1:04:41 PM
-* $Id$
+* Created: 3/28/11 1:57 PM
+* 
 */
-package com.dtolabs.rundeck.execution;
+package com.dtolabs.rundeck.core.execution.impl.common;
+
+import com.dtolabs.rundeck.core.execution.ExecutionListener;
+import com.dtolabs.rundeck.core.execution.ExecutionListenerBuildLogger;
+import org.apache.tools.ant.Project;
+
+import java.util.*;
 
 /**
- * IWorkflowJobItem is ...
+ * AntSupport is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @version $Revision$
  */
-public interface IWorkflowJobItem extends IWorkflowCmdItem{
-    /**
-     * Return a string identifying the job to execute
-     * @return identifier string
-     */
-    public String getJobIdentifier();
+public class AntSupport {
+    public static void addAntBuildListener(ExecutionListener listener, Project project) {
+        final ExecutionListenerBuildLogger listener1 = new ExecutionListenerBuildLogger(listener);
+        //listener1.setReformatter(gen);
+        project.addBuildListener(listener1);
+    }
 }

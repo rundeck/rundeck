@@ -34,5 +34,9 @@ import com.dtolabs.rundeck.core.utils.NodeSet;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface NodeDispatcher {
-    public DispatcherResult dispatch(ExecutionContext context, CommandInterpreter interpreter, ExecutionItem item) throws DispatcherException;
+    /**
+     * XXX: perhaps remove this in lieu of other interface
+     */
+    public DispatcherResult dispatch(ExecutionContext context, ExecutionItem item) throws DispatcherException;
+    public DispatcherResult dispatch(ExecutionContext context, Dispatchable item) throws DispatcherException;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+ * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,34 +15,43 @@
  */
 
 /*
-* ExecutionServiceMgr.java
+* ServiceThreadBase.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Mar 3, 2010 11:06:47 AM
-* $Id$
+* Created: 3/29/11 12:03 PM
+* 
 */
 package com.dtolabs.rundeck.core.execution;
 
-import com.dtolabs.rundeck.core.common.Framework;
+import java.util.*;
 
 /**
- * ExecutionServiceFactory creates ExecutionServices.
+ * ServiceThreadBase is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @version $Revision$
  */
-public class ExecutionServiceFactory {
+public class ServiceThreadBase extends Thread {
+    volatile boolean success = false;
+    private volatile boolean aborted = false;
+    volatile Exception thrown;
+    volatile Object resultObject;
 
-    private ExecutionServiceFactory() {
-    }
-
-    public static ExecutionService getInstanceForFramework(final Framework framework) {
-        if (null == framework.getService(ExecutionService.SERVICE_NAME)) {
-            final ExecutionService service = new ExecutionServiceImpl(framework);
-            framework.setService(ExecutionService.SERVICE_NAME, service);
-            return service;
+    public void abort() {
+        if (isAlive()) {
+            aborted = true;
+            interrupt();
         }
-        return (ExecutionService) framework.getService(ExecutionService.SERVICE_NAME);
     }
 
+    public boolean isSuccessful() {
+        return success;
+    }
+
+    public Exception getException() {
+        return thrown;
+    }
+
+    public boolean isAborted() {
+        return aborted;
+    }
 }

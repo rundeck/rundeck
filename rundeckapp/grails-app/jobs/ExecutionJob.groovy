@@ -155,10 +155,11 @@ class ExecutionJob implements InterruptableJob {
             execmap= executionService.executeAsyncBegin(framework,execution,scheduledExecution)
         }catch(Exception e){
             log.error("Execution failed: "+e.getMessage(), e)
+            throw e
         }
         if(!execmap){
             //failed to start
-            return false
+            return [success:false]
         }
 
         int killcount=0;

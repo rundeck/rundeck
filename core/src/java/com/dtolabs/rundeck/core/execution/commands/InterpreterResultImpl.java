@@ -15,24 +15,36 @@
  */
 
 /*
-* IWorkflowJobItem.java
+* InterpreterResultImpl.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Mar 17, 2010 1:04:41 PM
-* $Id$
+* Created: 3/29/11 3:00 PM
+* 
 */
-package com.dtolabs.rundeck.execution;
+package com.dtolabs.rundeck.core.execution.commands;
+
+import com.dtolabs.rundeck.core.execution.StatusResult;
+
+import java.util.*;
 
 /**
- * IWorkflowJobItem is ...
+ * InterpreterResultImpl is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @version $Revision$
  */
-public interface IWorkflowJobItem extends IWorkflowCmdItem{
-    /**
-     * Return a string identifying the job to execute
-     * @return identifier string
-     */
-    public String getJobIdentifier();
+public class InterpreterResultImpl implements InterpreterResult {
+    private StatusResult internalResult;
+
+    public InterpreterResultImpl(final StatusResult internalResult) {
+        this.internalResult = internalResult;
+    }
+
+    public boolean isSuccess() {
+        return internalResult.isSuccess();
+    }
+
+    public StatusResult getInternalResult() {
+        return internalResult;
+    }
+
 }

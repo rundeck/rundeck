@@ -173,7 +173,7 @@ public class DefaultNodeDispatcher implements NodeDispatcher{
                         if (e instanceof BuildException) {
                             throw (BuildException) e;
                         } else {
-                            throw new CoreException("Error dispatching execution", e);
+                            throw new CoreException("Error dispatching execution: "+e.getMessage(), e);
                         }
                     }
                 }

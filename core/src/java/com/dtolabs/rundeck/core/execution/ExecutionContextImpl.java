@@ -23,6 +23,8 @@
 */
 package com.dtolabs.rundeck.core.execution;
 
+import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.utils.NodeSet;
 
 import java.util.*;
@@ -38,11 +40,13 @@ public class ExecutionContextImpl implements ExecutionContext {
     private NodeSet nodeSet;
     private String[] args;
     private int loglevel;
-    private Map<String,Map<String,String>> dataContext;
+    private Map<String, Map<String, String>> dataContext;
     private ExecutionListener executionListener;
+    private Framework framework;
 
     private ExecutionContextImpl(String frameworkProject, String user, NodeSet nodeSet, String[] args, int loglevel,
-                                 Map<String, Map<String, String>> dataContext, ExecutionListener executionListener) {
+                                 Map<String, Map<String, String>> dataContext, ExecutionListener executionListener,
+                                 final Framework framework) {
         this.frameworkProject = frameworkProject;
         this.user = user;
         this.nodeSet = nodeSet;
@@ -50,14 +54,42 @@ public class ExecutionContextImpl implements ExecutionContext {
         this.loglevel = loglevel;
         this.dataContext = dataContext;
         this.executionListener = executionListener;
+        this.framework = framework;
     }
 
+    /**
+     * Create a new ExecutionContext with the specified values
+     */
     public static ExecutionContextImpl createExecutionContextImpl(String frameworkProject, String user, NodeSet nodeSet,
                                                                   String[] args, int loglevel,
                                                                   Map<String, Map<String, String>> dataContext,
-                                                                  ExecutionListener executionListener) {
+                                                                  ExecutionListener executionListener,
+                                                                  final Framework framework) {
         return new ExecutionContextImpl(frameworkProject, user, nodeSet, args, loglevel, dataContext,
-            executionListener);
+            executionListener, framework);
+    }
+
+    /**
+     * Create a new ExecutionContext with a single node nodeset value, and all other values specified
+     */
+    public static ExecutionContextImpl createExecutionContextImpl(String frameworkProject, String user,
+                                                                  INodeEntry singleNode,
+                                                                  String[] args, int loglevel,
+                                                                  Map<String, Map<String, String>> dataContext,
+                                                                  ExecutionListener executionListener,
+                                                                  final Framework framework) {
+        return new ExecutionContextImpl(frameworkProject, user, new NodeSet(singleNode), args, loglevel, dataContext,
+            executionListener, framework);
+    }
+
+    /**
+     * Create a new ExecutionContext with a single node nodeset value, and all other values from the input context
+     */
+    public static ExecutionContextImpl createExecutionContextImpl(final ExecutionContext context,
+                                                                  final INodeEntry singleNode) {
+        return new ExecutionContextImpl(context.getFrameworkProject(), context.getUser(), new NodeSet(singleNode),
+            context.getArgs(), context.getLoglevel(), context.getDataContext(), context.getExecutionListener(),
+            context.getFramework());
     }
 
     public String getFrameworkProject() {
@@ -86,5 +118,13 @@ public class ExecutionContextImpl implements ExecutionContext {
 
     public ExecutionListener getExecutionListener() {
         return executionListener;
+    }
+
+    public Framework getFramework() {
+        return framework;
+    }
+
+    public void setFramework(Framework framework) {
+        this.framework = framework;
     }
 }

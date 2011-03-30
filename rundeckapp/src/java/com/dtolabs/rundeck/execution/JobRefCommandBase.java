@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+ * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,34 +15,30 @@
  */
 
 /*
-* ExecutionServiceMgr.java
+* JobRefCommandBase.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Mar 3, 2010 11:06:47 AM
-* $Id$
+* Created: 3/23/11 1:57 PM
+* 
 */
-package com.dtolabs.rundeck.core.execution;
+package com.dtolabs.rundeck.execution;
 
 import com.dtolabs.rundeck.core.common.Framework;
 
+import java.util.*;
+
 /**
- * ExecutionServiceFactory creates ExecutionServices.
+ * JobRefCommandBase implementation returns a null value for jobIdentifier, can be subclassed.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @version $Revision$
  */
-public class ExecutionServiceFactory {
-
-    private ExecutionServiceFactory() {
+public class JobRefCommandBase extends JobRefCommand {
+    public String getJobIdentifier() {
+        return null;
     }
 
-    public static ExecutionService getInstanceForFramework(final Framework framework) {
-        if (null == framework.getService(ExecutionService.SERVICE_NAME)) {
-            final ExecutionService service = new ExecutionServiceImpl(framework);
-            framework.setService(ExecutionService.SERVICE_NAME, service);
-            return service;
-        }
-        return (ExecutionService) framework.getService(ExecutionService.SERVICE_NAME);
+    public String[] getArgs() {
+        return new String[0];
     }
 
 }

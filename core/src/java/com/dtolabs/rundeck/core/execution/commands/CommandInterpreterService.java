@@ -27,6 +27,9 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.execution.ExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.BaseProviderRegistryService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
+import com.dtolabs.rundeck.core.execution.workflow.NodeFirstWorkflowStrategy;
+import com.dtolabs.rundeck.core.execution.workflow.StepFirstWorkflowStrategy;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
 
 /**
  * CommandInterpreterService is ...

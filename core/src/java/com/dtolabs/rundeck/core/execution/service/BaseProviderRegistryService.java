@@ -56,7 +56,10 @@ public abstract class BaseProviderRegistryService<T> implements FrameworkSupport
     }
     
 
-    protected T providerOfType(String providerName) throws ExecutionServiceException {
+    protected T providerOfType(final String providerName) throws ExecutionServiceException {
+        if(null==providerName) {
+            throw new MissingProviderException("provider name was null", getName(), providerName);
+        }
         if (null == instanceregistry.get(providerName)) {
             T instance = createProviderInstanceOfType(providerName);
             instanceregistry.put(providerName, instance);
@@ -65,7 +68,7 @@ public abstract class BaseProviderRegistryService<T> implements FrameworkSupport
         return instanceregistry.get(providerName);
     }
 
-    private T createProviderInstanceOfType(String providerName) throws ExecutionServiceException {
+    private T createProviderInstanceOfType(final String providerName) throws ExecutionServiceException {
         if (null == registry.get(providerName)) {
             throw new MissingProviderException("No provider with the specified name is registered.", getName(), providerName);
         }

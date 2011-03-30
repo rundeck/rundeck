@@ -15,24 +15,23 @@
  */
 
 /*
-* IWorkflowJobItem.java
+* WorkflowExecutor.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Mar 17, 2010 1:04:41 PM
-* $Id$
+* Created: 3/29/11 10:37 AM
+* 
 */
-package com.dtolabs.rundeck.execution;
+package com.dtolabs.rundeck.core.execution.workflow;
+
+import com.dtolabs.rundeck.core.execution.ExecutionContext;
+
+import java.util.*;
 
 /**
- * IWorkflowJobItem is ...
+ * WorkflowExecutor is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @version $Revision$
  */
-public interface IWorkflowJobItem extends IWorkflowCmdItem{
-    /**
-     * Return a string identifying the job to execute
-     * @return identifier string
-     */
-    public String getJobIdentifier();
+public interface WorkflowExecutor {
+    WorkflowExecutionResult executeWorkflow(ExecutionContext executionContext, WorkflowExecutionItem item);
 }

@@ -38,6 +38,7 @@ import com.dtolabs.rundeck.core.execution.commands.CommandInterpreterService;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcherService;
 import com.dtolabs.rundeck.core.execution.service.*;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.NodeSet;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
@@ -281,6 +282,7 @@ public class Framework extends FrameworkResourceParent {
         FileCopierService.getInstanceForFramework(this);
         NodeDispatcherService.getInstanceForFramework(this);
         ExecutionServiceFactory.getInstanceForFramework(this);
+        WorkflowExecutionService.getInstanceForFramework(this);
 
     }
 
@@ -298,6 +300,9 @@ public class Framework extends FrameworkResourceParent {
     }
     public ExecutionService getExecutionService() {
         return ExecutionServiceFactory.getInstanceForFramework(this);
+    }
+    public WorkflowExecutionService getWorkflowExecutionService() {
+        return WorkflowExecutionService.getInstanceForFramework(this);
     }
 
     public FileCopier getFileCopierForNode(INodeEntry node) throws ExecutionServiceException {

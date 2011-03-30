@@ -30,7 +30,9 @@ import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
+import com.dtolabs.rundeck.core.execution.ExecutionListenerBuildLogger;
 import com.dtolabs.rundeck.core.execution.dispatch.ParallelNodeDispatcher;
+import com.dtolabs.rundeck.core.execution.impl.common.AntSupport;
 import com.dtolabs.rundeck.core.execution.script.ExecTaskParameterGenerator;
 import com.dtolabs.rundeck.core.execution.script.ExecTaskParameterGeneratorImpl;
 import com.dtolabs.rundeck.core.execution.script.ExecTaskParameters;
@@ -69,72 +71,38 @@ public class LocalNodeExecutor implements NodeExecutor {
         ExecutionException {
         final ExecutionListener listener = context.getExecutionListener();
         final Project project = new Project();
-        final LogReformatter gen;
-        if (null != listener && listener.isTerse()) {
-            gen = null;
-        } else {
-            String logformat = ExecTool.DEFAULT_LOG_FORMAT;
-            if (null != listener && null != listener.getLogFormat()) {
-                logformat = listener.getLogFormat();
-            }
-            final HashMap<String, String> contextData = new HashMap<String, String>();
-            //discover node name and username
-            contextData.put("node", node.getNodename());
-            contextData.put("user", node.extractUserName());
-            gen = new LogReformatter(logformat, contextData);
-        }
-
-        //bind System printstreams to the thread
-        final ThreadBoundOutputStream threadBoundSysOut = ThreadBoundOutputStream.bindSystemOut();
-        final ThreadBoundOutputStream threadBoundSysErr = ThreadBoundOutputStream.bindSystemErr();
-
-        //get outputstream for reformatting destination
-        final OutputStream origout = threadBoundSysOut.getThreadStream();
-        final OutputStream origerr = threadBoundSysErr.getThreadStream();
-
-        //replace any existing logreformatter
-        final FormattedOutputStream outformat;
-        if (origout instanceof FormattedOutputStream) {
-            final OutputStream origsink = ((FormattedOutputStream) origout).getOriginalSink();
-            outformat = new FormattedOutputStream(gen, origsink);
-        } else {
-            outformat = new FormattedOutputStream(gen, origout);
-        }
-        outformat.setContext("level", "INFO");
-
-        final FormattedOutputStream errformat;
-        if (origerr instanceof FormattedOutputStream) {
-            final OutputStream origsink = ((FormattedOutputStream) origerr).getOriginalSink();
-            errformat = new FormattedOutputStream(gen, origsink);
-        } else {
-            errformat = new FormattedOutputStream(gen, origerr);
-        }
-        errformat.setContext("level", "ERROR");
-
-        //install the OutputStreams for the thread
-        threadBoundSysOut.installThreadStream(outformat);
-        threadBoundSysErr.installThreadStream(errformat);
+        AntSupport.addAntBuildListener(listener, project);
 
         String propName = System.currentTimeMillis() + ".node." + node.getNodename() + ".LocalNodeExecutor.result";
 
         boolean success = false;
         final ExecTask execTask;
-        try {
-            //perform jsch sssh command
-            final Map<String, Map<String, String>> dataContext =
-                DataContextUtils.addContext("node", DataContextUtils.nodeData(node), context.getDataContext());
-            execTask = buildExecTask(project, parameterGenerator.generate(node, true, null,
-                DataContextUtils.replaceDataReferences(command, dataContext)), dataContext);
-            execTask.setResultProperty(propName);
+        //perform jsch sssh command
+        final Map<String, Map<String, String>> dataContext =
+            DataContextUtils.addContext("node", DataContextUtils.nodeData(node), context.getDataContext());
+        execTask = buildExecTask(project, parameterGenerator.generate(node, true, null,
+            DataContextUtils.replaceDataReferences(command, dataContext)), dataContext);
+        execTask.setResultProperty(propName);
 
-            final Task task = createTaskSequence(node, project, execTask);
+        final Task task = createTaskSequence(node, project, execTask);
+//        System.err.println("LocalNodeExecutor system.err");
+//        System.out.println("LocalNodeExecutor system.out");
+//        if (null != context.getExecutionListener()) {
+//            context.getExecutionListener().log(0, "LocalNodeExecutor log 0");
+//            context.getExecutionListener().log(1, "LocalNodeExecutor log 1");
+//            context.getExecutionListener().log(2, "LocalNodeExecutor log 2");
+//            context.getExecutionListener().log(3, "LocalNodeExecutor log 3");
+//            context.getExecutionListener().log(4, "LocalNodeExecutor log 4");
+//        }
+//        if (null != context.getExecutionListener().getBuildListener()) {
+//                project.addBuildListener(context.getExecutionListener().getBuildListener());
+//                project.log("LocalNodeExecutor added build listener", Project.MSG_ERR);
+//        }
+//        project.addBuildListener(new ExecutionListenerBuildLogger(listener));
+//        project.log("LocalNodeExecutor added custom listener", Project.MSG_DEBUG);
 
-            task.execute();
-            success = true;
-        } finally {
-            threadBoundSysOut.removeThreadStream();
-            threadBoundSysErr.removeThreadStream();
-        }
+        task.execute();
+        success = true;
         int result = success ? 0 : -1;
         if (project.getProperty(propName) != null) {
             try {
@@ -152,6 +120,12 @@ public class LocalNodeExecutor implements NodeExecutor {
 
             public boolean isSuccess() {
                 return status;
+            }
+
+            @Override
+            public String toString() {
+                return "[local node exec] result was " + (isSuccess() ? "success" : "failure") + ", resultcode: "
+                       + getResultCode();
             }
         };
     }

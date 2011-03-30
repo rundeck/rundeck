@@ -25,12 +25,15 @@ package com.dtolabs.rundeck.core.execution.commands;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.service.*;
 
 import java.io.File;
+import java.util.Arrays;
 
 /**
  * ExecFileCommandInterpreter is ...
@@ -47,35 +50,21 @@ public class ScriptFileCommandInterpreter implements CommandInterpreter {
 
     public InterpreterResult interpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node) throws
         InterpreterException {
-        ScriptFileCommand script = (ScriptFileCommand) item;
-
-        final FileCopier fileCopier;
-        try {
-            fileCopier = framework.getFileCopierForNode(node);
-        } catch (ExecutionServiceException e) {
-            throw new InterpreterException(e);
-        }
-        String filepath = null; //result file path
-
+        final ScriptFileCommand script = (ScriptFileCommand) item;
+        final ExecutionService executionService = framework.getExecutionService();
+        final String filepath; //result file path
         try {
             if (null != script.getScript()) {
-                filepath = fileCopier.copyScriptContent(context, script.getScript(), node);
+                filepath = executionService.fileCopyScriptContent(context, script.getScript(), node);
             } else if (null != script.getServerScriptFilePath()) {
-                filepath = fileCopier.copyFile(context, new File(script.getServerScriptFilePath()), node);
+                filepath = executionService.fileCopyFile(context, new File(
+                    script.getServerScriptFilePath()), node);
             } else {
-                filepath = fileCopier.copyFileStream(context, script.getScriptAsStream(), node);
+                filepath = executionService.fileCopyFileStream(context, script.getScriptAsStream(), node);
             }
         } catch (FileCopierException e) {
             throw new InterpreterException(e);
         }
-
-        final NodeExecutor nodeExecutor;
-        try {
-            nodeExecutor = framework.getNodeExecutorForNode(node);
-        } catch (ExecutionServiceException e) {
-            throw new InterpreterException(e);
-        }
-
 
         try {
             /**
@@ -83,14 +72,28 @@ public class ScriptFileCommandInterpreter implements CommandInterpreter {
              */
             if (!"windows".equalsIgnoreCase(node.getOsFamily())) {
                 //perform chmod+x for the file
-                final NodeExecutorResult nodeExecutorResult = nodeExecutor.executeCommand(context,
-                    new String[]{"chmod", "+x", filepath}, node);
-                if(!nodeExecutorResult.isSuccess()){
+
+                final NodeExecutorResult nodeExecutorResult = framework.getExecutionService().executeCommand(
+                    context, new String[]{"chmod", "+x", filepath}, node);
+                if (!nodeExecutorResult.isSuccess()) {
                     return nodeExecutorResult;
                 }
             }
 
-            return nodeExecutor.executeCommand(context, new String[]{filepath}, node);
+            final String[] args = script.getArgs();
+            //replace data references
+            String[] newargs=null;
+            if(null!=args && args.length>0) {
+                newargs = new String[args.length + 1];
+                String[] replargs= DataContextUtils.replaceDataReferences(args, context.getDataContext());
+                newargs[0]=filepath;
+                System.arraycopy(replargs, 0, newargs, 1, replargs.length);
+            }else{
+                newargs= new String[]{filepath};
+            }
+            //XXX: windows specific call?
+
+            return framework.getExecutionService().executeCommand(context, newargs, node);
         } catch (ExecutionException e) {
             throw new InterpreterException(e);
         }

@@ -24,9 +24,17 @@
 package com.dtolabs.rundeck.core.cli;
 
 import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.core.execution.ExecutionListener;
-import com.dtolabs.rundeck.core.execution.FailedNodesListener;
+import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.*;
+import com.dtolabs.rundeck.core.execution.commands.CommandInterpreter;
+import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
+import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
+import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import org.apache.tools.ant.BuildListener;
+
+import java.io.File;
+import java.io.InputStream;
 
 /**
  * CLIExecutionListener implements ExecutionListener, and is used to supply other listeners to the ExecutionService,
@@ -36,7 +44,6 @@ import org.apache.tools.ant.BuildListener;
  * @version $Revision$
  */
 public class CLIExecutionListener implements ExecutionListener {
-    private BuildListener buildListener;
     private FailedNodesListener failedNodesListener;
     private CLIToolLogger logger;
     private CLILoggerParams loggerParams;
@@ -64,7 +71,6 @@ public class CLIExecutionListener implements ExecutionListener {
      */
     public CLIExecutionListener(final BuildListener buildListener, final FailedNodesListener failedNodesListener,
                                 final CLIToolLogger logger, final CLILoggerParams loggerParams) {
-        this.buildListener = buildListener;
         this.failedNodesListener = failedNodesListener;
         this.logger = logger;
         this.loggerParams = loggerParams;
@@ -73,7 +79,6 @@ public class CLIExecutionListener implements ExecutionListener {
     public CLIExecutionListener(final BuildListener buildListener, final FailedNodesListener failedNodesListener,
                                 final CLIToolLogger logger,
                                 final CLILoggerParams loggerParams, final boolean terse) {
-        this.buildListener = buildListener;
         this.failedNodesListener = failedNodesListener;
         this.logger = logger;
         this.loggerParams = loggerParams;
@@ -83,7 +88,6 @@ public class CLIExecutionListener implements ExecutionListener {
     public CLIExecutionListener(final BuildListener buildListener, final FailedNodesListener failedNodesListener,
                                 final CLIToolLogger logger,
                                 final CLILoggerParams loggerParams, final boolean terse, final String logFormat) {
-        this.buildListener = buildListener;
         this.failedNodesListener = failedNodesListener;
         this.logger = logger;
         this.loggerParams = loggerParams;
@@ -126,13 +130,54 @@ public class CLIExecutionListener implements ExecutionListener {
         }
     }
 
+    public void beginExecution(ExecutionContext context, ExecutionItem item) {
+    }
+
+    public void finishExecution(ExecutionResult result, ExecutionContext context, ExecutionItem item) {
+    }
+
+    public void beginNodeExecution(ExecutionContext context, String[] command, INodeEntry node) {
+    }
+
+    public void finishNodeExecution(NodeExecutorResult result, ExecutionContext context, String[] command,
+                                    INodeEntry node) {
+    }
+
+    public void beginNodeDispatch(ExecutionContext context, ExecutionItem item) {
+    }
+
+    public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, ExecutionItem item) {
+    }
+
+    public void beginNodeDispatch(ExecutionContext context, Dispatchable item) {
+    }
+
+    public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, Dispatchable item) {
+    }
+
+    public void beginFileCopyFileStream(ExecutionContext context, InputStream input, INodeEntry node) {
+    }
+
+    public void beginFileCopyFile(ExecutionContext context, File input, INodeEntry node) {
+    }
+
+    public void beginFileCopyScriptContent(ExecutionContext context, String input, INodeEntry node) {
+    }
+
+    public void finishFileCopy(String result, ExecutionContext context, INodeEntry node) {
+    }
+
+    public void beginInterpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node) {
+    }
+
+    public void finishInterpretCommand(InterpreterResult result, ExecutionContext context, ExecutionItem item,
+                                       INodeEntry node) {
+    }
+
     public FailedNodesListener getFailedNodesListener() {
         return failedNodesListener;
     }
 
-    public BuildListener getBuildListener() {
-        return buildListener;
-    }
 
     public boolean isTerse() {
         return terse;

@@ -92,7 +92,8 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
     }
 
     public void testInterpretCommand() throws Exception {
-        ExecCommandInterpreter interpret = new ExecCommandInterpreter(getFrameworkInstance());
+        final Framework frameworkInstance = getFrameworkInstance();
+        ExecCommandInterpreter interpret = new ExecCommandInterpreter(frameworkInstance);
 
         //setup nodeexecutor for local node
         testNodeExecutor testexec = new testNodeExecutor();
@@ -100,11 +101,16 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
         service.registerInstance("local", testexec);
 
         //execute command interpreter on local node
-        final NodeEntryImpl test1 = new NodeEntryImpl("test1");
+        final NodeEntryImpl test1 = new NodeEntryImpl("testhost", "test1");
         final ExecutionContext context = new ExecutionContext() {
             public String getFrameworkProject() {
                 return PROJ_NAME;
             }
+
+            public Framework getFramework() {
+                return frameworkInstance;
+            }
+
 
             public String getUser() {
                 return "blah";
@@ -176,7 +182,8 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
      * Test use of remote node that uses jsch-ssh
      */
     public void testInterpretCommandRemote() throws Exception {
-        ExecCommandInterpreter interpret = new ExecCommandInterpreter(getFrameworkInstance());
+        final Framework frameworkInstance = getFrameworkInstance();
+        ExecCommandInterpreter interpret = new ExecCommandInterpreter(frameworkInstance);
 
         //setup nodeexecutor for local node
         testNodeExecutor testexec = new testNodeExecutor();
@@ -184,11 +191,16 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
         service.registerInstance("jsch-ssh", testexec);
 
         //execute command interpreter on local node
-        final NodeEntryImpl test1 = new NodeEntryImpl("testnode2");
+        final NodeEntryImpl test1 = new NodeEntryImpl("testhost2","testnode2");
         final ExecutionContext context = new ExecutionContext() {
             public String getFrameworkProject() {
                 return PROJ_NAME;
             }
+
+            public Framework getFramework() {
+                return frameworkInstance;
+            }
+
 
             public String getUser() {
                 return "blah";

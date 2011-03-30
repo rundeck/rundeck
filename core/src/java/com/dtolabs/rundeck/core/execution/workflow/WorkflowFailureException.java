@@ -15,24 +15,33 @@
  */
 
 /*
-* IWorkflowJobItem.java
+* WorkflowFailureException.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Mar 17, 2010 1:04:41 PM
-* $Id$
+* Created: 3/24/11 9:45 AM
+* 
 */
-package com.dtolabs.rundeck.execution;
+package com.dtolabs.rundeck.core.execution.workflow;
+
+import com.dtolabs.rundeck.core.execution.ExecutionException;
+
+import java.util.*;
 
 /**
- * IWorkflowJobItem is ...
- *
- * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @version $Revision$
- */
-public interface IWorkflowJobItem extends IWorkflowCmdItem{
-    /**
-     * Return a string identifying the job to execute
-     * @return identifier string
-     */
-    public String getJobIdentifier();
+* WorkflowFailureException is ...
+*
+* @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
+*/
+public class WorkflowFailureException extends ExecutionException {
+    public WorkflowFailureException(String s) {
+        super(s);
+    }
+
+    public WorkflowFailureException(Exception cause) {
+        super(cause);
+    }
+
+    public WorkflowFailureException(String msg, Exception cause) {
+        super(msg, cause);
+    }
 }
