@@ -31,8 +31,6 @@ import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.commands.*;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
-import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
-import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
@@ -41,12 +39,10 @@ import junit.framework.*;
 import org.apache.tools.ant.BuildListener;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
     Framework testFramework;
@@ -90,11 +86,13 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
 
     static class testWorkflowCmdItem implements ExecutionItem {
         private String type;
+        int flag=-1;
 
         @Override
         public String toString() {
             return "testWorkflowCmdItem{" +
-
+                   "type='" + type + '\'' +
+                   ", flag=" + flag +
                    '}';
         }
 
@@ -805,4 +803,249 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
         }
     }
 
+    public void testMultipleNodes() {
+
+        {
+            //test jobref item
+            final NodeSet nodeset = new NodeSet();
+            nodeset.createInclude().setName(".*");
+            final ArrayList<ExecutionItem> commands = new ArrayList<ExecutionItem>();
+            final testWorkflowCmdItem item = new testWorkflowCmdItem();
+            item.type = "my-type";
+            commands.add(item);
+            final WorkflowImpl workflow = new WorkflowImpl(commands, 1, false,
+                WorkflowStrategy.STEP_FIRST);
+            final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
+            final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+                com.dtolabs.rundeck.core.execution.ExecutionContextImpl.createExecutionContextImpl(
+                    TEST_PROJECT,
+                    "user1",
+                    nodeset,
+                    null,
+                    0,
+                    null,
+                    new testListener(),
+                    testFramework);
+
+            //setup testInterpreter for all command types
+            final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
+                testFramework);
+            testInterpreter interpreterMock = new testInterpreter();
+            testInterpreter failMock = new testInterpreter();
+            failMock.shouldThrowException = true;
+            interpreterService.registerInstance("my-type", interpreterMock);
+            interpreterService.registerInstance("exec", failMock);
+            interpreterService.registerInstance("script", failMock);
+            interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_NODE_FIRST, failMock);
+            interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
+
+            //set resturn result node 1
+            interpreterMock.resultList.add(new InterpreterResult() {
+                public boolean isSuccess() {
+                    return true;
+                }
+            });
+            //set resturn result node 2
+            interpreterMock.resultList.add(new InterpreterResult() {
+                public boolean isSuccess() {
+                    return true;
+                }
+            });
+
+            final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
+
+            assertNotNull(result);
+            if (!result.isSuccess() && null != result.getException()) {
+                result.getException().printStackTrace(System.err);
+            }
+            assertNull("threw exception: " + result.getException(), result.getException());
+            assertTrue(result.isSuccess());
+            assertEquals(2, interpreterMock.executionItemList.size());
+            assertEquals(2, interpreterMock.executionContextList.size());
+            {
+                final ExecutionItem executionItem1 = interpreterMock.executionItemList.get(0);
+                assertTrue("wrong class: " + executionItem1.getClass().getName(),
+                    executionItem1 instanceof testWorkflowCmdItem);
+                testWorkflowCmdItem execItem = (testWorkflowCmdItem) executionItem1;
+                assertNotNull(execItem.getType());
+                assertEquals("my-type", execItem.getType());
+
+                final ExecutionContext executionContext = interpreterMock.executionContextList.get(0);
+                assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
+                assertNull(executionContext.getArgs());
+                assertNull(executionContext.getDataContext());
+                assertEquals(0, executionContext.getLoglevel());
+                assertEquals("user1", executionContext.getUser());
+                assertEquals(new NodeSet("test1"), executionContext.getNodeSet());
+            }
+            {
+
+                final ExecutionItem executionItem1 = interpreterMock.executionItemList.get(1);
+                assertTrue("wrong class: " + executionItem1.getClass().getName(),
+                    executionItem1 instanceof testWorkflowCmdItem);
+                testWorkflowCmdItem execItem = (testWorkflowCmdItem) executionItem1;
+                assertNotNull(execItem.getType());
+                assertEquals("my-type", execItem.getType());
+                
+                final ExecutionContext executionContext = interpreterMock.executionContextList.get(1);
+                assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
+                assertNull(executionContext.getArgs());
+                assertNull(executionContext.getDataContext());
+                assertEquals(0, executionContext.getLoglevel());
+                assertEquals("user1", executionContext.getUser());
+                assertEquals(new NodeSet("testnode2"), executionContext.getNodeSet());
+            }
+        }
+    }
+    public void testMultipleItemsAndNodes() {
+
+        {
+            //test jobref item
+            final NodeSet nodeset = new NodeSet();
+            nodeset.createInclude().setName(".*");
+            final ArrayList<ExecutionItem> commands = new ArrayList<ExecutionItem>();
+            final testWorkflowCmdItem item = new testWorkflowCmdItem();
+            item.flag=0;
+            item.type = "my-type";
+            commands.add(item);
+            final testWorkflowCmdItem item2 = new testWorkflowCmdItem();
+            item2.flag = 1;
+            item2.type = "my-type";
+            commands.add(item2);
+            final WorkflowImpl workflow = new WorkflowImpl(commands, 1, false,
+                WorkflowStrategy.STEP_FIRST);
+            final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
+            final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+                com.dtolabs.rundeck.core.execution.ExecutionContextImpl.createExecutionContextImpl(
+                    TEST_PROJECT,
+                    "user1",
+                    nodeset,
+                    null,
+                    0,
+                    null,
+                    new testListener(),
+                    testFramework);
+
+            //setup testInterpreter for all command types
+            final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
+                testFramework);
+            testInterpreter interpreterMock = new testInterpreter();
+            testInterpreter failMock = new testInterpreter();
+            failMock.shouldThrowException = true;
+            interpreterService.registerInstance("my-type", interpreterMock);
+            interpreterService.registerInstance("exec", failMock);
+            interpreterService.registerInstance("script", failMock);
+            interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_NODE_FIRST, failMock);
+            interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
+
+            //set resturn result node 1 step 1
+            interpreterMock.resultList.add(new InterpreterResult() {
+                public boolean isSuccess() {
+                    return true;
+                }
+            });
+            //set resturn result node 2 step 1
+            interpreterMock.resultList.add(new InterpreterResult() {
+                public boolean isSuccess() {
+                    return true;
+                }
+            });
+            //set resturn result node 1 step 2
+            interpreterMock.resultList.add(new InterpreterResult() {
+                public boolean isSuccess() {
+                    return true;
+                }
+            });
+            //set resturn result node 2 step 2
+            interpreterMock.resultList.add(new InterpreterResult() {
+                public boolean isSuccess() {
+                    return true;
+                }
+            });
+
+            final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
+
+            assertNotNull(result);
+            if (!result.isSuccess() && null != result.getException()) {
+                result.getException().printStackTrace(System.err);
+            }
+            assertNull("threw exception: " + result.getException(), result.getException());
+            assertTrue(result.isSuccess());
+            assertEquals(4, interpreterMock.executionItemList.size());
+            assertEquals(4, interpreterMock.executionContextList.size());
+            {//node 1 step 1
+                final ExecutionItem executionItem1 = interpreterMock.executionItemList.get(0);
+                assertTrue("wrong class: " + executionItem1.getClass().getName(),
+                    executionItem1 instanceof testWorkflowCmdItem);
+                testWorkflowCmdItem execItem = (testWorkflowCmdItem) executionItem1;
+                assertNotNull(execItem.getType());
+                assertEquals("my-type", execItem.getType());
+                assertEquals(0, execItem.flag);
+
+                final ExecutionContext executionContext = interpreterMock.executionContextList.get(0);
+                assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
+                assertNull(executionContext.getArgs());
+                assertNull(executionContext.getDataContext());
+                assertEquals(0, executionContext.getLoglevel());
+                assertEquals("user1", executionContext.getUser());
+                assertEquals(new NodeSet("test1"), executionContext.getNodeSet());
+            }
+            {//node 2 step 1
+
+                final ExecutionItem executionItem1 = interpreterMock.executionItemList.get(1);
+                assertTrue("wrong class: " + executionItem1.getClass().getName(),
+                    executionItem1 instanceof testWorkflowCmdItem);
+                testWorkflowCmdItem execItem = (testWorkflowCmdItem) executionItem1;
+                assertNotNull(execItem.getType());
+                assertEquals("my-type", execItem.getType());
+                assertEquals(0, execItem.flag);
+
+                final ExecutionContext executionContext = interpreterMock.executionContextList.get(1);
+                assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
+                assertNull(executionContext.getArgs());
+                assertNull(executionContext.getDataContext());
+                assertEquals(0, executionContext.getLoglevel());
+                assertEquals("user1", executionContext.getUser());
+                assertEquals(new NodeSet("testnode2"), executionContext.getNodeSet());
+            }
+            {//node 1 step 2
+
+                final ExecutionItem executionItem1 = interpreterMock.executionItemList.get(2);
+                assertTrue("wrong class: " + executionItem1.getClass().getName(),
+                    executionItem1 instanceof testWorkflowCmdItem);
+                testWorkflowCmdItem execItem = (testWorkflowCmdItem) executionItem1;
+                assertNotNull(execItem.getType());
+                assertEquals("my-type", execItem.getType());
+                assertEquals(1, execItem.flag);
+
+                final ExecutionContext executionContext = interpreterMock.executionContextList.get(2);
+                assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
+                assertNull(executionContext.getArgs());
+                assertNull(executionContext.getDataContext());
+                assertEquals(0, executionContext.getLoglevel());
+                assertEquals("user1", executionContext.getUser());
+                assertEquals(new NodeSet("test1"), executionContext.getNodeSet());
+            }
+            {//node 2 step 2
+
+                final ExecutionItem executionItem1 = interpreterMock.executionItemList.get(3);
+                assertTrue("wrong class: " + executionItem1.getClass().getName(),
+                    executionItem1 instanceof testWorkflowCmdItem);
+                testWorkflowCmdItem execItem = (testWorkflowCmdItem) executionItem1;
+                assertNotNull(execItem.getType());
+                assertEquals("my-type", execItem.getType());
+                assertEquals(1, execItem.flag);
+
+                final ExecutionContext executionContext = interpreterMock.executionContextList.get(3);
+                assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
+                assertNull(executionContext.getArgs());
+                assertNull(executionContext.getDataContext());
+                assertEquals(0, executionContext.getLoglevel());
+                assertEquals("user1", executionContext.getUser());
+                assertEquals(new NodeSet("testnode2"), executionContext.getNodeSet());
+            }
+        }
+    }
 }
