@@ -49,7 +49,6 @@ import java.util.List;
 import java.util.Properties;
 
 public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
-    NodeFirstWorkflowStrategy lbah;
     Framework testFramework;
     String testnode;
     private static final String TEST_PROJECT = "StepFirstWorkflowStrategyTests";
@@ -63,41 +62,6 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
     }
 
     protected void setUp()  {
-       /* File rdeckbase = new File("target/test-rdeck-base");
-        rdeckbase.mkdirs();
-        new File(rdeckbase, "projects").mkdir();
-        new File(rdeckbase, "etc").mkdir();
-        File props = new File(rdeckbase, "etc/framework.properties");
-        Properties fwkprops = new Properties();
-        final File rdeckhome = new File("target/test-rdeck-home");
-        rdeckhome.mkdir();
-        fwkprops.setProperty("rdeck.home", rdeckhome.getAbsolutePath());
-        fwkprops.setProperty("ant.home", new File(rdeckhome, "ant-home").getAbsolutePath());
-        fwkprops.setProperty("framework.authentication.class",
-            "com.dtolabs.rundeck.core.authentication.NoAuthentication");
-        fwkprops.setProperty("framework.authorization.class", "com.dtolabs.rundeck.core.authorization.NoAuthorization");
-        fwkprops.setProperty("framework.centraldispatcher.classname",
-            "com.dtolabs.rundeck.core.dispatcher.NoCentralDispatcher");
-        fwkprops.setProperty("framework.node.name", testnode);
-        fwkprops.setProperty("framework.resources.file.name", "resources.xml");
-        fwkprops.setProperty("framework.nodes.file.name", "resources.xml");
-        final FileOutputStream fileOutputStream = new FileOutputStream(props);
-        fwkprops.store(fileOutputStream, "test");
-        fileOutputStream.flush();
-        fileOutputStream.close();
-
-        testFramework = Framework.getInstance("target/test-rdeck-base");
-
-        //create test depot
-        File projprops = new File(rdeckbase, "etc/project.properties");
-        projprops.createNewFile();
-        new File(rdeckbase, "projects/" + TEST_PROJECT + "/etc").mkdirs();
-        File projectNodes = new File(rdeckbase, "projects/" + TEST_PROJECT + "/etc/resources.xml");
-        final File testnodes = new File("src/test/com/dtolabs/rundeck/core/common/test-nodes1.xml");
-        FileUtils.copyFileStreams(testnodes, projectNodes);
-        final FrameworkProject frameworkProject = testFramework.getFrameworkProjectMgr().createFrameworkProject(
-            TEST_PROJECT);*/
-
         super.setUp();
         testFramework = getFrameworkInstance();
         testnode=testFramework.getFrameworkNodeName();
@@ -125,89 +89,12 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
     }
 
     static class testWorkflowCmdItem implements ExecutionItem {
-        String returnProperty;
-        String ifString;
-        String unlessString;
-        String equalsString;
-        String project;
-        String argString;
-        String type;
-        String user;
-        Boolean nodeKeepgoing = Boolean.FALSE;
-        Integer nodeThreadcount;
-        String adhocRemoteString;
-        String adhocLocalString;
-        String adhocFilepath;
-        Boolean adhocExecution = Boolean.FALSE;
-
-        public String getReturnProperty() {
-            return returnProperty;
-        }
-
-        public String getIfString() {
-            return ifString;
-        }
-
-        public String getUnlessString() {
-            return unlessString;
-        }
-
-        public String getEqualsString() {
-            return equalsString;
-        }
-
-        public String getProject() {
-            return project;
-        }
-
-        public String getArgString() {
-            return argString;
-        }
-
-        public String getUser() {
-            return user;
-        }
-
-        public Boolean getNodeKeepgoing() {
-            return nodeKeepgoing;
-        }
-
-        public Integer getNodeThreadcount() {
-            return nodeThreadcount;
-        }
-
-        public String getAdhocRemoteString() {
-            return adhocRemoteString;
-        }
-
-        public String getAdhocLocalString() {
-            return adhocLocalString;
-        }
-
-        public String getAdhocFilepath() {
-            return adhocFilepath;
-        }
-
-        public Boolean getAdhocExecution() {
-            return adhocExecution;
-        }
+        private String type;
 
         @Override
         public String toString() {
             return "testWorkflowCmdItem{" +
-                   "returnProperty='" + returnProperty + '\'' +
-                   ", ifString='" + ifString + '\'' +
-                   ", unlessString='" + unlessString + '\'' +
-                   ", equalsString='" + equalsString + '\'' +
-                   ", project='" + project + '\'' +
-                   ", argString='" + argString + '\'' +
-                   ", user='" + user + '\'' +
-                   ", nodeKeepgoing=" + nodeKeepgoing +
-                   ", nodeThreadcount=" + nodeThreadcount +
-                   ", adhocRemoteString='" + adhocRemoteString + '\'' +
-                   ", adhocLocalString='" + adhocLocalString + '\'' +
-                   ", adhocFilepath='" + adhocFilepath + '\'' +
-                   ", adhocExecution=" + adhocExecution +
+
                    '}';
         }
 
@@ -558,76 +445,6 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             assertEquals("user1", executionContext.getUser());
             assertEquals(nodeset, executionContext.getNodeSet());
         }
-       /* {
-            //test jobref item
-            final NodeSet nodeset = new NodeSet();
-            final ArrayList<ExecutionItem> commands = new ArrayList<ExecutionItem>();
-            final testWorkflowJobCmdItem testWorkflowCmdItem = new testWorkflowJobCmdItem();
-            testWorkflowCmdItem.jobIdentifier = "/some/job";
-            testWorkflowCmdItem.argString = "-some args";
-            testWorkflowCmdItem.project = "aProject";
-            commands.add(testWorkflowCmdItem);
-            final WorkflowImpl workflow = new WorkflowImpl(commands, 1, false,
-                WorkflowStrategy.STEP_FIRST);
-            final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow, nodeset, "user1", 1,
-                TEST_PROJECT, null);
-            final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
-            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
-                com.dtolabs.rundeck.core.execution.ExecutionContextImpl.createExecutionContextImpl(
-                    TEST_PROJECT,
-                    "user1",
-                    nodeset,
-                    null,
-                    0,
-                    null,
-                    new testListener());
-
-            //setup testInterpreter for all command types
-            final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
-                testFramework);
-            testInterpreter interpreterMock = new testInterpreter();
-            testInterpreter failMock = new testInterpreter();
-            failMock.shouldThrowException = true;
-            interpreterService.registerInstance(JobExecutionItem.COMMAND_TYPE, interpreterMock);
-            interpreterService.registerInstance("exec", failMock);
-            interpreterService.registerInstance("script", failMock);
-            interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_NODE_FIRST, failMock);
-            interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
-
-            //set resturn result
-            interpreterMock.resultList.add(new InterpreterResult() {
-                public boolean isSuccess() {
-                    return true;
-                }
-            });
-
-            final WorkflowExecutionResult result = strategy.executeWorkflow(executionItem, context);
-
-            assertNotNull(result);
-            if (!result.isSuccess() && null != result.getException()) {
-                result.getException().printStackTrace(System.err);
-            }
-            assertNull("threw exception: " + result.getException(), result.getException());
-            assertTrue(result.isSuccess());
-            assertEquals(1, interpreterMock.executionItemList.size());
-            final ExecutionItem executionItem1 = interpreterMock.executionItemList.get(0);
-            assertTrue("wrong class: " + executionItem1.getClass().getName(),
-                executionItem1 instanceof JobExecutionItem);
-            JobExecutionItem execItem = (JobExecutionItem) executionItem1;
-            assertNotNull(execItem.getJobIdentifier());
-            assertEquals("/some/job", execItem.getJobIdentifier());
-            assertEquals(1, interpreterMock.executionContextList.size());
-            final ExecutionContext executionContext = interpreterMock.executionContextList.get(0);
-            assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
-            assertNotNull(executionContext.getArgs());
-            assertEquals(2, executionContext.getArgs().length);
-            assertEquals("-some", executionContext.getArgs()[0]);
-            assertEquals("args", executionContext.getArgs()[1]);
-            assertNull(executionContext.getDataContext());
-            assertEquals(0, executionContext.getLoglevel());
-            assertEquals("user1", executionContext.getUser());
-            assertEquals(nodeset, executionContext.getNodeSet());
-        }*/
         {
             //test workflow of three successful items
             final NodeSet nodeset = new NodeSet(testFramework.getFrameworkNodeName());
@@ -917,6 +734,74 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 assertEquals(nodeset, executionContext.getNodeSet());
                 assertNull(executionContext.getArgs());
             }
+        }
+    }
+    public void testGenericItem(){
+
+        {
+            //test jobref item
+            final NodeSet nodeset = new NodeSet(testFramework.getFrameworkNodeName());
+            final ArrayList<ExecutionItem> commands = new ArrayList<ExecutionItem>();
+            final testWorkflowCmdItem item = new testWorkflowCmdItem();
+            item.type = "my-type";
+            commands.add(item);
+            final WorkflowImpl workflow = new WorkflowImpl(commands, 1, false,
+                WorkflowStrategy.STEP_FIRST);
+            final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
+            final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+                com.dtolabs.rundeck.core.execution.ExecutionContextImpl.createExecutionContextImpl(
+                    TEST_PROJECT,
+                    "user1",
+                    nodeset,
+                    null,
+                    0,
+                    null,
+                    new testListener(),
+                    testFramework);
+
+            //setup testInterpreter for all command types
+            final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
+                testFramework);
+            testInterpreter interpreterMock = new testInterpreter();
+            testInterpreter failMock = new testInterpreter();
+            failMock.shouldThrowException = true;
+            interpreterService.registerInstance("my-type", interpreterMock);
+            interpreterService.registerInstance("exec", failMock);
+            interpreterService.registerInstance("script", failMock);
+            interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_NODE_FIRST, failMock);
+            interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
+
+            //set resturn result
+            interpreterMock.resultList.add(new InterpreterResult() {
+                public boolean isSuccess() {
+                    return true;
+                }
+            });
+
+            final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
+
+            assertNotNull(result);
+            if (!result.isSuccess() && null != result.getException()) {
+                result.getException().printStackTrace(System.err);
+            }
+            assertNull("threw exception: " + result.getException(), result.getException());
+            assertTrue(result.isSuccess());
+            assertEquals(1, interpreterMock.executionItemList.size());
+            final ExecutionItem executionItem1 = interpreterMock.executionItemList.get(0);
+            assertTrue("wrong class: " + executionItem1.getClass().getName(),
+                executionItem1 instanceof testWorkflowCmdItem);
+            testWorkflowCmdItem execItem = (testWorkflowCmdItem) executionItem1;
+            assertNotNull(execItem.getType());
+            assertEquals("my-type", execItem.getType());
+            assertEquals(1, interpreterMock.executionContextList.size());
+            final ExecutionContext executionContext = interpreterMock.executionContextList.get(0);
+            assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
+            assertNull(executionContext.getArgs());
+            assertNull(executionContext.getDataContext());
+            assertEquals(0, executionContext.getLoglevel());
+            assertEquals("user1", executionContext.getUser());
+            assertEquals(nodeset, executionContext.getNodeSet());
         }
     }
 
