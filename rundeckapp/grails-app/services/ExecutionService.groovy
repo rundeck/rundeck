@@ -478,7 +478,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             NodeRecorder recorder = new NodeRecorder();//TODO: use workflow-aware listener for nodes
 
             //create listener to handle log messages and Ant build events
-            ExecutionListener executionListener = new WorkflowExecutionListenerImpl(loghandler, recorder, loghandler);
+            ExecutionListener executionListener = new WorkflowExecutionListenerImpl(recorder, loghandler,false,null);
             com.dtolabs.rundeck.core.execution.ExecutionContext executioncontext = createContext(execution, framework, execution.user, jobcontext, executionListener)
 
             final cis = CommandInterpreterService.getInstanceForFramework(framework);
@@ -561,11 +561,25 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             
         } else if (null != cmd.getAdhocLocalString()) {
             final String script = cmd.getAdhocLocalString();
-            return ExecutionItemFactory.createScriptFileItem(script);
+            final String[] args;
+            if (null != cmd.getArgString()) {
+                final List<String> strings = CLIUtils.splitArgLine(cmd.getArgString());
+                args = strings.toArray(new String[strings.size()]);
+            } else {
+                args = new String[0];
+            }
+            return ExecutionItemFactory.createScriptFileItem(script, args);
 
         } else if (null != cmd.getAdhocFilepath()) {
             final String filepath = cmd.getAdhocFilepath();
-            return ExecutionItemFactory.createScriptFileItem(new File(filepath));
+            final String[] args;
+            if (null != cmd.getArgString()) {
+                final List<String> strings = CLIUtils.splitArgLine(cmd.getArgString());
+                args = strings.toArray(new String[strings.size()]);
+            } else {
+                args = new String[0];
+            }
+            return ExecutionItemFactory.createScriptFileItem(new File(filepath), args);
         } else if (cmd instanceof IWorkflowJobItem) {
             final IWorkflowJobItem jobcmditem = (IWorkflowJobItem) cmd;
 
@@ -1120,10 +1134,9 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         if(null!=loglevels[loglevel]){
             level=loglevels[loglevel]
         }
-        boolean dometadatalogging = applicationContext.getServletContext().getAttribute("logging.ant.metadata")=="true"
-        
 
-        return new HtTableLogger(namespace, new File(filepath), level,dometadatalogging,defaultData)
+
+        return new HtTableLogger(namespace, new File(filepath), level,defaultData)
     }
 
     def saveExecutionState( schedId, exId, Map props, Map execmap=null){
@@ -1174,7 +1187,8 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             if (execmap && execmap.noderecorder && execmap.noderecorder instanceof NodeRecorder) {
                 NodeRecorder rec = (NodeRecorder) execmap.noderecorder
                 final HashSet<String> success = rec.getSuccessfulNodes()
-                final HashSet<String> failed = rec.getFailedNodes()
+                final Map<String,Object> failedMap = rec.getFailedNodes()
+                final HashSet<String> failed = new HashSet<String>(failedMap.keySet())
                 final HashSet<String> matched = rec.getMatchedNodes()
                 node = [success.size(),failed.size(),matched.size()].join("/")
                 sucCount=success.size()
@@ -1624,24 +1638,21 @@ class LogOutputStream extends OutputStream{
 /**
   * HtTableLogger
   */
-class HtTableLogger extends Handler implements LogHandler, BuildLogger, CLIToolLogger {
+class HtTableLogger extends Handler implements LogHandler, BuildLogger, CLIToolLogger, ContextLogger {
     def PrintStream printstream
     def String namespace
     def File outfile
     def boolean closed=false
     def int msgOutputLevel
     def long startTime
-    def Map multilineCache=[:]
-    def boolean projectMetadataLogging=false
     def Map defaultEntries=[:]
 
     def HtTableLogger(final String namespace, File outfile, int msglevel) {
-        this(namespace,outfile,msglevel,false,null)
+        this(namespace,outfile,msglevel,null)
     }
-    def HtTableLogger(final String namespace, File outfile, int msglevel, boolean metadataLogging, Map defaultEntries) {
+    def HtTableLogger(final String namespace, File outfile, int msglevel, Map defaultEntries) {
         this.namespace = namespace
         this.outfile = outfile
-        this.projectMetadataLogging=metadataLogging
         if(null!=defaultEntries){
             this.defaultEntries=new HashMap(defaultEntries)
         }
@@ -1650,7 +1661,6 @@ class HtTableLogger extends Handler implements LogHandler, BuildLogger, CLIToolL
         def Logger logger = Logger.getLogger(namespace)
         logger.addHandler(this);
         setFormatter(new HtFormatter())
-        multilineCache = new HashMap()
     }
 
     void setMessageOutputLevel(int i){
@@ -1735,7 +1745,7 @@ class HtTableLogger extends Handler implements LogHandler, BuildLogger, CLIToolL
                     msg = data.rest ? data.rest : msg
                 }
             }
-            log(getLevelForPriority(priority), msg, data ? data : projectMetadataLogging ? getLogDetail(event, defaultEntries) : defaultEntries);
+            log(getLevelForPriority(priority), msg, data ? data : defaultEntries);
         }
     }
     /**
@@ -1816,15 +1826,6 @@ class HtTableLogger extends Handler implements LogHandler, BuildLogger, CLIToolL
         }
         return map
     }
-    public static Map getLogDetail(final BuildEvent event,Map defaultEntries){
-        def map = [:]
-        defaultEntries.each{k,v->
-            if(!map[k]){
-                map[k]=v
-            }
-        }
-        return map
-    }
 
     /**
      * Logs build output to a java.util.logging.Logger.
@@ -1876,24 +1877,6 @@ class HtTableLogger extends Handler implements LogHandler, BuildLogger, CLIToolL
             //output was to console from stderr/stdout
             data = defaultEntries
         }
-        long millis = System.currentTimeMillis();
-        String ctxId = makeContextId(data)
-        if(multilineCache[ctxId]){
-            def regex = ~'^(.*)\\[/MULTI_LINE\\]\\s*$'
-            def matcher = xmessage =~ regex
-            if(matcher.matches()){
-                multilineCache[ctxId].mesg+=matcher.group(1)+lSep
-                xmessage = multilineCache[ctxId].mesg
-                multilineCache.remove(ctxId)
-            }else{
-                multilineCache[ctxId].mesg+=xmessage+lSep
-                return
-            }
-        }else if(xmessage.startsWith("[MULTI_LINE]")){
-            def store = [mesg:xmessage.substring(12)+lSep,data:data,time:millis]
-            multilineCache[ctxId]=store
-            return
-        }
 
         final LogRecord record = new LogRecord(xlevel, xmessage);
 
@@ -1921,34 +1904,15 @@ class HtTableLogger extends Handler implements LogHandler, BuildLogger, CLIToolL
         if (message == null) {
             return;
         }
-        long millis = System.currentTimeMillis();
-        String ctxId = makeContextId(data)
-        def String xmessage=message
-        def regex = ~'(?s)^(.*)\\[/MULTI_LINE\\]\\s*$'
-        if(multilineCache[ctxId]){
-            def matcher = xmessage =~ regex
-            if(matcher.matches()){
-                multilineCache[ctxId].mesg+=matcher.group(1)+lSep
-                xmessage = multilineCache[ctxId].mesg
-                multilineCache.remove(ctxId)
-            }else{
-                multilineCache[ctxId].mesg+=xmessage+lSep
-                return
-            }
-        }else if(xmessage.startsWith("[MULTI_LINE]")){
-            xmessage=xmessage.substring(12)
-            def matcher = xmessage =~ regex
-            if(matcher.matches()){
-                xmessage = matcher.group(1)
-            }else{
-                def store = [mesg:xmessage+lSep,data:data,time:millis]
-                multilineCache[ctxId]=store
-                return
-            }
-        }
         // log the message
-        final LogRecord record = new LogRecord(level, xmessage);
-        publish(record,data);
+        final LogRecord record = new LogRecord(level, message);
+        if(data){
+            publish(record,data);
+        }else if(defaultEntries){
+            publish(record,defaultEntries);
+        }else{
+            publish(record);
+        }
     }
     public BuildLogger getBuildLogger() {
         return this
@@ -1979,19 +1943,7 @@ class HtTableLogger extends Handler implements LogHandler, BuildLogger, CLIToolL
         return (HtFormatter)getFormatter()
     }
     public void close() {
-        if(!closed || multilineCache){
-            //finish all opened multi-line caches
-            multilineCache.keySet().sort{a,b ->
-                multilineCache.get(a).time <=> multilineCache.get(b).time 
-            }.each{ key ->
-                def data = multilineCache.get(key).data
-                def mesg = multilineCache.get(key).mesg
-                def xlevel = getLevelForString(data.level)
-                final LogRecord record = new LogRecord(xlevel, mesg);
-
-                publish(record,data);
-            }
-            multilineCache=[:]
+        if(!closed ){
             closed=true;
             if(null!=getFormatter()){
                 printstream.println (getFormatter().getTail(this))
@@ -2019,6 +1971,35 @@ class HtTableLogger extends Handler implements LogHandler, BuildLogger, CLIToolL
 
     public void verbose(String s) {
         logOOB(getLevelForString("VERBOSE"),s)
+    }
+
+    void log(String s, Map<String, String> data) {
+        log(Level.WARNING,s,data)
+    }
+
+    void error(String s, Map<String, String> data) {
+        log(getLevelForString("ERROR"), s, data)
+
+    }
+
+    void warn(String s, Map<String, String> data) {
+        log(getLevelForString("WARN"), s, data)
+
+    }
+
+    void verbose(String s, Map<String, String> data) {
+        log(getLevelForString("VERBOSE"), s, data)
+
+    }
+
+    void debug(String s, Map<String, String> data) {
+        log(getLevelForString("DEBUG"), s, data)
+
+    }
+
+    void debug(String s) {
+        logOOB(getLevelForString("DEBUG"), s)
+
     }
 }
     

@@ -155,7 +155,7 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
         copyservice.registerInstance("local", testcopier);
 
         //execute command interpreter on local node
-        final NodeEntryImpl test1 = new NodeEntryImpl("test1");
+        final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
         test1.setOsFamily("unix");
         final ExecutionContext context = new ExecutionContext() {
             public String getFrameworkProject() {
@@ -280,7 +280,7 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
         copyservice.registerInstance("local", testcopier);
 
         //execute command interpreter on local node
-        final NodeEntryImpl test1 = new NodeEntryImpl("test1");
+        final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
         test1.setOsFamily("unix");
         final ExecutionContext context = new ExecutionContext() {
             public String getFrameworkProject() {
@@ -410,7 +410,7 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
         copyservice.registerInstance("local", testcopier);
 
         //execute command interpreter on local node
-        final NodeEntryImpl test1 = new NodeEntryImpl("test1");
+        final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
         test1.setOsFamily("unix");
         final ExecutionContext context = new ExecutionContext() {
             public String getFrameworkProject() {
@@ -522,7 +522,7 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
         copyservice.registerInstance("local", testcopier);
 
         //execute command interpreter on local node
-        final NodeEntryImpl test1 = new NodeEntryImpl("test1");
+        final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
         test1.setOsFamily("windows");
         final ExecutionContext context = new ExecutionContext() {
             public String getFrameworkProject() {
@@ -630,7 +630,7 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
         copyservice.registerInstance("local", testcopier);
 
         //execute command interpreter on local node
-        final NodeEntryImpl test1 = new NodeEntryImpl("test1");
+        final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
         test1.setOsFamily("unix");
         final ExecutionContext context = new ExecutionContext() {
             public String getFrameworkProject() {
@@ -759,7 +759,7 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
         copyservice.registerInstance("local", testcopier);
 
         //execute command interpreter on local node
-        final NodeEntryImpl test1 = new NodeEntryImpl("test1");
+        final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
         test1.setOsFamily("unix");
         final ExecutionContext context = new ExecutionContext() {
             public String getFrameworkProject() {
@@ -886,7 +886,7 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
         copyservice.registerInstance("local", testcopier);
 
         //execute command interpreter on local node
-        final NodeEntryImpl test1 = new NodeEntryImpl("test1");
+        final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
         test1.setOsFamily("unix");
         final ExecutionContext context = new ExecutionContext() {
             public String getFrameworkProject() {
