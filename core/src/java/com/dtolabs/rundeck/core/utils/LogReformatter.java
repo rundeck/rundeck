@@ -99,7 +99,7 @@ public class LogReformatter implements Reformatter {
         final String[] arr = {
             tokens.get("user"),
             tokens.get("node"),
-            tokens.get("command"),
+            null != tokens.get("command") ? tokens.get("command") : "",
             tokens.get("level"),
             message
         };

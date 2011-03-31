@@ -102,11 +102,11 @@ public class FailedNodesFilestore {
             }
         }
 
-        public void nodesFailed(final Collection<String> failedNodeNames) {
+        public void nodesFailed(final Map<String,Object> failedNodeNames) {
             if (null != failedNodesFile) {
                 if (failedNodeNames.size() > 0) {
                     //store failed node list into file, echo Commandline with nodelist
-                    if (storeFailedNodes(failedNodeNames, failedNodesFile)) {
+                    if (storeFailedNodes(failedNodeNames.keySet(), failedNodesFile)) {
                         logger.info("Stored failed node list in: " + failedNodesFile.getAbsolutePath());
                     } else {
                         logger.error("Unable to store failed node list in file: " + failedNodesFile.getAbsolutePath());

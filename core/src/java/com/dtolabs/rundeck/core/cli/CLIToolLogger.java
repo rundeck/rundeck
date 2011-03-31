@@ -16,35 +16,10 @@
 
 package com.dtolabs.rundeck.core.cli;
 
+import com.dtolabs.rundeck.core.execution.BaseLogger;
+
 /**
  * Provides log interfaces to CLITools
  */
-public interface CLIToolLogger {
-    /**
-     * Logs message via implementation specific log facility
-     *
-     * @param message message to log
-     */
-    void log(String message);
-
-    /**
-     * Logs error message via implementation specific log facility
-     *
-     * @param message message to log
-     */
-    void error(String message);
-
-    /**
-     * Logs warning message via implementation specific log facility
-     *
-     * @param message message to log
-     */
-    void warn(String message);
-
-    /**
-     * Logs verbose message via implementation specific log facility
-     *
-     * @param message message to log
-     */
-    void verbose(String message);
+public interface CLIToolLogger extends BaseLogger {
 }
