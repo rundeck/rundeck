@@ -52,13 +52,12 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
         super(framework);
     }
 
-    public WorkflowExecutionResult executeWorkflow(final ExecutionContext executionContext,
-                                                   final WorkflowExecutionItem item) {
+    public WorkflowExecutionResult executeWorkflowImpl(final ExecutionContext executionContext,
+                                                       final WorkflowExecutionItem item) {
         Exception exception = null;
         final IWorkflow workflow = item.getWorkflow();
         boolean nodesuccess = false;
 
-        final Map<Integer, Object> failedMap = new HashMap<Integer, Object>();
         final HashMap<String, List<StatusResult>> results = new HashMap<String, List<StatusResult>>();
         final Map<String, Collection<String>> failures = new HashMap<String, Collection<String>>();
         try {
@@ -83,44 +82,8 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
             if (0 == nodes.size()) {
                 throw new NodesetEmptyException(nodeSet);
             }
-            final String user = executionContext.getUser();
-            final int loglevel = executionContext.getLoglevel();
-            final Map<String, Map<String, String>> dataContext = executionContext.getDataContext();
-
-
-            /*final ExecutionContext context = new ExecutionContext() {
-                public String getFrameworkProject() {
-                    return project;
-                }
-
-                public String getUser() {
-                    return user;
-                }
-
-                public NodeSet getNodeSet() {
-                    return nodeSet;
-                }
-
-                public String[] getArgs() {
-                    return null;
-                }
-
-                public int getLoglevel() {
-                    return loglevel;
-                }
-
-                public Map<String, Map<String, String>> getDataContext() {
-                    return dataContext;
-                }
-
-                public ExecutionListener getExecutionListener() {
-                    return executionContext.getExecutionListener();
-                }
-            };*/
-            //use nodeDispatcher service as appropriate for the nodeset to execute a workflow sequence
-            final WorkflowExecutionItem innerLoopItem = WorkflowExecutionItemImpl.createInnerLoopItem(item);
+            final WorkflowExecutionItem innerLoopItem = createInnerLoopItem(item);
             final WorkflowExecutor executor = framework.getWorkflowExecutionService().getExecutorForItem(innerLoopItem);
-//            final DispatcherResult dispatch = framework.getExecutionService().dispatchToNodes(executionContext, innerLoopItem);
             final DispatcherResult dispatch = framework.getExecutionService().dispatchToNodes(executionContext,
                 new Dispatchable() {
                     public StatusResult dispatch(final ExecutionContext context, final INodeEntry node) throws
@@ -130,9 +93,6 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
                             innerLoopItem);
                     }
                 });
-//            final NodeDispatcher nodeDispatcher = framework.getNodeDispatcherForContext(executionContext);
-//            final DispatcherResult dispatch = nodeDispatcher.dispatch(executionContext,
-//                WorkflowExecutionItemImpl.createInnerLoopItem(item));
 
             //extract node-oriented results from dispatch results
             for (final String nodename : dispatch.getResults().keySet()) {
@@ -167,34 +127,65 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
         final boolean success = nodesuccess;
         final Exception fexception = exception;
 
-        return new WorkflowExecutionResult() {
-            public Map<String, List<StatusResult>> getResultSet() {
-                return results;
-            }
-
-            public Map<String, Collection<String>> getFailureMessages() {
-                return failures;
-            }
-
-            public boolean isSuccess() {
-                return success;
-            }
-
-            public Exception getException() {
-                return fexception;
-            }
-
-
-            @Override
-            public String toString() {
-                return "Node-first strategy, resultset: " + getResultSet() + ", failures: " + getFailureMessages() + (
-                    null != getException() ? ": exception: " + getException() : "");
-            }
-
-        };
+        return new WorkflowExecutionResult(results, failures, success, fexception);
     }
 
 
+    /**
+     * Create workflowExecutionItem suitable for inner loop of node-first strategy
+     */
+    public static WorkflowExecutionItem createInnerLoopItem(WorkflowExecutionItem item) {
+        final WorkflowExecutionItemImpl workflowExecutionItem = new WorkflowExecutionItemImpl(new stepFirstWrapper(
+            item.getWorkflow()));
+        return workflowExecutionItem;
+    }
+
+    private static class stepFirstWrapper implements IWorkflow {
+        private IWorkflow workflow;
+
+        private stepFirstWrapper(IWorkflow workflow) {
+            this.workflow = workflow;
+        }
+
+        public List<ExecutionItem> getCommands() {
+            return workflow.getCommands();
+        }
+
+        public int getThreadcount() {
+            return workflow.getThreadcount();
+        }
+
+        public boolean isKeepgoing() {
+            return workflow.isKeepgoing();
+        }
+
+        public String getStrategy() {
+            return WorkflowExecutionItem.STEP_FIRST;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof stepFirstWrapper)) {
+                return false;
+            }
+
+            stepFirstWrapper that = (stepFirstWrapper) o;
+
+            if (workflow != null ? !workflow.equals(that.workflow) : that.workflow != null) {
+                return false;
+            }
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return workflow != null ? workflow.hashCode() : 0;
+        }
+    }
     /**
      * Create Callables to execute the workflow on a single node
      * @param node

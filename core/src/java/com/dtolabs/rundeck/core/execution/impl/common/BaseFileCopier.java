@@ -76,7 +76,7 @@ public class BaseFileCopier {
         } catch (IOException e) {
             throw new FileCopierException("error writing script to tempfile: " + e.getMessage(), e);
         }
-        System.err.println("Wrote script content to file: " + tempfile);
+//        System.err.println("Wrote script content to file: " + tempfile);
         try {
             ScriptfileUtils.setExecutePermissions(tempfile);
         } catch (IOException e) {

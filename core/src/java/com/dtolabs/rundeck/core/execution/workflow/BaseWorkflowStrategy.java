@@ -45,38 +45,75 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
         this.framework = framework;
     }
 
-    public InterpreterResult interpretCommand(ExecutionContext executionContext,
-                                              ExecutionItem executionItem, INodeEntry iNodeEntry) throws
-        InterpreterException {
-        if (!(executionItem instanceof WorkflowExecutionItem)) {
-            throw new InterpreterException("Incorrect item type: " + executionItem.getClass().getName());
+    static class WorkflowExecutionResult implements
+        com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult {
+        private final HashMap<String, List<StatusResult>> results;
+        private final Map<String, Collection<String>> failures;
+        private final boolean success;
+        private final Exception orig;
+
+        public WorkflowExecutionResult(HashMap<String, List<StatusResult>> results,
+                                       Map<String, Collection<String>> failures,
+                                       boolean success, Exception orig) {
+            this.results = results;
+            this.failures = failures;
+            this.success = success;
+            this.orig = orig;
         }
-        final WorkflowExecutionItem item = (WorkflowExecutionItem) executionItem;
-        final WorkflowExecutionResult workflowExecutionResult = executeWorkflow(executionContext, item);
-        return new StrategyInterpreterResult(workflowExecutionResult);
-    }
 
-    static class StrategyInterpreterResult implements InterpreterResult {
-        private final WorkflowExecutionResult workflowExecutionResult;
+        public Map<String, List<StatusResult>> getResultSet() {
+            return results;
+        }
 
-        StrategyInterpreterResult(WorkflowExecutionResult workflowExecutionResult) {
-            this.workflowExecutionResult = workflowExecutionResult;
+        public Map<String, Collection<String>> getFailureMessages() {
+            return failures;
         }
 
         public boolean isSuccess() {
-            return workflowExecutionResult.isSuccess();
+            return success;
         }
 
-        public WorkflowExecutionResult getWorkflowExecutionResult() {
-            return workflowExecutionResult;
+        public Exception getException() {
+            return orig;
         }
 
         @Override
         public String toString() {
-            return "Workflow: " + (isSuccess() ? "success" : "failure") + ", result: " + getWorkflowExecutionResult();
+            return "Workflow, result: " + getResultSet() + ", failures: " + getFailureMessages() + (
+                null != getException() ? ": exception: " + getException() : "");
         }
+
     }
 
+    public final WorkflowExecutionResult executeWorkflow(final ExecutionContext executionContext,
+                                                         final WorkflowExecutionItem item) {
+
+        final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
+        if (null != wlistener) {
+            wlistener.beginWorkflowExecution(executionContext, item);
+        }
+        WorkflowExecutionResult result = null;
+        try {
+            result = executeWorkflowImpl(executionContext, item);
+        } finally {
+            if (null != wlistener) {
+                wlistener.finishWorkflowExecution(result, executionContext, item);
+            }
+        }
+        return result;
+    }
+
+    private WorkflowExecutionListener getWorkflowListener(final ExecutionContext executionContext) {
+        WorkflowExecutionListener wlistener = null;
+        final ExecutionListener elistener = executionContext.getExecutionListener();
+        if (null != elistener && elistener instanceof WorkflowExecutionListener) {
+            wlistener = (WorkflowExecutionListener) elistener;
+        }
+        return wlistener;
+    }
+
+    public abstract WorkflowExecutionResult executeWorkflowImpl(ExecutionContext executionContext,
+                                                                WorkflowExecutionItem item);
 
     /**
      * Execute a workflow item, returns true if the item succeeds.  This method will throw an exception if the workflow
@@ -99,47 +136,17 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                                     final int c,
                                     final ExecutionItem cmd, final boolean keepgoing) throws
         WorkflowStepFailureException {
+        final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
+        if (null != wlistener) {
+            wlistener.beginWorkflowItem(c, cmd);
+        }
         //TODO evaluate conditionals set for cmd within the data context, and skip cmd if necessary
         executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, c + ": " + cmd.toString());
         ExecutionResult result = null;
         boolean itemsuccess;
         Throwable wfstepthrowable = null;
         try {
-//            final ArrayList<String> argslist = new ArrayList<String>();
-//            if (null == cmd.getAdhocRemoteString() && null != cmd.getArgString()) {
-//                argslist.addAll(CLIUtils.splitArgLine(cmd.getArgString()));
-//            }
-//            final String[] args = argslist.toArray(new String[argslist.size()]);
 
-            /*final ExecutionContext context=new ExecutionContext(){
-                public String getFrameworkProject() {
-                    return executionContext.getFrameworkProject();
-                }
-
-                public String getUser() {
-                    return executionContext.getUser();
-                }
-
-                public NodeSet getNodeSet() {
-                    return executionContext.getNodeSet();
-                }
-
-                public String[] getArgs() {
-                    return args;
-                }
-
-                public int getLoglevel() {
-                    return executionContext.getLoglevel();
-                }
-
-                public Map<String, Map<String, String>> getDataContext() {
-                    return executionContext.getDataContext();
-                }
-
-                public ExecutionListener getExecutionListener() {
-                    return executionContext.getExecutionListener();
-                }
-            };*/
             executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
                 "ExecutionItem created, executing: " + cmd);
             result = framework.getExecutionService().executeItem(executionContext, cmd);
@@ -147,16 +154,19 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
         } catch (Throwable exc) {
             if (keepgoing) {
                 //don't fail
-                executionContext.getExecutionListener().log(Constants.ERR_LEVEL,
-                    c + ": wf item failed: " + exc.getMessage());
+//                executionContext.getExecutionListener().log(Constants.ERR_LEVEL,
+//                    "Step " + c + "of the workflow failed: " + exc.getMessage());
                 executionContext.getExecutionListener().log(Constants.VERBOSE_LEVEL,
-                    c + ": wf item failed: " + org.apache.tools.ant.util
+                    "Step " + c + "of the workflow failed: " + org.apache.tools.ant.util
                         .StringUtils.getStackTrace(exc));
                 wfstepthrowable = exc;
                 itemsuccess = false;
             } else {
-                executionContext.getExecutionListener().log(Constants.ERR_LEVEL,
-                    c + ": wf item failed: " + exc.getMessage());
+//                executionContext.getExecutionListener().log(Constants.ERR_LEVEL,
+//                    "Step " + c + "of the workflow failed: " + exc.getMessage());
+                if (null != wlistener) {
+                    wlistener.finishWorkflowItem(c, cmd);
+                }
                 throw new WorkflowStepFailureException(
                     "Step " + c + " of the workflow threw exception: " + exc.getMessage(), exc, c);
             }
@@ -165,7 +175,9 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
         if (null != result && null != result.getResultObject()) {
             resultList.add(result.getResultObject());
         }
-
+        if (null != wlistener) {
+            wlistener.finishWorkflowItem(c, cmd);
+        }
         if (itemsuccess) {
             executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
                 c + ": ExecutionItem finished, result: " + result);

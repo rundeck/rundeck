@@ -73,6 +73,7 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
 
         context.getExecutionListener().log(4, "preparing for sequential execution on " + nodes.size() + " nodes");
         final HashSet<String> nodeNames = new HashSet<String>();
+        final HashMap<String,Object> failures = new HashMap<String,Object>();
         for (final Object node1 : nodes) {
             final INodeEntry node = (INodeEntry) node1;
             nodeNames.add(node.getNodename());
@@ -92,7 +93,7 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                 break;
             }
             final INodeEntry node = (INodeEntry) node1;
-            context.getExecutionListener().log(4,
+            context.getExecutionListener().log(Constants.DEBUG_LEVEL,
                 "Executing command on node: " + node.getNodename() + ", " + node.toString());
             try {
 
@@ -102,11 +103,10 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                     break;
                 }
                 final StatusResult result;
-                ExecutionContext interimcontext = ExecutionContextImpl.createExecutionContextImpl(context, node);
+                final ExecutionContext interimcontext = ExecutionContextImpl.createExecutionContextImpl(context, node);
                 if (null != item) {
-                    final InterpreterResult interpreterResult = framework.getExecutionService().interpretCommand(
+                    result = framework.getExecutionService().interpretCommand(
                         interimcontext, item, node);
-                    result = interpreterResult;
                 } else {
                     result = toDispatch.dispatch(interimcontext, node);
 
@@ -117,8 +117,14 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                 }
                 if (null == result || !result.isSuccess()) {
                     success = false;
-                    context.getExecutionListener().log(Constants.ERR_LEVEL,
-                        "Failed execution for node: " + node.getNodename() + ": " + result);
+//                    context.getExecutionListener().log(Constants.ERR_LEVEL,
+//                        "Failed execution for node " + node.getNodename() + ": " + result);
+                    if(null!=result) {
+                        failures.put(node.getNodename(), result);
+                    }else{
+                        failures.put(node.getNodename(),
+                            "Failed execution, result was null: " + result);
+                    }
                     if (!keepgoing) {
                         break;
                     }
@@ -127,32 +133,30 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                 }
             } catch (Throwable e) {
                 success = false;
+                failures.put(node.getNodename(), "Error dispatching command to the node: " + e.getMessage());
+
                 if (!keepgoing) {
-                    if (nodeNames.size() > 0 && null != failedListener) {
+                    if (failures.size() > 0 && null != failedListener) {
                         //tell listener of failed node list
-                        failedListener.nodesFailed(nodeNames);
+                        failedListener.nodesFailed(failures);
                     }
-//                    if (e instanceof BuildException) {
-//                        throw (BuildException) e;
-//                    } else {
-                    throw new DispatcherException("Error dispatching execution: "+e.getMessage(), e);
-//                    }
+                    throw new DispatcherException(
+                        "Failed dispatching to node " + node.getNodename() + ": " + e.getMessage(), e);
                 } else {
-                    //TODO: need to report failure of node
                     context.getExecutionListener().log(Constants.ERR_LEVEL,
-                        "Failed execution for node: " + node.getNodename() + ": " + e.getMessage());
+                        "Failed dispatching to node " + node.getNodename() + ": " + e.getMessage());
                 }
             }
         }
         if (keepgoing && nodeNames.size() > 0) {
             if (null != failedListener) {
                 //tell listener of failed node list
-                failedListener.nodesFailed(nodeNames);
+                failedListener.nodesFailed(failures);
             }
             //now fail
             //XXX: needs to change from exception
-            throw new NodesetFailureException(nodeNames);
-        } else if (null != failedListener && nodeNames.isEmpty() && !interrupted) {
+            throw new NodesetFailureException(failures);
+        } else if (null != failedListener && failures.isEmpty() && !interrupted) {
             failedListener.nodesSucceeded();
         }
         if (interrupted) {

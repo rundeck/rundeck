@@ -47,7 +47,7 @@ public class StepFirstWorkflowStrategy extends BaseWorkflowStrategy {
         super(framework);
     }
 
-    public WorkflowExecutionResult executeWorkflow(final ExecutionContext executionContext,
+    public WorkflowExecutionResult executeWorkflowImpl(final ExecutionContext executionContext,
                                                    final WorkflowExecutionItem item) {
         boolean workflowsuccess = false;
         Exception exception = null;
@@ -77,30 +77,7 @@ public class StepFirstWorkflowStrategy extends BaseWorkflowStrategy {
         final Exception orig = exception;
         final HashMap<String, List<StatusResult>> results = convertResults(resultList);
         final Map<String, Collection<String>> failures = convertFailures(failedList);
-        return new WorkflowExecutionResult() {
-            public Map<String, List<StatusResult>> getResultSet() {
-                return results;
-            }
-
-            public Map<String, Collection<String>> getFailureMessages() {
-                return failures;
-            }
-
-            public boolean isSuccess() {
-                return success;
-            }
-
-            public Exception getException() {
-                return orig;
-            }
-
-            @Override
-            public String toString() {
-                return "Step-first strategy, resultset: " + getResultSet() + ", failures: " + getFailureMessages() + (
-                    null != getException() ? ": exception: " + getException() : "");
-            }
-
-        };
+        return new WorkflowExecutionResult(results, failures, success, orig);
 
     }
 

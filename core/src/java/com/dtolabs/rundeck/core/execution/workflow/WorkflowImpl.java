@@ -81,6 +81,42 @@ public class WorkflowImpl implements IWorkflow {
                '}';
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof WorkflowImpl)) {
+            return false;
+        }
+
+        WorkflowImpl workflow = (WorkflowImpl) o;
+
+        if (keepgoing != workflow.keepgoing) {
+            return false;
+        }
+        if (threadcount != workflow.threadcount) {
+            return false;
+        }
+        if (commands != null ? !commands.equals(workflow.commands) : workflow.commands != null) {
+            return false;
+        }
+        if (strategy != null ? !strategy.equals(workflow.strategy) : workflow.strategy != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = commands != null ? commands.hashCode() : 0;
+        result = 31 * result + threadcount;
+        result = 31 * result + (keepgoing ? 1 : 0);
+        result = 31 * result + (strategy != null ? strategy.hashCode() : 0);
+        return result;
+    }
+
     public String getStrategy() {
         return strategy;
     }

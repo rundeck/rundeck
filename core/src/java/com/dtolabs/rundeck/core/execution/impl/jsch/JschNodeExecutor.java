@@ -24,29 +24,22 @@
 package com.dtolabs.rundeck.core.execution.impl.jsch;
 
 import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.core.cli.ExecTool;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
-import com.dtolabs.rundeck.core.execution.ExecutionListenerBuildLogger;
 import com.dtolabs.rundeck.core.execution.dispatch.ParallelNodeDispatcher;
 import com.dtolabs.rundeck.core.execution.impl.common.AntSupport;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.tasks.net.ExtSSHExec;
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
-import com.dtolabs.rundeck.core.utils.FormattedOutputStream;
-import com.dtolabs.rundeck.core.utils.LogReformatter;
-import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Sequential;
 
-import java.io.OutputStream;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -58,7 +51,7 @@ public class JschNodeExecutor implements NodeExecutor {
     public static final String SERVICE_PROVIDER_TYPE = "jsch-ssh";
     private Framework framework;
 
-    public JschNodeExecutor(Framework framework) {
+    public JschNodeExecutor(final Framework framework) {
         this.framework = framework;
     }
 
@@ -77,15 +70,13 @@ public class JschNodeExecutor implements NodeExecutor {
         final ExecutionListener listener = context.getExecutionListener();
         final Project project = new Project();
         AntSupport.addAntBuildListener(listener, project);
+
         boolean success = false;
         final ExtSSHExec sshexec;
         try {
             //perform jsch sssh command
             sshexec = buildSSHTask(context, node, command, project, framework);
             final Task taskSequence = createRemoteTaskSequence(node, project, sshexec);
-//            project.log("JschNodeExecutor log",Project.MSG_ERR);
-//            System.err.println("JschNodeExecutor sys.err");
-//            System.out.println("JschNodeExecutor sys.out");
             taskSequence.execute();
             success = true;
         } catch (SSHTaskBuilder.BuilderException e) {

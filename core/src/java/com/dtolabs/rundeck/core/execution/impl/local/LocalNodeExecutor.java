@@ -23,14 +23,12 @@
 */
 package com.dtolabs.rundeck.core.execution.impl.local;
 
-import com.dtolabs.rundeck.core.cli.ExecTool;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
-import com.dtolabs.rundeck.core.execution.ExecutionListenerBuildLogger;
 import com.dtolabs.rundeck.core.execution.dispatch.ParallelNodeDispatcher;
 import com.dtolabs.rundeck.core.execution.impl.common.AntSupport;
 import com.dtolabs.rundeck.core.execution.script.ExecTaskParameterGenerator;
@@ -38,17 +36,12 @@ import com.dtolabs.rundeck.core.execution.script.ExecTaskParameterGeneratorImpl;
 import com.dtolabs.rundeck.core.execution.script.ExecTaskParameters;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
-import com.dtolabs.rundeck.core.utils.FormattedOutputStream;
-import com.dtolabs.rundeck.core.utils.LogReformatter;
-import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.ExecTask;
 import org.apache.tools.ant.taskdefs.Sequential;
 import org.apache.tools.ant.types.Commandline;
 
-import java.io.OutputStream;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -85,22 +78,6 @@ public class LocalNodeExecutor implements NodeExecutor {
         execTask.setResultProperty(propName);
 
         final Task task = createTaskSequence(node, project, execTask);
-//        System.err.println("LocalNodeExecutor system.err");
-//        System.out.println("LocalNodeExecutor system.out");
-//        if (null != context.getExecutionListener()) {
-//            context.getExecutionListener().log(0, "LocalNodeExecutor log 0");
-//            context.getExecutionListener().log(1, "LocalNodeExecutor log 1");
-//            context.getExecutionListener().log(2, "LocalNodeExecutor log 2");
-//            context.getExecutionListener().log(3, "LocalNodeExecutor log 3");
-//            context.getExecutionListener().log(4, "LocalNodeExecutor log 4");
-//        }
-//        if (null != context.getExecutionListener().getBuildListener()) {
-//                project.addBuildListener(context.getExecutionListener().getBuildListener());
-//                project.log("LocalNodeExecutor added build listener", Project.MSG_ERR);
-//        }
-//        project.addBuildListener(new ExecutionListenerBuildLogger(listener));
-//        project.log("LocalNodeExecutor added custom listener", Project.MSG_DEBUG);
-
         task.execute();
         success = true;
         int result = success ? 0 : -1;

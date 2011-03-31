@@ -15,32 +15,25 @@
  */
 
 /*
-* WorkflowExecutionListener.java
+* ContextExecutionListener.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/28/11 1:44 PM
+* Created: 3/31/11 10:29 AM
 * 
 */
-package com.dtolabs.rundeck.core.execution.workflow;
-
-import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
-import com.dtolabs.rundeck.core.execution.ExecutionListener;
+package com.dtolabs.rundeck.core.execution;
 
 import java.util.*;
 
 /**
- * WorkflowExecutionListener is ...
+ * ContextLoggerExecutionListener provides a method for getting a map of logging context information.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface WorkflowExecutionListener extends ExecutionListener {
+public interface ContextLoggerExecutionListener extends ExecutionListener{
 
-    public void beginWorkflowExecution(ExecutionContext executionContext, WorkflowExecutionItem item);
-
-    public void finishWorkflowExecution(WorkflowExecutionResult result, ExecutionContext executionContext,
-                                        WorkflowExecutionItem item);
-    public void beginWorkflowItem(int step, ExecutionItem node);
-    public void finishWorkflowItem(int step, ExecutionItem node);
+    /**
+     * Return the current logging context, or null.
+     */
+    public Map<String, String> getLoggingContext();
 }

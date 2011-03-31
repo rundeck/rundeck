@@ -95,6 +95,10 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier {
         seq.addTask(scp);
 
         seq.execute();
+        if (!localTempfile.delete()) {
+            context.getExecutionListener().log(Constants.WARN_LEVEL,
+                "Unable to remove local temp file: " + localTempfile.getAbsolutePath());
+        }
         return remotefile;
     }
 
@@ -173,7 +177,7 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier {
 
             throw new CoreException("Unknown node authentication configuration for node: " + nodeentry.getNodename());
         }
-
+        //XXX:TODO use node attributes to specify ssh key/timeout
         /**
          * Set the local and remote file paths
          */
@@ -183,7 +187,6 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier {
 
         scp.setPassphrase(""); // set empty otherwise password will be required
         scp.setVerbose(context.getLoglevel() >= Project.MSG_VERBOSE);
-        System.err.println("Created scp action to copy file: " + remotepath);
         return scp;
     }
 
@@ -199,6 +202,6 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier {
     }
 
     private Echo createEchoVerbose(final String message, final Project project) {
-        return createEcho(message, project, "verbose");
+        return createEcho(message, project, "debug");
     }
 }

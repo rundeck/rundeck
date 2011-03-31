@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution;
 
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * FailedNodesListener is ...
@@ -33,11 +34,11 @@ import java.util.Collection;
  */
 public interface FailedNodesListener {
     /**
-     * Called with a list of node names if the execution failed.  The nodes will be the failed nodes.
+     * Called with a map of node names to failures.  The nodes will be the failed nodes.
      *
      * @param names node names
      */
-    public void nodesFailed(Collection<String> names);
+    public void nodesFailed(Map<String,Object> failures);
 
     /**
      * Called if no nodes failed during execution.

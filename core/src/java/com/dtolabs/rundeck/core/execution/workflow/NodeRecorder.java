@@ -21,7 +21,7 @@
 * Created: Dec 15, 2010 3:13:18 PM
 *
 */
-package com.dtolabs.rundeck.execution;
+package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 
@@ -34,17 +34,17 @@ import java.util.*;
  */
 public class NodeRecorder implements FailedNodesListener {
     private HashSet<String> matchedNodes;
-    private HashSet<String> failedNodes;
+    private HashMap<String,Object> failedNodes;
     private boolean success=false;
 
     public NodeRecorder() {
         matchedNodes =new HashSet<String>();
-        failedNodes=new HashSet<String>();
+        failedNodes=new HashMap<String,Object>();
         success=false;
     }
 
-    public void nodesFailed(final Collection<String> names) {
-        failedNodes.addAll(names);
+    public void nodesFailed(final Map<String,Object> failures) {
+        failedNodes.putAll(failures);
     }
 
     public void nodesSucceeded() {
@@ -61,7 +61,7 @@ public class NodeRecorder implements FailedNodesListener {
      */
     public HashSet<String> getSuccessfulNodes() {
         final HashSet<String> successfulNodes = new HashSet<String>(matchedNodes);
-        successfulNodes.removeAll(failedNodes);
+        successfulNodes.removeAll(failedNodes.keySet());
         return successfulNodes;
     }
 
@@ -69,7 +69,7 @@ public class NodeRecorder implements FailedNodesListener {
      * Return the set of failed nodes
      * @return
      */
-    public HashSet<String> getFailedNodes() {
+    public HashMap<String,Object> getFailedNodes() {
         return failedNodes;
     }
 

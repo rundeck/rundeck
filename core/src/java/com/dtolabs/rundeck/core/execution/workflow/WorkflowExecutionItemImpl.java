@@ -52,41 +52,38 @@ public class WorkflowExecutionItemImpl implements WorkflowExecutionItem {
         this(item.getWorkflow());
     }
 
-    /**
-     * Create workflowExecutionItem suitable for inner loop of node-first strategy
-     */
-    public static WorkflowExecutionItem createInnerLoopItem(WorkflowExecutionItem item) {
-        final WorkflowExecutionItemImpl workflowExecutionItem = new WorkflowExecutionItemImpl(new stepFirstWrapper(
-            item.getWorkflow()));
-        return workflowExecutionItem;
-    }
 
     public IWorkflow getWorkflow() {
         return workflow;
     }
 
-    private static class stepFirstWrapper implements IWorkflow {
-        private IWorkflow workflow;
-
-        private stepFirstWrapper(IWorkflow workflow) {
-            this.workflow = workflow;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof WorkflowExecutionItemImpl)) {
+            return false;
         }
 
-        public List<ExecutionItem> getCommands() {
-            return workflow.getCommands();
+        WorkflowExecutionItemImpl that = (WorkflowExecutionItemImpl) o;
+
+        if (workflow != null ? !workflow.equals(that.workflow) : that.workflow != null) {
+            return false;
         }
 
-        public int getThreadcount() {
-            return workflow.getThreadcount();
-        }
-
-        public boolean isKeepgoing() {
-            return workflow.isKeepgoing();
-        }
-
-        public String getStrategy() {
-            return WorkflowExecutionItem.STEP_FIRST;
-        }
+        return true;
     }
 
+    @Override
+    public int hashCode() {
+        return workflow != null ? workflow.hashCode() : 0;
+    }
+
+    @Override
+    public String toString() {
+        return "WorkflowExecutionItemImpl{" +
+               "workflow=" + workflow +
+               '}';
+    }
 }

@@ -23,6 +23,7 @@
 */
 package com.dtolabs.rundeck.core.execution;
 
+import com.dtolabs.rundeck.core.cli.ExecTool;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.commands.CommandInterpreter;
@@ -33,9 +34,16 @@ import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
 import com.dtolabs.rundeck.core.execution.service.*;
+import com.dtolabs.rundeck.core.utils.FormattedOutputStream;
+import com.dtolabs.rundeck.core.utils.LogReformatter;
+import com.dtolabs.rundeck.core.utils.MapGenerator;
+import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream;
 
 import java.io.File;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * NewExecutionServiceImpl is ...
@@ -55,18 +63,20 @@ class ExecutionServiceImpl implements ExecutionService {
         }
 
         boolean success = false;
-        Exception exception = null;
         DispatcherResult result = null;
+        BaseExecutionResult baseExecutionResult = null;
         try {
             result = dispatchToNodes(context, item);
             success = result.isSuccess();
+            baseExecutionResult = new BaseExecutionResult(result, success, null);
         } catch (DispatcherException e) {
-            exception = e;
+            baseExecutionResult = new BaseExecutionResult(result, success, e);
+        } finally {
+            if (null != context.getExecutionListener()) {
+                context.getExecutionListener().finishExecution(baseExecutionResult, context, item);
+            }
         }
-        final BaseExecutionResult baseExecutionResult = new BaseExecutionResult(result, success, exception);
-        if (null != context.getExecutionListener()) {
-            context.getExecutionListener().finishExecution(baseExecutionResult, context, item);
-        }
+
         return baseExecutionResult;
     }
 
@@ -83,9 +93,13 @@ class ExecutionServiceImpl implements ExecutionService {
         if (null != context.getExecutionListener()) {
             context.getExecutionListener().beginInterpretCommand(context, item, node);
         }
-        InterpreterResult result = interpreter.interpretCommand(context, item, node);
-        if (null != context.getExecutionListener()) {
-            context.getExecutionListener().finishInterpretCommand(result, context, item, node);
+        InterpreterResult result = null;
+        try {
+            result = interpreter.interpretCommand(context, item, node);
+        } finally {
+            if (null != context.getExecutionListener()) {
+                context.getExecutionListener().finishInterpretCommand(result, context, item, node);
+            }
         }
         return result;
     }
@@ -102,12 +116,17 @@ class ExecutionServiceImpl implements ExecutionService {
         } catch (ExecutionServiceException e) {
             throw new DispatcherException(e);
         }
-        DispatcherResult result = dispatcher.dispatch(context, item);
-        if (null != context.getExecutionListener()) {
-            context.getExecutionListener().finishNodeDispatch(result, context, item);
+        DispatcherResult result = null;
+        try {
+            result = dispatcher.dispatch(context, item);
+        } finally {
+            if (null != context.getExecutionListener()) {
+                context.getExecutionListener().finishNodeDispatch(result, context, item);
+            }
         }
         return result;
     }
+
     public DispatcherResult dispatchToNodes(ExecutionContext context, Dispatchable item) throws
         DispatcherException {
 
@@ -120,9 +139,13 @@ class ExecutionServiceImpl implements ExecutionService {
         } catch (ExecutionServiceException e) {
             throw new DispatcherException(e);
         }
-        DispatcherResult result = dispatcher.dispatch(context, item);
-        if (null != context.getExecutionListener()) {
-            context.getExecutionListener().finishNodeDispatch(result, context, item);
+        DispatcherResult result = null;
+        try {
+            result = dispatcher.dispatch(context, item);
+        } finally {
+            if (null != context.getExecutionListener()) {
+                context.getExecutionListener().finishNodeDispatch(result, context, item);
+            }
         }
         return result;
     }
@@ -140,9 +163,13 @@ class ExecutionServiceImpl implements ExecutionService {
         } catch (ExecutionServiceException e) {
             throw new FileCopierException(e);
         }
-        String result = copier.copyFileStream(context, input, node);
-        if (null != context.getExecutionListener()) {
-            context.getExecutionListener().finishFileCopy(result, context, node);
+        String result = null;
+        try {
+            result = copier.copyFileStream(context, input, node);
+        } finally {
+            if (null != context.getExecutionListener()) {
+                context.getExecutionListener().finishFileCopy(result, context, node);
+            }
         }
         return result;
     }
@@ -158,9 +185,13 @@ class ExecutionServiceImpl implements ExecutionService {
         } catch (ExecutionServiceException e) {
             throw new FileCopierException(e);
         }
-        String result = copier.copyFile(context, file, node);
-        if (null != context.getExecutionListener()) {
-            context.getExecutionListener().finishFileCopy(result, context, node);
+        String result = null;
+        try {
+            result = copier.copyFile(context, file, node);
+        } finally {
+            if (null != context.getExecutionListener()) {
+                context.getExecutionListener().finishFileCopy(result, context, node);
+            }
         }
         return result;
     }
@@ -176,9 +207,13 @@ class ExecutionServiceImpl implements ExecutionService {
         } catch (ExecutionServiceException e) {
             throw new FileCopierException(e);
         }
-        String result = copier.copyScriptContent(context, script, node);
-        if (null != context.getExecutionListener()) {
-            context.getExecutionListener().finishFileCopy(result, context, node);
+        String result = null;
+        try {
+            result = copier.copyScriptContent(context, script, node);
+        } finally {
+            if (null != context.getExecutionListener()) {
+                context.getExecutionListener().finishFileCopy(result, context, node);
+            }
         }
         return result;
     }
@@ -195,14 +230,129 @@ class ExecutionServiceImpl implements ExecutionService {
         } catch (ExecutionServiceException e) {
             throw new ExecutionException(e);
         }
-        NodeExecutorResult result = nodeExecutor.executeCommand(context, command, node);
-        if (null != context.getExecutionListener()) {
-            context.getExecutionListener().finishNodeExecution(result, context, command, node);
+
+        final LogReformatter formatter = createLogReformatter(node, context.getExecutionListener());
+        final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
+        NodeExecutorResult result = null;
+        try {
+            result = nodeExecutor.executeCommand(context, command, node);
+        } finally {
+            loggingReformatter.resetOutputStreams();
+            if (null != context.getExecutionListener()) {
+                context.getExecutionListener().finishNodeExecution(result, context, command, node);
+            }
         }
         return result;
     }
 
     public String getName() {
         return SERVICE_NAME;
+    }
+
+    public static LogReformatter createLogReformatter(INodeEntry node, final ExecutionListener listener) {
+        LogReformatter gen;
+        if (null != listener && listener.isTerse()) {
+            gen = null;
+        } else {
+            String logformat = ExecTool.DEFAULT_LOG_FORMAT;
+            if (null != listener && null != listener.getLogFormat()) {
+                logformat = listener.getLogFormat();
+            }
+            final HashMap<String, String> baseContext = new HashMap<String, String>();
+            //discover node name and username
+            baseContext.put("node", node.getNodename());
+            baseContext.put("user", node.extractUserName());
+//            contextData.put("command", "dispatch");
+            if (listener instanceof ContextLoggerExecutionListener) {
+                final ContextLoggerExecutionListener ctxListener = (ContextLoggerExecutionListener) listener;
+                gen = new LogReformatter(logformat, new MapGenerator<String, String>() {
+                    public Map<String, String> getMap() {
+                        final HashMap<String, String> result = new HashMap<String, String>(
+                            ctxListener.getLoggingContext());
+                        result.putAll(baseContext);
+                        return result;
+                    }
+                });
+            } else {
+
+                gen = new LogReformatter(logformat, baseContext);
+            }
+
+        }
+        return gen;
+    }
+
+    static class ThreadStreamFormatter {
+        final LogReformatter gen;
+        private ThreadBoundOutputStream threadBoundSysOut;
+        private ThreadBoundOutputStream threadBoundSysErr;
+        private OutputStream origout;
+        private OutputStream origerr;
+
+        ThreadStreamFormatter(final LogReformatter gen) {
+            this.gen = gen;
+        }
+
+        public ThreadBoundOutputStream getThreadBoundSysOut() {
+            return threadBoundSysOut;
+        }
+
+        public ThreadBoundOutputStream getThreadBoundSysErr() {
+            return threadBoundSysErr;
+        }
+
+        public OutputStream getOrigout() {
+            return origout;
+        }
+
+        public OutputStream getOrigerr() {
+            return origerr;
+        }
+
+
+        public ThreadStreamFormatter invoke() {
+            //bind System printstreams to the thread
+            threadBoundSysOut = ThreadBoundOutputStream.bindSystemOut();
+            threadBoundSysErr = ThreadBoundOutputStream.bindSystemErr();
+
+            //get outputstream for reformatting destination
+            origout = threadBoundSysOut.getThreadStream();
+            origerr = threadBoundSysErr.getThreadStream();
+
+            //replace any existing logreformatter
+            final FormattedOutputStream outformat;
+            if (origout instanceof FormattedOutputStream) {
+                final OutputStream origsink = ((FormattedOutputStream) origout).getOriginalSink();
+                outformat = new FormattedOutputStream(gen, origsink);
+            } else {
+                outformat = new FormattedOutputStream(gen, origout);
+            }
+            outformat.setContext("level", "INFO");
+
+            final FormattedOutputStream errformat;
+            if (origerr instanceof FormattedOutputStream) {
+                final OutputStream origsink = ((FormattedOutputStream) origerr).getOriginalSink();
+                errformat = new FormattedOutputStream(gen, origsink);
+            } else {
+                errformat = new FormattedOutputStream(gen, origerr);
+            }
+            errformat.setContext("level", "ERROR");
+
+            //install the OutputStreams for the thread
+            threadBoundSysOut.installThreadStream(outformat);
+            threadBoundSysErr.installThreadStream(errformat);
+            return this;
+        }
+
+        public void resetOutputStreams() {
+            threadBoundSysOut.removeThreadStream();
+            threadBoundSysErr.removeThreadStream();
+            if (null != origout) {
+                threadBoundSysOut.installThreadStream(origout);
+            }
+            if (null != origerr) {
+                threadBoundSysErr.installThreadStream(origerr);
+            }
+        }
     }
 }

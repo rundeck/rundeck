@@ -23,11 +23,11 @@
 */
 package com.dtolabs.rundeck.core.execution.impl.common;
 
+import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.ExecutionListenerBuildLogger;
+import com.dtolabs.rundeck.core.execution.commands.ExecCommandInterpreter;
 import org.apache.tools.ant.Project;
-
-import java.util.*;
 
 /**
  * AntSupport is ...
@@ -37,7 +37,6 @@ import java.util.*;
 public class AntSupport {
     public static void addAntBuildListener(ExecutionListener listener, Project project) {
         final ExecutionListenerBuildLogger listener1 = new ExecutionListenerBuildLogger(listener);
-        //listener1.setReformatter(gen);
         project.addBuildListener(listener1);
     }
 }

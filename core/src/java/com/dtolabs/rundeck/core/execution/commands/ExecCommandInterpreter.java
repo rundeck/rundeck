@@ -57,46 +57,11 @@ public class ExecCommandInterpreter implements CommandInterpreter {
         InterpreterException {
         final ExecCommand cmd = (ExecCommand) item;
         NodeExecutorResult result;
-        final ExecutionListener listener = context.getExecutionListener();
-        final LogReformatter gen;
-        gen = createLogReformatter(node, listener);
-        //bind System printstreams to the thread
-        final ThreadBoundOutputStream threadBoundSysOut = ThreadBoundOutputStream.bindSystemOut();
-        final ThreadBoundOutputStream threadBoundSysErr = ThreadBoundOutputStream.bindSystemErr();
-
-        //get outputstream for reformatting destination
-        final OutputStream origout = threadBoundSysOut.getThreadStream();
-        final OutputStream origerr = threadBoundSysErr.getThreadStream();
-
-        //replace any existing logreformatter
-        final FormattedOutputStream outformat;
-        if (origout instanceof FormattedOutputStream) {
-            final OutputStream origsink = ((FormattedOutputStream) origout).getOriginalSink();
-            outformat = new FormattedOutputStream(gen, origsink);
-        } else {
-            outformat = new FormattedOutputStream(gen, origout);
-        }
-        outformat.setContext("level", "INFO");
-
-        final FormattedOutputStream errformat;
-        if (origerr instanceof FormattedOutputStream) {
-            final OutputStream origsink = ((FormattedOutputStream) origerr).getOriginalSink();
-            errformat = new FormattedOutputStream(gen, origsink);
-        } else {
-            errformat = new FormattedOutputStream(gen, origerr);
-        }
-        errformat.setContext("level", "ERROR");
-
-        //install the OutputStreams for the thread
-        threadBoundSysOut.installThreadStream(outformat);
-        threadBoundSysErr.installThreadStream(errformat);
         try {
             result = framework.getExecutionService().executeCommand(context, cmd.getCommand(), node);
         } catch (ExecutionException e) {
             throw new InterpreterException(e);
-        } finally {
-            threadBoundSysOut.removeThreadStream();
-            threadBoundSysErr.removeThreadStream();
+
         }
         return result;
     }
@@ -114,7 +79,7 @@ public class ExecCommandInterpreter implements CommandInterpreter {
             //discover node name and username
             contextData.put("node", node.getNodename());
             contextData.put("user", node.extractUserName());
-            contextData.put("command", "test");
+//            contextData.put("command", "test");
             gen = new LogReformatter(logformat, contextData);
         }
         return gen;

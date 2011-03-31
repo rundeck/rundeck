@@ -47,4 +47,9 @@ public class InterpreterResultImpl implements InterpreterResult {
         return internalResult;
     }
 
+    @Override
+    public String toString() {
+        return internalResult.toString();
+    }
+    
 }

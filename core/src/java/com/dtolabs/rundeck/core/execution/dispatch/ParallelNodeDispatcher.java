@@ -33,7 +33,6 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionItem;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 import com.dtolabs.rundeck.core.execution.StatusResult;
-import com.dtolabs.rundeck.core.execution.commands.CommandInterpreter;
 import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
 import com.dtolabs.rundeck.core.execution.impl.common.AntSupport;
 import com.dtolabs.rundeck.core.tasks.dispatch.NodeExecutionStatusTask;
@@ -107,7 +106,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
 //            project.addBuildListener(context.getExecutionListener().getBuildListener());
 //        }
         project.addReference(STATUS_LISTENER_REF_ID, listener);
-        AntSupport.addAntBuildListener(context.getExecutionListener(), project);
+//        AntSupport.addAntBuildListener(context.getExecutionListener(), project, node);
 
         project.log(
             "preparing for parallel execution...(keepgoing? " + keepgoing + ", threads: " + nodeset.getThreadCount()
@@ -120,13 +119,14 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         parallelTask.setFailOnAny(!keepgoing);
         boolean success = false;
         final HashMap<String, StatusResult> resultMap = new HashMap<String, StatusResult>();
+        final HashMap<String, Object> failureMap = new HashMap<String, Object>();
         for (final Object node1 : nodes) {
             final INodeEntry node = (INodeEntry) node1;
             final Callable tocall;
             if (null != item) {
-                tocall = execItemCallable(context, item, resultMap, node);
+                tocall = execItemCallable(context, item, resultMap, node, failureMap);
             } else {
-                tocall = dispatchableCallable(context, toDispatch, resultMap, node);
+                tocall = dispatchableCallable(context, toDispatch, resultMap, node, failureMap);
             }
             nodeNames.add(node.getNodename());
             project.log("Create task for node: " + node.getNodename(), Project.MSG_DEBUG);
@@ -146,11 +146,12 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         if (nodeNames.size() > 0) {
             if (null != failedListener) {
                 //tell listener of failed node list
-                failedListener.nodesFailed(nodeNames);
+                //extract status results
+                failedListener.nodesFailed(failureMap);
             }
             //now fail
             //XXXX: needs to change from exception
-            throw new NodesetFailureException(nodeNames);
+            throw new NodesetFailureException(failureMap);
         } else if (null != failedListener && nodeNames.isEmpty()) {
             failedListener.nodesSucceeded();
         }
@@ -174,24 +175,42 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
     }
 
     private Callable dispatchableCallable(final ExecutionContext context, final Dispatchable toDispatch,
-                                          final HashMap<String, StatusResult> resultMap, final INodeEntry node) {
+                                          final HashMap<String, StatusResult> resultMap, final INodeEntry node,
+                                          final Map<String, Object> failureMap) {
         return new Callable() {
             public Object call() throws Exception {
-                final StatusResult dispatch = toDispatch.dispatch(context, node);
-                resultMap.put(node.getNodename(), dispatch);
-                return dispatch;
+                try {
+                    final StatusResult dispatch = toDispatch.dispatch(context, node);
+                    if (!dispatch.isSuccess()) {
+                        failureMap.put(node.getNodename(), dispatch);
+                    }
+                    resultMap.put(node.getNodename(), dispatch);
+                    return dispatch;
+                } catch (Throwable t) {
+                    failureMap.put(node.getNodename(), t);
+                    return null;
+                }
             }
         };
     }
 
     private Callable execItemCallable(final ExecutionContext context, final ExecutionItem item,
-                                      final HashMap<String, StatusResult> resultMap, final INodeEntry node) {
+                                      final HashMap<String, StatusResult> resultMap, final INodeEntry node,
+                                      final Map<String, Object> failureMap) {
         return new Callable() {
             public Object call() throws Exception {
-                final InterpreterResult interpreterResult = framework.getExecutionService().interpretCommand(
-                    context, item, node);
-                resultMap.put(node.getNodename(), interpreterResult);
-                return interpreterResult;
+                try {
+                    final InterpreterResult interpreterResult = framework.getExecutionService().interpretCommand(
+                        context, item, node);
+                    if (!interpreterResult.isSuccess()) {
+                        failureMap.put(node.getNodename(), interpreterResult);
+                    }
+                    resultMap.put(node.getNodename(), interpreterResult);
+                    return interpreterResult;
+                } catch (Throwable t) {
+                    failureMap.put(node.getNodename(), t);
+                    return null;
+                }
             }
         };
     }

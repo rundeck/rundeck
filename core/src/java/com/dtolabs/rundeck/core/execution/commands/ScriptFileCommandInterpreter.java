@@ -85,7 +85,7 @@ public class ScriptFileCommandInterpreter implements CommandInterpreter {
             String[] newargs=null;
             if(null!=args && args.length>0) {
                 newargs = new String[args.length + 1];
-                String[] replargs= DataContextUtils.replaceDataReferences(args, context.getDataContext());
+                final String[] replargs= DataContextUtils.replaceDataReferences(args, context.getDataContext());
                 newargs[0]=filepath;
                 System.arraycopy(replargs, 0, newargs, 1, replargs.length);
             }else{
@@ -94,6 +94,7 @@ public class ScriptFileCommandInterpreter implements CommandInterpreter {
             //XXX: windows specific call?
 
             return framework.getExecutionService().executeCommand(context, newargs, node);
+            //TODO: remove remote temp file after exec?
         } catch (ExecutionException e) {
             throw new InterpreterException(e);
         }

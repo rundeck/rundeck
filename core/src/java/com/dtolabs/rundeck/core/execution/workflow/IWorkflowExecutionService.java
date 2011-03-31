@@ -15,10 +15,10 @@
  */
 
 /*
-* WorkflowExecutionListener.java
+* IWorkflowExecutionService.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/28/11 1:44 PM
+* Created: 3/30/11 7:45 PM
 * 
 */
 package com.dtolabs.rundeck.core.execution.workflow;
@@ -26,21 +26,17 @@ package com.dtolabs.rundeck.core.execution.workflow;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionItem;
-import com.dtolabs.rundeck.core.execution.ExecutionListener;
-
-import java.util.*;
+import com.dtolabs.rundeck.core.execution.ExecutionResult;
 
 /**
- * WorkflowExecutionListener is ...
+ * IWorkflowExecutionService is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface WorkflowExecutionListener extends ExecutionListener {
+public interface IWorkflowExecutionService {
 
-    public void beginWorkflowExecution(ExecutionContext executionContext, WorkflowExecutionItem item);
-
-    public void finishWorkflowExecution(WorkflowExecutionResult result, ExecutionContext executionContext,
-                                        WorkflowExecutionItem item);
-    public void beginWorkflowItem(int step, ExecutionItem node);
-    public void finishWorkflowItem(int step, ExecutionItem node);
+    /**
+     * Execute a command within the context on the node.
+     */
+    public ExecutionResult executeWorkflowItem(ExecutionContext context, INodeEntry node, ExecutionItem item, int number);
 }
