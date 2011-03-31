@@ -279,34 +279,6 @@
         <option name="path" value="$PROJECT_DIR$/src/test/com/dtolabs/rundeck/core/cli/util/mvntest/pom.xml" />
         <plugin-list />
       </pom>
-      <pom>
-        <option name="path" value="$PROJECT_DIR$/build/classes/test/com/dtolabs/rundeck/core/cli/util/mvntest/a/pom.xml" />
-        <plugin-list />
-      </pom>
-      <pom>
-        <option name="path" value="$PROJECT_DIR$/build/classes/test/com/dtolabs/rundeck/core/cli/util/mvntest/b/pom.xml" />
-        <plugin-list />
-      </pom>
-      <pom>
-        <option name="path" value="$PROJECT_DIR$/build/classes/test/com/dtolabs/rundeck/core/cli/util/mvntest/c/pom.xml" />
-        <plugin-list />
-      </pom>
-      <pom>
-        <option name="path" value="$PROJECT_DIR$/build/classes/test/com/dtolabs/rundeck/core/cli/util/mvntest/d/pom.xml" />
-        <plugin-list />
-      </pom>
-      <pom>
-        <option name="path" value="$PROJECT_DIR$/build/classes/test/com/dtolabs/rundeck/core/cli/util/mvntest/e/pom.xml" />
-        <plugin-list />
-      </pom>
-      <pom>
-        <option name="path" value="$PROJECT_DIR$/build/classes/test/com/dtolabs/rundeck/core/cli/util/mvntest/f/pom.xml" />
-        <plugin-list />
-      </pom>
-      <pom>
-        <option name="path" value="$PROJECT_DIR$/build/classes/test/com/dtolabs/rundeck/core/cli/util/mvntest/pom.xml" />
-        <plugin-list />
-      </pom>
     </pom-list>
   </component>
   <component name="PEExternalization">
