@@ -23,7 +23,6 @@
 */
 package com.dtolabs.rundeck.execution;
 
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.execution.ExecutionItem;
 import com.dtolabs.rundeck.core.execution.commands.ExecCommandBase;
 import com.dtolabs.rundeck.core.execution.commands.ScriptFileCommandBase;
@@ -36,20 +35,30 @@ import java.io.File;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class ExecutionItemFactory {
-    public static ExecutionItem createScriptFileItem(final String script) {
+    public static ExecutionItem createScriptFileItem(final String script, final String[] strings) {
         return new ScriptFileCommandBase() {
             @Override
             public String getScript() {
                 return script;
             }
+
+            @Override
+            public String[] getArgs() {
+                return strings;
+            }
         };
     }
-    public static ExecutionItem createScriptFileItem(final File file){
+    public static ExecutionItem createScriptFileItem(final File file, final String[] strings){
         final String filepath = file.getAbsolutePath();
         return new ScriptFileCommandBase() {
             @Override
             public String getServerScriptFilePath() {
                 return filepath;
+            }
+
+            @Override
+            public String[] getArgs() {
+                return strings;
             }
         };
     }
