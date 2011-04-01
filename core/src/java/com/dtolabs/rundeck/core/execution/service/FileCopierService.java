@@ -27,13 +27,15 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschScpFileCopier;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalFileCopier;
+import com.dtolabs.rundeck.core.plugins.PluggableService;
+import com.dtolabs.rundeck.core.plugins.PluginException;
 
 /**
  * FileCopierService is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class FileCopierService extends NodeSpecifiedService<FileCopier> {
+public class FileCopierService extends NodeSpecifiedService<FileCopier> implements PluggableService {
     private static final String SERVICE_NAME = "FileCopier";
     private static final String SERVICE_FILECOPIER_DEFAULT_TYPE = "service.filecopier.default.type";
     public static final String REMOTE_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "remote-file-copy-service";
@@ -77,5 +79,17 @@ public class FileCopierService extends NodeSpecifiedService<FileCopier> {
             return LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE;
         }
         return REMOTE_NODE_SERVICE_SPECIFIER_ATTRIBUTE;
+    }
+
+    public boolean isValidPluginClass(final Class clazz) {
+        return FileCopier.class.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
+    }
+
+    public void registerPluginClass(Class clazz, String name) throws PluginException {
+        if (!isValidPluginClass(clazz)) {
+            throw new PluginException("Invalid plugin class: " + clazz.getName());
+        }
+        final Class<? extends FileCopier> pluginclazz = (Class<FileCopier>) clazz;
+        registry.put(name, pluginclazz);
     }
 }

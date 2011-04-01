@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.execution.service;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkSupportService;
+import com.dtolabs.rundeck.core.plugins.PluggableService;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -51,13 +52,14 @@ public abstract class BaseProviderRegistryService<T> implements FrameworkSupport
     public void registerClass(String name, Class<? extends T> clazz) {
         registry.put(name, clazz);
     }
+
     public void registerInstance(String name, T object) {
         instanceregistry.put(name, object);
     }
-    
+
 
     protected T providerOfType(final String providerName) throws ExecutionServiceException {
-        if(null==providerName) {
+        if (null == providerName) {
             throw new MissingProviderException("provider name was null", getName(), providerName);
         }
         if (null == instanceregistry.get(providerName)) {
@@ -70,16 +72,49 @@ public abstract class BaseProviderRegistryService<T> implements FrameworkSupport
 
     private T createProviderInstanceOfType(final String providerName) throws ExecutionServiceException {
         if (null == registry.get(providerName)) {
-            throw new MissingProviderException("No provider with the specified name is registered.", getName(), providerName);
+            throw new MissingProviderException("No provider with the specified name is registered.", getName(),
+                providerName);
         }
         final Class<? extends T> execClass = registry.get(providerName);
+        boolean ctrfound = true;
         try {
             final Constructor<? extends T> method = execClass.getDeclaredConstructor(new Class[]{Framework.class});
             final T executor = method.newInstance(framework);
             return executor;
+        } catch (NoSuchMethodException e) {
+            ctrfound = false;
         } catch (Exception e) {
             throw new ProviderCreationException("Unable to create provider instance: " + e.getMessage(), e, getName(),
                 providerName);
         }
+        try {
+            final Constructor<? extends T> method = execClass.getDeclaredConstructor(new Class[0]);
+            final T executor = method.newInstance();
+            return executor;
+        } catch (NoSuchMethodException e) {
+            throw new ProviderCreationException(
+                "No constructor found with signature (Framework) or (): " + e.getMessage(), e,
+                getName(),
+                providerName);
+        } catch (Exception e) {
+            throw new ProviderCreationException("Unable to create provider instance: " + e.getMessage(), e,
+                getName(),
+                providerName);
+        }
+    }
+
+    protected boolean hasValidProviderSignature(final Class clazz) {
+
+        try {
+            final Constructor method = clazz.getDeclaredConstructor(new Class[]{Framework.class});
+            return null != method;
+        } catch (NoSuchMethodException e) {
+        }
+        try {
+            final Constructor method = clazz.getDeclaredConstructor(new Class[0]);
+            return null != method;
+        } catch (NoSuchMethodException e) {
+        }
+        return false;
     }
 }

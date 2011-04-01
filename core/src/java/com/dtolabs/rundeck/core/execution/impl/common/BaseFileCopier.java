@@ -86,7 +86,7 @@ public class BaseFileCopier {
         return tempfile;
     }
 
-    public String appendRemoteFileExtensionForNode(INodeEntry node, String remoteFilename) {
+    public static String appendRemoteFileExtensionForNode(INodeEntry node, String remoteFilename) {
         if ("windows".equalsIgnoreCase(node.getOsFamily().trim())) {
             remoteFilename += (remoteFilename.endsWith(".bat") ? "" : ".bat");
         } else {
@@ -95,12 +95,24 @@ public class BaseFileCopier {
         return remoteFilename;
     }
 
-    public String getRemoteDirForNode(INodeEntry node) {
+    public static String getRemoteDirForNode(INodeEntry node) {
         //TODO: allow set temp dir via node attribute
         String remotedir = "/tmp/";
         if ("windows".equalsIgnoreCase(node.getOsFamily().trim())) {
             remotedir = "C:/WINDOWS/TEMP/";
         }
         return remotedir;
+    }
+
+    public static String generateRemoteFilepathForNode(INodeEntry node, final String scriptfileName) {
+        String remoteFilename = appendRemoteFileExtensionForNode(node,
+            System.currentTimeMillis() + "-" + node.getNodename() + "-" + scriptfileName);
+        /**
+         * Define the remote directory where the script file
+         * will be remotely copied.
+         */
+        final String remotedir = getRemoteDirForNode(node);
+
+        return remotedir + remoteFilename;
     }
 }

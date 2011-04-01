@@ -27,13 +27,15 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschNodeExecutor;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor;
+import com.dtolabs.rundeck.core.plugins.PluggableService;
+import com.dtolabs.rundeck.core.plugins.PluginException;
 
 /**
  * CommandExecutorFactory is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class NodeExecutorService extends NodeSpecifiedService<NodeExecutor> {
+public class NodeExecutorService extends NodeSpecifiedService<NodeExecutor> implements PluggableService {
     private static final String SERVICE_NAME = "NodeExecutor";
     private static final String SERVICE_FILECOPIER_DEFAULT_TYPE = "service.nodeexec.default.type";
     public static final String NODE_SERVICE_SPECIFIER_ATTRIBUTE = "exec-service";
@@ -78,4 +80,17 @@ public class NodeExecutorService extends NodeSpecifiedService<NodeExecutor> {
         }
         return NODE_SERVICE_SPECIFIER_ATTRIBUTE;
     }
+
+    public boolean isValidPluginClass(Class clazz) {
+        return NodeExecutor.class.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
+    }
+
+    public void registerPluginClass(final Class clazz, final String name) throws PluginException {
+        if(!isValidPluginClass(clazz)) {
+            throw new PluginException("Invalid plugin class: " + clazz.getName());
+        }
+        final Class<? extends NodeExecutor> pluginclazz = (Class<NodeExecutor>) clazz;
+        registry.put(name, pluginclazz);
+    }
+
 }

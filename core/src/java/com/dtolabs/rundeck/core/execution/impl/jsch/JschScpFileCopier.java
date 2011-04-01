@@ -78,8 +78,8 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier {
         final Sequential seq = new Sequential();
         seq.setProject(project);
 
-        final String remotefile = remoteFilepathForNode(node, (null != scriptfile ? scriptfile.getName()
-                                                                                  : "dispatch-script"));
+        final String remotefile = generateRemoteFilepathForNode(node, (null != scriptfile ? scriptfile.getName()
+                                                                                          : "dispatch-script"));
         //write the temp file and replace tokens in the script with values from the dataContext
         final File localTempfile = writeScriptTempFile(context, scriptfile, input, script, node, framework);
 
@@ -100,18 +100,6 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier {
                 "Unable to remove local temp file: " + localTempfile.getAbsolutePath());
         }
         return remotefile;
-    }
-
-    private String remoteFilepathForNode(INodeEntry node, final String scriptfileName) {
-        String remoteFilename = appendRemoteFileExtensionForNode(node,
-            System.currentTimeMillis() + "-" + node.getNodename() + "-" + scriptfileName);
-        /**
-         * Define the remote directory where the script file
-         * will be remotely copied.
-         */
-        final String remotedir = getRemoteDirForNode(node);
-
-        return remotedir + remoteFilename;
     }
 
 

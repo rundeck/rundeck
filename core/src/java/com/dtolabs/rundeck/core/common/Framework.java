@@ -39,6 +39,7 @@ import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcherService;
 import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
+import com.dtolabs.rundeck.core.plugins.PluginManagerService;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.NodeSet;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
@@ -83,7 +84,7 @@ public class Framework extends FrameworkResourceParent {
     private boolean allowUserInput = true;
     private static final String FRAMEWORK_USERINPUT_DISABLED = "framework.userinput.disabled";
 
-    final HashMap<String,FrameworkSupportService> services;
+    final HashMap<String,FrameworkSupportService> services = new HashMap<String, FrameworkSupportService>();
     /**
      * This is the root. Does not return a parent.
      *
@@ -147,6 +148,13 @@ public class Framework extends FrameworkResourceParent {
             nodeAuthResolutionStrategy = NodeAuthResolutionStrategyFactory.create(nodeAuthClassname, this);
             
         }
+        //todo initialize services via plugin manager
+        CommandInterpreterService.getInstanceForFramework(this);
+        NodeExecutorService.getInstanceForFramework(this);
+        FileCopierService.getInstanceForFramework(this);
+        NodeDispatcherService.getInstanceForFramework(this);
+        ExecutionServiceFactory.getInstanceForFramework(this);
+        WorkflowExecutionService.getInstanceForFramework(this);
     }
 
     private CentralDispatcher centralDispatcherMgr;
@@ -274,16 +282,8 @@ public class Framework extends FrameworkResourceParent {
         if(logger.isDebugEnabled()) {
             logger.debug("Framework.initialize() time: " + (end - start) + "ms");
         }
-
-        services=new HashMap<String, FrameworkSupportService>();
-        //todo initialize services via plugin manager
-        CommandInterpreterService.getInstanceForFramework(this);
-        NodeExecutorService.getInstanceForFramework(this);
-        FileCopierService.getInstanceForFramework(this);
-        NodeDispatcherService.getInstanceForFramework(this);
-        ExecutionServiceFactory.getInstanceForFramework(this);
-        WorkflowExecutionService.getInstanceForFramework(this);
-
+        //call PluginManager to load any plugins
+        PluginManagerService.getInstanceForFramework(this).loadPlugins(getServiceNames());
     }
 
     public FrameworkSupportService getService(String name) {
@@ -478,6 +478,10 @@ public class Framework extends FrameworkResourceParent {
      */
     public void setCentralDispatcherMgr(final CentralDispatcher centralDispatcherMgr) {
         this.centralDispatcherMgr = centralDispatcherMgr;
+    }
+
+    private Collection<String> getServiceNames() {
+        return services.keySet();
     }
 
     /**
