@@ -24,6 +24,8 @@
 */
 package com.dtolabs.rundeck.plugin.scriptexecutor;
 
+import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
@@ -61,22 +63,40 @@ import java.util.*;
 public class ExternalScriptExecutor implements NodeExecutor {
     public static String SCRIPT_ATTRIBUTE = "script-exec";
     public static String DIR_ATTRIBUTE = "script-exec-dir";
+    private static final String SCRIPT_EXEC_DEFAULT_COMMAND_PROPERTY = "script-exec.default.command";
+    private static final String SCRIPT_EXEC_DEFAULT_DIR_PROPERTY = "script-exec.default.dir";
 
     public NodeExecutorResult executeCommand(final ExecutionContext executionContext, final String[] command,
                                              final INodeEntry node) throws ExecutionException {
         File workingdir = null;
         String scriptargs = null;
-        if (null == node.getAttributes() || null == node.getAttributes().get(SCRIPT_ATTRIBUTE)) {
-            throw new ExecutionException(
-                "[script-exec node executor] Node was missing the " + SCRIPT_ATTRIBUTE + " attribute: " + node
-                    .getNodename());
-        }
+        String dirstring = null;
+
+        //get project or framework property for script-exec args
+        final Framework framework = executionContext.getFramework();
+        //look for specific property
+        scriptargs = framework.getProjectProperty(SCRIPT_EXEC_DEFAULT_COMMAND_PROPERTY,
+            executionContext.getFrameworkProject());
+
 
         if (null != node.getAttributes().get(SCRIPT_ATTRIBUTE)) {
             scriptargs = node.getAttributes().get(SCRIPT_ATTRIBUTE);
         }
+        if (null == scriptargs) {
+            throw new ExecutionException(
+                "[script-exec node executor] no script-exec attribute " + SCRIPT_ATTRIBUTE + " was found on node: "
+                + node
+                    .getNodename() + ", and no " + SCRIPT_EXEC_DEFAULT_COMMAND_PROPERTY
+                + " property was configured for the project or framework.");
+        }
+
+        dirstring = framework.getProjectProperty(SCRIPT_EXEC_DEFAULT_COMMAND_PROPERTY,
+            executionContext.getFrameworkProject());
         if (null != node.getAttributes().get(DIR_ATTRIBUTE)) {
-            workingdir = new File(node.getAttributes().get(DIR_ATTRIBUTE));
+            dirstring = node.getAttributes().get(DIR_ATTRIBUTE);
+        }
+        if (null != dirstring) {
+            workingdir = new File(dirstring);
         }
 
         final Map<String, Map<String, String>> origDataContext = executionContext.getDataContext();
