@@ -151,7 +151,7 @@ Optional parameters:
 The following parameters can also be used to narrow down the result set.
 
 * `idlist`: specify a comma-separated list of Job IDs to export
-* `groupPath`: specify a group or partial group path to include all jbos within that group path.
+* `groupPath`: specify a group or partial group path to include all jobs within that group path.
 * `jobFilter`: specify a filter for the job Name
 
 Result:
