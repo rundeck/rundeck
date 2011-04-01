@@ -116,6 +116,8 @@ public class PluginManagerService implements FrameworkSupportService {
             service.registerPluginClass(cls, pluginname);
         } catch (ClassNotFoundException e) {
             throw new PluginException("Class not found: " + classname, e);
+        } catch (Throwable t){
+            throw new PluginException("Error loading class: " + classname, t);
         }
 
 //        System.err.println("Succeeded loading plugin " + classname + " for service: " + service.getName());
