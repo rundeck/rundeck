@@ -27,10 +27,13 @@ import com.dtolabs.rundeck.core.execution.StatusResult;
 import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
 
 /**
- * NodeExecutorResult is ...
+ * NodeExecutorResult contains the result from a {@link NodeExecutor} execution.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface NodeExecutorResult extends InterpreterResult {
+    /**
+     * Return the exit/result code of the execution
+     */
     public int getResultCode();
 }

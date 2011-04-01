@@ -25,10 +25,13 @@
 package com.dtolabs.rundeck.core.execution;
 
 /**
- * StatusResult is ...
+ * StatusResult is a basic result interface indicating success or failure.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface StatusResult {
+    /**
+     * Return true if the result was successful
+     */
     boolean isSuccess();
 }
