@@ -92,33 +92,34 @@ public class PluginManagerService implements FrameworkSupportService {
             throw new IllegalArgumentException("A null java class name was specified.");
         }
         final Object auth;
+        final Class cls;
         try {
-            final Class cls = Class.forName(classname);
-            if(!service.isValidPluginClass(cls)) {
-                throw new PluginException(
-                    "Class " + classname + " was not a valid plugin class for service: " + service.getName());
-            }
-            //try to get plugin provider name
-            String pluginname=null;
-            if(cls.isAnnotationPresent(Plugin.class)){
-                final Plugin annotation = (Plugin) cls.getAnnotation(Plugin.class);
-                pluginname=annotation.name();
-                if(null==pluginname || "".equals(pluginname)){
-                    throw new PluginException(
-                        "Plugin annotation name cannot be empty for the class: " + classname + ", for service " + service
-                            .getName());
-                }
-            }else{
-                throw new PluginException(
-                    "No Plugin annotation was found for the class: " + classname + ", for service " + service
-                        .getName());
-            }
-            service.registerPluginClass(cls, pluginname);
+            cls = Class.forName(classname);
         } catch (ClassNotFoundException e) {
             throw new PluginException("Class not found: " + classname, e);
-        } catch (Throwable t){
+        } catch (Throwable t) {
             throw new PluginException("Error loading class: " + classname, t);
         }
+        if(!service.isValidPluginClass(cls)) {
+            throw new PluginException(
+                "Class " + classname + " was not a valid plugin class for service: " + service.getName());
+        }
+        //try to get plugin provider name
+        String pluginname=null;
+        if(cls.isAnnotationPresent(Plugin.class)){
+            final Plugin annotation = (Plugin) cls.getAnnotation(Plugin.class);
+            pluginname=annotation.name();
+            if(null==pluginname || "".equals(pluginname)){
+                throw new PluginException(
+                    "Plugin annotation name cannot be empty for the class: " + classname + ", for service " + service
+                        .getName());
+            }
+        }else{
+            throw new PluginException(
+                "No Plugin annotation was found for the class: " + classname + ", for service " + service
+                    .getName());
+        }
+        service.registerPluginClass(cls, pluginname);
 
 //        System.err.println("Succeeded loading plugin " + classname + " for service: " + service.getName());
 
