@@ -24,7 +24,6 @@ import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
 import com.dtolabs.rundeck.core.dispatcher.QueuedItemResult;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.commands.ExecCommand;
-import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
 import com.dtolabs.rundeck.core.execution.commands.ScriptFileCommand;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.utils.*;
@@ -495,7 +494,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
     public ExecutionListener getExecutionListener(BuildListener blistener) {
 
         final String logformat;
-        if (getFramework().existsProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT)) {
+        if (getFramework().hasProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT)) {
             logformat = getFramework().getProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT);
         } else {
             logformat = null;

@@ -74,7 +74,7 @@ public class TestFramework extends AbstractBaseTest {
 
         final Framework framework = Framework.getInstance(getBaseDir(), getFrameworkProjectsBase());
         assertNotNull("Framework.getInstance returned null", framework);
-        assertTrue("framework.node.hostname property was not set", framework.existsProperty("framework.node.hostname"));
+        assertTrue("framework.node.hostname property was not set", framework.hasProperty("framework.node.hostname"));
         assertEquals("basedir did not match: " + framework.getBaseDir().getAbsolutePath(), new File(
             getBaseDir()).getAbsolutePath(),
             framework.getBaseDir().getAbsolutePath());

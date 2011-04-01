@@ -514,8 +514,32 @@ public class Framework extends FrameworkResourceParent {
     }
 
 
-    public boolean existsProperty(final String key) {
+    /**
+     * Return true if the property exists
+     */
+    public boolean hasProperty(final String key) {
         return lookup.hasProperty(key);
+    }
+
+    /**
+     * Return true if the property is set for the project or the framework
+     */
+    public boolean hasProjectProperty(final String key, final String project) {
+        final FrameworkProject frameworkProject = getFrameworkProjectMgr().getFrameworkProject(project);
+        return frameworkProject.hasProperty(key) || hasProperty(key);
+    }
+    /**
+     * Return the property value for the key from the project or framework properties if it exists, otherwise
+     * return null.
+     */
+    public String getProjectProperty(final String key, final String project) {
+        final FrameworkProject frameworkProject = getFrameworkProjectMgr().getFrameworkProject(project);
+        if(frameworkProject.hasProperty(key)) {
+            return frameworkProject.getProperty(key);
+        }else if(hasProperty(key)) {
+            return getProperty(key);
+        }
+        return null;
     }
 
 
@@ -709,7 +733,7 @@ public class Framework extends FrameworkResourceParent {
      */
     public boolean isServerNode() {
         String serverNode = null;
-        if (existsProperty("framework.server.name")) {
+        if (hasProperty("framework.server.name")) {
             serverNode = getProperty("framework.server.name");
         }
         if (null!=serverNode && serverNode.equals(getPropertyLookup().getProperty("framework.node.name"))) {
