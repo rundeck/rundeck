@@ -49,19 +49,19 @@ For XML:
 
     <node name="mynode" ...>
         <!-- to enable on a remote node -->
-        <attribute name="exec-service" value="script-exec"/>
+        <attribute name="node-executor" value="script-exec"/>
         <!-- to enable on the server node -->
-        <attribute name="local-exec-service" value="script-exec"/>
+        <attribute name="local-node-executor" value="script-exec"/>
     </node>
 
 For YAML:
 
     mynode:
         hostname: ...
-        exec-service: script-exec
-        local-exec-service: script-exec
+        node-executor: script-exec
+        local-node-executor: script-exec
 
-Note that `local-exec-service` is required instead of `exec-service` only if 
+Note that `local-node-executor` is required instead of `node-executor` only if 
 the node is the local (server) node.
 
 This enables the plugin as the "Node Executor" for the node.
@@ -134,7 +134,7 @@ If you wanted to run some external remote connection command ("/bin/execremote")
 built-in ssh command, you could specify these attributes for node:
 
     mynode:
-        exec-service: script-exec
+        node-executor: script-exec
         script-exec: /bin/execremote -host ${node.hostname} -user ${node.username} -- ${script-exec.command}
 
 At run time, the properties specified would be expanded to the values for the
