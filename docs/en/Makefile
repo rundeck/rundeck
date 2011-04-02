@@ -20,7 +20,7 @@ html : $(DIST)/html
 	@ $(ECHO) Generating HTML book version $(VERSION)
 	# set version
 	@sed "s/@VERSION@/$(VERSION)/" title.txt.template > title.txt
-	$(PANDOC) --number-sections --toc -s title.txt 0[0-9]-*/*.md --css=$(CSS) --template=templates/html.template --include-before=templates/before.html --include-after=templates/after.html -o $(DIST)/html/RunDeck-Guide.html
+	$(PANDOC) --number-sections --toc -s title.txt {0[0-9],1[0-9]}-*/*.md --css=$(CSS) --template=templates/html.template --include-before=templates/before.html --include-after=templates/after.html -o $(DIST)/html/RunDeck-Guide.html
 	-rm title.txt
 	cp $(CSS) $(DIST)/html
 
