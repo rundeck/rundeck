@@ -75,8 +75,8 @@ public class ExternalScriptExecutor implements NodeExecutor {
         //get project or framework property for script-exec args
         final Framework framework = executionContext.getFramework();
         //look for specific property
-        scriptargs = framework.getProjectProperty(SCRIPT_EXEC_DEFAULT_COMMAND_PROPERTY,
-            executionContext.getFrameworkProject());
+        scriptargs = framework.getProjectProperty(executionContext.getFrameworkProject(),
+            SCRIPT_EXEC_DEFAULT_COMMAND_PROPERTY);
 
 
         if (null != node.getAttributes().get(SCRIPT_ATTRIBUTE)) {
@@ -90,8 +90,8 @@ public class ExternalScriptExecutor implements NodeExecutor {
                 + " property was configured for the project or framework.");
         }
 
-        dirstring = framework.getProjectProperty(SCRIPT_EXEC_DEFAULT_COMMAND_PROPERTY,
-            executionContext.getFrameworkProject());
+        dirstring = framework.getProjectProperty(executionContext.getFrameworkProject(),
+            SCRIPT_EXEC_DEFAULT_COMMAND_PROPERTY);
         if (null != node.getAttributes().get(DIR_ATTRIBUTE)) {
             dirstring = node.getAttributes().get(DIR_ATTRIBUTE);
         }
