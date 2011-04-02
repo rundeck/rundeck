@@ -37,9 +37,13 @@ import com.dtolabs.rundeck.core.plugins.PluginException;
  */
 public class NodeExecutorService extends NodeSpecifiedService<NodeExecutor> implements PluggableService {
     private static final String SERVICE_NAME = "NodeExecutor";
-    private static final String SERVICE_FILECOPIER_DEFAULT_TYPE = "service.nodeexec.default.type";
-    public static final String NODE_SERVICE_SPECIFIER_ATTRIBUTE = "exec-service";
-    public static final String LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "local-exec-service";
+    private static final String SERVICE_DEFAULT_PROVIDER_PROPERTY = "service." + SERVICE_NAME + ".default.provider";
+    private static final String SERVICE_DEFAULT_LOCAL_PROVIDER_PROPERTY =
+        "service." + SERVICE_NAME + ".default.local.provider";
+    public static final String NODE_SERVICE_SPECIFIER_ATTRIBUTE = "node-executor";
+    public static final String LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "local-node-executor";
+    private static final String DEFAULT_LOCAL_PROVIDER = LocalNodeExecutor.SERVICE_PROVIDER_TYPE;
+    private static final String DEFAULT_REMOTE_PROVIDER = JschNodeExecutor.SERVICE_PROVIDER_TYPE;
 
     public String getName() {
         return SERVICE_NAME;
@@ -55,13 +59,13 @@ public class NodeExecutorService extends NodeSpecifiedService<NodeExecutor> impl
     }
 
     @Override
-    protected String getDefaultProviderNameForNode(INodeEntry node) {
+    protected String getDefaultProviderNameForNodeAndProject(INodeEntry node, String project) {
         if (framework.isLocalNode(node)) {
-            return LocalNodeExecutor.SERVICE_PROVIDER_TYPE;
+            final String value = framework.getProjectProperty(project, SERVICE_DEFAULT_LOCAL_PROVIDER_PROPERTY);
+            return null != value ? value : DEFAULT_LOCAL_PROVIDER;
         }
-        return framework.getPropertyLookup().hasProperty(SERVICE_FILECOPIER_DEFAULT_TYPE)
-               ? framework.getPropertyLookup().getProperty(SERVICE_FILECOPIER_DEFAULT_TYPE)
-               : JschNodeExecutor.SERVICE_PROVIDER_TYPE;
+        final String value = framework.getProjectProperty(project, SERVICE_DEFAULT_PROVIDER_PROPERTY);
+        return null != value ? value : DEFAULT_REMOTE_PROVIDER;
     }
 
     public static NodeExecutorService getInstanceForFramework(Framework framework) {
@@ -86,7 +90,7 @@ public class NodeExecutorService extends NodeSpecifiedService<NodeExecutor> impl
     }
 
     public void registerPluginClass(final Class clazz, final String name) throws PluginException {
-        if(!isValidPluginClass(clazz)) {
+        if (!isValidPluginClass(clazz)) {
             throw new PluginException("Invalid plugin class: " + clazz.getName());
         }
         final Class<? extends NodeExecutor> pluginclazz = (Class<NodeExecutor>) clazz;

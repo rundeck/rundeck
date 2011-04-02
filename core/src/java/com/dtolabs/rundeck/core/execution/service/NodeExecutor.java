@@ -33,5 +33,17 @@ import com.dtolabs.rundeck.core.execution.ExecutionException;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface NodeExecutor {
-    public NodeExecutorResult executeCommand(ExecutionContext context, String[] command, INodeEntry node) throws ExecutionException;
+    /**
+     * Execute a command on a node and return the result.
+     *
+     * @param context the execution context
+     * @param command the array of strings for the command line
+     * @param node    the node to execute on
+     *
+     * @return a result
+     *
+     * @throws ExecutionException if there is an error performing the execution
+     */
+    public NodeExecutorResult executeCommand(ExecutionContext context, String[] command, INodeEntry node) throws
+        ExecutionException;
 }

@@ -39,8 +39,8 @@ public abstract class NodeSpecifiedService<T> extends BaseProviderRegistryServic
     /**
      * Return a specific service provider that can be used for the node
      */
-    public T getProviderForNode(final INodeEntry node) throws ExecutionServiceException {
-        String copiername = getDefaultProviderNameForNode(node);
+    public T getProviderForNodeAndProject(final INodeEntry node, final String project) throws ExecutionServiceException {
+        String copiername = getDefaultProviderNameForNodeAndProject(node, project);
         //look up node's attribute if it exists
         if (null != node.getAttributes() && null != node.getAttributes().get(getServiceProviderNodeAttributeForNode(node))) {
             copiername = node.getAttributes().get(getServiceProviderNodeAttributeForNode(node));
@@ -57,6 +57,6 @@ public abstract class NodeSpecifiedService<T> extends BaseProviderRegistryServic
     /**
      * Return name of default provider for this service
      */
-    protected abstract String getDefaultProviderNameForNode(INodeEntry node);
+    protected abstract String getDefaultProviderNameForNodeAndProject(INodeEntry node, String project);
 
 }

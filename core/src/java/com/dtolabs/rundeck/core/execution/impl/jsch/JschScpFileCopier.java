@@ -81,7 +81,7 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier {
         final String remotefile = generateRemoteFilepathForNode(node, (null != scriptfile ? scriptfile.getName()
                                                                                           : "dispatch-script"));
         //write the temp file and replace tokens in the script with values from the dataContext
-        final File localTempfile = writeScriptTempFile(context, scriptfile, input, script, node, framework);
+        final File localTempfile = writeScriptTempFile(context, scriptfile, input, script, node);
 
 
 //        logger.debug("temp file for node " + node.getNodename() + ": " + temp.getAbsolutePath() + ", datacontext: " + dataContext);

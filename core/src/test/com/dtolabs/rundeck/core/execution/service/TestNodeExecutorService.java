@@ -30,7 +30,6 @@ import com.dtolabs.rundeck.core.execution.impl.jsch.JschNodeExecutor;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
-import junit.framework.TestCase;
 
 import java.io.File;
 import java.io.IOException;
@@ -78,14 +77,14 @@ public class TestNodeExecutorService extends AbstractBaseTest {
         {
             //default for local node should be local provider
             final NodeEntryImpl test1 = new NodeEntryImpl("test1");
-            final NodeExecutor provider = service.getProviderForNode(test1);
+            final NodeExecutor provider = service.getProviderForNodeAndProject(test1, PROJ_NAME);
             assertNotNull(provider);
             assertTrue(provider instanceof LocalNodeExecutor);
         }
         {
             //default for non-node should be jsch-ssh provider
             final NodeEntryImpl test1 = new NodeEntryImpl("testnode2");
-            final NodeExecutor provider = service.getProviderForNode(test1);
+            final NodeExecutor provider = service.getProviderForNodeAndProject(test1, PROJ_NAME);
             assertNotNull(provider);
             assertTrue(provider instanceof JschNodeExecutor);
         }
@@ -97,7 +96,7 @@ public class TestNodeExecutorService extends AbstractBaseTest {
             //set attribute
             test1.setAttributes(new HashMap<String, String>());
             test1.getAttributes().put(NodeExecutorService.LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE, "jsch-ssh");
-            final NodeExecutor provider = service.getProviderForNode(test1);
+            final NodeExecutor provider = service.getProviderForNodeAndProject(test1, PROJ_NAME);
             assertNotNull(provider);
             assertTrue(provider instanceof JschNodeExecutor);
         }
@@ -107,7 +106,7 @@ public class TestNodeExecutorService extends AbstractBaseTest {
             //set attribute
             test1.setAttributes(new HashMap<String, String>());
             test1.getAttributes().put(NodeExecutorService.NODE_SERVICE_SPECIFIER_ATTRIBUTE, "local");
-            final NodeExecutor provider = service.getProviderForNode(test1);
+            final NodeExecutor provider = service.getProviderForNodeAndProject(test1, PROJ_NAME);
             assertNotNull(provider);
             assertTrue(provider instanceof LocalNodeExecutor);
         }

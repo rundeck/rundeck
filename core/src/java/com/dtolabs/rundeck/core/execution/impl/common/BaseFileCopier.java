@@ -36,23 +36,32 @@ import java.io.InputStream;
 import java.util.*;
 
 /**
- * BaseFileCopier is ...
+ * BaseFileCopier provides utility methods for a FileCopier class.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class BaseFileCopier {
+    public static final String FILE_COPY_DESTINATION_DIR = "file-copy-destination-dir";
+
     /**
-     * Copy the embedded script content, or the script source stream, or script string into a temp file, and replace embedded tokens with
-     * values from the dataContext. Marks the file as executable and delete-on-exit.
+     * Copy the embedded script content, or the script source stream, or script string into a temp file, and replace \
+     * embedded tokens with values from the dataContext. Marks the file as executable and delete-on-exit.
+     *
+     * @param context  execution context
+     * @param original local system file, or null
+     * @param input    input stream to write, or null
+     * @param script   file content string, or null
+     * @param node     destination node entry, to provide node data context
      *
      * @return temp file path
      *
      * @throws com.dtolabs.rundeck.core.execution.ExecutionException
      *          if an IO problem occurs
      */
-    protected File writeScriptTempFile(ExecutionContext context, final File original, final InputStream input,
-                                       final String script, final INodeEntry node, final Framework framework) throws
+    public static File writeScriptTempFile(final ExecutionContext context, final File original, final InputStream input,
+                                           final String script, final INodeEntry node) throws
         FileCopierException {
+        final Framework framework = context.getFramework();
 
         //create new dataContext with the node data, and write the script (file,content or strea) to a temp file
         //using the dataContext for substitution.
@@ -86,17 +95,36 @@ public class BaseFileCopier {
         return tempfile;
     }
 
-    public static String appendRemoteFileExtensionForNode(INodeEntry node, String remoteFilename) {
+    /**
+     * Return a string with an appropriate script file extension appended if it is not already on the file path
+     * provided. The OS-family of the node determines the appropriate extension to use.
+     *
+     * @param node     node destination
+     * @param filepath the file path string
+     */
+    public static String appendRemoteFileExtensionForNode(final INodeEntry node, final String filepath) {
+        String result = filepath;
         if ("windows".equalsIgnoreCase(node.getOsFamily().trim())) {
-            remoteFilename += (remoteFilename.endsWith(".bat") ? "" : ".bat");
+            result += (filepath.endsWith(".bat") ? "" : ".bat");
         } else {
-            remoteFilename += (remoteFilename.endsWith(".sh") ? "" : ".sh");
+            result += (filepath.endsWith(".sh") ? "" : ".sh");
         }
-        return remoteFilename;
+        return result;
     }
 
-    public static String getRemoteDirForNode(INodeEntry node) {
-        //TODO: allow set temp dir via node attribute
+    /**
+     * Return a remote destination temp dir path for the given node.  If specified, the node attribute named {@value
+     * #FILE_COPY_DESTINATION_DIR} is used, otherwise a temp directory appropriate for the os-family of the node is
+     * returned.
+     *
+     * @param node the node entry
+     *
+     * @return a path to destination dir for the node
+     */
+    public static String getRemoteDirForNode(final INodeEntry node) {
+        if (null != node.getAttributes() && null != node.getAttributes().get(FILE_COPY_DESTINATION_DIR)) {
+            return node.getAttributes().get(FILE_COPY_DESTINATION_DIR);
+        }
         String remotedir = "/tmp/";
         if ("windows".equalsIgnoreCase(node.getOsFamily().trim())) {
             remotedir = "C:/WINDOWS/TEMP/";
@@ -104,13 +132,19 @@ public class BaseFileCopier {
         return remotedir;
     }
 
-    public static String generateRemoteFilepathForNode(INodeEntry node, final String scriptfileName) {
-        String remoteFilename = appendRemoteFileExtensionForNode(node,
+    /**
+     * Return a temporary filepath for a file to be copied to the node, given the input filename (without directory
+     * path)
+     *
+     * @param node           the destination node
+     * @param scriptfileName the name of the file to copy
+     *
+     * @return a filepath specifying destination of the file to copy that should be unique for the node and current
+     *         date.
+     */
+    public static String generateRemoteFilepathForNode(final INodeEntry node, final String scriptfileName) {
+        final String remoteFilename = appendRemoteFileExtensionForNode(node,
             System.currentTimeMillis() + "-" + node.getNodename() + "-" + scriptfileName);
-        /**
-         * Define the remote directory where the script file
-         * will be remotely copied.
-         */
         final String remotedir = getRemoteDirForNode(node);
 
         return remotedir + remoteFilename;

@@ -37,9 +37,13 @@ import com.dtolabs.rundeck.core.plugins.PluginException;
  */
 public class FileCopierService extends NodeSpecifiedService<FileCopier> implements PluggableService {
     private static final String SERVICE_NAME = "FileCopier";
-    private static final String SERVICE_FILECOPIER_DEFAULT_TYPE = "service.filecopier.default.type";
-    public static final String REMOTE_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "remote-file-copy-service";
-    public static final String LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "local-file-copy-service";
+    private static final String SERVICE_DEFAULT_PROVIDER_PROPERTY = "service."+SERVICE_NAME+".default.provider";
+    private static final String SERVICE_DEFAULT_LOCAL_PROVIDER_PROPERTY =
+        "service." + SERVICE_NAME + ".default.local.provider";
+    public static final String REMOTE_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "file-copier";
+    public static final String LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "local-file-copier";
+    private static final String DEFAULT_REMOTE_PROVIDER = JschScpFileCopier.SERVICE_PROVIDER_TYPE;
+    private static final String DEFAULT_LOCAL_PROVIDER = LocalFileCopier.SERVICE_PROVIDER_TYPE;
 
     public String getName() {
         return SERVICE_NAME;
@@ -55,13 +59,14 @@ public class FileCopierService extends NodeSpecifiedService<FileCopier> implemen
     }
 
     @Override
-    protected String getDefaultProviderNameForNode(INodeEntry node) {
+    protected String getDefaultProviderNameForNodeAndProject(INodeEntry node, String project) {
         if (framework.isLocalNode(node)) {
-            return LocalFileCopier.SERVICE_PROVIDER_TYPE;
+            final String value = framework.getProjectProperty(project, SERVICE_DEFAULT_LOCAL_PROVIDER_PROPERTY);
+            return value != null ? value : DEFAULT_LOCAL_PROVIDER;
+        }else{
+            final String value = framework.getProjectProperty(project, SERVICE_DEFAULT_PROVIDER_PROPERTY);
+            return value != null ? value : DEFAULT_REMOTE_PROVIDER;
         }
-        return framework.getPropertyLookup().hasProperty(SERVICE_FILECOPIER_DEFAULT_TYPE)
-               ? framework.getPropertyLookup().getProperty(SERVICE_FILECOPIER_DEFAULT_TYPE)
-               : JschScpFileCopier.SERVICE_PROVIDER_TYPE;
     }
 
     public static FileCopierService getInstanceForFramework(Framework framework) {

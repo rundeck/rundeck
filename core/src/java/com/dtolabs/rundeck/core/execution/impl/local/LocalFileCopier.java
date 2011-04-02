@@ -32,7 +32,6 @@ import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 
 import java.io.File;
 import java.io.InputStream;
-import java.util.*;
 
 /**
  * LocalFileCopier is ...
@@ -68,7 +67,7 @@ public class LocalFileCopier extends BaseFileCopier implements FileCopier {
     private String copyFile(final ExecutionContext context, File scriptfile, InputStream input, String script,
                             INodeEntry node) throws FileCopierException {
         //write the temp file and replace tokens in the script with values from the dataContext
-        final File localTempfile = writeScriptTempFile(context, scriptfile, input, script, node, framework);
+        final File localTempfile = writeScriptTempFile(context, scriptfile, input, script, node);
         return localTempfile.getAbsolutePath();
     }
 }

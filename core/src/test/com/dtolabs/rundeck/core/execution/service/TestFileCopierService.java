@@ -75,14 +75,14 @@ public class TestFileCopierService extends AbstractBaseTest {
         {
             //default for local node should be local provider
             final NodeEntryImpl test1 = new NodeEntryImpl("test1");
-            final FileCopier provider = service.getProviderForNode(test1);
+            final FileCopier provider = service.getProviderForNodeAndProject(test1, PROJ_NAME);
             assertNotNull(provider);
             assertTrue(provider instanceof LocalFileCopier);
         }
         {
             //default for non-local node should be jsch-scp provider
             final NodeEntryImpl test1 = new NodeEntryImpl("testnode2");
-            final FileCopier provider = service.getProviderForNode(test1);
+            final FileCopier provider = service.getProviderForNodeAndProject(test1, PROJ_NAME);
             assertNotNull(provider);
             assertTrue(provider instanceof JschScpFileCopier);
         }
@@ -96,7 +96,7 @@ public class TestFileCopierService extends AbstractBaseTest {
             test1.setAttributes(new HashMap<String, String>());
             test1.getAttributes().put(FileCopierService.LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE, "jsch-scp");
 
-            final FileCopier provider = service.getProviderForNode(test1);
+            final FileCopier provider = service.getProviderForNodeAndProject(test1, PROJ_NAME);
             assertNotNull(provider);
             assertTrue(provider instanceof JschScpFileCopier);
         }
@@ -106,7 +106,7 @@ public class TestFileCopierService extends AbstractBaseTest {
             test1.setAttributes(new HashMap<String, String>());
             test1.getAttributes().put(FileCopierService.REMOTE_NODE_SERVICE_SPECIFIER_ATTRIBUTE, "local");
 
-            final FileCopier provider = service.getProviderForNode(test1);
+            final FileCopier provider = service.getProviderForNodeAndProject(test1, PROJ_NAME);
 
             assertNotNull(provider);
             assertTrue(provider instanceof LocalFileCopier);

@@ -159,7 +159,7 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         final FileCopier copier;
         try {
-            copier = framework.getFileCopierForNode(node);
+            copier = framework.getFileCopierForNodeAndProject(node, context.getFrameworkProject());
         } catch (ExecutionServiceException e) {
             throw new FileCopierException(e);
         }
@@ -181,7 +181,7 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         final FileCopier copier;
         try {
-            copier = framework.getFileCopierForNode(node);
+            copier = framework.getFileCopierForNodeAndProject(node, context.getFrameworkProject());
         } catch (ExecutionServiceException e) {
             throw new FileCopierException(e);
         }
@@ -203,7 +203,7 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         final FileCopier copier;
         try {
-            copier = framework.getFileCopierForNode(node);
+            copier = framework.getFileCopierForNodeAndProject(node, context.getFrameworkProject());
         } catch (ExecutionServiceException e) {
             throw new FileCopierException(e);
         }
@@ -226,7 +226,7 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         final NodeExecutor nodeExecutor;
         try {
-            nodeExecutor = framework.getNodeExecutorForNode(node);
+            nodeExecutor = framework.getNodeExecutorForNodeAndProject(node, context.getFrameworkProject());
         } catch (ExecutionServiceException e) {
             throw new ExecutionException(e);
         }

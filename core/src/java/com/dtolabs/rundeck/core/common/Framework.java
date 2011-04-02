@@ -305,12 +305,12 @@ public class Framework extends FrameworkResourceParent {
         return WorkflowExecutionService.getInstanceForFramework(this);
     }
 
-    public FileCopier getFileCopierForNode(INodeEntry node) throws ExecutionServiceException {
-        return FileCopierService.getInstanceForFramework(this).getProviderForNode(node);
+    public FileCopier getFileCopierForNodeAndProject(INodeEntry node, final String project) throws ExecutionServiceException {
+        return FileCopierService.getInstanceForFramework(this).getProviderForNodeAndProject(node, project);
     }
 
-    public NodeExecutor getNodeExecutorForNode(INodeEntry node) throws ExecutionServiceException {
-        return NodeExecutorService.getInstanceForFramework(this).getProviderForNode(node);
+    public NodeExecutor getNodeExecutorForNodeAndProject(INodeEntry node, final String project) throws ExecutionServiceException {
+        return NodeExecutorService.getInstanceForFramework(this).getProviderForNodeAndProject(node, project);
     }
     public CommandInterpreter getCommandInterpreterForItem(ExecutionItem item) throws ExecutionServiceException {
         return CommandInterpreterService.getInstanceForFramework(this).getInterpreterForExecutionItem(item);
@@ -532,7 +532,7 @@ public class Framework extends FrameworkResourceParent {
      * Return the property value for the key from the project or framework properties if it exists, otherwise
      * return null.
      */
-    public String getProjectProperty(final String key, final String project) {
+    public String getProjectProperty(final String project, final String key) {
         final FrameworkProject frameworkProject = getFrameworkProjectMgr().getFrameworkProject(project);
         if(frameworkProject.hasProperty(key)) {
             return frameworkProject.getProperty(key);
