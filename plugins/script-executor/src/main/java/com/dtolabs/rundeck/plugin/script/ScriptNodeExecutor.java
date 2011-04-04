@@ -22,7 +22,7 @@
 * Created: 3/31/11 6:18 PM
 * 
 */
-package com.dtolabs.rundeck.plugin.scriptexecutor;
+package com.dtolabs.rundeck.plugin.script;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
@@ -60,7 +60,7 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 @Plugin (name = "script-exec", service = "NodeExecutor")
-public class ExternalScriptExecutor implements NodeExecutor {
+public class ScriptNodeExecutor implements NodeExecutor {
     public static String SCRIPT_ATTRIBUTE = "script-exec";
     public static String DIR_ATTRIBUTE = "script-exec-dir";
     private static final String SCRIPT_EXEC_DEFAULT_COMMAND_PROPERTY = "script-exec.default.command";
@@ -91,7 +91,7 @@ public class ExternalScriptExecutor implements NodeExecutor {
         }
 
         dirstring = framework.getProjectProperty(executionContext.getFrameworkProject(),
-            SCRIPT_EXEC_DEFAULT_COMMAND_PROPERTY);
+            SCRIPT_EXEC_DEFAULT_DIR_PROPERTY);
         if (null != node.getAttributes().get(DIR_ATTRIBUTE)) {
             dirstring = node.getAttributes().get(DIR_ATTRIBUTE);
         }
@@ -110,7 +110,7 @@ public class ExternalScriptExecutor implements NodeExecutor {
             nodeContext);
 
 
-        //add some more data context values to allow templatized script-exec-args
+        //add some more data context values to allow templatized script-exec
         final HashMap<String, String> scptexec = new HashMap<String, String>();
         scptexec.put("command", StringArrayUtil.asString(expandCommand, " "));
         if (null != workingdir) {
@@ -119,17 +119,8 @@ public class ExternalScriptExecutor implements NodeExecutor {
         final Map<String, Map<String, String>> newDataContext = DataContextUtils.addContext("script-exec", scptexec,
             nodeContext);
 
-        //generate args that we are going to execute
-        final ArrayList<String> argslist = new ArrayList<String>();
-
         //use script-exec attribute and replace datareferences
-        final String[] split = scriptargs.split(" ");
-        argslist.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(split, newDataContext)));
-
-        /**
-         * final args array
-         */
-        final String[] args = argslist.toArray(new String[argslist.size()]);
+        final String[] args = DataContextUtils.replaceDataReferences(scriptargs.split(" "), newDataContext);
 
         //create system environment variables from the data context
         final Map<String, String> envMap = DataContextUtils.generateEnvVarsFromContext(nodeContext);

@@ -3,9 +3,8 @@ import org.apache.tools.ant.filters.ReplaceTokens
 apply plugin: 'java'
 sourceCompatibility = 1.5
 version = '1.2.0'
-archivesBaseName = 'rundeck-script-executor-plugin'
+archivesBaseName = 'rundeck-script-plugin'
 defaultTasks 'clean','assemble'
-rdPluginName="script-executor"
 repositories {
     mavenCentral()
     add(new org.apache.ivy.plugins.resolver.FileSystemResolver()) {
@@ -18,8 +17,6 @@ repositories {
 }
 dependencies {
     compile( 
-        //[group: 'ant', name: 'ant', version: '1.8.1',ext:'jar'],
-        //[group: 'ant-launcher', name: 'ant-launcher', version: '1.8.1',ext:'jar'],
         [group: 'rundeck-core',name:'rundeck-core',version: version]
     )
     testCompile(
@@ -29,26 +26,13 @@ dependencies {
 
 jar {
     manifest {
-        attributes 'Rundeck-Plugin-Name': rdPluginName, 'Rundeck-Service-Name': 'NodeExecutor'
+        attributes 'Rundeck-Plugin-Archive':'true','Rundeck-Plugin-Classnames': 'com.dtolabs.rundeck.plugin.script.ScriptFileCopier,com.dtolabs.rundeck.plugin.script.ScriptNodeExecutor'
     }
 }
 sourceSets {
     main {
-        /*java {
-            srcDir 'src/java'
-        }
-        resources {
-            srcDirs =['src/resources','src/java']
-        }*/
     }
     test {
-       /*
-        java {
-            srcDir 'src/test'
-        }
-        resources {
-            srcDirs = ['src/resources','src/test']
-        }*/
     }
 }
 
