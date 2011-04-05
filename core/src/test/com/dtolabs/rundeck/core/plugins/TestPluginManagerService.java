@@ -111,8 +111,10 @@ public class TestPluginManagerService extends AbstractBaseTest {
         final testService pluggableService = new testService();
         pluggableService.isValid = false;
         pluggableService.name = TEST_SERVICE;
+        final Framework frameworkInstance = getFrameworkInstance();
+        frameworkInstance.setService("test", pluggableService);
         try {
-            service.loadPluginForServiceByClassname(pluggableService, null);
+            service.loadPluginByClassname(null, service.getClass().getClassLoader());
             fail("should fail");
         } catch (IllegalArgumentException e) {
             assertEquals("A null java class name was specified.",
@@ -127,20 +129,42 @@ public class TestPluginManagerService extends AbstractBaseTest {
         final testService pluggableService = new testService();
         pluggableService.isValid = true;
         pluggableService.name = TEST_SERVICE;
+        final Framework frameworkInstance = getFrameworkInstance();
+        frameworkInstance.setService("test", pluggableService);
         try {
-            service.loadPluginForServiceByClassname(pluggableService, "test.invalid.classname");
+            service.loadPluginByClassname("test.invalid.classname",
+                service.getClass().getClassLoader());
             fail("should fail");
         } catch (PluginException e) {
             assertEquals("Class not found: test.invalid.classname", e.getMessage());
         }
     }
 
+    public void testNoService() {
+        final testService pluggableService = new testService();
+        pluggableService.isValid = false;
+        pluggableService.name = TEST_SERVICE;
+        final Framework frameworkInstance = getFrameworkInstance();
+        frameworkInstance.setService("test", pluggableService);
+        try {
+            service.loadPluginByClassname(TestInvalidService.class.getName(),
+                service.getClass().getClassLoader());
+            fail("should fail");
+        } catch (PluginException e) {
+            assertEquals("Class " + TestInvalidService.class.getName()
+                         + " did not specify a valid service name: invalid: no such service", e.getMessage());
+        }
+
+    }
     public void testInvalidCheck() {//test isValid returns false
         final testService pluggableService = new testService();
         pluggableService.isValid = false;
         pluggableService.name = TEST_SERVICE;
+        final Framework frameworkInstance = getFrameworkInstance();
+        frameworkInstance.setService("test", pluggableService);
         try {
-            service.loadPluginForServiceByClassname(pluggableService, TestOK.class.getName());
+            service.loadPluginByClassname(TestOK.class.getName(),
+                service.getClass().getClassLoader());
             fail("should fail");
         } catch (PluginException e) {
             assertEquals("Class " + TestOK.class.getName() + " was not a valid plugin class for service: " + TEST_SERVICE,
@@ -154,12 +178,15 @@ public class TestPluginManagerService extends AbstractBaseTest {
         final testService pluggableService = new testService();
         pluggableService.isValid = true;
         pluggableService.name = TEST_SERVICE;
+        final Framework frameworkInstance = getFrameworkInstance();
+        frameworkInstance.setService("test", pluggableService);
         try {
-            service.loadPluginForServiceByClassname(pluggableService, TestMissingAnnotation.class.getName());
+            service.loadPluginByClassname(TestMissingAnnotation.class.getName(),
+                service.getClass().getClassLoader());
             fail("should fail");
         } catch (PluginException e) {
             assertEquals("No Plugin annotation was found for the class: " + TestMissingAnnotation.class.getName()
-                         + ", for service " + TEST_SERVICE, e.getMessage());
+                         , e.getMessage());
         }
     }
 
@@ -167,12 +194,30 @@ public class TestPluginManagerService extends AbstractBaseTest {
         final testService pluggableService = new testService();
         pluggableService.isValid = true;
         pluggableService.name = TEST_SERVICE;
+        final Framework frameworkInstance = getFrameworkInstance();
+        frameworkInstance.setService("test", pluggableService);
         try {
-            service.loadPluginForServiceByClassname(pluggableService, TestEmptyName.class.getName());
+            service.loadPluginByClassname(TestEmptyName.class.getName(),
+                service.getClass().getClassLoader());
             fail("should fail");
         } catch (PluginException e) {
-            assertEquals("Plugin annotation name cannot be empty for the class: " + TestEmptyName.class.getName()
-                         + ", for service " + TEST_SERVICE, e.getMessage());
+            assertEquals("Plugin annotation 'name' cannot be empty for the class: " + TestEmptyName.class.getName()
+                         , e.getMessage());
+        }
+    }
+    public void testEmptyServiceAnnotation() {
+        final testService pluggableService = new testService();
+        pluggableService.isValid = true;
+        pluggableService.name = TEST_SERVICE;
+        final Framework frameworkInstance = getFrameworkInstance();
+        frameworkInstance.setService("test", pluggableService);
+        try {
+            service.loadPluginByClassname(TestEmptyService.class.getName(),
+                service.getClass().getClassLoader());
+            fail("should fail");
+        } catch (PluginException e) {
+            assertEquals("Plugin annotation 'service' cannot be empty for the class: " + TestEmptyService.class.getName()
+                         , e.getMessage());
         }
     }
 
@@ -180,8 +225,11 @@ public class TestPluginManagerService extends AbstractBaseTest {
         final testService pluggableService = new testService();
         pluggableService.isValid = true;
         pluggableService.name = TEST_SERVICE;
+        final Framework frameworkInstance = getFrameworkInstance();
+        frameworkInstance.setService("test", pluggableService);
         try {
-            service.loadPluginForServiceByClassname(pluggableService, TestOK.class.getName());
+            service.loadPluginByClassname(TestOK.class.getName(),
+                service.getClass().getClassLoader());
         } catch (PluginException e) {
             fail("unexpected exception: " + e);
         }
@@ -210,7 +258,22 @@ public class TestPluginManagerService extends AbstractBaseTest {
     /**
      * empty name
      */
-    @Plugin (name = "test")
+    @Plugin (name = "test", service = "")
+    public static class TestEmptyService {
+
+    }
+    /**
+     * empty name
+     */
+    @Plugin (name = "test", service = "invalid")
+    public static class TestInvalidService {
+
+    }
+
+    /**
+     * empty name
+     */
+    @Plugin (name = "test", service = "test")
     public static class TestOK {
 
     }

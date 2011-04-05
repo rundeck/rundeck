@@ -283,13 +283,18 @@ public class Framework extends FrameworkResourceParent {
             logger.debug("Framework.initialize() time: " + (end - start) + "ms");
         }
         //call PluginManager to load any plugins
-        PluginManagerService.getInstanceForFramework(this).loadPlugins(getServiceNames());
+        PluginManagerService.getInstanceForFramework(this).loadPlugins();
     }
-
+    /**
+     * Return a service by name
+     */
     public FrameworkSupportService getService(String name) {
         return services.get(name);
     }
-    public void setService(String name, FrameworkSupportService service){
+    /**
+     * Set a service by name
+     */
+    public void setService(final String name, final FrameworkSupportService service){
         synchronized (services){
             if(null==services.get(name) && null!=service) {
                 services.put(name, service);
@@ -480,9 +485,6 @@ public class Framework extends FrameworkResourceParent {
         this.centralDispatcherMgr = centralDispatcherMgr;
     }
 
-    private Collection<String> getServiceNames() {
-        return services.keySet();
-    }
 
     /**
      * An InputHandler implementation which simply throws an exception.  It also stores an original implementation that
