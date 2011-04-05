@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.execution.impl.jsch.JschScpFileCopier;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalFileCopier;
 import com.dtolabs.rundeck.core.plugins.PluggableService;
 import com.dtolabs.rundeck.core.plugins.PluginException;
+import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 
 /**
  * FileCopierService is ...
@@ -86,15 +87,24 @@ public class FileCopierService extends NodeSpecifiedService<FileCopier> implemen
         return REMOTE_NODE_SERVICE_SPECIFIER_ATTRIBUTE;
     }
 
-    public boolean isValidPluginClass(final Class clazz) {
+    public boolean isValidProviderClass(final Class clazz) {
         return FileCopier.class.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
     }
 
-    public void registerPluginClass(Class clazz, String name) throws PluginException {
-        if (!isValidPluginClass(clazz)) {
+    public void registerProviderClass(Class clazz, String name) throws PluginException {
+        if (!isValidProviderClass(clazz)) {
             throw new PluginException("Invalid plugin class: " + clazz.getName());
         }
         final Class<? extends FileCopier> pluginclazz = (Class<FileCopier>) clazz;
         registry.put(name, pluginclazz);
+    }
+
+    public boolean isScriptPluggable() {
+        return true;
+    }
+
+    public void registerScriptProvider(ScriptPluginProvider provider) throws PluginException {
+        ScriptPluginFileCopier.validateScriptPlugin(provider);
+        instanceregistry.put(provider.getName(), new ScriptPluginFileCopier(provider));
     }
 }

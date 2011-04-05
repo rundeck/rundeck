@@ -25,11 +25,15 @@ package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkSupportService;
+import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
+import com.dtolabs.rundeck.core.plugins.metadata.PluginDef;
+import com.dtolabs.rundeck.core.plugins.metadata.PluginMeta;
+import com.dtolabs.rundeck.core.utils.ZipUtil;
+import org.apache.log4j.Logger;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FilenameFilter;
-import java.io.IOException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -37,6 +41,8 @@ import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 /**
  * PluginManagerService is ...
@@ -44,6 +50,7 @@ import java.util.jar.Manifest;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class PluginManagerService implements FrameworkSupportService {
+    private static final Logger log = Logger.getLogger(PluginManagerService.class.getName());
     private static final String SERVICE_NAME = "PluginManager";
     public static final String RUNDECK_PLUGIN_ARCHIVE = "Rundeck-Plugin-Archive";
     public static final String RUNDECK_PLUGIN_CLASSNAMES = "Rundeck-Plugin-Classnames";
@@ -67,9 +74,10 @@ public class PluginManagerService implements FrameworkSupportService {
     }
 
     public void loadPlugins() {
-//        System.err.println("loading plugins for services...");
+        debug("loading plugins for services...");
         loadExplicitPluginConfig();
         scanAndLoadJarPlugins();
+        scanAndLoadZipScriptPlugins();
     }
 
     /**
@@ -77,7 +85,7 @@ public class PluginManagerService implements FrameworkSupportService {
      */
     private void scanAndLoadJarPlugins() {
         final File libext = new File(framework.getBaseDir(), "libext");
-//        System.err.println("libext dir: "+libext.getAbsolutePath());
+        debug("scanAndLoadJarPlugins dir: " + libext.getAbsolutePath());
         if (!libext.exists() || !libext.isDirectory()) {
             return;
         }
@@ -86,13 +94,12 @@ public class PluginManagerService implements FrameworkSupportService {
                 return s.endsWith(".jar");
             }
         });
-//        System.err.println("libext dir: " + list.length);
+        debug("libext dir: " + list.length);
         HashMap<File, String[]> jartoload = new HashMap<File, String[]>();
-        for (int i = 0 ; i < list.length ; i++) {
-            String s = list[i];
+        for (final String s : list) {
             //try reading jar
-            File jar = new File(libext, s);
-//            System.err.println("test file dir: " + jar.getAbsolutePath());
+            final File jar = new File(libext, s);
+            debug("test file dir: " + jar.getAbsolutePath());
             try {
                 final JarInputStream jarInputStream = new JarInputStream(new FileInputStream(jar));
                 final Manifest manifest = jarInputStream.getManifest();
@@ -105,16 +112,208 @@ public class PluginManagerService implements FrameworkSupportService {
 //                    System.err.println("Has metadata: " + RUNDECK_PLUGIN_CLASSNAMES + ": " + value);
                     jartoload.put(jar, value.split(","));
                 } else {
-//                    System.err.println("has no metadata: " + mainAttributes);
+                    debug("has no metadata: " + mainAttributes);
                 }
                 jarInputStream.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-//        System.err.println("libext dir: " + libext.getAbsolutePath());
-//        System.err.println("Will load plugin jars: " + jartoload);
+        debug("Will load plugin jars: " + jartoload);
         loadJarPlugins(jartoload);
+    }
+
+    private void debug(String msg) {
+        if (log.isDebugEnabled()) {
+            log.debug(msg);
+        }
+    }
+
+    /**
+     * Load any jars in the libext dir of RDECK_BASE and look for jar metadata to load classes as plugins
+     */
+    private void scanAndLoadZipScriptPlugins() {
+        final File libext = new File(framework.getBaseDir(), "libext");
+        debug("scanAndLoadZipScriptPlugins dir: " + libext.getAbsolutePath());
+        if (!libext.exists() || !libext.isDirectory()) {
+            return;
+        }
+        final String[] list = libext.list(new FilenameFilter() {
+            public boolean accept(File file, String s) {
+                return s.endsWith("-plugin.zip");
+            }
+        });
+        debug("found zip plugins: " + list.length);
+        final HashMap<File, loadedMeta> ziptoload = new HashMap<File, loadedMeta>();
+        for (final String s : list) {
+            //try reading jar
+            final File jar = new File(libext, s);
+            final String basename = s.substring(0, s.lastIndexOf("."));
+            debug("test zip: " + jar.getAbsolutePath() + ", basename: " + basename);
+            try {
+                final ZipInputStream zipinput = new ZipInputStream(new FileInputStream(jar));
+                ZipEntry nextEntry = zipinput.getNextEntry();
+                boolean found = false;
+                while (null != nextEntry) {
+                    if (!nextEntry.isDirectory() && (nextEntry.getName().equals("plugin.yaml") || nextEntry.getName()
+                        .equals(basename + "/plugin.yaml"))) {
+                        debug("Found metadata: " + nextEntry.getName());
+                        final PluginMeta metadata = loadMetadataYaml(zipinput);
+
+                        ziptoload.put(jar, new loadedMeta(metadata, nextEntry.getName()
+                            .equals(basename + "/plugin.yaml"), basename));
+                        found = true;
+                        break;
+                    }
+                    nextEntry = zipinput.getNextEntry();
+                }
+                if (!found) {
+                    debug("Skipping, Found no plugin.yaml within: " + jar.getAbsolutePath());
+                }
+                zipinput.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        debug("Will load zip plugins: " + ziptoload);
+        loadScriptPlugins(ziptoload);
+    }
+
+    private static class loadedMeta {
+        PluginMeta pluginMeta;
+        boolean hasTopdir;
+        String topdirname;
+
+        private loadedMeta(PluginMeta pluginMeta, boolean hasTopdir, String topdirname) {
+            this.pluginMeta = pluginMeta;
+            this.hasTopdir = hasTopdir;
+            this.topdirname = topdirname;
+        }
+    }
+
+    private PluginMeta loadMetadataYaml(final InputStream stream) {
+        final Constructor myconst = new Constructor(PluginMeta.class);
+        Yaml yaml = new Yaml(myconst);
+//        TypeDescription carDescription = new TypeDescription(PluginMeta.class);
+//        carDescription.putListPropertyType("wheels", Wheel.class);
+//        constructor.addTypeDefinition(carDescription);
+        final Object load = yaml.load(stream);
+
+        return (PluginMeta) load;
+    }
+
+    /**
+     * For each file and list of plugins defined, iterate over plugins, validate definitions, expand the file into a
+     * directory, create a ScriptPlugin instance, attempt to register it to the appropriate service
+     */
+    private void loadScriptPlugins(final Map<File, loadedMeta> scriptPlugins) {
+        Map<File, File> expanded = new HashMap<File, File>();
+        for (final File file : scriptPlugins.keySet()) {
+            final loadedMeta loadedMeta = scriptPlugins.get(file);
+            final PluginMeta pluginList = loadedMeta.pluginMeta;
+            for (final PluginDef pluginDef : pluginList.getPluginDefs()) {
+                //validate plugindef
+                try {
+                    validateScriptPluginDef(pluginDef);
+                    if (!expanded.containsKey(file)) {
+                        debug("expanding plugin contents: " + file);
+                        final File file1 = expandScriptPlugin(file, loadedMeta);
+                        expanded.put(file, file1);
+                    }
+                    File dir = expanded.get(file);
+                    //set executable bit for script-file of the provider
+                    File script = new File(dir, pluginDef.getScriptFile());
+                    ScriptfileUtils.setExecutePermissions(script);
+                    loadPluginDef(pluginDef, dir, file);
+                } catch (PluginException e) {
+                    System.err.println(
+                        "Failed loading plugindef: " + pluginDef.getName() + " for plugin " + file.getAbsolutePath());
+                    e.printStackTrace(System.err);
+                } catch (IOException e) {
+                    System.err.println(
+                        "Failed expanding plugin " + file.getAbsolutePath());
+                    e.printStackTrace(System.err);
+                }
+            }
+        }
+
+    }
+
+    /**
+     * Expand jar file into plugin cache dir
+     *
+     * @param file jar file
+     * @param meta loaded metadata
+     *
+     * @return cache dir for the contents of the plugin zip
+     */
+    private File expandScriptPlugin(final File file, final loadedMeta meta) throws IOException {
+        File basedir = new File(framework.getBaseDir(), "libext/cache");
+        if (!basedir.exists()) {
+            basedir.mkdirs();
+        }
+        final String name = file.getName();
+        String basename = name.substring(0, name.lastIndexOf("."));
+        String prefix = "contents/";
+        if (meta.hasTopdir) {
+            prefix = meta.topdirname + "/" + prefix;
+        }
+        File jardir = new File(basedir, basename);
+        if (!jardir.exists()) {
+            jardir.mkdir();
+        }
+
+
+        ZipUtil.extractZip(file.getAbsolutePath(), jardir, prefix, prefix);
+
+        return jardir;
+    }
+
+    /**
+     * Load a plugindef from the basedir specified. create a ScriptPlugin instance, attempt to register it to the
+     * appropriate service
+     */
+    private void loadPluginDef(final PluginDef pluginDef, final File dir, final File file) throws PluginException {
+        final ScriptPluginProvider provider = new ScriptPluginProviderImpl(pluginDef, file, dir);
+        final PluggableService service = (PluggableService) framework.getService(provider.getService());
+        service.registerScriptProvider(provider);
+        debug("loaded plugin def" + pluginDef);
+
+    }
+
+    private void validateScriptPluginDef(final PluginDef pluginDef) throws PluginException {
+        if (null == pluginDef.getName() || "".equals(pluginDef.getName())) {
+            throw new PluginException("Script plugin missing name");
+        }
+        if (null == pluginDef.getService() || "".equals(pluginDef.getService())) {
+            throw new PluginException("Script plugin missing service");
+        }
+        /*
+        //TODO: validate plugin-type when multiple types are supported
+        if (null == pluginDef.getPluginType() || "".equals(pluginDef.getPluginType())) {
+            throw new PluginException("Script plugin missing plugin-type");
+        }
+        if (! "script".equals(pluginDef.getPluginType())) {
+            throw new PluginException("plugin missing has invalid plugin-type");
+        }
+        */
+        if (null == pluginDef.getScriptFile() || "".equals(pluginDef.getScriptFile())) {
+            throw new PluginException("Script plugin missing script-file");
+        }
+
+        //make sure service is pluggable service and is script pluggable
+        final FrameworkSupportService service = framework.getService(pluginDef.getService());
+        if (!(service instanceof PluggableService)) {
+            throw new PluginException(
+                "Service '" + pluginDef.getService() + "' specified for script plugin '" + pluginDef.getName()
+                + "' is not valid: unsupported");
+        }
+        PluggableService pservice = (PluggableService) service;
+        if (!pservice.isScriptPluggable()) {
+            throw new PluginException(
+                "Service '" + pluginDef.getService() + "' specified for script plugin '" + pluginDef.getName()
+                + "' is not valid: unsupported");
+        }
     }
 
     /**
@@ -130,7 +329,7 @@ public class PluginManagerService implements FrameworkSupportService {
                 for (int i = 0 ; i < strings.length ; i++) {
                     String classname = strings[i];
                     try {
-                        loadPluginByClassname(classname, urlClassLoader);
+                        loadProviderByClassname(classname, urlClassLoader);
                     } catch (Exception e) {
                         e.printStackTrace(System.err);
                     }
@@ -150,7 +349,7 @@ public class PluginManagerService implements FrameworkSupportService {
             for (int i = 0 ; i < property.split(",").length ; i++) {
                 final String classname = property.split(",")[i];
                 try {
-                    loadPluginByClassname(classname, this.getClass().getClassLoader());
+                    loadProviderByClassname(classname, this.getClass().getClassLoader());
                 } catch (Exception e) {
 //                            System.err.println("Failed to load plugin for " + name + " with classname: " + classname);
                     e.printStackTrace(System.err);
@@ -165,8 +364,8 @@ public class PluginManagerService implements FrameworkSupportService {
      * @param classname   classname to load
      * @param classLoader classloader to user
      */
-    void loadPluginByClassname(final String classname, final ClassLoader classLoader) throws PluginException {
-//        System.err.println("Try loading plugin " + classname + " for service: " + service.getName());
+    void loadProviderByClassname(final String classname, final ClassLoader classLoader) throws PluginException {
+        debug("Try loading provider " + classname);
 
         if (null == classname) {
             throw new IllegalArgumentException("A null java class name was specified.");
@@ -210,13 +409,13 @@ public class PluginManagerService implements FrameworkSupportService {
         }
         PluggableService usedservice = (PluggableService) service1;
 
-        if (!usedservice.isValidPluginClass(cls)) {
+        if (!usedservice.isValidProviderClass(cls)) {
             throw new PluginException(
                 "Class " + classname + " was not a valid plugin class for service: " + usedservice.getName());
         }
-        usedservice.registerPluginClass(cls, pluginname);
+        usedservice.registerProviderClass(cls, pluginname);
 
-        //System.err.println("Succeeded loading plugin " + classname + " for service: " + usedservice.getName());
+        debug("Succeeded loading plugin " + classname + " for service: " + usedservice.getName());
 
     }
 }

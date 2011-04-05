@@ -86,7 +86,7 @@ public class TestPluginManagerService extends AbstractBaseTest {
         String name;
         boolean isValid = true;
 
-        public boolean isValidPluginClass(Class clazz) {
+        public boolean isValidProviderClass(Class clazz) {
             return isValid;
         }
 
@@ -94,12 +94,19 @@ public class TestPluginManagerService extends AbstractBaseTest {
         String registeredName;
         boolean throwException = false;
 
-        public void registerPluginClass(final Class clazz, final String name) throws PluginException {
+        public void registerProviderClass(final Class clazz, final String name) throws PluginException {
             this.registeredClass = clazz;
             this.registeredName = name;
             if (throwException) {
                 throw new PluginException("test exception");
             }
+        }
+
+        public boolean isScriptPluggable() {
+            return false;
+        }
+
+        public void registerScriptProvider(ScriptPluginProvider provider) throws PluginException {
         }
 
         public String getName() {
@@ -114,7 +121,7 @@ public class TestPluginManagerService extends AbstractBaseTest {
         final Framework frameworkInstance = getFrameworkInstance();
         frameworkInstance.setService("test", pluggableService);
         try {
-            service.loadPluginByClassname(null, service.getClass().getClassLoader());
+            service.loadProviderByClassname(null, service.getClass().getClassLoader());
             fail("should fail");
         } catch (IllegalArgumentException e) {
             assertEquals("A null java class name was specified.",
@@ -132,7 +139,7 @@ public class TestPluginManagerService extends AbstractBaseTest {
         final Framework frameworkInstance = getFrameworkInstance();
         frameworkInstance.setService("test", pluggableService);
         try {
-            service.loadPluginByClassname("test.invalid.classname",
+            service.loadProviderByClassname("test.invalid.classname",
                 service.getClass().getClassLoader());
             fail("should fail");
         } catch (PluginException e) {
@@ -147,7 +154,7 @@ public class TestPluginManagerService extends AbstractBaseTest {
         final Framework frameworkInstance = getFrameworkInstance();
         frameworkInstance.setService("test", pluggableService);
         try {
-            service.loadPluginByClassname(TestInvalidService.class.getName(),
+            service.loadProviderByClassname(TestInvalidService.class.getName(),
                 service.getClass().getClassLoader());
             fail("should fail");
         } catch (PluginException e) {
@@ -163,7 +170,7 @@ public class TestPluginManagerService extends AbstractBaseTest {
         final Framework frameworkInstance = getFrameworkInstance();
         frameworkInstance.setService("test", pluggableService);
         try {
-            service.loadPluginByClassname(TestOK.class.getName(),
+            service.loadProviderByClassname(TestOK.class.getName(),
                 service.getClass().getClassLoader());
             fail("should fail");
         } catch (PluginException e) {
@@ -181,7 +188,7 @@ public class TestPluginManagerService extends AbstractBaseTest {
         final Framework frameworkInstance = getFrameworkInstance();
         frameworkInstance.setService("test", pluggableService);
         try {
-            service.loadPluginByClassname(TestMissingAnnotation.class.getName(),
+            service.loadProviderByClassname(TestMissingAnnotation.class.getName(),
                 service.getClass().getClassLoader());
             fail("should fail");
         } catch (PluginException e) {
@@ -197,7 +204,7 @@ public class TestPluginManagerService extends AbstractBaseTest {
         final Framework frameworkInstance = getFrameworkInstance();
         frameworkInstance.setService("test", pluggableService);
         try {
-            service.loadPluginByClassname(TestEmptyName.class.getName(),
+            service.loadProviderByClassname(TestEmptyName.class.getName(),
                 service.getClass().getClassLoader());
             fail("should fail");
         } catch (PluginException e) {
@@ -212,7 +219,7 @@ public class TestPluginManagerService extends AbstractBaseTest {
         final Framework frameworkInstance = getFrameworkInstance();
         frameworkInstance.setService("test", pluggableService);
         try {
-            service.loadPluginByClassname(TestEmptyService.class.getName(),
+            service.loadProviderByClassname(TestEmptyService.class.getName(),
                 service.getClass().getClassLoader());
             fail("should fail");
         } catch (PluginException e) {
@@ -228,7 +235,7 @@ public class TestPluginManagerService extends AbstractBaseTest {
         final Framework frameworkInstance = getFrameworkInstance();
         frameworkInstance.setService("test", pluggableService);
         try {
-            service.loadPluginByClassname(TestOK.class.getName(),
+            service.loadProviderByClassname(TestOK.class.getName(),
                 service.getClass().getClassLoader());
         } catch (PluginException e) {
             fail("unexpected exception: " + e);
