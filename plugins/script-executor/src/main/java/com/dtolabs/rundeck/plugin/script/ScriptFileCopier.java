@@ -66,8 +66,8 @@ import java.util.*;
 public class ScriptFileCopier implements FileCopier {
     public static String SCRIPT_ATTRIBUTE = "script-copy";
     public static String DIR_ATTRIBUTE = "script-copy-dir";
-    private static final String SCRIPT_COPY_DEFAULT_COMMAND_PROPERTY = "script-copy.default.command";
-    private static final String SCRIPT_COPY_DEFAULT_DIR_PROPERTY = "script-copy.default.dir";
+    private static final String SCRIPT_COPY_DEFAULT_COMMAND_PROPERTY = "plugin.script-copy.default.command";
+    private static final String SCRIPT_COPY_DEFAULT_DIR_PROPERTY = "plugin.script-copy.default.dir";
 
     /**
      * Copy inputstream
@@ -153,7 +153,7 @@ public class ScriptFileCopier implements FileCopier {
             //set up the data context to include the working dir
             scptexec.put("dir", workingdir.getAbsolutePath());
         }
-        final Map<String, Map<String, String>> newDataContext = DataContextUtils.addContext("script-copy", scptexec,
+        final Map<String, Map<String, String>> newDataContext = DataContextUtils.addContext("file-copy", scptexec,
             nodeContext);
 
         //use script-copy attribute and replace datareferences

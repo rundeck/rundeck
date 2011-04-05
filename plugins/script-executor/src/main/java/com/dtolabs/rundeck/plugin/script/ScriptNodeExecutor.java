@@ -63,8 +63,8 @@ import java.util.*;
 public class ScriptNodeExecutor implements NodeExecutor {
     public static String SCRIPT_ATTRIBUTE = "script-exec";
     public static String DIR_ATTRIBUTE = "script-exec-dir";
-    private static final String SCRIPT_EXEC_DEFAULT_COMMAND_PROPERTY = "script-exec.default.command";
-    private static final String SCRIPT_EXEC_DEFAULT_DIR_PROPERTY = "script-exec.default.dir";
+    private static final String SCRIPT_EXEC_DEFAULT_COMMAND_PROPERTY = "plugin.script-exec.default.command";
+    private static final String SCRIPT_EXEC_DEFAULT_DIR_PROPERTY = "plugin.script-exec.default.dir";
 
     public NodeExecutorResult executeCommand(final ExecutionContext executionContext, final String[] command,
                                              final INodeEntry node) throws ExecutionException {
@@ -116,7 +116,7 @@ public class ScriptNodeExecutor implements NodeExecutor {
         if (null != workingdir) {
             scptexec.put("dir", workingdir.getAbsolutePath());
         }
-        final Map<String, Map<String, String>> newDataContext = DataContextUtils.addContext("script-exec", scptexec,
+        final Map<String, Map<String, String>> newDataContext = DataContextUtils.addContext("exec", scptexec,
             nodeContext);
 
         //use script-exec attribute and replace datareferences
