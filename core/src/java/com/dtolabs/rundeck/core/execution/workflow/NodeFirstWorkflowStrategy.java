@@ -135,57 +135,11 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
      * Create workflowExecutionItem suitable for inner loop of node-first strategy
      */
     public static WorkflowExecutionItem createInnerLoopItem(WorkflowExecutionItem item) {
-        final WorkflowExecutionItemImpl workflowExecutionItem = new WorkflowExecutionItemImpl(new stepFirstWrapper(
-            item.getWorkflow()));
+        final WorkflowExecutionItemImpl workflowExecutionItem = new WorkflowExecutionItemImpl(
+            new StepFirstWorkflowStrategy.stepFirstWrapper(item.getWorkflow()));
         return workflowExecutionItem;
     }
 
-    private static class stepFirstWrapper implements IWorkflow {
-        private IWorkflow workflow;
-
-        private stepFirstWrapper(IWorkflow workflow) {
-            this.workflow = workflow;
-        }
-
-        public List<ExecutionItem> getCommands() {
-            return workflow.getCommands();
-        }
-
-        public int getThreadcount() {
-            return workflow.getThreadcount();
-        }
-
-        public boolean isKeepgoing() {
-            return workflow.isKeepgoing();
-        }
-
-        public String getStrategy() {
-            return WorkflowExecutionItem.STEP_FIRST;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (!(o instanceof stepFirstWrapper)) {
-                return false;
-            }
-
-            stepFirstWrapper that = (stepFirstWrapper) o;
-
-            if (workflow != null ? !workflow.equals(that.workflow) : that.workflow != null) {
-                return false;
-            }
-
-            return true;
-        }
-
-        @Override
-        public int hashCode() {
-            return workflow != null ? workflow.hashCode() : 0;
-        }
-    }
     /**
      * Create Callables to execute the workflow on a single node
      * @param node

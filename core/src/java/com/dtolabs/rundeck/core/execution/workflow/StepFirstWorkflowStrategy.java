@@ -81,4 +81,56 @@ public class StepFirstWorkflowStrategy extends BaseWorkflowStrategy {
 
     }
 
+    static boolean isInnerLoop(final WorkflowExecutionItem item) {
+        return item.getWorkflow() instanceof stepFirstWrapper;
+    }
+    /**
+     * Wrapper of IWorkflow that always returns STEP_FIRST for strategy
+     */
+    static class stepFirstWrapper implements IWorkflow {
+        private IWorkflow workflow;
+
+        stepFirstWrapper(IWorkflow workflow) {
+            this.workflow = workflow;
+        }
+
+        public List<ExecutionItem> getCommands() {
+            return workflow.getCommands();
+        }
+
+        public int getThreadcount() {
+            return workflow.getThreadcount();
+        }
+
+        public boolean isKeepgoing() {
+            return workflow.isKeepgoing();
+        }
+
+        public String getStrategy() {
+            return WorkflowExecutionItem.STEP_FIRST;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof stepFirstWrapper)) {
+                return false;
+            }
+
+            stepFirstWrapper that = (stepFirstWrapper) o;
+
+            if (workflow != null ? !workflow.equals(that.workflow) : that.workflow != null) {
+                return false;
+            }
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return workflow != null ? workflow.hashCode() : 0;
+        }
+    }
 }

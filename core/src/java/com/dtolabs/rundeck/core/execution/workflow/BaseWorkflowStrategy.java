@@ -25,9 +25,7 @@ package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.*;
-import com.dtolabs.rundeck.core.execution.commands.*;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 
 import java.util.*;
@@ -89,14 +87,14 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                                                          final WorkflowExecutionItem item) {
 
         final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
-        if (null != wlistener) {
+        if (null != wlistener && !StepFirstWorkflowStrategy.isInnerLoop(item)) {
             wlistener.beginWorkflowExecution(executionContext, item);
         }
         WorkflowExecutionResult result = null;
         try {
             result = executeWorkflowImpl(executionContext, item);
         } finally {
-            if (null != wlistener) {
+            if (null != wlistener && !StepFirstWorkflowStrategy.isInnerLoop(item)) {
                 wlistener.finishWorkflowExecution(result, executionContext, item);
             }
         }
@@ -138,7 +136,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
         WorkflowStepFailureException {
         final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
         if (null != wlistener) {
-            wlistener.beginWorkflowItem(c, cmd);
+            wlistener.beginWorkflowItem(c, cmd, executionContext);
         }
         //TODO evaluate conditionals set for cmd within the data context, and skip cmd if necessary
         executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, c + ": " + cmd.toString());
