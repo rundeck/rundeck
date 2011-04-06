@@ -136,7 +136,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
         WorkflowStepFailureException {
         final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
         if (null != wlistener) {
-            wlistener.beginWorkflowItem(c, cmd, executionContext);
+            wlistener.beginWorkflowItem(c, cmd);
         }
         //TODO evaluate conditionals set for cmd within the data context, and skip cmd if necessary
         executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, c + ": " + cmd.toString());
