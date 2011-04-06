@@ -62,10 +62,6 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
         final Map<String, Collection<String>> failures = new HashMap<String, Collection<String>>();
         try {
             final NodeSet nodeSet = executionContext.getNodeSet();
-            executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, "NodeSet: " + nodeSet);
-            executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, "Workflow: " + workflow);
-            executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
-                "data context: " + executionContext.getDataContext());
 
             final List<ExecutionItem> iWorkflowCmdItems = workflow.getCommands();
             if (iWorkflowCmdItems.size() < 1) {
