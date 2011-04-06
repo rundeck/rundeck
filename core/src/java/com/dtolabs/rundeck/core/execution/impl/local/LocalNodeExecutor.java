@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.core.execution.script.ExecTaskParameterGeneratorImpl;
 import com.dtolabs.rundeck.core.execution.script.ExecTaskParameters;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.ExecTask;
@@ -77,9 +78,13 @@ public class LocalNodeExecutor implements NodeExecutor {
             DataContextUtils.replaceDataReferences(command, dataContext)), dataContext);
         execTask.setResultProperty(propName);
 
-        final Task task = createTaskSequence(node, project, execTask);
-        task.execute();
-        success = true;
+        try {
+            execTask.execute();
+            success = true;
+        } catch (BuildException e) {
+            throw new ExecutionException(e);
+        }
+
         int result = success ? 0 : -1;
         if (project.getProperty(propName) != null) {
             try {
@@ -88,7 +93,7 @@ public class LocalNodeExecutor implements NodeExecutor {
 
             }
         }
-        final boolean status = success;
+        final boolean status = 0==result;
         final int resultCode = result;
         return new NodeExecutorResult() {
             public int getResultCode() {
@@ -107,41 +112,13 @@ public class LocalNodeExecutor implements NodeExecutor {
         };
     }
 
-    /**
-     * Create a task to execute the command on the local node, using the specified exec task parameters and data
-     * context.
-     *
-     * @param nodeentry  the node
-     * @param project    ant project
-     * @param nestedTask
-     *
-     * @return a Task
-     */
-    protected Task createTaskSequence(final INodeEntry nodeentry, final Project project,
-                                      final ExecTask nestedTask) throws
-        ExecutionException {
-        final Sequential seq = new Sequential();
-        seq.setProject(project);
-        ParallelNodeDispatcher.addNodeContextTasks(nodeentry, project, seq);
-
-        seq.addTask(nestedTask);
-
-        //add success report for current node execution, for use by parallel execution failed nodes listener
-        ParallelNodeDispatcher.addNodeContextSuccessReport(nodeentry, project, seq);
-
-        return seq;
-
-    }
-
     private ExecTask buildExecTask(Project project, ExecTaskParameters taskParameters,
                                    Map<String, Map<String, String>> dataContext) {
         final ExecTask execTask = new ExecTask();
         execTask.setTaskType("exec");
-        execTask.setFailonerror(true);
+        execTask.setFailonerror(false);
         execTask.setProject(project);
         final Commandline.Argument arg = execTask.createArg();
-
-//        verbose("exectask");
 
         execTask.setExecutable(taskParameters.getCommandexecutable());
         arg.setLine(taskParameters.getCommandargline());

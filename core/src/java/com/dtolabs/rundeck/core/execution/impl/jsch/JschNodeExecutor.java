@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.tasks.net.ExtSSHExec;
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
+import com.sun.xml.internal.rngom.ast.builder.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Sequential;
@@ -66,7 +67,7 @@ public class JschNodeExecutor implements NodeExecutor {
                 "Username must be set to connect to remote node '" + node.getNodename() + "'");
         }
 
-        
+
         final ExecutionListener listener = context.getExecutionListener();
         final Project project = new Project();
         AntSupport.addAntBuildListener(listener, project);
@@ -76,10 +77,11 @@ public class JschNodeExecutor implements NodeExecutor {
         try {
             //perform jsch sssh command
             sshexec = buildSSHTask(context, node, command, project, framework);
-            final Task taskSequence = createRemoteTaskSequence(node, project, sshexec);
-            taskSequence.execute();
+            sshexec.execute();
             success = true;
         } catch (SSHTaskBuilder.BuilderException e) {
+            throw new ExecutionException(e);
+        } catch (BuildException e) {
             throw new ExecutionException(e);
         }
         final int resultCode = sshexec.getExitStatus();
@@ -102,27 +104,6 @@ public class JschNodeExecutor implements NodeExecutor {
         };
     }
 
-
-
-    /**
-     * Create a Task which invokes the command by sending it to a remote node.
-     *
-     * @param nodeentry the node
-     * @param project   the ant project
-     * @param sshexec
-     *
-     * @return the Task
-     */
-    protected Task createRemoteTaskSequence(final INodeEntry nodeentry,
-                                            final Project project, final Task sshexec) {
-        final Sequential seq = new Sequential();
-        seq.setProject(project);
-        ParallelNodeDispatcher.addNodeContextTasks(nodeentry, project, seq);
-        seq.addTask(sshexec);
-        ParallelNodeDispatcher.addNodeContextSuccessReport(nodeentry, project, seq);
-        return seq;
-
-    }
 
     private ExtSSHExec buildSSHTask(ExecutionContext context, INodeEntry nodeentry, String[] args, Project project,
                                     Framework framework) throws SSHTaskBuilder.BuilderException {
