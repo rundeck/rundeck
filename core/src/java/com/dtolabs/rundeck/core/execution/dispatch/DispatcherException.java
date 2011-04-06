@@ -23,25 +23,55 @@
 */
 package com.dtolabs.rundeck.core.execution.dispatch;
 
+import com.dtolabs.rundeck.core.common.INodeEntry;
+
 /**
  * DispatcherException is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class DispatcherException extends Exception {
+    private INodeEntry node;
+
     public DispatcherException() {
-        super();
     }
 
-    public DispatcherException(String msg) {
-        super(msg);
+    public DispatcherException(String s) {
+        super(s);
     }
 
-    public DispatcherException(Throwable cause) {
-        super(cause);
+    public DispatcherException(String s, Throwable throwable) {
+        super(s, throwable);
     }
 
-    public DispatcherException(String msg, Throwable cause) {
-        super(msg, cause);
+    public DispatcherException(Throwable throwable) {
+        super(throwable);
+    }
+
+    public DispatcherException(INodeEntry node) {
+        this.node = node;
+    }
+
+    public DispatcherException(String s, INodeEntry node) {
+        super(s);
+        this.node = node;
+    }
+
+    public DispatcherException(String s, Throwable throwable, INodeEntry node) {
+        super(s, throwable);
+        this.node = node;
+    }
+
+    public DispatcherException(Throwable throwable, INodeEntry node) {
+        super(throwable);
+        this.node = node;
+    }
+
+    public INodeEntry getNode() {
+        return node;
+    }
+
+    public void setNode(INodeEntry node) {
+        this.node = node;
     }
 }

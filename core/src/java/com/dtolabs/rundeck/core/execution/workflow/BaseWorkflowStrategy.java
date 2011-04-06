@@ -25,7 +25,9 @@ package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.*;
+import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 
 import java.util.*;
@@ -77,8 +79,12 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
 
         @Override
         public String toString() {
-            return "Workflow, result: " + getResultSet() + ", failures: " + getFailureMessages() + (
-                null != getException() ? ": exception: " + getException() : "");
+            return "[Workflow result: "
+                   + (null != getResultSet() && getResultSet().size() > 0 ? "result: " + getResultSet() : "")
+                   + (null != getFailureMessages() && getFailureMessages().size() > 0 ? ", failures: "
+                                                                                        + getFailureMessages() : "")
+                   + (null != getException() ? ": exception: " + getException() : "")
+                   + "]";
         }
 
     }
@@ -262,6 +268,14 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                     }
                     failures.get(s).add(interpreterResult.toString());
                 }
+            } else if (o instanceof DispatcherException) {
+                DispatcherException e = (DispatcherException) o;
+                final INodeEntry node = e.getNode();
+                final String key = null != node ? node.getNodename() : "?";
+                if (!failures.containsKey(key)) {
+                    failures.put(key, new ArrayList<String>());
+                }
+                failures.get(key).add(e.getMessage());
             } else if (o instanceof Exception) {
                 Exception e = (Exception) o;
                 if (!failures.containsKey("?")) {

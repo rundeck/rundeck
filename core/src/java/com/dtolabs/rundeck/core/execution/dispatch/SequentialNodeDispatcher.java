@@ -141,7 +141,7 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                         failedListener.nodesFailed(failures);
                     }
                     throw new DispatcherException(
-                        "Failed dispatching to node " + node.getNodename() + ": " + e.getMessage(), e);
+                        "Failed dispatching to node " + node.getNodename() + ": " + e.getMessage(), e, node);
                 } else {
                     context.getExecutionListener().log(Constants.ERR_LEVEL,
                         "Failed dispatching to node " + node.getNodename() + ": " + e.getMessage());
