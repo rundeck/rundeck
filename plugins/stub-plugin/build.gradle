@@ -1,0 +1,52 @@
+apply plugin: 'java'
+sourceCompatibility = 1.5
+version = '1.2.0'
+archivesBaseName = 'rundeck-stub-plugin'
+defaultTasks 'clean','assemble'
+repositories {
+    mavenCentral()
+    add(new org.apache.ivy.plugins.resolver.FileSystemResolver()) {
+        name = 'localdeps'
+        //addIvyPattern "$projectDir/../dependencies/[organisation]/[module]-ivy-[revision].xml"
+        addArtifactPattern "$projectDir/../../build/localrepo/[module]/[ext]s/[module]-[revision](-[classifier]).[ext]"
+        descriptor = 'optional'
+        checkmodified = true
+    }
+}
+dependencies {
+    compile( 
+        [group: 'rundeck-core',name:'rundeck-core',version: version]
+    )
+    testCompile(
+        //[group: 'junit', name: 'junit', version: '3.8.1',ext:'jar']
+    )
+}
+
+jar {
+    manifest {
+        attributes 'Rundeck-Plugin-Archive':'true','Rundeck-Plugin-Classnames': 'com.dtolabs.rundeck.plugin.stub.StubFileCopier,com.dtolabs.rundeck.plugin.stub.StubNodeExecutor'
+    }
+}
+sourceSets {
+    main {
+    }
+    test {
+    }
+}
+
+test{
+    //systemProperties 'rdeck.base': "$projectDir/build/rdeck_base"
+    //systemProperties 'rdeck.home': "$projectDir/build"
+}
+
+
+uploadArchives {
+    repositories {
+       flatDir(dirs: file('repos'))
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '0.9-rc-3'
+    jarPath = 'wrapper'
+}

@@ -21,7 +21,7 @@
 * Created: 3/31/11 4:09 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.impl.stub;
+package com.dtolabs.rundeck.plugin.stub;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.INodeEntry;
