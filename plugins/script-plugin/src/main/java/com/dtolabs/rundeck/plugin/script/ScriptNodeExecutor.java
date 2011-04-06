@@ -99,31 +99,22 @@ public class ScriptNodeExecutor implements NodeExecutor {
             workingdir = new File(dirstring);
         }
 
-        final Map<String, Map<String, String>> origDataContext = executionContext.getDataContext();
-
-        //add node context data
-        final Map<String, Map<String, String>> nodeContext =
-            DataContextUtils.addContext("node", DataContextUtils.nodeData(node), origDataContext);
-
-        //expand data references within the command to execute
-        final String[] expandCommand = DataContextUtils.replaceDataReferences(command,
-            nodeContext);
-
+        final Map<String, Map<String, String>> dataContext = executionContext.getDataContext();
 
         //add some more data context values to allow templatized script-exec
         final HashMap<String, String> scptexec = new HashMap<String, String>();
-        scptexec.put("command", StringArrayUtil.asString(expandCommand, " "));
+        scptexec.put("command", StringArrayUtil.asString(command, " "));
         if (null != workingdir) {
             scptexec.put("dir", workingdir.getAbsolutePath());
         }
         final Map<String, Map<String, String>> newDataContext = DataContextUtils.addContext("exec", scptexec,
-            nodeContext);
+            dataContext);
 
         //use script-exec attribute and replace datareferences
         final String[] args = DataContextUtils.replaceDataReferences(scriptargs.split(" "), newDataContext);
 
         //create system environment variables from the data context
-        final Map<String, String> envMap = DataContextUtils.generateEnvVarsFromContext(nodeContext);
+        final Map<String, String> envMap = DataContextUtils.generateEnvVarsFromContext(dataContext);
         final ArrayList<String> envlist = new ArrayList<String>();
         for (final String key : envMap.keySet()) {
             final String envval = envMap.get(key);
