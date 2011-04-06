@@ -56,7 +56,7 @@ public class JschNodeExecutor implements NodeExecutor {
         this.framework = framework;
     }
 
-    public NodeExecutorResult executeCommand(ExecutionContext context, String[] command, final INodeEntry node) throws
+    public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command, final INodeEntry node) throws
         ExecutionException {
         if (null == node.getHostname() || null == node.extractHostname()) {
             throw new ExecutionException(
@@ -105,8 +105,10 @@ public class JschNodeExecutor implements NodeExecutor {
     }
 
 
-    private ExtSSHExec buildSSHTask(ExecutionContext context, INodeEntry nodeentry, String[] args, Project project,
-                                    Framework framework) throws SSHTaskBuilder.BuilderException {
+    private ExtSSHExec buildSSHTask(final ExecutionContext context, final INodeEntry nodeentry, final String[] args,
+                                    final Project project, final Framework framework) throws
+        SSHTaskBuilder.BuilderException {
+
         //XXX:TODO use node attributes to specify ssh key/timeout
         int timeout = 0;
         /**
@@ -122,11 +124,7 @@ public class JschNodeExecutor implements NodeExecutor {
 //                      + " defaulting to: 0 (forever)");
             }
         }
-        final Map<String, Map<String, String>> dataContext =
-            DataContextUtils.addContext("node", DataContextUtils.nodeData(nodeentry), context.getDataContext());
-        //substitute any args values
-        final String[] newargs = DataContextUtils.replaceDataReferences(args, dataContext);
-        return SSHTaskBuilder.build(nodeentry, newargs, project, framework, timeout, dataContext);
+        return SSHTaskBuilder.build(nodeentry, args, project, framework, timeout, context.getDataContext());
     }
 
 

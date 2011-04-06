@@ -149,8 +149,8 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
             final InterpreterResult interpreterResult = interpret.interpretCommand(context, command, test1);
             //returning null from command
             assertNull(interpreterResult);
-            assertEquals(context, testexec.testContext);
-            assertEquals(strings, testexec.testCommand);
+//            assertEquals(context, testexec.testContext);
+            assertTrue(Arrays.deepEquals(strings, testexec.testCommand));
             assertEquals(test1, testexec.testNode);
         }
         testexec.testResult=new NodeExecutorResult() {
@@ -171,8 +171,8 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
             NodeExecutorResult result = (NodeExecutorResult) interpreterResult;
             assertEquals(-2, result.getResultCode());
 
-            assertEquals(context, testexec.testContext);
-            assertEquals(strings, testexec.testCommand);
+//            assertEquals(context, testexec.testContext);
+            assertTrue(Arrays.deepEquals(strings, testexec.testCommand));
             assertEquals(test1, testexec.testNode);
         }
 
@@ -239,8 +239,8 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
             final InterpreterResult interpreterResult = interpret.interpretCommand(context, command, test1);
             //returning null from command
             assertNull(interpreterResult);
-            assertEquals(context, testexec.testContext);
-            assertEquals(strings, testexec.testCommand);
+//            assertEquals(context, testexec.testContext);
+            assertTrue(Arrays.deepEquals(strings, testexec.testCommand));
             assertEquals(test1, testexec.testNode);
         }
         testexec.testResult = new NodeExecutorResult() {
@@ -261,8 +261,8 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
             NodeExecutorResult result = (NodeExecutorResult) interpreterResult;
             assertEquals(-2, result.getResultCode());
 
-            assertEquals(context, testexec.testContext);
-            assertEquals(strings, testexec.testCommand);
+//            assertEquals(context, testexec.testContext);
+            assertTrue(Arrays.deepEquals(strings, testexec.testCommand));
             assertEquals(test1, testexec.testNode);
         }
 

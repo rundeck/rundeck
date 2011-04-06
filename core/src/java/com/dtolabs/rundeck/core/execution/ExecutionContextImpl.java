@@ -92,6 +92,16 @@ public class ExecutionContextImpl implements ExecutionContext {
             context.getFramework());
     }
 
+    /**
+     * Create a new ExecutionContext from an original substituting a specific datacontext.
+     */
+    public static ExecutionContextImpl createExecutionContextImpl(final ExecutionContext context,
+                                                                  final Map<String, Map<String, String>> dataContext) {
+        return new ExecutionContextImpl(context.getFrameworkProject(), context.getUser(), context.getNodeSet(),
+            context.getArgs(), context.getLoglevel(), dataContext, context.getExecutionListener(),
+            context.getFramework());
+    }
+
     public String getFrameworkProject() {
         return frameworkProject;
     }

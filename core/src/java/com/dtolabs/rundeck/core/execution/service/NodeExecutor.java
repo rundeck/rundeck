@@ -28,7 +28,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
 
 /**
- * NodeExecutor executes a command on a node
+ * NodeExecutor executes a command on a node.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
@@ -37,7 +37,7 @@ public interface NodeExecutor {
      * Execute a command on a node and return the result.
      *
      * @param context the execution context
-     * @param command the array of strings for the command line
+     * @param command the array of strings for the command line, with any necessary data context references replaced.
      * @param node    the node to execute on
      *
      * @return a result

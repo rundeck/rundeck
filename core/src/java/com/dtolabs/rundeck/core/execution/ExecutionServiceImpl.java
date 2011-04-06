@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.execution;
 import com.dtolabs.rundeck.core.cli.ExecTool;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.commands.CommandInterpreter;
 import com.dtolabs.rundeck.core.execution.commands.InterpreterException;
 import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
@@ -218,8 +219,8 @@ class ExecutionServiceImpl implements ExecutionService {
         return result;
     }
 
-    public NodeExecutorResult executeCommand(ExecutionContext context, String[] command,
-                                             INodeEntry node) throws ExecutionException {
+    public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
+                                             final INodeEntry node) throws ExecutionException {
 
         if (null != context.getExecutionListener()) {
             context.getExecutionListener().beginNodeExecution(context, command, node);
@@ -231,11 +232,18 @@ class ExecutionServiceImpl implements ExecutionService {
             throw new ExecutionException(e);
         }
 
+        //create node context for node and substitute data references in command
+        final Map<String, Map<String, String>> nodeDataContext =
+            DataContextUtils.addContext("node", DataContextUtils.nodeData(node), context.getDataContext());
+        final String[] nodeCommand = DataContextUtils.replaceDataReferences(command, nodeDataContext);
+
         final LogReformatter formatter = createLogReformatter(node, context.getExecutionListener());
         final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
         NodeExecutorResult result = null;
         try {
-            result = nodeExecutor.executeCommand(context, command, node);
+            final ExecutionContextImpl nodeContext = ExecutionContextImpl.createExecutionContextImpl(context,
+                nodeDataContext);
+            result = nodeExecutor.executeCommand(nodeContext, nodeCommand, node);
         } finally {
             loggingReformatter.resetOutputStreams();
             if (null != context.getExecutionListener()) {

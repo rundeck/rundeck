@@ -72,10 +72,9 @@ public class LocalNodeExecutor implements NodeExecutor {
         boolean success = false;
         final ExecTask execTask;
         //perform jsch sssh command
-        final Map<String, Map<String, String>> dataContext =
-            DataContextUtils.addContext("node", DataContextUtils.nodeData(node), context.getDataContext());
-        execTask = buildExecTask(project, parameterGenerator.generate(node, true, null,
-            DataContextUtils.replaceDataReferences(command, dataContext)), dataContext);
+        execTask = buildExecTask(project, parameterGenerator.generate(node, true, null, command),
+            context.getDataContext());
+
         execTask.setResultProperty(propName);
 
         try {
