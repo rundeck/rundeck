@@ -15,86 +15,29 @@
  */
 
 /*
-* StepContext.java
+* WFStepContext.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/31/11 9:08 AM
+* Created: 4/6/11 12:58 PM
 * 
 */
 package com.dtolabs.rundeck.core.execution.workflow;
 
-import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionItem;
 
 import java.util.*;
 
 /**
- * WFStepContext contains context about a workflow step, and can generate logging context from the details of the step.
- * Node and step number/item are independent.
+ * WFStepContext holds current step info.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 class WFStepContext {
-    private Map<String, String> loggingContext;
-    private ExecutionItem stepItem;
-    private int step = -1;
-    private INodeEntry node;
+    ExecutionItem stepItem;
+    int step = -1;
 
-    public int getStep() {
-        return step;
-    }
-
-    public void setStep(final int step, final ExecutionItem executionItem) {
+    WFStepContext(final ExecutionItem stepItem, final int step) {
+        this.stepItem = stepItem;
         this.step = step;
-        this.stepItem = executionItem;
-        clearContext();
-    }
-
-    public void clearStep() {
-        setStep(-1, null);
-    }
-
-    public INodeEntry getNode() {
-        return node;
-    }
-
-    public void setNode(final INodeEntry node) {
-        this.node = node;
-        clearContext();
-    }
-
-    public void clearNode() {
-        setNode(null);
-    }
-
-    private void clearContext() {
-        loggingContext = null;
-    }
-
-    public Map<String, String> getContext() {
-        if (null != loggingContext) {
-            return loggingContext;
-        }
-        loggingContext = new HashMap<String, String>();
-        if (null != node) {
-            loggingContext.put("node", node.getNodename());
-            loggingContext.put("user", node.extractUserName());
-        }
-        if (null != stepItem) {
-            loggingContext.put("command", stepItem.getType() + "." + step);
-        }
-        if (step > -1) {
-            loggingContext.put("step", Integer.toString(step));
-        }
-        return loggingContext;
-    }
-
-    @Override
-    public String toString() {
-        return "StepContext{" +
-               "stepItem=" + stepItem +
-               ", step=" + step +
-               ", node=" + node +
-               '}';
     }
 }
