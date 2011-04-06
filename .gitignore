@@ -15,5 +15,6 @@ rundeckapp/.settings/
 packaging/dist
 core/.gradle
 plugins/script-executor/.gradle
+plugins/stub-plugin/.gradle
 docs/en/manpages/**/*.gz
 *.DS_Store
