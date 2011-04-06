@@ -59,9 +59,8 @@ public class ExecCommandInterpreter implements CommandInterpreter {
         NodeExecutorResult result;
         try {
             result = framework.getExecutionService().executeCommand(context, cmd.getCommand(), node);
-        } catch (ExecutionException e) {
+        } catch (Exception e) {
             throw new InterpreterException(e);
-
         }
         return result;
     }
