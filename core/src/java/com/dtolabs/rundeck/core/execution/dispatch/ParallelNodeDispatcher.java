@@ -25,7 +25,6 @@ package com.dtolabs.rundeck.core.execution.dispatch;
 
 import com.dtolabs.rundeck.core.NodesetFailureException;
 import com.dtolabs.rundeck.core.cli.CallableWrapperTask;
-import com.dtolabs.rundeck.core.cli.NodeDispatchStatusListener;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.NodeFileParserException;
@@ -34,7 +33,6 @@ import com.dtolabs.rundeck.core.execution.ExecutionItem;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 import com.dtolabs.rundeck.core.execution.StatusResult;
 import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
-import com.dtolabs.rundeck.core.execution.impl.common.AntSupport;
 import com.dtolabs.rundeck.core.tasks.dispatch.NodeExecutionStatusTask;
 import com.dtolabs.rundeck.core.utils.NodeSet;
 import org.apache.tools.ant.BuildException;
@@ -90,28 +88,13 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         boolean keepgoing = nodeset.isKeepgoing();
 
         final HashSet<String> nodeNames = new HashSet<String>();
-        final NodeDispatchStatusListener listener = new NodeDispatchStatusListener() {
-            public void reportSuccess(final String nodename) {
-                synchronized (nodeNames) {
-                    nodeNames.remove(nodename);
-                }
-            }
-        };
         FailedNodesListener failedListener = context.getExecutionListener().getFailedNodesListener();
-        if (null != failedListener) {
-            failedListener.matchedNodes(nodeNames);
-        }
-        Project project = new Project();
-//        if (null != context.getExecutionListener().getBuildListener() ) {
-//            project.addBuildListener(context.getExecutionListener().getBuildListener());
-//        }
-        project.addReference(STATUS_LISTENER_REF_ID, listener);
-//        AntSupport.addAntBuildListener(context.getExecutionListener(), project, node);
 
-        project.log(
+        Project project = new Project();
+
+        context.getExecutionListener().log(3,
             "preparing for parallel execution...(keepgoing? " + keepgoing + ", threads: " + nodeset.getThreadCount()
-            + ")",
-            Project.MSG_DEBUG);
+            + ")");
         configureNodeContextThreadLocalsForProject(project);
         final Parallel parallelTask = new Parallel();
         parallelTask.setProject(project);
@@ -129,21 +112,28 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
                 tocall = dispatchableCallable(context, toDispatch, resultMap, node, failureMap);
             }
             nodeNames.add(node.getNodename());
-            project.log("Create task for node: " + node.getNodename(), Project.MSG_DEBUG);
-            final Task callableWrapperTask = createWrappedCallableTask(project, tocall, node);
-            parallelTask.addTask(callableWrapperTask);
+            context.getExecutionListener().log(3, "Create task for node: " + node.getNodename());
+            final CallableWrapperTask callableWrapperTask1 = new CallableWrapperTask(tocall);
+            callableWrapperTask1.setProject(project);
+            parallelTask.addTask(callableWrapperTask1);
         }
+        if (null != failedListener) {
+            failedListener.matchedNodes(nodeNames);
+        }
+        context.getExecutionListener().log(3, "parallel dispatch to nodes: " + nodeNames);
+        BuildException buildException;
         try {
             parallelTask.execute();
             success = true;
         } catch (BuildException e) {
-            project.log(e.getMessage(), Project.MSG_ERR);
+            buildException=e;
+            context.getExecutionListener().log(0, e.getMessage());
             if (!keepgoing) {
                 throw new DispatcherException(e);
             }
         }
         //evaluate the failed nodes
-        if (nodeNames.size() > 0) {
+        if (failureMap.size() > 0) {
             if (null != failedListener) {
                 //tell listener of failed node list
                 //extract status results
@@ -320,27 +310,6 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         public void setRefid(final String refid) {
             this.refid = refid;
         }
-    }
-
-    /**
-     * Return a Sequential Task that sets threadlocal values for Node context information, then executes the Callable
-     * via a CallableWrapperTask, then reports node success via NodeExecutionStatusTask.
-     *
-     * @param project the project
-     * @param tocall  the Callable
-     * @param node    the target node
-     *
-     * @return Sequential Task instance
-     */
-    private Task createWrappedCallableTask(final Project project, final Callable tocall, final INodeEntry node) {
-        final Sequential seq = new Sequential();
-        seq.setProject(project);
-        addNodeContextTasks(node, project, seq);
-        final CallableWrapperTask callableWrapperTask = new CallableWrapperTask(tocall);
-        callableWrapperTask.setProject(project);
-        seq.addTask(callableWrapperTask);
-        addNodeContextSuccessReport(node, project, seq);
-        return seq;
     }
 
     /**
