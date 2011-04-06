@@ -65,22 +65,4 @@ public class ExecCommandInterpreter implements CommandInterpreter {
         return result;
     }
 
-    public static  LogReformatter createLogReformatter(INodeEntry node, ExecutionListener listener) {
-        LogReformatter gen;
-        if (null != listener && listener.isTerse()) {
-            gen = null;
-        } else {
-            String logformat = ExecTool.DEFAULT_LOG_FORMAT;
-            if (null != listener && null != listener.getLogFormat()) {
-                logformat = listener.getLogFormat();
-            }
-            final HashMap<String, String> contextData = new HashMap<String, String>();
-            //discover node name and username
-            contextData.put("node", node.getNodename());
-            contextData.put("user", node.extractUserName());
-//            contextData.put("command", "test");
-            gen = new LogReformatter(logformat, contextData);
-        }
-        return gen;
-    }
 }
