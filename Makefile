@@ -15,12 +15,14 @@ GRAILS=$(GRAILS_HOME)/bin/grails $(GARGS)
 
 RUNDECK_FILES=$(shell find rundeckapp/{src,test,grails-app,scripts} -name "*.java" -o -name "*.groovy" -o -name "*.gsp")
 CORE_FILES=$(shell find core/src -name "*.java" -o -name "*.templates" -o -path "*/src/sh/*")
+PLUGIN_FILES=$(shell find plugins/*-plugin -name "*.java" )
+plugs= $(shell for i in plugins/*-plugin ; do v=` basename $$i`; echo $$i/build/libs/rundeck-$${v}-$(VERSION).jar ; done )
 
 core = core/build/libs/rundeck-core-$(VERSION).jar
 war = rundeckapp/target/rundeck-$(VERSION).war
 launcher = rundeckapp/target/rundeck-launcher-$(VERSION).jar
 
-.PHONY: clean rundeck docs makedocs
+.PHONY: clean rundeck docs makedocs plugins
 
 rundeck: $(war) $(launcher)
 	@echo $(VERSION)-$(RELEASE)
@@ -37,6 +39,15 @@ $(core): $(CORE_FILES)
 $(war): $(core) $(RUNDECK_FILES)
 	./build.sh rundeckapp
 
+$(plugs): $(PLUGIN_FILES)
+	echo plugs are $(plugs)
+	cd plugins && ./gradlew	
+
+plugins: $(plugs)
+	-rm -rf ./rundeckapp/target/launcher-contents/libext 
+	mkdir -p ./rundeckapp/target/launcher-contents/libext
+	for i in $(plugs) ; do cp $$i ./rundeckapp/target/launcher-contents/libext/ ; done
+
 docs: makedocs
 	-rm -rf ./rundeckapp/target/launcher-contents/docs ./rundeckapp/web-app/docs
 	mkdir -p ./rundeckapp/target/launcher-contents/docs/man/man1
@@ -47,7 +58,7 @@ docs: makedocs
 	cp docs/en/dist/man/man1/*.1 ./rundeckapp/target/launcher-contents/docs/man/man1
 	cp docs/en/dist/man/man5/*.5 ./rundeckapp/target/launcher-contents/docs/man/man5
 
-$(launcher): $(core) $(RUNDECK_FILES)
+$(launcher): $(core) plugins $(RUNDECK_FILES)
 	./build.sh rundeckapp
 
 .PHONY: test
