@@ -23,7 +23,6 @@
 */
 package com.dtolabs.rundeck.core.execution.service;
 
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
@@ -58,19 +57,13 @@ class ScriptPluginNodeExecutor implements NodeExecutor {
 
     public NodeExecutorResult executeCommand(final ExecutionContext executionContext, final String[] command,
                                              final INodeEntry node) throws ExecutionException {
-        File workingdir = null;
-        File scriptfile = plugin.getScriptFile();
-        String scriptargs = null;
-        String dirstring = null;
+        final File workingdir = null;
+        final File scriptfile = plugin.getScriptFile();
         final String pluginname = plugin.getName();
         executionContext.getExecutionListener().log(3,
             "[" + pluginname + "] execCommand started, command: " + StringArrayUtil.asString(command, " "));
 
-
-        //get project or framework property for script-exec args
-        final Framework framework = executionContext.getFramework();
-        //look for specific property
-        scriptargs = plugin.getScriptArgs();
+        final String scriptargs = plugin.getScriptArgs();
         executionContext.getExecutionListener().log(3, "[" + pluginname + "] scriptargs: " + scriptargs);
 
 
@@ -79,7 +72,9 @@ class ScriptPluginNodeExecutor implements NodeExecutor {
                 "[" + pluginname + "] no script-args defined for plugin");
         }
 
-        /*dirstring = plugin.get
+        /*
+        String dirstring = null;
+        dirstring = plugin.get
         if (null != node.getAttributes().get(DIR_ATTRIBUTE)) {
             dirstring = node.getAttributes().get(DIR_ATTRIBUTE);
         }
@@ -89,26 +84,17 @@ class ScriptPluginNodeExecutor implements NodeExecutor {
 
         final Map<String, Map<String, String>> origDataContext = executionContext.getDataContext();
 
-        //add node context data
-        final Map<String, Map<String, String>> nodeContext =
-            DataContextUtils.addContext("node", DataContextUtils.nodeData(node), origDataContext);
-
-        //expand data references within the command to execute
-        final String[] expandCommand = DataContextUtils.replaceDataReferences(command,
-            nodeContext);
-
-
-        //add some more data context values to allow templatized script-exec
+        //add some more data context values to allow templatized args
         final HashMap<String, String> scptexec = new HashMap<String, String>();
-        scptexec.put("command", StringArrayUtil.asString(expandCommand, " "));
+        scptexec.put("command", StringArrayUtil.asString(command, " "));
         if (null != workingdir) {
             scptexec.put("dir", workingdir.getAbsolutePath());
         }
         final Map<String, Map<String, String>> newDataContext = DataContextUtils.addContext("exec", scptexec,
-            nodeContext);
+            origDataContext);
 
 
-        //use script-exec attribute and replace datareferences
+        // replace datareferences in args
         final String[] args = DataContextUtils.replaceDataReferences(scriptargs.split(" "), newDataContext);
         final String[] finalargs = new String[args.length + 1];
         finalargs[0] = scriptfile.getAbsolutePath();
@@ -117,7 +103,7 @@ class ScriptPluginNodeExecutor implements NodeExecutor {
         }
 
         //create system environment variables from the data context
-        final Map<String, String> envMap = DataContextUtils.generateEnvVarsFromContext(nodeContext);
+        final Map<String, String> envMap = DataContextUtils.generateEnvVarsFromContext(origDataContext);
         final ArrayList<String> envlist = new ArrayList<String>();
         for (final String key : envMap.keySet()) {
             final String envval = envMap.get(key);
@@ -127,14 +113,13 @@ class ScriptPluginNodeExecutor implements NodeExecutor {
 
         int result = -1;
         boolean success = false;
-        Thread errthread = null;
-        Thread outthread = null;
-        String errmsg;
+        final Thread errthread;
+        final Thread outthread;
         executionContext.getExecutionListener().log(3, "[" + pluginname + "] executing: " + StringArrayUtil.asString(
             finalargs,
             " "));
         final Runtime runtime = Runtime.getRuntime();
-        Process exec = null;
+        final Process exec;
         try {
             exec = runtime.exec(finalargs, envarr, workingdir);
         } catch (IOException e) {
