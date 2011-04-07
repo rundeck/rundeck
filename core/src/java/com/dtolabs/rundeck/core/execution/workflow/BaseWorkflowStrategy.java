@@ -79,8 +79,8 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
 
         @Override
         public String toString() {
-            return "[Workflow result: "
-                   + (null != getResultSet() && getResultSet().size() > 0 ? "result: " + getResultSet() : "")
+            return "[Workflow results: "
+                   + (null != getResultSet() && getResultSet().size() > 0 ? "successes: " + getResultSet() : "")
                    + (null != getFailureMessages() && getFailureMessages().size() > 0 ? ", failures: "
                                                                                         + getFailureMessages() : "")
                    + (null != getException() ? ": exception: " + getException() : "")
