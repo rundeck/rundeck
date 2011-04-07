@@ -1,0 +1,7 @@
+defaultTasks 'clean','build'
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '0.9-rc-3'
+    jarPath = 'wrapper'
+}
+
