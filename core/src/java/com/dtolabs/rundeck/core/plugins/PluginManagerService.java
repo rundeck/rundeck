@@ -84,7 +84,7 @@ public class PluginManagerService implements FrameworkSupportService {
      * Load any jars in the libext dir of RDECK_BASE and look for jar metadata to load classes as plugins
      */
     private void scanAndLoadJarPlugins() {
-        final File libext = new File(framework.getBaseDir(), "libext");
+        final File libext = framework.getLibextDir();
         debug("scanAndLoadJarPlugins dir: " + libext.getAbsolutePath());
         if (!libext.exists() || !libext.isDirectory()) {
             return;
@@ -133,7 +133,7 @@ public class PluginManagerService implements FrameworkSupportService {
      * Load any jars in the libext dir of RDECK_BASE and look for jar metadata to load classes as plugins
      */
     private void scanAndLoadZipScriptPlugins() {
-        final File libext = new File(framework.getBaseDir(), "libext");
+        final File libext = framework.getLibextDir();
         debug("scanAndLoadZipScriptPlugins dir: " + libext.getAbsolutePath());
         if (!libext.exists() || !libext.isDirectory()) {
             return;
@@ -248,7 +248,7 @@ public class PluginManagerService implements FrameworkSupportService {
      * @return cache dir for the contents of the plugin zip
      */
     private File expandScriptPlugin(final File file, final loadedMeta meta) throws IOException {
-        File basedir = new File(framework.getBaseDir(), "libext/cache");
+        File basedir = framework.getLibextCacheDir();
         if (!basedir.exists()) {
             basedir.mkdirs();
         }

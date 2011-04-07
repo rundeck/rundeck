@@ -76,6 +76,12 @@ public class Framework extends FrameworkResourceParent {
     static final String CENTRALDISPATCHER_CLS_DEFAULT = NoCentralDispatcher.class.getName();
 
     static final String PROJECTMGR_NAME = "projectResourceMgr";
+    public static final String FRAMEWORK_LIBEXT_DIR = "framework.libext.dir";
+    public static final String FRAMEWORK_LIBEXT_CACHE_DIR = "framework.libext.cache.dir";
+    public static final String DEFAULT_LIBEXT_DIR_NAME = "libext";
+    public static final String DEFAULT_LIBEXT_CACHE_DIR_NAME = "cache";
+    public static final String SYSTEM_PROP_LIBEXT = "rdeck.libext";
+    public static final String SYSTEM_PROP_LIBEXT_CACHE = "rdeck.libext.cache";
 
     private final IPropertyLookup lookup;
     private final File projectsBase;
@@ -673,6 +679,30 @@ public class Framework extends FrameworkResourceParent {
 
     public File getConfigDir() {
         return new File(Constants.getFrameworkConfigDir(getBaseDir().getAbsolutePath()));
+    }
+    /**
+     * Return the directory containing plugins/extensions for the framework.
+     */
+    public File getLibextDir(){
+        if(null!=System.getProperty(SYSTEM_PROP_LIBEXT)) {
+            return new File(System.getProperty(SYSTEM_PROP_LIBEXT));
+        }else if (hasProperty(FRAMEWORK_LIBEXT_DIR)) {
+            return new File(getProperty(FRAMEWORK_LIBEXT_DIR));
+        }else {
+            return new File(getBaseDir(), DEFAULT_LIBEXT_DIR_NAME);
+        }
+    }
+    /**
+     * Return the cache directory used by the plugin system
+     */
+    public File getLibextCacheDir(){
+        if (null != System.getProperty(SYSTEM_PROP_LIBEXT_CACHE)) {
+            return new File(System.getProperty(SYSTEM_PROP_LIBEXT_CACHE));
+        }else if (hasProperty(FRAMEWORK_LIBEXT_CACHE_DIR)) {
+            return new File(getProperty(FRAMEWORK_LIBEXT_CACHE_DIR));
+        }else {
+            return new File(getLibextDir(), DEFAULT_LIBEXT_CACHE_DIR_NAME);
+        }
     }
 
 
