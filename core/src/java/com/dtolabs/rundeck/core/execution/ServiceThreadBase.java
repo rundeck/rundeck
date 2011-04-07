@@ -33,7 +33,7 @@ import java.util.*;
 public class ServiceThreadBase extends Thread {
     volatile boolean success = false;
     private volatile boolean aborted = false;
-    volatile Exception thrown;
+    volatile Throwable thrown;
     volatile Object resultObject;
 
     public void abort() {
@@ -47,11 +47,15 @@ public class ServiceThreadBase extends Thread {
         return success;
     }
 
-    public Exception getException() {
+    public Throwable getThrowable() {
         return thrown;
     }
 
     public boolean isAborted() {
         return aborted;
+    }
+
+    public Object getResultObject() {
+        return resultObject;
     }
 }

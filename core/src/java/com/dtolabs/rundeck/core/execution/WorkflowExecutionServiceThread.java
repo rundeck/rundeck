@@ -60,8 +60,8 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase {
                 thrown = result.getException();
             }
             resultObject = result;
-        } catch (ExecutionServiceException e) {
-            e.printStackTrace();
+        } catch (Throwable e) {
+            e.printStackTrace(System.err);
             thrown = e;
         }
     }
