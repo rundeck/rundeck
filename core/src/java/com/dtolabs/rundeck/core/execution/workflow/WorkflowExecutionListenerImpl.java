@@ -42,6 +42,7 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
      */
     private InheritableThreadLocal<WFStepContext> localStep = new InheritableThreadLocal<WFStepContext>();
     private InheritableThreadLocal<INodeEntry> localNode = new InheritableThreadLocal<INodeEntry>();
+    private InheritableThreadLocal<String> contextPrefix = new InheritableThreadLocal<String>();
 
 
     public WorkflowExecutionListenerImpl(final FailedNodesListener failedNodesListener,
@@ -80,7 +81,12 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
             if (null != localStep.get()) {
                 final WFStepContext wfStepInfo = localStep.get();
                 final int step = wfStepInfo.step;
-                loggingContext.put("command", wfStepInfo.stepItem.getType() + "." + step);
+                final String s = makePrefix(wfStepInfo);
+                if(null!= contextPrefix.get()) {
+                    loggingContext.put("command", contextPrefix.get() + ":" + s);
+                }else{
+                    loggingContext.put("command", s);
+                }
 
                 if (step > -1) {
                     loggingContext.put("step", Integer.toString(step));
@@ -92,7 +98,20 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
         }
     }
 
+    private String makePrefix(WFStepContext wfStepInfo) {
+        return wfStepInfo.step + "-" + wfStepInfo.stepItem.getType();
+    }
+
+
     public void beginWorkflowExecution(final ExecutionContext executionContext, final WorkflowExecutionItem item) {
+        if(null!=localStep.get()) {
+            String prefix = makePrefix(localStep.get());
+            if(null!= contextPrefix.get()) {
+                contextPrefix.set(contextPrefix.get() + ":" + prefix);
+            }else {
+                contextPrefix.set(prefix);
+            }
+        }
         localStep.set(null);
         localNode.set(null);
         log(Constants.DEBUG_LEVEL,
