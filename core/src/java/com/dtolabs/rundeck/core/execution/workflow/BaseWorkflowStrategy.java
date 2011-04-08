@@ -79,8 +79,8 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
 
         @Override
         public String toString() {
-            return "[Workflow results: "
-                   + (null != getResultSet() && getResultSet().size() > 0 ? "successes: " + getResultSet() : "")
+            return "[Workflow "
+                   + (null != getResultSet() && getResultSet().size() > 0 ? "results: " + getResultSet() : "")
                    + (null != getFailureMessages() && getFailureMessages().size() > 0 ? ", failures: "
                                                                                         + getFailureMessages() : "")
                    + (null != getException() ? ": exception: " + getException() : "")
@@ -194,6 +194,11 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                                                                              : "no result"))));
             executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, "Workflow continues");
         } else {
+            failedMap.put(c, (null != wfstepthrowable ? wfstepthrowable.getMessage()
+                                                      : (null != result && null != result.getException() ? result
+                                                          .getException() : (null != result && null != result
+                                                          .getResultObject() ? result.getResultObject()
+                                                                             : "no result"))));
             if (null != result && null != result.getException()) {
                 throw new WorkflowStepFailureException(
                     "Step " + c + " of the workflow threw an exception: " + result.getException().getMessage(),
