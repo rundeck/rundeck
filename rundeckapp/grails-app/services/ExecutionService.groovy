@@ -662,6 +662,8 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                     errmsgs << org.apache.tools.ant.util.StringUtils.getStackTrace(exc)
                 }
                 loghandler.publish(new LogRecord(Level.SEVERE, errmsgs.join(',')))
+            }else {
+                log.error("Execution failed: " + execMap.execution.id + ": " + thread.resultObject?.toString())
             }
 
         }else{
