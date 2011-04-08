@@ -47,9 +47,6 @@ public class StubNodeExecutor implements NodeExecutor {
                                              final INodeEntry node) throws
         ExecutionException {
         //replace data context in args
-        context.getExecutionListener().log(Constants.WARN_LEVEL,
-            "[stub] execute on node " + node.getNodename() + ": " + StringArrayUtil.asString(
-                DataContextUtils.replaceDataReferences(command, context.getDataContext()), " "));
         int tcode = 0;
         boolean tsuccess = true;
         if (null != node.getAttributes() && null != node.getAttributes().get(STUB_RESULT_CODE)) {
@@ -68,6 +65,13 @@ public class StubNodeExecutor implements NodeExecutor {
                     "[stub] (failed to parse " + STUB_EXEC_SUCCESS + " for node)");
             }
         }
+        if(tsuccess){
+            context.getExecutionListener().log(Constants.WARN_LEVEL,
+                "[stub] execute on node " + node.getNodename() + ": " + StringArrayUtil.asString(command, " "));
+        }else{
+            context.getExecutionListener().log(Constants.ERR_LEVEL,
+                "[stub] fail on node " + node.getNodename() + ": " + StringArrayUtil.asString(command, " "));
+        }
 
         final int returnCode = tcode;
         final boolean returnSuccess = tsuccess;
@@ -78,6 +82,10 @@ public class StubNodeExecutor implements NodeExecutor {
 
             public boolean isSuccess() {
                 return returnSuccess;
+            }
+
+            public String toString() {
+                return "[Stub result: success? "+isSuccess()+", result code: "+getResultCode()+"]";
             }
         };
     }
