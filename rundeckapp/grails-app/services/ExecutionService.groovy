@@ -487,7 +487,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             //create service object for the framework and listener
             Thread thread = new WorkflowExecutionServiceThread(framework.getWorkflowExecutionService(),item, executioncontext)
             thread.start()
-            return [thread:thread, loghandler:loghandler, noderecorder:recorder]
+            return [thread:thread, loghandler:loghandler, noderecorder:recorder, execution: execution, scheduledExecution:scheduledExecution]
         }catch(Exception e){
             loghandler.publish(new LogRecord(Level.SEVERE, 'Failed to start execution: ' + e.getClass().getName() + ": " + e.message))
             sysThreadBoundOut.removeThreadStream()
@@ -641,29 +641,31 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
     def boolean executeAsyncFinish(Map execMap){
         def WorkflowExecutionServiceThread thread=execMap.thread
         def LogHandler loghandler=execMap.loghandler
-        if(!thread.isSuccessful() && thread.getException()){
-            Exception exc = thread.getException()
+        if(!thread.isSuccessful() ){
+            Throwable exc = thread.getThrowable()
             def errmsgs = []
 
-            if (exc instanceof BuildException && exc.getCause()) {
-                errmsgs << exc.getCause().getMessage()
-            }else if (exc instanceof com.dtolabs.rundeck.core.NodesetFailureException || exc instanceof com.dtolabs.rundeck.core.NodesetEmptyException) {
+            if (exc && (exc instanceof com.dtolabs.rundeck.core.NodesetFailureException
+                || exc instanceof com.dtolabs.rundeck.core.NodesetEmptyException)) {
                 errmsgs << exc.getMessage()
-            }else{
+            }else if(exc){
                 errmsgs<< exc.getMessage()
                 if(exc.getCause()){
                     errmsgs << "Caused by: "+exc.getCause().getMessage()
                 }
+            }else if (Project.MSG_VERBOSE <= loghandler.getMessageOutputLevel()) {
+                loghandler.publish(new LogRecord(Level.SEVERE, thread.resultObject?.toString()))
             }
-            if (Project.MSG_VERBOSE <= loghandler.getMessageOutputLevel() ) {
-                errmsgs<<org.apache.tools.ant.util.StringUtils.getStackTrace(exc)
-                log.error(errmsgs.join(','),exc)
-            }else{
-                log.error(errmsgs.join(','))
+            if(errmsgs) {
+                log.error("Execution failed: " + execMap.execution.id + ": " + errmsgs.join(","))
+                if (exc && Project.MSG_VERBOSE <= loghandler.getMessageOutputLevel()) {
+                    errmsgs << org.apache.tools.ant.util.StringUtils.getStackTrace(exc)
+                }
+                loghandler.publish(new LogRecord(Level.SEVERE, errmsgs.join(',')))
             }
 
-            loghandler.publish(new LogRecord(Level.SEVERE, errmsgs.join(',')))
-
+        }else{
+            log.info("Execution successful: " + execMap.execution.id )
         }
         sysThreadBoundOut.removeThreadStream()
         sysThreadBoundErr.removeThreadStream()
@@ -1417,88 +1419,90 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
 
     InterpreterResult interpretCommand(com.dtolabs.rundeck.core.execution.ExecutionContext executionContext,
                                        ExecutionItem executionItem, INodeEntry iNodeEntry) throws InterpreterException {
-        if (executionItem instanceof JobExecutionItem) {
-            def requestAttributes = RequestContextHolder.getRequestAttributes()
-            boolean unbindrequest = false
-            // outside of an executing request, establish a mock version
-            if (!requestAttributes) {
-                def servletContext = ServletContextHolder.getServletContext()
-                def applicationContext = WebApplicationContextUtils.getRequiredWebApplicationContext(servletContext)
-                requestAttributes = GrailsWebUtil.bindMockWebRequest(applicationContext)
-                unbindrequest = true
-            }
-            try{
-
-                //lookup job, create item, submit to ExecutionService
-                JobExecutionItem jitem = (JobExecutionItem) executionItem
-                def group = null
-                def name = null
-                def m = jitem.jobIdentifier =~ '^/?(.+)/([^/]+)$'
-                if (m.matches()) {
-                    group = m.group(1)
-                    name = m.group(2)
-                } else {
-                    name = jitem.jobIdentifier
-                }
-                def c = ScheduledExecution.createCriteria()
-                def schedlist = c.list {
-                    and {
-                        eq('jobName', name)
-                        if (!group) {
-                            or {
-                                eq('groupPath', '')
-                                isNull('groupPath')
-                            }
-                        } else {
-                            eq('groupPath', group)
-                        }
-                        eq('project', executionContext.getFrameworkProject())
-                    }
-                }
-                def id
-                if (schedlist && 1 == schedlist.size()) {
-                    id = schedlist[0].id
-                }else{
-                    throw new InterpreterException("No Unique Job found for identifier: ${jitem.jobIdentifier}, name: ${name}, group: ${group}, project: ${executionContext.getFrameworkProject()}")
-                }
-                def com.dtolabs.rundeck.core.execution.ExecutionContext newContext
-                def WorkflowExecutionItem newExecItem
-                ScheduledExecution.withTransaction{status->
-
-                    ScheduledExecution se = ScheduledExecution.get(id)//.findByJobNameAndGroupPath(name, group)
-//                    se.refresh()
-                    //replace data context within arg string
-                    String[] newargs = jitem.args
-                    //try to set defaults for any missing args
-                    def newargstring = addArgStringOptionDefaults(se, newargs)
-                    final List<String> stringList = CLIUtils.splitArgLine(newargstring);
-                    newargs = stringList.toArray(new String[stringList.size()]);
-
-                    if (null != executionContext.dataContext && null != jitem.args) {
-                        newargs = com.dtolabs.rundeck.core.dispatcher.DataContextUtils.replaceDataReferences(jitem.args, executionContext.getDataContext())
-                    }
-                    //construct job data context
-                    def jobcontext = new HashMap<String, String>()
-                    jobcontext.id = se.id.toString()
-                    jobcontext.name = se.jobName
-                    jobcontext.group = se.groupPath
-                    jobcontext.project = se.project
-                    jobcontext.username = executionContext.getUser()
-                    newExecItem = createExecutionItemForExecutionContext(se, executionContext.getFramework(), executionContext.getUser())
-                    newContext= createContext(se, executionContext.getFramework(), executionContext.getUser(), jobcontext, executionContext.getExecutionListener(),newargs)
-
-                }
-                def WorkflowExecutionService service = executionContext.getFramework().getWorkflowExecutionService()
-
-                final WorkflowExecutionResult result = service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
-                return new InterpreterResultImpl(result)
-            } finally {
-                if (unbindrequest) {
-                    RequestContextHolder.setRequestAttributes (null)
-                }
-            }
-        } else {
+        if (!(executionItem instanceof JobExecutionItem)) {
             throw new InterpreterException("Unsupported item type: " + executionItem.getClass().getName());
+        }
+        def requestAttributes = RequestContextHolder.getRequestAttributes()
+        boolean unbindrequest = false
+        // outside of an executing request, establish a mock version
+        if (!requestAttributes) {
+            def servletContext = ServletContextHolder.getServletContext()
+            def applicationContext = WebApplicationContextUtils.getRequiredWebApplicationContext(servletContext)
+            requestAttributes = GrailsWebUtil.bindMockWebRequest(applicationContext)
+            unbindrequest = true
+        }
+        def id
+        //lookup job, create item, submit to ExecutionService
+        JobExecutionItem jitem = (JobExecutionItem) executionItem
+        try{
+
+            def group = null
+            def name = null
+            def m = jitem.jobIdentifier =~ '^/?(.+)/([^/]+)$'
+            if (m.matches()) {
+                group = m.group(1)
+                name = m.group(2)
+            } else {
+                name = jitem.jobIdentifier
+            }
+            def c = ScheduledExecution.createCriteria()
+            def schedlist = c.list {
+                and {
+                    eq('jobName', name)
+                    if (!group) {
+                        or {
+                            eq('groupPath', '')
+                            isNull('groupPath')
+                        }
+                    } else {
+                        eq('groupPath', group)
+                    }
+                    eq('project', executionContext.getFrameworkProject())
+                }
+            }
+            if (schedlist && 1 == schedlist.size()) {
+                id = schedlist[0].id
+            }else{
+                throw new InterpreterException("Job ref [${jitem.jobIdentifier}] failed: No Unique Job found for name: ${name}, group: ${group}, project: ${executionContext.getFrameworkProject()}")
+            }
+            def com.dtolabs.rundeck.core.execution.ExecutionContext newContext
+            def WorkflowExecutionItem newExecItem
+            ScheduledExecution.withTransaction{status->
+
+                ScheduledExecution se = ScheduledExecution.get(id)//.findByJobNameAndGroupPath(name, group)
+//                    se.refresh()
+                //replace data context within arg string
+                String[] newargs = jitem.args
+                //try to set defaults for any missing args
+                def newargstring = addArgStringOptionDefaults(se, newargs)
+                final List<String> stringList = CLIUtils.splitArgLine(newargstring);
+                newargs = stringList.toArray(new String[stringList.size()]);
+
+                if (null != executionContext.dataContext && null != jitem.args) {
+                    newargs = com.dtolabs.rundeck.core.dispatcher.DataContextUtils.replaceDataReferences(jitem.args, executionContext.getDataContext())
+                }
+                //construct job data context
+                def jobcontext = new HashMap<String, String>()
+                jobcontext.id = se.id.toString()
+                jobcontext.name = se.jobName
+                jobcontext.group = se.groupPath
+                jobcontext.project = se.project
+                jobcontext.username = executionContext.getUser()
+                newExecItem = createExecutionItemForExecutionContext(se, executionContext.getFramework(), executionContext.getUser())
+                newContext= createContext(se, executionContext.getFramework(), executionContext.getUser(), jobcontext, executionContext.getExecutionListener(),newargs)
+
+            }
+            def WorkflowExecutionService service = executionContext.getFramework().getWorkflowExecutionService()
+
+            final WorkflowExecutionResult result = service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
+            if(!result.isSuccess()){
+                System.err.println("Job ref [${jitem.jobIdentifier}] failed: "+result);
+            }
+            return new InterpreterResultImpl(result)
+        } finally {
+            if (unbindrequest) {
+                RequestContextHolder.setRequestAttributes (null)
+            }
         }
     }
 
