@@ -13,49 +13,88 @@ the RunDeck core.
 RunDeck comes with some built-in providers for these services, but Plugins
 let you write your own, or use third-party implementations.
 
-Each Provider defined by a plugin has a unique "name" that is used to identify
-it when enabling it.
+RunDeck currently comes installed with a few useful plugins: script-plugin and 
+stub-plugin.
 
-There are currently two types of Plugins that can be used and developed for
+
+## About Services and Providers
+
+The RunDeck core makes use of several different "Services" that provide
+functionality for the different steps necessary to execute workflows, jobs, 
+and commands across multiple nodes.
+
+Each Service makes use of "Providers". Each Provider has a unique "Provider Name"
+that is used to identify it, and most Services have default Providers unless
+you specify different ones to use.
+
+![RunDeck Services and Providers](figures/fig1101.png)
+
+There are currently two types of Providers that can be used and developed for
 RunDeck:
 
-1. Node Executor Plugins - these provide ways of executing a command on a Node (local or remote)
-2. File Copier Plugins - these provide ways of copying files to a Node
+1. Node Executor Providers - these define ways of executing a command on a Node (local or remote)
+2. File Copier Providers - these define ways of copying files to a Node
 
 Specifics of how providers of these plugins work is listed below.
 
-The current Plugins are "enabled" for particular nodes on a node-specific basis,
+RunDeck Plugins can contain more than one Provider.
+
+## Using Providers
+
+The Providers are "enabled" for particular nodes on a node-specific basis,
 or set as a default provider for a project or for the system.
 
-Enabling plugins:
+If multiple providers are defined the most specific definition takes precedence
+in this order:
 
-To enable a Node Executor plugin for a node, add an attribute named either:
+1. Node specific
+2. Project scope
+3. Framework scope
 
-`node-executor`: specify the provider by name for a non-local node.
-OR
-`local-node-executor`: specify the provider by name for the local (server) node.
+### Node Specific
 
-To specify a default remote Node Executor for a project, or framework-wide, specify this property:
+To enable a Node Executor provider for a node, add an attribute to the node definition:
+
+`node-executor`
+
+:    specify the provider name for a non-local node.
+
+`local-node-executor`
+
+:    specify the provider name for the local (server) node.
+
+
+To enable a FileCopier provider for a node, add an attribute named either:
+
+`file-copier`
+
+:    specify the provider by name for a non-local node.
+
+`local-file-copier`
+
+:    specify the provider by name for the local (server) node.
+
+### Project or Framework Scope
+
+You can define the default provider to use for nodes at either the Project or
+Framework scope (or both).  To do so, configure one of the following properties
+in the `project.properties` or the `framework.properties` files.  
 
 `service.NodeExecutor.default.provider`
 
-To specify a default local Node Executor for a project, or framework-wide, specify this property:
+:   Specifies the default NodeExecutor provider for remote nodes
 
 `service.NodeExecutor.default.local.provider`
 
-TO enable a FileCopier plugin for a node, add an attribute named either:
-
-`file-copier`: specify the provider by name for a non-local node.
-OR
-`local-file-copier`: specify the provider by name for the local (server) node.
-
-To specify a default remote File Copier for a project, or framework-wide, specify this property:
+:   Specifies the default Node Executor provider for the  local node.
 
 `service.FileCopier.default.provider`
 
-To specify a default local File Copier for a project, or framework-wide, specify this property:
+:   Specifies the default File Copier provider for remote nodes.
 
 `service.FileCopier.default.local.provider`
+
+:   Specifies the default File Copier provider for the local node.
 
 ## When providers are invoked
 
@@ -65,7 +104,7 @@ in a Job, and it may be executed multiple times on different nodes.
 Currently three "kinds" of Command items can be specified in Workflows:
 
 1. "exec" commands - simple system command strings
-2 "script" commands - either embedded script content, or server-local script 
+2. "script" commands - either embedded script content, or server-local script 
 files can be sent to the specified node and then executed with a set of input arguments.
 3. "jobref" commands - references to other Jobs by name that will be executed with
 a set of input arguments.
@@ -86,19 +125,6 @@ The procedure for executing a "script" command is:
 4. Possibly execute an intermediate command (such as "chmod +x" on the copied file)
 5. execute the NodeExecutor#executeCommand method, passing the filepath of the 
   copied file, and any arguments to the script command.
-
-### Lifecycle
-
-Service Provider implementations have a lifecycle that is scoped to the lifetime
-of the request/execution context.
-
-Providers are instantiated when needed, and the instance is retained within the
-Service for future use.
-
-Provider instances may also be used by multiple threads.
-
-Your provider class should not use any instance fields or un-threadsafe 
-operations.
 
 ## built-in providers
 
@@ -136,18 +162,17 @@ file.  See [Java plugin development](#java-plugin-development).
 2. Write shell/system scripts that implement your desired behavior and put them
 in a zip file with some metadata.   See [Script Plugin Development](#script-plugin-development).
 
-In both manners, the resultant plugin archive file, either a .jar java archive, 
-or a .zip file archive will be placed in the `$RDECK_BASE/libext` dir.
-
+Either way, the resultant plugin archive file, either a .jar java archive, 
+or a .zip file archive, will be placed in the `$RDECK_BASE/libext` dir.
 
 Java Plugin Development
 --------
 
-Java plugins are distributed as .jar files containing the necessary classes to
-provide one or more services.
+Java plugins are distributed as .jar files containing the necessary classes for 
+one or more service provider.
 
-The `.jar` file you distribute must have this metdata within the Manifest for
-the jar file to be correctly loaded by the system:
+The `.jar` file you distribute must have this metdata within the main Manifest
+forthe jar file to be correctly loaded by the system:
 
 * `Rundeck-Plugin-Archive: true`
 * `Rundeck-Plugin-Classnames: classname,..`
@@ -188,6 +213,18 @@ captured as output of the execution.
 
 * `NodeExecutor` - executes a command on a node
 * `FileCopier` - copies a file to a node
+
+## Provider Lifecycle
+
+Provider classes are instantiated when needed by the Framework object, and the
+instance is retained within the Service for future reuse. The Framework
+object may exist across multiple executions, and the provider instance may be
+reused.
+
+Provider instances may also be used by multiple threads.
+
+Your provider class should not use any instance fields and should be
+careful not to use un-threadsafe operations.
 
 ### Node Executor Providers
 
