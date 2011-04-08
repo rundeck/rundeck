@@ -122,6 +122,14 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
 
     public void finishWorkflowExecution(final WorkflowExecutionResult result, final ExecutionContext executionContext,
                                         final WorkflowExecutionItem item) {
+        final String s = contextPrefix.get();
+        if (null != s) {
+            if(s.lastIndexOf(":")>0){
+                contextPrefix.set(s.substring(0, s.lastIndexOf(":")));
+            }else {
+                contextPrefix.set(null);
+            }
+        }
         localStep.set(null);
         localNode.set(null);
         log(Constants.DEBUG_LEVEL,
