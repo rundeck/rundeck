@@ -27,7 +27,7 @@ launcher = rundeckapp/target/rundeck-launcher-$(VERSION).jar
 rundeck: $(war) $(launcher)
 	@echo $(VERSION)-$(RELEASE)
 
-rpm: docs $(war)
+rpm: docs $(war) $(plugs)
 	cd packaging; $(MAKE) VERSION=$(VERSION) RELEASE=$(RELEASE) clean rpm
 
 makedocs:
@@ -39,8 +39,7 @@ $(core): $(CORE_FILES)
 $(war): $(core) $(RUNDECK_FILES)
 	./build.sh rundeckapp
 
-$(plugs): $(PLUGIN_FILES)
-	echo plugs are $(plugs)
+$(plugs): $(core) $(PLUGIN_FILES)
 	cd plugins && ./gradlew	
 
 plugins: $(plugs)
@@ -67,7 +66,7 @@ test: $(war)
 	pushd rundeckapp; $(GRAILS) test-app; popd
 	
 clean:
-	-rm $(core) $(war) $(launcher)
+	-rm $(core) $(war) $(launcher) $(plugs)
 
 	pushd rundeckapp; $(GRAILS) clean; popd
 
