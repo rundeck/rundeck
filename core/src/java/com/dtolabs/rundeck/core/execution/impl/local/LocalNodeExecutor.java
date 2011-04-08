@@ -81,7 +81,7 @@ public class LocalNodeExecutor implements NodeExecutor {
             execTask.execute();
             success = true;
         } catch (BuildException e) {
-            throw new ExecutionException(e);
+            context.getExecutionListener().log(0, e.getMessage());
         }
 
         int result = success ? 0 : -1;

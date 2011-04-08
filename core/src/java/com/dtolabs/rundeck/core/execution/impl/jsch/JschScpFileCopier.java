@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
+import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Echo;
@@ -94,7 +95,12 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier {
                                       + "' to: '" + node.getNodename() + ":" + remotefile + "'", project));
         seq.addTask(scp);
 
-        seq.execute();
+        try {
+            seq.execute();
+        } catch (BuildException e) {
+            context.getExecutionListener().log(0, e.getMessage());
+            throw new FileCopierException("[jsch-scp] Failed copying the file: " + e.getMessage(), e);
+        }
         if (!localTempfile.delete()) {
             context.getExecutionListener().log(Constants.WARN_LEVEL,
                 "Unable to remove local temp file: " + localTempfile.getAbsolutePath());

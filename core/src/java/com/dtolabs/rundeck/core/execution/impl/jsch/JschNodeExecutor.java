@@ -74,15 +74,17 @@ public class JschNodeExecutor implements NodeExecutor {
 
         boolean success = false;
         final ExtSSHExec sshexec;
-        try {
             //perform jsch sssh command
+        try {
             sshexec = buildSSHTask(context, node, command, project, framework);
-            sshexec.execute();
-            success = true;
         } catch (SSHTaskBuilder.BuilderException e) {
             throw new ExecutionException(e);
+        }
+        try {
+            sshexec.execute();
+            success = true;
         } catch (BuildException e) {
-            throw new ExecutionException(e);
+            context.getExecutionListener().log(0, e.getMessage());
         }
         final int resultCode = sshexec.getExitStatus();
         final boolean status = success;
