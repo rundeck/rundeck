@@ -112,8 +112,15 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
                     final Collection<String> strings = workflowExecutionResult.getFailureMessages().get(s);
                     failures.put(s, strings);
                 }
+                if(null!=workflowExecutionResult.getException()) {
+                    final ArrayList<String> strings = new ArrayList<String>();
+                    if(null!=failures.get(nodename)) {
+                        strings.addAll(failures.get(nodename));
+                    }
+                    strings.add(workflowExecutionResult.getException().getMessage());
+                    failures.put(nodename, strings);
+                }
             }
-            //conver failures
 
             nodesuccess = dispatch.isSuccess();
 
@@ -135,35 +142,5 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
             new StepFirstWorkflowStrategy.stepFirstWrapper(item.getWorkflow()));
         return workflowExecutionItem;
     }
-
-    /**
-     * Create Callables to execute the workflow on a single node
-     * @param node
-     * @return
-     */
-    /*  public Callable createCallable(final INodeEntry node) {
-        //create temporary nodeset for the single node
-        final NodeSet tempNodeset = new NodeSet();
-        tempNodeset.setSingleNodeName(node.getNodename());
-        final IWorkflow workflow = item.getWorkflow();
-        final List<IWorkflowCmdItem> iWorkflowCmdItems = workflow.getCommands();
-        return new Callable() {
-            public Object call() throws Exception {
-                final List<String> localList = new ArrayList<String>();
-                if (!executeWorkflowItemsForNodeSet(workflow,localList, resultList, iWorkflowCmdItems, tempNodeset)) {
-                    if(1==localList.size()) {
-                        failedList.add(localList.get(0));
-                    }
-                    throw new WorkflowAction.WorkflowFailureException(
-                        "Some steps in the workflow failed: " + localList);
-                }
-                if (1 == localList.size()) {
-                    failedList.add(localList.get(0));
-                }
-                return resultList;
-            }
-        };
-
-    }*/
 
 }
