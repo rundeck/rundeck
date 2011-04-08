@@ -106,19 +106,33 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
                      * Collection of results for each workflow item
                      */
                     final List<StatusResult> collection = workflowExecutionResult.getResultSet().get(s);
-                    results.put(s, collection);
+                    //include any failures in the failures group
+
+                    final ArrayList<StatusResult> statusResults = new ArrayList<StatusResult>();
+                    for (final StatusResult statusResult : collection) {
+                        if (!statusResult.isSuccess()) {
+                            if (null == failures.get(s)) {
+                                failures.put(s, new ArrayList<String>());
+                            }
+                            failures.get(s).add(statusResult.toString());
+                        }else {
+                            statusResults.add(statusResult);
+                        }
+                    }
+                    results.put(s, statusResults);
                 }
                 for (final String s : workflowExecutionResult.getFailureMessages().keySet()) {
                     final Collection<String> strings = workflowExecutionResult.getFailureMessages().get(s);
-                    failures.put(s, strings);
-                }
-                if(null!=workflowExecutionResult.getException()) {
-                    final ArrayList<String> strings = new ArrayList<String>();
-                    if(null!=failures.get(nodename)) {
-                        strings.addAll(failures.get(nodename));
+                    if (null == failures.get(s)) {
+                        failures.put(s, new ArrayList<String>());
                     }
-                    strings.add(workflowExecutionResult.getException().getMessage());
-                    failures.put(nodename, strings);
+                    failures.get(s).addAll(strings);
+                }
+                if (null != workflowExecutionResult.getException()) {
+                    if (null == failures.get(nodename)) {
+                        failures.put(nodename, new ArrayList<String>());
+                    }
+                    failures.get(nodename).add(workflowExecutionResult.getException().getMessage());
                 }
             }
 
