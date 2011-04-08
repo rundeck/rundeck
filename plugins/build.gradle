@@ -1,7 +1,28 @@
-defaultTasks 'clean','build'
 
+allprojects{
+    version = '1.2.0'
+    defaultTasks 'clean','build'
+}
 task wrapper(type: Wrapper) {
     gradleVersion = '0.9-rc-3'
     jarPath = 'wrapper'
+}
+
+subprojects{
+    //applies to all the plugin sub projects
+    apply plugin: 'java'
+    sourceCompatibility = 1.5
+    archivesBaseName = "rundeck-$project.name"
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        compile files("${rootProject.projectDir}/../core/build/libs/rundeck-core-${version}.jar")
+        testCompile(
+            //[group: 'junit', name: 'junit', version: '3.8.1',ext:'jar']
+        )
+    }
 }
 
