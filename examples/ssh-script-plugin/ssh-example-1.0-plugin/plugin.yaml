@@ -1,0 +1,15 @@
+# plugin metadata for ssh-example plugin
+
+name: ssh-example
+author: Greg Schueler
+date: 4/11/2011
+version: 1.0
+providers:
+    - name: ssh-example
+      service: NodeExecutor
+      script-file: ssh-exec.sh
+      script-args: ${node.username} ${node.hostname} ${exec.command}
+    - name: ssh-example
+      service: FileCopier
+      script-file: ssh-copy.sh
+      script-args: ${node.username} ${node.hostname} ${file-copy.file}
