@@ -1465,7 +1465,8 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             if (schedlist && 1 == schedlist.size()) {
                 id = schedlist[0].id
             }else{
-                throw new InterpreterException("Job ref [${jitem.jobIdentifier}] failed: No Unique Job found for name: ${name}, group: ${group}, project: ${executionContext.getFrameworkProject()}")
+                executionContext.getExecutionListener().log(0,"Job ref [${jitem.jobIdentifier}] invalid: No Unique Job found for name: ${name}, group: ${group}, project: ${executionContext.getFrameworkProject()}")
+                throw new InterpreterException("Job ref [${jitem.jobIdentifier}] invalid: No Unique Job found for name: ${name}, group: ${group}, project: ${executionContext.getFrameworkProject()}")
             }
             def com.dtolabs.rundeck.core.execution.ExecutionContext newContext
             def WorkflowExecutionItem newExecItem
