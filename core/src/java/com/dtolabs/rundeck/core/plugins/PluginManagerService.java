@@ -54,7 +54,9 @@ public class PluginManagerService implements FrameworkSupportService {
     private static final String SERVICE_NAME = "PluginManager";
     public static final String RUNDECK_PLUGIN_ARCHIVE = "Rundeck-Plugin-Archive";
     public static final String RUNDECK_PLUGIN_CLASSNAMES = "Rundeck-Plugin-Classnames";
+    public static final String JAR_PLUGIN_VERSION = "1.0";
     public static final String SCRIPT_PLUGIN_VERSION = "1.0";
+    public static final String RUNDECK_PLUGIN_VERSION = "Rundeck-Plugin-Version";
     private Framework framework;
 
     public PluginManagerService(final Framework framework) {
@@ -105,16 +107,13 @@ public class PluginManagerService implements FrameworkSupportService {
                 final JarInputStream jarInputStream = new JarInputStream(new FileInputStream(jar));
                 final Manifest manifest = jarInputStream.getManifest();
                 final Attributes mainAttributes = manifest.getMainAttributes();
-                if (null != mainAttributes.getValue(RUNDECK_PLUGIN_ARCHIVE) && null != mainAttributes.getValue(
-                    RUNDECK_PLUGIN_CLASSNAMES)) {
-
-                    final String value = mainAttributes.getValue(RUNDECK_PLUGIN_CLASSNAMES);
-//                    System.err.println("Has metadata: " + RUNDECK_PLUGIN_ARCHIVE);
-//                    System.err.println("Has metadata: " + RUNDECK_PLUGIN_CLASSNAMES + ": " + value);
-                    jartoload.put(jar, value.split(","));
-                } else {
-                    debug("has no metadata: " + mainAttributes);
+                if (!validateJarManifest(jar, mainAttributes)) {
+                    error("Skipping plugin file: metadata was invalid: " + jar.getAbsolutePath());
+                    continue;
                 }
+
+                jartoload.put(jar, mainAttributes.getValue(RUNDECK_PLUGIN_CLASSNAMES).split(","));
+
                 jarInputStream.close();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -122,6 +121,31 @@ public class PluginManagerService implements FrameworkSupportService {
         }
         debug("Will load plugin jars: " + jartoload);
         loadJarPlugins(jartoload);
+    }
+
+    private boolean validateJarManifest(final File jar, final Attributes mainAttributes) {
+        boolean valid = true;
+        final String value1 = mainAttributes.getValue(RUNDECK_PLUGIN_ARCHIVE);
+        final String plugvers = mainAttributes.getValue(RUNDECK_PLUGIN_VERSION);
+        final String plugclassnames = mainAttributes.getValue(
+            RUNDECK_PLUGIN_CLASSNAMES);
+        if (null == value1) {
+            warn("Jar plugin manifest attribute missing: " + RUNDECK_PLUGIN_ARCHIVE + ": " + jar.getAbsolutePath());
+            valid = false;
+        }
+        if (null == plugvers) {
+            warn("Jar plugin manifest attribute missing: " + RUNDECK_PLUGIN_VERSION + ": " + jar.getAbsolutePath());
+            valid = false;
+        } else if (!JAR_PLUGIN_VERSION.equals(plugvers)) {
+            warn("Unssupported plugin version: " + RUNDECK_PLUGIN_VERSION + ": " + plugvers + ": " + jar
+                .getAbsolutePath());
+            valid = false;
+        }
+        if (null == plugclassnames) {
+            warn("Jar plugin manifest attribute missing: " + RUNDECK_PLUGIN_CLASSNAMES + ": " + jar.getAbsolutePath());
+            valid = false;
+        }
+        return valid;
     }
 
     private void debug(final String msg) {
@@ -132,6 +156,9 @@ public class PluginManagerService implements FrameworkSupportService {
 
     private void warn(final String msg) {
         log.warn(msg);
+    }
+    private void error(final String msg) {
+        log.error(msg);
     }
 
     /**
@@ -237,7 +264,7 @@ public class PluginManagerService implements FrameworkSupportService {
             final loadedMeta loadedMeta = scriptPlugins.get(file);
             final PluginMeta pluginList = loadedMeta.pluginMeta;
             if (!validatePluginMeta(pluginList, file)) {
-                System.err.println("Skipping plugin file: metadata was invalid: " + file.getAbsolutePath());
+                error("Skipping plugin file: metadata was invalid: " + file.getAbsolutePath());
                 continue;
             }
             for (final PluginDef pluginDef : pluginList.getPluginDefs()) {
@@ -258,11 +285,11 @@ public class PluginManagerService implements FrameworkSupportService {
                     ScriptfileUtils.setExecutePermissions(script);
                     loadPluginDef(pluginDef, dir, file);
                 } catch (PluginException e) {
-                    System.err.println(
+                    error(
                         "Failed loading plugindef: " + pluginDef.getName() + " for plugin " + file.getAbsolutePath());
                     e.printStackTrace(System.err);
                 } catch (IOException e) {
-                    System.err.println(
+                    error(
                         "Failed expanding plugin " + file.getAbsolutePath());
                     e.printStackTrace(System.err);
                 }
