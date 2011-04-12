@@ -217,7 +217,7 @@ public class PluginManagerService implements FrameworkSupportService {
         }
     }
 
-    private PluginMeta loadMetadataYaml(final InputStream stream) {
+    static PluginMeta loadMetadataYaml(final InputStream stream) {
         final Constructor myconst = new Constructor(PluginMeta.class);
         Yaml yaml = new Yaml(myconst);
 //        TypeDescription carDescription = new TypeDescription(PluginMeta.class);
@@ -240,7 +240,7 @@ public class PluginManagerService implements FrameworkSupportService {
             for (final PluginDef pluginDef : pluginList.getPluginDefs()) {
                 //validate plugindef
                 try {
-                    validateScriptPluginDef(pluginDef);
+                    validatePluginDef(pluginDef);
                     if (!expanded.containsKey(file)) {
                         debug("expanding plugin contents: " + file);
                         final File file1 = expandScriptPlugin(file, loadedMeta);
@@ -310,6 +310,18 @@ public class PluginManagerService implements FrameworkSupportService {
 
     }
 
+    private void validatePluginDef(final PluginDef pluginDef) throws PluginException {
+
+        if (null == pluginDef.getPluginType() || "".equals(pluginDef.getPluginType())) {
+            throw new PluginException("Script plugin missing plugin-type");
+        }
+        if ("script".equals(pluginDef.getPluginType())) {
+            validateScriptPluginDef(pluginDef);
+        }else{
+            throw new PluginException("plugin missing has invalid plugin-type: "+pluginDef.getPluginType());
+        }
+    }
+
     private void validateScriptPluginDef(final PluginDef pluginDef) throws PluginException {
         if (null == pluginDef.getName() || "".equals(pluginDef.getName())) {
             throw new PluginException("Script plugin missing name");
@@ -317,15 +329,6 @@ public class PluginManagerService implements FrameworkSupportService {
         if (null == pluginDef.getService() || "".equals(pluginDef.getService())) {
             throw new PluginException("Script plugin missing service");
         }
-        /*
-        //TODO: validate plugin-type when multiple types are supported
-        if (null == pluginDef.getPluginType() || "".equals(pluginDef.getPluginType())) {
-            throw new PluginException("Script plugin missing plugin-type");
-        }
-        if (! "script".equals(pluginDef.getPluginType())) {
-            throw new PluginException("plugin missing has invalid plugin-type");
-        }
-        */
         if (null == pluginDef.getScriptFile() || "".equals(pluginDef.getScriptFile())) {
             throw new PluginException("Script plugin missing script-file");
         }
@@ -337,7 +340,7 @@ public class PluginManagerService implements FrameworkSupportService {
                 "Service '" + pluginDef.getService() + "' specified for script plugin '" + pluginDef.getName()
                 + "' is not valid: unsupported");
         }
-        PluggableService pservice = (PluggableService) service;
+        final PluggableService pservice = (PluggableService) service;
         if (!pservice.isScriptPluggable()) {
             throw new PluginException(
                 "Service '" + pluginDef.getService() + "' specified for script plugin '" + pluginDef.getName()
@@ -355,11 +358,11 @@ public class PluginManagerService implements FrameworkSupportService {
             try {
                 final URL url = file.toURI().toURL();
                 final URLClassLoader urlClassLoader = URLClassLoader.newInstance(new URL[]{url}, parent);
-                for (int i = 0 ; i < strings.length ; i++) {
-                    String classname = strings[i];
+                for (final String classname : strings) {
                     try {
                         loadProviderByClassname(classname, urlClassLoader);
                     } catch (Exception e) {
+                        warn("Failed to load class from" + file + ": classname: " + classname);
                         e.printStackTrace(System.err);
                     }
                 }
@@ -375,8 +378,8 @@ public class PluginManagerService implements FrameworkSupportService {
         if (framework.getPropertyLookup().hasProperty("framework.plugins.classnames")) {
 //                    System.err.println("Has classnames: " + pservice.getName());
             final String property = framework.getProperty("framework.plugins.classnames");
-            for (int i = 0 ; i < property.split(",").length ; i++) {
-                final String classname = property.split(",")[i];
+            final String[] split = property.split(",");
+            for (final String classname : split) {
                 try {
                     loadProviderByClassname(classname, this.getClass().getClassLoader());
                 } catch (Exception e) {
