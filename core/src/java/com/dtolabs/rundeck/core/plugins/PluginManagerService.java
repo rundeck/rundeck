@@ -128,6 +128,9 @@ public class PluginManagerService implements FrameworkSupportService {
             log.debug(msg);
         }
     }
+    private void warn(String msg) {
+        log.warn(msg);
+    }
 
     /**
      * Load any jars in the libext dir of RDECK_BASE and look for jar metadata to load classes as plugins
@@ -153,22 +156,45 @@ public class PluginManagerService implements FrameworkSupportService {
             try {
                 final ZipInputStream zipinput = new ZipInputStream(new FileInputStream(jar));
                 ZipEntry nextEntry = zipinput.getNextEntry();
+                boolean topfound = false;
                 boolean found = false;
+                boolean dirfound = false;
+                loadedMeta loaded = null;
                 while (null != nextEntry) {
-                    if (!nextEntry.isDirectory() && (nextEntry.getName().equals("plugin.yaml") || nextEntry.getName()
-                        .equals(basename + "/plugin.yaml"))) {
+                    if (!topfound && nextEntry.getName().startsWith(basename + "/")) {
+                        topfound = true;
+                    }
+                    if (!dirfound && (nextEntry.getName().startsWith(basename + "/contents/")
+                                      || nextEntry.isDirectory() && nextEntry.getName().equals(
+                        basename + "/contents"))) {
+
+                        debug("Found contents dir: " + nextEntry.getName());
+                        dirfound = true;
+                    }
+                    if (!found && !nextEntry.isDirectory() && nextEntry.getName().equals(basename + "/plugin.yaml")) {
                         debug("Found metadata: " + nextEntry.getName());
                         final PluginMeta metadata = loadMetadataYaml(zipinput);
 
-                        ziptoload.put(jar, new loadedMeta(metadata, nextEntry.getName()
-                            .equals(basename + "/plugin.yaml"), basename));
+                        loaded = new loadedMeta(metadata, nextEntry.getName().equals(basename + "/plugin.yaml"),
+                            basename);
                         found = true;
+                    }
+                    if(dirfound && found){
                         break;
                     }
                     nextEntry = zipinput.getNextEntry();
                 }
+                if (!topfound) {
+                    warn("Plugin not loaded: Found no " + basename + "/ dir within file: " + jar.getAbsolutePath());
+                }
                 if (!found) {
-                    debug("Skipping, Found no plugin.yaml within: " + jar.getAbsolutePath());
+                    warn("Plugin not loaded: Found no " + basename + "/plugin.yaml within: " + jar.getAbsolutePath());
+                }
+                if (!dirfound) {
+                    warn("Plugin not loaded: Found no " + basename + "/contents dir within: " + jar.getAbsolutePath());
+                }
+                if (found && dirfound) {
+                    ziptoload.put(jar, loaded);
                 }
                 zipinput.close();
             } catch (IOException e) {
@@ -223,6 +249,9 @@ public class PluginManagerService implements FrameworkSupportService {
                     File dir = expanded.get(file);
                     //set executable bit for script-file of the provider
                     File script = new File(dir, pluginDef.getScriptFile());
+                    if (!script.exists() || !script.isFile()) {
+                        throw new PluginException("Script file was not found: " + script.getAbsolutePath());
+                    }
                     ScriptfileUtils.setExecutePermissions(script);
                     loadPluginDef(pluginDef, dir, file);
                 } catch (PluginException e) {
@@ -254,7 +283,7 @@ public class PluginManagerService implements FrameworkSupportService {
         }
         final String name = file.getName();
         String basename = name.substring(0, name.lastIndexOf("."));
-        String prefix = "contents/";
+        String prefix = "contents";
         if (meta.hasTopdir) {
             prefix = meta.topdirname + "/" + prefix;
         }
@@ -263,8 +292,8 @@ public class PluginManagerService implements FrameworkSupportService {
             jardir.mkdir();
         }
 
-
-        ZipUtil.extractZip(file.getAbsolutePath(), jardir, prefix, prefix);
+        debug("Expand zip " + file.getAbsolutePath() + " to dir: " + jardir + ", prefix: " + prefix);
+        ZipUtil.extractZip(file.getAbsolutePath(), jardir, prefix, prefix + "/");
 
         return jardir;
     }
