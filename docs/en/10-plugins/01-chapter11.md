@@ -150,6 +150,14 @@ For FileCopier, these providers:
 
 :   remote copy of a command via SCP, requiring the "hostname" and  "username" attributes on a node.
 
+
+## Installing Plugins
+
+Copy the `plugin.jar` or `some-plugin.zip` to the RunDeck server's libext dir:
+
+    cp plugin.jar \
+        $RDECK_BASE/libext
+
 Plugin Development
 =============
 
@@ -172,8 +180,9 @@ Java plugins are distributed as .jar files containing the necessary classes for
 one or more service provider.
 
 The `.jar` file you distribute must have this metdata within the main Manifest
-forthe jar file to be correctly loaded by the system:
+for the jar file to be correctly loaded by the system:
 
+* `Rundeck-Plugin-Version: 1.0`
 * `Rundeck-Plugin-Archive: true`
 * `Rundeck-Plugin-Classnames: classname,..`
 
@@ -267,53 +276,117 @@ with a script that is invoked in an external system processes by the JVM.
 
 You must create a zip file with the following structure:
 
+    [name]-plugin.zip
+    \- [name]-plugin/ -- root directory of zip contents, same name as zip file
+       |- plugin.yaml -- plugin metadata file
+       \- contents/
+          |- ...      -- script or resource files
+          \- ...
 
-    [something]-plugin.zip -- container (root)
-    |- plugin.yaml -- plugin metadata file
-    \- contents/  -- plugin contents directory
-       \- script/resource files...
+Here is an example:
+
+    $ unzip -l example-1.0-plugin.zip 
+    Archive:  example-1.0-plugin.zip
+      Length     Date   Time    Name
+     --------    ----   ----    ----
+            0  04-12-11 11:31   example-1.0-plugin/
+            0  04-11-11 15:31   example-1.0-plugin/contents/
+         2142  04-11-11 15:31   example-1.0-plugin/contents/script1.sh
+         1591  04-11-11 13:10   example-1.0-plugin/contents/script2.sh
+          576  04-12-11 10:58   example-1.0-plugin/plugin.yaml
+     --------                   -------
+         4309                   5 files
 
 The filename of the plugin zip must end with "-plugin.zip" to be recognized as a
-plugin archive. (NB: to support a common confusion with zip files, if the zip 
-contains a top-level directory with the same base name as the zip file (sans ".zip") 
-then that directory is considered the root.)
+plugin archive. The zip must contain a top-level directory with the same base name 
+as the zip file (sans ".zip").
 
 The file `plugin.yaml` must have this structure:
 
     # yaml plugin metadata
     
-    name: plugin name
+    name: plugin name, required
+    version: plugin version, required
+    rundeckPluginVersion: 1.0
     author: author name
-    version: version info
     date: release data
     providers:
         - name: [provider name]
           service: [service name]
           plugin-type: script
+          script-interpreter: [interpreter]
           script-file: [script file name]
           script-args: [script file args]
+
+The main metadata that is required:
+
+* `name` - name for the plugin
+* `version` - version number of the plugin
+* `rundeckPluginVersion` - Rundeck Plugin type version, currently "1.0"
+* `author` - optional author info
+* `date` - optional release date info
+* `providers` - list of provider metadata maps
 
 This provides the necessary metadata about the plugin, including one or more 
 entries in the `providers` list to declare those providers defined in the plugin.
 
-Each provider must have a name unique for the service it provides.
+### Provider metadata
 
-Each provider must declare one of these valid services:
+Required provider entries:
 
-* `NodeExecutor`
-* `FileCopier`
+* `name` - provider name
+* `service` - service name, one of these valid services:
+    * `NodeExecutor`
+    * `FileCopier`
+* `plugin-type` - must be "script" currently.
+* `script-file` - must be the name of a file relative to the `contents` directory
 
-The `script-file` must be the name of a file relative to the `contents` directory.
+Optional entries:
 
-`script-args` is the arguments to use when invoking the script file. This can
+* `script-interpreter` - A system command that should be used to execute the 
+    script.  This can be a single binary path, e.g. `/bin/bash`, or include
+    any args to the command, such as `/bin/bash -c`.
+* `script-args` - the arguments to use when executing the script file.
+
+### How script plugin providers are invoked
+
+When the provider is used for node execution or file copying, the script file,
+interpreter, and args are combined into a commandline executed by the system in
+this pattern:
+
+    [interpreter] [filename] [args...]
+
+If the interpreter is not specified, then the script file is executed directly,
+and that means it must be acceptable by the system to be executed directly (include
+any necessary `#!` line, etc).
+
+`script-args`  can
 contain data-context properties such as `${node.name}`.  Additionally, the
 specific Service will provide some additional context properties that can be used:
 
-* `NodeExecutor` will define "${exec.command}" containing the command to be executed
-* `FileCopier` will define "${file-copy.file}" containing the local path to the file
+* NodeExecutor will define `${exec.command}` containing the command to be executed
+* FileCopier will define `${file-copy.file}` containing the local path to the file
 that needs to be copied.
 
-### Service requirements
+In addition, all of the data-context properties that are available in the
+`script-args` are provided as environment variables to the 
+script or interpreter when it is executed.
+
+Environment variables are generated in all-caps with this format:
+
+    RD_[KEY]_[NAME]
+
+The `KEY` and `NAME` are the same as `${key.name}`. Any characters in the key or name
+that are not valid Bash shell variable characters are replaced with underscore '_'.
+
+Examples:
+
+* `${node.name}` becomes `$RD_NODE_NAME`
+* `${node.some-attribute}` becomes `$RD_NODE_SOME_ATTRIBUTE`
+* `${exec.command}` becomes `$RD_EXEC_COMMAND`
+* `${file-copy.file}` becomes `$RD_FILE_COPY_FILE`
+
+### Script provider requirements
 
 The specific service has expectations about
 the way your provider script behaves:
@@ -331,12 +404,3 @@ For `FileCopier`
     to the target node.  Other output is ignored. All output to `STDERR` will be
     captured for the job's output.
 
-Architecture
-------
-
-Installing Java Plugins
-
-Copy the `plugin.jar` to the RunDeck server's libext dir:
-
-    cp plugin.jar \
-        $RDECK_BASE/libext
