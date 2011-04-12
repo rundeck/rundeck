@@ -35,6 +35,7 @@ public class PluginMeta {
     private String author;
     private String date;
     private String version;
+    private String rundeckPluginVersion;
     private List<Map<String, String>> providers;
     private List<PluginDef> pluginDefs;
 
@@ -98,5 +99,13 @@ public class PluginMeta {
                ", providers=" + providers +
                ", pluginDefs=" + pluginDefs +
                '}';
+    }
+
+    public String getRundeckPluginVersion() {
+        return rundeckPluginVersion;
+    }
+
+    public void setRundeckPluginVersion(final String rundeckPluginVersion) {
+        this.rundeckPluginVersion = rundeckPluginVersion;
     }
 }

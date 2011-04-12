@@ -31,37 +31,44 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class PluginDef {
-    Map<String, String> data;
+    private Map<String, String> pluginData;
 
-    public PluginDef(final Map<String, String> data) {
-        this.data = data;
+    public PluginDef(final Map<String, String> pluginData) {
+        this.pluginData = pluginData;
     }
 
     public String getName() {
-        return data.get("name");
+        return pluginData.get("name");
     }
 
 
     public String getService() {
-        return data.get("service");
+        return pluginData.get("service");
     }
 
     public String getScriptFile() {
-        return data.get("script-file");
+        return pluginData.get("script-file");
     }
 
     public String getScriptArgs() {
-        return data.get("script-args");
+        return pluginData.get("script-args");
+    }
+    public String getScriptInterpreter() {
+        return pluginData.get("script-interpreter");
     }
 
     public String getPluginType() {
-        return data.get("plugin-type");
+        return pluginData.get("plugin-type");
     }
 
     @Override
     public String toString() {
         return "PluginDef{" +
-               "data=" + data +
+               "data=" + pluginData +
                '}';
+    }
+
+    public Map<String, String> getPluginData() {
+        return pluginData;
     }
 }

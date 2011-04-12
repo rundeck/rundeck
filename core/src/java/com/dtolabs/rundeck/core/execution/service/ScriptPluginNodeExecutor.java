@@ -49,10 +49,6 @@ class ScriptPluginNodeExecutor implements NodeExecutor {
     }
 
     static void validateScriptPlugin(final ScriptPluginProvider plugin) throws PluginException {
-        if (null == plugin.getScriptArgs()) {
-            throw new PluginException(
-                "no script-args defined for provider: " + plugin);
-        }
     }
 
     public NodeExecutorResult executeCommand(final ExecutionContext executionContext, final String[] command,
@@ -64,13 +60,10 @@ class ScriptPluginNodeExecutor implements NodeExecutor {
             "[" + pluginname + "] execCommand started, command: " + StringArrayUtil.asString(command, " "));
 
         final String scriptargs = plugin.getScriptArgs();
-        executionContext.getExecutionListener().log(3, "[" + pluginname + "] scriptargs: " + scriptargs);
+        final String scriptinterpreter = plugin.getScriptInterpreter();
+        executionContext.getExecutionListener().log(3,
+            "[" + pluginname + "] scriptargs: " + scriptargs + ", interpreter: " + scriptinterpreter);
 
-
-        if (null == scriptargs) {
-            throw new ExecutionException(
-                "[" + pluginname + "] no script-args defined for plugin");
-        }
 
         /*
         String dirstring = null;
@@ -93,17 +86,19 @@ class ScriptPluginNodeExecutor implements NodeExecutor {
         final Map<String, Map<String, String>> newDataContext = DataContextUtils.addContext("exec", scptexec,
             origDataContext);
 
-
-        // replace datareferences in args
-        final String[] args = DataContextUtils.replaceDataReferences(scriptargs.split(" "), newDataContext);
-        final String[] finalargs = new String[args.length + 1];
-        finalargs[0] = scriptfile.getAbsolutePath();
-        if (args.length > 0) {
-            System.arraycopy(args, 0, finalargs, 1, args.length);
+        final ArrayList<String> arglist = new ArrayList<String>();
+        if(null!= scriptinterpreter) {
+            arglist.addAll(Arrays.asList(scriptinterpreter.split(" ")));
         }
+        arglist.add(scriptfile.getAbsolutePath());
+        if(null!=scriptargs) {
+            arglist.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargs.split(" "),
+                newDataContext)));
+        }
+        final String[] finalargs = arglist.toArray(new String[arglist.size()]);
 
         //create system environment variables from the data context
-        final Map<String, String> envMap = DataContextUtils.generateEnvVarsFromContext(origDataContext);
+        final Map<String, String> envMap = DataContextUtils.generateEnvVarsFromContext(newDataContext);
         final ArrayList<String> envlist = new ArrayList<String>();
         for (final String key : envMap.keySet()) {
             final String envval = envMap.get(key);

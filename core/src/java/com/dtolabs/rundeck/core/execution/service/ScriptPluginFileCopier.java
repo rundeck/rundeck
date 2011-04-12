@@ -98,10 +98,9 @@ class ScriptPluginFileCopier implements FileCopier {
         final String pluginname = plugin.getName();
         final File scriptfile = plugin.getScriptFile();
 
-        //get project or framework property for script-exec args
-        final Framework framework = executionContext.getFramework();
         //look for specific property
         scriptargs = plugin.getScriptArgs();
+        final String scriptinterpreter = plugin.getScriptInterpreter();
 
 
         if (null == scriptargs) {
@@ -140,18 +139,20 @@ class ScriptPluginFileCopier implements FileCopier {
         final Map<String, Map<String, String>> newDataContext = DataContextUtils.addContext("file-copy", scptexec,
             nodeContext);
 
-        //use script-copy attribute and replace datareferences
-        final String[] args = DataContextUtils.replaceDataReferences(scriptargs.split(" "), newDataContext);
 
-        //create final args
-        final String[] finalargs = new String[args.length + 1];
-        finalargs[0] = scriptfile.getAbsolutePath();
-        if (args.length > 0) {
-            System.arraycopy(args, 0, finalargs, 1, args.length);
+        final ArrayList<String> arglist = new ArrayList<String>();
+        if (null != scriptinterpreter) {
+            arglist.addAll(Arrays.asList(scriptinterpreter.split(" ")));
         }
+        arglist.add(scriptfile.getAbsolutePath());
+        if (null != scriptargs) {
+            arglist.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargs.split(" "),
+                newDataContext)));
+        }
+        final String[] finalargs = arglist.toArray(new String[arglist.size()]);
 
         //create system environment variables from the data context
-        final Map<String, String> envMap = DataContextUtils.generateEnvVarsFromContext(nodeContext);
+        final Map<String, String> envMap = DataContextUtils.generateEnvVarsFromContext(newDataContext);
         final ArrayList<String> envlist = new ArrayList<String>();
         for (final String key : envMap.keySet()) {
             final String envval = envMap.get(key);

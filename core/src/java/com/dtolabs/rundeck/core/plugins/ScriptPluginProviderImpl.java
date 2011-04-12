@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.plugins;
 import com.dtolabs.rundeck.core.plugins.metadata.PluginDef;
 
 import java.io.File;
+import java.util.Map;
 
 /**
  * Contains PluginDef and info about archive file/cache dir to implement ScriptPluginProvider
@@ -61,5 +62,13 @@ class ScriptPluginProviderImpl implements ScriptPluginProvider {
 
     public File getScriptFile() {
         return scriptFile;
+    }
+
+    public String getScriptInterpreter() {
+        return plugindef.getScriptInterpreter();
+    }
+
+    public Map<String, String> getMetadata() {
+        return plugindef.getPluginData();
     }
 }

@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.plugins;
 
 import java.io.File;
+import java.util.Map;
 
 /**
  * ScriptPluginProvider defines scripted plugin provider details
@@ -55,4 +56,12 @@ public interface ScriptPluginProvider {
      * Return script file to execute
      */
     public File getScriptFile();
+    /**
+     * Return any interpreter specification to run the script
+     */
+    public String getScriptInterpreter();
+    /**
+     * Return any interpreter specification to run the script
+     */
+    public Map<String,String> getMetadata();
 }
