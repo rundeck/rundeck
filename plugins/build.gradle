@@ -13,6 +13,7 @@ subprojects{
     apply plugin: 'java'
     sourceCompatibility = 1.5
     archivesBaseName = "rundeck-$project.name"
+    rundeckPluginVersion= '1.0'
 
     repositories {
         mavenCentral()
@@ -24,5 +25,11 @@ subprojects{
             //[group: 'junit', name: 'junit', version: '3.8.1',ext:'jar']
         )
     }
+    jar {
+        manifest {
+            attributes 'Rundeck-Plugin-Version': rundeckPluginVersion, 'Rundeck-Plugin-Archive': 'true'
+        }
+    }
+
 }
 

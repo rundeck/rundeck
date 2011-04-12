@@ -1,6 +1,6 @@
 jar {
     manifest {
-        attributes 'Rundeck-Plugin-Archive':'true','Rundeck-Plugin-Classnames': 'com.dtolabs.rundeck.plugin.script.ScriptFileCopier,com.dtolabs.rundeck.plugin.script.ScriptNodeExecutor'
+        attributes 'Rundeck-Plugin-Classnames': 'com.dtolabs.rundeck.plugin.script.ScriptFileCopier,com.dtolabs.rundeck.plugin.script.ScriptNodeExecutor'
     }
 }
 
