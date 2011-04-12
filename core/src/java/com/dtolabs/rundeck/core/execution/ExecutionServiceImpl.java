@@ -164,10 +164,13 @@ class ExecutionServiceImpl implements ExecutionService {
         } catch (ExecutionServiceException e) {
             throw new FileCopierException(e);
         }
+        final LogReformatter formatter = createLogReformatter(node, context.getExecutionListener());
+        final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
         String result = null;
         try {
             result = copier.copyFileStream(context, input, node);
         } finally {
+            loggingReformatter.resetOutputStreams();
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishFileCopy(result, context, node);
             }
@@ -186,10 +189,13 @@ class ExecutionServiceImpl implements ExecutionService {
         } catch (ExecutionServiceException e) {
             throw new FileCopierException(e);
         }
+        final LogReformatter formatter = createLogReformatter(node, context.getExecutionListener());
+        final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
         String result = null;
         try {
             result = copier.copyFile(context, file, node);
         } finally {
+            loggingReformatter.resetOutputStreams();
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishFileCopy(result, context, node);
             }
@@ -208,10 +214,13 @@ class ExecutionServiceImpl implements ExecutionService {
         } catch (ExecutionServiceException e) {
             throw new FileCopierException(e);
         }
+        final LogReformatter formatter = createLogReformatter(node, context.getExecutionListener());
+        final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
         String result = null;
         try {
             result = copier.copyScriptContent(context, script, node);
         } finally {
+            loggingReformatter.resetOutputStreams();
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishFileCopy(result, context, node);
             }
@@ -257,7 +266,18 @@ class ExecutionServiceImpl implements ExecutionService {
         return SERVICE_NAME;
     }
 
-    public static LogReformatter createLogReformatter(INodeEntry node, final ExecutionListener listener) {
+    private static class ContextLoggerExecutionListenerMapGenerator implements MapGenerator<String,String>{
+        final ContextLoggerExecutionListener ctxListener;
+
+        private ContextLoggerExecutionListenerMapGenerator(final ContextLoggerExecutionListener ctxListener) {
+            this.ctxListener = ctxListener;
+        }
+
+        public Map<String, String> getMap() {
+            return ctxListener.getLoggingContext();
+        }
+    }
+    public static LogReformatter createLogReformatter(final INodeEntry node, final ExecutionListener listener) {
         LogReformatter gen;
         if (null != listener && listener.isTerse()) {
             gen = null;
@@ -266,23 +286,14 @@ class ExecutionServiceImpl implements ExecutionService {
             if (null != listener && null != listener.getLogFormat()) {
                 logformat = listener.getLogFormat();
             }
-            final HashMap<String, String> baseContext = new HashMap<String, String>();
-            //discover node name and username
-            baseContext.put("node", node.getNodename());
-            baseContext.put("user", node.extractUserName());
-//            contextData.put("command", "dispatch");
             if (listener instanceof ContextLoggerExecutionListener) {
                 final ContextLoggerExecutionListener ctxListener = (ContextLoggerExecutionListener) listener;
-                gen = new LogReformatter(logformat, new MapGenerator<String, String>() {
-                    public Map<String, String> getMap() {
-                        final HashMap<String, String> result = new HashMap<String, String>(
-                            ctxListener.getLoggingContext());
-                        result.putAll(baseContext);
-                        return result;
-                    }
-                });
+                gen = new LogReformatter(logformat, new ContextLoggerExecutionListenerMapGenerator(ctxListener));
             } else {
-
+                final HashMap<String, String> baseContext = new HashMap<String, String>();
+                //discover node name and username
+                baseContext.put("node", node.getNodename());
+                baseContext.put("user", node.extractUserName());
                 gen = new LogReformatter(logformat, baseContext);
             }
 
