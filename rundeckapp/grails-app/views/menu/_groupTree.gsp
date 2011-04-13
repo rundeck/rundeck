@@ -37,7 +37,12 @@
 <g:each in="${gkeys}" var="group">
     <g:timerStart key="_groupTree2.gsp-loop"/>
     <g:timerStart key="prepare"/>
-    <g:set var="displaygroup" value="${group.key}"/>
+    <g:if test="${org.codehaus.groovy.grails.commons.ConfigurationHolder.config.rundeck?.gui?.realJobTree}">
+        <g:set var="displaygroup" value="${group.key.split('/')[-1]}"/>
+    </g:if>
+    <g:else>
+        <g:set var="displaygroup" value="${group.key}"/>
+    </g:else>
     <g:set var="currkey" value="${g.rkey()}"/>
     <g:if test="${prevkey && group.key.startsWith(prevkey+'/')}">
         %{
@@ -46,9 +51,27 @@
         <g:set var="displaygroup" value="${group.key.substring(prevkey.length()+1)}"/>
     </g:if>
     <g:else>
-        ${divcount.join('<!--rend-->')}
-        <g:set var="indent" value="${0}"/>
-        <g:set var="divcount" value="${[]}"/>
+        <g:if test="${org.codehaus.groovy.grails.commons.ConfigurationHolder.config.rundeck?.gui?.realJobTree}">
+        <%
+            if(prevkey) {
+                List prevKeyLst = prevkey.split('/')
+                List currKeyLst = group.key.split('/')
+                //define all different elements compared to the last key
+                def deltaGroups = prevKeyLst - currKeyLst
+                //We write 2 divs per iteration
+                def closeDivCount = deltaGroups.size() * 2
+                for(i in 1..closeDivCount) {
+                    out << divcount.pop() + '<!--rend-->' 
+                }
+                indent = indent - closeDivCount
+            }
+        %>
+        </g:if>
+        <g:else>
+            ${divcount.join('<!--rend-->')}
+            <g:set var="indent" value="${0}"/>
+            <g:set var="divcount" value="${[]}"/>
+        </g:else>
     </g:else>
     <g:set var="prevkey" value="${group.key}"/>
     <g:set var="groupopen" value="${(wasfiltered || jscallback)}"/>

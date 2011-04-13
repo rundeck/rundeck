@@ -283,6 +283,23 @@ class MenuController {
             }
 
         }
+
+        if(org.codehaus.groovy.grails.commons.ConfigurationHolder.config.rundeck?.gui?.realJobTree) {
+            //Adding group entries for empty hierachies to have a "real" tree 
+            def missinggroups = [:]
+            jobgroups.each { k, v ->
+                def splittedgroups = k.split('/')
+                splittedgroups.eachWithIndex { item, idx ->
+                    def thepath = splittedgroups[0..idx].join('/')
+                    if(!jobgroups.containsKey(thepath)) {
+                        missinggroups[thepath]=[]
+                    }
+                }
+            }
+            //sorting is done in the view
+            jobgroups.putAll(missinggroups)
+        }
+
         schedlist=newschedlist
         log.debug("listWorkflows(viewable): "+(System.currentTimeMillis()-viewable));
         long last=System.currentTimeMillis()

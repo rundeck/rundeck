@@ -958,3 +958,8 @@ these properties in the [rundeck-config.properties](#rundeck-config.properties) 
 |`rundeck.gui.titleLink`  |URL for the link used by the app     |http://rundeck.org  |
 |                         |header icon.                         |                    |
 +-------------------------+-------------------------------------+--------------------+
+|`rundeck.gui.realJobTree`|Displaying a real tree in the Jobs   |true                |
+|                         |overview instead of collapsing       |                    |
+|                         |empty groups. **Default: false**     |                    |
++-------------------------+-------------------------------------+--------------------+
+
