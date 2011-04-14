@@ -181,7 +181,7 @@ class JarPluginProviderLoader implements ProviderLoader {
      * Get the Plugin annotation for the class
      */
     @SuppressWarnings ("unchecked")
-    private static Plugin getPluginMetadata(final Class cls) throws PluginException {
+    static Plugin getPluginMetadata(final Class cls) throws PluginException {
         //try to get plugin provider name
         final String pluginname;
         if (!cls.isAnnotationPresent(Plugin.class)) {
