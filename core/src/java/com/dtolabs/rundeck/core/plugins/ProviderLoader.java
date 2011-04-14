@@ -24,14 +24,14 @@
 package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
-import com.dtolabs.rundeck.core.utils.cache.Cacheable;
+import com.dtolabs.rundeck.core.utils.cache.FileCache;
 
 /**
  * ProviderLoader can load a provider instance for a service given a provider name.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-interface ProviderLoader extends Cacheable {
+interface ProviderLoader extends FileCache.Cacheable {
     /**
      * Return an provider instance for a service and provider name
      */

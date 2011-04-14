@@ -29,7 +29,7 @@ import com.dtolabs.rundeck.core.plugins.metadata.ProviderDef;
 import com.dtolabs.rundeck.core.plugins.metadata.PluginMeta;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.core.utils.ZipUtil;
-import com.dtolabs.rundeck.core.utils.cache.Expireable;
+import com.dtolabs.rundeck.core.utils.cache.FileCache;
 import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.JavaBeanLoader;
 
@@ -46,7 +46,7 @@ import java.util.zip.ZipInputStream;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class ScriptPluginProviderLoader implements ProviderLoader, Expireable {
+class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
 
     private static final Logger log = Logger.getLogger(ScriptPluginProviderLoader.class.getName());
     public static final String SCRIPT_PLUGIN_VERSION = "1.0";
