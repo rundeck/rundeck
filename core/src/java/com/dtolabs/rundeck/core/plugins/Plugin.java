@@ -35,5 +35,5 @@ import java.lang.annotation.Target;
  */
 public @interface Plugin {
     String name();
-    String service() default "";
+    String service();
 }
