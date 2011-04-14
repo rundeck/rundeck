@@ -25,7 +25,7 @@ package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
-import com.dtolabs.rundeck.core.plugins.metadata.PluginDef;
+import com.dtolabs.rundeck.core.plugins.metadata.ProviderDef;
 import com.dtolabs.rundeck.core.plugins.metadata.PluginMeta;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.core.utils.ZipUtil;
@@ -42,26 +42,38 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 /**
- * ScriptFileProviderLoader is ...
+ * ScriptPluginProviderLoader can load a provider instance for a service from a script plugin zip file.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class ScriptFileProviderLoader implements FileProviderLoader, Expireable {
+class ScriptPluginProviderLoader implements ProviderLoader, Expireable {
 
-    private static final Logger log = Logger.getLogger(ScriptFileProviderLoader.class.getName());
+    private static final Logger log = Logger.getLogger(ScriptPluginProviderLoader.class.getName());
     public static final String SCRIPT_PLUGIN_VERSION = "1.0";
     private final File file;
     final File cachedir;
+    /**
+     * Dir of expanded zip contents
+     */
     private File fileExpandedDir;
+    /**
+     * Metadata from the plugin.yaml file
+     */
     private PluginMeta metadata;
+    /**
+     * cache of ident to scriptplugin def mapping
+     */
     private Map<ProviderIdent, ScriptPluginProvider> pluginProviderDefs =
         new HashMap<ProviderIdent, ScriptPluginProvider>();
 
-    public ScriptFileProviderLoader(final File file, final File cachedir) {
+    public ScriptPluginProviderLoader(final File file, final File cachedir) {
         this.file = file;
         this.cachedir = cachedir;
     }
 
+    /**
+     * Load a provider instance for the service by name
+     */
     public synchronized <T> T load(final PluggableService<T> service, final String providerName) throws
         ProviderLoaderException {
         if (!service.isScriptPluggable()) {
@@ -71,8 +83,17 @@ class ScriptFileProviderLoader implements FileProviderLoader, Expireable {
 
         if (null == pluginProviderDefs.get(ident)) {
             //look for plugin def
-            final PluginMeta pluginMeta = getPluginMeta(file, ident);
-            for (final PluginDef pluginDef : pluginMeta.getPluginDefs()) {
+            final PluginMeta pluginMeta;
+            try {
+                pluginMeta = getPluginMeta();
+            } catch (IOException e) {
+                throw new ProviderLoaderException(e, service.getName(), providerName);
+            }
+            if (null == pluginMeta) {
+                throw new ProviderLoaderException("Unable to load plugin metadata for file: " + file, service.getName(),
+                    providerName);
+            }
+            for (final ProviderDef pluginDef : pluginMeta.getPluginDefs()) {
                 if (matchesProvider(ident, pluginDef)) {
                     final ScriptPluginProvider provider;
                     try {
@@ -98,20 +119,25 @@ class ScriptFileProviderLoader implements FileProviderLoader, Expireable {
     }
 
 
-    private PluginMeta getPluginMeta(final File file, final ProviderIdent ident) throws
-        ProviderLoaderException {
+    /**
+     * Get the plugin metadata, loading from the file if necessary
+     *
+     * @return loaded metadata or null if not found
+     *
+     * @throws IOException if an error occurs trying to load from the file
+     */
+    private PluginMeta getPluginMeta() throws IOException {
         if (null != metadata) {
             return metadata;
         }
-        try {
-            metadata = loadMeta(file);
-        } catch (IOException e) {
-            throw new ProviderLoaderException(e, ident.getService(), ident.getProviderName());
-        }
+        metadata = loadMeta(file);
         return metadata;
     }
 
-    private ScriptPluginProvider getPlugin(final File file, final PluginDef pluginDef, final ProviderIdent ident) throws
+    /**
+     * Get the ScriptPluginProvider definition from the file for the given provider def and ident
+     */
+    private ScriptPluginProvider getPlugin(final File file, final ProviderDef pluginDef, final ProviderIdent ident) throws
         ProviderLoaderException, PluginException {
         if (null == fileExpandedDir) {
             final File dir;
@@ -123,19 +149,18 @@ class ScriptFileProviderLoader implements FileProviderLoader, Expireable {
             fileExpandedDir = dir;
             final File script = new File(fileExpandedDir, pluginDef.getScriptFile());
             if (null == pluginDef.getScriptInterpreter()) {
+                //set executable bit for script-file of the provider
                 try {
                     ScriptfileUtils.setExecutePermissions(script);
                 } catch (IOException e) {
-                    warn("Unable to set executable bit for script file: " + script + ": " + e.getMessage());
+                    log.warn("Unable to set executable bit for script file: " + script + ": " + e.getMessage());
                 }
             }
             debug("expanded plugin dir! " + fileExpandedDir);
         } else {
-
             debug("expanded plugin dir: " + fileExpandedDir);
         }
 
-        //set executable bit for script-file of the provider
         final File script = new File(fileExpandedDir, pluginDef.getScriptFile());
         if (!script.exists() || !script.isFile()) {
             throw new PluginException("Script file was not found: " + script.getAbsolutePath());
@@ -143,23 +168,29 @@ class ScriptFileProviderLoader implements FileProviderLoader, Expireable {
         return new ScriptPluginProviderImpl(pluginDef, file, fileExpandedDir);
     }
 
-    private boolean matchesProvider(final ProviderIdent ident, final PluginDef pluginDef) {
+    /**
+     * Return true if the ident matches the provider def metadata
+     */
+    private boolean matchesProvider(final ProviderIdent ident, final ProviderDef pluginDef) {
         return ident.getService().equals(pluginDef.getService()) && ident.getProviderName().equals(pluginDef.getName());
     }
 
+    /**
+     * Return true if the plugin file can loade a provider for the ident
+     */
     public synchronized boolean isLoaderFor(final ProviderIdent ident) {
 
         final PluginMeta pluginMeta;
         try {
-            pluginMeta = getPluginMeta(file, ident);
-        } catch (ProviderLoaderException e) {
-            warn("Unable to load file meta: " + e.getMessage());
+            pluginMeta = getPluginMeta();
+        } catch (IOException e) {
+            log.warn("Unable to load file meta: " + e.getMessage());
             return false;
         }
         if (null == pluginMeta) {
             return false;
         }
-        for (final PluginDef pluginDef : pluginMeta.getPluginDefs()) {
+        for (final ProviderDef pluginDef : pluginMeta.getPluginDefs()) {
             if (matchesProvider(ident, pluginDef)) {
                 return true;
             }
@@ -168,13 +199,22 @@ class ScriptFileProviderLoader implements FileProviderLoader, Expireable {
     }
 
 
+    /**
+     * Get plugin metadatat from a zip file
+     */
     static PluginMeta loadMeta(final File jar) throws IOException {
         final ZipInputStream zipinput = new ZipInputStream(new FileInputStream(jar));
-        final PluginMeta metadata = ScriptFileProviderLoader.loadMeta(jar, zipinput);
+        final PluginMeta metadata = ScriptPluginProviderLoader.loadMeta(jar, zipinput);
         zipinput.close();
         return metadata;
     }
 
+    /**
+     * Load plugin metadata for a file and zip inputstream
+     * @param jar the file
+     * @param zipinput zip input stream
+     * @return loaded metadata, or null if it is invalid or not found
+     */
     static PluginMeta loadMeta(final File jar, final ZipInputStream zipinput) throws IOException {
         final String basename = basename(jar);
         PluginMeta metadata = null;
@@ -204,13 +244,13 @@ class ScriptFileProviderLoader implements FileProviderLoader, Expireable {
             nextEntry = zipinput.getNextEntry();
         }
         if (!topfound) {
-            warn("Plugin not loaded: Found no " + basename + "/ dir within file: " + jar.getAbsolutePath());
+            log.warn("Plugin not loaded: Found no " + basename + "/ dir within file: " + jar.getAbsolutePath());
         }
         if (!found) {
-            warn("Plugin not loaded: Found no " + basename + "/plugin.yaml within: " + jar.getAbsolutePath());
+            log.warn("Plugin not loaded: Found no " + basename + "/plugin.yaml within: " + jar.getAbsolutePath());
         }
         if (!dirfound) {
-            warn("Plugin not loaded: Found no " + basename + "/contents dir within: " + jar.getAbsolutePath());
+            log.warn("Plugin not loaded: Found no " + basename + "/contents dir within: " + jar.getAbsolutePath());
         }
         if (found && dirfound) {
             return metadata;
@@ -233,25 +273,25 @@ class ScriptFileProviderLoader implements FileProviderLoader, Expireable {
     static boolean validatePluginMeta(final PluginMeta pluginList, final File file) {
         boolean valid = true;
         if (null == pluginList.getName()) {
-            warn("name not found in metadata: " + file.getAbsolutePath());
+            log.warn("name not found in metadata: " + file.getAbsolutePath());
             valid = false;
         }
         if (null == pluginList.getVersion()) {
-            warn("version not found in metadata: " + file.getAbsolutePath());
+            log.warn("version not found in metadata: " + file.getAbsolutePath());
             valid = false;
         }
         if (null == pluginList.getRundeckPluginVersion()) {
-            warn("rundeckPluginVersion not found in metadata: " + file.getAbsolutePath());
+            log.warn("rundeckPluginVersion not found in metadata: " + file.getAbsolutePath());
             valid = false;
         } else if (!SCRIPT_PLUGIN_VERSION.equals(pluginList.getRundeckPluginVersion())) {
-            warn("rundeckPluginVersion: " + pluginList.getRundeckPluginVersion() + " is not supported: " + file
-                .getAbsolutePath());
+            log.warn("rundeckPluginVersion: " + pluginList.getRundeckPluginVersion() + " is not supported: " + file
+                    .getAbsolutePath());
             valid = false;
         }
-        final List<PluginDef> pluginDefs = pluginList.getPluginDefs();
-        for (final PluginDef pluginDef : pluginDefs) {
+        final List<ProviderDef> pluginDefs = pluginList.getPluginDefs();
+        for (final ProviderDef pluginDef : pluginDefs) {
             try {
-                validatePluginDef(pluginDef);
+                validateProviderDef(pluginDef);
             } catch (PluginException e) {
                 valid = false;
             }
@@ -260,22 +300,22 @@ class ScriptFileProviderLoader implements FileProviderLoader, Expireable {
     }
 
     /**
-     * Expand jar file into plugin cache dir
+     * Expand zip file into plugin cache dir
      *
-     * @param file jar file
+     * @param file zip file
      *
      * @return cache dir for the contents of the plugin zip
      */
     private File expandScriptPlugin(final File file) throws IOException {
         if (!cachedir.exists()) {
             if (!cachedir.mkdirs()) {
-                warn("Unable to create cache dir: " + cachedir.getAbsolutePath());
+                log.warn("Unable to create cache dir: " + cachedir.getAbsolutePath());
             }
         }
         final File jardir = getFileCacheDir();
         if (!jardir.exists()) {
             if (!jardir.mkdir()) {
-                warn("Unable to create cache dir for plugin: " + jardir.getAbsolutePath());
+                log.warn("Unable to create cache dir for plugin: " + jardir.getAbsolutePath());
             }
         }
         final String prefix = getFileBasename() + "/contents";
@@ -286,6 +326,9 @@ class ScriptFileProviderLoader implements FileProviderLoader, Expireable {
         return jardir;
     }
 
+    /**
+     * Remove any cache dir for the file
+     */
     private synchronized boolean removeScriptPluginCache() {
         if (null != fileExpandedDir && fileExpandedDir.exists()) {
             debug("removeScriptPluginCache: " + fileExpandedDir);
@@ -294,33 +337,48 @@ class ScriptFileProviderLoader implements FileProviderLoader, Expireable {
         return true;
     }
 
+    /**
+     * Basename of the file
+     */
     String getFileBasename() {
         return basename(file);
     }
 
+    /**
+     * Get basename of a file
+     */
     private static String basename(final File file) {
         final String name = file.getName();
         return name.substring(0, name.lastIndexOf("."));
     }
 
+    /**
+     * Get the cache dir for use for this file
+     */
     File getFileCacheDir() {
         return new File(cachedir, getFileBasename());
     }
 
 
-    private static void validatePluginDef(final PluginDef pluginDef) throws PluginException {
+    /**
+     * Validate provider def
+     */
+    private static void validateProviderDef(final ProviderDef pluginDef) throws PluginException {
 
         if (null == pluginDef.getPluginType() || "".equals(pluginDef.getPluginType())) {
             throw new PluginException("Script plugin missing plugin-type");
         }
         if ("script".equals(pluginDef.getPluginType())) {
-            validateScriptPluginDef(pluginDef);
+            validateScriptProviderDef(pluginDef);
         } else {
             throw new PluginException("plugin missing has invalid plugin-type: " + pluginDef.getPluginType());
         }
     }
 
-    private static void validateScriptPluginDef(final PluginDef pluginDef) throws PluginException {
+    /**
+     * Validate script provider def
+     */
+    private static void validateScriptProviderDef(final ProviderDef pluginDef) throws PluginException {
         if (null == pluginDef.getName() || "".equals(pluginDef.getName())) {
             throw new PluginException("Script plugin missing name");
         }
@@ -352,14 +410,9 @@ class ScriptFileProviderLoader implements FileProviderLoader, Expireable {
         }
     }
 
-    private static void warn(final String msg) {
-        log.warn(msg);
-    }
-
-    private static void error(final String msg) {
-        log.error(msg);
-    }
-
+    /**
+     * Expire the loader cache item
+     */
     public void expire() {
         removeScriptPluginCache();
     }
@@ -373,7 +426,7 @@ class ScriptFileProviderLoader implements FileProviderLoader, Expireable {
             return false;
         }
 
-        final ScriptFileProviderLoader that = (ScriptFileProviderLoader) o;
+        final ScriptPluginProviderLoader that = (ScriptPluginProviderLoader) o;
 
         if (!cachedir.equals(that.cachedir)) {
             return false;

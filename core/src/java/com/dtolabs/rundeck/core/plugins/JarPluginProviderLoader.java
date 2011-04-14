@@ -40,21 +40,36 @@ import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
 /**
- * JarFileProviderLoader is ...
+ * JarPluginProviderLoader can load jar plugin files as provider instances.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class JarFileProviderLoader implements FileProviderLoader {
-    private static Logger log = Logger.getLogger(JarFileProviderLoader.class.getName());
+class JarPluginProviderLoader implements ProviderLoader {
+    private static Logger log = Logger.getLogger(JarPluginProviderLoader.class.getName());
+    public static final String RUNDECK_PLUGIN_ARCHIVE = "Rundeck-Plugin-Archive";
+    public static final String RUNDECK_PLUGIN_CLASSNAMES = "Rundeck-Plugin-Classnames";
+    public static final String JAR_PLUGIN_VERSION = "1.0";
+    public static final String RUNDECK_PLUGIN_VERSION = "Rundeck-Plugin-Version";
     private final File file;
     private Map<ProviderIdent, Class> pluginProviderDefs =
         new HashMap<ProviderIdent, Class>();
 
-    public JarFileProviderLoader(final File file) {
+    public JarPluginProviderLoader(final File file) {
+        if (null == file) {
+            throw new NullPointerException("file");
+        }
+        if(!file.exists()) {
+            throw new IllegalArgumentException("File does not exist: " + file);
+        }
+        if(!file.isFile()) {
+            throw new IllegalArgumentException("Not a file: " + file);
+        }
         this.file = file;
-        debug("create JarFileProviderLoader for: " + file);
     }
 
+    /**
+     * Load provider instance for the service
+     */
     public synchronized <T> T load(final PluggableService<T> service, final String providerName) throws
         ProviderLoaderException {
         final ProviderIdent ident = new ProviderIdent(service.getName(), providerName);
@@ -87,7 +102,10 @@ class JarFileProviderLoader implements FileProviderLoader {
     }
 
 
-    private static boolean matchesProviderDeclaration(final ProviderIdent ident, final Class cls) throws
+    /**
+     * Return true if the ident matches the Plugin annotation for the class
+     */
+    static boolean matchesProviderDeclaration(final ProviderIdent ident, final Class cls) throws
         PluginException {
         final Plugin annotation = getPluginMetadata(cls);
         return ident.getFirst().equals(annotation.service()) &&
@@ -96,14 +114,24 @@ class JarFileProviderLoader implements FileProviderLoader {
 
     Attributes mainAttributes;
 
+    /**
+     * Get the declared list of provider classnames for the file
+     */
     public String[] getClassnames() {
         if (null == mainAttributes) {
             mainAttributes = getJarMainAttributes(file);
         }
 
-        return mainAttributes.getValue(JarPluginDirScanner.RUNDECK_PLUGIN_CLASSNAMES).split(",");
+        final String value = mainAttributes.getValue(RUNDECK_PLUGIN_CLASSNAMES);
+        if (null == value) {
+            return null;
+        }
+        return value.split(",");
     }
 
+    /**
+     * Get the main attributes for the jar file
+     */
     private static Attributes getJarMainAttributes(final File file) {
         debug("getJarMainAttributes: " + file);
 
@@ -121,7 +149,7 @@ class JarFileProviderLoader implements FileProviderLoader {
     }
 
     /**
-     * Attempt to load the classname and register the class as a provider for the given service
+     * Attempt to create an instance of thea provider for the given service
      *
      * @param cls
      */
@@ -149,6 +177,9 @@ class JarFileProviderLoader implements FileProviderLoader {
         }
     }
 
+    /**
+     * Get the Plugin annotation for the class
+     */
     @SuppressWarnings ("unchecked")
     private static Plugin getPluginMetadata(final Class cls) throws PluginException {
         //try to get plugin provider name
@@ -175,6 +206,9 @@ class JarFileProviderLoader implements FileProviderLoader {
 
     private Map<String, Class> classCache = new HashMap<String, Class>();
 
+    /**
+     * Load a class from the jar file by name
+     */
     private Class loadClass(final String classname, final File file) throws PluginException {
         if (null == classname) {
             throw new IllegalArgumentException("A null java class name was specified.");
@@ -184,7 +218,7 @@ class JarFileProviderLoader implements FileProviderLoader {
             return classCache.get(classname);
         }
         debug("loadClass! " + classname + ": " + file);
-        final ClassLoader parent = JarFileProviderLoader.class.getClassLoader();
+        final ClassLoader parent = JarPluginProviderLoader.class.getClassLoader();
         final Class cls;
         try {
             final URL url = file.toURI().toURL();
@@ -201,6 +235,9 @@ class JarFileProviderLoader implements FileProviderLoader {
         return cls;
     }
 
+    /**
+     * Return true if the file has a class that provides the ident.
+     */
     public synchronized boolean isLoaderFor(final ProviderIdent ident) {
         final String[] strings = getClassnames();
         for (final String classname : strings) {
@@ -224,7 +261,7 @@ class JarFileProviderLoader implements FileProviderLoader {
             return false;
         }
 
-        final JarFileProviderLoader that = (JarFileProviderLoader) o;
+        final JarPluginProviderLoader that = (JarPluginProviderLoader) o;
 
         if (classCache != null ? !classCache.equals(that.classCache) : that.classCache != null) {
             return false;
@@ -250,5 +287,65 @@ class JarFileProviderLoader implements FileProviderLoader {
         result = 31 * result + (mainAttributes != null ? mainAttributes.hashCode() : 0);
         result = 31 * result + (classCache != null ? classCache.hashCode() : 0);
         return result;
+    }
+
+    /**
+     * Return true if the file is a valid jar plugin file
+     */
+    public static boolean isValidJarPlugin(final File file) {
+        try {
+            final JarInputStream jarInputStream = new JarInputStream(new FileInputStream(file));
+            final Manifest manifest = jarInputStream.getManifest();
+            if(null==manifest){
+                jarInputStream.close();
+                return false;
+            }
+            final Attributes mainAttributes = manifest.getMainAttributes();
+            validateJarManifest(mainAttributes);
+            jarInputStream.close();
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace(System.err);
+            log.warn(e.getMessage() + ": " + file.getAbsolutePath());
+            return false;
+        } catch (InvalidManifestException e) {
+            e.printStackTrace(System.err);
+
+            log.warn(e.getMessage() + ": " + file.getAbsolutePath());
+            return false;
+        }
+    }
+
+    /**
+     * Validate whether the jar file has a valid manifest, throw exception if invalid
+     */
+    static void validateJarManifest(final Attributes mainAttributes) throws InvalidManifestException {
+        final String value1 = mainAttributes.getValue(RUNDECK_PLUGIN_ARCHIVE);
+        final String plugvers = mainAttributes.getValue(RUNDECK_PLUGIN_VERSION);
+        final String plugclassnames = mainAttributes.getValue(
+            RUNDECK_PLUGIN_CLASSNAMES);
+        if (null == value1) {
+            throw new InvalidManifestException(
+                "Jar plugin manifest attribute missing: " + RUNDECK_PLUGIN_ARCHIVE);
+        } else if (!"true".equals(value1)) {
+            throw new InvalidManifestException(
+                RUNDECK_PLUGIN_ARCHIVE + " was not 'true': " + value1);
+        }
+        if (null == plugvers) {
+            throw new InvalidManifestException("Jar plugin manifest attribute missing: " + RUNDECK_PLUGIN_VERSION);
+        } else if (!JAR_PLUGIN_VERSION.equals(plugvers)) {
+            throw new InvalidManifestException(
+                "Unssupported plugin version: " + RUNDECK_PLUGIN_VERSION + ": " + plugvers);
+        }
+        if (null == plugclassnames) {
+            throw new InvalidManifestException(
+                "Jar plugin manifest attribute missing: " + RUNDECK_PLUGIN_CLASSNAMES);
+        }
+    }
+
+    static class InvalidManifestException extends Exception {
+        public InvalidManifestException(String s) {
+            super(s);
+        }
     }
 }

@@ -30,10 +30,10 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class PluginDef {
+public class ProviderDef {
     private Map<String, String> pluginData;
 
-    public PluginDef(final Map<String, String> pluginData) {
+    public ProviderDef(final Map<String, String> pluginData) {
         this.pluginData = pluginData;
     }
 
@@ -63,7 +63,7 @@ public class PluginDef {
 
     @Override
     public String toString() {
-        return "PluginDef{" +
+        return "ProviderDef{" +
                "data=" + pluginData +
                '}';
     }

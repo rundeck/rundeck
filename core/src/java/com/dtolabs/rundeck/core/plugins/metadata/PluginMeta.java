@@ -37,13 +37,13 @@ public class PluginMeta {
     private String version;
     private String rundeckPluginVersion;
     private List<Map<String, String>> providers;
-    private List<PluginDef> pluginDefs;
+    private List<ProviderDef> pluginDefs;
 
-    public List<PluginDef> getPluginDefs() {
+    public List<ProviderDef> getPluginDefs() {
         if (null == pluginDefs && null!=providers) {
-            pluginDefs = new ArrayList<PluginDef>();
+            pluginDefs = new ArrayList<ProviderDef>();
             for (final Map<String, String> provider : providers) {
-                pluginDefs.add(new PluginDef(provider));
+                pluginDefs.add(new ProviderDef(provider));
             }
         }
         return pluginDefs;

@@ -23,7 +23,7 @@
 */
 package com.dtolabs.rundeck.core.plugins;
 
-import com.dtolabs.rundeck.core.plugins.metadata.PluginDef;
+import com.dtolabs.rundeck.core.plugins.metadata.ProviderDef;
 
 import java.io.File;
 import java.util.Map;
@@ -34,11 +34,11 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 class ScriptPluginProviderImpl implements ScriptPluginProvider {
-    final private PluginDef plugindef;
+    final private ProviderDef plugindef;
     final private File archiveFile;
     final private File scriptFile;
 
-    ScriptPluginProviderImpl(final PluginDef plugindef, final File archiveFile, final File basedir) {
+    ScriptPluginProviderImpl(final ProviderDef plugindef, final File archiveFile, final File basedir) {
         this.plugindef = plugindef;
         this.archiveFile = archiveFile;
         scriptFile = new File(basedir, plugindef.getScriptFile());

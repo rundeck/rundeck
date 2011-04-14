@@ -51,10 +51,10 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
     private PluginManagerService(final File extdir, final File cachedir) {
         this.extdir = extdir;
         this.cachedir = cachedir;
-        final FileCache<FileProviderLoader> filecache = new FileCache<FileProviderLoader>();
-        cache = new PluginCache(filecache);
-        cache.addScanner(new JarPluginDirScanner(extdir, cachedir, filecache));
-        cache.addScanner(new ScriptPluginDirScanner(extdir, cachedir, filecache));
+        final FileCache<ProviderLoader> filecache = new FileCache<ProviderLoader>();
+        cache = new FilePluginCache(filecache);
+        cache.addScanner(new JarPluginScanner(extdir, filecache));
+        cache.addScanner(new ScriptPluginScanner(extdir, cachedir, filecache));
         log.debug("Create PluginManagerService");
     }
 
@@ -86,7 +86,7 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
 
     public <T> T loadProvider(final PluggableService<T> service, final String providerName) throws ProviderLoaderException {
         final ProviderIdent ident = new ProviderIdent(service.getName(), providerName);
-        final FileProviderLoader loaderForIdent = cache.getLoaderForIdent(ident);
+        final ProviderLoader loaderForIdent = cache.getLoaderForIdent(ident);
         if (null == loaderForIdent) {
             throw new MissingProviderException("Provider was not found", service.getName(), providerName);
         }

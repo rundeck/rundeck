@@ -28,12 +28,19 @@ import com.dtolabs.rundeck.core.utils.cache.FileCache;
 import java.io.File;
 
 /**
- * PluginDirScanner is ...
+ * PluginScanner can scan some set of files for a plugin that supplies a given provider, and can create a {@link
+ * ProviderLoader} as a {@link FileCache.ItemCreator}.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-interface PluginDirScanner extends FileCache.ItemCreator<FileProviderLoader> {
-    public FileProviderLoader createLoader(File file);
+interface PluginScanner extends FileCache.ItemCreator<ProviderLoader> {
+    /**
+     * Create a loader for a file
+     */
+    public ProviderLoader createLoader(File file);
 
+    /**
+     * Return a file plugin that can supply the given provider ident
+     */
     public File scanForFile(ProviderIdent ident);
 }

@@ -67,6 +67,8 @@ public abstract class BaseProviderRegistryService<T> implements FrameworkSupport
                 T instance = createProviderInstanceOfType(providerName);
                 instanceregistry.put(providerName, instance);
                 return instance;
+            }else {
+                throw new MissingProviderException("provider not found: " + providerName, getName(), providerName);
             }
         }
         return instanceregistry.get(providerName);
