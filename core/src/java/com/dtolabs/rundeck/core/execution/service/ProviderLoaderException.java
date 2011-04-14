@@ -15,33 +15,35 @@
  */
 
 /*
-* ProviderCreationError.java
+* ProviderLoaderException.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/22/11 3:15 PM
+* Created: 4/13/11 9:46 AM
 * 
 */
 package com.dtolabs.rundeck.core.execution.service;
 
+import java.util.*;
+
 /**
- * ProviderCreationError is ...
+ * ProviderLoaderException is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ProviderCreationException extends ProviderLoaderException {
-    public ProviderCreationException(String serviceName, String providerName) {
+public class ProviderLoaderException extends ServiceProviderException {
+    public ProviderLoaderException(String serviceName, String providerName) {
         super(serviceName, providerName);
     }
 
-    public ProviderCreationException(String msg, String serviceName, String providerName) {
+    public ProviderLoaderException(String msg, String serviceName, String providerName) {
         super(msg, serviceName, providerName);
     }
 
-    public ProviderCreationException(Exception cause, String serviceName, String providerName) {
+    public ProviderLoaderException(Exception cause, String serviceName, String providerName) {
         super(cause, serviceName, providerName);
     }
 
-    public ProviderCreationException(String msg, Exception cause, String serviceName, String providerName) {
+    public ProviderLoaderException(String msg, Exception cause, String serviceName, String providerName) {
         super(msg, cause, serviceName, providerName);
     }
 }

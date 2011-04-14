@@ -15,33 +15,28 @@
  */
 
 /*
-* ProviderCreationError.java
+* Pair.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/22/11 3:15 PM
+* Created: 4/12/11 3:28 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.service;
+package com.dtolabs.rundeck.core.utils;
 
 /**
- * ProviderCreationError is ...
+ * Pair of objects
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ProviderCreationException extends ProviderLoaderException {
-    public ProviderCreationException(String serviceName, String providerName) {
-        super(serviceName, providerName);
-    }
+public interface Pair<T, W> {
 
-    public ProviderCreationException(String msg, String serviceName, String providerName) {
-        super(msg, serviceName, providerName);
-    }
+    /**
+     * Return the first item
+     */
+    public T getFirst();
 
-    public ProviderCreationException(Exception cause, String serviceName, String providerName) {
-        super(cause, serviceName, providerName);
-    }
-
-    public ProviderCreationException(String msg, Exception cause, String serviceName, String providerName) {
-        super(msg, cause, serviceName, providerName);
-    }
+    /**
+     * Return the second item
+     */
+    public W getSecond();
 }

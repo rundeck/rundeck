@@ -24,13 +24,14 @@
 package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.FrameworkSupportService;
+import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
 
 /**
  * PluggableService is a service that supports plugin provider classes and optionally supports plugin provider scripts.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface PluggableService extends FrameworkSupportService {
+public interface PluggableService<T> extends FrameworkSupportService {
     /**
      * Return true if the class is a valid provider class for the service
      *
@@ -39,12 +40,13 @@ public interface PluggableService extends FrameworkSupportService {
     public boolean isValidProviderClass(Class clazz);
 
     /**
-     * Register the class given as a provider with the given name
+     * Create provider instance from a class
      *
      * @param clazz the class
      * @param name  the provider name
      */
-    public void registerProviderClass(Class clazz, final String name) throws PluginException;
+    public T createProviderInstance(Class<T> clazz, final String name) throws PluginException,
+        ProviderCreationException;
 
     /**
      * Return true if the service supports script plugins
@@ -52,10 +54,10 @@ public interface PluggableService extends FrameworkSupportService {
     public boolean isScriptPluggable();
 
     /**
-     * Install the ScriptPluginProvider instances as a provider
+     * Return the instance for a ScriptPluginProvider definition
      *
      * @param provider the script plugin provider
      */
-    public void registerScriptProvider(final ScriptPluginProvider provider) throws PluginException;
+    public T createScriptProviderInstance(final ScriptPluginProvider provider) throws PluginException;
 
 }

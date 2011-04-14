@@ -15,33 +15,24 @@
  */
 
 /*
-* ProviderCreationError.java
+* FileProviderLoader.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/22/11 3:15 PM
+* Created: 4/12/11 5:24 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.service;
+package com.dtolabs.rundeck.core.plugins;
+
+import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
+import com.dtolabs.rundeck.core.utils.cache.Cacheable;
 
 /**
- * ProviderCreationError is ...
+ * FileProviderLoader is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ProviderCreationException extends ProviderLoaderException {
-    public ProviderCreationException(String serviceName, String providerName) {
-        super(serviceName, providerName);
-    }
+interface FileProviderLoader extends Cacheable {
+    public <T> T load(PluggableService<T> service, String providerName) throws ProviderLoaderException;
 
-    public ProviderCreationException(String msg, String serviceName, String providerName) {
-        super(msg, serviceName, providerName);
-    }
-
-    public ProviderCreationException(Exception cause, String serviceName, String providerName) {
-        super(cause, serviceName, providerName);
-    }
-
-    public ProviderCreationException(String msg, Exception cause, String serviceName, String providerName) {
-        super(msg, cause, serviceName, providerName);
-    }
+    public boolean isLoaderFor(ProviderIdent ident);
 }

@@ -15,33 +15,25 @@
  */
 
 /*
-* ProviderCreationError.java
+* PluginDirScanner.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/22/11 3:15 PM
+* Created: 4/12/11 3:52 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.service;
+package com.dtolabs.rundeck.core.plugins;
+
+import com.dtolabs.rundeck.core.utils.cache.FileCache;
+
+import java.io.File;
 
 /**
- * ProviderCreationError is ...
+ * PluginDirScanner is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ProviderCreationException extends ProviderLoaderException {
-    public ProviderCreationException(String serviceName, String providerName) {
-        super(serviceName, providerName);
-    }
+interface PluginDirScanner extends FileCache.ItemCreator<FileProviderLoader> {
+    public FileProviderLoader createLoader(File file);
 
-    public ProviderCreationException(String msg, String serviceName, String providerName) {
-        super(msg, serviceName, providerName);
-    }
-
-    public ProviderCreationException(Exception cause, String serviceName, String providerName) {
-        super(cause, serviceName, providerName);
-    }
-
-    public ProviderCreationException(String msg, Exception cause, String serviceName, String providerName) {
-        super(msg, cause, serviceName, providerName);
-    }
+    public File scanForFile(ProviderIdent ident);
 }

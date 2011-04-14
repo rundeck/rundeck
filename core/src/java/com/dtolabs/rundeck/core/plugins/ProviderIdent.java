@@ -15,33 +15,41 @@
  */
 
 /*
-* ProviderCreationError.java
+* ProviderIdent.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/22/11 3:15 PM
+* Created: 4/12/11 4:00 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.service;
+package com.dtolabs.rundeck.core.plugins;
+
+import com.dtolabs.rundeck.core.utils.PairImpl;
 
 /**
- * ProviderCreationError is ...
+ * ProviderIdent is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ProviderCreationException extends ProviderLoaderException {
-    public ProviderCreationException(String serviceName, String providerName) {
-        super(serviceName, providerName);
+class ProviderIdent extends PairImpl<String, String> {
+    /**
+     * Constructor
+     * @param service service name
+     * @param providerName providername
+     */
+    ProviderIdent(final String service, final String providerName) {
+        super(service, providerName);
     }
 
-    public ProviderCreationException(String msg, String serviceName, String providerName) {
-        super(msg, serviceName, providerName);
+    public String getService() {
+        return getFirst();
     }
 
-    public ProviderCreationException(Exception cause, String serviceName, String providerName) {
-        super(cause, serviceName, providerName);
+    public String getProviderName() {
+        return getSecond();
     }
 
-    public ProviderCreationException(String msg, Exception cause, String serviceName, String providerName) {
-        super(msg, cause, serviceName, providerName);
+    @Override
+    public String toString() {
+        return "Provider(" + getService() + "," + getProviderName() + ")";
     }
 }

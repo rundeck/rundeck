@@ -94,14 +94,6 @@ public class TestPluginManagerService extends AbstractBaseTest {
         String registeredName;
         boolean throwException = false;
 
-        public void registerProviderClass(final Class clazz, final String name) throws PluginException {
-            this.registeredClass = clazz;
-            this.registeredName = name;
-            if (throwException) {
-                throw new PluginException("test exception");
-            }
-        }
-
         public boolean isScriptPluggable() {
             return false;
         }

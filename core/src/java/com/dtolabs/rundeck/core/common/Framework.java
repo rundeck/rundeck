@@ -40,6 +40,7 @@ import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcherService;
 import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
 import com.dtolabs.rundeck.core.plugins.PluginManagerService;
+import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.NodeSet;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
@@ -154,7 +155,10 @@ public class Framework extends FrameworkResourceParent {
             nodeAuthResolutionStrategy = NodeAuthResolutionStrategyFactory.create(nodeAuthClassname, this);
             
         }
-        //todo initialize services via plugin manager
+
+        //plugin manager service inited first.  any pluggable services will then be
+        //able to try to load providers via the plugin manager
+        PluginManagerService.getInstanceForFramework(this);
         CommandInterpreterService.getInstanceForFramework(this);
         NodeExecutorService.getInstanceForFramework(this);
         FileCopierService.getInstanceForFramework(this);
@@ -288,8 +292,6 @@ public class Framework extends FrameworkResourceParent {
         if(logger.isDebugEnabled()) {
             logger.debug("Framework.initialize() time: " + (end - start) + "ms");
         }
-        //call PluginManager to load any plugins
-        PluginManagerService.getInstanceForFramework(this).loadPlugins();
     }
     /**
      * Return a service by name
@@ -330,6 +332,12 @@ public class Framework extends FrameworkResourceParent {
         return NodeDispatcherService.getInstanceForFramework(this).getNodeDispatcher(context);
     }
 
+    public ServiceProviderLoader getPluginManager(){
+        if(null!=getService(PluginManagerService.SERVICE_NAME)) {
+            return PluginManagerService.getInstanceForFramework(this);
+        }
+        return null;
+    }
     /**
      * Returns the singleton instance of Framework object.  If any of the
      * supplied directory paths are null, then the value from {@link Constants} is used.

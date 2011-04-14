@@ -63,9 +63,11 @@ public abstract class BaseProviderRegistryService<T> implements FrameworkSupport
             throw new MissingProviderException("provider name was null", getName(), providerName);
         }
         if (null == instanceregistry.get(providerName)) {
-            T instance = createProviderInstanceOfType(providerName);
-            instanceregistry.put(providerName, instance);
-            return instance;
+            if (null != registry.get(providerName)) {
+                T instance = createProviderInstanceOfType(providerName);
+                instanceregistry.put(providerName, instance);
+                return instance;
+            }
         }
         return instanceregistry.get(providerName);
     }
@@ -76,6 +78,11 @@ public abstract class BaseProviderRegistryService<T> implements FrameworkSupport
                 providerName);
         }
         final Class<? extends T> execClass = registry.get(providerName);
+        return createProviderInstanceFromType(execClass, providerName);
+    }
+
+    protected T createProviderInstanceFromType(final Class<? extends T> execClass, final String providerName) throws
+        ProviderCreationException {
         boolean ctrfound = true;
         try {
             final Constructor<? extends T> method = execClass.getDeclaredConstructor(new Class[]{Framework.class});

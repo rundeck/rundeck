@@ -27,7 +27,6 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschNodeExecutor;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor;
-import com.dtolabs.rundeck.core.plugins.PluggableService;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 
@@ -36,7 +35,7 @@ import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class NodeExecutorService extends NodeSpecifiedService<NodeExecutor> implements PluggableService {
+public class NodeExecutorService extends NodeSpecifiedService<NodeExecutor> {
     private static final String SERVICE_NAME = "NodeExecutor";
     private static final String SERVICE_DEFAULT_PROVIDER_PROPERTY = "service." + SERVICE_NAME + ".default.provider";
     private static final String SERVICE_DEFAULT_LOCAL_PROVIDER_PROPERTY =
@@ -69,7 +68,7 @@ public class NodeExecutorService extends NodeSpecifiedService<NodeExecutor> impl
         return null != value ? value : DEFAULT_REMOTE_PROVIDER;
     }
 
-    public static NodeExecutorService getInstanceForFramework(Framework framework) {
+    public static NodeExecutorService getInstanceForFramework(final Framework framework) {
         if (null == framework.getService(SERVICE_NAME)) {
             final NodeExecutorService service = new NodeExecutorService(framework);
             framework.setService(SERVICE_NAME, service);
@@ -86,25 +85,21 @@ public class NodeExecutorService extends NodeSpecifiedService<NodeExecutor> impl
         return NODE_SERVICE_SPECIFIER_ATTRIBUTE;
     }
 
-    public boolean isValidProviderClass(Class clazz) {
+    public boolean isValidProviderClass(final Class clazz) {
         return NodeExecutor.class.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
     }
 
-    public void registerProviderClass(final Class clazz, final String name) throws PluginException {
-        if (!isValidProviderClass(clazz)) {
-            throw new PluginException("Invalid plugin class: " + clazz.getName());
-        }
-        final Class<? extends NodeExecutor> pluginclazz = (Class<NodeExecutor>) clazz;
-        registry.put(name, pluginclazz);
+    public NodeExecutor createProviderInstance(final Class<NodeExecutor> clazz, final String name) throws PluginException,
+        ProviderCreationException {
+        return createProviderInstanceFromType(clazz, name);
     }
 
     public boolean isScriptPluggable() {
         return true;
     }
 
-    public void registerScriptProvider(final ScriptPluginProvider provider) throws PluginException {
+    public NodeExecutor createScriptProviderInstance(final ScriptPluginProvider provider) throws PluginException {
         ScriptPluginNodeExecutor.validateScriptPlugin(provider);
-        instanceregistry.put(provider.getName(), new ScriptPluginNodeExecutor(provider));
+        return new ScriptPluginNodeExecutor(provider);
     }
-
 }

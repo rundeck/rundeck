@@ -27,7 +27,6 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschScpFileCopier;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalFileCopier;
-import com.dtolabs.rundeck.core.plugins.PluggableService;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 
@@ -36,9 +35,9 @@ import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class FileCopierService extends NodeSpecifiedService<FileCopier> implements PluggableService {
+public class FileCopierService extends NodeSpecifiedService<FileCopier> {
     private static final String SERVICE_NAME = "FileCopier";
-    private static final String SERVICE_DEFAULT_PROVIDER_PROPERTY = "service."+SERVICE_NAME+".default.provider";
+    private static final String SERVICE_DEFAULT_PROVIDER_PROPERTY = "service." + SERVICE_NAME + ".default.provider";
     private static final String SERVICE_DEFAULT_LOCAL_PROVIDER_PROPERTY =
         "service." + SERVICE_NAME + ".default.local.provider";
     public static final String REMOTE_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "file-copier";
@@ -64,7 +63,7 @@ public class FileCopierService extends NodeSpecifiedService<FileCopier> implemen
         if (framework.isLocalNode(node)) {
             final String value = framework.getProjectProperty(project, SERVICE_DEFAULT_LOCAL_PROVIDER_PROPERTY);
             return value != null ? value : DEFAULT_LOCAL_PROVIDER;
-        }else{
+        } else {
             final String value = framework.getProjectProperty(project, SERVICE_DEFAULT_PROVIDER_PROPERTY);
             return value != null ? value : DEFAULT_REMOTE_PROVIDER;
         }
@@ -91,20 +90,17 @@ public class FileCopierService extends NodeSpecifiedService<FileCopier> implemen
         return FileCopier.class.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
     }
 
-    public void registerProviderClass(Class clazz, String name) throws PluginException {
-        if (!isValidProviderClass(clazz)) {
-            throw new PluginException("Invalid plugin class: " + clazz.getName());
-        }
-        final Class<? extends FileCopier> pluginclazz = (Class<FileCopier>) clazz;
-        registry.put(name, pluginclazz);
+    public FileCopier createProviderInstance(Class<FileCopier> clazz, String name) throws PluginException,
+        ProviderCreationException {
+        return createProviderInstanceFromType(clazz, name);
     }
 
     public boolean isScriptPluggable() {
         return true;
     }
 
-    public void registerScriptProvider(ScriptPluginProvider provider) throws PluginException {
+    public FileCopier createScriptProviderInstance(final ScriptPluginProvider provider) throws PluginException {
         ScriptPluginFileCopier.validateScriptPlugin(provider);
-        instanceregistry.put(provider.getName(), new ScriptPluginFileCopier(provider));
+        return new ScriptPluginFileCopier(provider);
     }
 }

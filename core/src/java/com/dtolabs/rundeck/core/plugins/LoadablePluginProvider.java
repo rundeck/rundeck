@@ -15,33 +15,25 @@
  */
 
 /*
-* ProviderCreationError.java
+* LoadableProvider.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/22/11 3:15 PM
+* Created: 4/12/11 5:23 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.service;
+package com.dtolabs.rundeck.core.plugins;
+
+import com.dtolabs.rundeck.core.utils.PairImpl;
+
+import java.io.File;
 
 /**
- * ProviderCreationError is ...
+ * LoadableProvider is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ProviderCreationException extends ProviderLoaderException {
-    public ProviderCreationException(String serviceName, String providerName) {
-        super(serviceName, providerName);
-    }
-
-    public ProviderCreationException(String msg, String serviceName, String providerName) {
-        super(msg, serviceName, providerName);
-    }
-
-    public ProviderCreationException(Exception cause, String serviceName, String providerName) {
-        super(cause, serviceName, providerName);
-    }
-
-    public ProviderCreationException(String msg, Exception cause, String serviceName, String providerName) {
-        super(msg, cause, serviceName, providerName);
+class LoadablePluginProvider extends PairImpl<File,FileProviderLoader> {
+    public LoadablePluginProvider(File first, FileProviderLoader second) {
+        super(first, second);
     }
 }

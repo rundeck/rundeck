@@ -25,13 +25,14 @@ package com.dtolabs.rundeck.core.execution.service;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.plugins.PluggableService;
 
 /**
  * NodeSpecifiedService uses node metadata to select service provider implementation.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public abstract class NodeSpecifiedService<T> extends BaseProviderRegistryService<T> {
+public abstract class NodeSpecifiedService<T> extends BaseProviderRegistryService<T> implements PluggableService<T> {
     protected NodeSpecifiedService(final Framework framework) {
         super(framework);
     }
@@ -39,14 +40,27 @@ public abstract class NodeSpecifiedService<T> extends BaseProviderRegistryServic
     /**
      * Return a specific service provider that can be used for the node
      */
-    public T getProviderForNodeAndProject(final INodeEntry node, final String project) throws ExecutionServiceException {
+    public T getProviderForNodeAndProject(final INodeEntry node, final String project) throws
+        ExecutionServiceException {
         String copiername = getDefaultProviderNameForNodeAndProject(node, project);
         //look up node's attribute if it exists
-        if (null != node.getAttributes() && null != node.getAttributes().get(getServiceProviderNodeAttributeForNode(node))) {
+        if (null != node.getAttributes() && null != node.getAttributes().get(getServiceProviderNodeAttributeForNode(
+            node))) {
             copiername = node.getAttributes().get(getServiceProviderNodeAttributeForNode(node));
         }
         //try to acquire supplier from registry
         return providerOfType(copiername);
+    }
+
+    @Override
+    protected T providerOfType(final String providerName) throws ExecutionServiceException {
+        T t = super.providerOfType(providerName);
+        if (null != t) {
+            return t;
+        } else {
+            t = framework.getPluginManager().loadProvider(this, providerName);
+        }
+        return t;
     }
 
     /**

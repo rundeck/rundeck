@@ -28,7 +28,7 @@ package com.dtolabs.rundeck.core.execution.service;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class MissingProviderException extends ServiceProviderException {
+public class MissingProviderException extends ProviderLoaderException {
     public MissingProviderException(String serviceName, String providerName) {
         super(serviceName, providerName);
     }
