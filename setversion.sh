@@ -49,3 +49,8 @@ echo MODIFIED: `pwd`/rundeckapp/application.properties
 perl  -i'.orig' -p -e "s#^version\s*=.*\$#version = '$VERSION'#" `pwd`/core/build.gradle
 
 echo MODIFIED: `pwd`/core/build.gradle
+
+#modify plugins/build.gradle
+perl  -i'.orig' -p -e "s#^version\s*=.*\$#version = '$VERSION'#" `pwd`/plugins/build.gradle
+
+echo MODIFIED: `pwd`/plugins/build.gradle
