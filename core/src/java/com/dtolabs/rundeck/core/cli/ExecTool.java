@@ -478,56 +478,40 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
 
     }
 
-    /**
-     * Execute the script with the ExecutionService layer, using a default build listener
-     */
-    private void runAction() throws Exception {
-        runAction(null);
-    }
-
     public static final String DEFAULT_LOG_FORMAT = "[%user@%node %command][%level] %message";
     public static final String FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT = "framework.log.dispatch.console.format";
 
-    public ExecutionListener getExecutionListener() {
-        return getExecutionListener(createExecToolCommandLogger(getAntLoglevel(), null));
+    ExecutionListener mylistener;
+    public synchronized ExecutionListener getExecutionListener() {
+        if(null==mylistener){
+            mylistener = createExecutionListener();
+        }
+        return mylistener;
     }
-    public ExecutionListener getExecutionListener(BuildListener blistener) {
+    public ExecutionListener createExecutionListener() {
 
         final String logformat;
         if (getFramework().hasProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT)) {
             logformat = getFramework().getProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT);
         } else {
-            logformat = null;
+            logformat = DEFAULT_LOG_FORMAT;
         }
-        return new CLIExecutionListener(blistener,
-            FailedNodesFilestore.createListener(getFailedNodes()), this, this, argTerse, logformat);
+        return new CLIExecutionListener(FailedNodesFilestore.createListener(getFailedNodes()), this, getAntLoglevel(),
+            argTerse,
+            logformat);
     }
 
     /**
      *
      * Execute the script with the ExecutionService layer, using a build listener
      *
-     * @param listener a build listener
      */
-    void runAction(final BuildListener listener) throws Exception {
+    void runAction() throws Exception {
         ExecutionResult result=null;
         Exception exception=null;
         final Date startDate=new Date();
         final String user = getUser();
         try {
-            //set up build listener
-            final BuildListener blistener;
-            if(null!=listener){
-                final HashMap<Integer,Integer> map = new HashMap<Integer, Integer>();
-                //convert all INFO level messages to WARN level.
-                //INFO is used by default for all ExecTask messages, and any messages for SSHExec will go out on
-                //STDOUT so they are captured later in the stream.
-                map.put(Project.MSG_INFO, Project.MSG_WARN);
-                blistener=new LogLevelConvertBuildListener(listener, map);
-            }else {
-                //XXX need this in exec listener?
-                blistener = createExecToolCommandLogger(getAntLoglevel(), null);
-            }
             //store inline script content (via STDIN or script property) to a temp file
             if(inlineScript){
                 File inlinefile=null;
@@ -543,9 +527,17 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
             }
             //acquire ExecutionService object
             final ExecutionService service = framework.getExecutionService();
-            
+
             //submit the execution request to the service layer
             result = service.executeItem(this, createExecutionItem());
+            if(!result.isSuccess()){
+                if (null != result.getResultObject()) {
+                    error(result.getResultObject().toString());
+                }
+                if(null!= result.getException()){
+                    error(result.getException().getMessage());
+                }
+            }
         } catch (ExecutionException e) {
             error("Unable to perform the execution: " + e.getMessage());
             exception = e;
@@ -702,7 +694,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
      * @throws Exception
      */
     public static void main(final String[] args) throws Exception {
-        
+
         /**
          * Initialize the log4j logger
          */
@@ -1021,14 +1013,22 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
     }
 
     public int getLoglevel() {
-        return getAntLoglevel();
+        if(argDebug) {
+            return Constants.DEBUG_LEVEL;
+        }
+        if (argQuiet && argVerbose) {
+            return Constants.WARN_LEVEL;
+        }
+        if(argVerbose) {
+            return Constants.VERBOSE_LEVEL;
+        }
+        if(argQuiet) {
+            return Constants.ERR_LEVEL;
+        }
+        return Constants.INFO_LEVEL;
     }
 
     public Map<String, Map<String, String>> getDataContext() {
-        return null;
-    }
-
-    public Map<String, String> getOptions() {
         return null;
     }
 

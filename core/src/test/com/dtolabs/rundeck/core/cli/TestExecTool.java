@@ -544,7 +544,7 @@ public class TestExecTool extends AbstractBaseTest {
             ExecTool main = new ExecTool(framework);
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "--", "uptime", "for", "ever"});
 
-            main.runAction(null);
+            main.runAction();
             assertTrue(test1.wascalled);
             assertEquals(TEST_EXEC_TOOL_PROJECT, test1.project);
             assertEquals("dispatch", test1.name);
@@ -588,7 +588,7 @@ public class TestExecTool extends AbstractBaseTest {
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "--", "uptime", "for", "ever"});
 
             try {
-                main.runAction(null);
+                main.runAction();
                 fail("should have thrown exception");
             } catch (Exception e) {
                 assertEquals("DispatcherResult{status=false, results={test1=test failure result}}", e.getMessage());
@@ -627,7 +627,7 @@ public class TestExecTool extends AbstractBaseTest {
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-s", testScriptFile.getAbsolutePath()});
 
             try {
-                main.runAction(null);
+                main.runAction();
                 fail("run shouldn't succeed");
             } catch (CoreException e) {
                 assertNotNull(e);
@@ -656,7 +656,7 @@ public class TestExecTool extends AbstractBaseTest {
             ExecTool main = new ExecTool(framework);
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "--", "uptime","for","ever"});
 
-            main.runAction(null);
+            main.runAction();
             assertNotNull("missing execitem", testExecutor1.testItem);
             assertNotNull("missing execListener", testExecutor1.testListener);
             assertTrue("executeItem not called", testExecutor1.executeItemCalled);
@@ -678,7 +678,7 @@ public class TestExecTool extends AbstractBaseTest {
             ExecTool main = new ExecTool(framework);
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-s", testScriptFile.getAbsolutePath()});
 
-            main.runAction(null);
+            main.runAction();
             assertNotNull("missing execitem", testExecutor1.testItem);
             assertNotNull("missing execListener", testExecutor1.testListener);
             assertTrue("executeItem not called", testExecutor1.executeItemCalled);
@@ -700,7 +700,7 @@ public class TestExecTool extends AbstractBaseTest {
                 new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-s", testScriptFile.getAbsolutePath(), "--", "test", "args"});
 
 
-            main.runAction(null);
+            main.runAction();
             assertNotNull("missing execitem", testExecutor1.testItem);
             assertNotNull("missing execListener", testExecutor1.testListener);
             assertTrue("executeItem not called", testExecutor1.executeItemCalled);
@@ -728,7 +728,7 @@ public class TestExecTool extends AbstractBaseTest {
                 new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-s", testScriptFile.getAbsolutePath(), "--", "test", "args",
                     "with a space"});
 
-            main.runAction(null);
+            main.runAction();
             assertNotNull("missing execitem", testExecutor1.testItem);
             assertNotNull("missing execListener", testExecutor1.testListener);
             assertTrue("executeItem not called", testExecutor1.executeItemCalled);
@@ -756,7 +756,7 @@ public class TestExecTool extends AbstractBaseTest {
             main.setInlineScriptContent("test content");
 
 
-            main.runAction(null);
+            main.runAction();
             assertNotNull("missing execitem", testExecutor1.testItem);
             assertNotNull("missing execListener", testExecutor1.testListener);
             assertTrue("executeItem not called", testExecutor1.executeItemCalled);
