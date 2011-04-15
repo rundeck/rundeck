@@ -298,7 +298,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             assertNotNull("threw exception: " + result.getException(), result.getException());
             assertTrue("threw exception: " + result.getException(),
                 result.getException() instanceof WorkflowStepFailureException);
-            assertEquals("threw exception: " + result.getException(), "Step 1 of the workflow threw an exception: Failed dispatching to node test1: com.dtolabs.rundeck.core.execution.service.MissingProviderException: provider name was null provider: null for Service: CommandInterpreter",                result.getException().getMessage());
+            assertEquals("threw exception: " + result.getException(), "Step 1 of the workflow threw an exception: Failed dispatching to node test1: provider name was null for Service: CommandInterpreter",                result.getException().getMessage());
         }
 
         {

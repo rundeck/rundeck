@@ -177,11 +177,8 @@ public class TestCommandInterpreterService extends AbstractBaseTest {
                 }
             });
             fail("Should have thrown exception");
-        } catch (ExecutionServiceException e) {
-            assertTrue(e instanceof MissingProviderException);
-            MissingProviderException mis = (MissingProviderException) e;
-            assertEquals("CommandInterpreter", mis.getServiceName());
-            assertNull(mis.getProviderName());
+        } catch (IllegalArgumentException e) {
+            assertNotNull(e);
         }
     }
 
