@@ -53,8 +53,9 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
         this.cachedir = cachedir;
         final FileCache<ProviderLoader> filecache = new FileCache<ProviderLoader>();
         cache = new FilePluginCache(filecache);
-        cache.addScanner(new JarPluginScanner(extdir, filecache));
-        cache.addScanner(new ScriptPluginScanner(extdir, cachedir, filecache));
+        final int rescanInterval = 5000;//TODO: use framework property to set interval
+        cache.addScanner(new JarPluginScanner(extdir, filecache, rescanInterval));
+        cache.addScanner(new ScriptPluginScanner(extdir, cachedir, filecache, rescanInterval));
         log.debug("Create PluginManagerService");
     }
 
@@ -84,11 +85,11 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
     }
 
 
-    public <T> T loadProvider(final PluggableService<T> service, final String providerName) throws ProviderLoaderException {
+    public synchronized <T> T loadProvider(final PluggableService<T> service, final String providerName) throws ProviderLoaderException {
         final ProviderIdent ident = new ProviderIdent(service.getName(), providerName);
         final ProviderLoader loaderForIdent = cache.getLoaderForIdent(ident);
         if (null == loaderForIdent) {
-            throw new MissingProviderException("Provider was not found", service.getName(), providerName);
+            throw new MissingProviderException("No matching plugin found", service.getName(), providerName);
         }
         final T load = loaderForIdent.load(service, providerName);
         if (null != load) {

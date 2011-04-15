@@ -15,33 +15,37 @@
  */
 
 /*
-* PluginCache.java
+* PluginScannerException.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 4/14/11 8:49 AM
+* Created: 4/14/11 3:26 PM
 * 
 */
 package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 
+import java.util.*;
+
 /**
- * PluginCache can use PluginScanners and find ProviderLoaders for ProviderIdents.
+ * PluginScannerException is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface PluginCache {
-    /**
-     * Add a new scanner
-     */
-    void addScanner(PluginScanner scanner);
+class PluginScannerException extends ProviderLoaderException {
+    public PluginScannerException(String serviceName, String providerName) {
+        super(serviceName, providerName);
+    }
 
-    /**
-     * Get the loader for the provider
-     *
-     * @param ident provider ident
-     *
-     * @return loader for the provider
-     */
-    ProviderLoader getLoaderForIdent(ProviderIdent ident) throws ProviderLoaderException;
+    public PluginScannerException(String msg, String serviceName, String providerName) {
+        super(msg, serviceName, providerName);
+    }
+
+    public PluginScannerException(Exception cause, String serviceName, String providerName) {
+        super(cause, serviceName, providerName);
+    }
+
+    public PluginScannerException(String msg, Exception cause, String serviceName, String providerName) {
+        super(msg, cause, serviceName, providerName);
+    }
 }

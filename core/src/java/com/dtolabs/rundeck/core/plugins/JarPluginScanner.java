@@ -27,9 +27,6 @@ import com.dtolabs.rundeck.core.utils.cache.FileCache;
 import org.apache.log4j.Logger;
 
 import java.io.*;
-import java.util.jar.Attributes;
-import java.util.jar.JarInputStream;
-import java.util.jar.Manifest;
 
 /**
  * JarPluginScanner scans for java Jar plugins in the extensions dir.
@@ -44,8 +41,8 @@ class JarPluginScanner extends DirPluginScanner {
         }
     };
 
-    JarPluginScanner(final File extdir, final FileCache<ProviderLoader> filecache) {
-        super(extdir, filecache);
+    JarPluginScanner(final File extdir, final FileCache<ProviderLoader> filecache, final int rescanInterval) {
+        super(extdir, filecache, rescanInterval);
     }
 
     public boolean isValidPluginFile(final File file) {

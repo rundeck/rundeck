@@ -23,6 +23,7 @@
 */
 package com.dtolabs.rundeck.core.plugins;
 
+import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 import com.dtolabs.rundeck.core.utils.PairImpl;
 import com.dtolabs.rundeck.core.utils.cache.FileCache;
 import org.apache.log4j.Logger;
@@ -31,8 +32,8 @@ import java.io.File;
 import java.util.*;
 
 /**
- * FilePluginCache uses a filecache and a set of {@link PluginScanner}s to cache and create {@link ProviderLoader} instances
- * associated with files.
+ * FilePluginCache uses a filecache and a set of {@link PluginScanner}s to cache and create {@link ProviderLoader}
+ * instances associated with files.
  * <p/>
  * The instances are returned for {@link ProviderIdent} instances.
  *
@@ -96,21 +97,31 @@ class FilePluginCache implements PluginCache {
      *
      * @return loader for the provider
      */
-    public synchronized ProviderLoader getLoaderForIdent(final ProviderIdent ident) {
+    public synchronized ProviderLoader getLoaderForIdent(final ProviderIdent ident) throws ProviderLoaderException {
         final cacheItem cacheItem = cache.get(ident);
         if (null == cacheItem) {
-            log.debug("getLoaderForIdent!: " + ident);
+            log.debug("getLoaderForIdent! " + ident);
             return rescanForItem(ident);
         }
-        log.debug("getLoaderForIdent: " + ident);
+
         final File file = cacheItem.getFirst();
-        if (!file.exists() || null == expire.get(ident) || file.lastModified() > expire.get(ident)) {
+        if (cacheItem.getSecond().isExpired(ident, file) || shouldRescan()) {
             remove(ident);
-            log.debug("getLoaderForIdent(reload): " + ident + ": " + file);
+            log.debug("getLoaderForIdent(expired): " + ident);
             return rescanForItem(ident);
         } else {
+            log.debug("getLoaderForIdent: " + ident);
             return loadFileProvider(cacheItem);
         }
+    }
+
+    private boolean shouldRescan() {
+        for (final PluginScanner scanner : scanners) {
+            if(scanner.shouldRescan()){
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -126,17 +137,32 @@ class FilePluginCache implements PluginCache {
     /**
      * Rescan for the ident and cache and return the loader
      */
-    private synchronized ProviderLoader rescanForItem(final ProviderIdent ident) {
+    private synchronized ProviderLoader rescanForItem(final ProviderIdent ident) throws ProviderLoaderException {
         log.debug("rescanForItem: " + ident);
+        File candidate = null;
+        PluginScanner cscanner = null;
         for (final PluginScanner scanner : scanners) {
             final File file = scanner.scanForFile(ident);
             if (null != file) {
-                log.debug("file scanned:" + file);
-                final cacheItem cacheItem = new cacheItem(file, scanner);
-                cache.put(ident, cacheItem);
-                expire.put(ident, file.lastModified());
-                return loadFileProvider(cacheItem);
+                log.debug("saw file: " + file);
+                if (null != candidate) {
+                    throw new ProviderLoaderException(
+                        "More than one plugin file matched: " + file + ", and " + candidate,
+                        ident.getService(), ident.getProviderName()
+                    );
+                }
+                candidate = file;
+                cscanner = scanner;
+            } else {
+                log.debug("scanner no result: " + scanner);
             }
+        }
+        if (null != candidate) {
+            log.debug("file scanned:" + candidate);
+            final cacheItem cacheItem = new cacheItem(candidate, cscanner);
+            cache.put(ident, cacheItem);
+            expire.put(ident, candidate.lastModified());
+            return loadFileProvider(cacheItem);
         }
         return null;
     }

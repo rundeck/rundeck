@@ -42,5 +42,15 @@ interface PluginScanner extends FileCache.ItemCreator<ProviderLoader> {
     /**
      * Return a file plugin that can supply the given provider ident
      */
-    public File scanForFile(ProviderIdent ident);
+    public File scanForFile(ProviderIdent ident) throws PluginScannerException;
+
+    /**
+     * Return true if the ident and file pair is no longer valid
+     */
+    public boolean isExpired(final ProviderIdent ident, final File file) ;
+
+    /**
+     * Return true if the scanner determines need to rescan
+     */
+    public boolean shouldRescan();
 }

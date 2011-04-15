@@ -34,6 +34,13 @@ import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 public interface ServiceProviderLoader {
     /**
      * Create a provider instance for the service
+     *
+     * @param service      the service
+     * @param providerName the name of the provider to load
+     *
+     * @return the provider instance
+     *
+     * @throws ProviderLoaderException if the provider cannot be found or there is an error loading it
      */
     public <T> T loadProvider(PluggableService<T> service, String providerName) throws
         ProviderLoaderException;

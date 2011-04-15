@@ -46,8 +46,8 @@ class ScriptPluginScanner extends DirPluginScanner {
     final File cachedir;
 
     public ScriptPluginScanner(final File extdir, final File cachedir,
-                               final FileCache<ProviderLoader> filecache) {
-        super(extdir, filecache);
+                               final FileCache<ProviderLoader> filecache, final int rescanInterval) {
+        super(extdir, filecache, rescanInterval);
         this.cachedir = cachedir;
     }
 
