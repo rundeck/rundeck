@@ -83,6 +83,7 @@ public class Framework extends FrameworkResourceParent {
     public static final String DEFAULT_LIBEXT_CACHE_DIR_NAME = "cache";
     public static final String SYSTEM_PROP_LIBEXT = "rdeck.libext";
     public static final String SYSTEM_PROP_LIBEXT_CACHE = "rdeck.libext.cache";
+    public static final String FRAMEWORK_PLUGINS_ENABLED = "framework.plugins.enabled";
 
     private final IPropertyLookup lookup;
     private final File projectsBase;
@@ -146,19 +147,22 @@ public class Framework extends FrameworkResourceParent {
         if (null==nodeAuthResolutionStrategy) {
             final String nodeAuthClassname;
             if (lookup.hasProperty(NODEAUTH_CLS_PROP)) {
-                nodeAuthClassname = lookup.getProperty(NODEAUTH_CLS_PROP);                
+                nodeAuthClassname = lookup.getProperty(NODEAUTH_CLS_PROP);
             } else {
                 nodeAuthClassname = Constants.DEFAULT_NODE_AUTHSTRATEGY_CLASSNAME;
                 logger.info("Framework setting, "+NODEAUTH_CLS_PROP+", not set. "
                         + "Defaulted to " + nodeAuthClassname);
             }
             nodeAuthResolutionStrategy = NodeAuthResolutionStrategyFactory.create(nodeAuthClassname, this);
-            
+
         }
 
         //plugin manager service inited first.  any pluggable services will then be
         //able to try to load providers via the plugin manager
-        PluginManagerService.getInstanceForFramework(this);
+        if(!hasProperty(FRAMEWORK_PLUGINS_ENABLED) || "true".equals(getProperty(FRAMEWORK_PLUGINS_ENABLED))){
+            //enable plugin service only if framework property does not disable them
+            PluginManagerService.getInstanceForFramework(this);
+        }
         CommandInterpreterService.getInstanceForFramework(this);
         NodeExecutorService.getInstanceForFramework(this);
         FileCopierService.getInstanceForFramework(this);
@@ -241,7 +245,7 @@ public class Framework extends FrameworkResourceParent {
             throw new NullPointerException(
                 "rdeck_base_dir was not set in constructor and system property rdeck.base was not defined");
         }
-        
+
         final String projectsBaseDir = null == projects_base_dir ? getBaseDir() + Constants.FILE_SEP + "projects"
                                      : projects_base_dir;
         if (null == projectsBaseDir) {
@@ -430,7 +434,7 @@ public class Framework extends FrameworkResourceParent {
     public static Framework getInstance(final String rdeck_base_dir,
                                         final Authenticator authenticator,
                                         final LegacyAuthorization authorization) {
-        
+
         logger.debug("creating new Framework instance."
                      + "  rdeck_base_dir=" + rdeck_base_dir
         );
