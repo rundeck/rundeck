@@ -32,7 +32,7 @@ import com.dtolabs.rundeck.core.plugins.PluggableService;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public abstract class NodeSpecifiedService<T> extends BaseProviderRegistryService<T> implements PluggableService<T> {
+public abstract class NodeSpecifiedService<T> extends PluggableProviderRegistryService<T> implements PluggableService<T> {
     protected NodeSpecifiedService(final Framework framework) {
         super(framework);
     }
@@ -50,17 +50,6 @@ public abstract class NodeSpecifiedService<T> extends BaseProviderRegistryServic
         }
         //try to acquire supplier from registry
         return providerOfType(copiername);
-    }
-
-    @Override
-    protected T providerOfType(final String providerName) throws ExecutionServiceException {
-        T t = super.providerOfType(providerName);
-        if (null != t) {
-            return t;
-        } else {
-            t = framework.getPluginManager().loadProvider(this, providerName);
-        }
-        return t;
     }
 
     /**
