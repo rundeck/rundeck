@@ -56,6 +56,46 @@ public class Streams {
     }
 
     /**
+     * A simple Thread subclass that performs a stream copy from an InputStream to an OutputStream.  If an IOException
+     * is thrown, it is available via {@link #getException()}.
+     */
+    public static class StreamCopyThread extends Thread {
+        final InputStream in;
+        final OutputStream out;
+        private IOException exception;
+
+        public StreamCopyThread(final InputStream in, final OutputStream out) {
+            this.in = in;
+            this.out = out;
+        }
+
+        @Override
+        public void run() {
+            try {
+                Streams.copyStream(in, out);
+            } catch (IOException e) {
+                exception = e;
+            }
+        }
+
+        public IOException getException() {
+            return exception;
+        }
+    }
+
+    /**
+     * Return a new thread that will copy an inputstream to an output stream.  You must start the thread.
+     *
+     * @param in  inputstream
+     * @param out outputstream
+     *
+     * @return an unstarted {@link StreamCopyThread}
+     */
+    public static StreamCopyThread copyStreamThread(final InputStream in, final OutputStream out) {
+        return new StreamCopyThread(in, out);
+    }
+
+    /**
      * Read the data from the input stream and write to the outputstream, filtering with an Ant FilterSet.
      *
      * @param in  inputstream

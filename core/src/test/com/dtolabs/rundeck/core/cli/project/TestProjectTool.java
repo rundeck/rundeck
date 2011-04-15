@@ -33,9 +33,6 @@ public class TestProjectTool extends AbstractBaseTest {
     private static final String PROJECT = "TestProjectTool";
     File projectsBasedir;
     private File setupXml;
-    private File deploymentsFile;
-    private File davEtcPath;
-    private File davDepotBase;
 
     public TestProjectTool(String name) {
         super(name);
@@ -48,20 +45,12 @@ public class TestProjectTool extends AbstractBaseTest {
     protected void tearDown() throws Exception {
         super.tearDown();
         FileUtils.deleteDir(new File(projectsBasedir, PROJECT));
-        FileUtils.deleteDir(davDepotBase);
     }
 
     protected void setUp() {
         super.setUp();
         projectsBasedir = new File(getFrameworkProjectsBase());
         setupXml = new File("src/ant/controllers/rdeck/projectsetupCmd.xml");
-        davDepotBase = new File(getCtlDavBase(), PROJECT);
-        davEtcPath = new File(davDepotBase, "etc");
-        deploymentsFile = new File(davEtcPath, "resources.properties");
-        davEtcPath.mkdirs();
-        if(deploymentsFile.exists()) {
-            deploymentsFile.delete();
-        }
     }
 
     public static Test suite() {

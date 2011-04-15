@@ -34,26 +34,24 @@ package com.dtolabs.rundeck.core.execution;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public class ExecutionServiceThread extends Thread {
+public class ExecutionServiceThread extends ServiceThreadBase {
     ExecutionService eservice;
     ExecutionItem eitem;
-    volatile boolean success = false;
-    private volatile boolean aborted = false;
-    volatile Exception thrown;
-    volatile Object resultObject;
+    ExecutionContext econtext;
     volatile ExecutionResult result;
 
-    public ExecutionServiceThread(final ExecutionService eservice, final ExecutionItem eitem) {
+    public ExecutionServiceThread(ExecutionService eservice, ExecutionItem eitem, ExecutionContext econtext) {
         this.eservice = eservice;
         this.eitem = eitem;
+        this.econtext = econtext;
     }
 
     public void run() {
-        if (null == this.eservice || null == this.eitem) {
+        if (null == this.eservice || null == this.eitem || null==this.econtext) {
             throw new IllegalStateException("project or execution detail not instantiated");
         }
         try {
-            result = eservice.executeItem(eitem);
+            result = eservice.executeItem(econtext, eitem);
             success = result.isSuccess();
             if (null != result.getException()) {
                 thrown = result.getException();
@@ -67,23 +65,4 @@ public class ExecutionServiceThread extends Thread {
         }
     }
 
-
-    public void abort() {
-        if (isAlive()) {
-            aborted = true;
-            interrupt();
-        }
-    }
-
-    public boolean isSuccessful() {
-        return success;
-    }
-
-    public Exception getException() {
-        return thrown;
-    }
-
-    public boolean isAborted() {
-        return aborted;
-    }
 }

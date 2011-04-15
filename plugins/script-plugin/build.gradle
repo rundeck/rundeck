@@ -1,0 +1,10 @@
+jar {
+    manifest {
+        attributes 'Rundeck-Plugin-Classnames': 'com.dtolabs.rundeck.plugin.script.ScriptFileCopier,com.dtolabs.rundeck.plugin.script.ScriptNodeExecutor'
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '0.9-rc-3'
+    jarPath = 'wrapper'
+}

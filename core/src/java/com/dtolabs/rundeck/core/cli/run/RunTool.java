@@ -447,6 +447,11 @@ public class RunTool extends BaseTool {
             clilogger.verbose(message);
         }
     }
+    public void debug(final String message) {
+        if (null != clilogger) {
+            clilogger.debug(message);
+        }
+    }
 
 
 }

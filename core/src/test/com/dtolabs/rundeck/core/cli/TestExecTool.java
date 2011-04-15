@@ -27,8 +27,10 @@ package com.dtolabs.rundeck.core.cli;
 import com.dtolabs.rundeck.core.CoreException;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
+import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.*;
+import com.dtolabs.rundeck.core.execution.commands.*;
 import com.dtolabs.rundeck.core.utils.NodeSet;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
@@ -98,7 +100,8 @@ public class TestExecTool extends AbstractBaseTest {
             TEST_EXEC_TOOL_PROJ2);
         FileUtils.deleteDir(d2.getBaseDir());
         getFrameworkInstance().getFrameworkProjectMgr().remove(TEST_EXEC_TOOL_PROJ2);
-        ExecutionServiceFactory.resetDefaultExecutorClasses();
+//        ExecutionServiceFactory.resetDefaultExecutorClasses();
+        getFrameworkInstance().setService(CommandInterpreterService.SERVICE_NAME, null);
     }
 
     public static Test suite() {
@@ -388,7 +391,7 @@ public class TestExecTool extends AbstractBaseTest {
     /**
      * Stub to set as Executor class for ExecutionItem types, used for testing.
      */
-    public static class testExecutor1 implements Executor {
+    /*public static class testExecutor1 implements Executor {
         static ExecutionItem testItem;
         static ExecutionListener testListener;
         static boolean executeItemCalled=false;
@@ -415,6 +418,37 @@ public class TestExecTool extends AbstractBaseTest {
             testExecutionService=null;
         }
 
+    }*/
+    public static class testExecutor1 implements CommandInterpreter{
+        static ExecutionItem testItem;
+        static ExecutionContext testContext;
+        static ExecutionListener testListener;
+        static boolean executeItemCalled = false;
+        static Framework testFramework;
+        static InterpreterResult returnResult = null;
+        Framework framework;
+
+        public testExecutor1(Framework framework) {
+            this.framework = framework;
+        }
+
+        public InterpreterResult interpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node) throws
+            InterpreterException {
+            testContext=context;
+            testItem = item;
+            testListener = context.getExecutionListener();
+            executeItemCalled = true;
+            testFramework = framework;
+            return returnResult;
+        }
+
+        static void reset() {
+            testContext=null;
+            testItem = null;
+            testListener = null;
+            executeItemCalled = false;
+            testFramework = null;
+        }
     }
 
     static class noopDispatcher implements CentralDispatcher{
@@ -483,20 +517,21 @@ public class TestExecTool extends AbstractBaseTest {
 
     public void testRunActionShouldLogResult() throws Exception {
         //set up test Executors
-        ExecutionServiceFactory.setDefaultExecutorClass(DispatchedScriptExecutionItem.class, testExecutor1.class);
+//        ExecutionServiceFactory.setDefaultExecutorClass(DispatchedScriptExecutionItem.class, testExecutor1.class);
+        final CommandInterpreterService cis = CommandInterpreterService.getInstanceForFramework(
+            getFrameworkInstance());
+        cis.registerClass("exec", testExecutor1.class);
+
 
         //set return result
-        testExecutor1.returnResult = new ExecutionResult() {
+        testExecutor1.returnResult = new InterpreterResult() {
             public boolean isSuccess() {
                 return true;
             }
 
-            public Exception getException() {
-                return null;
-            }
-
-            public Object getResultObject() {
-                return "testResult1";
+            @Override
+            public String toString() {
+                return "test1ResultString";
             }
         };
 
@@ -509,7 +544,7 @@ public class TestExecTool extends AbstractBaseTest {
             ExecTool main = new ExecTool(framework);
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "--", "uptime", "for", "ever"});
 
-            main.runAction(null);
+            main.runAction();
             assertTrue(test1.wascalled);
             assertEquals(TEST_EXEC_TOOL_PROJECT, test1.project);
             assertEquals("dispatch", test1.name);
@@ -518,7 +553,7 @@ public class TestExecTool extends AbstractBaseTest {
             assertEquals(4, test1.successNodeCount);
             assertEquals("", test1.tags);
             assertEquals("dispatch -p " + TEST_EXEC_TOOL_PROJECT + " -- uptime for ever", test1.script);
-            assertEquals("testResult1", test1.summary);
+            assertEquals("DispatcherResult{status=true, results={test1=test1ResultString}}", test1.summary);
             assertNotNull(test1.start);
             assertNotNull(test1.end);
 
@@ -526,22 +561,19 @@ public class TestExecTool extends AbstractBaseTest {
             testExecutor1.reset();
         }
     }
-    
+
     public void testRunActionShouldLogResultFailure() throws Exception {
         //set up test Executors
-        ExecutionServiceFactory.setDefaultExecutorClass(DispatchedScriptExecutionItem.class, testExecutor1.class);
-
+//        ExecutionServiceFactory.setDefaultExecutorClass(DispatchedScriptExecutionItem.class, testExecutor1.class);
+        final CommandInterpreterService cis = CommandInterpreterService.getInstanceForFramework(
+            getFrameworkInstance());
+        cis.registerClass("exec", testExecutor1.class);
         //set return result
-        testExecutor1.returnResult = new ExecutionResult() {
+        testExecutor1.returnResult = new InterpreterResult() {
             public boolean isSuccess() {
                 return false;
             }
-
-            public Exception getException() {
-                return null;
-            }
-
-            public Object getResultObject() {
+            public String toString() {
                 return "test failure result";
             }
         };
@@ -556,10 +588,10 @@ public class TestExecTool extends AbstractBaseTest {
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "--", "uptime", "for", "ever"});
 
             try {
-                main.runAction(null);
+                main.runAction();
                 fail("should have thrown exception");
             } catch (Exception e) {
-                assertEquals("action failed: result was null", e.getMessage());
+                assertEquals("DispatcherResult{status=false, results={test1=test failure result}}", e.getMessage());
             }
             assertTrue(test1.wascalled);
             assertEquals(TEST_EXEC_TOOL_PROJECT, test1.project);
@@ -569,7 +601,7 @@ public class TestExecTool extends AbstractBaseTest {
             assertEquals(0, test1.successNodeCount);
             assertEquals("", test1.tags);
             assertEquals("dispatch -p " + TEST_EXEC_TOOL_PROJECT + " -- uptime for ever", test1.script);
-            assertEquals("test failure result", test1.summary);
+            assertEquals("DispatcherResult{status=false, results={test1=test failure result}}", test1.summary);
             assertNotNull(test1.start);
             assertNotNull(test1.end);
 
@@ -579,7 +611,11 @@ public class TestExecTool extends AbstractBaseTest {
     }
     public void testRunAction() throws Exception{
         //set up test Executors
-        ExecutionServiceFactory.setDefaultExecutorClass(DispatchedScriptExecutionItem.class, testExecutor1.class);
+//        ExecutionServiceFactory.setDefaultExecutorClass(DispatchedScriptExecutionItem.class, testExecutor1.class);
+        final CommandInterpreterService cis = CommandInterpreterService.getInstanceForFramework(
+            getFrameworkInstance());
+        cis.registerClass("exec", testExecutor1.class);
+        cis.registerClass("script", testExecutor1.class);
         testExecutor1.returnResult=null;
 
         final Framework framework = getFrameworkInstance();
@@ -591,31 +627,27 @@ public class TestExecTool extends AbstractBaseTest {
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-s", testScriptFile.getAbsolutePath()});
 
             try {
-                main.runAction(null);
+                main.runAction();
                 fail("run shouldn't succeed");
             } catch (CoreException e) {
                 assertNotNull(e);
-                assertEquals("action failed: result was null", e.getMessage());
+                assertEquals("DispatcherResult{status=false, results={}}", e.getMessage());
+                e.printStackTrace(System.err);
             }
+            assertTrue("executeItem not called", testExecutor1.executeItemCalled);
             assertNotNull("missing execitem", testExecutor1.testItem);
             assertNotNull("missing execListener", testExecutor1.testListener);
-            assertTrue("executeItem not called", testExecutor1.executeItemCalled);
             assertNotNull("missing testFramework", testExecutor1.testFramework);
-            assertNotNull("missing testFramework", testExecutor1.testExecutionService);
             testExecutor1.reset();
         }
 
         //set return result
-        testExecutor1.returnResult=new ExecutionResult(){
+        testExecutor1.returnResult=new InterpreterResult(){
             public boolean isSuccess() {
                 return true;
             }
 
-            public Exception getException() {
-                return null;
-            }
-
-            public Object getResultObject() {
+            public String toString() {
                 return "testResult1";
             }
         };
@@ -624,25 +656,21 @@ public class TestExecTool extends AbstractBaseTest {
             ExecTool main = new ExecTool(framework);
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "--", "uptime","for","ever"});
 
-            main.runAction(null);
+            main.runAction();
             assertNotNull("missing execitem", testExecutor1.testItem);
             assertNotNull("missing execListener", testExecutor1.testListener);
             assertTrue("executeItem not called", testExecutor1.executeItemCalled);
-            assertNotNull("missing executionService", testExecutor1.testExecutionService);
             assertNotNull("missing testFramework", testExecutor1.testFramework);
-            assertNotNull("missing testFramework", testExecutor1.testExecutionService);
+            assertNotNull("missing testFramework", testExecutor1.testContext);
 
-            assertTrue(testExecutor1.testItem instanceof DispatchedScriptExecutionItem);
-            DispatchedScriptExecutionItem item1 = (DispatchedScriptExecutionItem) testExecutor1.testItem;
-            assertEquals(TEST_EXEC_TOOL_PROJECT, item1.getDispatchedScript().getFrameworkProject());
-            assertNull( item1.getDispatchedScript().getServerScriptFilePath());
-            assertNotNull("should not be null", item1.getDispatchedScript().getArgs());
-            assertEquals("should not be null",3, item1.getDispatchedScript().getArgs().length);
-            assertEquals("should not be null","uptime", item1.getDispatchedScript().getArgs()[0]);
-            assertEquals("should not be null","for", item1.getDispatchedScript().getArgs()[1]);
-            assertEquals("should not be null","ever", item1.getDispatchedScript().getArgs()[2]);
-            assertNull(item1.getDispatchedScript().getScript());
-            assertNull(item1.getDispatchedScript().getScriptAsStream());
+            assertTrue(testExecutor1.testItem instanceof ExecCommandExecutionItem);
+            ExecCommandExecutionItem item1 = (ExecCommandExecutionItem) testExecutor1.testItem;
+            assertEquals(TEST_EXEC_TOOL_PROJECT, testExecutor1.testContext.getFrameworkProject());
+            assertNotNull("should not be null", item1.getCommand());
+            assertEquals("should not be null",3, item1.getCommand().length);
+            assertEquals("should not be null","uptime", item1.getCommand()[0]);
+            assertEquals("should not be null","for", item1.getCommand()[1]);
+            assertEquals("should not be null","ever", item1.getCommand()[2]);
 
             testExecutor1.reset();
         }
@@ -650,20 +678,19 @@ public class TestExecTool extends AbstractBaseTest {
             ExecTool main = new ExecTool(framework);
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-s", testScriptFile.getAbsolutePath()});
 
-            main.runAction(null);
+            main.runAction();
             assertNotNull("missing execitem", testExecutor1.testItem);
             assertNotNull("missing execListener", testExecutor1.testListener);
             assertTrue("executeItem not called", testExecutor1.executeItemCalled);
             assertNotNull("missing testFramework", testExecutor1.testFramework);
-            assertNotNull("missing testFramework", testExecutor1.testExecutionService);
+            assertNotNull("missing testFramework", testExecutor1.testContext);
 
-            assertTrue(testExecutor1.testItem instanceof DispatchedScriptExecutionItem);
-            DispatchedScriptExecutionItem item1 = (DispatchedScriptExecutionItem) testExecutor1.testItem;
-            assertEquals(TEST_EXEC_TOOL_PROJECT, item1.getDispatchedScript().getFrameworkProject());
-            assertEquals(testScriptFile.getAbsolutePath(), item1.getDispatchedScript().getServerScriptFilePath());
-            assertNull(item1.getDispatchedScript().getArgs());
-            assertNull(item1.getDispatchedScript().getScript());
-            assertNotNull(item1.getDispatchedScript().getScriptAsStream());
+            assertTrue(testExecutor1.testItem instanceof ScriptFileCommandExecutionItem);
+            ScriptFileCommandExecutionItem item1 = (ScriptFileCommandExecutionItem) testExecutor1.testItem;
+            assertEquals(TEST_EXEC_TOOL_PROJECT, testExecutor1.testContext.getFrameworkProject());
+            assertEquals(testScriptFile.getAbsolutePath(), item1.getServerScriptFilePath());
+            assertNull(item1.getScript());
+            assertNotNull(item1.getScriptAsStream());
 
             testExecutor1.reset();
         }
@@ -673,24 +700,24 @@ public class TestExecTool extends AbstractBaseTest {
                 new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-s", testScriptFile.getAbsolutePath(), "--", "test", "args"});
 
 
-            main.runAction(null);
+            main.runAction();
             assertNotNull("missing execitem", testExecutor1.testItem);
             assertNotNull("missing execListener", testExecutor1.testListener);
             assertTrue("executeItem not called", testExecutor1.executeItemCalled);
             assertNotNull("missing testFramework", testExecutor1.testFramework);
-            assertNotNull("missing testFramework", testExecutor1.testExecutionService);
+            assertNotNull("missing testFramework", testExecutor1.testContext);
 
-            assertTrue(testExecutor1.testItem instanceof DispatchedScriptExecutionItem);
-            DispatchedScriptExecutionItem item1 = (DispatchedScriptExecutionItem) testExecutor1.testItem;
-            assertEquals(TEST_EXEC_TOOL_PROJECT, item1.getDispatchedScript().getFrameworkProject());
-            assertEquals(testScriptFile.getAbsolutePath(), item1.getDispatchedScript().getServerScriptFilePath());
-            assertNotNull(item1.getDispatchedScript().getArgs());
-            String[] args = item1.getDispatchedScript().getArgs();
+            assertTrue(testExecutor1.testItem instanceof ScriptFileCommandExecutionItem);
+            ScriptFileCommandExecutionItem item1 = (ScriptFileCommandExecutionItem) testExecutor1.testItem;
+            assertEquals(TEST_EXEC_TOOL_PROJECT, testExecutor1.testContext.getFrameworkProject());
+            assertEquals(testScriptFile.getAbsolutePath(), item1.getServerScriptFilePath());
+            assertNotNull(testExecutor1.testContext.getArgs());
+            String[] args = testExecutor1.testContext.getArgs();
             assertEquals("incorrect args count", 2, args.length);
             assertEquals("incorrect args count", "test", args[0]);
             assertEquals("incorrect args count", "args", args[1]);
-            assertNull(item1.getDispatchedScript().getScript());
-            assertNotNull(item1.getDispatchedScript().getScriptAsStream());
+            assertNull(item1.getScript());
+            assertNotNull(item1.getScriptAsStream());
 
             testExecutor1.reset();
 
@@ -701,25 +728,25 @@ public class TestExecTool extends AbstractBaseTest {
                 new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-s", testScriptFile.getAbsolutePath(), "--", "test", "args",
                     "with a space"});
 
-            main.runAction(null);
+            main.runAction();
             assertNotNull("missing execitem", testExecutor1.testItem);
             assertNotNull("missing execListener", testExecutor1.testListener);
             assertTrue("executeItem not called", testExecutor1.executeItemCalled);
             assertNotNull("missing testFramework", testExecutor1.testFramework);
-            assertNotNull("missing testFramework", testExecutor1.testExecutionService);
+            assertNotNull("missing testFramework", testExecutor1.testContext);
 
-            assertTrue(testExecutor1.testItem instanceof DispatchedScriptExecutionItem);
-            DispatchedScriptExecutionItem item1 = (DispatchedScriptExecutionItem) testExecutor1.testItem;
-            assertEquals(TEST_EXEC_TOOL_PROJECT, item1.getDispatchedScript().getFrameworkProject());
-            assertEquals(testScriptFile.getAbsolutePath(), item1.getDispatchedScript().getServerScriptFilePath());
-            assertNotNull(item1.getDispatchedScript().getArgs());
-            String[] args = item1.getDispatchedScript().getArgs();
+            assertTrue(testExecutor1.testItem instanceof ScriptFileCommandExecutionItem);
+            ScriptFileCommandExecutionItem item1 = (ScriptFileCommandExecutionItem) testExecutor1.testItem;
+            assertEquals(TEST_EXEC_TOOL_PROJECT, testExecutor1.testContext.getFrameworkProject());
+            assertEquals(testScriptFile.getAbsolutePath(), item1.getServerScriptFilePath());
+            assertNotNull(testExecutor1.testContext.getArgs());
+            String[] args = testExecutor1.testContext.getArgs();
             assertEquals("incorrect args count", 3, args.length);
             assertEquals("test", args[0]);
             assertEquals("args", args[1]);
             assertEquals("with a space", args[2]);
-            assertNull(item1.getDispatchedScript().getScript());
-            assertNotNull(item1.getDispatchedScript().getScriptAsStream());
+            assertNull(item1.getScript());
+            assertNotNull(item1.getScriptAsStream());
 
             testExecutor1.reset();
         }
@@ -729,25 +756,25 @@ public class TestExecTool extends AbstractBaseTest {
             main.setInlineScriptContent("test content");
 
 
-            main.runAction(null);
+            main.runAction();
             assertNotNull("missing execitem", testExecutor1.testItem);
             assertNotNull("missing execListener", testExecutor1.testListener);
             assertTrue("executeItem not called", testExecutor1.executeItemCalled);
             assertNotNull("missing testFramework", testExecutor1.testFramework);
-            assertNotNull("missing testFramework", testExecutor1.testExecutionService);
+            assertNotNull("missing testFramework", testExecutor1.testContext);
 
-            assertTrue(testExecutor1.testItem instanceof DispatchedScriptExecutionItem);
-            DispatchedScriptExecutionItem item1 = (DispatchedScriptExecutionItem) testExecutor1.testItem;
-            assertEquals(TEST_EXEC_TOOL_PROJECT, item1.getDispatchedScript().getFrameworkProject());
-            assertNotNull(item1.getDispatchedScript().getServerScriptFilePath());
-            assertNotNull(item1.getDispatchedScript().getArgs());
-            String[] args = item1.getDispatchedScript().getArgs();
+            assertTrue(testExecutor1.testItem instanceof ScriptFileCommandExecutionItem);
+            ScriptFileCommandExecutionItem item1 = (ScriptFileCommandExecutionItem) testExecutor1.testItem;
+            assertEquals(TEST_EXEC_TOOL_PROJECT, testExecutor1.testContext.getFrameworkProject());
+            assertNotNull(item1.getServerScriptFilePath());
+            assertNotNull(testExecutor1.testContext.getArgs());
+            String[] args = testExecutor1.testContext.getArgs();
             assertEquals("incorrect args count", 2, args.length);
             assertEquals("test", args[0]);
             assertEquals("args", args[1]);
-            assertNotNull(item1.getDispatchedScript().getScript());
-            assertEquals("test content", item1.getDispatchedScript().getScript());
-            assertNotNull(item1.getDispatchedScript().getScriptAsStream());
+            assertNotNull(item1.getScript());
+            assertEquals("test content", item1.getScript());
+            assertNotNull(item1.getScriptAsStream());
 
             testExecutor1.reset();
         }

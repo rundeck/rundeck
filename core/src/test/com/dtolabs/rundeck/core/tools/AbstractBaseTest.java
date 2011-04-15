@@ -45,17 +45,10 @@ public abstract class AbstractBaseTest extends TestCase {
     //
     // derived modules and projects base
     //
-    private static String MODULES_BASE = RDECK_BASE + "/" +"modules";
     private static String PROJECTS_BASE = RDECK_BASE + "/" + "projects";
 
     private static String EXTENSIONS_BASE = RDECK_HOME + "/" + "lib" + "/" + "extensions";
 
-    //
-    // rdeck's derived taskdef and typedef properties
-    //
-    private static String TASKDEF_PROPERTIES = RDECK_HOME + "/classes/com/dtolabs/rundeck/core/tasks/taskdef.properties";
-
-    private static String TYPEDEF_PROPERTIES = RDECK_HOME + "/classes/com/dtolabs/rundeck/core/types/typedef.properties";
 
     /** hostname used for local node in test environment */
     public static final String localNodeHostname = "test1";
@@ -83,42 +76,10 @@ public abstract class AbstractBaseTest extends TestCase {
         return baseDir;
     }
 
-    private static String modulesBase;
-
-    public String getModulesBase() {
-        return modulesBase;
-    }
-
     private static String projectsBase;
 
     public String getFrameworkProjectsBase() {
         return projectsBase;
-    }
-
-    private static String taskdefProperties;
-
-    public String getTaskdefProperties() {
-        return taskdefProperties;
-    }
-
-    private static String typedefProperties;
-
-    public String getTypedefProperties() {
-        return typedefProperties;
-    }
-
-    private static File ctlDavBase;
-
-    public static File getCtlDavBase() {
-        return ctlDavBase;
-    }
-
-    public static void setCtlDavBase(File ctlDavBase) {
-        AbstractBaseTest.ctlDavBase = ctlDavBase;
-    }
-
-    public String getExtensionsBase() {
-        return EXTENSIONS_BASE;
     }
 
     public AbstractBaseTest(String name) {
@@ -148,7 +109,7 @@ public abstract class AbstractBaseTest extends TestCase {
 
     protected Framework getFrameworkInstance() {
         if(null==instance){
-            instance = Framework.getInstance(RDECK_BASE, MODULES_BASE, PROJECTS_BASE);
+            instance = Framework.getInstance(RDECK_BASE, PROJECTS_BASE);
         }
         return instance;
     }
@@ -159,14 +120,8 @@ public abstract class AbstractBaseTest extends TestCase {
         antHome = ANT_HOME;
         homeDir = RDECK_HOME;
         baseDir = RDECK_BASE;
-        ctlDavBase = new File(RDECK_BASE,"dav-test");
-        modulesBase = MODULES_BASE;
         projectsBase = PROJECTS_BASE;
-        taskdefProperties = TASKDEF_PROPERTIES;
-        typedefProperties = TYPEDEF_PROPERTIES;
-        new File(modulesBase).mkdirs();
         new File(baseDir,"etc").mkdirs();
-        ctlDavBase.mkdirs();
         File dummykey = new File(baseDir, "etc/dummy_ssh_key.pub");
         try {
             dummykey.createNewFile();
@@ -180,15 +135,7 @@ public abstract class AbstractBaseTest extends TestCase {
             return;
         }
 
-        final String davUrl;
-        try {
-            davUrl = ctlDavBase.toURI().toURL().toExternalForm();
-        } catch (MalformedURLException e) {
-            throw new BuildException("unable to create webdav uri: " + e.getMessage(), e);
-        }
-        
         final ArrayList argsList = new ArrayList(Arrays.asList(SETUP_ARGS));
-        argsList.add("--framework.webdav.uri=" + davUrl);
         argsList.add("--framework.ssh.keypath=" + dummykey.getAbsolutePath());
 
         try {

@@ -124,7 +124,7 @@ public class DataContextUtils {
     }
 
     /**
-     * Escape characters meaningful to bash shell unless the string is already surrounded in single quotes
+     * Escape characters meaningful to windows unless the string is already surrounded in single quotes
      *
      * @param s string
      *
@@ -245,7 +245,7 @@ public class DataContextUtils {
 
     /**
      * Configure the ReplaceTokens for use by filterchain or straight use.  Adds tokens for "X" for each key in the
-     * options data, uses the '@' begin/end tokens.
+     *  data, uses the '@' begin/end tokens.
      *
      * @param data          input options
      * @param replaceTokens ReplaceTokens object.

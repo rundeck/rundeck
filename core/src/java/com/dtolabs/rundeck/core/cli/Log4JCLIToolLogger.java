@@ -57,4 +57,8 @@ public class Log4JCLIToolLogger implements CLIToolLogger {
     public void verbose(final String message) {
         logger.debug(message);
     }
+
+    public void debug(final String message) {
+        logger.trace(message);
+    }
 }

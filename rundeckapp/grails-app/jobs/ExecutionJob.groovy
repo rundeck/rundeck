@@ -9,7 +9,7 @@ import org.quartz.InterruptableJob
 import com.dtolabs.rundeck.core.execution.ExecutionServiceThread
 import com.dtolabs.rundeck.core.NodesetFailureException
 import org.apache.tools.ant.BuildException
-import com.dtolabs.rundeck.execution.NodeRecorder
+import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
 
 class ExecutionJob implements InterruptableJob {
 
@@ -62,22 +62,23 @@ class ExecutionJob implements InterruptableJob {
      * an {@link ExecutionServiceThread}.
      * @return the list of failed node names, or null
      */
-    private static Collection<String> extractFailedNodes(Map execmap=null) {
+    private static Map<String,Object> extractFailedNodes(Map execmap=null) {
         if(null==execmap){
             return null;
         }
         if(null!=execmap.noderecorder && execmap.noderecorder instanceof NodeRecorder){
-            return ((NodeRecorder)execmap.noderecorder).getFailedNodes()
-        } else if (null != execmap.thread && execmap.thread instanceof ExecutionServiceThread) {
-            Exception e = ((ExecutionServiceThread) execmap.thread).getException()
-            if (null != e && e instanceof NodesetFailureException) {
-                return ((NodesetFailureException) e).getNodeset();
-            } else if (null != e && e instanceof BuildException) {
-                final Throwable cause = ((BuildException) e).getCause()
-                if (null != cause && cause instanceof NodesetFailureException) {
-                    return ((NodesetFailureException) cause).getNodeset()
-                }
-            }
+            final recorder = (NodeRecorder) execmap.noderecorder
+            return recorder.getFailedNodes()
+//        } else if (null != execmap.thread && execmap.thread instanceof ExecutionServiceThread) {
+//            Exception e = ((ExecutionServiceThread) execmap.thread).getException()
+//            if (null != e && e instanceof NodesetFailureException) {
+//                return ((NodesetFailureException) e).getNodeset();
+//            } else if (null != e && e instanceof BuildException) {
+//                final Throwable cause = ((BuildException) e).getCause()
+//                if (null != cause && cause instanceof NodesetFailureException) {
+//                    return ((NodesetFailureException) cause).getNodeset()
+//                }
+//            }
         }
         return null;
     }
@@ -155,10 +156,11 @@ class ExecutionJob implements InterruptableJob {
             execmap= executionService.executeAsyncBegin(framework,execution,scheduledExecution)
         }catch(Exception e){
             log.error("Execution failed: "+e.getMessage(), e)
+            throw e
         }
         if(!execmap){
             //failed to start
-            return false
+            return [success:false]
         }
 
         int killcount=0;
@@ -192,7 +194,7 @@ class ExecutionJob implements InterruptableJob {
     }
 
     def saveState(ExecutionService executionService,Execution execution, boolean success, boolean _interrupted, boolean isTemp, long scheduledExecutionId=-1, Map execmap=null) {
-        Collection<String> failedNodes=extractFailedNodes(execmap)
+        Map<String,Object> failedNodes=extractFailedNodes(execmap)
         if(isTemp){
             executionService.saveExecutionState(
                             null,
@@ -201,7 +203,8 @@ class ExecutionJob implements InterruptableJob {
                                 status:String.valueOf(success),
                                 dateCompleted:new Date(),
                                 cancelled:_interrupted,
-                                failedNodes:failedNodes,
+                                failedNodes:failedNodes?.keySet(),
+                                failedNodesMap:failedNodes,
                                 ],
                             execmap
                             )
@@ -214,7 +217,8 @@ class ExecutionJob implements InterruptableJob {
                     status:String.valueOf(success),
                     dateCompleted:new Date(),
                     cancelled:_interrupted,
-                    failedNodes:failedNodes,
+                    failedNodes:failedNodes?.keySet(),
+                    failedNodesMap: failedNodes,
                     ],
                     execmap
                 )

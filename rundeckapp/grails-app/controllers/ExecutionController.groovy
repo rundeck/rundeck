@@ -169,7 +169,7 @@ class ExecutionController {
         def dateStamp= dateFormater.format(e.dateStarted);
         response.setContentType("text/plain")
         if("inline"!=params.view){
-            response.setHeader("Content-Disposition","attachment; filename=\"${e.scheduledExecution?e.scheduledExecution.jobName:e.name}-${dateStamp}.txt\"")
+            response.setHeader("Content-Disposition","attachment; filename=\"${e.scheduledExecution?e.scheduledExecution.jobName:'adhoc'}-${dateStamp}.txt\"")
         }
         def isFormatted = "true"==servletContext.getAttribute("output.download.formatted")
         if(params.formatted){

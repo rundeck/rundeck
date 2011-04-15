@@ -30,5 +30,8 @@ package com.dtolabs.rundeck.core.execution;
  * @version $Revision$
  */
 public abstract interface ExecutionItem {
-    
+    /**
+     * Return type of the execution item
+     */
+    public String getType();
 }

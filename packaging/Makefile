@@ -32,7 +32,7 @@ rpm:
 	@mkdir -p dist/SOURCES/usr/bin
 	@mkdir -p dist/SOURCES/var/lib/rundeck
 	@mkdir -p dist/SOURCES/var/lib/rundeck/exp/webapp
-	@mkdir -p dist/SOURCES/var/lib/rundeck/{data,work,logs,cli}
+	@mkdir -p dist/SOURCES/var/lib/rundeck/{data,work,logs,cli,libext}
 	@mkdir -p dist/SOURCES/var/log/rundeck
 	@mkdir -p dist/SOURCES/var/lib/rundeck/var/tmp
 	@mkdir -p dist/SOURCES/var/rundeck/projects
@@ -46,6 +46,7 @@ rpm:
 	@cp -R ../core/build/tools/lib/*.jar dist/SOURCES/var/lib/rundeck/cli
 	@cp ../core/build/libs/rundeck-core-*.jar dist/SOURCES/var/lib/rundeck/cli
 	@cp ../rundeckapp/target/rundeck-server-*.jar dist/SOURCES/var/lib/rundeck/bootstrap	
+	@cp ../plugins/*-plugin/build/libs/*-plugin*.jar dist/SOURCES/var/lib/rundeck/libext
 	@find ../core/src/resources/com/dtolabs/rundeck/core/cli/templates ! -regex ".*.bat$$" -and -type f | sed -e /rd-check/d -e /rd-setup/d | xargs -I Z cp Z dist/SOURCES/usr/bin
 	@unzip -oq ../rundeckapp/target/rundeck-$(VERSION).war -d dist/SOURCES/var/lib/rundeck/exp/webapp/
 	ln -s /etc/rundeck/log4j.properties; mv log4j.properties dist/SOURCES/var/lib/rundeck/exp/webapp/WEB-INF/classes

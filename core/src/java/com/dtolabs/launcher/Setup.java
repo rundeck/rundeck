@@ -312,6 +312,11 @@ public class Setup implements CLIToolLogger {
             System.out.println(message);
 //        }
     }
+    public void debug(String message) {
+//        if(null!=requiredParams && requiredParams.debugFlag){
+            System.out.println(message);
+//        }
+    }
 
     public Parameters getParameters() {
         return parameters;

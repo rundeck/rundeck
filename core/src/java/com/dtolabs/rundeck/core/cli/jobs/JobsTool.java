@@ -748,5 +748,9 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
         }
     }
 
-
+    public void debug(final String message) {
+        if (null != clilogger) {
+            clilogger.debug(message);
+        }
+    }
 }

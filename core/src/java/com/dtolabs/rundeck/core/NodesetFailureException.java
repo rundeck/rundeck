@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core;
 
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * NodesetFailureException indicates some nodes failed during a multi-node dispatch.
@@ -43,6 +44,7 @@ public class NodesetFailureException extends CoreException {
      * @param retryMsg commandline for retrying the command for the failed nodes.
      */
     private Collection<String> nodeset;
+    private Map<String,Object> nodeFailures;
 
     /**
      * Create NodesetFailureException
@@ -51,6 +53,14 @@ public class NodesetFailureException extends CoreException {
     public NodesetFailureException(final Collection<String> nodeset) {
         super("Execution failed on the following " + (null != nodeset ? nodeset.size() : 0) + " nodes: " + nodeset);
         this.nodeset = nodeset;
+    }
+    /**
+     * Create NodesetFailureException
+     * @param nodeset node names
+     */
+    public NodesetFailureException(final Map<String,Object> failures) {
+        super("Execution failed on the following " + (null != failures ? failures.size() : 0) + " nodes: " + failures);
+        this.nodeFailures = failures;
     }
 
     /**
@@ -67,5 +77,13 @@ public class NodesetFailureException extends CoreException {
      */
     public void setNodeset(final Collection<String> nodeset) {
         this.nodeset = nodeset;
+    }
+
+    public Map<String, Object> getNodeFailures() {
+        return nodeFailures;
+    }
+
+    public void setNodeFailures(Map<String, Object> nodeFailures) {
+        this.nodeFailures = nodeFailures;
     }
 }

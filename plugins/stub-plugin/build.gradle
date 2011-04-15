@@ -1,0 +1,10 @@
+jar {
+    manifest {
+        attributes 'Rundeck-Plugin-Classnames': 'com.dtolabs.rundeck.plugin.stub.StubFileCopier,com.dtolabs.rundeck.plugin.stub.StubNodeExecutor'
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '0.9-rc-3'
+    jarPath = 'wrapper'
+}

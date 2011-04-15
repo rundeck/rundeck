@@ -118,7 +118,7 @@ build_rundeck_core(){
 
 cd $BASEDIR/core
 echo "core build starting..."
-./gradlew -PbuildNum=$RELNUM clean check assemble
+./gradlew -PbuildNum=$RELNUM clean check assemble javadoc
 if [ 0 != $? ]
 then
    echo "Core build assemble failed: $!"

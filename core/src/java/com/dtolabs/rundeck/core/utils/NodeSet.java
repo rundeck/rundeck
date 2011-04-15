@@ -40,6 +40,27 @@ public class NodeSet extends ProjectComponent {
     public static final String OS_VERSION = "os-version";
 
     private String singleNodeName;
+
+    /**
+     * default constructor
+     */
+    public NodeSet() {
+    }
+
+    /**
+     * Create a nodeset with a single node name
+     */
+    public NodeSet(final String singleNodeName) {
+        this.singleNodeName = singleNodeName;
+    }
+
+    /**
+     * Create a nodeset for a single node
+     */
+    public NodeSet(final INodeEntry singleNode) {
+        this(singleNode.getNodename());
+    }
+
     /**
      * names of the filter attributes used by exclude/include that are exposed to the CLI interface
      */
@@ -377,6 +398,46 @@ public class NodeSet extends ProjectComponent {
         return setselector;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        NodeSet nodeSet = (NodeSet) o;
+
+        if (keepgoing != nodeSet.keepgoing) {
+            return false;
+        }
+        if (threadCount != nodeSet.threadCount) {
+            return false;
+        }
+        if (excludes != null ? !excludes.equals(nodeSet.excludes) : nodeSet.excludes != null) {
+            return false;
+        }
+        if (includes != null ? !includes.equals(nodeSet.includes) : nodeSet.includes != null) {
+            return false;
+        }
+        if (singleNodeName != null ? !singleNodeName.equals(nodeSet.singleNodeName) : nodeSet.singleNodeName != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = singleNodeName != null ? singleNodeName.hashCode() : 0;
+        result = 31 * result + (includes != null ? includes.hashCode() : 0);
+        result = 31 * result + (excludes != null ? excludes.hashCode() : 0);
+        result = 31 * result + threadCount;
+        result = 31 * result + (keepgoing ? 1 : 0);
+        return result;
+    }
+
     public String toString() {
         final StringBuilder builder = new StringBuilder();
         builder.append("NodeSet{");
@@ -385,6 +446,9 @@ public class NodeSet extends ProjectComponent {
         }
         if (null != includes && !includes.isBlank()) {
             builder.append("includes=").append(includes);
+        }
+        if (null != singleNodeName ) {
+            builder.append("singleNode=").append(singleNodeName);
         }
         builder.append("}");
         return builder.toString();
@@ -628,6 +692,62 @@ public class NodeSet extends ProjectComponent {
 
         public void setAttributesMap(Map<String, String> attributesMap) {
             this.attributesMap = attributesMap;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof SetSelector)) {
+                return false;
+            }
+
+            SetSelector that = (SetSelector) o;
+
+            if (dominant != that.dominant) {
+                return false;
+            }
+            if (attributesMap != null ? !attributesMap.equals(that.attributesMap) : that.attributesMap != null) {
+                return false;
+            }
+            if (hostname != null ? !hostname.equals(that.hostname) : that.hostname != null) {
+                return false;
+            }
+            if (name != null ? !name.equals(that.name) : that.name != null) {
+                return false;
+            }
+            if (osarch != null ? !osarch.equals(that.osarch) : that.osarch != null) {
+                return false;
+            }
+            if (osfamily != null ? !osfamily.equals(that.osfamily) : that.osfamily != null) {
+                return false;
+            }
+            if (osname != null ? !osname.equals(that.osname) : that.osname != null) {
+                return false;
+            }
+            if (osversion != null ? !osversion.equals(that.osversion) : that.osversion != null) {
+                return false;
+            }
+            if (tags != null ? !tags.equals(that.tags) : that.tags != null) {
+                return false;
+            }
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = (dominant ? 1 : 0);
+            result = 31 * result + (hostname != null ? hostname.hashCode() : 0);
+            result = 31 * result + (osfamily != null ? osfamily.hashCode() : 0);
+            result = 31 * result + (osarch != null ? osarch.hashCode() : 0);
+            result = 31 * result + (osname != null ? osname.hashCode() : 0);
+            result = 31 * result + (tags != null ? tags.hashCode() : 0);
+            result = 31 * result + (osversion != null ? osversion.hashCode() : 0);
+            result = 31 * result + (name != null ? name.hashCode() : 0);
+            result = 31 * result + (attributesMap != null ? attributesMap.hashCode() : 0);
+            return result;
         }
     }
 

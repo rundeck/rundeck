@@ -21,6 +21,7 @@ class FrameworkService implements ApplicationContextAware {
     String depsdir
 
     def ApplicationContext applicationContext
+    def ExecutionService executionService
 
     // implement ApplicationContextAware interface
     def void setApplicationContext(ApplicationContext ac) throws BeansException {

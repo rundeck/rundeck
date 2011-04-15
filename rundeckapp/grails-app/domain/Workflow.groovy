@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import com.dtolabs.rundeck.execution.IWorkflow
 
 
 /*

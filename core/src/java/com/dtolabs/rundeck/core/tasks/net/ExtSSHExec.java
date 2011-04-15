@@ -165,6 +165,16 @@ public class ExtSSHExec extends SSHBase {
         allocatePty = b;
     }
 
+    private int exitStatus =-1;
+    /**
+     * Return exitStatus of the remote execution, after it has finished or failed.
+     * The return value prior to retrieving the result will be -1. If that value is returned
+     * after the task has executed, it indicates that an exception was thrown prior to retrieval
+     * of the value.
+     */
+    public int getExitStatus(){
+        return exitStatus;
+    }
     /**
      * Add an Env element
      * @param env element
@@ -338,6 +348,7 @@ public class ExtSSHExec extends SSHBase {
 
                 // this is the wrong test if the remote OS is OpenVMS,
                 // but there doesn't seem to be a way to detect it.
+                exitStatus =channel.getExitStatus();
                 int ec = channel.getExitStatus();
                 if (ec != 0) {
                     String msg = "Remote command failed with exit status " + ec;

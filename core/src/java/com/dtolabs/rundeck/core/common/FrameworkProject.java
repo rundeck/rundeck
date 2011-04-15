@@ -221,7 +221,7 @@ public class FrameworkProject extends FrameworkResourceParent {
         }
         final Framework framework = projectResourceMgr.getFramework();
         final String s;
-        if(framework.existsProperty(Framework.NODES_RESOURCES_FILE_PROP)){
+        if(framework.hasProperty(Framework.NODES_RESOURCES_FILE_PROP)){
             return new File(getEtcDir(), framework.getProperty(Framework.NODES_RESOURCES_FILE_PROP)).getAbsolutePath();
         }else{
             return new File(getEtcDir(), NODES_XML).getAbsolutePath();

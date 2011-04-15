@@ -9,9 +9,6 @@ import org.apache.log4j.LogManager
 import org.apache.log4j.Level
 import org.apache.log4j.net.SocketAppender
 import grails.util.GrailsUtil
-import com.dtolabs.rundeck.execution.WorkflowExecutionItem
-import com.dtolabs.rundeck.execution.WorkflowExecutor
-import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.launcher.Setup
 
 
@@ -98,8 +95,8 @@ class BootStrap {
 
 
          //initialize execution service plugin
-         com.dtolabs.rundeck.core.execution.ExecutionServiceFactory.instance().setDefaultExecutorClass(WorkflowExecutionItem.class,WorkflowExecutor.class)
-         com.dtolabs.rundeck.core.execution.ExecutionServiceFactory.instance().setDefaultExecutor(JobExecutionItem.class,executionService)
+//         com.dtolabs.rundeck.core.execution.ExecutionServiceFactory.instance().setDefaultExecutorClass(WorkflowExecutionItem.class,WorkflowExecutor.class)
+//         com.dtolabs.rundeck.core.execution.ExecutionServiceFactory.instance().setDefaultExecutor(JobExecutionItem.class,executionService)
 
 
          if(grailsApplication.config.loglevel.default){
