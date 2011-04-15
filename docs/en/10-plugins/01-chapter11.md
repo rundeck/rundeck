@@ -14,8 +14,28 @@ RunDeck comes with some built-in providers for these services, but Plugins
 let you write your own, or use third-party implementations.
 
 RunDeck currently comes installed with a few useful plugins: script-plugin and 
-stub-plugin.
+stub-plugin.  See [Pre-installed plugins](#pre-installed-plugins) for more info.
 
+## Installing Plugins
+
+Installation of plugins is simple:
+
+Put the plugin file, such as `plugin.jar` or `some-plugin.zip`, into the RunDeck 
+server's libext dir:
+
+    cp some-plugin.zip $RDECK_BASE/libext
+
+The plugin is now enabled, and any providers it defines can be used by nodes
+or projects.
+
+The RunDeck server does not have to be restarted.
+
+## Uninstalling or Updating Plugins
+
+You can simply remove the plugin files from `$RDECK_BASE/libext` to uninstall
+them.
+
+You can overwrite an old plugin with a newer version to update it.
 
 ## About Services and Providers
 
@@ -53,31 +73,40 @@ in this order:
 
 ### Node Specific
 
-To enable a Node Executor provider for a node, add an attribute to the node definition:
+To enable a provider for a node, add an attribute to the node definition.
+
+Node Executor provider attributes:
 
 `node-executor`
 
-:    specify the provider name for a non-local node.
+:    specifies the provider name for a non-local node.
 
 `local-node-executor`
 
-:    specify the provider name for the local (server) node.
+:    specifies the provider name for the local (server) node.
 
 
-To enable a FileCopier provider for a node, add an attribute named either:
+FileCopier provider attributes:
 
 `file-copier`
 
-:    specify the provider by name for a non-local node.
+:    specifies the provider by name for a non-local node.
 
 `local-file-copier`
 
-:    specify the provider by name for the local (server) node.
+:    specifies the provider by name for the local (server) node.
+
+Example Node in YAML specifying `stub` NodeExecutor and FileCopier:
+
+    remotehost:
+        hostname: remotehost
+        node-executor: stub
+        file-copier: stub
 
 ### Project or Framework Scope
 
 You can define the default provider to use for nodes at either the Project or
-Framework scope (or both).  To do so, configure one of the following properties
+Framework scope (or both).  To do so, configure any of the following properties
 in the `project.properties` or the `framework.properties` files.  
 
 `service.NodeExecutor.default.provider`
@@ -95,6 +124,11 @@ in the `project.properties` or the `framework.properties` files.
 `service.FileCopier.default.local.provider`
 
 :   Specifies the default File Copier provider for the local node.
+
+Example `project.properties` to set default local providers to `stub`:
+
+    service.NodeExecutor.default.local.provider=stub
+    service.FileCopier.default.local.provider=stub
 
 ## When providers are invoked
 
@@ -126,7 +160,7 @@ The procedure for executing a "script" command is:
 5. execute the NodeExecutor#executeCommand method, passing the filepath of the 
   copied file, and any arguments to the script command.
 
-## built-in providers
+## Built-in providers
 
 RunDeck uses a few built-in providers to provide the default service:
 
@@ -150,13 +184,301 @@ For FileCopier, these providers:
 
 :   remote copy of a command via SCP, requiring the "hostname" and  "username" attributes on a node.
 
+## Pre-installed plugins
 
-## Installing Plugins
+RunDeck comes with two pre-installed plugins that may be useful, and also serve
+as examples of plugin development and usage.
 
-Copy the `plugin.jar` or `some-plugin.zip` to the RunDeck server's libext dir:
+### script-plugin
 
-    cp plugin.jar \
-        $RDECK_BASE/libext
+The `script-plugin` includes these providers:
+
+* `script-exec` for the NodeExecutor service
+* `script-copy` for the FileCopier service
+
+(Refer to [Using Providers](#using-providers) to enable them.)
+
+This plugin provides the ability to specify an external script or command
+to perform a remote or local execution of a Rundeck command, and remote or local file copies.
+
+It can be a replacement for the built-in SSH-based remote execution and SCP-based file-copy mechanism to
+allow you to user whatever external mechanism you wish.
+
+Note: this plugin offers similar functionality to the 
+[Script Plugin Development](#script-plugin-development) 
+ model.  You may want to use this plugin to test your scripts, and
+then later package them into a standalone plugin using that model.  
+
+#### Configuring script-exec
+
+To configure the plugin you must specify a commandline string to execute.  Optionally
+you may specify a directory to be used as the working directory when executing
+the commandline string.
+
+You can configure these across all projects (framework-wide), a single project 
+(project-wide), or specifically for each node, with the most specific configuration
+value taking precedence.
+
+#### Configuring the command for script-exec
+
+For Framework and Project-wide, configure a property in either the framework.properties or 
+project.properties files:
+
+`plugin.script-exec.default.command`
+
+:   Specifies the default system command to run
+
+For node-specific add an attribute named `script-exec` to the node.
+
+`script-exec`
+
+:   Specifies the system command to run
+
+See [Defining the script-exec command](#defining-the-script-exec-command) for
+what to specify for this property.
+
+#### Configuring the working directory
+
+For Framework and Project-wide, configure a property in either the framework.properties or 
+project.properties files:
+
+`plugin.script-exec.default.dir`
+
+:   Specifies the default woring directory for the execution
+
+For node-specific add an attribute named `script-exec-dir` to the node.
+
+`script-exec-dir`
+
+:   Specifies the default woring directory for the execution (optional)
+
+#### Defining the script-exec command
+
+The value of this property or attribute should be the complete commandline 
+string to execute in an external system process.
+
+You can use *Data context properties* as you can in normal Rundeck command 
+execution, such as `${node.name}` or `${job.name}`. 
+
+In addition, the plugin provides these new data context properties:
+
+`exec.command`
+
+:   The command that the workflow/user has specified to run on the node
+
+Example:
+
+If you wanted to run some external remote connection command ("/bin/execremote") in lieu of the 
+built-in ssh command, you could specify these attributes for node:
+
+    mynode:
+        node-executor: script-exec
+        script-exec: /bin/execremote -host ${node.hostname} -user ${node.username} -- ${script-exec.command}
+
+At run time, the properties specified would be expanded to the values for the
+specific node and command string to execute.
+
+OR, you could specify a default to apply to all nodes within the project.properties 
+file located at `$RDECK_BASE/projects/NAME/etc/project.properties`.
+
+    script-exec.default.command= /bin/execremote -host ${node.hostname} \
+        -user ${node.username} -- ${script-exec.command}
+
+Similarly for the `$RDECK_BASE/etc/framework.properties` file to apply to all
+projects.
+
+#### Requirements for the script-exec command
+
+The command run by by the script plugin is expected to behave in the following manner:
+
+* Exit with a system exit code of "0" in case of success.
+* Any other exit code indicates failure
+
+Note: all output from STDOUT and STDERR will be captured as part of the Rundeck job execution.
+
+#### Configuring script-copy
+
+To configure script-copy you must specify a commandline string to execute.  Optionally
+you may specify a directory to be used as the working directory when executing
+the commandline string.
+
+You can configure these across all projects (framework-wide), a single project
+(project-wide), or specifically for each node, with the most specific configuration
+value taking precedence.
+
+#### Configuring the command for script-copy
+
+For Framework and Project-wide, configure a property in either the framework.properties or
+project.properties files:
+
+`plugin.script-copy.default.command`
+
+:   Specifies the default system command to run
+
+For node-specific add an attribute named `script-copy` to the node.
+
+`script-copy`
+
+:   Specifies the system command to run
+
+See [Defining the script-copy command](#defining-the-script-copy-command) for
+what to specify for this property.
+
+#### Configuring the working directory
+
+For Framework and Project-wide, configure a property in either the framework.properties or
+project.properties files:
+
+`plugin.script-copy.default.dir`
+
+:   Specifies the default woring directory for the execution
+
+
+For node-specific add an attribute named `script-copy-dir` to the node.
+
+`script-copy-dir`
+
+:   Specifies the default woring directory for the execution (optional)
+
+
+#### Defining the script-copy command
+
+The value of this property or attribute should be the complete commandline
+string to execute in an external system process.
+
+You can use *Data context properties* as you can in normal Rundeck command
+execution, such as `${node.name}` or `${job.name}`.
+
+In addition, the plugin provides these new data context properties:
+
+`file-copy.file`
+
+:   The local filepath that should be copied to the remote node
+
+
+Example:
+
+If you wanted to run some external remote connection command ("/bin/execremote") in lieu of the
+built-in ssh command, you could specify these attributes for node:
+
+    mynode:
+        node-executor: script-exec
+        script-exec: /bin/execremote -host ${node.hostname} -user ${node.username} -- ${script-exec.command}
+
+At run time, the properties specified would be expanded to the values for the
+specific node and command string to execute.
+
+OR, you could specify a default to apply to all nodes within the project.properties
+file located at `$RDECK_BASE/projects/NAME/etc/project.properties`.
+
+    script-exec.default.command= /bin/execremote -host ${node.hostname} \
+        -user ${node.username} -- ${script-exec.command}
+
+Similarly for the `$RDECK_BASE/etc/framework.properties` file to apply to all
+projects.
+
+#### Requirements of script-copy command
+
+The command executed by script-copy is expected to behave in the following manner:
+
+* Output the filepath of the copied file on the target node as the first line of output on STDOUT
+* Exit with an exit code of "0" to indicate success
+* Exit with any other exit code indicates failure
+
+#### Example Scripts
+
+Here are some example scripts to show the some possible usage patterns.
+
+**Example script-exec**:
+
+Node definition:
+
+    mynode:
+        node-executor: script-exec
+
+Project config `project.properties` file:
+
+    plugin.script-exec.default.command: /tmp/myexec.sh ${node.hostname} ${node.username} -- ${exec.command}
+
+Contents of `/tmp/myexec.sh`:
+
+    #!/bin/bash
+
+    # args are [hostname] [username] -- [command to exec...]
+
+    host=$1
+    shift
+    user=$1
+    shift
+    command="$*"
+
+    REMOTECMD=ssh
+
+    exec $REMOTECMD $user@$host $command
+
+**Example script-copy**:
+
+Node definition:
+
+    mynode:
+        file-copier: script-copy
+        destdir: /some/node/dir
+
+System-wide config in `framework.properties`:
+
+    plugin.script-copy.default.command: /tmp/mycopy.sh ${node.hostname} ${node.username} ${node.destdir} ${file-copy.file}
+
+Contents of `/tmp/mycopy.sh`:
+
+    #!/bin/bash
+
+    # args are [hostname] [username] [destdir] [filepath]
+
+    host=$1
+    shift
+    user=$1
+    shift
+    dir=$1
+    shift
+    file=$1
+
+    name=`basename $file`
+
+    # copy to node
+    CPCMD=scp
+
+    exec $CPCMD $file $user@$host:$dir/$name > /dev/null || exit $?
+
+    echo "$dir/$name"
+
+### stub-plugin
+
+The `stub-plugin` includes these providers:
+
+* `stub` for the NodeExecutor service
+* `stub` for the FileCopier service
+
+(Refer to [Using Providers](#using-providers) to enable them.)
+
+This plugin does not actually perform any remote file copy or command execution,
+instead it simply echoes the command that was supposed to be executed, and
+pretends to have copied a file. 
+
+This is intended for use in testing new Nodes, Jobs or Workflow sequences without
+affecting any actual runtime environment.  
+
+You can also test some failure scenarios by configuring the following node attributes:
+
+`stub-exec-success`="true/false"
+
+:   If set to false, the stub command execution will simulate command failure
+
+`stub-result-code`
+
+:   Simulate the return result code from execution
+
+You could, for example, disable or test an entire project's workflows or jobs by
+simply setting the `project.properties` node executor provider to `stub`.
 
 Plugin Development
 =============
@@ -305,14 +627,14 @@ The file `plugin.yaml` must have this structure:
 
     # yaml plugin metadata
     
-    name: plugin name, required
-    version: plugin version, required
+    name: plugin name
+    version: plugin version
     rundeckPluginVersion: 1.0
     author: author name
-    date: release data
+    date: release date
     providers:
-        - name: [provider name]
-          service: [service name]
+        - name: provider
+          service: service name
           plugin-type: script
           script-interpreter: [interpreter]
           script-file: [script file name]
@@ -323,9 +645,12 @@ The main metadata that is required:
 * `name` - name for the plugin
 * `version` - version number of the plugin
 * `rundeckPluginVersion` - Rundeck Plugin type version, currently "1.0"
+* `providers` - list of provider metadata maps
+
+These are optional:
+
 * `author` - optional author info
 * `date` - optional release date info
-* `providers` - list of provider metadata maps
 
 This provides the necessary metadata about the plugin, including one or more 
 entries in the `providers` list to declare those providers defined in the plugin.
