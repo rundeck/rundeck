@@ -14,13 +14,14 @@ import org.codehaus.groovy.grails.web.json.JSONElement
 import com.dtolabs.rundeck.core.utils.NodeSet
 import groovy.xml.MarkupBuilder
 import com.dtolabs.client.utils.Constants
-import com.dtolabs.utils.Streams
 import org.apache.log4j.Logger
 import org.apache.commons.httpclient.Header
 import org.apache.commons.httpclient.util.DateUtil
 import org.apache.commons.httpclient.util.DateParseException
 import org.apache.log4j.MDC
 import org.apache.log4j.Priority
+import org.apache.commons.httpclient.auth.AuthScope
+import org.apache.commons.httpclient.UsernamePasswordCredentials
 
 class ScheduledExecutionController  {
     def Scheduler quartzScheduler
@@ -249,9 +250,10 @@ class ScheduledExecutionController  {
             if (opt.valuesUrl) {
                 //load expand variables in URL source
                 String srcUrl = expandUrl(opt, opt.valuesUrl.toExternalForm(), scheduledExecution)
+                String cleanUrl=srcUrl.replaceAll("^(https?://)([^:@/]+):[^@/]*@",'$1$2:****@');
                 def remoteResult=[:]
                 def remoteStats=[:]
-                def result
+                def result=null
                 def err = [:]
                 try {
                     remoteResult = getRemoteJSON(srcUrl, 10)
@@ -260,45 +262,49 @@ class ScheduledExecutionController  {
                 } catch (Exception e) {
                     err.message = "Failed loading remote option values"
                     err.exception = e
-                    err.srcUrl = srcUrl
-                    log.error("getRemoteJSON error: URL ${srcUrl} : ${e.message}");
+                    err.srcUrl = cleanUrl
+                    log.error("getRemoteJSON error: URL ${cleanUrl} : ${e.message}");
                     e.printStackTrace()
                 }
                 if(remoteResult.error){
                     err.message = "Failed loading remote option values"
                     err.exception = new Exception(remoteResult.error)
-                    err.srcUrl = srcUrl
-                    log.error("getRemoteJSON error: URL ${srcUrl} : ${remoteResult.error}");
+                    err.srcUrl = cleanUrl
+                    log.error("getRemoteJSON error: URL ${cleanUrl} : ${remoteResult.error}");
                 }
                 logRemoteOptionStats(remoteStats,[jobName:scheduledExecution.generateFullName(),jobID:scheduledExecution.id, jobProject:scheduledExecution.project,optionName:params.option,user:session.user])
                 //validate result contents
                 boolean valid = true;
                 def validationerrors=[]
-                if(result && result instanceof Collection){
-                    result.eachWithIndex { entry,i->
-                        if(entry instanceof org.codehaus.groovy.grails.web.json.JSONObject){
-                            if(!entry.name){
-                                validationerrors<<"Item: ${i} has no 'name' entry"
-                                valid=false;
-                            }
-                            if(!entry.value){
-                                validationerrors<<"Item: ${i} has no 'value' entry"
+                if(result){
+                    if( result instanceof Collection){
+                        result.eachWithIndex { entry,i->
+                            if(entry instanceof org.codehaus.groovy.grails.web.json.JSONObject){
+                                if(!entry.name){
+                                    validationerrors<<"Item: ${i} has no 'name' entry"
+                                    valid=false;
+                                }
+                                if(!entry.value){
+                                    validationerrors<<"Item: ${i} has no 'value' entry"
+                                    valid = false;
+                                }
+                            }else if(!(entry instanceof String)){
                                 valid = false;
+                                validationerrors << "Item: ${i} expected string or map like {name:\"..\",value:\"..\"}"
                             }
-                        }else if(!(entry instanceof String)){
-                            valid = false;
-                            validationerrors << "Item: ${i} expected string or map like {name:\"..\",value:\"..\"}"
                         }
+                    }else{
+                        validationerrors << "Expected top-level list with format: [{name:\"..\",value:\"..\"},..], or ['value','value2',..]"
+                        valid=false
                     }
-                }else{
-                    validationerrors << "Expected top-level list with format: [{name:\"..\",value:\"..\"},..], or ['value','value2',..]"
-                    valid=false
+                    if(!valid){
+                        result=null
+                        err.message="Failed parsing remote option values: ${validationerrors.join('\n')}"
+                    }
+                }else if(!err){
+                    err.message = "Empty result"
                 }
-                if(!valid){
-                    result=null
-                    err.message="Failed parsing remote option values: ${validationerrors.join('\n')}"
-                }
-                return render(template: "/framework/optionValuesSelect", model: [optionSelect: opt, values: result, srcUrl: srcUrl, err: err,fieldPrefix:params.fieldPrefix,selectedvalue:params.selectedvalue]);
+                return render(template: "/framework/optionValuesSelect", model: [optionSelect: opt, values: result, srcUrl: cleanUrl, err: err,fieldPrefix:params.fieldPrefix,selectedvalue:params.selectedvalue]);
             } else {
                 return error.call()
             }
@@ -412,10 +418,30 @@ class ScheduledExecutionController  {
             params.setConnectionManagerTimeout(timeout*1000)
             params.setSoTimeout(timeout*1000)
             def HttpClient client= new HttpClient(params)
+            def URL urlo
+            def AuthScope authscope=null
+            def UsernamePasswordCredentials cred=null
+            boolean doauth=false
+            String cleanUrl = url.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
+            try{
+                urlo = new URL(url)
+                if(urlo.userInfo){
+                    doauth = true
+                    authscope = new AuthScope(urlo.host,urlo.port>0? urlo.port:urlo.defaultPort,AuthScope.ANY_REALM,"BASIC")
+                    cred = new UsernamePasswordCredentials(urlo.userInfo)
+                    url = new URL(urlo.protocol, urlo.host, urlo.port, urlo.file).toExternalForm()
+                }
+            }catch(MalformedURLException e){
+                throw new Exception("Failed to configure base URL for authentication: "+e.getMessage(),e)
+            }
+            if(doauth){
+                client.getParams().setAuthenticationPreemptive(true);
+                client.getState().setCredentials(authscope,cred)
+            }
             def HttpMethod method = new GetMethod(url)
             method.setFollowRedirects(true)
             method.setRequestHeader("Accept","application/json")
-            stats.url = url;
+            stats.url = cleanUrl;
             stats.startTime = System.currentTimeMillis();
             def resultCode = client.executeMethod(method);
             stats.httpStatusCode = resultCode

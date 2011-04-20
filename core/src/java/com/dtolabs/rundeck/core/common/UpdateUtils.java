@@ -60,15 +60,43 @@ public class UpdateUtils {
      */
     public static void updateFileFromUrl(final String sourceUrl, final String destinationFilePath) throws
         UpdateException {
-        final URL url;
+        updateFileFromUrl(sourceUrl, destinationFilePath, null, null);
+    }
+    /**
+     * Get the source URL and store it to a destination file path
+     *
+     * @param sourceUrl
+     * @param destinationFilePath
+     *
+     * @param username
+     * @param password
+     * @throws UpdateException
+     */
+    public static void updateFileFromUrl(final String sourceUrl, final String destinationFilePath,
+                                         final String username, final String password) throws
+        UpdateException {
+        String tusername = username;
+        String tpassword = password;
+        URL url;
         try {
             url = new URL(sourceUrl);
+            if (null == username && null == password && null != url.getUserInfo()) {
+                //try to extract userinfo from URL
+                final String userInfo = url.getUserInfo();
+                final String[] split = userInfo.split(":", 2);
+                if (2 == split.length) {
+                    tusername = split[0];
+                    tpassword = split[1];
+                    url = new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile());
+                }
+            }
         } catch (MalformedURLException e) {
             throw new UpdateException(e);
         }
         final File destinationFile = new File(destinationFilePath);
         final long mtime = destinationFile.exists() ? destinationFile.lastModified() : 0;
-        get(url, destinationFile);
+
+        get(url, destinationFile, tusername, tpassword);
         if (destinationFile.lastModified() > mtime) {
             logger.info("updated file: " + destinationFile.getAbsolutePath());
         } else {
@@ -77,13 +105,13 @@ public class UpdateUtils {
 
     }
 
-    static void get(final URL srcUrl, final File destFile) throws UpdateException {
+    static void get(final URL srcUrl, final File destFile, final String username, final String password) throws UpdateException {
         final Project p = new Project();
         final File lockFile = new File(destFile.getAbsolutePath() + ".lock");
         final File newDestFile = new File(destFile.getAbsolutePath() + ".new");
 
         try {
-            final Task getTask = createTask(srcUrl, newDestFile, null, null);
+            final Task getTask = createTask(srcUrl, newDestFile, username, password);
             getTask.setProject(p);
 
             //synchronize writing to file within this jvm
@@ -118,7 +146,9 @@ public class UpdateUtils {
                         }
                     }
                 } catch (BuildException e) {
-                    logger.error("Error getting URL <" + srcUrl + ">: " + e.getMessage(), e);
+                    logger.error(
+                        "Error getting URL <" + srcUrl + ">" + (null != username ? "(user: " + username + ", pass: ****) " : "") + e
+                            .getMessage(), e);
                     throw new UpdateException(e);
                 } finally {
                     lock.release();
@@ -142,7 +172,8 @@ public class UpdateUtils {
             getTask.setPassword(password);
         }
         getTask.setSrc(fileUrl);
-
+        getTask.setHttpUseCaches(false);
+        getTask.setMaxTime(60);
         /**
          * If it is an empty file, then ignore timestamp check and get it
          */
