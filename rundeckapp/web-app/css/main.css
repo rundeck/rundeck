@@ -2236,7 +2236,7 @@ table.userlist .username{
 /** workflows page */
 
 div.jobstats table td{
-    font-size:60%;
+    font-size: 0.9em;
 }
 div.jobstats .statlabel{
     color: gray;
