@@ -197,6 +197,105 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         assertEquals "desc",job.description
         assertEquals "project1",job.project
     }
+
+    /**
+     * test application/x-www-form-urlencoded instead of multipart
+     */
+    public void testUploadFormContentShouldCreate() {
+        def sec = new ScheduledExecutionController()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.existsFrameworkProject {project, framework -> return true }
+        sec.frameworkService = fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.nextExecutionTimes {joblist -> return [] }
+        sec.scheduledExecutionService = mock2.createMock()
+
+        def xml = '''
+<joblist>
+    <job>
+        <name>test1</name>
+        <group>testgroup</group>
+        <description>desc</description>
+        <context>
+            <project>project1</project>
+        </context>
+        <sequence>
+            <command><exec>echo test</exec></command>
+        </sequence>
+    </job>
+</joblist>
+'''
+        sec.params.xmlBatch=xml
+        def result = sec.upload()
+        assertNull sec.response.redirectedUrl
+        assertNull "Result had an error: ${sec.flash.error}", sec.flash.error
+        assertNull "Result had an error: ${sec.flash.message}", sec.flash.message
+        assertNotNull result
+        assertTrue result.didupload
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
+        assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
+        assertEquals 1, result.jobs.size()
+        assertTrue result.jobs[0] instanceof ScheduledExecution
+        def ScheduledExecution job = result.jobs[0]
+        assertEquals "test1", job.jobName
+        assertEquals "testgroup", job.groupPath
+        assertEquals "desc", job.description
+        assertEquals "project1", job.project
+    }
+    /**
+     * test missing content
+     */
+    public void testUploadMissingContent() {
+        def sec = new ScheduledExecutionController()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.existsFrameworkProject {project, framework -> return true }
+        sec.frameworkService = fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.nextExecutionTimes {joblist -> return [] }
+        sec.scheduledExecutionService = mock2.createMock()
+
+        def result = sec.upload()
+        assertEquals "No file or XML was uploaded.", sec.flash.message
+        assertNull result
+
+    }
+    /**
+     * test missing File content
+     */
+    public void testUploadMissingFile() {
+        def sec = new ScheduledExecutionController()
+
+        sec.metaClass.request = new MockMultipartHttpServletRequest()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.existsFrameworkProject {project, framework -> return true }
+        sec.frameworkService = fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.nextExecutionTimes {joblist -> return [] }
+        sec.scheduledExecutionService = mock2.createMock()
+
+        def result = sec.upload()
+        assertEquals "No file was uploaded.", sec.flash.message
+        assertNull result
+
+    }
     public void testUploadShouldUpdateSameNameDupeOptionUpdate(){
         def sec = new ScheduledExecutionController()
 
