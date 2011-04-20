@@ -192,7 +192,7 @@
             if(popvis && lastHref===elem.href){
                 return;
             }
-            var delay=500;
+            var delay=50;
             if(popvis){
                 delay=50;
             }
@@ -202,7 +202,7 @@
             if(popvis && $('jobIdDetailHolder')){
                 popvis=false;
                 Try.these(
-                    function(){Effect.Fade($('jobIdDetailHolder'),{duration:0.5});},
+//                    function(){Effect.Fade($('jobIdDetailHolder'),{duration:0.5});},
                     function(){$('jobIdDetailHolder').hide();}
                     );
             }
@@ -218,7 +218,7 @@
                 motimer=null;
             }
             doshow=false;
-            mltimer=setTimeout(doMouseout,3000);
+            mltimer=setTimeout(doMouseout,500);
         }
         function showJobDetails(elem){
             //get url
