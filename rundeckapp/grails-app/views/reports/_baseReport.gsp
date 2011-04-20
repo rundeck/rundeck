@@ -142,8 +142,9 @@
 
             <td style="white-space:nowrap" class="right sepL">
                 <g:if test="${it.dateCompleted}">
-                    <span title="${it?.actionType ? it.actionType : it.status}: <g:relativeDate atDate='${it?.dateCompleted}'/>">
+                    <span title="<g:relativeDate atDate='${it?.dateStarted}'/> to <g:relativeDate atDate='${it?.dateCompleted}'/> ">
                         <g:relativeDate elapsed="${it?.dateCompleted}" />
+                        (<g:relativeDate end="${it?.dateCompleted}" start="${it?.dateStarted}"/>)
                     </span>
                 </g:if>
             </td>
