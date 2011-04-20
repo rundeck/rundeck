@@ -293,7 +293,7 @@
                 //click outside of popup bubble hides it
                 doMouseout();
             },false);
-            Event.observe(document.body,'keydown',function(evt){
+            Event.observe(document,'keydown',function(evt){
                 //escape key hides popup bubble
                 if(evt.keyCode===27 ){
                     doMouseout();
