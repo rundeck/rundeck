@@ -275,7 +275,8 @@ public class FrameworkProject extends FrameworkResourceParent {
      */
     public void updateNodesResourceFile() throws UpdateUtils.UpdateException {
         if (shouldUpdateNodesResourceFile()) {
-            UpdateUtils.updateFileFromUrl(getProperty(PROJECT_RESOURCES_URL_PROPERTY), getNodesResourceFilePath());
+            UpdateUtils.updateFileFromUrl(getProperty(PROJECT_RESOURCES_URL_PROPERTY), getNodesResourceFilePath(), null,
+                null);
             logger.debug("Updated nodes resources file: " + getNodesResourceFilePath());
         }
     }
