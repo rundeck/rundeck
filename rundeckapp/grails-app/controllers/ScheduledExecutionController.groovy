@@ -422,6 +422,7 @@ class ScheduledExecutionController  {
             def AuthScope authscope=null
             def UsernamePasswordCredentials cred=null
             boolean doauth=false
+            String cleanUrl = url.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
             try{
                 urlo = new URL(url)
                 if(urlo.userInfo){
@@ -440,7 +441,7 @@ class ScheduledExecutionController  {
             def HttpMethod method = new GetMethod(url)
             method.setFollowRedirects(true)
             method.setRequestHeader("Accept","application/json")
-            stats.url = url;
+            stats.url = cleanUrl;
             stats.startTime = System.currentTimeMillis();
             def resultCode = client.executeMethod(method);
             stats.httpStatusCode = resultCode
