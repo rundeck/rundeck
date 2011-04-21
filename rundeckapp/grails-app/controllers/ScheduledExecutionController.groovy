@@ -15,11 +15,11 @@ import com.dtolabs.rundeck.core.utils.NodeSet
 import groovy.xml.MarkupBuilder
 import com.dtolabs.client.utils.Constants
 import org.apache.log4j.Logger
-import org.apache.commons.httpclient.Header
+
 import org.apache.commons.httpclient.util.DateUtil
 import org.apache.commons.httpclient.util.DateParseException
 import org.apache.log4j.MDC
-import org.apache.log4j.Priority
+
 import org.apache.commons.httpclient.auth.AuthScope
 import org.apache.commons.httpclient.UsernamePasswordCredentials
 
@@ -2151,13 +2151,14 @@ class ScheduledExecutionController  {
         }
     }
     /**
-     * Parse an uploaded file multipart request using the specified format
+     * Parse some kind of job input request using the specified format
+     * @param input either an inputStream, a File, or a String
      */
-    private def parseUploadedFile={ file , fileformat->
+    private def parseUploadedFile={  input, fileformat->
         def jobset
         if('xml'==fileformat){
             try{
-                jobset= file.getInputStream().decodeJobsXML()
+                jobset= input.decodeJobsXML()
             }catch(Exception e){
                 return [error:"${e}"]
             }
@@ -2165,7 +2166,7 @@ class ScheduledExecutionController  {
 
             try{
                 //load file into string
-                jobset = file.getInputStream().decodeJobsYAML()
+                jobset = input.decodeJobsYAML()
             }catch (Exception e){
                 return [error:"${e}"]
             }
@@ -2273,18 +2274,24 @@ class ScheduledExecutionController  {
     }
     def upload ={
         log.info("ScheduledExecutionController: upload " + params)
-        if(!(request instanceof MultipartHttpServletRequest)){
+        def fileformat = params.fileformat ?: 'xml'
+        def parseresult
+        if(request instanceof MultipartHttpServletRequest){
+            def file = request.getFile("xmlBatch")
+            if (!file) {
+                flash.message = "No file was uploaded."
+                return
+            }
+            parseresult = parseUploadedFile(file.getInputStream(), fileformat)
+        }else if(params.xmlBatch){
+            String fileContent=params.xmlBatch
+            parseresult = parseUploadedFile(fileContent, fileformat)
+        }else{
+            flash.message = "No file or XML was uploaded."
             return
         }
-        def file = request.getFile("xmlBatch")
-        def fileformat=params.fileformat?:'xml'
         def jobset
-        if(!file){
-            flash.message="No file was uploaded."
-            return
-        }
 
-        def parseresult=parseUploadedFile(file,fileformat)
         if(parseresult.error){
             flash.error=parseresult.error
             if(params.xmlreq){
@@ -2650,24 +2657,32 @@ class ScheduledExecutionController  {
      */
     def apiJobsImport= {
         log.info("ScheduledExecutionController: upload " + params)
-        if (!(request instanceof MultipartHttpServletRequest)) {
-            flash.errorCode = "api.error.jobs.import.wrong-contenttype"
-            return chain(controller: 'api', action: 'renderError')
-        }
-        def file = request.getFile("xmlBatch")
         def fileformat = params.format ?: 'xml'
-        def jobset
-        if (!file) {
+        def parseresult
+        if (!params.xmlBatch) {
+            flash.error = g.message(code: 'api.error.parameter.required', args: ['xmlBatch'])
+            return chain(controller: 'api', action: 'error')
+        }
+        if (request instanceof MultipartHttpServletRequest) {
+            def file = request.getFile("xmlBatch")
+            if (!file) {
+                flash.errorCode = "api.error.jobs.import.missing-file"
+                return chain(controller: 'api', action: 'renderError')
+            }
+            parseresult = parseUploadedFile(file.getInputStream(), fileformat)
+        }else if (params.xmlBatch) {
+            String fileContent = params.xmlBatch
+            parseresult = parseUploadedFile(fileContent, fileformat)
+        }else{
             flash.errorCode = "api.error.jobs.import.missing-file"
             return chain(controller: 'api', action: 'renderError')
         }
 
-        def parseresult = parseUploadedFile(file, fileformat)
         if (parseresult.error) {
             flash.error = parseresult.error
             return chain(controller: 'api', action: 'error')
         }
-        jobset = parseresult.jobset
+        def jobset = parseresult.jobset
 
         def loadresults = loadJobs(jobset,params.dupeOption)
 

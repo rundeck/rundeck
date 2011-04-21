@@ -172,11 +172,11 @@ URL:
 
 Method: `POST`
 
-Expected Content-Type: `application/x-www-form-urlencoded`
+Expected Content-Type: `application/x-www-form-urlencoded` (**since 1.3**) or `multipart/form-data`
 
 Required Content:
 
-* `xmlBatch`: A `x-www-form-urlencoded` request parameter containing the input file content.
+* `xmlBatch`: Either a `x-www-form-urlencoded` request parameter containing the input content (**since 1.3**), or a `multipart/form-data` multipart MIME request part containing the content. 
 
 Optional parameters:
 
