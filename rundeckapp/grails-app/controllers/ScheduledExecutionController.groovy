@@ -39,6 +39,7 @@ class ScheduledExecutionController  {
         update:'POST',
         apiJobsImport:'POST',
         apiJobDelete:'DELETE',
+        apiJobAction:['GET','DELETE'],
         apiRunScript:'POST',
         deleteBulk:'DELETE'
     ]
@@ -2588,6 +2589,18 @@ class ScheduledExecutionController  {
      */
 
     /**
+     * common action for delete or get, which will pass through to apiJobDelete or apiJobExport
+     */
+    def apiJobAction = {
+        //switch on method
+        if('DELETE'==request.method){
+            return apiJobDelete()
+        }else{
+            return apiJobExport()
+        }
+    }
+
+    /**
      * Utility, render content for jobs/import response
      */
     def renderJobsImportApiXML={jobs,jobsi,errjobs,skipjobs, delegate->
@@ -2702,7 +2715,7 @@ class ScheduledExecutionController  {
      * API: export job definition: /job/{id}, version 1
      */
     def apiJobExport={
-        log.info("ScheduledExecutionController: show : params: " + params)
+        log.info("ScheduledExecutionController: /api/job GET : params: " + params)
         def ScheduledExecution scheduledExecution = ScheduledExecution.get( params.long('id') )
         if (!scheduledExecution) {
             flash.errorCode = "api.error.item.doesnotexist"
@@ -2761,7 +2774,7 @@ class ScheduledExecutionController  {
      * API: DELETE job definition: /job/{id}, version 1
      */
     def apiJobDelete={
-        log.info("ScheduledExecutionController: show : params: " + params)
+        log.info("ScheduledExecutionController: /api/job DELETE : params: " + params)
         def ScheduledExecution scheduledExecution = ScheduledExecution.get( params.long('id') )
         if (!scheduledExecution) {
             flash.error = g.message(code:"api.error.item.doesnotexist",args:['Job ID',params.id])

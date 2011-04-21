@@ -87,6 +87,10 @@ echo "TEST: DELETE job should succeed"
 runurl="${APIURL}/job/${jobid}"
 params=""
 
+#dont' allow redirects, remove -L
+CURLOPTS="-s -S -c $DIR/cookies -b $DIR/cookies"
+CURL="curl $CURLOPTS"
+
 # get listing
 $CURL --header "$VERSHEADER" -X DELETE ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then

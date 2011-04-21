@@ -14,10 +14,7 @@ class UrlMappings {
         "/api/$api_version/execution/$id/abort"(controller: 'execution', action: 'apiExecutionAbort')
         "/api/$api_version/executions/running"(controller: 'menu', action: 'apiExecutionsRunning')
         "/api/$api_version/history"(controller: 'reports', action: 'apiHistory')
-        "/api/$api_version/job/$id"(controller: 'api') {
-            //passthrough from ApiController to ScheduledExecutionController
-            action = [GET: "apiJobExport", DELETE: "apiJobDelete"]
-        }
+        "/api/$api_version/job/$id"(controller: 'scheduledExecution',action:'apiJobAction')
         "/api/$api_version/job/$id/run"(controller: 'scheduledExecution', action: 'apiJobRun')
         "/api/$api_version/job/$id/executions"(controller: 'scheduledExecution', action: 'apiJobExecutions')
         "/api/$api_version/jobs"(controller: 'menu', action: 'apiJobsList')
