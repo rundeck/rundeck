@@ -290,8 +290,7 @@ class FrameworkController  {
                 def project=framework.getFrameworkProjectMgr().getFrameworkProject(params.project)
                //if reload parameter is specified, and user is admin, reload from source URL
                 try {
-                    project.updateNodesResourceFile()
-                    return true
+                    return project.updateNodesResourceFile()
                 } catch (Exception e) {
                     log.error("Error updating node resources file for project ${project.name}: "+e.message)
                     flash.error="Error updating node resources file for project ${project.name}: "+e.message
@@ -433,6 +432,35 @@ class FrameworkController  {
      * API actions
      */
 
+    /**
+     * API: /api/project/NAME/updateResources
+     * calls performNodeReload, then returns API response
+     * */
+    def apiProjectUpdateResources = {
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if (!params.project) {
+            flash.error = g.message(code: 'api.error.parameter.required', args: ['project'])
+            return new ApiController().error()
+        }
+        def exists = frameworkService.existsFrameworkProject(params.project, framework)
+        if (!exists) {
+            flash.error = g.message(code: 'api.error.item.doesnotexist', args: ['project', params.project])
+            return new ApiController().error()
+        }
+        def didsucceed = performNodeReload()
+        if(didsucceed){
+            return new ApiController().success { delegate ->
+                delegate.'success' {
+                    message(g.message(code: 'api.project.updateResources.succeeded', args: [params.project]))
+                }
+            }
+        }else{
+            if(!flash.error){
+                flash.error= g.message(code: 'api.project.updateResources.failed', args: [params.project])
+            }
+            return new ApiController().error()
+        }
+    }
     /**
      * API: /api/projects, version 1
      */
