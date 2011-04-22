@@ -270,15 +270,18 @@ public class FrameworkProject extends FrameworkResourceParent {
     /**
      * Conditionally update the nodes resources file if a URL source is defined for it 
      *
-     * @throws UpdateUtils.UpdateException
+     * @return true if the update succeeded, false if it was not performed
+     * @throws UpdateUtils.UpdateException if an error occurs while trying to update the resources file
      *
      */
-    public void updateNodesResourceFile() throws UpdateUtils.UpdateException {
+    public boolean updateNodesResourceFile() throws UpdateUtils.UpdateException {
         if (shouldUpdateNodesResourceFile()) {
             UpdateUtils.updateFileFromUrl(getProperty(PROJECT_RESOURCES_URL_PROPERTY), getNodesResourceFilePath(), null,
                 null);
             logger.debug("Updated nodes resources file: " + getNodesResourceFilePath());
+            return true;
         }
+        return false;
     }
 
     /**
