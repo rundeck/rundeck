@@ -424,6 +424,16 @@ If the project defines a Resource Model Provider URL, then the additional items 
         <providerURL>URL</providerURL>
     </resources>
 
+### Updating Resources for a Project
+
+Update the resources for a project via its Resource Model Provider URL.
+
+URL:
+
+    /project/NAME/updateResources
+
+Result: A success or failure result with a message.
+
 ### Listing History
 
 List the event history for a project.
