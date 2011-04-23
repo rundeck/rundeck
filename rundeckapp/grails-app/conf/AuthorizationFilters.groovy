@@ -160,6 +160,10 @@ public class AuthorizationFilters {
             'listFrameworkResourceInstances': _rs_read,
             'apiProjects': _rs_read,
             'apiProject': _rs_read,
+            'apiResource': _rs_read,
+            'apiResources': _rs_read,
+            'apiProjectResources': [_rs_read, _rs_create, _rs_update],
+            'apiProjectResourcesRefresh': [_rs_read, _rs_create, _rs_update],
         ],
         /*
             ReportsController authorizations
