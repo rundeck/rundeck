@@ -26,11 +26,7 @@ project="test"
 params="project=${project}"
 
 # get listing
-$CURL --header "$VERSHEADER" ${runurl}?${params} > ${file}
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
+$CURL ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
 #test curl.out for valid xml
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
