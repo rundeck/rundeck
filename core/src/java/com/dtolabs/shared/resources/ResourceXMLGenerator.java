@@ -111,6 +111,12 @@ public class ResourceXMLGenerator implements NodesFileGenerator {
         addEntity(entity);
     }
 
+    public void addNodes(final Collection<INodeEntry> iNodeEntries) {
+        for (final INodeEntry iNodeEntry : iNodeEntries) {
+            addNode(iNodeEntry);
+        }
+    }
+
     /**
      * Create entity from Node
      *

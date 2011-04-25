@@ -112,7 +112,7 @@ public class Nodes implements NodeReceiver {
      * @return Nodes object
      * @throws NodeFileParserException if a parsing error occurs
      */
-    static Nodes create(final FrameworkProject project, final File nodesFile, final Format format) throws
+    public static Nodes create(final FrameworkProject project, final File nodesFile, final Format format) throws
         NodeFileParserException {
         return new Nodes(project, nodesFile, format);
     }

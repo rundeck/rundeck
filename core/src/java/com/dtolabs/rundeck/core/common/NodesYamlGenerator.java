@@ -25,15 +25,9 @@ package com.dtolabs.rundeck.core.common;
 
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.introspector.Property;
-import org.yaml.snakeyaml.introspector.GenericProperty;
-import org.yaml.snakeyaml.nodes.*;
-import org.yaml.snakeyaml.representer.Representer;
 
 import java.util.*;
 import java.io.*;
-import java.beans.IntrospectionException;
-import java.lang.reflect.Type;
 
 /**
  * NodesYamlGenerator produces YAML formatted output from a set of {@link INodeEntry} data.  Nodes should be added with
@@ -84,6 +78,12 @@ public class NodesYamlGenerator implements NodesFileGenerator {
 
     public void addNode(final INodeEntry node) {
         maps.put(node.getNodename(), NodeEntryFactory.toMap(node));
+    }
+
+    public void addNodes(final Collection<INodeEntry> nodes) {
+        for (final INodeEntry iNodeEntry : nodes) {
+            addNode(iNodeEntry);
+        }
     }
 
     public void generate() throws IOException, NodesGeneratorException {
