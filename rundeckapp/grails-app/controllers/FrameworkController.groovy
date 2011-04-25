@@ -508,7 +508,7 @@ class FrameworkController  {
             final Nodes.Format format
             if(contentType.endsWith("/xml")){
                 format=Nodes.Format.resourcexml
-            }else if("text/yaml"==contentType){
+            }else if(contentType.endsWith('/yaml')|| contentType.endsWith('/x-yaml')){
                 format = Nodes.Format.resourceyaml
             }else {
                 flash.error = "Unexpected content type: ${contentType}"
