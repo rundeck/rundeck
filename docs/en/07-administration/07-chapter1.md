@@ -115,6 +115,11 @@ Configuration used by shell tools. This file contains a number of
 settings used by the shell tools to interoperate with the RunDeck
 services. 
 
+Some important settings:
+
+* `framework.resources.allowedURL.X`: a sequence of regular expressions (for `X` starting at 0 and increasing). These are matched against requested providerURL values when
+the `/project/name/resources/refresh` API endpoint is called. See [Refreshing Resources for a Project](#refreshing-resources-for-a-project).
+
 #### log4j.properties
 
 RunDeck uses [log4j] as its application logging facility. This file
@@ -135,9 +140,11 @@ generated at project setup time. There are two important settings in
 this file:
 
 * `project.resources.file`: Path to the project resource model document
-  (see [resources-v10(5)](resources-v10.html)).
+  (see [resource-v10(5)](resource-v10.html) and [resource-yaml-v12(5)](resource-yaml-v12.html)).
 * `project.resources.url`: (Optional) The URL to an external
   [Resource Model Provider](#resource-model-provider).
+* `project.resources.allowedURL.X`: a sequence of regular expressions (for `X` starting at 0 and increasing). These are matched against requested providerURL values when
+the `/project/name/resources/refresh` API endpoint is called. See [Refreshing Resources for a Project](#refreshing-resources-for-a-project).
 
 #### jaas-loginmodule.conf
 
