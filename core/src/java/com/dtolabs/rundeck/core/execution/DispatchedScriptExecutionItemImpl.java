@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+ * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -44,5 +44,9 @@ class DispatchedScriptExecutionItemImpl implements DispatchedScriptExecutionItem
 
     public void setDispatchedScript(final IDispatchedScript dispatchedScript) {
         this.dispatchedScript = dispatchedScript;
+    }
+
+    public String getType() {
+        return null;
     }
 }

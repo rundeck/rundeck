@@ -197,6 +197,105 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         assertEquals "desc",job.description
         assertEquals "project1",job.project
     }
+
+    /**
+     * test application/x-www-form-urlencoded instead of multipart
+     */
+    public void testUploadFormContentShouldCreate() {
+        def sec = new ScheduledExecutionController()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.existsFrameworkProject {project, framework -> return true }
+        sec.frameworkService = fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.nextExecutionTimes {joblist -> return [] }
+        sec.scheduledExecutionService = mock2.createMock()
+
+        def xml = '''
+<joblist>
+    <job>
+        <name>test1</name>
+        <group>testgroup</group>
+        <description>desc</description>
+        <context>
+            <project>project1</project>
+        </context>
+        <sequence>
+            <command><exec>echo test</exec></command>
+        </sequence>
+    </job>
+</joblist>
+'''
+        sec.params.xmlBatch=xml
+        def result = sec.upload()
+        assertNull sec.response.redirectedUrl
+        assertNull "Result had an error: ${sec.flash.error}", sec.flash.error
+        assertNull "Result had an error: ${sec.flash.message}", sec.flash.message
+        assertNotNull result
+        assertTrue result.didupload
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
+        assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
+        assertEquals 1, result.jobs.size()
+        assertTrue result.jobs[0] instanceof ScheduledExecution
+        def ScheduledExecution job = result.jobs[0]
+        assertEquals "test1", job.jobName
+        assertEquals "testgroup", job.groupPath
+        assertEquals "desc", job.description
+        assertEquals "project1", job.project
+    }
+    /**
+     * test missing content
+     */
+    public void testUploadMissingContent() {
+        def sec = new ScheduledExecutionController()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.existsFrameworkProject {project, framework -> return true }
+        sec.frameworkService = fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.nextExecutionTimes {joblist -> return [] }
+        sec.scheduledExecutionService = mock2.createMock()
+
+        def result = sec.upload()
+        assertEquals "No file or XML was uploaded.", sec.flash.message
+        assertNull result
+
+    }
+    /**
+     * test missing File content
+     */
+    public void testUploadMissingFile() {
+        def sec = new ScheduledExecutionController()
+
+        sec.metaClass.request = new MockMultipartHttpServletRequest()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.existsFrameworkProject {project, framework -> return true }
+        sec.frameworkService = fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.nextExecutionTimes {joblist -> return [] }
+        sec.scheduledExecutionService = mock2.createMock()
+
+        def result = sec.upload()
+        assertEquals "No file was uploaded.", sec.flash.message
+        assertNull result
+
+    }
     public void testUploadShouldUpdateSameNameDupeOptionUpdate(){
         def sec = new ScheduledExecutionController()
 
@@ -1354,7 +1453,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             sec.frameworkService=fwkControl.createMock()
 
             def params=[jobName:'monkey1',project:'testProject',description:'',adhocExecution:true,adhocRemoteString:"test command",
-                notifications:[onsuccess:[email:'c@example.com,d@example.com']]                
+                notifications: [[eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com']]
             ]
             def results=sec._dovalidate(params)
             if(results.scheduledExecution.errors.hasErrors()){
@@ -1409,7 +1508,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             sec.frameworkService=fwkControl.createMock()
 
             def params=[jobName:'monkey1',project:'testProject',description:'',adhocExecution:true,adhocRemoteString:'test command',
-                notifications:[onsuccess:[email:'c@example.com,d@example.com'],onfailure:[email:'monkey@example.com']]
+                notifications: [[eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com'], [eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com']]
             ]
             def results=sec._dovalidate(params)
             if(results.scheduledExecution.errors.hasErrors()){
@@ -1611,7 +1710,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             sec.frameworkService=fwkControl.createMock()
 
             def params=[jobName:'monkey1',project:'testProject',description:'',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand',
-                   notifications:[onsuccess:[email:'c@example.comd@example.com'],onfailure:[email:'monkey@ example.com']]
+                   notifications: [[eventTrigger: 'onsuccess', type: 'email', content: 'c@example.comd@example.com'], [eventTrigger: 'onfailure', type: 'email', content: 'monkey@ example.com']]
             ]
             def results=sec._dovalidate(params)
             if(results.scheduledExecution.errors.hasErrors()){
@@ -1628,6 +1727,40 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertTrue(execution.errors.hasErrors())
             assertTrue(execution.errors.hasFieldErrors('notifyFailureRecipients'))
             assertTrue(execution.errors.hasFieldErrors('notifySuccessRecipients'))
+        }
+        if (true) {//test job with notifications, invalid urls
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.existsFrameworkProject {project, framework ->
+                assertEquals 'testProject', project
+                return true
+            }
+            fwkControl.demand.getCommand {project, type, command, framework ->
+                assertEquals 'testProject', project
+                assertEquals 'aType', type
+                assertEquals 'aCommand', command
+                return null
+            }
+            sec.frameworkService = fwkControl.createMock()
+
+            def params = [jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand',
+                notifications: [[eventTrigger: 'onsuccess', type: 'url', content: 'c@example.comd@example.com'], [eventTrigger: 'onfailure', type: 'url', content: 'monkey@ example.com']]
+            ]
+            def results = sec._dovalidate(params)
+            if (results.scheduledExecution.errors.hasErrors()) {
+                results.scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            assertTrue results.failed
+            assertNotNull(results.scheduledExecution)
+            assertTrue(results.scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = results.scheduledExecution
+            assertNotNull(execution)
+            assertNotNull(execution.errors)
+            assertTrue(execution.errors.hasErrors())
+            assertTrue(execution.errors.hasFieldErrors('notifyFailureUrl'))
+            assertTrue(execution.errors.hasFieldErrors('notifySuccessUrl'))
         }
     }
     public void testDoValidateOptions(){
@@ -3441,6 +3574,283 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertNull execution.options
     }
 
+    public void testDoUpdateNotificationsShouldUpdate(){
+        def sec = new ScheduledExecutionController()
+        if (true) {//test update job  notifications, disabling onsuccess
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: true, adhocRemoteString: 'test command',)
+            def na1 = new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com')
+            def na2 = new Notification(eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com')
+            se.addToNotifications(na1)
+            se.addToNotifications(na2)
+            se.save()
+
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.existsFrameworkProject {project, framework ->
+                assertEquals 'testProject', project
+                return true
+            }
+            fwkControl.demand.getCommand {project, type, command, framework ->
+                assertEquals 'testProject', project
+                assertEquals 'aType', type
+                assertEquals 'aCommand', command
+                return null
+            }
+            sec.frameworkService = fwkControl.createMock()
+
+            def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: true, adhocRemoteString: 'test command',
+                notified:'true',
+                notifySuccessRecipients: 'spaghetti@nowhere.com',
+                notifyOnfailure: 'true', notifyFailureRecipients: 'milk@store.com',
+            ]
+            def results = sec._doupdate(params)
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            assertTrue succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = scheduledExecution
+            assertNotNull(execution)
+            assertNotNull(execution.errors)
+            assertFalse(execution.errors.hasErrors())
+            assertEquals 'monkey1', execution.jobName
+            assertEquals 'testProject', execution.project
+            assertEquals '', execution.description
+            assertFalse execution.adhocExecution
+            assertNotNull execution.workflow
+            assertNotNull execution.workflow.commands
+            assertEquals 1, execution.workflow.commands.size()
+            def CommandExec cexec = execution.workflow.commands[0]
+            assertTrue cexec.adhocExecution
+            assertEquals 'test command', cexec.adhocRemoteString
+            assertNull cexec.adhocFilepath
+            assertNull execution.adhocLocalString
+            assertNull execution.adhocRemoteString
+            assertNull execution.argString
+
+            assertNotNull execution.notifications
+            assertEquals 1, execution.notifications.size()
+            def nmap = [:]
+            execution.notifications.each {not1 ->
+                nmap[not1.eventTrigger] = not1
+            }
+            assertNull(nmap.onsuccess)
+            assertNotNull(nmap.onfailure)
+            assertTrue(nmap.onfailure instanceof Notification)
+            def Notification n2 = nmap.onfailure
+            assertEquals "onfailure", n2.eventTrigger
+            assertEquals "email", n2.type
+            assertEquals "milk@store.com", n2.content
+        }
+        if (true) {//test update job  notifications, replacing onsuccess, and removing onfailure
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: true, adhocRemoteString: 'test command',)
+            def na1 = new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com')
+            def na2 = new Notification(eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com')
+            se.addToNotifications(na1)
+            se.addToNotifications(na2)
+            se.save()
+
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.existsFrameworkProject {project, framework ->
+                assertEquals 'testProject', project
+                return true
+            }
+            fwkControl.demand.getCommand {project, type, command, framework ->
+                assertEquals 'testProject', project
+                assertEquals 'aType', type
+                assertEquals 'aCommand', command
+                return null
+            }
+            sec.frameworkService = fwkControl.createMock()
+
+            def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: true, adhocRemoteString: 'test command',
+                notified: 'true',
+                notifyOnsuccessUrl:'true',notifySuccessUrl: 'http://example.com',
+                 notifyFailureRecipients: 'milk@store.com',
+            ]
+            def results = sec._doupdate(params)
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            assertTrue succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = scheduledExecution
+            assertNotNull(execution)
+            assertNotNull(execution.errors)
+            assertFalse(execution.errors.hasErrors())
+            assertEquals 'monkey1', execution.jobName
+            assertEquals 'testProject', execution.project
+            assertEquals '', execution.description
+            assertFalse execution.adhocExecution
+            assertNotNull execution.workflow
+            assertNotNull execution.workflow.commands
+            assertEquals 1, execution.workflow.commands.size()
+            def CommandExec cexec = execution.workflow.commands[0]
+            assertTrue cexec.adhocExecution
+            assertEquals 'test command', cexec.adhocRemoteString
+            assertNull cexec.adhocFilepath
+            assertNull execution.adhocLocalString
+            assertNull execution.adhocRemoteString
+            assertNull execution.argString
+
+            assertNotNull execution.notifications
+            assertEquals 1, execution.notifications.size()
+            def nmap = [:]
+            execution.notifications.each {not1 ->
+                nmap[not1.eventTrigger] = not1
+            }
+            assertNotNull(nmap.onsuccess)
+            assertNull(nmap.onfailure)
+            assertTrue(nmap.onsuccess instanceof Notification)
+            def Notification n2 = nmap.onsuccess
+            assertEquals "onsuccess", n2.eventTrigger
+            assertEquals "url", n2.type
+            assertEquals "http://example.com", n2.content
+        }
+
+        if (true) {//test update job  notifications, removing all notifications
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: true, adhocRemoteString: 'test command',)
+            def na1 = new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com')
+            def na2 = new Notification(eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com')
+            se.addToNotifications(na1)
+            se.addToNotifications(na2)
+            se.save()
+
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.existsFrameworkProject {project, framework ->
+                assertEquals 'testProject', project
+                return true
+            }
+            fwkControl.demand.getCommand {project, type, command, framework ->
+                assertEquals 'testProject', project
+                assertEquals 'aType', type
+                assertEquals 'aCommand', command
+                return null
+            }
+            sec.frameworkService = fwkControl.createMock()
+
+            def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: true, adhocRemoteString: 'test command',
+                notified: 'false',
+                notifyOnsuccessUrl: 'true', notifySuccessUrl: 'http://example.com',
+                notifyFailureRecipients: 'milk@store.com',
+            ]
+            def results = sec._doupdate(params)
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            assertTrue succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = scheduledExecution
+            assertNotNull(execution)
+            assertNotNull(execution.errors)
+            assertFalse(execution.errors.hasErrors())
+            assertEquals 'monkey1', execution.jobName
+            assertEquals 'testProject', execution.project
+            assertEquals '', execution.description
+            assertFalse execution.adhocExecution
+            assertNotNull execution.workflow
+            assertNotNull execution.workflow.commands
+            assertEquals 1, execution.workflow.commands.size()
+            def CommandExec cexec = execution.workflow.commands[0]
+            assertTrue cexec.adhocExecution
+            assertEquals 'test command', cexec.adhocRemoteString
+            assertNull cexec.adhocFilepath
+            assertNull execution.adhocLocalString
+            assertNull execution.adhocRemoteString
+            assertNull execution.argString
+
+            assertNull execution.notifications
+        }
+
+        if (true) {//test update job  notifications, removing all notifications by unchecking
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: true, adhocRemoteString: 'test command',)
+            def na1 = new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com')
+            def na2 = new Notification(eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com')
+            se.addToNotifications(na1)
+            se.addToNotifications(na2)
+            se.save()
+
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.existsFrameworkProject {project, framework ->
+                assertEquals 'testProject', project
+                return true
+            }
+            fwkControl.demand.getCommand {project, type, command, framework ->
+                assertEquals 'testProject', project
+                assertEquals 'aType', type
+                assertEquals 'aCommand', command
+                return null
+            }
+            sec.frameworkService = fwkControl.createMock()
+
+            def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: true, adhocRemoteString: 'test command',
+                notified: 'true',
+                notifySuccessUrl: 'http://example.com',
+                notifyFailureRecipients: 'milk@store.com',
+            ]
+            def results = sec._doupdate(params)
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            assertTrue succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = scheduledExecution
+            assertNotNull(execution)
+            assertNotNull(execution.errors)
+            assertFalse(execution.errors.hasErrors())
+            assertEquals 'monkey1', execution.jobName
+            assertEquals 'testProject', execution.project
+            assertEquals '', execution.description
+            assertFalse execution.adhocExecution
+            assertNotNull execution.workflow
+            assertNotNull execution.workflow.commands
+            assertEquals 1, execution.workflow.commands.size()
+            def CommandExec cexec = execution.workflow.commands[0]
+            assertTrue cexec.adhocExecution
+            assertEquals 'test command', cexec.adhocRemoteString
+            assertNull cexec.adhocFilepath
+            assertNull execution.adhocLocalString
+            assertNull execution.adhocRemoteString
+            assertNull execution.argString
+
+            assertNull execution.notifications
+        }
+    }
     public void testDoUpdateNotifications(){
         def sec = new ScheduledExecutionController()
         if(true){//test update job  notifications
@@ -3469,7 +3879,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             sec.frameworkService=fwkControl.createMock()
 
             def params=[id:se.id.toString(),jobName:'monkey1',project:'testProject',description:'',adhocExecution:true,adhocRemoteString:'test command',
-                notifications:[onsuccess:[email:'spaghetti@nowhere.com'],onfailure:[email:'milk@store.com']]
+                notifications:[[eventTrigger:'onsuccess',type:'email',content:'spaghetti@nowhere.com'],[eventTrigger:'onfailure',type:'email',content:'milk@store.com']]
             ]
             def results=sec._doupdate(params)
             def succeeded=results[0]

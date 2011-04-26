@@ -26,6 +26,8 @@ package com.dtolabs.shared.resources;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.NodesFileGenerator;
 import static com.dtolabs.shared.resources.ResourceXMLConstants.*;
+
+import com.dtolabs.utils.XMLChar;
 import org.apache.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.DocumentFactory;
@@ -37,10 +39,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * ResourceXMLGenerator can generate a resources.xml file given a set of entities or INodeEntry objects.
@@ -110,10 +109,11 @@ public class ResourceXMLGenerator implements NodesFileGenerator {
         //convert to entity
         final ResourceXMLParser.Entity entity = createEntity(node);
         addEntity(entity);
-        if(null!=entity.getResources()){
-            for (final ResourceXMLParser.Entity entity1 : entity.getResources()) {
-                addEntity(entity1);
-            }
+    }
+
+    public void addNodes(final Collection<INodeEntry> iNodeEntries) {
+        for (final INodeEntry iNodeEntry : iNodeEntries) {
+            addNode(iNodeEntry);
         }
     }
 
@@ -127,7 +127,6 @@ public class ResourceXMLGenerator implements NodesFileGenerator {
     private ResourceXMLParser.Entity createEntity(final INodeEntry node) {
         final ResourceXMLParser.Entity ent = new ResourceXMLParser.Entity();
         ent.setName(node.getNodename());
-        ent.setType(null != node.getType() ? node.getType() : "Node");
         ent.setResourceType(NODE_ENTITY_TAG);
         ent.setProperty(COMMON_DESCRIPTION, notNull(node.getDescription()));
         if (null != node.getTags() && node.getTags().size() > 0) {
@@ -146,17 +145,15 @@ public class ResourceXMLGenerator implements NodesFileGenerator {
             ent.setProperty(NODE_REMOTE_URL, notNull(node.getAttributes().get(NODE_REMOTE_URL)));
         }
         //iterate settings
-        if(null!=node.getSettings()){
-            for (final String setName : node.getSettings().keySet()) {
-                String value = node.getSettings().get(setName);
-                final ResourceXMLParser.Entity setent = new ResourceXMLParser.Entity();
-                setent.setName(setName);
-                setent.setResourceType(SETTING_ENTITY_TAG);
-                setent.setProperty(SETTING_VALUE, value);
-                setent.setType("Setting");
-                ent.addResource(setent);
+        //TODO: replace with attributes
+
+        if(null!=node.getAttributes()){
+            for (final String setName : node.getAttributes().keySet()) {
+                String value = node.getAttributes().get(setName);
+                ent.setProperty(setName, value);
             }
         }
+
 
         return ent;
     }
@@ -187,32 +184,13 @@ public class ResourceXMLGenerator implements NodesFileGenerator {
      * @throws IOException
      */
     public void generate() throws IOException {
-        final Document doc = DocumentFactory.getInstance().createDocument().addDocType("project",
-            DTD_PROJECT_DOCUMENT_1_0_EN, "project.dtd");
+        final Document doc = DocumentFactory.getInstance().createDocument();
         final Element root = doc.addElement("project");
         //iterate through entities in correct order
         for (final ResourceXMLParser.Entity entity : entities) {
             if (NODE_ENTITY_TAG.equals(entity.getResourceType())) {
                 final Element ent = genEntityCommon(root, entity);
                 genNode(ent, entity);
-            }
-        }
-        for (final ResourceXMLParser.Entity entity : entities) {
-            if (SETTING_ENTITY_TAG.equals(entity.getResourceType())) {
-                final Element ent = genEntityCommon(root, entity);
-                genSetting(ent, entity);
-            }
-        }
-        for (final ResourceXMLParser.Entity entity : entities) {
-            if (PACKAGE_ENTITY_TAG.equals(entity.getResourceType())) {
-                final Element ent = genEntityCommon(root, entity);
-                genPackage(ent, entity);
-            }
-        }
-        for (final ResourceXMLParser.Entity entity : entities) {
-            if (DEPLOYMENT_ENTITY_TAG.equals(entity.getResourceType())) {
-                final Element ent = genEntityCommon(root, entity);
-                genDeployment(ent, entity);
             }
         }
 
@@ -229,18 +207,22 @@ public class ResourceXMLGenerator implements NodesFileGenerator {
      * @param ent
      * @param entity
      */
-    private void genResources(final Element ent, final ResourceXMLParser.Entity entity) {
-        if (null == entity.getResources() || entity.getResources().size() < 1) {
+    private void genAttributes(final Element ent, final ResourceXMLParser.Entity entity) {
+        if (null == entity.getProperties() ) {
             return;
         }
-        final Element resources = ent.addElement(RESOURCES_GROUP_TAG);
-        if (Boolean.toString(true).equals(entity.getProperty(RESOURCES_REPLACE_PROP))) {
-            resources.addAttribute(COMMON_REPLACE, Boolean.toString(true));
-        }
-        for (final ResourceXMLParser.Entity entity1 : entity.getResources()) {
-            final Element res = resources.addElement(RESOURCE_REF_TAG);
-            res.addAttribute(COMMON_NAME, entity1.getName());
-            res.addAttribute(COMMON_TYPE, entity1.getType());
+        for (final String key:entity.getProperties().stringPropertyNames()){
+            if (!ResourceXMLConstants.allPropSet.contains(key)) {
+                //test attribute name is a valid XML attribute name
+                if(XMLChar.isValidName(key)){
+                    ent.addAttribute(key, entity.getProperties().getProperty(key));
+                }else {
+                    //add sub element
+                    final Element atelm = ent.addElement(ATTRIBUTE_TAG);
+                    atelm.addAttribute(ATTRIBUTE_NAME_ATTR, key);
+                    atelm.addAttribute(ATTRIBUTE_VALUE_ATTR, entity.getProperties().getProperty(key));
+                }
+            }
         }
 
     }
@@ -255,47 +237,11 @@ public class ResourceXMLGenerator implements NodesFileGenerator {
         for (final String nodeProp : nodeProps) {
             ent.addAttribute(nodeProp, notNull(entity.getProperty(nodeProp)));
         }
-        genResources(ent, entity);
+        genAttributes(ent, entity);
     }
 
 
-    /**
-     * Gen "setting" tag contents
-     *
-     * @param ent
-     * @param entity
-     */
-    private void genSetting(final Element ent, final ResourceXMLParser.Entity entity) {
-        for (final String prop : settingProps) {
-            ent.addAttribute(prop, notNull(entity.getProperty(prop)));
-        }
-    }
 
-    /**
-     * Gen "package" tag contents
-     *
-     * @param ent
-     * @param entity
-     */
-    private void genPackage(final Element ent, final ResourceXMLParser.Entity entity) {
-        for (final String prop : packageProps) {
-            ent.addAttribute(prop, notNull(entity.getProperty(prop)));
-        }
-        genResources(ent, entity);
-    }
-
-    /**
-     * Gen "deployment" tag contents
-     *
-     * @param ent
-     * @param entity
-     */
-    private void genDeployment(final Element ent, final ResourceXMLParser.Entity entity) {
-        for (final String prop : deploymentProps) {
-            ent.addAttribute(prop, notNull(entity.getProperty(prop)));
-        }
-        genResources(ent, entity);
-    }
 
     /**
      * Create entity tag based on resourceType of entity, and add common attributes
@@ -308,11 +254,8 @@ public class ResourceXMLGenerator implements NodesFileGenerator {
     private Element genEntityCommon(final Element root, final ResourceXMLParser.Entity entity) {
         final Element tag = root.addElement(entity.getResourceType());
         tag.addAttribute(COMMON_NAME, entity.getName());
-        tag.addAttribute(COMMON_TYPE, entity.getType());
         tag.addAttribute(COMMON_DESCRIPTION, notNull(entity.getProperty(COMMON_DESCRIPTION)));
-        if(!SETTING_ENTITY_TAG.equals(entity.getResourceType())){
-            tag.addAttribute(COMMON_TAGS, notNull(entity.getProperty(COMMON_TAGS)));
-        }
+        tag.addAttribute(COMMON_TAGS, notNull(entity.getProperty(COMMON_TAGS)));
         return tag;
     }
 

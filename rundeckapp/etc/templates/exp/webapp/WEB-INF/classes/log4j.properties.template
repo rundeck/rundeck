@@ -7,6 +7,10 @@ log4j.rootLogger=warn, stdout, file
 log4j.logger.com.dtolabs.rundeck.core.authorization=info, audit
 log4j.additivity.com.dtolabs.rundeck.core.authorization=false
 
+# Enable options remote URL logging
+log4j.logger.com.dtolabs.rundeck.remoteservice.http.options=INFO, options
+log4j.additivity.com.dtolabs.rundeck.remoteservice.http.options=false
+
 # Enable this logger to log Hibernate output
 # handy to see its database interaction activity
 #log4j.logger.org.hibernate=debug,stdout
@@ -57,3 +61,15 @@ log4j.appender.audit.file=${rundeck.log.dir}${file.separator}rundeck.audit.log
 log4j.appender.audit.append=true
 log4j.appender.audit.layout=org.apache.log4j.PatternLayout
 log4j.appender.audit.layout.ConversionPattern=%d{ISO8601} - %m%n
+
+
+#
+# options log
+#
+# Logs remote HTTP requests for Options JSON data
+#
+log4j.appender.options=org.apache.log4j.DailyRollingFileAppender
+log4j.appender.options.file=${rundeck.log.dir}/rundeck.options.log
+log4j.appender.options.append=true
+log4j.appender.options.layout=org.apache.log4j.PatternLayout
+log4j.appender.options.layout.ConversionPattern=${logger.options.format}

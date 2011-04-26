@@ -151,7 +151,7 @@ Optional parameters:
 The following parameters can also be used to narrow down the result set.
 
 * `idlist`: specify a comma-separated list of Job IDs to export
-* `groupPath`: specify a group or partial group path to include all jbos within that group path.
+* `groupPath`: specify a group or partial group path to include all jobs within that group path.
 * `jobFilter`: specify a filter for the job Name
 
 Result:
@@ -172,11 +172,11 @@ URL:
 
 Method: `POST`
 
-Expected Content-Type: `application/x-www-form-urlencoded`
+Expected Content-Type: `application/x-www-form-urlencoded` (**since 1.3**) or `multipart/form-data`
 
 Required Content:
 
-* `xmlBatch`: A `x-www-form-urlencoded` request parameter containing the input file content.
+* `xmlBatch`: Either a `x-www-form-urlencoded` request parameter containing the input content (**since 1.3**), or a `multipart/form-data` multipart MIME request part containing the content. 
 
 Optional parameters:
 
@@ -423,6 +423,95 @@ If the project defines a Resource Model Provider URL, then the additional items 
     <resources>
         <providerURL>URL</providerURL>
     </resources>
+
+### Updating and Listing Resources for a Project
+
+Update or retrieve the Resources for a project.  A GET request returns the resources
+for the project, and a POST request will update the resources.
+
+URL:
+
+    /project/NAME/resources
+
+Method: POST, GET
+
+#### POST request
+
+POSTing to this URL will set the resources for the project to the content of the request.
+
+Expected POST Content: either `text/xml` or `text/yaml` Content-Type containing the 
+Resource Model definition in [resources-v10(5)](resources-v10.html) or [resources-v10-yaml(5)](resources-v10-yaml.html) formats as the request body. (Note: any MIME type ending with '/yaml' or '/x-yaml' or '/xml' will be accepted).
+
+POST Result: A success or failure API response. (See [Response Format](#response-format)).
+
+Example POST request:
+
+    POST /api/1/project/test/resources
+    Content-Type: text/yaml
+    
+    node1:
+      hostname: node1
+      username: bob
+    
+    node2:
+      hostname: node2
+      username: bob
+
+Result:
+
+    200 OK
+    
+    <result success="true">
+        <success>
+            <message>Resources were successfully updated for project test</message>
+        </success>
+    </result>
+
+#### GET request
+
+Optional GET Parameters:
+
+* `format` : Result format.  One of "xml" or "yaml". Default is "xml".
+*  Query 
+parameters can also be used. This is an alternate interface to [Listing Resources](#listing-resources).
+
+GET Result: Depending on the `format` parameter, a value of "xml" will return [resources-v10(5)](resources-v10.html) and "yaml" will return [resources-v10-yaml(5)](resources-v10-yaml.html) formatted results.
+
+Example GET request:
+
+    GET /api/1/project/test/resources
+
+Response:
+
+    200 OK
+    Content-Type: text/xml
+    
+    <project>
+        <node name="node1" hostname="node1" username="bob" />
+        <node name="node2" hostname="node2" username="bob" />
+    </project>
+
+### Refreshing Resources for a Project
+
+Refresh the resources for a project via its Resource Model Provider URL. The URL can be
+specified as a request parameter, or the pre-configured URL for the project
+can be used.
+
+URL:
+
+    /project/NAME/resources/refresh
+
+Method: POST
+
+Optional Parameters:
+
+`providerURL`
+
+:   Specify the Resource Model Provider URL to refresh the resources from.  If 
+    not specified then the configured provider URL in the `project.properties`
+    file will be used.
+
+Result: A success or failure result with a message.
 
 ### Listing History
 

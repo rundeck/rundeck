@@ -9,12 +9,19 @@ import com.dtolabs.shared.resources.ResourceXMLGenerator
 import com.dtolabs.rundeck.core.common.NodesYamlGenerator
 import com.dtolabs.rundeck.core.common.NodesFileGenerator
 import com.dtolabs.rundeck.core.common.NodesGeneratorException
+import com.dtolabs.utils.Streams
 
 class FrameworkController  {
     FrameworkService frameworkService
     ExecutionService executionService
     UserService userService
     RoleService roleService
+    // the delete, save and update actions only
+    // accept POST requests
+    def static allowedMethods = [
+        apiProjectResources: [ 'POST'],
+        apiProjectResourcesRefresh: ['POST'],
+    ]
 
     def index = {
         redirect(action:"nodes")        
@@ -283,15 +290,24 @@ class FrameworkController  {
      * via the project's project.resources.url (if it exists).
      * Returns true if re-fetch succeeded, false otherwise.
      */
-    def performNodeReload = {
+    def performNodeReload = {String url=null->
         if(params.project){
             if(roleService.isUserInAnyRoles(request,['admin','nodes_admin'])){
                 Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
                 def project=framework.getFrameworkProjectMgr().getFrameworkProject(params.project)
                //if reload parameter is specified, and user is admin, reload from source URL
                 try {
-                    project.updateNodesResourceFile()
-                    return true
+                    if(url){
+                        if(!(url==~ /(?i)^(https?|file):\/\/.*$/)){
+                            log.error("Error updating node resources file for project ${project.name}: invalid URL: " + url)
+                            flash.error = "Error updating node resources file for project ${project.name}: invalid URL: " + url
+                            return false
+                        }
+                        project.updateNodesResourceFileFromUrl(url, null, null)
+                        return true
+                    }else{
+                        return project.updateNodesResourceFile()
+                    }
                 } catch (Exception e) {
                     log.error("Error updating node resources file for project ${project.name}: "+e.message)
                     flash.error="Error updating node resources file for project ${project.name}: "+e.message
@@ -433,6 +449,108 @@ class FrameworkController  {
      * API actions
      */
 
+    /**
+     * API: /api/project/NAME/resources/refresh
+     * calls performNodeReload, then returns API response
+     * */
+    def apiProjectResourcesRefresh = {
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if (!params.project) {
+            flash.error = g.message(code: 'api.error.parameter.required', args: ['project'])
+            return new ApiController().error()
+        }
+        def exists = frameworkService.existsFrameworkProject(params.project, framework)
+        if (!exists) {
+            flash.error = g.message(code: 'api.error.item.doesnotexist', args: ['project', params.project])
+            return new ApiController().error()
+        }
+
+        //check content
+        def didsucceed = performNodeReload(params.providerURL)
+        if(didsucceed){
+            return new ApiController().success { delegate ->
+                delegate.'success' {
+                    message(g.message(code: 'api.project.updateResources.succeeded', args: [params.project]))
+                }
+            }
+        }else{
+            if(!flash.error){
+                flash.error= g.message(code: 'api.project.updateResources.failed', args: [params.project])
+            }
+            return new ApiController().error()
+        }
+    }
+    /**
+     * API: /api/project/NAME/resources
+     * GET: return resources data
+     * POST: update resources data with either: text/xml content, text/yaml content, form-data param providerURL=<url>
+     * */
+    def apiProjectResources = {
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if (!params.project) {
+            flash.error = g.message(code: 'api.error.parameter.required', args: ['project'])
+            return new ApiController().error()
+        }
+        def exists = frameworkService.existsFrameworkProject(params.project, framework)
+        if (!exists) {
+            flash.error = g.message(code: 'api.error.item.doesnotexist', args: ['project', params.project])
+            return new ApiController().error()
+        }
+        final FrameworkProject project = frameworkService.getFrameworkProject(params.project, framework)
+
+        def didsucceed=false
+        def errormsg=null
+        //determine data
+        //assume post request
+        if(request.post){
+            final contentType = request.contentType
+            //try to parse loaded data
+            final Nodes.Format format
+            if(contentType.endsWith("/xml")){
+                format=Nodes.Format.resourcexml
+            }else if(contentType.endsWith('/yaml')|| contentType.endsWith('/x-yaml')){
+                format = Nodes.Format.resourceyaml
+            }else {
+                flash.error = "Unexpected content type: ${contentType}"
+                return new ApiController().error()
+            }
+            //write content to temp file
+            File tempfile=File.createTempFile("post-input","data")
+            tempfile.deleteOnExit()
+            Streams.copyStream(request.getInputStream(),new FileOutputStream(tempfile))
+
+
+            final nodes = Nodes.create(project, tempfile, format)
+            if(!nodes.isValid()){
+                //invalid data
+                flash.error = "Invalid data: ${nodes.getParserException().getMessage()}"
+                return new ApiController().error()
+            }
+
+            //finally update resources file with the new nodes data
+            try {
+                project.updateNodesResourceFile nodes
+                didsucceed=true
+            } catch (Exception e) {
+                log.error("Failed updating nodes file: "+e.getMessage())
+                e.printStackTrace(System.err)
+                flash.error=e.getMessage()
+            }
+        }
+
+        if(didsucceed){
+            return new ApiController().success { delegate ->
+                delegate.'success' {
+                    message(g.message(code: 'api.project.updateResources.succeeded', args: [params.project]))
+                }
+            }
+        }else{
+            if(!flash.error){
+                flash.error= g.message(code: 'api.project.updateResources.failed', args: [params.project])
+            }
+            return new ApiController().error()
+        }
+    }
     /**
      * API: /api/projects, version 1
      */

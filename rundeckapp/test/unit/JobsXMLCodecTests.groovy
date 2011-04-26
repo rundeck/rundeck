@@ -428,7 +428,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <nodefilters excludeprecedence="true">
       <include>
         <hostname>cypress.hill.com</hostname>
-        <type />
         <tags />
         <os-name />
         <os-family />
@@ -473,7 +472,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <nodefilters excludeprecedence="true">
       <include>
         <hostname>cypress.hill.com</hostname>
-        <type />
         <tags />
         <os-name />
         <os-family />
@@ -531,7 +529,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
             assertEquals "incorrect nodefilter nodeInclude","centos5",jobs[0].nodeInclude
-            assertEquals "incorrect nodefilter nodeIncludeType",null,jobs[0].nodeIncludeType
             assertEquals "incorrect nodefilter nodeIncludeTags",null,jobs[0].nodeIncludeTags
             assertEquals "incorrect nodefilter nodeIncludeOsName",null,jobs[0].nodeIncludeOsName
             assertEquals "incorrect nodefilter nodeIncludeOsFamily",null,jobs[0].nodeIncludeOsFamily
@@ -540,7 +537,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect nodefilter nodeIncludeName",null,jobs[0].nodeIncludeName
 
             assertEquals "incorrect nodefilter nodeExclude",null,jobs[0].nodeExclude
-            assertEquals "incorrect nodefilter nodeExcludeType",null,jobs[0].nodeExcludeType
             assertEquals "incorrect nodefilter nodeExcludeTags",null,jobs[0].nodeExcludeTags
             assertEquals "incorrect nodefilter nodeExcludeOsName",null,jobs[0].nodeExcludeOsName
             assertEquals "incorrect nodefilter nodeExcludeOsFamily",null,jobs[0].nodeExcludeOsFamily
@@ -571,7 +567,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <nodefilters>
         <include>
             <hostname>centos5</hostname>
-            <type>MyNode</type>
             <tags>a+b,c</tags>
             <os-name>Win.*</os-name>
             <os-family>windows</os-family>
@@ -591,7 +586,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
             assertEquals "incorrect nodefilter nodeInclude","centos5",jobs[0].nodeInclude
-            assertEquals "incorrect nodefilter nodeIncludeType","MyNode",jobs[0].nodeIncludeType
             assertEquals "incorrect nodefilter nodeIncludeTags","a+b,c",jobs[0].nodeIncludeTags
             assertEquals "incorrect nodefilter nodeIncludeOsName","Win.*",jobs[0].nodeIncludeOsName
             assertEquals "incorrect nodefilter nodeIncludeOsFamily","windows",jobs[0].nodeIncludeOsFamily
@@ -600,7 +594,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect nodefilter nodeIncludeName","mynodename",jobs[0].nodeIncludeName
 
             assertEquals "incorrect nodefilter nodeExclude",null,jobs[0].nodeExclude
-            assertEquals "incorrect nodefilter nodeExcludeType",null,jobs[0].nodeExcludeType
             assertEquals "incorrect nodefilter nodeExcludeTags",null,jobs[0].nodeExcludeTags
             assertEquals "incorrect nodefilter nodeExcludeOsName",null,jobs[0].nodeExcludeOsName
             assertEquals "incorrect nodefilter nodeExcludeOsFamily",null,jobs[0].nodeExcludeOsFamily
@@ -631,7 +624,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <nodefilters excludeprecedence="false">
         <exclude>
             <hostname>centos5</hostname>
-            <type>MyNode</type>
             <tags>a+b,c</tags>
             <os-name>Win.*</os-name>
             <os-family>windows</os-family>
@@ -651,7 +643,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
             assertEquals "incorrect nodefilter nodeInclude",null,jobs[0].nodeInclude
-            assertEquals "incorrect nodefilter nodeIncludeType",null,jobs[0].nodeIncludeType
             assertEquals "incorrect nodefilter nodeIncludeTags",null,jobs[0].nodeIncludeTags
             assertEquals "incorrect nodefilter nodeIncludeOsName",null,jobs[0].nodeIncludeOsName
             assertEquals "incorrect nodefilter nodeIncludeOsFamily",null,jobs[0].nodeIncludeOsFamily
@@ -660,7 +651,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect nodefilter nodeIncludeName",null,jobs[0].nodeIncludeName
 
             assertEquals "incorrect nodefilter nodeExclude","centos5",jobs[0].nodeExclude
-            assertEquals "incorrect nodefilter nodeExcludeType","MyNode",jobs[0].nodeExcludeType
             assertEquals "incorrect nodefilter nodeExcludeTags","a+b,c",jobs[0].nodeExcludeTags
             assertEquals "incorrect nodefilter nodeExcludeOsName","Win.*",jobs[0].nodeExcludeOsName
             assertEquals "incorrect nodefilter nodeExcludeOsFamily","windows",jobs[0].nodeExcludeOsFamily
@@ -1637,7 +1627,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             def jobs = JobsXMLCodec.decode(xml1)
             fail "parsing should have failed"
         } catch (Exception e) {
-            assertEquals ("notification 'onsuccess' element had missing 'email' element",e.message)
+            assertEquals ("notification 'onsuccess' element had missing 'email' or 'webhook' element",e.message)
         }
         //missing email attribute
         def xml2 = """<joblist>
@@ -1667,7 +1657,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             def jobs = JobsXMLCodec.decode(xml2)
             fail "parsing should have failed"
         } catch (Exception e) {
-            assertEquals ("onsuccess handler had blank or missing 'recipients' attribute",e.message)
+            assertEquals ("onsuccess email had blank or missing 'recipients' attribute",e.message)
         }
         //onfailure and onsuccess notification
         def xml3 = """<joblist>
@@ -1698,7 +1688,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             def jobs = JobsXMLCodec.decode(xml3)
             fail "parsing should have failed"
         } catch (Exception e) {
-            assertEquals ("onsuccess handler had blank or missing 'recipients' attribute",e.message)
+            assertEquals ("onsuccess email had blank or missing 'recipients' attribute",e.message)
         }
 
 
@@ -1730,7 +1720,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             def jobs = JobsXMLCodec.decode(xml4)
             fail "parsing should have failed"
         } catch (Exception e) {
-            assertEquals ("notification 'onfailure' element had missing 'email' element",e.message)
+            assertEquals ("notification 'onfailure' element had missing 'email' or 'webhook' element",e.message)
         }
         //missing email attribute
         def xml5 = """<joblist>
@@ -1760,7 +1750,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             def jobs = JobsXMLCodec.decode(xml5)
             fail "parsing should have failed"
         } catch (Exception e) {
-            assertEquals ("onfailure handler had blank or missing 'recipients' attribute",e.message)
+            assertEquals ("onfailure email had blank or missing 'recipients' attribute",e.message)
         }
         //onfailure and onsuccess notification
         def xml6 = """<joblist>
@@ -1791,7 +1781,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             def jobs = JobsXMLCodec.decode(xml6)
             fail "parsing should have failed"
         } catch (Exception e) {
-            assertEquals ("onfailure handler had blank or missing 'recipients' attribute",e.message)
+            assertEquals ("onfailure email had blank or missing 'recipients' attribute",e.message)
         }
     }
 
@@ -2122,7 +2112,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         nodeKeepgoing:true,
                         doNodedispatch:false,
                         nodeInclude:'myhostname',
-                        nodeIncludeType:'Node1',
                         nodeIncludeTags:'a+b,c',
                         nodeIncludeOsName:'Windows.*',
                         nodeIncludeOsFamily:'windows',
@@ -2153,7 +2142,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         nodeKeepgoing:true,
                         doNodedispatch:true,
                         nodeInclude:'myhostname',
-                        nodeIncludeType:'Node1',
                         nodeIncludeTags:'a+b,c',
                         nodeIncludeOsName:'Windows.*',
                         nodeIncludeOsFamily:'windows',
@@ -2173,11 +2161,9 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "missing nodefilters",1,doc.job[0].nodefilters.size()
             assertEquals "unexpected nodefilters exclude",0,doc.job[0].nodefilters[0].exclude.size()
             assertEquals "missing nodefilters include",1,doc.job[0].nodefilters[0].include.size()
-            assertEquals "incorrect number of nodefilters include elements",8,doc.job[0].nodefilters[0].include[0].children().size()
+            assertEquals "incorrect number of nodefilters include elements",7,doc.job[0].nodefilters[0].include[0].children().size()
             assertEquals "incorrect nodefilters include hostname",1,doc.job[0].nodefilters[0].include[0].hostname.size()
             assertEquals "incorrect nodefilters include hostname",'myhostname',doc.job[0].nodefilters[0].include[0].hostname[0].text()
-            assertEquals "incorrect nodefilters include type",1,doc.job[0].nodefilters[0].include[0].type.size()
-            assertEquals "incorrect nodefilters include type",'Node1',doc.job[0].nodefilters[0].include[0].type[0].text()
             assertEquals "incorrect nodefilters include tags",1,doc.job[0].nodefilters[0].include[0].tags.size()
             assertEquals "incorrect nodefilters include tags",'a+b,c',doc.job[0].nodefilters[0].include[0].tags[0].text()
             assertEquals "incorrect nodefilters include os-name",1,doc.job[0].nodefilters[0].include[0].'os-name'.size()
@@ -2205,7 +2191,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         nodeKeepgoing:true,
                         doNodedispatch:true,
                         nodeExclude:'myhostname',
-                        nodeExcludeType:'Node1',
                         nodeExcludeTags:'a+b,c',
                         nodeExcludeOsName:'Windows.*',
                         nodeExcludeOsFamily:'windows',
@@ -2225,11 +2210,9 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "missing nodefilters",1,doc.job[0].nodefilters.size()
             assertEquals "unexpected nodefilters include",0,doc.job[0].nodefilters[0].include.size()
             assertEquals "missing nodefilters exclude",1,doc.job[0].nodefilters[0].exclude.size()
-            assertEquals "incorrect number of nodefilters exclude elements",8,doc.job[0].nodefilters[0].exclude[0].children().size()
+            assertEquals "incorrect number of nodefilters exclude elements",7,doc.job[0].nodefilters[0].exclude[0].children().size()
             assertEquals "incorrect nodefilters exclude hostname",1,doc.job[0].nodefilters[0].exclude[0].hostname.size()
             assertEquals "incorrect nodefilters exclude hostname",'myhostname',doc.job[0].nodefilters[0].exclude[0].hostname[0].text()
-            assertEquals "incorrect nodefilters exclude type",1,doc.job[0].nodefilters[0].exclude[0].type.size()
-            assertEquals "incorrect nodefilters exclude type",'Node1',doc.job[0].nodefilters[0].exclude[0].type[0].text()
             assertEquals "incorrect nodefilters exclude tags",1,doc.job[0].nodefilters[0].exclude[0].tags.size()
             assertEquals "incorrect nodefilters exclude tags",'a+b,c',doc.job[0].nodefilters[0].exclude[0].tags[0].text()
             assertEquals "incorrect nodefilters exclude os-name",1,doc.job[0].nodefilters[0].exclude[0].'os-name'.size()
@@ -2256,8 +2239,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         nodeKeepgoing:true,
                         doNodedispatch:true,
                         nodeExclude:'myhostname',
-                        nodeExcludeType:'Node1',
-                        nodeExcludeTags:'a+b,c',
+                            nodeExcludeTags:'a+b,c',
                         nodeExcludeOsName:'Windows.*',
                         nodeExcludeOsFamily:'windows',
                         nodeExcludeOsArch:'x86,sparc',
@@ -2265,7 +2247,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         nodeExcludeName:'mynode',
 
                         nodeInclude:'anotherhost',
-                        nodeIncludeType:'SomeNode',
                         nodeIncludeTags:'prod',
                         nodeIncludeOsName:'Mac.*',
                         nodeIncludeOsFamily:'unix',
@@ -2284,11 +2265,9 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNotNull doc
             assertEquals "missing nodefilters",1,doc.job[0].nodefilters.size()
             assertEquals "missing nodefilters exclude",1,doc.job[0].nodefilters[0].exclude.size()
-            assertEquals "incorrect number of nodefilters exclude elements",8,doc.job[0].nodefilters[0].exclude[0].children().size()
+            assertEquals "incorrect number of nodefilters exclude elements",7,doc.job[0].nodefilters[0].exclude[0].children().size()
             assertEquals "incorrect nodefilters exclude hostname",1,doc.job[0].nodefilters[0].exclude[0].hostname.size()
             assertEquals "incorrect nodefilters exclude hostname",'myhostname',doc.job[0].nodefilters[0].exclude[0].hostname[0].text()
-            assertEquals "incorrect nodefilters exclude type",1,doc.job[0].nodefilters[0].exclude[0].type.size()
-            assertEquals "incorrect nodefilters exclude type",'Node1',doc.job[0].nodefilters[0].exclude[0].type[0].text()
             assertEquals "incorrect nodefilters exclude tags",1,doc.job[0].nodefilters[0].exclude[0].tags.size()
             assertEquals "incorrect nodefilters exclude tags",'a+b,c',doc.job[0].nodefilters[0].exclude[0].tags[0].text()
             assertEquals "incorrect nodefilters exclude os-name",1,doc.job[0].nodefilters[0].exclude[0].'os-name'.size()
@@ -2303,11 +2282,9 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect nodefilters exclude name",'mynode',doc.job[0].nodefilters[0].exclude[0].find{it.name=='name'}.text()
 
             assertEquals "missing nodefilters include",1,doc.job[0].nodefilters[0].include.size()
-            assertEquals "incorrect number of nodefilters include elements",8,doc.job[0].nodefilters[0].include[0].children().size()
+            assertEquals "incorrect number of nodefilters include elements",7,doc.job[0].nodefilters[0].include[0].children().size()
             assertEquals "incorrect nodefilters include hostname",1,doc.job[0].nodefilters[0].include[0].hostname.size()
             assertEquals "incorrect nodefilters include hostname",'anotherhost',doc.job[0].nodefilters[0].include[0].hostname[0].text()
-            assertEquals "incorrect nodefilters include type",1,doc.job[0].nodefilters[0].include[0].type.size()
-            assertEquals "incorrect nodefilters include type",'SomeNode',doc.job[0].nodefilters[0].include[0].type[0].text()
             assertEquals "incorrect nodefilters include tags",1,doc.job[0].nodefilters[0].include[0].tags.size()
             assertEquals "incorrect nodefilters include tags",'prod',doc.job[0].nodefilters[0].include[0].tags[0].text()
             assertEquals "incorrect nodefilters include os-name",1,doc.job[0].nodefilters[0].include[0].'os-name'.size()
@@ -3031,5 +3008,83 @@ class JobsXMLCodecTests extends GroovyTestCase {
                assertEquals "incorrect notifications onsuccess email size","z@example.com,y@example.com",doc.job[0].notification[0].onsuccess[0].email[0]['@recipients'].text()
 
 
+    }
+    void testEncodeNotificationUrl(){
+
+        def XmlSlurper parser = new XmlSlurper()
+
+
+        def jobs1 = [
+            new ScheduledExecution(
+                jobName: 'test job 1',
+                description: 'test descrip',
+                loglevel: 'INFO',
+                project: 'test1',
+
+
+                workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                    jobName: 'a Job',
+                    jobGroup: '/some/path',
+                )]
+                ),
+                nodeThreadcount: 1,
+                nodeKeepgoing: true,
+                notifications: [
+                    new Notification(eventTrigger: 'onsuccess', type: 'url', content: 'http://example.com'),
+                    new Notification(eventTrigger: 'onfailure', type: 'url', content: 'http://2.example.com'),
+                ]
+            )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "incorrect notifications onsuccess webhook size", 1, doc.job[0].notification[0].onsuccess[0].webhook.size()
+        assertEquals "incorrect notifications onsuccess webhook/@urls", "http://example.com", doc.job[0].notification[0].onsuccess[0].webhook[0]['@urls'].text()
+        assertEquals "incorrect notifications onfailure webhook size", 1, doc.job[0].notification[0].onfailure[0].webhook.size()
+        assertEquals "incorrect notifications onfailure webhook/@urls value", "http://2.example.com", doc.job[0].notification[0].onfailure[0].webhook[0]['@urls'].text()
+
+
+        def jobs2 = [
+            new ScheduledExecution(
+                jobName: 'test job 1',
+                description: 'test descrip',
+                loglevel: 'INFO',
+                project: 'test1',
+
+
+                workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                    jobName: 'a Job',
+                    jobGroup: '/some/path',
+                )]
+                ),
+                nodeThreadcount: 1,
+                nodeKeepgoing: true,
+                notifications: [
+                    new Notification(eventTrigger: 'onsuccess', type: 'url', content: 'http://example.com'),
+                    new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'test@example.com'),
+                    new Notification(eventTrigger: 'onfailure', type: 'url', content: 'http://2.example.com'),
+                    new Notification(eventTrigger: 'onfailure', type: 'email', content: 'test2@example.com'),
+                ]
+            )
+        ]
+
+        xmlstr = JobsXMLCodec.encode(jobs2)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "incorrect notifications onsuccess webhook size", 1, doc.job[0].notification[0].onsuccess[0].webhook.size()
+        assertEquals "incorrect notifications onsuccess webhook/@urls", "http://example.com", doc.job[0].notification[0].onsuccess[0].webhook[0]['@urls'].text()
+        assertEquals "incorrect notifications onfailure webhook size", 1, doc.job[0].notification[0].onfailure[0].webhook.size()
+        assertEquals "incorrect notifications onfailure webhook/@urls value", "http://2.example.com", doc.job[0].notification[0].onfailure[0].webhook[0]['@urls'].text()
+        assertEquals "incorrect notifications onsuccess email size", 1, doc.job[0].notification[0].onsuccess[0].email.size()
+        assertEquals "incorrect notifications onsuccess email size", "test@example.com", doc.job[0].notification[0].onsuccess[0].email[0]['@recipients'].text()
+        assertEquals "incorrect notifications onsuccess email size", 1, doc.job[0].notification[0].onfailure[0].email.size()
+        assertEquals "incorrect notifications onsuccess email size", "test2@example.com", doc.job[0].notification[0].onfailure[0].email[0]['@recipients'].text()
     }
 }

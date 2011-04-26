@@ -23,7 +23,15 @@
 */
 package com.dtolabs.rundeck.core.execution;
 
-import org.apache.tools.ant.BuildListener;
+import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.commands.CommandInterpreter;
+import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
+import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
+import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+
+import java.io.File;
+import java.io.InputStream;
 
 /**
  * ExecutionListener is ...
@@ -34,12 +42,14 @@ import org.apache.tools.ant.BuildListener;
 public interface ExecutionListener {
     /**
      * Return true if output should be terse and not prefixed
+     *
      * @return
      */
     public boolean isTerse();
 
     /**
-     * Return log message format 
+     * Return log message format
+     *
      * @return
      */
     public String getLogFormat();
@@ -48,20 +58,87 @@ public interface ExecutionListener {
      * Log a message
      *
      * @param level   the log level
-     * @param message Message being logged. <code>null</code> messages are not
-     *                logged, however, zero-length strings are.
+     * @param message Message being logged. <code>null</code> messages are not logged, however, zero-length strings
+     *                are.
      */
     public void log(final int level, final String message);
 
     /**
      * Return a listener for failed node list
+     *
      * @return listener
      */
     public FailedNodesListener getFailedNodesListener();
 
+
     /**
-     * Return a build listener
-     * @return build listener
+     * Called when executionb begins
      */
-    public BuildListener getBuildListener();
+    public void beginExecution(ExecutionContext context, ExecutionItem item);
+
+    /**
+     * Called when execution finishes
+     */
+    public void finishExecution(ExecutionResult result, ExecutionContext context, ExecutionItem item);
+
+    /**
+     * Called before execution of command on node
+     */
+    public void beginNodeExecution(ExecutionContext context, String[] command, final INodeEntry node);
+
+    /**
+     * Called after execution of command on node.
+     */
+    public void finishNodeExecution(NodeExecutorResult result, ExecutionContext context, String[] command,
+                                    final INodeEntry node);
+
+    /**
+     * Begin dispatch of command to set of nodes
+     */
+    public void beginNodeDispatch(ExecutionContext context, ExecutionItem item);
+    /**
+     * Begin dispatch of command to set of nodes
+     */
+    public void beginNodeDispatch(ExecutionContext context, Dispatchable item);
+
+    /**
+     * Finish node dispatch
+     */
+    public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, ExecutionItem item);
+
+    /**
+     * Finish node dispatch
+     */
+    public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, Dispatchable item);
+
+    /**
+     * Begin file copy of stream
+     */
+    public void beginFileCopyFileStream(final ExecutionContext context, InputStream input, INodeEntry node);
+
+    /**
+     * Begin file copy of file
+     */
+    public void beginFileCopyFile(final ExecutionContext context, File input, INodeEntry node);
+
+    /**
+     * Begin file copy of string
+     */
+    public void beginFileCopyScriptContent(final ExecutionContext context, String input, INodeEntry node);
+
+    /**
+     * Finish file copy
+     */
+    public void finishFileCopy(String result, ExecutionContext context, INodeEntry node);
+
+    /**
+     * Begin command interpretation
+     */
+    public void beginInterpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node);
+
+    /**
+     * Finish command interpretation
+     */
+    public void finishInterpretCommand(InterpreterResult result, ExecutionContext context, ExecutionItem item,
+                                       INodeEntry node);
 }

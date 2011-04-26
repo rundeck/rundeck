@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+ * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,23 +23,81 @@
 */
 package com.dtolabs.rundeck.core.execution;
 
+import com.dtolabs.rundeck.core.common.FrameworkSupportService;
+import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.commands.InterpreterException;
+import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
+import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
+import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
+import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
+import com.dtolabs.rundeck.core.execution.service.FileCopierException;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+
+import java.io.File;
+import java.io.InputStream;
+
 /**
- * ExecutionService is ...
+ * ExecutionService provides interface to all dispatcher and command execution services.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public interface ExecutionService {
-    /**
-     * Execute the item and return the result.
-     * @param item item
-     * @return result
-     */
-    public ExecutionResult executeItem(ExecutionItem item) throws ExecutionException;
+public interface ExecutionService extends FrameworkSupportService {
+    public static final String SERVICE_NAME = "ExecutionService";
 
     /**
-     * Return the execution listener if any
-     * @return
+     * Execute the item for the given context and return the result.
+     *
+     * @param item item
+     *
+     * @return result
      */
-    public ExecutionListener getListener();
+    public ExecutionResult executeItem(ExecutionContext context, ExecutionItem item) throws ExecutionException;
+
+    /**
+     * Interpret the execution item within the context for the given node.
+     */
+    public InterpreterResult interpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node) throws
+        InterpreterException;
+
+
+    /**
+     * Dispatch the command (execution item) to all the nodes within the context.
+     */
+    public DispatcherResult dispatchToNodes(ExecutionContext context, ExecutionItem item) throws DispatcherException;
+    /**
+     * Dispatch the command (execution item) to all the nodes within the context.
+     */
+    public DispatcherResult dispatchToNodes(ExecutionContext context, Dispatchable item) throws DispatcherException;
+
+
+    /**
+     * Copy inputstream as a file to the node.
+     *
+     * @return filepath on the node for the destination file.
+     */
+    public String fileCopyFileStream(final ExecutionContext context, InputStream input, INodeEntry node) throws
+        FileCopierException;
+
+    /**
+     * Copy file to the node.
+     *
+     * @return filepath for the copied file on the node.
+     */
+    public String fileCopyFile(final ExecutionContext context, File file, INodeEntry node) throws FileCopierException;
+
+    /**
+     * Copy string as a file to the node,
+     *
+     * @return filepath for the copied file on the node
+     */
+    public String fileCopyScriptContent(final ExecutionContext context, String script,
+                                        INodeEntry node) throws
+        FileCopierException;
+
+    /**
+     * Execute a command within the context on the node.
+     */
+    public NodeExecutorResult executeCommand(ExecutionContext context, String[] command, INodeEntry node) throws
+        ExecutionException;
 }

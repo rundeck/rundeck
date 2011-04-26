@@ -54,8 +54,8 @@ public class TestRundeckCentralDispatcher extends TestCase {
 
 
     public void testAddNodeSetParams() throws Exception {
-        // 19 parameters: 16 exclude/include params + nodexcludeprecedence + threadcount + donodedispatch
-        final int PARAM_COUNT = 19;
+        // 17 parameters: 14 exclude/include params + nodexcludeprecedence + threadcount + donodedispatch
+        final int PARAM_COUNT = 17;
         {
             //test null nodeset
             HashMap<String, String> params = new HashMap<String, String>();
@@ -133,7 +133,6 @@ public class TestRundeckCentralDispatcher extends TestCase {
             include.setOsarch("testosarch");
             include.setName("testname");
             include.setTags("testtags");
-            include.setType("testtype");
 
             //test other include filters
             RundeckCentralDispatcher.addNodeSetParams(params, nodeset, null, "test.");
@@ -148,7 +147,6 @@ public class TestRundeckCentralDispatcher extends TestCase {
             assertEquals("testosarch", params.get("test.nodeIncludeOsArch"));
             assertEquals("testname", params.get("test.nodeIncludeName"));
             assertEquals("testtags", params.get("test.nodeIncludeTags"));
-            assertEquals("testtype", params.get("test.nodeIncludeType"));
         }
         {
             //test exclude filters
@@ -162,7 +160,6 @@ public class TestRundeckCentralDispatcher extends TestCase {
             exclude.setOsarch("testosarch");
             exclude.setName("testname");
             exclude.setTags("testtags");
-            exclude.setType("testtype");
 
             //test other include filters
             RundeckCentralDispatcher.addNodeSetParams(params, nodeset, null, "test.");
@@ -176,7 +173,6 @@ public class TestRundeckCentralDispatcher extends TestCase {
             assertEquals("testosarch", params.get("test.nodeExcludeOsArch"));
             assertEquals("testname", params.get("test.nodeExcludeName"));
             assertEquals("testtags", params.get("test.nodeExcludeTags"));
-            assertEquals("testtype", params.get("test.nodeExcludeType"));
         }
         {
             //test precedence filters

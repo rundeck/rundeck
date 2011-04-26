@@ -85,12 +85,10 @@ public class TestNodesYamlRoundtrip extends TestCase {
             assertNull(entry.getOsFamily());
             assertNull(entry.getOsVersion());
             assertNull(entry.getOsName());
-            assertNull(entry.getAttributes());
+            assertNotNull(entry.getAttributes());
             assertNull(entry.getDescription());
             assertNull(entry.getFrameworkProject());
-            assertNull(entry.getSettings());
             assertNull(entry.getUsername());
-            assertNull(entry.getType());
         }
         {
             NodeEntryImpl node = new NodeEntryImpl();
@@ -109,15 +107,12 @@ public class TestNodesYamlRoundtrip extends TestCase {
             node.setTags(tags);
 
             //set properties that should not be serialized: type, frameworkProject, settings, attributes
-            node.setType("unused");
             node.setFrameworkProject("my project");
 
             final HashMap<String, String> dummy = new HashMap<String, String>();
             dummy.put("a", "b");
             node.setAttributes(dummy);
 
-            final HashMap<String, String> dummy2 = new HashMap<String, String>(dummy);
-            node.setSettings(dummy2);
 
 
             gen.addNode(node);
@@ -147,9 +142,7 @@ public class TestNodesYamlRoundtrip extends TestCase {
             assertEquals("a description", entry.getDescription());
             assertEquals("some user", entry.getUsername());
             //null values should be ignored
-            assertNull(entry.getAttributes());
-            assertNull(entry.getSettings());
-            assertNull(entry.getType());
+            assertNotNull(entry.getAttributes());
             assertNull(entry.getFrameworkProject());
         }
 

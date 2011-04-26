@@ -14,16 +14,17 @@ class UrlMappings {
         "/api/$api_version/execution/$id/abort"(controller: 'execution', action: 'apiExecutionAbort')
         "/api/$api_version/executions/running"(controller: 'menu', action: 'apiExecutionsRunning')
         "/api/$api_version/history"(controller: 'reports', action: 'apiHistory')
-        "/api/$api_version/job/$id"(controller: 'api') {
-            //passthrough from ApiController to ScheduledExecutionController
-            action = [GET: "apiJobExport", DELETE: "apiJobDelete"]
-        }
+        "/api/$api_version/job/$id"(controller: 'scheduledExecution',action:'apiJobAction')
         "/api/$api_version/job/$id/run"(controller: 'scheduledExecution', action: 'apiJobRun')
         "/api/$api_version/job/$id/executions"(controller: 'scheduledExecution', action: 'apiJobExecutions')
         "/api/$api_version/jobs"(controller: 'menu', action: 'apiJobsList')
         "/api/$api_version/jobs/export"(controller: 'menu', action: 'apiJobsExport')
         "/api/$api_version/jobs/import"(controller: 'scheduledExecution', action: 'apiJobsImport')
         "/api/$api_version/project/$project?"(controller: 'framework', action: 'apiProject')
+        "/api/$api_version/project/$project/resources/refresh"(controller: 'framework', action: 'apiProjectResourcesRefresh')
+        "/api/$api_version/project/$project/resources"(controller: 'framework') {
+            action = [GET: "apiResources",/* PUT: "update", DELETE: "delete",*/ POST: "apiProjectResources"]
+        }
         "/api/$api_version/projects"(controller: 'framework', action: 'apiProjects')
         "/api/renderError"(controller: 'api', action: 'renderError')
         "/api/error"(controller: 'api', action: 'error')

@@ -8,7 +8,7 @@ TEMPLATES=../../templates
 
 all: manpages html roff
 
-manpages: aclpolicy-v10.5.gz job-v20.5.gz resource-v10.5.gz job-yaml-v12.5.gz resource-yaml-v12.5.gz
+manpages: aclpolicy-v10.5.gz job-v20.5.gz resource-v13.5.gz job-yaml-v12.5.gz resource-yaml-v13.5.gz
 
 %.5.gz: %.5
 	gzip < $< > $@
@@ -16,7 +16,7 @@ manpages: aclpolicy-v10.5.gz job-v20.5.gz resource-v10.5.gz job-yaml-v12.5.gz re
 %.5:
 	pandoc -s -w man $@.md -o $@
 
-PAGES = aclpolicy-v10.5 job-v20.5 resource-v10.5 job-yaml-v12.5 resource-yaml-v12.5
+PAGES = aclpolicy-v10.5 job-v20.5 resource-v13.5 job-yaml-v12.5 resource-yaml-v13.5
 
 publish : roff html
 

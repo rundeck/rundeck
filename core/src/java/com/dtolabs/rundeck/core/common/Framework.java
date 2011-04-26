@@ -29,6 +29,18 @@ import com.dtolabs.rundeck.core.dispatcher.CentralDispatcher;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherMgrFactory;
 import com.dtolabs.rundeck.core.dispatcher.NoCentralDispatcher;
+import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.ExecutionService;
+import com.dtolabs.rundeck.core.execution.ExecutionServiceFactory;
+import com.dtolabs.rundeck.core.execution.commands.CommandInterpreter;
+import com.dtolabs.rundeck.core.execution.commands.CommandInterpreterService;
+import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
+import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcherService;
+import com.dtolabs.rundeck.core.execution.service.*;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
+import com.dtolabs.rundeck.core.plugins.PluginManagerService;
+import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.NodeSet;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
@@ -40,6 +52,7 @@ import org.apache.tools.ant.input.InputHandler;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -64,6 +77,13 @@ public class Framework extends FrameworkResourceParent {
     static final String CENTRALDISPATCHER_CLS_DEFAULT = NoCentralDispatcher.class.getName();
 
     static final String PROJECTMGR_NAME = "projectResourceMgr";
+    public static final String FRAMEWORK_LIBEXT_DIR = "framework.libext.dir";
+    public static final String FRAMEWORK_LIBEXT_CACHE_DIR = "framework.libext.cache.dir";
+    public static final String DEFAULT_LIBEXT_DIR_NAME = "libext";
+    public static final String DEFAULT_LIBEXT_CACHE_DIR_NAME = "cache";
+    public static final String SYSTEM_PROP_LIBEXT = "rdeck.libext";
+    public static final String SYSTEM_PROP_LIBEXT_CACHE = "rdeck.libext.cache";
+    public static final String FRAMEWORK_PLUGINS_ENABLED = "framework.plugins.enabled";
 
     private final IPropertyLookup lookup;
     private final File projectsBase;
@@ -72,6 +92,7 @@ public class Framework extends FrameworkResourceParent {
     private boolean allowUserInput = true;
     private static final String FRAMEWORK_USERINPUT_DISABLED = "framework.userinput.disabled";
 
+    final HashMap<String,FrameworkSupportService> services = new HashMap<String, FrameworkSupportService>();
     /**
      * This is the root. Does not return a parent.
      *
@@ -126,15 +147,28 @@ public class Framework extends FrameworkResourceParent {
         if (null==nodeAuthResolutionStrategy) {
             final String nodeAuthClassname;
             if (lookup.hasProperty(NODEAUTH_CLS_PROP)) {
-                nodeAuthClassname = lookup.getProperty(NODEAUTH_CLS_PROP);                
+                nodeAuthClassname = lookup.getProperty(NODEAUTH_CLS_PROP);
             } else {
                 nodeAuthClassname = Constants.DEFAULT_NODE_AUTHSTRATEGY_CLASSNAME;
                 logger.info("Framework setting, "+NODEAUTH_CLS_PROP+", not set. "
                         + "Defaulted to " + nodeAuthClassname);
             }
             nodeAuthResolutionStrategy = NodeAuthResolutionStrategyFactory.create(nodeAuthClassname, this);
-            
+
         }
+
+        //plugin manager service inited first.  any pluggable services will then be
+        //able to try to load providers via the plugin manager
+        if(!hasProperty(FRAMEWORK_PLUGINS_ENABLED) || "true".equals(getProperty(FRAMEWORK_PLUGINS_ENABLED))){
+            //enable plugin service only if framework property does not disable them
+            PluginManagerService.getInstanceForFramework(this);
+        }
+        CommandInterpreterService.getInstanceForFramework(this);
+        NodeExecutorService.getInstanceForFramework(this);
+        FileCopierService.getInstanceForFramework(this);
+        NodeDispatcherService.getInstanceForFramework(this);
+        ExecutionServiceFactory.getInstanceForFramework(this);
+        WorkflowExecutionService.getInstanceForFramework(this);
     }
 
     private CentralDispatcher centralDispatcherMgr;
@@ -191,9 +225,8 @@ public class Framework extends FrameworkResourceParent {
      * @param projects_base_dir  path name to the projects base
      */
     private Framework(final String rdeck_base_dir,
-                      final String module_base_dir,
                       final String projects_base_dir) {
-        this(rdeck_base_dir, module_base_dir, projects_base_dir, null, null);
+        this(rdeck_base_dir, projects_base_dir, null, null);
     }
 
     /**
@@ -204,7 +237,6 @@ public class Framework extends FrameworkResourceParent {
      * @param projects_base_dir  path name to the projects base
      */
     private Framework(final String rdeck_base_dir,
-                      final String module_base_dir,
                       final String projects_base_dir,
                       final Authenticator authentication,
                       final LegacyAuthorization authorization) {
@@ -213,7 +245,7 @@ public class Framework extends FrameworkResourceParent {
             throw new NullPointerException(
                 "rdeck_base_dir was not set in constructor and system property rdeck.base was not defined");
         }
-        
+
         final String projectsBaseDir = null == projects_base_dir ? getBaseDir() + Constants.FILE_SEP + "projects"
                                      : projects_base_dir;
         if (null == projectsBaseDir) {
@@ -265,7 +297,51 @@ public class Framework extends FrameworkResourceParent {
             logger.debug("Framework.initialize() time: " + (end - start) + "ms");
         }
     }
+    /**
+     * Return a service by name
+     */
+    public FrameworkSupportService getService(String name) {
+        return services.get(name);
+    }
+    /**
+     * Set a service by name
+     */
+    public void setService(final String name, final FrameworkSupportService service){
+        synchronized (services){
+            if(null==services.get(name) && null!=service) {
+                services.put(name, service);
+            }else if(null==service) {
+                services.remove(name);
+            }
+        }
+    }
+    public ExecutionService getExecutionService() {
+        return ExecutionServiceFactory.getInstanceForFramework(this);
+    }
+    public WorkflowExecutionService getWorkflowExecutionService() {
+        return WorkflowExecutionService.getInstanceForFramework(this);
+    }
 
+    public FileCopier getFileCopierForNodeAndProject(INodeEntry node, final String project) throws ExecutionServiceException {
+        return FileCopierService.getInstanceForFramework(this).getProviderForNodeAndProject(node, project);
+    }
+
+    public NodeExecutor getNodeExecutorForNodeAndProject(INodeEntry node, final String project) throws ExecutionServiceException {
+        return NodeExecutorService.getInstanceForFramework(this).getProviderForNodeAndProject(node, project);
+    }
+    public CommandInterpreter getCommandInterpreterForItem(ExecutionItem item) throws ExecutionServiceException {
+        return CommandInterpreterService.getInstanceForFramework(this).getInterpreterForExecutionItem(item);
+    }
+    public NodeDispatcher getNodeDispatcherForContext(ExecutionContext context) throws ExecutionServiceException {
+        return NodeDispatcherService.getInstanceForFramework(this).getNodeDispatcher(context);
+    }
+
+    public ServiceProviderLoader getPluginManager(){
+        if(null!=getService(PluginManagerService.SERVICE_NAME)) {
+            return PluginManagerService.getInstanceForFramework(this);
+        }
+        return null;
+    }
     /**
      * Returns the singleton instance of Framework object.  If any of the
      * supplied directory paths are null, then the value from {@link Constants} is used.
@@ -276,10 +352,9 @@ public class Framework extends FrameworkResourceParent {
      * @return a Framework instance
      */
     public static Framework getInstance(final String rdeck_base_dir,
-                                        final String module_base_dir,
                                         final String projects_base_dir) {
 
-        return new Framework(rdeck_base_dir, module_base_dir, projects_base_dir);
+        return new Framework(rdeck_base_dir, projects_base_dir);
     }
 
     /**
@@ -325,7 +400,6 @@ public class Framework extends FrameworkResourceParent {
         }
         if (null != project && null == fw && null != project.getProperty("rdeck.base")) {
             fw = Framework.getInstance(project.getProperty("rdeck.base"),
-                                       project.getProperty("modules.dir"),
                                        project.getProperty("projects.dir"));
             fw.configureFromProject(project);
             fw.configureProject(project);
@@ -360,7 +434,7 @@ public class Framework extends FrameworkResourceParent {
     public static Framework getInstance(final String rdeck_base_dir,
                                         final Authenticator authenticator,
                                         final LegacyAuthorization authorization) {
-        
+
         logger.debug("creating new Framework instance."
                      + "  rdeck_base_dir=" + rdeck_base_dir
         );
@@ -369,7 +443,6 @@ public class Framework extends FrameworkResourceParent {
                 "Unable to determine rdeck base directory: system property rdeck.base is not set");
         }
         Framework instance = new Framework(rdeck_base_dir,
-                                           null,
                                            Constants.getFrameworkProjectsDir(rdeck_base_dir),
                                            authenticator,
                                            authorization);
@@ -385,7 +458,7 @@ public class Framework extends FrameworkResourceParent {
      */
     public static Framework getInstance() {
         logger.debug("creating new Framework using info from com.dtolabs.rundeck.core.Constants");
-        return Framework.getInstance((String) null, (String) null, (String) null);
+        return Framework.getInstance((String) null, (String) null);
     }
 
     /**
@@ -430,6 +503,7 @@ public class Framework extends FrameworkResourceParent {
         this.centralDispatcherMgr = centralDispatcherMgr;
     }
 
+
     /**
      * An InputHandler implementation which simply throws an exception.  It also stores an original implementation that
      * it may have replaced.
@@ -460,8 +534,32 @@ public class Framework extends FrameworkResourceParent {
     }
 
 
-    public boolean existsProperty(final String key) {
+    /**
+     * Return true if the property exists
+     */
+    public boolean hasProperty(final String key) {
         return lookup.hasProperty(key);
+    }
+
+    /**
+     * Return true if the property is set for the project or the framework
+     */
+    public boolean hasProjectProperty(final String key, final String project) {
+        final FrameworkProject frameworkProject = getFrameworkProjectMgr().getFrameworkProject(project);
+        return frameworkProject.hasProperty(key) || hasProperty(key);
+    }
+    /**
+     * Return the property value for the key from the project or framework properties if it exists, otherwise
+     * return null.
+     */
+    public String getProjectProperty(final String project, final String key) {
+        final FrameworkProject frameworkProject = getFrameworkProjectMgr().getFrameworkProject(project);
+        if(frameworkProject.hasProperty(key)) {
+            return frameworkProject.getProperty(key);
+        }else if(hasProperty(key)) {
+            return getProperty(key);
+        }
+        return null;
     }
 
 
@@ -517,7 +615,6 @@ public class Framework extends FrameworkResourceParent {
         NodeEntryImpl node = new NodeEntryImpl(getFrameworkNodeHostname(), getFrameworkNodeName());
         node.setUsername(getProperty("framework.ssh.user"));
         node.setDescription("Rundeck server node");
-        node.setType("Node");
         node.setOsArch(System.getProperty("os.arch"));
         node.setOsName(System.getProperty("os.name"));
         node.setOsVersion(System.getProperty("os.version"));
@@ -595,6 +692,30 @@ public class Framework extends FrameworkResourceParent {
     public File getConfigDir() {
         return new File(Constants.getFrameworkConfigDir(getBaseDir().getAbsolutePath()));
     }
+    /**
+     * Return the directory containing plugins/extensions for the framework.
+     */
+    public File getLibextDir(){
+        if(null!=System.getProperty(SYSTEM_PROP_LIBEXT)) {
+            return new File(System.getProperty(SYSTEM_PROP_LIBEXT));
+        }else if (hasProperty(FRAMEWORK_LIBEXT_DIR)) {
+            return new File(getProperty(FRAMEWORK_LIBEXT_DIR));
+        }else {
+            return new File(getBaseDir(), DEFAULT_LIBEXT_DIR_NAME);
+        }
+    }
+    /**
+     * Return the cache directory used by the plugin system
+     */
+    public File getLibextCacheDir(){
+        if (null != System.getProperty(SYSTEM_PROP_LIBEXT_CACHE)) {
+            return new File(System.getProperty(SYSTEM_PROP_LIBEXT_CACHE));
+        }else if (hasProperty(FRAMEWORK_LIBEXT_CACHE_DIR)) {
+            return new File(getProperty(FRAMEWORK_LIBEXT_CACHE_DIR));
+        }else {
+            return new File(getLibextDir(), DEFAULT_LIBEXT_CACHE_DIR_NAME);
+        }
+    }
 
 
 
@@ -656,7 +777,7 @@ public class Framework extends FrameworkResourceParent {
      */
     public boolean isServerNode() {
         String serverNode = null;
-        if (existsProperty("framework.server.name")) {
+        if (hasProperty("framework.server.name")) {
             serverNode = getProperty("framework.server.name");
         }
         if (null!=serverNode && serverNode.equals(getPropertyLookup().getProperty("framework.node.name"))) {

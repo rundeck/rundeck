@@ -257,5 +257,8 @@ public class ProjectTool implements ActionMaker, CLITool {
         }
     }
 
+    public void debug(final String message) {
+        verbose(message);
+    }
 
 }

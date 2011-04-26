@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.common;
 
 import java.io.IOException;
+import java.util.Collection;
 
 /**
  * NodesFileGenerator interface for a file serializer for nodes data
@@ -38,6 +39,13 @@ public interface NodesFileGenerator {
      * @param node
      */
     public void addNode(final INodeEntry node) ;
+
+    /**
+     * Add all Node objects
+     *
+     * @param nodes the nodes
+     */
+    public void addNodes(final Collection<INodeEntry> nodes) ;
 
     /**
      * Generate output from the provided ndoes.

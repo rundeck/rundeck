@@ -24,7 +24,9 @@ class ScheduledExecution extends ExecutionContext {
     Date lastUpdated
     String notifySuccessRecipients
     String notifyFailureRecipients
-    static transients = ['adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients','crontabString']
+    String notifySuccessUrl
+    String notifyFailureUrl
+    static transients = ['adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients', 'notifySuccessUrl', 'notifyFailureUrl','crontabString']
 
     static constraints = {
         workflow(nullable:true)
@@ -38,8 +40,6 @@ class ScheduledExecution extends ExecutionContext {
         nodeExclude(nullable:true)
         nodeIncludeName(nullable:true)
         nodeExcludeName(nullable:true)
-        nodeIncludeType(nullable:true)
-        nodeExcludeType(nullable:true)
         nodeIncludeTags(nullable:true)
         nodeExcludeTags(nullable:true)
         nodeIncludeOsName(nullable:true)
@@ -120,19 +120,13 @@ class ScheduledExecution extends ExecutionContext {
                 }
             }
         }
-        if(notifySuccessRecipients || notifyFailureRecipients){
-            map.notification=[:]
-            if(notifySuccessRecipients){
-                map.notification.onsuccess=[recipients:notifySuccessRecipients]
-            }
-            if(notifyFailureRecipients){
-                map.notification.onfailure=[recipients:notifyFailureRecipients]
-            }
-        }
         if(notifications){
             map.notification=[:]
             notifications.each{
-                map.notification[it.eventTrigger]=it.toMap()
+                if(!map.notification[it.eventTrigger]){
+                    map.notification[it.eventTrigger]=[:]
+                }
+                map.notification[it.eventTrigger].putAll(it.toMap())
             }
         }
         return map
@@ -215,8 +209,14 @@ class ScheduledExecution extends ExecutionContext {
         }
         if(data.notification){
             def nots=[]
-            data.notification.keySet().each{ name->
-                nots<<Notification.fromMap(name,data.notification[name])
+            ['onsuccess','onfailure'].each{ name->
+                if(data.notification[name]){
+                    ['urls','recipients'].each{ subkey->
+                        if(data.notification[name][subkey]){
+                            nots << Notification.fromMap(name, [(subkey):data.notification[name][subkey]])
+                        }
+                    }
+                }
             }
             se.notifications=nots
         }
@@ -512,9 +512,9 @@ class ScheduledExecution extends ExecutionContext {
       return result;
   }
 
-    def Notification findNotification(String trigger){
+    def Notification findNotification(String trigger, String type){
         if(this.id){
-            return Notification.findByScheduledExecutionAndEventTrigger(this,trigger)
+            return this.notifications.find{it.eventTrigger==trigger && it.type==type}
         }else{
             return null
         }

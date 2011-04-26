@@ -38,7 +38,6 @@ public interface INodeEntry extends INodeBase, INodeDesc {
     public String getOsArch();
     public String getOsVersion();
     public String getOsName();
-    public String getType();
     public String getNodename();
     public String getUsername();
     public boolean containsUserName();
@@ -56,11 +55,5 @@ public interface INodeEntry extends INodeBase, INodeDesc {
      * @return attributes
      */
     public Map<String, String> getAttributes();
-
-    /**
-     * Return setting name/value map.
-     * @return map of setting name to value.
-     */
-    public Map<String, String> getSettings();
 
 }

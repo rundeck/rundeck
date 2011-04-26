@@ -14,10 +14,8 @@
   ~  limitations under the License.
   -->
 
-<!--<!DOCTYPE project PUBLIC
-    "-//DTO Labs Inc.//DTD Resources Document 1.0//EN" "project.dtd">-->
 <project>
-  <node name="node1" type="Node1" description="description1" tags="tag1,tag2"
+  <node name="node1" description="description1" tags="tag1,tag2"
         hostname="hostname1"
         osName="osName1"
         osFamily="osFamily1"
@@ -26,38 +24,9 @@
         username="username1"
         editUrl="EditURL"
         remoteUrl="RemoteURL"
+        testattribute="testvalue"
       >
-
+    <attribute name="testattribute2" value="test value2"/>
+    <attribute name="testattribute3">test value3</attribute>
   </node>
-  <setting name="setting1" type="Setting1" description="description2" tags="tag1,tag3"
-           settingType="settingType1"
-           settingValue="settingValue1"
-      >
-
-  </setting>
-  <package name="package1" type="Package1" description="description3" tags="tag3,tag4"
-           arch="arch1"
-           base="base1"
-           buildtime="buildtime1"
-           filename="filename1"
-           filetype="filetype1"
-           installroot="installroot1"
-           installrank="installrank1"
-           release="release1"
-           releasetag="releasetag1"
-           repoUrl="repoUrl1"
-           restart="restart1"
-           vendor="vendor1"
-           version="version1"
-      >
-
-  </package>
-  <deployment name="deployment1" type="Deployment1" description="description4" tags="tag5,tag6"
-              installRoot="installRoot1"
-              basedir="basedir1"
-              startuprank="startuprank1"
-
-      >
-
-  </deployment>
 </project>

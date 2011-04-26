@@ -23,6 +23,8 @@
 */
 package com.dtolabs.rundeck.core.execution;
 
+import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
+
 /**
  * BaseExecutionResult implements ExecutionResult and provides factory methods for creating success or failure results
 *
@@ -30,11 +32,11 @@ package com.dtolabs.rundeck.core.execution;
 * @version $Revision$
 */
 public class BaseExecutionResult implements ExecutionResult{
-    Object resultObject;
+    DispatcherResult resultObject;
     boolean success;
     Exception exception;
 
-    BaseExecutionResult(final Object resultObject, final boolean success, final Exception exception) {
+    BaseExecutionResult(final DispatcherResult resultObject, final boolean success, final Exception exception) {
         this.resultObject = resultObject;
         this.success = success;
         this.exception = exception;
@@ -45,7 +47,7 @@ public class BaseExecutionResult implements ExecutionResult{
      * @param object result object
      * @return success result containing the object
      */
-    public static ExecutionResult createSuccess(final Object object) {
+    public static ExecutionResult createSuccess(final DispatcherResult object) {
         return new BaseExecutionResult(object, true, null);
     }
 
@@ -66,7 +68,7 @@ public class BaseExecutionResult implements ExecutionResult{
         return exception;
     }
 
-    public Object getResultObject() {
+    public DispatcherResult getResultObject() {
         return resultObject;
     }
 

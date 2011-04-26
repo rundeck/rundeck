@@ -23,14 +23,15 @@
 */
 package com.dtolabs.rundeck.core.execution;
 
+import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
+
 /**
  * ExecutionResult is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public interface ExecutionResult {
-    public boolean isSuccess();
+public interface ExecutionResult extends StatusResult {
     public Exception getException();
-    public Object getResultObject();
+    public DispatcherResult getResultObject();
 }

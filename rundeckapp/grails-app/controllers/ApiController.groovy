@@ -49,8 +49,12 @@ class ApiController {
         return render(contentType:"text/xml",encoding:"UTF-8"){
             result(error:"true", apiversion:ApiRequestFilters.API_CURRENT_VERSION){
                 delegate.'error'{
+                    if (!flash.error && !flash.errors && !request.error && !request.errors) {
+                        message(g.message(code: "api.error.unknown"))
+                    }
                     if(flash.error){
                         message(flash.error)
+                        flash.error=null
                     }
                     if(request.error){
                         message(request.error)
@@ -59,33 +63,16 @@ class ApiController {
                         flash.errors.each{
                             message(it)
                         }
+                        flash.errors = null
                     }
                     if(request.errors){
                         request.errors.each{
                             message(it)
                         }
                     }
-                    if(!flash.error && !flash.errors && !request.error && !request.errors){
-                        message(g.message(code:"api.error.unknown"))
-                    }
                 }
             }
         }
     }
 
-    /**
-     * Pass through to ScheduledExecutionController.
-     * this prevents automatic link generation caused by UrlMappings file to generate links to /api in the GUI
-     */
-    def apiJobExport={
-        return chain(controller:'scheduledExecution',action:'apiJobExport',params:params)
-    }
-
-    /**
-     * Pass through to ScheduledExecutionController.
-     * this prevents automatic link generation caused by UrlMappings file to generate links to /api in the GUI
-     */
-    def apiJobDelete={
-        return chain(controller:'scheduledExecution',action:'apiJobDelete',params:params)
-    }
 }

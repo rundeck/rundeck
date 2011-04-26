@@ -69,8 +69,29 @@ echo "OK"
 ##
 
 echo "TEST: /jobs/import without expected file content"
+params="xmlBatch=z"
 
 CURL_REQ_OPTS="-F x=y" sh $DIR/api-expect-error.sh "${runurl}" "${params}" "No file was uploaded" || exit 2
+echo "OK"
+
+##
+# try to make POST request without expected xmlBatch parameter (multipart)
+##
+
+echo "TEST: /jobs/import multipart without xmlBatch param"
+params=""
+
+CURL_REQ_OPTS="-F x=y" sh $DIR/api-expect-error.sh "${runurl}" "${params}" "parameter \"xmlBatch\" is required" || exit 2
+echo "OK"
+
+##
+# try to make POST request without expected xmlBatch parameter (form)
+##
+
+echo "TEST: /jobs/import form without xmlBatch param"
+params=""
+
+CURL_REQ_OPTS="--data-urlencode x=y" sh $DIR/api-expect-error.sh "${runurl}" "${params}" "parameter \"xmlBatch\" is required" || exit 2
 echo "OK"
 
 ##

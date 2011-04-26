@@ -24,15 +24,14 @@
 package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.utils.FileUtils;
+import com.dtolabs.utils.Streams;
 import org.apache.log4j.Logger;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Get;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.channels.FileChannel;
@@ -60,15 +59,130 @@ public class UpdateUtils {
      */
     public static void updateFileFromUrl(final String sourceUrl, final String destinationFilePath) throws
         UpdateException {
-        final URL url;
+        updateFileFromUrl(sourceUrl, destinationFilePath, null, null);
+    }
+    /**
+     * Get the source URL and store it to a destination file path
+     *
+     * @param sourceUrl
+     * @param destinationFilePath
+     *
+     * @throws UpdateException
+     */
+    public static void updateFileFromFile(final File sourceFile, final String destinationFilePath) throws
+        UpdateException {
+        if(!sourceFile.exists()) {
+            throw new UpdateException("Source file does not exist: " + sourceFile);
+        }
+        if(!sourceFile.isFile()) {
+            throw new UpdateException("Not a file: " + sourceFile);
+        }
+        if (sourceFile.length() < 1) {
+            throw new UpdateException("Source file is empty: " + sourceFile);
+        }
+
+        try {
+            updateFileFromInputStream(new FileInputStream(sourceFile),destinationFilePath);
+        } catch (IOException e) {
+            throw new UpdateException("Unable to update file: " + e.getMessage(), e);
+        }
+    }
+    /**
+     * Get the source URL and store it to a destination file path
+     *
+     * @param sourceUrl
+     * @param destinationFilePath
+     *
+     * @throws UpdateException
+     */
+    public static void updateFileFromInputStream(final InputStream input, final String destinationFilePath) throws
+        UpdateException {
+        final File destFile = new File(destinationFilePath);
+        final File lockFile = new File(destFile.getAbsolutePath() + ".lock");
+        final File newDestFile = new File(destFile.getAbsolutePath() + ".new");
+
+        //synchronize writing to file within this jvm
+        synchronized (UpdateUtils.class) {
+            try {
+                final FileChannel channel = new RandomAccessFile(lockFile, "rw").getChannel();
+
+                //acquire file lock to block external jvm (commandline) from writing to file
+                final FileLock lock = channel.lock();
+
+                try {
+                    Streams.copyStream(input, new FileOutputStream(newDestFile));
+
+                    moveFile(newDestFile, destFile);
+                } finally {
+                    lock.release();
+                    channel.close();
+                }
+            } catch (IOException e) {
+                throw new UpdateException("Unable to update file: " + e.getMessage(), e);
+            }
+        }
+
+    }
+
+    /**
+     * Rename the file. Handle possible OS specific issues
+     */
+    private static void moveFile(final File fromFile, final File toFile) throws UpdateException {
+        if (!fromFile.renameTo(toFile)) {
+            final String osName1 = System.getProperty("os.name");
+            if (osName1.toLowerCase().indexOf("windows") > -1 && toFile.exists()) {
+                //first remove the destFile
+                if (!toFile.delete()) {
+                    throw new UpdateException(
+                        "Unable to remove dest file on windows: " + toFile);
+                }
+                if (!fromFile.renameTo(toFile)) {
+                    throw new UpdateException(
+                        "Unable to move temp file to dest file on windows: " + fromFile + ", "
+                        + toFile);
+                }
+            } else {
+                throw new UpdateException(
+                    "Unable to move temp file to dest file: " + fromFile + ", " + toFile);
+            }
+        }
+    }
+
+    /**
+     * Get the source URL and store it to a destination file path
+     *
+     * @param sourceUrl
+     * @param destinationFilePath
+     *
+     * @param username
+     * @param password
+     * @throws UpdateException
+     */
+    public static void updateFileFromUrl(final String sourceUrl, final String destinationFilePath,
+                                         final String username, final String password) throws
+        UpdateException {
+        String tusername = username;
+        String tpassword = password;
+        URL url;
         try {
             url = new URL(sourceUrl);
+            if (null == username && null == password && null != url.getUserInfo()) {
+                //try to extract userinfo from URL
+                final String userInfo = url.getUserInfo();
+                final String[] split = userInfo.split(":", 2);
+                if (2 == split.length) {
+                    tusername = split[0];
+                    tpassword = split[1];
+                    url = new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile());
+                }
+            }
         } catch (MalformedURLException e) {
             throw new UpdateException(e);
         }
         final File destinationFile = new File(destinationFilePath);
         final long mtime = destinationFile.exists() ? destinationFile.lastModified() : 0;
-        get(url, destinationFile);
+
+        get(url, destinationFile, tusername, tpassword);
         if (destinationFile.lastModified() > mtime) {
             logger.info("updated file: " + destinationFile.getAbsolutePath());
         } else {
@@ -77,13 +191,13 @@ public class UpdateUtils {
 
     }
 
-    static void get(final URL srcUrl, final File destFile) throws UpdateException {
+    static void get(final URL srcUrl, final File destFile, final String username, final String password) throws UpdateException {
         final Project p = new Project();
         final File lockFile = new File(destFile.getAbsolutePath() + ".lock");
         final File newDestFile = new File(destFile.getAbsolutePath() + ".new");
 
         try {
-            final Task getTask = createTask(srcUrl, newDestFile, null, null);
+            final Task getTask = createTask(srcUrl, newDestFile, username, password);
             getTask.setProject(p);
 
             //synchronize writing to file within this jvm
@@ -98,27 +212,12 @@ public class UpdateUtils {
                         logger.warn("Unable to set modification time of temp file: " + newDestFile.getAbsolutePath());
                     }
                     getTask.execute();
-                    final String osName = System.getProperty("os.name");
 
-                    if (!newDestFile.renameTo(destFile)) {
-                        if (osName.toLowerCase().indexOf("windows") > -1 && destFile.exists()) {
-                            //first remove the destFile
-                            if (!destFile.delete()) {
-                                throw new UpdateException(
-                                    "Unable to remove dest file on windows: " + destFile);
-                            }
-                            if (!newDestFile.renameTo(destFile)) {
-                                throw new UpdateException(
-                                    "Unable to move temp file to dest file on windows: " + newDestFile + ", "
-                                    + destFile);
-                            }
-                        } else {
-                            throw new UpdateException(
-                                "Unable to move temp file to dest file: " + newDestFile + ", " + destFile);
-                        }
-                    }
+                    moveFile(destFile, newDestFile);
                 } catch (BuildException e) {
-                    logger.error("Error getting URL <" + srcUrl + ">: " + e.getMessage(), e);
+                    logger.error(
+                        "Error getting URL <" + srcUrl + ">" + (null != username ? "(user: " + username + ", pass: ****) " : "") + e
+                            .getMessage(), e);
                     throw new UpdateException(e);
                 } finally {
                     lock.release();
@@ -142,7 +241,8 @@ public class UpdateUtils {
             getTask.setPassword(password);
         }
         getTask.setSrc(fileUrl);
-
+        getTask.setHttpUseCaches(false);
+        getTask.setMaxTime(60);
         /**
          * If it is an empty file, then ignore timestamp check and get it
          */

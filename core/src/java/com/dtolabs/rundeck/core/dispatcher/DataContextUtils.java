@@ -124,7 +124,7 @@ public class DataContextUtils {
     }
 
     /**
-     * Escape characters meaningful to bash shell unless the string is already surrounded in single quotes
+     * Escape characters meaningful to windows unless the string is already surrounded in single quotes
      *
      * @param s string
      *
@@ -245,7 +245,7 @@ public class DataContextUtils {
 
     /**
      * Configure the ReplaceTokens for use by filterchain or straight use.  Adds tokens for "X" for each key in the
-     * options data, uses the '@' begin/end tokens.
+     *  data, uses the '@' begin/end tokens.
      *
      * @param data          input options
      * @param replaceTokens ReplaceTokens object.
@@ -389,12 +389,11 @@ public class DataContextUtils {
             data.put("username", notNull(nodeentry.getUsername()));
             data.put("description", notNull(nodeentry.getDescription()));
             data.put("tags", null != nodeentry.getTags() ? join(nodeentry.getTags(), ",") : "");
-            data.put("type", notNull(nodeentry.getType()));
-            //include setting data
-            if(null!=nodeentry.getSettings()){
-                for (final String name : nodeentry.getSettings().keySet()) {
-                    if(null!=nodeentry.getSettings().get(name)) {
-                        data.put("setting." + name, notNull(nodeentry.getSettings().get(name)));
+            //include attributes data
+            if (null != nodeentry.getAttributes()) {
+                for (final String name : nodeentry.getAttributes().keySet()) {
+                    if (null != nodeentry.getAttributes().get(name) && !data.containsKey(name)) {
+                        data.put( name, notNull(nodeentry.getAttributes().get(name)));
                     }
                 }
             }

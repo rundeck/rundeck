@@ -40,6 +40,27 @@ public class NodeSet extends ProjectComponent {
     public static final String OS_VERSION = "os-version";
 
     private String singleNodeName;
+
+    /**
+     * default constructor
+     */
+    public NodeSet() {
+    }
+
+    /**
+     * Create a nodeset with a single node name
+     */
+    public NodeSet(final String singleNodeName) {
+        this.singleNodeName = singleNodeName;
+    }
+
+    /**
+     * Create a nodeset for a single node
+     */
+    public NodeSet(final INodeEntry singleNode) {
+        this(singleNode.getNodename());
+    }
+
     /**
      * names of the filter attributes used by exclude/include that are exposed to the CLI interface
      */
@@ -72,7 +93,6 @@ public class NodeSet extends ProjectComponent {
 
         F_HOSTNAME ("hostname"){public String value(SetSelector set) { return set.getHostname(); }},
         F_NAME ("name"){public String value(SetSelector set) { return set.getName(); }},
-        F_TYPE ("type"){public String value(SetSelector set) { return set.getType(); }},
         F_TAGS ("tags"){public String value(SetSelector set) { return set.getTags(); }},
         F_OS_NAME ("os-name"){public String value(SetSelector set) { return set.getOsname(); }},
         F_OS_FAMILY("os-family"){public String value(SetSelector set) { return set.getOsfamily(); }},
@@ -370,14 +390,52 @@ public class NodeSet extends ProjectComponent {
                 setselector.setName((String) map.get(key));
             } else if (TAGS.equals(key)) {
                 setselector.setTags((String) map.get(key));
-            } else if (TYPE.equals(key)) {
-                setselector.setType((String) map.get(key));
             }else {
                 attrs.put(key, (String) map.get(key));
             }
         }
         setselector.setAttributesMap(attrs);
         return setselector;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        NodeSet nodeSet = (NodeSet) o;
+
+        if (keepgoing != nodeSet.keepgoing) {
+            return false;
+        }
+        if (threadCount != nodeSet.threadCount) {
+            return false;
+        }
+        if (excludes != null ? !excludes.equals(nodeSet.excludes) : nodeSet.excludes != null) {
+            return false;
+        }
+        if (includes != null ? !includes.equals(nodeSet.includes) : nodeSet.includes != null) {
+            return false;
+        }
+        if (singleNodeName != null ? !singleNodeName.equals(nodeSet.singleNodeName) : nodeSet.singleNodeName != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = singleNodeName != null ? singleNodeName.hashCode() : 0;
+        result = 31 * result + (includes != null ? includes.hashCode() : 0);
+        result = 31 * result + (excludes != null ? excludes.hashCode() : 0);
+        result = 31 * result + threadCount;
+        result = 31 * result + (keepgoing ? 1 : 0);
+        return result;
     }
 
     public String toString() {
@@ -388,6 +446,9 @@ public class NodeSet extends ProjectComponent {
         }
         if (null != includes && !includes.isBlank()) {
             builder.append("includes=").append(includes);
+        }
+        if (null != singleNodeName ) {
+            builder.append("singleNode=").append(singleNodeName);
         }
         builder.append("}");
         return builder.toString();
@@ -413,7 +474,6 @@ public class NodeSet extends ProjectComponent {
         private String tags = "";
         private String osversion = "";
         private String name = "";
-        private String type = "";
         private Collection<Attribute> attributes;
         private AttributeSet attributeSet;
         private Map<String,String> attributesMap;
@@ -451,9 +511,6 @@ public class NodeSet extends ProjectComponent {
             if (!isBlank(name)) {
                 builder.append("name=").append(getName()).append(", ");
             }
-            if (!isBlank(type)) {
-                builder.append("type=").append(getType()).append(", ");
-            }
             builder.append("dominant=").append(isDominant()).append(", ");
 
             if (null != getAttributes() && getAttributes().size() > 0) {
@@ -480,7 +537,6 @@ public class NodeSet extends ProjectComponent {
                    && isBlank(tags)
                    && isBlank(osversion)
                    && isBlank(name)
-                   && isBlank(type)
                    && (null== attributes ||0== attributes.size())
                    && isBlank(getAttributesMap())
                 ;
@@ -502,7 +558,6 @@ public class NodeSet extends ProjectComponent {
         public boolean matches(INodeEntry entry) {
             return !isBlank() && matchOrBlank(hostname, entry.getHostname()) &&
                    matchOrBlank(name, entry.getNodename()) &&
-                   matchOrBlank(type, entry.getType()) &&
                    matchOrBlank(tags, entry.getTags()) &&
                    matchOrBlank(osfamily, entry.getOsFamily()) &&
                    matchOrBlank(osarch, entry.getOsArch()) &&
@@ -560,14 +615,6 @@ public class NodeSet extends ProjectComponent {
 
         public void setName(String name) {
             this.name = name;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public void setType(String type) {
-            this.type = type;
         }
 
         public boolean isDominant() {
@@ -645,6 +692,62 @@ public class NodeSet extends ProjectComponent {
 
         public void setAttributesMap(Map<String, String> attributesMap) {
             this.attributesMap = attributesMap;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof SetSelector)) {
+                return false;
+            }
+
+            SetSelector that = (SetSelector) o;
+
+            if (dominant != that.dominant) {
+                return false;
+            }
+            if (attributesMap != null ? !attributesMap.equals(that.attributesMap) : that.attributesMap != null) {
+                return false;
+            }
+            if (hostname != null ? !hostname.equals(that.hostname) : that.hostname != null) {
+                return false;
+            }
+            if (name != null ? !name.equals(that.name) : that.name != null) {
+                return false;
+            }
+            if (osarch != null ? !osarch.equals(that.osarch) : that.osarch != null) {
+                return false;
+            }
+            if (osfamily != null ? !osfamily.equals(that.osfamily) : that.osfamily != null) {
+                return false;
+            }
+            if (osname != null ? !osname.equals(that.osname) : that.osname != null) {
+                return false;
+            }
+            if (osversion != null ? !osversion.equals(that.osversion) : that.osversion != null) {
+                return false;
+            }
+            if (tags != null ? !tags.equals(that.tags) : that.tags != null) {
+                return false;
+            }
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = (dominant ? 1 : 0);
+            result = 31 * result + (hostname != null ? hostname.hashCode() : 0);
+            result = 31 * result + (osfamily != null ? osfamily.hashCode() : 0);
+            result = 31 * result + (osarch != null ? osarch.hashCode() : 0);
+            result = 31 * result + (osname != null ? osname.hashCode() : 0);
+            result = 31 * result + (tags != null ? tags.hashCode() : 0);
+            result = 31 * result + (osversion != null ? osversion.hashCode() : 0);
+            result = 31 * result + (name != null ? name.hashCode() : 0);
+            result = 31 * result + (attributesMap != null ? attributesMap.hashCode() : 0);
+            return result;
         }
     }
 

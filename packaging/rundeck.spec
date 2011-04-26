@@ -49,6 +49,7 @@ fi
 %dir /var/lib/rundeck/data
 %dir /var/lib/rundeck/work
 %dir /var/rundeck/projects
+/var/lib/rundeck/libext
 
 # Rundeck VAR directory.
 %dir /var/lib/rundeck/var

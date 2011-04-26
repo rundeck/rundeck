@@ -24,7 +24,7 @@
 package com.dtolabs.rundeck.core.cli;
 
 /**
- * DefaultCLIToolLogger is ...
+ * DefaultCLIToolLogger logs to System.out and System.err
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
@@ -53,4 +53,7 @@ public class DefaultCLIToolLogger implements CLIToolLogger{
         System.err.println(message);
     }
 
+    public void debug(final String message) {
+        System.err.println(message);
+    }
 }

@@ -79,17 +79,15 @@ public class TestNodesYamlParser extends TestCase {
             assertEquals("test", entry.getNodename());
             assertEquals("test", entry.getHostname());
             assertNotNull(entry.getTags());
-            assertEquals(0,entry.getTags().size());
+            assertEquals(0, entry.getTags().size());
             assertNull(entry.getOsArch());
             assertNull(entry.getOsFamily());
             assertNull(entry.getOsVersion());
             assertNull(entry.getOsName());
-            assertNull(entry.getAttributes());
+            assertNotNull(entry.getAttributes());
             assertNull(entry.getDescription());
             assertNull(entry.getFrameworkProject());
-            assertNull(entry.getSettings());
             assertNull(entry.getUsername());
-            assertNull(entry.getType());
         }
         {
             //test key for map data always overrides node name
@@ -106,17 +104,15 @@ public class TestNodesYamlParser extends TestCase {
             assertEquals("test", entry.getNodename());
             assertEquals("test", entry.getHostname());
             assertNotNull(entry.getTags());
-            assertEquals(0,entry.getTags().size());
+            assertEquals(0, entry.getTags().size());
             assertNull(entry.getOsArch());
             assertNull(entry.getOsFamily());
             assertNull(entry.getOsVersion());
             assertNull(entry.getOsName());
-            assertNull(entry.getAttributes());
+            assertNotNull(entry.getAttributes());
             assertNull(entry.getDescription());
             assertNull(entry.getFrameworkProject());
-            assertNull(entry.getSettings());
             assertNull(entry.getUsername());
-            assertNull(entry.getType());
         }
         {
             testReceiver recv = new testReceiver();
@@ -157,9 +153,7 @@ public class TestNodesYamlParser extends TestCase {
             assertEquals("a description",entry.getDescription());
             assertEquals("a user", entry.getUsername());
             //null values should be ignored
-            assertNull(entry.getAttributes());
-            assertNull(entry.getSettings());
-            assertNull(entry.getType());
+            assertNotNull(entry.getAttributes());
             assertNull(entry.getFrameworkProject());
         }
         {
@@ -211,6 +205,32 @@ public class TestNodesYamlParser extends TestCase {
         }
 
     }
+    public void testParseAnyAttribute() throws Exception{
+
+        {
+            //test flow style data
+            testReceiver recv = new testReceiver();
+            ByteArrayInputStream is = new ByteArrayInputStream(
+                ("test: \n"
+                 + "  nodename: bill\n"
+                 + "  hostname: test\n"
+                 + "  tags: [ a, b, c ]\n"
+                 + "  my-attribute: some value\n"
+                ).getBytes());
+
+            NodesYamlParser nodesYamlParser = new NodesYamlParser(is, recv);
+            nodesYamlParser.parse();
+            assertEquals(1, recv.nodes.size());
+            assertTrue(recv.nodes.containsKey("test"));
+            INodeEntry entry = recv.nodes.get("test");
+            assertNotNull(entry);
+            assertEquals("test", entry.getNodename());
+            assertNotNull(entry.getAttributes());
+            assertNotNull(entry.getAttributes().get("my-attribute"));
+            assertEquals("some value", entry.getAttributes().get("my-attribute"));
+        }
+
+    }
     public void testShouldReadEditUrls() throws Exception{
 
         {
@@ -248,8 +268,6 @@ public class TestNodesYamlParser extends TestCase {
             assertEquals("a description", entry.getDescription());
             assertEquals("a user", entry.getUsername());
             //null values should be ignored
-            assertNull(entry.getSettings());
-            assertNull(entry.getType());
             assertNull(entry.getFrameworkProject());
 
             assertNotNull(entry.getAttributes());

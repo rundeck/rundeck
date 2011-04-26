@@ -66,7 +66,7 @@ public class TestFormattedOutputStream extends TestCase {
             catch (IOException ex) {
                 fail("Should not have thrown an Exception: " + ex.getMessage());
             }
-            assertEquals("test1 : null : null : null : This is a test\n",baos.toString());
+            assertEquals("test1 : null :  : null : This is a test\n",baos.toString());
         }
         {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();

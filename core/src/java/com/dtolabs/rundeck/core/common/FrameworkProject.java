@@ -221,7 +221,7 @@ public class FrameworkProject extends FrameworkResourceParent {
         }
         final Framework framework = projectResourceMgr.getFramework();
         final String s;
-        if(framework.existsProperty(Framework.NODES_RESOURCES_FILE_PROP)){
+        if(framework.hasProperty(Framework.NODES_RESOURCES_FILE_PROP)){
             return new File(getEtcDir(), framework.getProperty(Framework.NODES_RESOURCES_FILE_PROP)).getAbsolutePath();
         }else{
             return new File(getEtcDir(), NODES_XML).getAbsolutePath();
@@ -250,11 +250,23 @@ public class FrameworkProject extends FrameworkResourceParent {
         final Nodes.Format format;
         if (nodesFile.getName().endsWith(".xml")) {
             format = Nodes.Format.resourcexml;
-        }else if (nodesFile.getName().endsWith(".yaml")) {
+        } else if (nodesFile.getName().endsWith(".yaml")) {
             format = Nodes.Format.resourceyaml;
-        }else {
-            throw new NodeFileParserException("Unable to determine file format for file: " + nodesFile.getAbsolutePath());
+        } else {
+            throw new NodeFileParserException(
+                "Unable to determine file format for file: " + nodesFile.getAbsolutePath());
         }
+        return getNodes(nodesFile, format);
+
+    }
+    /**
+     * Returns a {@link Nodes} object conatining the nodes config data.
+     *
+     * @param nodesFile the source file
+     * @param format
+     * @return an instance of {@link Nodes}
+     */
+    public Nodes getNodes(final File nodesFile, final Nodes.Format format) throws NodeFileParserException {
         final Long modtime = nodesFile.lastModified();
         if ( null == nodesCache.get(nodesFile) || !modtime.equals(nodesFileTimes.get(nodesFile)) ) {
             final Nodes nodes = Nodes.create(this, nodesFile, format);
@@ -268,16 +280,97 @@ public class FrameworkProject extends FrameworkResourceParent {
     }
 
     /**
-     * Conditionally update the nodes resources file if a URL source is defined for it 
+     * Conditionally update the nodes resources file if a URL source is defined for it and return
+     * true if the update process was invoked and succeeded
      *
-     * @throws UpdateUtils.UpdateException
+     * @return true if the update succeeded, false if it was not performed
+     * @throws UpdateUtils.UpdateException if an error occurs while trying to update the resources file
      *
      */
-    public void updateNodesResourceFile() throws UpdateUtils.UpdateException {
+    public boolean updateNodesResourceFile() throws UpdateUtils.UpdateException {
         if (shouldUpdateNodesResourceFile()) {
-            UpdateUtils.updateFileFromUrl(getProperty(PROJECT_RESOURCES_URL_PROPERTY), getNodesResourceFilePath());
-            logger.debug("Updated nodes resources file: " + getNodesResourceFilePath());
+            updateNodesResourceFileFromUrl(getProperty(PROJECT_RESOURCES_URL_PROPERTY), null, null);
+            return true;
         }
+        return false;
+    }
+
+    /**
+     * Update the nodes resources file from a specific URL, with BASIC authentication as provided or
+     * as defined in the URL's userInfo section.
+     * @param providerURL URL to retrieve resources file definition
+     * @param username username or null
+     * @param password or null
+     * @throws com.dtolabs.rundeck.core.common.UpdateUtils.UpdateException if an error occurs during the update process
+     */
+    public void updateNodesResourceFileFromUrl(final String providerURL, final String username,
+                                              final String password) throws UpdateUtils.UpdateException {
+        UpdateUtils.updateFileFromUrl(providerURL, getNodesResourceFilePath(), username, password);
+        logger.debug("Updated nodes resources file: " + getNodesResourceFilePath());
+    }
+
+    /**
+     * Update the resources file from a source file
+     *
+     * @param source the source file
+     * @throws UpdateUtils.UpdateException if an error occurs while trying to update the resources file
+     *
+     */
+    public void updateNodesResourceFile(final File source) throws UpdateUtils.UpdateException {
+        UpdateUtils.updateFileFromFile(source, getNodesResourceFilePath());
+        logger.debug("Updated nodes resources file: " + getNodesResourceFilePath());
+    }
+
+    /**
+     * Update the resources file given an input Nodes set
+     *
+     * @param source the source nodes
+     * @throws UpdateUtils.UpdateException if an error occurs while trying to update the resources file or generate
+     * nodes
+     *
+     */
+    public void updateNodesResourceFile(final Nodes source) throws UpdateUtils.UpdateException {
+
+        final Nodes.Format format;
+        final String nodesResourceFilePath = getNodesResourceFilePath();
+        if (nodesResourceFilePath.endsWith(".xml")) {
+            format = Nodes.Format.resourcexml;
+        } else if (nodesResourceFilePath.endsWith(".yaml")) {
+            format = Nodes.Format.resourceyaml;
+        } else {
+            throw new UpdateUtils.UpdateException(
+                "Unable to determine file format for file: " + nodesResourceFilePath);
+        }
+        File resfile = null;
+        try {
+            resfile = File.createTempFile("resource-temp", ".nodes");
+            resfile.deleteOnExit();
+        } catch (IOException e) {
+            throw new UpdateUtils.UpdateException("Unable to create temp file: " + e.getMessage(), e);
+        }
+        //serialize nodes and replace the nodes resource file
+        final NodesFileGenerator generator;
+        if (Nodes.Format.resourcexml==format) {
+            generator = new ResourceXMLGenerator(resfile);
+        } else if (Nodes.Format.resourceyaml==format) {
+            generator = new NodesYamlGenerator(resfile);
+        } else {
+            getLogger().error("Unable to generate resources file. Unrecognized extension for dest file: " + resfile
+                .getAbsolutePath());
+            return;
+        }
+        generator.addNodes(source.listNodes());
+        try {
+            generator.generate();
+        } catch (IOException e) {
+            throw new UpdateUtils.UpdateException("Unable to generate resources file: " + e.getMessage(), e);
+        } catch (NodesGeneratorException e) {
+            throw new UpdateUtils.UpdateException("Unable to generate resources file: " + e.getMessage(), e);
+        }
+
+        updateNodesResourceFile(resfile);
+        resfile.delete();
+        getLogger().debug("generated resources file: " + resfile.getAbsolutePath());
     }
 
     /**

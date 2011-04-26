@@ -21,7 +21,7 @@ The Resource model provider is a way to transfer Node definitions from other sys
 
 Resource model data is a set of Node descriptors, each with a uniquely identifying name.  In addition to Name, some pieces of metadata are required (like `hostname`, and `username`), and some are optional.
 
-(See [resource.xml - node](resource-v10.html#node) and [resource-yaml-v12](resource-yaml-v12.html) for more information.)
+(See [resource.xml - node](resource-v13.html#node) and [resource-yaml-v13](resource-yaml-v13.html) for more information.)
 
 The Resource model data, commonly referred to as resources.xml or resources.yaml, is stored on the server as a file.  Each Project in RunDeck has its own Resources file, and this file is used to determine what Nodes are available and how to connect to those Nodes and run commands. The Resource model data is assumed to be a static file, unless a Provider URL is configured, in which case an admin can tell the RunDeck server to refresh the Resource model from the URL.
 
@@ -30,8 +30,8 @@ The Resource model data, commonly referred to as resources.xml or resources.yaml
 In order to provide the Resource model data to RunDeck:
 
 1. The data must be either:
-    * XML in [resource-v10 format](resource-v10.html)
-    * YAML in [resource-yaml-v12 format](resource-yaml-v12.html)
+    * XML in [resource-v13 format](resource-v13.html)
+    * YAML in [resource-yaml-v13 format](resource-yaml-v13.html)
 2. Each Node entry must have a unique `name` value. You may have to convert the external system's identifier to be unique, or create one yourself.
 3. The data must be *either*: 
     * accessible on-disk from the RunDeck server, 
@@ -56,7 +56,7 @@ Define the file where the resource.xml will be stored on-disk.  Each new project
 
     project.resources.file = ..
     
-This file path is where RunDeck will read the contents from, and also where it will store it to if refreshing from a remote URL.  If you specify a file ending in ".xml" then the format is [resource-v10 XML](resource-v10.html).  If you specify a file ending in ".yaml" then the format is [resource-yaml-v12 YAML](resource-yaml-v12.html).
+This file path is where RunDeck will read the contents from, and also where it will store it to if refreshing from a remote URL.  If you specify a file ending in ".xml" then the format is [resource-v13 XML](resource-v13.html).  If you specify a file ending in ".yaml" then the format is [resource-yaml-v13 YAML](resource-yaml-v13.html).
 
     project.resources.url = http://...
     
@@ -416,7 +416,7 @@ of these tools, it is possible to map the data to meet the needs of
 
 ### Definition ###
 
-The [RunDeck resource model document format](resource-v10.html) and the [resource-yaml-v12](resource-yaml-v12.html) format provide two attributes that help connect the dots between the
+The [RunDeck resource model document format](resource-v13.html) and the [resource-yaml-v13](resource-yaml-v13.html) format provide two attributes that help connect the dots between the
 RunDeck UI and the editing interface provided by the external data
 management tool. They can use `editUrl` or `remoteUrl` attributes to specify the remote URL.  The URLs can embed properties about the node to expand prior to being loaded, which allows you to e.g. submit query parameters using the node name.
 
@@ -436,7 +436,7 @@ Properties of the Node can be embedded in the URL and expanded prior to use.  Th
 
 Available properties are:
 
-`name`, `hostname`, `os-name`, `os-version`, `os-family`, `os-arch`, `username`, `description`, `tags`, `type`, `project`
+`name`, `hostname`, `os-name`, `os-version`, `os-family`, `os-arch`, `username`, `description`, `tags`, `project`
 
 You can embed these properties within the url like this:
 
@@ -570,3 +570,108 @@ So the JavaScript for integrating with RunDeck is then added to the following pa
     * If an error has occurred, it posts an error message starting on [line 20](https://github.com/gschueler/ndbtest/blob/master/grails-app/views/node/list.gsp#L20).
 
 To complete the round-trip of editing a Node and then showing the results back in RunDeck, the ndbtest project would have to export XML formatted Resource data, and then your RunDeck project.properties file would have to point to the appropriate URL.  (This is left as an exercise to the reader.)
+
+## Webhooks
+
+RunDeck Jobs can be configured to POST data to a webhook URL when they succeed or fail.
+
+* For more info about configuring jobs to use webhook notifications, see the chapter [Jobs - Job Notifications](RunDeck-Guide.html#job-notifications).
+* For more info about webhooks in general see: <http://webhooks.pbwiki.com/>
+
+When a RunDeck Job webhook notification is triggered, the server will send a POST request to one or more configured URLs.  The request will contain XML content containing information about the Execution that has finished.  The request will also contain special HTTP Headers to include some information about the notification and the Execution.  You can also configure your URLs to have property tokens that will be replaced with specific details about the Job, Execution or Notification prior to the webhook request being submitted.
+
+### Execution Notification Content
+
+The content of the POST request will be XML, with a single `<notification>` root element.  This element will contain `<executions..><execution>...</execution></executions>` content. This inner content is of the same format as the XML returned from the Web API for Execution information. See the chapter [API - Listing Running Executions](RunDeck-Guide.html#listing-running-executions) for more information.
+
+Attributes of the `notification` element will include:
+
+`trigger`
+
+:    The type of notification trigger.  Either "success" or "failure".
+
+`executionId`
+
+:    The ID of the Execution
+
+`status`
+
+:    The result status of the Execution.  Either "succeeded", "failed" or "aborted".
+
+*Example*
+
+    <notification trigger="success" executionId="[ID]" status="[STATUS]">
+        <executions count="1">
+            <execution ...>
+                ...
+            </execution>
+        </executions>
+    </notification>
+
+### Execution Notification Headers
+
+The POST request will also contain several custom HTTP headers, providing another way to receive some of the webhook information:
+
+`X-RunDeck-Notification-Trigger`
+
+:    The notification trigger type, either "success" or "failure".
+
+`X-RunDeck-Notification-Execution-ID`
+
+:    The Execution ID
+
+`X-RunDeck-Notification-Execution-Status`
+
+:    The status of the execution, either "succeeded", "failed", or "aborted".
+
+### Execution Notification URL Token Expansion
+
+As well, the URLs configured for the webhook notification may contain tokens that will be expanded with values taken from the associated job and execution, such as `${job.name}`.
+
+Available tokens for expansion are:
+
+`job.PROPERTY`
+
+:    Properties about the Job, including:
+
+    `name`
+  
+     :    the Job name
+  
+    `group`
+  
+    :    The Job group, or a blank string
+  
+    `id`
+  
+    :    the Job Id
+  
+    `project`
+  
+    :    the Project name
+
+`execution.PROPERTY`
+
+:    Properties about the Execution, including:
+
+    `id`
+    
+    :    The Execution ID
+
+    `user`
+    
+    :    The user who executed the job
+
+    `status`
+    
+    :    The execution status, one of "succeeded","failed",or "aborted"
+
+`notification.trigger`
+
+:    The trigger associated with the notification, one of "success" or "failure".
+
+So for example, this URL:
+
+    http://server/callback?id=${execution.id}&status=${execution.status}&trigger=${notification.trigger}
+
+Will have the tokens replaced with the appropriate values prior to making the webhook request.

@@ -28,8 +28,6 @@ public class NodeFilter {
     String nodeExclude
     String nodeIncludeName
     String nodeExcludeName
-    String nodeIncludeType
-    String nodeExcludeType
     String nodeIncludeTags
     String nodeExcludeTags
     String nodeIncludeOsName
@@ -50,8 +48,6 @@ public class NodeFilter {
         nodeExclude(nullable: true)
         nodeIncludeName(nullable: true)
         nodeExcludeName(nullable: true)
-        nodeIncludeType(nullable: true)
-        nodeExcludeType(nullable: true)
         nodeIncludeTags(nullable: true)
         nodeExcludeTags(nullable: true)
         nodeIncludeOsName(nullable: true)

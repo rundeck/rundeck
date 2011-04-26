@@ -23,6 +23,8 @@ import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException;
 import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
 import com.dtolabs.rundeck.core.dispatcher.QueuedItemResult;
 import com.dtolabs.rundeck.core.execution.*;
+import com.dtolabs.rundeck.core.execution.commands.ExecCommand;
+import com.dtolabs.rundeck.core.execution.commands.ScriptFileCommand;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.utils.*;
 import org.apache.commons.cli.*;
@@ -30,7 +32,6 @@ import org.apache.log4j.PropertyConfigurator;
 import org.apache.tools.ant.BuildEvent;
 import org.apache.tools.ant.BuildListener;
 import org.apache.tools.ant.Project;
-import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
 import java.util.*;
@@ -39,7 +40,7 @@ import java.util.*;
  * Main class for <code>dispatch</code> command line tool. This command will dispatch the command either locally or
  * remotely.
  */
-public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
+public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, ExecutionContext {
 
     /**
      * Short option value for filter exclude precedence option
@@ -477,40 +478,40 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
 
     }
 
-    /**
-     * Execute the script with the ExecutionService layer, using a default build listener
-     */
-    private void runAction() throws Exception {
-        runAction(null);
-    }
-
     public static final String DEFAULT_LOG_FORMAT = "[%user@%node %command][%level] %message";
     public static final String FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT = "framework.log.dispatch.console.format";
+
+    ExecutionListener mylistener;
+    public synchronized ExecutionListener getExecutionListener() {
+        if(null==mylistener){
+            mylistener = createExecutionListener();
+        }
+        return mylistener;
+    }
+    public ExecutionListener createExecutionListener() {
+
+        final String logformat;
+        if (getFramework().hasProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT)) {
+            logformat = getFramework().getProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT);
+        } else {
+            logformat = DEFAULT_LOG_FORMAT;
+        }
+        return new CLIExecutionListener(FailedNodesFilestore.createListener(getFailedNodes()), this, getAntLoglevel(),
+            argTerse,
+            logformat);
+    }
+
     /**
      *
      * Execute the script with the ExecutionService layer, using a build listener
      *
-     * @param listener a build listener
      */
-    void runAction(final BuildListener listener) throws Exception {
+    void runAction() throws Exception {
         ExecutionResult result=null;
-        final DispatchedScriptExecutionItem executionItem =
-            ExecutionServiceFactory.createDispatchedScriptExecutionItem(this);
+        Exception exception=null;
         final Date startDate=new Date();
-        final String user = getFramework().getAuthenticationMgr().getUserInfoWithoutPrompt().getUsername();
+        final String user = getUser();
         try {
-            //set up build listener
-            final BuildListener blistener;
-            if(null!=listener){
-                final HashMap<Integer,Integer> map = new HashMap<Integer, Integer>();
-                //convert all INFO level messages to WARN level.
-                //INFO is used by default for all ExecTask messages, and any messages for SSHExec will go out on
-                //STDOUT so they are captured later in the stream.
-                map.put(Project.MSG_INFO, Project.MSG_WARN);
-                blistener=new LogLevelConvertBuildListener(listener, map);
-            }else {
-                blistener = createExecToolCommandLogger(getAntLoglevel(), null);
-            }
             //store inline script content (via STDIN or script property) to a temp file
             if(inlineScript){
                 File inlinefile=null;
@@ -524,32 +525,28 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
             }else if(null!=scriptpath){
                 setScriptAsStream(new FileInputStream(getScriptpath()));
             }
-            final String logformat;
-            if (getFramework().existsProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT)) {
-                logformat = getFramework().getProperty(ExecTool.FRAMEWORK_LOG_RUNDECK_EXEC_CONSOLE_FORMAT);
-            }else{
-                logformat=null;
-            }
-            //configure execution listener
-            final ExecutionListener executionListener = new CLIExecutionListener(blistener,
-                FailedNodesFilestore.createListener(getFailedNodes()), this, this, argTerse, logformat);
-
             //acquire ExecutionService object
-            final ExecutionService service = ExecutionServiceFactory.instance().createExecutionService(framework,
-                executionListener);
-            
+            final ExecutionService service = framework.getExecutionService();
+
             //submit the execution request to the service layer
-            result = service.executeItem(executionItem);
+            result = service.executeItem(this, createExecutionItem());
+            if(!result.isSuccess()){
+                if (null != result.getResultObject()) {
+                    error(result.getResultObject().toString());
+                }
+                if(null!= result.getException()){
+                    error(result.getException().getMessage());
+                }
+            }
         } catch (ExecutionException e) {
             error("Unable to perform the execution: " + e.getMessage());
+            exception = e;
         }
 
 
         final String tags;
-        if (null != executionItem.getDispatchedScript().getNodeSet()
-            && null != executionItem.getDispatchedScript().getNodeSet().getInclude()
-            && executionItem.getDispatchedScript().getNodeSet().getInclude().getTags() != null) {
-            tags = executionItem.getDispatchedScript().getNodeSet().getInclude().getTags();
+        if (null != getNodeSet() && null != getNodeSet().getInclude() && getNodeSet().getInclude().getTags() != null) {
+            tags = getNodeSet().getInclude().getTags();
         } else {
             tags = null;
         }
@@ -562,7 +559,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
 
             try {
                 framework.getCentralDispatcherMgr().reportExecutionStatus(
-                    executionItem.getDispatchedScript().getFrameworkProject(), "dispatch", "succeeded",
+                    getFrameworkProject(), "dispatch", "succeeded",
                     0, nodeEntryCollection.size(), tags, script, resultString, startDate, new Date());
             } catch (CentralDispatcherException e) {
                 e.printStackTrace();
@@ -583,10 +580,17 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
             if(null!=failure.getNodeset()){
                 failednodes = failure.getNodeset().size();
             }
+        }else if(null!=result && null!=result.getResultObject() && null!=result.getResultObject().getResults()){
+            for (final String node : result.getResultObject().getResults().keySet()) {
+                final StatusResult interpreterResult = result.getResultObject().getResults().get(node);
+                if(interpreterResult.isSuccess()){
+                    failednodes--;
+                }
+            }
         }
         try {
             framework.getCentralDispatcherMgr().reportExecutionStatus(
-                executionItem.getDispatchedScript().getFrameworkProject(), "dispatch", "failed",
+                getFrameworkProject(), "dispatch", "failed",
                 failednodes, nodeEntryCollection.size() - failednodes, tags, script,
                 failureString, startDate, new Date());
         } catch (CentralDispatcherException e) {
@@ -594,10 +598,45 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
         }
         if(null!=result && null!=result.getException()) {
             throw result.getException();
-        }else{
-            throw new CoreException("action failed: result was null" );
+        }else if(null!=exception){
+            throw exception;
+        }else {
+            throw new CoreException(failureString);
         }
 
+    }
+
+    ExecutionItem createExecutionItem() {
+        if(null!=getScript() || null!=getServerScriptFilePath() || null!=getScriptAsStream()){
+            return new ScriptFileCommand() {
+                public String getScript() {
+                    return ExecTool.this.getScript();
+                }
+
+                public InputStream getScriptAsStream() {
+                    return ExecTool.this.getScriptAsStream();
+                }
+
+                public String getServerScriptFilePath() {
+                    return ExecTool.this.getServerScriptFilePath();
+                }
+
+                public String[] getArgs() {
+                    return ExecTool.this.getArgs();
+                }
+            };
+        }else{
+            return new ExecCommand() {
+                public String[] getCommand(){
+                    return ExecTool.this.getArgs();
+                }
+            };
+        }
+
+    }
+
+    public String getUser() {
+        return getFramework().getAuthenticationMgr().getUserInfoWithoutPrompt().getUsername();
     }
 
 
@@ -655,7 +694,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
      * @throws Exception
      */
     public static void main(final String[] args) throws Exception {
-        
+
         /**
          * Initialize the log4j logger
          */
@@ -735,7 +774,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
         error(t.getMessage());
     }
 
-    private void debug(String message) {
+    public void debug(String message) {
         if (argDebug) {
             log("debug: " +message);
         }
@@ -941,7 +980,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
         this.argNoQueue = argNoQueue;
     }
 
-    Framework getFramework() {
+    public Framework getFramework() {
         return framework;
     }
 
@@ -974,14 +1013,22 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
     }
 
     public int getLoglevel() {
-        return getAntLoglevel();
+        if(argDebug) {
+            return Constants.DEBUG_LEVEL;
+        }
+        if (argQuiet && argVerbose) {
+            return Constants.WARN_LEVEL;
+        }
+        if(argVerbose) {
+            return Constants.VERBOSE_LEVEL;
+        }
+        if(argQuiet) {
+            return Constants.ERR_LEVEL;
+        }
+        return Constants.INFO_LEVEL;
     }
 
     public Map<String, Map<String, String>> getDataContext() {
-        return null;
-    }
-
-    public Map<String, String> getOptions() {
         return null;
     }
 
@@ -1151,26 +1198,6 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
             gen.generate();
             return writer.getBuffer();
         }
-    }
-
-    public static NodeDispatcher createNodeDispatcher() {
-        return new DefaultNodeDispatcher();
-    }
-    /**
-     * Execute a node dispatch request, in serial with parallel threads.
-     *
-     * @param project Ant project
-     * @param nodes node set to iterate over
-     * @param threadcount max number of parallel threads
-     * @param keepgoing if true, continue execution even if a node fails
-     * @param failedListener listener for results of failed nodes (when keepgoing is true)
-     * @param factory factory to produce executable items given input nodes
-     */
-    public static void executeNodedispatch(final Project project, final Collection<INodeEntry> nodes,
-                                           final int threadcount, final boolean keepgoing,
-                                           final FailedNodesListener failedListener,
-                                           final NodeCallableFactory factory) {
-        createNodeDispatcher().executeNodedispatch(project, nodes, threadcount, keepgoing, failedListener, factory);
     }
 
     /**

@@ -169,7 +169,7 @@ class ExecutionController {
         def dateStamp= dateFormater.format(e.dateStarted);
         response.setContentType("text/plain")
         if("inline"!=params.view){
-            response.setHeader("Content-Disposition","attachment; filename=\"${e.scheduledExecution?e.scheduledExecution.jobName:e.name}-${dateStamp}.txt\"")
+            response.setHeader("Content-Disposition","attachment; filename=\"${e.scheduledExecution?e.scheduledExecution.jobName:'adhoc'}-${dateStamp}.txt\"")
         }
         def isFormatted = "true"==servletContext.getAttribute("output.download.formatted")
         if(params.formatted){
@@ -552,40 +552,45 @@ class ExecutionController {
         return null==e.dateCompleted?EXECUTION_RUNNING:"true"==e.status?EXECUTION_SUCCEEDED:e.cancelled?EXECUTION_ABORTED:EXECUTION_FAILED
     }
     /**
-     * Utility, render xml response for a list of executions
+     * Render execution list xml given a List of executions, and a builder delegate
      */
-    public def renderApiExecutionListResultXML={execlist ->
-        return new ApiController().success{ delegate->
-            delegate.'executions'(count:execlist.size()){
-                execlist.each {Execution e ->
-                    execution(
-                        /** attributes  **/
-                        id: e.id,
-                        href: g.createLink(controller: 'execution', action: 'follow', id: e.id, absolute: true),
-                        status: getExecutionState(e)
-                    ) {
-                        /** elements  */
-                        user(e.user)
-                        delegate.'date-started'(unixtime: e.dateStarted.time, g.w3cDateValue(date: e.dateStarted))
-                        if (null != e.dateCompleted) {
-                            delegate.'date-ended'(unixtime: e.dateCompleted.time, g.w3cDateValue(date: e.dateCompleted))
-                        }
-                        if(e.cancelled){
-                            abortedby(e.abortedby?e.abortedby:e.user)
-                        }
-                        if (e.scheduledExecution) {
-                            job(id: e.scheduledExecution.id) {
-                                name(e.scheduledExecution.jobName)
-                                group(e.scheduledExecution.groupPath ?: '')
-                                project(e.scheduledExecution.project)
-                                description(e.scheduledExecution.description)
-                            }
-                        }
-                        description(ExecutionService.summarizeJob(e.scheduledExecution, e))
+    public def renderApiExecutions= { execlist, delegate ->
+        delegate.'executions'(count: execlist.size()) {
+            execlist.each {Execution e ->
+                execution(
+                    /** attributes   **/
+                    id: e.id,
+                    href: g.createLink(controller: 'execution', action: 'follow', id: e.id, absolute: true),
+                    status: getExecutionState(e)
+                ) {
+                    /** elements   */
+                    user(e.user)
+                    delegate.'date-started'(unixtime: e.dateStarted.time, g.w3cDateValue(date: e.dateStarted))
+                    if (null != e.dateCompleted) {
+                        delegate.'date-ended'(unixtime: e.dateCompleted.time, g.w3cDateValue(date: e.dateCompleted))
                     }
+                    if (e.cancelled) {
+                        abortedby(e.abortedby ? e.abortedby : e.user)
+                    }
+                    if (e.scheduledExecution) {
+                        job(id: e.scheduledExecution.id) {
+                            name(e.scheduledExecution.jobName)
+                            group(e.scheduledExecution.groupPath ?: '')
+                            project(e.scheduledExecution.project)
+                            description(e.scheduledExecution.description)
+                        }
+                    }
+                    description(ExecutionService.summarizeJob(e.scheduledExecution, e))
                 }
             }
         }
+    }
+
+    /**
+     * Utility, render xml response for a list of executions
+     */
+    public def renderApiExecutionListResultXML={execlist ->
+        return new ApiController().success(renderApiExecutions.curry(execlist))
     }
     /**
      * API: /api/execution/{id} , version 1

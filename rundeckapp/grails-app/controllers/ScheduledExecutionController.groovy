@@ -1,20 +1,27 @@
 import org.quartz.*
-import java.text.ParseException
+
 import com.dtolabs.rundeck.core.common.Framework
 import java.text.SimpleDateFormat
-import groovy.xml.QName
+
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import java.util.regex.Pattern
 import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.HttpMethod
 import org.apache.commons.httpclient.methods.GetMethod
 import org.apache.commons.httpclient.params.HttpClientParams
-import grails.converters.JSON
+
 import org.codehaus.groovy.grails.web.json.JSONElement
 import com.dtolabs.rundeck.core.utils.NodeSet
 import groovy.xml.MarkupBuilder
 import com.dtolabs.client.utils.Constants
-import com.dtolabs.utils.Streams
+import org.apache.log4j.Logger
+
+import org.apache.commons.httpclient.util.DateUtil
+import org.apache.commons.httpclient.util.DateParseException
+import org.apache.log4j.MDC
+
+import org.apache.commons.httpclient.auth.AuthScope
+import org.apache.commons.httpclient.UsernamePasswordCredentials
 
 class ScheduledExecutionController  {
     def Scheduler quartzScheduler
@@ -32,6 +39,7 @@ class ScheduledExecutionController  {
         update:'POST',
         apiJobsImport:'POST',
         apiJobDelete:'DELETE',
+        apiJobAction:['GET','DELETE'],
         apiRunScript:'POST',
         deleteBulk:'DELETE'
     ]
@@ -243,44 +251,61 @@ class ScheduledExecutionController  {
             if (opt.valuesUrl) {
                 //load expand variables in URL source
                 String srcUrl = expandUrl(opt, opt.valuesUrl.toExternalForm(), scheduledExecution)
-                def result
+                String cleanUrl=srcUrl.replaceAll("^(https?://)([^:@/]+):[^@/]*@",'$1$2:****@');
+                def remoteResult=[:]
+                def remoteStats=[:]
+                def result=null
                 def err = [:]
                 try {
-                    result = getRemoteJSON(srcUrl, 10)
+                    remoteResult = getRemoteJSON(srcUrl, 10)
+                    result=remoteResult.json
+                    remoteStats=remoteResult.stats
                 } catch (Exception e) {
                     err.message = "Failed loading remote option values"
                     err.exception = e
-                    err.srcUrl = srcUrl
-                    log.error("getRemoteJSON error: URL ${srcUrl} : ${e.message}");
+                    err.srcUrl = cleanUrl
+                    log.error("getRemoteJSON error: URL ${cleanUrl} : ${e.message}");
+                    e.printStackTrace()
                 }
+                if(remoteResult.error){
+                    err.message = "Failed loading remote option values"
+                    err.exception = new Exception(remoteResult.error)
+                    err.srcUrl = cleanUrl
+                    log.error("getRemoteJSON error: URL ${cleanUrl} : ${remoteResult.error}");
+                }
+                logRemoteOptionStats(remoteStats,[jobName:scheduledExecution.generateFullName(),jobID:scheduledExecution.id, jobProject:scheduledExecution.project,optionName:params.option,user:session.user])
                 //validate result contents
                 boolean valid = true;
                 def validationerrors=[]
-                if(result && result instanceof Collection){
-                    result.eachWithIndex { entry,i->
-                        if(entry instanceof org.codehaus.groovy.grails.web.json.JSONObject){
-                            if(!entry.name){
-                                validationerrors<<"Item: ${i} has no 'name' entry"
-                                valid=false;
-                            }
-                            if(!entry.value){
-                                validationerrors<<"Item: ${i} has no 'value' entry"
+                if(result){
+                    if( result instanceof Collection){
+                        result.eachWithIndex { entry,i->
+                            if(entry instanceof org.codehaus.groovy.grails.web.json.JSONObject){
+                                if(!entry.name){
+                                    validationerrors<<"Item: ${i} has no 'name' entry"
+                                    valid=false;
+                                }
+                                if(!entry.value){
+                                    validationerrors<<"Item: ${i} has no 'value' entry"
+                                    valid = false;
+                                }
+                            }else if(!(entry instanceof String)){
                                 valid = false;
+                                validationerrors << "Item: ${i} expected string or map like {name:\"..\",value:\"..\"}"
                             }
-                        }else if(!(entry instanceof String)){
-                            valid = false;
-                            validationerrors << "Item: ${i} expected string or map like {name:\"..\",value:\"..\"}"
                         }
+                    }else{
+                        validationerrors << "Expected top-level list with format: [{name:\"..\",value:\"..\"},..], or ['value','value2',..]"
+                        valid=false
                     }
-                }else{
-                    validationerrors << "Expected top-level list with format: [{name:\"..\",value:\"..\"},..], or ['value','value2',..]"
-                    valid=false
+                    if(!valid){
+                        result=null
+                        err.message="Failed parsing remote option values: ${validationerrors.join('\n')}"
+                    }
+                }else if(!err){
+                    err.message = "Empty result"
                 }
-                if(!valid){
-                    result=null
-                    err.message="Failed parsing remote option values: ${validationerrors.join('\n')}"
-                }
-                return render(template: "/framework/optionValuesSelect", model: [optionSelect: opt, values: result, srcUrl: srcUrl, err: err,fieldPrefix:params.fieldPrefix,selectedvalue:params.selectedvalue]);
+                return render(template: "/framework/optionValuesSelect", model: [optionSelect: opt, values: result, srcUrl: cleanUrl, err: err,fieldPrefix:params.fieldPrefix,selectedvalue:params.selectedvalue]);
             } else {
                 return error.call()
             }
@@ -288,6 +313,37 @@ class ScheduledExecutionController  {
             return error.call()
         }
 
+    }
+    static Logger optionsLogger = Logger.getLogger("com.dtolabs.rundeck.remoteservice.http.options")
+    private logRemoteOptionStats(stats,jobdata){
+        stats.keySet().each{k->
+            def v= stats[k]
+            if(v instanceof Date){
+                //TODO: reformat date
+                MDC.put(k,v.toString())
+                MDC.put("${k}Time",v.time.toString())
+            }else if(v instanceof String){
+                MDC.put(k,v?v:"-")
+            }else{
+                final string = v.toString()
+                MDC.put(k, string?string:"-")
+            }
+        }
+        jobdata.keySet().each{k->
+            final var = jobdata[k]
+            MDC.put(k,var?var:'-')
+        }
+        optionsLogger.info(stats.httpStatusCode + " " + stats.httpStatusText+" "+stats.contentLength+" "+stats.url)
+        stats.keySet().each {k ->
+            if (stats[k] instanceof Date) {
+                //reformat date
+                MDC.remove(k+'Time')
+            }
+            MDC.remove(k)
+        }
+        jobdata.keySet().each {k ->
+            MDC.remove(k)
+        }
     }
 
     /**
@@ -336,21 +392,74 @@ class ScheduledExecutionController  {
     }
 
     /**
-     * Make a remote URL request and return the parsed JSON data
+     * Make a remote URL request and return the parsed JSON data and statistics for http requests in a map.
+     * if an error occurs, a map with a single 'error' entry will be returned.
+     * the stats data contains:
+     *
+     * url: requested url
+     * startTime: start time epoch ms
+     * httpStatusCode: http status code (int)
+     * httpStatusText: http status text
+     * finishTime: finish time epoch ms
+     * durationTime: duration time in ms
+     * contentLength: response content length bytes (long)
+     * lastModifiedDate: Last-Modified header (Date)
+     * contentSHA1: SHA1 hash of the content
+     *
      * @param url URL to request
      * @param timeout request timeout in seconds
+     * @return Map of data, [json: parsed json or null, stats: stats data, error: error message]
+     *
      */
     def Object getRemoteJSON(String url, int timeout){
         //attempt to get the URL JSON data
+        def stats=[:]
         if(url.startsWith("http:") || url.startsWith("https:")){
             final HttpClientParams params = new HttpClientParams()
             params.setConnectionManagerTimeout(timeout*1000)
             params.setSoTimeout(timeout*1000)
             def HttpClient client= new HttpClient(params)
+            def URL urlo
+            def AuthScope authscope=null
+            def UsernamePasswordCredentials cred=null
+            boolean doauth=false
+            String cleanUrl = url.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
+            try{
+                urlo = new URL(url)
+                if(urlo.userInfo){
+                    doauth = true
+                    authscope = new AuthScope(urlo.host,urlo.port>0? urlo.port:urlo.defaultPort,AuthScope.ANY_REALM,"BASIC")
+                    cred = new UsernamePasswordCredentials(urlo.userInfo)
+                    url = new URL(urlo.protocol, urlo.host, urlo.port, urlo.file).toExternalForm()
+                }
+            }catch(MalformedURLException e){
+                throw new Exception("Failed to configure base URL for authentication: "+e.getMessage(),e)
+            }
+            if(doauth){
+                client.getParams().setAuthenticationPreemptive(true);
+                client.getState().setCredentials(authscope,cred)
+            }
             def HttpMethod method = new GetMethod(url)
             method.setFollowRedirects(true)
             method.setRequestHeader("Accept","application/json")
+            stats.url = cleanUrl;
+            stats.startTime = System.currentTimeMillis();
             def resultCode = client.executeMethod(method);
+            stats.httpStatusCode = resultCode
+            stats.httpStatusText = method.getStatusText()
+            stats.finishTime = System.currentTimeMillis()
+            stats.durationTime=stats.finishTime-stats.startTime
+            stats.contentLength = method.getResponseContentLength()
+            final header = method.getResponseHeader("Last-Modified")
+            if(null!=header){
+                try {
+                    stats.lastModifiedDate= DateUtil.parseDate(header.getValue())
+                } catch (DateParseException e) {
+                }
+            }else{
+                stats.lastModifiedDate=""
+                stats.lastModifiedDateTime=""
+            }
             try{
                 def reasonCode = method.getStatusText();
                 if(resultCode>=200 && resultCode<=300){
@@ -365,12 +474,28 @@ class ScheduledExecutionController  {
                     }
 
                     if (expectedContentType.equals(type)) {
-                        return grails.converters.JSON.parse(new InputStreamReader(method.getResponseBodyAsStream(),method.getResponseCharSet()))
+                        final stream = method.getResponseBodyAsStream()
+                        final writer = new StringWriter()
+                        int len=copyToWriter(new BufferedReader(new InputStreamReader(stream, method.getResponseCharSet())),writer)
+                        stream.close()
+                        writer.flush()
+                        final string = writer.toString()
+                        def json=grails.converters.JSON.parse(string)
+                        if(string){
+                            stats.contentSHA1=string.encodeAsSHA1()
+                            if(stats.contentLength<0){
+                                stats.contentLength= len
+                            }
+                        }else{
+                            stats.contentSHA1=""
+                        }
+                        return [json:json,stats:stats]
                     }else{
-                        throw new Exception("Unexpected content type received: "+resultType)
+                        return [error:"Unexpected content type received: "+resultType,stats:stats]
                     }
                 }else{
-                    throw new Exception("Server returned an error response: ${resultCode}:${reasonCode}")
+                    stats.contentSHA1 = ""
+                    return [error:"Server returned an error response: ${resultCode} ${reasonCode}",stats:stats]
                 }
             } finally {
                 method.releaseConnection();
@@ -381,10 +506,22 @@ class ScheduledExecutionController  {
             if(!parse ){
                 throw new Exception("JSON was empty")
             }
-            return parse
+            return [json:parse,stats:stats]
         } else {
             throw new Exception("Unsupported protocol: " + url)
         }
+    }
+
+    static int copyToWriter(Reader read, Writer writer){
+        char[] chars = new char[1024];
+        int len=0;
+        int size=read.read(chars,0,chars.length)
+        while(-1!=size){
+            len+=size;
+            writer.write(chars,0,size)
+            size = read.read(chars, 0, chars.length)
+        }
+        return len;
     }
 
     /**
@@ -757,18 +894,27 @@ class ScheduledExecutionController  {
             
         }
 
-        if(!params.notifications && (params.notifyOnsuccess || params.notifyOnfailure)){
-            def nots=[exists:true]
+        if(!params.notifications && (params.notifyOnsuccess || params.notifyOnfailure || params.notifyOnsuccessUrl || params.notifyOnfailureUrl) ){
+            def nots=[]
             if('true'==params.notifyOnsuccess){
-                nots['onsuccess']=[email:params.notifySuccessRecipients]
+                nots << [eventTrigger:'onsuccess',type:'email',content:params.notifySuccessRecipients]
+            }
+            if('true'==params.notifyOnsuccessUrl){
+                nots << [eventTrigger: 'onsuccess', type: 'url', content: params.notifySuccessUrl]
             }
             if('true'==params.notifyOnfailure){
-                nots['onfailure']=[email:params.notifyFailureRecipients]
+                nots << [eventTrigger: 'onfailure', type: 'email', content: params.notifyFailureRecipients]
+            }
+            if('true'==params.notifyOnfailureUrl){
+                nots << [eventTrigger: 'onfailure', type: 'url', content: params.notifyFailureUrl]
             }
             params.notifications=nots
         }
+        if(!params.notifications){
+            params.notified='false'
+        }
         def todiscard=[]
-        if(params.notifications && scheduledExecution.notifications){
+        if(scheduledExecution.notifications){
             def todelete=[]
             scheduledExecution.notifications.each{Notification note->
                 todelete<<note
@@ -780,7 +926,7 @@ class ScheduledExecutionController  {
             }
             scheduledExecution.notifications=null
         }
-        if(params.notifications){
+        if(params.notifications && 'false'!=params.notified){
             //create notifications
             failed=_updateNotifications(params, scheduledExecution)
         }
@@ -988,7 +1134,7 @@ class ScheduledExecutionController  {
         }
 
         def todiscard=[]
-        if(params.notifications && scheduledExecution.notifications){
+        if(scheduledExecution.notifications){
             def todelete=[]
             scheduledExecution.notifications.each{Notification note->
                 todelete<<note
@@ -1669,19 +1815,24 @@ class ScheduledExecutionController  {
                 }
             }
         }
-        if(!params.notifications && (params.notifyOnsuccess || params.notifyOnfailure)){
-            def nots=[:]
+        if(!params.notifications && (params.notifyOnsuccess || params.notifyOnfailure || params.notifyOnsuccessUrl || params.notifyOnfailureUrl)){
+            def nots=[]
             if('true'==params.notifyOnsuccess){
-                nots['onsuccess']=[email:params.notifySuccessRecipients]
+                nots<<[eventTrigger:'onsuccess',type:'email',content:params.notifySuccessRecipients]
+            }
+            if('true'==params.notifyOnsuccessUrl){
+                nots << [eventTrigger: 'onsuccess', type: 'url', content:params.notifySuccessUrl]
             }
             if('true'==params.notifyOnfailure){
-                nots['onfailure']=[email:params.notifyFailureRecipients]
+                nots << [eventTrigger: 'onfailure', type: 'email', content:params.notifyFailureRecipients]
+            }
+            if('true'==params.notifyOnfailureUrl){
+                nots << [eventTrigger: 'onfailure', type: 'url', content:params.notifyFailureUrl]
             }
             params.notifications=nots
         }
         if(params.notifications){
             //create notifications
-            def i=0;
             failed=_updateNotifications(params, scheduledExecution)
         }
         if(scheduledExecution.doNodedispatch){
@@ -1689,8 +1840,6 @@ class ScheduledExecutionController  {
                 && !scheduledExecution.nodeExclude
              && !scheduledExecution.nodeIncludeName
                 && !scheduledExecution.nodeExcludeName
-             && !scheduledExecution.nodeIncludeType
-                && !scheduledExecution.nodeExcludeType
              && !scheduledExecution.nodeIncludeTags
                 && !scheduledExecution.nodeExcludeTags
              && !scheduledExecution.nodeIncludeOsName
@@ -1718,10 +1867,11 @@ class ScheduledExecutionController  {
     private boolean _updateNotifications(Map params,ScheduledExecution scheduledExecution) {
         boolean failed=false
         def fieldNames=[onsuccess:'notifySuccessRecipients',onfailure:'notifyFailureRecipients']
-        ['onsuccess', 'onfailure'].each {trigger ->
-            def notif = params.notifications[trigger]
-            if (notif && notif.email) {
-                def arr=notif.email.split(",")
+        def fieldNamesUrl=[onsuccess:'notifySuccessUrl',onfailure:'notifyFailureUrl']
+        params.notifications.each {notif ->
+            def trigger=notif.eventTrigger
+            if (notif && notif.type=='email' && notif.content) {
+                def arr=notif.content.split(",")
                 arr.each{email->
                     if(email && !org.apache.commons.validator.EmailValidator.getInstance().isValid(email)){
                         failed=true
@@ -1751,6 +1901,45 @@ class ScheduledExecutionController  {
                     )
                 }
                 n.scheduledExecution = scheduledExecution
+            }else if (notif && notif.type=='url' && notif.content) {
+                def arr=notif.content.split(",")
+
+                arr.each{String url ->
+                    boolean valid=false
+                    try{
+                        new URL(url)
+                        valid=true
+                    }catch(MalformedURLException e){
+                        valid=false
+                    }
+                    if(url && !valid){
+                        failed=true
+                         scheduledExecution.errors.rejectValue(
+                             fieldNamesUrl[trigger],
+                            'scheduledExecution.notifications.invalidurl.message',
+                            [url] as Object[],
+                            'Invalid URL: {0}'
+                        )
+                    }
+                }
+                if(failed){
+                    return
+                }
+                def addrs = arr.findAll{it.trim()}.join(",")
+                Notification n = new Notification(eventTrigger: trigger, type: 'url', content: addrs)
+                scheduledExecution.addToNotifications(n)
+                if (!n.validate()) {
+                    failed = true
+                    n.discard()
+                    def errmsg = trigger + " notification: " + n.errors.allErrors.collect {g.message(error: it)}.join(";")
+                    scheduledExecution.errors.rejectValue(
+                        fieldNamesUrl[trigger],
+                        'scheduledExecution.notifications.invalid.message',
+                        [errmsg] as Object[],
+                        'Invalid notification definition: {0}'
+                    )
+                }
+                n.scheduledExecution = scheduledExecution
             }
         }
         return failed
@@ -1764,8 +1953,9 @@ class ScheduledExecutionController  {
     private boolean _updateNotifications(ScheduledExecution params,ScheduledExecution scheduledExecution) {
         boolean failed=false
         def fieldNames=[onsuccess:'notifySuccessRecipients',onfailure:'notifyFailureRecipients']
-        ['onsuccess', 'onfailure'].each {trigger ->
-            def notif = params.notifications.find{it.eventTrigger==trigger}
+        def fieldNamesUrl=[onsuccess:'notifySuccessUrl',onfailure:'notifyFailureUrl']
+        params.notifications.each {notif ->
+            def trigger = notif.eventTrigger
             if (notif && notif.type=='email' && notif.content) {
                 def arr=notif.content.split(",")
                 arr.each{email->
@@ -1791,6 +1981,44 @@ class ScheduledExecutionController  {
                     def errmsg = trigger + " notification: " + n.errors.allErrors.collect {g.message(error: it)}.join(";")
                     scheduledExecution.errors.rejectValue(
                         fieldNames[trigger],
+                        'scheduledExecution.notifications.invalid.message',
+                        [errmsg] as Object[],
+                        'Invalid notification definition: {0}'
+                    )
+                }
+                n.scheduledExecution = scheduledExecution
+            }else if (notif && notif.type=='url' && notif.content) {
+                def arr=notif.content.split(",")
+                arr.each{String url ->
+                    boolean valid = false
+                    try {
+                        new URL(url)
+                        valid = true
+                    } catch (MalformedURLException e) {
+                        valid = false
+                    }
+                    if (url && !valid) {
+                        failed=true
+                         scheduledExecution.errors.rejectValue(
+                             fieldNamesUrl[trigger],
+                            'scheduledExecution.notifications.invalidurl.message',
+                            [url] as Object[],
+                            'Invalid URL: {0}'
+                        )
+                    }
+                }
+                if(failed){
+                    return
+                }
+                def addrs = arr.findAll{it.trim()}.join(",")
+                Notification n = new Notification(eventTrigger: trigger, type: 'email', content: addrs)
+                scheduledExecution.addToNotifications(n)
+                if (!n.validate()) {
+                    failed = true
+                    n.discard()
+                    def errmsg = trigger + " notification: " + n.errors.allErrors.collect {g.message(error: it)}.join(";")
+                    scheduledExecution.errors.rejectValue(
+                        fieldNamesUrl[trigger],
                         'scheduledExecution.notifications.invalid.message',
                         [errmsg] as Object[],
                         'Invalid notification definition: {0}'
@@ -1924,13 +2152,14 @@ class ScheduledExecutionController  {
         }
     }
     /**
-     * Parse an uploaded file multipart request using the specified format
+     * Parse some kind of job input request using the specified format
+     * @param input either an inputStream, a File, or a String
      */
-    private def parseUploadedFile={ file , fileformat->
+    private def parseUploadedFile={  input, fileformat->
         def jobset
         if('xml'==fileformat){
             try{
-                jobset= file.getInputStream().decodeJobsXML()
+                jobset= input.decodeJobsXML()
             }catch(Exception e){
                 return [error:"${e}"]
             }
@@ -1938,7 +2167,7 @@ class ScheduledExecutionController  {
 
             try{
                 //load file into string
-                jobset = file.getInputStream().decodeJobsYAML()
+                jobset = input.decodeJobsYAML()
             }catch (Exception e){
                 return [error:"${e}"]
             }
@@ -2046,18 +2275,24 @@ class ScheduledExecutionController  {
     }
     def upload ={
         log.info("ScheduledExecutionController: upload " + params)
-        if(!(request instanceof MultipartHttpServletRequest)){
+        def fileformat = params.fileformat ?: 'xml'
+        def parseresult
+        if(request instanceof MultipartHttpServletRequest){
+            def file = request.getFile("xmlBatch")
+            if (!file) {
+                flash.message = "No file was uploaded."
+                return
+            }
+            parseresult = parseUploadedFile(file.getInputStream(), fileformat)
+        }else if(params.xmlBatch){
+            String fileContent=params.xmlBatch
+            parseresult = parseUploadedFile(fileContent, fileformat)
+        }else{
+            flash.message = "No file or XML was uploaded."
             return
         }
-        def file = request.getFile("xmlBatch")
-        def fileformat=params.fileformat?:'xml'
         def jobset
-        if(!file){
-            flash.message="No file was uploaded."
-            return
-        }
 
-        def parseresult=parseUploadedFile(file,fileformat)
         if(parseresult.error){
             flash.error=parseresult.error
             if(params.xmlreq){
@@ -2354,6 +2589,18 @@ class ScheduledExecutionController  {
      */
 
     /**
+     * common action for delete or get, which will pass through to apiJobDelete or apiJobExport
+     */
+    def apiJobAction = {
+        //switch on method
+        if('DELETE'==request.method){
+            return apiJobDelete()
+        }else{
+            return apiJobExport()
+        }
+    }
+
+    /**
      * Utility, render content for jobs/import response
      */
     def renderJobsImportApiXML={jobs,jobsi,errjobs,skipjobs, delegate->
@@ -2423,24 +2670,32 @@ class ScheduledExecutionController  {
      */
     def apiJobsImport= {
         log.info("ScheduledExecutionController: upload " + params)
-        if (!(request instanceof MultipartHttpServletRequest)) {
-            flash.errorCode = "api.error.jobs.import.wrong-contenttype"
-            return chain(controller: 'api', action: 'renderError')
-        }
-        def file = request.getFile("xmlBatch")
         def fileformat = params.format ?: 'xml'
-        def jobset
-        if (!file) {
+        def parseresult
+        if (!params.xmlBatch) {
+            flash.error = g.message(code: 'api.error.parameter.required', args: ['xmlBatch'])
+            return chain(controller: 'api', action: 'error')
+        }
+        if (request instanceof MultipartHttpServletRequest) {
+            def file = request.getFile("xmlBatch")
+            if (!file) {
+                flash.errorCode = "api.error.jobs.import.missing-file"
+                return chain(controller: 'api', action: 'renderError')
+            }
+            parseresult = parseUploadedFile(file.getInputStream(), fileformat)
+        }else if (params.xmlBatch) {
+            String fileContent = params.xmlBatch
+            parseresult = parseUploadedFile(fileContent, fileformat)
+        }else{
             flash.errorCode = "api.error.jobs.import.missing-file"
             return chain(controller: 'api', action: 'renderError')
         }
 
-        def parseresult = parseUploadedFile(file, fileformat)
         if (parseresult.error) {
             flash.error = parseresult.error
             return chain(controller: 'api', action: 'error')
         }
-        jobset = parseresult.jobset
+        def jobset = parseresult.jobset
 
         def loadresults = loadJobs(jobset,params.dupeOption)
 
@@ -2460,7 +2715,7 @@ class ScheduledExecutionController  {
      * API: export job definition: /job/{id}, version 1
      */
     def apiJobExport={
-        log.info("ScheduledExecutionController: show : params: " + params)
+        log.info("ScheduledExecutionController: /api/job GET : params: " + params)
         def ScheduledExecution scheduledExecution = ScheduledExecution.get( params.long('id') )
         if (!scheduledExecution) {
             flash.errorCode = "api.error.item.doesnotexist"
@@ -2519,7 +2774,7 @@ class ScheduledExecutionController  {
      * API: DELETE job definition: /job/{id}, version 1
      */
     def apiJobDelete={
-        log.info("ScheduledExecutionController: show : params: " + params)
+        log.info("ScheduledExecutionController: /api/job DELETE : params: " + params)
         def ScheduledExecution scheduledExecution = ScheduledExecution.get( params.long('id') )
         if (!scheduledExecution) {
             flash.error = g.message(code:"api.error.item.doesnotexist",args:['Job ID',params.id])

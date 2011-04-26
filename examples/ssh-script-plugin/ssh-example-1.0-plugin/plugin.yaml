@@ -1,0 +1,20 @@
+# plugin metadata for ssh-example plugin
+
+name: ssh-example
+rundeckPluginVersion: 1.0
+author: Greg Schueler
+date: 4/11/2011
+version: 1.0
+providers:
+    - name: ssh-example
+      service: NodeExecutor
+      plugin-type: script
+      script-interpreter: /bin/bash
+      script-file: ssh-exec.sh
+      script-args: ${node.username} ${node.hostname} ${exec.command}
+    - name: ssh-example
+      service: FileCopier
+      plugin-type: script
+      script-interpreter: /bin/bash
+      script-file: ssh-copy.sh
+      script-args: ${node.username} ${node.hostname} ${file-copy.file}

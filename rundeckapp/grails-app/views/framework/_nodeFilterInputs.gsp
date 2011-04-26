@@ -56,9 +56,9 @@
     }
 </g:javascript>
 
-<g:set var="NODE_FILTERS_ALL" value="${['Name','Tags','','OsName','OsFamily','OsArch','OsVersion','Type']}"/>
+<g:set var="NODE_FILTERS_ALL" value="${['Name','Tags','','OsName','OsFamily','OsArch','OsVersion']}"/>
 <g:set var="NODE_FILTERS" value="${['Name','Tags']}"/>
-<g:set var="NODE_FILTERS_X" value="${['','OsName','OsFamily','OsArch','OsVersion','Type']}"/>
+<g:set var="NODE_FILTERS_X" value="${['','OsName','OsFamily','OsArch','OsVersion']}"/>
 <g:set var="NODE_FILTER_MAP" value="${['':'Hostname','OsName':'OS Name','OsFamily':'OS Family','OsArch':'OS Architecture','OsVersion':'OS Version']}"/>
         <%--<tr>
             <td>
