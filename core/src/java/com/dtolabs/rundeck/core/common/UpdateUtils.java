@@ -213,7 +213,7 @@ public class UpdateUtils {
                     }
                     getTask.execute();
 
-                    moveFile(destFile, newDestFile);
+                    moveFile(newDestFile, destFile);
                 } catch (BuildException e) {
                     logger.error(
                         "Error getting URL <" + srcUrl + ">" + (null != username ? "(user: " + username + ", pass: ****) " : "") + e
