@@ -513,6 +513,22 @@ Optional Parameters:
 
 Result: A success or failure result with a message.
 
+The URL requested as the `providerURL` must be allowed by the `project.properties` and `framework.properties` configuration settings according to these rules:
+
+* If the `providerURL` matches the value of `project.resources.url`, it is allowed.
+* Otherwise, these properties are checked as regular expressions to match the URL:
+    * `project.resources.allowedURL.X` in project.properties (X starts at 0).
+    * `framework.resources.allowedURL.X` in framework.properties
+* If both files define allowedURL regexes, the URL must match a regex in both of them.
+* Otherwise, if only one file defines regexes, the URL must match one of them.
+* Otherwise if no regexes are defined in either file, the URL is rejected.
+
+Multiple regexes can be specified in those config files by adding muliple properties:
+
+    project.resources.allowedURL.0=^http://myserver:9090/resources/.*$
+    project.resources.allowedURL.1=^http://server2:9090/resources/.*$
+
+
 ### Listing History
 
 List the event history for a project.
