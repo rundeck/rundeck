@@ -21,10 +21,7 @@ import com.dtolabs.rundeck.core.utils.FileUtils;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.Properties;
 
 
@@ -36,6 +33,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
 
     File projectBasedir;
     File nodesfile;
+    File projectPropsFile;
 
 
     public TestFrameworkProject(String name) {
@@ -54,6 +52,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         super.setUp();
         projectBasedir = new File(getFrameworkProjectsBase(), PROJECT_NAME);
         nodesfile = new File(projectBasedir, "/etc/resources.xml");
+        projectPropsFile = new File(projectBasedir, "/etc/project.properties");
     }
 
     protected void tearDown() throws Exception {
@@ -120,7 +119,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
 
 
     public void testProperties() throws IOException {
-        final File projectDir = new File(getFrameworkProjectsBase(), PROJECT_NAME);
+     /*   final File projectDir = new File(getFrameworkProjectsBase(), PROJECT_NAME);
         FrameworkProject.createFileStructure(projectDir);
         final File etcDir = new File(projectDir, "etc");
         final File projectPropertyFile = new File(etcDir, "project.properties");
@@ -128,14 +127,14 @@ public class TestFrameworkProject extends AbstractBaseTest {
         p.put("project.dir", "${framework.projects.dir}/${project.name}");
         p.put("project.resources.dir", "${project.dir}/resources");
         p.put("project.etc.dir", "${project.dir}/etc");
-        p.put("project.resources.file", "${project.etc.dir}/resources.properties");
+        p.put("project.resources.file", "${project.etc.dir}/resources.xml");
         p.store(new FileOutputStream(projectPropertyFile), "test properties");
 
         final FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
                                          new File(getFrameworkProjectsBase()),
                                          getFrameworkInstance().getFrameworkProjectMgr());
 
-        assertEquals(project.getProperty("project.dir"), projectDir.getAbsolutePath());
+        assertEquals(project.getProperty("project.dir"), projectDir.getAbsolutePath());*/
     }
 
 
@@ -153,6 +152,280 @@ public class TestFrameworkProject extends AbstractBaseTest {
         assertEquals("nodes was incorrect size", 2, nodes.listNodes().size());
         assertTrue("nodes did not have correct test node1", nodes.hasNode("test1"));
         assertTrue("nodes did not have correct test node2", nodes.hasNode("testnode2"));
+    }
+
+    public void testUpdateNodesResourceFile() throws Exception {
+        FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
+                                         new File(getFrameworkProjectsBase()),
+                                         getFrameworkInstance().getFrameworkProjectMgr());
+        //attempt to update nodes resource file without url prop
+        assertFalse(project.hasProperty(FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY));
+        assertFalse(project.updateNodesResourceFile());
+
+        //set the nodes resources url property
+        Properties orig = new Properties();
+        orig.load(new InputStreamReader(new FileInputStream(projectPropsFile)));
+
+        Properties newProps = new Properties();
+        newProps.load(new InputStreamReader(new FileInputStream(projectPropsFile)));
+        final File filesrc = new File("src/test/com/dtolabs/rundeck/core/common/test-nodes2.xml");
+        final File tempfile = File.createTempFile("test", ".xml");
+        FileUtils.copyFileStreams(filesrc, tempfile);
+        final String providerURL = tempfile.toURI().toURL().toExternalForm();
+        
+        newProps.setProperty("project.resources.url", providerURL);
+
+        newProps.store(new FileOutputStream(projectPropsFile),null);
+
+        project = FrameworkProject.create(PROJECT_NAME,
+            new File(getFrameworkProjectsBase()),
+            getFrameworkInstance().getFrameworkProjectMgr());
+        assertTrue(project.hasProperty("project.resources.url"));
+        assertEquals(providerURL, project.getProperty("project.resources.url"));
+
+        tempfile.setLastModified(System.currentTimeMillis());
+        File resourcesFile = new File(project.getNodesResourceFilePath());
+        assertTrue(project.updateNodesResourceFile());
+        final File toFile = new File(projectBasedir, "/etc/testout");
+        assertTrue("does not exist file: "+resourcesFile.getAbsolutePath(), resourcesFile.exists());
+        FileUtils.copyFileStreams(resourcesFile, toFile);
+        System.err.println("copied to file " + resourcesFile + " to " + toFile);
+
+        Nodes nodes = project.getNodes();
+        assertNotNull(nodes);
+        assertEquals("nodes was incorrect size", 3, nodes.listNodes().size());
+        assertTrue("nodes did not have correct test node1", nodes.hasNode("test1"));
+        assertTrue("nodes did not have correct test node2", nodes.hasNode("testnode2"));
+        assertTrue("nodes did not have correct test node2", nodes.hasNode("testnode3"));
+
+        //restore props and resources
+        orig.store(new FileOutputStream(projectPropsFile), null);
+        FileUtils.copyFileStreams(new File("src/test/com/dtolabs/rundeck/core/common/test-nodes1.xml"), resourcesFile);
+    }
+
+    public void testUpdateNodesResourceFileFromUrl() throws Exception {
+        FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
+                                         new File(getFrameworkProjectsBase()),
+                                         getFrameworkInstance().getFrameworkProjectMgr());
+
+        //attempt to update nodes resource file without url prop
+        assertFalse(project.hasProperty(FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY));
+
+        //use invalid protocol
+        try{
+            project.updateNodesResourceFileFromUrl("ftp://test.com/test", null, null);
+            fail("Should fail");
+        } catch (UpdateUtils.UpdateException e) {
+            assertEquals("URL protocol not allowed: ftp", e.getMessage());
+        }
+
+        final String nodesUrl = new File("src/test/com/dtolabs/rundeck/core/common/test-nodes2.xml")
+            .toURI().toURL().toExternalForm();
+
+
+        //set the nodes resources url property
+        Properties orig = new Properties();
+        orig.load(new InputStreamReader(new FileInputStream(projectPropsFile)));
+
+        Properties newProps = new Properties();
+        newProps.load(new InputStreamReader(new FileInputStream(projectPropsFile)));
+        newProps.setProperty("project.resources.url", nodesUrl);
+        newProps.store(new FileOutputStream(projectPropsFile), null);
+        
+        project = FrameworkProject.create(PROJECT_NAME,
+            new File(getFrameworkProjectsBase()),
+            getFrameworkInstance().getFrameworkProjectMgr());
+        project.updateNodesResourceFileFromUrl(nodesUrl,null,null);
+
+        Nodes nodes = project.getNodes();
+        assertNotNull(nodes);
+        assertEquals("nodes was incorrect size", 3, nodes.listNodes().size());
+        assertTrue("nodes did not have correct test node1", nodes.hasNode("test1"));
+        assertTrue("nodes did not have correct test node2", nodes.hasNode("testnode2"));
+        assertTrue("nodes did not have correct test node2", nodes.hasNode("testnode3"));
+
+        //restore props and resources
+
+        orig.store(new FileOutputStream(projectPropsFile), null);
+        FileUtils.copyFileStreams(new File("src/test/com/dtolabs/rundeck/core/common/test-nodes1.xml"), nodesfile);
+    }
+    public void testValidateResourceProviderURL() throws Exception{
+        FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
+            new File(getFrameworkProjectsBase()),
+            getFrameworkInstance().getFrameworkProjectMgr());
+
+        //use invalid protocol
+        try {
+            project.validateResourceProviderURL("ftp://test.com/test");
+            fail("Should fail");
+        } catch (UpdateUtils.UpdateException e) {
+            assertEquals("URL protocol not allowed: ftp", e.getMessage());
+        }
+        //use valid protocol
+        try {
+            project.validateResourceProviderURL("http://test.com/test");
+        } catch (UpdateUtils.UpdateException e) {
+            fail("Unexpected exception: " + e.getMessage());
+        }
+        //use valid protocol
+        try {
+            project.validateResourceProviderURL("https://test.com/test");
+        } catch (UpdateUtils.UpdateException e) {
+            fail("Unexpected exception: " + e.getMessage());
+        }
+        //use valid protocol
+        try {
+            project.validateResourceProviderURL("file:///tmp/test");
+        } catch (UpdateUtils.UpdateException e) {
+            fail("Unexpected exception: " + e.getMessage());
+        }
+
+    }
+    public void testIsAllowedProviderURL() throws Exception{
+        FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
+            new File(getFrameworkProjectsBase()),
+            getFrameworkInstance().getFrameworkProjectMgr());
+
+        //set project providerURL and allowed URL regexes
+        Properties orig = new Properties();
+        orig.load(new InputStreamReader(new FileInputStream(projectPropsFile)));
+
+        Properties newProps = new Properties();
+        newProps.load(new InputStreamReader(new FileInputStream(projectPropsFile)));
+        final String providerURL = new File(
+            "src/test/com/dtolabs/rundeck/core/common/test-nodes2.xml")
+            .toURI().toURL().toExternalForm();
+        newProps.setProperty("project.resources.url", providerURL);
+        newProps.setProperty(FrameworkProject.PROJECT_RESOURCES_ALLOWED_URL_PREFIX + "0", "^http://example.com/test1$");
+        newProps.setProperty(FrameworkProject.PROJECT_RESOURCES_ALLOWED_URL_PREFIX + "1",
+            "^http://example.com/test2/.*$");
+        newProps.setProperty(FrameworkProject.PROJECT_RESOURCES_ALLOWED_URL_PREFIX + "2",
+            "^https://example.com/.*?/monkey$");
+
+        newProps.store(new FileOutputStream(projectPropsFile), null);
+
+        project = FrameworkProject.create(PROJECT_NAME,
+            new File(getFrameworkProjectsBase()),
+            getFrameworkInstance().getFrameworkProjectMgr());
+
+        //provider URL for the project should work
+        assertTrue(project.isAllowedProviderURL(providerURL));
+
+        //valid URL match 0
+        assertTrue(project.isAllowedProviderURL("http://example.com/test1"));
+        assertFalse(project.isAllowedProviderURL("HTTP://example.com/test2"));
+
+        //valid URL match 1
+        assertTrue(project.isAllowedProviderURL("HTTP://example.com/test2/"));
+        assertTrue(project.isAllowedProviderURL("HTTP://example.com/test2/elephant"));
+        assertTrue(project.isAllowedProviderURL("HTTP://example.com/test2/bologna/something"));
+        assertTrue(project.isAllowedProviderURL("HTTP://example.com/test2/elf"));
+        assertTrue(project.isAllowedProviderURL("HTTP://example.com/test2/bologna"));
+
+        //valid URL match 2
+        assertTrue(project.isAllowedProviderURL("HTTPs://example.com/blah/monkey"));
+        assertTrue(project.isAllowedProviderURL("HTTPs://example.com/blah/blee/monkey"));
+        assertTrue(project.isAllowedProviderURL("HTTPs://example.com/xylophone/monkey"));
+        assertTrue(project.isAllowedProviderURL("HTTPs://example.com/a/lonely/xylophone/monkey"));
+
+        //invalid file URL
+        assertFalse(project.isAllowedProviderURL("file:///tmp/test"));
+
+        //invalid https URL
+        assertFalse(project.isAllowedProviderURL("https://example.com/test1"));
+        //invalid http URL
+        assertFalse(project.isAllowedProviderURL("http://example.com/blah/monkey"));
+
+        //set some framework properties to intersect the regexes
+
+
+        final File frameworkProps = new File(getFrameworkInstance().getBaseDir(),
+            "/etc/framework.properties");
+        Properties origFProps = new Properties();
+        origFProps.load(new InputStreamReader(new FileInputStream(frameworkProps)));
+
+        Properties newFProps = new Properties();
+        newFProps.load(new InputStreamReader(new FileInputStream(frameworkProps)));
+        newFProps.setProperty(FrameworkProject.FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX+"0", "^https?://example.com/test[\\d]$");
+        newFProps.setProperty(FrameworkProject.FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX + "1",
+            "^http://example.com/test2/(elf|bologna)$");
+        newFProps.setProperty(FrameworkProject.FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX+"2",
+            "^https://example.com/.*?xylophone/monkey$");
+        newFProps.setProperty(FrameworkProject.FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX+"3",
+            "^file:///tmp/test.*$");
+
+        newFProps.store(new FileOutputStream(frameworkProps), null);
+
+        //load framework instance
+        Framework framework = Framework.getInstance(getFrameworkInstance().getBaseDir().getAbsolutePath(),
+            getFrameworkProjectsBase());
+        project = FrameworkProject.create(PROJECT_NAME, new File(getFrameworkProjectsBase()),
+            framework.getFrameworkProjectMgr());
+
+        //provider URL for the project should work
+        assertTrue(project.isAllowedProviderURL(providerURL));
+
+        //valid URL match 0
+        assertTrue(project.isAllowedProviderURL("http://example.com/test1"));
+        assertFalse(project.isAllowedProviderURL("HTTP://example.com/test2"));
+
+        //valid URL match 1
+        assertFalse(project.isAllowedProviderURL("HTTP://example.com/test2/"));
+        assertFalse(project.isAllowedProviderURL("HTTP://example.com/test2/elephant"));
+        assertFalse(project.isAllowedProviderURL("HTTP://example.com/test2/bologna/something"));
+        assertTrue(project.isAllowedProviderURL("HTTP://example.com/test2/elf"));
+        assertTrue(project.isAllowedProviderURL("HTTP://example.com/test2/bologna"));
+
+        //valid URL match 2
+        assertFalse(project.isAllowedProviderURL("HTTPs://example.com/blah/monkey"));
+        assertFalse(project.isAllowedProviderURL("HTTPs://example.com/blah/blee/monkey"));
+        assertTrue(project.isAllowedProviderURL("HTTPs://example.com/xylophone/monkey"));
+        assertTrue(project.isAllowedProviderURL("HTTPs://example.com/a/lonely/xylophone/monkey"));
+
+        //invalid file URL
+        assertFalse(project.isAllowedProviderURL("file:///tmp/test"));
+
+        //invalid https URL
+        assertFalse(project.isAllowedProviderURL("https://example.com/test1"));
+        //invalid http URL
+        assertFalse(project.isAllowedProviderURL("http://example.com/blah/monkey"));
+
+
+        //remove project specific props
+        orig.store(new FileOutputStream(projectPropsFile), null);
+        project = FrameworkProject.create(PROJECT_NAME, new File(getFrameworkProjectsBase()),
+            framework.getFrameworkProjectMgr());
+
+        //provider URL for the project should now fail
+        assertFalse(project.isAllowedProviderURL(providerURL));
+
+        //valid URL match 0
+        assertTrue(project.isAllowedProviderURL("http://example.com/test1"));
+        assertTrue(project.isAllowedProviderURL("HTTP://example.com/test2"));
+
+        //valid URL match 1
+        assertFalse(project.isAllowedProviderURL("HTTP://example.com/test2/"));
+        assertFalse(project.isAllowedProviderURL("HTTP://example.com/test2/elephant"));
+        assertFalse(project.isAllowedProviderURL("HTTP://example.com/test2/bologna/something"));
+        assertTrue(project.isAllowedProviderURL("HTTP://example.com/test2/elf"));
+        assertTrue(project.isAllowedProviderURL("HTTP://example.com/test2/bologna"));
+
+        //valid URL match 2
+        assertFalse(project.isAllowedProviderURL("HTTPs://example.com/blah/monkey"));
+        assertFalse(project.isAllowedProviderURL("HTTPs://example.com/blah/blee/monkey"));
+        assertTrue(project.isAllowedProviderURL("HTTPs://example.com/xylophone/monkey"));
+        assertTrue(project.isAllowedProviderURL("HTTPs://example.com/a/lonely/xylophone/monkey"));
+
+        //invalid file URL
+        assertTrue(project.isAllowedProviderURL("file:///tmp/test"));
+
+        //invalid https URL
+        assertTrue(project.isAllowedProviderURL("https://example.com/test1"));
+        //invalid http URL
+        assertFalse(project.isAllowedProviderURL("http://example.com/blah/monkey"));
+
+        //restore fprops
+        origFProps.store(new FileOutputStream(frameworkProps), null);
     }
 
 
