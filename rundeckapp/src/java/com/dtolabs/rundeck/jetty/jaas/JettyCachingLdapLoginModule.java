@@ -71,6 +71,7 @@ import org.mortbay.log.Log;
  *    bindPassword="directory"
  *    authenticationMethod="simple"
  *    forceBindingLogin="false"
+ *    forceBindingLoginUseRootContextForRoles="false"
  *    userBaseDn="ou=people,dc=alcatel"
  *    userRdnAttribute="uid"
  *    userIdAttribute="uid"
@@ -193,6 +194,12 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
      * this to true
      */
     private boolean _forceBindingLogin = false;
+
+    /**
+     * if _forceFindingLogin is true, and _forceBindingLoginUseRootContextForRoles
+     * is true, then role memberships are obtained using _rootContext
+     */
+    private boolean _forceBindingLoginUseRootContextForRoles = false;
 
     private DirContext _rootContext;
 
@@ -527,6 +534,11 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         DirContext dirContext = new InitialDirContext(environment);
 
+	// use _rootContext to find roles, if configured to doso
+	if ( _forceBindingLoginUseRootContextForRoles ) {
+	    dirContext = _rootContext;
+	    Log.debug("Using _rootContext for role lookup.");
+	}
         List roles = getUserRolesByDn(dirContext, userDn);
 
         UserInfo userInfo = new UserInfo(username, null, roles);
@@ -584,6 +596,10 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         if (options.containsKey("forceBindingLogin")) {
             _forceBindingLogin = Boolean.parseBoolean((String) options.get("forceBindingLogin"));
+        }
+
+        if (options.containsKey("forceBindingLoginUseRootContextForRoles")) {
+            _forceBindingLoginUseRootContextForRoles = Boolean.parseBoolean((String) options.get("forceBindingLoginUseRootContextForRoles"));
         }
 
         _userObjectClass = getOption(options, "userObjectClass", _userObjectClass);
