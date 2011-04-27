@@ -311,7 +311,6 @@ public class FrameworkProject extends FrameworkResourceParent {
      */
     public void updateNodesResourceFileFromUrl(final String providerURL, final String username,
                                               final String password) throws UpdateUtils.UpdateException {
-        System.err.println("called updateNodesResourceFileFromUrl for URL: " + providerURL);
         if(!validateResourceProviderURL(providerURL)){
             throw new UpdateUtils.UpdateException("providerURL is not allowed: " + providerURL);
         }
