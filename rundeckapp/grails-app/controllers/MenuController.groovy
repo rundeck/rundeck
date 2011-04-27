@@ -182,7 +182,6 @@ class MenuController {
 
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         def projects = frameworkService.projects(framework)
-        session.projects=projects
         def usedFilter=null
         if(!query){
             query = new ScheduledExecutionQuery()
