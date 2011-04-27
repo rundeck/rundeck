@@ -35,12 +35,12 @@ JETTYVERS=6.1.21
 
 # this is to provide a workaround for a grails bug for this version of
 # grails, where grails does not listen to the gradle config content for proxies
-export GRADLE_PROXY_DEFS=""
+export PROXY_DEFS=""
 if [ -n "$http_proxy" ]; then
 	# assume that http_proxy is of format http://<host>:<port>
 	gradle_proxy_host=`echo $http_proxy|sed 's/http:\/\///'|awk -F ':' '{ print $1 }'`
 	gradle_proxy_port=`echo $http_proxy|awk -F ':' '{ print $3 }'`
-	export GRADLE_PROXY_DEFS="-Dhttp.proxyHost=$gradle_proxy_host -Dhttp.proxyPort=$gradle_proxy_port"
+	export PROXY_DEFS="-Dhttp.proxyHost=$gradle_proxy_host -Dhttp.proxyPort=$gradle_proxy_port"
 fi
 
 prepare_build(){
@@ -128,8 +128,8 @@ build_rundeck_core(){
 
 cd $BASEDIR/core
 echo "core build starting..."
-echo ./gradlew $GRADLE_PROXY_DEFS -PbuildNum=$RELNUM clean check assemble javadoc
-./gradlew $GRADLE_PROXY_DEFS -PbuildNum=$RELNUM clean check assemble javadoc
+echo ./gradlew $PROXY_DEFS -PbuildNum=$RELNUM clean check assemble javadoc
+./gradlew $PROXY_DEFS -PbuildNum=$RELNUM clean check assemble javadoc
 if [ 0 != $? ]
 then
    echo "Core build assemble failed: $!"
@@ -165,7 +165,7 @@ export PATH=$PATH:$GRAILS_HOME/bin
 GWORKDIR=$BASEDIR/rundeckapp/work
 
 #echo 'y' to the command to quell y/n prompt on second time running it:
-yes | $GRAILS_HOME/bin/grails $GRADLE_PROXY_DEFS -Dgrails.project.work.dir=$GWORKDIR install-plugin jetty
+yes | $GRAILS_HOME/bin/grails $PROXY_DEFS -Dgrails.project.work.dir=$GWORKDIR install-plugin jetty
 if [ 0 != $? ]
 then
    echo "failed to install jetty plugin"
@@ -173,14 +173,14 @@ then
 fi
 
 # # run clean and test 
-$GRAILS_HOME/bin/grails $GRADLE_PROXY_DEFS -Dgrails.project.work.dir=$GWORKDIR clean
+$GRAILS_HOME/bin/grails $PROXY_DEFS -Dgrails.project.work.dir=$GWORKDIR clean
 if [ 0 != $? ]
 then
    echo "Run Deck clean failed"
    exit 2
 fi
 
-$GRAILS_HOME/bin/grails $GRADLE_PROXY_DEFS -Dgrails.project.work.dir=$GWORKDIR test-app
+$GRAILS_HOME/bin/grails $PROXY_DEFS -Dgrails.project.work.dir=$GWORKDIR test-app
 if [ 0 != $? ]
 then
    echo "Run Deck tests failed"
@@ -188,7 +188,7 @@ then
 fi
 
 #run war phase
-yes | $GRAILS_HOME/bin/grails $GRADLE_PROXY_DEFS -Dgrails.project.work.dir=$GWORKDIR prod build-launcher
+yes | $GRAILS_HOME/bin/grails $PROXY_DEFS -Dgrails.project.work.dir=$GWORKDIR prod build-launcher
 if [ 0 != $? ]
 then
    echo "Run Deck build failed"
