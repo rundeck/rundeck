@@ -626,7 +626,7 @@ class ScheduledExecutionController  {
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         return [ scheduledExecution:scheduledExecution, crontab:crontab,params:params,
             nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
-            authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework)]
+            authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework), projects: projects]
     }
 
     def renderEditFragment = {
@@ -1317,7 +1317,6 @@ class ScheduledExecutionController  {
 
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         def projects = frameworkService.projects(framework)
-        session.projects=projects
         def user = (session?.user) ? session.user : "anonymous"
         def rolelist = (session?.roles) ? session.roles : []
         log.info("ScheduledExecutionController: create : params: " + params)
@@ -1357,7 +1356,7 @@ class ScheduledExecutionController  {
         }
 
         log.info("ScheduledExecutionController: create : now returning model data to view...")
-        return ['scheduledExecution':scheduledExecution,params:params,crontab:[:]]
+        return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],projects:projects]
     }
 
 

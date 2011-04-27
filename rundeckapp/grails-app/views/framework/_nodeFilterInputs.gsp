@@ -70,8 +70,8 @@
                     <span class="error filter">${filterErrors?.project}</span>
                 </g:if>
                 --><!-- show popup of projects list --><!--
-                <g:if test="${session.projects}">
-                    <g:select name="project_select" value="${query?.project}" from="${session.projects}" noSelection="${['':'Select a Project...']}"/>
+                <g:if test="${projects}">
+                    <g:select name="project_select" value="${query?.project}" from="${projects}" noSelection="${['':'Select a Project...']}"/>
                     <wdgt:eventHandler for="project_select" state="unempty" copy="value" target="project"/>
                 </g:if>
             </td>

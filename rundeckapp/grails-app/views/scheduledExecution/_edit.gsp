@@ -19,7 +19,7 @@
 
 <script type="text/javascript">
 //<!CDATA[
-        var selFrameworkProject='${scheduledExecution?.project?scheduledExecution?.project.encodeAsJavaScript():session.projects?.size()==1?session.projects[0].name.encodeAsJavaScript():''}';
+        var selFrameworkProject='${scheduledExecution?.project?scheduledExecution?.project.encodeAsJavaScript():projects?.size()==1?projects[0].name.encodeAsJavaScript():''}';
         var selArgs='${scheduledExecution?.argString?.encodeAsJavaScript()}';
         var isWorkflow=${isWorkflow};
 var node_filter_map =${NODE_FILTER_MAP.encodeAsJSON()};
@@ -435,7 +435,7 @@ var applinks={
         <td class="${hasErrors(bean:scheduledExecution,field:'project','fieldError')} required" id="schedProjErr">Project</td>
         <td>
             <div id="schedEditFrameworkProjectHolder">
-                <g:select id="schedEditFrameworkProject" name="project" from="${session.projects*.name}" value="${scheduledExecution.project?scheduledExecution.project.toString():session.projects?.size()==1?session.projects[0].name:session.project?session.project:''}" onchange="_editFormSelectProject(this.value);" noSelection="['':'-Choose a Project-']"/>
+                <g:select id="schedEditFrameworkProject" name="project" from="${projects*.name}" value="${scheduledExecution.project?scheduledExecution.project.toString():projects?.size()==1?projects[0].name:session.project?session.project:''}" onchange="_editFormSelectProject(this.value);" noSelection="['':'-Choose a Project-']"/>
             </div>
             <g:hasErrors bean="${scheduledExecution}" field="project">
                     <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error"  width="16px" height="16px" id="schedProjErrImg"/>
