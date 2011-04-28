@@ -64,7 +64,7 @@ public class WebserviceFormAuthenticator extends BaseFormAuthenticator {
     }
 
     String getInitialPath() {
-        return getBasePath() + "/menu/index";
+        return "/menu/index";
     }
 
     boolean isValidLoginRedirect(final HttpMethod method) {
