@@ -378,7 +378,7 @@ Then restart RunDeck to ensure it picks up the change and you're done.
 
 Create a `jaas-activedirectory.conf` file in the same directory as the `jaas-loginmodule.conf` file.
 
-* RPM install: /etc/runduck/
+* RPM install: /etc/rundeck/
 * Launcher install: $RDECK_BASE/server/config
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -399,7 +399,7 @@ activedirectory {
     roleBaseDn="ou=roles,dc=rundeck,dc=com"
     roleNameAttribute="cn"
     roleMemberAttribute="member"
-    roleObjectClass="group";
+    roleObjectClass="group"
     cacheDurationMillis="300000"
     reportStatistics="true";
     };
