@@ -115,7 +115,7 @@ function doCreateProject(){
                 </span> &raquo;
                 <g:link action="logout" controller="user" title="Logout user: ${session.user}" params="${[refLink:controllerName&&actionName?createLink(controller:controllerName,action:actionName,params:params,absolute:true):'']}">logout</g:link>
             </span>
-            <a href="${g.message(code:'app.wiki.help')}" class="help">
+            <a href="${resource(dir:'docs')}" class="help">
                 help
                 <img src="${resource(dir:'images',file:'icon-small-help.png')}" width="16px" height="16px" alt=""/>
             </a>
@@ -123,7 +123,7 @@ function doCreateProject(){
     </g:if>
     <g:else>
         <span class="headright">
-            <a href="${g.message(code:'app.wiki.help')}" class="help">
+            <a href="${resource(dir: 'docs')}" class="help">
                 help
                 <img src="${resource(dir:'images',file:'icon-small-help.png')}" width="16px" height="16px" alt=""/>
             </a>
