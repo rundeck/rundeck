@@ -72,6 +72,7 @@ public class ExpandRunServer {
         "server.https.port",
         "server.hostname",
         "server.reportservice.port",
+        "server.web.context",
         "rdeck.base",
         SERVER_DATASTORE_PATH,
         "default.user.name",

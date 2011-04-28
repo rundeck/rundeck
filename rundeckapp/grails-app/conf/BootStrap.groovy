@@ -54,8 +54,9 @@ class BootStrap {
                      URL url = new URL(grailsApplication.config.grails.serverURL)
                      hostname=url.getHost()
                      port=url.getPort().toString()
-                     setup.getParameters().properties["framework.server.url"]=url.toExternalForm()
-                     setup.getParameters().properties["framework.rundeck.url"]=url.toExternalForm()
+                     def urlstr= url.toExternalForm().replaceAll('/+$','')
+                     setup.getParameters().properties["framework.server.url"]=urlstr
+                     setup.getParameters().properties["framework.rundeck.url"]= urlstr
                  }else{
                      //determine hostname
                      hostname=InetAddress.getLocalHost().getHostName()
