@@ -36,16 +36,14 @@ public class StoredJobLoadResultImpl extends StoredJobImpl implements IStoredJob
     private boolean successful;
     private boolean skippedJob;
     private String message;
-    private int index;
 
     StoredJobLoadResultImpl(final String jobId, final String name, final String url, final String group,
                             final String description, final boolean successful, final boolean skippedJob,
-                            final String message, final int index) {
+                            final String message) {
         super(jobId, name, url, group, description);
         this.successful = successful;
         this.skippedJob = skippedJob;
         this.message = message;
-        this.index= index;
     }
 
     /**
@@ -58,15 +56,14 @@ public class StoredJobLoadResultImpl extends StoredJobImpl implements IStoredJob
      * @param successful true if creation succeeded
      * @param skippedJob true if creation was skippped
      * @param message message for error
-     * @param index index of job in original input
      * @return IStoredJobLoadResult instance
      */
     public static IStoredJobLoadResult createLoadResult(final String jobId, final String name, final String url,
                                                         final String group,
                                                         final String description, final boolean successful,
                                                         final boolean skippedJob,
-                                                        final String message, final int index) {
-        return new StoredJobLoadResultImpl(jobId, name, url, group, description, successful, skippedJob, message, index);
+                                                        final String message) {
+        return new StoredJobLoadResultImpl(jobId, name, url, group, description, successful, skippedJob, message);
 
     }
 
@@ -80,9 +77,5 @@ public class StoredJobLoadResultImpl extends StoredJobImpl implements IStoredJob
 
     public String getMessage() {
         return message;
-    }
-
-    public int getIndex() {
-        return index;
     }
 }

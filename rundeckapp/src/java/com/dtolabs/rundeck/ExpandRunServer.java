@@ -72,6 +72,7 @@ public class ExpandRunServer {
         "server.https.port",
         "server.hostname",
         "server.reportservice.port",
+        "server.web.context",
         "rdeck.base",
         SERVER_DATASTORE_PATH,
         "default.user.name",
@@ -236,12 +237,11 @@ public class ExpandRunServer {
         }
         debug = debug || cl.hasOption('d');
         DEBUG("Debugging is turned on.");
-        
-        this.basedir = cl.getOptionValue("basedir", new File(thisJar.getAbsolutePath()).getParentFile().getAbsolutePath());  // TODO: is the first getAbsolutePath required?
+        this.basedir = cl.getOptionValue('b', new File(thisJar.getAbsolutePath()).getParentFile().getAbsolutePath());  // TODO: is the first getAbsolutePath required?
         this.serverdir = new File(cl.getOptionValue("serverdir", basedir+"/server"));
         this.configDir = new File(cl.getOptionValue("c", serverdir + "/config"));
         DEBUG("configDir is " + configDir.getAbsolutePath());
-        bindir = new File(cl.getOptionValue("bindir"), toolsdir+"/bin");
+        bindir = new File(cl.getOptionValue('x', toolsdir+"/bin"));
         
         
 

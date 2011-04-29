@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+ * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
-* RundeckCentralDispatcher.java
+* RundeckAPICentralDispatcher.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: Feb 18, 2010 11:59:34 AM
@@ -25,18 +25,19 @@ package com.dtolabs.client.services;
 
 import com.dtolabs.client.utils.WebserviceResponse;
 import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.core.utils.NodeSet;
 import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.*;
+import com.dtolabs.rundeck.core.utils.NodeSet;
+import com.dtolabs.utils.Streams;
 import org.apache.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.Node;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
 import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.error.YAMLException;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
+import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -46,44 +47,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * RundeckCentralDispatcher serializes central dispatcher requests and submits them to the central dispatcher in the
- * run-center application, via a remote web service call.  The responses are parsed and returned.
+ * RundeckAPICentralDispatcher serializes uses server API v1 to submit requests and receive responses.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public class RundeckCentralDispatcher implements CentralDispatcher {
-    /********
-     *  Legacy endpoints
-     ********/
-    /**
-     * Webservice endpoint for queuing job executions
-     */
-    public static final String RUNDECK_EXEC_JOB_PATH = "/scheduledExecution/uploadAndExecute.xml";
-    /**
-     * Webservice endpoint for queue list requests
-     */
-    public static final String RUNDECK_LIST_EXECUTIONS_PATH = "/menu/queueList.xml";
-    /**
-     * Webservice endpoint for killing job executions
-     */
-    public static final String RUNDECK_KILL_JOB_PATH = "/execution/cancelExecution.xml";
-    /**
-     * Webservice endpoint for listing stored jobs.
-     */
-    public static final String RUNDECK_LIST_STORED_JOBS_PATH = "/menu/workflows";
+public class RundeckAPICentralDispatcher implements CentralDispatcher {
     /**
      * Webservice link prefix for a stored job.
      */
-    public static final String RUNDECK_JOB_LINK_PREFIX = "/scheduledExecution/show/";
-    /**
-     * upload path
-     */
-    public static final String RUNDECK_JOBS_UPLOAD = "/scheduledExecution/upload";
-    /**
-     * Webservice endpoint for running job by name or id
-     */
-    public static final String RUNDECK_JOBS_RUN = "/scheduledExecution/runJobByName.xml";
+    public static final String RUNDECK_JOB_LINK_PREFIX = "/job/show/";
 
     /*******************
      * API v1 endpoints
@@ -92,19 +65,56 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
     /**
      * RUNDECK API Version
      */
-    public static final String RUNDECK_API_VERSION= "1";
+    public static final String RUNDECK_API_VERSION = "1";
     /**
      * RUNDECK API base path
      */
-    public static final String RUNDECK_API_BASE= "/api/"+RUNDECK_API_VERSION;
+    public static final String RUNDECK_API_BASE = "/api/" + RUNDECK_API_VERSION;
     /**
      * API endpoint for execution report
      */
     public static final String RUNDECK_API_EXECUTION_REPORT = RUNDECK_API_BASE + "/report/create";
+
+
+    /**
+     * Webservice endpoint for running scripts
+     */
+    public static final String RUNDECK_API_RUN_SCRIPT = RUNDECK_API_BASE + "/run/script";
+    /**
+     * Webservice endpoint for running commands
+     */
+    public static final String RUNDECK_API_RUN_COMMAND = RUNDECK_API_BASE + "/run/command";
+    /**
+     * Webservice endpoint for queue list requests
+     */
+    public static final String RUNDECK_API_LIST_EXECUTIONS_PATH = RUNDECK_API_BASE + "/executions/running";
+    /**
+     * Webservice endpoint for killing job executions
+     */
+    public static final String RUNDECK_API_KILL_JOB_PATH = RUNDECK_API_BASE + "/execution/$id/abort";
+    /**
+     * Webservice endpoint for exporting stored jobs.
+     */
+    public static final String RUNDECK_API_JOBS_EXPORT_PATH = RUNDECK_API_BASE + "/jobs/export";
+
+    /**
+     * Webservice endpoint for listing stored jobs.
+     */
+    public static final String RUNDECK_API_JOBS_LIST_PATH = RUNDECK_API_BASE + "/jobs";
+
+    /**
+     * upload path
+     */
+    public static final String RUNDECK_API_JOBS_UPLOAD = RUNDECK_API_BASE + "/jobs/import";
+    /**
+     * Webservice endpoint for running job by name or id
+     */
+    public static final String RUNDECK_API_JOBS_RUN = RUNDECK_API_BASE + "/job/$id/run";
+
     /**
      * logger
      */
-    public static final Logger logger = Logger.getLogger(RundeckCentralDispatcher.class);
+    public static final Logger logger = Logger.getLogger(RundeckAPICentralDispatcher.class);
     private ServerService serverService;
 
     /**
@@ -112,26 +122,31 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
      *
      * @param framework the framework
      */
-    public RundeckCentralDispatcher(final Framework framework) {
+    public RundeckAPICentralDispatcher(final Framework framework) {
         serverService = new ServerService(framework);
     }
 
     /**
      * Report execution status
-     * @param project project
-     * @param title execution title
-     * @param status result status, either 'succeed','cancel','fail'
-     * @param failedNodeCount total node count
+     *
+     * @param project          project
+     * @param title            execution title
+     * @param status           result status, either 'succeed','cancel','fail'
+     * @param failedNodeCount  total node count
      * @param successNodeCount count of successful nodes
      * @param tags
-     * @param script script content (can be null if summary specified)
-     * @param summary summary of execution (can be null if script specified)
-     * @param start start date (can be null)
-     * @param end end date (can be null)
-     * @throws CentralDispatcherException
+     * @param script           script content (can be null if summary specified)
+     * @param summary          summary of execution (can be null if script specified)
+     * @param start            start date (can be null)
+     * @param end              end date (can be null)
+     *
+     * @throws com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException
+     *
      */
-    public void reportExecutionStatus(final String project, final String title, final String status, final int failedNodeCount, final int successNodeCount,
-                                   final String tags, final String script, final String summary, final Date start, final Date end) throws
+    public void reportExecutionStatus(final String project, final String title, final String status,
+                                      final int failedNodeCount, final int successNodeCount,
+                                      final String tags, final String script, final String summary, final Date start,
+                                      final Date end) throws
         CentralDispatcherException {
         final HashMap<String, String> params = new HashMap<String, String>();
         params.put("project", project);
@@ -139,17 +154,17 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
         params.put("status", status);
         params.put("nodesuccesscount", Integer.toString(successNodeCount));
         params.put("nodefailcount", Integer.toString(failedNodeCount));
-        if(null!=tags){
+        if (null != tags) {
             params.put("tags", tags);
         }
-        if(null!=script){
+        if (null != script) {
             params.put("script", script);
         }
         params.put("summary", summary);
-        if(null!=start){
+        if (null != start) {
             params.put("start", Long.toString(start.getTime()));
         }
-        if(null!=end){
+        if (null != end) {
             params.put("end", Long.toString(end.getTime()));
         }
 
@@ -167,39 +182,94 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
 
     public QueuedItemResult queueDispatcherScript(final IDispatchedScript iDispatchedScript) throws
         CentralDispatcherException {
-        final File tempxml;
+        final String argString;
+        final String scriptString;
+        final boolean isExec;
+
         try {
-            tempxml = File.createTempFile("dispatch", "xml");
-            JobDefinitionSerializer.serializeToFile(iDispatchedScript, tempxml);
+
+            //write script to file
+            final InputStream stream = iDispatchedScript.getScriptAsStream();
+            if (null != iDispatchedScript.getScript() || null != stream) {
+                //full script
+                if (null != iDispatchedScript.getScript()) {
+                    scriptString = iDispatchedScript.getScript();
+                } else {
+                    //read stream to string
+                    final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                    Streams.copyStream(stream, byteArrayOutputStream);
+                    scriptString = new String(byteArrayOutputStream.toByteArray());
+                }
+                if (null != iDispatchedScript.getArgs() && iDispatchedScript.getArgs().length > 0) {
+                    argString = CLIUtils.generateArgline(null, iDispatchedScript.getArgs());
+                } else {
+                    argString = null;
+                }
+
+                isExec = false;
+            } else if (null != iDispatchedScript.getServerScriptFilePath()) {
+                //server-local script filepath
+
+                //read stream to string
+                final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                Streams.copyStream(new FileInputStream(new File(iDispatchedScript.getServerScriptFilePath())),
+                    byteArrayOutputStream);
+                scriptString = new String(byteArrayOutputStream.toByteArray());
+
+                if (null != iDispatchedScript.getArgs() && iDispatchedScript.getArgs().length > 0) {
+                    argString = CLIUtils.generateArgline(null, iDispatchedScript.getArgs());
+                } else {
+                    argString = null;
+                }
+                isExec = false;
+            } else if (null != iDispatchedScript.getArgs() && iDispatchedScript.getArgs().length > 0) {
+                //shell command
+                scriptString = null;
+                argString = CLIUtils.generateArgline(null, iDispatchedScript.getArgs());
+                isExec = true;
+            } else {
+                throw new IllegalArgumentException("Dispatched script did not specify a command, script or filepath");
+            }
+
         } catch (IOException e) {
             throw new CentralDispatcherServerRequestException("Unable to queue command: " + e.getMessage(), e);
         }
-        final QueuedItemResult queuedItemResult = submitQueueRequest(tempxml, new HashMap<String, String>(),
-            RUNDECK_EXEC_JOB_PATH);
-        if (!tempxml.delete()) {
-            logger.warn("Failed to delete temp file: " + tempxml.getAbsolutePath());
+
+        //request parameters
+        final HashMap<String, String> params = new HashMap<String, String>();
+
+        params.put("project", iDispatchedScript.getFrameworkProject());
+        if (isExec) {
+            params.put("exec", argString);
+        } else {
+            params.put("scriptFile", scriptString);
         }
-        return queuedItemResult;
+        addLoglevelParams(params, iDispatchedScript.getLoglevel());
+        addAPINodeSetParams(params, iDispatchedScript.getNodeSet(), iDispatchedScript.getNodeSet().isKeepgoing());
+
+        return submitRunRequest(null, params,
+            isExec ? RUNDECK_API_RUN_COMMAND : RUNDECK_API_RUN_SCRIPT);
     }
 
     /**
-     * Submit a request to the server which expects a list of queued item results in the response, and return a single QueuedItemResult parsed from the response.
+     * Submit a request to the server which expects a list of execution items in the response, and return a single
+     * QueuedItemResult parsed from the response.
      *
-     * @param tempxml xml temp file (or null)
+     * @param tempxml     xml temp file (or null)
      * @param otherparams parameters for the request
-     *
      * @param requestPath
+     *
      * @return a single QueuedItemResult
      *
-     * @throws CentralDispatcherException if an error occurs
+     * @throws com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException
+     *          if an error occurs
      */
-    private QueuedItemResult submitQueueRequest(final File tempxml, final HashMap<String, String> otherparams,
-                                                final String requestPath) throws CentralDispatcherException {
+    private QueuedItemResult submitExecutionRequest(final File tempxml, final HashMap<String, String> otherparams,
+                                                    final String requestPath) throws CentralDispatcherException {
 
 
         final HashMap<String, String> params = new HashMap<String, String>();
-        params.put("xmlreq", "true");
-        if(null!=otherparams){
+        if (null != otherparams) {
             params.putAll(otherparams);
         }
 
@@ -211,76 +281,70 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
         }
         validateResponse(response);
 
-        ////////////////////
-        //parse result list of execution responses.  this implementation handles multiple responses, but only
-        //returns a single QueuedItem (the first one found).
-        //TODO: update to return multiple QueuedItems when multiple job queue requests are supported
-        ///////////////////
+        final ArrayList<QueuedItem> list = parseExecutionListResult(response);
+        if (null == list || list.size() < 1) {
+
+            return QueuedItemResultImpl.failed("Server response contained no success information.");
+        } else {
+
+            final QueuedItem next = list.iterator().next();
+            return QueuedItemResultImpl.successful("Succeeded queueing " + next.getName(), next.getId(), next.getUrl(),
+                next.getName());
+        }
+    }
+
+
+    /**
+     * Submit a request to the server which expects an execution id in response, and return a single
+     * QueuedItemResult parsed from the response.
+     *
+     * @param tempxml     xml temp file (or null)
+     * @param otherparams parameters for the request
+     * @param requestPath
+     *
+     * @return a single QueuedItemResult
+     *
+     * @throws com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException
+     *          if an error occurs
+     */
+    private QueuedItemResult submitRunRequest(final File tempxml, final HashMap<String, String> otherparams,
+                                              final String requestPath) throws CentralDispatcherException {
+
+
+        final HashMap<String, String> params = new HashMap<String, String>();
+        if (null != otherparams) {
+            params.putAll(otherparams);
+        }
+
+        final WebserviceResponse response;
+        try {
+            response = serverService.makeRundeckRequest(requestPath, params, tempxml, null);
+        } catch (MalformedURLException e) {
+            throw new CentralDispatcherServerRequestException("Failed to make request", e);
+        }
+        validateResponse(response);
 
         final Document resultDoc = response.getResultDoc();
 
-        final int succeeded;
-        final int failed;
-
-        Node node = resultDoc.selectSingleNode("/result/succeeded/@count");
-        if (null != node) {
-            succeeded = Integer.parseInt(node.getStringValue());
-        } else {
-            succeeded = -1;
-        }
-        node = resultDoc.selectSingleNode("/result/failed/@count");
-        if (null != node) {
-            failed = Integer.parseInt(node.getStringValue());
-        } else {
-            failed = -1;
-        }
-        final String succeededId;
-        if (succeeded > 0) {
-            logger.info("Succeeded queueing " + succeeded + " Job" + (succeeded > 1 ? "s" : "") + ":");
-            final List nodes = resultDoc.selectNodes("/result/succeeded/execution");
-            final Node node1 = (Node) nodes.iterator().next();
-            final String index = node1.selectSingleNode("@index").getStringValue();
-            final String id = node1.selectSingleNode("id").getStringValue();
-            succeededId = id;
-            final String name = node1.selectSingleNode("name").getStringValue();
-            String url = node1.selectSingleNode("url").getStringValue();
+        if (null != resultDoc.selectSingleNode("/result/execution") && null != resultDoc.selectSingleNode(
+            "/result/execution/@id")) {
+            final Node node = resultDoc.selectSingleNode("/result/execution/@id");
+            final String succeededId = node.getStringValue();
+            final String name = "adhoc";
+            String url = createJobURL(succeededId);
             url = makeAbsoluteURL(url);
-            logger.info("\t" + index + ": " + name + " [" + id + "] <" + url + ">");
+            logger.info("\t[" + succeededId + "] <" + url + ">");
             return QueuedItemResultImpl.successful("Succeeded queueing " + name, succeededId, url, name);
-        }
-        if (failed > 0) {
-            final String s1 = "Failed to queue " + failed + " Job" + (failed > 1 ? "s" : "") + ":";
-            logger.error(s1);
-            final List nodes = resultDoc.selectNodes("/result/failed/execution");
-            final Node node1 = (Node) nodes.iterator().next();
-            final String index = node1.selectSingleNode("@index").getStringValue();
-            final String id = null != node1.selectSingleNode("id") ? node1.selectSingleNode("id")
-                .getStringValue()
-                                                                   : null;
-            String url = null != node1.selectSingleNode("url") ? node1.selectSingleNode("url")
-                .getStringValue()
-                                                               : null;
-            url = makeAbsoluteURL(url);
-            final String error = null != node1.selectSingleNode("error") ? node1.selectSingleNode("error")
-                .getStringValue() : null;
-            final String message = null != node1.selectSingleNode("message") ? node1.selectSingleNode("message")
-                .getStringValue() : null;
-            final String errmsg = error + (null != id ? " [" + id + "] <" + url + ">" : "")
-                                  + (null != message ? " : " + message : "");
-            final String s2 = index + ": " + errmsg;
-            logger.error(s2);
-            return QueuedItemResultImpl.failed(errmsg);
         }
         return QueuedItemResultImpl.failed("Server response contained no success information.");
     }
 
     public Collection<QueuedItem> listDispatcherQueue() throws CentralDispatcherException {
         final HashMap<String, String> params = new HashMap<String, String>();
-        params.put("xmlreq", "true");
 
         final WebserviceResponse response;
         try {
-            response = serverService.makeRundeckRequest(RUNDECK_LIST_EXECUTIONS_PATH, params, null, null);
+            response = serverService.makeRundeckRequest(RUNDECK_API_LIST_EXECUTIONS_PATH, params, null, null);
         } catch (MalformedURLException e) {
             throw new CentralDispatcherServerRequestException("Failed to make request", e);
         }
@@ -291,25 +355,35 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
         //parse result list of queued items, return the collection of QueuedItems
         ///////////////////
 
+        return parseExecutionListResult(response);
+
+    }
+
+    private ArrayList<QueuedItem> parseExecutionListResult(final WebserviceResponse response) {
         final Document resultDoc = response.getResultDoc();
 
-        final Node node = resultDoc.selectSingleNode("/result/items");
-        final List items = node.selectNodes("item");
+        final Node node = resultDoc.selectSingleNode("/result/executions");
+        final List items = node.selectNodes("execution");
         final ArrayList<QueuedItem> list = new ArrayList<QueuedItem>();
         if (null != items && items.size() > 0) {
             for (final Object o : items) {
                 final Node node1 = (Node) o;
-                final String id = node1.selectSingleNode("id").getStringValue();
-                final String name = node1.selectSingleNode("name").getStringValue();
-                String url = node1.selectSingleNode("url").getStringValue();
+                final String id = node1.selectSingleNode("@id").getStringValue();
+                final Node jobname = node1.selectSingleNode("job/name");
+                final Node desc = node1.selectSingleNode("description");
+                final String name;
+                if (null != jobname) {
+                    name = jobname.getStringValue();
+                } else {
+                    name = desc.getStringValue();
+                }
+                String url = node1.selectSingleNode("@href").getStringValue();
                 url = makeAbsoluteURL(url);
                 logger.info("\t" + ": " + name + " [" + id + "] <" + url + ">");
                 list.add(QueuedItemResultImpl.createQueuedItem(id, url, name));
             }
         }
-
         return list;
-
     }
 
     /**
@@ -333,7 +407,7 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
         }
         return url;
     }
-    
+
     /**
      * If the url appears relative to an authority, i.e. it starts with "/", then convert it to be absolute using the
      * server URL (including context path) provided by the ServerService.
@@ -346,7 +420,7 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
         if (null != url && url.startsWith("/")) {
             //change relative URL into absolute using the base server URL
             try {
-                final URL newUrl = new URL(serverService.getConnParams().getServerUrl()+ url);
+                final URL newUrl = new URL(serverService.getConnParams().getServerUrl() + url);
                 url = newUrl.toExternalForm();
             } catch (MalformedURLException e) {
                 e.printStackTrace();
@@ -362,7 +436,8 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
      *
      * @return Envelope if format is correct and there is no error
      *
-     * @throws CentralDispatcherServerRequestException if the format is incorrect, or the Envelope indicates an error response.
+     * @throws com.dtolabs.client.services.CentralDispatcherServerRequestException
+     *          if the format is incorrect, or the Envelope indicates an error response.
      */
     private void validateJobsResponse(final WebserviceResponse response) throws
         CentralDispatcherServerRequestException {
@@ -396,7 +471,8 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
      *
      * @return Envelope if format is correct and there is no error
      *
-     * @throws CentralDispatcherException if the format is incorrect, or the Envelope indicates an error response.
+     * @throws com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException
+     *          if the format is incorrect, or the Envelope indicates an error response.
      */
     private Envelope validateResponse(final WebserviceResponse response) throws
         CentralDispatcherException {
@@ -410,7 +486,10 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
         final Document resultDoc = response.getResultDoc();
         if (null == resultDoc) {
             throw new CentralDispatcherServerRequestException("Response content unexpectedly empty. " + (response
-                .getResponseMessage() != null ? response.getResponseMessage() : ""));
+                                                                                                             .getResponseMessage()
+                                                                                                         != null
+                                                                                                         ? response
+                .getResponseMessage() : ""));
         }
         try {
             logger.debug(serialize(resultDoc));
@@ -425,11 +504,11 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
         if (envelope.isErrorResult()) {
             final StringBuffer sb = new StringBuffer();
             final StringBuffer buffer = envelope.errorMessages();
-            if(buffer.length()>0){
+            if (buffer.length() > 0) {
                 sb.append(buffer);
-            }else{
+            } else {
                 sb.append("Server reported an error");
-                if(null!=response.getResponseMessage()){
+                if (null != response.getResponseMessage()) {
                     sb.append(": ").append(response.getResponseMessage());
                 }
             }
@@ -444,22 +523,76 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
     }
 
 
+    /**
+     * Check if the response is an API error response, if so throw an exception, otherwise return;
+     *
+     * @param response response
+     *
+     * @throws com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException
+     *          if the format is incorrect, or the Envelope indicates an error response.
+     */
+    private void checkErrorResponse(final WebserviceResponse response) throws
+        CentralDispatcherException {
+        if (null == response) {
+            throw new CentralDispatcherServerRequestException("Response was null");
+        }
+
+        if (null != response.getResponseMessage()) {
+            logger.info("Response: " + response.getResponseMessage());
+        }
+        final Document resultDoc = response.getResultDoc();
+        if (null == resultDoc) {
+            return;
+        }
+        try {
+            logger.debug(serialize(resultDoc));
+        } catch (IOException e) {
+            logger.debug("ioexception serializing result doc", e);
+        }
+
+        if (!"result".equals(resultDoc.getRootElement().getName())) {
+            return;
+        }
+        final Envelope envelope = new Envelope(response.getResultDoc());
+        if (envelope.isErrorResult()) {
+            final StringBuffer sb = new StringBuffer();
+            final StringBuffer buffer = envelope.errorMessages();
+            if (buffer.length() > 0) {
+                sb.append(buffer);
+            } else {
+                sb.append("Server reported an error");
+                if (null != response.getResponseMessage()) {
+                    sb.append(": ").append(response.getResponseMessage());
+                }
+            }
+            if (null != response.getResponseMessage()) {
+                logger.error("Server reported an error: " + response.getResponseMessage());
+            } else {
+                logger.error("Server reported an error.");
+            }
+            throw new CentralDispatcherFailureResponseException(sb.toString());
+        }
+    }
+
+
     public DispatcherResult killDispatcherExecution(final String execId) throws CentralDispatcherException {
         final HashMap<String, String> params = new HashMap<String, String>();
         params.put("id", execId);
-        params.put("xmlreq", "true");
 
+        final String rundeckApiKillJobPath = RUNDECK_API_KILL_JOB_PATH.replace("$id", execId);
         //2. send request via ServerService
         final WebserviceResponse response;
         try {
-            response = serverService.makeRundeckRequest(RUNDECK_KILL_JOB_PATH, params, null, null);
+            response = serverService.makeRundeckRequest(rundeckApiKillJobPath, params, null, null);
         } catch (MalformedURLException e) {
             throw new CentralDispatcherServerRequestException("Failed to make request", e);
         }
 
         final Envelope envelope = validateResponse(response);
 
-        final boolean result = envelope.isSuccessResult();
+        final Node result1 = envelope.doc.selectSingleNode("result");
+        final String abortStatus = result1.selectSingleNode("abort/@status").getStringValue();
+        final boolean result = !"failed".equals(abortStatus);
         final StringBuffer sb = envelope.successMessages();
         return new DispatcherResult() {
             public boolean isSuccessful() {
@@ -510,7 +643,7 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
             params.put("groupPath", groupMatch);
         }
         if (null != projectFilter) {
-            params.put("projFilter", projectFilter);
+            params.put("project", projectFilter);
         }
         if (null != idlistFilter) {
             params.put("idlist", idlistFilter);
@@ -519,13 +652,13 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
         //2. send request via ServerService
         final WebserviceResponse response;
         try {
-            response = serverService.makeRundeckRequest(RUNDECK_LIST_STORED_JOBS_PATH, params, null, null);
+            response = serverService.makeRundeckRequest(RUNDECK_API_JOBS_EXPORT_PATH, params, null, null);
         } catch (MalformedURLException e) {
             throw new CentralDispatcherServerRequestException("Failed to make request", e);
         }
-
+        checkErrorResponse(response);
         //if xml, do local validation and listing
-        if(null==fformat || fformat== JobDefinitionFileFormat.xml){
+        if (null == fformat || fformat == JobDefinitionFileFormat.xml) {
             validateJobsResponse(response);
 
             ////////////////////
@@ -566,7 +699,7 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
                 }
             }
             return list;
-        }else if(fformat==JobDefinitionFileFormat.yaml){
+        } else if (fformat == JobDefinitionFileFormat.yaml) {
             //do rought yaml parse
             final Collection<Map> mapCollection = validateJobsResponseYAML(response);
             final ArrayList<IStoredJob> list = new ArrayList<IStoredJob>();
@@ -598,6 +731,57 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
         return null;
     }
 
+    public Collection<IStoredJob> reallistStoredJobs(final IStoredJobsQuery iStoredJobsQuery) throws
+        CentralDispatcherException {
+        final HashMap<String, String> params = new HashMap<String, String>();
+        final String nameMatch = iStoredJobsQuery.getNameMatch();
+        String groupMatch = iStoredJobsQuery.getGroupMatch();
+        final String projectFilter = iStoredJobsQuery.getProjectFilter();
+        final String idlistFilter = iStoredJobsQuery.getIdlist();
+
+        if (null != nameMatch) {
+            params.put("jobFilter", nameMatch);
+        }
+        if (null != groupMatch) {
+            final Matcher matcher = Pattern.compile("^/*(.+?)/*$").matcher(groupMatch);
+            if (matcher.matches()) {
+                //strip leading and trailing slashes
+                groupMatch = matcher.group(1);
+            }
+            params.put("groupPath", groupMatch);
+        }
+        if (null != projectFilter) {
+            params.put("project", projectFilter);
+        }
+        if (null != idlistFilter) {
+            params.put("idlist", idlistFilter);
+        }
+
+        //2. send request via ServerService
+        final WebserviceResponse response;
+        try {
+            response = serverService.makeRundeckRequest(RUNDECK_API_JOBS_LIST_PATH, params, null, null);
+        } catch (MalformedURLException e) {
+            throw new CentralDispatcherServerRequestException("Failed to make request", e);
+        }
+        validateResponse(response);
+        //extract job list
+        final Document resultDoc = response.getResultDoc();
+        final ArrayList<IStoredJob> list = new ArrayList<IStoredJob>();
+
+        final Node jobs = resultDoc.selectSingleNode("/result/jobs");
+        for (final Object job1 : jobs.selectNodes("job")) {
+            final Node job = (Node) job1;
+            final String id = job.selectSingleNode("@id").getStringValue();
+            final String name = job.selectSingleNode("name").getStringValue();
+            final String group = job.selectSingleNode("group").getStringValue();
+            final String desc = job.selectSingleNode("desc").getStringValue();
+            final String url = createJobURL(id);
+            list.add(StoredJobImpl.create(id, name, url, group, desc, projectFilter));
+        }
+
+        return list;
+    }
 
     /**
      * Validate the response is in expected yaml format
@@ -606,7 +790,7 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
      *
      * @return Collection of job data maps if format is correct and there is no error
      *
-     * @throws CentralDispatcherServerRequestException
+     * @throws com.dtolabs.client.services.CentralDispatcherServerRequestException
      *          if the format is incorrect, or the response indicates an error response.
      */
     private Collection<Map> validateJobsResponseYAML(final WebserviceResponse response) throws
@@ -626,10 +810,10 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
             throw new CentralDispatcherServerRequestException(
                 "Expected YAML response, unexpected content type: " + response.getResultContentType());
         }
-        ArrayList<Map> dataset = new ArrayList<Map>();
-        Object resobj;
+        final ArrayList<Map> dataset = new ArrayList<Map>();
+        final Object resobj;
         try {
-            Yaml yaml = new Yaml(new SafeConstructor());
+            final Yaml yaml = new Yaml(new SafeConstructor());
             resobj = yaml.load(response.getResults());
         } catch (YAMLException e) {
             throw new CentralDispatcherServerRequestException("Failed to parse YAML: " + e.getMessage(), e);
@@ -650,36 +834,63 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
 
 
     public QueuedItemResult queueDispatcherJob(final IDispatchedJob dispatchedJob) throws CentralDispatcherException {
-        final HashMap<String,String> params = new HashMap<String, String>();
-        if(null==dispatchedJob.getJobRef()) {
+        final HashMap<String, String> params = new HashMap<String, String>();
+        if (null == dispatchedJob.getJobRef()) {
             throw new IllegalArgumentException("JobRef was null");
         }
-        if(null!=dispatchedJob.getJobRef().getJobId()) {
-            params.put("id", dispatchedJob.getJobRef().getJobId());
-        }else {
+        final String jobid;
+        if (null != dispatchedJob.getJobRef().getJobId()) {
+            jobid = dispatchedJob.getJobRef().getJobId();
+        } else {
+            final String name;
+            final String group;
+            final String project = dispatchedJob.getJobRef().getProject();
+
             if (null != dispatchedJob.getJobRef().getName()) {
-                params.put("jobName", dispatchedJob.getJobRef().getName());
+                name = dispatchedJob.getJobRef().getName();
+            } else {
+                name = null;
             }
             if (null != dispatchedJob.getJobRef().getGroup()) {
-                params.put("groupPath", dispatchedJob.getJobRef().getGroup());
+                group = dispatchedJob.getJobRef().getGroup();
+            } else {
+                group = null;
             }
+            //Query to find matching job
+            final Collection<IStoredJob> iStoredJobs = reallistStoredJobs(new IStoredJobsQueryImpl(name, group, null,
+                project));
+            if (null == iStoredJobs) {
+                throw new CentralDispatcherException("Unable to query jobs");
+            }
+            if (iStoredJobs.size() < 1) {
+                throw new CentralDispatcherException(
+                    "Job not found matching query: " + (null != group ? group : "") + "/" + name);
+            }
+            if (iStoredJobs.size() > 1) {
+                throw new CentralDispatcherException(
+                    "Job not was not unique: " + (null != group ? group : "") + "/" + name + ": " + iStoredJobs.size()
+                    + " jobs found");
+            }
+            //use found id
+            final IStoredJob next = iStoredJobs.iterator().next();
+            jobid = next.getJobId();
+
         }
 
-        addNodeSetParams(params, dispatchedJob.getNodeSet(), dispatchedJob.isKeepgoing(), "extra.");
-        addLoglevelParams(params, dispatchedJob.getLoglevel(), "extra.");
-        if(null!=dispatchedJob.getArgs() && dispatchedJob.getArgs().length>0) {
-            params.put("extra.argString", CLIUtils.generateArgline(null, dispatchedJob.getArgs()));
+        addAPINodeSetParams(params, dispatchedJob.getNodeSet(), dispatchedJob.isKeepgoing());
+        addLoglevelParams(params, dispatchedJob.getLoglevel());
+        if (null != dispatchedJob.getArgs() && dispatchedJob.getArgs().length > 0) {
+            params.put("argString", CLIUtils.generateArgline(null, dispatchedJob.getArgs()));
         }
-        /*
-         * submit request to the URL path, expecting standard "queued item list" result 
-         */
-        return submitQueueRequest(null, params, RUNDECK_JOBS_RUN);
+        
+        final String apipath = RUNDECK_API_JOBS_RUN.replace("$id", jobid);
+        return submitExecutionRequest(null, params, apipath);
     }
 
-    
-    private void addLoglevelParams(Map<String,String> params, int loglevel, final String prefix) {
 
-        String loglevelstr= RundeckAppConstants.MSG_INFO.toUpperCase();
+    private void addLoglevelParams(final Map<String, String> params, final int loglevel) {
+
+        String loglevelstr = RundeckAppConstants.MSG_INFO.toUpperCase();
         switch (loglevel) {
             case Constants.DEBUG_LEVEL:
                 loglevelstr = RundeckAppConstants.MSG_DEBUG.toUpperCase();
@@ -698,76 +909,62 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
                 break;
         }
 
-        params.put(prefix + "loglevel", loglevelstr);
+        params.put("loglevel", loglevelstr);
     }
 
     /**
-     * Maps nodeset keys to the parameter suffix used in the service request
+     * Add entries to the Map for node filter parameters from the nodeset
      */
-    private static Map<String, String> nodeFilterParams = new HashMap<String, String>();
-    static{
-        nodeFilterParams.put(NodeSet.HOSTNAME,"");
-        nodeFilterParams.put(NodeSet.TYPE,"Type");
-        nodeFilterParams.put(NodeSet.TAGS,"Tags");
-        nodeFilterParams.put(NodeSet.OS_NAME,"OsName");
-        nodeFilterParams.put(NodeSet.OS_FAMILY,"OsFamily");
-        nodeFilterParams.put(NodeSet.OS_ARCH,"OsArch");
-        nodeFilterParams.put(NodeSet.OS_VERSION,"OsVersion");
-        nodeFilterParams.put(NodeSet.NAME,"Name");
-    }
-
-
-    public static void addNodeSetParams(final HashMap<String, String> params, final NodeSet nodeSet,
-                                        final Boolean isKeepgoing, final String prefix) {
+    public static void addAPINodeSetParams(final HashMap<String, String> params, final NodeSet nodeSet,
+                                           final Boolean isKeepgoing) {
 
         if (null == nodeSet) {
             return;
         }
         if (nodeSet.getThreadCount() > 0) {
-            params.put(prefix + "nodeThreadcount", Integer.toString(nodeSet.getThreadCount()));
+            params.put("nodeThreadcount", Integer.toString(nodeSet.getThreadCount()));
         }
-        if(null!=isKeepgoing){
-            params.put(prefix + "nodeKeepgoing", Boolean.toString(isKeepgoing));
+        if (null != isKeepgoing) {
+            params.put("nodeKeepgoing", Boolean.toString(isKeepgoing));
         }
         if (nodeSet.isBlank()) {
             return;
         }
-        params.put(prefix + "doNodedispatch", "true");
         boolean excludeprecedence = true;
         if (null != nodeSet.getExclude() && nodeSet.getExclude().isDominant()) {
             excludeprecedence = true;
         } else if (null != nodeSet.getInclude() && nodeSet.getInclude().isDominant()) {
             excludeprecedence = false;
         }
-        params.put(prefix + "nodeExcludePrecedence", Boolean.toString(excludeprecedence));
+        params.put("exclude-precedence", Boolean.toString(excludeprecedence));
 
         final NodeSet.Include include = nodeSet.getInclude();
 
-        for (NodeSet.FILTER_ENUM filter : NodeSet.FILTER_ENUM.values()) {
+        for (final NodeSet.FILTER_ENUM filter : NodeSet.FILTER_ENUM.values()) {
             String value = null;
             if (null != include && !include.isBlank()) {
                 value = filter.value(include);
             }
 
-            String key = nodeFilterParams.get(filter.getName());
+            final String key = filter.getName();
             if (null != value && !"".equals(value)) {
-                params.put(prefix + "nodeInclude" + key, value);
+                params.put(key, value);
             } else {
-                params.put(prefix + "nodeInclude" + key, "");
+                params.put(key, "");
             }
         }
         final NodeSet.Exclude exclude = nodeSet.getExclude();
 
-        for (NodeSet.FILTER_ENUM filter : NodeSet.FILTER_ENUM.values()) {
+        for (final NodeSet.FILTER_ENUM filter : NodeSet.FILTER_ENUM.values()) {
             String value = null;
             if (null != exclude && !exclude.isBlank()) {
                 value = filter.value(exclude);
             }
-            String key = nodeFilterParams.get(filter.getName());
+            final String key = filter.getName();
             if (null != value && !"".equals(value)) {
-                params.put(prefix + "nodeExclude" + key, value);
+                params.put("exclude-" + key, value);
             } else {
-                params.put(prefix + "nodeExclude" + key, "");
+                params.put("exclude-" + key, "");
             }
         }
 
@@ -778,12 +975,11 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
                                                      final JobDefinitionFileFormat format) throws
 
         CentralDispatcherException {
-        final HashMap params = new HashMap();
+        final HashMap<String,String> params = new HashMap<String, String>();
         params.put("dupeOption", iLoadJobsRequest.getDuplicateOption().toString());
-        params.put("xmlreq", "true");
 
         if (null != format) {
-            params.put("fileformat", format.getName());
+            params.put("format", format.getName());
         }
 
         /*
@@ -793,7 +989,7 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
         //2. send request via ServerService
         final WebserviceResponse response;
         try {
-            response = serverService.makeRundeckRequest(RUNDECK_JOBS_UPLOAD, params, input, null);
+            response = serverService.makeRundeckRequest(RUNDECK_API_JOBS_UPLOAD, params, input, null);
         } catch (MalformedURLException e) {
             throw new CentralDispatcherServerRequestException("Failed to make request", e);
         }
@@ -826,13 +1022,13 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
         } else {
             skipped = -1;
         }
-        ArrayList<IStoredJobLoadResult> resultList = new ArrayList<IStoredJobLoadResult>();
+        final ArrayList<IStoredJobLoadResult> resultList = new ArrayList<IStoredJobLoadResult>();
         if (succeeded > 0) {
             logger.debug("Succeeded creating/updating " + succeeded + " Jobs:");
             final List nodes = result.selectNodes("/result/succeeded/job");
             for (final Object node2 : nodes) {
                 final Node node1 = (Node) node2;
-                final IStoredJobLoadResult storedJobLoadResult = parseStoredJobResult(node1, true, false,
+                final IStoredJobLoadResult storedJobLoadResult = parseAPIJobResult(node1, true, false,
                     "Succeeded");
                 resultList.add(storedJobLoadResult);
 
@@ -845,7 +1041,7 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
                 final Node node1 = (Node) node2;
                 final String error = null != node1.selectSingleNode("error") ? node1.selectSingleNode("error")
                     .getStringValue() : "Failed";
-                final IStoredJobLoadResult storedJobLoadResult = parseStoredJobResult(node1, false, false,
+                final IStoredJobLoadResult storedJobLoadResult = parseAPIJobResult(node1, false, false,
                     error);
 
                 resultList.add(storedJobLoadResult);
@@ -859,7 +1055,7 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
 
                 final String error = null != node1.selectSingleNode("error") ? node1.selectSingleNode("error")
                     .getStringValue() : "Skipped";
-                final IStoredJobLoadResult storedJobLoadResult = parseStoredJobResult(node1, true, true,
+                final IStoredJobLoadResult storedJobLoadResult = parseAPIJobResult(node1, true, true,
                     error);
                 resultList.add(storedJobLoadResult);
 
@@ -868,25 +1064,17 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
         return resultList;
     }
 
-    private IStoredJobLoadResult parseStoredJobResult(final Node node1, final boolean successful, final boolean skippedJob,
-                                                      final String message) {
-        final String index = node1.selectSingleNode("@index").getStringValue();
+    private IStoredJobLoadResult parseAPIJobResult(final Node node1, final boolean successful, final boolean skippedJob,
+                                                   final String message) {
         final Node idNode = node1.selectSingleNode("id");
-        final String id = null!= idNode? idNode.getStringValue():null;
+        final String id = null != idNode ? idNode.getStringValue() : null;
         final String name = node1.selectSingleNode("name").getStringValue();
-        final Node urlNode = node1.selectSingleNode("url");
-        final String url = null != urlNode ? makeAbsoluteURL(urlNode.getStringValue()) : null;
+        final String url = null != id ? createJobURL(id) : null;
         final String group = null != node1.selectSingleNode("group") ? node1.selectSingleNode("group")
             .getStringValue() : null;
         final String description = null != node1.selectSingleNode("description") ? node1.selectSingleNode("description")
             .getStringValue() : null;
-        logger.debug("\t" + index + ": " + name + " [" + id + "] <" + url + ">");
-        int ndx = -1;
-        try {
-            ndx = Integer.parseInt(index);
-        } catch (NumberFormatException e) {
-
-        }
+        logger.debug("\t" + name + " [" + id + "] <" + url + ">");
         return StoredJobLoadResultImpl.createLoadResult(id, name, url,
             group, description, successful, skippedJob,
             message);
@@ -899,7 +1087,7 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
      *
      * @return xml string
      *
-     * @throws IOException if error occurs
+     * @throws java.io.IOException if error occurs
      */
     private static String serialize(final Document document) throws IOException {
         final OutputFormat format = OutputFormat.createPrettyPrint();

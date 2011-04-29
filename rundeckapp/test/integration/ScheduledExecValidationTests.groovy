@@ -5009,6 +5009,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             //try to do update of the ScheduledExecution
             def fwkControl = mockFor(FrameworkService, true)
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.projects {return []}
             sec.frameworkService = fwkControl.createMock()
             def seServiceControl = mockFor(ScheduledExecutionService,true)
             seServiceControl.demand.userAuthorizedForJob {user,schedexec, framework -> return true }

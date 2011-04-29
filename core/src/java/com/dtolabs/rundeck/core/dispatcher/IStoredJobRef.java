@@ -50,4 +50,9 @@ public interface IStoredJobRef {
      * @return the name
      */
     String getGroup();
+
+    /**
+     * Get the project
+     */
+    String getProject();
 }

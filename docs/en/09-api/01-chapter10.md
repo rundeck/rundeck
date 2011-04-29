@@ -128,6 +128,7 @@ URL:
 Optional parameters:
 
 * `argString`: argument string to pass to the job, of the form: `-opt value -opt2 value ...`.
+* `loglevel`: argument specifying the loglevel to use, one of: 'DEBUG','VERBOSE','INFO','WARN','ERR'
 * Node filter parameters as described under [Using Node Filters](#using-node-filters)
 
 Result:  An Item List of `executions` containing a single entry for the execution that was created.  See [Listing Running Executions](#listing-running-executions).
@@ -364,6 +365,11 @@ Optional Parameters:
 
 Node filter parameters as described under [Using Node Filters](#using-node-filters)
 
+Result: A success message, and a single `<execution>` item identifying the
+new execution by ID:
+
+    <execution id="X"/>
+
 ### Running Adhoc Scripts
 
 Run a script.
@@ -391,6 +397,11 @@ Optional Parameters:
 * `nodeKeepgoing`: if "true", continue executing on other nodes even if some fail.
 
 Node filter parameters as described under [Using Node Filters](#using-node-filters)
+
+Result: A success message, and a single `<execution>` item identifying the
+new execution by ID:
+
+    <execution id="X"/>
 
 ### Listing Projects ###
 
@@ -512,6 +523,22 @@ Optional Parameters:
     file will be used.
 
 Result: A success or failure result with a message.
+
+The URL requested as the `providerURL` must be allowed by the `project.properties` and `framework.properties` configuration settings according to these rules:
+
+* If the `providerURL` matches the value of `project.resources.url`, it is allowed.
+* Otherwise, these properties are checked as regular expressions to match the URL:
+    * `project.resources.allowedURL.X` in project.properties (X starts at 0).
+    * `framework.resources.allowedURL.X` in framework.properties
+* If both files define allowedURL regexes, the URL must match a regex in both of them.
+* Otherwise, if only one file defines regexes, the URL must match one of them.
+* Otherwise if no regexes are defined in either file, the URL is rejected.
+
+Multiple regexes can be specified in those config files by adding muliple properties:
+
+    project.resources.allowedURL.0=^http://myserver:9090/resources/.*$
+    project.resources.allowedURL.1=^http://server2:9090/resources/.*$
+
 
 ### Listing History
 

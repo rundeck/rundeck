@@ -26,10 +26,14 @@ import org.apache.tools.ant.taskdefs.Property;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -43,6 +47,8 @@ public class FrameworkProject extends FrameworkResourceParent {
     public static final String NODES_XML = "resources.xml";
     public static final String PROJECT_RESOURCES_URL_PROPERTY = "project.resources.url";
     public static final String PROJECT_RESOURCES_FILE_PROPERTY = "project.resources.file";
+    public static final String PROJECT_RESOURCES_ALLOWED_URL_PREFIX = "project.resources.allowedURL.";
+    public static final String FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX = "framework.resources.allowedURL.";
     /**
      * Reference to deployments base directory
      */
@@ -104,8 +110,12 @@ public class FrameworkProject extends FrameworkResourceParent {
 
         final String resfilepath = getNodesResourceFilePath();
         File resfile= new File(resfilepath);
-        if(!resfile.isFile()){
-            generateResourcesFile(resfile);
+        if(!resfile.isFile() && shouldUpdateNodesResourceFile()) {
+            try {
+                updateNodesResourceFile();
+            } catch (UpdateUtils.UpdateException e) {
+                getLogger().error("Unable to retrieve resources file: " + e.getMessage());
+            }
         }
         initialize();
     }
@@ -305,8 +315,96 @@ public class FrameworkProject extends FrameworkResourceParent {
      */
     public void updateNodesResourceFileFromUrl(final String providerURL, final String username,
                                               final String password) throws UpdateUtils.UpdateException {
+        if(!validateResourceProviderURL(providerURL)){
+            throw new UpdateUtils.UpdateException("providerURL is not allowed: " + providerURL);
+        }
         UpdateUtils.updateFileFromUrl(providerURL, getNodesResourceFilePath(), username, password);
         logger.debug("Updated nodes resources file: " + getNodesResourceFilePath());
+    }
+
+    /**
+     * Return true if the URL is valid, and allowed by configuration
+     */
+    boolean validateResourceProviderURL(final String providerURL) throws UpdateUtils.UpdateException {
+        final URL url;
+        try {
+            url= new URL(providerURL);
+        } catch (MalformedURLException e) {
+            throw new UpdateUtils.UpdateException("Invalid URL: " + providerURL, e);
+        }
+        //assert allowed URL scheme
+        if(!("file".equals(url.getProtocol()) || "http".equals(url.getProtocol()) || "https".equals(url.getProtocol()))) {
+            throw new UpdateUtils.UpdateException("URL protocol not allowed: " + url.getProtocol());
+        }
+
+        return isAllowedProviderURL(providerURL);
+    }
+
+    /**
+     * Return true in these cases:
+     *  1. project.properties allows URL and framework.properties allows URL.
+     *  2. project.properties allows URL and no regexes are set in framework.properties
+     *  3. project.properties no regexes are set, and framework.properites allows URL.
+     */
+    boolean isAllowedProviderURL(final String providerURL) {
+
+        //whitelist the configured providerURL
+        if (hasProperty(PROJECT_RESOURCES_URL_PROPERTY) && getProperty(PROJECT_RESOURCES_URL_PROPERTY).equals(
+            providerURL)) {
+            return true;
+        }
+        //check regex properties for project props
+        int i = 0;
+        boolean projpass = false;
+        boolean setproj = false;
+        while (hasProperty(PROJECT_RESOURCES_ALLOWED_URL_PREFIX + i)) {
+            setproj = true;
+            final String regex = getProperty(PROJECT_RESOURCES_ALLOWED_URL_PREFIX + i);
+            final Pattern pat = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            final Matcher matcher = pat.matcher(providerURL);
+            if (matcher.matches()) {
+                logger.debug(
+                    "ProviderURL allowed by project property \"project.resources.allowedURL." + i + "\": " + regex);
+                projpass = true;
+                break;
+            }
+            i++;
+        }
+        if (!projpass && setproj) {
+            //was checked but failed match
+            return false;
+        }
+        assert projpass ^ !setproj;
+        //check framework props
+        i = 0;
+
+        final Framework framework = getFrameworkProjectMgr().getFramework();
+        final boolean setframework = framework.hasProperty(FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX + i);
+        if (!setframework && projpass) {
+            //unset in framework.props, allowed by project.props
+            return true;
+        }
+        if(!setframework && !setproj){
+            //unset in both
+            return false;
+        }
+        while (framework.hasProperty(FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX + i)) {
+            final String regex = framework.getProperty(FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX + i);
+            final Pattern pat = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            final Matcher matcher = pat.matcher(providerURL);
+            if (matcher.matches()) {
+                logger.debug(
+                    "ProviderURL allowed by framework property \"framework.resources.allowedURL." + i + "\": " + regex);
+                //allowed by framework.props, and unset or allowed by project.props,
+                return true;
+            }
+            i++;
+        }
+        if (projpass) {
+            logger.warn("providerURL was allowed by project.properties, but is not allowed by framework.properties: "
+                        + providerURL);
+        }
+        return false;
     }
 
     /**

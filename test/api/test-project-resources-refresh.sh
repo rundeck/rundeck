@@ -31,11 +31,11 @@ TRES=$TETC/resources.xml
 if [ ! -f $TPROPS.testbackup ] ; then
     cp $TPROPS $TPROPS.testbackup
 fi
-if [ ! -f $TRES.testbackup ] ; then
+if [ ! -f $TRES.testbackup -a -f $TRES ] ; then
     cp $TRES $TRES.testbackup
 fi
 
-echo "project.resources.url=http://invaliddomain:1234/resources.xml" >> $TPROPS
+echo "project.resources.url=http://invaliddomain:1235/resources.xml" >> $TPROPS
 
 
 $CURL -X POST  ${runurl}?${params} > ${file} || fail "ERROR: failed request"
@@ -71,10 +71,13 @@ echo "OK"
 
 #restore backup props, no provider url
 if [ -f $TPROPS.testbackup ] ; then
-    mv $TPROPS.testbackup $TPROPS
+    cp $TPROPS.testbackup $TPROPS
 fi
 
-echo "TEST: /api/project/${proj}/resources/refresh (POST) (invalid provider URL)"
+# set allowed URL with port 1235
+echo "project.resources.allowedURL.0=http://invaliddomain:1235/resources.xml" >> $TPROPS
+
+echo "TEST: /api/project/${proj}/resources/refresh (POST) (not allowed provider URL)"
 
 #backup project.properties and set invalid resources url
 
@@ -83,7 +86,33 @@ data="providerURL=http://invaliddomain:1234/resources.xml"
 # post data
 $CURL -X POST --data-urlencode "${data}" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
+sh $DIR/api-test-error.sh ${file} "Error updating node resources file for project test: providerURL is not allowed: http://invaliddomain:1234/resources.xml" || exit 2
+
+echo "OK"
+
+echo "TEST: /api/project/${proj}/resources/refresh (POST) (allowed URL, invalid hostname)"
+
+#backup project.properties and set invalid resources url
+
+data="providerURL=http://invaliddomain:1235/resources.xml"
+
+# post data
+$CURL -X POST --data-urlencode "${data}" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
+
 sh $DIR/api-test-error.sh ${file} "Error updating node resources file for project test: java.net.UnknownHostException: invaliddomain" || exit 2
+
+echo "OK"
+
+echo "TEST: /api/project/${proj}/resources/refresh (POST) (not allowed file URL)"
+
+TEMPURL="file://$TETC/testUpdateResources.xml"
+
+data="providerURL=$TEMPURL"
+
+# post data
+$CURL -X POST --data-urlencode "${data}" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
+
+sh $DIR/api-test-error.sh ${file} "Error updating node resources file for project test: providerURL is not allowed: file://$TETC/testUpdateResources.xml" || exit 2
 
 echo "OK"
 
@@ -92,6 +121,9 @@ echo "TEST: /api/project/${proj}/resources/refresh (POST) (valid provider URL)"
 
 
 TEMPURL="file://$TETC/testUpdateResources.xml"
+
+# set allowed URL for test file
+echo "project.resources.allowedURL.1=file://$TETC/testUpdateResources.xml" >> $TPROPS
 
 data="providerURL=$TEMPURL"
 
@@ -102,6 +134,10 @@ sh $DIR/api-test-success.sh ${file} "Resources were successfully updated for pro
 
 echo "OK"
 
+#restore backup props, no provider url
+if [ -f $TPROPS.testbackup ] ; then
+    mv $TPROPS.testbackup $TPROPS
+fi
 
 if [ -f $TRES.testbackup ] ; then
     mv $TRES.testbackup $TRES

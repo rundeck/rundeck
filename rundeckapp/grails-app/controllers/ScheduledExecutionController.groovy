@@ -530,8 +530,10 @@ class ScheduledExecutionController  {
         log.info("ScheduledExecutionController: delete : params: " + params)
         def ScheduledExecution scheduledExecution = ScheduledExecution.get( params.id )
         if(scheduledExecution) {
+            def changeinfo=[user:session.user,method:'delete',change:'delete']
             def jobname = scheduledExecution.generateJobScheduledName()
             def groupname = scheduledExecution.generateJobGroupName()
+            def jobdata=scheduledExecution.properties
             def jobtitle=scheduledExecution.jobName
             //unlink any Execution records
             def torem=[]
@@ -545,6 +547,7 @@ class ScheduledExecutionController  {
             }
             scheduledExecution.delete(flush:true)
             scheduledExecutionService.deleteJob(jobname,groupname)
+            logJobChange(changeinfo, jobdata)
             flash.message = "Job '${jobtitle}' was successfully deleted."
             redirect(action:index, params:[:])
         } else {
@@ -619,15 +622,50 @@ class ScheduledExecutionController  {
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         return [ scheduledExecution:scheduledExecution, crontab:crontab,params:params,
             nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
-            authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework)]
+            authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework), projects: frameworkService.projects(framework)]
     }
 
     def renderEditFragment = {
         render(template:'editForm', model:edit(params))
     }
 
+    static Logger jobChangeLogger = Logger.getLogger("com.dtolabs.rundeck.data.jobs.changes")
+
+    private logJobChange(data, jobdata) {
+        data.keySet().each {k ->
+            def v = data[k]
+            if (v instanceof Date) {
+                //TODO: reformat date
+                MDC.put(k, v.toString())
+                MDC.put("${k}Time", v.time.toString())
+            } else if (v instanceof String) {
+                MDC.put(k, v ? v : "-")
+            } else {
+                final string = v.toString()
+                MDC.put(k, string ? string : "-")
+            }
+        }
+        ['id','jobName','groupPath','project'].each {k ->
+            final var = jobdata[k]
+            MDC.put(k, var ? var : '-')
+        }
+        final msg = data.user + " " + data.change.toUpperCase() + " [" + jobdata.id + "] "+jobdata.project+" \"" + (jobdata.groupPath ? jobdata.groupPath : '') + "/" + jobdata.jobName + "\" (" + data.method+")"
+        jobChangeLogger.info(msg)
+        data.keySet().each {k ->
+            if (data[k] instanceof Date) {
+                //reformat date
+                MDC.remove(k + 'Time')
+            }
+            MDC.remove(k)
+        }
+        ['id', 'jobName', 'groupPath', 'project'].each {k ->
+            MDC.remove(k)
+        }
+    }
+
     def update = {
-        def result = _doupdate(params)
+        def changeinfo=[method:'update',change:'modify',user:session.user]
+        def result = _doupdate(params,changeinfo)
         def scheduledExecution=result[1]
         def success = result[0]
         if(!scheduledExecution){
@@ -644,22 +682,26 @@ class ScheduledExecutionController  {
             }else{
                 scheduledExecution.refresh()
             }
+            Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
             render(view:'edit',model:[scheduledExecution:scheduledExecution,
-                       nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution)],
+                       nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution), projects: frameworkService.projects(framework)],
                    params:[project:params.project])
         }else{
             flash.savedJob=scheduledExecution
             flash.savedJobMessage="Saved changes to Job"
+            logJobChange(changeinfo,scheduledExecution.properties)
             redirect(controller: 'scheduledExecution', action: 'show', params: [id: scheduledExecution.id])
         }
     }
-    def _doupdate = { params ->
+    def _doupdate = { params, changeinfo=[:] ->
         log.debug("ScheduledExecutionController: update : attempting to update: "+params.id +
                  ". params: " + params)
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         def user = (session?.user) ? session.user : "anonymous"
         def rolelist = (session?.roles) ? session.roles : []
-
+        /**
+         * stores info about change for logging purposes
+         */
         if(params.groupPath ){
             def re = /^\/*(.+?)\/*$/
             def matcher = params.groupPath =~ re
@@ -751,6 +793,11 @@ class ScheduledExecutionController  {
         }
 
         def boolean renamed = oldjobname!=scheduledExecution.generateJobScheduledName() || oldjobgroup!=scheduledExecution.generateJobGroupName()
+        if(renamed){
+            changeinfo.rename=true
+            changeinfo.origName=oldjobname
+            changeinfo.origGroup=oldjobgroup
+        }
 
 
         if(!frameworkService.existsFrameworkProject(scheduledExecution.project,framework)){
@@ -980,7 +1027,7 @@ class ScheduledExecutionController  {
         }
 
     }
-    def _doupdateJob = {id, ScheduledExecution params ->
+    def _doupdateJob = {id, ScheduledExecution params, changeinfo=[:] ->
         log.debug("ScheduledExecutionController: update : attempting to update: "+id +
                  ". params: " + params)
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
@@ -1232,7 +1279,7 @@ class ScheduledExecutionController  {
         if(newScheduledExecution.scheduled){
             crontab=newScheduledExecution.timeAndDateAsBooleanMap()
         }
-        render(view:'create',model: [ scheduledExecution:newScheduledExecution, crontab:crontab,params:params, iscopy:true, authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework)])
+        render(view:'create',model: [ scheduledExecution:newScheduledExecution, crontab:crontab,params:params, iscopy:true, authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework), projects: frameworkService.projects(framework)])
 
     }
     /**
@@ -1276,7 +1323,6 @@ class ScheduledExecutionController  {
 
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         def projects = frameworkService.projects(framework)
-        session.projects=projects
         def user = (session?.user) ? session.user : "anonymous"
         def rolelist = (session?.roles) ? session.roles : []
         log.info("ScheduledExecutionController: create : params: " + params)
@@ -1316,7 +1362,7 @@ class ScheduledExecutionController  {
         }
 
         log.info("ScheduledExecutionController: create : now returning model data to view...")
-        return ['scheduledExecution':scheduledExecution,params:params,crontab:[:]]
+        return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],projects:projects]
     }
 
 
@@ -1326,19 +1372,22 @@ class ScheduledExecutionController  {
 
     def saveAndExec = {
         log.info("ScheduledExecutionController: saveAndExec : params: " + params)
-        def scheduledExecution = _dosave(params)
+        def changeinfo = [user: session.user, change: 'create', method: 'saveAndExec']
+        def scheduledExecution = _dosave(params,change)
         if(scheduledExecution.id){
             params.id=scheduledExecution.id
+            logJobChange(changeinfo, scheduledExecution.properties)
             if(!scheduledExecution.scheduled){
                 return redirect(action:execute,id:scheduledExecution.id)
             }else{
                 return redirect(action:show,id:scheduledExecution.id)
             }
         }else{
+            Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
 
             scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
             flash.message=g.message(code:'ScheduledExecutionController.save.failed')
-            return render(view:'create',model:[scheduledExecution:scheduledExecution,params:params])
+            return render(view:'create',model:[scheduledExecution:scheduledExecution,params:params, projects: frameworkService.projects(framework)])
         }
     }
     /**
@@ -1534,7 +1583,8 @@ class ScheduledExecutionController  {
             scheduledExecution.jobName = ''
             scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
             flash.message=results.message
-            render(view:'create',model:[scheduledExecution:scheduledExecution,params:params])
+            Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+            render(view:'create',model:[scheduledExecution:scheduledExecution,params:params, projects: frameworkService.projects(framework)])
         } else {
             log.info("ExecutionController: immediate execution scheduled (${results.id})")
             redirect(controller:"execution", action:"follow",id:results.id)
@@ -2076,7 +2126,7 @@ class ScheduledExecutionController  {
 
     /**
     */
-    def _dosave = { params ->
+    def _dosave = { params, changeinfo=[:]->
         log.info("ScheduledExecutionController: save : params: " + params)
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         def user = (session?.user) ? session.user : "anonymous"
@@ -2140,15 +2190,18 @@ class ScheduledExecutionController  {
     }
 
     def save = {
-        def scheduledExecution = _dosave(params)
+        def changeinfo=[user:session.user,change:'create',method:'save']
+        def scheduledExecution = _dosave(params,changeinfo)
         if(scheduledExecution.id){
             flash.savedJob=scheduledExecution
             flash.savedJobMessage="Created new Job"
+            logJobChange(changeinfo,scheduledExecution.properties)
             redirect(controller:'scheduledExecution',action:'show',params:[id:scheduledExecution.id])
         }else{
             scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
             request.message=g.message(code:'ScheduledExecutionController.save.failed')
-            render(view:'create',model:[scheduledExecution:scheduledExecution,params:params])
+            Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+            render(view:'create',model:[scheduledExecution:scheduledExecution,params:params, projects: frameworkService.projects(framework)])
         }
     }
     /**
@@ -2182,7 +2235,7 @@ class ScheduledExecutionController  {
     /**
      * Given list of imported jobs, create, update or skip them as defined by the dupeOption parameter.
      */
-    private def loadJobs={ jobset, option ->
+    private def loadJobs={ jobset, option, changeinfo=[:] ->
         def jobs=[]
         def jobsi=[]
         def i=1
@@ -2192,6 +2245,7 @@ class ScheduledExecutionController  {
         jobset.each{ jobdata ->
             log.debug("saving job data: ${jobdata}")
             def ScheduledExecution scheduledExecution
+            def jobchange=new HashMap(changeinfo)
             if(option=="update" || option=="skip"){
                 //look for dupe by name and group path and project
                 def c = ScheduledExecution.createCriteria()
@@ -2220,19 +2274,22 @@ class ScheduledExecutionController  {
             else if(option == "update" && scheduledExecution){
                 def success=false
                 def errmsg
+                jobchange.change = 'modify'
                 try{
                     def result
                     if(jobdata instanceof ScheduledExecution){
-                        result = _doupdateJob(scheduledExecution.id,jobdata)
+                        result = _doupdateJob(scheduledExecution.id,jobdata,jobchange)
                     }else{
                         jobdata.id=scheduledExecution.id
-                        result = _doupdate(jobdata)
+                        result = _doupdate(jobdata, jobchange)
                     }
 
                     success = result[0]
                     scheduledExecution=result[1]
                     if(!success && scheduledExecution && scheduledExecution.hasErrors()){
                         errmsg=scheduledExecution.errors.allErrors.collect {g.message(error: it)}.join("\n")
+                    }else{
+                        logJobChange(jobchange, scheduledExecution.properties)
                     }
                 }catch(Exception e){
                     errmsg=e.getMessage()
@@ -2248,9 +2305,12 @@ class ScheduledExecutionController  {
             }else if(option=="create" || !scheduledExecution){
                 def errmsg
                 try{
-                    scheduledExecution = _dosave(jobdata)
+                    jobchange.change='create'
+                    scheduledExecution = _dosave(jobdata, jobchange)
                     if(scheduledExecution && scheduledExecution.hasErrors()){
                         errmsg=scheduledExecution.errors.allErrors.collect {g.message(error: it)}.join("\n")
+                    }else{
+                        logJobChange(jobchange, scheduledExecution.properties)
                     }
                 }catch(Exception e){
                     System.err.println("caught exception");
@@ -2303,8 +2363,8 @@ class ScheduledExecutionController  {
             }
         }
         jobset=parseresult.jobset
-
-        def loadresults = loadJobs(jobset,params.dupeOption)
+        def changeinfo = [user: session.user,method:'upload']
+        def loadresults = loadJobs(jobset,params.dupeOption,changeinfo)
 
         def jobs = loadresults.jobs
         def jobsi = loadresults.jobsi
@@ -2696,8 +2756,8 @@ class ScheduledExecutionController  {
             return chain(controller: 'api', action: 'error')
         }
         def jobset = parseresult.jobset
-
-        def loadresults = loadJobs(jobset,params.dupeOption)
+        def changeinfo = [user: session.user,method:'apiJobsImport']
+        def loadresults = loadJobs(jobset,params.dupeOption,changeinfo)
 
         def jobs = loadresults.jobs
         def jobsi = loadresults.jobsi
@@ -2754,6 +2814,9 @@ class ScheduledExecutionController  {
         if (params.argString) {
             inparams.extra["argString"] = params.argString
         }
+        if (params.loglevel) {
+            inparams.extra["loglevel"] = params.loglevel
+        }
         //convert api parameters to node filter parameters
         def filters = FrameworkController.extractApiNodeFilterParams(params)
         if (filters) {
@@ -2780,6 +2843,8 @@ class ScheduledExecutionController  {
             flash.error = g.message(code:"api.error.item.doesnotexist",args:['Job ID',params.id])
             return chain(controller: 'api', action: 'error')
         }
+        def changeinfo = [user: session.user, method: 'apiJobDelete', change: 'delete']
+        def jobdata=scheduledExecution.properties
         def jobname = scheduledExecution.generateJobScheduledName()
         def groupname = scheduledExecution.generateJobGroupName()
         def jobtitle="["+params.id+"] "+scheduledExecution.generateFullName()
@@ -2795,6 +2860,7 @@ class ScheduledExecutionController  {
         }
         scheduledExecution.delete(flush:true)
         scheduledExecutionService.deleteJob(jobname,groupname)
+        logJobChange(changeinfo,jobdata)
         def resmsg= g.message(code:'api.success.job.delete.message',args:[jobtitle])
 
         return new ApiController().success{ delegate->

@@ -37,6 +37,7 @@ public class RunServer {
     File serverdir;
     private static final String REALM_NAME = "rundeckrealm";
     private static final String SYS_PROP_LOGIN_MODULE = "loginmodule.name";
+    public static final String SYS_PROP_WEB_CONTEXT = "server.web.context";
     File configdir;
     String loginmodulename;
     private boolean useJaas;
@@ -52,6 +53,7 @@ public class RunServer {
     private String keyPassword;
     private String truststore;
     private String truststorePassword;
+    private String appContext;
     private static final String RUNDECK_SERVER_SERVER_DIR = "rundeck.server.serverDir";
     private static final String RUNDECK_SERVER_CONFIG_DIR = "rundeck.server.configDir";
 
@@ -62,6 +64,7 @@ public class RunServer {
     public RunServer() {
         useJaas = null == System.getProperty(RUNDECK_JAASLOGIN) || Boolean.getBoolean(RUNDECK_JAASLOGIN);
         loginmodulename = System.getProperty(SYS_PROP_LOGIN_MODULE, "rundecklogin");
+        appContext = System.getProperty(SYS_PROP_WEB_CONTEXT, "/");
     }
 
     /**
@@ -195,7 +198,7 @@ public class RunServer {
         if (!webapp.isDirectory() || !new File(webapp, "WEB-INF").isDirectory()) {
             throw new RuntimeException("expected expanded webapp at location: " + webapp.getAbsolutePath());
         }
-        final WebAppContext context = new WebAppContext(webapp.getAbsolutePath(), "/");
+        final WebAppContext context = new WebAppContext(webapp.getAbsolutePath(), appContext);
         context.setTempDirectory(new File(serverdir, "work"));
         return context;
     }
