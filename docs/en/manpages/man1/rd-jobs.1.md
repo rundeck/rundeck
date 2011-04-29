@@ -71,27 +71,29 @@ The jobs can be specifed explicitly by ID using the `-i/--idlist` option. Otherw
 If no options to the list action are supplied, then all Jobs on the
 server are returned.
 
+If no `-p/--project` option is specified, and only one project exists, the single project is used.  Otherwise the option is required.
+
 *Examples*
 
-List all jobs on the server:
+List all jobs on the server for the only project:
 
     rd-jobs
-
-List only a single job by ID:
-
-    rd-jobs -i 123
-
-List a set of jobs by ID and store them in a XML file:
-
-    rd-jobs -i 1,23,4 --file out.xml
-    
-List a set of jobs by ID and store them in a Yaml file:
-
-    rd-jobs -i 1,23,4 --file out.yaml --format yaml
 
 List all jobs in the project "demo"
 
     rd-jobs -p demo
+
+List only a single job by ID:
+
+    rd-jobs -i 123 -p demo
+
+List a set of jobs by ID and store them in a XML file:
+
+    rd-jobs -i 1,23,4 --file out.xml -p demo
+    
+List a set of jobs by ID and store them in a Yaml file:
+
+    rd-jobs -i 1,23,4 --file out.yaml --format yaml -p demo
 
 Output from the command will list the job name, ID number in brackets,
 and the URL to view the Job in the server.
