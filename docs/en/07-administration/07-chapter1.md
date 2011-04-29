@@ -399,7 +399,7 @@ activedirectory {
     roleBaseDn="ou=roles,dc=rundeck,dc=com"
     roleNameAttribute="cn"
     roleMemberAttribute="member"
-    roleObjectClass="group";
+    roleObjectClass="group"
     cacheDurationMillis="300000"
     reportStatistics="true";
     };
