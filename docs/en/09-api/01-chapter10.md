@@ -128,6 +128,7 @@ URL:
 Optional parameters:
 
 * `argString`: argument string to pass to the job, of the form: `-opt value -opt2 value ...`.
+* `loglevel`: argument specifying the loglevel to use, one of: 'DEBUG','VERBOSE','INFO','WARN','ERR'
 * Node filter parameters as described under [Using Node Filters](#using-node-filters)
 
 Result:  An Item List of `executions` containing a single entry for the execution that was created.  See [Listing Running Executions](#listing-running-executions).
@@ -364,6 +365,11 @@ Optional Parameters:
 
 Node filter parameters as described under [Using Node Filters](#using-node-filters)
 
+Result: A success message, and a single `<execution>` item identifying the
+new execution by ID:
+
+    <execution id="X"/>
+
 ### Running Adhoc Scripts
 
 Run a script.
@@ -391,6 +397,11 @@ Optional Parameters:
 * `nodeKeepgoing`: if "true", continue executing on other nodes even if some fail.
 
 Node filter parameters as described under [Using Node Filters](#using-node-filters)
+
+Result: A success message, and a single `<execution>` item identifying the
+new execution by ID:
+
+    <execution id="X"/>
 
 ### Listing Projects ###
 

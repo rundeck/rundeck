@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.cli.jobs;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.cli.*;
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -134,20 +135,8 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
         return getArgIdlist();
     }
 
-    public String getCommand() {
-        return null;
-    }
-
-    public String getType() {
-        return null;
-    }
-
     public String getProjectFilter() {
         return getArgProject();
-    }
-
-    public String getResource() {
-        return null;
     }
 
     /**
@@ -544,6 +533,17 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
         }
 
         public void validate(final CommandLine cli, final String[] original) throws CLIToolOptionsException {
+            if(null==argProject){
+                if(framework.getFrameworkProjectMgr().listFrameworkProjects().size() == 1) {
+                    final FrameworkProject project =
+                        (FrameworkProject) framework.getFrameworkProjectMgr().listFrameworkProjects().iterator().next();
+                    argProject = project.getName();
+                    debug("No project specified, defaulting to: " + argProject);
+                }else{
+                    throw new CLIToolOptionsException(
+                        "list action: -" + PROJECT_OPTION + "/--" + PROJECT_OPTION_LONG + " option is required");
+                }
+            }
         }
     }
 

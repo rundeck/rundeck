@@ -53,30 +53,10 @@ public interface IStoredJobsQuery {
     public String getIdlist();
 
     /**
-     * Return match string for command name
-     *
-     * @return match string
-     */
-    public String getCommand();
-
-    /**
-     * Return match string for type name
-     *
-     * @return match string
-     */
-    public String getType();
-
-    /**
      * Return match string for project name
      *
      * @return match string
      */
     public String getProjectFilter();
 
-    /**
-     * Return match string for resource name
-     *
-     * @return match string
-     */
-    public String getResource();
 }

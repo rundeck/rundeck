@@ -33,12 +33,6 @@ package com.dtolabs.rundeck.core.dispatcher;
  * @version $Revision$
  */
 public interface IStoredJobLoadResult extends IStoredJob {
-    /**
-     * Return the original job index from the input
-     *
-     * @return index of this job in the original input
-     */
-    public int getIndex();
 
     /**
      * Return true if the load was successful.

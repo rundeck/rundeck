@@ -95,6 +95,24 @@ fi
 rm $DIR/load.out
 rm $DIR/test.jobs.expanded.yaml
 
+
+echo "Listing jobs"
+
+$RDECK_BASE/tools/bin/rd-jobs list -p test  > $DIR/list.out
+if [ 0 != $? ] ; then
+	echo Failed to list jobs: $!
+	exit 2
+fi
+cat $DIR/list.out
+
+grep -q Failed $DIR/list.out
+if [ 0 == $? ] ; then
+	echo Failed to list some job : $!
+	exit 2
+fi
+
+rm $DIR/list.out
+
 egrep 'https://' $RDECK_BASE/etc/framework.properties > /dev/null
 https=$?
 
