@@ -115,7 +115,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../maven/repository/jetty/jars/jetty-6.1.21.jar!/" />
+          <root url="jar://$MODULE_DIR$/../dependencies/jetty/jars/jetty-6.1.21.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -132,6 +132,15 @@
     </orderEntry>
     <orderEntry type="module" module-name="rundeck-grailsPlugins" />
     <orderEntry type="module" module-name="webrealms-inplacePlugin" exported="" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../dependencies/jetty-plus/jars/jetty-plus-6.1.21.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
   <component name="POM File Configuration" pomFile="" />
 </module>
