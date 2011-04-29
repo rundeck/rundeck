@@ -37,6 +37,7 @@ public class StoredJobImpl implements IStoredJob {
     private String url;
     private String group;
     private String description;
+    private String project;
 
     StoredJobImpl(final String jobId, final String name, final String url, final String group, final String description) {
         this.jobId = jobId;
@@ -46,9 +47,23 @@ public class StoredJobImpl implements IStoredJob {
         this.description = description;
     }
 
+    StoredJobImpl(final String jobId, final String name, final String url, final String group, final String description,
+                  final String project) {
+        this.jobId = jobId;
+        this.name = name;
+        this.url = url;
+        this.group = group;
+        this.description = description;
+        this.project= project;
+    }
+
     public static IStoredJob create(final String jobId, final String name, final String url, final String group,
                                     final String description) {
         return new StoredJobImpl(jobId, name, url, group, description);
+    }
+    public static IStoredJob create(final String jobId, final String name, final String url, final String group,
+                                    final String description, final String project) {
+        return new StoredJobImpl(jobId, name, url, group, description, project);
     }
 
     public String getJobId() {
@@ -89,5 +104,13 @@ public class StoredJobImpl implements IStoredJob {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getProject() {
+        return project;
+    }
+
+    public void setProject(String project) {
+        this.project = project;
     }
 }

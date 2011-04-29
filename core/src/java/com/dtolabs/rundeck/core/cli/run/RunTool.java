@@ -221,9 +221,20 @@ public class RunTool extends BaseTool {
          * long option string for run option: job
          */
         public static final String JOB_OPTION_LONG = "job";
+
+        /**
+         * short option string for run option: job
+         */
+        public static final String PROJECT_OPTION = "p";
+
+        /**
+         * long option string for run option: job
+         */
+        public static final String PROJECT_OPTION_LONG = "project";
         String argIdlist;
         String argJob;
         boolean argVerbose;
+        String argProject;
 
         public void addOptions(final org.apache.commons.cli.Options options) {
 
@@ -231,6 +242,8 @@ public class RunTool extends BaseTool {
                 "Job ID. Run the Job with this ID. ");
             options.addOption(JOB_OPTION, JOB_OPTION_LONG, true,
                 "Job identifier (group and name).  Run a Job specified by Job name and optional group, e.g: 'Group Name/Job Name'. ");
+            options.addOption(PROJECT_OPTION, PROJECT_OPTION_LONG, true,
+                "Project name. Required if not specifying Job ID.");
             options.addOption(VERBOSE_OPTION, VERBOSE_OPTION_LONG, false,
                 "Enable verbose output");
         }
@@ -245,6 +258,9 @@ public class RunTool extends BaseTool {
             }
             if (cli.hasOption(JOB_OPTION)) {
                 argJob = cli.getOptionValue(JOB_OPTION);
+            }
+            if (cli.hasOption(PROJECT_OPTION)) {
+                argProject = cli.getOptionValue(PROJECT_OPTION);
             }
         }
 
@@ -272,6 +288,12 @@ public class RunTool extends BaseTool {
                     "run action: -" + Options.JOB_OPTION + "/--" + Options.JOB_OPTION_LONG + " option and -"
                     + Options.ID_OPTION + "/--"
                     + Options.ID_OPTION_LONG + " cannot be combined, please specify only one.");
+            }
+            if (null != argJob && null == argProject) {
+                throw new CLIToolOptionsException(
+                    "run action: -" + Options.JOB_OPTION + "/--" + Options.JOB_OPTION_LONG + " option requires -"
+                    + Options.PROJECT_OPTION + "/--"
+                    + Options.PROJECT_OPTION_LONG + " option");
             }
             if (null != argIdlist ) {
                 try {
@@ -329,6 +351,7 @@ public class RunTool extends BaseTool {
         final QueuedItemResult result;
         final String jobname;
         final String jobgroup;
+        final String project;
 
         if (null != runOptions.argJob && runOptions.argJob.indexOf("/") >= 0) {
             //separate group and job name
@@ -347,6 +370,7 @@ public class RunTool extends BaseTool {
             jobname = null;
             jobgroup = null;
         }
+        project=runOptions.argProject;
 
         final NodeSet nodeset = nodefilterOptions.getNodeSet();
         final Boolean argKeepgoing = nodefilterOptions.isKeepgoingSet() ? nodeset.isKeepgoing() : null;
@@ -383,6 +407,10 @@ public class RunTool extends BaseTool {
 
                         public String getGroup() {
                             return jobgroup;
+                        }
+
+                        public String getProject() {
+                            return project;
                         }
                     };
                 }

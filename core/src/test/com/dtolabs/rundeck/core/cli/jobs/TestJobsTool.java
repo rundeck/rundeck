@@ -23,6 +23,7 @@ package com.dtolabs.rundeck.core.cli.jobs;
 * $Id$
 */
 
+import com.dtolabs.rundeck.core.cli.CLIToolException;
 import com.dtolabs.rundeck.core.cli.CLIToolOptionsException;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.*;
@@ -133,10 +134,28 @@ public class TestJobsTool extends AbstractBaseTest {
             framework.setCentralDispatcherMgr(centralDispatcher1);
 
             try {
-                tool.run(new String[]{"list"});
+                tool.run(new String[]{"list","-p","test"});
                 fail("run should fail");
             } catch (JobsToolException e) {
                 assertTrue(e.getMessage().startsWith("List request returned null"));
+            }
+        }
+        {
+            //test list action missing -p flag
+            //test 0 items result
+
+            final JobsTool tool = new JobsTool(framework);
+            final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
+            framework.setCentralDispatcherMgr(centralDispatcher1);
+
+            final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
+            centralDispatcher1.listJobsResult = jobs;
+
+            try {
+                tool.run(new String[]{"list"});
+                fail("run should fail");
+            } catch (CLIToolOptionsException e) {
+                assertTrue(e.getMessage().startsWith("list action: -p/--project option is required"));
             }
         }
         {
@@ -150,7 +169,7 @@ public class TestJobsTool extends AbstractBaseTest {
             final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
             centralDispatcher1.listJobsResult = jobs;
 
-            tool.run(new String[]{"list"});
+            tool.run(new String[]{"list", "-p", "test"});
             assertTrue("list action was not called", centralDispatcher1.listStoredJobsCalled);
             assertFalse("load action should not be called", centralDispatcher1.loadJobsCalled);
             assertNotNull(centralDispatcher1.listStoredJobsQuery);
@@ -170,7 +189,7 @@ public class TestJobsTool extends AbstractBaseTest {
             final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
             centralDispatcher1.listJobsResult = jobs;
 
-            tool.run(new String[]{"list", "-f", t.getAbsolutePath()});
+            tool.run(new String[]{"list", "-f", t.getAbsolutePath(), "-p", "test"});
             assertTrue("list action was not called", centralDispatcher1.listStoredJobsCalled);
             assertFalse("load action should not be called", centralDispatcher1.loadJobsCalled);
             assertNotNull(centralDispatcher1.listStoredJobsQuery);
@@ -191,7 +210,7 @@ public class TestJobsTool extends AbstractBaseTest {
             centralDispatcher1.listJobsResult = jobs;
 
             tool.run(new String[]{"list", "-f", t.getAbsolutePath(), "-" + JobsTool.FORMAT_OPTION,
-                JobDefinitionFileFormat.yaml.getName()});
+                JobDefinitionFileFormat.yaml.getName(), "-p", "test"});
             assertTrue("list action was not called", centralDispatcher1.listStoredJobsCalled);
             assertFalse("load action should not be called", centralDispatcher1.loadJobsCalled);
             assertNotNull(centralDispatcher1.listStoredJobsQuery);
@@ -208,7 +227,7 @@ public class TestJobsTool extends AbstractBaseTest {
             final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
             centralDispatcher1.listJobsResult = jobs;
 
-            tool.run(new String[]{"list", "-" + JobsTool.NAME_OPTION, "name1"});
+            tool.run(new String[]{"list", "-" + JobsTool.NAME_OPTION, "name1", "-p", "test"});
             assertTrue("list action was not called", centralDispatcher1.listStoredJobsCalled);
             assertFalse("load action should not be called", centralDispatcher1.loadJobsCalled);
             assertNull(centralDispatcher1.listStoredJobsOutput);
@@ -226,7 +245,7 @@ public class TestJobsTool extends AbstractBaseTest {
             final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
             centralDispatcher1.listJobsResult = jobs;
 
-            tool.run(new String[]{"list", "--" + JobsTool.NAME_OPTION_LONG, "name1"});
+            tool.run(new String[]{"list", "--" + JobsTool.NAME_OPTION_LONG, "name1", "-p", "test"});
             assertTrue("list action was not called", centralDispatcher1.listStoredJobsCalled);
             assertFalse("load action should not be called", centralDispatcher1.loadJobsCalled);
             assertNull(centralDispatcher1.listStoredJobsOutput);
@@ -244,7 +263,7 @@ public class TestJobsTool extends AbstractBaseTest {
             final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
             centralDispatcher1.listJobsResult = jobs;
 
-            tool.run(new String[]{"list", "-" + JobsTool.GROUP_OPTION, "group1"});
+            tool.run(new String[]{"list", "-" + JobsTool.GROUP_OPTION, "group1", "-p", "test"});
             assertTrue("list action was not called", centralDispatcher1.listStoredJobsCalled);
             assertFalse("load action should not be called", centralDispatcher1.loadJobsCalled);
             assertNull(centralDispatcher1.listStoredJobsOutput);
@@ -262,7 +281,7 @@ public class TestJobsTool extends AbstractBaseTest {
             final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
             centralDispatcher1.listJobsResult = jobs;
 
-            tool.run(new String[]{"list", "--" + JobsTool.GROUP_OPTION_LONG, "group2"});
+            tool.run(new String[]{"list", "--" + JobsTool.GROUP_OPTION_LONG, "group2", "-p", "test"});
             assertTrue("list action was not called", centralDispatcher1.listStoredJobsCalled);
             assertFalse("load action should not be called", centralDispatcher1.loadJobsCalled);
             assertNull(centralDispatcher1.listStoredJobsOutput);
@@ -281,14 +300,11 @@ public class TestJobsTool extends AbstractBaseTest {
             centralDispatcher1.listJobsResult = jobs;
 
             tool.run(
-                new String[]{"list",  "-" + JobsTool.IDLIST_OPTION, "1,2"});
+                new String[]{"list",  "-" + JobsTool.IDLIST_OPTION, "1,2", "-p", "test"});
             assertTrue("list action was not called", centralDispatcher1.listStoredJobsCalled);
             assertFalse("load action should not be called", centralDispatcher1.loadJobsCalled);
             assertNull(centralDispatcher1.listStoredJobsOutput);
             assertNotNull(centralDispatcher1.listStoredJobsQuery);
-            assertNull(centralDispatcher1.listStoredJobsQuery.getCommand());
-            assertNull( centralDispatcher1.listStoredJobsQuery.getType());
-            assertNull( centralDispatcher1.listStoredJobsQuery.getResource());
             assertEquals("1,2", centralDispatcher1.listStoredJobsQuery.getIdlist());
             assertEquals(JobDefinitionFileFormat.xml, centralDispatcher1.listFormat);
         }
@@ -303,14 +319,11 @@ public class TestJobsTool extends AbstractBaseTest {
             centralDispatcher1.listJobsResult = jobs;
 
             tool.run(
-                new String[]{"list", "--" + JobsTool.IDLIST_OPTION_LONG, "3,4"});
+                new String[]{"list", "--" + JobsTool.IDLIST_OPTION_LONG, "3,4", "-p", "test"});
             assertTrue("list action was not called", centralDispatcher1.listStoredJobsCalled);
             assertFalse("load action should not be called", centralDispatcher1.loadJobsCalled);
             assertNull(centralDispatcher1.listStoredJobsOutput);
             assertNotNull(centralDispatcher1.listStoredJobsQuery);
-            assertNull( centralDispatcher1.listStoredJobsQuery.getCommand());
-            assertNull( centralDispatcher1.listStoredJobsQuery.getType());
-            assertNull( centralDispatcher1.listStoredJobsQuery.getResource());
             assertEquals("3,4", centralDispatcher1.listStoredJobsQuery.getIdlist());
             assertEquals(JobDefinitionFileFormat.xml, centralDispatcher1.listFormat);
         }
@@ -385,11 +398,26 @@ public class TestJobsTool extends AbstractBaseTest {
             }
         }
         {
+            //test missing project param
+            final JobsTool tool = new JobsTool(getFrameworkInstance());
+            try {
+                final String[] args = {"list", "-n", "test1"};
+                final CommandLine line = tool.parseArgs(args);
+                tool.validateOptions(line, args);
+                fail("should have thrown missing argument exception.");
+            } catch (CLIToolOptionsException e) {
+                assertNotNull(e);
+                assertTrue("wrong message:" + e.getMessage(), e.getMessage().startsWith(
+                    "list action: -p/--project option is required"));
+            }
+
+        }
+        {
             //test valid actions
             final JobsTool tool = new JobsTool(getFrameworkInstance());
             boolean success = false;
             try {
-                final String[] args = {"list", "-n", "test1"};
+                final String[] args = {"list", "-n", "test1", "-p", "test"};
                 final CommandLine line = tool.parseArgs(args);
                 tool.validateOptions(line, args);
                 success = true;
@@ -403,7 +431,7 @@ public class TestJobsTool extends AbstractBaseTest {
             //test valid actions
             final JobsTool tool = new JobsTool(getFrameworkInstance());
             try {
-                final String[] args = {"list"};
+                final String[] args = {"list","-p","test"};
                 final CommandLine line = tool.parseArgs(args);
                 tool.validateOptions(line, args);
             } catch (CLIToolOptionsException e) {
@@ -427,7 +455,7 @@ public class TestJobsTool extends AbstractBaseTest {
             //test valid format xml
             final JobsTool tool = new JobsTool(getFrameworkInstance());
             try {
-                final String[] args = {"list","-f","test.out","-F","xml"};
+                final String[] args = {"list","-f","test.out","-F","xml","-p","test"};
                 final CommandLine line = tool.parseArgs(args);
                 tool.validateOptions(line, args);
             } catch (CLIToolOptionsException e) {
@@ -439,7 +467,7 @@ public class TestJobsTool extends AbstractBaseTest {
             //test valid format yaml
             final JobsTool tool = new JobsTool(getFrameworkInstance());
             try {
-                final String[] args = {"list","-f","test.out","-F","yaml"};
+                final String[] args = {"list","-f","test.out","-F","yaml", "-p", "test"};
                 final CommandLine line = tool.parseArgs(args);
                 tool.validateOptions(line, args);
             } catch (CLIToolOptionsException e) {

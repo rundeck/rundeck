@@ -2757,6 +2757,9 @@ class ScheduledExecutionController  {
         if (params.argString) {
             inparams.extra["argString"] = params.argString
         }
+        if (params.loglevel) {
+            inparams.extra["loglevel"] = params.loglevel
+        }
         //convert api parameters to node filter parameters
         def filters = FrameworkController.extractApiNodeFilterParams(params)
         if (filters) {
