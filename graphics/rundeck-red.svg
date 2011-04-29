@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.47 r22583"
+   sodipodi:docname="rundeck-red.svg">
+  <defs
+     id="defs4">
+    <linearGradient
+       id="linearGradient3661">
+      <stop
+         style="stop-color:#4e4e4e;stop-opacity:1;"
+         offset="0"
+         id="stop3663" />
+      <stop
+         style="stop-color:#c0c0c0;stop-opacity:0;"
+         offset="1"
+         id="stop3665" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient3617">
+      <stop
+         style="stop-color:#818181;stop-opacity:1;"
+         offset="0"
+         id="stop3619" />
+      <stop
+         style="stop-color:#757575;stop-opacity:0;"
+         offset="1"
+         id="stop3621" />
+    </linearGradient>
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       id="perspective10" />
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3661"
+       id="radialGradient3667"
+       cx="370.43868"
+       cy="294.75407"
+       fx="370.43868"
+       fy="294.75407"
+       r="105.90894"
+       gradientTransform="matrix(1,0,0,1.000135,11.313709,-11.353492)"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.95371667"
+     inkscape:cx="161.07982"
+     inkscape:cy="507.22937"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="941"
+     inkscape:window-height="904"
+     inkscape:window-x="640"
+     inkscape:window-y="61"
+     inkscape:window-maximized="0" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g3692"
+       inkscape:export-filename="/Users/greg/devel/ctiersvn/ctl-center/web-app/images/rdeck1.png"
+       inkscape:export-xdpi="11.434426"
+       inkscape:export-ydpi="11.434426"
+       transform="translate(-46,-697)">
+      <rect
+         y="720.36218"
+         x="91.5"
+         height="244"
+         width="297"
+         id="rect3682"
+         style="color:#000000;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:8;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
+      <g
+         id="g3684">
+        <rect
+           style="color:#000000;fill:#ff0000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:8;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+           id="rect3652"
+           width="282"
+           height="24"
+           x="99"
+           y="729.36218" />
+        <use
+           x="0"
+           y="0"
+           xlink:href="#rect3652"
+           id="use3656"
+           transform="translate(0,202)"
+           width="744.09448"
+           height="1052.3622"
+           style="stroke:none" />
+        <text
+           xml:space="preserve"
+           style="font-size:14.16302872px;font-style:normal;font-weight:normal;line-height:100%;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+           x="79.039482"
+           y="1089.8003"
+           id="text3658"
+           sodipodi:linespacing="100%"
+           transform="scale(1.1802524,0.8472764)"><tspan
+             sodipodi:role="line"
+             id="tspan3666"
+             style="font-size:118.02523804px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:condensed;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;font-family:Impact;-inkscape-font-specification:Impact Condensed"
+             x="79.039482"
+             y="1089.8003">DECK</tspan></text>
+        <text
+           sodipodi:linespacing="100%"
+           id="text3672"
+           y="1131.3179"
+           x="67.734932"
+           style="font-size:16.21259499px;font-style:normal;font-weight:normal;line-height:100%;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+           xml:space="preserve"
+           transform="scale(1.3510497,0.74016523)"><tspan
+             style="font-size:135.10496521px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:condensed;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;font-family:Impact;-inkscape-font-specification:Impact Condensed"
+             id="tspan3676"
+             sodipodi:role="line"
+             x="67.734932"
+             y="1131.3179">RUN</tspan></text>
+      </g>
+    </g>
+    <rect
+       y="644.98718"
+       x="47.5"
+       height="159"
+       width="670"
+       id="rect2843"
+       style="color:#000000;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:8;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       inkscape:export-filename="/Users/greg/devel/ctiersvn/ctl-center/web-app/images/rdeck-long-red.png"
+       inkscape:export-xdpi="17.547171"
+       inkscape:export-ydpi="17.547171" />
+    <text
+       transform="scale(1.1802524,0.8472764)"
+       sodipodi:linespacing="100%"
+       id="text2851"
+       y="481.97031"
+       x="306.95685"
+       style="font-size:14.16302872px;font-style:normal;font-weight:normal;line-height:100%;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       xml:space="preserve"><tspan
+         y="481.97031"
+         x="306.95685"
+         style="font-size:118.02523804px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:condensed;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;font-family:Impact;-inkscape-font-specification:Impact Condensed"
+         id="tspan2853"
+         sodipodi:role="line" /></text>
+    <g
+       id="g2875"
+       transform="translate(0.5000073,355.625)"
+       inkscape:export-filename="/Users/greg/devel/ctiersvn/ctl-center/web-app/images/rdeck-long-red.png"
+       inkscape:export-xdpi="17.547171"
+       inkscape:export-ydpi="17.547171">
+      <rect
+         style="color:#000000;fill:#ff0000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:8;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+         id="rect2847"
+         width="652"
+         height="24"
+         x="56"
+         y="299.36218" />
+      <text
+         sodipodi:linespacing="100%"
+         id="text2855"
+         y="533.03986"
+         x="37.550922"
+         style="font-size:15.6627264px;font-style:normal;font-weight:normal;line-height:100%;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"
+         transform="scale(1.3052273,0.76615008)"><tspan
+           style="font-size:130.52272034px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:condensed;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;font-family:Impact;-inkscape-font-specification:Impact Condensed"
+           id="tspan2857"
+           sodipodi:role="line"
+           x="37.550922"
+           y="533.03986">RUN DECK</tspan></text>
+      <rect
+         y="414.36218"
+         x="56"
+         height="24"
+         width="652"
+         id="rect2873"
+         style="color:#000000;fill:#ff0000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:8;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
+    </g>
+    <g
+       id="g2845"
+       transform="matrix(0.84356777,0,0,1.2295082,7.8860241,-5.5503186)"
+       inkscape:export-filename="/Users/greg/Downloads/rdeck640.png"
+       inkscape:export-xdpi="144"
+       inkscape:export-ydpi="144">
+      <g
+         inkscape:export-ydpi="11.434426"
+         inkscape:export-xdpi="11.434426"
+         inkscape:export-filename="/Users/greg/devel/ctiersvn/ctl-center/web-app/images/rdeck-med.png"
+         id="g2907">
+        <rect
+           y="270.36218"
+           x="50.411762"
+           height="244"
+           width="474.17648"
+           id="rect2883"
+           style="color:#000000;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:8;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
+        <g
+           id="g2885"
+           transform="matrix(1.6228956,0,0,1,-101.99495,-450)">
+          <rect
+             style="color:#000000;fill:#ff0000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:8;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+             id="rect2887"
+             width="282"
+             height="24"
+             x="99"
+             y="729.36218" />
+          <use
+             x="0"
+             y="0"
+             xlink:href="#rect3652"
+             id="use2889"
+             transform="translate(0,202)"
+             width="744.09448"
+             height="1052.3622"
+             style="stroke:none" />
+          <text
+             xml:space="preserve"
+             style="font-size:14.16302872px;font-style:normal;font-weight:normal;line-height:100%;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+             x="79.039482"
+             y="1089.8003"
+             id="text2891"
+             sodipodi:linespacing="100%"
+             transform="scale(1.1802524,0.8472764)"><tspan
+               sodipodi:role="line"
+               id="tspan2893"
+               style="font-size:118.02523804px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:condensed;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;font-family:Impact;-inkscape-font-specification:Impact Condensed"
+               x="79.039482"
+               y="1089.8003">DECK</tspan></text>
+          <text
+             sodipodi:linespacing="100%"
+             id="text2895"
+             y="1131.3179"
+             x="67.734932"
+             style="font-size:16.21259499px;font-style:normal;font-weight:normal;line-height:100%;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+             xml:space="preserve"
+             transform="scale(1.3510497,0.74016523)"><tspan
+               style="font-size:135.10496521px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:condensed;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;font-family:Impact;-inkscape-font-specification:Impact Condensed"
+               id="tspan2897"
+               sodipodi:role="line"
+               x="67.734932"
+               y="1131.3179">RUN</tspan></text>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>
