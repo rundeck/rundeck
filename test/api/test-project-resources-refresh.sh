@@ -31,7 +31,7 @@ TRES=$TETC/resources.xml
 if [ ! -f $TPROPS.testbackup ] ; then
     cp $TPROPS $TPROPS.testbackup
 fi
-if [ ! -f $TRES.testbackup ] ; then
+if [ ! -f $TRES.testbackup -a -f $TRES ] ; then
     cp $TRES $TRES.testbackup
 fi
 
