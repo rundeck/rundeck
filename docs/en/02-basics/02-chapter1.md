@@ -167,7 +167,7 @@ distinguished with the word "server" in red text.
 
 ### Resource model
 
-The initial resource model generated during project setup will contain
+The initial resource model will contain
 information just about the RunDeck server host and is useful just for
 running local commands on the RunDeck server. 
 You can browse the project resource model by going to the "Run" page.
