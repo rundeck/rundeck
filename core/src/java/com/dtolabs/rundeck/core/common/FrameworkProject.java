@@ -110,8 +110,12 @@ public class FrameworkProject extends FrameworkResourceParent {
 
         final String resfilepath = getNodesResourceFilePath();
         File resfile= new File(resfilepath);
-        if(!resfile.isFile()){
-            generateResourcesFile(resfile);
+        if(!resfile.isFile() && shouldUpdateNodesResourceFile()) {
+            try {
+                updateNodesResourceFile();
+            } catch (UpdateUtils.UpdateException e) {
+                getLogger().error("Unable to retrieve resources file: " + e.getMessage());
+            }
         }
         initialize();
     }

@@ -252,7 +252,7 @@ class FrameworkController  {
     def nodesFragment = {ExtNodeFilters query->
         def result = nodes(query)
         if(!result.nodesvalid){
-            request.error="Error parsing file \"${result.nodesfile}\": "+result.nodeserror.message
+            request.error="Error parsing file \"${result.nodesfile}\": "+result.nodeserror? result.nodeserror.message:'no message'
         }
         render(template:"allnodes",model: result)
     }

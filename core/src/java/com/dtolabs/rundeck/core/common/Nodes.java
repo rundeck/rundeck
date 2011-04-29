@@ -85,6 +85,7 @@ public class Nodes implements NodeReceiver {
         valid=false;
         if(!nodesFile.exists()){
             logger.warn("nodes resource file doesn't exist: " + nodesFile.getAbsolutePath());
+            valid=true;
         }else{
             final NodeFileParser parser = createParser(this.project, nodesFile);
             try {
