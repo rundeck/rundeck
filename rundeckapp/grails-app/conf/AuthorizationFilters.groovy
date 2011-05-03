@@ -191,54 +191,6 @@ public class AuthorizationFilters {
                     }
                     
                     request.subject = subject
-
-                    //check user role membership for verification
-                    def foundroles=roleService.listMappedRoleMembership(request)
-                    if(!foundroles){
-                        log.warn("User ${session.user} has no role membership in mapped roles");
-                    }
-                }
-            }
-        }
-        /**
-         * Check the user has authorization for the actions.
-         */
-        authorizationCheck(controller: '*', action: '*') {
-            before = {
-                def authc = authSet[controllerName]
-                def authReq
-                if (authc) {
-                    authReq = authc[actionName]
-                }
-                if (!authReq && authc) {
-                    //look for controller/* auth requirement
-                    authReq = authc['*']
-                }
-                if (authReq) {
-                    if (authReq instanceof String) {
-                        authReq = [authReq]
-                    }
-                    //get user authorizations
-                    def User user = userService.findOrCreateUser(session.user)
-                    def admintest = roleService.isUserInRole(request,'admin')
-                    def roletest = admintest || roleService.isUserInAllRoles(request,authReq)
-                    if (!roletest ) {
-                        log.error("User ${session.user} UNAUTHORIZED for ${controllerName}/${actionName}");
-                        if(request.api_version){
-                            //api request
-                            flash.errorCode="api.error.user-unauthorized"
-                            flash.errorArgs=[session.user,request.forwardURI]
-                            redirect(controller: 'api', action: 'renderError')
-                            return false
-                        }
-                        flash.title = "Unauthorized"
-                        flash.error = "User: ${session.user} is not authorized"
-                        response.setHeader(Constants.X_RUNDECK_ACTION_UNAUTHORIZED_HEADER,flash.error)
-                        redirect(controller: 'user', action: actionName ==~ /^.*(Fragment|Inline)$/ ? 'deniedFragment' : 'denied',params:params.xmlreq?params.subMap(['xmlreq']):null)
-                        return false;
-                    }
-                } else {
-//                    System.err.println("No auth set found for: ${controllerName}/${actionName}: ${authSet[controllerName]?.(actionName)}");
                 }
             }
         }
