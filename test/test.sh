@@ -53,13 +53,13 @@ fi
 
 # try dispatch
 echo "using --noqueue option"
-$RDECK_BASE/tools/bin/dispatch --noqueue -- uptime
+$RDECK_BASE/tools/bin/dispatch -p test --noqueue -- uptime
 if [ 0 != $? ] ; then
 	echo Failed to dispatch uptime via cli : $!
 	exit 2
 fi
 
-$RDECK_BASE/tools/bin/dispatch -Q -- uptime > $DIR/exec.out 
+$RDECK_BASE/tools/bin/dispatch -p test -Q -- uptime > $DIR/exec.out 
 if [ 0 != $? ] ; then
 	echo Failed: dispatch -Q -- uptime : $!
 	exit 2
