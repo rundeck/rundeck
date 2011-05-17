@@ -1713,15 +1713,25 @@ class ScheduledExecutionController  {
     /**
      * Update ScheduledExecution notification definitions based on input params.
      *
-     * expected params: [notifications: [<eventTrigger>:[email:<content>]]]
+     * expected params: [notifications: [<eventTrigger>:[email:<content>]]] or
+     * params: [notifications: [Notification, Notification..]]
      */
     private boolean _updateNotifications(Map params,ScheduledExecution scheduledExecution) {
         boolean failed=false
         def fieldNames=[onsuccess:'notifySuccessRecipients',onfailure:'notifyFailureRecipients']
         ['onsuccess', 'onfailure'].each {trigger ->
-            def notif = params.notifications[trigger]
-            if (notif && notif.email) {
-                def arr=notif.email.split(",")
+            def notif
+            def content
+            if(params.notifications instanceof Map){
+                notif = params.notifications[trigger]
+                content=notif?.email
+            }else{
+                notif=params.notifications.find{it.eventTrigger==trigger}
+                content=notif?.content
+            }
+
+            if (notif && content) {
+                def arr=content.split(",")
                 arr.each{email->
                     if(email && !org.apache.commons.validator.EmailValidator.getInstance().isValid(email)){
                         failed=true
