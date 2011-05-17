@@ -2,7 +2,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 apply plugin: 'java'
 sourceCompatibility = 1.5
-version = '1.2.0'
+version = '1.2.1'
 archivesBaseName = 'rundeck-core'
 defaultTasks 'clean','assemble'
 repositories {
