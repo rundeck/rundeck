@@ -889,7 +889,7 @@ class ScheduledExecutionController  {
             }
             scheduledExecution.options=null
         }
-        if( params['_sessionopts'] && session.editOPTS && session.editOPTS[scheduledExecution.id.toString()]){
+        if( params['_sessionopts'] && session.editOPTS && null!=session.editOPTS[scheduledExecution.id.toString()]){
             def optsmap=session.editOPTS[scheduledExecution.id.toString()]
 
             def optfailed=false
