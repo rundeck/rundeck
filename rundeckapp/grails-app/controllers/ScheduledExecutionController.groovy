@@ -294,8 +294,14 @@ class ScheduledExecutionController  {
                                 validationerrors << "Item: ${i} expected string or map like {name:\"..\",value:\"..\"}"
                             }
                         }
+                    } else if (result instanceof org.codehaus.groovy.grails.web.json.JSONObject) {
+                        org.codehaus.groovy.grails.web.json.JSONObject jobject = result
+                        result = []
+                        jobject.keys().sort().each {k ->
+                            result << [name: k, value: jobject.get(k)]
+                        }
                     }else{
-                        validationerrors << "Expected top-level list with format: [{name:\"..\",value:\"..\"},..], or ['value','value2',..]"
+                        validationerrors << "Expected top-level list with format: [{name:\"..\",value:\"..\"},..], or ['value','value2',..] or simple object with {name:\"value\",...}"
                         valid=false
                     }
                     if(!valid){
@@ -305,6 +311,7 @@ class ScheduledExecutionController  {
                 }else if(!err){
                     err.message = "Empty result"
                 }
+
                 return render(template: "/framework/optionValuesSelect", model: [optionSelect: opt, values: result, srcUrl: cleanUrl, err: err,fieldPrefix:params.fieldPrefix,selectedvalue:params.selectedvalue]);
             } else {
                 return error.call()
