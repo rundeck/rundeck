@@ -15,72 +15,104 @@
  */
 
 /*
-* WorkflowExecutionItemImpl.java
-* 
-* User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Mar 16, 2010 10:44:41 AM
-* $Id$
-*/
+ * WorkflowExecutionItemImpl.java
+ * 
+ * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
+ * Created: Mar 16, 2010 10:44:41 AM
+ * $Id$
+ */
 package com.dtolabs.rundeck.execution;
-
-import com.dtolabs.rundeck.core.utils.NodeSet;
 
 import java.util.Map;
 
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.utils.NodeSet;
+import com.dtolabs.rundeck.core.utils.NodeSet.Exclude;
+import com.dtolabs.rundeck.core.utils.NodeSet.Include;
+
 /**
  * WorkflowExecutionItemImpl is ...
- *
- * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
+ * 
+ * @author Greg Schueler <a
+ *         href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public class WorkflowExecutionItemImpl implements WorkflowExecutionItem{
-    final private IWorkflow workflow;
-    final private NodeSet nodeSet;
-    final private String user;
-    final private int loglevel;
-    private boolean keepgoing=false;
-    final private String project;
-    final private Map<String,Map<String,String>> dataContext;
+public class WorkflowExecutionItemImpl implements WorkflowExecutionItem {
+	final private IWorkflow workflow;
+	final private NodeSet nodeSet;
+	final private String user;
+	final private int loglevel;
+	private boolean keepgoing = false;
+	final private String project;
+	final private Map<String, Map<String, String>> dataContext;
 
-    public WorkflowExecutionItemImpl(final IWorkflow workflow, final NodeSet nodeSet, final String user,
-                                     final int loglevel, final String project, final Map<String, Map<String, String>> dataContext) {
-        this.workflow = workflow;
-        this.nodeSet = nodeSet;
-        this.user = user;
-        this.loglevel = loglevel;
-        this.project = project;
-        this.dataContext=dataContext;
-    }
+	public WorkflowExecutionItemImpl(final IWorkflow workflow,
+			final NodeSet nodeSet, final String user, final int loglevel,
+			final String project,
+			final Map<String, Map<String, String>> dataContext) {
+		this.workflow = workflow;
+		this.nodeSet = nodeSet;
+		this.user = user;
+		this.loglevel = loglevel;
+		this.project = project;
+		this.dataContext = dataContext;
+	}
 
-    public IWorkflow getWorkflow() {
-        return workflow;
-    }
+	public IWorkflow getWorkflow() {
+		return workflow;
+	}
 
-    public NodeSet getNodeSet() {
-        return nodeSet;
-    }
+	public NodeSet getNodeSet() {
+		NodeSet result = nodeSet; // TODO: will evtl. have to clone the object
+									// to avoid overwriting during first
+									// execution
 
-    public String getUser() {
-        return user;
-    }
+		Include includes = result.getInclude(); // TODO: find a generic way of
+												// replacing everything in
+												// includes and excludes
+		if (includes.getName() != null) {
+			includes.setName(DataContextUtils.replaceDataReferences(
+					includes.getName(), getDataContext()));
+		}
+		if (includes.getTags() != null) {
+			includes.setTags(DataContextUtils.replaceDataReferences(
+					includes.getTags(), getDataContext()));
+		}
 
-    public int getLoglevel() {
-        return loglevel;
-    }
+		Exclude excludes = result.getExclude();
+		if (excludes.getName() != null) {
+			excludes.setName(DataContextUtils.replaceDataReferences(
+					excludes.getName(), getDataContext()));
+		}
+		if (excludes.getTags() != null) {
+			excludes.setTags(DataContextUtils.replaceDataReferences(
+					excludes.getTags(), getDataContext()));
+		}
 
-    public boolean isKeepgoing() {
-        return keepgoing;
-    }
+		return result;
+	}
 
-    public void setKeepgoing(boolean keepgoing) {
-        this.keepgoing = keepgoing;
-    }
+	public String getUser() {
+		return user;
+	}
 
-    public String getProject() {
-        return project;
-    }
+	public int getLoglevel() {
+		return loglevel;
+	}
 
-    public Map<String, Map<String, String>> getDataContext() {
-        return dataContext;
-    }
+	public boolean isKeepgoing() {
+		return keepgoing;
+	}
+
+	public void setKeepgoing(boolean keepgoing) {
+		this.keepgoing = keepgoing;
+	}
+
+	public String getProject() {
+		return project;
+	}
+
+	public Map<String, Map<String, String>> getDataContext() {
+		return dataContext;
+	}
 }
