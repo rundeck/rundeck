@@ -36,5 +36,6 @@ import java.util.concurrent.Callable;
  */
 public interface NodeCallableFactory {
     public Callable createCallable(INodeEntry node);
+    public int getRemoteTimeout();
 
 }

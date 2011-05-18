@@ -189,6 +189,22 @@ class CommandAction extends AbstractAction {
         threadBoundSysOut.installThreadStream(outformat);
         threadBoundSysErr.installThreadStream(errformat);
 
+        final int timeout;
+        /**
+         * configure an SSH timeout
+         */
+        if (getFramework().getPropertyLookup().hasProperty(Constants.SSH_TIMEOUT_PROP)) {
+            final String val = getFramework().getProperty(Constants.SSH_TIMEOUT_PROP);
+            int parsed=0;
+            try {
+                parsed = Integer.parseInt(val);
+            } catch (NumberFormatException e) {
+                parsed = 0;
+            }
+            timeout = parsed;
+        }else{
+            timeout=0;
+        }
 
         try {
             nodeDispatcher.executeNodedispatch(project,
@@ -203,6 +219,10 @@ class CommandAction extends AbstractAction {
                         } catch (ExecutionException e) {
                             throw new CoreException(e);
                         }
+                    }
+
+                    public int getRemoteTimeout() {
+                        return timeout;
                     }
                 }
             );
