@@ -67,26 +67,34 @@ public class WorkflowExecutionItemImpl implements WorkflowExecutionItem {
 									// to avoid overwriting during first
 									// execution
 
-		Include includes = result.getInclude(); // TODO: find a generic way of
-												// replacing everything in
-												// includes and excludes
-		if (includes.getName() != null) {
-			includes.setName(DataContextUtils.replaceDataReferences(
-					includes.getName(), getDataContext()));
-		}
-		if (includes.getTags() != null) {
-			includes.setTags(DataContextUtils.replaceDataReferences(
-					includes.getTags(), getDataContext()));
-		}
+		if (result != null) {
+			Include includes = result.getInclude(); // TODO: find a generic way
+													// of
+													// replacing everything in
+													// includes and excludes
 
-		Exclude excludes = result.getExclude();
-		if (excludes.getName() != null) {
-			excludes.setName(DataContextUtils.replaceDataReferences(
-					excludes.getName(), getDataContext()));
-		}
-		if (excludes.getTags() != null) {
-			excludes.setTags(DataContextUtils.replaceDataReferences(
-					excludes.getTags(), getDataContext()));
+			if (includes != null) {
+				if (includes.getName() != null) {
+					includes.setName(DataContextUtils.replaceDataReferences(
+							includes.getName(), getDataContext()));
+				}
+				if (includes.getTags() != null) {
+					includes.setTags(DataContextUtils.replaceDataReferences(
+							includes.getTags(), getDataContext()));
+				}
+			}
+
+			Exclude excludes = result.getExclude();
+			if (excludes != null) {
+				if (excludes.getName() != null) {
+					excludes.setName(DataContextUtils.replaceDataReferences(
+							excludes.getName(), getDataContext()));
+				}
+				if (excludes.getTags() != null) {
+					excludes.setTags(DataContextUtils.replaceDataReferences(
+							excludes.getTags(), getDataContext()));
+				}
+			}
 		}
 
 		return result;
