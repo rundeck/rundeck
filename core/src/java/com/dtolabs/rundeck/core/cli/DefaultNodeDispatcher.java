@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+ * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionServiceThread;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 import com.dtolabs.rundeck.core.tasks.dispatch.NodeExecutionStatusTask;
+import com.jcraft.jsch.JSchException;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
@@ -98,8 +99,23 @@ public class DefaultNodeDispatcher implements NodeDispatcher{
                 try {
                     tocall = factory.createCallable(node);
                 } catch (Throwable e) {
-                    project.log("Failed execution for node: " + node.getNodename() + ": " + e.getMessage(),
-                        Project.MSG_ERR);
+                    if (e instanceof BuildException && (e.getMessage().contains(
+                        "Timeout period exceeded, connection dropped"))) {
+                        project.log("Failed execution for node: " + node.getNodename() + ": "
+                                    + "Execution Timeout period exceeded (after " + factory.getRemoteTimeout()
+                                    + "ms), connection dropped", e,
+                            Project.MSG_ERR);
+                    } else if (e instanceof BuildException && null != e.getCause()
+                               && e.getCause() instanceof JSchException
+                               && (e.getCause().getMessage().contains("timeout:"))) {
+                        project.log("Failed execution for node: " + node.getNodename() + ": "
+                                    + "Connection Timeout (after " + factory.getRemoteTimeout()
+                                    + "ms): " + e.getMessage(), e,
+                            Project.MSG_ERR);
+                    } else {
+                        project.log("Failed execution for node: " + node.getNodename() + ": " + e.getMessage(),
+                            Project.MSG_ERR);
+                    }
                     continue;
                 }
                 project.log("dispatching to proxy on node: " + node.getNodename(), Project.MSG_DEBUG);
@@ -163,8 +179,23 @@ public class DefaultNodeDispatcher implements NodeDispatcher{
                     task.call();
                     nodeNames.remove(node.getNodename());
                 } catch (Throwable e) {
-                    project.log("Failed execution for node: " + node.getNodename() + ": " + e.getMessage(),
-                        Project.MSG_ERR);
+                    if (e instanceof BuildException && (e.getMessage().contains(
+                        "Timeout period exceeded, connection dropped"))) {
+                        project.log("Failed execution for node: " + node.getNodename() + ": "
+                                    + "Execution Timeout period exceeded (after " + factory.getRemoteTimeout()
+                                    + "ms), connection dropped", e,
+                            Project.MSG_ERR);
+                    } else if (e instanceof BuildException && null != e.getCause()
+                               && e.getCause() instanceof JSchException
+                               && (e.getCause().getMessage().contains("timeout:"))) {
+                        project.log("Failed execution for node: " + node.getNodename() + ": "
+                                    + "Connection Timeout (after " + factory.getRemoteTimeout()
+                                    + "ms): "+e.getMessage(), e,
+                            Project.MSG_ERR);
+                    } else {
+                        project.log("Failed execution for node: " + node.getNodename() + ": " + e.getMessage(),
+                            Project.MSG_ERR);
+                    }
                     if (!keepgoing) {
                         if (nodeNames.size() > 0 && null != failedListener) {
                             //tell listener of failed node list
