@@ -492,7 +492,7 @@
   <component name="libraryTable">
     <library name="dispatch-build">
       <CLASSES>
-        <root url="jar://$PROJECT_DIR$/lib/rundeck-core-1.0.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/lib/rundeck-core-1.2.1.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
