@@ -53,12 +53,25 @@ import java.util.concurrent.Callable;
 public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy implements NodeCallableFactory {
     private DefaultNodeDispatcher nodeDispatcher;
     final List resultList;
+    int remoteTimeout;
 
     public NodeFirstWorkflowStrategy(final WorkflowExecutionItem item, final ExecutionService executionService,
                                      final ExecutionListener listener, final Framework framework) {
         super(item,executionService, listener, framework);
         nodeDispatcher = new DefaultNodeDispatcher();
         resultList = new ArrayList();
+        remoteTimeout=0;
+        if (framework.getPropertyLookup().hasProperty(Constants.SSH_TIMEOUT_PROP)) {
+            final String val = framework.getProperty(Constants.SSH_TIMEOUT_PROP);
+            try {
+                remoteTimeout = Integer.parseInt(val);
+            } catch (NumberFormatException e) {
+            }
+        }
+    }
+
+    public int getRemoteTimeout() {
+        return remoteTimeout;
     }
 
     public ExecutionResult executeWorkflow() {
