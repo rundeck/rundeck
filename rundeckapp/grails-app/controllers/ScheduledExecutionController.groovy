@@ -944,7 +944,7 @@ class ScheduledExecutionController  {
             
         }
 
-        if(!params.notifications && (params.notifyOnsuccess || params.notifyOnfailure)){
+        if(!params.notifications && (params.notifyOnsuccess || params.notifyOnfailure) && 'false'!=params.notified){
             def nots=[exists:true]
             if('true'==params.notifyOnsuccess){
                 nots['onsuccess']=[email:params.notifySuccessRecipients]
@@ -955,7 +955,7 @@ class ScheduledExecutionController  {
             params.notifications=nots
         }
         def todiscard=[]
-        if(params.notifications && scheduledExecution.notifications){
+        if('false'==params.notified || params.notifications && scheduledExecution.notifications || !(params.notifyOnsuccess || params.notifyOnfailure)){
             def todelete=[]
             scheduledExecution.notifications.each{Notification note->
                 todelete<<note
