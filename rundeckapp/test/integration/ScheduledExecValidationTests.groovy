@@ -3674,6 +3674,135 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertEquals "monkey@example.com",n2.content
         }
     }
+    public void testDoUpdateRemoveNotifications(){
+        def sec = new ScheduledExecutionController()
+        if (true) {//test update job  notifications, disabling notifications
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: true, adhocRemoteString: 'test command', workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'test command',)]))
+            def na1 = new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com')
+            def na2 = new Notification(eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com')
+            se.addToNotifications(na1)
+            se.addToNotifications(na2)
+            se.save()
+
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.existsFrameworkProject {project, framework ->
+                assertEquals 'testProject', project
+                return true
+            }
+            fwkControl.demand.getCommand {project, type, command, framework ->
+                assertEquals 'testProject', project
+                assertEquals 'aType', type
+                assertEquals 'aCommand', command
+                return null
+            }
+            sec.frameworkService = fwkControl.createMock()
+
+            def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: '',
+                notifyOnsuccess: 'true', notifySuccessRecipients: 'spaghetti@nowhere.com',
+                notifyOnfailure: 'true', notifyFailureRecipients: 'milk@store.com',
+                notified: 'false',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'test command',)])
+            ]
+            def results = sec._doupdate(params)
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            assertTrue succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = scheduledExecution
+            assertNotNull(execution)
+            assertNotNull(execution.errors)
+            assertFalse(execution.errors.hasErrors())
+            assertEquals 'monkey1', execution.jobName
+            assertEquals 'testProject', execution.project
+            assertEquals '', execution.description
+            assertFalse execution.adhocExecution
+            assertNotNull execution.workflow
+            assertNotNull execution.workflow.commands
+            assertEquals 1, execution.workflow.commands.size()
+            def CommandExec cexec = execution.workflow.commands[0]
+            assertTrue cexec.adhocExecution
+            assertEquals 'test command', cexec.adhocRemoteString
+            assertNull cexec.adhocFilepath
+            assertNull execution.adhocLocalString
+            assertNull execution.adhocRemoteString
+            assertNull execution.argString
+
+            assertNull execution.notifications
+        }
+        if (true) {//test update job  notifications, removing notifications
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: true, adhocRemoteString: 'test command', workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'test command',)]))
+            def na1 = new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com')
+            def na2 = new Notification(eventTrigger: 'onfailure', type: 'email', content: 'monkey@example.com')
+            se.addToNotifications(na1)
+            se.addToNotifications(na2)
+            se.save()
+
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.existsFrameworkProject {project, framework ->
+                assertEquals 'testProject', project
+                return true
+            }
+            fwkControl.demand.getCommand {project, type, command, framework ->
+                assertEquals 'testProject', project
+                assertEquals 'aType', type
+                assertEquals 'aCommand', command
+                return null
+            }
+            sec.frameworkService = fwkControl.createMock()
+
+            def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: '',
+                notifyOnsuccess: '', notifySuccessRecipients: 'spaghetti@nowhere.com',
+                notifyOnfailure: '', notifyFailureRecipients: 'milk@store.com',
+                notified: 'true',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'test command',)])
+            ]
+            def results = sec._doupdate(params)
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            assertTrue succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = scheduledExecution
+            assertNotNull(execution)
+            assertNotNull(execution.errors)
+            assertFalse(execution.errors.hasErrors())
+            assertEquals 'monkey1', execution.jobName
+            assertEquals 'testProject', execution.project
+            assertEquals '', execution.description
+            assertFalse execution.adhocExecution
+            assertNotNull execution.workflow
+            assertNotNull execution.workflow.commands
+            assertEquals 1, execution.workflow.commands.size()
+            def CommandExec cexec = execution.workflow.commands[0]
+            assertTrue cexec.adhocExecution
+            assertEquals 'test command', cexec.adhocRemoteString
+            assertNull cexec.adhocFilepath
+            assertNull execution.adhocLocalString
+            assertNull execution.adhocRemoteString
+            assertNull execution.argString
+
+            assertNull execution.notifications
+        }
+    }
     public void testDoUpdateJobShouldUpdateNotifications(){
         def sec = new ScheduledExecutionController()
         if(true){//test update job  notifications
