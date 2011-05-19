@@ -391,14 +391,12 @@ class FrameworkController  {
             request.error=error
         }
         def projects=frameworkService.projects(framework)
-        session.projects=projects
         return [projects:projects,project:session.project]
     }
 
     def projectSelect={
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         def projects=frameworkService.projects(framework)
-        session.projects=projects
         [projects:projects,project:session.project]
     }
     def selectProject= {
@@ -421,7 +419,6 @@ class FrameworkController  {
 
     static autosetSessionProject( session, Framework framework) {
         def projects=new ArrayList(framework.getFrameworkProjectMgr().listFrameworkProjects())
-        session.projects=projects
         if(null==session.project && 1==projects.size()){
             session.project=projects[0].name
         }else if(0==projects.size()){
@@ -439,7 +436,6 @@ class FrameworkController  {
     def apiProjects={
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         def projlist=frameworkService.projects(framework)
-        session.projects=projlist
         return new ApiController().success{ delegate->
                 delegate.'projects'(count:projlist.size()){
                     projlist.each{ pject ->

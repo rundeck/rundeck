@@ -626,7 +626,7 @@ class ScheduledExecutionController  {
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         return [ scheduledExecution:scheduledExecution, crontab:crontab,params:params,
             nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
-            authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework)]
+            authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework), projects: frameworkService.projects(framework)]
     }
 
     def renderEditFragment = {
@@ -686,8 +686,9 @@ class ScheduledExecutionController  {
             }else{
                 scheduledExecution.refresh()
             }
+            Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
             render(view:'edit',model:[scheduledExecution:scheduledExecution,
-                       nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution)],
+                       nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution), projects: frameworkService.projects(framework)],
                    params:[project:params.project])
         }else{
             flash.savedJob=scheduledExecution
@@ -1273,7 +1274,7 @@ class ScheduledExecutionController  {
         if(newScheduledExecution.scheduled){
             crontab=newScheduledExecution.timeAndDateAsBooleanMap()
         }
-        render(view:'create',model: [ scheduledExecution:newScheduledExecution, crontab:crontab,params:params, iscopy:true, authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework)])
+        render(view:'create',model: [ scheduledExecution:newScheduledExecution, crontab:crontab,params:params, iscopy:true, authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework), projects: frameworkService.projects(framework)])
 
     }
     /**
@@ -1317,7 +1318,6 @@ class ScheduledExecutionController  {
 
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         def projects = frameworkService.projects(framework)
-        session.projects=projects
         def user = (session?.user) ? session.user : "anonymous"
         def rolelist = (session?.roles) ? session.roles : []
         log.info("ScheduledExecutionController: create : params: " + params)
@@ -1357,7 +1357,7 @@ class ScheduledExecutionController  {
         }
 
         log.info("ScheduledExecutionController: create : now returning model data to view...")
-        return ['scheduledExecution':scheduledExecution,params:params,crontab:[:]]
+        return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],projects:projects]
     }
 
 
@@ -1378,10 +1378,11 @@ class ScheduledExecutionController  {
                 return redirect(action:show,id:scheduledExecution.id)
             }
         }else{
+            Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
 
             scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
             flash.message=g.message(code:'ScheduledExecutionController.save.failed')
-            return render(view:'create',model:[scheduledExecution:scheduledExecution,params:params])
+            return render(view:'create',model:[scheduledExecution:scheduledExecution,params:params, projects: frameworkService.projects(framework)])
         }
     }
     /**
@@ -1577,7 +1578,8 @@ class ScheduledExecutionController  {
             scheduledExecution.jobName = ''
             scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
             flash.message=results.message
-            render(view:'create',model:[scheduledExecution:scheduledExecution,params:params])
+            Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+            render(view:'create',model:[scheduledExecution:scheduledExecution,params:params, projects: frameworkService.projects(framework)])
         } else {
             log.info("ExecutionController: immediate execution scheduled (${results.id})")
             redirect(controller:"execution", action:"follow",id:results.id)
@@ -2121,7 +2123,8 @@ class ScheduledExecutionController  {
         }else{
             scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
             request.message=g.message(code:'ScheduledExecutionController.save.failed')
-            render(view:'create',model:[scheduledExecution:scheduledExecution,params:params])
+            Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+            render(view:'create',model:[scheduledExecution:scheduledExecution,params:params, projects: frameworkService.projects(framework)])
         }
     }
     /**

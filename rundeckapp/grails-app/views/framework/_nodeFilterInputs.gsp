@@ -60,22 +60,6 @@
 <g:set var="NODE_FILTERS" value="${['Name','Tags']}"/>
 <g:set var="NODE_FILTERS_X" value="${['','OsName','OsFamily','OsArch','OsVersion','Type']}"/>
 <g:set var="NODE_FILTER_MAP" value="${['':'Hostname','OsName':'OS Name','OsFamily':'OS Family','OsArch':'OS Architecture','OsVersion':'OS Version']}"/>
-        <%--<tr>
-            <td>
-               Project
-            </td>
-            <td>
-                <g:textField name="project" size="30" value="${query?.project?.encodeAsHTML()}"/>
-                <g:if test="${filterErrors?.project}">
-                    <span class="error filter">${filterErrors?.project}</span>
-                </g:if>
-                --><!-- show popup of projects list --><!--
-                <g:if test="${session.projects}">
-                    <g:select name="project_select" value="${query?.project}" from="${session.projects}" noSelection="${['':'Select a Project...']}"/>
-                    <wdgt:eventHandler for="project_select" state="unempty" copy="value" target="project"/>
-                </g:if>
-            </td>
-        </tr>--%>
         <tr>
             <td>
                 <span class=" ${hasErrors(bean:query,field:'nodeInclude','fieldError')}">
