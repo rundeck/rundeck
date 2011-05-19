@@ -70,7 +70,7 @@ var MenuController = Class.create({
         var w = menu.getWidth();
         var t = page - (pos.left + (w + 16 + cw) );
         if (t < 0 && page>w) {
-            cw = cw - w;
+            cw +=t;
         }
         if(Prototype.Browser.IE){
             h+=pt[1];

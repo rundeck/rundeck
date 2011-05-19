@@ -50,8 +50,12 @@
     };
 
     var _tooltipElemSelector=null;
+    var _tooltiptimer=null;
+    var _tooltipelem=null;
 
     var tooltipMouseOut=function(){
+        _tooltiptimer=null;
+        _tooltipelem=null;
         if(_tooltipElemSelector){
             $$('.tooltipcontent').each(Element.hide);
             $$(_tooltipElemSelector).each(function(e){$(e).removeClassName('glow');});
@@ -71,13 +75,26 @@
         $$(selector).each(function(elem){
             var ident=elem.identify();
             if($(ident+'_tooltip')){
-                elem.onmouseover=function(){
-                    tooltipMouseOut();
+                var over = function(evt){
+                    if(_tooltiptimer && _tooltipelem==elem){
+                        return;
+                    }
+                    if(_tooltiptimer){
+                        clearTimeout(_tooltiptimer);
+                        tooltipMouseOut();
+                    }
 
                     $(elem).addClassName('glow');
                     new MenuController().showRelativeTo(elem,ident+'_tooltip');
                 };
-                elem.onmouseout=tooltipMouseOut;
+                var out=function(evt){
+                    if(!_tooltiptimer){
+                        _tooltiptimer=setTimeout(tooltipMouseOut,50);
+                        _tooltipelem = elem;
+                    }
+                };
+                Event.observe(elem,'mouseenter',over);
+                Event.observe(elem,'mouseleave', out);
             }
         });
         Event.observe(document.body, 'click', function(evt) {

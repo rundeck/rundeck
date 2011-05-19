@@ -203,9 +203,9 @@
         padding-left: 20px;
     }
 
-    .bubbletop {
+    div.bubbletop {
+        background: transparent url("${resource(dir:'images',file:'bubble-bg.png')}")  10px top no-repeat;
         height: 16px;
-        background: transparent url(${resource(dir:'images',file:'bubble-bg.png')}) top 10px no-repeat;
         z-index: 1;
     }
 
@@ -214,14 +214,14 @@
         /*padding-bottom:14px;*/
         height: 14px;
         display: inline-block;
-        background: transparent url(${resource(dir:'images',file:'icon-small-folder-open.png')}) top left no-repeat;
+        background: transparent url("${resource(dir:'images',file:'icon-small-folder-open.png')}") top left no-repeat;
     }
 
     .expandComponentHolder > div > span.expandComponentControl.jobgroupexpand span.foldertoggle {
         width: 16px;
         height:14px;
         display: inline-block;
-        background: transparent url(${resource(dir:'images',file:'icon-small-folder.png')}) top left no-repeat;
+        background: transparent url("${resource(dir:'images',file:'icon-small-folder.png')}") top left no-repeat;
     }
 
 </style>
