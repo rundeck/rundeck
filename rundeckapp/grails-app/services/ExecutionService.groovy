@@ -1,43 +1,55 @@
-import org.springframework.web.servlet.support.RequestContextUtils as RCU
+import com.dtolabs.rundeck.core.common.*
 
-import com.dtolabs.rundeck.core.Constants
-import com.dtolabs.rundeck.core.cli.CLIToolLogger
-import com.dtolabs.rundeck.core.cli.CLIUtils
-import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.INodeEntry
-import com.dtolabs.rundeck.core.execution.ExecutionItem
-import com.dtolabs.rundeck.core.execution.ExecutionListener
-import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
-import com.dtolabs.rundeck.core.utils.NodeSet
-import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
-import grails.util.GrailsWebUtil
-import java.text.MessageFormat
-import java.text.SimpleDateFormat
-import java.util.logging.Handler
-import java.util.logging.Level
+import java.text.SimpleDateFormat;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.logging.LogRecord
-import java.util.logging.Logger
-import java.util.regex.Pattern
-import javax.servlet.http.HttpSession
-import org.apache.tools.ant.BuildEvent
-import org.apache.tools.ant.BuildException
-import org.apache.tools.ant.BuildLogger
-import org.apache.tools.ant.Project
-import org.codehaus.groovy.grails.web.context.ServletContextHolder
+import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
+import com.dtolabs.rundeck.core.Constants
+import com.dtolabs.rundeck.core.utils.NodeSet
+import com.dtolabs.rundeck.core.utils.NodeSet.Exclude;
+import com.dtolabs.rundeck.core.utils.NodeSet.Include;
+
 import org.springframework.beans.BeansException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import com.dtolabs.rundeck.core.execution.ExecutionItem
+import com.dtolabs.rundeck.core.execution.ExecutionResult
+import com.dtolabs.rundeck.core.execution.ExecutionException
+import com.dtolabs.rundeck.core.execution.ExecutionListener
+import com.dtolabs.rundeck.core.execution.ExecutionServiceFactory
+import com.dtolabs.rundeck.core.cli.CLIExecutionListener
+import com.dtolabs.rundeck.core.cli.CLIToolLogger
+
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript
+import com.dtolabs.rundeck.core.dispatcher.DispatchedScriptImpl
+
+import com.dtolabs.rundeck.execution.WorkflowExecutionItemImpl
+import com.dtolabs.rundeck.execution.WorkflowImpl
+
+import com.dtolabs.rundeck.core.execution.Executor
+import org.apache.tools.ant.BuildException
+import org.apache.tools.ant.BuildLogger
+import org.apache.tools.ant.Project
+import org.apache.tools.ant.BuildEvent
+import com.dtolabs.rundeck.execution.JobExecutionItem
+
+import com.dtolabs.rundeck.core.execution.ExecutionServiceThread
+import com.dtolabs.rundeck.execution.NodeRecorder
 import org.springframework.context.MessageSource
+import javax.servlet.http.HttpSession
 import org.springframework.web.context.request.RequestContextHolder
-import org.springframework.web.context.support.WebApplicationContextUtils
-import com.dtolabs.rundeck.core.execution.commands.*
-import com.dtolabs.rundeck.core.execution.workflow.*
-import com.dtolabs.rundeck.execution.*
+import org.springframework.web.servlet.support.RequestContextUtils as RCU
+import java.text.MessageFormat
+import com.dtolabs.rundeck.core.cli.CLIUtils
+import java.util.regex.Pattern;
 
 /**
  * Coordinates Command executions via Ant Project objects
  */
-class ExecutionService implements ApplicationContextAware, CommandInterpreter{
+class ExecutionService implements ApplicationContextAware, Executor{
 
     static transactional = true
     def FrameworkService frameworkService
@@ -468,26 +480,23 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             if(scheduledExecution){
                 jobcontext.name=scheduledExecution.jobName
                 jobcontext.group=scheduledExecution.groupPath
-                jobcontext.id=scheduledExecution.id.toString()
             }
             jobcontext.username=execution.user
             jobcontext.project=execution.project
 
-            WorkflowExecutionItem item = createExecutionItemForExecutionContext(execution, framework, execution.user)
+            ExecutionItem item = createExecutionItemForExecutionContext(execution, framework, execution.user,jobcontext)
 
             NodeRecorder recorder = new NodeRecorder();//TODO: use workflow-aware listener for nodes
 
             //create listener to handle log messages and Ant build events
-            ExecutionListener executionListener = new WorkflowExecutionListenerImpl(recorder, loghandler,false,null);
-            com.dtolabs.rundeck.core.execution.ExecutionContext executioncontext = createContext(execution, framework, execution.user, jobcontext, executionListener)
-
-            final cis = CommandInterpreterService.getInstanceForFramework(framework);
-            cis.registerInstance(JobExecutionItem.COMMAND_TYPE, this)
+            ExecutionListener executionListener = new CLIExecutionListener(loghandler, recorder, loghandler);
 
             //create service object for the framework and listener
-            Thread thread = new WorkflowExecutionServiceThread(framework.getWorkflowExecutionService(),item, executioncontext)
+            com.dtolabs.rundeck.core.execution.ExecutionService service = ExecutionServiceFactory.instance().createExecutionService(framework, executionListener);
+
+            ExecutionServiceThread thread = new ExecutionServiceThread(service,item)
             thread.start()
-            return [thread:thread, loghandler:loghandler, noderecorder:recorder, execution: execution, scheduledExecution:scheduledExecution]
+            return [thread:thread, loghandler:loghandler, noderecorder:recorder]
         }catch(Exception e){
             loghandler.publish(new LogRecord(Level.SEVERE, 'Failed to start execution: ' + e.getClass().getName() + ": " + e.message))
             sysThreadBoundOut.removeThreadStream()
@@ -522,10 +531,10 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
     /**
      * Return an appropriate ExecutionItem object for the stored Execution
      */
-    public WorkflowExecutionItem createExecutionItemForExecutionContext(ExecutionContext execution, Framework framework, String user=null) {
-        WorkflowExecutionItem item
+    public ExecutionItem createExecutionItemForExecutionContext(ExecutionContext execution, Framework framework, String user=null, Map<String,String> jobcontext=null, Map input=null) {
+        ExecutionItem item
         if (execution.workflow) {
-            item = createExecutionItemForWorkflowContext(execution, framework,user)
+            item = createExecutionItemForWorkflowContext(execution, framework,user,jobcontext,input)
         } else {
             throw new RuntimeException("unsupported job type")
         }
@@ -536,7 +545,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
     /**
      * Return an ExecutionItem instance for the given workflow Execution, suitable for the ExecutionService layer
      */
-    public WorkflowExecutionItem createExecutionItemForWorkflowContext(ExecutionContext execMap, Framework framework, String userName=null) {
+    public ExecutionItem createExecutionItemForWorkflowContext(ExecutionContext execMap, Framework framework, String userName=null, Map<String,String> jobcontext=null, Map input=null) {
         if (!execMap.workflow.commands || execMap.workflow.commands.size() < 1) {
             throw new Exception("Workflow is empty")
         }
@@ -544,72 +553,48 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         if (!user) {
             throw new Exception(g.message(code:'unauthorized.job.run.user',args:[userName?userName:execMap.user]))
         }
-
-        //create thread object with an execution item, and start it
-        final WorkflowExecutionItemImpl item = new WorkflowExecutionItemImpl(
-            new WorkflowImpl(execMap.workflow.commands.collect {itemForWFCmdItem(it)}, execMap.workflow.threadcount, execMap.workflow.keepgoing,execMap.workflow.strategy?execMap.workflow.strategy: "node-first"))
-        return item
-    }
-
-    public ExecutionItem itemForWFCmdItem(final IWorkflowCmdItem cmd) throws FileNotFoundException {
-        if (null != cmd.getAdhocRemoteString()) {
-
-            final List<String> strings = CLIUtils.splitArgLine(cmd.getAdhocRemoteString());
-            final String[] args = strings.toArray(new String[strings.size()]);
-
-            return ExecutionItemFactory.createExecCommand(args);
-            
-        } else if (null != cmd.getAdhocLocalString()) {
-            final String script = cmd.getAdhocLocalString();
-            final String[] args;
-            if (null != cmd.getArgString()) {
-                final List<String> strings = CLIUtils.splitArgLine(cmd.getArgString());
-                args = strings.toArray(new String[strings.size()]);
-            } else {
-                args = new String[0];
-            }
-            return ExecutionItemFactory.createScriptFileItem(script, args);
-
-        } else if (null != cmd.getAdhocFilepath()) {
-            final String filepath = cmd.getAdhocFilepath();
-            final String[] args;
-            if (null != cmd.getArgString()) {
-                final List<String> strings = CLIUtils.splitArgLine(cmd.getArgString());
-                args = strings.toArray(new String[strings.size()]);
-            } else {
-                args = new String[0];
-            }
-            return ExecutionItemFactory.createScriptFileItem(new File(filepath), args);
-        } else if (cmd instanceof IWorkflowJobItem) {
-            final IWorkflowJobItem jobcmditem = (IWorkflowJobItem) cmd;
-
-            final String[] args;
-            if (null != jobcmditem.getArgString()) {
-                final List<String> strings = CLIUtils.splitArgLine(jobcmditem.getArgString());
-                args = strings.toArray(new String[strings.size()]);
-            } else {
-                args = new String[0];
-            }
-
-            return ExecutionItemFactory.createJobRef(jobcmditem.getJobIdentifier(),args)
-        } else {
-            throw new IllegalArgumentException("Workflow command item was not valid");
-        }
-    }
-
-    /**
-     * Return an ExecutionItem instance for the given workflow Execution, suitable for the ExecutionService layer
-     */
-    public com.dtolabs.rundeck.core.execution.ExecutionContext createContext(ExecutionContext execMap, Framework framework, String userName = null, Map<String, String> jobcontext, ExecutionListener listener, String[] inputargs=null) {
-        def User user = User.findByLogin(userName ? userName : execMap.user)
-        if (!user) {
-            throw new Exception(g.message(code: 'unauthorized.job.run.user', args: [userName ? userName : execMap.user]))
-        }
         //convert argString into Map<String,String>
-        def String[] args = execMap.argString? CLIUtils.splitArgLine(execMap.argString):inputargs
-        def Map<String, String> optsmap = execMap.argString ? frameworkService.parseOptsFromString(execMap.argString) : null!=args? frameworkService.parseOptsFromArray(args):null
+        def Map<String,String> optsmap =input?.args?frameworkService.parseOptsFromArray(input.args):execMap.argString?frameworkService.parseOptsFromString(execMap.argString):null
+		
+		
+		def Map<String,Map<String,String>> datacontext = new HashMap<String,Map<String,String>>()
+		datacontext.put("option",optsmap)
+		datacontext.put("job",jobcontext?jobcontext:new HashMap<String,String>())
 
         NodeSet nodeset
+		
+				// enhnacement to allow ${option.xyz} in tags and names
+				if (nodeset != null) {
+					Include includes = nodeset.getInclude(); // TODO: find a generic way
+															// of
+															// replacing everything in
+															// includes and excludes
+		
+					if (includes != null) {
+						if (includes.getName() != null) {
+							includes.setName(DataContextUtils.replaceDataReferences(
+									includes.getName(), datacontext));
+						}
+						if (includes.getTags() != null) {
+							includes.setTags(DataContextUtils.replaceDataReferences(
+									includes.getTags(), datacontext));
+						}
+					}
+		
+					Exclude excludes = nodeset.getExclude();
+					if (excludes != null) {
+						if (excludes.getName() != null) {
+							excludes.setName(DataContextUtils.replaceDataReferences(
+									excludes.getName(), datacontext));
+						}
+						if (excludes.getTags() != null) {
+							excludes.setTags(DataContextUtils.replaceDataReferences(
+									excludes.getTags(), datacontext));
+						}
+					}
+				}
+		
+		
         if (execMap.doNodedispatch) {
             //set nodeset for the context if doNodedispatch parameter is true
             nodeset = filtersAsNodeSet(execMap)
@@ -617,21 +602,70 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             //blank?
             nodeset = new NodeSet()
         }
-        def Map<String, Map<String, String>> datacontext = new HashMap<String, Map<String, String>>()
-        datacontext.put("option", optsmap)
-        datacontext.put("job", jobcontext ? jobcontext : new HashMap<String, String>())
         //create thread object with an execution item, and start it
-        final com.dtolabs.rundeck.core.execution.ExecutionContext item =  com.dtolabs.rundeck.core.execution.ExecutionContextImpl.createExecutionContextImpl(
-            execMap.project,
-            user.login,
+        final WorkflowExecutionItemImpl item = new WorkflowExecutionItemImpl(
+            new WorkflowImpl(execMap.workflow.commands, execMap.workflow.threadcount, execMap.workflow.keepgoing,execMap.workflow.strategy?execMap.workflow.strategy: "node-first"),
             nodeset,
-            args,
+            user.login,
             loglevels[null != execMap.loglevel ? execMap.loglevel : 'WARN'],
-            datacontext,
-            listener,
-            framework)
+            execMap.project,
+            datacontext)
         return item
     }
+
+    /**
+     * Return an ExecutionItem instance for the given script Execution, suitable for the ExecutionService layer
+     */
+    public ExecutionItem createExecutionItemForAdhocScriptContext(ExecutionContext execMap, Framework framework, String user=null){
+        final String projectString = execMap.project
+        final String adhocRemoteString = execMap.adhocRemoteString
+        final String adhocLocalString = execMap.adhocLocalString
+        final String username = user?user:execMap.user
+        if(!framework.getAuthorizationMgr().authorizeScript(username,projectString,adhocLocalString?adhocLocalString:adhocRemoteString)){
+            throw new Exception(g.message(code:'unauthorized.job.run.script',args:[username,projectString]))
+        }
+        //create nodeset from execution map if doNodedispatch is true
+        NodeSet nodeset=null
+        if (execMap.doNodedispatch){
+            nodeset = filtersAsNodeSet(execMap)
+        }else{
+            //execute on all nodes
+            nodeset = filtersAsNodeSet([nodeKeepgoing:execMap.nodeKeepgoing,nodeThreadcount:execMap.nodeThreadcount])
+            //only execute on local node
+//                nodeset = filtersAsNodeSet([nodeIncludeName:framework.getFrameworkNodeName()])
+        }
+
+        //set Ant loglevel based on loglevel parameter
+        int loglevel=Project.MSG_WARN
+        if(execMap.loglevel=="VERBOSE"){
+            loglevel=Project.MSG_VERBOSE
+        }
+        if(execMap.loglevel=="DEBUG"){
+            loglevel=Project.MSG_DEBUG
+        }
+
+        //create script execution context to send to the execution service layer
+        final String filepath = execMap.adhocFilepath
+        final String argString = execMap.argString
+        final List remoteCommand = []
+        if (null != adhocRemoteString) {
+            remoteCommand = adhocRemoteString.split(" ") as List
+        }
+        if(null!=argString){
+            final List argsList = argString.split(" ")
+            remoteCommand.addAll(argsList)
+        }
+        final IDispatchedScript context = new DispatchedScriptImpl(
+            nodeset,
+            projectString,
+            adhocLocalString ? adhocLocalString.replaceAll("\r\n", "\n") : null,
+            null,
+            filepath,
+            remoteCommand as String[],
+            loglevel)
+        return ExecutionServiceFactory.createDispatchedScriptExecutionItem(context)
+    }
+
 
     /**
      * cleans up executed job
@@ -639,35 +673,31 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
      * @execMap map contains 'thread' and 'loghandler' keys, for Thread and LogHandler objects
      */
     def boolean executeAsyncFinish(Map execMap){
-        def WorkflowExecutionServiceThread thread=execMap.thread
+        def ExecutionServiceThread thread=execMap.thread
         def LogHandler loghandler=execMap.loghandler
-        if(!thread.isSuccessful() ){
-            Throwable exc = thread.getThrowable()
+        if(!thread.isSuccessful() && thread.getException()){
+            Exception exc = thread.getException()
             def errmsgs = []
 
-            if (exc && (exc instanceof com.dtolabs.rundeck.core.NodesetFailureException
-                || exc instanceof com.dtolabs.rundeck.core.NodesetEmptyException)) {
+            if (exc instanceof BuildException && exc.getCause()) {
+                errmsgs << exc.getCause().getMessage()
+            }else if (exc instanceof com.dtolabs.rundeck.core.NodesetFailureException || exc instanceof com.dtolabs.rundeck.core.NodesetEmptyException) {
                 errmsgs << exc.getMessage()
-            }else if(exc){
+            }else{
                 errmsgs<< exc.getMessage()
                 if(exc.getCause()){
                     errmsgs << "Caused by: "+exc.getCause().getMessage()
                 }
-            }else if (Project.MSG_VERBOSE <= loghandler.getMessageOutputLevel()) {
-                loghandler.publish(new LogRecord(Level.SEVERE, thread.resultObject?.toString()))
             }
-            if(errmsgs) {
-                log.error("Execution failed: " + execMap.execution.id + ": " + errmsgs.join(","))
-                if (exc && Project.MSG_VERBOSE <= loghandler.getMessageOutputLevel()) {
-                    errmsgs << org.apache.tools.ant.util.StringUtils.getStackTrace(exc)
-                }
-                loghandler.publish(new LogRecord(Level.SEVERE, errmsgs.join(',')))
-            }else {
-                log.error("Execution failed: " + execMap.execution.id + ": " + thread.resultObject?.toString())
+            if (Project.MSG_VERBOSE <= loghandler.getMessageOutputLevel() ) {
+                errmsgs<<org.apache.tools.ant.util.StringUtils.getStackTrace(exc)
+                log.error(errmsgs.join(','),exc)
+            }else{
+                log.error(errmsgs.join(','))
             }
 
-        }else{
-            log.info("Execution successful: " + execMap.execution.id )
+            loghandler.publish(new LogRecord(Level.SEVERE, errmsgs.join(',')))
+
         }
         sysThreadBoundOut.removeThreadStream()
         sysThreadBoundErr.removeThreadStream()
@@ -716,6 +746,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         def nodeIncludeMap = [:]
         if (econtext.nodeInclude || econtext.nodeExclude
                                || econtext.nodeIncludeName || econtext.nodeExcludeName
+                               || econtext.nodeIncludeType || econtext.nodeExcludeType
                                || econtext.nodeIncludeTags || econtext.nodeExcludeTags
                                || econtext.nodeIncludeOsName || econtext.nodeExcludeOsName
                                || econtext.nodeIncludeOsFamily || econtext.nodeExcludeOsFamily
@@ -725,6 +756,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
 
             nodeIncludeMap[NodeSet.HOSTNAME] = econtext.nodeInclude
             nodeIncludeMap[NodeSet.NAME] = econtext.nodeIncludeName
+            nodeIncludeMap[NodeSet.TYPE] = econtext.nodeIncludeType
             nodeIncludeMap[NodeSet.TAGS] = econtext.nodeIncludeTags
             nodeIncludeMap[NodeSet.OS_NAME] = econtext.nodeIncludeOsName
             nodeIncludeMap[NodeSet.OS_FAMILY] = econtext.nodeIncludeOsFamily
@@ -742,6 +774,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         def nodeExcludeMap = [:]
         if (econtext.nodeInclude || econtext.nodeExclude
                                || econtext.nodeIncludeName || econtext.nodeExcludeName
+                               || econtext.nodeIncludeType || econtext.nodeExcludeType
                                || econtext.nodeIncludeTags || econtext.nodeExcludeTags
                                || econtext.nodeIncludeOsName || econtext.nodeExcludeOsName
                                || econtext.nodeIncludeOsFamily || econtext.nodeExcludeOsFamily
@@ -750,6 +783,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             ) {
             nodeExcludeMap[NodeSet.HOSTNAME] = econtext.nodeExclude
             nodeExcludeMap[NodeSet.NAME] = econtext.nodeExcludeName
+            nodeExcludeMap[NodeSet.TYPE] = econtext.nodeExcludeType
             nodeExcludeMap[NodeSet.TAGS] = econtext.nodeExcludeTags
             nodeExcludeMap[NodeSet.OS_NAME] = econtext.nodeExcludeOsName
             nodeExcludeMap[NodeSet.OS_FAMILY] = econtext.nodeExcludeOsFamily
@@ -804,6 +838,8 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                                     nodeExclude:params.nodeExclude,
                                     nodeIncludeName:params.nodeIncludeName,
                                     nodeExcludeName:params.nodeExcludeName,
+                                    nodeIncludeType:params.nodeIncludeType,
+                                    nodeExcludeType:params.nodeExcludeType,
                                     nodeIncludeTags:params.nodeIncludeTags,
                                     nodeExcludeTags:params.nodeExcludeTags,
                                     nodeIncludeOsName:params.nodeIncludeOsName,
@@ -983,10 +1019,9 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             sb.append(args?args.join(" "):'')
         }
 
-        final options = scheduledExecution.options
-        if (options) {
+        if (scheduledExecution.options) {
             def defaultoptions=[:]
-            options.each {Option opt ->
+            scheduledExecution.options.each {Option opt ->
                 if (opt.required && null==optparams[opt.name] && opt.defaultValue) {
                     defaultoptions[opt.name]=opt.defaultValue
                 }
@@ -1138,9 +1173,10 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         if(null!=loglevels[loglevel]){
             level=loglevels[loglevel]
         }
+        boolean dometadatalogging = applicationContext.getServletContext().getAttribute("logging.ant.metadata")=="true"
+        
 
-
-        return new HtTableLogger(namespace, new File(filepath), level,defaultData)
+        return new HtTableLogger(namespace, new File(filepath), level,dometadatalogging,defaultData)
     }
 
     def saveExecutionState( schedId, exId, Map props, Map execmap=null){
@@ -1191,8 +1227,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             if (execmap && execmap.noderecorder && execmap.noderecorder instanceof NodeRecorder) {
                 NodeRecorder rec = (NodeRecorder) execmap.noderecorder
                 final HashSet<String> success = rec.getSuccessfulNodes()
-                final Map<String,Object> failedMap = rec.getFailedNodes()
-                final HashSet<String> failed = new HashSet<String>(failedMap.keySet())
+                final HashSet<String> failed = rec.getFailedNodes()
                 final HashSet<String> matched = rec.getMatchedNodes()
                 node = [success.size(),failed.size(),matched.size()].join("/")
                 sucCount=success.size()
@@ -1418,26 +1453,15 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
     }
     def public static EXEC_FORMAT_SEQUENCE=['time','level','user','module','command','node','context']
 
+    /**
+     * Executes a JobExecutionItem, which provides job name/group, user context, and runtime options
+     */
+    public ExecutionResult executeItem(ExecutionItem executionItem, ExecutionListener executionListener, com.dtolabs.rundeck.core.execution.ExecutionService service,
+        Framework framework) throws ExecutionException {
+        if (executionItem instanceof JobExecutionItem) {
 
-    InterpreterResult interpretCommand(com.dtolabs.rundeck.core.execution.ExecutionContext executionContext,
-                                       ExecutionItem executionItem, INodeEntry iNodeEntry) throws InterpreterException {
-        if (!(executionItem instanceof JobExecutionItem)) {
-            throw new InterpreterException("Unsupported item type: " + executionItem.getClass().getName());
-        }
-        def requestAttributes = RequestContextHolder.getRequestAttributes()
-        boolean unbindrequest = false
-        // outside of an executing request, establish a mock version
-        if (!requestAttributes) {
-            def servletContext = ServletContextHolder.getServletContext()
-            def applicationContext = WebApplicationContextUtils.getRequiredWebApplicationContext(servletContext)
-            requestAttributes = GrailsWebUtil.bindMockWebRequest(applicationContext)
-            unbindrequest = true
-        }
-        def id
-        //lookup job, create item, submit to ExecutionService
-        JobExecutionItem jitem = (JobExecutionItem) executionItem
-        try{
-
+            //lookup job, create item, submit to ExecutionService
+            JobExecutionItem jitem = (JobExecutionItem) executionItem
             def group = null
             def name = null
             def m = jitem.jobIdentifier =~ '^/?(.+)/([^/]+)$'
@@ -1447,69 +1471,36 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             } else {
                 name = jitem.jobIdentifier
             }
-            def c = ScheduledExecution.createCriteria()
-            def schedlist = c.list {
-                and {
-                    eq('jobName', name)
-                    if (!group) {
-                        or {
-                            eq('groupPath', '')
-                            isNull('groupPath')
-                        }
-                    } else {
-                        eq('groupPath', group)
-                    }
-                    eq('project', executionContext.getFrameworkProject())
-                }
+            ScheduledExecution se = ScheduledExecution.findByJobNameAndGroupPath(name, group)
+            if(!se){
+                throw new ExecutionException("No Job found for identifier: ${jitem.jobIdentifier}, name: ${name}, group: ${group}")
             }
-            if (schedlist && 1 == schedlist.size()) {
-                id = schedlist[0].id
-            }else{
-                executionContext.getExecutionListener().log(0,"Job ref [${jitem.jobIdentifier}] invalid: No Unique Job found for name: ${name}, group: ${group}, project: ${executionContext.getFrameworkProject()}")
-                throw new InterpreterException("Job ref [${jitem.jobIdentifier}] invalid: No Unique Job found for name: ${name}, group: ${group}, project: ${executionContext.getFrameworkProject()}")
-            }
-            def com.dtolabs.rundeck.core.execution.ExecutionContext newContext
-            def WorkflowExecutionItem newExecItem
-            ScheduledExecution.withTransaction{status->
+            //replace data context within arg string
+            String[] newargs=jitem.args
+            //try to set defaults for any missing args
+            def newargstring = addArgStringOptionDefaults(se, newargs)
+            final List<String> stringList = CLIUtils.splitArgLine(newargstring);
+            newargs = stringList.toArray(new String[stringList.size()]);
 
-                ScheduledExecution se = ScheduledExecution.get(id)//.findByJobNameAndGroupPath(name, group)
-//                    se.refresh()
-                //replace data context within arg string
-                String[] newargs = jitem.args
-                //try to set defaults for any missing args
-                def newargstring = addArgStringOptionDefaults(se, newargs)
-                final List<String> stringList = CLIUtils.splitArgLine(newargstring);
-                newargs = stringList.toArray(new String[stringList.size()]);
-
-                if (null != executionContext.dataContext && null != jitem.args) {
-                    newargs = com.dtolabs.rundeck.core.dispatcher.DataContextUtils.replaceDataReferences(jitem.args, executionContext.getDataContext())
-                }
-                //construct job data context
-                def jobcontext = new HashMap<String, String>()
-                jobcontext.id = se.id.toString()
-                jobcontext.name = se.jobName
-                jobcontext.group = se.groupPath
-                jobcontext.project = se.project
-                jobcontext.username = executionContext.getUser()
-                newExecItem = createExecutionItemForExecutionContext(se, executionContext.getFramework(), executionContext.getUser())
-                newContext= createContext(se, executionContext.getFramework(), executionContext.getUser(), jobcontext, executionContext.getExecutionListener(),newargs)
-
+            if(null!=jitem.dataContext && null!=jitem.args){
+                newargs=com.dtolabs.rundeck.core.dispatcher.DataContextUtils.replaceDataReferences(jitem.args,jitem.getDataContext())
             }
-            def WorkflowExecutionService service = executionContext.getFramework().getWorkflowExecutionService()
+            //construct job data context
+            def jobcontext=new HashMap<String,String>()
+            jobcontext.name=se.jobName
+            jobcontext.group=se.groupPath
+            jobcontext.project=se.project
+            jobcontext.username=jitem.getUser()
+            def ExecutionItem newExecItem =createExecutionItemForExecutionContext(se,framework,jitem.getUser(),jobcontext,[args:newargs])
 
-            final WorkflowExecutionResult result = service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
-            if(!result.isSuccess()){
-                System.err.println("Job ref [${jitem.jobIdentifier}] failed: "+result);
-            }
-            return new InterpreterResultImpl(result)
-        } finally {
-            if (unbindrequest) {
-                RequestContextHolder.setRequestAttributes (null)
-            }
+            return service.executeItem(newExecItem)
+        } else {
+            throw new ExecutionException("Unsupported item type: " + executionItem.getClass().getName());
         }
     }
 
-    ///////////////
+
+      ///////////////
       //for loading i18n messages
       //////////////
 
@@ -1645,21 +1636,24 @@ class LogOutputStream extends OutputStream{
 /**
   * HtTableLogger
   */
-class HtTableLogger extends Handler implements LogHandler, BuildLogger, CLIToolLogger, ContextLogger {
+class HtTableLogger extends Handler implements LogHandler, BuildLogger, CLIToolLogger {
     def PrintStream printstream
     def String namespace
     def File outfile
     def boolean closed=false
     def int msgOutputLevel
     def long startTime
+    def Map multilineCache=[:]
+    def boolean projectMetadataLogging=false
     def Map defaultEntries=[:]
 
     def HtTableLogger(final String namespace, File outfile, int msglevel) {
-        this(namespace,outfile,msglevel,null)
+        this(namespace,outfile,msglevel,false,null)
     }
-    def HtTableLogger(final String namespace, File outfile, int msglevel, Map defaultEntries) {
+    def HtTableLogger(final String namespace, File outfile, int msglevel, boolean metadataLogging, Map defaultEntries) {
         this.namespace = namespace
         this.outfile = outfile
+        this.projectMetadataLogging=metadataLogging
         if(null!=defaultEntries){
             this.defaultEntries=new HashMap(defaultEntries)
         }
@@ -1668,6 +1662,7 @@ class HtTableLogger extends Handler implements LogHandler, BuildLogger, CLIToolL
         def Logger logger = Logger.getLogger(namespace)
         logger.addHandler(this);
         setFormatter(new HtFormatter())
+        multilineCache = new HashMap()
     }
 
     void setMessageOutputLevel(int i){
@@ -1752,7 +1747,7 @@ class HtTableLogger extends Handler implements LogHandler, BuildLogger, CLIToolL
                     msg = data.rest ? data.rest : msg
                 }
             }
-            log(getLevelForPriority(priority), msg, data ? data : defaultEntries);
+            log(getLevelForPriority(priority), msg, data ? data : projectMetadataLogging ? getLogDetail(event, defaultEntries) : defaultEntries);
         }
     }
     /**
@@ -1833,6 +1828,15 @@ class HtTableLogger extends Handler implements LogHandler, BuildLogger, CLIToolL
         }
         return map
     }
+    public static Map getLogDetail(final BuildEvent event,Map defaultEntries){
+        def map = [:]
+        defaultEntries.each{k,v->
+            if(!map[k]){
+                map[k]=v
+            }
+        }
+        return map
+    }
 
     /**
      * Logs build output to a java.util.logging.Logger.
@@ -1884,6 +1888,24 @@ class HtTableLogger extends Handler implements LogHandler, BuildLogger, CLIToolL
             //output was to console from stderr/stdout
             data = defaultEntries
         }
+        long millis = System.currentTimeMillis();
+        String ctxId = makeContextId(data)
+        if(multilineCache[ctxId]){
+            def regex = ~'^(.*)\\[/MULTI_LINE\\]\\s*$'
+            def matcher = xmessage =~ regex
+            if(matcher.matches()){
+                multilineCache[ctxId].mesg+=matcher.group(1)+lSep
+                xmessage = multilineCache[ctxId].mesg
+                multilineCache.remove(ctxId)
+            }else{
+                multilineCache[ctxId].mesg+=xmessage+lSep
+                return
+            }
+        }else if(xmessage.startsWith("[MULTI_LINE]")){
+            def store = [mesg:xmessage.substring(12)+lSep,data:data,time:millis]
+            multilineCache[ctxId]=store
+            return
+        }
 
         final LogRecord record = new LogRecord(xlevel, xmessage);
 
@@ -1911,15 +1933,34 @@ class HtTableLogger extends Handler implements LogHandler, BuildLogger, CLIToolL
         if (message == null) {
             return;
         }
-        // log the message
-        final LogRecord record = new LogRecord(level, message);
-        if(data){
-            publish(record,data);
-        }else if(defaultEntries){
-            publish(record,defaultEntries);
-        }else{
-            publish(record);
+        long millis = System.currentTimeMillis();
+        String ctxId = makeContextId(data)
+        def String xmessage=message
+        def regex = ~'(?s)^(.*)\\[/MULTI_LINE\\]\\s*$'
+        if(multilineCache[ctxId]){
+            def matcher = xmessage =~ regex
+            if(matcher.matches()){
+                multilineCache[ctxId].mesg+=matcher.group(1)+lSep
+                xmessage = multilineCache[ctxId].mesg
+                multilineCache.remove(ctxId)
+            }else{
+                multilineCache[ctxId].mesg+=xmessage+lSep
+                return
+            }
+        }else if(xmessage.startsWith("[MULTI_LINE]")){
+            xmessage=xmessage.substring(12)
+            def matcher = xmessage =~ regex
+            if(matcher.matches()){
+                xmessage = matcher.group(1)
+            }else{
+                def store = [mesg:xmessage+lSep,data:data,time:millis]
+                multilineCache[ctxId]=store
+                return
+            }
         }
+        // log the message
+        final LogRecord record = new LogRecord(level, xmessage);
+        publish(record,data);
     }
     public BuildLogger getBuildLogger() {
         return this
@@ -1950,7 +1991,19 @@ class HtTableLogger extends Handler implements LogHandler, BuildLogger, CLIToolL
         return (HtFormatter)getFormatter()
     }
     public void close() {
-        if(!closed ){
+        if(!closed || multilineCache){
+            //finish all opened multi-line caches
+            multilineCache.keySet().sort{a,b ->
+                multilineCache.get(a).time <=> multilineCache.get(b).time 
+            }.each{ key ->
+                def data = multilineCache.get(key).data
+                def mesg = multilineCache.get(key).mesg
+                def xlevel = getLevelForString(data.level)
+                final LogRecord record = new LogRecord(xlevel, mesg);
+
+                publish(record,data);
+            }
+            multilineCache=[:]
             closed=true;
             if(null!=getFormatter()){
                 printstream.println (getFormatter().getTail(this))
@@ -1978,35 +2031,6 @@ class HtTableLogger extends Handler implements LogHandler, BuildLogger, CLIToolL
 
     public void verbose(String s) {
         logOOB(getLevelForString("VERBOSE"),s)
-    }
-
-    void log(String s, Map<String, String> data) {
-        log(Level.WARNING,s,data)
-    }
-
-    void error(String s, Map<String, String> data) {
-        log(getLevelForString("ERROR"), s, data)
-
-    }
-
-    void warn(String s, Map<String, String> data) {
-        log(getLevelForString("WARN"), s, data)
-
-    }
-
-    void verbose(String s, Map<String, String> data) {
-        log(getLevelForString("VERBOSE"), s, data)
-
-    }
-
-    void debug(String s, Map<String, String> data) {
-        log(getLevelForString("DEBUG"), s, data)
-
-    }
-
-    void debug(String s) {
-        logOOB(getLevelForString("DEBUG"), s)
-
     }
 }
     
@@ -2063,3 +2087,4 @@ class HtFormatter extends java.util.logging.Formatter{
         return '^^^END^^^';
     }
 }
+
