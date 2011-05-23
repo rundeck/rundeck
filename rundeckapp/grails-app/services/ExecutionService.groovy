@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.cli.CLIToolLogger
 import com.dtolabs.rundeck.core.cli.CLIUtils
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionItem
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
@@ -617,6 +618,14 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
 		
 				NodeSet nodeset
 				
+        if (execMap.doNodedispatch) {
+            //set nodeset for the context if doNodedispatch parameter is true
+            nodeset = filtersAsNodeSet(execMap)
+        } else {
+            //blank?
+            nodeset = new NodeSet()
+        }
+				
 				// enhnacement to allow ${option.xyz} in tags and names
 				if (nodeset != null) {
 					Include includes = nodeset.getInclude();
@@ -644,15 +653,6 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
 						}
 					}
 				}
-		
-		
-        if (execMap.doNodedispatch) {
-            //set nodeset for the context if doNodedispatch parameter is true
-            nodeset = filtersAsNodeSet(execMap)
-        } else {
-            //blank?
-            nodeset = new NodeSet()
-        }
         
         //create thread object with an execution item, and start it
         final com.dtolabs.rundeck.core.execution.ExecutionContext item =  com.dtolabs.rundeck.core.execution.ExecutionContextImpl.createExecutionContextImpl(
@@ -1516,7 +1516,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                 newargs = stringList.toArray(new String[stringList.size()]);
 
                 if (null != executionContext.dataContext && null != jitem.args) {
-                    newargs = com.dtolabs.rundeck.core.dispatcher.DataContextUtils.replaceDataReferences(jitem.args, executionContext.getDataContext())
+                    newargs = DataContextUtils.replaceDataReferences(jitem.args, executionContext.getDataContext())
                 }
                 //construct job data context
                 def jobcontext = new HashMap<String, String>()
