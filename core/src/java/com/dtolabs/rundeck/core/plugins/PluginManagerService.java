@@ -54,7 +54,7 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
         final FileCache<ProviderLoader> filecache = new FileCache<ProviderLoader>();
         cache = new FilePluginCache(filecache);
         final int rescanInterval = 5000;//TODO: use framework property to set interval
-        cache.addScanner(new JarPluginScanner(extdir, filecache, rescanInterval));
+        cache.addScanner(new JarPluginScanner(extdir, cachedir, filecache, rescanInterval));
         cache.addScanner(new ScriptPluginScanner(extdir, cachedir, filecache, rescanInterval));
         log.debug("Create PluginManagerService");
     }

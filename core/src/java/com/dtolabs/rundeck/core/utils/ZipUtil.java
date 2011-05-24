@@ -58,6 +58,26 @@ public class ZipUtil {
     public static void extractZip(final String path, final File dest, final String prefix) throws IOException {
         extractZip(path, dest, prefix, null);
     }
+    /**
+     * Extracts a single entry from the zip
+     *
+     * @param path   zip file path
+     * @param dest   destination directory
+     * @param fileName specific filepath to extract
+     *
+     * @throws IOException
+     */
+    public static void extractZipFile(final String path, final File dest, final String fileName) throws IOException {
+        FilenameFilter filter = null;
+        if (null != fileName) {
+            filter = new FilenameFilter() {
+                public boolean accept(final File file, final String name) {
+                    return fileName.equals(name) || fileName.startsWith(name);
+                }
+            };
+        }
+        extractZip(path, dest, filter, null, null);
+    }
 
     /**
      * Extract the zip file to the destination, optionally only the matching files and renaming the files
