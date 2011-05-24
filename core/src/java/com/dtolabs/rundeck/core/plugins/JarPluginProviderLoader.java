@@ -25,6 +25,9 @@ package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
+import com.dtolabs.rundeck.core.utils.FileUtils;
+import com.dtolabs.rundeck.core.utils.ZipUtil;
+import com.dtolabs.rundeck.core.utils.cache.FileCache;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -33,6 +36,8 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.Attributes;
@@ -44,17 +49,19 @@ import java.util.jar.Manifest;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class JarPluginProviderLoader implements ProviderLoader {
+class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
     private static Logger log = Logger.getLogger(JarPluginProviderLoader.class.getName());
     public static final String RUNDECK_PLUGIN_ARCHIVE = "Rundeck-Plugin-Archive";
     public static final String RUNDECK_PLUGIN_CLASSNAMES = "Rundeck-Plugin-Classnames";
+    public static final String RUNDECK_PLUGIN_LIBS = "Rundeck-Plugin-Libs";
     public static final String JAR_PLUGIN_VERSION = "1.0";
     public static final String RUNDECK_PLUGIN_VERSION = "Rundeck-Plugin-Version";
     private final File file;
+    private final File cachedir;
     private Map<ProviderIdent, Class> pluginProviderDefs =
         new HashMap<ProviderIdent, Class>();
 
-    public JarPluginProviderLoader(final File file) {
+    public JarPluginProviderLoader(final File file, final File cachedir) {
         if (null == file) {
             throw new NullPointerException("file");
         }
@@ -65,6 +72,7 @@ class JarPluginProviderLoader implements ProviderLoader {
             throw new IllegalArgumentException("Not a file: " + file);
         }
         this.file = file;
+        this.cachedir=cachedir;
     }
 
     /**
@@ -85,8 +93,8 @@ class JarPluginProviderLoader implements ProviderLoader {
                         pluginProviderDefs.put(ident, cls);
                     }
                 } catch (PluginException e) {
-                    log.warn(
-                        "Failed to verify class from " + file + ": classname: " + classname + ": " + e.getMessage());
+                    log.error(
+                        "Failed to load class from " + file + ": classname: " + classname + ": " + e.getMessage());
                 }
             }
         }
@@ -118,15 +126,25 @@ class JarPluginProviderLoader implements ProviderLoader {
      * Get the declared list of provider classnames for the file
      */
     public String[] getClassnames() {
-        if (null == mainAttributes) {
-            mainAttributes = getJarMainAttributes(file);
+        final Attributes attributes = getMainAttributes();
+        if (null == attributes) {
+            return null;
         }
-
-        final String value = mainAttributes.getValue(RUNDECK_PLUGIN_CLASSNAMES);
+        final String value = attributes.getValue(RUNDECK_PLUGIN_CLASSNAMES);
         if (null == value) {
             return null;
         }
         return value.split(",");
+    }
+
+    /**
+     * return the main attributes from the jar manifest
+     */
+    private Attributes getMainAttributes() {
+        if (null == mainAttributes) {
+            mainAttributes = getJarMainAttributes(file);
+        }
+        return mainAttributes;
     }
 
     /**
@@ -220,9 +238,29 @@ class JarPluginProviderLoader implements ProviderLoader {
         debug("loadClass! " + classname + ": " + file);
         final ClassLoader parent = JarPluginProviderLoader.class.getClassLoader();
         final Class cls;
+
+        //if jar manifest declares secondary lib deps, expand lib into cachedir, and setup classloader to use the libs
+        Collection<File> extlibs=null;
+        try {
+            extlibs=extractDependentLibs();
+        } catch (IOException e) {
+            throw new PluginException("Unable to expand plugin libs: "+e.getMessage(), e);
+        }
+
         try {
             final URL url = file.toURI().toURL();
-            final URLClassLoader urlClassLoader = URLClassLoader.newInstance(new URL[]{url}, parent);
+            final URL[] urlarray;
+            if(null!=extlibs && extlibs.size()>0){
+                final ArrayList<URL> urls = new ArrayList<URL>();
+                urls.add(url);
+                for (final File extlib : extlibs) {
+                    urls.add(extlib.toURI().toURL());
+                }
+                urlarray = urls.toArray(new URL[urls.size()]);
+            }else {
+                urlarray = new URL[]{url};
+            }
+            final URLClassLoader urlClassLoader = URLClassLoader.newInstance(urlarray, parent);
             cls = Class.forName(classname, true, urlClassLoader);
             classCache.put(classname, cls);
         } catch (ClassNotFoundException e) {
@@ -235,6 +273,76 @@ class JarPluginProviderLoader implements ProviderLoader {
         return cls;
     }
 
+    /**
+     * Extract the dependent libs and return the extracted jar files
+     * @return the collection of extracted files
+     */
+    private Collection<File> extractDependentLibs() throws IOException {
+        final Attributes attributes = getMainAttributes();
+        if (null == attributes) {
+            debug("no manifest attributes");
+            return null;
+        }
+
+        final ArrayList<File> files = new ArrayList<File>();
+        final String libs = attributes.getValue(RUNDECK_PLUGIN_LIBS);
+        if(null!=libs) {
+            debug("jar libs listed: " + libs + " for file: " + file);
+
+            final String[] libsarr = libs.split(" ");
+            final File cachedir = getFileCacheDir();
+            extractJarContents(libsarr, cachedir);
+            for (final String s : libsarr) {
+                files.add(new File(cachedir, s));
+            }
+        }else {
+            debug("no jar libs listed in manifest: " + file);
+        }
+        return files;
+    }
+
+    /**
+     * Extract specific entries from the jar to a destination directory. Creates the
+     * destination directory if it does not exist
+     * @param entries the entries to extract
+     * @param destdir destination directory
+     */
+    private void extractJarContents(final String[] entries, final File destdir) throws IOException {
+        if (!destdir.exists()) {
+            if (!destdir.mkdir()) {
+                log.warn("Unable to create cache dir for plugin: " + destdir.getAbsolutePath());
+            }
+        }
+
+        debug("extracting lib files from jar: " + file);
+        for (final String path : entries) {
+            debug("Expand zip " + file.getAbsolutePath() + " to dir: " + destdir + ", file: " + path);
+            ZipUtil.extractZipFile(file.getAbsolutePath(), destdir, path);
+        }
+
+    }
+
+    /**
+     * Basename of the file
+     */
+    String getFileBasename() {
+        return basename(file);
+    }
+
+    /**
+     * Get basename of a file
+     */
+    private static String basename(final File file) {
+        final String name = file.getName();
+        return name.substring(0, name.lastIndexOf("."));
+    }
+
+    /**
+     * Get the cache dir for use for this file
+     */
+    File getFileCacheDir() {
+        return new File(cachedir, getFileBasename());
+    }
     /**
      * Return true if the file has a class that provides the ident.
      */
@@ -250,6 +358,24 @@ class JarPluginProviderLoader implements ProviderLoader {
             }
         }
         return false;
+    }
+
+    /**
+     * Remove any cache dir for the file
+     */
+    private synchronized boolean removeScriptPluginCache() {
+        final File fileExpandedDir = getFileCacheDir();
+        if (null != fileExpandedDir && fileExpandedDir.exists()) {
+            debug("removeScriptPluginCache: " + fileExpandedDir);
+            return FileUtils.deleteDir(fileExpandedDir);
+        }
+        return true;
+    }
+    /**
+     * Expire the loader cache item
+     */
+    public void expire() {
+        removeScriptPluginCache();
     }
 
     @Override

@@ -40,9 +40,11 @@ class JarPluginScanner extends DirPluginScanner {
             return file.isFile() && file.getName().endsWith(".jar");
         }
     };
+    final File cachedir;
 
-    JarPluginScanner(final File extdir, final FileCache<ProviderLoader> filecache, final int rescanInterval) {
+    JarPluginScanner(final File extdir, final File cachedir, final FileCache<ProviderLoader> filecache, final int rescanInterval) {
         super(extdir, filecache, rescanInterval);
+        this.cachedir = cachedir;
     }
 
     public boolean isValidPluginFile(final File file) {
@@ -63,7 +65,7 @@ class JarPluginScanner extends DirPluginScanner {
         if (log.isDebugEnabled()) {
             log.debug("create JarFileProviderLoader: " + file);
         }
-        return new JarPluginProviderLoader(file);
+        return new JarPluginProviderLoader(file,cachedir);
     }
 
 }

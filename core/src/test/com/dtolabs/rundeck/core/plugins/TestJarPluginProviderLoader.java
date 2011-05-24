@@ -53,6 +53,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
     private File testDir = new File("src/test/com/dtolabs/rundeck/core/plugins");
     private File testJar1 = new File("src/test/com/dtolabs/rundeck/core/plugins/test-plugin1.jar");
     private File testJarDNE = new File("src/test/com/dtolabs/rundeck/core/plugins/DNE-plugin.jar");
+    private File testCachedir;
 
     public TestJarPluginProviderLoader(final String name) {
         super(name);
@@ -60,30 +61,30 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
 
     public void setUp() {
         super.setUp();
-
+        testCachedir = getFrameworkInstance().getLibextCacheDir();
     }
 
     public void testConstruct() throws Exception {
         try {
-            new JarPluginProviderLoader(null);
+            new JarPluginProviderLoader(null,null);
             fail("expected npe");
         } catch (NullPointerException e) {
             assertNotNull(e);
         }
         try {
-            new JarPluginProviderLoader(testJarDNE);
+            new JarPluginProviderLoader(testJarDNE,null);
             fail("expected illegal argument");
         } catch (IllegalArgumentException e) {
             assertNotNull(e);
         }
         try {
-            new JarPluginProviderLoader(testDir);
+            new JarPluginProviderLoader(testDir,null);
             fail("expected illegal argument");
         } catch (IllegalArgumentException e) {
             assertNotNull(e);
         }
         final File testJar = createTestJar(null, null);
-        final JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(testJar);
+        final JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(testJar, testCachedir);
         assertNotNull(jarPluginProviderLoader);
     }
 
@@ -256,7 +257,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         final File testJar11 = createTestJar(entries, null, classes);
 
 
-        final JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(testJar11);
+        final JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(testJar11, testCachedir);
         //non-existent
         final JarTestType1 testx = jarPluginProviderLoader.load(service, "testX");
         assertNull(testx);
@@ -289,7 +290,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         final File testJar11 = createTestJar(entries, null, classes);
 
 
-        final JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(testJar11);
+        final JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(testJar11, testCachedir);
         //non-existent
         final JarTestType1 testx = jarPluginProviderLoader.load(service, "testX");
         assertNull(testx);
@@ -319,7 +320,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         final File testJar11 = createTestJar(entries, null, classes);
 
 
-        final JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(testJar11);
+        final JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(testJar11, testCachedir);
         //non-existent
         final JarTestType1 testx = jarPluginProviderLoader.load(service, "testX");
         assertNull(testx);
@@ -426,7 +427,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_CLASSNAMES, classnameString(classes));
 
         final File testJar11 = createTestJar(entries, null, classes);
-        final JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(testJar11);
+        final JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(testJar11, testCachedir);
         final String[] classnames = jarPluginProviderLoader.getClassnames();
         assertTrue(Arrays.equals(classnames(classes), classnames));
     }
