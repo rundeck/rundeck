@@ -22,7 +22,30 @@
     $Id$
  --%>
 
-<script type="text/javascript"> 
+<script type="text/javascript">
+        //add a reload button for remote option values
+        function _addReloadRemoteOptionValues(elem, schedId, optName, prefix, value) {
+            var btn = new Element('span');
+            btn.addClassName('action');
+            btn.addClassName('textbtn');
+            if($(elem).innerHTML.indexOf("_error_detail")<0){
+                btn.addClassName('minor');
+            }
+
+            btn.setAttribute('title','Click to reload the remote option values for: '+optName);
+            Event.observe(btn,'click',function(e){
+                //look for selected value
+                var newvalue=value;
+                if ($(elem).down('input')) {
+                    newvalue = $(elem).down('input').value;
+                }else if ($(elem).down('select')) {
+                    newvalue = $(elem).down('select').value;
+                }
+                _loadRemoteOptionValues(elem,schedId,optName,prefix,newvalue);
+            });
+            btn.innerHTML='reload';
+            $(elem).insert({bottom:btn});
+        }
         //load remote values
         function _loadRemoteOptionValues(elem,schedId,optName,prefix,value){
             $(elem).loading('Loading option values&hellip;');
@@ -32,9 +55,11 @@
                 {
                     parameters:{option:optName,id:schedId,fieldPrefix:prefix,selectedvalue:value},
                     evalScripts:true,
-                    onSuccess: function(transport) {
-                        $(elem).show();
-
+                    onComplete: function(transport) {
+                        if (transport.request.success()) {
+                            $(elem).show();
+                            _addReloadRemoteOptionValues(elem,schedId,optName,prefix,value);
+                        }
                     }
                 }
             );

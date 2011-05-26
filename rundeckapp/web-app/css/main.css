@@ -242,6 +242,9 @@ a.action, .action.textbtn{
 .action{
     color:blue;
 }
+.action.minor{
+    color:gray;
+}
 a.action:hover, span.action.textbtn:hover{
     color: blue;
     text-decoration:underline;
