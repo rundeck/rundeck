@@ -1373,7 +1373,7 @@ class ScheduledExecutionController  {
     def saveAndExec = {
         log.info("ScheduledExecutionController: saveAndExec : params: " + params)
         def changeinfo = [user: session.user, change: 'create', method: 'saveAndExec']
-        def scheduledExecution = _dosave(params,change)
+        def scheduledExecution = _dosave(params,changeinfo)
         if(scheduledExecution.id){
             params.id=scheduledExecution.id
             logJobChange(changeinfo, scheduledExecution.properties)
