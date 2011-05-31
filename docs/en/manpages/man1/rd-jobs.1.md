@@ -66,7 +66,7 @@ The tool works in one of two *ACTION* modes:
 
 The List action queries the server for a list of matching jobs, and displays the result list. Optionally the definitions of the matching jobs can be stored in a file if `-f` is specified.
 
-The jobs can be specifed explicitly by ID using the `-i/--idlist` option. Otherwise they are searched using the options as filter criteria, and all matching Jobs are returned.
+The jobs can be specified explicitly by ID using the `-i/--idlist` option. Otherwise they are searched using the options as filter criteria, and all matching Jobs are returned.
 
 If no options to the list action are supplied, then all Jobs on the
 server are returned.

@@ -68,7 +68,7 @@ Execute the rd-setup command defining the framework hostname as
 The rd-setup command generates a working configuration from a set of
 template files found in: $RDECK_BASE/lib/templates/etc. Additionally,
 initial configuration default values are maintained in
-rd-defaults.properties but these can be overwridden using
+rd-defaults.properties but these can be overridden using
 \--key=value flags.
 
 # SEE ALSO

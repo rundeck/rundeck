@@ -429,7 +429,7 @@ Define defaults for the "port" option, enforcing the values list.
 
     <option name="port" value="80" values="80,8080,8888" enforcedvalues="true" />
 
-Define defaults for the "ports" option, allowing multple values separated by ",".
+Define defaults for the "ports" option, allowing multiple values separated by ",".
 
     <option name="port" value="80" values="80,8080,8888" enforcedvalues="true" multivalued="true" delimiter="," />
 
@@ -557,7 +557,7 @@ type
 
 tags
 
-:    node tags. comma separted
+:    node tags. comma separated
 
 os-name
 

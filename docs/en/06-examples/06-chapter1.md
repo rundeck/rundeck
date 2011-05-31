@@ -4,7 +4,7 @@ This chapter presents working examples reflecting a variety of
 solutions you can create with RunDeck. Helping you apply concepts
 and features introduced in earlier chapters is the focus of these examples.
 Rather than make the examples abstract, they are set in the context
-of Acme Anvils, a fictious organization that manages an online application. 
+of Acme Anvils, a fictitious organization that manages an online application. 
 
 ## Acme Anvils 
 
@@ -17,7 +17,7 @@ has led to mistakes and outages. Because the senior management is so
 enthusiastic, they push the teams to deliver new features as
 frequently as possible. Unfortunately, this has led to another
 problem: the Acme Anvil web site is an unstable memory 
-hog and requires occassional restarts.  
+hog and requires occasional restarts.  
 
 There are actually two methods to the restart procedure depending
 on the problem: "kill" versus "normal". The "kill" restart is required
@@ -44,7 +44,7 @@ The administrator chooses a machine with access to the servers in
 the live environment and installs the RunDeck software there.
 
 A project called "anvils" is created to manage the application support
-activites . 
+activities. 
 
 The administrator creates the project using the
 [rd-project](rd-project.html) shell tool though this could be done with the
@@ -170,7 +170,7 @@ Filtering with tags provides an abstraction over hostnames
 and lets the administrator think about scripting process using loose
 classifications. New nodes can be added, others decommissioned while
 others given new purpose, and the procedures stay unchanged because
-they are bound to the filtering critera. 
+they are bound to the filtering criteria. 
 
 This simple classification scheme will allow the developers and
 administrators to share a common vocabulary when talking about the kinds
@@ -232,7 +232,7 @@ to define a job to encapsulate the restart procedure. Though the overall goal
 is to provide a single restart procedure, for the sake of reusability, it
 might be preferred to break each step of the process into separate jobs.
 
-Using this approach the adminstrator imagines the following jobs:
+Using this approach the administrator imagines the following jobs:
 
 * start: call the start.sh script to start the web service
 * stop: call the stop.sh script to stop the web service
@@ -335,7 +335,7 @@ control the restart operation, the final step is to compose the Job
 definitions. 
 
 While each job can be defined graphically in RunDeck, each can
-succinctly be defined using an XML file comforming to the
+succinctly be defined using an XML file conforming to the
 [job-v20(5)](job-v20.html) document format. This 
 document contains a set of tags corresponding to the choices seen in
 the RunDeck GUI form.
@@ -502,7 +502,7 @@ The Jobs can be run from the RunDeck graphical console by going to the
 display the three stored Jobs.
 
 Clicking the "Run" button for the Restart job, will display the
-options selection page. The menu for the "method" option dislays the
+options selection page. The menu for the "method" option displays the
 two choices: "normal" and "kill". No other choices can be made, nor a
 textfield for free form entry, because the "method" option was defined
 with the restriction "enforced from allowed values".
@@ -533,7 +533,7 @@ group is allowed to perform which actions. The
 covers this in detail.
 
 The administrator wants to use the aclpolicy to define two levels of
-access. The first level, has limited privilge and allows for just
+access. The first level, has limited privilege and allows for just
 running jobs. The second level, is administrative and can modify job
 definitions.
 

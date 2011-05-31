@@ -15,7 +15,7 @@ reduces the complexity of each file.  The default path is
 * RPM install: `/etc/rundeck`
 * Launcher install: `$RDECK_BASE/etc`
 
-Policy files are parsed using YAML and while the structure is ridgid, 
+Policy files are parsed using YAML and while the structure is rigid, 
 additional information can be added and safely ignored.  So creating arbitrary 
 elements for documentation or organizational purposes is gracefully parsed.  
 The resulting file must be a valid yaml file.

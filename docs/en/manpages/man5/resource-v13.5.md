@@ -78,7 +78,7 @@ remoteUrl
 
 *anything*
 
-:   Any user-supplied attributes can be specifed to add additional metadata about a node.
+:   Any user-supplied attributes can be specified to add additional metadata about a node.
 
 *Nested Elements*
 

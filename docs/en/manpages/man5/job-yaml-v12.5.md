@@ -208,7 +208,7 @@ Example:
 
 ### Options
 
-Options for a job can be specifed with a map. Each map key is the name of the option, and the content is a map defining the [Option](#option).
+Options for a job can be specified with a map. Each map key is the name of the option, and the content is a map defining the [Option](#option).
 
     options:
       optname1:
