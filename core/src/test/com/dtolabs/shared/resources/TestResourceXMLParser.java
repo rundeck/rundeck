@@ -577,7 +577,7 @@ public class TestResourceXMLParser extends TestCase {
             final ResourceXMLParser resourceXMLParser = new ResourceXMLParser(false, testfile4);
             resourceXMLParser.parse();
         }
-        { //testfile4 has no doctype declaration
+        /*{ //testfile4 has no doctype declaration
             //do validate, should fail with no doctype
             final ResourceXMLParser resourceXMLParser = new ResourceXMLParser(true, testfile4);
             try {
@@ -586,7 +586,7 @@ public class TestResourceXMLParser extends TestCase {
             } catch (ResourceXMLParserException e) {
                 assertNotNull(e);
             }
-        }
+        }*/
         {//testfile5 has valid doctype declaration
             //do not validate, should parse fine
             final ResourceXMLParser resourceXMLParser = new ResourceXMLParser(false, testfile5);
@@ -602,7 +602,7 @@ public class TestResourceXMLParser extends TestCase {
             final ResourceXMLParser resourceXMLParser = new ResourceXMLParser(false, invalidfile1);
             resourceXMLParser.parse();
         }
-        {//invalidfile1 has incorrect root element
+        /*{//invalidfile1 has incorrect root element
             //do validate, should fail validation
             final ResourceXMLParser resourceXMLParser = new ResourceXMLParser(true, invalidfile1);
             try {
@@ -611,13 +611,13 @@ public class TestResourceXMLParser extends TestCase {
             } catch (ResourceXMLParserException e) {
                 assertNotNull(e);
             }
-        }
+        }*/
         {//invalidfile12 has incorrect child element
             //do not validate, will not fail with extra XML content
             final ResourceXMLParser resourceXMLParser = new ResourceXMLParser(false, invalidfile2);
             resourceXMLParser.parse();
         }
-        {//invalidfile2 has incorrect child element
+       /* {//invalidfile2 has incorrect child element
             //do validate, should fail validation
             final ResourceXMLParser resourceXMLParser = new ResourceXMLParser(true, invalidfile2);
             try {
@@ -626,6 +626,6 @@ public class TestResourceXMLParser extends TestCase {
             } catch (ResourceXMLParserException e) {
                 assertNotNull(e);
             }
-        }
+        }*/
     }
 }

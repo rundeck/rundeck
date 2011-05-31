@@ -187,8 +187,7 @@ public class ResourceXMLGenerator implements NodesFileGenerator {
      * @throws IOException
      */
     public void generate() throws IOException {
-        final Document doc = DocumentFactory.getInstance().createDocument().addDocType("project",
-            DTD_PROJECT_DOCUMENT_1_0_EN, "project.dtd");
+        final Document doc = DocumentFactory.getInstance().createDocument();
         final Element root = doc.addElement("project");
         //iterate through entities in correct order
         for (final ResourceXMLParser.Entity entity : entities) {

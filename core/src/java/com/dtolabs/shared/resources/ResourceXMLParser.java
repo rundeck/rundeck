@@ -86,7 +86,7 @@ public class ResourceXMLParser {
      */
     public void parse() throws ResourceXMLParserException, FileNotFoundException {
         final EntityResolver resolver = createEntityResolver();
-        final SAXReader reader = new SAXReader(validate);
+        final SAXReader reader = new SAXReader(false);
         reader.setEntityResolver(resolver);
 
         try {
