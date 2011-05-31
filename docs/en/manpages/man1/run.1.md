@@ -14,7 +14,7 @@ run [-h] [-v] [-l level] [nodefilters] [-i id] [-j group/name][\-- arguments]
 
 The run command is used to start the execution of a Job defined in RunDeck. The Job is executed on the server, and the ID for the execution is displayed. This is equivalent to logging in to RunDeck and starting a Job within the web application GUI.
 
-The Job can either be specified by ID (-i), or by name and optional group (-j). The Node filters used for the execution of the job can also be specified on the commandline, and will be used instead of any already defined for the Job. Arguments to the Execution can be specfied after (\--).
+The Job can either be specified by ID (-i), or by name and optional group (-j). The Node filters used for the execution of the job can also be specified on the commandline, and will be used instead of any already defined for the Job. Arguments to the Execution can be specified after (\--).
 
 
 # OPTIONS

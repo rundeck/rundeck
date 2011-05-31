@@ -15,7 +15,7 @@ help you use and integrate RunDeck into your environment.
 ### Command dispatching
 
 RunDeck supports a notion called *command dispatching* wherein a
-user specifies dispatch critera along with an action (called a
+user specifies dispatch criteria along with an action (called a
 command) and this specification is used to perform a distributed execution.
 
 The *command dispatcher* is an internal mechanism that looks up
@@ -50,7 +50,7 @@ from any source, so long as it meets the RunDeck resource model
 document requirement. 
 
 A *resource model provider* is an external service
-accesible via the HTTP GET method that returns data conforming to the
+accessible via the HTTP GET method that returns data conforming to the
 RunDeck resource model document formats: [resource-v13(5) XML](resource-v13.html) or [resource-v13(5) YAML](resource-yaml-v13.html). 
 
 
@@ -137,7 +137,7 @@ there is a conflict.
     
 In addition, TCP port 22 needs to be open on the clients for SSH.
     
-Cients should be set up to allow the RunDeck server user to connect to
+Clients should be set up to allow the RunDeck server user to connect to
 the clients using SSH via public-key authentication. It should not
 prompt for a password. See
 [Configure remote machine for SSH](#configuring-remote-machine-for-ssh)
@@ -221,7 +221,7 @@ Use the launcher as an alternative to a system package:
 
 
 If you get an error message that resembles the one below, you probably
-are using an unupported Java version.
+are using an unsupported Java version.
 
     Exception in thread "main" java.lang.UnsupportedClassVersionError: Bad version number in .class file
 

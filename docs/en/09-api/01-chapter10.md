@@ -534,7 +534,7 @@ The URL requested as the `providerURL` must be allowed by the `project.propertie
 * Otherwise, if only one file defines regexes, the URL must match one of them.
 * Otherwise if no regexes are defined in either file, the URL is rejected.
 
-Multiple regexes can be specified in those config files by adding muliple properties:
+Multiple regexes can be specified in those config files by adding multiple properties:
 
     project.resources.allowedURL.0=^http://myserver:9090/resources/.*$
     project.resources.allowedURL.1=^http://server2:9090/resources/.*$
@@ -560,7 +560,7 @@ Optional Parameters:
     * `userFilter`: include events created by a user
     * `statFilter`: include events based on result status.  this can be 'succeed','fail', or 'cancel'.
 * Date query parameters:
-    * `recentFilter`: Use a simple text format to filter events that occured within a period of time. The format is "XY" where X is an integer, and "Y" is one of:
+    * `recentFilter`: Use a simple text format to filter events that occurred within a period of time. The format is "XY" where X is an integer, and "Y" is one of:
         * `h`: hour
         * `d`: day
         * `w`: week

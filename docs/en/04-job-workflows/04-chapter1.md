@@ -16,11 +16,11 @@ XML document that is loaded to the server.
 The graphical console provides an authoring environment where steps
 can be added, edited, removed or reordered.
 
-Users prefering to define Jobs in XML should read the [job-v20(5)](job-v20.html)
+Users preferring to define Jobs in XML should read the [job-v20(5)](job-v20.html)
 manual page. 
 
 It is also possible to author Jobs inside the graphical console
-and then export the definiton as an XML file using the
+and then export the definition as an XML file using the
 `rd-jobs` shell tool ([rd-jobs(1)](rd-jobs.html)).
 
 ## Workflow control settings
@@ -153,7 +153,7 @@ Click the "Choose A Job..." link and navigate to the desired Job.
 Finally, if the Job defines Options, you can specify them in the
 commandline arguments text field.
 
-This is simililar to calling the other Job with [run](run.html):
+This is similar to calling the other Job with [run](run.html):
 
     run [filter-options] -j group/jobname
     

@@ -261,7 +261,7 @@ another tool, perhaps Chef, Puppet, Nagios, Amazon EC2, RightScale or
 even an in-house database. One of these tools might be
 considered the authority of knowledge about the nodes
 deployed in your network. Therefore, it is best to create an interface
-to the authorative tool and expose it as RunDeck resource model provider. This
+to the authoritative tool and expose it as RunDeck resource model provider. This
 can be done as a simple CGI script that does a transformation from
 the tool's format to the one RunDeck understands.
 
@@ -530,7 +530,7 @@ Compact
     revealed by pressing the disclosure icon to the right. 
     ![Node output](figures/fig0210.png)
 
-###### Separate exeuction follow page
+###### Separate execution follow page
 
 Sometimes it is useful to have a page where just the execution output
 is displayed separately. One purpose is to share a link to others 
@@ -716,7 +716,7 @@ failed.
 ### RSS link
 
 An RSS icon provides a link to an RSS view of the events that match
-the current filtering critera.
+the current filtering criteria.
 
 ![RSS link](figures/fig0214.png)
 

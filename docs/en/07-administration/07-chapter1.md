@@ -130,7 +130,7 @@ defines the logging configuration for the RunDeck server.
 #### profile
 
 Shell environment variables used by the shell tools. This file
-contains several paramaters needed during the startup of the shell
+contains several parameters needed during the startup of the shell
 tools like umask, Java home and classpath, and SSL options.
 
 #### project.properties
@@ -437,7 +437,7 @@ The default port for communicating with active directory is 389, which is insecu
 
 Before you can establish trust, you need to get the CA certificate.  Typically, this would require a request to the organization's security officer to have them send you the certificate.  It's also often found publicly if your organization does secure transactions.
 
-Another option is to interogate the secure ldap endpoint with openssl.  The example below shows a connection to paypal.com on port 443.  The first certificate is the machine and that last is the CA.  Pick the last certificate.  
+Another option is to interrogate the secure ldap endpoint with openssl.  The example below shows a connection to paypal.com on port 443.  The first certificate is the machine and that last is the CA.  Pick the last certificate.  
 
 *note* that for Active Directory, the host would be the Active Directory server and port 686.  
 *note* Certificates are PEM encoded and start with -----BEGIN CERTIFICATE----- end with -----END CERTIFICATE----- inclusive.
@@ -640,7 +640,7 @@ might see these actions as a granular set of roles.
 `workflow_create`
 ~   Create new jobs.
 `workflow_update`
-~   Edit existing jo.bs
+~   Edit existing jobs.
 `workflow_delete`
 ~   Remove jobs.
 `workflow_kill`
@@ -681,7 +681,7 @@ roles you have. Role mappings are defined in the
 
 *User Roles*
 
-:   Role names used by an authencation system
+:   Role names used by an authentication system
 
 These properties provide a mapping of allowed *Application Roles* to a
 set of specified *User Roles*. The defaults shown here match the set of
