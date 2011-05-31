@@ -45,6 +45,7 @@ import org.apache.tools.ant.types.Commandline;
 import java.io.File;
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -98,25 +99,35 @@ class CommandAction extends AbstractAction {
             project.addBuildListener(listener.getBuildListener());
             debug("added build listener");
         }
+        final INodeEntry singleNode;
         final Collection<INodeEntry> c;
-        try {
-            c = getFramework().filterNodes(getContext().getNodeSet(),getContext().getFrameworkProject());
-        } catch (NodeFileParserException e) {
-            throw new CoreException("Error parsing node resource file: " + e.getMessage(), e);
-        }
-        if (0 == c.size()) {
-            throw new NodesetEmptyException(getContext().getNodeSet());
+        if(null!=getContext().getNodeSet().getSingleNodeName()){
+            //get the single node
+            try{
+                singleNode= getFramework().getFrameworkProjectMgr().getFrameworkProject(getContext().getFrameworkProject()).getNodes().getNode(
+                    getContext().getNodeSet().getSingleNodeName());
+            } catch (NodeFileParserException e) {
+                throw new CoreException("Error parsing node resource file: " + e.getMessage(), e);
+            }
+            if(null!=singleNode){
+                c = Collections.singleton(singleNode);
+            }else{
+                throw new NodesetEmptyException(getContext().getNodeSet());
+            }
+        }else{
+            try {
+                c = getFramework().filterNodes(getContext().getNodeSet(),getContext().getFrameworkProject());
+            } catch (NodeFileParserException e) {
+                throw new CoreException("Error parsing node resource file: " + e.getMessage(), e);
+            }
+            if (0 == c.size()) {
+                throw new NodesetEmptyException(getContext().getNodeSet());
+            }
+            singleNode = null;
+            debug("number of nodes to dispatch to: " + c.size() + ", (threadcount="
+                  + getContext().getNodeSet().getThreadCount() + ")");
         }
 
-        debug("number of nodes to dispatch to: " + c.size() + ", (threadcount="
-              + getContext().getNodeSet().getThreadCount() + ")");
-        
-        final INodeEntry singleNode;
-        if (1 == c.size()) {
-            singleNode = c.iterator().next();
-        } else {
-            singleNode = null;
-        }
         final String fwkNodeName =
             null != singleNode ? singleNode.getNodename() : getFramework().getFrameworkNodeName();
         final String fwkUser = null != singleNode ? singleNode.extractUserName()
