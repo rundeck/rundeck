@@ -659,6 +659,31 @@ might see these actions as a granular set of roles.
 `job_view_unauthorized`
 ~   Special role for viewing jobs that the user is unauthorized to run.
 
+#### Access control policy actions example
+
+Below is an example policy document demonstrating wokflow policy actions
+to create limited job access for a group of users.
+Users in the group "restart_user" are allowed to run three jobs in the "adm"
+group: Restart, stop and start. By allowing ``workflow_run`` but not ``workflow_read``,
+the "stop" and "start" jobs will not be visible in job listings in the graphical console.
+The "Restart" job will be visible since it has ``workflow_read`` granted.
+
+File listing: restart_user.aclpolicy
+
+    <policies>
+      <policy description="Limited user access for adm restart actions">
+        <context project="*">
+          <command group="adm" job="Restart" actions="workflow_run,workflow_read"/>
+          <command group="adm" job="stop"  actions="workflow_run"/>
+          <command group="adm" job="start" actions="workflow_run"/>
+        </context>
+        <by>
+          <group name="restart_user"/>
+        </by>
+      </policy>
+    </policies>
+    
+    
 ### Role mapping
 
 Role mapping is a way of adapting the User Roles provided by your
