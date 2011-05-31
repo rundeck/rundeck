@@ -131,7 +131,7 @@ belonging in the "apps/web" Job group:
 From the graphical console, any stored job can be started 
 from the Jobs page. Navigate to the desired Job
 from the filtered listing and then press the green
-"Run" icon to immediatly queue and run the Job. 
+"Run" icon to immediately queue and run the Job. 
 If you do not see the Run icon, it
 means your login does not have "run" privileges.
 
@@ -152,7 +152,7 @@ a form presenting any of these Job options.
 
 Some options will have default values while others may present you
 with a menu of choices. Some options are optional while others are
-required. Lastly, their might be a pattern govering what values are
+required. Lastly, their might be a pattern governing what values are
 acceptable. 
 
 If there are any such Job options, you can change them here before
@@ -301,7 +301,7 @@ Jobs by clicking the "Executions" link for the Job.
 
 ![Job executions link](figures/fig0309.png)
 
-This returns a filtered history peraining to that Job.  You can click on
+This returns a filtered history pertaining to that Job.  You can click on
 any past execution in the list to see the full execution state.
 
 ![Job executions matches](figures/fig0310.png)
@@ -380,7 +380,7 @@ the GUI web interface, you can do so.
 
 Click on the New Job" button in the Job list.
 
-In the "Create New Job" form, click on the button that says "Uplaod Definition..." on the right side:
+In the "Create New Job" form, click on the button that says "Upload Definition..." on the right side:
 
 ![Job import button](figures/fig0315.png)
 
@@ -405,7 +405,7 @@ definitions in the XML file, they will show up on the page.
 
 After reading this chapter, you should be familiar with RunDeck Jobs
 and able to find and run them. You should understand how to create
-temporary and saved jobs and understand how to find thier history.
+temporary and saved jobs and understand how to find their history.
 Finally, you should be aware of how to export and import Job
 definitions as XML documents.
 

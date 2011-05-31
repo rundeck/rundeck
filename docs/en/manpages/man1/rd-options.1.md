@@ -58,7 +58,7 @@ besides hostname.
 
 # KEYWORDS
 
-Keywords are specifed by using one of the filter options with
+Keywords are specified by using one of the filter options with
 "key=value" as the argument to the option.
 
 *Example*
@@ -89,7 +89,7 @@ The available keywords are:
  operating system name, e.g. "Linux", "Macintosh OS X"
 
 *  os-family 
-: operating system familiy, e.g. "windows","unix"
+: operating system family, e.g. "windows","unix"
 
 *  os-arch 
 : operating system CPU architecture, e.g. "x86", "x386"

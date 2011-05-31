@@ -71,7 +71,7 @@ on a set of nodes which are specified by the filter options.
 # COMMAND MODE #
 
 Command mode occurs when the -p option is present (or there is only
-one Project), ando one (and only one) of the following options are
+one Project), and one (and only one) of the following options are
 specified: \--, -s, or -S
 
 ## COMMAND STRING (\--) ##

@@ -244,13 +244,13 @@ project.properties files:
 
 `plugin.script-exec.default.dir`
 
-:   Specifies the default woring directory for the execution
+:   Specifies the default working directory for the execution
 
 For node-specific add an attribute named `script-exec-dir` to the node.
 
 `script-exec-dir`
 
-:   Specifies the default woring directory for the execution (optional)
+:   Specifies the default working directory for the execution (optional)
 
 #### Defining the script-exec command
 
@@ -331,14 +331,14 @@ project.properties files:
 
 `plugin.script-copy.default.dir`
 
-:   Specifies the default woring directory for the execution
+:   Specifies the default working directory for the execution
 
 
 For node-specific add an attribute named `script-copy-dir` to the node.
 
 `script-copy-dir`
 
-:   Specifies the default woring directory for the execution (optional)
+:   Specifies the default working directory for the execution (optional)
 
 
 #### Defining the script-copy command
@@ -501,7 +501,7 @@ Java Plugin Development
 Java plugins are distributed as .jar files containing the necessary classes for 
 one or more service provider.
 
-The `.jar` file you distribute must have this metdata within the main Manifest
+The `.jar` file you distribute must have this metadata within the main Manifest
 for the jar file to be correctly loaded by the system:
 
 * `Rundeck-Plugin-Version: 1.0`
@@ -717,7 +717,7 @@ The specific service has expectations about
 the way your provider script behaves:
 
 * Exit code of 0 indicates success
-* Any other exit code indiates failure
+* Any other exit code indicates failure
 
 For `NodeExecutor`
 

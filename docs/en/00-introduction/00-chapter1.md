@@ -76,7 +76,7 @@ Many automation tasks cross the boundaries of tool sets. For example,
 deploying software or maintaining an application often involves
 using tools up and down the management tool chain. RunDeck has a simple
 to use interface to create multi-step workflows that might call a
-package mangager, configuration mangement tool, system utilities, or your
+package manager, configuration management tool, system utilities, or your
 own scripts. RunDeck is really meant to help glue tools together and
 in return enable a push button interface you can hand off to others.
 
