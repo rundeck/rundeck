@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.cli;
 
 import com.dtolabs.rundeck.core.CoreException;
 import com.dtolabs.rundeck.core.NodesetFailureException;
+import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionServiceThread;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
@@ -36,6 +37,7 @@ import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Parallel;
 import org.apache.tools.ant.taskdefs.Sequential;
 
+import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.concurrent.Callable;
@@ -50,6 +52,9 @@ public class DefaultNodeDispatcher implements NodeDispatcher{
     public static final String STATUS_LISTENER_REF_ID = DefaultNodeDispatcher.class.getName() + ":status.listener";
     public static final String NODE_NAME_LOCAL_REF_ID = DefaultNodeDispatcher.class.getName() + ":node.name";
     public static final String NODE_USER_LOCAL_REF_ID = DefaultNodeDispatcher.class.getName() + ":node.user";
+    public static final String FWK_PROP_AUTH_CANCEL_MSG = "framework.messages.error.ssh.authcancel";
+    public static final String FWK_PROP_AUTH_CANCEL_MSG_DEFAULT =
+        "Authentication failure connecting to node: \"{0}\". Make sure your resource definitions and credentials are up to date.";
 
     /**
      * Execute a node dispatch request, in serial with parallel threads.
@@ -61,7 +66,7 @@ public class DefaultNodeDispatcher implements NodeDispatcher{
      * @param failedListener listener for results of failed nodes (when keepgoing is true)
      * @param factory        factory to produce executable items given input nodes
      */
-    public void executeNodedispatch(final Project project, final Collection<INodeEntry> nodes,
+    public void executeNodedispatch(final Project project, final Framework framework, final Collection<INodeEntry> nodes,
                                     final int threadcount, final boolean keepgoing,
                                     final FailedNodesListener failedListener,
                                     final NodeCallableFactory factory) {
@@ -111,6 +116,18 @@ public class DefaultNodeDispatcher implements NodeDispatcher{
                         project.log("Failed execution for node: " + node.getNodename() + ": "
                                     + "Connection Timeout (after " + factory.getRemoteTimeout()
                                     + "ms): " + e.getMessage(), e,
+                            Project.MSG_ERR);
+                    } else if (e instanceof BuildException && null != e.getCause()
+                               && e.getCause() instanceof JSchException
+                               && (e.getCause().getMessage().contains("Auth cancel"))) {
+                        final String msgformat;
+                        if (framework.getPropertyLookup().hasProperty(FWK_PROP_AUTH_CANCEL_MSG)) {
+                            msgformat = framework.getProperty(FWK_PROP_AUTH_CANCEL_MSG);
+                        } else {
+                            msgformat = FWK_PROP_AUTH_CANCEL_MSG_DEFAULT;
+                        }
+
+                        project.log(MessageFormat.format(msgformat, node.getNodename(), e.getMessage()), e,
                             Project.MSG_ERR);
                     } else {
                         project.log("Failed execution for node: " + node.getNodename() + ": " + e.getMessage(),
@@ -191,6 +208,18 @@ public class DefaultNodeDispatcher implements NodeDispatcher{
                         project.log("Failed execution for node: " + node.getNodename() + ": "
                                     + "Connection Timeout (after " + factory.getRemoteTimeout()
                                     + "ms): "+e.getMessage(), e,
+                            Project.MSG_ERR);
+                    } else if (e instanceof BuildException && null != e.getCause()
+                               && e.getCause() instanceof JSchException
+                               && (e.getCause().getMessage().contains("Auth cancel"))) {
+                        final String msgformat;
+                        if (framework.getPropertyLookup().hasProperty(FWK_PROP_AUTH_CANCEL_MSG)) {
+                            msgformat = framework.getProperty(FWK_PROP_AUTH_CANCEL_MSG);
+                        } else {
+                            msgformat = FWK_PROP_AUTH_CANCEL_MSG_DEFAULT;
+                        }
+
+                        project.log(MessageFormat.format(msgformat, node.getNodename(), e.getMessage()), e,
                             Project.MSG_ERR);
                     } else {
                         project.log("Failed execution for node: " + node.getNodename() + ": " + e.getMessage(),

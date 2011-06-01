@@ -100,7 +100,7 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy implements N
                 throw new NodesetEmptyException(baseNodeSet);
             }
 
-            nodeDispatcher.executeNodedispatch(new Project(), nodes, baseNodeSet.getThreadCount(),
+            nodeDispatcher.executeNodedispatch(new Project(),framework, nodes, baseNodeSet.getThreadCount(),
                 baseNodeSet.isKeepgoing(), listener.getFailedNodesListener(), this);
             nodesuccess=true;
 

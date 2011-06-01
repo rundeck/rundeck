@@ -219,6 +219,7 @@ class CommandAction extends AbstractAction {
 
         try {
             nodeDispatcher.executeNodedispatch(project,
+                getFramework(),
                 c,
                 getContext().getNodeSet().getThreadCount(),
                 getContext().getNodeSet().isKeepgoing(),
