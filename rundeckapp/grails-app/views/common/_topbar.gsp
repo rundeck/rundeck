@@ -100,7 +100,7 @@ function doCreateProject(){
         <span class="headright">
 
             <g:ifUserInAnyRoles roles="admin,user_admin">
-                <g:link controller="user" action="list"><img src="${resource(dir:'images',file:'icon-small-admin.png')}" width="16px" height="16px" alt=""/>
+                <g:link controller="menu" action="admin"><img src="${resource(dir:'images',file:'icon-small-admin.png')}" width="16px" height="16px" alt=""/>
                     Admin</g:link>
             </g:ifUserInAnyRoles>
             <span class="logininfo">
