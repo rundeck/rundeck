@@ -156,7 +156,7 @@ public class TestCommandAction extends AbstractBaseTest {
 
             final boolean wascalled[]={false};
             action.setNodeDispatcher(new NodeDispatcher() {
-                public void executeNodedispatch(Project project, Collection<INodeEntry> nodes, int threadcount,
+                public void executeNodedispatch(Project project, Framework fwk, Collection<INodeEntry> nodes, int threadcount,
                                                 boolean keepgoing, FailedNodesListener failedListener,
                                                 NodeCallableFactory factory) {
                     wascalled[0] = true;
@@ -190,7 +190,7 @@ public class TestCommandAction extends AbstractBaseTest {
             final NodeEntryImpl nodeentry = new NodeEntryImpl(AbstractBaseTest.localNodeHostname, AbstractBaseTest.localNodeHostname);
             final boolean wascalled[] = {false};
             action.setNodeDispatcher(new NodeDispatcher() {
-                public void executeNodedispatch(Project project, Collection<INodeEntry> nodes, int threadcount,
+                public void executeNodedispatch(Project project, Framework fwk, Collection<INodeEntry> nodes, int threadcount,
                                                 boolean keepgoing, FailedNodesListener failedListener,
                                                 NodeCallableFactory factory) {
                     wascalled[0] = true;

@@ -23,6 +23,7 @@
 */
 package com.dtolabs.rundeck.core.cli;
 
+import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 import org.apache.tools.ant.Project;
@@ -46,7 +47,7 @@ public interface NodeDispatcher {
      * @param failedListener listener for results of failed nodes (when keepgoing is true)
      * @param factory        factory to produce executable items given input nodes
      */
-    public void executeNodedispatch(final Project project, final Collection<INodeEntry> nodes,
+    public void executeNodedispatch(final Project project, final Framework framework, final Collection<INodeEntry> nodes,
                                     final int threadcount, final boolean keepgoing,
                                     final FailedNodesListener failedListener,
                                     final NodeCallableFactory factory);

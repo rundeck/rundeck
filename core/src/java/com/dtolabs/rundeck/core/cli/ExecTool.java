@@ -1156,22 +1156,6 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams {
     public static NodeDispatcher createNodeDispatcher() {
         return new DefaultNodeDispatcher();
     }
-    /**
-     * Execute a node dispatch request, in serial with parallel threads.
-     *
-     * @param project Ant project
-     * @param nodes node set to iterate over
-     * @param threadcount max number of parallel threads
-     * @param keepgoing if true, continue execution even if a node fails
-     * @param failedListener listener for results of failed nodes (when keepgoing is true)
-     * @param factory factory to produce executable items given input nodes
-     */
-    public static void executeNodedispatch(final Project project, final Collection<INodeEntry> nodes,
-                                           final int threadcount, final boolean keepgoing,
-                                           final FailedNodesListener failedListener,
-                                           final NodeCallableFactory factory) {
-        createNodeDispatcher().executeNodedispatch(project, nodes, threadcount, keepgoing, failedListener, factory);
-    }
 
     /**
      * This BuildListener repeats all events to a secondary BuildListener, but converts messageLogged events' priorities
