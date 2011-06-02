@@ -370,7 +370,7 @@ Then add this to the `realm.properties` file with a line like so:
 Then restart RunDeck to ensure it picks up the change and you're done.
 
 
-### Active Directory
+### LDAP and Active Directory
 
 *note* Because the underlying security mechanism relies on JAAS, you are free to use what ever JAAS provider you feel is suitable for your environment.
 
@@ -405,10 +405,14 @@ activedirectory {
     };
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-(2) Update /etc/rundeck/profile
-Update the `RDECK_JVM` in `/etc/rundeck/profile` by changing the following two JVM arguments:
+(2) Update the ``profile``
 
-    export RDECK_JVM="-Djava.security.auth.login.config=/etc/rundeck/jaas-loginmodule.conf \
+* RPM: /etc/rundeck/profile
+* Launcher: $RDECK_BASE/etc/profile
+
+Append the `RDECK_JVM` variable adding the ``java.security.auth.login.config`` and ``loginmodule.name`` properties to use the ``jaas-loginmodule.conf`` and ``activedirectory``:
+
+    export RDECK_JVM="$RDECK_JVM -Djava.security.auth.login.config=/etc/rundeck/jaas-loginmodule.conf \
 	    -Dloginmodule.name=RDpropertyfilelogin \
 	
 to
@@ -418,11 +422,12 @@ to
 
 (3) Restart rundeckd
 
-`sudo /etc/init.d/rundeckd restart`
+* RPM install: `sudo /etc/init.d/rundeckd restart`
+* Launcher install: `$RDECK_BASE/server/sbin/rundeckd restart`
 
-(4) Attempt to logon
+(4) Attempt to login
 
-If everything was configured correctly, you will be able to access RunDeck using your AD credentials.  If something did not go smoothly, look at `/var/log/rundeck/service.log` for stack traces that may indicate what is wrong.
+If everything was configured correctly, you will be able to access RunDeck using your credentials.  If something did not go smoothly, look at `/var/log/rundeck/service.log` for stack traces that may indicate what is wrong.
 
 #### Communicating over secure ldap (ldaps://)
 
