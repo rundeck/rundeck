@@ -90,6 +90,158 @@ When an API path declares its results as an "Item List" this is the format that 
 API Contents
 -----
 
+### System Info ###
+
+Get RunDeck server information and stats.
+
+URL:
+
+    /system/info
+
+Parameters: none
+
+Result: Success response, with included system info and stats in this format:
+
+    <system>
+        <timestamp epoch="1305909785806" unit="ms">
+            <datetime>2011-05-20T16:43:05Z</datetime>
+        </timestamp>
+        <rundeck>
+            <version>1.2.1</version>
+            <build>1.2.1-0-beta</build>
+            <node>Venkman.local</node>
+            <base>/Users/greg/rundeck121</base>
+        </rundeck>
+        <os>
+            <arch>x86_64</arch>
+            <name>Mac OS X</name>
+            <version>10.6.7</version>
+        </os>
+        <jvm>
+            <name>Java HotSpot(TM) 64-Bit Server VM</name>
+            <vendor>Apple Inc.</vendor>
+            <version>19.1-b02-334</version>
+        </jvm>
+        <stats>
+            <uptime duration="300584" unit="ms">
+                <since epoch="1305909485222" unit="ms">
+                    <datetime>2011-05-20T16:38:05Z</datetime>
+                </since>
+            </uptime>
+            <cpu>
+                <loadAverage unit="percent">0.40234375</loadAverage>
+                <processors>4</processors>
+            </cpu>
+            <memory unit="byte">
+                <max>477233152</max>
+                <free>76626216</free>
+                <total>257163264</total>
+            </memory>
+            <scheduler>
+                <running>0</running>
+            </scheduler>
+            <threads>
+                <active>24</active>
+            </threads>
+        </stats>
+    </system>
+
+Description of included elements:
+
+`timestamp` describes the current system time known to the server. The `@epoch`
+attribute includes the milliseconds since the unix epoch.
+
+`datetime`
+
+:   The W3C date and time
+
+`rundeck` includes information about the RunDeck application.
+
+`rundeck/version`
+
+:   RunDeck version
+
+`rundeck/build`
+
+:   RunDeck build stamp
+
+`rundeck/node`
+
+:   Server node name
+
+`rundeck/base`
+
+:   Server base directory
+
+`os/arch`
+
+:   Operating System architecture
+
+`os/name`
+
+:   Operating System Name
+
+`os/version`
+
+:   Operating System Version
+
+`jvm/name`
+
+:   JVM name
+
+`jvm/vendor`
+
+:   JVM vendor
+
+`jvm/version`
+
+:   JVM version
+
+`stats` section includes some system statistics:
+
+`uptime` describes the JVM uptime as duration in ms, and includes absolute
+startup time:
+
+`uptime/since`
+
+:   JVM startup time as time since the unix epoch
+
+`uptime/since/datetime`
+
+:   JVM startup time as W3C date time.
+
+`cpu/loadAverage`
+
+:   JVM load average percentage for the system for the previous minute (see [getSystemLoadAverage](http://download.oracle.com/javase/6/docs/api/java/lang/management/OperatingSystemMXBean.html#getSystemLoadAverage()))
+
+`cpu/processors`
+
+:   Number of available system processors. note that loadAverage might be
+    calculated based on the total number of available processors
+
+The `memory` section describes memory usage in bytes:
+
+`max`
+
+:   Maximum JVM memory that can be allocated
+
+`free`
+
+:   Free memory of the allocated memory
+
+`total`
+
+:   Total allocated memory for the JVM
+
+`scheduler/running`
+
+:   Number of running jobs in the scheduler
+
+`threads/active`
+
+:   Number of active Threads in the JVM
+
+
 ### Listing Jobs ###
 
 List the jobs that exist for a project.
