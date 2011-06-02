@@ -149,5 +149,5 @@
     </span>
 </g:if>
 <g:elseif test="${values}">
-    <g:img file="icon-tiny-ok.png" title="Remote option values loaded from URL: ${srcUrl.encodeAsHTML()}"/>
+    %{--<g:img file="icon-tiny-ok.png" title="Remote option values loaded from URL: ${srcUrl.encodeAsHTML()}"/>--}%
 </g:elseif>
