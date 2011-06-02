@@ -224,4 +224,17 @@
         background: transparent url("${resource(dir:'images',file:'icon-small-folder.png')}") top left no-repeat;
     }
 
+    .remotestatus.ok {
+        width: 12px;
+        background: transparent url("${resource(dir:'images',file:'icon-tiny-ok.png')}") center left no-repeat;
+    }
+    .remotestatus.error {
+        width: 12px;
+        background: transparent url("${resource(dir:'images',file:'icon-tiny-warn.png')}") center left no-repeat;
+    }
+
+    .remoteoptionfield:hover .remotestatus {
+        width: 12px;
+        background: transparent url("${resource(dir:'images',file:'icon-tiny-refresh.png')}") center left no-repeat;
+    }
 </style>
