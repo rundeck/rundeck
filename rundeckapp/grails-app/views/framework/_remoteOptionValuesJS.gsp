@@ -24,30 +24,48 @@
 
 <script type="text/javascript">
         //add a reload button for remote option values
-        function _addReloadRemoteOptionValues(elem, schedId, optName, prefix, value) {
-            var btn = new Element('span');
+        function _addReloadRemoteOptionValues(elem, schedId, optName, prefix, value,reloader,obs) {
+            var btn;
+            var icn;
+            if($(reloader)){
+                btn=$(reloader);
+                icn=$(reloader).down('span.remotestatus');
+                icn.show();
+            }else{
+                btn= new Element('span');
+                icn= new Element('span');
+            }
             btn.addClassName('action');
             btn.addClassName('textbtn');
             if($(elem).innerHTML.indexOf("_error_detail")<0){
-                btn.addClassName('minor');
+                icn.removeClassName('error');
+                icn.addClassName('ok');
+            }else{
+                icn.removeClassName('ok');
+                icn.addClassName('error');
             }
 
             btn.setAttribute('title','Click to reload the remote option values for: '+optName);
-            Event.observe(btn,'click',function(e){
-                //look for selected value
-                var newvalue=value;
-                if ($(elem).down('input')) {
-                    newvalue = $(elem).down('input').value;
-                }else if ($(elem).down('select')) {
-                    newvalue = $(elem).down('select').value;
-                }
-                _loadRemoteOptionValues(elem,schedId,optName,prefix,newvalue);
-            });
-            btn.innerHTML='reload';
-            $(elem).insert({bottom:btn});
+            if(obs){
+                Event.observe(btn,'click',function(e){
+                    //look for selected value
+                    var newvalue=value;
+                    if ($(elem).down('input')) {
+                        newvalue = $(elem).down('input').value;
+                    }else if ($(elem).down('select')) {
+                        newvalue = $(elem).down('select').value;
+                    }
+                    _loadRemoteOptionValues(elem,schedId,optName,prefix,newvalue,reloader,false);
+                });
+            }
+            if(!$(reloader)){
+                btn.innerHTML='reload';
+                $(btn).insert({bottom:icn});
+                $(elem).insert({bottom:btn});
+            }
         }
         //load remote values
-        function _loadRemoteOptionValues(elem,schedId,optName,prefix,value){
+        function _loadRemoteOptionValues(elem,schedId,optName,prefix,value,reloader, obs){
             $(elem).loading('Loading option values&hellip;');
             new Ajax.Updater(
                 elem,
@@ -58,7 +76,7 @@
                     onComplete: function(transport) {
                         if (transport.request.success()) {
                             $(elem).show();
-                            _addReloadRemoteOptionValues(elem,schedId,optName,prefix,value);
+                            _addReloadRemoteOptionValues(elem,schedId,optName,prefix,value,reloader, obs);
                         }
                     }
                 }
