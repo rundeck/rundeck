@@ -26,11 +26,9 @@ package com.dtolabs.rundeck.core.execution.impl.jsch;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
-import com.dtolabs.rundeck.core.execution.dispatch.ParallelNodeDispatcher;
 import com.dtolabs.rundeck.core.execution.impl.common.AntSupport;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
@@ -39,11 +37,8 @@ import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
 import com.jcraft.jsch.JSchException;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
-import org.apache.tools.ant.Task;
-import org.apache.tools.ant.taskdefs.Sequential;
 
 import java.text.MessageFormat;
-import java.util.Map;
 
 /**
  * JschNodeExecutor is ...
@@ -80,6 +75,7 @@ public class JschNodeExecutor implements NodeExecutor {
 
         boolean success = false;
         final ExtSSHExec sshexec;
+        final int timeout = getFrameworkSSHTimeout(framework);
         //perform jsch sssh command
         try {
             sshexec = buildSSHTask(context, node, command, project, framework);
@@ -91,8 +87,16 @@ public class JschNodeExecutor implements NodeExecutor {
             sshexec.execute();
             success = true;
         } catch (BuildException e) {
-            if (null != e.getCause() && e.getCause() instanceof JSchException && e.getCause().getMessage().contains(
-                "Auth cancel")) {
+            if ((e.getMessage().contains("Timeout period exceeded, connection dropped"))) {
+                errormsg =
+                    "Failed execution for node: " + node.getNodename() + ": Execution Timeout period exceeded (after "
+                    + timeout + "ms), connection dropped";
+            } else if (null != e.getCause() && e.getCause() instanceof JSchException && (e.getCause().getMessage()
+                .contains("timeout:"))) {
+                errormsg = "Failed execution for node: " + node.getNodename() + ": Connection Timeout (after " + timeout
+                           + "ms): " + e.getMessage();
+            } else if (null != e.getCause() && e.getCause() instanceof JSchException && e.getCause().getMessage()
+                .contains("Auth cancel")) {
                 String msgformat = FWK_PROP_AUTH_CANCEL_MSG_DEFAULT;
                 if (framework.getPropertyLookup().hasProperty(FWK_PROP_AUTH_CANCEL_MSG)) {
                     msgformat = framework.getProperty(FWK_PROP_AUTH_CANCEL_MSG);
@@ -132,10 +136,16 @@ public class JschNodeExecutor implements NodeExecutor {
         SSHTaskBuilder.BuilderException {
 
         //XXX:TODO use node attributes to specify ssh key/timeout
-        int timeout = 0;
+
         /**
          * configure an SSH timeout
          */
+        final int timeout = getFrameworkSSHTimeout(framework);
+        return SSHTaskBuilder.build(nodeentry, args, project, framework, timeout, context.getDataContext());
+    }
+
+    static int getFrameworkSSHTimeout(final Framework framework) {
+        int timeout=0;
         if (framework.getPropertyLookup().hasProperty(Constants.SSH_TIMEOUT_PROP)) {
             final String val = framework.getProperty(Constants.SSH_TIMEOUT_PROP);
             try {
@@ -146,7 +156,7 @@ public class JschNodeExecutor implements NodeExecutor {
 //                      + " defaulting to: 0 (forever)");
             }
         }
-        return SSHTaskBuilder.build(nodeentry, args, project, framework, timeout, context.getDataContext());
+        return timeout;
     }
 
 
