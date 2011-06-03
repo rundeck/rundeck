@@ -501,14 +501,14 @@ var applinks={
         </tr>
     </tbody>
     <tbody class="savedJobFields" style="${wdgt.styleVisible(if:wasSaved)}" >
-    <g:set var="defSuccess" value="${scheduledExecution.id?scheduledExecution.findNotification('onsuccess','email'):null}"/>
+    <g:set var="defSuccess" value="${scheduledExecution.findNotification('onsuccess','email')}"/>
     <g:set var="isSuccess" value="${params.notifySuccessRecipients && 'true'==params.notifyOnsuccess ||  defSuccess}"/>
-    <g:set var="defSuccessUrl" value="${scheduledExecution.id?scheduledExecution.findNotification('onsuccess','url'):null}"/>
+    <g:set var="defSuccessUrl" value="${scheduledExecution.findNotification('onsuccess','url')}"/>
     <g:set var="isSuccessUrl" value="${params.notifySuccessUrl && 'true'==params.notifyOnsuccessUrl ||  defSuccessUrl}"/>
 
-    <g:set var="defFailure" value="${scheduledExecution.id?scheduledExecution.findNotification('onfailure','email'):null}"/>
+    <g:set var="defFailure" value="${scheduledExecution.findNotification('onfailure','email')}"/>
     <g:set var="isFailure" value="${params.notifyFailureRecipients && 'true'==params.notifyOnfailure ||  defFailure}"/>
-    <g:set var="defFailureUrl" value="${scheduledExecution.id?scheduledExecution.findNotification('onfailure','url'):null}"/>
+    <g:set var="defFailureUrl" value="${scheduledExecution.findNotification('onfailure','url')}"/>
     <g:set var="isFailureUrl" value="${params.notifyFailureUrl && 'true'==params.notifyOnfailureUrl ||  defFailureUrl}"/>
     <tr>
         <td>
