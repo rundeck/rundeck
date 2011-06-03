@@ -2713,8 +2713,13 @@ class ScheduledExecutionController  {
         //convert api parameters to node filter parameters
         def filters = FrameworkController.extractApiNodeFilterParams(params)
         if (filters) {
+            inparams.extra['_replaceNodeFilters']='true'
+            inparams.extra['doNodedispatch']=true
             filters.each {k, v ->
                 inparams.extra[k] = v
+            }
+            if(null==inparams.extra['nodeExcludePrecedence']){
+                inparams.extra['nodeExcludePrecedence'] = true
             }
         }
 
@@ -2795,8 +2800,12 @@ class ScheduledExecutionController  {
         //convert api parameters to node filter parameters
         def filters=FrameworkController.extractApiNodeFilterParams(params)
         if(filters){
+            filters['doNodedispatch']=true
             filters.each{k,v->
                 params[k]=v
+            }
+            if (null == params['nodeExcludePrecedence']) {
+                params['nodeExcludePrecedence'] = true
             }
         }
 
@@ -2863,8 +2872,12 @@ class ScheduledExecutionController  {
         //convert api parameters to node filter parameters
         def filters=FrameworkController.extractApiNodeFilterParams(params)
         if(filters){
+            filters['doNodedispatch'] = true
             filters.each{k,v->
                 params[k]=v
+            }
+            if (null == params['nodeExcludePrecedence']) {
+                params['nodeExcludePrecedence'] = true
             }
         }
 

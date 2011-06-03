@@ -158,7 +158,7 @@ class ExecutionJob implements InterruptableJob {
         }
         if(!execmap){
             //failed to start
-            return false
+            return [success:false]
         }
 
         int killcount=0;

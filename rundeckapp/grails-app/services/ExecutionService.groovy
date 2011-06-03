@@ -760,8 +760,8 @@ class ExecutionService implements ApplicationContextAware, Executor{
      */
     public static NodeSet filtersAsNodeSet(BaseNodeFilters econtext) {
         final NodeSet nodeset = new NodeSet();
-        nodeset.createExclude(excludeFiltersAsNodeSetMap(econtext)).setDominant(econtext.nodeExcludePrecedence);
-        nodeset.createInclude(includeFiltersAsNodeSetMap(econtext)).setDominant(!econtext.nodeExcludePrecedence);
+        nodeset.createExclude(excludeFiltersAsNodeSetMap(econtext)).setDominant(econtext.nodeExcludePrecedence ? true : false);
+        nodeset.createInclude(includeFiltersAsNodeSetMap(econtext)).setDominant(!econtext.nodeExcludePrecedence ? true : false);
         return nodeset
     }
     /**
@@ -769,9 +769,9 @@ class ExecutionService implements ApplicationContextAware, Executor{
      */
     public static NodeSet filtersAsNodeSet(ExecutionContext econtext) {
         final NodeSet nodeset = new NodeSet();
-        nodeset.createExclude(excludeFiltersAsNodeSetMap(econtext)).setDominant(econtext.nodeExcludePrecedence);
-        nodeset.createInclude(includeFiltersAsNodeSetMap(econtext)).setDominant(!econtext.nodeExcludePrecedence);
-        nodeset.setKeepgoing(econtext.nodeKeepgoing)
+        nodeset.createExclude(excludeFiltersAsNodeSetMap(econtext)).setDominant(econtext.nodeExcludePrecedence ? true : false);
+        nodeset.createInclude(includeFiltersAsNodeSetMap(econtext)).setDominant(!econtext.nodeExcludePrecedence ? true : false);
+        nodeset.setKeepgoing(econtext.nodeKeepgoing?true:false)
         nodeset.setThreadCount(econtext.nodeThreadcount?econtext.nodeThreadcount:1)
         return nodeset
     }
