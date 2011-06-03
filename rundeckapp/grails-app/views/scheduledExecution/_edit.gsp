@@ -501,10 +501,10 @@ var applinks={
         </tr>
     </tbody>
     <tbody class="savedJobFields" style="${wdgt.styleVisible(if:wasSaved)}" >
-    <g:set var="defSuccess" value="${scheduledExecution.id?scheduledExecution.findNotification('onsuccess'):null}"/>
+    <g:set var="defSuccess" value="${scheduledExecution.findNotification('onsuccess')}"/>
     <g:set var="isSuccess" value="${params.notifySuccessRecipients && 'true'==params.notifyOnsuccess ||  defSuccess}"/>
 
-    <g:set var="defFailure" value="${scheduledExecution.id?scheduledExecution.findNotification('onfailure'):null}"/>
+    <g:set var="defFailure" value="${scheduledExecution.findNotification('onfailure')}"/>
     <g:set var="isFailure" value="${params.notifyFailureRecipients && 'true'==params.notifyOnfailure ||  defFailure}"/>
     <tr>
         <td>
