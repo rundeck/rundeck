@@ -32,6 +32,7 @@ webrealms{
         JS.urlpattern='/js/*'
         Feed.urlpattern='/feed/*'
         Test.urlpattern='/test/*'
+        Api.urlpattern='/api/*'
         all{
             urlpattern='/*'
             authconstraint{

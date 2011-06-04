@@ -54,8 +54,8 @@ public class RoleService {
         if(roleset){
             def foundrole=false;
             roleset.each{role->
-                log.debug("testRole: ${role}: "+request.isUserInRole(role));
-                if(request.isUserInRole(role)){
+                log.debug("testRole: ${role}: "+request.isUserInRole(role)+" tokenauth: "+ isSubjectInRole(request, role));
+                if(request.isUserInRole(role) || isSubjectInRole(request, role)){
                     foundrole= true;
                 }
             }
@@ -63,10 +63,14 @@ public class RoleService {
                 return foundrole
             }
         }else if(rolename){
-            log.debug("didn't find mappings for role: ${rolename}, checking as plain role: "+request.isUserInRole(rolename))
-            return request.isUserInRole(rolename);
+            log.debug("didn't find mappings for role: ${rolename}, checking as plain role: "+request.isUserInRole(rolename) + " tokenauth: "+ isSubjectInRole(request, rolename))
+            return request.isUserInRole(rolename)|| isSubjectInRole(request, rolename)
         }
         return false
+    }
+
+    private def isSubjectInRole(request, role) {
+        return request.subject?.principals?.find {it instanceof com.dtolabs.rundeck.core.authentication.Group && it.name == role}?true:false
     }
 
     /**

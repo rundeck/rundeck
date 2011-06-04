@@ -58,10 +58,14 @@ public class ApiRequestFilters {
                         }
                     }
                     if(unsupported){
-                        flash.errorCode='api.error.api-version.unsupported'
-                        flash.errorArgs=[params.api_version,request.forwardURI,"Current version: "+API_CURRENT_VERSION]
-                        redirect(controller:'api',action:'renderError')
-                        return false
+                        render(contentType: "text/xml", encoding: "UTF-8") {
+                            result(error: "true", apiversion: API_CURRENT_VERSION) {
+                                delegate.'error' {
+                                    message("Unsupported API Version \"${params.api_version}\". API Request: ${request.forwardURI}. Reason: Current version: ${API_CURRENT_VERSION}")
+                                }
+                            }
+                        }
+                        return false;
                     }
                     request.api_version=reqversion
                     return true
