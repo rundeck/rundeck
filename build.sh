@@ -37,9 +37,9 @@ JETTYVERS=6.1.21
 # grails, where grails does not listen to the gradle config content for proxies
 export PROXY_DEFS=""
 if [ -n "$http_proxy" ]; then
-	# assume that http_proxy is of format http://<host>:<port>
+	# assume that http_proxy is of format http://<host>:<port> or <host>:<port>
 	gradle_proxy_host=`echo $http_proxy|sed 's/http:\/\///'|awk -F ':' '{ print $1 }'`
-	gradle_proxy_port=`echo $http_proxy|awk -F ':' '{ print $3 }'`
+	gradle_proxy_port=`echo $http_proxy|awk -F ':' '{ print $NF }'`
 	export PROXY_DEFS="-Dhttp.proxyHost=$gradle_proxy_host -Dhttp.proxyPort=$gradle_proxy_port"
 fi
 
