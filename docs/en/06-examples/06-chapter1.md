@@ -77,7 +77,6 @@ anv1, anv2, anv3, anv4, anv5:
 File listing: resources.xml
 
     <?xml version="1.0" encoding="UTF-8"?>
-    <!DOCTYPE project PUBLIC "-//DTO Labs Inc.//DTD Resources Document 1.0//EN" "project.dtd">
 
     <project>
       <node name="anv1" type="Node"
