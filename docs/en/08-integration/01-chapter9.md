@@ -197,7 +197,7 @@ Simple Object:
 
     { "Name": "value1", "Name2":"value2" }
 
-This will populate the select menu to show the labels, and .
+This will populate the select menu to show the names and use the values.
 
 Name Value List:
  
