@@ -517,7 +517,7 @@ class FrameworkController  {
             Streams.copyStream(request.getInputStream(),new FileOutputStream(tempfile))
 
 
-            final nodes = Nodes.create(project, tempfile, format)
+            final nodes = Nodes.create(tempfile, format)
             if(!nodes.isValid()){
                 //invalid data
                 flash.error = "Invalid data: ${nodes.getParserException().getMessage()}"

@@ -279,7 +279,8 @@ public class FrameworkProject extends FrameworkResourceParent {
     public Nodes getNodes(final File nodesFile, final Nodes.Format format) throws NodeFileParserException {
         final Long modtime = nodesFile.lastModified();
         if ( null == nodesCache.get(nodesFile) || !modtime.equals(nodesFileTimes.get(nodesFile)) ) {
-            final Nodes nodes = Nodes.create(this, nodesFile, format);
+            final Nodes nodes = Nodes.create( nodesFile, format);
+            nodes.addFrameworkNode(this);
             nodesFileTimes.put(nodesFile, modtime);
             nodesCache.put(nodesFile, nodes);
             return nodes;
