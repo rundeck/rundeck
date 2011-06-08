@@ -386,7 +386,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
      * Set the result status to FAIL for any Executions that are not complete
      */
     def cleanupRunningJobs(){
-        Execution.findByDateCompleted(null).each{Execution e->
+        Execution.findAllByDateCompleted(null).each{Execution e->
             saveExecutionState(e.scheduledExecution?.id, e.id, [status: String.valueOf(false), dateCompleted: new Date(), cancelled: true],null)
             log.error("Stale Execution cleaned up: [${e.id}]")
         }
