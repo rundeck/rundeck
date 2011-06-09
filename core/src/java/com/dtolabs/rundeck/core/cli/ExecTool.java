@@ -470,7 +470,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
             if (null != result.getMessage()) {
                 out.println(result.getMessage());
             }
-            out.println("Queued job ID: " + result.getItem().getId() + " <" + result.getItem().getUrl() + ">");
+            out.println("Queued Execution ID: " + result.getItem().getId() + " <" + result.getItem().getUrl() + ">");
         } else {
             throw new CoreException(
                 "Queued job request failed: " + (null != result ? result.getMessage() : "Result was null"));
