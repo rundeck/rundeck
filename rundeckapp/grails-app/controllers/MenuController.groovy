@@ -266,6 +266,8 @@ class MenuController {
          'group/name' -> [ jobs...]
          */
         def jobgroups=[:]
+        
+				
         schedlist.each{ ScheduledExecution se->
             authorizemap[se.id.toString()]=jobauthorizations[UserAuth.WF_READ]?.contains(se.id.toString())
             if(authorizemap[se.id.toString()] || roleService.isUserInAnyRoles(request,['admin','job_view_unauthorized'])){
@@ -282,6 +284,21 @@ class MenuController {
             }
 
         }
+		
+				// add empty hierarchy nodes to allow for a real tree structure layout
+				def missinggroups = [:]
+				jobgroups.each { k, v ->
+					def splittedgroups = k.split('/')
+					splittedgroups.eachWithIndex { item, idx ->
+						def thepath = splittedgroups[0..idx].join('/')
+						if(!jobgroups.containsKey(thepath)) {
+							missinggroups[thepath]=[]
+							log.debug("Adding empty job group $thepath")
+						}
+					}
+				}
+				jobgroups.putAll(missinggroups)
+		
         schedlist=newschedlist
         log.debug("listWorkflows(viewable): "+(System.currentTimeMillis()-viewable));
         long last=System.currentTimeMillis()
@@ -475,4 +492,5 @@ class MenuController {
         return new ExecutionController().renderApiExecutionListResultXML(results.nowrunning)
     }
 }
+
 
