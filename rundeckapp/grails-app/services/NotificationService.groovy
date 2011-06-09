@@ -66,7 +66,7 @@ public class NotificationService {
                               body( view:"/execution/mailNotification/status", model: [execution: exec,scheduledExecution:source, msgtitle:subjectmsg,nodestatus:content.nodestatus])
                             }
                         }catch(Exception e){
-                            System.err.println("Error sending notification email: "+e.getMessage());
+                            log.error("Error sending notification email: "+e.getMessage());
                         }
                     }
                     didsend= true
@@ -109,15 +109,16 @@ public class NotificationService {
                         //perform token expansion within URL.
                         String newurlstr=expandWebhookNotificationUrl(urlstr,exec,source,trigger)
                         try{
-                            if(!postDataUrl(newurlstr,xmlStr,trigger, state,exec.id.toString())){
+                            def result= postDataUrl(newurlstr, xmlStr, trigger, state, exec.id.toString())
+                            if(!result.success){
                                 webhookfailure=true
-                                log.trace("Notification failed [${n.eventTrigger},${state},${exec.id}]; URL ${newurlstr}")
+                                log.error("Notification failed [${n.eventTrigger},${state},${exec.id}]; URL ${newurlstr}: ${result.error}")
                             }else if (log.traceEnabled) {
                                 log.trace("Notification succeeded [${n.eventTrigger},${state},${exec.id}]; URL ${newurlstr}")
                             }
                         } catch (Throwable t) {
                             webhookfailure=true
-                            System.err.println("Notification failed [${n.eventTrigger},${state},${exec.id}]; URL ${newurlstr}: " + t.message);
+                            log.error("Notification failed [${n.eventTrigger},${state},${exec.id}]; URL ${newurlstr}: " + t.message);
                             if (log.traceEnabled) {
                                 log.trace("Notification failed", t)
                             }
@@ -125,10 +126,10 @@ public class NotificationService {
                     }
                     didsend=!webhookfailure
                 }else{
-                    System.err.println("Unsupported notification type: " + n.type);
+                    log.error("Unsupported notification type: " + n.type);
                 }
                 }catch(Throwable t){
-                    System.err.println("Error sending notification: ${n}: "+t.message);
+                    log.error("Error sending notification: ${n}: "+t.message);
                     if (log.traceEnabled) {
                         log.trace("Notification failed",t)
                     }
@@ -168,7 +169,7 @@ public class NotificationService {
         return srcUrl
     }
 
-    static boolean postDataUrl(String url, String xmlstr, String trigger, String status, String id, rptCount=1, backoff=2){
+    static Map postDataUrl(String url, String xmlstr, String trigger, String status, String id, rptCount=1, backoff=2){
         int count=0;
         int wait=1000;
         int timeout=15
@@ -214,9 +215,9 @@ public class NotificationService {
 
         }
         if(!complete){
-            System.err.println("Unable to POST notification after ${count} tries: ${trigger} for execution ${id} (${status}) to ${url}: ${error}");
+            return [success:complete,error:"Unable to POST notification after ${count} tries: ${trigger} for execution ${id} (${status}): ${error}"]
         }
-        return complete
+        return [success:complete]
     }
 
 }
