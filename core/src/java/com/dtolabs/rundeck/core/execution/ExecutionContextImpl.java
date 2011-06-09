@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.utils.NodeSet;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -43,10 +44,13 @@ public class ExecutionContextImpl implements ExecutionContext {
     private Map<String, Map<String, String>> dataContext;
     private ExecutionListener executionListener;
     private Framework framework;
+    private File nodesFile;
 
-    private ExecutionContextImpl(String frameworkProject, String user, NodeSet nodeSet, String[] args, int loglevel,
-                                 Map<String, Map<String, String>> dataContext, ExecutionListener executionListener,
-                                 final Framework framework) {
+    private ExecutionContextImpl(final String frameworkProject, final String user, final NodeSet nodeSet,
+                                 final String[] args, final int loglevel,
+                                 final Map<String, Map<String, String>> dataContext,
+                                 final ExecutionListener executionListener,
+                                 final Framework framework, final File nodesFile) {
         this.frameworkProject = frameworkProject;
         this.user = user;
         this.nodeSet = nodeSet;
@@ -55,31 +59,46 @@ public class ExecutionContextImpl implements ExecutionContext {
         this.dataContext = dataContext;
         this.executionListener = executionListener;
         this.framework = framework;
+        this.nodesFile = nodesFile;
     }
 
     /**
      * Create a new ExecutionContext with the specified values
      */
-    public static ExecutionContextImpl createExecutionContextImpl(String frameworkProject, String user, NodeSet nodeSet,
-                                                                  String[] args, int loglevel,
-                                                                  Map<String, Map<String, String>> dataContext,
-                                                                  ExecutionListener executionListener,
+    public static ExecutionContextImpl createExecutionContextImpl(final String frameworkProject, final String user,
+                                                                  final NodeSet nodeSet,
+                                                                  final String[] args, final int loglevel,
+                                                                  final Map<String, Map<String, String>> dataContext,
+                                                                  final ExecutionListener executionListener,
                                                                   final Framework framework) {
+        return createExecutionContextImpl(frameworkProject, user, nodeSet, args, loglevel, dataContext,
+            executionListener, framework, null);
+    }
+
+    /**
+     * Create a new ExecutionContext with the specified values
+     */
+    public static ExecutionContextImpl createExecutionContextImpl(final String frameworkProject, final String user,
+                                                                  final NodeSet nodeSet,
+                                                                  final String[] args, final int loglevel,
+                                                                  final Map<String, Map<String, String>> dataContext,
+                                                                  final ExecutionListener executionListener,
+                                                                  final Framework framework, final File nodesFile) {
         return new ExecutionContextImpl(frameworkProject, user, nodeSet, args, loglevel, dataContext,
-            executionListener, framework);
+            executionListener, framework, nodesFile);
     }
 
     /**
      * Create a new ExecutionContext with a single node nodeset value, and all other values specified
      */
-    public static ExecutionContextImpl createExecutionContextImpl(String frameworkProject, String user,
-                                                                  INodeEntry singleNode,
-                                                                  String[] args, int loglevel,
-                                                                  Map<String, Map<String, String>> dataContext,
-                                                                  ExecutionListener executionListener,
-                                                                  final Framework framework) {
+    public static ExecutionContextImpl createExecutionContextImpl(final String frameworkProject, final String user,
+                                                                  final INodeEntry singleNode,
+                                                                  final String[] args, final int loglevel,
+                                                                  final Map<String, Map<String, String>> dataContext,
+                                                                  final ExecutionListener executionListener,
+                                                                  final Framework framework, final File nodesFile) {
         return new ExecutionContextImpl(frameworkProject, user, new NodeSet(singleNode), args, loglevel, dataContext,
-            executionListener, framework);
+            executionListener, framework, nodesFile);
     }
 
     /**
@@ -89,7 +108,7 @@ public class ExecutionContextImpl implements ExecutionContext {
                                                                   final INodeEntry singleNode) {
         return new ExecutionContextImpl(context.getFrameworkProject(), context.getUser(), new NodeSet(singleNode),
             context.getArgs(), context.getLoglevel(), context.getDataContext(), context.getExecutionListener(),
-            context.getFramework());
+            context.getFramework(), context.getNodesFile());
     }
 
     /**
@@ -99,7 +118,7 @@ public class ExecutionContextImpl implements ExecutionContext {
                                                                   final Map<String, Map<String, String>> dataContext) {
         return new ExecutionContextImpl(context.getFrameworkProject(), context.getUser(), context.getNodeSet(),
             context.getArgs(), context.getLoglevel(), dataContext, context.getExecutionListener(),
-            context.getFramework());
+            context.getFramework(), context.getNodesFile());
     }
 
     public String getFrameworkProject() {
@@ -134,7 +153,7 @@ public class ExecutionContextImpl implements ExecutionContext {
         return framework;
     }
 
-    public void setFramework(Framework framework) {
-        this.framework = framework;
+    public File getNodesFile() {
+        return nodesFile;
     }
 }

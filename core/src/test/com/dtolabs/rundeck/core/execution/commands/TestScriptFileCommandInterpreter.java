@@ -190,6 +190,10 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
             public ExecutionListener getExecutionListener() {
                 return null;
             }
+
+            public File getNodesFile() {
+                return null;
+            }
         };
         final String testScript = "a script";
 
@@ -313,6 +317,10 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
             }
 
             public ExecutionListener getExecutionListener() {
+                return null;
+            }
+
+            public File getNodesFile() {
                 return null;
             }
         };
@@ -446,6 +454,10 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
             public ExecutionListener getExecutionListener() {
                 return null;
             }
+
+            public File getNodesFile() {
+                return null;
+            }
         };
         final String testScript = "a script";
 
@@ -557,6 +569,11 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
             public ExecutionListener getExecutionListener() {
                 return null;
             }
+
+
+            public File getNodesFile() {
+                return null;
+            }
         };
         final String testScript = "a script";
 
@@ -664,6 +681,10 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
             }
 
             public ExecutionListener getExecutionListener() {
+                return null;
+            }
+
+            public File getNodesFile() {
                 return null;
             }
         };
@@ -795,6 +816,10 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
             public ExecutionListener getExecutionListener() {
                 return null;
             }
+
+            public File getNodesFile() {
+                return null;
+            }
         };
         final InputStream inputStream = new ByteArrayInputStream(new byte[]{0});
 
@@ -920,6 +945,10 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
             }
 
             public ExecutionListener getExecutionListener() {
+                return null;
+            }
+
+            public File getNodesFile() {
                 return null;
             }
         };

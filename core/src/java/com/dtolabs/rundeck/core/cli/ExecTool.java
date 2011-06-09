@@ -111,9 +111,9 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
                 "true/false. if true, exclusion filters have precedence over inclusion filters");
         options.addOption("s", "scriptfile", true, "scriptfile script file");
         options.addOption("S", "stdin", false, "read script from stdin");
-        options.addOption("N", "nodesfile", true, "Path to arbitrary nodes file");
+        options.addOption("N", "nodesfile", true, "Path to arbitrary nodes file (with -L/--noqueue only)");
         options.addOption(NO_QUEUE_FLAG, "noqueue", false,
-            "Run locallay, do not send the execution to the command dispatcher queue");
+            "Run locally, do not send the execution to the command dispatcher queue");
         options.addOption("Q", "queue", false,
             "Send the execution to the command dispatcher queue (default behavior)");
         options.addOption("z", "terse", false, "leave log messages unadorned");
@@ -141,6 +141,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
 
     // Set to the value of -N,--nodeslist
     private String argNodesFile;
+    private File nodesFile;
 
     /**
      * Create a new ExecTool initialized at the RDECK_BASE location via System property
@@ -264,10 +265,14 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
         }
 
         if (cli.hasOption('N')) {
+            if(!argNoQueue){
+                throw new IllegalArgumentException("-N option requires -L/--noqueue");
+            }
             if (!new File(cli.getOptionValue('N')).exists()) {
-                throw new IllegalArgumentException("specified nodes  file does not exist");
+                throw new IllegalArgumentException("specified nodes file does not exist");
             }
             argNodesFile = cli.getOptionValue('N');
+            nodesFile=new File(argNodesFile);
         }
         if (cli.hasOption("h")) {
             help();
@@ -1030,6 +1035,10 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
 
     public Map<String, Map<String, String>> getDataContext() {
         return null;
+    }
+
+    public File getNodesFile() {
+        return nodesFile;
     }
 
     /**
