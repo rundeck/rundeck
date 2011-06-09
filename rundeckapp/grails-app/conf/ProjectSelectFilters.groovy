@@ -64,6 +64,9 @@ public class ProjectSelectFilters {
                     //only default the project if not an api request
                     return
                 }
+                if(controllerName=='user' && ( actionName in ['logout','login'] )){
+                    return
+                }
                 if (session && session.user) {
                     //get user authorizations
                     session.projectSelectFilterApplied = true
