@@ -113,6 +113,10 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                 public ExecutionListener getExecutionListener() {
                     return null;
                 }
+
+                public File getNodesFile() {
+                    return null;
+                }
             };
             final NodeDispatcher nodeDispatcher = service.getNodeDispatcher(context);
             assertNotNull(nodeDispatcher);
@@ -156,6 +160,10 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                 }
 
                 public ExecutionListener getExecutionListener() {
+                    return null;
+                }
+
+                public File getNodesFile() {
                     return null;
                 }
             };
@@ -203,6 +211,10 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                 public ExecutionListener getExecutionListener() {
                     return null;
                 }
+
+                public File getNodesFile() {
+                    return null;
+                }
             };
             final NodeDispatcher nodeDispatcher = service.getNodeDispatcher(context);
             assertNotNull(nodeDispatcher);
@@ -246,6 +258,10 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                 }
 
                 public ExecutionListener getExecutionListener() {
+                    return null;
+                }
+
+                public File getNodesFile() {
                     return null;
                 }
             };

@@ -52,7 +52,7 @@ public class NodeDispatcherService extends BaseProviderRegistryService<NodeDispa
         final NodeSet nodeset = context.getNodeSet();
         Collection<INodeEntry> nodes = null;
         try {
-            nodes = framework.filterNodes(nodeset, context.getFrameworkProject());
+            nodes = framework.filterNodes(nodeset, context.getFrameworkProject(), context.getNodesFile());
         } catch (NodeFileParserException e) {
             throw new ExecutionServiceException(e, getName());
         }

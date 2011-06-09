@@ -71,7 +71,7 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
             final Collection<INodeEntry> nodes;
             final String project = executionContext.getFrameworkProject();
             try {
-                nodes = framework.filterNodes(nodeSet, project);
+                nodes = framework.filterNodes(nodeSet, project, executionContext.getNodesFile());
             } catch (NodeFileParserException e) {
                 throw new CoreException("Error parsing node resource file: " + e.getMessage(), e);
             }
