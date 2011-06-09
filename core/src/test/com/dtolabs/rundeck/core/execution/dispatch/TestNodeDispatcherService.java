@@ -44,6 +44,7 @@ import java.util.*;
 public class TestNodeDispatcherService extends AbstractBaseTest {
     private static final String PROJ_NAME = "TestNodeDispatcherService";
     private File resourcesfile;
+    private File extResourcesfile;
 
     public TestNodeDispatcherService(String name) {
         super(name);
@@ -61,6 +62,7 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
         } catch (IOException e) {
             throw new RuntimeException("Caught Setup exception: " + e.getMessage(), e);
         }
+        extResourcesfile = new File("src/test/com/dtolabs/rundeck/core/common/test-nodes2.xml");
 
     }
 
@@ -269,6 +271,109 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
             assertNotNull(nodeDispatcher);
             assertTrue(nodeDispatcher instanceof SequentialNodeDispatcher);
 
+        }
+    }
+
+    /**
+     * Test specifying an external nodes file
+     */
+    public void testExtResources() throws Exception {
+        final Framework frameworkInstance = getFrameworkInstance();
+        final NodeDispatcherService service = NodeDispatcherService.getInstanceForFramework(
+            frameworkInstance);
+        {   //use test-1 file
+            final NodeSet nodeSet = new NodeSet();
+            nodeSet.createInclude().setTags("priority1"); //matches single nodes in test1 file
+            nodeSet.setThreadCount(2);
+            //get node dispatcher for a context.  nodeset<2 and threadcount>1 returns sequential provider
+            final ExecutionContext context = new ExecutionContext() {
+                public String getFrameworkProject() {
+                    return PROJ_NAME;
+                }
+
+                public Framework getFramework() {
+                    return frameworkInstance;
+                }
+
+                public String getUser() {
+                    return "blah";
+                }
+
+                public NodeSet getNodeSet() {
+
+                    return nodeSet;
+                }
+
+                public String[] getArgs() {
+                    return new String[0];
+                }
+
+                public int getLoglevel() {
+                    return 0;
+                }
+
+                public Map<String, Map<String, String>> getDataContext() {
+                    return null;
+                }
+
+                public ExecutionListener getExecutionListener() {
+                    return null;
+                }
+
+                public File getNodesFile() {
+                    return resourcesfile;
+                }
+            };
+            final NodeDispatcher nodeDispatcher = service.getNodeDispatcher(context);
+            assertNotNull(nodeDispatcher);
+            assertTrue(nodeDispatcher instanceof SequentialNodeDispatcher);
+        }
+        {
+            final NodeSet nodeSet = new NodeSet();
+            nodeSet.createInclude().setTags("priority1"); //matches two nodes in external file
+            nodeSet.setThreadCount(2);
+            //get node dispatcher for a context.  nodeset>1 and threadcount>1 returns parallel provider
+            final ExecutionContext context = new ExecutionContext() {
+                public String getFrameworkProject() {
+                    return PROJ_NAME;
+                }
+
+                public Framework getFramework() {
+                    return frameworkInstance;
+                }
+
+                public String getUser() {
+                    return "blah";
+                }
+
+                public NodeSet getNodeSet() {
+
+                    return nodeSet;
+                }
+
+                public String[] getArgs() {
+                    return new String[0];
+                }
+
+                public int getLoglevel() {
+                    return 0;
+                }
+
+                public Map<String, Map<String, String>> getDataContext() {
+                    return null;
+                }
+
+                public ExecutionListener getExecutionListener() {
+                    return null;
+                }
+
+                public File getNodesFile() {
+                    return extResourcesfile;
+                }
+            };
+            final NodeDispatcher nodeDispatcher = service.getNodeDispatcher(context);
+            assertNotNull(nodeDispatcher);
+            assertTrue(nodeDispatcher instanceof ParallelNodeDispatcher);
         }
     }
 }
