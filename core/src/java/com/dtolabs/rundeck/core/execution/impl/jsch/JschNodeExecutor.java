@@ -37,6 +37,7 @@ import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
 import com.jcraft.jsch.JSchException;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
+import org.apache.tools.ant.util.StringUtils;
 
 import java.text.MessageFormat;
 
@@ -87,12 +88,14 @@ public class JschNodeExecutor implements NodeExecutor {
             sshexec.execute();
             success = true;
         } catch (BuildException e) {
-            if ((e.getMessage().contains("Timeout period exceeded, connection dropped"))) {
+            if (e.getMessage().contains("Timeout period exceeded, connection dropped")) {
                 errormsg =
                     "Failed execution for node: " + node.getNodename() + ": Execution Timeout period exceeded (after "
                     + timeout + "ms), connection dropped";
-            } else if (null != e.getCause() && e.getCause() instanceof JSchException && (e.getCause().getMessage()
-                .contains("timeout:"))) {
+            } else if (null != e.getCause() && e.getCause() instanceof JSchException && (
+                e.getCause().getMessage().contains("timeout:") || e.getCause().getMessage().contains(
+                    "SocketTimeoutException") || e.getCause().getMessage().contains(
+                    "java.net.ConnectException: Operation timed out"))) {
                 errormsg = "Failed execution for node: " + node.getNodename() + ": Connection Timeout (after " + timeout
                            + "ms): " + e.getMessage();
             } else if (null != e.getCause() && e.getCause() instanceof JSchException && e.getCause().getMessage()
