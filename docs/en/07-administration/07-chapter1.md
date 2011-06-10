@@ -996,3 +996,6 @@ these properties in the [rundeck-config.properties](#rundeck-config.properties) 
 |`rundeck.gui.titleLink`  |URL for the link used by the app     |http://rundeck.org  |
 |                         |header icon.                         |                    |
 +-------------------------+-------------------------------------+--------------------+
+|`rundeck.gui.helpLink`   |URL for the "help" link in the app   |http://rundeck.org/ |
+|                         |header.                              |   docs             |
++-------------------------+-------------------------------------+--------------------+
