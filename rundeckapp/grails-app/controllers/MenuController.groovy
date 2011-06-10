@@ -285,7 +285,7 @@ class MenuController {
 
         }
 
-        if(org.codehaus.groovy.grails.commons.ConfigurationHolder.config.rundeck?.gui?.realJobTree) {
+        if(org.codehaus.groovy.grails.commons.ConfigurationHolder.config.rundeck?.gui?.realJobTree != "false") {
             //Adding group entries for empty hierachies to have a "real" tree 
             def missinggroups = [:]
             jobgroups.each { k, v ->
