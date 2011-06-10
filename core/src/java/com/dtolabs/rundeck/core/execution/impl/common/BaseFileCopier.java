@@ -104,7 +104,7 @@ public class BaseFileCopier {
      */
     public static String appendRemoteFileExtensionForNode(final INodeEntry node, final String filepath) {
         String result = filepath;
-        if ("windows".equalsIgnoreCase(node.getOsFamily().trim())) {
+        if (null != node.getOsFamily() && "windows".equalsIgnoreCase(node.getOsFamily().trim())) {
             result += (filepath.endsWith(".bat") ? "" : ".bat");
         } else {
             result += (filepath.endsWith(".sh") ? "" : ".sh");
@@ -126,7 +126,7 @@ public class BaseFileCopier {
             return node.getAttributes().get(FILE_COPY_DESTINATION_DIR);
         }
         String remotedir = "/tmp/";
-        if ("windows".equalsIgnoreCase(node.getOsFamily().trim())) {
+        if (null != node.getOsFamily() && "windows".equalsIgnoreCase(node.getOsFamily().trim())) {
             remotedir = "C:/WINDOWS/TEMP/";
         }
         return remotedir;
