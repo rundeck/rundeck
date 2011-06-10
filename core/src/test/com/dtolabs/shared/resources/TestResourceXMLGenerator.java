@@ -140,7 +140,7 @@ public class TestResourceXMLGenerator extends TestCase {
             assertEquals(1, root.selectNodes("node").size());
             assertEquals("test1name", root.selectSingleNode("node/@name").getStringValue());
             assertEquals("test1", root.selectSingleNode("node/@hostname").getStringValue());
-            assertEquals("a,d", root.selectSingleNode("node/@tags").getStringValue());
+            assertEquals("a, d", root.selectSingleNode("node/@tags").getStringValue());
             assertEquals("test desc", root.selectSingleNode("node/@description").getStringValue());
             assertEquals("test arch", root.selectSingleNode("node/@osArch").getStringValue());
             assertEquals("test fam", root.selectSingleNode("node/@osFamily").getStringValue());
@@ -177,7 +177,7 @@ public class TestResourceXMLGenerator extends TestCase {
             assertEquals(1, root.selectNodes("node").size());
             assertEquals("test1name", root.selectSingleNode("node/@name").getStringValue());
             assertEquals("test1", root.selectSingleNode("node/@hostname").getStringValue());
-            assertEquals("a,d", root.selectSingleNode("node/@tags").getStringValue());
+            assertEquals("a, d", root.selectSingleNode("node/@tags").getStringValue());
             assertEquals("test desc", root.selectSingleNode("node/@description").getStringValue());
             assertEquals("test arch", root.selectSingleNode("node/@osArch").getStringValue());
             assertEquals("test fam", root.selectSingleNode("node/@osFamily").getStringValue());
