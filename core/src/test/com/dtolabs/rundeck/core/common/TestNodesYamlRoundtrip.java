@@ -109,9 +109,7 @@ public class TestNodesYamlRoundtrip extends TestCase {
             //set properties that should not be serialized: type, frameworkProject, settings, attributes
             node.setFrameworkProject("my project");
 
-            final HashMap<String, String> dummy = new HashMap<String, String>();
-            dummy.put("a", "b");
-            node.setAttributes(dummy);
+            node.getAttributes().put("a", "b");
 
 
 

@@ -23,10 +23,9 @@
 */
 package com.dtolabs.rundeck.core.common;
 
-import java.util.*;
-import java.lang.reflect.InvocationTargetException;
+import com.dtolabs.rundeck.core.utils.StringArrayUtil;
 
-import org.apache.commons.beanutils.BeanUtils;
+import java.util.*;
 
 
 /**
@@ -39,33 +38,30 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
 
     protected static final String USER_AT_HOSTNAME_REGEX = "([^@])+@([^@:])+";
     protected static final String PORT_REGEX = "([^:]+):([0-9]+)";
+    public static final String OS_NAME = "os-name";
+    public static final String OS_FAMILY = "os-family";
+    public static final String OS_VERSION = "os-version";
+    public static final String HOSTNAME = "hostname";
+    public static final String OS_ARCH = "os-arch";
+    public static final String USERNAME = "username";
+    public static final String DESCRIPTION = "description";
+    public static final String NAME = "name";
+    public static final String TAGS = "tags";
 
     private Set tags;
-    private String osName;
-    private String osArch;
-    private String osFamily;
-    private String osVersion;
-    private String hostname;
-    private String description;
+
     private Map<String, String> attributes;
 
     public NodeEntryImpl() {
         super();
         this.tags = new HashSet();
+        this.attributes = new HashMap<String, String>();
     }
 
-    public NodeEntryImpl(String nodename) {
-        super(nodename);
-        this.tags = new HashSet();
+    public NodeEntryImpl(final String nodename) {
+        this();
+        setNodename(nodename);
     }
-
-    private static String notNull(String in) {
-        if (null == in) {
-            return "";
-        }
-        return in;
-    }
-
 
     /**
      * Create a NodeEntryImpl with hostname and nodename
@@ -75,7 +71,7 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
      */
     public NodeEntryImpl(final String hostname, final String nodename) {
         this(nodename);
-        this.hostname = hostname;
+        setHostname(hostname);
     }
 
     public static INodeEntry create(final String hostname, final String nodename) {
@@ -86,78 +82,87 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
         return new NodeEntryImpl(node.getHostname(), node.getNodename());
     }
 
+    @Override
+    public void setNodename(final String nodename) {
+        super.setNodename(nodename);
+        getAttributes().put(NAME, nodename);
+    }
+
     public Set getTags() {
         return tags;
     }
 
     public void setTags(final Set tags) {
         this.tags = tags;
+        final Object[] objects = tags.toArray();
+        Arrays.sort(objects);
+        getAttributes().put(TAGS, StringArrayUtil.asString(objects, ","));
     }
 
     public String getOsName() {
-        return osName;
+        return getAttributes().get(OS_NAME);
     }
 
+
     public void setOsName(final String osName) {
-        this.osName = osName;
+        getAttributes().put(OS_NAME, osName);
     }
 
     public String getOsFamily() {
-        return osFamily;
+        return getAttributes().get(OS_FAMILY);
     }
 
     public void setOsFamily(final String osFamily) {
-        this.osFamily = osFamily;
+        getAttributes().put(OS_FAMILY, osFamily);
     }
 
     public String getOsVersion() {
-        return osVersion;
+        return getAttributes().get(OS_VERSION);
     }
 
     public void setOsVersion(final String osVersion) {
-        this.osVersion = osVersion;
+        getAttributes().put(OS_VERSION, osVersion);
     }
 
     public String getHostname() {
-        return hostname;
+        return getAttributes().get(HOSTNAME);
     }
 
-    public void setHostname(String hostname) {
-        this.hostname = hostname;
+    public void setHostname(final String hostname) {
+        getAttributes().put(HOSTNAME, hostname);
     }
 
     public String getOsArch() {
-        return osArch;
+        return getAttributes().get(OS_ARCH);
     }
 
     public void setOsArch(final String osArch) {
-        this.osArch = osArch;
+        getAttributes().put(OS_ARCH, osArch);
     }
 
-    private String username;
 
     public String getUsername() {
-        return username;
+        return getAttributes().get(USERNAME);
     }
 
     public void setUsername(final String username) {
-        this.username = username;
+        getAttributes().put(USERNAME, username);
     }
+
 
     public boolean equals(final INodeDesc node) {
-        return nodename.equals(node.getNodename());
+        return getNodename().equals(node.getNodename());
     }
-
 
     public String toString() {
         return "NodeEntryImpl{" +
-               "nodename=" + nodename +
-               ",hostname=" + hostname +
-               ",osName=" + osName +
-               ",osArch=" + osArch +
-               ",osFamily=" + osFamily +
-               ",osVersion=" + osVersion +
-               ",username=" + username +
+               "nodename=" + getNodename() +
+               ",hostname=" + getHostname() +
+               ",osName=" + getOsName() +
+               ",osArch=" + getOsArch() +
+               ",osFamily=" + getOsFamily() +
+               ",osVersion=" + getOsVersion() +
+               ",username=" + getUsername() +
                ",tags=" + tags +
                ",attributes=" + attributes +
                "}";
@@ -198,10 +203,11 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
      * @return Gets the username for remote connections
      */
     public String extractUserName() {
+        final String username = getUsername();
         if (null != username && !"".equals(username)) {
             return username;
         }
-        return extractUserName(hostname);
+        return extractUserName(getHostname());
     }
 
     public static String extractHostname(final String host) {
@@ -218,11 +224,11 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
     }
 
     public String extractHostname() {
-        return extractHostname(hostname);
+        return extractHostname(getHostname());
     }
 
     public String extractPort() {
-        return extractPort(hostname);
+        return extractPort(getHostname());
     }
 
     public static String extractPort(final String host) {
@@ -234,7 +240,7 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
     }
 
     public boolean containsPort() {
-        return containsPort(hostname);
+        return containsPort(getHostname());
     }
 
     /**
@@ -271,15 +277,15 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
         return attributes;
     }
 
-    public void setAttributes(Map<String, String> attributes) {
+    public void setAttributes(final Map<String, String> attributes) {
         this.attributes = attributes;
     }
 
     public void setDescription(final String description) {
-        this.description = description;
+        getAttributes().put(DESCRIPTION, description);
     }
 
     public String getDescription() {
-        return description;
+        return getAttributes().get(DESCRIPTION);
     }
 }

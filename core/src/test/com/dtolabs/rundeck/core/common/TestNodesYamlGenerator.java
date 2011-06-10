@@ -248,7 +248,6 @@ public class TestNodesYamlGenerator extends TestCase {
         final NodeEntryImpl nodeEntry = new NodeEntryImpl();
         nodeEntry.setNodename("strongbad");
         nodeEntry.setHostname("strongbad");
-        nodeEntry.setAttributes(new HashMap<String, String>());
         nodeEntry.getAttributes().put("editUrl","http://some.com/test/url");
 
         nodesYamlGenerator.addNode(nodeEntry);
@@ -275,7 +274,7 @@ public class TestNodesYamlGenerator extends TestCase {
         final NodeEntryImpl nodeEntry = new NodeEntryImpl();
         nodeEntry.setNodename("strongbad");
         nodeEntry.setHostname("strongbad");
-        nodeEntry.setAttributes(new HashMap<String, String>());
+
         nodeEntry.getAttributes().put("remoteUrl", "http://somez.com/test/other/url");
 
         nodesYamlGenerator.addNode(nodeEntry);
@@ -300,7 +299,7 @@ public class TestNodesYamlGenerator extends TestCase {
         final NodeEntryImpl nodeEntry = new NodeEntryImpl();
         nodeEntry.setNodename("strongbad");
         nodeEntry.setHostname("strongbad");
-        nodeEntry.setAttributes(new HashMap<String, String>());
+        
         nodeEntry.getAttributes().put("test-attribute", "some value");
 
         nodesYamlGenerator.addNode(nodeEntry);

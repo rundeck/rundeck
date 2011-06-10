@@ -72,11 +72,9 @@ public class TestNodeSet extends TestCase {
         tags2.add("devenv");
         tags2.add("workstation");
         nodeimp2.setTags(tags2);
-        HashMap<String, String> attrs2 = new HashMap<String, String>();
-        attrs2.put("testattribute1", "testvalue1");
-        attrs2.put("testattribute2", "testvalue2");
-        attrs2.put("testattribute3", "testvalue3");
-        nodeimp2.setAttributes(attrs2);
+        nodeimp2.getAttributes().put("testattribute1", "testvalue1");
+        nodeimp2.getAttributes().put("testattribute2", "testvalue2");
+        nodeimp2.getAttributes().put("testattribute3", "testvalue3");
 
         nodeimp3 = new NodeEntryImpl("testnode3.local", "testnode3");
         nodeimp3.setOsArch("intel");
@@ -87,11 +85,9 @@ public class TestNodeSet extends TestCase {
         tags3.add("priority1");
         tags3.add("workstation");
         nodeimp3.setTags(tags3);
-        HashMap<String, String> attrs3 = new HashMap<String, String>();
-        attrs3.put("testattribute1", "testvalue1");
-        attrs3.put("testattribute2", "testvalue2redux");
-        attrs3.put("testattribute4", "testvalue5");
-        nodeimp3.setAttributes(attrs3);
+        nodeimp3.getAttributes().put("testattribute1", "testvalue1");
+        nodeimp3.getAttributes().put("testattribute2", "testvalue2redux");
+        nodeimp3.getAttributes().put("testattribute4", "testvalue5");
     }
 
     protected void tearDown() throws Exception {
