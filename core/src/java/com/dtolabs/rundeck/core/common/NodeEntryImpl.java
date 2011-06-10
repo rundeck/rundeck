@@ -38,14 +38,14 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
 
     protected static final String USER_AT_HOSTNAME_REGEX = "([^@])+@([^@:])+";
     protected static final String PORT_REGEX = "([^:]+):([0-9]+)";
-    public static final String OS_NAME = "os-name";
-    public static final String OS_FAMILY = "os-family";
-    public static final String OS_VERSION = "os-version";
+    public static final String OS_NAME = "osName";
+    public static final String OS_FAMILY = "osFamily";
+    public static final String OS_VERSION = "osVersion";
     public static final String HOSTNAME = "hostname";
-    public static final String OS_ARCH = "os-arch";
+    public static final String OS_ARCH = "osArch";
     public static final String USERNAME = "username";
     public static final String DESCRIPTION = "description";
-    public static final String NAME = "name";
+    public static final String NAME = "nodename";
     public static final String TAGS = "tags";
 
     private Set tags;
@@ -85,7 +85,7 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
     @Override
     public void setNodename(final String nodename) {
         super.setNodename(nodename);
-        getAttributes().put(NAME, nodename);
+        setAttribute(NAME, nodename);
     }
 
     public Set getTags() {
@@ -96,57 +96,57 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
         this.tags = tags;
         final Object[] objects = tags.toArray();
         Arrays.sort(objects);
-        getAttributes().put(TAGS, StringArrayUtil.asString(objects, ","));
+        setAttribute(TAGS, StringArrayUtil.asString(objects, ", "));
     }
 
     public String getOsName() {
-        return getAttributes().get(OS_NAME);
+        return getAttribute(OS_NAME);
     }
 
 
     public void setOsName(final String osName) {
-        getAttributes().put(OS_NAME, osName);
+        setAttribute(OS_NAME, osName);
     }
 
     public String getOsFamily() {
-        return getAttributes().get(OS_FAMILY);
+        return getAttribute(OS_FAMILY);
     }
 
     public void setOsFamily(final String osFamily) {
-        getAttributes().put(OS_FAMILY, osFamily);
+        setAttribute(OS_FAMILY, osFamily);
     }
 
     public String getOsVersion() {
-        return getAttributes().get(OS_VERSION);
+        return getAttribute(OS_VERSION);
     }
 
     public void setOsVersion(final String osVersion) {
-        getAttributes().put(OS_VERSION, osVersion);
+        setAttribute(OS_VERSION, osVersion);
     }
 
     public String getHostname() {
-        return getAttributes().get(HOSTNAME);
+        return getAttribute(HOSTNAME);
     }
 
     public void setHostname(final String hostname) {
-        getAttributes().put(HOSTNAME, hostname);
+        setAttribute(HOSTNAME, hostname);
     }
 
     public String getOsArch() {
-        return getAttributes().get(OS_ARCH);
+        return getAttribute(OS_ARCH);
     }
 
     public void setOsArch(final String osArch) {
-        getAttributes().put(OS_ARCH, osArch);
+        setAttribute(OS_ARCH, osArch);
     }
 
 
     public String getUsername() {
-        return getAttributes().get(USERNAME);
+        return getAttribute(USERNAME);
     }
 
     public void setUsername(final String username) {
-        getAttributes().put(USERNAME, username);
+        setAttribute(USERNAME, username);
     }
 
 
@@ -282,10 +282,19 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
     }
 
     public void setDescription(final String description) {
-        getAttributes().put(DESCRIPTION, description);
+        setAttribute(DESCRIPTION, description);
     }
 
     public String getDescription() {
-        return getAttributes().get(DESCRIPTION);
+        return getAttribute(DESCRIPTION);
+    }
+
+
+    public String getAttribute(final String name) {
+        return getAttributes().get(name);
+    }
+
+    public String setAttribute(final String name, final String value) {
+        return getAttributes().put(name, value);
     }
 }

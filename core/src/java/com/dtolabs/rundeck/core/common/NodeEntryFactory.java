@@ -98,7 +98,7 @@ public class NodeEntryFactory {
         //populate attributes with any keys outside of nodeprops
         for (final String key : map.keySet()) {
             if (!ResourceXMLConstants.allPropSet.contains(key)) {
-                nodeEntry.getAttributes().put(key, (String) map.get(key));
+                nodeEntry.setAttribute(key, (String) map.get(key));
             }
         }
 
@@ -110,42 +110,9 @@ public class NodeEntryFactory {
         if(null!=node.getAttributes()) {
             map.putAll(node.getAttributes());
         }
-        try {
-            final Map describe = BeanUtils.describe(node);
-            map.putAll(describe);
-            /*for (final String s : ResourceXMLConstants.allPropSet) {
 
-            }*/
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
-        if (null!=node.getTags()) {
-            //convert Set of tag strings into comma-separated scalar
-            String valueString = "";
-            Set values = node.getTags();
-            StringBuffer sb = new StringBuffer();
-            for (final Object tagValue : new TreeSet(values)) {
-                if (sb.length() > 0) {
-                    sb.append(", ");
-                }
-                sb.append(tagValue);
-            }
-            valueString = sb.toString();
-            map.put("tags", valueString);
-        }
-        HashSet<String> toremove = new HashSet<String>();
-        toremove.addAll(Arrays.asList(excludeProps));
-        for (final String s : map.keySet()) {
-            if(null==map.get(s)) {
-                toremove.add(s);
-            }
-        }
-        for (final String s : toremove) {
-            map.remove(s);
+        if(null==map.get("tags")) {
+            map.put("tags", "");
         }
         return map;
     }
