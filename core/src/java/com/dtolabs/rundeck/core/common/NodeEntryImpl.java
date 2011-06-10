@@ -29,7 +29,7 @@ import java.util.*;
 
 
 /**
- * NodeEntryImpl provides a bean representation of a nodes.properties entry
+ * NodeEntryImpl provides a bean representation of INodesEntry
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
@@ -52,12 +52,20 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
 
     private Map<String, String> attributes;
 
+    /**
+     * Base constructor
+     */
     public NodeEntryImpl() {
         super();
         this.tags = new HashSet();
         this.attributes = new HashMap<String, String>();
     }
 
+    /**
+     * Create an instance with a nodename value
+     *
+     * @param nodename the node name
+     */
     public NodeEntryImpl(final String nodename) {
         this();
         setNodename(nodename);
@@ -74,12 +82,14 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
         setHostname(hostname);
     }
 
+    /**
+     * Factory method to create an instance with a hostname and node name.
+     *
+     * @param hostname hostname value
+     * @param nodename node name
+     */
     public static INodeEntry create(final String hostname, final String nodename) {
         return new NodeEntryImpl(hostname, nodename);
-    }
-
-    public static INodeEntry create(final INodeDesc node) {
-        return new NodeEntryImpl(node.getHostname(), node.getNodename());
     }
 
     @Override
@@ -102,7 +112,6 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
     public String getOsName() {
         return getAttribute(OS_NAME);
     }
-
 
     public void setOsName(final String osName) {
         setAttribute(OS_NAME, osName);
@@ -186,7 +195,14 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
         return containsUserName(getHostname());
     }
 
-    public String extractUserName(final String hostname) {
+    /**
+     * Extract a username from a "username@hostname" pattern.
+     *
+     * @param hostname value
+     *
+     * @return username extracted, or null
+     */
+    public static String extractUserName(final String hostname) {
         if (containsUserName(hostname)) {
             return hostname.substring(0, hostname.indexOf("@"));
         } else {
@@ -210,6 +226,13 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
         return extractUserName(getHostname());
     }
 
+    /**
+     * Extract hostname from a string of the pattern "username@hostname:port"
+     *
+     * @param host the hostname
+     *
+     * @return the extracted hostname, or the original string if the pattern is not matched
+     */
     public static String extractHostname(final String host) {
         String extracted = host;
         if (containsUserName(host)) {
@@ -231,11 +254,18 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
         return extractPort(getHostname());
     }
 
+    /**
+     * Extract the port string from a string in the pattern "hostname:port"
+     *
+     * @param host the hostname
+     *
+     * @return the extracted port string, or null if the pattern is not matched.
+     */
     public static String extractPort(final String host) {
         if (containsPort(host)) {
             return host.substring(host.indexOf(":") + 1, host.length());
         } else {
-            return host;
+            return null;
         }
     }
 
@@ -244,11 +274,11 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
     }
 
     /**
-     * Checks if nodename contains a port value
+     * Return true if the hostname contains a port value in the form "hostname:port".
      *
-     * @param host port value
+     * @param host hostname
      *
-     * @return true if matches a "host:port" pattern
+     * @return true if it matches the "host:port" pattern
      */
     public static boolean containsPort(final String host) {
         if (null == host) {
@@ -269,7 +299,7 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
 
 
     /**
-     * Get the map of attributes for the node.
+     * Get the map of attributes for the node, including all predefined attribtes available via acessors.
      *
      * @return attributes
      */
@@ -290,10 +320,23 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
     }
 
 
+    /**
+     * Get the value for a specific attribute
+     *
+     * @param name attribute name
+     *
+     * @return attribute value, or null if it is not set
+     */
     public String getAttribute(final String name) {
         return getAttributes().get(name);
     }
 
+    /**
+     * Set the value for a specific attribute
+     *
+     * @param name  attribute name
+     * @param value attribute value
+     */
     public String setAttribute(final String name, final String value) {
         return getAttributes().put(name, value);
     }
