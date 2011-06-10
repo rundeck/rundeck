@@ -999,3 +999,7 @@ these properties in the [rundeck-config.properties](#rundeck-config.properties) 
 |`rundeck.gui.helpLink`   |URL for the "help" link in the app   |http://rundeck.org/ |
 |                         |header.                              |   docs             |
 +-------------------------+-------------------------------------+--------------------+
+|`rundeck.gui.realJobTree`|Displaying a real tree in the Jobs   |false               |
+|                         |overview instead of collapsing       |                    |
+|                         |empty groups. **Default: true**      |                    |
++-------------------------+-------------------------------------+--------------------+
