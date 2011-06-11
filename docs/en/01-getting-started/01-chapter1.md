@@ -229,6 +229,57 @@ See the [startup and shutdown](#startup-and-shutdown) section for
 instructions on using the ``rundeckd`` shell tool to manage the 
 rundeck launcher process.
 
+#### Launcher Options
+
+The launcher jar can take a number of options to specify how the server should start. If you execute with a "-h" you will see the usage information:
+
+    java -jar rundeck-launcher-1.3.0.jar -h
+    
+    usage: java [JAVA_OPTIONS] -jar rundeck-launcher.jar  [-c PATH] [-d]
+       [--skipinstall] [-s PATH] [-b PATH] [-p PATH] [-h] [-x PATH] [--serverdir
+       PATH] [--datadir PATH]
+
+    Run the rundeck server, installing the necessary components if they do not
+    exist.
+        --skipinstall         Skip the extraction of the utilities from the
+                              launcher.
+     -b,--basedir <PATH>      The basedir
+     -c,--configdir <PATH>    The location of the configuration.
+     -d                       Show debug information
+     -h,--help                Display this message.
+     -p,--projectdir <PATH>   The location of Rundeck's project data.
+     -s,--sbindir <PATH>      The install directory for the tools used by
+                              administrators.
+     -x,--bindir <PATH>       The install directory for the tools used by
+                              users.
+    
+These options can be used to customize the directories used by the launcher. 
+By default all the directories are organized by convention within the current
+working directory where the launcher jar is located.
+
+#### System Properties
+
+You can also customize the launcher behavior by using some java system properties.
+
+Specify these properties using the normal `-Dproperty=value` commandline options
+to the `java` command:
+
+* `server.http.port` The HTTP port to use for the server, default "4440"
+* `server.https.port` The HTTPS port to use or the server, default "4443"
+* `server.hostname` Hostname to use for the server, default is the system hostname
+* `server.web.context` Web context path to use, such as "/rundeck". Default is "/".
+* `rdeck.base` RunDeck Basedir to use, default is the directory containing the launcher jar
+* `server.datastore.path` Path to server datastore dir
+* `default.user.name`  Username for default user account to create
+* `default.user.password` Password for default user account to create
+* `rundeck.jaaslogin` "true/false" - if true, enable JAAS login. If false, use the realm.properties file for login information.
+* `loginmodule.name` Custom JAAS loginmodule name to use
+* `loginmodule.conf.name` Name of a custom JAAS config file, located in the server's config dir.
+* `rundeck.config.name` Name of a custom rundeck config file, located in the server's config dir.
+* `rundeck.ssl.config` Path to the SSL config properties file to enable SSL. If not set, SSL is not enabled.
+
+For more information about using SSL, see [Administration - Configuring Rundeck for SSL](#configuring-rundeck-for-ssl)
+
 ## First-Time Setup
 
 ### Logins 
