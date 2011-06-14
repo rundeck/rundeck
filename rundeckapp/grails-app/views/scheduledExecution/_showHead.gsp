@@ -31,6 +31,7 @@
           </g:else>
             <span class="jobInfoPart">
                 <g:if test="${execInfo instanceof ScheduledExecution && execInfo?.description}"><span class="jobDesc">${execInfo?.description.encodeAsHTML()}</span></g:if>
+                <g:if test="${execInfo instanceof ScheduledExecution && execInfo?.uuid}"><span class="jobuuid">[${execInfo?.uuid.encodeAsHTML()}]</span></g:if>
                 <g:if test="${execInfo instanceof ScheduledExecution && execInfo.groupPath}">
                     <span class="jobGroup">
                    <span class="grouplabel"><g:link controller="menu" action="jobs" params="${[groupPath:execInfo.groupPath]}" title="${'View '+g.message(code:'domain.ScheduledExecution.title')+'s in this group'}"  absolute="${absolute?'true':'false'}">

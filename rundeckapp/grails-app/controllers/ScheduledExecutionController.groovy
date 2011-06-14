@@ -121,7 +121,7 @@ class ScheduledExecutionController  {
         log.info("ScheduledExecutionController: show : params: " + params)
         def crontab = [:]
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-        def ScheduledExecution scheduledExecution = ScheduledExecution.get( params.long('id') )
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if (!scheduledExecution) {
             log.error("No Job found for id: " + params.id)
             flash.error="No Job found for id: " + params.id
@@ -151,7 +151,7 @@ class ScheduledExecutionController  {
         log.info("ScheduledExecutionController: show : params: " + params)
         def crontab = [:]
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-        def ScheduledExecution scheduledExecution = ScheduledExecution.get( params.long('id') )
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if (!scheduledExecution) {
             log.error("No Job found for id: " + params.id)
             flash.error="No Job found for id: " + params.id
@@ -230,7 +230,7 @@ class ScheduledExecutionController  {
      * using the data.
      */
     def loadRemoteOptionValues={
-        def ScheduledExecution scheduledExecution = ScheduledExecution.get( params.long('id') )
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if (!scheduledExecution) {
             log.error("No Job found for id: " + params.id)
             flash.error="No Job found for id: " + params.id
@@ -558,7 +558,7 @@ class ScheduledExecutionController  {
     */
     def delete = {
         log.info("ScheduledExecutionController: delete : params: " + params)
-        def ScheduledExecution scheduledExecution = ScheduledExecution.get( params.id )
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if(scheduledExecution) {
             def changeinfo=[user:session.user,method:'delete',change:'delete']
             def jobname = scheduledExecution.generateJobScheduledName()
@@ -600,7 +600,7 @@ class ScheduledExecutionController  {
         def ids=params.idlist.split(",")
         def errs=[]
         ids.each{
-            def ScheduledExecution scheduledExecution = ScheduledExecution.get( it )
+            def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( it )
             if(scheduledExecution){
                 list<<scheduledExecution
             }else{
@@ -630,7 +630,7 @@ class ScheduledExecutionController  {
 
     def edit = {
         log.info("ScheduledExecutionController: edit : params: " + params)
-        def scheduledExecution = ScheduledExecution.get( params.id )
+        def scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         def crontab = [:]
         if(!scheduledExecution) {
@@ -679,7 +679,10 @@ class ScheduledExecutionController  {
             final var = jobdata[k]
             MDC.put(k, var ? var : '-')
         }
-        final msg = data.user + " " + data.change.toUpperCase() + " [" + jobdata.id + "] "+jobdata.project+" \"" + (jobdata.groupPath ? jobdata.groupPath : '') + "/" + jobdata.jobName + "\" (" + data.method+")"
+        if(jobdata.uuid){
+            MDC.put('id',jobdata.uuid)
+        }
+        final msg = data.user + " " + data.change.toUpperCase() + " [" + (jobdata.uuid?:jobdata.id) + "] "+jobdata.project+" \"" + (jobdata.groupPath ? jobdata.groupPath : '') + "/" + jobdata.jobName + "\" (" + data.method+")"
         jobChangeLogger.info(msg)
         data.keySet().each {k ->
             if (data[k] instanceof Date) {
@@ -743,7 +746,7 @@ class ScheduledExecutionController  {
             }
         }
         boolean failed=false
-        def ScheduledExecution scheduledExecution = ScheduledExecution.get( params.id )
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
 
         def crontab = [:]
         if(!scheduledExecution) {
@@ -754,6 +757,7 @@ class ScheduledExecutionController  {
         def oldsched = scheduledExecution.scheduled
         def optparams = params.findAll { it.key.startsWith("option.")}
         def nonopts = params.findAll { !it.key.startsWith("option.") && it.key!='workflow' && it.key!='options'&& it.key!='notifications'}
+        nonopts.uuid=scheduledExecution.uuid//don't modify uuid
         scheduledExecution.properties = nonopts
         
         final Map oldopts = params.findAll{it.key=~/^(name|command|type|adhocExecution|adhocFilepath|adhoc.*String)$/}
@@ -1087,6 +1091,7 @@ class ScheduledExecutionController  {
         scheduledExecution.properties =null
         final Collection foundprops = params.properties.keySet().findAll {it != 'lastUpdated' && it != 'dateCreated' && (params.properties[it] instanceof String || params.properties[it] instanceof Boolean) }
         final Map newprops = foundprops ? params.properties.subMap(foundprops) : [:]
+        newprops.uuid = scheduledExecution.uuid//don't modify uuid
         //clear filter params
         scheduledExecution.clearFilterFields()
         scheduledExecution.properties = newprops
@@ -1284,7 +1289,7 @@ class ScheduledExecutionController  {
         def rolelist = (session?.roles) ? session.roles : []
         log.info("ScheduledExecutionController: create : params: " + params)
 
-        def ScheduledExecution scheduledExecution = ScheduledExecution.get( params.id )
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if(!scheduledExecution){
             flash.message = "ScheduledExecution not found with id ${params.id}"
             log.info("update: there was no object by id: " +params.id+". redirecting to menu.")
@@ -1294,6 +1299,7 @@ class ScheduledExecutionController  {
         def newScheduledExecution = new ScheduledExecution()
         newScheduledExecution.properties = new java.util.HashMap(scheduledExecution.properties)
         newScheduledExecution.id=null
+        newScheduledExecution.uuid=null
         newScheduledExecution.nextExecution=null
         //set session new workflow
         WorkflowController.getSessionWorkflow(session,null,new Workflow(scheduledExecution.workflow))
@@ -2190,6 +2196,10 @@ class ScheduledExecutionController  {
                 failed=true;
             }
         }
+        //set UUID if not submitted
+        if(!scheduledExecution.uuid){
+            scheduledExecution.uuid=UUID.randomUUID().toString()
+        }
         if(!failed && scheduledExecution.save(true)){
             if(scheduledExecution.scheduled){
                 def nextdate=null
@@ -2279,18 +2289,29 @@ class ScheduledExecutionController  {
             if(option=="update" || option=="skip"){
                 //look for dupe by name and group path and project
                 def c = ScheduledExecution.createCriteria()
-                def schedlist = c.list{
-                    and{
-                        eq('jobName',jobdata.jobName)
-                        if(!jobdata.groupPath){
-                            or{
-                                eq('groupPath', '')
-                                isNull('groupPath')
-                            }
-                        }else{
-                            eq('groupPath',jobdata.groupPath)
+                def schedlist
+                //first look for uuid
+                if(jobdata.uuid){
+                    schedlist = c.list {
+                        and {
+                            eq('uuid', jobdata.uuid)
                         }
-                        eq('project',jobdata.project)
+                    }
+                }else{
+//                if(!schedlist){
+                    schedlist= c.list{
+                        and{
+                            eq('jobName',jobdata.jobName)
+                            if(!jobdata.groupPath){
+                                or{
+                                    eq('groupPath', '')
+                                    isNull('groupPath')
+                                }
+                            }else{
+                                eq('groupPath',jobdata.groupPath)
+                            }
+                            eq('project',jobdata.project)
+                        }
                     }
                 }
                 if(schedlist && 1==schedlist.size()){
@@ -2311,6 +2332,7 @@ class ScheduledExecutionController  {
                         result = _doupdateJob(scheduledExecution.id,jobdata,jobchange)
                     }else{
                         jobdata.id=scheduledExecution.id
+                        jobdata.uuid=scheduledExecution.uuid
                         result = _doupdate(jobdata, jobchange)
                     }
 
@@ -2356,9 +2378,7 @@ class ScheduledExecutionController  {
                 }
             }
 
-
             i++
-
 
         }
         return [jobs:jobs,jobsi:jobsi,msgs:msgs,errjobs:errjobs,skipjobs:skipjobs]
@@ -2470,7 +2490,7 @@ class ScheduledExecutionController  {
         }
         def jobs
         if(params.id){
-            final def get = ScheduledExecution.get(params.id)
+            final def get = scheduledExecutionService.getByIDorUUID(params.id)
             if(!get){
                 log.error("No Job found for id: " + params.id)
                 flash.error="No Job found for id: " + params.id
@@ -2575,7 +2595,7 @@ class ScheduledExecutionController  {
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         params["user"] = (session?.user) ? session.user : "anonymous"
         def rolelist = (session?.roles) ? session.roles : []
-        def ScheduledExecution scheduledExecution = ScheduledExecution.get( params.id )
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if (!scheduledExecution) {
 //            response.setStatus (404)
             return [error:"No Job found for id: " + params.id,code:404]
@@ -2697,6 +2717,9 @@ class ScheduledExecutionController  {
         delegate.'succeeded'(count:jobs.size()){
             jobsi.each{ Map job ->
                 delegate.'job'(index:job.entrynum){
+                    if(job.scheduledExecution.uuid){
+                        uuid(job.scheduledExecution.uuid)
+                    }
                     id(job.scheduledExecution.id.toString())
                     name(job.scheduledExecution.jobName)
                     group(job.scheduledExecution.groupPath?:'')
@@ -2709,6 +2732,9 @@ class ScheduledExecutionController  {
             errjobs.each{ Map job ->
                 delegate.'job'(index:job.entrynum){
                     if(job.scheduledExecution.id){
+                        if (job.scheduledExecution.uuid) {
+                            uuid(job.scheduledExecution.uuid)
+                        }
                         id(job.scheduledExecution.id.toString())
                         url(g.createLink(action:'show',id:job.scheduledExecution.id))
                     }
@@ -2737,6 +2763,9 @@ class ScheduledExecutionController  {
             skipjobs.each{ Map job ->
                 delegate.'job'(index:job.entrynum){
                     if(job.scheduledExecution.id){
+                        if (job.scheduledExecution.uuid) {
+                            uuid(job.scheduledExecution.uuid)
+                        }
                         id(job.scheduledExecution.id.toString())
                         url(g.createLink(action:'show',id:job.scheduledExecution.id))
                     }
@@ -2806,7 +2835,7 @@ class ScheduledExecutionController  {
      */
     def apiJobExport={
         log.info("ScheduledExecutionController: /api/job GET : params: " + params)
-        def ScheduledExecution scheduledExecution = ScheduledExecution.get( params.long('id') )
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if (!scheduledExecution) {
             flash.errorCode = "api.error.item.doesnotexist"
             flash.errorArgs = ['Job ID',params.id]
@@ -2830,7 +2859,7 @@ class ScheduledExecutionController  {
      * API: Run a job immediately: /job/{id}/run, version 1
      */
     def apiJobRun = {
-        def ScheduledExecution scheduledExecution = ScheduledExecution.get(params.long('id'))
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
         if (!scheduledExecution) {
             flash.errorCode = "api.error.item.doesnotexist"
             flash.errorArgs = ['Job ID', params.id]
@@ -2873,7 +2902,7 @@ class ScheduledExecutionController  {
      */
     def apiJobDelete={
         log.info("ScheduledExecutionController: /api/job DELETE : params: " + params)
-        def ScheduledExecution scheduledExecution = ScheduledExecution.get( params.long('id') )
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if (!scheduledExecution) {
             flash.error = g.message(code:"api.error.item.doesnotexist",args:['Job ID',params.id])
             return chain(controller: 'api', action: 'error')
@@ -3048,7 +3077,7 @@ class ScheduledExecutionController  {
             flash.error = g.message(code: 'api.error.parameter.required', args: ['id'])
             return chain(controller: 'api', action: 'error')
         }
-        def ScheduledExecution scheduledExecution = ScheduledExecution.get(params.long('id'))
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
         if (!scheduledExecution) {
             flash.errorCode = "api.error.item.doesnotexist"
             flash.errorArgs = ['Job ID', params.id]
@@ -3067,7 +3096,7 @@ class ScheduledExecutionController  {
         def c = Execution.createCriteria()
         def result=c.list{
             delegate.'scheduledExecution'{
-                eq('id', params.long('id'))
+                eq('id', scheduledExecution.id)
             }
             if(state== ExecutionController.EXECUTION_RUNNING){
                 isNull('dateCompleted')

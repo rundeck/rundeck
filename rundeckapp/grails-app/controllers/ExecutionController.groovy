@@ -573,7 +573,11 @@ class ExecutionController {
                         abortedby(e.abortedby ? e.abortedby : e.user)
                     }
                     if (e.scheduledExecution) {
-                        job(id: e.scheduledExecution.id) {
+                        def jobparams= [id: e.scheduledExecution.id]
+                        if(e.scheduledExecution.uuid){
+                            jobparams.uuid= e.scheduledExecution.uuid
+                        }
+                        job(jobparams) {
                             name(e.scheduledExecution.jobName)
                             group(e.scheduledExecution.groupPath ?: '')
                             project(e.scheduledExecution.project)
