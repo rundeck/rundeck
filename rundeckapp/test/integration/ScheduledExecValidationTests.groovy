@@ -2381,6 +2381,65 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
         }
     }
+
+    /**
+     * test update via session options, should remove all options
+     */
+    public void testDoUpdateOptionsSessionRemoveAll() {
+
+        def sec = new ScheduledExecutionController()
+
+        def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand')
+        def opt1 = new Option(name: 'test1', defaultValue: 'val1', enforced: false, valuesUrl: "http://test.com/test")
+        def opt2 = new Option(name: 'test2', defaultValue: 'val2', enforced: true, values: ['a', 'b', 'c'])
+        se.addToOptions(opt1)
+        se.addToOptions(opt2)
+        se.save()
+
+        assertNotNull se.id
+
+        //try to do update of the ScheduledExecution
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.existsFrameworkProject {project, framework ->
+            return true
+        }
+        fwkControl.demand.getCommand {project, type, command, framework ->
+            return null
+        }
+        sec.frameworkService = fwkControl.createMock()
+
+        def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand',
+            //set _sessionopts to true
+            '_sessionopts':true
+        ]
+        //mock session editOPTS storage
+        sec.session.editOPTS=[:]
+
+        //set empty map for job id should remove options
+        sec.session.editOPTS[se.id.toString()]=[:]
+
+        def results = sec._doupdate(params)
+
+        def succeeded = results[0]
+        def scheduledExecution = results[1]
+        if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+            scheduledExecution.errors.allErrors.each {
+                System.err.println(it);
+            }
+        }
+        assertTrue succeeded
+        assertNotNull(scheduledExecution)
+        assertTrue(scheduledExecution instanceof ScheduledExecution)
+        final ScheduledExecution execution = scheduledExecution
+        assertNotNull(execution)
+        assertNotNull(execution.errors)
+        assertFalse(execution.errors.hasErrors())
+
+        //options should be cleared
+        assertNull execution.options
+
+    }
     public void testDoUpdateOptions(){
 
         def sec = new ScheduledExecutionController()
