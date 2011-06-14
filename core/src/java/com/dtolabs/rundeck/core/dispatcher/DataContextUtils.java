@@ -93,7 +93,7 @@ public class DataContextUtils {
             final String key = m.group(1);
             final String nm = m.group(2);
             if (null!=key && null!=nm && null!=data.get(key) && null!= data.get(key).get(nm)) {
-                m.appendReplacement(sb, Matcher.quoteReplacement(escapeShell(data.get(key).get(nm))));
+                m.appendReplacement(sb, Matcher.quoteReplacement(data.get(key).get(nm)));
             }else {
                 m.appendReplacement(sb, Matcher.quoteReplacement(m.group(0)));
             }
