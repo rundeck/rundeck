@@ -24,7 +24,7 @@ ifndef GA_RELEASE
 RPMBUILD_DEFINES+= --define "_alphatag $(ALPHATAG)"
 endif
 
-.PHONY: rpm
+.PHONY: rpm deb
 
 rpm:
 	@mkdir -p dist/RPMS/noarch
@@ -49,8 +49,33 @@ rpm:
 	@cp ../plugins/*-plugin/build/libs/*-plugin*.jar dist/SOURCES/var/lib/rundeck/libext
 	@find ../core/src/resources/com/dtolabs/rundeck/core/cli/templates ! -regex ".*.bat$$" -and -type f | sed -e /rd-check/d -e /rd-setup/d | xargs -I Z cp Z dist/SOURCES/usr/bin
 	@unzip -oq ../rundeckapp/target/rundeck-$(VERSION).war -d dist/SOURCES/var/lib/rundeck/exp/webapp/
-	ln -s /etc/rundeck/log4j.properties; mv log4j.properties dist/SOURCES/var/lib/rundeck/exp/webapp/WEB-INF/classes
+	@ln -s /etc/rundeck/log4j.properties; mv log4j.properties dist/SOURCES/var/lib/rundeck/exp/webapp/WEB-INF/classes
 	rpmbuild -bb --target=noarch-linux $(RPMBUILD_DEFINES) --buildroot ${PWD}/dist/SOURCES rundeck.spec 
-    
+
+
+deb:
+	@mkdir -p dist/
+	@mkdir -p dist/usr/bin
+	@mkdir -p dist/var/lib/rundeck/exp/webapp
+	@mkdir -p dist/var/lib/rundeck/{data,work,logs,cli}
+	@mkdir -p dist/var/log/rundeck
+	@mkdir -p dist/var/lib/rundeck/var/tmp
+	@mkdir -p dist/var/rundeck/projects
+	@mkdir -p dist/usr/share/man/man{1,5}
+	@mkdir -p dist/usr/share/man/en/man{1,5}
+	@cp -R debroot/* dist
+	@cp ../docs/en/manpages/man1/*.1.gz dist/usr/share/man/man1
+	@cp ../docs/en/manpages/man5/*.5.gz dist/usr/share/man/man5
+	@cp ../docs/en/manpages/man1/*.1.gz dist/usr/share/man/en/man1
+	@cp ../docs/en/manpages/man5/*.5.gz dist/usr/share/man/en/man5
+	@cp -R ../core/build/tools/lib/*.jar dist/var/lib/rundeck/cli
+	@cp ../core/build/libs/rundeck-core-*.jar dist/var/lib/rundeck/cli
+	@cp ../rundeckapp/target/rundeck-server-*.jar dist/var/lib/rundeck/bootstrap
+	@find ../core/src/resources/com/dtolabs/rundeck/core/cli/templates ! -regex ".*.bat$$" -and -type f | sed -e /rd-check/d -e /rd-setup/d | xargs -I Z cp Z dist/usr/bin
+	@unzip -oq ../rundeckapp/target/rundeck-$(VERSION).war -d dist/var/lib/rundeck/exp/webapp/
+	@ln -s /etc/rundeck/log4j.properties; mv log4j.properties dist/var/lib/rundeck/exp/webapp/WEB-INF/classes
+	fakeroot dpkg-deb --build dist
+	@mv dist.deb rundeck-$(VERSION)-$(RELEASE).deb
+
 clean:
 	rm -rf target dist/

@@ -1,0 +1,10 @@
+Package: rundeck
+Version: 1.2-1
+Section: utils
+Priority: optional
+Architecture: all
+Depends: openssh-client, openjdk-6-jdk
+Maintainer: Noah Campbell <noahcampbell@gmail.com>
+Description: No ordinary wooden deck. You can build a bon fire on this deck.
+ Rundeck provides a single console for dispatching commands across many 
+ resources.

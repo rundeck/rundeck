@@ -1,0 +1,10 @@
+/etc/init.d/rundeckd
+/etc/rundeck/admin.aclpolicy
+/etc/rundeck/framework.properties
+/etc/rundeck/jaas-loginmodule.conf
+/etc/rundeck/log4j.properties
+/etc/rundeck/profile
+/etc/rundeck/project.properties
+/etc/rundeck/realm.properties
+/etc/rundeck/rundeck-config.properties
+/etc/rundeck/ssl/ssl.properties

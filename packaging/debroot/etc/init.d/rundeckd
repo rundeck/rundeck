@@ -1,0 +1,91 @@
+#!/bin/bash 
+#
+# rundeckd    Startup script for the tapd
+#
+# chkconfig: 2345 90 10
+# description: rundeckd, providing rundeckd
+# pidfile: /var/run/rundeckd.pid
+
+### BEGIN INIT INFO
+# Provides:		rundeckd
+# Required-Start:	$all
+# Required-Stop:	$local_fs
+# Default-Start: 	2 3 4 5
+# Default-Stop: 	0 1 6
+# Short-Description:	rundeck job automation console
+# Description:		rundeckd services.
+### END INIT INFO
+
+# Source function library
+. /etc/rundeck/profile
+
+prog="rundeckd"
+rundeckd="${JAVA_HOME:-/usr}/bin/java ${RDECK_JVM} -cp ${BOOTSTRAP_CP}:/etc/rundeck com.dtolabs.rundeck.RunServer /etc/rundeck 4440"
+RETVAL=0
+PID_FILE=/var/run/rundeckd.pid
+
+start() {
+	echo -n $"Starting $prog: "
+	nohup su -l rundeck -c "$rundeckd" 2>&1 >>/var/log/rundeck/service.log &
+ 	RETVAL=$?	
+	PID=$!
+	echo $PID > /var/run/rundeckd.pid
+	if [ $RETVAL -eq 0 ]; then 
+		touch /var/lock/subsys/$prog
+		echo_success
+	else
+		echo_failure
+	fi
+	echo
+	return $RETVAL
+}
+
+stop() {
+	echo -n $"Stopping $prog: "
+	killproc -p /var/run/rundeckd.pid "$rundeckd"
+	RETVAL=$?
+	echo
+	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/$prog
+	return $RETVAL
+}
+
+### NOT USED
+reload() {
+	echo -n $"Reloading $prog: "
+	killproc -p /var/run/rundeckd.pid "$rundeckd" -HUP
+	RETVAL=$?
+	echo
+	return $RETVAL
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	force-reload)
+		stop
+		start
+		;;
+	restart)
+		stop
+		start
+		;;
+	condrestart)
+		if [ -f /var/lock/subsys/$prog ]; then
+			stop
+			start
+		fi
+		;;
+	status)
+		status $rundeckd
+		RETVAL=$?
+		;;
+	*)
+		echo $"Usage: $0 {start|stop|restart|condrestart|status}"
+		RETVAL=1
+esac
+
+exit $RETVAL

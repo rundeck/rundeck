@@ -30,6 +30,9 @@ rundeck: $(war) $(launcher)
 rpm: docs $(war) $(plugs)
 	cd packaging; $(MAKE) VERSION=$(VERSION) RELEASE=$(RELEASE) clean rpm
 
+deb: docs $(war) $(plugs)
+	cd packaging; $(MAKE) VERSION=$(VERSION) RELEASE=$(RELEASE) clean deb
+
 makedocs:
 	$(MAKE) -C docs
 
