@@ -1,16 +1,5 @@
-import org.springframework.web.servlet.support.RequestContextUtils as RCU
-
-import com.dtolabs.rundeck.core.Constants
-import com.dtolabs.rundeck.core.cli.CLIToolLogger
-import com.dtolabs.rundeck.core.cli.CLIUtils
-import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.INodeEntry
-import com.dtolabs.rundeck.core.execution.ExecutionItem
-import com.dtolabs.rundeck.core.execution.ExecutionListener
-import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
-import com.dtolabs.rundeck.core.utils.NodeSet
-import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import grails.util.GrailsWebUtil
+
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
 import java.util.logging.Handler
@@ -18,7 +7,17 @@ import java.util.logging.Level
 import java.util.logging.LogRecord
 import java.util.logging.Logger
 import java.util.regex.Pattern
+
 import javax.servlet.http.HttpSession
+
+import org.apache.commons.httpclient.HttpClient
+import org.apache.commons.httpclient.HttpMethod
+import org.apache.commons.httpclient.UsernamePasswordCredentials
+import org.apache.commons.httpclient.auth.AuthScope
+import org.apache.commons.httpclient.methods.GetMethod
+import org.apache.commons.httpclient.params.HttpClientParams
+import org.apache.commons.httpclient.util.DateParseException
+import org.apache.commons.httpclient.util.DateUtil
 import org.apache.tools.ant.BuildEvent
 import org.apache.tools.ant.BuildException
 import org.apache.tools.ant.BuildLogger
@@ -30,8 +29,23 @@ import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.support.WebApplicationContextUtils
+import org.springframework.web.servlet.support.RequestContextUtils as RCU
+
+import com.dtolabs.rundeck.core.Constants
+import com.dtolabs.rundeck.core.cli.CLIToolLogger
+import com.dtolabs.rundeck.core.cli.CLIUtils
+import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.dtolabs.rundeck.core.execution.ExecutionItem
+import com.dtolabs.rundeck.core.execution.ExecutionListener
+import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.commands.*
 import com.dtolabs.rundeck.core.execution.workflow.*
+import com.dtolabs.rundeck.core.utils.NodeSet
+import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
+import com.dtolabs.rundeck.core.utils.NodeSet.Exclude
+import com.dtolabs.rundeck.core.utils.NodeSet.Include
 import com.dtolabs.rundeck.execution.*
 
 /**
@@ -609,7 +623,12 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         def String[] args = execMap.argString? CLIUtils.splitArgLine(execMap.argString):inputargs
         def Map<String, String> optsmap = execMap.argString ? frameworkService.parseOptsFromString(execMap.argString) : null!=args? frameworkService.parseOptsFromArray(args):null
 
-        NodeSet nodeset
+        def Map<String,Map<String,String>> datacontext = new HashMap<String,Map<String,String>>()
+		datacontext.put("option",optsmap)
+		datacontext.put("job",jobcontext?jobcontext:new HashMap<String,String>())
+
+		NodeSet nodeset
+				
         if (execMap.doNodedispatch) {
             //set nodeset for the context if doNodedispatch parameter is true
             nodeset = filtersAsNodeSet(execMap)
@@ -617,9 +636,35 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             //blank?
             nodeset = new NodeSet()
         }
-        def Map<String, Map<String, String>> datacontext = new HashMap<String, Map<String, String>>()
-        datacontext.put("option", optsmap)
-        datacontext.put("job", jobcontext ? jobcontext : new HashMap<String, String>())
+				
+				// enhnacement to allow ${option.xyz} in tags and names
+				if (nodeset != null) {
+					Include includes = nodeset.getInclude();
+		
+					if (includes != null) {
+						if (includes.getName() != null) {
+							includes.setName(DataContextUtils.replaceDataReferences(
+									includes.getName(), datacontext));
+						}
+						if (includes.getTags() != null) {
+							includes.setTags(DataContextUtils.replaceDataReferences(
+									includes.getTags(), datacontext));
+						}
+					}
+		
+					Exclude excludes = nodeset.getExclude();
+					if (excludes != null) {
+						if (excludes.getName() != null) {
+							excludes.setName(DataContextUtils.replaceDataReferences(
+									excludes.getName(), datacontext));
+						}
+						if (excludes.getTags() != null) {
+							excludes.setTags(DataContextUtils.replaceDataReferences(
+									excludes.getTags(), datacontext));
+						}
+					}
+				}
+        
         //create thread object with an execution item, and start it
         final com.dtolabs.rundeck.core.execution.ExecutionContext item =  com.dtolabs.rundeck.core.execution.ExecutionContextImpl.createExecutionContextImpl(
             execMap.project,
@@ -913,6 +958,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         def optparams = ExecutionService.filterOptParams(props)
         if(!optparams){
             props.argString=addArgStringOptionDefaults(scheduledExec, props.argString)
+			//props.argString+=addArgStringOptionRemotes(scheduledExec, props.argString)
         }
         validateInputOptionValues(scheduledExec, props)
         if (optparams) {
@@ -990,6 +1036,11 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                 if (opt.required && null==optparams[opt.name] && opt.defaultValue) {
                     defaultoptions[opt.name]=opt.defaultValue
                 }
+				if (opt.remoteValue){
+					def String remoteUrl = DataContextUtils.replaceDataReferences(opt.remoteValue, data);
+					def remote = getRemoteValue(remoteUrl, 10);
+					defaultoptions[opt.name]=remote.value
+				}
             }
             if(defaultoptions){
                 if(sb.size()>0){
@@ -1000,6 +1051,103 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         }
         return sb.toString()
     }
+	
+	def static Object getRemoteValue(String url, int timeout){
+		//attempt to get the URL data
+		def stats=[:]
+		if(url.startsWith("http:") || url.startsWith("https:")){
+			final HttpClientParams params = new HttpClientParams()
+			params.setConnectionManagerTimeout(timeout*1000)
+			params.setSoTimeout(timeout*1000)
+			def HttpClient client= new HttpClient(params)
+			def URL urlo
+			def AuthScope authscope=null
+			def UsernamePasswordCredentials cred=null
+			boolean doauth=false
+			String cleanUrl = url.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
+			try{
+				urlo = new URL(url)
+				if(urlo.userInfo){
+					doauth = true
+					authscope = new AuthScope(urlo.host,urlo.port>0? urlo.port:urlo.defaultPort,AuthScope.ANY_REALM,"BASIC")
+					cred = new UsernamePasswordCredentials(urlo.userInfo)
+					url = new URL(urlo.protocol, urlo.host, urlo.port, urlo.file).toExternalForm()
+				}
+			}catch(MalformedURLException e){
+				throw new Exception("Failed to configure base URL for authentication: "+e.getMessage(),e)
+			}
+			if(doauth){
+				client.getParams().setAuthenticationPreemptive(true);
+				client.getState().setCredentials(authscope,cred)
+			}
+			def HttpMethod method = new GetMethod(url)
+			method.setFollowRedirects(true)
+			method.setRequestHeader("Accept","application/json")
+			stats.url = cleanUrl;
+			stats.startTime = System.currentTimeMillis();
+			def resultCode = client.executeMethod(method);
+			stats.httpStatusCode = resultCode
+			stats.httpStatusText = method.getStatusText()
+			stats.finishTime = System.currentTimeMillis()
+			stats.durationTime=stats.finishTime-stats.startTime
+			stats.contentLength = method.getResponseContentLength()
+			final header = method.getResponseHeader("Last-Modified")
+			if(null!=header){
+				try {
+					stats.lastModifiedDate= DateUtil.parseDate(header.getValue())
+				} catch (DateParseException e) {
+				}
+			}else{
+				stats.lastModifiedDate=""
+				stats.lastModifiedDateTime=""
+			}
+			try{
+				def reasonCode = method.getStatusText();
+				if(resultCode>=200 && resultCode<=300){
+					def expectedContentType="application/json"
+					def resultType=''
+					if (null != method.getResponseHeader("Content-Type")) {
+						resultType = method.getResponseHeader("Content-Type").getValue();
+					}
+					String type = resultType;
+					if (type.indexOf(";") > 0) {
+						type = type.substring(0, type.indexOf(";")).trim();
+					}
+
+					if (expectedContentType.equals(type)) {
+						final stream = method.getResponseBodyAsStream()
+						final writer = new StringWriter()
+						int len=copyToWriter(new BufferedReader(new InputStreamReader(stream, method.getResponseCharSet())),writer)
+						stream.close()
+						writer.flush()
+						final string = writer.toString()
+						if(string){
+							stats.contentSHA1=string.encodeAsSHA1()
+							if(stats.contentLength<0){
+								stats.contentLength= len
+							}
+						}else{
+							stats.contentSHA1=""
+						}
+						return [value:string,stats:stats]
+					}else{
+						return [error:"Unexpected content type received: "+resultType,stats:stats]
+					}
+				}else{
+					stats.contentSHA1 = ""
+					return [error:"Server returned an error response: ${resultCode} ${reasonCode}",stats:stats]
+				}
+			} finally {
+				method.releaseConnection();
+			}
+		}else if (url.startsWith("file:")) {
+			def File srfile = new File(new URI(url))
+			def String resp = srfile.getText('UTF-8').replaceAll("\n", "")
+			return [value:resp,stats:stats]
+		} else {
+			throw new Exception("Unsupported protocol: " + url)
+		}
+	}
 
     /**
      * evaluate the options in the input properties, and if any Options defined for the Job have regex constraints,
@@ -1363,12 +1511,18 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
      */
     public static String generateJobArgline(ScheduledExecution sched,Map<String,Object> opts){
         HashMap<String,String> newopts = new HashMap<String,String>();
+		
+		Map<String, Map<String,String>> data = new HashMap<String, Map<String,String>>();
+		data.put("option", newopts);
+		
         for (String key: opts.keySet().sort()) {
             Object obj=opts.get(key)
+			def opt = sched.options.find {it.name == key}
+			
             String val
             if (obj instanceof String[] || obj instanceof Collection) {
                 //join with delimiter
-                def opt = sched.options.find {it.name == key}
+                
                 if (opt && opt.delimiter) {
                     val = obj.grep {it}.join(opt.delimiter)
                 } else {
@@ -1377,6 +1531,13 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             }else{
                 val = (String) obj
             }
+			
+			if(opt && opt.remoteValue){
+				def String remoteUrl = DataContextUtils.replaceDataReferences(opt.remoteValue, data);
+				def remote = getRemoteValue(remoteUrl, 10);
+				val = remote.value;
+			}
+			
             newopts[key]=val
         }
         return generateArgline(newopts)
@@ -1482,7 +1643,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                 newargs = stringList.toArray(new String[stringList.size()]);
 
                 if (null != executionContext.dataContext && null != jitem.args) {
-                    newargs = com.dtolabs.rundeck.core.dispatcher.DataContextUtils.replaceDataReferences(jitem.args, executionContext.getDataContext())
+                    newargs = DataContextUtils.replaceDataReferences(jitem.args, executionContext.getDataContext())
                 }
                 //construct job data context
                 def jobcontext = new HashMap<String, String>()

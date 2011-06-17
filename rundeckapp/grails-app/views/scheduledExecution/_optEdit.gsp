@@ -50,6 +50,11 @@
                 <div class="${hasErrors(bean:option,field:'defaultValue','fieldError')}">Default Value</div>
                 <input type="text" class="right" name="defaultValue" value="${option?.defaultValue}" size="40" placeholder="Default value"/>
             </label>
+            
+            <label>
+            	<div class="${hasErrors(bean:option,field:'remoteValue','fieldError')}">Remote Value</div>
+                <input type="text" class="right" name="remoteValue" value="${option?.remoteValue}" size="40" placeholder="Remote value"/>
+            </label>
 
             <g:if test="${origName || option?.name && !newoption}">
                 <g:hiddenField name="origName" value="${origName?origName:option?.name}"/>
