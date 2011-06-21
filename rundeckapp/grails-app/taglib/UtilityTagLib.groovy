@@ -621,4 +621,49 @@ class UtilityTagLib{
         }
         request.pageTimers=null
     }
+    /**
+     * Humanize data value, based on unit attribute
+     */
+    def humanize={attrs,body->
+        if(attrs.unit && null!=attrs.value){
+            if(attrs.unit=='byte'){
+                long val=attrs.value instanceof String?Long.parseLong(attrs.value):attrs.value
+                def testset=[
+                    [value: 0, name: 'B'],
+                    [value: 1024, name: 'KiB'],
+                    [value: 1024*1024, name: 'MiB'],
+                    [value: 1024 * 1024 * 1024, name: 'GiB'],
+                    [value: 1024 * 1024 * 1024 * 1024, name: 'TiB'],
+                ]
+                def found
+                testset.eachWithIndex  {lvl, x -> if (!found && val < lvl.value) {found = testset[x-1]} }
+                if(!found){
+                    found=testset[-1]
+                }
+                out<<g.formatNumber([number : (val/found.value), type : "number", maxFractionDigits: "2"],body)+' '+found.name
+            }else if(attrs.unit=='hbyte'){
+                long val=attrs.value instanceof String?Long.parseLong(attrs.value):attrs.value
+                def testset=[
+                    [value: 0, name: 'B'],
+                    [value: 1000, name: 'KB'],
+                    [value: 1000* 1000, name: 'MB'],
+                    [value: 1000 * 1000 * 1000, name: 'GB'],
+                    [value: 1000 * 1000 * 1000 * 1000, name: 'TB'],
+                ]
+                def found
+                testset.eachWithIndex  {lvl, x -> if (!found && val < lvl.value) {found = testset[x-1]} }
+                if(!found){
+                    found=testset[-1]
+                }
+                out<<g.formatNumber([number : (val/found.value), type : "number", maxFractionDigits: "2"],body)+' '+found.name
+            }else if(attrs.unit=='ms'){
+                attrs.time=attrs.value
+                out<<timeDuration(attrs,body)
+            }else if(attrs.unit=='%'){
+                out << g.formatNumber([number: attrs.value, type: "number", maxFractionDigits: "2"], body) + '%'
+            }else{
+                out<<attrs.value+' ('+attrs.unit+')'
+            }
+        }
+    }
 }

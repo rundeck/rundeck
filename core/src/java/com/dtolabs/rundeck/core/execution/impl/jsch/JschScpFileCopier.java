@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
+import com.jcraft.jsch.JSchException;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
@@ -40,6 +41,7 @@ import org.apache.tools.ant.taskdefs.Sequential;
 import org.apache.tools.ant.taskdefs.optional.ssh.Scp;
 
 import java.io.*;
+import java.text.MessageFormat;
 
 /**
  * JschScpFileCopier is ...
@@ -95,11 +97,23 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier {
                                       + "' to: '" + node.getNodename() + ":" + remotefile + "'", project));
         seq.addTask(scp);
 
+        String errormsg=null;
         try {
             seq.execute();
         } catch (BuildException e) {
-            context.getExecutionListener().log(0, e.getMessage());
-            throw new FileCopierException("[jsch-scp] Failed copying the file: " + e.getMessage(), e);
+            if (null != e.getCause() && e.getCause() instanceof JSchException && e.getCause().getMessage().contains(
+                "Auth cancel")) {
+                String msgformat = JschNodeExecutor.FWK_PROP_AUTH_CANCEL_MSG_DEFAULT;
+                if (framework.getPropertyLookup().hasProperty(JschNodeExecutor.FWK_PROP_AUTH_CANCEL_MSG)) {
+                    msgformat = framework.getProperty(JschNodeExecutor.FWK_PROP_AUTH_CANCEL_MSG);
+                }
+                errormsg = MessageFormat.format(msgformat, node.getNodename(),
+                    e.getMessage());
+            } else {
+                errormsg = e.getMessage();
+            }
+            context.getExecutionListener().log(0, errormsg);
+            throw new FileCopierException("[jsch-scp] Failed copying the file: " + errormsg, e);
         }
         if (!localTempfile.delete()) {
             context.getExecutionListener().log(Constants.WARN_LEVEL,

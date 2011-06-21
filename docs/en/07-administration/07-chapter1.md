@@ -185,6 +185,8 @@ The following files will be found in the log directory:
      .
      |-- command.log
      |-- rundeck.audit.log
+     |-- rundeck.jobs.log
+     |-- rundeck.options.log
      |-- rundeck.log
      `-- service.log
 
@@ -192,8 +194,13 @@ Different facilities log to their own files:
 
 * `command.log`: Shell tools log their activity to the command.log
 * `rundeck.audit.log`: Authorization messages pertaining to aclpolicy
+* `rundeck.job.log`: Log of all job definition changes
+* `rundeck.options.log`: Logs remote HTTP requests for Options JSON data
 * `rundeck.log`: General RunDeck application messages
 * `service.log`: Standard input and output generated during runtime
+
+See the [#log4j.properties](#log4j.properties) section for information 
+about customizing log message formats and location.
 
 ## Backup and recovery
 
@@ -383,53 +390,75 @@ Then restart RunDeck to ensure it picks up the change and you're done.
 
 (1)  Setup the LDAP login module configuration file
 
-Create a `jaas-activedirectory.conf` file in the same directory as the `jaas-loginmodule.conf` file.
+    Create a `jaas-activedirectory.conf` file in the same directory as the `jaas-loginmodule.conf` file.
+    
+    * RPM install: /etc/rundeck/
+    * Launcher install: $RDECK_BASE/server/config
+    
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    activedirectory {
+        com.dtolabs.rundeck.jetty.jaas.JettyCachingLdapLoginModule required
+        debug="true"
+        contextFactory="com.sun.jndi.ldap.LdapCtxFactory"
+        providerUrl="ldap://localhost:389"
+        bindDn="cn=Manager,dc=rundeck,dc=com"
+        bindPassword="secret"
+        authenticationMethod="simple"
+        forceBindingLogin="true"
+        userBaseDn="ou=users,dc=rundeck,dc=com"
+        userRdnAttribute="cn"
+        userIdAttribute="cn"
+        userPasswordAttribute="unicodePwd"
+        userObjectClass="user"
+        roleBaseDn="ou=roles,dc=rundeck,dc=com"
+        roleNameAttribute="cn"
+        roleMemberAttribute="member"
+        roleObjectClass="group"
+        cacheDurationMillis="300000"
+        reportStatistics="true";
+        };
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* RPM install: /etc/rundeck/
-* Launcher install: $RDECK_BASE/server/config
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-activedirectory {
-    com.dtolabs.rundeck.jetty.jaas.JettyCachingLdapLoginModule required
-    debug="true"
-    contextFactory="com.sun.jndi.ldap.LdapCtxFactory"
-    providerUrl="ldap://localhost:389"
-    bindDn="cn=Manager,dc=rundeck,dc=com"
-    bindPassword="secret"
-    authenticationMethod="simple"
-    forceBindingLogin="true"
-    userBaseDn="ou=users,dc=rundeck,dc=com"
-    userRdnAttribute="cn"
-    userIdAttribute="cn"
-    userPasswordAttribute="unicodePwd"
-    userObjectClass="user"
-    roleBaseDn="ou=roles,dc=rundeck,dc=com"
-    roleNameAttribute="cn"
-    roleMemberAttribute="member"
-    roleObjectClass="group"
-    cacheDurationMillis="300000"
-    reportStatistics="true";
-    };
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+(2) To override the default JAAS configuration file, you will need to supply the RunDeck server with the proper path to the new one, and a `loginmodule.name` Java system property to identify the new login module by name.
 
-(2) Update /etc/rundeck/profile
-Update the `RDECK_JVM` in `/etc/rundeck/profile` by changing the following two JVM arguments:
+    The JAAS configuration file location is specified differently between The Launcher and the RPM.
+    
+    **For the Launcher**:  the `loginmodule.conf.name` Java system property is used to identify the *name* of the config file, which must be located in the `$RDECK_BASE/server/config` dir.
+    
+    You can simply specify the system properties on the java commandline:
+    
+        java -Dloginmodule.conf.name=jaas-activedirectory.conf \
+            -Dloginmodule.name=activedirectory \
+            -jar rundeck-launcher-x.x.jar
+            
+    Otherwise, using the launcher with the supplied `rundeckd` script, you can modify the `RDECK_JVM` value in the `$RDECK_BASE/etc/profile` file to add two JVM arguments:
+    
+        export RDECK_JVM="-Dloginmodule.conf.name=jaas-activedirectory.conf \
+            -Dloginmodule.name=activedirectory"
+    
+    Note: more information about using the launcher and useful properties are under [Getting Started - Launcher Options](#launcher-options).
+    
+    **For the RPM installation**: the absolute path to the JAAS config file must be specified with the `java.security.auth.login.config` property.
+    
+    Update the `RDECK_JVM` in `/etc/rundeck/profile` by changing the following two JVM arguments:
+    
+        export RDECK_JVM="-Djava.security.auth.login.config=/etc/rundeck/jaas-loginmodule.conf \
+               -Dloginmodule.name=RDpropertyfilelogin \
+           
+    to
+    
+        export RDECK_JVM="-Djava.security.auth.login.config=/etc/rundeck/jaas-activedirectory.conf \
+               -Dloginmodule.name=activedirectory \
 
-    export RDECK_JVM="-Djava.security.auth.login.config=/etc/rundeck/jaas-loginmodule.conf \
-	    -Dloginmodule.name=RDpropertyfilelogin \
-	
-to
-
-    export RDECK_JVM="-Djava.security.auth.login.config=/etc/rundeck/jaas-activedirectory.conf \
-	    -Dloginmodule.name=activedirectory \
 
 (3) Restart rundeckd
 
-`sudo /etc/init.d/rundeckd restart`
+    `sudo /etc/init.d/rundeckd restart`
 
 (4) Attempt to logon
 
-If everything was configured correctly, you will be able to access RunDeck using your AD credentials.  If something did not go smoothly, look at `/var/log/rundeck/service.log` for stack traces that may indicate what is wrong.
+    If everything was configured correctly, you will be able to access RunDeck using your AD credentials.  If something did not go smoothly, look at `/var/log/rundeck/service.log` for stack traces that may indicate what is wrong.
 
 #### Communicating over secure ldap (ldaps://)
 
@@ -666,6 +695,30 @@ might see these actions as a granular set of roles.
 `job_view_unauthorized`
 ~   Special role for viewing jobs that the user is unauthorized to run.
 
+#### Access control policy actions example
+
+Below is an example policy document demonstrating policy actions
+to create limited access for a group of users.
+Users in the group "restart_user", are allowed to run three jobs in the "adm"
+group, Restart, stop and start. By allowing ``workflow_run`` but not ``workflow_read``,
+the "stop" and "start" jobs will not be visible.
+
+File listing: restart_user.aclpolicy example
+
+    <policies>
+      <policy description="Limited user access for adm restart action">
+        <context project="*">
+          <command group="adm" job="Restart" actions="workflow_run,workflow_read"/>
+          <command group="adm" job="stop"  actions="workflow_run"/>
+          <command group="adm" job="start" actions="workflow_run"/>
+        </context>
+        <by>
+          <group name="restart_user"/>
+        </by>
+      </policy>
+    </policies>
+    
+    
 ### Role mapping
 
 Role mapping is a way of adapting the User Roles provided by your
@@ -964,4 +1017,11 @@ these properties in the [rundeck-config.properties](#rundeck-config.properties) 
 +-------------------------+-------------------------------------+--------------------+
 |`rundeck.gui.titleLink`  |URL for the link used by the app     |http://rundeck.org  |
 |                         |header icon.                         |                    |
++-------------------------+-------------------------------------+--------------------+
+|`rundeck.gui.helpLink`   |URL for the "help" link in the app   |http://rundeck.org/ |
+|                         |header.                              |   docs             |
++-------------------------+-------------------------------------+--------------------+
+|`rundeck.gui.realJobTree`|Displaying a real tree in the Jobs   |false               |
+|                         |overview instead of collapsing       |                    |
+|                         |empty groups. **Default: true**      |                    |
 +-------------------------+-------------------------------------+--------------------+

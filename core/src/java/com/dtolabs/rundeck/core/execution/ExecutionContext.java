@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.execution;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.utils.NodeSet;
 
+import java.io.File;
 import java.util.Map;
 
 /**
@@ -81,4 +82,9 @@ public interface ExecutionContext {
     public Map<String, Map<String, String>> getDataContext();
 
     public ExecutionListener getExecutionListener();
+
+    /**
+     * Specific file to use for nodes source instead of project nodes
+     */
+    public File getNodesFile();
 }

@@ -37,7 +37,6 @@ public class Nodes implements NodeReceiver {
     private final HashMap<String,INodeEntry> nodes;
     private final HashMap<String, INodeEntry> nodesByHostname;
 
-    final private FrameworkProject project;
     private boolean valid;
     private NodeFileParserException parserException;
 
@@ -66,7 +65,8 @@ public class Nodes implements NodeReceiver {
         resourceyaml
     }
     final private Format format;
-    
+
+
     /**
      * Base constructor
      *
@@ -75,10 +75,9 @@ public class Nodes implements NodeReceiver {
      * @param format
      * @throws NodeFileParserException if a parsing error occurs
      */
-    protected Nodes(final FrameworkProject project, final File nodesDataFile, final Format format) throws
+    protected Nodes(final File nodesDataFile, final Format format) throws
         NodeFileParserException {
         this.format= format;
-        this.project = project;
         nodesFile = nodesDataFile;
         nodes=new HashMap<String, INodeEntry>();
         nodesByHostname=new HashMap<String, INodeEntry>();
@@ -87,7 +86,7 @@ public class Nodes implements NodeReceiver {
             logger.warn("nodes resource file doesn't exist: " + nodesFile.getAbsolutePath());
             valid=true;
         }else{
-            final NodeFileParser parser = createParser(this.project, nodesFile);
+            final NodeFileParser parser = createParser(nodesFile);
             try {
                 parser.parse();
                 valid=true;
@@ -96,26 +95,31 @@ public class Nodes implements NodeReceiver {
                 logger.error(e.getMessage(), e);
             }
         }
+    }
+
+    public void addFrameworkNode(final FrameworkProject project){
+
         //add local node if it does not exist
         final String fwkNode = project.getFrameworkProjectMgr().getFramework().getFrameworkNodeName();
         if (null == nodes.get(fwkNode)) {
             nodes.put(fwkNode, project.getFrameworkProjectMgr().getFramework().createFrameworkNode());
         }
-
     }
-
 
     /**
      * Factory method to create Nodes for a project, using specified nodes resources file
-     * @param project framework project
+     *
+     * @param project   framework project
      * @param nodesFile nodes resource file
-     * @param format file format
+     * @param format    file format
+     *
      * @return Nodes object
+     *
      * @throws NodeFileParserException if a parsing error occurs
      */
-    public static Nodes create(final FrameworkProject project, final File nodesFile, final Format format) throws
+    public static Nodes create(final File nodesFile, final Format format) throws
         NodeFileParserException {
-        return new Nodes(project, nodesFile, format);
+        return new Nodes(nodesFile, format);
     }
 
     /**
@@ -211,11 +215,10 @@ public class Nodes implements NodeReceiver {
     /**
      * Create a NodeFileParser given the project and the source file, using the predetermined format
      *
-     * @param project the project
      * @param propfile the nodes resource file
      * @return a new parser based on the determined format
      */
-    protected NodeFileParser createParser(final FrameworkProject project, final File propfile) {
+    protected NodeFileParser createParser(final File propfile) {
         switch(format){
             case resourcexml:
                 return new NodesXMLParser(propfile, this);

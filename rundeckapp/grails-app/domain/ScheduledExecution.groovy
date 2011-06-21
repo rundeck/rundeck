@@ -513,7 +513,7 @@ class ScheduledExecution extends ExecutionContext {
   }
 
     def Notification findNotification(String trigger, String type){
-        if(this.id){
+        if(this.notifications){
             return this.notifications.find{it.eventTrigger==trigger && it.type==type}
         }else{
             return null

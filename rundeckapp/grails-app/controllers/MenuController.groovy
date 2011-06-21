@@ -6,6 +6,7 @@ import grails.converters.JSON
 import groovy.xml.MarkupBuilder
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.core.authorization.Decision
+import java.lang.management.ManagementFactory
 
 class MenuController {
     FrameworkService frameworkService
@@ -14,6 +15,7 @@ class MenuController {
     ScheduledExecutionService scheduledExecutionService
     MenuService menuService
     RoleService roleService
+    def quartzScheduler
     def list = {
         def results = index(params)
         render(view:"index",model:results)
@@ -282,6 +284,23 @@ class MenuController {
             }
 
         }
+
+        if(org.codehaus.groovy.grails.commons.ConfigurationHolder.config.rundeck?.gui?.realJobTree != "false") {
+            //Adding group entries for empty hierachies to have a "real" tree 
+            def missinggroups = [:]
+            jobgroups.each { k, v ->
+                def splittedgroups = k.split('/')
+                splittedgroups.eachWithIndex { item, idx ->
+                    def thepath = splittedgroups[0..idx].join('/')
+                    if(!jobgroups.containsKey(thepath)) {
+                        missinggroups[thepath]=[]
+                    }
+                }
+            }
+            //sorting is done in the view
+            jobgroups.putAll(missinggroups)
+        }
+
         schedlist=newschedlist
         log.debug("listWorkflows(viewable): "+(System.currentTimeMillis()-viewable));
         long last=System.currentTimeMillis()
@@ -370,6 +389,131 @@ class MenuController {
             flash.message="Filter deleted: ${filtername.encodeAsHTML()}"
         }
         redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:[compact:params.compact?'true':''])
+    }
+
+    def admin={
+
+        if (!roleService.isUserInAnyRoles(request, ['admin', 'user_admin'])) {
+            flash.error = "User Admin role required"
+            flash.title = "Unauthorized"
+            response.setStatus(403)
+            render(template: '/common/error', model: [:])
+        }
+    }
+
+    def systemInfo = {
+        if (!roleService.isUserInAnyRoles(request, ['admin', 'user_admin'])) {
+            flash.error = "User Admin role required"
+            flash.title = "Unauthorized"
+            response.setStatus(403)
+            render(template: '/common/error', model: [:])
+        }
+        Date nowDate = new Date();
+        String nodeName = servletContext.getAttribute("FRAMEWORK_NODE")
+        String appVersion = grailsApplication.metadata['app.version']
+        double load = ManagementFactory.getOperatingSystemMXBean().systemLoadAverage
+        int processorsCount = ManagementFactory.getOperatingSystemMXBean().availableProcessors
+        String osName = ManagementFactory.getOperatingSystemMXBean().name
+        String osVersion = ManagementFactory.getOperatingSystemMXBean().version
+        String osArch = ManagementFactory.getOperatingSystemMXBean().arch
+        String vmName = ManagementFactory.getRuntimeMXBean().vmName
+        String vmVendor = ManagementFactory.getRuntimeMXBean().vmVendor
+        String vmVersion = ManagementFactory.getRuntimeMXBean().vmVersion
+        long durationTime = ManagementFactory.getRuntimeMXBean().uptime
+        Date startupDate = new Date(nowDate.getTime() - durationTime)
+        int threadActiveCount = Thread.activeCount()
+        def build = grailsApplication.metadata['build.ident']
+        def base = servletContext.getAttribute("RDECK_BASE")
+
+        def memmax = Runtime.getRuntime().maxMemory()
+        def memfree = Runtime.getRuntime().freeMemory()
+        def memtotal = Runtime.getRuntime().totalMemory()
+        def schedulerRunningCount = quartzScheduler.getCurrentlyExecutingJobs().size()
+        def info = [
+            nowDate: nowDate,
+            nodeName: nodeName,
+            appVersion: appVersion,
+            load: load,
+            processorsCount: processorsCount,
+            osName: osName,
+            osVersion: osVersion,
+            osArch: osArch,
+            vmName: vmName,
+            vmVendor: vmVendor,
+            vmVersion: vmVersion,
+            durationTime: durationTime,
+            startupDate: startupDate,
+            threadActiveCount: threadActiveCount,
+            build: build,
+            base: base,
+            memmax: memmax,
+            memfree: memfree,
+            memtotal: memtotal,
+            schedulerRunningCount: schedulerRunningCount
+        ]
+        return [systemInfo: [
+
+            [
+                "stats: uptime": [
+                    duration: info.durationTime,
+                    'duration.unit': 'ms',
+                    datetime: g.w3cDateValue(date: info.startupDate)
+                ]],
+
+            ["stats: cpu": [
+
+                loadAverage: info.load,
+                'loadAverage.unit': '%',
+                processors: info.processorsCount
+            ]],
+            ["stats: memory":
+            [
+                'max.unit': 'byte',
+                'free.unit': 'byte',
+                'total.unit': 'byte',
+                max: info.memmax,
+                free: info.memfree,
+                total: info.memtotal,
+                used: info.memtotal-info.memfree,
+                'used.unit': 'byte',
+                heapusage: (info.memtotal-info.memfree)/info.memtotal,
+                'heapusage.unit': 'ratio',
+                'heapusage.info': 'Ratio of Used to Free memory within the Heap (used/total)',
+                allocated: (info.memtotal)/info.memmax,
+                'allocated.unit': 'ratio',
+                'allocated.info': 'Ratio of system memory allocated to maximum allowed (total/max)',
+            ]],
+            ["stats: scheduler":
+            [running: info.schedulerRunningCount]
+            ],
+            ["stats: threads":
+            [active: info.threadActiveCount]
+            ],
+            [timestamp: [
+//                epoch: info.nowDate.getTime(), 'epoch.unit': 'ms',
+                datetime: g.w3cDateValue(date: info.nowDate)
+            ]],
+
+            [rundeck:
+            [version: info.appVersion,
+                build: info.build,
+                node: info.nodeName,
+                base: info.base,
+            ]],
+            [os:
+            [arch: info.osArch,
+                name: info.osName,
+                version: info.osVersion,
+            ]
+            ],
+            [jvm:
+            [
+                name: info.vmName,
+                vendor: info.vmVendor,
+                version: info.vmVersion
+            ]
+            ],
+        ]]
     }
 
 

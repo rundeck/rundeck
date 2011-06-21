@@ -26,22 +26,20 @@ package com.dtolabs.rundeck.core.execution.impl.jsch;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
-import com.dtolabs.rundeck.core.execution.dispatch.ParallelNodeDispatcher;
 import com.dtolabs.rundeck.core.execution.impl.common.AntSupport;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.tasks.net.ExtSSHExec;
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
+import com.jcraft.jsch.JSchException;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
-import org.apache.tools.ant.Task;
-import org.apache.tools.ant.taskdefs.Sequential;
+import org.apache.tools.ant.util.StringUtils;
 
-import java.util.Map;
+import java.text.MessageFormat;
 
 /**
  * JschNodeExecutor is ...
@@ -50,13 +48,17 @@ import java.util.Map;
  */
 public class JschNodeExecutor implements NodeExecutor {
     public static final String SERVICE_PROVIDER_TYPE = "jsch-ssh";
+    public static final String FWK_PROP_AUTH_CANCEL_MSG = "framework.messages.error.ssh.authcancel";
+    public static final String FWK_PROP_AUTH_CANCEL_MSG_DEFAULT =
+        "Authentication failure connecting to node: \"{0}\". Make sure your resource definitions and credentials are up to date.";
     private Framework framework;
 
     public JschNodeExecutor(final Framework framework) {
         this.framework = framework;
     }
 
-    public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command, final INodeEntry node) throws
+    public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
+                                             final INodeEntry node) throws
         ExecutionException {
         if (null == node.getHostname() || null == node.extractHostname()) {
             throw new ExecutionException(
@@ -74,20 +76,44 @@ public class JschNodeExecutor implements NodeExecutor {
 
         boolean success = false;
         final ExtSSHExec sshexec;
-            //perform jsch sssh command
+        final int timeout = getFrameworkSSHTimeout(framework);
+        //perform jsch sssh command
         try {
             sshexec = buildSSHTask(context, node, command, project, framework);
         } catch (SSHTaskBuilder.BuilderException e) {
             throw new ExecutionException(e);
         }
+        String errormsg = null;
         try {
             sshexec.execute();
             success = true;
         } catch (BuildException e) {
-            context.getExecutionListener().log(0, e.getMessage());
+            if (e.getMessage().contains("Timeout period exceeded, connection dropped")) {
+                errormsg =
+                    "Failed execution for node: " + node.getNodename() + ": Execution Timeout period exceeded (after "
+                    + timeout + "ms), connection dropped";
+            } else if (null != e.getCause() && e.getCause() instanceof JSchException && (
+                e.getCause().getMessage().contains("timeout:") || e.getCause().getMessage().contains(
+                    "SocketTimeoutException") || e.getCause().getMessage().contains(
+                    "java.net.ConnectException: Operation timed out"))) {
+                errormsg = "Failed execution for node: " + node.getNodename() + ": Connection Timeout (after " + timeout
+                           + "ms): " + e.getMessage();
+            } else if (null != e.getCause() && e.getCause() instanceof JSchException && e.getCause().getMessage()
+                .contains("Auth cancel")) {
+                String msgformat = FWK_PROP_AUTH_CANCEL_MSG_DEFAULT;
+                if (framework.getPropertyLookup().hasProperty(FWK_PROP_AUTH_CANCEL_MSG)) {
+                    msgformat = framework.getProperty(FWK_PROP_AUTH_CANCEL_MSG);
+                }
+                errormsg = MessageFormat.format(msgformat, node.getNodename(),
+                    e.getMessage());
+            } else {
+                errormsg = e.getMessage();
+            }
+            context.getExecutionListener().log(0, errormsg);
         }
         final int resultCode = sshexec.getExitStatus();
         final boolean status = success;
+        final String resultmsg = null != errormsg ? errormsg : null;
 
         return new NodeExecutorResult() {
             public int getResultCode() {
@@ -101,7 +127,8 @@ public class JschNodeExecutor implements NodeExecutor {
             @Override
             public String toString() {
                 return "[jsch-ssh] result was " + (isSuccess() ? "success" : "failure") + ", resultcode: "
-                       + getResultCode();
+                       + getResultCode()+(null!=resultmsg?": "+resultmsg:"");
+
             }
         };
     }
@@ -112,10 +139,16 @@ public class JschNodeExecutor implements NodeExecutor {
         SSHTaskBuilder.BuilderException {
 
         //XXX:TODO use node attributes to specify ssh key/timeout
-        int timeout = 0;
+
         /**
          * configure an SSH timeout
          */
+        final int timeout = getFrameworkSSHTimeout(framework);
+        return SSHTaskBuilder.build(nodeentry, args, project, framework, timeout, context.getDataContext());
+    }
+
+    static int getFrameworkSSHTimeout(final Framework framework) {
+        int timeout=0;
         if (framework.getPropertyLookup().hasProperty(Constants.SSH_TIMEOUT_PROP)) {
             final String val = framework.getProperty(Constants.SSH_TIMEOUT_PROP);
             try {
@@ -126,7 +159,7 @@ public class JschNodeExecutor implements NodeExecutor {
 //                      + " defaulting to: 0 (forever)");
             }
         }
-        return SSHTaskBuilder.build(nodeentry, args, project, framework, timeout, context.getDataContext());
+        return timeout;
     }
 
 

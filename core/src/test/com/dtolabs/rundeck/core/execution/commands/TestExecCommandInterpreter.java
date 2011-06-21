@@ -136,6 +136,10 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
             public ExecutionListener getExecutionListener() {
                 return null;
             }
+
+            public File getNodesFile() {
+                return null;
+            }
         };
         final String[] strings = {"test", "command"};
 
@@ -224,6 +228,10 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
             }
 
             public ExecutionListener getExecutionListener() {
+                return null;
+            }
+
+            public File getNodesFile() {
                 return null;
             }
         };

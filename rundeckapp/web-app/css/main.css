@@ -232,7 +232,7 @@ img{
     vertical-align: middle;
     border: 0;
 }
-a.action, .action.textbtn{
+a.action, .action.textbtn, td.action.textbtn{
     color:blue;
     font-weight:normal;
 }
@@ -242,7 +242,10 @@ a.action, .action.textbtn{
 .action{
     color:blue;
 }
-a.action:hover, span.action.textbtn:hover{
+.action.minor{
+    color:gray;
+}
+a.action:hover, span.action.textbtn:hover, td.action.textbtn:hover{
     color: blue;
     text-decoration:underline;
 }
@@ -360,6 +363,11 @@ h1 {
 }
 .valuesSet span.valuesUrl{
     color:blue;
+}
+.remotestatus{
+    padding-left: 12px;
+    padding-right:4px;
+    background:none;
 }
 
 .body {
@@ -695,6 +703,10 @@ table.simpleForm > tr > td:first-child,table.simpleForm > tbody > tr > td:first-
     padding: 5px 10px 5px 5px;
     vertical-align: top;
     color: #555;
+}
+
+table.simpleForm > tr > td:first-child.action, table.simpleForm > tbody > tr > td:first-child.action, table.simpleForm td.displabel.action {
+    color:blue;
 }
 table.simpleForm > tr > td.fieldError,table.simpleForm > tbody > tr > td.fieldError {
     color: red;

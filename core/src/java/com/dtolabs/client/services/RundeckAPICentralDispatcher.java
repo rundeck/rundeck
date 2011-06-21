@@ -57,6 +57,10 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      * Webservice link prefix for a stored job.
      */
     public static final String RUNDECK_JOB_LINK_PREFIX = "/job/show/";
+    /**
+     * Webservice link prefix for an execution
+     */
+    public static final String RUNDECK_EXEC_LINK_PREFIX = "/execution/show/";
 
     /*******************
      * API v1 endpoints
@@ -331,7 +335,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
             final Node node = resultDoc.selectSingleNode("/result/execution/@id");
             final String succeededId = node.getStringValue();
             final String name = "adhoc";
-            String url = createJobURL(succeededId);
+            String url = createExecutionURL(succeededId);
             url = makeAbsoluteURL(url);
             logger.info("\t[" + succeededId + "] <" + url + ">");
             return QueuedItemResultImpl.successful("Succeeded queueing " + name, succeededId, url, name);
@@ -614,7 +618,16 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      */
     private String createJobURL(final String id) {
         return makeContextAbsoluteURL(RUNDECK_JOB_LINK_PREFIX + id);
-
+    }
+    /**
+     * Return the URL for a job based on its ID
+     *
+     * @param id job ID
+     *
+     * @return absolute URL for the job's link
+     */
+    private String createExecutionURL(final String id) {
+        return makeContextAbsoluteURL(RUNDECK_EXEC_LINK_PREFIX + id);
     }
 
     public Collection<IStoredJob> listStoredJobs(final IStoredJobsQuery iStoredJobsQuery, final OutputStream output,

@@ -386,7 +386,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
      * Set the result status to FAIL for any Executions that are not complete
      */
     def cleanupRunningJobs(){
-        Execution.findByDateCompleted(null).each{Execution e->
+        Execution.findAllByDateCompleted(null).each{Execution e->
             saveExecutionState(e.scheduledExecution?.id, e.id, [status: String.valueOf(false), dateCompleted: new Date(), cancelled: true],null)
             log.error("Stale Execution cleaned up: [${e.id}]")
         }
@@ -765,8 +765,8 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
      */
     public static NodeSet filtersAsNodeSet(BaseNodeFilters econtext) {
         final NodeSet nodeset = new NodeSet();
-        nodeset.createExclude(excludeFiltersAsNodeSetMap(econtext)).setDominant(econtext.nodeExcludePrecedence);
-        nodeset.createInclude(includeFiltersAsNodeSetMap(econtext)).setDominant(!econtext.nodeExcludePrecedence);
+        nodeset.createExclude(excludeFiltersAsNodeSetMap(econtext)).setDominant(econtext.nodeExcludePrecedence ? true : false);
+        nodeset.createInclude(includeFiltersAsNodeSetMap(econtext)).setDominant(!econtext.nodeExcludePrecedence ? true : false);
         return nodeset
     }
     /**
@@ -774,9 +774,9 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
      */
     public static NodeSet filtersAsNodeSet(ExecutionContext econtext) {
         final NodeSet nodeset = new NodeSet();
-        nodeset.createExclude(excludeFiltersAsNodeSetMap(econtext)).setDominant(econtext.nodeExcludePrecedence);
-        nodeset.createInclude(includeFiltersAsNodeSetMap(econtext)).setDominant(!econtext.nodeExcludePrecedence);
-        nodeset.setKeepgoing(econtext.nodeKeepgoing)
+        nodeset.createExclude(excludeFiltersAsNodeSetMap(econtext)).setDominant(econtext.nodeExcludePrecedence ? true : false);
+        nodeset.createInclude(includeFiltersAsNodeSetMap(econtext)).setDominant(!econtext.nodeExcludePrecedence ? true : false);
+        nodeset.setKeepgoing(econtext.nodeKeepgoing?true:false)
         nodeset.setThreadCount(econtext.nodeThreadcount?econtext.nodeThreadcount:1)
         return nodeset
     }

@@ -533,15 +533,17 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
         }
 
         public void validate(final CommandLine cli, final String[] original) throws CLIToolOptionsException {
-            if(null==argProject){
-                if(framework.getFrameworkProjectMgr().listFrameworkProjects().size() == 1) {
-                    final FrameworkProject project =
-                        (FrameworkProject) framework.getFrameworkProjectMgr().listFrameworkProjects().iterator().next();
-                    argProject = project.getName();
-                    debug("No project specified, defaulting to: " + argProject);
-                }else{
-                    throw new CLIToolOptionsException(
-                        "list action: -" + PROJECT_OPTION + "/--" + PROJECT_OPTION_LONG + " option is required");
+            if (Actions.list == action) {
+                if(null==argProject){
+                    if(framework.getFrameworkProjectMgr().listFrameworkProjects().size() == 1) {
+                        final FrameworkProject project =
+                            (FrameworkProject) framework.getFrameworkProjectMgr().listFrameworkProjects().iterator().next();
+                        argProject = project.getName();
+                        debug("No project specified, defaulting to: " + argProject);
+                    }else{
+                        throw new CLIToolOptionsException(
+                            "list action: -" + PROJECT_OPTION + "/--" + PROJECT_OPTION_LONG + " option is required");
+                    }
                 }
             }
         }

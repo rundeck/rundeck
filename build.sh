@@ -6,7 +6,7 @@
 
 # find wget
 if which wget >/dev/null; then
-    GET="wget -N"
+    GET="wget -N -nd"
 elif which curl >/dev/null; then
     GET="curl -O"
 else

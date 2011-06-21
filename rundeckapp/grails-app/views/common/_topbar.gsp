@@ -100,7 +100,7 @@ function doCreateProject(){
         <span class="headright">
 
             <g:ifUserInAnyRoles roles="admin,user_admin">
-                <g:link controller="user" action="list"><img src="${resource(dir:'images',file:'icon-small-admin.png')}" width="16px" height="16px" alt=""/>
+                <g:link controller="menu" action="admin"><img src="${resource(dir:'images',file:'icon-small-admin.png')}" width="16px" height="16px" alt=""/>
                     Admin</g:link>
             </g:ifUserInAnyRoles>
             <span class="logininfo">
@@ -115,7 +115,7 @@ function doCreateProject(){
                 </span> &raquo;
                 <g:link action="logout" controller="user" title="Logout user: ${session.user}" params="${[refLink:controllerName&&actionName?createLink(controller:controllerName,action:actionName,params:params,absolute:true):'']}">logout</g:link>
             </span>
-            <a href="${resource(dir:'docs')}" class="help">
+            <a href="${org.codehaus.groovy.grails.commons.ConfigurationHolder.config.rundeck?.gui?.helpLink ? org.codehaus.groovy.grails.commons.ConfigurationHolder.config.rundeck?.gui?.helpLink : resource(dir:'docs')}" class="help">
                 help
                 <img src="${resource(dir:'images',file:'icon-small-help.png')}" width="16px" height="16px" alt=""/>
             </a>
@@ -123,7 +123,7 @@ function doCreateProject(){
     </g:if>
     <g:else>
         <span class="headright">
-            <a href="${resource(dir: 'docs')}" class="help">
+            <a href="${org.codehaus.groovy.grails.commons.ConfigurationHolder.config.rundeck?.gui?.helpLink ? org.codehaus.groovy.grails.commons.ConfigurationHolder.config.rundeck?.gui?.helpLink : resource(dir: 'docs')}" class="help">
                 help
                 <img src="${resource(dir:'images',file:'icon-small-help.png')}" width="16px" height="16px" alt=""/>
             </a>

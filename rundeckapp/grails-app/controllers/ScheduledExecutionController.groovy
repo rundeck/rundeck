@@ -253,19 +253,23 @@ class ScheduledExecutionController  {
                 String srcUrl = expandUrl(opt, opt.valuesUrl.toExternalForm(), scheduledExecution)
                 String cleanUrl=srcUrl.replaceAll("^(https?://)([^:@/]+):[^@/]*@",'$1$2:****@');
                 def remoteResult=[:]
-                def remoteStats=[:]
                 def result=null
+                def remoteStats=[startTime: System.currentTimeMillis(), httpStatusCode: "", httpStatusText: "", contentLength: "", url: srcUrl,durationTime:"",finishTime:"", lastModifiedDateTime:""]
                 def err = [:]
                 try {
                     remoteResult = getRemoteJSON(srcUrl, 10)
                     result=remoteResult.json
-                    remoteStats=remoteResult.stats
+                    if(remoteResult.stats){
+                        remoteStats.putAll(remoteResult.stats)
+                    }
                 } catch (Exception e) {
                     err.message = "Failed loading remote option values"
                     err.exception = e
                     err.srcUrl = cleanUrl
                     log.error("getRemoteJSON error: URL ${cleanUrl} : ${e.message}");
                     e.printStackTrace()
+                    remoteStats.finishTime=System.currentTimeMillis()
+                    remoteStats.durationTime= remoteStats.finishTime- remoteStats.startTime
                 }
                 if(remoteResult.error){
                     err.message = "Failed loading remote option values"
@@ -294,8 +298,14 @@ class ScheduledExecutionController  {
                                 validationerrors << "Item: ${i} expected string or map like {name:\"..\",value:\"..\"}"
                             }
                         }
+                    } else if (result instanceof org.codehaus.groovy.grails.web.json.JSONObject) {
+                        org.codehaus.groovy.grails.web.json.JSONObject jobject = result
+                        result = []
+                        jobject.keys().sort().each {k ->
+                            result << [name: k, value: jobject.get(k)]
+                        }
                     }else{
-                        validationerrors << "Expected top-level list with format: [{name:\"..\",value:\"..\"},..], or ['value','value2',..]"
+                        validationerrors << "Expected top-level list with format: [{name:\"..\",value:\"..\"},..], or ['value','value2',..] or simple object with {name:\"value\",...}"
                         valid=false
                     }
                     if(!valid){
@@ -305,6 +315,7 @@ class ScheduledExecutionController  {
                 }else if(!err){
                     err.message = "Empty result"
                 }
+
                 return render(template: "/framework/optionValuesSelect", model: [optionSelect: opt, values: result, srcUrl: cleanUrl, err: err,fieldPrefix:params.fieldPrefix,selectedvalue:params.selectedvalue]);
             } else {
                 return error.call()
@@ -501,11 +512,30 @@ class ScheduledExecutionController  {
                 method.releaseConnection();
             }
         }else if (url.startsWith("file:")) {
+            stats.url=url
             def File srfile = new File(new URI(url))
-            final JSONElement parse = grails.converters.JSON.parse(new InputStreamReader(new FileInputStream(srfile)))
+            final writer = new StringWriter()
+            final stream= new FileInputStream(srfile)
+
+            stats.startTime = System.currentTimeMillis();
+            int len = copyToWriter(new BufferedReader(new InputStreamReader(stream)), writer)
+            stats.finishTime = System.currentTimeMillis()
+            stats.durationTime = stats.finishTime - stats.startTime
+            stream.close()
+            writer.flush()
+            final string = writer.toString()
+            final JSONElement parse = grails.converters.JSON.parse(string)
             if(!parse ){
                 throw new Exception("JSON was empty")
             }
+            if (string) {
+                stats.contentSHA1 = string.encodeAsSHA1()
+            }else{
+                stats.contentSHA1 = ""
+            }
+            stats.contentLength=srfile.length()
+            stats.lastModifiedDate=new Date(srfile.lastModified())
+            stats.lastModifiedDateTime=srfile.lastModified()
             return [json:parse,stats:stats]
         } else {
             throw new Exception("Unsupported protocol: " + url)
@@ -889,7 +919,7 @@ class ScheduledExecutionController  {
             }
             scheduledExecution.options=null
         }
-        if( params['_sessionopts'] && session.editOPTS && session.editOPTS[scheduledExecution.id.toString()]){
+        if( params['_sessionopts'] && session.editOPTS && null!=session.editOPTS[scheduledExecution.id.toString()]){
             def optsmap=session.editOPTS[scheduledExecution.id.toString()]
 
             def optfailed=false
@@ -1373,7 +1403,7 @@ class ScheduledExecutionController  {
     def saveAndExec = {
         log.info("ScheduledExecutionController: saveAndExec : params: " + params)
         def changeinfo = [user: session.user, change: 'create', method: 'saveAndExec']
-        def scheduledExecution = _dosave(params,change)
+        def scheduledExecution = _dosave(params,changeinfo)
         if(scheduledExecution.id){
             params.id=scheduledExecution.id
             logJobChange(changeinfo, scheduledExecution.properties)
@@ -2820,8 +2850,13 @@ class ScheduledExecutionController  {
         //convert api parameters to node filter parameters
         def filters = FrameworkController.extractApiNodeFilterParams(params)
         if (filters) {
+            inparams.extra['_replaceNodeFilters']='true'
+            inparams.extra['doNodedispatch']=true
             filters.each {k, v ->
                 inparams.extra[k] = v
+            }
+            if(null==inparams.extra['nodeExcludePrecedence']){
+                inparams.extra['nodeExcludePrecedence'] = true
             }
         }
 
@@ -2902,8 +2937,12 @@ class ScheduledExecutionController  {
         //convert api parameters to node filter parameters
         def filters=FrameworkController.extractApiNodeFilterParams(params)
         if(filters){
+            filters['doNodedispatch']=true
             filters.each{k,v->
                 params[k]=v
+            }
+            if (null == params['nodeExcludePrecedence']) {
+                params['nodeExcludePrecedence'] = true
             }
         }
 
@@ -2970,8 +3009,12 @@ class ScheduledExecutionController  {
         //convert api parameters to node filter parameters
         def filters=FrameworkController.extractApiNodeFilterParams(params)
         if(filters){
+            filters['doNodedispatch'] = true
             filters.each{k,v->
                 params[k]=v
+            }
+            if (null == params['nodeExcludePrecedence']) {
+                params['nodeExcludePrecedence'] = true
             }
         }
 

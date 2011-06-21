@@ -32,9 +32,7 @@ import org.apache.tools.ant.taskdefs.ExecTask;
 import org.apache.tools.ant.types.Environment;
 
 import java.io.*;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -95,7 +93,7 @@ public class DataContextUtils {
             final String key = m.group(1);
             final String nm = m.group(2);
             if (null!=key && null!=nm && null!=data.get(key) && null!= data.get(key).get(nm)) {
-                m.appendReplacement(sb, Matcher.quoteReplacement(escapeShell(data.get(key).get(nm))));
+                m.appendReplacement(sb, Matcher.quoteReplacement(data.get(key).get(nm)));
             }else {
                 m.appendReplacement(sb, Matcher.quoteReplacement(m.group(0)));
             }
@@ -379,7 +377,9 @@ public class DataContextUtils {
      */
     public static Map<String, String> nodeData(final INodeEntry nodeentry) {
         final HashMap<String, String> data = new HashMap<String, String>();
-        if(null!=nodeentry){
+        if(null!=nodeentry) {
+            HashSet<String> skipProps = new HashSet<String>();
+            skipProps.addAll(Arrays.asList("nodename", "osName", "osVersion", "osArch", "osFamily"));
             data.put("name", notNull(nodeentry.getNodename()));
             data.put("hostname", notNull(nodeentry.getHostname()));
             data.put("os-name", notNull(nodeentry.getOsName()));
@@ -392,8 +392,10 @@ public class DataContextUtils {
             //include attributes data
             if (null != nodeentry.getAttributes()) {
                 for (final String name : nodeentry.getAttributes().keySet()) {
-                    if (null != nodeentry.getAttributes().get(name) && !data.containsKey(name)) {
-                        data.put( name, notNull(nodeentry.getAttributes().get(name)));
+                    if (null != nodeentry.getAttributes().get(name) && !data.containsKey(name) && !skipProps.contains(
+                        name)) {
+                        
+                        data.put(name, notNull(nodeentry.getAttributes().get(name)));
                     }
                 }
             }

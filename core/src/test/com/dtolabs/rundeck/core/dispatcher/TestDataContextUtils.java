@@ -460,7 +460,7 @@ public class TestDataContextUtils extends AbstractBaseTest {
             final NodeEntryImpl nodeentry = new NodeEntryImpl("testhost", "test1");
             final Map<String, String> stringMap = DataContextUtils.nodeData(nodeentry);
             assertNotNull(stringMap);
-            assertEquals(9, stringMap.size());
+            assertEquals("wrong size: " + stringMap, 9, stringMap.size());
             assertEquals("test1", stringMap.get("name"));
             assertEquals("testhost", stringMap.get("hostname"));
             assertEquals("", stringMap.get("os-name"));

@@ -128,24 +128,7 @@ public class ResourceXMLGenerator implements NodesFileGenerator {
         final ResourceXMLParser.Entity ent = new ResourceXMLParser.Entity();
         ent.setName(node.getNodename());
         ent.setResourceType(NODE_ENTITY_TAG);
-        ent.setProperty(COMMON_DESCRIPTION, notNull(node.getDescription()));
-        if (null != node.getTags() && node.getTags().size() > 0) {
-            ent.setProperty(COMMON_TAGS, joinStrings(new TreeSet(node.getTags()), ","));
-        }
-        ent.setProperty(NODE_HOSTNAME, notNull(node.getHostname()));
-        ent.setProperty(NODE_OS_ARCH, notNull(node.getOsArch()));
-        ent.setProperty(NODE_OS_FAMILY, notNull(node.getOsFamily()));
-        ent.setProperty(NODE_OS_NAME, notNull(node.getOsName()));
-        ent.setProperty(NODE_OS_VERSION, notNull(node.getOsVersion()));
-        ent.setProperty(NODE_USERNAME, notNull(node.getUsername()));
-        if(null!=node.getAttributes() && null!=node.getAttributes().get(NODE_EDIT_URL)) {
-            ent.setProperty(NODE_EDIT_URL, notNull(node.getAttributes().get(NODE_EDIT_URL)));
-        }
-        if(null!=node.getAttributes() && null!=node.getAttributes().get(NODE_REMOTE_URL)) {
-            ent.setProperty(NODE_REMOTE_URL, notNull(node.getAttributes().get(NODE_REMOTE_URL)));
-        }
-        //iterate settings
-        //TODO: replace with attributes
+        
 
         if(null!=node.getAttributes()){
             for (final String setName : node.getAttributes().keySet()) {

@@ -25,15 +25,16 @@ used by _editOptions.gsp template
             <g:set var="fieldName" value="${usePrefix+'option.'+optName}"/>
             <g:set var="optionHasValue" value="${optionSelect.defaultValue || selectedoptsmap && selectedoptsmap[optName]}"/>
             <g:set var="hasError" value="${jobexecOptionErrors?jobexecOptionErrors[optName]:null}"/>
+            <g:set var="fieldNamekey" value="${rkey+'_'+optName+'_label'}"/>
             <tr>
-                <td class="${hasError?'fieldError':''}">${optName}:</td>
+                <td class="${hasError?'fieldError':''} remoteoptionfield" id="${fieldNamekey}"><span style="display:none;" class="remotestatus"></span> ${optName}:</td>
                 <td>
                     <g:if test="${optionSelect.valuesUrl !=null}">
                         <g:set var="holder" value="${rkey+'_'+optName+'_hold'}"/>
                         <span id="${holder}" >
                         </span>
                         <g:javascript>
-                            _loadRemoteOptionValues("${holder}",'${scheduledExecutionId}','${optName}','${usePrefix}','${selectedoptsmap?selectedoptsmap[optName]:''}');
+                            _loadRemoteOptionValues("${holder}",'${scheduledExecutionId}','${optName}','${usePrefix}','${selectedoptsmap?selectedoptsmap[optName]:''}','${fieldNamekey}',true);
                         </g:javascript>
                     </g:if>
                     <g:else>

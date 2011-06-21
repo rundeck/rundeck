@@ -23,14 +23,13 @@
 */
 package com.dtolabs.rundeck.core.common;
 
-import java.util.*;
-import java.lang.reflect.InvocationTargetException;
+import com.dtolabs.rundeck.core.utils.StringArrayUtil;
 
-import org.apache.commons.beanutils.BeanUtils;
+import java.util.*;
 
 
 /**
- * NodeEntryImpl provides a bean representation of a nodes.properties entry
+ * NodeEntryImpl provides a bean representation of INodesEntry
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
@@ -39,33 +38,38 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
 
     protected static final String USER_AT_HOSTNAME_REGEX = "([^@])+@([^@:])+";
     protected static final String PORT_REGEX = "([^:]+):([0-9]+)";
+    public static final String OS_NAME = "osName";
+    public static final String OS_FAMILY = "osFamily";
+    public static final String OS_VERSION = "osVersion";
+    public static final String HOSTNAME = "hostname";
+    public static final String OS_ARCH = "osArch";
+    public static final String USERNAME = "username";
+    public static final String DESCRIPTION = "description";
+    public static final String NAME = "nodename";
+    public static final String TAGS = "tags";
 
     private Set tags;
-    private String osName;
-    private String osArch;
-    private String osFamily;
-    private String osVersion;
-    private String hostname;
-    private String description;
+
     private Map<String, String> attributes;
 
+    /**
+     * Base constructor
+     */
     public NodeEntryImpl() {
         super();
         this.tags = new HashSet();
+        this.attributes = new HashMap<String, String>();
     }
 
-    public NodeEntryImpl(String nodename) {
-        super(nodename);
-        this.tags = new HashSet();
+    /**
+     * Create an instance with a nodename value
+     *
+     * @param nodename the node name
+     */
+    public NodeEntryImpl(final String nodename) {
+        this();
+        setNodename(nodename);
     }
-
-    private static String notNull(String in) {
-        if (null == in) {
-            return "";
-        }
-        return in;
-    }
-
 
     /**
      * Create a NodeEntryImpl with hostname and nodename
@@ -75,15 +79,23 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
      */
     public NodeEntryImpl(final String hostname, final String nodename) {
         this(nodename);
-        this.hostname = hostname;
+        setHostname(hostname);
     }
 
+    /**
+     * Factory method to create an instance with a hostname and node name.
+     *
+     * @param hostname hostname value
+     * @param nodename node name
+     */
     public static INodeEntry create(final String hostname, final String nodename) {
         return new NodeEntryImpl(hostname, nodename);
     }
 
-    public static INodeEntry create(final INodeDesc node) {
-        return new NodeEntryImpl(node.getHostname(), node.getNodename());
+    @Override
+    public void setNodename(final String nodename) {
+        super.setNodename(nodename);
+        setAttribute(NAME, nodename);
     }
 
     public Set getTags() {
@@ -92,72 +104,74 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
 
     public void setTags(final Set tags) {
         this.tags = tags;
+        final Object[] objects = tags.toArray();
+        Arrays.sort(objects);
+        setAttribute(TAGS, StringArrayUtil.asString(objects, ", "));
     }
 
     public String getOsName() {
-        return osName;
+        return getAttribute(OS_NAME);
     }
 
     public void setOsName(final String osName) {
-        this.osName = osName;
+        setAttribute(OS_NAME, osName);
     }
 
     public String getOsFamily() {
-        return osFamily;
+        return getAttribute(OS_FAMILY);
     }
 
     public void setOsFamily(final String osFamily) {
-        this.osFamily = osFamily;
+        setAttribute(OS_FAMILY, osFamily);
     }
 
     public String getOsVersion() {
-        return osVersion;
+        return getAttribute(OS_VERSION);
     }
 
     public void setOsVersion(final String osVersion) {
-        this.osVersion = osVersion;
+        setAttribute(OS_VERSION, osVersion);
     }
 
     public String getHostname() {
-        return hostname;
+        return getAttribute(HOSTNAME);
     }
 
-    public void setHostname(String hostname) {
-        this.hostname = hostname;
+    public void setHostname(final String hostname) {
+        setAttribute(HOSTNAME, hostname);
     }
 
     public String getOsArch() {
-        return osArch;
+        return getAttribute(OS_ARCH);
     }
 
     public void setOsArch(final String osArch) {
-        this.osArch = osArch;
+        setAttribute(OS_ARCH, osArch);
     }
 
-    private String username;
 
     public String getUsername() {
-        return username;
+        return getAttribute(USERNAME);
     }
 
     public void setUsername(final String username) {
-        this.username = username;
+        setAttribute(USERNAME, username);
     }
+
 
     public boolean equals(final INodeDesc node) {
-        return nodename.equals(node.getNodename());
+        return getNodename().equals(node.getNodename());
     }
-
 
     public String toString() {
         return "NodeEntryImpl{" +
-               "nodename=" + nodename +
-               ",hostname=" + hostname +
-               ",osName=" + osName +
-               ",osArch=" + osArch +
-               ",osFamily=" + osFamily +
-               ",osVersion=" + osVersion +
-               ",username=" + username +
+               "nodename=" + getNodename() +
+               ",hostname=" + getHostname() +
+               ",osName=" + getOsName() +
+               ",osArch=" + getOsArch() +
+               ",osFamily=" + getOsFamily() +
+               ",osVersion=" + getOsVersion() +
+               ",username=" + getUsername() +
                ",tags=" + tags +
                ",attributes=" + attributes +
                "}";
@@ -181,7 +195,14 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
         return containsUserName(getHostname());
     }
 
-    public String extractUserName(final String hostname) {
+    /**
+     * Extract a username from a "username@hostname" pattern.
+     *
+     * @param hostname value
+     *
+     * @return username extracted, or null
+     */
+    public static String extractUserName(final String hostname) {
         if (containsUserName(hostname)) {
             return hostname.substring(0, hostname.indexOf("@"));
         } else {
@@ -198,12 +219,20 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
      * @return Gets the username for remote connections
      */
     public String extractUserName() {
+        final String username = getUsername();
         if (null != username && !"".equals(username)) {
             return username;
         }
-        return extractUserName(hostname);
+        return extractUserName(getHostname());
     }
 
+    /**
+     * Extract hostname from a string of the pattern "username@hostname:port"
+     *
+     * @param host the hostname
+     *
+     * @return the extracted hostname, or the original string if the pattern is not matched
+     */
     public static String extractHostname(final String host) {
         String extracted = host;
         if (containsUserName(host)) {
@@ -218,31 +247,38 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
     }
 
     public String extractHostname() {
-        return extractHostname(hostname);
+        return extractHostname(getHostname());
     }
 
     public String extractPort() {
-        return extractPort(hostname);
+        return extractPort(getHostname());
     }
 
+    /**
+     * Extract the port string from a string in the pattern "hostname:port"
+     *
+     * @param host the hostname
+     *
+     * @return the extracted port string, or null if the pattern is not matched.
+     */
     public static String extractPort(final String host) {
         if (containsPort(host)) {
             return host.substring(host.indexOf(":") + 1, host.length());
         } else {
-            return host;
+            return null;
         }
     }
 
     public boolean containsPort() {
-        return containsPort(hostname);
+        return containsPort(getHostname());
     }
 
     /**
-     * Checks if nodename contains a port value
+     * Return true if the hostname contains a port value in the form "hostname:port".
      *
-     * @param host port value
+     * @param host hostname
      *
-     * @return true if matches a "host:port" pattern
+     * @return true if it matches the "host:port" pattern
      */
     public static boolean containsPort(final String host) {
         if (null == host) {
@@ -263,7 +299,7 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
 
 
     /**
-     * Get the map of attributes for the node.
+     * Get the map of attributes for the node, including all predefined attribtes available via acessors.
      *
      * @return attributes
      */
@@ -271,15 +307,37 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
         return attributes;
     }
 
-    public void setAttributes(Map<String, String> attributes) {
+    public void setAttributes(final Map<String, String> attributes) {
         this.attributes = attributes;
     }
 
     public void setDescription(final String description) {
-        this.description = description;
+        setAttribute(DESCRIPTION, description);
     }
 
     public String getDescription() {
-        return description;
+        return getAttribute(DESCRIPTION);
+    }
+
+
+    /**
+     * Get the value for a specific attribute
+     *
+     * @param name attribute name
+     *
+     * @return attribute value, or null if it is not set
+     */
+    public String getAttribute(final String name) {
+        return getAttributes().get(name);
+    }
+
+    /**
+     * Set the value for a specific attribute
+     *
+     * @param name  attribute name
+     * @param value attribute value
+     */
+    public String setAttribute(final String name, final String value) {
+        return getAttributes().put(name, value);
     }
 }

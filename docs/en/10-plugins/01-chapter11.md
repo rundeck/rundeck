@@ -499,7 +499,7 @@ Java Plugin Development
 --------
 
 Java plugins are distributed as .jar files containing the necessary classes for 
-one or more service provider.
+one or more service provider, as well as any other java jar dependency files.
 
 The `.jar` file you distribute must have this metadata within the main Manifest
 for the jar file to be correctly loaded by the system:
@@ -507,6 +507,7 @@ for the jar file to be correctly loaded by the system:
 * `Rundeck-Plugin-Version: 1.0`
 * `Rundeck-Plugin-Archive: true`
 * `Rundeck-Plugin-Classnames: classname,..`
+* `Rundeck-Plugin-Libs: lib/something.jar ...` *(optional)*
 
 Each classname listed must be a valid "Provider Class" as defined below.
 
@@ -539,6 +540,35 @@ You may log messages to the ExecutionListener available via
 
 You can also send output to `System.err` and `System.out` and it will be 
 captured as output of the execution.
+
+### Jar Dependencies
+
+If your Java classes require external libraries that are not included with
+the RunDeck runtime, you can include them in your .jar archive. (Look in
+`$RDECK_BASE/tools/lib` to see the set of
+third-party jars that are available for your classes by default at runtime).
+
+Specify the `Rundeck-Plugin-Libs` attribute in the Main attributes of the
+Manifest for the jar, set the value to a space-separated list of jar file names
+as you have included them in the jar.
+
+E.g.:
+
+    Rundeck-Plugin-Libs: lib/somejar-1.2.jar lib/anotherjar-1.3.jar
+
+Then include the jar files in the Plugin's jar contents:
+
+    META-INF/
+    META-INF/MANIFEST.MF
+    com/
+    com/mycompany/
+    com/mycompany/rundeck/
+    com/mycompany/rundeck/plugin/
+    com/mycompany/rundeck/plugin/test/
+    com/mycompany/rundeck/plugin/test/TestNodeExecutor.class
+    lib/
+    lib/somejar-1.2.jar
+    lib/anotherjar-1.3.jar
 
 ### Available Services:
 

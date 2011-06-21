@@ -36,7 +36,7 @@ public class NodeBaseImpl implements INodeBase {
         
     }
     NodeBaseImpl(final String nodename) {
-        this.nodename = nodename;
+        setNodename(nodename);
     }
 
     public String getNodename() {
