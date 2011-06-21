@@ -56,7 +56,7 @@ params="dupeOption=create"
 ulopts="-F xmlBatch=@$DIR/temp.out"
 
 # get listing
-$CURL $ulopts  ${runurl}?${params} > $DIR/curl.out
+docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -86,7 +86,7 @@ runurl="${APIURL}/job/${jobid}/executions"
 params=""
 
 # get listing
-$CURL  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
@@ -107,7 +107,7 @@ params=""
 execargs="-opt2 a"
 
 # get listing
-$CURL  --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+$CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
@@ -134,7 +134,7 @@ runurl="${APIURL}/job/${jobid}/executions"
 params=""
 
 # get listing
-$CURL  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
@@ -157,7 +157,7 @@ params="status=succeeded"
 sleep 3
 
 # get listing
-$CURL  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
@@ -182,7 +182,7 @@ params=""
 execargs="-opt2 a"
 
 # get listing
-$CURL  --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+$CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
@@ -211,7 +211,7 @@ runurl="${APIURL}/job/${jobid}/executions"
 params=""
 
 # get listing
-$CURL  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
@@ -232,7 +232,7 @@ runurl="${APIURL}/job/${jobid}/executions"
 params="max=1"
 
 # get listing
-$CURL  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
@@ -254,7 +254,7 @@ runurl="${APIURL}/job/${jobid}/executions"
 params="max=1&offset=1"
 
 # get listing
-$CURL  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
@@ -346,7 +346,7 @@ params="dupeOption=create"
 ulopts="-F xmlBatch=@$DIR/temp.out"
 
 # get listing
-$CURL $ulopts  ${runurl}?${params} > $DIR/curl.out
+docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -378,7 +378,7 @@ params=""
 execargs="-opt2 a"
 
 # get listing
-$CURL  --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+$CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
@@ -408,7 +408,7 @@ runurl="${APIURL}/job/${jobid}/executions"
 params="status=failed"
 
 # get listing
-$CURL  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
@@ -476,7 +476,7 @@ params="dupeOption=create"
 ulopts="-F xmlBatch=@$DIR/temp.out"
 
 # get listing
-$CURL $ulopts  ${runurl}?${params} > $DIR/curl.out
+docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -506,7 +506,7 @@ params=""
 execargs="-opt2 a"
 
 # get listing
-$CURL  --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+$CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
@@ -528,7 +528,7 @@ runurl="${APIURL}/job/${jobid}/executions"
 params="status=running"
 
 # get listing
-$CURL  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
@@ -549,7 +549,7 @@ echo "OK"
 runurl="${APIURL}/execution/${execid}/abort"
 
 # get listing
-$CURL  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
@@ -569,7 +569,7 @@ runurl="${APIURL}/job/${jobid}/executions"
 params="status=aborted"
 
 # get listing
-$CURL  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 

@@ -16,7 +16,7 @@ echo "TEST: /api/project/${proj}/resources (GET)"
 params="format=xml"
 
 # get listing
-$CURL ${runurl}?${params} > ${file} || fail "ERROR: failed request"
+docurl ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
 #test curl.out for valid xml
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
@@ -83,7 +83,7 @@ echo "TEST: /api/project/${proj}/resources (POST) (xml)"
 
 
 # post data
-$CURL -X POST -H 'Content-Type: text/xml' --data-binary "@$TETC/testUpdateResources.xml" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
+$CURL -H "$AUTHHEADER" -X POST -H 'Content-Type: text/xml' --data-binary "@$TETC/testUpdateResources.xml" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
 sh $DIR/api-test-success.sh ${file} "Resources were successfully updated for project test" || exit 2
 
@@ -123,7 +123,7 @@ END
 echo "TEST: /api/project/${proj}/resources (POST) (yaml)"
 
 # post data
-$CURL -X POST -H 'Content-Type: text/yaml' --data-binary "@$TETC/testUpdateResources.yaml" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
+$CURL -H "$AUTHHEADER" -X POST -H 'Content-Type: text/yaml' --data-binary "@$TETC/testUpdateResources.yaml" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
 sh $DIR/api-test-success.sh ${file} "Resources were successfully updated for project test" || exit 2
 

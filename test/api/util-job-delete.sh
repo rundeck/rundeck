@@ -29,7 +29,7 @@ for jobid in $joblist ; do
     params=""
 
     # delete
-    $CURL -X DELETE ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+    docurl -X DELETE ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
     sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 

@@ -59,7 +59,7 @@ params=""
 ulopts="-F xmlBatch=@$DIR/temp.out"
 
 # get listing
-$CURL $ulopts  ${runurl}?${params} > $DIR/curl.out
+docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -92,7 +92,7 @@ params=""
 execargs="-opt2 a"
 
 # get listing
-$CURL  --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+$CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
@@ -122,7 +122,7 @@ params=""
 execargs=""
 
 # get listing
-$CURL  --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+$CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-error.sh $DIR/curl.out "Option 'opt2' is required." || exit 2
 

@@ -30,10 +30,28 @@ xmlsel(){
 }
 
 API_VERSION="1"
+AUTHHEADER="X-RunDeck-Auth-Token: $RDAUTH"
 
 # curl opts to use a cookie jar, and follow redirects, showing only errors
-CURLOPTS="-s -S -L -c $DIR/cookies -b $DIR/cookies"
+if [ -n "$RDAUTH" ] ; then 
+    CURLOPTS="-s -S -L"
+else
+    CURLOPTS="-s -S -L -c $DIR/cookies -b $DIR/cookies"
+fi
 CURL="curl $CURLOPTS"
+docurl(){
+    if [ -n "$RDAUTH" ] ; then
+        if [ "true" == "$RDDEBUG" ] ; then
+            echo $CURL -H "$AUTHHEADER" $* 1>&2
+        fi
+        $CURL -H "$AUTHHEADER" $*
+    else    
+        if [ "true" == "$RDDEBUG" ] ; then
+            echo $CURL $* 1>&2
+        fi
+        $CURL $*
+    fi
+}
 
 # accept url argument on commandline, if '-' use default
 RDURL="$1"

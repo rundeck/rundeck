@@ -23,7 +23,7 @@ params="project=${proj}&${args}"
 
 
 # get listing
-$CURL  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 

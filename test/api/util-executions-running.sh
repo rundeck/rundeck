@@ -22,7 +22,7 @@ params="project=${proj}"
 
 
 # get listing
-$CURL  ${runurl}?${params} > $DIR/curl.out
+docurl  ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2

@@ -130,7 +130,7 @@ ulopts="-F xmlBatch=@$DIR/temp.out"
 echo "TEST: /jobs/import with bad definition"
 
 # get listing
-$CURL $ulopts --header "$VERSHEADER" ${runurl}?${params} > $DIR/curl.out
+docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2

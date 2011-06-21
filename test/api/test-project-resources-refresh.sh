@@ -14,7 +14,7 @@ runurl="${APIURL}/project/${proj}/resources/refresh"
 echo "TEST: /api/project/${proj}/resources/refresh (no URL defined)"
 params="t=t"
 
-$CURL -X POST  ${runurl}?${params} > ${file} || fail "ERROR: failed request"
+docurl -X POST  ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
 sh $DIR/api-test-error.sh ${file} "Resources were not updated because no resource model provider URL is configured for project test" || exit 2
 
@@ -38,7 +38,7 @@ fi
 echo "project.resources.url=http://invaliddomain:1235/resources.xml" >> $TPROPS
 
 
-$CURL -X POST  ${runurl}?${params} > ${file} || fail "ERROR: failed request"
+docurl -X POST  ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
 sh $DIR/api-test-error.sh ${file} "Error updating node resources file for project test: java.net.UnknownHostException: invaliddomain" || exit 2
 
@@ -63,7 +63,7 @@ TEMPURL="file://$TETC/testUpdateResources.xml"
 echo "project.resources.url=$TEMPURL" >> $TPROPS
 
 
-$CURL -X POST  ${runurl}?${params} > ${file} || fail "ERROR: failed request"
+docurl -X POST  ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
 sh $DIR/api-test-success.sh ${file} "Resources were successfully updated for project test" || exit 2
 
@@ -84,7 +84,7 @@ echo "TEST: /api/project/${proj}/resources/refresh (POST) (not allowed provider 
 data="providerURL=http://invaliddomain:1234/resources.xml"
 
 # post data
-$CURL -X POST --data-urlencode "${data}" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
+$CURL -H "$AUTHHEADER" -X POST --data-urlencode "${data}" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
 sh $DIR/api-test-error.sh ${file} "Error updating node resources file for project test: providerURL is not allowed: http://invaliddomain:1234/resources.xml" || exit 2
 
@@ -97,7 +97,7 @@ echo "TEST: /api/project/${proj}/resources/refresh (POST) (allowed URL, invalid 
 data="providerURL=http://invaliddomain:1235/resources.xml"
 
 # post data
-$CURL -X POST --data-urlencode "${data}" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
+$CURL -H "$AUTHHEADER" -X POST --data-urlencode "${data}" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
 sh $DIR/api-test-error.sh ${file} "Error updating node resources file for project test: java.net.UnknownHostException: invaliddomain" || exit 2
 
@@ -110,7 +110,7 @@ TEMPURL="file://$TETC/testUpdateResources.xml"
 data="providerURL=$TEMPURL"
 
 # post data
-$CURL -X POST --data-urlencode "${data}" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
+$CURL -H "$AUTHHEADER" -X POST --data-urlencode "${data}" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
 sh $DIR/api-test-error.sh ${file} "Error updating node resources file for project test: providerURL is not allowed: file://$TETC/testUpdateResources.xml" || exit 2
 
@@ -128,7 +128,7 @@ echo "project.resources.allowedURL.1=file://$TETC/testUpdateResources.xml" >> $T
 data="providerURL=$TEMPURL"
 
 # post data
-$CURL -X POST --data-urlencode "${data}" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
+$CURL -H "$AUTHHEADER" -X POST --data-urlencode "${data}" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
 sh $DIR/api-test-success.sh ${file} "Resources were successfully updated for project test" || exit 2
 

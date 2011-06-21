@@ -17,7 +17,7 @@ echo "TEST: export RunDeck Jobs in jobs.yaml format"
 params="project=${proj}&format=yaml"
 
 # get listing
-$CURL --header "$VERSHEADER" -D $DIR/headers.out ${runurl}?${params} > $DIR/curl.out
+docurl -D $DIR/headers.out ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2

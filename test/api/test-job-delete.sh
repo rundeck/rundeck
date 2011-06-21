@@ -56,7 +56,7 @@ params=""
 ulopts="-F xmlBatch=@$DIR/temp.out"
 
 # get listing
-$CURL $ulopts --header "$VERSHEADER" ${runurl}?${params} > $DIR/curl.out
+docurl $ulopts ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -88,11 +88,11 @@ runurl="${APIURL}/job/${jobid}"
 params=""
 
 #dont' allow redirects, remove -L
-CURLOPTS="-s -S -c $DIR/cookies -b $DIR/cookies"
+CURLOPTS="-s -S "
 CURL="curl $CURLOPTS"
 
 # get listing
-$CURL --header "$VERSHEADER" -X DELETE ${runurl}?${params} > $DIR/curl.out
+curl $CURLOPTS -H "$AUTHHEADER" -X DELETE ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2

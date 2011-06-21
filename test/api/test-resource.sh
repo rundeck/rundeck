@@ -24,7 +24,7 @@ params="project=${project}"
 echo "TEST: /api/resource/$localnode"
 
 # get listing
-$CURL --header "$VERSHEADER" ${runurl}?${params} > ${file}
+docurl ${runurl}?${params} > ${file}
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -78,7 +78,7 @@ params="project=${project}&format=yaml"
 echo "TEST: /api/resource/$localnode YAML response"
 
 # get listing
-$CURL --header "$VERSHEADER" ${runurl}?${params} > ${file}
+docurl ${runurl}?${params} > ${file}
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -135,7 +135,7 @@ runurl="${APIURL}/resource/test1"
 
 echo "TEST: query result for /etc/resources/test1"
 
-$CURL --header "$VERSHEADER" ${runurl}?${params} > ${file}
+docurl ${runurl}?${params} > ${file}
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -166,7 +166,7 @@ runurl="${APIURL}/resource/test2"
 
 echo "TEST: query result for /etc/resource/test2"
 
-$CURL --header "$VERSHEADER" ${runurl}?${params} > ${file}
+docurl ${runurl}?${params} > ${file}
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2

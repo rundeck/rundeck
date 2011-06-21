@@ -22,7 +22,7 @@ CURL_REQ_OPTS="-X POST" sh $DIR/api-expect-error.sh "${runurl}" "${params}" 'par
 
 echo "TEST: /api/run/script POST should fail with empty scriptFile content"
 touch $DIR/test.tmp
-$CURL --header "$VERSHEADER" -F scriptFile=@$DIR/test.tmp ${runurl}?${params} > $DIR/curl.out
+docurl -F scriptFile=@$DIR/test.tmp ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "FAIL: failed query request"
     exit 2
@@ -45,7 +45,7 @@ END
 
 echo "TEST: /api/run/script should succeed and return execution id"
 # make api request
-$CURL --header "$VERSHEADER" -F scriptFile=@$DIR/script.tmp ${runurl}?${params} > $DIR/curl.out
+docurl -F scriptFile=@$DIR/script.tmp ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "FAIL: failed query request"
     exit 2

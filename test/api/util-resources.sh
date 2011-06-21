@@ -26,9 +26,12 @@ echo "# Listing RunDeck Resources for project ${proj}..."
 
 params="project=${proj}&format=${format}&${args}"
 
+file=$DIR/curl.out
 
 # get listing
-$CURL ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+#echo $CURL ${runurl}?${params}
+#$CURL ${runurl}?${params} > ${file} || fail "failed request: ${runurl}"
+docurl ${runurl}?${params} > ${file} || fail "failed request: ${runurl}"
 
 #test curl.out for valid xml
 $XMLSTARLET val -w ${file} > /dev/null 2>&1

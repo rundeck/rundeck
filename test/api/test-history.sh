@@ -15,7 +15,7 @@ echo "TEST: output from /api/history should be valid"
 params="project=${proj}"
 
 # get listing
-$CURL ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
@@ -55,7 +55,7 @@ echo "OK"
 echo "TEST: /api/history using valid \"end\" date format parameter"
 params="project=${proj}&end=2011-02-04T21:38:02Z"
 
-$CURL ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 echo "OK"
@@ -64,7 +64,7 @@ echo "OK"
 echo "TEST: /api/history using valid \"begin\" date format parameter"
 params="project=${proj}&begin=2011-02-04T21:03:34Z"
 
-$CURL ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 echo "OK"
