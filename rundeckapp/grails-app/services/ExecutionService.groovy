@@ -5,10 +5,13 @@ import com.dtolabs.rundeck.core.cli.CLIToolLogger
 import com.dtolabs.rundeck.core.cli.CLIUtils
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionItem
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.utils.NodeSet
+import com.dtolabs.rundeck.core.utils.NodeSet.Exclude;
+import com.dtolabs.rundeck.core.utils.NodeSet.Include;
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import grails.util.GrailsWebUtil
 import java.text.MessageFormat
@@ -609,7 +612,12 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         def String[] args = execMap.argString? CLIUtils.splitArgLine(execMap.argString):inputargs
         def Map<String, String> optsmap = execMap.argString ? frameworkService.parseOptsFromString(execMap.argString) : null!=args? frameworkService.parseOptsFromArray(args):null
 
-        NodeSet nodeset
+        def Map<String,Map<String,String>> datacontext = new HashMap<String,Map<String,String>>()
+				datacontext.put("option",optsmap)
+				datacontext.put("job",jobcontext?jobcontext:new HashMap<String,String>())
+		
+				NodeSet nodeset
+				
         if (execMap.doNodedispatch) {
             //set nodeset for the context if doNodedispatch parameter is true
             nodeset = filtersAsNodeSet(execMap)
@@ -617,9 +625,35 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             //blank?
             nodeset = new NodeSet()
         }
-        def Map<String, Map<String, String>> datacontext = new HashMap<String, Map<String, String>>()
-        datacontext.put("option", optsmap)
-        datacontext.put("job", jobcontext ? jobcontext : new HashMap<String, String>())
+				
+				// enhnacement to allow ${option.xyz} in tags and names
+				if (nodeset != null) {
+					Include includes = nodeset.getInclude();
+		
+					if (includes != null) {
+						if (includes.getName() != null) {
+							includes.setName(DataContextUtils.replaceDataReferences(
+									includes.getName(), datacontext));
+						}
+						if (includes.getTags() != null) {
+							includes.setTags(DataContextUtils.replaceDataReferences(
+									includes.getTags(), datacontext));
+						}
+					}
+		
+					Exclude excludes = nodeset.getExclude();
+					if (excludes != null) {
+						if (excludes.getName() != null) {
+							excludes.setName(DataContextUtils.replaceDataReferences(
+									excludes.getName(), datacontext));
+						}
+						if (excludes.getTags() != null) {
+							excludes.setTags(DataContextUtils.replaceDataReferences(
+									excludes.getTags(), datacontext));
+						}
+					}
+				}
+        
         //create thread object with an execution item, and start it
         final com.dtolabs.rundeck.core.execution.ExecutionContext item =  com.dtolabs.rundeck.core.execution.ExecutionContextImpl.createExecutionContextImpl(
             execMap.project,
@@ -1482,7 +1516,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                 newargs = stringList.toArray(new String[stringList.size()]);
 
                 if (null != executionContext.dataContext && null != jitem.args) {
-                    newargs = com.dtolabs.rundeck.core.dispatcher.DataContextUtils.replaceDataReferences(jitem.args, executionContext.getDataContext())
+                    newargs = DataContextUtils.replaceDataReferences(jitem.args, executionContext.getDataContext())
                 }
                 //construct job data context
                 def jobcontext = new HashMap<String, String>()
