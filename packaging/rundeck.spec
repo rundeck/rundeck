@@ -111,6 +111,7 @@ All configuration related artifacts are stored in this package.
 # Client Configuration
 %config(noreplace) /etc/rundeck/framework.properties
 %config(noreplace) /etc/rundeck/admin.aclpolicy
+%config(noreplace) /etc/rundeck/apitoken.aclpolicy
 %config(noreplace) /etc/rundeck/log4j.properties
 %config(noreplace) /etc/rundeck/profile
 %config(noreplace) /etc/rundeck/project.properties

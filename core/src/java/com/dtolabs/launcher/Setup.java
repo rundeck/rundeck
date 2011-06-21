@@ -85,6 +85,7 @@ public class Setup implements CLIToolLogger {
      */
     static String[] templates={
         "admin.aclpolicy",
+        "apitoken.aclpolicy",
         "framework.properties",
         "log4j.properties",
         "console-log4j.properties",
@@ -95,7 +96,7 @@ public class Setup implements CLIToolLogger {
     static final HashSet<String> restrictedPermTemplates=new HashSet<String>();
     static {
         restrictedPermTemplates.addAll(Arrays.asList(
-            "admin.aclpolicy"));
+            "admin.aclpolicy","apitoken.aclpolicy"));
     }
     /**
      * Validates the install, generates preference data and then invokes the adminCmd.xml
