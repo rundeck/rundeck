@@ -37,6 +37,7 @@ public class Option implements Comparable{
     String name
     String description
     String defaultValue
+	String remoteValue
     Boolean enforced
     Boolean required
     SortedSet values
@@ -54,6 +55,7 @@ public class Option implements Comparable{
         name(nullable:false,blank:false)
         description(nullable:true)
         defaultValue(nullable:true)
+		remoteValue(nullable:true)
         enforced(nullable:false)
         required(nullable:true)
         values(nullable:true)
@@ -81,6 +83,9 @@ public class Option implements Comparable{
         if(defaultValue){
             map.value=defaultValue
         }
+		if(remoteValue){
+			map.value=remoteValue
+		}
         //valuesUrl: valuesUrl.toExternalForm(), regex: regex, values: values
         if(valuesUrl){
             map.valuesUrl=valuesUrl.toExternalForm()
@@ -109,6 +114,9 @@ public class Option implements Comparable{
         if(data.value){
             opt.defaultValue = data.value
         }
+		if(data.remoteValue){
+			opt.remoteValue = data.remoteValue
+		}
         if(data.valuesUrl){
             opt.valuesUrl=new URL(data.valuesUrl)
         }
@@ -159,7 +167,7 @@ public class Option implements Comparable{
      */
     public Option createClone(){
         Option opt = new Option()
-        ['name','description','defaultValue','enforced','required','values','valuesList','valuesUrl','regex','multivalued','delimiter'].each{k->
+        ['name','description','defaultValue','remoteValue','enforced','required','values','valuesList','valuesUrl','regex','multivalued','delimiter'].each{k->
             opt[k]=this[k]
         }
         if(!opt.valuesList && values){
@@ -173,6 +181,7 @@ public class Option implements Comparable{
         "name='" + name + '\'' +
         ", description='" + description + '\'' +
         ", defaultValue='" + defaultValue + '\'' +
+		", remoteValue='" + remoteValue + '\'' +
         ", enforced=" + enforced +
         ", required=" + required +
         ", values=" + values +
