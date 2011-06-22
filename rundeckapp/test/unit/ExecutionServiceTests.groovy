@@ -705,98 +705,42 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         }
         t: {//variable expansion in include name
 
-            Execution se = new Execution(argString: "-test args -test3 something", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true,nodeIncludeName: "basic,\${option.test}")
+            Execution se = new Execution(argString: "-test args -test3 something", user: "testuser", project: "testproj", loglevel: 'WARN',
+                doNodedispatch: true,
+                nodeInclude: "a,\${option.test} \${option.test3}",
+                nodeIncludeName: "b,\${option.test} \${option.test3}",
+                nodeIncludeTags: "c,\${option.test} \${option.test3}",
+                nodeIncludeOsArch: "d,\${option.test} \${option.test3}",
+                nodeIncludeOsFamily: "e,\${option.test} \${option.test3}",
+                nodeIncludeOsName: "f,\${option.test} \${option.test3}",
+                nodeIncludeOsVersion: "g,\${option.test} \${option.test3}",
+                nodeExclude: "h,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
+                nodeExcludeName: "i,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
+                nodeExcludeTags: "j,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
+                nodeExcludeOsArch: "k,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
+                nodeExcludeOsFamily: "l,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
+                nodeExcludeOsName: "m,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
+                nodeExcludeOsVersion: "n,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
+            )
             def val = testService.createContext(se, null, null, [id:'3',name:'blah',group:'something/else',username:'bill',project:'testproj'], null, null)
             assertNotNull(val)
             assertNotNull(val.nodeSet)
             assertNotNull(val.nodeSet.exclude)
             assertNotNull(val.nodeSet.include)
-            assertNull(val.nodeSet.exclude.tags)
-            assertNull(val.nodeSet.exclude.name)
-            assertNull(val.nodeSet.include.tags)
-            assertEquals("basic,args", val.nodeSet.include.name)
-        }
-        t: {//variable expansion in include tags
-
-            Execution se = new Execution(argString: "-test args -test3 something", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true,nodeIncludeTags: "test2+\${option.test3}")
-            def val = testService.createContext(se, null, null, [id:'3',name:'blah',group:'something/else',username:'bill',project:'testproj'], null, null)
-            assertNotNull(val)
-            assertNotNull(val.nodeSet)
-            assertNotNull(val.nodeSet.exclude)
-            assertNotNull(val.nodeSet.include)
-            assertNull(val.nodeSet.exclude.tags)
-            assertNull(val.nodeSet.exclude.name)
-            assertNull(val.nodeSet.include.name)
-            assertEquals("test2+something", val.nodeSet.include.tags)
-        }
-        t: {//variable expansion in exclude name
-
-            Execution se = new Execution(argString: "-test args -test3 something", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true,nodeExcludeName: "test3,\${job.id}")
-            def val = testService.createContext(se, null, null, [id:'3',name:'blah',group:'something/else',username:'bill',project:'testproj'], null, null)
-            assertNotNull(val)
-            assertNotNull(val.nodeSet)
-            assertNotNull(val.nodeSet.exclude)
-            assertNotNull(val.nodeSet.include)
-            assertNull(val.nodeSet.exclude.tags)
-            assertNull(val.nodeSet.include.name)
-            assertNull(val.nodeSet.include.tags)
-            assertEquals("test3,3", val.nodeSet.exclude.name)
-        }
-        t: {//variable expansion in include tags
-
-            Execution se = new Execution(argString: "-test args -test3 something", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true,nodeExcludeTags: "test4,\${job.name}")
-            def val = testService.createContext(se, null, null, [id:'3',name:'blah',group:'something/else',username:'bill',project:'testproj'], null, null)
-            assertNotNull(val)
-            assertNotNull(val.nodeSet)
-            assertNotNull(val.nodeSet.exclude)
-            assertNotNull(val.nodeSet.include)
-            assertNull(val.nodeSet.exclude.name)
-            assertNull(val.nodeSet.include.name)
-            assertNull(val.nodeSet.include.tags)
-            assertEquals("test4,blah", val.nodeSet.exclude.tags)
-        }
-        t: {//variable expansion test other job context properties
-
-            Execution se = new Execution(argString: "-test args -test3 something", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true, nodeExcludeTags: "test4,\${job.name} \${job.group} \${job.username} \${job.project}")
-            def val = testService.createContext(se, null, null, [id: '3', name: 'blah', group: 'something/else', username: 'bill', project: 'testproj'], null, null)
-            assertNotNull(val)
-            assertNotNull(val.nodeSet)
-            assertNotNull(val.nodeSet.exclude)
-            assertNotNull(val.nodeSet.include)
-            assertNull(val.nodeSet.exclude.name)
-            assertNull(val.nodeSet.include.name)
-            assertNull(val.nodeSet.include.tags)
-            assertEquals("test4,blah something/else bill testproj", val.nodeSet.exclude.tags)
-        }
-        t: {//variable expansion NOT in include hostname
-
-            Execution se = new Execution(argString: "-test args -test3 something", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true,nodeInclude: "test4,\${job.name}")
-            def val = testService.createContext(se, null, null, [id:'3',name:'blah',group:'something/else',username:'bill',project:'testproj'], null, null)
-            assertNotNull(val)
-            assertNotNull(val.nodeSet)
-            assertNotNull(val.nodeSet.exclude)
-            assertNotNull(val.nodeSet.include)
-            assertNull(val.nodeSet.exclude.name)
-            assertNull(val.nodeSet.include.name)
-            assertNull(val.nodeSet.include.tags)
-            assertNull(val.nodeSet.exclude.tags)
-            assertNull(val.nodeSet.exclude.hostname)
-            assertEquals("test4,\${job.name}", val.nodeSet.include.hostname)
-        }
-        t: {//variable expansion NOT in exclude hostname
-
-            Execution se = new Execution(argString: "-test args -test3 something", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true,nodeExclude: "test4,\${job.name}")
-            def val = testService.createContext(se, null, null, [id:'3',name:'blah',group:'something/else',username:'bill',project:'testproj'], null, null)
-            assertNotNull(val)
-            assertNotNull(val.nodeSet)
-            assertNotNull(val.nodeSet.exclude)
-            assertNotNull(val.nodeSet.include)
-            assertNull(val.nodeSet.exclude.name)
-            assertNull(val.nodeSet.include.name)
-            assertNull(val.nodeSet.include.tags)
-            assertNull(val.nodeSet.exclude.tags)
-            assertNull(val.nodeSet.include.hostname)
-            assertEquals("test4,\${job.name}", val.nodeSet.exclude.hostname)
+            assertEquals("a,args something", val.nodeSet.include.hostname)
+            assertEquals("b,args something", val.nodeSet.include.name)
+            assertEquals("c,args something", val.nodeSet.include.tags)
+            assertEquals("d,args something", val.nodeSet.include.osarch)
+            assertEquals("e,args something", val.nodeSet.include.osfamily)
+            assertEquals("f,args something", val.nodeSet.include.osname)
+            assertEquals("g,args something", val.nodeSet.include.osversion)
+            assertEquals("h,3 blah something/else bill testproj", val.nodeSet.exclude.hostname)
+            assertEquals("i,3 blah something/else bill testproj", val.nodeSet.exclude.name)
+            assertEquals("j,3 blah something/else bill testproj", val.nodeSet.exclude.tags)
+            assertEquals("k,3 blah something/else bill testproj", val.nodeSet.exclude.osarch)
+            assertEquals("l,3 blah something/else bill testproj", val.nodeSet.exclude.osfamily)
+            assertEquals("m,3 blah something/else bill testproj", val.nodeSet.exclude.osname)
+            assertEquals("n,3 blah something/else bill testproj", val.nodeSet.exclude.osversion)
         }
     }
 }

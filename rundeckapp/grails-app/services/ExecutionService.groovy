@@ -621,37 +621,23 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         if (execMap.doNodedispatch) {
             //set nodeset for the context if doNodedispatch parameter is true
             nodeset = filtersAsNodeSet(execMap)
+
+            // enhnacement to allow ${option.xyz} in tags and names
+            if (nodeset != null) {
+                final nodesetProperties = ['name', 'tags', 'hostname', 'osfamily', 'osname', 'osversion', 'osarch']
+                nodesetProperties.each {key ->
+                    if (nodeset.include && nodeset.include[key]) {
+                        nodeset.include[key] = DataContextUtils.replaceDataReferences(nodeset.include[key], datacontext)
+                    }
+                    if (nodeset.exclude && nodeset.exclude[key]) {
+                        nodeset.exclude[key] = DataContextUtils.replaceDataReferences(nodeset.exclude[key], datacontext)
+                    }
+                }
+                //TODO: apply to attributes once nodefilters support attributes
+            }
         } else {
             //blank?
             nodeset = new NodeSet()
-        }
-
-        // enhnacement to allow ${option.xyz} in tags and names
-        if (nodeset != null) {
-            Include includes = nodeset.getInclude();
-
-            if (includes != null) {
-                if (includes.getName() != null) {
-                    includes.setName(DataContextUtils.replaceDataReferences(
-                            includes.getName(), datacontext));
-                }
-                if (includes.getTags() != null) {
-                    includes.setTags(DataContextUtils.replaceDataReferences(
-                            includes.getTags(), datacontext));
-                }
-            }
-
-            Exclude excludes = nodeset.getExclude();
-            if (excludes != null) {
-                if (excludes.getName() != null) {
-                    excludes.setName(DataContextUtils.replaceDataReferences(
-                            excludes.getName(), datacontext));
-                }
-                if (excludes.getTags() != null) {
-                    excludes.setTags(DataContextUtils.replaceDataReferences(
-                            excludes.getTags(), datacontext));
-                }
-            }
         }
 
         //create thread object with an execution item, and start it
