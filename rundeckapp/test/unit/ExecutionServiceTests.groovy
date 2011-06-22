@@ -573,4 +573,174 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             assertEquals "-test3 'some value,another value'", ExecutionService.generateJobArgline(se2, ['test3': ['some value','another value']])
         }
     }
+
+    /**
+     * Test createContext method
+     */
+    void testCreateContext(){
+        mockDomain(Execution)
+        mockDomain(User)
+        def testService = new ExecutionService()
+        def frameworkService = new FrameworkService()
+        testService.frameworkService = frameworkService
+        //create mock user
+        User u1 = new User(login: 'testuser')
+        u1.save()
+
+        t:{//basic test
+
+            Execution se = new Execution(argString:"-test args",user:"testuser",project:"testproj", loglevel:'WARN',doNodedispatch: false)
+            def val=testService.createContext(se,null,null,null,null,null)
+            assertNotNull(val)
+            assertNotNull(val.nodeSet)
+            assertEquals("testproj",val.frameworkProject)
+            assertEquals("testuser",val.user)
+            assertEquals(['-test','args'] as String[],val.args)
+            assertEquals(1,val.loglevel)
+            assertNull(val.framework)
+            assertNull(val.executionListener)
+        }
+        t:{//test DNE user
+
+            Execution se = new Execution(argString:"-test args",user:"DNEuser",project:"testproj", loglevel:'WARN',doNodedispatch: false)
+            try {
+                def val=testService.createContext(se,null,null,null,null,null)
+                fail("Should not succeed")
+            } catch (Exception e) {
+                assertEquals("User DNEuser is not authorized to run this Job.",e.message)
+            }
+
+        }
+        t: {//check datacontext
+
+            Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
+            def val = testService.createContext(se, null, null, null, null, null)
+            assertNotNull(val)
+            assertNotNull(val.dataContext)
+            assertNotNull(val.dataContext.job)
+            assertEquals(0,val.dataContext.job.size())
+            assertNotNull(val.dataContext.option)
+            assertEquals([test:"args"],val.dataContext.option)
+        }
+        t: {//check datacontext, inputargs instead of argString
+
+            Execution se = new Execution(user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
+            def val = testService.createContext(se, null, null, null, null, ['-test','args','-test2','monkey args'] as String[])
+            assertNotNull(val)
+            assertNotNull(val.dataContext)
+            assertNotNull(val.dataContext.job)
+            assertEquals(0,val.dataContext.job.size())
+            assertNotNull(val.dataContext.option)
+            assertEquals([test:"args",test2:'monkey args'],val.dataContext.option)
+        }
+        t: {//check datacontext, include job data
+
+            Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
+            def val = testService.createContext(se, null, null, [id:"3",name:"testjob"], null, null)
+            assertNotNull(val)
+            assertNotNull(val.dataContext)
+            assertNotNull(val.dataContext.job)
+            assertEquals([id: "3", name: "testjob"],val.dataContext.job)
+            assertNotNull(val.dataContext.option)
+            assertEquals([test:"args"],val.dataContext.option)
+        }
+        t: {//check nodeset, empty
+
+            Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
+            def val = testService.createContext(se, null, null, [id:"3",name:"testjob"], null, null)
+            assertNotNull(val)
+            assertNotNull(val.nodeSet)
+            assertNull(val.nodeSet.include)
+            assertNull(val.nodeSet.exclude)
+        }
+        t: {//check nodeset, filtered from execution obj. include name
+
+            Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true, nodeIncludeName: "testnode")
+            def val = testService.createContext(se, null, null, [id: "3", name: "testjob"], null, null)
+            assertNotNull(val)
+            assertNotNull(val.nodeSet)
+            assertNotNull(val.nodeSet.exclude)
+            assertNotNull(val.nodeSet.include)
+            assertNull(val.nodeSet.exclude.name)
+            assertEquals("testnode", val.nodeSet.include.name)
+        }
+        t: {//check nodeset, filtered from execution obj. exclude name
+
+            Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true, nodeExcludeName: "testnode")
+            def val = testService.createContext(se, null, null, [id: "3", name: "testjob"], null, null)
+            assertNotNull(val)
+            assertNotNull(val.nodeSet)
+            assertNotNull(val.nodeSet.exclude)
+            assertNotNull(val.nodeSet.include)
+            assertEquals("testnode", val.nodeSet.exclude.name)
+            assertNull(val.nodeSet.include.name)
+        }
+    }
+
+    /**
+     * Test use of ${option.x} and ${job.y} parameter expansion in node filter tag and name filters.
+     */
+    void testCreateContextParameterizedFilters() {
+        mockDomain(Execution)
+        mockDomain(User)
+        def testService = new ExecutionService()
+        def frameworkService = new FrameworkService()
+        testService.frameworkService = frameworkService
+        //create mock user
+        User u1 = new User(login: 'testuser')
+        u1.save()
+
+        t: {//basic test
+
+            Execution se = new Execution(argString: "-test args -test3 something", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true,nodeIncludeName: "basic")
+            def val = testService.createContext(se, null, null, [id:'3',name:'blah',group:'something/else',username:'bill',project:'testproj'], null, null)
+            assertNotNull(val)
+            assertNotNull(val.nodeSet)
+            assertNotNull(val.nodeSet.exclude)
+            assertNotNull(val.nodeSet.include)
+            assertNull(val.nodeSet.exclude.tags)
+            assertNull(val.nodeSet.exclude.name)
+            assertNull(val.nodeSet.include.tags)
+            assertEquals("basic", val.nodeSet.include.name)
+        }
+        t: {//variable expansion in include name
+
+            Execution se = new Execution(argString: "-test args -test3 something", user: "testuser", project: "testproj", loglevel: 'WARN',
+                doNodedispatch: true,
+                nodeInclude: "a,\${option.test} \${option.test3}",
+                nodeIncludeName: "b,\${option.test} \${option.test3}",
+                nodeIncludeTags: "c,\${option.test} \${option.test3}",
+                nodeIncludeOsArch: "d,\${option.test} \${option.test3}",
+                nodeIncludeOsFamily: "e,\${option.test} \${option.test3}",
+                nodeIncludeOsName: "f,\${option.test} \${option.test3}",
+                nodeIncludeOsVersion: "g,\${option.test} \${option.test3}",
+                nodeExclude: "h,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
+                nodeExcludeName: "i,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
+                nodeExcludeTags: "j,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
+                nodeExcludeOsArch: "k,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
+                nodeExcludeOsFamily: "l,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
+                nodeExcludeOsName: "m,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
+                nodeExcludeOsVersion: "n,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
+            )
+            def val = testService.createContext(se, null, null, [id:'3',name:'blah',group:'something/else',username:'bill',project:'testproj'], null, null)
+            assertNotNull(val)
+            assertNotNull(val.nodeSet)
+            assertNotNull(val.nodeSet.exclude)
+            assertNotNull(val.nodeSet.include)
+            assertEquals("a,args something", val.nodeSet.include.hostname)
+            assertEquals("b,args something", val.nodeSet.include.name)
+            assertEquals("c,args something", val.nodeSet.include.tags)
+            assertEquals("d,args something", val.nodeSet.include.osarch)
+            assertEquals("e,args something", val.nodeSet.include.osfamily)
+            assertEquals("f,args something", val.nodeSet.include.osname)
+            assertEquals("g,args something", val.nodeSet.include.osversion)
+            assertEquals("h,3 blah something/else bill testproj", val.nodeSet.exclude.hostname)
+            assertEquals("i,3 blah something/else bill testproj", val.nodeSet.exclude.name)
+            assertEquals("j,3 blah something/else bill testproj", val.nodeSet.exclude.tags)
+            assertEquals("k,3 blah something/else bill testproj", val.nodeSet.exclude.osarch)
+            assertEquals("l,3 blah something/else bill testproj", val.nodeSet.exclude.osfamily)
+            assertEquals("m,3 blah something/else bill testproj", val.nodeSet.exclude.osname)
+            assertEquals("n,3 blah something/else bill testproj", val.nodeSet.exclude.osversion)
+        }
+    }
 }
