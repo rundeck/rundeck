@@ -606,7 +606,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
     public com.dtolabs.rundeck.core.execution.ExecutionContext createContext(ExecutionContext execMap, Framework framework, String userName = null, Map<String, String> jobcontext, ExecutionListener listener, String[] inputargs=null) {
         def User user = User.findByLogin(userName ? userName : execMap.user)
         if (!user) {
-            throw new Exception(g.message(code: 'unauthorized.job.run.user', args: [userName ? userName : execMap.user]))
+            throw new Exception("User ${userName ? userName : execMap.user} is not authorized to run this Job.")
         }
         //convert argString into Map<String,String>
         def String[] args = execMap.argString? CLIUtils.splitArgLine(execMap.argString):inputargs
