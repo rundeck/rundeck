@@ -218,10 +218,7 @@ public class ExpandRunServer {
     
     public void run(final String[] args) throws Exception {
         
-        CommandLineParser parser = new GnuParser();
-        final File toolsdir = new File(basedir, "tools");
-        File bindir = new File(toolsdir, "bin");
-        File toolslibdir = new File(toolsdir, "lib");
+        final CommandLineParser parser = new GnuParser();
         
         CommandLine cl = null; 
         try {
@@ -250,11 +247,11 @@ public class ExpandRunServer {
         this.serverdir = new File(cl.getOptionValue("serverdir", basedir+"/server"));
         this.configDir = new File(cl.getOptionValue("c", serverdir + "/config"));
         DEBUG("configDir is " + configDir.getAbsolutePath());
-        bindir = new File(cl.getOptionValue('x', toolsdir+"/bin"));
-        
-        
+        final File toolsdir = new File(basedir, "tools");
+        final File toolslibdir = new File(toolsdir, "lib");
+        final File bindir = new File(cl.getOptionValue('x', toolsdir.getAbsolutePath() + "/bin"));
 
-        
+
         initArgs();
         this.coreJarName = "rundeck-core-" + versionString + ".jar";
 
