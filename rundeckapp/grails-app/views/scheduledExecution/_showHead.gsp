@@ -1,7 +1,7 @@
         <g:set var="execInfo" value="${scheduledExecution?scheduledExecution:execution}"/>
         <div class="jobInfo" id="jobInfo_${execution?execution.id:''}">
             <g:if test="${scheduledExecution}">
-                <g:link controller="scheduledExecution" action="show" id="${scheduledExecution?.id}" class="jobIcon ${execution?.status=='true'?'jobok':execution?.cancelled?'jobwarn':'joberror'}" absolute="${absolute?'true':'false'}">
+                <g:link controller="scheduledExecution" action="show" id="${scheduledExecution.extid}" class="jobIcon ${execution?.status=='true'?'jobok':execution?.cancelled?'jobwarn':'joberror'}" absolute="${absolute?'true':'false'}">
                     <g:if test="${iconName}">
                         <g:if test="${!noimgs}"><img src="${resource(dir:'images',file:iconName+'.png')}" alt="job" style="border:0;"/></g:if>
                     </g:if>
@@ -31,7 +31,6 @@
           </g:else>
             <span class="jobInfoPart">
                 <g:if test="${execInfo instanceof ScheduledExecution && execInfo?.description}"><span class="jobDesc">${execInfo?.description.encodeAsHTML()}</span></g:if>
-                <g:if test="${execInfo instanceof ScheduledExecution && execInfo?.uuid}"><span class="jobuuid">[${execInfo?.uuid.encodeAsHTML()}]</span></g:if>
                 <g:if test="${execInfo instanceof ScheduledExecution && execInfo.groupPath}">
                     <span class="jobGroup">
                    <span class="grouplabel"><g:link controller="menu" action="jobs" params="${[groupPath:execInfo.groupPath]}" title="${'View '+g.message(code:'domain.ScheduledExecution.title')+'s in this group'}"  absolute="${absolute?'true':'false'}">
@@ -43,6 +42,9 @@
                     </span>
                     </span>
                 </g:if>
+
+                <g:if test="${execInfo instanceof ScheduledExecution && execInfo?.uuid}"><div><span
+                    class="jobuuid desc" title="UUID for this job">[${execInfo?.uuid.encodeAsHTML()}]</span></div></g:if>
             </span>
             
             <g:if test="${execution}">

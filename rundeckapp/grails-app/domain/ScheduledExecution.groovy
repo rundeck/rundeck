@@ -526,5 +526,9 @@ class ScheduledExecution extends ExecutionContext {
             return null
         }
     }
+
+    def getExtid(){
+        return this.uuid?:this.id
+    }
 }
 

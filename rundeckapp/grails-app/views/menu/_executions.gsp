@@ -46,7 +46,7 @@
                                     <g:if test="${scheduledExecution}">
                                         <td class="jobname">
                                             <g:link
-                                            title="${'View '+g.message(code:'domain.ScheduledExecution.title')}" controller="scheduledExecution" action="show" id="${scheduledExecution.id}">${scheduledExecution.jobName.encodeAsHTML()}</g:link>
+                                            title="${'View '+g.message(code:'domain.ScheduledExecution.title')}" controller="scheduledExecution" action="show" id="${scheduledExecution.extid}">${scheduledExecution.jobName.encodeAsHTML()}</g:link>
                                         </td>
                                         <td class="jobdesc">${scheduledExecution.description.encodeAsHTML()}</td>
                                     </g:if>

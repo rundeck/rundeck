@@ -43,6 +43,16 @@
                 </td>
             </tr>
             </tbody>
+            <g:if test="${scheduledExecution.uuid}">
+                <tbody class="section">
+                    <tr>
+                       <td>
+                           UUID:
+                           <span class="desc">${scheduledExecution.uuid.encodeAsHTML()}</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </g:if>
         </table>
     </div>
 </div>

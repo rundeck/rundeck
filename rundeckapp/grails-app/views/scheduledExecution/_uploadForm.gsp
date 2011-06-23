@@ -98,7 +98,7 @@
                                 </td>
                                 <td class="jobname" >
                                     <g:if test="${scheduledExecution.id}">
-                                        <g:link controller="scheduledExecution" action="show" id="${scheduledExecution.id}">${scheduledExecution.jobName.encodeAsHTML()}</g:link >
+                                        <g:link controller="scheduledExecution" action="show" id="${scheduledExecution.extid}">${scheduledExecution.jobName.encodeAsHTML()}</g:link >
                                     </g:if>
                                     <g:else>
                                         ${scheduledExecution.jobName.encodeAsHTML()}
@@ -144,7 +144,7 @@
                                 </td>
                                 <td class="jobname">
                                     <g:if test="${scheduledExecution.id}">
-                                        <g:link controller="scheduledExecution" action="show" id="${scheduledExecution.id}">${scheduledExecution.jobName.encodeAsHTML()}</g:link >
+                                        <g:link controller="scheduledExecution" action="show" id="${scheduledExecution.extid}">${scheduledExecution.jobName.encodeAsHTML()}</g:link >
                                     </g:if>
                                 </td>
                                 <td class="jobdesc">

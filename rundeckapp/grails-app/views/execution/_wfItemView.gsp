@@ -27,7 +27,7 @@
             <g:if test="${jobitem}">
                 <g:set var="foundjob" value="${edit?null:ScheduledExecution.findByJobNameAndGroupPath(item.jobName,item.jobGroup?item.jobGroup:null)}"/>
                 <g:if test="${foundjob}">
-                <g:link controller="scheduledExecution" action="show" id="${foundjob.id}"><g:if test="${!noimgs}"><g:img file="icon-small-job.png" width="16px" height="16px"/> </g:if>${item.jobGroup?item.jobGroup.encodeAsHTML()+'/':''}${item.jobName.encodeAsHTML()}</g:link>
+                <g:link controller="scheduledExecution" action="show" id="${foundjob.extid}"><g:if test="${!noimgs}"><g:img file="icon-small-job.png" width="16px" height="16px"/> </g:if>${item.jobGroup?item.jobGroup.encodeAsHTML()+'/':''}${item.jobName.encodeAsHTML()}</g:link>
                 </g:if>
                 <g:else>
                 <g:if test="${!noimgs}"><g:img file="icon-small-job.png" width="16px" height="16px"/> </g:if>${item.jobGroup?item.jobGroup.encodeAsHTML()+'/':''}${item.jobName.encodeAsHTML()}
