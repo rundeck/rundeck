@@ -12,8 +12,6 @@ The root URL path for all calls to the API in this version is:
 
     $RUNDECK_SERVER_URL/api/1
 
-In this document we will leave off the `$RUNDECK_SERVER_URL/api/1` and simply display URLs as `/...`.
-
 XML
 ----
 
@@ -96,7 +94,7 @@ Get RunDeck server information and stats.
 
 URL:
 
-    /system/info
+    /api/1/system/info
 
 Parameters: none
 
@@ -248,7 +246,7 @@ List the jobs that exist for a project.
 
 URL:
 
-    /jobs
+    /api/1/jobs
 
 Required parameters:
 
@@ -275,7 +273,7 @@ Run a job specified by ID.
 
 URL:
     
-    /job/[ID]/run
+    /api/1/job/[ID]/run
 
 Optional parameters:
 
@@ -291,7 +289,7 @@ Export the job definitions for in XML or YAML formats.
 
 URL:
 
-    /jobs/export
+    /api/1/jobs/export
 
 Required parameters:
 
@@ -321,7 +319,7 @@ Import job definitions in XML or YAML formats.
 
 URL:
 
-    /jobs/import
+    /api/1/jobs/import
 
 Method: `POST`
 
@@ -368,7 +366,7 @@ Export a single job definition in XML or YAML formats.
 
 URL:
 
-    /job/[ID]
+    /api/1/job/[ID]
 
 Optional parameters:
 
@@ -388,7 +386,7 @@ Delete a single job definition.
 
 URL:
 
-    /job/[ID]
+    /api/1/job/[ID]
 
 Method: `DELETE`
 
@@ -408,7 +406,7 @@ Get the list of executions for a Job.
 
 URL:
 
-    /job/[ID]/executions
+    /api/1/job/[ID]/executions
 
 Optional Query Parameters:
 
@@ -425,7 +423,7 @@ List the currently running executions for a project
 
 URL:
 
-    /executions/running
+    /api/1/executions/running
 
 Required Parameters:
 
@@ -476,7 +474,7 @@ Get the status for an execution by ID.
 
 URL:
 
-    /execution/[ID]
+    /api/1/execution/[ID]
 
 Result: an Item List of `executions` with a single item. See [Listing Running Executions](#listing-running-executions).
 
@@ -487,7 +485,7 @@ Abort a running execution by ID.
 
 URL:
 
-    /execution/[ID]/abort
+    /api/1/execution/[ID]/abort
 
 Result:  The result will contain a `success/message` element will contain a descriptive message.  The status of the abort action will be included as an element:
 
@@ -503,7 +501,7 @@ Run a command string.
 
 URL:
 
-    /run/command
+    /api/1/run/command
 
 Required Parameters:
 
@@ -528,7 +526,7 @@ Run a script.
 
 URL:
 
-    /run/script
+    /api/1/run/script
 
 Method: `POST`
 
@@ -561,7 +559,7 @@ List the existing projects on the server.
 
 URL:
 
-    /projects
+    /api/1/projects
 
 Result:  An Item List of `projects`, each `project` of the form specified in the [Getting Project Info](#getting-project-info) section.
 
@@ -571,7 +569,7 @@ Get information about a project.
 
 URL:
 
-    /project/NAME
+    /api/1/project/NAME
 
 Result:  An Item List of `projects` with one `project`.  The `project` is of the form:
 
@@ -594,7 +592,7 @@ for the project, and a POST request will update the resources.
 
 URL:
 
-    /project/NAME/resources
+    /api/1/project/NAME/resources
 
 Method: POST, GET
 
@@ -662,7 +660,7 @@ can be used.
 
 URL:
 
-    /project/NAME/resources/refresh
+    /api/1/project/NAME/resources/refresh
 
 Method: POST
 
@@ -698,7 +696,7 @@ List the event history for a project.
 
 URL:
 
-    /history
+    /api/1/history
 
 Required Parameters:
 
@@ -763,7 +761,7 @@ Create a history event report for any external process.
 
 URL:
 
-    /report/create
+    /api/1/report/create
 
 Required Parameters:
 
@@ -790,7 +788,7 @@ List or query the resources for a project.
 
 URL:
 
-    /resources
+    /api/1/resources
 
 Required Parameters:
 
@@ -851,7 +849,7 @@ Get a specific resource within a project.
 
 URL:
 
-    /resource/[name]
+    /api/1/resource/[name]
 
 Required Parameters:
 
