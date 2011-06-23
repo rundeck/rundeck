@@ -2331,8 +2331,7 @@ class ScheduledExecutionController  {
                     if(jobdata instanceof ScheduledExecution){
                         result = _doupdateJob(scheduledExecution.id,jobdata,jobchange)
                     }else{
-                        jobdata.id=scheduledExecution.id
-                        jobdata.uuid=scheduledExecution.uuid
+                        jobdata.id=scheduledExecution.uuid?:scheduledExecution.id
                         result = _doupdate(jobdata, jobchange)
                     }
 
@@ -2717,14 +2716,11 @@ class ScheduledExecutionController  {
         delegate.'succeeded'(count:jobs.size()){
             jobsi.each{ Map job ->
                 delegate.'job'(index:job.entrynum){
-                    if(job.scheduledExecution.uuid){
-                        uuid(job.scheduledExecution.uuid)
-                    }
-                    id(job.scheduledExecution.id.toString())
+                    id(job.scheduledExecution.extid)
                     name(job.scheduledExecution.jobName)
                     group(job.scheduledExecution.groupPath?:'')
                     project(job.scheduledExecution.project)
-                    url(g.createLink(action:'show',id:job.scheduledExecution.id))
+                    url(g.createLink(action:'show',id: job.scheduledExecution.extid))
                 }
             }
         }
@@ -2732,11 +2728,8 @@ class ScheduledExecutionController  {
             errjobs.each{ Map job ->
                 delegate.'job'(index:job.entrynum){
                     if(job.scheduledExecution.id){
-                        if (job.scheduledExecution.uuid) {
-                            uuid(job.scheduledExecution.uuid)
-                        }
-                        id(job.scheduledExecution.id.toString())
-                        url(g.createLink(action:'show',id:job.scheduledExecution.id))
+                        id(job.scheduledExecution.extid)
+                        url(g.createLink(action:'show',id: job.scheduledExecution.extid))
                     }
                     name(job.scheduledExecution.jobName)
                     group(job.scheduledExecution.groupPath?:'')
@@ -2763,11 +2756,8 @@ class ScheduledExecutionController  {
             skipjobs.each{ Map job ->
                 delegate.'job'(index:job.entrynum){
                     if(job.scheduledExecution.id){
-                        if (job.scheduledExecution.uuid) {
-                            uuid(job.scheduledExecution.uuid)
-                        }
-                        id(job.scheduledExecution.id.toString())
-                        url(g.createLink(action:'show',id:job.scheduledExecution.id))
+                        id(job.scheduledExecution.extid)
+                        url(g.createLink(action:'show',id: job.scheduledExecution.extid))
                     }
                     name(job.scheduledExecution.jobName)
                     group(job.scheduledExecution.groupPath?:'')

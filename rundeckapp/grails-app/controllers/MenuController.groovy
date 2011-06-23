@@ -547,7 +547,7 @@ class MenuController {
                 new ApiController().success{ delegate->
                     delegate.'jobs'(count:results.nextScheduled.size()){
                         results.nextScheduled.each{ ScheduledExecution se->
-                            job(id:se.id){
+                            job(id:se.extid){
                                 name(se.jobName)
                                 group(se.groupPath)
                                 project(se.project)
