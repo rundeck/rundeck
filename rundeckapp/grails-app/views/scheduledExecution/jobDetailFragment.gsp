@@ -47,8 +47,7 @@
                 <tbody class="section">
                     <tr>
                        <td>
-                           UUID:
-                           <span class="desc">${scheduledExecution.uuid.encodeAsHTML()}</span>
+                           <span class="desc">UUID: ${scheduledExecution.uuid.encodeAsHTML()}</span>
                         </td>
                     </tr>
                 </tbody>

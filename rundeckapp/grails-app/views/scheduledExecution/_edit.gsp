@@ -434,7 +434,7 @@ var applinks={
             <label for="schedJobUuid"
                    class=" ${hasErrors(bean: scheduledExecution, field: 'uuid', 'fieldError')}"
                    id="schedJobUuidLabel">
-                uuid
+                UUID
             </label>
         </td>
         <td>

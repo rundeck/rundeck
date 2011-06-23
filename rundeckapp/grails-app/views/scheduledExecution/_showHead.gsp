@@ -42,9 +42,6 @@
                     </span>
                     </span>
                 </g:if>
-
-                <g:if test="${execInfo instanceof ScheduledExecution && execInfo?.uuid}"><div><span
-                    class="jobuuid desc" title="UUID for this job">[${execInfo?.uuid.encodeAsHTML()}]</span></div></g:if>
             </span>
             
             <g:if test="${execution}">
@@ -60,6 +57,8 @@
                     </span>
                 </span>
             </g:if>
+            <g:if test="${execInfo instanceof ScheduledExecution && execInfo?.uuid}"><div><span
+                class="jobuuid desc" title="UUID for this job">UUID: ${execInfo?.uuid.encodeAsHTML()}</span></div></g:if>
 
         </div>
         
