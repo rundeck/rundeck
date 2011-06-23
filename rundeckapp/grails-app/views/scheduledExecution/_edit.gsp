@@ -429,7 +429,36 @@ var applinks={
             </span>
         </td>
     </tr>
-
+    <tr>
+        <td>
+            <label for="schedJobUuid"
+                   class=" ${hasErrors(bean: scheduledExecution, field: 'uuid', 'fieldError')}"
+                   id="schedJobUuidLabel">
+                UUID
+            </label>
+        </td>
+        <td>
+            <g:if test="${editSchedExecId}">
+                <span class="desc" title="UUID for this Job">
+                    ${scheduledExecution?.uuid?.encodeAsHTML()}
+                </span>
+            </g:if>
+            <g:if test="${!editSchedExecId}">
+                <span class="input">
+                    <input type='text' name="uuid" value="${scheduledExecution?.uuid?.encodeAsHTML()}"
+                           id="schedJobUuid" size="40"/>
+                    <g:hasErrors bean="${scheduledExecution}" field="uuid">
+                        <img src="${resource(dir: 'images', file: 'icon-small-warn.png')}" alt="Error" width="16px"
+                             height="16px" id="schedJobUuidErr"/>
+                        <wdgt:eventHandler for="schedJobUuid" state="unempty" frequency="1">
+                            <wdgt:action target="schedJobUuidLabel" removeClassname="fieldError"/>
+                            <wdgt:action visible="false" target="schedJobUuidErr"/>
+                        </wdgt:eventHandler>
+                    </g:hasErrors>
+                </span>
+            </g:if>
+        </td>
+    </tr>
     </tbody>
     <tr>
         <td class="${hasErrors(bean:scheduledExecution,field:'project','fieldError')} required" id="schedProjErr">Project</td>
@@ -958,4 +987,9 @@ var applinks={
 
 
 </table>
+<g:javascript>
+    if (typeof(initTooltipForElements) == 'function') {
+        initTooltipForElements('.obs_tooltip');
+    }
+</g:javascript>
 <div id="msg"></div>

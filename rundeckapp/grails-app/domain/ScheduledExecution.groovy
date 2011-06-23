@@ -14,6 +14,7 @@ class ScheduledExecution extends ExecutionContext {
     String seconds = "0"
     String year = "*"
     String crontabString
+    String uuid;
 
     Date nextExecution
     boolean scheduled = false
@@ -66,6 +67,7 @@ class ScheduledExecution extends ExecutionContext {
         adhocRemoteString(nullable:true, blank:true)
         adhocLocalString(nullable:true, blank:true)
         adhocFilepath(nullable:true, blank:true)
+        uuid(unique: true, nullable:true, blank:false)
     }
 
     public static final daysofweeklist = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
@@ -78,8 +80,10 @@ class ScheduledExecution extends ExecutionContext {
         if(groupPath){
             map.group=groupPath
         }
-        if(id){
-            map.id=id
+        if(uuid){
+            map.uuid=uuid
+        }else if (id) {
+            map.id = id
         }
         map.description=description
         map.loglevel=loglevel
@@ -138,6 +142,9 @@ class ScheduledExecution extends ExecutionContext {
         se.description=data.description
         se.loglevel=data.loglevel?data.loglevel:'INFO'
         se.project=data.project
+        if (data.uuid) {
+            se.uuid = data.uuid
+        }
         if(data.options){
             TreeSet options=new TreeSet()
             data.options.keySet().each{optname->
@@ -518,6 +525,10 @@ class ScheduledExecution extends ExecutionContext {
         }else{
             return null
         }
+    }
+
+    def getExtid(){
+        return this.uuid?:this.id
     }
 }
 

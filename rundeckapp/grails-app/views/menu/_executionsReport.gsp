@@ -88,7 +88,7 @@
                                         <g:if test="${options?.job}">
                                         <td class="jobname ${execution?.status!='true'?'fail':''}">
                                             <g:link
-                                            title="${'View '+g.message(code:'domain.ScheduledExecution.title')}" controller="scheduledExecution" action="show" id="${scheduledExecution.id}">${scheduledExecution.jobName.encodeAsHTML()}</g:link >
+                                            title="${'View '+g.message(code:'domain.ScheduledExecution.title')}" controller="scheduledExecution" action="show" id="${scheduledExecution.extid}">${scheduledExecution.jobName.encodeAsHTML()}</g:link >
                                         </td>
                                         </g:if>
                                         <g:if test="${options?.desc}">

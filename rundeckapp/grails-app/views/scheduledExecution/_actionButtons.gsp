@@ -43,11 +43,11 @@
                 </g:if>
                 </g:if>
                 <g:if test="${jobAuths[UserAuth.WF_CREATE]?.contains(idKey) }">
-                    <g:link controller="scheduledExecution" title="Copy Job" action="copy" id="${scheduledExecution.id}" class="icon button floatl"><img src="${resource(dir:'images',file:'icon-small-copy.png')}" alt="copy" width="16px" height="16px"/></g:link>
+                    <g:link controller="scheduledExecution" title="Copy Job" action="copy" id="${scheduledExecution.extid}" class="icon button floatl"><img src="${resource(dir:'images',file:'icon-small-copy.png')}" alt="copy" width="16px" height="16px"/></g:link>
                 </g:if>
                 <g:if test="${!execPage}">
                 <g:if test="${jobAuths[UserAuth.WF_UPDATE]?.contains(idKey) }">
-                    <g:link controller="scheduledExecution" title="Edit Job" action="edit" id="${scheduledExecution.id}" class="icon button floatl"><img src="${resource(dir:'images',file:'icon-small-edit.png')}" alt="edit" width="16px" height="16px"/></g:link>
+                    <g:link controller="scheduledExecution" title="Edit Job" action="edit" id="${scheduledExecution.extid}" class="icon button floatl"><img src="${resource(dir:'images',file:'icon-small-edit.png')}" alt="edit" width="16px" height="16px"/></g:link>
                 </g:if>
                 </g:if>
                 <g:if test="${jobAuths[UserAuth.WF_READ]?.contains(idKey) }">
@@ -55,14 +55,14 @@
                     <div  id="downloadlink_popup" style="display:none;">
                         <span class="prompt">Select a format:</span>
                         <ul>
-                            <li><g:link controller="scheduledExecution" title="Download XML" action="show" id="${scheduledExecution.id}.xml">XML</g:link></li>
-                            <li><g:link controller="scheduledExecution" title="Download YAML" action="show" id="${scheduledExecution.id}.yaml">YAML</g:link></li>
+                            <li><g:link controller="scheduledExecution" title="Download XML" action="show" id="${scheduledExecution.extid}.xml">XML</g:link></li>
+                            <li><g:link controller="scheduledExecution" title="Download YAML" action="show" id="${scheduledExecution.extid}.yaml">YAML</g:link></li>
                         </ul>
                     </div>
                 </g:if>
             </g:if>
             <g:if test="${jobAuthorized || jobAuths[UserAuth.WF_RUN]?.contains(idKey) }">
-                <g:link controller="scheduledExecution" action="execute" id="${scheduledExecution.id}" class="icon button floatl" onclick="loadExec(${scheduledExecution.id});return false;"><img src="${resource(dir:'images',file:'icon-small-run.png')}" title="Run ${g.message(code:'domain.ScheduledExecution.title')}&hellip;" alt="run" width="16px" height="16px"/></g:link>
+                <g:link controller="scheduledExecution" action="execute" id="${scheduledExecution.extid}" class="icon button floatl" onclick="loadExec(${scheduledExecution.id});return false;"><img src="${resource(dir:'images',file:'icon-small-run.png')}" title="Run ${g.message(code:'domain.ScheduledExecution.title')}&hellip;" alt="run" width="16px" height="16px"/></g:link>
             </g:if>
             <g:elseif test="${ !jobAuthorized }">
                 <span class="info note floatl" style="width:16px;padding: 2px;" title="${message(code:'unauthorized.job.run')}"><img src="${resource(dir:'images',file:'icon-small-warn.png')}" alt="" width="16px" height="16px"/></span>
@@ -72,7 +72,7 @@
             </g:else>
         </span>
         <div id="${ukey}jobDisplayDeleteConf${scheduledExecution.id}" class="confirmBox popout" style="display:none;">
-            <g:form controller="scheduledExecution" action="delete" method="post" id="${scheduledExecution.id}">
+            <g:form controller="scheduledExecution" action="delete" method="post" id="${scheduledExecution.extid}">
                 <span  class="confirmMessage">Really delete this <g:message code="domain.ScheduledExecution.title"/>?</span>
                 <input type="submit" value="No" onclick="Element.toggle('${ukey}jobDisplayDeleteConf${scheduledExecution.id}');return false;"/>
                 <input type="submit" value="Yes"/>
