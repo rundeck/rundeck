@@ -268,7 +268,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         sec.scheduledExecutionService = mock2.createMock()
 
         def result = sec.upload()
-        assertEquals "No file or XML was uploaded.", sec.flash.message
+        assertNull sec.flash.message
         assertNull result
 
     }
