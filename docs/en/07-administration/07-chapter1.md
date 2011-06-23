@@ -118,7 +118,7 @@ services.
 Some important settings:
 
 * `framework.resources.allowedURL.X`: a sequence of regular expressions (for `X` starting at 0 and increasing). These are matched against requested providerURL values when
-the `/project/name/resources/refresh` API endpoint is called. See [Refreshing Resources for a Project](#refreshing-resources-for-a-project).
+the `/project/name/resources/refresh` API endpoint is called. See [Refreshing Resources for a Project](api/index.html#refreshing-resources-for-a-project).
 
 #### log4j.properties
 
@@ -144,7 +144,7 @@ this file:
 * `project.resources.url`: (Optional) The URL to an external
   [Resource Model Provider](#resource-model-provider).
 * `project.resources.allowedURL.X`: a sequence of regular expressions (for `X` starting at 0 and increasing). These are matched against requested providerURL values when
-the `/project/name/resources/refresh` API endpoint is called. See [Refreshing Resources for a Project](#refreshing-resources-for-a-project).
+the `/project/name/resources/refresh` API endpoint is called. See [Refreshing Resources for a Project](api/index.html#refreshing-resources-for-a-project).
 
 #### jaas-loginmodule.conf
 
