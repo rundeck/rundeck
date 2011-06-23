@@ -24,7 +24,7 @@ launcher = rundeckapp/target/rundeck-launcher-$(VERSION).jar
 
 .PHONY: clean rundeck docs makedocs plugins
 
-rundeck: $(war) $(launcher)
+rundeck:  $(launcher)
 	@echo $(VERSION)-$(RELEASE)
 
 rpm: docs $(war) $(plugs)
