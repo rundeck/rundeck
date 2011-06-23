@@ -28,23 +28,23 @@
         </span>
 
     <g:if test="${edit}">
-        <span class="optctrl opteditcontrols controls autohide" id="optctrls_${option.name}">
-            <span class="action" onclick="menus.showRelativeTo(this,'optdel_${option.name}',-2,-2);" title="Delete this option"><g:img file="icon-tiny-removex.png"/></span>
-            <span class="action textbtn" onclick="_optedit('${option.name}',$(this).up('li.optEntry'));" title="Edit this option">edit</span>
+        <span class="optctrl opteditcontrols controls autohide" id="optctrls_${option.name.encodeAsHTML()}">
+            <span class="action" onclick="menus.showRelativeTo(this,'optdel_${option.name.encodeAsJavaScript()}',-2,-2);" title="Delete this option"><g:img file="icon-tiny-removex.png"/></span>
+            <span class="action textbtn" onclick="_optedit('${option.name.encodeAsJavaScript()}',$(this).up('li.optEntry'));" title="Edit this option">edit</span>
         </span>
 
-        <div id="optdel_${option.name}" class="confirmMessage popout confirmbox"  style="display:none">
-            Really delete option ${option.name}?
-            <span class="action button small textbtn" onclick="['optdel_${option.name}'].each(Element.hide);">No</span>
-            <span class="action button small textbtn" onclick="_doRemoveOption('${option.name}',$(this).up('li.optEntry'));">Yes</span>
+        <div id="optdel_${option.name.encodeAsHTML()}" class="confirmMessage popout confirmbox"  style="display:none">
+            Really delete option ${option.name.encodeAsHTML()}?
+            <span class="action button small textbtn" onclick="['optdel_${option.name.encodeAsJavaScript()}'].each(Element.hide);">No</span>
+            <span class="action button small textbtn" onclick="_doRemoveOption('${option.name.encodeAsJavaScript()}',$(this).up('li.optEntry'));">Yes</span>
         </div>
         <g:javascript>
-        fireWhenReady('opt_${option.name.encodeAsHTML()}',function(){
-            $('opt_${option.name.encodeAsHTML()}').select('span.autoedit').each(function(e){
+        fireWhenReady('opt_${option.name.encodeAsJavaScript()}',function(){
+            $('opt_${option.name.encodeAsJavaScript()}').select('span.autoedit').each(function(e){
                 Event.observe(e,'click',function(evt){
                     var f=$('optionsContent').down('form');
                     if(!f || 0==f.length){
-                        _optedit('${option.name}',$(e).up('li.optEntry'));
+                        _optedit('${option.name.encodeAsJavaScript()}',$(e).up('li.optEntry'));
                     }
                 });
             });

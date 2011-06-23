@@ -48,7 +48,7 @@
 
             <label>
                 <div class="${hasErrors(bean:option,field:'defaultValue','fieldError')}">Default Value</div>
-                <input type="text" class="right" name="defaultValue" value="${option?.defaultValue}" size="40" placeholder="Default value"/>
+                <input type="text" class="right" name="defaultValue" value="${option?.defaultValue?.encodeAsHTML()}" size="40" placeholder="Default value"/>
             </label>
 
             <g:if test="${origName || option?.name && !newoption}">
@@ -68,7 +68,7 @@
                 </div>
                 <div>
                     <label class="left ${hasErrors(bean:option,field:'valuesUrl','fieldError')}"><g:radio name="valuesType" value="url" checked="${option?.valuesUrl || option?.valuesUrlString || params.valuesType=='url'?true:false}"  id="vtrurl_${rkey}"/> Remote URL:</label>
-                    <input type="url" class="right" name="valuesUrl" value="${option?.valuesUrlString? option.valuesUrlString : option?.valuesUrl }" size="60" placeholder="Remote URL" id="vurl_${rkey}"/>
+                    <input type="url" class="right" name="valuesUrl" value="${option?.valuesUrlString? option.valuesUrlString.encodeAsHTML() : option?.valuesUrl.encodeAsHTML() }" size="60" placeholder="Remote URL" id="vurl_${rkey}"/>
                     <div class="info note right">A URL to a Remote JSON service. See <a href="${resource(dir: 'docs')}/RunDeck-Guide.html#option-model-provider" target="_blank">RunDeck Guide - Option model provider</a></div>
                     <wdgt:eventHandler for="vurl_${rkey}" state="unempty" target="vtrurl_${rkey}" check="true" inline="true" action="keydown"/>
                     <wdgt:eventHandler for="vtrurl_${rkey}" state="unempty" target="vurl_${rkey}" focus="true" inline="true"/>
@@ -88,7 +88,7 @@
                 <div>
                     <label class="${hasErrors(bean:option,field:'regex','fieldError')}"><g:radio name="enforcedType" value="regex" checked="${option?.regex?true:false}" id="etregex_${rkey}"/>
                     Match Regular Expression:</label>
-                    <input type="text" name="regex" value="${option?.regex}" size="40" placeholder="Enter a Regular Expression" id="vregex_${rkey}"/>
+                    <input type="text" name="regex" value="${option?.regex?.encodeAsHTML()}" size="40" placeholder="Enter a Regular Expression" id="vregex_${rkey}"/>
                     <wdgt:eventHandler for="vregex_${rkey}" state="unempty" target="etregex_${rkey}" check="true" inline="true" action="keydown"/>
                     <wdgt:eventHandler for="etregex_${rkey}" state="unempty" target="vregex_${rkey}" focus="true" inline="true"/>
                 </div>
@@ -122,7 +122,7 @@
                     </label>
                     with
                     <label class="${hasErrors(bean: option, field: 'delimiter', 'fieldError')}">delimiter
-                        <input type="text" name="delimiter" value="${option?.delimiter}" size="5" id="vdelimiter_${rkey}"/>
+                        <input type="text" name="delimiter" value="${option?.delimiter.encodeAsHTML()}" size="5" id="vdelimiter_${rkey}"/>
                         <span class="info note"><g:message code="form.option.delimiter.description"/></span>
                     </label>
                     <wdgt:eventHandler for="vdelimiter_${rkey}" state="unempty" target="cdelimiter_${rkey}" check="true" inline="true" action="keydown"/>
@@ -135,7 +135,7 @@
             <div class="presentation">
                 <span class="info note">The option values will be available to scripts in these forms:</span>
                 <div>
-                    Bash: <code>$<span id="bashpreview${rkey}">${option?.name?DataContextUtils.generateEnvVarName('option.'+option.name):''}</span></code>
+                    Bash: <code>$<span id="bashpreview${rkey}">${option?.name?DataContextUtils.generateEnvVarName('option.'+option.name).encodeAsHTML():''}</span></code>
                 </div>
                 <div>
                     Commandline Arguments: <code>$<!-- -->{option.<span id="clipreview${rkey}">${option?.name?.encodeAsHTML()}</span>}</code>
@@ -164,7 +164,7 @@
         <div class="floatr" style="margin:10px 0;">
             <g:if test="${newoption}">
                 <g:hiddenField name="newoption" value="true"/>
-                <span class="action button small textbtn" onclick="_optcancelnew('${option?.name}');" title="Cancel adding new option">Cancel</span>
+                <span class="action button small textbtn" onclick="_optcancelnew('${option?.name?.encodeAsJavaScript()}');" title="Cancel adding new option">Cancel</span>
                 <span class="action button small textbtn" onclick="_optsavenew('optedit_${rkey}');" title="Save the new option">Save</span>
                 <g:javascript>
                     fireWhenReady('optname_${rkey}',function(){

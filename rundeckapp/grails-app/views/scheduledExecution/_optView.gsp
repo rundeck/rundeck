@@ -25,15 +25,15 @@
 
 <span id="opt_${rkey}" class="optview">
     <span class="optdetail ${edit?'autohilite autoedit':''}" ${edit?'title="Click to edit"':''} ${edit?'':''}>
-        <span class="optname ${option?.required ? 'required' : ''}" title="${option?.description?.encodeAsHTML()}${option?.required ? ' (Required)' : ''}">-${option.name}</span>
-        <span class="argstring">&lt;<g:truncate max="10" showtitle="true">${option.defaultValue? option.defaultValue.encodeAsHTML() : ''}</g:truncate>&gt;${option.multivalued?'+':''}</span>
-        <span class="desc">${option.description}</span>
+        <span class="optname ${option?.required ? 'required' : ''}" title="${option?.description?.encodeAsHTML()}${option?.required ? ' (Required)' : ''}">-${option.name.encodeAsHTML()}</span>
+        <span class="argstring">&lt;<g:truncate max="20" showtitle="true">${option.defaultValue? option.defaultValue.encodeAsHTML() : ''}</g:truncate>&gt;${option.multivalued?'+':''}</span>
+        <span class="desc">${option.description.encodeAsHTML()}</span>
     </span>
     <g:if test="${option?.values || option.valuesList}">
         <g:set var="opts" value="${option.values?option.values.sort():option.valuesList.split(',').sort()}"/>
         <div class="popout detailpopup" id="vls_${rkey}_tooltip" style="width:200px;display:none;" >
             <div class="info note">Allowed Values</div>
-            <g:each var="val" in="${opts}" status="i">${0!=i?', ':''}<span class="valueItem">${val}</span></g:each>
+            <g:each var="val" in="${opts}" status="i">${0!=i?', ':''}<span class="valueItem">${val.encodeAsHTML()}</span></g:each>
         </div>
         <span class="valuesSet">
         <span class="valueslist" id="vls_${rkey}">${opts ? opts.size() :0} Value${1==opts?.size()?'':'s'}</span>
