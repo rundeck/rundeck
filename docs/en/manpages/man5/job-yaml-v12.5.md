@@ -36,6 +36,10 @@ Each Job definition requires these values:
 
 :    the job name
 
+`uuid`
+
+:    Unique UUID
+
 `description`
 
 :    the job description (can be blank)
@@ -88,6 +92,14 @@ In addition, these optional entries can be present:
 [`notification`](#notification)
 
 :    Job result notifications
+
+*Note:* The UUID can be set manually (if
+you are writing the job definition from scratch), or will be assigned at job
+creation time by the RunDeck server using a random UUID.  This string should be 
+as unique as possible if you set it manually.
+
+This identifier is used to uniquely identify jobs when ported between RunDeck
+instances.
 
 ### Sequence
 

@@ -2053,6 +2053,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 return null
             }
             sec.frameworkService=fwkControl.createMock()
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID{id-> return se }
+            sec.scheduledExecutionService=sesControl.createMock()
 
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:true,adhocRemoteString:'test command',]
             def results=sec._doupdate(params)
@@ -2226,6 +2229,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             }
             sec.frameworkService=fwkControl.createMock()
             def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
             sesControl.demand.scheduleJob{schedEx,oldname,oldgroup->
                 //scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null
                 assertNotNull(schedEx)
@@ -2280,6 +2284,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             }
             sec.frameworkService=fwkControl.createMock()
             def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
             sesControl.demand.scheduleJob{schedEx,oldname,oldgroup->
                 //scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null
                 assertNotNull(schedEx)
@@ -2322,6 +2327,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             }
             sec.frameworkService=fwkControl.createMock()
             def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
             sesControl.demand.scheduleJob{schedEx,oldname,oldgroup->
                 //scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null
                 assertNotNull(schedEx)
@@ -2364,6 +2370,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             }
             sec.frameworkService=fwkControl.createMock()
 
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
+
             def params=[id:se.id.toString(),scheduled:true,crontabString:'0 21 */4 */4 */6 ? z2010-2040',useCrontabString:'true']
             def results=sec._doupdate(params)
             def succeeded=results[0]
@@ -2399,6 +2409,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 return null
             }
             sec.frameworkService=fwkControl.createMock()
+
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
 
             def params=[id:se.id.toString(),scheduled:true,crontabString:'0 21 */4 */4 */6',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand']
             def results=sec._doupdate(params)
@@ -2436,6 +2450,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             }
             sec.frameworkService=fwkControl.createMock()
 
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
+
             def params=[id:se.id.toString(),scheduled:true,crontabString:'70 21 */4 */4 */6 ?',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand']
             def results=sec._doupdate(params)
             def succeeded=results[0]
@@ -2471,6 +2489,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 return null
             }
             sec.frameworkService=fwkControl.createMock()
+
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
 
             def params=[id:se.id.toString(),scheduled:true,crontabString:'0 70 */4 */4 */6 ?',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand']
             def results=sec._doupdate(params)
@@ -2508,6 +2530,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             }
             sec.frameworkService=fwkControl.createMock()
 
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
+
             def params=[id:se.id.toString(),scheduled:true,crontabString:'0 0 25 */4 */6 ?',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand']
             def results=sec._doupdate(params)
             def succeeded=results[0]
@@ -2543,6 +2569,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 return null
             }
             sec.frameworkService=fwkControl.createMock()
+
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
 
             def params=[id:se.id.toString(),scheduled:true,crontabString:'0 0 2 32 */6 ?',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand']
             def results=sec._doupdate(params)
@@ -2580,6 +2610,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             }
             sec.frameworkService=fwkControl.createMock()
 
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
+
             def params=[id:se.id.toString(),scheduled:true,crontabString:'0 0 2 3 13 ?',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand']
             def results=sec._doupdate(params)
             def succeeded=results[0]
@@ -2615,6 +2649,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 return null
             }
             sec.frameworkService=fwkControl.createMock()
+
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
 
             def params=[id:se.id.toString(),scheduled:true,crontabString:'0 0 2 ? 12 8',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand']
             def results=sec._doupdate(params)
@@ -3100,6 +3138,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             }
             sec.frameworkService=fwkControl.createMock()
 
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
+
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:'true',adhocRemoteString:'']
             def results=sec._doupdate(params)
             def succeeded=results[0]
@@ -3148,6 +3190,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 return null
             }
             sec.frameworkService=fwkControl.createMock()
+
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
 
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:'true',adhocLocalString:'test local']
             def results=sec._doupdate(params)
@@ -3204,6 +3250,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 return null
             }
             sec.frameworkService=fwkControl.createMock()
+
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
 
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:'true',adhocFilepath:'test file']
             def results=sec._doupdate(params)
@@ -3262,6 +3312,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             }
             sec.frameworkService=fwkControl.createMock()
 
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
+
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:'true',adhocRemoteString:'test remote']
             def results=sec._doupdate(params)
             def succeeded=results[0]
@@ -3317,6 +3371,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 return null
             }
             sec.frameworkService=fwkControl.createMock()
+
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
 
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:'true',adhocFilepath:'test file']
             def results=sec._doupdate(params)
@@ -3374,6 +3432,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             }
             sec.frameworkService=fwkControl.createMock()
 
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
+
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:'true',adhocRemoteString:'test remote']
             def results=sec._doupdate(params)
             def succeeded=results[0]
@@ -3429,6 +3491,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 return null
             }
             sec.frameworkService=fwkControl.createMock()
+
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
 
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:'true',adhocLocalString:'test local']
             def results=sec._doupdate(params)
@@ -3601,6 +3667,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             }
             sec.frameworkService = fwkControl.createMock()
 
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
+
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: true, adhocRemoteString: 'test command',
                 notified:'true',
                 notifySuccessRecipients: 'spaghetti@nowhere.com',
@@ -3674,6 +3744,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 return null
             }
             sec.frameworkService = fwkControl.createMock()
+            
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
 
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: true, adhocRemoteString: 'test command',
                 notified: 'true',
@@ -3750,6 +3824,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             }
             sec.frameworkService = fwkControl.createMock()
 
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
+
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: true, adhocRemoteString: 'test command',
                 notified: 'false',
                 notifyOnsuccessUrl: 'true', notifySuccessUrl: 'http://example.com',
@@ -3812,6 +3890,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 return null
             }
             sec.frameworkService = fwkControl.createMock()
+
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
 
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: true, adhocRemoteString: 'test command',
                 notified: 'true',
@@ -3877,6 +3959,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 return null
             }
             sec.frameworkService=fwkControl.createMock()
+
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
 
             def params=[id:se.id.toString(),jobName:'monkey1',project:'testProject',description:'',adhocExecution:true,adhocRemoteString:'test command',
                 notifications:[[eventTrigger:'onsuccess',type:'email',content:'spaghetti@nowhere.com'],[eventTrigger:'onfailure',type:'email',content:'milk@store.com']]
@@ -3957,6 +4043,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             }
             sec.frameworkService=fwkControl.createMock()
 
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
+
             def params=[id:se.id.toString(),jobName:'monkey1',project:'testProject',description:'',adhocExecution:true,adhocRemoteString:'test command',
                 notifyOnsuccess:'true',notifySuccessRecipients:'spaghetti@nowhere.com',
                 notifyOnfailure:'true',notifyFailureRecipients:'milk@store.com',
@@ -4034,6 +4124,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 return null
             }
             sec.frameworkService=fwkControl.createMock()
+
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
 
             def params=[id:se.id.toString(),jobName:'monkey1',project:'testProject',description:'',adhocExecution:true,adhocRemoteString:'test command',
                 notifyOnsuccess:'true',notifySuccessRecipients:'spaghetti@ nowhere.com',
@@ -4269,6 +4363,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             }
             sec.frameworkService = fwkControl.createMock()
 
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
+
             def params = [id: se.id.toString(), description: 'changed description',workflow:['commands[0]':[adhocExecution:true,adhocRemoteString:'test command2',]],'_workflow_data':true]
             def results = sec._doupdate(params)
             def succeeded = results[0]
@@ -4334,6 +4432,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             }
             sec.frameworkService = fwkControl.createMock()
 
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
+
             def params = [id: se.id.toString(), description: 'changed description',
                 options:["options[0]":[name: 'test3', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"]]
             ]
@@ -4396,6 +4498,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             }
             sec.frameworkService = fwkControl.createMock()
 
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
+
             def params = [id: se.id.toString(), description: 'changed description',_nooptions:true]
             def results = sec._doupdate(params)
             def succeeded = results[0]
@@ -4445,6 +4551,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 return null
             }
             sec.frameworkService = fwkControl.createMock()
+
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
 
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand']
             def results = sec._doupdate(params)
@@ -4507,6 +4617,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             }
             sec.frameworkService = fwkControl.createMock()
 
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
+
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand', _nooptions:true]
             def results = sec._doupdate(params)
             def succeeded = results[0]
@@ -4546,6 +4660,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 return null
             }
             sec.frameworkService = fwkControl.createMock()
+
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
 
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand',
                 options:["options[0]":[name: 'test3', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"]]
@@ -4599,6 +4717,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 return null
             }
             sec.frameworkService = fwkControl.createMock()
+
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
 
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: '', adhocExecution:true,adhocRemoteString:'test command',
                 'option.test3':'val3',options:["options[0]":[name: 'test3', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"]]
@@ -4661,6 +4783,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 return null
             }
             sec.frameworkService = fwkControl.createMock()
+
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
 
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand',
                 options:["options[0]":[name: 'test1', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"],
@@ -4726,6 +4852,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 return null
             }
             sec.frameworkService = fwkControl.createMock()
+
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
 
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand',
                 options: ["options[0]": [name: 'test1', defaultValue: 'val3', enforced: false,multivalued:true],
@@ -5012,6 +5142,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             fwkControl.demand.projects {return []}
             sec.frameworkService = fwkControl.createMock()
             def seServiceControl = mockFor(ScheduledExecutionService,true)
+
+            seServiceControl.demand.getByIDorUUID {id -> return se }
             seServiceControl.demand.userAuthorizedForJob {user,schedexec, framework -> return true }
             sec.scheduledExecutionService = seServiceControl.createMock()
 

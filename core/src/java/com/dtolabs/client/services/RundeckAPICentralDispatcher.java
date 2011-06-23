@@ -689,7 +689,9 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
             if (null != items && items.size() > 0) {
                 for (final Object o : items) {
                     final Node node1 = (Node) o;
-                    final String id = node1.selectSingleNode("id").getStringValue();
+                    final Node uuid = node1.selectSingleNode("uuid");
+                    final Node id1 = node1.selectSingleNode("id");
+                    final String id = null!=uuid?uuid.getStringValue():id1.getStringValue();
                     final String name = node1.selectSingleNode("name").getStringValue();
                     final String url = createJobURL(id);
 
@@ -1079,8 +1081,9 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
 
     private IStoredJobLoadResult parseAPIJobResult(final Node node1, final boolean successful, final boolean skippedJob,
                                                    final String message) {
+        final Node uuidNode = node1.selectSingleNode("uuid");
         final Node idNode = node1.selectSingleNode("id");
-        final String id = null != idNode ? idNode.getStringValue() : null;
+        final String id = null != uuidNode ? uuidNode.getStringValue() :null != idNode ? idNode.getStringValue() : null;
         final String name = node1.selectSingleNode("name").getStringValue();
         final String url = null != id ? createJobURL(id) : null;
         final String group = null != node1.selectSingleNode("group") ? node1.selectSingleNode("group")

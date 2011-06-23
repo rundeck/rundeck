@@ -39,7 +39,7 @@
                             <td class="jobname">
                                 <div style="overflow:hidden; text-overflow: ellipsis; height:16px;">
                                 %{--<g:expander key="${ukey+'jobDisplay'+scheduledExecution.id}" open="${paginateParams?.idlist==scheduledExecution.id.toString()?'true':'false'}" imgfirst="true">${scheduledExecution.jobName.encodeAsHTML()}</g:expander>--}%
-                                <g:link action="show" controller="scheduledExecution" id="${scheduledExecution.id}" class="jobIdLink">
+                                <g:link action="show" controller="scheduledExecution" id="${scheduledExecution.extid}" class="jobIdLink">
                                     ${scheduledExecution.jobName.encodeAsHTML()}</g:link>
 
                                 <g:if test="${!session.project}">

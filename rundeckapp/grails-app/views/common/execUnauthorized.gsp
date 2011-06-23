@@ -22,7 +22,7 @@
     <g:if test="${scheduledExecution}">
         <div id="error" class="error note" >
             <g:if test="${scheduledExecution.id}">
-                <g:link controller="scheduledExecution" action="show" id="${scheduledExecution.id}">${scheduledExecution.jobName}</g:link> cannot be executed:
+                <g:link controller="scheduledExecution" action="show" id="${scheduledExecution.extid}">${scheduledExecution.jobName}</g:link> cannot be executed:
             </g:if>
             <g:else>
                 ${scheduledExecution.jobName} cannot be executed:

@@ -1,7 +1,7 @@
         <g:set var="execInfo" value="${scheduledExecution?scheduledExecution:execution}"/>
         <div class="jobInfo" id="jobInfo_${execution?execution.id:''}">
             <g:if test="${scheduledExecution}">
-                <g:link controller="scheduledExecution" action="show" id="${scheduledExecution?.id}" class="jobIcon ${execution?.status=='true'?'jobok':execution?.cancelled?'jobwarn':'joberror'}" absolute="${absolute?'true':'false'}">
+                <g:link controller="scheduledExecution" action="show" id="${scheduledExecution.extid}" class="jobIcon ${execution?.status=='true'?'jobok':execution?.cancelled?'jobwarn':'joberror'}" absolute="${absolute?'true':'false'}">
                     <g:if test="${iconName}">
                         <g:if test="${!noimgs}"><img src="${resource(dir:'images',file:iconName+'.png')}" alt="job" style="border:0;"/></g:if>
                     </g:if>
@@ -57,6 +57,8 @@
                     </span>
                 </span>
             </g:if>
+            <g:if test="${execInfo instanceof ScheduledExecution && execInfo?.uuid}"><div><span
+                class="jobuuid desc" title="UUID for this job">UUID: ${execInfo?.uuid.encodeAsHTML()}</span></div></g:if>
 
         </div>
         

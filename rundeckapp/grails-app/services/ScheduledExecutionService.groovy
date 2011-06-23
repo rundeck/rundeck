@@ -76,7 +76,7 @@ class ScheduledExecutionService {
                 try{
                     idlist<<Long.valueOf(it)
                 }catch(NumberFormatException e){
-                    log.error "idlist value was not valid: ${it}"
+                    idlist<<it
                 }
             }
 
@@ -102,7 +102,11 @@ class ScheduledExecutionService {
             if(idlist){
                 or{
                     idlist.each{ theid->
-                        eq("id",theid)
+                        if(theid instanceof Long){
+                            eq("id",theid)
+                        }else{
+                            eq("uuid", theid)
+                        }
                     }
                 }
             }
@@ -155,7 +159,11 @@ class ScheduledExecutionService {
             if(idlist){
                 or{
                     idlist.each{ theid->
-                        eq("id",theid)
+                        if (theid instanceof Long) {
+                            eq("id", theid)
+                        } else {
+                            eq("uuid", theid)
+                        }
                     }
                 }
             }
@@ -484,5 +492,32 @@ class ScheduledExecutionService {
     def Date tempNextExecutionTime(ScheduledExecution se){
         def trigger = createTrigger(se)
         return trigger.getNextFireTime()
+    }
+
+    /**
+     * Find a ScheduledExecution by UUID or ID.  Checks if the
+     * input value is a Long, if so finds the ScheduledExecution with that ID.
+     * If it is a String it attempts to parse the String as a Long and if it is
+     * valid it finds the ScheduledExecution by ID. Otherwise it attempts to find the ScheduledExecution with that
+     * UUID.
+     * @param anid
+     * @return ScheduledExecution found or null
+     */
+    def ScheduledExecution getByIDorUUID(anid){
+        def found=null
+        if(anid instanceof Long){
+            return ScheduledExecution.get(anid)
+        }else if(anid instanceof String){
+            //attempt to parse as long id
+            try {
+                def long idlong = Long.parseLong(anid)
+                found = ScheduledExecution.get(idlong)
+            } catch (NumberFormatException e) {
+            }
+            if (!found) {
+                found=ScheduledExecution.findByUuid(anid)
+            }
+        }
+        return found
     }
 }

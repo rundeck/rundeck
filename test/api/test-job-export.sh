@@ -111,12 +111,11 @@ fi
 # job export doesn't wrap result in common result wrapper
 #Check projects list
 itemcount=$($XMLSTARLET sel -T -t -m "/joblist" -v "count(job)" $DIR/curl.out)
-foundjobid=$($XMLSTARLET sel -T -t -m "/joblist" -v "job/id" $DIR/curl.out)
+foundjobid=$($XMLSTARLET sel -T -t -m "/joblist" -v "job/uuid" $DIR/curl.out)
 if [ "1" == "$itemcount" -a "$jobid" == "$foundjobid" ] ; then
     echo "OK"
 else
-    errMsg "Wrong job count: $itemcount, or wrong found id: $foundjobid"
-    exit 2
+    fail "Wrong job count: $itemcount, or wrong found id: $foundjobid"
 fi
 
 

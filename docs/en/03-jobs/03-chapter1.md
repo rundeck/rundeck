@@ -44,6 +44,21 @@ corresponding to the group structure your jobs define.
 Beyond organizing jobs, groups assist in defining access control
 policy, as we'll cover later in the Authorization chapter.
 
+## Job UUIDs
+
+When created, each new job will be assigned a unique UUID.  If you are writing
+the Job definition using one of the supported formats you can assign the UUID
+yourself.
+
+You can use the UUID to make sure that when you rename or change the group for
+your job in your job definition, it will modify the correct job in the server.
+
+The UUID is also useful when porting Job definitions between RunDeck instances.
+
+(Note: RunDeck also assigns each Job an internal "ID" value, although this value is
+not portable between RunDeck instances. As of RunDeck 1.3+ the UUID should be used
+in lieu of ID.)
+
 ## Listing and filtering Jobs
 
 All Job activity begins on the main "Jobs" page inside RunDeck. After
@@ -228,6 +243,8 @@ For the first saved Job example, create a Job that calls the info script.
      description for the job. 
      -   For "Job Name", enter "info" and for the "Group", enter
      "adm/resources". 
+     -   If you want to specify your own UUID you can enter it in the field. 
+     Otherwise a unique value will be set for you.
      -   Providing a description will be come helpful to other users to understand the intent and purpose for the Job.
      -   Check the box for "Dispatch to Nodes"
      -   Choose the "Node Exclude Filters" and enter the name of your RunDeck server. This will cause the job to run on just the remote Nodes (eg., centos54 and ubuntu).
@@ -336,7 +353,7 @@ Click "Yes" when it says "Really delete this Job?"
 
 ## Updating and copying Jobs
 
-All of the data you set when creating a job can be modified. To edit a
+All of the data you set when creating a job can be modified (except UUID). To edit a
 Job, you can click the Pencil icon:
 
 ![Job edit button](figures/fig0312.png)
