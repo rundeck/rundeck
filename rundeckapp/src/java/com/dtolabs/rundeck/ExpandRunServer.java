@@ -84,6 +84,8 @@ public class ExpandRunServer {
      * line separator
      */
     private static final String LINESEP = System.getProperty("line.separator");
+    public static final String FLAG_INSTALLONLY = "installonly";
+    public static final String FLAG_SKIPINSTALL = "skipinstall";
 
     //members
     String basedir;
@@ -162,8 +164,12 @@ public class ExpandRunServer {
         Option debugFlag =  OptionBuilder.withDescription("Show debug information")
                                          .create('d');
         
-        Option skipInstall = OptionBuilder.withLongOpt("skipinstall")
+        Option skipInstall = OptionBuilder.withLongOpt(FLAG_SKIPINSTALL)
                                           .withDescription("Skip the extraction of the utilities from the launcher.")
+                                          .create();
+
+        Option installonly = OptionBuilder.withLongOpt(FLAG_INSTALLONLY)
+                                          .withDescription("Perform installation only and do not start the server.")
                                           .create();
         
         options.addOption(baseDir);
@@ -175,6 +181,7 @@ public class ExpandRunServer {
         options.addOption(help);
         options.addOption(debugFlag);
         options.addOption(skipInstall);
+        options.addOption(installonly);
         options.addOption(projectDir);
         
         debug = Boolean.getBoolean(SYS_PROP_RUNDECK_LAUNCHER_DEBUG);
@@ -221,17 +228,20 @@ public class ExpandRunServer {
             cl = parser.parse(this.options, args);
             
             if(cl.hasOption('h')) {
-                // automatically generate the help statement
-                HelpFormatter formatter = new HelpFormatter();
-                formatter.printHelp( "java [JAVA_OPTIONS] -jar rundeck-launcher.jar ", "\nRun the rundeck server, installing the " +
-                		"necessary components if they do not exist.\n", options, 
-                		"\nhttp://rundeck.org\n", true );
+                printUsage();
+                return;
+            }
+            if(cl.hasOption(FLAG_INSTALLONLY) && cl.hasOption(FLAG_SKIPINSTALL)) {
+                ERR("--" + FLAG_INSTALLONLY + " and --" + FLAG_SKIPINSTALL + " are mutually exclusive");
+                printUsage();
+                System.exit(1);
                 return;
             }
             
         } catch (ParseException e) {
             // oops, something went wrong
             System.err.println( "Parsing failed.  Reason: " + e.getMessage() );
+            System.exit(1);
             return;
         }
         debug = debug || cl.hasOption('d');
@@ -255,7 +265,7 @@ public class ExpandRunServer {
         final Properties defaults = loadDefaults(CONFIG_DEFAULTS_PROPERTIES);
         Properties configuration = new Properties();
         
-        if(!cl.hasOption("skipinstall")) {
+        if(!cl.hasOption(FLAG_SKIPINSTALL)) {
             final File libdir = new File(serverdir, "lib");
             DEBUG("Extracting libs to: " + libdir.getAbsolutePath() + " ... ");
             extractLibs(libdir);
@@ -290,8 +300,20 @@ public class ExpandRunServer {
         if(cl.hasOption('p')) {
             System.setProperty("rdeck.projects",cl.getOptionValue('p'));
         }
-                
-        execute(cl.getArgs(), configDir, new File(basedir), serverdir, configuration);
+
+        if (cl.hasOption(FLAG_INSTALLONLY)) {
+            DEBUG("Done. --"+FLAG_INSTALLONLY+": Not starting server.");
+        } else {
+            execute(cl.getArgs(), configDir, new File(basedir), serverdir, configuration);
+        }
+    }
+
+    private void printUsage() {
+        // automatically generate the help statement
+        HelpFormatter formatter = new HelpFormatter();
+        formatter.printHelp( "java [JAVA_OPTIONS] -jar rundeck-launcher.jar ", "\nRun the rundeck server, installing the " +
+                "necessary components if they do not exist.\n", options,
+                "\nhttp://rundeck.org\n", true );
     }
 
     private void extractLauncherContents(final File targetdir, final String prefix, final String stripPrefix) throws IOException {
