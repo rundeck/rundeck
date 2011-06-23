@@ -52,9 +52,9 @@ element is allowed.
 
 *Nested elements*
 
-[id](#id)
+[uuid](#uuid)
 
-:    job identifier
+:    unique UUID to identify the job
 
 [name](#name-1)
 
@@ -185,20 +185,20 @@ Execute a sequence of other commands, scripts and jobs:
       </job>
     </joblist>
 
-## id
+## uuid
 
-The job identifier is a sub-element of [job](#job). This is normally
-defined by RunDeck upon job creation. If it is specified,  job will be
-created with this id.
+The UUID is a sub-element of [job](#job). This string can be set manually (if
+you are writing the job definition from scratch), or will be assigned at job
+creation time by the RunDeck server using a random UUID.  This string should be 
+as unique as possible if you set it manually.
 
-If a job was already defined with this id, it will be updated with the
-included job definition.
-     
+This identifier is used to uniquely identify jobs when ported between RunDeck
+instances.
 
 ## name 
 
 The job name is a sub-element of [job](#job). The combination of  'name'
-and  [group](#group) must be unique if the [id](#id) identifier is not
+and  [group](#group) and [project](#project) must be unique if the [uuid](#uuid) identifier is not
 included.
      
 ## description 
