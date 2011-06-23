@@ -2388,7 +2388,7 @@ class ScheduledExecutionController  {
         def parseresult
         if(request instanceof MultipartHttpServletRequest){
             def file = request.getFile("xmlBatch")
-            if (!file) {
+            if (!file || file.empty) {
                 flash.message = "No file was uploaded."
                 return
             }
@@ -2397,7 +2397,6 @@ class ScheduledExecutionController  {
             String fileContent=params.xmlBatch
             parseresult = parseUploadedFile(fileContent, fileformat)
         }else{
-            flash.message = "No file or XML was uploaded."
             return
         }
         def jobset
