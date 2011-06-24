@@ -43,6 +43,30 @@ fi
 rm $DIR/load.out
 rm $DIR/test.jobs.expanded.xml
 
+
+###############
+# load jobs with failures
+###############
+#
+#copy jobs file to replace template
+
+#load jobs
+$RDECK_BASE/tools/bin/rd-jobs load -f $DIR/test.jobs2.xml > $DIR/load.out
+if [ 1 != $? ] ; then
+	echo Should have failed to load a job: $!
+	exit 2
+fi
+cat $DIR/load.out
+
+grep -q Failed $DIR/load.out 
+if [ 1 == $? ] ; then
+	echo Should have failed to load a job: $!
+	exit 2
+fi
+
+rm $DIR/load.out
+
+
 # try to run job id 1
 
 $RDECK_BASE/tools/bin/run -i 1 

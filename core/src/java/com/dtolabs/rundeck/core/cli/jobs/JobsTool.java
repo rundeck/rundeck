@@ -658,6 +658,9 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
                 logStoredJobItem(item, null);
             }
         }
+        if(failed.size()>0) {
+            throw new JobsToolException("Failed to load " + failed.size() + " Jobs");
+        }
 
     }
 
