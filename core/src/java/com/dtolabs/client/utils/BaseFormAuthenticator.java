@@ -79,6 +79,10 @@ public abstract class BaseFormAuthenticator implements HttpAuthenticator {
      */
     public static final String HTTP_SECURE_PROTOCOL = "https";
 
+    /**
+     * Text to check Location of redirects to indicate login is required.
+     */
+    public static final String LOGIN_PAGE = "/user/login";
     private String username;
     private String password;
     private String basePath;
@@ -325,10 +329,20 @@ public abstract class BaseFormAuthenticator implements HttpAuthenticator {
     public boolean needsReAuthentication(final int resultCode, final HttpMethod method) {
         if (resultCode >= 300 && resultCode < 400 && method.getResponseHeader("Location") != null) {
             final String loc = method.getResponseHeader("Location").getValue();
-            final int logNdx = loc.indexOf(basePath);
+            final int logNdx = loc.indexOf(LOGIN_PAGE);
             final int qNdx = loc.indexOf("?");
             if (logNdx >= 0 && (qNdx < 0 || logNdx < qNdx)) {
-                //if "/itnav/Logon.do" is in redir, and "/itnav/Logon.do" is not after query part of URL
+                //if "user/login" is in the location and is not after query part of URL
+                //reset session cookie then return true
+                ClientState.resetHttpState();
+                return true;
+            }
+        }else if(HttpStatus.SC_OK==resultCode){
+            final String loc = method.getPath();
+            final int logNdx = loc.indexOf(LOGIN_PAGE);
+            final int qNdx = loc.indexOf("?");
+            if (logNdx >= 0 && (qNdx < 0 || logNdx < qNdx)) {
+                //if "user/login" is in the location and is not after query part of URL
                 //reset session cookie then return true
                 ClientState.resetHttpState();
                 return true;

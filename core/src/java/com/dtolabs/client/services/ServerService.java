@@ -94,6 +94,25 @@ public class ServerService {
     public WebserviceResponse makeRundeckRequest(final String urlPath, final Map queryParams, final File uploadFile,
                                                    final String method)
         throws CoreException, MalformedURLException {
+        return makeRundeckRequest(urlPath, queryParams, uploadFile, method, null);
+    }
+    /**
+     * Make the request to the ItNav workbench.
+     *
+     * @param urlPath     the path for the request
+     * @param queryParams any query parameters
+     * @param uploadFile  a file to upload with the request.
+     * @param method      HTTP connection method, e.g. "get","post","put","delete".
+     *
+     * @return parsed XML document, or null
+     *
+     * @throws com.dtolabs.rundeck.core.CoreException
+     *                                        if an error occurs
+     * @throws java.net.MalformedURLException if connection URL or urlPath params are malformed.
+     */
+    public WebserviceResponse makeRundeckRequest(final String urlPath, final Map queryParams, final File uploadFile,
+                                                   final String method, final String expectedContentType)
+        throws CoreException, MalformedURLException {
         if (null == connParams) {
             throw new IllegalArgumentException("WebConnectionParameters must be specified");
         }
@@ -107,7 +126,7 @@ public class ServerService {
             connParams.getPassword(),
             queryParams,
             uploadFile,
-            "xmlBatch");
+            "xmlBatch",null,expectedContentType);
         if (null != method) {
             hc.setMethodType(method);
         }
