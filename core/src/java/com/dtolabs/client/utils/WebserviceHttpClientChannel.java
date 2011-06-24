@@ -240,8 +240,6 @@ class WebserviceHttpClientChannel extends BaseHttpClientChannel implements Webse
             } catch (DocumentException e) {
                 logger.error("Unable to parse result document: " + e.getMessage(), e);
             }
-        } else {
-            logger.debug("Result type was not " + XML_CONTENT_TYPE + ": " + type);
         }
     }
 

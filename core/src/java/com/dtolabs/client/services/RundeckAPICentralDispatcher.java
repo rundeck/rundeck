@@ -639,10 +639,13 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         final String projectFilter = iStoredJobsQuery.getProjectFilter();
         final String idlistFilter = iStoredJobsQuery.getIdlist();
 
-        if (null != output && null != fformat) {
+        final String expectedContentType;
+        if (null != fformat) {
             params.put("format", fformat.getName());
+            expectedContentType = fformat == JobDefinitionFileFormat.xml ? "text/xml" : "text/yaml";
         } else {
             params.put("format", JobDefinitionFileFormat.xml.getName());
+            expectedContentType = "text/xml";
         }
         if (null != nameMatch) {
             params.put("jobFilter", nameMatch);
@@ -665,7 +668,8 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         //2. send request via ServerService
         final WebserviceResponse response;
         try {
-            response = serverService.makeRundeckRequest(RUNDECK_API_JOBS_EXPORT_PATH, params, null, null);
+            response = serverService.makeRundeckRequest(RUNDECK_API_JOBS_EXPORT_PATH, params, null, null,
+                expectedContentType);
         } catch (MalformedURLException e) {
             throw new CentralDispatcherServerRequestException("Failed to make request", e);
         }
@@ -723,7 +727,9 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
                 return list;
             }
             for (final Map map : mapCollection) {
-                final String id = map.get("id").toString();
+                final Object uuidobj = map.get("uuid");
+                final Object idobj = map.get("id");
+                final String id = null != uuidobj ? uuidobj.toString() : idobj.toString();
                 final String name = (String) map.get("name");
                 final String group = map.containsKey("group") ? (String) map.get("group") : null;
                 final String desc = map.containsKey("description") ? (String) map.get("description") : "";
@@ -840,7 +846,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         }
 
         for (final Map map : dataset) {
-            if (!map.containsKey("name") || !map.containsKey("id")) {
+            if (!map.containsKey("name") || !map.containsKey("id") && !map.containsKey("uuid")) {
                 throw new CentralDispatcherServerRequestException("Response had unexpected dataset: " + resobj);
             }
         }

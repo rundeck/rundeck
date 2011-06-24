@@ -18,10 +18,7 @@ package com.dtolabs.client.utils;
 
 
 import com.dtolabs.rundeck.core.CoreException;
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.methods.*;
 import org.apache.log4j.Logger;
 
@@ -29,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.*;
+import java.net.URI;
 import java.util.*;
 
 
@@ -310,8 +308,15 @@ abstract class HttpClientChannel implements BaseHttpClient {
         }
         int bytesread=0;
         try {
+            if(!isPostMethod()){
+                method.setFollowRedirects(true);
+            }
             resultCode = httpc.executeMethod(method);
             reasonCode = method.getStatusText();
+            if(isPostMethod()){
+                //check redirect after post
+                method = checkFollowRedirect(method);
+            }
 
             if(needsReAuthentication(resultCode,method)){
                 logger.debug("re-authentication needed, performing...");
@@ -375,6 +380,31 @@ abstract class HttpClientChannel implements BaseHttpClient {
 
         logger.debug("Read input:\n" + results.toString());
         postMakeRequest();
+    }
+
+    private HttpMethod checkFollowRedirect(final HttpMethod method) throws IOException, HttpClientException {
+
+        final int res = httpc.executeMethod(method);
+        if ((res == HttpStatus.SC_MOVED_TEMPORARILY) ||
+            (res == HttpStatus.SC_MOVED_PERMANENTLY) ||
+            (res == HttpStatus.SC_SEE_OTHER) ||
+            (res == HttpStatus.SC_TEMPORARY_REDIRECT)) {
+            final Header locHeader = method.getResponseHeader("Location");
+            if (locHeader == null) {
+                throw new HttpClientException("Redirect with no Location header, request URL: " + method.getURI());
+            }
+            final String location = locHeader.getValue();
+            logger.debug("Follow redirect: " + res + ": " + location);
+
+            method.releaseConnection();
+            final GetMethod followMethod = new GetMethod(location);
+            followMethod.setFollowRedirects(true);
+            resultCode = httpc.executeMethod(followMethod);
+            reasonCode = followMethod.getStatusText();
+            logger.debug("Result: " + resultCode);
+            return followMethod;
+        }
+        return method;
     }
 
     /**
