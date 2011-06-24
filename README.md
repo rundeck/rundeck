@@ -63,10 +63,18 @@ Documentation
 
 Available online at <http://rundeck.org/docs>
 
+Development
+======
+
+* [Issue tracker](http://rundeck.lighthouseapp.com/projects/59277-development) at Lighthouseapp.com
+* [Fresh builds](http://build.rundeck.org) served by Jenkins
+
+Do you have changes to contribute? Please see the [Development](https://github.com/dtolabs/rundeck/wiki/Development) wiki page.
+
 License
 ======
 
-Copyright 2010 DTO Solutions
+Copyright 2011 DTO Solutions
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

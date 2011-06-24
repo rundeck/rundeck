@@ -1,6 +1,0 @@
-TODO
-
-add rpm build
-replace CoreException with checked version
-simplify build
-GUI test suite
