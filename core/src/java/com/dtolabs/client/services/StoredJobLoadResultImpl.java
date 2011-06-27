@@ -46,6 +46,15 @@ public class StoredJobLoadResultImpl extends StoredJobImpl implements IStoredJob
         this.message = message;
     }
 
+    StoredJobLoadResultImpl(final String jobId, final String name, final String url, final String group,
+                            final String description, final String project, final boolean successful, final boolean skippedJob,
+                            final String message) {
+        super(jobId, name, url, group, description,project);
+        this.successful = successful;
+        this.skippedJob = skippedJob;
+        this.message = message;
+    }
+
     /**
      * Factory method to create IStoredJobLoadResult instance
      * @param jobId job id
@@ -64,6 +73,30 @@ public class StoredJobLoadResultImpl extends StoredJobImpl implements IStoredJob
                                                         final boolean skippedJob,
                                                         final String message) {
         return new StoredJobLoadResultImpl(jobId, name, url, group, description, successful, skippedJob, message);
+
+    }
+
+    /**
+     * Factory method to create IStoredJobLoadResult instance
+     * @param jobId job id
+     * @param name na,e
+     * @param url url
+     * @param group group
+     * @param description description
+     * @param successful true if creation succeeded
+     * @param skippedJob true if creation was skippped
+     * @param message message for error
+     * @return IStoredJobLoadResult instance
+     */
+    public static IStoredJobLoadResult createLoadResult(final String jobId, final String name, final String url,
+                                                        final String group,
+                                                        final String description,
+                                                        final String project,
+                                                        final boolean successful,
+                                                        final boolean skippedJob,
+                                                        final String message) {
+        return new StoredJobLoadResultImpl(jobId, name, url, group, description, project, successful, skippedJob,
+            message);
 
     }
 
