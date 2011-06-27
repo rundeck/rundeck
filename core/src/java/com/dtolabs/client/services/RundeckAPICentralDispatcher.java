@@ -1096,10 +1096,10 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
             .getStringValue() : null;
         final String description = null != node1.selectSingleNode("description") ? node1.selectSingleNode("description")
             .getStringValue() : null;
-        logger.debug("\t" + name + " [" + id + "] <" + url + ">");
-        return StoredJobLoadResultImpl.createLoadResult(id, name, url,
-            group, description, successful, skippedJob,
-            message);
+        final String project = null != node1.selectSingleNode("project") ? node1.selectSingleNode("project").getStringValue() : null;
+        logger.debug("\t" + name + " [" + id + "] <" + url + "> (" + project + ")");
+        return StoredJobLoadResultImpl.createLoadResult(id, name, url, group, description, project, successful,
+            skippedJob, message);
     }
 
     /**
