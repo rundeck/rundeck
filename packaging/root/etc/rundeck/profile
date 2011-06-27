@@ -5,6 +5,7 @@ RDECK_BASE=/etc/rundeck
 export RDECK_BASE
 
 JAVA_CMD=java
+RUNDECK_TEMPDIR=/tmp/rundeck
 
 #
 # If JAVA_HOME is set, then add it to home and set JAVA_CMD to use the version specified in that 
@@ -30,7 +31,8 @@ export RDECK_JVM="-Djava.security.auth.login.config=/etc/rundeck/jaas-loginmodul
 	-Drundeck.server.serverDir=/var/lib/rundeck \
 	-Drdeck.projects=/var/rundeck/projects \
 	-Drdeck.runlogs=/var/lib/rundeck/logs \
-	-Drundeck.config.name=/etc/rundeck/rundeck-config.properties"
+	-Drundeck.config.name=/etc/rundeck/rundeck-config.properties \
+	$RUNDECK_TEMPDIR"
 #
 # Set min/max heap size
 #
