@@ -32,14 +32,13 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.CommandLine;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 
 /**
  * JobsTool commandline tool (rd-jobs), which provides actions for listing stored jobs from the server, and loading XML
@@ -539,7 +538,7 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
                         final FrameworkProject project =
                             (FrameworkProject) framework.getFrameworkProjectMgr().listFrameworkProjects().iterator().next();
                         argProject = project.getName();
-                        debug("No project specified, defaulting to: " + argProject);
+                        debug("# No project specified, defaulting to: " + argProject);
                     }else{
                         throw new CLIToolOptionsException(
                             "list action: -" + PROJECT_OPTION + "/--" + PROJECT_OPTION_LONG + " option is required");
@@ -548,11 +547,6 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
             }
         }
     }
-
-    /**
-     * Commandline
-     */
-    protected CommandLine cli;
 
     /**
      * Reads the argument vector and constructs a {@link org.apache.commons.cli.CommandLine} object containing params
@@ -623,7 +617,7 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
         if (null == result) {
             throw new JobsToolException("Upload request returned null");
         }
-        log("Total Jobs Uploaded: " + result.size() + " jobs");
+        log("# Total Jobs Uploaded: " + result.size() + " jobs");
         //list failed jobs
         final ArrayList<IStoredJobLoadResult> failed = new ArrayList<IStoredJobLoadResult>();
         final ArrayList<IStoredJobLoadResult> skipped = new ArrayList<IStoredJobLoadResult>();
@@ -637,26 +631,30 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
                 succeeded.add(item);
             }
         }
+
         //list failed jobs
         if (failed.size() > 0) {
-            log("Failed to add " + failed.size() + " Jobs:");
-            for (final IStoredJobLoadResult item : failed) {
-                logStoredJobItem(item, item.getMessage());
-            }
+            log("# Failed to add " + failed.size() + " Jobs:");
+            final ArrayList list = genJobDetailList(failed);
+            HashMap map = new HashMap();
+            map.put("failed", list);
+            logYaml(map);
         }
         //list skipped jobs
         if (skipped.size() > 0) {
-            log("Skipped " + skipped.size() + " Jobs:");
-            for (final IStoredJobLoadResult item : skipped) {
-                logStoredJobItem(item, null);
-            }
+            log("# Skipped " + skipped.size() + " Jobs:");
+            final ArrayList list = genJobDetailList(skipped);
+            HashMap map = new HashMap();
+            map.put("skipped", list);
+            logYaml(map);
         }
         //list succeeded jobs
         if (succeeded.size() > 0) {
-            log("Succeeded creating/updating " + succeeded.size() + "  Jobs:");
-            for (final IStoredJobLoadResult item : succeeded) {
-                logStoredJobItem(item, null);
-            }
+            log("# Succeeded creating/updating " + succeeded.size() + "  Jobs:");
+            final ArrayList list = genJobDetailList(succeeded);
+            HashMap map = new HashMap();
+            map.put("succeeded", list);
+            logYaml(map);
         }
         if(failed.size()>0) {
             throw new JobsToolException("Failed to load " + failed.size() + " Jobs");
@@ -682,12 +680,8 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
             throw new JobsToolException(msg, e);
         }
         if (null != result) {
-            log("Found " + result.size() + " jobs:");
-            int i = 1;
-            for (final IStoredJob item : result) {
-                logStoredJobItem(item);
-                i++;
-            }
+            log("# Found " + result.size() + " jobs:");
+            logYaml(genJobDetailList(result));
         } else {
             throw new JobsToolException("List request returned null");
         }
@@ -698,30 +692,69 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
 
     }
 
-    private void logStoredJobItem(final IStoredJob item) {
-        log(MessageFormat.format("\t{0} {1} [{2}] <{3}>",
-            "-",
-            item.getName(),
-            item.getJobId(),
-            item.getUrl()));
-        if (isArgVerbose() && null != item.getGroup() && !"".equals(item.getGroup())) {
-            log("\t- " + item.getGroup() + "/ ");
-        }
-        if (isArgVerbose() && null != item.getDescription() && !"".equals(item.getDescription())) {
-            log("\t- " + item.getDescription());
-        }
+    private void logYaml(final Object list) {
+        final DumperOptions dumperOptions = new DumperOptions();
+        dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        Yaml yaml = new Yaml(dumperOptions);
+        log(yaml.dump(list));
+
     }
 
-    private void logStoredJobItem(final IStoredJobLoadResult item, final String message) {
-        log(MessageFormat.format("\t{0} {1}{2}{3}{4}{5}",
-            "-",
-            isArgVerbose() && null != item.getGroup() ? item.getGroup() + "/" : "",
-            item.getName(),
-            null != item.getJobId() ? " [" + item.getJobId() + "]" : "",
-            null != item.getUrl() ? " <" + item.getUrl() + ">" : "",
-            null != message ? " : " + message : ""));
+    private ArrayList genJobDetailList(Collection<? extends IStoredJob> result) {
+        ArrayList list = new ArrayList();
+        for (final IStoredJob item : result) {
+            list.add(genJobDetail(item));
+        }
+        return list;
     }
 
+    private Object genJobDetail(final IStoredJob item) {
+        final HashMap<String, String> map = new HashMap<String, String>();
+
+        if(isArgVerbose()) {
+            map.put("name", item.getName());
+            if(null!=item.getDescription() && !"".equals(item.getDescription())){
+                map.put("description", item.getDescription());
+            }
+            if(item instanceof IStoredJobLoadResult) {
+                final IStoredJobLoadResult load = (IStoredJobLoadResult) item;
+                if(null!=load.getMessage()) {
+                    map.put("message", load.getMessage());
+                }
+            }
+            if (null != item.getGroup()) {
+                map.put("group", item.getGroup());
+            }
+            if(null != item.getJobId()){
+                map.put("id", item.getJobId());
+            }
+            if(null!=item.getUrl()){
+                map.put("url", item.getUrl());
+            }
+            if(null!=item.getProject()){
+                map.put("project", item.getProject());
+            }
+        }else {
+            final String ident = (null != item.getGroup() ? item.getGroup() + "/" : "") + item.getName();
+
+            if (item instanceof IStoredJobLoadResult) {
+                final IStoredJobLoadResult load = (IStoredJobLoadResult) item;
+                if(!load.isSuccessful()){
+                    map.put("job", ident);
+                    if (null != load.getMessage()) {
+                        map.put("reason", load.getMessage());
+                    }
+                    return map;
+                }
+            }
+            final String desc = null != item.getDescription() && !"".equals(item.getDescription()) ? " - '" + item
+                .getDescription()
+                                                                                               + "'" : "";
+
+            return ident + desc;
+        }
+        return map;
+    }
 
     public void log(final String output) {
         if (null != clilogger) {
