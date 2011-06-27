@@ -13,7 +13,7 @@ echo "TEST: api request to invalid api path"
 params="project=test"
 
 # get listing
-$CURL --header "$VERSHEADER" -D $DIR/headers.out ${runurl}?${params} > $DIR/curl.out
+docurl -D $DIR/headers.out ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2

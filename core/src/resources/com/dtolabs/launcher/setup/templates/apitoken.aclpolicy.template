@@ -1,0 +1,10 @@
+<policies>
+  <policy description="API clients using Token authentication have access to execute all actions.">
+    <context project="*">
+      <command group="*" job="*" actions="*"/>
+    </context>
+    <by>
+      <group name="api_token_group"/>
+    </by>
+  </policy>
+</policies>

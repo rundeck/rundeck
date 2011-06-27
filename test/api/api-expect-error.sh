@@ -9,9 +9,6 @@ errorMsg() {
    echo "$*" 1>&2
 }
 
-# curl opts to use a cookie jar, and follow redirects, showing only errors
-CURLOPTS="-s -S -L -c $DIR/cookies -b $DIR/cookies"
-CURL="curl $CURLOPTS"
 
 requrl="$1"
 shift
@@ -20,7 +17,11 @@ params="$1"
 shift
 
 # get listing
-$CURL -D $DIR/headers.out $CURL_REQ_OPTS ${requrl}?${params} > $DIR/curl.out
+if [ -n "$RDAUTH" ] ; then
+    curl -L -s -S -H "X-RunDeck-Auth-Token: $RDAUTH" -D $DIR/headers.out $CURL_REQ_OPTS ${requrl}?${params} > $DIR/curl.out
+else
+    curl -L -s -S -c $DIR/cookies -b $DIR/cookies -D $DIR/headers.out $CURL_REQ_OPTS ${requrl}?${params} > $DIR/curl.out
+fi
 if [ 0 != $? ] ; then
     errorMsg "FAIL: failed query request"
     exit 2

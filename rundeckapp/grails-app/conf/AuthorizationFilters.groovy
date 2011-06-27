@@ -191,6 +191,50 @@ public class AuthorizationFilters {
                     }
                     
                     request.subject = subject
+
+                    //check user role membership for verification
+                    def foundroles=roleService.listMappedRoleMembership(request)
+                    if(!foundroles){
+                        log.warn("User ${session.user} has no role membership in mapped roles");
+                    }
+                }else if (request.api_version) {
+                    //allow authentication token to be used 
+                    def authtoken = params.authtoken? params.authtoken : request.getHeader('X-RunDeck-Auth-Token')
+                    def tokenobj=authtoken?AuthToken.findByToken(authtoken):null
+                    User user = tokenobj?.user
+                    if (tokenobj && user){
+                        session.user = user.login
+                        request.authenticatedToken=authtoken
+                        log.debug("loginCheck found user ${user} via token: ${authtoken}");
+                        def subject = new Subject();
+                        subject.principals << new Username(user.login)
+
+                        ['api_token_group'].each{role->
+                            subject.principals << new Group(role.trim());
+                        }
+
+                        request.subject = subject
+                    }else{
+                        request.subject=null
+                        session.user=null
+                        if(authtoken){
+                            request.invalidAuthToken = "Token:" + authtoken.substring(0, 5) + "****"
+                        }
+                        request.authenticatedToken = null
+                        if(authtoken){
+                            log.error("Invalid API token used: ${authtoken}");
+                        }else{
+                            log.error("Unauthenticated API request");
+                        }
+                    }
+                }
+            }
+        }
+        postApiTokenCheck(controller:'user',action:'logout',invert:true){
+            after={
+                if(session.user && request.authenticatedToken){
+                    session.user=null
+                    request.subject=null
                 }
             }
         }

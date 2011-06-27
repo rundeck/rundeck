@@ -1,5 +1,8 @@
 import com.dtolabs.rundeck.core.common.Framework
 import javax.servlet.http.HttpSession
+import java.security.SecureRandom
+import grails.converters.JSON
+import org.apache.commons.lang.RandomStringUtils
 
 class UserController {
     UserService userService
@@ -144,7 +147,155 @@ class UserController {
         def model=profile(params)
         return model
     }
+//    private static SecureRandom srandom=new SecureRandom()
 
+    private String genRandomString() {
+//        return new BigInteger(130, srandom).toString(32)
+        return RandomStringUtils.random(32,"rundeckRUNDECK0123456789dvopsDVOPS")
+    }
+    def generateApiToken={
+        //check auth to edit profile
+        //default to current user profile
+        def login = params.login
+        def result
+        if (login != session.user && !roleService.isUserInAnyRoles(request, ['admin', 'user_admin'])) {
+            def error = "Unauthorized: admin role required"
+            log.error error
+            result=[result: false, error: error] 
+        }else{
+            def User u = userService.findOrCreateUser(login)
+            if (!u) {
+                def error = "Couldn't find user: ${login}"
+                log.error error
+                result=[result: false, error: error]
+            }else{
+                String newtoken= genRandomString()
+                while(AuthToken.findByToken(newtoken) != null){
+                    newtoken = genRandomString()
+                }
+                final userroles = request.subject?.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class).collect { it.name }
+                AuthToken token = new AuthToken(token:newtoken,authRoles: userroles.join(","),user:u)
+
+                if(token.save()){
+                    log.debug("GENERATE TOKEN ${newtoken} for User ${login} with roles: ${token.authRoles}")
+                    result= [result: true, apitoken: newtoken]
+                }else{
+                    def msg= "Failed to save token for User ${login}"
+                    log.error(msg)
+                    result= [result: false,error:msg]
+                }
+            }
+        }
+        def done=false
+        withFormat {
+            json {
+                done=true
+                render(result as JSON)
+            }
+        }
+        if (done) {
+            return
+        }
+        if (result.error) {
+            flash.error = result.error
+        }
+        return redirect(controller: 'user', action: 'profile', params: [login: login])
+    }
+
+    def renderApiToken = {
+        //check auth to edit profile
+        //default to current user profile
+
+        def login = params.login
+        def result
+        def user
+        def token
+        if (login != session.user && !roleService.isUserInAnyRoles(request, ['admin', 'user_admin'])) {
+            def error = "Unauthorized: admin role required"
+            log.error error
+            result = [result: false, error: error]
+        } else {
+            user = userService.findOrCreateUser(login)
+            if (!user) {
+                def error = "Couldn't find user: ${login}"
+                log.error error
+                result = [result: false, error: error]
+            } else {
+                def t= AuthToken.findByUserAndToken(user,params.token);
+                if(t){
+                    token=t
+                }else{
+                    def error = "Couldn't find user auth token: ${params.token}"
+                    log.error error
+                    result = [result: false, error: error]
+                }
+            }
+        }
+        if(user && token){
+            return render(template: 'token',model: [user:user,token:token]);
+        }else{
+            flash.error=result.error
+            return render(template:'/common/error')
+        }
+
+    }
+
+    def clearApiToken={
+        def login = params.login
+        def result
+        if (login != session.user && !roleService.isUserInAnyRoles(request, ['admin', 'user_admin'])) {
+            def error = "Unauthorized: admin role required"
+            log.error error
+            result=[result: false, error: error]
+        }else if(!params.token){
+            def error = "Parameter token required"
+            log.error error
+            result = [result: false, error: error]
+        }else if (params.No == 'No') {
+            return redirect(controller: 'user', action: 'profile', params: [login: login])
+        }else if (request.getMethod()=='GET') {
+            return redirect(controller: 'user', action: 'profile', params: [login: login,showConfirm:true,token:token])
+        }else{
+            def User u = userService.findOrCreateUser(login)
+            if (!u) {
+                def error = "Couldn't find user: ${login}"
+                log.error error
+                result=[result: false, error: error]
+            }else{
+                def findtoken=params.token
+                def found=AuthToken.findByUserAndToken(u,findtoken)
+                if(!found){
+                    def error = "Couldn't find token ${findtoken} for user ${login}"
+                    log.error error
+                    result = [result: false, error: error]
+                }else{
+
+                    AuthToken oldtoken=found
+                    def oldAuthRoles=oldtoken.authRoles
+
+                    oldtoken.delete(flush: true)
+                    log.info("EXPIRE TOKEN ${findtoken} for User ${login} with roles: ${oldAuthRoles}")
+                    result= [result: true]
+                }
+            }
+        }
+        def done=false
+        withFormat {
+            json{
+                done=true
+                render(result as JSON)
+            }
+        }
+        if(done){
+            return
+        }
+
+        if (result.error) {
+            flash.error = result.error
+        }
+        return redirect(controller: 'user', action: 'profile', params: [login: login])
+
+    }
     def setDashboardPref={
         def User u = userService.findOrCreateUser(session.user)
         if(!u){

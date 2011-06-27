@@ -1,0 +1,9 @@
+description: API access via Token Authencation ACL
+
+rules: 
+  .*:
+      actions: '*'
+  
+by:
+  group: api_token_group
+

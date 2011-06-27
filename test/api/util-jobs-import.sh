@@ -21,7 +21,7 @@ params="dupeOption=update"
 ulopts="-F xmlBatch=@$infile"
 
 # get listing
-$CURL $ulopts ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl $ulopts ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 

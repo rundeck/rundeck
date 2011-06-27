@@ -9,16 +9,18 @@ source $DIR/include.sh
 proj=$1
 shift
 
-execargs="$*"
+execargs="$1"
+shift
+qparams="$*"
 # now submit req
 runurl="${APIURL}/run/command"
 
 echo "# Run command: ${execargs}"
 
-params="project=${proj}"
+params="project=${proj}&${qparams}"
 
 # get listing
-$CURL --data-urlencode "exec=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl --data-urlencode "exec=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 

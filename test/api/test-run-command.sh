@@ -22,7 +22,7 @@ sh $DIR/api-expect-error.sh "${runurl}" "${params}" 'parameter "exec" is require
 
 echo "TEST: /api/run/command should succeed and return execution id"
 # make api request
-$CURL --header "$VERSHEADER" --data-urlencode "exec=${execargs}" ${runurl}?${params} > $DIR/curl.out
+$CURL -H "$AUTHHEADER" --data-urlencode "exec=${execargs}" ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "FAIL: failed query request"
     exit 2

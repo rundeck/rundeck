@@ -48,13 +48,48 @@
             </td>
         </tr>
         <tr>
-        <td>Username:</td>
-        <td>${user.login}</td>
+            <td>Username:</td>
+            <td>${user.login}</td>
         </tr>
         <g:if test="${user.login == request.remoteUser}">
             <tr>
-            <td>Groups:</td>
-            <td><%= request.subject.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class).collect { it.name }.join(", ") %></td>
+                <td>Groups:</td>
+                <td><%=request.subject.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class).collect { it.name }.join(", ")%></td>
+            </tr>
+        </g:if>
+        <g:if test="${session.user==user.login || g.isUserInRoleTest(role:'admin') || g.isUserInRoleTest(role:'admin_user')}">
+            <g:set var="rkeytok" value="${g.rkey()}"/>
+            <tr id="${rkeytok}">
+                <td>API Tokens:</td>
+                <td>
+                    <g:set var="tokens" value="${AuthToken.findAllByUser(user)}"/>
+
+
+                    <table class="apitokentable">
+                        <tbody >
+                            <g:if test="${tokens}">
+                            <g:each var="tokenobj" in="${tokens}">
+                                <tr class="apitokenform">
+                                <g:render template="token" model="${[user:user,token:tokenobj]}"/>
+                                </tr>
+                            </g:each>
+                            </g:if>
+                        </tbody>
+                    </table>
+                    <div style="margin-top:10px;" >
+                        <a class="gentokenbtn action button"
+                           href="${createLink(controller: 'user', action: 'generateApiToken', params: [login: user.login])}">
+                            Generate New Token
+                        </a>
+                    </div>
+
+                    <div style="display:none" class="gentokenerror error note">
+                    </div>
+
+                    <g:javascript>
+                    fireWhenReady($('${rkeytok}'),function(){addBehavior('${rkeytok}',"${user.login.encodeAsJavaScript()}");});
+                    </g:javascript>
+                </td>
             </tr>
         </g:if>
     </table>

@@ -125,14 +125,14 @@ reportparams="title=test&status=succeeded&nodesuccesscount=1&nodefailcount=0&sum
 params="project=${proj}&${reportparams}"
 
 # get listing
-$CURL  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 # get history and look for test
 
 params="project=${proj}&max=1"
 
-$CURL  "${APIURL}/history/?${params}" > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl  "${APIURL}/history/?${params}" > $DIR/curl.out || fail "failed request: ${runurl}"
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 assert "1" $(xmlsel "/result/events/@count" $DIR/curl.out)
@@ -162,7 +162,7 @@ reportparams="title=test-failed&status=failed&nodesuccesscount=1&nodefailcount=3
 params="project=${proj}&${reportparams}"
 
 # get listing
-$CURL  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 # get history and look for test
@@ -171,7 +171,7 @@ runurl="${APIURL}/history"
 
 params="project=${proj}&max=1"
 
-$CURL  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 assert "1" $(xmlsel "/result/events/@count" $DIR/curl.out)

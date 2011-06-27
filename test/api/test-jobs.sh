@@ -15,7 +15,7 @@ echo "Listing RunDeck Jobs for project ${proj}..."
 params="project=${proj}"
 
 # get listing
-$CURL --header "$VERSHEADER" ${runurl}?${params} > $DIR/curl.out
+docurl ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2

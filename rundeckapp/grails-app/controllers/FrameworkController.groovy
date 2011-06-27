@@ -312,6 +312,10 @@ class FrameworkController  {
                     log.error("Error updating node resources file for project ${project.name}: "+e.message)
                     flash.error="Error updating node resources file for project ${project.name}: "+e.message
                 }
+            }else{
+                def msg= "user: ${session.user} UNAUTHORIZED for performNodeReload"
+                log.error(msg)
+                flash.error = msg
             }
         }
         return false

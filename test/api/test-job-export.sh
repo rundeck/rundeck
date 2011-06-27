@@ -55,7 +55,7 @@ params=""
 ulopts="-F xmlBatch=@$DIR/temp.out"
 
 # get listing
-$CURL $ulopts --header "$VERSHEADER" ${runurl}?${params} > $DIR/curl.out
+docurl $ulopts ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -88,7 +88,7 @@ runurl="${APIURL}/job/${jobid}"
 params=""
 
 # get listing
-$CURL --header "$VERSHEADER" ${runurl}?${params} > $DIR/curl.out
+docurl  ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -131,7 +131,7 @@ runurl="${APIURL}/job/${jobid}"
 params="format=yaml"
 
 # get listing
-$CURL -D $DIR/headers.out --header "$VERSHEADER" ${runurl}?${params} > $DIR/curl.out
+docurl -D $DIR/headers.out ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2

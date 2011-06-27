@@ -26,7 +26,7 @@ project="test"
 params="project=${project}"
 
 # get listing
-$CURL ${runurl}?${params} > ${file} || fail "ERROR: failed request"
+docurl ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
 #test curl.out for valid xml
 $XMLSTARLET val -w ${file} > /dev/null 2>&1
@@ -75,7 +75,7 @@ params="project=${project}&format=yaml"
 echo "TEST: /api/resources, basic YAML response with no query: >0 result"
 
 # get listing
-$CURL --header "$VERSHEADER" ${runurl}?${params} > ${file}
+docurl ${runurl}?${params} > ${file}
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -126,7 +126,7 @@ params="project=${project}&format=xml&${query}"
 
 echo "TEST: query result for /etc/resources"
 
-$CURL --header "$VERSHEADER" ${runurl}?${params} > ${file}
+docurl ${runurl}?${params} > ${file}
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -157,7 +157,7 @@ params="project=${project}&format=xml&${query}"
 
 echo "TEST: query result for /etc/resources"
 
-$CURL --header "$VERSHEADER" ${runurl}?${params} > ${file}
+docurl ${runurl}?${params} > ${file}
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -188,7 +188,7 @@ params="project=${project}&format=xml&${query}"
 
 echo "TEST: query result for /etc/resources"
 
-$CURL --header "$VERSHEADER" ${runurl}?${params} > ${file}
+docurl ${runurl}?${params} > ${file}
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -218,7 +218,7 @@ params="project=${project}&format=xml&${query}"
 
 echo "TEST: query result for /etc/resources&$query"
 
-$CURL --header "$VERSHEADER" ${runurl}?${params} > ${file}
+docurl ${runurl}?${params} > ${file}
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -249,7 +249,7 @@ params="project=${project}&format=xml&${query}"
 
 echo "TEST: query result for /etc/resources, using mixed include/exclude filters"
 
-$CURL --header "$VERSHEADER" ${runurl}?${params} > ${file}
+docurl ${runurl}?${params} > ${file}
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -280,7 +280,7 @@ params="project=${project}&format=xml&${query}"
 
 echo "TEST: /etc/resources, using mixed include/exclude filters, exclude-precedence=false"
 
-$CURL --header "$VERSHEADER" ${runurl}?${params} > ${file}
+docurl ${runurl}?${params} > ${file}
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
