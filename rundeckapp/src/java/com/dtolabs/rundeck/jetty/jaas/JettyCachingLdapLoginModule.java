@@ -244,17 +244,6 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         Credential credential = Credential.getCredential(pwdCredential);
         List roles = getUserRoles(_rootContext, username);
 
-        if (_rolePrefix != null && !"".equalsIgnoreCase(_rolePrefix)) {
-            List<String> newRoles = new ArrayList<String>();
-
-            for (Object roleObj : roles) {
-                String role = (String) roleObj;
-                newRoles.add(role.replace(_rolePrefix, ""));
-            }
-
-            roles.addAll(newRoles);
-        }
-
         return new UserInfo(username, credential, roles);
     }
 
@@ -397,7 +386,13 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
             NamingEnumeration roles = roleAttribute.getAll();
             while (roles.hasMore()) {
-                roleList.add(roles.next());
+                if (_rolePrefix != null && !"".equalsIgnoreCase(_rolePrefix)) {
+                    String role = (String) roles.next();
+                    // Log.info("Role for user " + userDn + ": " + role); 
+                    roleList.add(role.replace(_rolePrefix, ""));
+                } else {
+                    roleList.add(roles.next());
+                }
             }
         }
 
