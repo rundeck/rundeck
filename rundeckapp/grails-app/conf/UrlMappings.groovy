@@ -25,6 +25,7 @@ class UrlMappings {
         "/api/$api_version/project/$project/resources"(controller: 'framework') {
             action = [GET: "apiResources",/* PUT: "update", DELETE: "delete",*/ POST: "apiProjectResources"]
         }
+        "/api/$api_version/project/$project/jobs"(controller: 'menu', action: 'apiJobsList')
         "/api/$api_version/projects"(controller: 'framework', action: 'apiProjects')
         "/api/renderError"(controller: 'api', action: 'renderError')
         "/api/error"(controller: 'api', action: 'error')
