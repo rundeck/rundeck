@@ -654,6 +654,14 @@ The example policy document above demonstrates the access granted to
 the users in group "admin". The asterisks indicate a wild card for
 those attributes (eg, semantically it means "ALL"). 
 
+### Special API Token Authentication group
+
+Clients of the [Web API](api/index.html) may use the [Token Authentication](api/index.html#token-authentication) method.  These clients are
+placed in the special authorization group called `api_token_group`.
+
+`api_token_group`
+~   Special role given to all [API Token](api/index.html#token-authentication) authenticated access.
+
 ### Access control policy actions
 
 The authorization defines a number of actions that can be referenced
