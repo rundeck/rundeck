@@ -29,7 +29,10 @@ xmlsel(){
     $XMLSTARLET sel -T -t -v "$xpath" $*
 }
 
-API_VERSION="1"
+API_CURRENT_VERSION=2
+
+API_VERSION=${API_VERSION:-$API_CURRENT_VERSION}
+
 AUTHHEADER="X-RunDeck-Auth-Token: $RDAUTH"
 
 # curl opts to use a cookie jar, and follow redirects, showing only errors

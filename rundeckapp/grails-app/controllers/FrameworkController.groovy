@@ -451,10 +451,13 @@ class FrameworkController  {
      */
 
     /**
-     * API: /api/project/NAME/resources/refresh
+     * API: /api/2/project/NAME/resources/refresh
      * calls performNodeReload, then returns API response
      * */
     def apiProjectResourcesRefresh = {
+        if (!new ApiController().requireVersion(ApiRequestFilters.V2)) {
+            return
+        }
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         if (!params.project) {
             flash.error = g.message(code: 'api.error.parameter.required', args: ['project'])
@@ -482,11 +485,14 @@ class FrameworkController  {
         }
     }
     /**
-     * API: /api/project/NAME/resources
+     * API: /api/2/project/NAME/resources
      * GET: return resources data
      * POST: update resources data with either: text/xml content, text/yaml content, form-data param providerURL=<url>
      * */
     def apiProjectResources = {
+        if (!new ApiController().requireVersion(ApiRequestFilters.V2)) {
+            return
+        }
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         if (!params.project) {
             flash.error = g.message(code: 'api.error.parameter.required', args: ['project'])
@@ -656,7 +662,16 @@ class FrameworkController  {
         return apiRenderNodeResult(nodes)
     }
     /**
-     * API: /api/resources, version 1
+     * API: /api/2/project/NAME/resources, version 2
+     */
+    def apiResourcesv2={ExtNodeFilters query->
+        if (!new ApiController().requireVersion(ApiRequestFilters.V2)) {
+            return
+        }
+        return apiResources(query)
+    }
+    /**
+     * API: /api/1/resources, version 1
      */
     def apiResources={ExtNodeFilters query->
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
