@@ -3,6 +3,7 @@
 #test update project resources file
 
 DIR=$(cd `dirname $0` && pwd)
+export API_VERSION=2 #/api/2/project/NAME/resources/refresh
 source $DIR/include.sh
 file=$DIR/curl.out
 
@@ -11,7 +12,7 @@ proj="test"
 
 runurl="${APIURL}/project/${proj}/resources/refresh"
 
-echo "TEST: /api/project/${proj}/resources/refresh (no URL defined)"
+echo "TEST: /api/2/project/${proj}/resources/refresh (no URL defined)"
 params="t=t"
 
 docurl -X POST  ${runurl}?${params} > ${file} || fail "ERROR: failed request"
@@ -20,7 +21,7 @@ sh $DIR/api-test-error.sh ${file} "Resources were not updated because no resourc
 
 echo "OK"
 
-echo "TEST: /api/project/${proj}/resources/refresh (invalid URL)"
+echo "TEST: /api/2/project/${proj}/resources/refresh (invalid URL)"
 
 #backup project.properties and set invalid resources url
 
@@ -46,7 +47,7 @@ echo "OK"
 
 cp $TPROPS.testbackup $TPROPS
 
-echo "TEST: /api/project/${proj}/resources/refresh (valid temp URL)"
+echo "TEST: /api/2/project/${proj}/resources/refresh (valid temp URL)"
 
 cat <<END > $TETC/testUpdateResources.xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -77,7 +78,7 @@ fi
 # set allowed URL with port 1235
 echo "project.resources.allowedURL.0=http://invaliddomain:1235/resources.xml" >> $TPROPS
 
-echo "TEST: /api/project/${proj}/resources/refresh (POST) (not allowed provider URL)"
+echo "TEST: /api/2/project/${proj}/resources/refresh (POST) (not allowed provider URL)"
 
 #backup project.properties and set invalid resources url
 
@@ -90,7 +91,7 @@ sh $DIR/api-test-error.sh ${file} "Error updating node resources file for projec
 
 echo "OK"
 
-echo "TEST: /api/project/${proj}/resources/refresh (POST) (allowed URL, invalid hostname)"
+echo "TEST: /api/2/project/${proj}/resources/refresh (POST) (allowed URL, invalid hostname)"
 
 #backup project.properties and set invalid resources url
 
@@ -103,7 +104,7 @@ sh $DIR/api-test-error.sh ${file} "Error updating node resources file for projec
 
 echo "OK"
 
-echo "TEST: /api/project/${proj}/resources/refresh (POST) (not allowed file URL)"
+echo "TEST: /api/2/project/${proj}/resources/refresh (POST) (not allowed file URL)"
 
 TEMPURL="file://$TETC/testUpdateResources.xml"
 
@@ -117,7 +118,7 @@ sh $DIR/api-test-error.sh ${file} "Error updating node resources file for projec
 echo "OK"
 
 
-echo "TEST: /api/project/${proj}/resources/refresh (POST) (valid provider URL)"
+echo "TEST: /api/2/project/${proj}/resources/refresh (POST) (valid provider URL)"
 
 
 TEMPURL="file://$TETC/testUpdateResources.xml"

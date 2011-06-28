@@ -113,6 +113,7 @@ class ApiController {
                     build(grailsApplication.metadata['build.ident'])
                     node(nodeName)
                     base(servletContext.getAttribute("RDECK_BASE"))
+                    apiversion(ApiRequestFilters.API_CURRENT_VERSION)
                 }
                 os {
                     arch(osArch)

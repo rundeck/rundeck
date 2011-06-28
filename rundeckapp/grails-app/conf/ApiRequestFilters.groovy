@@ -25,8 +25,11 @@
 
 public class ApiRequestFilters {
 
-    public final static int API_CURRENT_VERSION=1
-    public final static int API_MIN_VERSION=API_CURRENT_VERSION
+    public static final int V1 = 1
+    public static final int V2 = 2
+    public final static int API_EARLIEST_VERSION=V1
+    public final static int API_CURRENT_VERSION=V2
+    public final static int API_MIN_VERSION=API_EARLIEST_VERSION
     public final static int API_MAX_VERSION=API_CURRENT_VERSION
 
     def allowed_actions=["renderError","invalid","error"]

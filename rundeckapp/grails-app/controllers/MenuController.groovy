@@ -559,6 +559,15 @@ class MenuController {
             }
         }
     }
+    /**
+     * API: /api/2/project/NAME/jobs, version 2
+     */
+    def apiJobsListv2 = {ScheduledExecutionQuery query ->
+        if(!new ApiController().requireVersion(ApiRequestFilters.V2)){
+            return
+        }
+        return apiJobsList(query)
+    }
 
     /**
      * API: /jobs/export, version 1

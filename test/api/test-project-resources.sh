@@ -3,6 +3,7 @@
 #test update project resources file
 
 DIR=$(cd `dirname $0` && pwd)
+export API_VERSION=2 #/api/2/project/NAME/resources
 source $DIR/include.sh
 
 file=$DIR/curl.out
@@ -12,7 +13,7 @@ proj="test"
 
 runurl="${APIURL}/project/${proj}/resources"
 
-echo "TEST: /api/project/${proj}/resources (GET)"
+echo "TEST: /api/2/project/${proj}/resources (GET)"
 params="format=xml"
 
 # get listing
@@ -79,7 +80,7 @@ cat <<END > $TETC/testUpdateResources.xml
 </project>
 END
 
-echo "TEST: /api/project/${proj}/resources (POST) (xml)"
+echo "TEST: /api/2/project/${proj}/resources (POST) (xml)"
 
 
 # post data
@@ -120,7 +121,7 @@ test2:
    osName: Mac OS X
 END
 
-echo "TEST: /api/project/${proj}/resources (POST) (yaml)"
+echo "TEST: /api/2/project/${proj}/resources (POST) (yaml)"
 
 # post data
 $CURL -H "$AUTHHEADER" -X POST -H 'Content-Type: text/yaml' --data-binary "@$TETC/testUpdateResources.yaml" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
