@@ -29,6 +29,7 @@ if [ 0 != $? ] ; then
 fi
 
 sh $DIR/api-test-error.sh $DIR/curl.out "Input script file was empty" && echo "OK" || exit 2
+rm $DIR/test.tmp
 
 ####
 #  echo a script into a temp file
@@ -74,3 +75,4 @@ fi
 echo "OK"
 
 rm $DIR/curl.out
+rm $DIR/script.tmp
