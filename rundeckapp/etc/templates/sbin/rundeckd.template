@@ -93,7 +93,7 @@ stop() {
 	echo_failure; #empty pid value"
 	return $RETVAL;
     }
-    ps "$PID" >/dev/null 2>&1
+    ps -p "$PID" >/dev/null 2>&1
     if [ $? -eq 0 ]; then
 	kill $PID >/dev/null 2>&1
 	RETVAL=$?
@@ -116,7 +116,7 @@ status() {
 	return $RETVAL;
     }
     PID=`cat $PID_FILE`
-    ps "$PID" >/dev/null
+    ps -p "$PID" >/dev/null
     RETVAL=$?
     [ $RETVAL -eq 0 ] && { 
 	echo "$prog is running (pid=$PID, port=$RDECK_PORT)"
