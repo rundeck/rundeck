@@ -1,4 +1,5 @@
 *~
+*.swp
 *.iws
 build
 rundeckapp/stacktrace.log
