@@ -28,6 +28,11 @@ else
     TAG=$1
 fi
 
+IDENT_TAG="-$TAG"
+if [ "$TAG" = "GA" ] ; then
+    IDENT_TAG=
+fi
+
 echo "new VERSION: $VERSION"
 echo "new RELEASE: $RELEASE"
 echo "new TAG: $TAG"
@@ -41,7 +46,7 @@ echo MODIFIED: `pwd`/version.properties
 
 #alter grails i18n messages main.app.version.num=1.0.0
 perl  -i'.orig' -p -e "s#^app\.version\s*=.*\$#app.version=$VERSION#" `pwd`/rundeckapp/application.properties
-perl  -i'.orig' -p -e "s#^build\.ident\s*=.*\$#build.ident=$VERSION-$RELEASE-$TAG#" `pwd`/rundeckapp/application.properties
+perl  -i'.orig' -p -e "s#^build\.ident\s*=.*\$#build.ident=$VERSION-$RELEASE$IDENT_TAG#" `pwd`/rundeckapp/application.properties
 
 echo MODIFIED: `pwd`/rundeckapp/application.properties
 
