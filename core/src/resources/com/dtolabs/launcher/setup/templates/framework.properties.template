@@ -173,7 +173,7 @@ framework.ssh.user = @framework.ssh.user@
 # ssh timeout. The connection can be dropped after a specified number of milliseconds.
 # A "0" value means wait forever.
 #
-framework.ssh.timeout = 30000
+framework.ssh.timeout = 0
 
 #
 # Set the formatting for dispatch console output
