@@ -85,7 +85,7 @@ framework.rdeck.base = @rdeck.base@
 #
 # project spaces containing resources
 #
-framework.projects.dir= @rdeck.base@/project
+framework.projects.dir= @rdeck.base@/projects
 
 #
 # directory containing instance based property files
