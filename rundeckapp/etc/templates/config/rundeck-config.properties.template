@@ -7,3 +7,26 @@ grails.serverURL=http://${server.hostname}:${server.http.port}${server.web.conte
 dataSource.dbCreate = update
 dataSource.url = jdbc:hsqldb:file:${server.datastore.path};shutdown=true
 
+#
+#Map rundeck actions to allowed roles
+# mappedRoles.X=A,B,C
+# means allow X to users in role A, B or C
+#
+mappedRoles.admin=admin,api_token_group
+mappedRoles.user_admin=admin,api_token_group
+mappedRoles.workflow_read=user,api_token_group
+mappedRoles.workflow_create=admin,api_token_group
+mappedRoles.workflow_update=admin,api_token_group
+mappedRoles.workflow_delete=admin,api_token_group
+mappedRoles.workflow_kill=user,api_token_group
+mappedRoles.workflow_run=user,api_token_group
+mappedRoles.events_read=user,api_token_group
+mappedRoles.events_create=user,api_token_group
+mappedRoles.events_update=user,api_token_group
+mappedRoles.events_delete=user,api_token_group
+mappedRoles.resources_read=user,api_token_group
+mappedRoles.resources_create=admin,api_token_group
+mappedRoles.resources_update=admin,api_token_group
+mappedRoles.resources_delete=admin,api_token_group
+#special role for viewing jobs unauthorized to run
+mappedRoles.job_view_unauthorized=job_view_unauthorized,api_token_group
