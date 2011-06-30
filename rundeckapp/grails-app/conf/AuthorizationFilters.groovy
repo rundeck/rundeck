@@ -230,6 +230,56 @@ public class AuthorizationFilters {
                 }
             }
         }
+        /**
+         * Check the user has authorization for the actions.
+         */
+        authorizationCheck(controller: '*', action: '*') {
+            before = {
+                def authc = authSet[controllerName]
+                def authReq
+                if (authc) {
+                    authReq = authc[actionName]
+                }
+                if (!authReq && authc) {
+                    //look for controller/* auth requirement
+                    authReq = authc['*']
+                }
+                if (authReq) {
+                    if (authReq instanceof String) {
+                        authReq = [authReq]
+                    }
+                    //get user authorizations
+                    def User user
+                    def roletest
+                    if(session && session.user){
+                        def admintest = roleService.isUserInRole(request, 'admin') || request.subject?.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class)?.find{it.name=='admin'}
+                        roletest = admintest || roleService.isUserInAllRoles(request, authReq)
+                    }
+                    if (!roletest ) {
+                        def authid= session.user ?: "(${request.invalidAuthToken ?: 'unauthenticated'})"
+                        log.error("${authid} UNAUTHORIZED for ${controllerName}/${actionName}");
+                        if(request.api_version){
+                            //api request
+                            render(contentType: "text/xml", encoding: "UTF-8") {
+                                result(error: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
+                                    delegate.'error' {
+                                        message("${authid} is not authorized for: ${request.forwardURI}")
+                                    }
+                                }
+                            }
+                            return false
+                        }
+                        flash.title = "Unauthorized"
+                        flash.error = "${authid} is not authorized"
+                        response.setHeader(Constants.X_RUNDECK_ACTION_UNAUTHORIZED_HEADER,flash.error)
+                        redirect(controller: 'user', action: actionName ==~ /^.*(Fragment|Inline)$/ ? 'deniedFragment' : 'denied',params:params.xmlreq?params.subMap(['xmlreq']):null)
+                        return false;
+                    }
+                } else {
+//                    System.err.println("No auth set found for: ${controllerName}/${actionName}: ${authSet[controllerName]?.(actionName)}");
+                }
+            }
+        }
         postApiTokenCheck(controller:'user',action:'logout',invert:true){
             after={
                 if(session.user && request.authenticatedToken){
