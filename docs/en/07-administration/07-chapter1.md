@@ -111,14 +111,33 @@ policy files for other user groups.
 
 #### framework.properties
 
-Configuration used by shell tools. This file contains a number of
-settings used by the shell tools to interoperate with the RunDeck
-services. 
+Configuration file used by shell tools and core RunDeck services. This file will be created for you at install time.
 
 Some important settings:
 
+* `framework.node.hostname`: Hostname of the RunDeck server node
+* `framework.node.name`: Name (identity) of the RunDeck server node
+* `framework.projects.dir`: Path to the directory containing RunDeck Project directories.  Default is `$RDECK_BASE/projects`.
+* `framework.var.dir`: Base directory for output and temp files used by the server and CLI tools. Default is `$RDECK_BASE/var`.
+* `framework.logs.dir`: Directory for log files written by core services and RunDeck Server's Job executions. Default is `$RDECK_BASE/var/logs`
+* `framework.server.username`: Username for connection to the RunDeck server
+* `framework.server.password`: Password for connection to the RunDeck server
+* `framework.rundeck.url`: Base URL for RunDeck server.
+
+Resource Provider settings:
+
 * `framework.resources.allowedURL.X`: a sequence of regular expressions (for `X` starting at 0 and increasing). These are matched against requested providerURL values when
 the `/project/name/resources/refresh` API endpoint is called. See [Refreshing Resources for a Project](api/index.html#refreshing-resources-for-a-project).
+
+SSH Connection settings:
+
+* `framework.ssh.keypath`: Path to the SSH private key file used for SSH connections
+* `framework.ssh.user`: Default username for SSH Connections, if not overridden by Node specific value.
+* `framework.ssh.timeout`: timeout in milliseconds for SSH connections and executions. The default is "0" (no timeout).  You can modify this to change the maximum time allowed for SSH connections.
+
+Other settings:
+
+* `framework.log.dispatch.console.format`: Default format for non-terse node execution logging run by the `dispatch` CLI tool.
 
 #### log4j.properties
 
