@@ -262,7 +262,7 @@ public class AuthorizationFilters {
                             //api request
                             render(contentType: "text/xml", encoding: "UTF-8") {
                                 result(error: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
-                                    delegate.'error' {
+                                    delegate.'error'(code: "unauthorized"){
                                         message("${authid} is not authorized for: ${request.forwardURI}")
                                     }
                                 }
