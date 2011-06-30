@@ -65,9 +65,6 @@ framework.node.name = @framework.node.name@
 # for backwards compatability
 framework.node = @framework.node.hostname@
 
-# the node type
-framework.node.type = @framework.node.type@
-
 # 
 #
 # Version of this RUNDECK implementation
@@ -88,8 +85,7 @@ framework.rdeck.base = @rdeck.base@
 #
 # project spaces containing resources
 #
-framework.projects.dir= @rdeck.base@/projects
-framework.depots.dir= @rdeck.base@/projects
+framework.projects.dir= @rdeck.base@/project
 
 #
 # directory containing instance based property files
