@@ -169,7 +169,7 @@ used. Specified from [jaas-loginmodule.conf](#jaas-loginmodule.conf).
 #### rundeck-config.properties
 
 The primary RunDeck webapp configuration file. Defines default
-loglevel, datasource configuration, and
+loglevel, datasource configuration, [role mapping](#role-mapping), and
 [GUI customization](#customizing-rundeck-gui).
 
 ## Logs
@@ -606,17 +606,18 @@ Use this to provide connection redundancy if a particular host is unavailable.
 
 ## Authorization
 
-Two dimensions of information dictate authorization inside RunDeck:
+Three dimensions of information dictate authorization inside RunDeck:
 
 * *group* memberships assigned to a *user* login.  
 * access control policy that grants access to one or more *policy
   action*s to a *group*  or *user*.
+* role mapping that ties *policy action*s to a set of user *group*s.
 
 The section on [managing logins](#managing-logins) discusses how to
 assign group memberships to users.
 
 The remainder of this section will describe how to use the access
-control policy.
+control policy and role mappings.
 
 *Note from the project team*: The authorization layer is an early work
  in progress. Please share your ideas on the IRC or mailing list.
@@ -726,6 +727,112 @@ File listing: restart_user.aclpolicy example
     </policies>
     
     
+### Role mapping
+
+Role mapping is a way of adapting the User Roles provided by your
+authentication system to the Application Roles used by the RunDeck web
+app. This lets you work with whatever authentication provider based
+roles you have. Role mappings are defined in the
+[rundeck-config.properties](#rundeck-config.properties) configuration file.
+
+*Application Roles*
+
+:   Role names used by the RunDeck application for testing whether the
+    user is allowed to perform certain actions
+
+*User Roles*
+
+:   Role names used by an authentication system
+
+These properties provide a mapping of allowed *Application Roles* to a
+set of specified *User Roles*. The defaults shown here match the set of
+default User Roles installed in the file based login mechanism (ie,
+[realm.properties](#realm.properties) when you install RunDeck.
+
+If you use your own directory-based authentication (eg [Active Directory](#active-directory)) you
+may need to modify the roles you use, especially if you are unable to
+change the roles/groups that User profiles are assigned to in your
+directory.
+
+These are the default Application Roles that the role mapping can override:
+
++-----------------------+-----------------------+
+|**Application Role**   |**User Role**          |
++-----------------------+-----------------------+
+|`admin`                |admin                  |
++-----------------------+-----------------------+
+|`user_admin`           |admin                  |
++-----------------------+-----------------------+
+|`workflow_read`        |user                   |
++-----------------------+-----------------------+
+|`workflow_create`      |admin                  |
++-----------------------+-----------------------+
+|`workflow_update`      |admin                  |
++-----------------------+-----------------------+
+|`workflow_kill`        |user                   |
++-----------------------+-----------------------+
+|`workflow_run`         |user                   |
++-----------------------+-----------------------+
+|`events_read`          |user                   |
++-----------------------+-----------------------+
+|`events_create`        |user                   |
++-----------------------+-----------------------+
+|`events_update`        |admin                  |
++-----------------------+-----------------------+
+|`events_delete`        |admin                  |
++-----------------------+-----------------------+
+|`resources_read`       |user                   |
++-----------------------+-----------------------+
+|`resources_create`     |admin                  |
++-----------------------+-----------------------+
+|`resources_update`     |admin                  |
++-----------------------+-----------------------+
+|`resources_delete`     |admin                  |
++-----------------------+-----------------------+
+|`job_view_unauthorized`|job\_view\_unauthorized|
++-----------------------+-----------------------+
+
+
+Note
+
+:    Setting the mapping value to a comma-separated list of Role names
+     grants that Application Role to a user in any of the mapped roles.
+
+
+If no role mapping is defined for an Application Role, then the
+literal name of the Application Role will be tested as the role
+name. E.g. If "mappedRoles.admin" is not defined, then a role named
+"admin" will be used.
+
+The listing below contains the role mappings that appear after a
+normal RunDeck installation you will find in [rundeck-config.properties](#rundeck-config.properties). 
+
+    #
+    # Map rundeck actions to allowed roles
+    #       mappedRoles.X=A,B,C
+    # means allow X to users in role A, B or C
+    #
+    mappedRoles.admin=admin
+    mappedRoles.user_admin=admin
+    mappedRoles.workflow_read=user
+    mappedRoles.workflow_create=admin
+    mappedRoles.workflow_update=admin
+    mappedRoles.workflow_delete=admin
+    mappedRoles.workflow_kill=user
+    mappedRoles.workflow_run=user
+    mappedRoles.events_read=user
+    mappedRoles.events_create=user
+    mappedRoles.events_update=user
+    mappedRoles.events_delete=user
+    mappedRoles.resources_read=user
+    mappedRoles.resources_create=admin
+    mappedRoles.resources_update=admin
+    mappedRoles.resources_delete=admin
+    #special role for viewing jobs unauthorized to run
+    mappedRoles.job_view_unauthorized=job_view_unauthorized
+
+You can replace all of the *User Roles* shown in this file with your own
+custom role names from your directory service.
 
 ### Troubleshooting access control policy
 
@@ -742,6 +849,13 @@ To diagnose this, begin by checking two bits:
    authorization facility generates fairly low level messages describing
    how the policy is matched to the user context.
 
+If you don't see any output in the audit log for a user's action and
+they are able to login, then make sure [role mapping](#role-mapping)
+is set correctly.
+
+Once the user role mappings are defined correctly ask the user to
+login again and attempt accessing their jobs. You should watch the
+stream of messages flowing through the audit log.
 For each entry, you'll see all decisions leading up to either a
 AUTHORIZED or a REJECTED message.  It's not uncommon to see REJECTED
 messages followed by AUTHORIZED.  The important thing is to look at
@@ -750,8 +864,12 @@ the last decision made.
 ### Authorization caveats
 
 * aclpolicy is used to determine what UI widgets are displayed (e.g., run,
-  edit, delete, etc).
-* new and modified aclpolicy files are detected after restarts
+  edit, delete, etc).  But Authorization for pages still depends on Roles.
+  (i.e. the AuthorizationFilter code looks at role membership, not
+  aclpolicy).
+* role mapping changes require a server restart, while aclpolicy
+  changes do not.
+* new and deleted aclpolicy files are detected after restarts
   
 
 ## Configuring Rundeck for SSL
