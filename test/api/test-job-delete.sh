@@ -88,11 +88,15 @@ runurl="${APIURL}/job/${jobid}"
 params=""
 
 #dont' allow redirects, remove -L
-CURLOPTS="-s -S "
+if [ -n "$RDAUTH" ] ; then 
+    CURLOPTS="-s -S"
+else
+    CURLOPTS="-s -S -c $DIR/cookies -b $DIR/cookies"
+fi
 CURL="curl $CURLOPTS"
 
 # get listing
-curl $CURLOPTS -H "$AUTHHEADER" -X DELETE ${runurl}?${params} > $DIR/curl.out
+$CURL -H "$AUTHHEADER" -X DELETE ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
