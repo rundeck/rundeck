@@ -45,8 +45,25 @@ public class AuthorizationFilters {
                     def principal = request.userPrincipal
                     def subject = new Subject();
                     subject.principals << new Username(principal.name)
-                    principal.roles.members.each { group ->
-                        subject.principals << new Group(group.name);
+                    if(principal.roles instanceof Iterator){
+                        def Iterator iter= principal.roles
+                        while(iter.hasNext()){
+                            def role=iter.next()
+                            if(role.rolename){
+                                subject.principals << new Group(role.rolename)
+                            }else if(role instanceof String){
+                                subject.principals << new Group(role)
+                            }
+
+                        }
+                    } else if (principal.roles instanceof Collection || principal.roles instanceof Object[]){
+                        principal.roles?.each { name ->
+                            subject.principals << new Group(name);
+                        }
+                    }else{
+                        principal.roles?.members.each { group ->
+                            subject.principals << new Group(group.name);
+                        }
                     }
                     
                     request.subject = subject
