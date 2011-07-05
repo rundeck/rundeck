@@ -2359,3 +2359,21 @@ div.jobscontent{
     overflow-y: auto;
     margin:0;
 }
+
+/** api tokens **/
+span.apitoken {
+    padding: 3px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    background: #eee;
+    font-family: Courier, monospace;
+    color: black;
+}
+
+span.apitoken.empty {
+
+    border: none;
+    background: none;
+    font-family: Courier, monospace;
+    color: #bbb;
+}
