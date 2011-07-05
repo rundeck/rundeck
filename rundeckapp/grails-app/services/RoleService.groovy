@@ -70,7 +70,7 @@ public class RoleService {
     }
 
     private def isSubjectInRole(request, role) {
-        return request.subject?.principals?.find {it instanceof com.dtolabs.rundeck.core.authentication.Group && it.name == role}?true:false
+        return request.subject?.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class).find {it.name == role}?true:false
     }
 
     /**

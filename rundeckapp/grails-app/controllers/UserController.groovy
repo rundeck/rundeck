@@ -158,7 +158,7 @@ class UserController {
         //default to current user profile
         def login = params.login
         def result
-        if (login != session.user && !roleService.isUserInAnyRoles(request, ['admin', 'user_admin'])) {
+        if(!roleService.isUserInAnyRoles(request, ['admin', 'user_admin'])){
             def error = "Unauthorized: admin role required"
             log.error error
             result=[result: false, error: error] 
@@ -215,7 +215,7 @@ class UserController {
         def result
         def user
         def token
-        if (login != session.user && !roleService.isUserInAnyRoles(request, ['admin', 'user_admin'])) {
+        if (!roleService.isUserInAnyRoles(request, ['admin', 'user_admin'])) {
             def error = "Unauthorized: admin role required"
             log.error error
             result = [result: false, error: error]
@@ -248,7 +248,7 @@ class UserController {
     def clearApiToken={
         def login = params.login
         def result
-        if (login != session.user && !roleService.isUserInAnyRoles(request, ['admin', 'user_admin'])) {
+        if (!roleService.isUserInAnyRoles(request, ['admin', 'user_admin'])) {
             def error = "Unauthorized: admin role required"
             log.error error
             result=[result: false, error: error]

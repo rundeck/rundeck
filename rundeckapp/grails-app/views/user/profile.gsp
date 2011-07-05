@@ -54,8 +54,8 @@
                     //remove element
                     Effect.DropOut($(elem));
                 }else{
-                    $(elem).down('.gentokenerror').innerHTML="Error: "+error;
-                    $(elem).down('.gentokenerror').show();
+                    $(elem).up('.userapitoken').down('.gentokenerror').innerHTML="Error: "+error;
+                    $(elem).up('.userapitoken').down('.gentokenerror').show();
                 }
             }
         });
