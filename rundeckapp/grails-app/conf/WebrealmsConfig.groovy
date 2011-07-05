@@ -40,6 +40,11 @@ webrealms{
             }
         }
     }
+    securityroles{
+        role{
+            name='user'
+        }
+    }
 
     server{
         addrealm{
