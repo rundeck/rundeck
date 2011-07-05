@@ -80,25 +80,10 @@
         Event.observe($(elem).down('.gentokenbtn'),'click',mkhndlr(generateToken.curry(login,elem)));
         $$(' tr.apitokenform').each(addRowBehavior);
     }
+    function highlightNew(elem){
+        $$(' tr.apitokenform.newtoken').each( Effect.Appear);
+    }
     </g:javascript>
-    <style type="text/css">
-    span.apitoken{
-        padding:3px;
-        border: 1px solid #ccc;
-        border-radius:3px;
-        background: #eee;
-        font-family: Courier,monospace;
-        color:black;
-    }
-
-    span.apitoken.empty {
-
-        border: none;
-        background: none;
-        font-family: Courier, monospace;
-        color: #bbb;
-    }
-    </style>
 </head>
 <body>
 

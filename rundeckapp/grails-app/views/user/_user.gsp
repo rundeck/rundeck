@@ -69,7 +69,7 @@
                         <tbody >
                             <g:if test="${tokens}">
                             <g:each var="tokenobj" in="${tokens}">
-                                <tr class="apitokenform">
+                                <tr class="apitokenform ${tokenobj.token == flash.newtoken?'newtoken':''}" style="${tokenobj.token== flash.newtoken?'opacity:0;':''}">
                                 <g:render template="token" model="${[user:user,token:tokenobj]}"/>
                                 </tr>
                             </g:each>
@@ -88,6 +88,7 @@
 
                     <g:javascript>
                     fireWhenReady($('${rkeytok}'),function(){addBehavior('${rkeytok}',"${user.login.encodeAsJavaScript()}");});
+                    fireWhenReady($('${rkeytok}'),function(){highlightNew('${rkeytok}');});
                     </g:javascript>
                 </td>
             </tr>

@@ -188,6 +188,9 @@ class UserController {
         }
         def done=false
         withFormat {
+            html{
+
+            }
             json {
                 done=true
                 render(result as JSON)
@@ -198,6 +201,8 @@ class UserController {
         }
         if (result.error) {
             flash.error = result.error
+        }else{
+            flash.newtoken=result.apitoken
         }
         return redirect(controller: 'user', action: 'profile', params: [login: login])
     }
@@ -254,7 +259,7 @@ class UserController {
         }else if (params.No == 'No') {
             return redirect(controller: 'user', action: 'profile', params: [login: login])
         }else if (request.getMethod()=='GET') {
-            return redirect(controller: 'user', action: 'profile', params: [login: login,showConfirm:true,token:token])
+            return redirect(controller: 'user', action: 'profile', params: [login: login,showConfirm:true,token:params.token])
         }else{
             def User u = userService.findOrCreateUser(login)
             if (!u) {
@@ -281,6 +286,9 @@ class UserController {
         }
         def done=false
         withFormat {
+            html{
+
+            }
             json{
                 done=true
                 render(result as JSON)
