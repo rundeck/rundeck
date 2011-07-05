@@ -1,4 +1,4 @@
-<plugin name='webrealms' version='0.2' grailsVersion='1.2.0 &gt; *'>
+<plugin name='webrealms' version='0.3' grailsVersion='1.2.0 &gt; *'>
   <author>Greg Schueler</author>
   <authorEmail>greg@dtosolutions.com</authorEmail>
   <title>Allows configuration of web.xml to support UserRealms and security constraints</title>

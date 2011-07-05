@@ -3,7 +3,7 @@ class WebrealmsGrailsPlugin {
     def DEFAULT_CONFIG_FILE = "DefaultWebrealmsConfig"
     def APP_CONFIG_FILE     = "WebrealmsConfig"
 
-    def version = 0.2
+    def version = 0.3
     def dependsOn = [:]
 
     // TODO Fill in these fields
@@ -71,6 +71,19 @@ Simply generates definitions in web.xml to define login configuration with parti
                             }
                         }
 
+                    }
+                }
+            }
+            if(config.securityroles){
+                def contextParam = xml."context-param"
+                contextParam[contextParam.size() - 1] + {
+                    'security-role'{
+                        def secroles=config.securityroles
+                        secroles.each{role->
+                            if(role.key=='role' && role.value.name){
+                                'role-name'(role.value.name)
+                            }
+                        }
                     }
                 }
             }
