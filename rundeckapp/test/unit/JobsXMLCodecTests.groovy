@@ -744,11 +744,11 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect minute","1-5,9,12",jobs[0].month
             def datemap=jobs[0].timeAndDateAsBooleanMap()
         System.err.println("datemap: ${datemap}");
-            assertEquals "incorrect crontab.dayOfWeek.MON","true",datemap.'dayOfWeek.MON'
-            assertEquals "incorrect crontab.dayOfWeek.TUE",null,datemap.'dayOfWeek.TUE'
-            assertEquals "incorrect crontab.dayOfWeek.WED","true",datemap.'dayOfWeek.WED'
-            assertEquals "incorrect crontab.dayOfWeek.THU","true",datemap.'dayOfWeek.THU'
-            assertEquals "incorrect crontab.dayOfWeek.FRI","true",datemap.'dayOfWeek.FRI'
+            assertEquals "incorrect crontab.dayOfWeek.MON","true",datemap.'dayOfWeek.SUN'
+            assertEquals "incorrect crontab.dayOfWeek.TUE",null,datemap.'dayOfWeek.MON'
+            assertEquals "incorrect crontab.dayOfWeek.WED","true",datemap.'dayOfWeek.TUE'
+            assertEquals "incorrect crontab.dayOfWeek.THU","true",datemap.'dayOfWeek.WED'
+            assertEquals "incorrect crontab.dayOfWeek.FRI","true",datemap.'dayOfWeek.THU'
             assertEquals "incorrect crontab.month.JAN","true",datemap.'month.JAN'
             assertEquals "incorrect crontab.month.FEB","true",datemap.'month.FEB'
             assertEquals "incorrect crontab.month.MAR","true",datemap.'month.MAR'

@@ -320,7 +320,7 @@ The [schedule](#schedule) weekday to run the job
 
 day
 
-:   values: * - all 1-5 days mon-fri 1,2,3-5 - days mon,tue,wed-fri, etc
+:   values: `*` - all ; `1-5` days "sun-sat" ; `1,2,3-5` - days "sun,mon,tue-thu", etc
 
 
 ### month 

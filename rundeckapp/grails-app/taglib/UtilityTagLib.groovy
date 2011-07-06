@@ -2,7 +2,7 @@ import java.util.*
 import java.text.SimpleDateFormat
 
 class UtilityTagLib{
-    def static  daysofweekkey = [Calendar.MONDAY,Calendar.TUESDAY,Calendar.WEDNESDAY,Calendar.THURSDAY,Calendar.FRIDAY,Calendar.SATURDAY,Calendar.SUNDAY];
+    def static  daysofweekkey = [Calendar.SUNDAY,Calendar.MONDAY,Calendar.TUESDAY,Calendar.WEDNESDAY,Calendar.THURSDAY,Calendar.FRIDAY,Calendar.SATURDAY];
     def public static daysofweekord = ScheduledExecution.daysofweeklist;
     def public static monthsofyearord = ScheduledExecution.monthsofyearlist;
 	static returnObjectForTags = ['rkey','isUserInRoleTest','w3cDateValue']
