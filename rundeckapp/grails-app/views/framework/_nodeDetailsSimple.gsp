@@ -1,3 +1,4 @@
+<%@ page import="com.dtolabs.rundeck.core.common.NodeEntryImpl" %>
     <table>
         <tr>
             <td>
@@ -18,13 +19,15 @@
 
             </td>
             <td style="vertical-align:top">
-                <g:if test="${node.attributes}">
+                <g:set var="nodeAttrs" value="${NodeEntryImpl.nodeExtendedAttributes(node)}"/>
+
+                <g:if test="${nodeAttrs}">
                     <table width="300px">
                         %{--<tr><th colspan="2" style="font-size:9pt;">Attributes</th></tr>--}%
-                        <g:each var="setting" in="${node.attributes.keySet().grep{node.attributes[it]}.sort()}">
+                        <g:each var="setting" in="${nodeAttrs.keySet().grep{nodeAttrs[it]}.sort()}">
                             <tr>
                                 <td class="key setting">${setting.encodeAsHTML()}:</td>
-                                <td class="setting Value">${node.attributes[setting]?.encodeAsHTML()}</td>
+                                <td class="setting Value">${nodeAttrs[setting]?.encodeAsHTML()}</td>
                             </tr>
                         </g:each>
                     </table>
