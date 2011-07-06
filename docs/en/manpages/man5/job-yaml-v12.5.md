@@ -344,7 +344,7 @@ Or use a structure of explicit components. All of these are optional, but likely
 
     `day`
 
-    :    Weekday value. (mutually exclusive with `dayofmonth`) (default: "*")
+    :    Weekday value. (mutually exclusive with `dayofmonth`) (default: "*") Numerical values are 1-7 for Sunday-Saturday.
 
 Example using crontab string:
 

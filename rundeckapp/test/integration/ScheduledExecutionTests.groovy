@@ -448,4 +448,23 @@ class ScheduledExecutionTests extends GrailsUnitTestCase {
 
 
     }
+    /**
+     * Test crontab index values. month 1-12, day of week 1-7 (sun-sat)
+     */
+    void testTimeAndDateAsBooleanMapFromCrontab(){
+        t:{
+
+            def ScheduledExecution se = new ScheduledExecution()
+            assertTrue(se.parseCrontabString('0 5 4,3,2 ? 1,12 1,3,5,7 8'))
+            def map = se.timeAndDateAsBooleanMap()
+            assertNotNull "map should not be null", map
+            assertEquals "map was wrong size: ${map.size()}", 6, map.size()
+            assertEquals "month.JAN was not true", "true", map['month.JAN']
+            assertEquals "month.JAN was not true", "true", map['month.DEC']
+            assertEquals "dayOfWeek.MON was not true", "true", map['dayOfWeek.SUN']
+            assertEquals "dayOfWeek.MON was not true", "true", map['dayOfWeek.TUE']
+            assertEquals "dayOfWeek.MON was not true", "true", map['dayOfWeek.THU']
+            assertEquals "dayOfWeek.MON was not true", "true", map['dayOfWeek.SAT']
+        }
+    }
 }

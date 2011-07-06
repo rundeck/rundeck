@@ -70,7 +70,7 @@ class ScheduledExecution extends ExecutionContext {
         uuid(unique: true, nullable:true, blank:false)
     }
 
-    public static final daysofweeklist = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+    public static final daysofweeklist = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
     public static final monthsofyearlist = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 
     String toString() { "$jobName - $description" }
