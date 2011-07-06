@@ -48,6 +48,20 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
     public static final String NAME = "nodename";
     public static final String TAGS = "tags";
 
+    /**
+     * All attribute names for predefined properties.
+     */
+    public static final String[] PROPERTY_ATTRIBUTE_NAMES = {
+        OS_NAME,
+        OS_FAMILY,
+        OS_VERSION,
+        HOSTNAME,
+        OS_ARCH,
+        USERNAME,
+        DESCRIPTION,
+        NAME,
+        TAGS
+    };
     private Set tags;
 
     private Map<String, String> attributes;
@@ -319,6 +333,26 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
         return getAttribute(DESCRIPTION);
     }
 
+    /**
+     * Return the attributes for the node without any of the predefined attributes.
+     */
+    public Map<String, String> getExtendedAttributes() {
+        return nodeExtendedAttributes(this);
+    }
+
+    /**
+     * Return the attributes for the node without any of the predefined attributes.
+     */
+    public static Map<String, String> nodeExtendedAttributes(final INodeEntry node) {
+        final HashMap<String, String> attrs = new HashMap<String, String>();
+        if (null != node.getAttributes()) {
+            attrs.putAll(node.getAttributes());
+        }
+        for (final String attr : PROPERTY_ATTRIBUTE_NAMES) {
+            attrs.remove(attr);
+        }
+        return attrs;
+    }
 
     /**
      * Get the value for a specific attribute
