@@ -796,7 +796,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
             final String id = job.selectSingleNode("@id").getStringValue();
             final String name = job.selectSingleNode("name").getStringValue();
             final String group = job.selectSingleNode("group").getStringValue();
-            final String desc = job.selectSingleNode("desc").getStringValue();
+            final String desc = job.selectSingleNode("description").getStringValue();
             final String url = createJobURL(id);
             list.add(StoredJobImpl.create(id, name, url, group, desc, projectFilter));
         }
