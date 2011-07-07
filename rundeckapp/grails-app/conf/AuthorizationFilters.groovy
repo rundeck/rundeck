@@ -221,6 +221,7 @@ public class AuthorizationFilters {
                             request.invalidAuthToken = "Token:" + authtoken.substring(0, 5) + "****"
                         }
                         request.authenticatedToken = null
+                        request.invalidApiAuthentication = true
                         if(authtoken){
                             log.error("Invalid API token used: ${authtoken}");
                         }else{
@@ -244,39 +245,39 @@ public class AuthorizationFilters {
                     //look for controller/* auth requirement
                     authReq = authc['*']
                 }
+                def roletest
                 if (authReq) {
                     if (authReq instanceof String) {
                         authReq = [authReq]
                     }
                     //get user authorizations
                     def User user
-                    def roletest
                     if(session && session.user){
                         def admintest = roleService.isUserInRole(request, 'admin') || request.subject?.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class)?.find{it.name=='admin'}
                         roletest = admintest || roleService.isUserInAllRoles(request, authReq)
                     }
-                    if (!roletest ) {
-                        def authid= session.user ?: "(${request.invalidAuthToken ?: 'unauthenticated'})"
-                        log.error("${authid} UNAUTHORIZED for ${controllerName}/${actionName}");
-                        if(request.api_version){
-                            //api request
-                            render(contentType: "text/xml", encoding: "UTF-8") {
-                                result(error: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
-                                    delegate.'error'(code: "unauthorized"){
-                                        message("${authid} is not authorized for: ${request.forwardURI}")
-                                    }
+                }
+
+                if (request.invalidApiAuthentication || (authReq && !roletest)) {
+                    response.setStatus(403)
+                    def authid = session.user ?: "(${request.invalidAuthToken ?: 'unauthenticated'})"
+                    log.error("${authid} UNAUTHORIZED for ${controllerName}/${actionName}");
+                    if (request.api_version) {
+                        //api request
+                        render(contentType: "text/xml", encoding: "UTF-8") {
+                            result(error: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
+                                delegate.'error'(code: "unauthorized") {
+                                    message("${authid} is not authorized for: ${request.forwardURI}")
                                 }
                             }
-                            return false
                         }
-                        flash.title = "Unauthorized"
-                        flash.error = "${authid} is not authorized"
-                        response.setHeader(Constants.X_RUNDECK_ACTION_UNAUTHORIZED_HEADER,flash.error)
-                        redirect(controller: 'user', action: actionName ==~ /^.*(Fragment|Inline)$/ ? 'deniedFragment' : 'denied',params:params.xmlreq?params.subMap(['xmlreq']):null)
-                        return false;
+                        return false
                     }
-                } else {
-//                    System.err.println("No auth set found for: ${controllerName}/${actionName}: ${authSet[controllerName]?.(actionName)}");
+                    flash.title = "Unauthorized"
+                    flash.error = "${authid} is not authorized"
+                    response.setHeader(Constants.X_RUNDECK_ACTION_UNAUTHORIZED_HEADER, flash.error)
+                    redirect(controller: 'user', action: actionName ==~ /^.*(Fragment|Inline)$/ ? 'deniedFragment' : 'denied', params: params.xmlreq ? params.subMap(['xmlreq']) : null)
+                    return false;
                 }
             }
         }
