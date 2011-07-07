@@ -34,14 +34,18 @@ class ApiController {
      */
     public def requireVersion={min,max=0->
         if(request.api_version < min){
+            response.setStatus(400)
             request.error=g.message(code:'api.error.api-version.unsupported',
                 args:[request.api_version,request.forwardURI,"Minimum supported version: "+min])
+            request.apiErrorCode="api-version-unsupported"
             error()
             return false
         }
         if(max>0 && request.api_version > max){
+            response.setStatus(400)
             request.error=g.message(code:'api.error.api-version.unsupported',
                 args:[request.api_version,request.forwardURI,"Maximum supported version: "+max])
+            request.apiErrorCode = "api-version-unsupported"
             error()
             return false
         }
@@ -51,7 +55,11 @@ class ApiController {
     def error={
         return render(contentType:"text/xml",encoding:"UTF-8"){
             result(error:"true", apiversion:ApiRequestFilters.API_CURRENT_VERSION){
-                delegate.'error'{
+                def errorprops=[:]
+                if(request.apiErrorCode){
+                    errorprops=[code:request.apiErrorCode]
+                }
+                delegate.'error'(errorprops){
                     if (!flash.error && !flash.errors && !request.error && !request.errors) {
                         message(g.message(code: "api.error.unknown"))
                     }
