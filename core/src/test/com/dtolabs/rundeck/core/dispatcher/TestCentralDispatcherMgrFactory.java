@@ -103,7 +103,7 @@ public class TestCentralDispatcherMgrFactory extends AbstractBaseTest {
             assertNotNull(ex);
         }
         try {
-            cd.listDispatcherQueue();
+            cd.listDispatcherQueue(null);
             fail("should not succeed");
         } catch (CentralDispatcherException ex) {
             assertNotNull(ex);
@@ -123,6 +123,9 @@ public class TestCentralDispatcherMgrFactory extends AbstractBaseTest {
             return null;
         }
 
+        public Collection<QueuedItem> listDispatcherQueue(final String project) throws CentralDispatcherException {
+            return null;
+        }
         public Collection<QueuedItem> listDispatcherQueue() throws CentralDispatcherException {
             return null;
         }
@@ -161,6 +164,10 @@ public class TestCentralDispatcherMgrFactory extends AbstractBaseTest {
         }
 
         public QueuedItemResult queueDispatcherScript(IDispatchedScript dispatch) throws CentralDispatcherException {
+            return null;
+        }
+
+        public Collection<QueuedItem> listDispatcherQueue(final String project) throws CentralDispatcherException {
             return null;
         }
 

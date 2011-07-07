@@ -137,6 +137,42 @@ fi
 
 rm $DIR/list.out
 
+echo "Test rd-queue"
+
+$RDECK_BASE/tools/bin/rd-queue list -p test  > $DIR/list.out
+if [ 0 != $? ] ; then
+	echo Failed to list queue: $!
+	exit 2
+fi
+cat $DIR/list.out
+rm $DIR/list.out
+
+# create secondary project and assert rd-queue requires -p parameter
+
+#create test project
+$RDECK_BASE/tools/bin/rd-project -p test2 -a create
+if [ 0 != $? ] ; then
+	echo Failed to create test 2project : $!
+	exit 2
+fi
+
+echo "Test rd-queue requires -p argument"
+
+$RDECK_BASE/tools/bin/rd-queue list   > $DIR/list.out
+if [ 0 == $? ] ; then
+	echo Expected failure to rd-queue: $!
+    cat $DIR/list.out
+	exit 2
+fi
+rm $DIR/list.out
+
+rm -rf $RDECK_BASE/projects/test2
+
+if [ -d "$RDECK_BASE/projects/test2" ] ; then
+	echo Failed to remove test2 project : $RDECK_BASE/projects/test2 exists
+	exit 2
+fi
+
 egrep 'https://' $RDECK_BASE/etc/framework.properties > /dev/null
 https=$?
 

@@ -86,4 +86,9 @@ public final class NoCentralDispatcher implements CentralDispatcher {
         throw new CentralDispatcherException("Operation unsupported: No central dispatcher class is configured: "
                                              + Framework.CENTRALDISPATCHER_CLS_PROP);
     }
+
+    public Collection<QueuedItem> listDispatcherQueue(String project) throws CentralDispatcherException {
+        throw new CentralDispatcherException("Operation unsupported: No central dispatcher class is configured: "
+                                             + Framework.CENTRALDISPATCHER_CLS_PROP);
+    }
 }

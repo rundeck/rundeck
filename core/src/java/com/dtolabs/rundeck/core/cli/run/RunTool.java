@@ -295,15 +295,6 @@ public class RunTool extends BaseTool {
                     + Options.PROJECT_OPTION + "/--"
                     + Options.PROJECT_OPTION_LONG + " option");
             }
-            if (null != argIdlist ) {
-                try {
-                    Long.parseLong(argIdlist);
-                } catch (NumberFormatException e){
-                    throw new CLIToolOptionsException(
-                        "run action: -" + Options.ID_OPTION + "/--" + Options.ID_OPTION_LONG
-                        + " must be a valid ID number.");
-                }
-            }
         }
     }
 

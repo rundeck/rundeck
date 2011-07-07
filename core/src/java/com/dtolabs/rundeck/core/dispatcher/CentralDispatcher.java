@@ -67,8 +67,18 @@ public interface CentralDispatcher {
      * @return Collection of Strings listing the active dispatcher queue items
      *
      * @throws CentralDispatcherException if an error occurs
+     * @deprecated The rundeck API requires a project parameter, use {@link #listDispatcherQueue(String)}
      */
     public Collection<QueuedItem> listDispatcherQueue() throws CentralDispatcherException;
+
+    /**
+     * List the items on the dispatcher queue
+     *
+     * @return Collection of Strings listing the active dispatcher queue items
+     *
+     * @throws CentralDispatcherException if an error occurs
+     */
+    public Collection<QueuedItem> listDispatcherQueue(String project) throws CentralDispatcherException;
 
     /**
      * Attempt to kill the execution of an item currently on the dispatcher queue

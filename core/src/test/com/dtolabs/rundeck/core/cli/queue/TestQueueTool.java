@@ -137,6 +137,17 @@ public class TestQueueTool extends AbstractBaseTest {
             }
 
         }
+        {
+            //test valid actions
+            final QueueTool tool = new QueueTool(getFrameworkInstance());
+            try {
+                tool.parseArgs(new String[]{"list","-p","test1"});
+                assertEquals("test1", tool.argProject);
+            } catch (CLIToolOptionsException e) {
+                fail("unexpected exception: " + e.getMessage());
+            }
+
+        }
     }
 
 
@@ -159,6 +170,11 @@ public class TestQueueTool extends AbstractBaseTest {
                 return null;
             }
 
+            public Collection<QueuedItem> listDispatcherQueue(final String project) throws CentralDispatcherException {
+                //
+                fail("unexpected call to listDispatcherQueue");
+                return null;
+            }
             public Collection<QueuedItem> listDispatcherQueue() throws CentralDispatcherException {
                 //
                 fail("unexpected call to listDispatcherQueue");
@@ -192,12 +208,10 @@ public class TestQueueTool extends AbstractBaseTest {
         }
         final Framework framework = getFrameworkInstance();
         {
-            //test list action
-
             final QueueTool tool = new QueueTool(framework);
             final boolean[] actionCalled = new boolean[]{false};
             framework.setCentralDispatcherMgr(new FailDispatcher(){
-                public Collection<QueuedItem> listDispatcherQueue() throws CentralDispatcherException {
+                public Collection<QueuedItem> listDispatcherQueue(final String project) throws CentralDispatcherException {
                     //
                     actionCalled[0] = true;
                     return new ArrayList<QueuedItem>();
@@ -205,9 +219,23 @@ public class TestQueueTool extends AbstractBaseTest {
 
             });
 
+            //test list action without required -p
+
+            try{
+                tool.run(new String[]{"list"});
+
+                fail("should have thrown argument exception.");
+            } catch (CLIToolOptionsException e) {
+                assertNotNull(e);
+            } catch (QueueToolException e) {
+                fail("unexpected exception: " + e.getMessage());
+            }
+            assertFalse("list action was not called", actionCalled[0]);
+
+
             //exec the dispatch
 
-            tool.run(new String[]{"list"});
+            tool.run(new String[]{"list","-p","test"});
             assertTrue("list action was not called", actionCalled[0]);
 
         }

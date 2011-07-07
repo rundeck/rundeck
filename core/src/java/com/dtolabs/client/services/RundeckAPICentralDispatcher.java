@@ -30,6 +30,8 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.utils.NodeSet;
 import com.dtolabs.utils.Streams;
+import org.apache.commons.httpclient.URIException;
+import org.apache.commons.httpclient.util.URIUtil;
 import org.apache.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.Node;
@@ -343,8 +345,35 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         return QueuedItemResultImpl.failed("Server response contained no success information.");
     }
 
+    /**
+     * List the items on the dispatcher queue for a project
+     *
+     * @param project Project name
+     *
+     * @return Collection of Strings listing the active dispatcher queue items
+     *
+     * @throws CentralDispatcherException if an error occurs
+     */
     public Collection<QueuedItem> listDispatcherQueue() throws CentralDispatcherException {
+        throw new CentralDispatcherException(
+            "Unsupported operation: project is required by the RunDeck API");
+    }
+    /**
+     * List the items on the dispatcher queue for a project
+     *
+     * @param project Project name
+     *
+     * @return Collection of Strings listing the active dispatcher queue items
+     *
+     * @throws CentralDispatcherException if an error occurs
+     */
+    public Collection<QueuedItem> listDispatcherQueue(final String project) throws CentralDispatcherException {
+        if(null==project){
+            throw new CentralDispatcherException(
+                "Unsupported operation: project is required by the RunDeck API");
+        }
         final HashMap<String, String> params = new HashMap<String, String>();
+        params.put("project", project);
 
         final WebserviceResponse response;
         try {
@@ -581,9 +610,8 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
 
     public DispatcherResult killDispatcherExecution(final String execId) throws CentralDispatcherException {
         final HashMap<String, String> params = new HashMap<String, String>();
-        params.put("id", execId);
 
-        final String rundeckApiKillJobPath = RUNDECK_API_KILL_JOB_PATH.replace("$id", execId);
+        final String rundeckApiKillJobPath = substitutePathVariable(RUNDECK_API_KILL_JOB_PATH, "id", execId);
         //2. send request via ServerService
         final WebserviceResponse response;
         try {
@@ -607,6 +635,23 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
                 return sb.toString();
             }
         };
+    }
+
+    /**
+     * Replace a "$var" within a path string with a value, properly encoding it.
+     * @param path the URL path to substitute the var within
+     * @param var the name of the var in the string
+     * @param value the value to substitute
+     */
+    public static String substitutePathVariable(final String path, final String var, final String value) throws
+        CentralDispatcherException {
+        final String encoded;
+        try {
+            encoded = URIUtil.encodeWithinPath(value);
+        } catch (URIException e) {
+            throw new CentralDispatcherException(e);
+        }
+        return path.replace("$" + var, encoded);
     }
 
     /**
@@ -796,7 +841,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
             final String id = job.selectSingleNode("@id").getStringValue();
             final String name = job.selectSingleNode("name").getStringValue();
             final String group = job.selectSingleNode("group").getStringValue();
-            final String desc = job.selectSingleNode("desc").getStringValue();
+            final String desc = job.selectSingleNode("description").getStringValue();
             final String url = createJobURL(id);
             list.add(StoredJobImpl.create(id, name, url, group, desc, projectFilter));
         }
@@ -903,8 +948,8 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         if (null != dispatchedJob.getArgs() && dispatchedJob.getArgs().length > 0) {
             params.put("argString", CLIUtils.generateArgline(null, dispatchedJob.getArgs()));
         }
-        
-        final String apipath = RUNDECK_API_JOBS_RUN.replace("$id", jobid);
+
+        final String apipath = substitutePathVariable(RUNDECK_API_JOBS_RUN, "id", jobid);
         return submitExecutionRequest(null, params, apipath);
     }
 

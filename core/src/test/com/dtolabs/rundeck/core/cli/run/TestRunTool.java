@@ -96,16 +96,15 @@ public class TestRunTool extends AbstractBaseTest {
             }
         }
         {
-            //run action with invalid ID
+            //run action with any string ID
             final RunTool tool = new RunTool(getFrameworkInstance());
             try {
-                final String[] args = {"run","-i","job"};
+                final String[] args = {"run","-i","35e0eadf-b7a7-40a4-977d-da182e8d67c3"};
                 final CommandLine line = tool.parseArgs(args);
                 tool.validateOptions(line, args);
-                fail("should have thrown options exception.");
+
             } catch (CLIToolOptionsException e) {
-                assertNotNull(e);
-                assertTrue(e.getMessage().endsWith("must be a valid ID number."));
+                fail("should not have thrown options exception: "+e);
             }
         }
         {

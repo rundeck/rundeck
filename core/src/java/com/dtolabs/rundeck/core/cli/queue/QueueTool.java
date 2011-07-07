@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.cli.queue;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.cli.*;
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException;
 import com.dtolabs.rundeck.core.dispatcher.DispatcherResult;
 import com.dtolabs.rundeck.core.dispatcher.QueuedItem;
@@ -139,6 +140,7 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
     private String execid;
     private boolean argVerbose;
     private CLIToolLogger clilogger;
+    String argProject;
 
 
     /**
@@ -241,11 +243,16 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
          * long option string for verbose
          */
         public static final String VERBOSE_OPTION_LONG = "verbose";
+        /**
+         * short option string for project
+         */
+        public static final String PROJECT_OPTION = "p";
 
         public void addOptions(final org.apache.commons.cli.Options options) {
 
             options.addOption(EXECID_OPTION, EXECID_OPTION_LONG, true, "Execution ID");
             options.addOption(VERBOSE_OPTION, VERBOSE_OPTION_LONG, true, "Enable verbose output");
+            options.addOption(PROJECT_OPTION, null, true, "Project name (list action only)");
         }
 
         public void parseArgs(final CommandLine cli, final String[] original) throws CLIToolOptionsException {
@@ -254,6 +261,9 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
             }
             if (cli.hasOption(VERBOSE_OPTION)) {
                 argVerbose = true;
+            }
+            if (cli.hasOption(PROJECT_OPTION)) {
+                argProject = cli.getOptionValue(PROJECT_OPTION);
             }
         }
 
@@ -269,11 +279,24 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
             if (null != execid) {
                 warn("-"+ EXECID_OPTION +"/--"+ EXECID_OPTION_LONG +" argument only valid with kill action");
             }
+            if(null==argProject){
+                if (framework.getFrameworkProjectMgr().listFrameworkProjects().size() == 1) {
+                    final FrameworkProject project =
+                        (FrameworkProject) framework.getFrameworkProjectMgr().listFrameworkProjects().iterator().next();
+                    argProject = project.getName();
+                    debug("# No project specified, defaulting to: " + argProject);
+                } else {
+                    throw new CLIToolOptionsException("-" + PROJECT_OPTION + " argument is required with list action");
+                }
+            }
         }
 
         private void validateKillAction() throws CLIToolOptionsException {
             if (null == execid) {
                 throw new CLIToolOptionsException("-" + EXECID_OPTION + "/--" + EXECID_OPTION_LONG +" argument required");
+            }
+            if (null != argProject) {
+                warn("-" + PROJECT_OPTION + " argument only valid with list action");
             }
         }
         public String getJobid() {
@@ -350,7 +373,7 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
     private void listAction() throws QueueToolException {
         final Collection<QueuedItem> result;
         try {
-            result = framework.getCentralDispatcherMgr().listDispatcherQueue();
+            result = framework.getCentralDispatcherMgr().listDispatcherQueue(argProject);
         } catch (CentralDispatcherException e) {
             final String msg = "Failed request to list the queue: " + e.getMessage();
             throw new QueueToolException(msg, e);

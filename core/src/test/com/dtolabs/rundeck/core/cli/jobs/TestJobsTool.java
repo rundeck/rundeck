@@ -86,6 +86,11 @@ public class TestJobsTool extends AbstractBaseTest {
             return null;
         }
 
+        public Collection<QueuedItem> listDispatcherQueue(final String project) throws CentralDispatcherException {
+            //
+            fail("unexpected call to listDispatcherQueue");
+            return null;
+        }
         public Collection<QueuedItem> listDispatcherQueue() throws CentralDispatcherException {
             //
             fail("unexpected call to listDispatcherQueue");
