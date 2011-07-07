@@ -151,12 +151,27 @@ select from the existing set of saved Jobs.
 Click the "Choose A Job..." link and navigate to the desired Job.
 
 Finally, if the Job defines Options, you can specify them in the
-commandline arguments text field.
+commandline arguments text field and can include variable expansion to pass
+any input options for the current job.  Format:
+
+    -optname <value> -optname <value> ...
+
+The format for specifying options is exactly the same as you would pass to the `run` commandline tool, and you can substitute values of input options to the current job. For example:
+
+    -opt1 something -opt2 ${option.opt2}
+
+This would set the value "something" for the Job's "opt1" option, and then pass
+the "opt2" option directly from the top-level job to the Job reference.
 
 This is similar to calling the other Job with [run](run.html):
 
-    run [filter-options] -j group/jobname
-    
+    run [filter-options] -j group/jobname -- -opt1 something -opt2 somethingelse
+
+If the Job has required Options that are not specified on the arguments line,
+then a "defaultValue" of that option will be used if it is defined.  If a
+required option does not have a default value, then the execution will fail
+because the option is not specified.
+
 ## Reordering steps
 
 The order of the Workflow steps can be modified by hovering over any
