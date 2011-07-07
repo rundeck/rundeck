@@ -1,6 +1,6 @@
 % RD-QUEUE(1) RunDeck User Manuals | Version @VERSION@
 % Greg Schueler; Alex Honor
-% November 20, 2010
+% July 7, 2011
 
 # NAME
 
@@ -8,7 +8,7 @@ rd-queue - Lists and kills executions in the RunDeck queue
 
 # SYNOPSIS
 
-rd-queue [*action*] [-h] [-e]
+rd-queue [*action*] [-h] [-e id] [-p project]
 
 # DESCRIPTION
 
@@ -25,23 +25,28 @@ The tool provides two actions:
 # OPTIONS
 
 -h, \--help
-: Print usage message.
+:    Print usage message.
 
 -e, \--eid
-: ID of the execution to kill
+:    ID of the execution to kill
+
+-p
+:    Project name (list action only)
 
 
 # LIST ACTION #
 
-This is the default action of the tool, so to list all running Executions, simply use:
+This is the default action of the tool, so to list all running Executions for a project, simply use:
 
-    rd-queue
+    rd-queue -p project
 
 The output will display the number of executions, and their IDs and identifying names or descriptions, as well as a link to the RunDeck page to follow the output.
 
+If there is only one project, the `-p` option can be left out.
+
 *Example*
 
-    rd-queue 
+    rd-queue -p test
     Queue: 1 items
     [160] adhoc script job <http://localhost:8080/rundeck/execution/follow/160>
 
