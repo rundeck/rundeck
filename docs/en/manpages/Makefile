@@ -15,8 +15,10 @@ subdirs: $(DIRS)
 $(DIRS) : 
 	$(MAKE) VERSION=$(VERSION) -C $@
 
-clean : $(DIRS)
-	$(MAKE) -C $< clean
+clean :
+	@-for i in $(DIRS) ; do \
+	    echo $(MAKE) -C $$i clean; \
+	done
 
 #generate md file for index for each man section
 htmlindex: subdirs

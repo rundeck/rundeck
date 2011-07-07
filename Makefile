@@ -70,6 +70,7 @@ test: $(war)
 	
 clean:
 	-rm $(core) $(war) $(launcher) $(plugs)
+	$(MAKE) -C docs clean
 
 	pushd rundeckapp; $(GRAILS) clean; popd
 
