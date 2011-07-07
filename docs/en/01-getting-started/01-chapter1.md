@@ -234,15 +234,17 @@ rundeck launcher process.
 The launcher jar can take a number of options to specify how the server should start. If you execute with a "-h" you will see the usage information:
 
     java -jar rundeck-launcher-1.3.0.jar -h
-    
+
     usage: java [JAVA_OPTIONS] -jar rundeck-launcher.jar  [-c PATH] [-d]
-       [--skipinstall] [-s PATH] [-b PATH] [-p PATH] [-h] [-x PATH] [--serverdir
-       PATH] [--datadir PATH]
+           [--installonly] [-s PATH] [-b PATH] [-p PATH] [-h] [-x PATH]
+           [--skipinstall] [--serverdir PATH] [--datadir PATH]
 
     Run the rundeck server, installing the necessary components if they do not
     exist.
         --skipinstall         Skip the extraction of the utilities from the
                               launcher.
+        --installonly         Perform installation only and do not start the
+                              server.
      -b,--basedir <PATH>      The basedir
      -c,--configdir <PATH>    The location of the configuration.
      -d                       Show debug information
