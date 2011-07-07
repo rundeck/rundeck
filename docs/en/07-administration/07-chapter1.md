@@ -441,7 +441,7 @@ Then restart RunDeck to ensure it picks up the change and you're done.
 
 (2) To override the default JAAS configuration file, you will need to supply the RunDeck server with the proper path to the new one, and a `loginmodule.name` Java system property to identify the new login module by name.
 
-    The JAAS configuration file location is specified differently between The Launcher and the RPM.
+    The JAAS configuration file location is specified differently between the Launcher and the RPM.
     
     **For the Launcher**:  the `loginmodule.conf.name` Java system property is used to identify the *name* of the config file, which must be located in the `$RDECK_BASE/server/config` dir.
     
@@ -451,7 +451,7 @@ Then restart RunDeck to ensure it picks up the change and you're done.
             -Dloginmodule.name=activedirectory \
             -jar rundeck-launcher-x.x.jar
             
-    Otherwise, using the launcher with the supplied `rundeckd` script, you can modify the `RDECK_JVM` value in the `$RDECK_BASE/etc/profile` file to add two JVM arguments:
+    Otherwise, if you are starting the Launcher via the supplied `rundeckd` script, you can modify the `RDECK_JVM` value in the `$RDECK_BASE/etc/profile` file to add two JVM arguments:
     
         export RDECK_JVM="-Dloginmodule.conf.name=jaas-activedirectory.conf \
             -Dloginmodule.name=activedirectory"
