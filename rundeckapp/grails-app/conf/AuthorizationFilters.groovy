@@ -283,7 +283,7 @@ public class AuthorizationFilters {
         }
         postApiTokenCheck(controller:'user',action:'logout',invert:true){
             after={
-                if(session.user && request.authenticatedToken){
+                if(request?.authenticatedToken && session && session?.user){
                     session.user=null
                     request.subject=null
                 }
