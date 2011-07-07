@@ -345,8 +345,35 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         return QueuedItemResultImpl.failed("Server response contained no success information.");
     }
 
+    /**
+     * List the items on the dispatcher queue for a project
+     *
+     * @param project Project name
+     *
+     * @return Collection of Strings listing the active dispatcher queue items
+     *
+     * @throws CentralDispatcherException if an error occurs
+     */
     public Collection<QueuedItem> listDispatcherQueue() throws CentralDispatcherException {
+        throw new CentralDispatcherException(
+            "Unsupported operation: project is required by the RunDeck API");
+    }
+    /**
+     * List the items on the dispatcher queue for a project
+     *
+     * @param project Project name
+     *
+     * @return Collection of Strings listing the active dispatcher queue items
+     *
+     * @throws CentralDispatcherException if an error occurs
+     */
+    public Collection<QueuedItem> listDispatcherQueue(final String project) throws CentralDispatcherException {
+        if(null==project){
+            throw new CentralDispatcherException(
+                "Unsupported operation: project is required by the RunDeck API");
+        }
         final HashMap<String, String> params = new HashMap<String, String>();
+        params.put("project", project);
 
         final WebserviceResponse response;
         try {

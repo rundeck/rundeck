@@ -275,8 +275,14 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
     }
 
     public Collection<QueuedItem> listDispatcherQueue() throws CentralDispatcherException {
+        return listDispatcherQueue(null);
+    }
+    public Collection<QueuedItem> listDispatcherQueue(final String project) throws CentralDispatcherException {
         final HashMap<String, String> params = new HashMap<String, String>();
         params.put("xmlreq", "true");
+        if(null!=project){
+            params.put("projFilter", project);
+        }
 
         final WebserviceResponse response;
         try {

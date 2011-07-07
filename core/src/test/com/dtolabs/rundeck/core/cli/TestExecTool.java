@@ -460,6 +460,9 @@ public class TestExecTool extends AbstractBaseTest {
             return null;
         }
 
+        public Collection<QueuedItem> listDispatcherQueue(final String project) throws CentralDispatcherException {
+            return null;
+        }
         public Collection<QueuedItem> listDispatcherQueue() throws CentralDispatcherException {
             return null;
         }
@@ -1018,6 +1021,10 @@ public class TestExecTool extends AbstractBaseTest {
             return queuedItemSuccess;
         }
 
+        public Collection<QueuedItem> listDispatcherQueue(final String project) throws CentralDispatcherException {
+            listDispatcherCalled = true;
+            return null;
+        }
         public Collection<QueuedItem> listDispatcherQueue() throws CentralDispatcherException {
             listDispatcherCalled = true;
             return null;
