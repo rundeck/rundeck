@@ -438,12 +438,12 @@ var applinks={
             </label>
         </td>
         <td>
-            <g:if test="${editSchedExecId}">
+            <g:if test="${editSchedExecId && scheduledExecution?.uuid}">
                 <span class="desc" title="UUID for this Job">
                     ${scheduledExecution?.uuid?.encodeAsHTML()}
                 </span>
             </g:if>
-            <g:if test="${!editSchedExecId}">
+            <g:else>
                 <span class="input">
                     <input type='text' name="uuid" value="${scheduledExecution?.uuid?.encodeAsHTML()}"
                            id="schedJobUuid" size="40"/>
@@ -456,7 +456,7 @@ var applinks={
                         </wdgt:eventHandler>
                     </g:hasErrors>
                 </span>
-            </g:if>
+            </g:else>
         </td>
     </tr>
     </tbody>

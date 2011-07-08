@@ -757,7 +757,15 @@ class ScheduledExecutionController  {
         def oldsched = scheduledExecution.scheduled
         def optparams = params.findAll { it.key.startsWith("option.")}
         def nonopts = params.findAll { !it.key.startsWith("option.") && it.key!='workflow' && it.key!='options'&& it.key!='notifications'}
-        nonopts.uuid=scheduledExecution.uuid//don't modify uuid
+        if(scheduledExecution.uuid){
+            nonopts.uuid=scheduledExecution.uuid//don't modify uuid if it exists
+        }else if (!nonopts.uuid) {
+            //set UUID if not submitted
+            nonopts.uuid = UUID.randomUUID().toString()
+        }
+        if (nonopts.uuid != scheduledExecution.uuid) {
+            changeinfo.extraInfo = " (internalID:${scheduledExecution.id})"
+        }
         scheduledExecution.properties = nonopts
         
         final Map oldopts = params.findAll{it.key=~/^(name|command|type|adhocExecution|adhocFilepath|adhoc.*String)$/}
@@ -1091,7 +1099,15 @@ class ScheduledExecutionController  {
         scheduledExecution.properties =null
         final Collection foundprops = params.properties.keySet().findAll {it != 'lastUpdated' && it != 'dateCreated' && (params.properties[it] instanceof String || params.properties[it] instanceof Boolean) }
         final Map newprops = foundprops ? params.properties.subMap(foundprops) : [:]
-        newprops.uuid = scheduledExecution.uuid//don't modify uuid
+        if (scheduledExecution.uuid) {
+            newprops.uuid = scheduledExecution.uuid//don't modify uuid if it exists
+        } else if (!newprops.uuid) {
+            //set UUID if not submitted
+            newprops.uuid = UUID.randomUUID().toString()
+        }
+        if(newprops.uuid!=scheduledExecution.uuid){
+            changeinfo.extraInfo = " (internalID:${scheduledExecution.id})"
+        }
         //clear filter params
         scheduledExecution.clearFilterFields()
         scheduledExecution.properties = newprops
