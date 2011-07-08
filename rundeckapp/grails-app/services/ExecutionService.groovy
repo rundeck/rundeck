@@ -471,8 +471,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             if(scheduledExecution){
                 jobcontext.name=scheduledExecution.jobName
                 jobcontext.group=scheduledExecution.groupPath
-                jobcontext.id=scheduledExecution.id.toString()
-                jobcontext.uuid=scheduledExecution.uuid
+                jobcontext.id=scheduledExecution.extid
             }
             jobcontext.username=execution.user
             jobcontext.project=execution.project

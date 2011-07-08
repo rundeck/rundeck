@@ -277,7 +277,7 @@ class ScheduledExecutionController  {
                     err.srcUrl = cleanUrl
                     log.error("getRemoteJSON error: URL ${cleanUrl} : ${remoteResult.error}");
                 }
-                logRemoteOptionStats(remoteStats,[jobName:scheduledExecution.generateFullName(),jobID:scheduledExecution.id, jobProject:scheduledExecution.project,optionName:params.option,user:session.user])
+                logRemoteOptionStats(remoteStats,[jobName:scheduledExecution.generateFullName(),id:scheduledExecution.extid, jobProject:scheduledExecution.project,optionName:params.option,user:session.user])
                 //validate result contents
                 boolean valid = true;
                 def validationerrors=[]
@@ -723,7 +723,7 @@ class ScheduledExecutionController  {
             flash.savedJob=scheduledExecution
             flash.savedJobMessage="Saved changes to Job"
             logJobChange(changeinfo,scheduledExecution.properties)
-            redirect(controller: 'scheduledExecution', action: 'show', params: [id: scheduledExecution.id])
+            redirect(controller: 'scheduledExecution', action: 'show', params: [id: scheduledExecution.extid])
         }
     }
     def _doupdate = { params, changeinfo=[:] ->
@@ -1033,7 +1033,7 @@ class ScheduledExecutionController  {
                 try{
                     nextdate=scheduledExecutionService.scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
                 }catch (SchedulerException e){
-                    log.error("Unable to schedule job: ${scheduledExecution.id}: ${e.message}")
+                    log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
                 }
                 def newsched = ScheduledExecution.get(scheduledExecution.id)
                 newsched.nextExecution=nextdate
@@ -1254,7 +1254,7 @@ class ScheduledExecutionController  {
                 try{
                     nextdate=scheduledExecutionService.scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
                 }catch (SchedulerException e){
-                    log.error("Unable to schedule job: ${scheduledExecution.id}: ${e.message}")
+                    log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
                 }
                 def newsched = ScheduledExecution.get(scheduledExecution.id)
                 newsched.nextExecution=nextdate
@@ -1411,12 +1411,12 @@ class ScheduledExecutionController  {
         def changeinfo = [user: session.user, change: 'create', method: 'saveAndExec']
         def scheduledExecution = _dosave(params,changeinfo)
         if(scheduledExecution.id){
-            params.id=scheduledExecution.id
+            params.id=scheduledExecution.extid
             logJobChange(changeinfo, scheduledExecution.properties)
             if(!scheduledExecution.scheduled){
-                return redirect(action:execute,id:scheduledExecution.id)
+                return redirect(action:execute,id:scheduledExecution.extid)
             }else{
-                return redirect(action:show,id:scheduledExecution.id)
+                return redirect(action:show,id:scheduledExecution.extid)
             }
         }else{
             Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
@@ -2206,7 +2206,7 @@ class ScheduledExecutionController  {
                 try{
                     nextdate=scheduledExecutionService.scheduleJob(scheduledExecution,null,null);
                 }catch (SchedulerException e){
-                    log.error("Unable to schedule job: ${scheduledExecution.id}: ${e.message}")
+                    log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
                 }
                 def newsched = ScheduledExecution.get(scheduledExecution.id)
                 newsched.nextExecution=nextdate
@@ -2236,7 +2236,7 @@ class ScheduledExecutionController  {
             flash.savedJob=scheduledExecution
             flash.savedJobMessage="Created new Job"
             logJobChange(changeinfo,scheduledExecution.properties)
-            redirect(controller:'scheduledExecution',action:'show',params:[id:scheduledExecution.id])
+            redirect(controller:'scheduledExecution',action:'show',params:[id:scheduledExecution.extid])
         }else{
             scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
             request.message=g.message(code:'ScheduledExecutionController.save.failed')

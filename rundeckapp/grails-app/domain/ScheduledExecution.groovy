@@ -529,7 +529,7 @@ class ScheduledExecution extends ExecutionContext {
     }
 
     def getExtid(){
-        return this.uuid?:this.id
+        return this.uuid?:this.id.toString()
     }
 }
 
