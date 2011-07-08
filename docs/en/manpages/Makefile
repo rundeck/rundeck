@@ -23,6 +23,7 @@ clean :
 #generate md file for index for each man section
 htmlindex: subdirs
 	-rm -f man1.index.md man5.index.md
+	echo >> man1.index.md
 	echo "## Command Reference" >> man1.index.md
 	for i in man1/*.md ; do \
 		f=$$(basename $$i); \
