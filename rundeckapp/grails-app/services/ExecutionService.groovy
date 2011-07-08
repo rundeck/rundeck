@@ -10,19 +10,14 @@ import java.util.regex.Pattern
 
 import javax.servlet.http.HttpSession
 
-import org.apache.commons.httpclient.HttpClient
-import org.apache.commons.httpclient.HttpMethod
-import org.apache.commons.httpclient.UsernamePasswordCredentials
-import org.apache.commons.httpclient.auth.AuthScope
-import org.apache.commons.httpclient.methods.GetMethod
-import org.apache.commons.httpclient.params.HttpClientParams
-import org.apache.commons.httpclient.util.DateParseException
-import org.apache.commons.httpclient.util.DateUtil
 import org.apache.tools.ant.BuildEvent
 import org.apache.tools.ant.BuildException
 import org.apache.tools.ant.BuildLogger
 import org.apache.tools.ant.Project
 import org.codehaus.groovy.grails.web.context.ServletContextHolder
+import org.codehaus.groovy.grails.web.json.JSONArray
+import org.codehaus.groovy.grails.web.json.JSONElement
+import org.codehaus.groovy.grails.web.json.JSONObject
 import org.springframework.beans.BeansException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -1036,11 +1031,6 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                 if (opt.required && null==optparams[opt.name] && opt.defaultValue) {
                     defaultoptions[opt.name]=opt.defaultValue
                 }
-				if (opt.remoteValue){
-					def String remoteUrl = DataContextUtils.replaceDataReferences(opt.remoteValue, data);
-					def remote = getRemoteValue(remoteUrl, 10);
-					defaultoptions[opt.name]=remote.value
-				}
             }
             if(defaultoptions){
                 if(sb.size()>0){
@@ -1052,102 +1042,6 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         return sb.toString()
     }
 	
-	def static Object getRemoteValue(String url, int timeout){
-		//attempt to get the URL data
-		def stats=[:]
-		if(url.startsWith("http:") || url.startsWith("https:")){
-			final HttpClientParams params = new HttpClientParams()
-			params.setConnectionManagerTimeout(timeout*1000)
-			params.setSoTimeout(timeout*1000)
-			def HttpClient client= new HttpClient(params)
-			def URL urlo
-			def AuthScope authscope=null
-			def UsernamePasswordCredentials cred=null
-			boolean doauth=false
-			String cleanUrl = url.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
-			try{
-				urlo = new URL(url)
-				if(urlo.userInfo){
-					doauth = true
-					authscope = new AuthScope(urlo.host,urlo.port>0? urlo.port:urlo.defaultPort,AuthScope.ANY_REALM,"BASIC")
-					cred = new UsernamePasswordCredentials(urlo.userInfo)
-					url = new URL(urlo.protocol, urlo.host, urlo.port, urlo.file).toExternalForm()
-				}
-			}catch(MalformedURLException e){
-				throw new Exception("Failed to configure base URL for authentication: "+e.getMessage(),e)
-			}
-			if(doauth){
-				client.getParams().setAuthenticationPreemptive(true);
-				client.getState().setCredentials(authscope,cred)
-			}
-			def HttpMethod method = new GetMethod(url)
-			method.setFollowRedirects(true)
-			method.setRequestHeader("Accept","application/json")
-			stats.url = cleanUrl;
-			stats.startTime = System.currentTimeMillis();
-			def resultCode = client.executeMethod(method);
-			stats.httpStatusCode = resultCode
-			stats.httpStatusText = method.getStatusText()
-			stats.finishTime = System.currentTimeMillis()
-			stats.durationTime=stats.finishTime-stats.startTime
-			stats.contentLength = method.getResponseContentLength()
-			final header = method.getResponseHeader("Last-Modified")
-			if(null!=header){
-				try {
-					stats.lastModifiedDate= DateUtil.parseDate(header.getValue())
-				} catch (DateParseException e) {
-				}
-			}else{
-				stats.lastModifiedDate=""
-				stats.lastModifiedDateTime=""
-			}
-			try{
-				def reasonCode = method.getStatusText();
-				if(resultCode>=200 && resultCode<=300){
-					def expectedContentType="application/json"
-					def resultType=''
-					if (null != method.getResponseHeader("Content-Type")) {
-						resultType = method.getResponseHeader("Content-Type").getValue();
-					}
-					String type = resultType;
-					if (type.indexOf(";") > 0) {
-						type = type.substring(0, type.indexOf(";")).trim();
-					}
-
-					if (expectedContentType.equals(type)) {
-						final stream = method.getResponseBodyAsStream()
-						final writer = new StringWriter()
-						int len=copyToWriter(new BufferedReader(new InputStreamReader(stream, method.getResponseCharSet())),writer)
-						stream.close()
-						writer.flush()
-						final string = writer.toString()
-						if(string){
-							stats.contentSHA1=string.encodeAsSHA1()
-							if(stats.contentLength<0){
-								stats.contentLength= len
-							}
-						}else{
-							stats.contentSHA1=""
-						}
-						return [value:string,stats:stats]
-					}else{
-						return [error:"Unexpected content type received: "+resultType,stats:stats]
-					}
-				}else{
-					stats.contentSHA1 = ""
-					return [error:"Server returned an error response: ${resultCode} ${reasonCode}",stats:stats]
-				}
-			} finally {
-				method.releaseConnection();
-			}
-		}else if (url.startsWith("file:")) {
-			def File srfile = new File(new URI(url))
-			def String resp = srfile.getText('UTF-8').replaceAll("\n", "")
-			return [value:resp,stats:stats]
-		} else {
-			throw new Exception("Unsupported protocol: " + url)
-		}
-	}
 
     /**
      * evaluate the options in the input properties, and if any Options defined for the Job have regex constraints,
@@ -1534,8 +1428,17 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
 			
 			if(opt && opt.remoteValue){
 				def String remoteUrl = DataContextUtils.replaceDataReferences(opt.remoteValue, data);
-				def remote = getRemoteValue(remoteUrl, 10);
-				val = remote.value;
+				def remote = RemoteJSONUtil.getRemoteJSON(remoteUrl, 10);
+				def jsonel = (JSONElement) remote.json;
+				
+				if(jsonel instanceof JSONArray){
+					String t = jsonel[0]
+					val = t
+				}
+				if (jsonel instanceof JSONObject){
+					String t = jsonel.getString("value")
+					val = t
+				}
 			}
 			
             newopts[key]=val
