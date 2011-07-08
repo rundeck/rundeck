@@ -191,6 +191,21 @@ The primary RunDeck webapp configuration file. Defines default
 loglevel, datasource configuration, [role mapping](#role-mapping), and
 [GUI customization](#customizing-rundeck-gui).
 
+##### Notification email settings
+
+The URL and From: address used in email notifications are managed via the settings located in the rundeck-config.properties file.
+
+The two properties are:
+
+* grails.serverURL
+* grails.mail.default.from
+
+Here's an example:
+
+    grails.serverURL=https://node.fully.qualified.domain.name:4443
+    grails.mail.default.from=deployer@domain.com
+
+
 ## Logs
 
 Depending on the installer used, the log files will be under a base
