@@ -40,16 +40,30 @@
         </g:if>
 
         <div class="presentation">
-            <label for="optname_${rkey}" class="  left  ${hasErrors(bean:option,field:'name','fieldError')}" style="width:22em;">Option Name</label>
-            <label for="optdesc_${rkey}" class=" right">Description</label>
-            <div class="clear"></div>
-            <g:textField name="name" class="left half restrictOptName" value="${option?.name}" size="40" placeholder="Option Name" id="optname_${rkey}"/>
-            <g:textField name="description"  class="right" value="${option?.description}" size="40" placeholder="Option description" id="optdesc_${rkey}"/>
+            <table cellspacing="0" cellpadding="0">
+                <tr>
+                    <td>
 
-            <label>
-                <div class="${hasErrors(bean:option,field:'defaultValue','fieldError')}">Default Value</div>
-                <input type="text" class="right" name="defaultValue" value="${option?.defaultValue?.encodeAsHTML()}" size="40" placeholder="Default value"/>
-            </label>
+            <div><label for="optname_${rkey}" class="    ${hasErrors(bean:option,field:'name','fieldError')}">Option Name</label></div>
+            <g:textField name="name" class=" restrictOptName" value="${option?.name}" size="40" placeholder="Option Name" id="optname_${rkey}"/>
+                    </td>
+                    <td>
+            <div><label for="optdesc_${rkey}" >Description</label></div>
+            <g:textField name="description" value="${option?.description}" size="40" placeholder="Description" id="optdesc_${rkey}"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+
+                        <label>
+                            <div class="${hasErrors(bean: option, field: 'defaultValue', 'fieldError')}">Default Value</div>
+                            <input type="text" class="right" name="defaultValue"
+                                   value="${option?.defaultValue?.encodeAsHTML()}"
+                                   size="40" placeholder="Default value"/>
+                        </label>
+                    </td>
+                </tr>
+            </table>
 
             <g:if test="${origName || option?.name && !newoption}">
                 <g:hiddenField name="origName" value="${origName?origName:option?.name}"/>
