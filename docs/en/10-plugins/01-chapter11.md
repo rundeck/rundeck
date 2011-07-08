@@ -266,6 +266,10 @@ In addition, the plugin provides these new data context properties:
 
 :   The command that the workflow/user has specified to run on the node
 
+`exec.dir`
+
+:   The working directory path if it is configured for the node or in a properties file
+
 Example:
 
 If you wanted to run some external remote connection command ("/bin/execremote") in lieu of the 
@@ -273,7 +277,7 @@ built-in ssh command, you could specify these attributes for node:
 
     mynode:
         node-executor: script-exec
-        script-exec: /bin/execremote -host ${node.hostname} -user ${node.username} -- ${script-exec.command}
+        script-exec: /bin/execremote -host ${node.hostname} -user ${node.username} -- ${exec.command}
 
 At run time, the properties specified would be expanded to the values for the
 specific node and command string to execute.
@@ -282,7 +286,7 @@ OR, you could specify a default to apply to all nodes within the project.propert
 file located at `$RDECK_BASE/projects/NAME/etc/project.properties`.
 
     script-exec.default.command= /bin/execremote -host ${node.hostname} \
-        -user ${node.username} -- ${script-exec.command}
+        -user ${node.username} -- ${exec.command}
 
 Similarly for the `$RDECK_BASE/etc/framework.properties` file to apply to all
 projects.
@@ -363,7 +367,7 @@ built-in ssh command, you could specify these attributes for node:
 
     mynode:
         node-executor: script-exec
-        script-exec: /bin/execremote -host ${node.hostname} -user ${node.username} -- ${script-exec.command}
+        script-exec: /bin/execremote -host ${node.hostname} -user ${node.username} -- ${exec.command}
 
 At run time, the properties specified would be expanded to the values for the
 specific node and command string to execute.
@@ -372,7 +376,7 @@ OR, you could specify a default to apply to all nodes within the project.propert
 file located at `$RDECK_BASE/projects/NAME/etc/project.properties`.
 
     script-exec.default.command= /bin/execremote -host ${node.hostname} \
-        -user ${node.username} -- ${script-exec.command}
+        -user ${node.username} -- ${exec.command}
 
 Similarly for the `$RDECK_BASE/etc/framework.properties` file to apply to all
 projects.

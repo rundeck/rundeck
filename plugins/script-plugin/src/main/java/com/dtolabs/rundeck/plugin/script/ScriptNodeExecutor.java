@@ -45,8 +45,8 @@ import java.util.*;
  * script should be specified for a node via the {@value #SCRIPT_ATTRIBUTE} attribute on a node. This should be the full
  * command to execute </p><p>   In addition to normal Data context references in this attribute, you can include these
  * special data references: </p> <ul>
- * <li><pre>${script-exec.command}</pre>: This is the user-entered command to execute</li>
- * <li><pre>${script-exec.dir}</pre>: This is the value of the script-exec-dir attribute</li>
+ * <li><pre>${exec.command}</pre>: This is the user-entered command to execute</li>
+ * <li><pre>${exec.dir}</pre>: This is the value of the script-exec-dir attribute</li>
  * </ul> <p> So for example, if you wanted to change the way the script is invoked, you could specify the
  * script-exec-args like:
  * <pre>
