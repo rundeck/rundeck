@@ -147,7 +147,7 @@ public class NotificationService {
          * limited
          */
         def props=[
-            job:[id:job.id,uuid:job.uuid,name:job.jobName,group:job.groupPath?:'',project:job.project],
+            job:[id:job.extid,name:job.jobName,group:job.groupPath?:'',project:job.project],
             execution:[id:exec.id,status:state,user:exec.user],
             notification:[trigger:trigger]
         ]
