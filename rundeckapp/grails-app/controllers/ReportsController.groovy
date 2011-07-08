@@ -9,6 +9,7 @@ class ReportsController {
     def reportService
     def userService
     def frameworkService
+    def scheduledExecutionService
 
     def index = { ReportQuery query->
        //find previous executions
@@ -518,7 +519,8 @@ class ReportsController {
                         delegate.'date-started'(g.w3cDateValue(date:rpt.dateStarted))
                         delegate.'date-ended'(g.w3cDateValue(date:rpt.dateCompleted))
                         if(rpt.jcJobId){
-                            job(id:rpt.jcJobId)
+                            def foundjob=scheduledExecutionService.getByIDorUUID(rpt.jcJobId)
+                            job(id:foundjob?foundjob.extid:jcJobId)
                         }
                         if(rpt.jcExecId){
                             execution(id:rpt.jcExecId)
