@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.execution.impl.jsch;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
@@ -37,7 +38,6 @@ import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
 import com.jcraft.jsch.JSchException;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
-import org.apache.tools.ant.util.StringUtils;
 
 import java.text.MessageFormat;
 
@@ -51,6 +51,9 @@ public class JschNodeExecutor implements NodeExecutor {
     public static final String FWK_PROP_AUTH_CANCEL_MSG = "framework.messages.error.ssh.authcancel";
     public static final String FWK_PROP_AUTH_CANCEL_MSG_DEFAULT =
         "Authentication failure connecting to node: \"{0}\". Make sure your resource definitions and credentials are up to date.";
+    public static final String NODE_ATTR_SSH_KEYPATH = "ssh-keypath";
+    public static final String FWK_PROP_SSH_KEYPATH = "framework.ssh-keypath";
+    public static final String PROJ_PROP_SSH_KEYPATH = "project.ssh-keypath";
     private Framework framework;
 
     public JschNodeExecutor(final Framework framework) {
@@ -138,14 +141,39 @@ public class JschNodeExecutor implements NodeExecutor {
                                     final Project project, final Framework framework) throws
         SSHTaskBuilder.BuilderException {
 
-        //XXX:TODO use node attributes to specify ssh key/timeout
+        //XXX:TODO use node attributes to specify timeout
 
         /**
          * configure an SSH timeout
          */
         final int timeout = getFrameworkSSHTimeout(framework);
-        return SSHTaskBuilder.build(nodeentry, args, project, framework, timeout, context.getDataContext());
+        final String frameworkProject = context.getFrameworkProject();
+
+        return SSHTaskBuilder.build(nodeentry, args, project, framework, timeout, context.getDataContext(),
+            frameworkProject, keyfilefinder);
     }
+
+    /**
+     * Keyfile finder looks for node attribute "ssh-keypath", then looks for project and framework level default
+     * "default.ssh.keypath", then looks for framework level "framework.ssh.keypath"
+     */
+    final static SSHTaskBuilder.KeyfileFinder keyfilefinder = new SSHTaskBuilder.KeyfileFinder() {
+        public String getKeyfilePathForNode(final INodeEntry node, final Framework framework, final String project) {
+            if (null != node.getAttributes().get(NODE_ATTR_SSH_KEYPATH)) {
+                return node.getAttributes().get(NODE_ATTR_SSH_KEYPATH);
+            }
+
+            final FrameworkProject frameworkProject = framework.getFrameworkProjectMgr().getFrameworkProject(project);
+            if (frameworkProject.hasProperty(PROJ_PROP_SSH_KEYPATH)) {
+                return frameworkProject.getProperty(PROJ_PROP_SSH_KEYPATH);
+            } else if (framework.hasProperty(FWK_PROP_SSH_KEYPATH)) {
+                return framework.getProperty(FWK_PROP_SSH_KEYPATH);
+            } else {
+                //return default framework level
+                return framework.getProperty(Constants.SSH_KEYPATH_PROP);
+            }
+        }
+    };
 
     static int getFrameworkSSHTimeout(final Framework framework) {
         int timeout=0;

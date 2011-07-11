@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
+import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
 import com.jcraft.jsch.JSchException;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
@@ -88,7 +89,7 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier {
 
 
 //        logger.debug("temp file for node " + node.getNodename() + ": " + temp.getAbsolutePath() + ", datacontext: " + dataContext);
-        final Task scp = createScp(context, node, project, remotefile, localTempfile);
+        final Task scp = createScp(context, node, project, remotefile, localTempfile, JschNodeExecutor.keyfilefinder);
 
         /**
          * Copy the file over
@@ -131,11 +132,12 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier {
      * @param remotepath path
      * @param sourceFile
      *
+     * @param finder
      * @return Scp object
      */
     protected Scp createScp(final ExecutionContext context, final INodeEntry nodeentry, final Project project,
                             final String remotepath,
-                            final File sourceFile) {
+                            final File sourceFile, final SSHTaskBuilder.KeyfileFinder finder) {
         final INodeAuthResolutionStrategy nodeAuth = framework.getNodeAuthResolutionStrategy();
 
         final Scp scp = new Scp();
@@ -163,10 +165,11 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier {
             /**
              * Configure keybased authentication
              */
-            final String sshKeypath = framework.getProperty(Constants.SSH_KEYPATH_PROP);
+            final String sshKeypath = finder != null ? finder.getKeyfilePathForNode(nodeentry, framework,
+                context.getFrameworkProject()) : null;
             final boolean keyFileExists = null != sshKeypath && !"".equals(sshKeypath) && new File(sshKeypath).exists();
             if (!keyFileExists) {
-                throw new CoreException("SSH Keyfile, " + sshKeypath + ", does not exist and is needed: " + sshKeypath);
+                throw new CoreException("SSH Keyfile does not exist: " + sshKeypath);
             }
             scp.setKeyfile(sshKeypath);
 
@@ -185,7 +188,7 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier {
 
             throw new CoreException("Unknown node authentication configuration for node: " + nodeentry.getNodename());
         }
-        //XXX:TODO use node attributes to specify ssh key/timeout
+        //XXX:TODO use node attributes to specify timeout
         /**
          * Set the local and remote file paths
          */
