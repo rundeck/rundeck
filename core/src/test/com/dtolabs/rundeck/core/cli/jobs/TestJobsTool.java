@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.cli.jobs;
 
 import com.dtolabs.rundeck.core.cli.CLIToolException;
 import com.dtolabs.rundeck.core.cli.CLIToolOptionsException;
+import com.dtolabs.rundeck.core.cli.SingleProjectResolver;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
@@ -405,6 +406,15 @@ public class TestJobsTool extends AbstractBaseTest {
         {
             //test missing project param
             final JobsTool tool = new JobsTool(getFrameworkInstance());
+            tool.internalResolver=new SingleProjectResolver() {
+                public boolean hasSingleProject() {
+                    return false;
+                }
+
+                public String getSingleProjectName() {
+                    return null;
+                }
+            };
             try {
                 final String[] args = {"list", "-n", "test1"};
                 final CommandLine line = tool.parseArgs(args);
@@ -414,6 +424,28 @@ public class TestJobsTool extends AbstractBaseTest {
                 assertNotNull(e);
                 assertTrue("wrong message:" + e.getMessage(), e.getMessage().startsWith(
                     "list action: -p/--project option is required"));
+            }
+
+        }
+        {
+            //test missing project param, defaulting to single project
+            final JobsTool tool = new JobsTool(getFrameworkInstance());
+            tool.internalResolver=new SingleProjectResolver() {
+                public boolean hasSingleProject() {
+                    return true;
+                }
+
+                public String getSingleProjectName() {
+                    return "testProject";
+                }
+            };
+            try {
+                final String[] args = {"list", "-n", "test1"};
+                final CommandLine line = tool.parseArgs(args);
+                tool.validateOptions(line, args);
+                assertEquals("testProject", tool.argProject);
+            } catch (CLIToolOptionsException e) {
+                fail("unexpected exception: " + e.getMessage());
             }
 
         }

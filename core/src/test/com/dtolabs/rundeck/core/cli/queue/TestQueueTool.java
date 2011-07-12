@@ -23,11 +23,13 @@ package com.dtolabs.rundeck.core.cli.queue;
 * $Id$
 */
 
+import com.dtolabs.rundeck.core.cli.SingleProjectResolver;
 import junit.framework.*;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.cli.CLIToolOptionsException;
+import org.apache.commons.cli.CommandLine;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -126,6 +128,49 @@ public class TestQueueTool extends AbstractBaseTest {
             }
             assertTrue("parseArgs did not succeed", success);
 
+        }
+        {
+            //test -p is required for multiple projects
+            final QueueTool tool = new QueueTool(getFrameworkInstance());
+            tool.internalResolver = new SingleProjectResolver() {
+                public boolean hasSingleProject() {
+                    return false;
+                }
+
+                public String getSingleProjectName() {
+                    return null;
+                }
+            };
+            try {
+                final String[] args = {"list"};
+                final CommandLine commandLine = tool.parseArgs(args);
+                tool.validateOptions(commandLine, args);
+                fail("Should have thrown exception");
+            } catch (CLIToolOptionsException e) {
+                assertNotNull(e);
+                assertTrue(e.getMessage().endsWith("-p argument is required with list action"));
+            }
+        }
+        {
+            //test -p is not required for a single project
+            final QueueTool tool = new QueueTool(getFrameworkInstance());
+            tool.internalResolver = new SingleProjectResolver() {
+                public boolean hasSingleProject() {
+                    return true;
+                }
+
+                public String getSingleProjectName() {
+                    return "testProject";
+                }
+            };
+            try {
+                final String[] args = {"list"};
+                final CommandLine commandLine = tool.parseArgs(args);
+                tool.validateOptions(commandLine, args);
+                assertEquals("testProject",tool.argProject);
+            } catch (CLIToolOptionsException e) {
+                fail("unexpected exception: " + e.getMessage());
+            }
         }
         {
             //test valid actions
