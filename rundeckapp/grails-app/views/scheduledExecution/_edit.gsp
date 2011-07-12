@@ -133,8 +133,21 @@ var applinks={
              var wfitem=$(form).down('div.wfitemEditForm');
              if(wfitem && !wascancelled){
                  doyft(wfitem.identify());
+                 $(wfitem).scrollTo();
+                 if ($(wfitem).down("span.cancelsavemsg")) {
+                     $(wfitem).down("span.cancelsavemsg").show();
+                 }
                  return false;
              }
+            var optedit= $(form).down('div.optEditForm');
+            if (optedit && !wascancelled) {
+                doyft(optedit.identify());
+                $(optedit).scrollTo();
+                if($(optedit).down("span.cancelsavemsg")){
+                    $(optedit).down("span.cancelsavemsg").show();
+                }
+                return false;
+            }
              return true;
          }
         function pageinit(){

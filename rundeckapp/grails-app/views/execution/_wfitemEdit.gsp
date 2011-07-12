@@ -93,6 +93,10 @@
 <g:hiddenField name="num" value="${num}"/>
 <g:hiddenField name="scheduledExecutionId" value="${scheduledExecutionId}"/>
     <div class="floatr" style="margin:10px 0;">
+        <span class="warn note cancelsavemsg" style="display:none;">
+            <g:message code="scheduledExecution.workflow.step.unsaved.warning"
+                       default="Discard or save changes to this Workflow Step before completing changes to the job"/>
+        </span>
         <g:if test="${newitemtype||newitem}">
             <g:hiddenField name="newitem" value="true"/>
             <g:hiddenField name="newitemtype" value="${newitemtype}"/>

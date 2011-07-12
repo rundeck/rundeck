@@ -176,6 +176,9 @@
 
         <g:hiddenField name="scheduledExecutionId" value="${scheduledExecutionId}"/>
         <div class="floatr" style="margin:10px 0;">
+            <span class="warn note cancelsavemsg" style="display:none;">
+                <g:message code="scheduledExecution.option.unsaved.warning" default="Discard or save changes to this option before completing changes to the job"/>
+            </span>
             <g:if test="${newoption}">
                 <g:hiddenField name="newoption" value="true"/>
                 <span class="action button small textbtn" onclick="_optcancelnew('${option?.name?.encodeAsJavaScript()}');" title="Cancel adding new option">Cancel</span>
