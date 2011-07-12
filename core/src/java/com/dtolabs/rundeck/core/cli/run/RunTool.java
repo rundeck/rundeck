@@ -36,7 +36,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.io.File;
 
 /**
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
@@ -104,6 +103,7 @@ public class RunTool extends BaseTool {
      * Reference to the Framework instance
      */
     private final Framework framework;
+    SingleProjectResolver internalResolver;
 
     /**
      * Creates an instance and executes {@link #run(String[])}.
@@ -167,6 +167,7 @@ public class RunTool extends BaseTool {
      */
     public RunTool(final Framework framework, final CLIToolLogger logger) {
         this.framework = framework;
+        internalResolver = new FrameworkSingleProjectResolver(framework);
         this.clilogger = logger;
         if (null == clilogger) {
             clilogger = new Log4JCLIToolLogger(log4j);
@@ -184,13 +185,13 @@ public class RunTool extends BaseTool {
     private NodeFilterOptions nodefilterOptions;
     private LoglevelOptions loglevelOptions;
     private ExtendedOptions extendedOptions;
-    private Options runOptions;
+    Options runOptions;
 
 
     /**
      * CLIToolOptions class for the run tool
      */
-    private class Options implements CLIToolOptions {
+    class Options implements CLIToolOptions {
 
         /**
          * short option string for query parameter: idlist
@@ -290,10 +291,15 @@ public class RunTool extends BaseTool {
                     + Options.ID_OPTION_LONG + " cannot be combined, please specify only one.");
             }
             if (null != argJob && null == argProject) {
-                throw new CLIToolOptionsException(
-                    "run action: -" + Options.JOB_OPTION + "/--" + Options.JOB_OPTION_LONG + " option requires -"
-                    + Options.PROJECT_OPTION + "/--"
-                    + Options.PROJECT_OPTION_LONG + " option");
+                if (internalResolver.hasSingleProject()) {
+                    argProject = internalResolver.getSingleProjectName();
+                    debug("# No project specified, defaulting to: " + argProject);
+                } else {
+                    throw new CLIToolOptionsException(
+                        "run action: -" + Options.JOB_OPTION + "/--" + Options.JOB_OPTION_LONG + " option requires -"
+                        + Options.PROJECT_OPTION + "/--"
+                        + Options.PROJECT_OPTION_LONG + " option");
+                }
             }
         }
     }

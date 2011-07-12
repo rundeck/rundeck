@@ -24,6 +24,7 @@ package com.dtolabs.rundeck.core.cli.run;
 */
 
 import com.dtolabs.rundeck.core.cli.CLIToolOptionsException;
+import com.dtolabs.rundeck.core.cli.SingleProjectResolver;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -104,7 +105,7 @@ public class TestRunTool extends AbstractBaseTest {
                 tool.validateOptions(line, args);
 
             } catch (CLIToolOptionsException e) {
-                fail("should not have thrown options exception: "+e);
+                fail("should not have thrown options exception: " + e);
             }
         }
         {
@@ -126,6 +127,53 @@ public class TestRunTool extends AbstractBaseTest {
                 final String[] args = {"run","-i","1","--","some","other","args"};
                 final CommandLine line = tool.parseArgs(args);
                 tool.validateOptions(line, args);
+            } catch (CLIToolOptionsException e) {
+                fail("unexpected exception: " + e.getMessage());
+            }
+        }
+        {
+            //-j option but no -p option
+            final RunTool tool = new RunTool(getFrameworkInstance());
+            tool.internalResolver=new SingleProjectResolver() {
+
+                public boolean hasSingleProject() {
+                    return false;
+                }
+
+                public String getSingleProjectName() {
+                    return null;
+                }
+            };
+            try {
+                final String[] args = {"run","-j","testjob"};
+                final CommandLine line = tool.parseArgs(args);
+                tool.validateOptions(line, args);
+                fail("should have thrown options exception.");
+            } catch (CLIToolOptionsException e) {
+                assertNotNull(e);
+                assertTrue("wrong message: " + e.getMessage(), e.getMessage().endsWith(
+                    "-j/--job option requires -p/--project option"));
+            }
+        }
+        {
+            //-j option but no -p option, defaulted project name
+            final RunTool tool = new RunTool(getFrameworkInstance());
+            tool.internalResolver= new SingleProjectResolver() {
+
+                public boolean hasSingleProject() {
+                    return true;
+                }
+
+
+                public String getSingleProjectName() {
+                    return "testProject";
+                }
+            };
+            try {
+                final String[] args = {"run","-j","testjob"};
+                final CommandLine line = tool.parseArgs(args);
+                tool.validateOptions(line, args);
+                assertEquals("testProject", tool.runOptions.argProject);
             } catch (CLIToolOptionsException e) {
                 fail("unexpected exception: " + e.getMessage());
             }
