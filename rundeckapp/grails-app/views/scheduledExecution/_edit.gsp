@@ -158,6 +158,7 @@ var applinks={
 <style lang="text/css">
     textarea.code{
         font-family: Courier,monospace;
+        font-size:100%;
     }
     /** drag and drop for workflow editor */
     #workflowDropfinal.ready{
