@@ -31,7 +31,6 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import org.apache.tools.ant.Project;
-import org.apache.tools.ant.Task;
 
 import java.io.File;
 import java.util.Map;
@@ -55,10 +54,14 @@ public class SSHTaskBuilder {
      * @param framework framework
      * @param timeout connection timeout
      * @param dataContext
+     * @param frameworkProject
+     * @param finder
      * @return task
      */
     public static ExtSSHExec build(final INodeEntry nodeentry, final String[] args, final Project project,
-                             final Framework framework, final long timeout, final Map<String, Map<String, String>> dataContext) throws
+                                   final Framework framework, final long timeout,
+                                   final Map<String, Map<String, String>> dataContext, final String frameworkProject,
+                                   final KeyfileFinder finder) throws
         BuilderException {
         final INodeAuthResolutionStrategy nodeAuth = framework.getNodeAuthResolutionStrategy();
 
@@ -108,8 +111,9 @@ public class SSHTaskBuilder {
             /**
              * Configure keybased authentication
              */
-            String sshKeypath = framework.getProperty(Constants.SSH_KEYPATH_PROP);
-            boolean keyFileExists = null != sshKeypath && !"".equals(sshKeypath) && new File(sshKeypath).exists();
+            final String sshKeypath =
+                finder != null ? finder.getKeyfilePathForNode(nodeentry, framework, frameworkProject) : null;
+            final boolean keyFileExists = null != sshKeypath && !"".equals(sshKeypath) && new File(sshKeypath).exists();
             if (!keyFileExists) {
                 throw new BuilderException("SSH Keyfile does not exist: " + sshKeypath);
             }
@@ -117,6 +121,7 @@ public class SSHTaskBuilder {
             sshexecTask.setKeyfile(sshKeypath);
 
         } else if (nodeAuth.isPasswordBasedAuthentication(nodeentry)) {
+            //nb password auth is never enabled
             /**
              * Configure password based authentication
              */
@@ -153,6 +158,13 @@ public class SSHTaskBuilder {
         public BuilderException(Throwable throwable) {
             super(throwable);
         }
+    }
+
+    /**
+     * Returns the path to the keyfile to use for the specified node
+     */
+    public static interface KeyfileFinder{
+        public String getKeyfilePathForNode(final INodeEntry node, final Framework framework, final String project);
     }
 
 }
