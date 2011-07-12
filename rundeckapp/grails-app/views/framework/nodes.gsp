@@ -513,6 +513,19 @@
 //            $$('.obs_shownodes').each(function(e){
 //                Event.observe(e, 'click', showNodeView);
 //            });
+
+            $$('#${rkey}filter div.filter input').each(function(elem) {
+                if (elem.type == 'text') {
+                    elem.observe('keypress', function(evt) {
+                        if (!noenter(evt)) {
+                            $('nodefiltersubmit').click();
+                            return false;
+                        } else {
+                            return true;
+                        }
+                    });
+                }
+            });
         }
         Event.observe(window,'load',init);
 
@@ -679,7 +692,7 @@
                     <div>
 
                         <div class=" " style="text-align:right;">
-                            <g:submitButton  name="Filter" />
+                            <g:submitButton  name="Filter" id="nodefiltersubmit"/>
 
                             <g:submitButton name="Clear" onclick="return _clearNodeFilters();"/>
                         </div>
