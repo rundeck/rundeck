@@ -240,9 +240,11 @@ about customizing log message formats and location.
 
 RunDeck backup should only be done with the server down. 
 
-(1) Export the jobs
+(1) Export the jobs. You will have to do this for each project
 
-         rd-jobs -f /path/to/backup/dir/job.xml
+        rd-jobs list -f /path/to/backup/dir/project1/jobs.xml -p project1
+        rd-jobs list -f /path/to/backup/dir/project2/jobs.xml -p project2
+        ...
 
 (2) Stop the server. See: [startup and shutdown](#startup-and-shtudown)
 

@@ -81,10 +81,10 @@ display a prompt confirming you want to delete that option from the Job.
 Clicking the "edit" link opens a new form that lets you modify all
 aspects of that option.
 
-Options can also be defined as part of an XML job definition and later
-loaded to the RunDeck server. See [job-v20(5)](job-v20.html) and 
+Options can also be defined as part of a job definition and later
+loaded to the RunDeck server. See [job-v20(5)](job-v20.html)(XML) and [job-yaml-v12(5)](job-yaml-v12.html)(YAML) and 
 [rd-jobs(1)](rd-jobs.html) manual
-pages if you prefer using an XML Job definition.
+pages if you prefer using an textual Job definition.
 
 ## Defining an option
 
@@ -247,9 +247,12 @@ environment variables.
 Jobs can be invoked from the command line using the `run`
 shell tool or as a step in another Job's workflow.
 
+The format for specifying options is `-name value`.
+
 Using the `run` command pass them after the double hyphen:
 
-    run -j jobId -- -paramA valA -paramB valB
+    run -i jobId -- -paramA valA -paramB valB
+    run -j group/name -p project -- -paramA valA -paramB valB
 
 Inside an XML definition, insert them as an `arg` element:
 

@@ -11,17 +11,24 @@ detail from a Job listing or within the Job editor form.
 ## Workflow definition
 
 Workflows can be defined within the RunDeck graphical console or as an
-XML document that is loaded to the server.
+XML or YAML document that is loaded to the server.
 
 The graphical console provides an authoring environment where steps
 can be added, edited, removed or reordered.
 
-Users preferring to define Jobs in XML should read the [job-v20(5)](job-v20.html)
-manual page. 
+Users preferring to define Jobs in a text format should refer to the two format definitions:
+
+* XML:  [job-v20(5)](job-v20.html)
+* YAML: [job-yaml-v12(5)](job-yaml-v12.5.html)
 
 It is also possible to author Jobs inside the graphical console
-and then export the definition as an XML file using the
+and then export the definition as a file using the
 `rd-jobs` shell tool ([rd-jobs(1)](rd-jobs.html)).
+
+See [Exporting Job definitions][1] and [Importing Job definitions][2].
+
+[1]: #exporting-job-definitions
+[2]: #importing-job-definitions
 
 ## Workflow control settings
 

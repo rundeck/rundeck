@@ -17,6 +17,9 @@ RunDeck provides two primary user interfaces:
 Both interfaces allow you to view resources, dispatch commands, as
 well as, store and run jobs.
 
+In addition RunDeck provides a Web API which can be used to interact with
+the server programattically. See [RunDeck API](api/index.html).
+
 ### Graphical Console 
 
 To get started, go to the URL for your RunDeck server. 
@@ -188,7 +191,6 @@ a verbose listing that includes more detail:
         osName: Mac OS X
         osVersion: 10.6.2
         tags: ''
-       ---- Attributes ----
 
 Node resources have standard properties, such as "hostname" but these
 can be extended via attributes. One of the more useful properties
@@ -299,23 +301,23 @@ Dispatcher execution can be controlled by various types of options.
 
 Execution control
 
-:    Command execution can be controlled in various ways. Concurrency
-     is controlled through threadcount. Execution can continue if specified
-     to keepgoing
+:    Concurrency
+     is controlled by setting the "threadcount". Execution can continue even if
+     some node fails if the "keepgoing" option is set to true.
 
-Include and exclude patterns
+Node Filters
 
-:    Filtering options specify include and exclude patterns to
+:    Filtering options specify include and exclude filters to
      determine which nodes from the project resource model to distribute
-     commands.
+     commands to.
 
-Keywords
+Filter Keywords
 
 :    Keywords are used within they include and exclude patterns. The
-     "tags" keywords additionally can use a boolean operator to combine
+     "tags" keyword additionally can use a boolean operator to combine
      logical ORs and ANDs.
 
-Option combination
+Filter combinations
 
 :    All keywords can be combined by specifying the include and
      exclude options multiple times on the command line.
@@ -653,7 +655,7 @@ the page.
 
 Execution can also be tracked using the [rd-queue](rd-queue.html) shell tool.
 
-    $ rd-queue
+    $ rd-queue -p project
     Queue: 1 items
     [5] workflow: Workflow:(threadcount:1){[command( scriptfile: /Users/alexh/bin/checkagain.sh)]} <http://strongbad:4440/execution/follow/5>
 
@@ -665,6 +667,55 @@ Specify execution ID using the "-e" option:
 
     $ rd-queue kill -e 5
     rd-queue kill: success. [5] Job status: killed
+
+### Plugins
+
+RunDeck supports a plugin model for the execution service, which allows you to
+fully customize the way that a particular Node, Project or your entire RunDeck installation executes commands and scripts remotely (or locally).
+
+By default RunDeck uses an internal plugin to perform execution via SSH for remote nodes, 
+and local execution on the RunDeck server itself.
+
+Plugins can be installed by copying them to the `libext` directory of your RunDeck
+installation.
+
+Plugins are used to add new "providers" for particular "services".  The services used for  command execution on nodes are the "node-executor" and "file-copier" services.
+
+To use a particular plugin, it must be set as the provider for a service by configuring the `framework.properties` file, the `project.properties` file, or by adding attributes to Nodes in your project's resources definitions.  For more about configuring the providers, see [Using Providers](#using-providers).
+
+The internal SSH command execution plugin is described below, and more information about plugins can be found in the [RunDeck Plugins](#rundeck-plugins) chapter.
+
+#### SSH Plugin
+
+RunDeck by default uses SSH to execute commands on remote nodes, SCP to copy scripts to remote nodes, and locally executes commands and scripts for the local (server) node.
+
+The SSH plugin expects each node definition to have the following properties in order to create the SSH connection:
+
+* `hostname`: the hostname of the remote node.  It can be in the format "hostname:port" to indicate that a non-default port should be used. The default port is 22.
+* `username`: the username to connect to the remote node.
+
+When a Script is executed on a remote node, it is copied over via SCP first, and then executed.  In addition to the SSH connection properties above, these node attributes
+can be configured for SCP:
+
+* `file-copy-destination-dir`: The directory on the remote node to copy the script file to before executing it. The default value is `C:/WINDOWS/TEMP/` on Windows nodes, and `/tmp` for other nodes.
+* `osFamily`: specify "windows" for windows nodes.
+
+In addition, for both SSH and SCP, you must also have the private key of the public/private keypair for the remote 
+node available on the server.  See [Configuring SSH Private Keys](#configuring-ssh-private-keys).
+
+The SSH plugin is used by default for non-local nodes, however you can also configure it explicitly using these provider names:
+
+* NodeExecutor provider: `jsch-ssh`
+* FileCopier provider: `jsch-scp`
+
+The Local plugin is used by default on the local (server) node.  You configure the local plugin if necessary with the provider name `local`.
+
+#### Included Plugins
+
+Two plugin files are included with the default RunDeck installation for your use in testing or development. (See [Pre-Installed Plugins](#pre-installed-plugins))
+
+* [Stub plugin](#stub-plugin): simply prints the command or script instead of running it.
+* [Script plugin](#script-plugin): executes an external script file to perform the command, useful for developing your own plugin with the [Script Plugin Development](#script-plugin-development) model.
 
 ## History
 

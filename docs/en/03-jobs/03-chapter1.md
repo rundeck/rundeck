@@ -137,9 +137,9 @@ Jobs can be run from the shell or from the graphical console.
 
 From the command line, use the [run](run.html) shell tool.
 Here's an example that starts a hypothetical job named "restart"
-belonging in the "apps/web" Job group:
+belonging in the "apps/web" Job group in project "myproject":
 
-    $ run -j apps/web/restart
+    $ run -j apps/web/restart -p myproject
     Job execution started:
     [51] restart <http://strongbad:4440/execution/follow/51>
 
@@ -398,32 +398,43 @@ Similarly, to Copy a Job definition to a new Job, press the Copy button.
 ## Exporting Job definitions
 
 Job definitions created inside the RunDeck graphical console can be
-exported to an XML file format and be used for later import. 
+exported to XML or YAML file formats and be used for later import. 
 
-Two methods exist to retrieve the XML definition one inside RunDeck's
-graphical interface and the other using the <code>rd-jobs</code> shell tool.
+Two methods exist to retrieve the Job definitions: via RunDeck's
+graphical interface, and via the <code>rd-jobs</code> shell tool.
 
-In the Job detail page, locate the icon with an XML symbol in the toolbar. It is labeled
-"Download XML"  in the mouse tool tip. 
+In the Job detail page, locate the icon with a document symbol in the toolbar. It is labeled
+"Download Job definition file"  in the mouse tool tip. Clicking on the icon will let you
+choose either XML or YAML format to download the definition.
 
 ![Job export button](figures/fig0314.png)
 
-Press this button to initiate the file download to your
-browser. Depending on your browser, it will be stored in your
-downloads directory.
+Click the preferred format to initiate the file download to your
+browser. 
 
-If you prefer the command line open a shell on the RunDeck server.
+If you prefer to use the command line, open a shell on the RunDeck server.
 Run the ``rd-jobs`` command to write it to disk. By default,
 rd-jobs will dump all Job definitions to one file. To limit it to just
-a single Job specify its name:
+a single Job specify its name with `-n` or its ID with `-i`:
 
-    rd-jobs -n "job-name" -f job.xml
+    rd-jobs -p project -n "job-name" -f job.xml
 
-This will store the results in the "job.xml" file [job-v20(5)](job-v20.html).
+This will store the results in the "job.xml" file.
+
+To export it in YAML format, specify the `-F` option:
+
+    rd-jobs -p project -n "job-name" -F yaml -f job.yaml
+
+This will export in the YAML document format file.
+
+The XML and YAML document formats are described here:
+
+* XML:  [job-v20(5)](job-v20.html)
+* YAML: [job-yaml-v12(5)](job-yaml-v12.5.html)
 
 Consult the [rd-jobs(1)](rd-jobs.html) manual page for additional command usage.
 
-## Importing Jobs definitions
+## Importing Job definitions
 
 If you have a "job.xml" file (See above) and want to upload it via
 the GUI web interface, you can do so.

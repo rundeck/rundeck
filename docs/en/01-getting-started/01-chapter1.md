@@ -35,6 +35,9 @@ The command dispatcher supports two methods of command execution:
 RunDeck provides both graphical and command line interfaces to
 interact with the command dispatcher.
 
+You can also use the Web API to interface with all aspects of the command
+dispatcher. (See the [RunDeck API](api/index.html).)
+
 ### Resource model
 
 The command dispatcher works in conjunction with a resource model. A
@@ -117,25 +120,23 @@ Verify your Java version to check it meets the requirement:
 
 #### Network access
 
-When the server starts, it binds to several TCP ports:
+When the server starts, it binds to several TCP ports by default:
 
 *  4440 (http) 
 *  4443 (https)
-*  4435 (log4j)
 
 To check if the ports are free on a Unix host, run:
 
-    netstat -an | egrep '4440|4435' 
+    netstat -an | egrep '4440|4443' 
 
 If the ports are in use on the server, you will see output similar to below:
 
     tcp46      0      0  *.4440                 *.*                    LISTEN
-    tcp46      0      0  *.4435                 *.*                    LISTEN
 
 The installation procedures describe how to choose different ports, if
 there is a conflict.
     
-In addition, TCP port 22 needs to be open on the clients for SSH.
+In addition, TCP port 22 (by default) needs to be open on the clients for SSH.
     
 Clients should be set up to allow the RunDeck server user to connect to
 the clients using SSH via public-key authentication. It should not
@@ -152,16 +153,22 @@ There are various ways for installing SSH on Windows; we recommend
 
 Checkout the sources from [GitHub](https://github.com/dtolabs/rundeck)
 
-Run the build script:
+You can build either the launcher jar (self-running archive), or a RPM.
 
-    ./build.sh
+    make
 
-Build clean
+Creates the rundeck-launcher.jar
 
-    ./build.sh -clean
+Build the RPM:
 
-The build will generate a launcher jar. On Linux build servers, an RPM
-will also be generated.
+    make rpm
+
+To build clean:
+
+    make clean
+
+Documentation can be built using: `make clean docs`.  Documentation build requires [pandoc](http://johnmacfarlane.net/pandoc/).  The RPM build depends on the the 
+documentation as well.
 
 ### Installing with RPM
 

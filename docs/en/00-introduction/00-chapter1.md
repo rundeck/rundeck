@@ -46,7 +46,8 @@ RunDeck is free software and is public under the [Apache Software License].
 
 ### RunDeck features
 
-* distributed command execution via SSH
+* distributed command execution
+* pluggable execution system uses SSH by default
 * multi-step workflows 
 * job definition and on demand or scheduled runs
 * graphical console for command and job execution
@@ -54,6 +55,7 @@ RunDeck is free software and is public under the [Apache Software License].
 * history and auditing logs
 * open integration to external host inventory tools
 * command line interface 
+* Web API
 
 ### RunDeck in context
 

@@ -480,7 +480,7 @@ Run the ``rd-jobs load`` command for each job definition file:
 The ``rd-jobs list`` command queries RunDeck and prints out the list of
 defined jobs:
 
-    rd-jobs list
+    rd-jobs list -p anvils
     Found 3 jobs:
 	- Restart [9] <http://strongbad:4440/scheduledExecution/show/9>
 	- start [10] <http://strongbad:4440/scheduledExecution/show/10>
@@ -512,15 +512,16 @@ with the restriction "enforced from allowed values".
 The jobs can also be started from the command line using the
 [run](run.html) shell tool. The job group and name are specified
 using the "-j" parameter. Any options the Job supports are supplied
-after the "--" (double dash) parameter.
+after the "--" (double dash) parameter. (The "-p" parameter specifies the project,
+but it can be left out if there is only one project available.)
 
 Run Restart specifying the method, "normal": 
 
-    run -j "anvils/web/Restart" -- -method normal
+    run -j "anvils/web/Restart" -p anvils -- -method normal
 
 Run Restart specifying the method, "kill":
 
-    run -j "anvils/web/Restart" -- -method kill
+    run -j "anvils/web/Restart" -p anvils -- -method kill
 
 
 ## Job access control
