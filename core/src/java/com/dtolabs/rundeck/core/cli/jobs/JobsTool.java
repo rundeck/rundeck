@@ -247,7 +247,7 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
     private String argName;
     private String argGroup;
     private String argIdlist;
-    private String argProject;
+    String argProject;
     private boolean argVerbose;
     private File argFile;
     private JobDefinitionFileFormat format= JobDefinitionFileFormat.xml;
@@ -337,6 +337,7 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
      * Reference to the Framework instance
      */
     private final Framework framework;
+    SingleProjectResolver internalResolver;
 
     /**
      * Creates an instance and executes {@link #run(String[])}.
@@ -405,6 +406,7 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
      */
     public JobsTool(final Framework framework, final CLIToolLogger logger) {
         this.framework = framework;
+        internalResolver = new FrameworkSingleProjectResolver(framework);
         this.clilogger = logger;
         if (null == clilogger) {
             clilogger = new Log4JCLIToolLogger(log4j);
@@ -534,10 +536,8 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
         public void validate(final CommandLine cli, final String[] original) throws CLIToolOptionsException {
             if (Actions.list == action) {
                 if(null==argProject){
-                    if(framework.getFrameworkProjectMgr().listFrameworkProjects().size() == 1) {
-                        final FrameworkProject project =
-                            (FrameworkProject) framework.getFrameworkProjectMgr().listFrameworkProjects().iterator().next();
-                        argProject = project.getName();
+                    if(internalResolver.hasSingleProject()) {
+                        argProject = internalResolver.getSingleProjectName();
                         debug("# No project specified, defaulting to: " + argProject);
                     }else{
                         throw new CLIToolOptionsException(

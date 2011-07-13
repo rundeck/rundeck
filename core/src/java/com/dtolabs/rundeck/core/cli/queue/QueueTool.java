@@ -147,6 +147,7 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
      * Reference to the Framework instance
      */
     private final Framework framework;
+    SingleProjectResolver internalResolver;
 
     /**
      * Creates an instance and executes {@link #run(String[])}.
@@ -221,6 +222,7 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
      */
     public QueueTool(final Framework framework, final CLIToolLogger logger) {
         this.framework = framework;
+        internalResolver=new FrameworkSingleProjectResolver(framework);
         this.clilogger = logger;
         if (null == clilogger) {
             clilogger = new Log4JCLIToolLogger(log4j);
@@ -280,10 +282,8 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
                 warn("-"+ EXECID_OPTION +"/--"+ EXECID_OPTION_LONG +" argument only valid with kill action");
             }
             if(null==argProject){
-                if (framework.getFrameworkProjectMgr().listFrameworkProjects().size() == 1) {
-                    final FrameworkProject project =
-                        (FrameworkProject) framework.getFrameworkProjectMgr().listFrameworkProjects().iterator().next();
-                    argProject = project.getName();
+                if (internalResolver.hasSingleProject()) {
+                    argProject = internalResolver.getSingleProjectName();
                     debug("# No project specified, defaulting to: " + argProject);
                 } else {
                     throw new CLIToolOptionsException("-" + PROJECT_OPTION + " argument is required with list action");
