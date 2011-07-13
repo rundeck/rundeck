@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.utils.NodeSet;
+import com.dtolabs.rundeck.core.utils.StringArrayUtil;
 import com.dtolabs.utils.Streams;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.util.URIUtil;
@@ -806,7 +807,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         final String idlistFilter = iStoredJobsQuery.getIdlist();
 
         if (null != nameMatch) {
-            params.put("jobFilter", nameMatch);
+            params.put("jobExactFilter", nameMatch);
         }
         if (null != groupMatch) {
             final Matcher matcher = Pattern.compile("^/*(.+?)/*$").matcher(groupMatch);
@@ -814,7 +815,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
                 //strip leading and trailing slashes
                 groupMatch = matcher.group(1);
             }
-            params.put("groupPath", groupMatch);
+            params.put("groupPathExact", groupMatch);
         }
         if (null != projectFilter) {
             params.put("project", projectFilter);
@@ -933,9 +934,13 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
                     "Job not found matching query: " + (null != group ? group : "") + "/" + name);
             }
             if (iStoredJobs.size() > 1) {
+                ArrayList<String> ids = new ArrayList<String>();
+                for (final IStoredJob iStoredJob : iStoredJobs) {
+                    ids.add(iStoredJob.getJobId());
+                }
                 throw new CentralDispatcherException(
-                    "Job not was not unique: " + (null != group ? group : "") + "/" + name + ": " + iStoredJobs.size()
-                    + " jobs found");
+                    "Job was not unique: " + (null != group ? group : "") + "/" + name + ": " + iStoredJobs.size()
+                    + " jobs found: " + ids);
             }
             //use found id
             final IStoredJob next = iStoredJobs.iterator().next();

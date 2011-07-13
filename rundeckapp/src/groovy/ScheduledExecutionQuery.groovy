@@ -25,9 +25,11 @@
 public class ScheduledExecutionQuery extends BaseQuery{
 
     String jobFilter
+    String jobExactFilter
     String projFilter
     String groupPath
-    
+    String groupPathExact
+
     String descFilter
     String loglevelFilter
     String idlist
@@ -45,6 +47,7 @@ public class ScheduledExecutionQuery extends BaseQuery{
     public final static EQ_FILTERS=[
                 loglevel:'loglevel',
                 proj:'project',
+                jobExact:'jobName',
             ]
     /**
      * Boolean filters
@@ -80,6 +83,10 @@ public class ScheduledExecutionQuery extends BaseQuery{
         if(this['groupPath']){
             sb.append('groupPath: ')
             sb.append("'${this['groupPath']}',")
+        }
+        if(this['groupPathExact']){
+            sb.append('groupPathExact: ')
+            sb.append("'${this['groupPathExact']}',")
         }
         sb.append("]")
         return sb.toString()

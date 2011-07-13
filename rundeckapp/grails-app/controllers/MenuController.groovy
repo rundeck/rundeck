@@ -540,6 +540,12 @@ class MenuController {
             flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
             return chain(controller:'api',action:'error')
         }
+        if(query.groupPathExact || query.jobExactFilter){
+            //these query inputs require API version 2
+            if (!new ApiController().requireVersion(ApiRequestFilters.V2)) {
+                return
+            }
+        }
         def results = jobsFragment(query)
 
         withFormat{
