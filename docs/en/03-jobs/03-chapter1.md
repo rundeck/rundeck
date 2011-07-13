@@ -264,6 +264,39 @@ For the first saved Job example, create a Job that calls the info script.
      -    Press the "output >>" link to go to the execution follow page.
      ![Simple saved job output](figures/fig0305.png)
 
+### Node dispatching and filtering
+
+When you create a job you can choose between either running the job only locally (on the RunDeck server), or dispatching it to multiple nodes (including the RunDeck server if you want).
+
+In the GUI, the "Dispatch to Nodes" checkbox lets you enable node dispatching.  When you click this box you are presented with the Node Filtering interface:
+
+![Node Filtering interface](figures/fig0305-b.png)
+
+You can click the different filter fields "Name", and "Tags" to enter filter values for those fields.  As you update the values you will see the "Matched Nodes" section updated to reflect the list of nodes that will match the inputs.  You can click "More" to see more of the available inclusion filters, and you can click "Extended Filters" to enter
+exclusion filters for the same fields.
+
+You can set the maximum number of simultaneous threads to use by changing the "Thread Count" box.  A value of 1 means all node dispatches happen sequentially, and any greater value means that the node dispatches will happen in parallel.
+
+If you set "Keep going on error?" to "Yes", then if any node dispatches fail for any reason, the rest will continue to be executed until all have been executed.  At the end of the workflow for all nodes, the Job Execution will fail if any of the nodes had failed.
+
+If you leave it at the default value of "No", then if any node dispatches fail for any reason, no further dispatches will be executed and the Job Execution will fail immediately.
+
+#### Dynamic node filters
+
+In addition to entering static values that match the nodes, you can also use 
+more dynamic values.
+
+If you have defined Options for the Job (see [Job Options](#job-options)), you
+can use the values submitted by the user when the job is executed as part of the
+node filtering.
+
+Simply set the filter value to `${option.name}`, where "name" is the name of the option.
+
+When the job is executed, the user will be prompted to enter the value of the option, and
+that will then be used in the node filter to determine the nodes to dispatch to.
+
+**Note**: Since the dynamic option value is not set yet, the "Matched Nodes" shown in the node filtering input may indicate that there are "None" matched.  Also, when the Job is executed, you may see a message saying "Warning: The Node filters specified for this Job do not match any nodes, execution may fail." The nodes matched will be determined
+after the user enters the option values.
 
 ## Scheduled Jobs
 
