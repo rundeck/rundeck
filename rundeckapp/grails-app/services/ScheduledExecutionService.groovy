@@ -81,7 +81,7 @@ class ScheduledExecutionService {
             }
 
         }
-        if(!query.groupPath){
+        if(!query.groupPath && !query.groupPathExact){
             query.groupPath='*'
         }else if('-'==query.groupPath){
             query.groupPath=null
@@ -135,6 +135,18 @@ class ScheduledExecutionService {
                 or{
                     like("groupPath",query["groupPath"]+"/%")
                     eq("groupPath",query['groupPath'])
+                }
+            }else if(query["groupPathExact"]){
+                if("-"==query["groupPathExact"]){
+
+                    or {
+                        eq("groupPath", "")
+                        isNull("groupPath")
+                    }
+                }else{
+                    or{
+                        eq("groupPath",query['groupPathExact'])
+                    }
                 }
             }else{
                 or{
