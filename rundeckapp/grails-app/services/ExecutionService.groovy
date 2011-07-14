@@ -10,9 +10,11 @@ import com.dtolabs.rundeck.core.execution.ExecutionItem
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.utils.NodeSet
-import com.dtolabs.rundeck.core.utils.NodeSet.Exclude;
-import com.dtolabs.rundeck.core.utils.NodeSet.Include;
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
+import com.dtolabs.rundeck.execution.ExecutionItemFactory
+import com.dtolabs.rundeck.execution.IWorkflowCmdItem
+import com.dtolabs.rundeck.execution.IWorkflowJobItem
+import com.dtolabs.rundeck.execution.JobExecutionItem
 import grails.util.GrailsWebUtil
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
@@ -35,7 +37,6 @@ import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.support.WebApplicationContextUtils
 import com.dtolabs.rundeck.core.execution.commands.*
 import com.dtolabs.rundeck.core.execution.workflow.*
-import com.dtolabs.rundeck.execution.*
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -74,6 +75,15 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             lastexecs[proj]=results
         }
         return lastexecs
+    }
+    /**
+     * Return the last execution time for any execution in the query's project
+     * @param query
+     * @return
+     */
+    def Execution lastExecution(String project){
+        def execs = Execution.findAllByProjectAndDateCompletedIsNotNull(project,[max:1,sort:'dateCompleted',order:'desc'])
+        return execs?execs[0]:null
     }
 
     /**

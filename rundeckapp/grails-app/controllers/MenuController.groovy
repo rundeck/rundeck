@@ -1,11 +1,7 @@
-import java.util.Collections;
-
+import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.core.common.Framework
-
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
-import com.dtolabs.client.utils.Constants
-import com.dtolabs.rundeck.core.authorization.Decision
 import java.lang.management.ManagementFactory
 
 class MenuController {
@@ -41,6 +37,10 @@ class MenuController {
         def model= executionService.queryQueue(query)
         //        System.err.println("nowrunning: "+model.nowrunning);
         model = executionService.finishQueueQuery(query,params,model)
+
+        //include timestamp of last completed execution for the project
+        Execution e=executionService.lastExecution(query.projFilter)
+        model.lastExecId=e?.id
         
         User u = userService.findOrCreateUser(session.user)
         Map filterpref=[:] 
