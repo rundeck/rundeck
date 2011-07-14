@@ -25,7 +25,6 @@
 package com.dtolabs.rundeck.plugin.script;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
@@ -63,14 +62,17 @@ import java.util.*;
 public class ScriptNodeExecutor implements NodeExecutor {
     public static String SCRIPT_ATTRIBUTE = "script-exec";
     public static String DIR_ATTRIBUTE = "script-exec-dir";
+    public static String SHELL_ATTRIBUTE = "script-exec-shell";
     private static final String SCRIPT_EXEC_DEFAULT_COMMAND_PROPERTY = "plugin.script-exec.default.command";
     private static final String SCRIPT_EXEC_DEFAULT_DIR_PROPERTY = "plugin.script-exec.default.dir";
+    private static final String SCRIPT_EXEC_DEFAULT_REMOTE_SHELL =
+        "plugin.script-exec.default.shell";
 
     public NodeExecutorResult executeCommand(final ExecutionContext executionContext, final String[] command,
                                              final INodeEntry node) throws ExecutionException {
         File workingdir = null;
-        String scriptargs = null;
-        String dirstring = null;
+        String scriptargs;
+        String dirstring;
 
         //get project or framework property for script-exec args
         final Framework framework = executionContext.getFramework();
@@ -110,33 +112,31 @@ public class ScriptNodeExecutor implements NodeExecutor {
         final Map<String, Map<String, String>> newDataContext = DataContextUtils.addContext("exec", scptexec,
             dataContext);
 
-        //use script-exec attribute and replace datareferences
-        final String[] args = DataContextUtils.replaceDataReferences(scriptargs.split(" "), newDataContext);
+        final Process exec;
 
-        //create system environment variables from the data context
-        final Map<String, String> envMap = DataContextUtils.generateEnvVarsFromContext(dataContext);
-        final ArrayList<String> envlist = new ArrayList<String>();
-        for (final String key : envMap.keySet()) {
-            final String envval = envMap.get(key);
-            envlist.add(key + "=" + envval);
+        String remoteShell = framework.getProjectProperty(executionContext.getFrameworkProject(),
+            SCRIPT_EXEC_DEFAULT_REMOTE_SHELL);
+        if (null != node.getAttributes().get(SHELL_ATTRIBUTE)) {
+            remoteShell = node.getAttributes().get(SHELL_ATTRIBUTE);
         }
-        final String[] envarr = envlist.toArray(new String[envlist.size()]);
-
-
-        int result = -1;
-        boolean success = false;
-        Thread errthread = null;
-        Thread outthread = null;
-        String errmsg;
-        executionContext.getExecutionListener().log(3, "[script-exec] executing: " + StringArrayUtil.asString(args,
-            " "));
-        final Runtime runtime = Runtime.getRuntime();
-        Process exec = null;
         try {
-            exec = runtime.exec(args, envarr, workingdir);
+            if (null != remoteShell) {
+                exec = ScriptUtil.execShellProcess(executionContext.getExecutionListener(), workingdir, scriptargs,
+                    dataContext, newDataContext, remoteShell, "script-exec");
+            } else {
+                exec = ScriptUtil.execProcess(executionContext.getExecutionListener(), workingdir, scriptargs,
+                    dataContext,
+                    newDataContext, "script-exec");
+            }
         } catch (IOException e) {
             throw new ExecutionException(e);
         }
+
+        int result = -1;
+        boolean success = false;
+        Thread errthread;
+        Thread outthread;
+
         try {
             errthread = Streams.copyStreamThread(exec.getErrorStream(), System.err);
             outthread = Streams.copyStreamThread(exec.getInputStream(), System.out);
@@ -171,4 +171,5 @@ public class ScriptNodeExecutor implements NodeExecutor {
             }
         };
     }
+
 }
