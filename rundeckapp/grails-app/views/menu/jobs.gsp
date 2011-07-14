@@ -133,12 +133,17 @@
                 loadHistory();
             }
         }
+        var lastRunExec=0;
         /**
          * Handle embedded content updates
          */
         function _updateBoxInfo(name,data){
             if(name==='events' && data.lastDate){
                 histControl.setHiliteSince(data.lastDate);
+            }
+            if (name == 'nowrunning' && data.lastExecId && data.lastExecId != lastRunExec) {
+                lastRunExec = data.lastExecId;
+                loadHistory();
             }
         }
 
@@ -147,7 +152,7 @@
         function loadNowRunning(){
             runupdate=new Ajax.PeriodicalUpdater('nowrunning','${createLink(controller:"menu",action:"nowrunningFragment")}',{
                 evalScripts:true,
-                parameters:{}
+                parameters:{projFilter:'${session.project}'}
             });
         }
 

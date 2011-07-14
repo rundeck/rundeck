@@ -6,5 +6,4 @@
 <g:if test="${total>max}">
 <span class="paginate"><g:paginate action="nowrunning" total="${total}"  max="${max}"/></span>
 </g:if>
-
-<g:render template="/common/boxinfo" model="${[name:'nowrunning',model:[title:'Now Running',total:total]]}"/>
+<g:render template="/common/boxinfo" model="${[name:'nowrunning',model:[title:'Now Running',total:total,lastExecId:lastExecId]]}"/>
