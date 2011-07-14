@@ -29,7 +29,6 @@ import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.utils.NodeSet;
-import com.dtolabs.rundeck.core.utils.StringArrayUtil;
 import com.dtolabs.utils.Streams;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.util.URIUtil;
@@ -72,7 +71,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
     /**
      * RUNDECK API Version
      */
-    public static final String RUNDECK_API_VERSION = "1";
+    public static final String RUNDECK_API_VERSION = "2";
     /**
      * RUNDECK API base path
      */

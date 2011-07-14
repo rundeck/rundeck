@@ -75,6 +75,15 @@ if [ 0 != $? ] ; then
 	exit 2
 fi
 
+# try to run job by name and project
+
+$RDECK_BASE/tools/bin/run -j 'test/simple exec test' -p test
+if [ 0 != $? ] ; then
+	echo Failed to run job by name: $!
+	exit 2
+fi
+
+
 # try dispatch
 echo "using --noqueue option"
 $RDECK_BASE/tools/bin/dispatch -p test --noqueue -- uptime
