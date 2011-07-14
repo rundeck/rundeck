@@ -1885,7 +1885,7 @@ class ScheduledExecutionController  {
                     if (theopt.errors.hasErrors() || !theopt.validate()) {
                         failed = true
                         theopt.discard()
-                        def errmsg = optdefparams.name + ": " + theopt.errors.allErrors.collect {g.message(error: it)}.join(";")
+                        def errmsg = theopt.name + ": " + theopt.errors.allErrors.collect {g.message(error: it)}.join(";")
                         scheduledExecution.errors.rejectValue(
                                'options',
                                'scheduledExecution.options.invalid.message',
