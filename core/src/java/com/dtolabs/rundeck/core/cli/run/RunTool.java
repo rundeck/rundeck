@@ -352,9 +352,10 @@ public class RunTool extends BaseTool {
 
         if (null != runOptions.argJob && runOptions.argJob.indexOf("/") >= 0) {
             //separate group and job name
-            final Matcher m = Pattern.compile("^(/?(.+)/)?(.+)$").matcher(runOptions.argJob);
+            final Matcher m = Pattern.compile("^(/?(.*)/)?(.+)$").matcher(runOptions.argJob);
             if (m.matches()) {
-                jobgroup = m.group(2);
+                final String gmatch= m.group(2);
+                jobgroup = "".equals(gmatch)?null:gmatch;
                 jobname = m.group(3);
             } else {
                 jobname = runOptions.argJob;

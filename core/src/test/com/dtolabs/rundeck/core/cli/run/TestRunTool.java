@@ -23,12 +23,20 @@ package com.dtolabs.rundeck.core.cli.run;
 * $Id$
 */
 
+import com.dtolabs.client.services.QueuedItemResultImpl;
 import com.dtolabs.rundeck.core.cli.CLIToolOptionsException;
 import com.dtolabs.rundeck.core.cli.SingleProjectResolver;
+import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import org.apache.commons.cli.CommandLine;
+
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
 
 public class TestRunTool extends AbstractBaseTest {
     RunTool runTool;
@@ -181,5 +189,181 @@ public class TestRunTool extends AbstractBaseTest {
 
         
 
+    }
+
+
+    static class failCentralDispatcher implements CentralDispatcher {
+        boolean listStoredJobsCalled = false;
+        boolean loadJobsCalled = false;
+        ILoadJobsRequest loadRequest;
+        java.io.File loadInput;
+        IStoredJobsQuery listStoredJobsQuery;
+        OutputStream listStoredJobsOutput;
+        Collection<IStoredJob> listJobsResult;
+        Collection<IStoredJobLoadResult> loadJobsResult;
+        JobDefinitionFileFormat loadFormat;
+        JobDefinitionFileFormat listFormat;
+
+
+        public QueuedItemResult queueDispatcherJob(IDispatchedJob job) throws CentralDispatcherException {
+            fail("unexpected call to queueDispatcherJob");
+            return null;
+        }
+
+        public QueuedItemResult queueDispatcherScript(final IDispatchedScript dispatch) throws
+            CentralDispatcherException {
+            fail("unexpected call to queueDispatcherScript");
+            return null;
+        }
+
+        public Collection<QueuedItem> listDispatcherQueue(final String project) throws CentralDispatcherException {
+            //
+            fail("unexpected call to listDispatcherQueue");
+            return null;
+        }
+
+        public Collection<QueuedItem> listDispatcherQueue() throws CentralDispatcherException {
+            //
+            fail("unexpected call to listDispatcherQueue");
+            return null;
+        }
+
+        public DispatcherResult killDispatcherExecution(final String id) throws CentralDispatcherException {
+            fail("unexpected call to killDispatcherExecution");
+            return null;
+        }
+
+        public void reportExecutionStatus(String project, String title, String status, int totalNodeCount,
+                                          int successNodeCount, String tags, String script, String summary, Date start,
+                                          Date end) throws CentralDispatcherException {
+            fail("unexpected call to reportExecutionStatus");
+        }
+
+        public Collection<IStoredJobLoadResult> loadJobs(ILoadJobsRequest request, java.io.File input,
+                                                         JobDefinitionFileFormat format) throws
+            CentralDispatcherException {
+            fail("unexpected call to loadJobs");
+            return null;
+        }
+
+        public Collection<IStoredJob> listStoredJobs(IStoredJobsQuery query, OutputStream output,
+                                                     JobDefinitionFileFormat format) throws
+            CentralDispatcherException {
+            fail("unexpected call to loadJobs");
+            return null;
+        }
+    }
+
+    static class testCentralDispatcher1 extends failCentralDispatcher{
+        IDispatchedJob queuedJob;
+        QueuedItemResult queueDispatcherJobResult;
+        @Override
+        public QueuedItemResult queueDispatcherJob(IDispatchedJob job) throws CentralDispatcherException {
+            queuedJob=job;
+            return queueDispatcherJobResult;
+        }
+    }
+    public void testJobOptionGroups() throws Exception {
+
+        {
+            //-j option but no -p option, defaulted project name
+            final Framework framework = getFrameworkInstance();
+            final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
+            framework.setCentralDispatcherMgr(centralDispatcher1);
+            centralDispatcher1.queueDispatcherJobResult = QueuedItemResultImpl.successful("test", "123", "blah",
+                "blah");
+
+            final RunTool tool = new RunTool(framework);
+
+            //no group in -j
+            tool.run(new String[]{"run", "-j", "testjob", "-p", "testProject"});
+            assertNotNull(centralDispatcher1.queuedJob);
+            assertEquals(null, centralDispatcher1.queuedJob.getJobRef().getJobId());
+            assertEquals(null, centralDispatcher1.queuedJob.getJobRef().getGroup());
+            assertEquals("testProject", centralDispatcher1.queuedJob.getJobRef().getProject());
+            assertEquals("testjob", centralDispatcher1.queuedJob.getJobRef().getName());
+
+            //empty / in -j
+            tool.run(new String[]{"run", "-j", "/testjob", "-p", "testProject"});
+            assertNotNull(centralDispatcher1.queuedJob);
+            assertEquals(null, centralDispatcher1.queuedJob.getJobRef().getJobId());
+            assertEquals(null, centralDispatcher1.queuedJob.getJobRef().getGroup());
+            assertEquals("testProject", centralDispatcher1.queuedJob.getJobRef().getProject());
+            assertEquals("testjob", centralDispatcher1.queuedJob.getJobRef().getName());
+
+            //group used / in -j
+            tool.run(new String[]{"run", "-j", "test/testjob", "-p", "testProject"});
+            assertNotNull(centralDispatcher1.queuedJob);
+            assertEquals(null, centralDispatcher1.queuedJob.getJobRef().getJobId());
+            assertEquals("test", centralDispatcher1.queuedJob.getJobRef().getGroup());
+            assertEquals("testProject", centralDispatcher1.queuedJob.getJobRef().getProject());
+            assertEquals("testjob", centralDispatcher1.queuedJob.getJobRef().getName());
+
+            //group multilevel used / in -j
+            tool.run(new String[]{"run", "-j", "test/blah/monkey/testjob", "-p", "testProject"});
+            assertNotNull(centralDispatcher1.queuedJob);
+            assertEquals(null, centralDispatcher1.queuedJob.getJobRef().getJobId());
+            assertEquals("test/blah/monkey", centralDispatcher1.queuedJob.getJobRef().getGroup());
+            assertEquals("testProject", centralDispatcher1.queuedJob.getJobRef().getProject());
+            assertEquals("testjob", centralDispatcher1.queuedJob.getJobRef().getName());
+
+            //group multilevel used / in -j, leading slash
+            tool.run(new String[]{"run", "-j", "/test/blah/monkey/testjob", "-p", "testProject"});
+            assertNotNull(centralDispatcher1.queuedJob);
+            assertEquals(null, centralDispatcher1.queuedJob.getJobRef().getJobId());
+            assertEquals("test/blah/monkey", centralDispatcher1.queuedJob.getJobRef().getGroup());
+            assertEquals("testProject", centralDispatcher1.queuedJob.getJobRef().getProject());
+            assertEquals("testjob", centralDispatcher1.queuedJob.getJobRef().getName());
+
+
+        }
+    }
+    public void testJobOptionId() throws Exception {
+
+        {
+            //-j option but no -p option, defaulted project name
+            final Framework framework = getFrameworkInstance();
+            final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
+            framework.setCentralDispatcherMgr(centralDispatcher1);
+            centralDispatcher1.queueDispatcherJobResult = QueuedItemResultImpl.successful("test", "123", "blah",
+                "blah");
+
+            final RunTool tool = new RunTool(framework);
+
+            //no group in -j
+            tool.run(new String[]{"run", "-i", "testjob"});
+            assertNotNull(centralDispatcher1.queuedJob);
+            assertEquals("testjob", centralDispatcher1.queuedJob.getJobRef().getJobId());
+            assertEquals(null, centralDispatcher1.queuedJob.getJobRef().getGroup());
+            assertEquals(null, centralDispatcher1.queuedJob.getJobRef().getProject());
+            assertEquals(null, centralDispatcher1.queuedJob.getJobRef().getName());
+            assertEquals(null, centralDispatcher1.queuedJob.getArgs());
+
+        }
+    }
+    public void testArgs() throws Exception {
+
+        {
+            //-j option but no -p option, defaulted project name
+            final Framework framework = getFrameworkInstance();
+            final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
+            framework.setCentralDispatcherMgr(centralDispatcher1);
+            centralDispatcher1.queueDispatcherJobResult = QueuedItemResultImpl.successful("test", "123", "blah",
+                "blah");
+
+            final RunTool tool = new RunTool(framework);
+
+            //no group in -j
+            tool.run(new String[]{"run", "-i", "testjob","--","-test1","arg","-test2","arg2"});
+            assertNotNull(centralDispatcher1.queuedJob);
+            assertEquals("testjob", centralDispatcher1.queuedJob.getJobRef().getJobId());
+            assertEquals(null, centralDispatcher1.queuedJob.getJobRef().getGroup());
+            assertEquals(null, centralDispatcher1.queuedJob.getJobRef().getProject());
+            assertEquals(null, centralDispatcher1.queuedJob.getJobRef().getName());
+            assertNotNull(centralDispatcher1.queuedJob.getArgs());
+            assertEquals(Arrays.asList("-test1", "arg", "-test2", "arg2"), Arrays.asList(
+                centralDispatcher1.queuedJob.getArgs()));
+
+        }
     }
 }

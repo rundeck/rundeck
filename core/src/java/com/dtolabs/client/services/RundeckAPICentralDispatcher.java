@@ -908,20 +908,19 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         if (null != dispatchedJob.getJobRef().getJobId()) {
             jobid = dispatchedJob.getJobRef().getJobId();
         } else {
-            final String name;
-            final String group;
-            final String project = dispatchedJob.getJobRef().getProject();
-
-            if (null != dispatchedJob.getJobRef().getName()) {
-                name = dispatchedJob.getJobRef().getName();
-            } else {
-                name = null;
+            if(null==dispatchedJob.getJobRef().getName() || "".equals(dispatchedJob.getJobRef().getName())) {
+                throw new CentralDispatcherException("job name input is required");
             }
-            if (null != dispatchedJob.getJobRef().getGroup()) {
+            final String project = dispatchedJob.getJobRef().getProject();
+            final String name = dispatchedJob.getJobRef().getName();
+            final String group;
+            if (null != dispatchedJob.getJobRef().getGroup() && !"".equals(dispatchedJob.getJobRef().getGroup())) {
                 group = dispatchedJob.getJobRef().getGroup();
             } else {
-                group = null;
+                //indicates a top level job
+                group = "-";
             }
+
             //Query to find matching job
             final Collection<IStoredJob> iStoredJobs = reallistStoredJobs(new IStoredJobsQueryImpl(name, group, null,
                 project));
