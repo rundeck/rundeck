@@ -482,9 +482,9 @@ defined jobs:
 
     rd-jobs list -p anvils
     Found 3 jobs:
-	- Restart <http://strongbad:4440/scheduledExecution/show/9>
-	- start <http://strongbad:4440/scheduledExecution/show/10>
-	- stop <http://strongbad:4440/scheduledExecution/show/11>
+	- Restart - 'the web restart procedure'
+	- start - 'the web start procedure'
+	- stop - 'the web stop procedure'
 
 Of course, the jobs can be viewed inside the RunDeck graphical console by going to
 the Jobs page. Hovering over the "Restart" job name reveals job detail.
