@@ -39,8 +39,7 @@ makedocs:
 $(core): $(CORE_FILES)
 	./build.sh rundeck_core
 
-$(war): $(core) $(RUNDECK_FILES)
-	./build.sh rundeckapp
+$(war): $(launcher)
 
 $(plugs): $(core) $(PLUGIN_FILES)
 	cd plugins && ./gradlew	
