@@ -803,41 +803,25 @@ directory.
 
 These are the default Application Roles that the role mapping can override:
 
-+-----------------------+-----------------------+
-|**Application Role**   |**User Role**          |
-+-----------------------+-----------------------+
-|`admin`                |admin                  |
-+-----------------------+-----------------------+
-|`user_admin`           |admin                  |
-+-----------------------+-----------------------+
-|`workflow_read`        |user                   |
-+-----------------------+-----------------------+
-|`workflow_create`      |admin                  |
-+-----------------------+-----------------------+
-|`workflow_update`      |admin                  |
-+-----------------------+-----------------------+
-|`workflow_kill`        |user                   |
-+-----------------------+-----------------------+
-|`workflow_run`         |user                   |
-+-----------------------+-----------------------+
-|`events_read`          |user                   |
-+-----------------------+-----------------------+
-|`events_create`        |user                   |
-+-----------------------+-----------------------+
-|`events_update`        |admin                  |
-+-----------------------+-----------------------+
-|`events_delete`        |admin                  |
-+-----------------------+-----------------------+
-|`resources_read`       |user                   |
-+-----------------------+-----------------------+
-|`resources_create`     |admin                  |
-+-----------------------+-----------------------+
-|`resources_update`     |admin                  |
-+-----------------------+-----------------------+
-|`resources_delete`     |admin                  |
-+-----------------------+-----------------------+
-|`job_view_unauthorized`|job\_view\_unauthorized|
-+-----------------------+-----------------------+
+
+**Application Role**    **User Role**          
+----------------------  -------------------------
+`admin`                 admin                  
+`user_admin`            admin
+`workflow_read`         user
+`workflow_create`       admin
+`workflow_update`       admin
+`workflow_kill`         user
+`workflow_run`          user
+`events_read`           user
+`events_create`         user
+`events_update`         admin
+`events_delete`         admin
+`resources_read`        user
+`resources_create`      admin
+`resources_update`      admin
+`resources_delete`      admin
+`job_view_unauthorized` job\_view\_unauthorized
 
 
 Note
@@ -1056,30 +1040,31 @@ Export pem cacert for use by e.g. curl:
 You can modify some display features of the RunDeck GUI by setting
 these properties in the [rundeck-config.properties](#rundeck-config.properties) file:
 
-+-------------------------+-------------------------------------+--------------------+
-|**Property**             |   **Description**                   |**example**         |
-+-------------------------+-------------------------------------+--------------------+
-|`rundeck.gui.title`      |Title shown in app header            |Test App            |
-+-------------------------+-------------------------------------+--------------------+
-|`rundeck.gui.logo`       |Logo icon path relative to           | test-logo.png      |
-|                         |webapps/rundeck/images dir           |                    |
-+-------------------------+-------------------------------------+--------------------+
-|`rundeck.gui.logo-width` |Icon width for proper display (32px  |32px                |
-|                         |is best)                             |                    |
-+-------------------------+-------------------------------------+--------------------+
-|`rundeck.gui.logo-height`|Icon height for proper display (32px |32px                |
-|                         |is best)                             |                    |
-+-------------------------+-------------------------------------+--------------------+
-|`rundeck.gui.titleLink`  |URL for the link used by the app     |http://rundeck.org  |
-|                         |header icon.                         |                    |
-+-------------------------+-------------------------------------+--------------------+
-|`rundeck.gui.helpLink`   |URL for the "help" link in the app   |http://rundeck.org/ |
-|                         |header.                              |   docs             |
-+-------------------------+-------------------------------------+--------------------+
-|`rundeck.gui.realJobTree`|Displaying a real tree in the Jobs   |false               |
-|                         |overview instead of collapsing       |                    |
-|                         |empty groups. **Default: true**      |                    |
-+-------------------------+-------------------------------------+--------------------+
+-------------------------------------------------------------------------------
+**Property**              **Description**                      **Example**
+----------------------    ----------------------------------   ----------------
+`rundeck.gui.title`       Title shown in app header            Test App
+
+`rundeck.gui.logo`        Logo icon path relative to           test-logo.png
+                          webapps/rundeck/images dir           
+
+`rundeck.gui.logo-width`  Icon width for proper display (32px  32px
+                          is best)                             
+
+`rundeck.gui.logo-height` Icon height for proper display (32px 32px
+                          is best)                             
+
+`rundeck.gui.titleLink`   URL for the link used by the app     http://rundeck.org
+                          header icon.                         
+
+`rundeck.gui.helpLink`    URL for the "help" link in the app   http://rundeck.org/
+                          header.                              docs
+
+`rundeck.gui.realJobTree` Displaying a real tree in the Jobs   false
+                          overview instead of collapsing            
+                          empty groups. **Default: true**           
+-------------------------------------------------------------------------------
+
 
 ## Customizing configuration for scale
 
