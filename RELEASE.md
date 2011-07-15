@@ -5,7 +5,9 @@ Date: 7/15/2011
 
 Closed Issues:
 
- [#235 - token expansion in nodes filter](http://rundeck.lighthouseapp.com/projects/59277/tickets/235)
+* [#390 - Generate resources.xml after project setup](http://rundeck.lighthouseapp.com/projects/59277/tickets/390)
+* [#265 - Make it possible to use forceBindingLogin="true" and still obtain roles from rootContext](http://rundeck.lighthouseapp.com/projects/59277/tickets/265)
+* [#235 - token expansion in nodes filter](http://rundeck.lighthouseapp.com/projects/59277/tickets/235)
 * [#240 - Customizable dispatch plugin ](http://rundeck.lighthouseapp.com/projects/59277/tickets/240)
 * [#202 - Long running jobs time out after 30 seconds](http://rundeck.lighthouseapp.com/projects/59277/tickets/202)
 * [#385 - run -j option fails to find unique job by name](http://rundeck.lighthouseapp.com/projects/59277/tickets/385)

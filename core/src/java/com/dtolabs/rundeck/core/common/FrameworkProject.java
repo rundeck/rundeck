@@ -116,6 +116,8 @@ public class FrameworkProject extends FrameworkResourceParent {
             } catch (UpdateUtils.UpdateException e) {
                 getLogger().error("Unable to retrieve resources file: " + e.getMessage());
             }
+        }else if(!resfile.isFile()){
+            generateResourcesFile(resfile);
         }
         initialize();
     }
