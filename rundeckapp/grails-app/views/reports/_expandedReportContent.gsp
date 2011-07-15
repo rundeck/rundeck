@@ -33,7 +33,13 @@
                     </g:if>
                     <div class="rptitem">
                         <g:if test="${it.jcJobId}">
-                            <g:link controller="scheduledExecution" action="show" id="${it.jcJobId}"><g:message code="domain.ScheduledExecution.title"/> Detail &raquo;</g:link>
+                            <g:set var="foundJob" value="${ ScheduledExecution.get(it.jcJobId)}"/>
+                            <g:if test="${foundJob}">
+                                <g:link controller="scheduledExecution" action="show" id="${foundJob.extid}"><g:message code="domain.ScheduledExecution.title"/> Detail &raquo;</g:link>
+                            </g:if>
+                            <g:else>
+                                <span class="warning note">(<g:message code="domain.ScheduledExecution.title"/> ID ${it.jcJobId} has been deleted)</span>
+                            </g:else>
                         </g:if>
                     </div>
                     <g:if test="${it.jcExecId }">

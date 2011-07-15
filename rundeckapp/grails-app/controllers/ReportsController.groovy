@@ -1,9 +1,8 @@
-import org.springframework.web.servlet.ModelAndView
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.core.common.Framework
-import java.util.regex.Matcher
-import java.text.SimpleDateFormat
 import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.regex.Matcher
 
 class ReportsController {
     def reportService
@@ -520,7 +519,7 @@ class ReportsController {
                         delegate.'date-ended'(g.w3cDateValue(date:rpt.dateCompleted))
                         if(rpt.jcJobId){
                             def foundjob=scheduledExecutionService.getByIDorUUID(rpt.jcJobId)
-                            job(id:foundjob?foundjob.extid:jcJobId)
+                            job(id:foundjob?foundjob.extid:rpt.jcJobId)
                         }
                         if(rpt.jcExecId){
                             execution(id:rpt.jcExecId)
