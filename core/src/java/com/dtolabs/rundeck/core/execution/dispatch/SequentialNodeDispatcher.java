@@ -29,11 +29,12 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.NodeFileParserException;
 import com.dtolabs.rundeck.core.execution.*;
-import com.dtolabs.rundeck.core.execution.commands.CommandInterpreter;
-import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
 import com.dtolabs.rundeck.core.utils.NodeSet;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 
 /**
  * SequentialNodeDispatcher is ...
@@ -135,6 +136,8 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                 success = false;
                 failures.put(node.getNodename(), "Error dispatching command to the node: " + e.getMessage());
 
+                context.getExecutionListener().log(Constants.ERR_LEVEL,
+                    "Failed dispatching to node " + node.getNodename() + ": " + e.getMessage());
                 if (!keepgoing) {
                     if (failures.size() > 0 && null != failedListener) {
                         //tell listener of failed node list
@@ -142,9 +145,6 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                     }
                     throw new DispatcherException(
                         "Failed dispatching to node " + node.getNodename() + ": " + e.getMessage(), e, node);
-                } else {
-                    context.getExecutionListener().log(Constants.ERR_LEVEL,
-                        "Failed dispatching to node " + node.getNodename() + ": " + e.getMessage());
                 }
             }
         }
