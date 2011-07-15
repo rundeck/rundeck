@@ -13,11 +13,16 @@
     <g:form controller="scheduledExecution" method="post">
         <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized,jobexecOptionErrors:jobexecOptionErrors]}"/>
 
-        <g:if test="${nodesetempty }">
+        <g:if test="${nodesetvariables }">
+            <div class="message note">
+                <g:message code="scheduledExecution.nodeset.variable.warning" default="Note: The Node filters specified for this Job contain variable references, and the runtime nodeset cannot be determined."/>
+            </div>
+        </g:if>
+        <g:elseif test="${nodesetempty }">
             <div class="error note">
                 <g:message code="scheduledExecution.nodeset.empty.warning"/>
             </div>
-        </g:if>
+        </g:elseif>
         <div class="buttons" id="formbuttons">
 
             <g:actionSubmit id="execFormCancelButton" value="Cancel"/>
