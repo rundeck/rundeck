@@ -41,8 +41,11 @@ import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
 import com.dtolabs.rundeck.core.plugins.PluginManagerService;
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
+import com.dtolabs.rundeck.core.resources.nodes.ConfigurationException;
+import com.dtolabs.rundeck.core.resources.nodes.FileNodesProvider;
+import com.dtolabs.rundeck.core.resources.nodes.NodesProviderException;
+import com.dtolabs.rundeck.core.resources.nodes.NodesProviderService;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
-import com.dtolabs.rundeck.core.utils.NodeSet;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import org.apache.log4j.Logger;
 import org.apache.tools.ant.BuildException;
@@ -53,7 +56,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 
 
 /**
@@ -169,6 +171,7 @@ public class Framework extends FrameworkResourceParent {
         NodeDispatcherService.getInstanceForFramework(this);
         ExecutionServiceFactory.getInstanceForFramework(this);
         WorkflowExecutionService.getInstanceForFramework(this);
+        NodesProviderService.getInstanceForFramework(this);
     }
 
     private CentralDispatcher centralDispatcherMgr;
@@ -334,6 +337,9 @@ public class Framework extends FrameworkResourceParent {
     }
     public NodeDispatcher getNodeDispatcherForContext(ExecutionContext context) throws ExecutionServiceException {
         return NodeDispatcherService.getInstanceForFramework(this).getNodeDispatcher(context);
+    }
+    public NodesProviderService getNodesProviderService() {
+        return NodesProviderService.getInstanceForFramework(this);
     }
 
     public ServiceProviderLoader getPluginManager(){
@@ -611,7 +617,7 @@ public class Framework extends FrameworkResourceParent {
      * Generate a node entry for the framework with default values
      * @return
      */
-    NodeEntryImpl createFrameworkNode() {
+    public NodeEntryImpl createFrameworkNode() {
         NodeEntryImpl node = new NodeEntryImpl(getFrameworkNodeHostname(), getFrameworkNodeName());
         node.setUsername(getProperty("framework.ssh.user"));
         node.setDescription("Rundeck server node");
@@ -659,7 +665,6 @@ public class Framework extends FrameworkResourceParent {
         n = frameworkProject.getNodes(nodesFile);
         return n;
     }
-
     /**
      * Read the nodes file for a project and return a filtered set of nodes
      *
@@ -670,9 +675,9 @@ public class Framework extends FrameworkResourceParent {
      *
      * @throws NodeFileParserException
      */
-    public Collection<INodeEntry> filterNodes(final NodeSet nodeset, final String project) throws
+    public Collection<INodeEntry> filterNodes(final NodesSelector nodeset, final String project, final File nodesFile) throws
         NodeFileParserException {
-        return filterNodes(nodeset, project, null);
+        return filterNodeSet(nodeset, project, nodesFile).getNodes();
     }
     /**
      * Read the nodes file for a project and return a filtered set of nodes
@@ -684,45 +689,27 @@ public class Framework extends FrameworkResourceParent {
      *
      * @throws NodeFileParserException
      */
-    public Collection<INodeEntry> filterNodes(final NodeSet nodeset, final String project, final File nodesFile) throws
+    public INodeSet filterNodeSet(final NodesSelector nodeset, final String project, final File nodesFile) throws
         NodeFileParserException {
-        /**
-         * Read the nodes.properties file
-         */
-        final Nodes n;
-        if(null!=nodesFile) {
-            n = readNodesFile(project, nodesFile);
-        } else {
-            n=readNodesFile(project);
-        }
-        /**
-         * Retrieve the complete list of node entries
-         */
-        logger.debug("unfiltered nodeset size=" + n.countNodes());
-        if (0 == n.countNodes()) {
-            logger.warn("Empty node list");
-        } else {
-            if (null != nodeset && !nodeset.isBlank()) {
-                /**
-                 * Apply the include/exclude filters to the list
-                 */
-                logger.debug("applying nodeset filter... " + nodeset.toString());
-                /**
-                 * Reset collection to filter results
-                 */
-                return n.filterNodes(nodeset);
-            } else {
-                //include only the local framework node
-                final String nodeName = getFrameworkNodeName();
-                final INodeEntry node = n.getNode(nodeName);
-                final List<INodeEntry> list = new ArrayList<INodeEntry>();
-                if(null!=node){
-                    list.add(node);
-                }
-                return list;
+        INodeSet unfiltered=null;
+
+        System.err.println("Framework.filterNodeSet, instance: " + hashCode());
+        if (null != nodesFile) {
+            try {
+                unfiltered = FileNodesProvider.parseFile(nodesFile, this, project);
+            } catch (NodesProviderException e) {
+                throw new CoreException(e);
+            } catch (ConfigurationException e) {
+                throw new CoreException(e);
             }
+        } else {
+            unfiltered = getFrameworkProjectMgr().getFrameworkProject(project).getNodeSet();
         }
-        return n.listNodes();
+        if(0==unfiltered.getNodeNames().size()) {
+            logger.warn("Empty node list");
+        }
+        INodeSet filtered = NodeFilter.filterNodes(nodeset, unfiltered);
+        return filtered;
     }
 
     public File getConfigDir() {

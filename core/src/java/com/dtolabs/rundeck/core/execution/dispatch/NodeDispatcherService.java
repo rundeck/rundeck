@@ -23,15 +23,13 @@
 */
 package com.dtolabs.rundeck.core.execution.dispatch;
 
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.common.NodeFileParserException;
+import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.service.BaseProviderRegistryService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
-import com.dtolabs.rundeck.core.utils.NodeSet;
-
-import java.util.Collection;
+import com.dtolabs.rundeck.core.resources.nodes.ConfigurationException;
+import com.dtolabs.rundeck.core.resources.nodes.FileNodesProvider;
+import com.dtolabs.rundeck.core.resources.nodes.NodesProviderException;
 
 /**
  * NodeProcessorService is ...
@@ -49,15 +47,28 @@ public class NodeDispatcherService extends BaseProviderRegistryService<NodeDispa
     }
 
     public  NodeDispatcher getNodeDispatcher(ExecutionContext context) throws ExecutionServiceException {
-        final NodeSet nodeset = context.getNodeSet();
-        Collection<INodeEntry> nodes = null;
+        final NodesSelector nodeset = context.getNodeSelector();
+        final FrameworkProject frameworkProject = framework.getFrameworkProjectMgr().getFrameworkProject(
+            context.getFrameworkProject());
+        INodeSet filtered=null;
         try {
-            nodes = framework.filterNodes(nodeset, context.getFrameworkProject(), context.getNodesFile());
+            INodeSet unfiltered;
+            if(null!= context.getNodesFile()) {
+                unfiltered = FileNodesProvider.parseFile(context.getNodesFile(), framework,
+                    context.getFrameworkProject());
+            }else{
+                unfiltered=frameworkProject.getNodeSet();
+            }
+            filtered = NodeFilter.filterNodes(nodeset, unfiltered);
         } catch (NodeFileParserException e) {
+            throw new ExecutionServiceException(e, getName());
+        } catch (NodesProviderException e) {
+            throw new ExecutionServiceException(e, getName());
+        } catch (ConfigurationException e) {
             throw new ExecutionServiceException(e, getName());
         }
 
-        if (nodeset.getThreadCount() > 1 && nodes.size() > 1) {
+        if (context.getThreadCount() > 1 && filtered.getNodeNames().size() > 1) {
             return providerOfType("parallel");
         }else{
             return providerOfType("sequential");

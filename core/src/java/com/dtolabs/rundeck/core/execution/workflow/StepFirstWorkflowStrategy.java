@@ -26,7 +26,6 @@ package com.dtolabs.rundeck.core.execution.workflow;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.execution.*;
-import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 
 import java.util.*;
@@ -56,7 +55,7 @@ public class StepFirstWorkflowStrategy extends BaseWorkflowStrategy {
         final List<DispatcherResult> resultList = new ArrayList<DispatcherResult>();
         try {
             executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
-                "NodeSet: " + executionContext.getNodeSet());
+                "NodeSet: " + executionContext.getNodeSelector());
             executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, "Workflow: " + workflow);
             executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, "data context: " + executionContext
                 .getDataContext());

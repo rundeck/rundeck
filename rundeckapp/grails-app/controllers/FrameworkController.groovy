@@ -1,15 +1,10 @@
-import com.dtolabs.rundeck.core.common.FrameworkProject
-import com.dtolabs.rundeck.core.common.Framework
-import grails.converters.*
-import com.dtolabs.rundeck.core.common.Nodes
-import com.dtolabs.rundeck.core.common.INodeEntry
+import NodeFilter
 import com.dtolabs.rundeck.core.utils.NodeSet
-import java.util.regex.PatternSyntaxException
 import com.dtolabs.shared.resources.ResourceXMLGenerator
-import com.dtolabs.rundeck.core.common.NodesYamlGenerator
-import com.dtolabs.rundeck.core.common.NodesFileGenerator
-import com.dtolabs.rundeck.core.common.NodesGeneratorException
 import com.dtolabs.utils.Streams
+import grails.converters.JSON
+import java.util.regex.PatternSyntaxException
+import com.dtolabs.rundeck.core.common.*
 
 class FrameworkController  {
     FrameworkService frameworkService
@@ -106,15 +101,16 @@ class FrameworkController  {
         def filterErrors=[:]
         def project = framework.getFrameworkProjectMgr().getFrameworkProject(query.project)
         def nodes
-        final Nodes nodes1 = project.getNodes()
-        allcount=nodes1.countNodes()
+        final Nodes parsedNodes = project.getNodes()
+        final INodeSet nodes1 = project.getNodeSet()
+        allcount=nodes1.nodes.size()
         if(params.localNodeOnly){
             nodes=[nodes1.getNode(framework.getFrameworkNodeName())]
         }
         else if (nset && !(nset.include.blank && nset.exclude.blank)){
             //match using nodeset unless all filters are blank
             try {
-                nodes= nodes1.filterNodes(nset)
+                nodes= com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nset,nodes1).nodes
             } catch (PatternSyntaxException e) {
                 request.error='<pre>'+e.getMessage()+'</pre>'
                 filterErrors['filter']='<pre>'+e.getMessage()+'</pre>'
@@ -122,7 +118,7 @@ class FrameworkController  {
             }
         }else if("true"==params.defaultAllNodes){
             //match all nodes if filters are all blank
-            nodes = nodes1.listNodes()
+            nodes = nodes1.getNodes()
         }else{
             //match only local node if filters are blank
             nodes=[nodes1.getNode(framework.getFrameworkNodeName())]
@@ -222,9 +218,9 @@ class FrameworkController  {
 
         def model=[
             allnodes: allnodes,
-            nodesvalid:nodes1.valid,
-            nodeserror:nodes1.parserException,
-            nodesfile:nodes1.file,
+            nodesvalid: parsedNodes.valid,
+            nodeserror: parsedNodes.parserException,
+//            nodesfile:nodes1.file,
             params:params,
             total:total,
             allcount:allcount,
@@ -262,7 +258,7 @@ class FrameworkController  {
     def nodesData = {ExtNodeFilters query->
         def result = nodes(query)
         if(params.project){
-            render result.allnodes[params.project].nodes as JSON
+            render result.allnodes[params.project].nodeSet.nodes as JSON
         }else{
             render result.allnodes as JSON
         }
@@ -654,7 +650,7 @@ class FrameworkController  {
         NodeSet nset = new NodeSet()
         nset.setSingleNodeName(params.name)
         def pject=frameworkService.getFrameworkProject(params.project,framework)
-        final Collection nodes = pject.getNodes().filterNodes(nset)
+        final Collection nodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nset,pject.getNodeSet()).nodes
         if(!nodes || nodes.size()<1 ){
             flash.error=g.message(code:'api.error.item.doesnotexist',args:['Node Name',params.name])
             return chain(controller:'api',action:'error')
@@ -698,7 +694,8 @@ class FrameworkController  {
             query.nodeInclude=".*"
         }
         def pject=frameworkService.getFrameworkProject(params.project,framework)
-        final Collection nodes = pject.getNodes().filterNodes(ExecutionService.filtersAsNodeSet(query))
+//        final Collection nodes = pject.getNodes().filterNodes(ExecutionService.filtersAsNodeSet(query))
+        final Collection nodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(ExecutionService.filtersAsNodeSet(query), pject.getNodeSet()).nodes
         return apiRenderNodeResult(nodes)
     }
     def apiRenderNodeResult={nodes->

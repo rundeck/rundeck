@@ -170,11 +170,18 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
                 return "blah";
             }
 
-            public NodeSet getNodeSet() {
+            public NodeSet getNodeSelector() {
 
                 return null;
             }
 
+            public int getThreadCount() {
+                return 1;
+            }
+
+            public boolean isKeepgoing() {
+                return false;
+            }
             public String[] getArgs() {
                 return new String[0];
             }
@@ -299,11 +306,18 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
                 return "blah";
             }
 
-            public NodeSet getNodeSet() {
+            public NodeSet getNodeSelector() {
 
                 return null;
             }
 
+            public int getThreadCount() {
+                return 1;
+            }
+
+            public boolean isKeepgoing() {
+                return false;
+            }
             public String[] getArgs() {
                 return new String[0];
             }
@@ -434,9 +448,17 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
                 return "blah";
             }
 
-            public NodeSet getNodeSet() {
+            public NodeSet getNodeSelector() {
 
                 return null;
+            }
+
+            public int getThreadCount() {
+                return 1;
+            }
+
+            public boolean isKeepgoing() {
+                return false;
             }
 
             public String[] getArgs() {
@@ -549,11 +571,18 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
                 return "blah";
             }
 
-            public NodeSet getNodeSet() {
+            public NodeSet getNodeSelector() {
 
                 return null;
             }
 
+            public int getThreadCount() {
+                return 1;
+            }
+
+            public boolean isKeepgoing() {
+                return false;
+            }
             public String[] getArgs() {
                 return new String[0];
             }
@@ -663,9 +692,17 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
                 return "blah";
             }
 
-            public NodeSet getNodeSet() {
+            public NodeSet getNodeSelector() {
 
                 return null;
+            }
+
+            public int getThreadCount() {
+                return 1;
+            }
+
+            public boolean isKeepgoing() {
+                return false;
             }
 
             public String[] getArgs() {
@@ -796,9 +833,17 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
                 return "blah";
             }
 
-            public NodeSet getNodeSet() {
+            public NodeSet getNodeSelector() {
 
                 return null;
+            }
+
+            public int getThreadCount() {
+                return 1;
+            }
+
+            public boolean isKeepgoing() {
+                return false;
             }
 
             public String[] getArgs() {
@@ -927,9 +972,17 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
                 return "blah";
             }
 
-            public NodeSet getNodeSet() {
+            public NodeSet getNodeSelector() {
 
                 return null;
+            }
+
+            public int getThreadCount() {
+                return 1;
+            }
+
+            public boolean isKeepgoing() {
+                return false;
             }
 
             public String[] getArgs() {

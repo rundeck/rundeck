@@ -17,6 +17,8 @@
 package com.dtolabs.rundeck.core.utils;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.NodesSelector;
+import com.dtolabs.rundeck.core.common.SelectorUtils;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.ProjectComponent;
@@ -29,7 +31,7 @@ import java.util.regex.PatternSyntaxException;
 /**
  * NodeSet provides filtering logic for Node criteria
  */
-public class NodeSet extends ProjectComponent {
+public class NodeSet extends ProjectComponent implements NodesSelector {
     public static final String HOSTNAME = "hostname";
     public static final String NAME = "name";
     public static final String TYPE = "type";
@@ -81,6 +83,33 @@ public class NodeSet extends ProjectComponent {
 
     public void setSingleNodeName(final String singleNodeName) {
         this.singleNodeName = singleNodeName;
+    }
+
+    public boolean acceptNode(final INodeEntry entry) {
+        return !shouldExclude(entry);
+    }
+    /**
+     * Return a new Node Selector that will apply the include/exclude filters if they are set, otherwise
+     * it only includes the node with the given nodename
+     */
+    public NodesSelector nodeSelectorWithDefault(final String nodename) {
+        final NodesSelector nodesSelector = SelectorUtils.singleNode(nodename);
+        return new NodesSelector() {
+            public boolean acceptNode(final INodeEntry entry) {
+                return !isBlank() ? NodeSet.this.acceptNode(entry) : nodesSelector.acceptNode(entry);
+            }
+        };
+    }
+    /**
+     * Return a new Node Selector that will apply the include/exclude filters if they are set, otherwise
+     * it will accept all nodes
+     */
+    public NodesSelector nodeSelectorWithDefaultAll() {
+        return new NodesSelector() {
+            public boolean acceptNode(final INodeEntry entry) {
+                return isBlank() || NodeSet.this.acceptNode(entry);
+            }
+        };
     }
 
     /**

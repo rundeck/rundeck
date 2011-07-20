@@ -36,11 +36,11 @@ import com.dtolabs.rundeck.core.execution.service.NodeExecutorService;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.core.utils.NodeSet;
-import junit.framework.TestCase;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
 
 /**
  * TestExecCommandInterpreter is ...
@@ -116,9 +116,17 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
                 return "blah";
             }
 
-            public NodeSet getNodeSet() {
+            public NodeSet getNodeSelector() {
 
                 return null;
+            }
+
+            public int getThreadCount() {
+                return 1;
+            }
+
+            public boolean isKeepgoing() {
+                return false;
             }
 
             public String[] getArgs() {
@@ -210,11 +218,18 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
                 return "blah";
             }
 
-            public NodeSet getNodeSet() {
+            public NodeSet getNodeSelector() {
 
                 return null;
             }
 
+            public int getThreadCount() {
+                return 1;
+            }
+
+            public boolean isKeepgoing() {
+                return false;
+            }
             public String[] getArgs() {
                 return new String[0];
             }

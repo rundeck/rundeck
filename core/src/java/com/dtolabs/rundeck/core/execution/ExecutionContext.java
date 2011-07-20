@@ -24,7 +24,7 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.utils.NodeSet;
+import com.dtolabs.rundeck.core.common.NodesSelector;
 
 import java.io.File;
 import java.util.Map;
@@ -54,11 +54,19 @@ public interface ExecutionContext {
     public String getUser();
 
     /**
-     * Return the nodeset configuration
+     * Return the node selector
      *
      * @return nodeset
      */
-    NodeSet getNodeSet();
+    NodesSelector getNodeSelector();
+    /**
+     * Return node dispatch threadcount
+     */
+    int getThreadCount();
+    /**
+     * return node dispatch keepgoing
+     */
+    boolean isKeepgoing();
 
     /**
      * Get the argument line definition

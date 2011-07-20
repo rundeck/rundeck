@@ -26,6 +26,9 @@ import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.commands.ExecCommand;
 import com.dtolabs.rundeck.core.execution.commands.ScriptFileCommand;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
+import com.dtolabs.rundeck.core.resources.nodes.ConfigurationException;
+import com.dtolabs.rundeck.core.resources.nodes.FileNodesProvider;
+import com.dtolabs.rundeck.core.resources.nodes.NodesProviderException;
 import com.dtolabs.rundeck.core.utils.*;
 import org.apache.commons.cli.*;
 import org.apache.log4j.PropertyConfigurator;
@@ -445,7 +448,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
      */
     void listAction() {
         try {
-            log((argVerbose ? getNodeFormatter() : new DefaultNodeFormatter()).formatNodes(filterNodes()).toString());
+            log((argVerbose ? getNodeFormatter() : new DefaultNodeFormatter()).formatNodes(filterNodes(false).getNodes()).toString());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -550,15 +553,18 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
 
 
         final String tags;
-        if (null != getNodeSet() && null != getNodeSet().getInclude() && getNodeSet().getInclude().getTags() != null) {
-            tags = getNodeSet().getInclude().getTags();
+        final NodeSet filterNodeSelector = createFilterNodeSelector();
+        if (null != filterNodeSelector && null != filterNodeSelector.getInclude() &&
+            filterNodeSelector.getInclude().getTags() != null) {
+            tags = filterNodeSelector.getInclude().getTags();
         } else {
             tags = null;
         }
         final String script = CLIUtils.generateArgline("dispatch", inputArgs);
-        final Collection<INodeEntry> nodeEntryCollection = filterNodes();
+        final Collection<INodeEntry> nodeEntryCollection = filterNodes(true).getNodes();
+        System.err.println("Filtered nodes: " + nodeEntryCollection);
         if (null != result && result.isSuccess()) {
-            debug("Finished execution: " + result.getResultObject());
+            System.err.println("Finished execution: " + result.getResultObject());
             final String resultString =
                 null != result.getResultObject() ?  result.getResultObject().toString() : "dispatch succeeded" ;
 
@@ -650,7 +656,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
      *
      * @return NodeSet
      */
-    protected NodeSet createNodeSet() {
+    protected NodeSet createFilterNodeSelector() {
         return createNodeSet(includeMap, excludeMap, argExcludePrecedence, argThreadCount, argKeepgoing, failedNodes);
     }
 
@@ -989,8 +995,16 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
         return framework;
     }
 
-    public NodeSet getNodeSet() {
-        return createNodeSet();
+    public NodesSelector getNodeSelector() {
+        return createFilterNodeSelector().nodeSelectorWithDefault(framework.getFrameworkNodeName());
+    }
+
+    public int getThreadCount() {
+        return argThreadCount;
+    }
+
+    public boolean isKeepgoing() {
+        return argKeepgoing;
     }
 
     public String getFrameworkProject() {
@@ -1011,6 +1025,10 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
 
     public String getServerScriptFilePath() {
         return getScriptpath();
+    }
+
+    public NodeSet getNodeSet() {
+        return createFilterNodeSelector();
     }
 
     public String[] getArgs() {
@@ -1111,49 +1129,63 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
      *
      * @return Nodes object
      */
-    private Nodes readNodesFile() {
+    private INodeSet readNodesFile() {
         FrameworkProject project = framework.getFrameworkProjectMgr().getFrameworkProject(argProject);
-
-        final Nodes n;
 
         try {
             if (null != argNodesFile) {
-                n = project.getNodes(new File(argNodesFile));
+                System.err.println("use argNodesFile: "+argNodesFile+", project:" +argProject);
+                return loadLocalFile(argNodesFile);
             } else {
-                n = project.getNodes();
+                return project.getNodeSet();
             }
         } catch (NodeFileParserException e) {
             throw new CoreException("Error parsing nodes resource file: " + e.getMessage(), e);
         }
-        return n;
     }
 
-    Collection<INodeEntry> filterNodes() {
+    private INodeSet loadLocalFile(String argNodesFile) {
+        try {
+            return FileNodesProvider.parseFile(argNodesFile, framework, argProject);
+        } catch (ConfigurationException e) {
+            throw new CoreException("Error parsing nodes resource file: " + e.getMessage(), e);
+        } catch (NodesProviderException e) {
+            throw new CoreException("Error parsing nodes resource file: " + e.getMessage(), e);
+        }
+    }
+
+
+    INodeSet filterNodes() {
+        return filterNodes(false);
+    }
+
+    INodeSet filterNodes(final boolean singleNodeDefault) {
         /**
          * Read the nodes.properties file
          */
-        final Nodes n = readNodesFile();
-        debug("total unfiltered nodes=" + n.countNodes());
-        if (0 == n.countNodes()) {
+        final INodeSet n = readNodesFile();
+        debug("total unfiltered nodes=" + n.getNodeNames().size());
+        System.err.println("total unfiltered nodes=" + n.getNodeNames().size());
+        final NodeSet filterNodeSelector = createFilterNodeSelector();
+        if (0 == n.getNodeNames().size()) {
             verbose("Empty node list");
-        } else if (null != getNodeSet() && !(getNodeSet().getExclude().isBlank() && getNodeSet().getInclude()
-            .isBlank())) {
+        }else{
             /**
              * Apply the include/exclude filters to the list
              */
-            debug("applying nodeset filter... " + getNodeSet().toString());
+            debug("applying nodeset filter... " + getNodeSelector().toString());
             /**
              * Reset collection to filter results
              */
-            return n.filterNodes(getNodeSet());
-        } else {
-            //list action defaults to listing all nodes when no filter is supplied, so fallthrough to list all nodes
+            return NodeFilter.filterNodes(singleNodeDefault ? filterNodeSelector.nodeSelectorWithDefault(
+                framework.getFrameworkNodeName()) : filterNodeSelector.nodeSelectorWithDefaultAll(), n);
         }
+
         /**
          * Retrieve the complete list of node entries
          */
 
-        return n.listNodes();
+        return n;
     }
 
     void setNodeFormatter(final NodeFormatter nodeFormatter) {

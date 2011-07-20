@@ -30,11 +30,10 @@ import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.core.utils.NodeSet;
-import junit.framework.TestCase;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Map;
 
 /**
  * TestNodeDispatcherService is ...
@@ -95,9 +94,17 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                     return "blah";
                 }
 
-                public NodeSet getNodeSet() {
+                public NodeSet getNodeSelector() {
 
                     return nodeSet;
+                }
+
+                public int getThreadCount() {
+                    return nodeSet.getThreadCount();
+                }
+
+                public boolean isKeepgoing() {
+                    return nodeSet.isKeepgoing();
                 }
 
                 public String[] getArgs() {
@@ -144,9 +151,17 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                     return "blah";
                 }
 
-                public NodeSet getNodeSet() {
+                public NodeSet getNodeSelector() {
 
                     return nodeSet;
+                }
+
+                public int getThreadCount() {
+                    return nodeSet.getThreadCount();
+                }
+
+                public boolean isKeepgoing() {
+                    return nodeSet.isKeepgoing();
                 }
 
                 public String[] getArgs() {
@@ -193,9 +208,17 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                     return "blah";
                 }
 
-                public NodeSet getNodeSet() {
+                public NodeSet getNodeSelector() {
 
                     return nodeSet;
+                }
+
+                public int getThreadCount() {
+                    return nodeSet.getThreadCount();
+                }
+
+                public boolean isKeepgoing() {
+                    return nodeSet.isKeepgoing();
                 }
 
                 public String[] getArgs() {
@@ -242,9 +265,17 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                     return "blah";
                 }
 
-                public NodeSet getNodeSet() {
+                public NodeSet getNodeSelector() {
 
                     return nodeSet;
+                }
+
+                public int getThreadCount() {
+                    return nodeSet.getThreadCount();
+                }
+
+                public boolean isKeepgoing() {
+                    return nodeSet.isKeepgoing();
                 }
 
                 public String[] getArgs() {
@@ -299,9 +330,17 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                     return "blah";
                 }
 
-                public NodeSet getNodeSet() {
+                public NodeSet getNodeSelector() {
 
                     return nodeSet;
+                }
+
+                public int getThreadCount() {
+                    return nodeSet.getThreadCount();
+                }
+
+                public boolean isKeepgoing() {
+                    return nodeSet.isKeepgoing();
                 }
 
                 public String[] getArgs() {
@@ -346,9 +385,17 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                     return "blah";
                 }
 
-                public NodeSet getNodeSet() {
+                public NodeSet getNodeSelector() {
 
                     return nodeSet;
+                }
+
+                public int getThreadCount() {
+                    return nodeSet.getThreadCount();
+                }
+
+                public boolean isKeepgoing() {
+                    return nodeSet.isKeepgoing();
                 }
 
                 public String[] getArgs() {

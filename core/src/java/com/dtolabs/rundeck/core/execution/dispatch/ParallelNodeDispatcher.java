@@ -25,23 +25,19 @@ package com.dtolabs.rundeck.core.execution.dispatch;
 
 import com.dtolabs.rundeck.core.NodesetFailureException;
 import com.dtolabs.rundeck.core.cli.CallableWrapperTask;
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.common.NodeFileParserException;
+import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionItem;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 import com.dtolabs.rundeck.core.execution.StatusResult;
 import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
 import com.dtolabs.rundeck.core.tasks.dispatch.NodeExecutionStatusTask;
-import com.dtolabs.rundeck.core.utils.NodeSet;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Parallel;
 import org.apache.tools.ant.taskdefs.Sequential;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -78,14 +74,14 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
     public DispatcherResult dispatch(final ExecutionContext context,
                                      final ExecutionItem item, final Dispatchable toDispatch) throws
         DispatcherException {
-        final NodeSet nodeset = context.getNodeSet();
-        Collection<INodeEntry> nodes = null;
+        final NodesSelector nodeSelector = context.getNodeSelector();
+        INodeSet nodes = null;
         try {
-            nodes = framework.filterNodes(nodeset, context.getFrameworkProject(), context.getNodesFile());
+            nodes = framework.filterNodeSet(nodeSelector, context.getFrameworkProject(), context.getNodesFile());
         } catch (NodeFileParserException e) {
             throw new DispatcherException(e);
         }
-        boolean keepgoing = nodeset.isKeepgoing();
+        boolean keepgoing = context.isKeepgoing();
 
         final HashSet<String> nodeNames = new HashSet<String>();
         FailedNodesListener failedListener = context.getExecutionListener().getFailedNodesListener();
@@ -93,18 +89,18 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         Project project = new Project();
 
         context.getExecutionListener().log(3,
-            "preparing for parallel execution...(keepgoing? " + keepgoing + ", threads: " + nodeset.getThreadCount()
+            "preparing for parallel execution...(keepgoing? " + keepgoing + ", threads: "
+            + context.getThreadCount()
             + ")");
         configureNodeContextThreadLocalsForProject(project);
         final Parallel parallelTask = new Parallel();
         parallelTask.setProject(project);
-        parallelTask.setThreadCount(nodeset.getThreadCount());
+        parallelTask.setThreadCount(context.getThreadCount());
         parallelTask.setFailOnAny(!keepgoing);
         boolean success = false;
         final HashMap<String, StatusResult> resultMap = new HashMap<String, StatusResult>();
         final HashMap<String, Object> failureMap = new HashMap<String, Object>();
-        for (final Object node1 : nodes) {
-            final INodeEntry node = (INodeEntry) node1;
+        for (final INodeEntry node: nodes.getNodes()) {
             final Callable tocall;
             if (null != item) {
                 tocall = execItemCallable(context, item, resultMap, node, failureMap);

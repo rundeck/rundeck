@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+ * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,33 +15,25 @@
  */
 
 /*
-* NodesetEmptyException.java
+* INodeSet.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Jun 2, 2010 3:06:47 PM
-* $Id$
+* Created: 7/19/11 10:46 AM
+* 
 */
-package com.dtolabs.rundeck.core;
+package com.dtolabs.rundeck.core.common;
 
-import com.dtolabs.rundeck.core.common.NodesSelector;
+import java.util.Collection;
 
 /**
- * NodesetEmptyException is thrown when execution is not performed because no nodes matched the
- * filter parameters.
+ * INodeSet contains a set of nodes
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @version $Revision$
  */
-public class NodesetEmptyException extends CoreException {
+public interface INodeSet {
+    public Collection<INodeEntry> getNodes();
 
-    private NodesSelector nodeset;
-    public NodesetEmptyException(final NodesSelector nodeset) {
-        super("No matched nodes: " + nodeset);
-        this.nodeset = nodeset;
-    }
+    public INodeEntry getNode(String name);
 
-
-    public NodesSelector getNodeset() {
-        return nodeset;
-    }
+    public Collection<String> getNodeNames();
 }

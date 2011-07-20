@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.execution.workflow;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.SelectorUtils;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.commands.CommandInterpreter;
 import com.dtolabs.rundeck.core.execution.commands.CommandInterpreterService;
@@ -44,7 +45,8 @@ import org.apache.tools.ant.BuildListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * TestNodeFirstWorkflowStrategy is ...
@@ -285,7 +287,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                 assertNull(executionContext.getDataContext());
                 assertEquals(0, executionContext.getLoglevel());
                 assertEquals("user1", executionContext.getUser());
-                assertEquals(new NodeSet("test1"), executionContext.getNodeSet());
+                assertEquals(SelectorUtils.singleNode("test1"), executionContext.getNodeSelector());
             }
             {
 
@@ -302,7 +304,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                 assertNull(executionContext.getDataContext());
                 assertEquals(0, executionContext.getLoglevel());
                 assertEquals("user1", executionContext.getUser());
-                assertEquals(new NodeSet("testnode2"), executionContext.getNodeSet());
+                assertEquals(SelectorUtils.singleNode("testnode2"), executionContext.getNodeSelector());
             }
         }
     }
@@ -331,7 +333,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                     null,
                     new testListener(),
                     testFramework,
-                    extResourcesfile);//specify ext resources file
+                    extResourcesfile,1,false);//specify ext resources file
 
             //setup testInterpreter for all command types
             final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
@@ -388,7 +390,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                 assertNull(executionContext.getDataContext());
                 assertEquals(0, executionContext.getLoglevel());
                 assertEquals("user1", executionContext.getUser());
-                assertEquals(new NodeSet("test1"), executionContext.getNodeSet());
+                assertEquals(SelectorUtils.singleNode("test1"), executionContext.getNodeSelector());
             }
             {
 
@@ -405,7 +407,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                 assertNull(executionContext.getDataContext());
                 assertEquals(0, executionContext.getLoglevel());
                 assertEquals("user1", executionContext.getUser());
-                assertEquals(new NodeSet("testnode2"), executionContext.getNodeSet());
+                assertEquals(SelectorUtils.singleNode("testnode2"), executionContext.getNodeSelector());
             }
             {
 
@@ -422,7 +424,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                 assertNull(executionContext.getDataContext());
                 assertEquals(0, executionContext.getLoglevel());
                 assertEquals("user1", executionContext.getUser());
-                assertEquals(new NodeSet("testnode3"), executionContext.getNodeSet());
+                assertEquals(SelectorUtils.singleNode("testnode3"), executionContext.getNodeSelector());
             }
         }
     }
@@ -519,7 +521,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                 assertNull(executionContext.getDataContext());
                 assertEquals(0, executionContext.getLoglevel());
                 assertEquals("user1", executionContext.getUser());
-                assertEquals(new NodeSet("test1"), executionContext.getNodeSet());
+                assertEquals(SelectorUtils.singleNode("test1"), executionContext.getNodeSelector());
             }
             {//node 2 step 1
 
@@ -537,7 +539,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                 assertNull(executionContext.getDataContext());
                 assertEquals(0, executionContext.getLoglevel());
                 assertEquals("user1", executionContext.getUser());
-                assertEquals(new NodeSet("test1"), executionContext.getNodeSet());
+                assertEquals(SelectorUtils.singleNode("test1"), executionContext.getNodeSelector());
             }
             {//node 1 step 2
 
@@ -555,7 +557,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                 assertNull(executionContext.getDataContext());
                 assertEquals(0, executionContext.getLoglevel());
                 assertEquals("user1", executionContext.getUser());
-                assertEquals(new NodeSet("testnode2"), executionContext.getNodeSet());
+                assertEquals(SelectorUtils.singleNode("testnode2"), executionContext.getNodeSelector());
             }
             {//node 2 step 2
 
@@ -573,7 +575,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                 assertNull(executionContext.getDataContext());
                 assertEquals(0, executionContext.getLoglevel());
                 assertEquals("user1", executionContext.getUser());
-                assertEquals(new NodeSet("testnode2"), executionContext.getNodeSet());
+                assertEquals(SelectorUtils.singleNode("testnode2"), executionContext.getNodeSelector());
             }
         }
     }

@@ -152,7 +152,7 @@ public class Nodes implements NodeReceiver {
     /**
      * Comparator for INodeBase objects
      */
-    public class NodeEntryComparator implements Comparator<INodeBase> {
+    public static class NodeEntryComparator implements Comparator<INodeBase> {
         /**
          * Creates a new instance of NodeEntryComparator
          */

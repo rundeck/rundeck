@@ -227,7 +227,7 @@ public class TestExecTool extends AbstractBaseTest {
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT});
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
-            final Collection c = main.filterNodes();
+            final Collection c = main.filterNodes().getNodes();
             assertEquals("wrong size", 4, c.size());
         }
         {
@@ -238,7 +238,7 @@ public class TestExecTool extends AbstractBaseTest {
             NodeSet nodeset = main.createNodeSet(incmap, exmap);
             assertTrue(nodeset.getExclude().isDominant());
             assertFalse(nodeset.getInclude().isDominant());
-            final Collection c = main.filterNodes();
+            final Collection c = main.filterNodes().getNodes();
             assertEquals("wrong size", 1, c.size());
         }
 
@@ -248,7 +248,7 @@ public class TestExecTool extends AbstractBaseTest {
                 "-I", "os-family=unix"});
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
-            final Collection c = main.filterNodes();
+            final Collection c = main.filterNodes().getNodes();
             assertEquals("wrong size", 2, c.size());
         }
     }
@@ -261,7 +261,7 @@ public class TestExecTool extends AbstractBaseTest {
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT});
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
-            final Collection c = main.filterNodes();
+            final Collection c = main.filterNodes().getNodes();
             final String result = new ExecTool.DefaultNodeFormatter().formatResults(c).toString();
             System.out.println("TEST-DEBUG: result='" + result + "'");
             assertNotNull(result);
@@ -275,7 +275,7 @@ public class TestExecTool extends AbstractBaseTest {
             NodeSet nodeset = main.createNodeSet(incmap, exmap);
             assertTrue(nodeset.getExclude().isDominant());
             assertFalse(nodeset.getInclude().isDominant());
-            final Collection c = main.filterNodes();
+            final Collection c = main.filterNodes().getNodes();
             assertEquals("wrong size", 1, c.size());
             final String result = new ExecTool.DefaultNodeFormatter().formatResults(c).toString();
             assertNotNull(result);
@@ -288,7 +288,7 @@ public class TestExecTool extends AbstractBaseTest {
                 "-I", "os-family=unix"});
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
-            final Collection c = main.filterNodes();
+            final Collection c = main.filterNodes().getNodes();
             assertEquals("wrong size", 2, c.size());
             final String result = new ExecTool.DefaultNodeFormatter().formatResults(c).toString();
             assertNotNull(result);
@@ -309,7 +309,7 @@ public class TestExecTool extends AbstractBaseTest {
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-v"});
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
-            final Collection c = main.filterNodes();
+            final Collection c = main.filterNodes().getNodes();
             final TestFormatter formatter = new TestFormatter();
             main.setNodeFormatter(formatter);
             main.listAction();
@@ -324,7 +324,7 @@ public class TestExecTool extends AbstractBaseTest {
             NodeSet nodeset = main.createNodeSet(incmap, exmap);
             assertTrue(nodeset.getExclude().isDominant());
             assertFalse(nodeset.getInclude().isDominant());
-            final Collection c = main.filterNodes();
+            final Collection c = main.filterNodes().getNodes();
             final TestFormatter formatter = new TestFormatter();
             main.setNodeFormatter(formatter);
             main.listAction();
@@ -338,7 +338,7 @@ public class TestExecTool extends AbstractBaseTest {
                 "-I", "os-family=unix"});
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
-            final Collection c = main.filterNodes();
+            final Collection c = main.filterNodes().getNodes();
             final TestFormatter formatter = new TestFormatter();
             main.setNodeFormatter(formatter);
             main.listAction();
@@ -544,16 +544,19 @@ public class TestExecTool extends AbstractBaseTest {
         framework.setCentralDispatcherMgr(test1);
 
         { //test dispatch shell script
+            System.err.println("testRunActionShouldLogResult start");
             ExecTool main = new ExecTool(framework);
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "--", "uptime", "for", "ever"});
 
             main.runAction();
+            System.err.println("testRunActionShouldLogResult selector: " + main.getNodeSelector());
             assertTrue(test1.wascalled);
             assertEquals(TEST_EXEC_TOOL_PROJECT, test1.project);
             assertEquals("dispatch", test1.name);
             assertEquals("succeeded", test1.status);
             assertEquals(0, test1.failedNodeCount);
-            assertEquals(4, test1.successNodeCount);
+
+            assertEquals(1, test1.successNodeCount);
             assertEquals("", test1.tags);
             assertEquals("dispatch -p " + TEST_EXEC_TOOL_PROJECT + " -- uptime for ever", test1.script);
             assertEquals("DispatcherResult{status=true, results={test1=test1ResultString}}", test1.summary);
@@ -600,7 +603,7 @@ public class TestExecTool extends AbstractBaseTest {
             assertEquals(TEST_EXEC_TOOL_PROJECT, test1.project);
             assertEquals("dispatch", test1.name);
             assertEquals("failed", test1.status);
-            assertEquals(4, test1.failedNodeCount);
+            assertEquals(1, test1.failedNodeCount);
             assertEquals(0, test1.successNodeCount);
             assertEquals("", test1.tags);
             assertEquals("dispatch -p " + TEST_EXEC_TOOL_PROJECT + " -- uptime for ever", test1.script);
@@ -852,7 +855,7 @@ public class TestExecTool extends AbstractBaseTest {
         {
             final ExecTool main = new ExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT});
-            final NodeSet set = main.createNodeSet();
+            final NodeSet set = main.createFilterNodeSelector();
             assertNotNull(set);
             assertNotNull(set.getInclude());
             assertTrue(set.getInclude().isBlank() );
@@ -864,7 +867,7 @@ public class TestExecTool extends AbstractBaseTest {
         {
             final ExecTool main = new ExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT,"-K"});
-            final NodeSet set = main.createNodeSet();
+            final NodeSet set = main.createFilterNodeSelector();
             assertNotNull(set);
             assertNotNull(set.getInclude());
             assertTrue(set.getInclude().isBlank() );
@@ -876,7 +879,7 @@ public class TestExecTool extends AbstractBaseTest {
         {
             final ExecTool main = new ExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT,"-C","2"});
-            final NodeSet set = main.createNodeSet();
+            final NodeSet set = main.createFilterNodeSelector();
             assertNotNull(set);
             assertNotNull(set.getInclude());
             assertTrue(set.getInclude().isBlank() );
@@ -888,7 +891,7 @@ public class TestExecTool extends AbstractBaseTest {
         {
             final ExecTool main = new ExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT,"-C","2","-I","ahostname","-X","tags=blaoen","-I","os-family=test","-X","os-version=3"});
-            final NodeSet set = main.createNodeSet();
+            final NodeSet set = main.createFilterNodeSelector();
             assertNotNull(set);
             assertNotNull(set.getInclude());
             assertFalse(set.getInclude().isBlank() );
@@ -905,7 +908,7 @@ public class TestExecTool extends AbstractBaseTest {
             //test precedence setting, Include dominant in first position
             final ExecTool main = new ExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT,"-C","2","-I","ahostname","-X","tags=blaoen"});
-            final NodeSet set = main.createNodeSet();
+            final NodeSet set = main.createFilterNodeSelector();
             assertNotNull(set);
             assertNotNull(set.getInclude());
             assertFalse(set.getInclude().isBlank() );
@@ -918,7 +921,7 @@ public class TestExecTool extends AbstractBaseTest {
             //test precedence setting, Exclude dominant in first position
             final ExecTool main = new ExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT,"-C","2","-X","ahostname","-I","tags=blaoen"});
-            final NodeSet set = main.createNodeSet();
+            final NodeSet set = main.createFilterNodeSelector();
             assertNotNull(set);
             assertNotNull(set.getInclude());
             assertFalse(set.getInclude().isBlank() );
@@ -931,7 +934,7 @@ public class TestExecTool extends AbstractBaseTest {
             //test precedence setting, Include dominant explicitly
             final ExecTool main = new ExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT,"--filter-exclude-precedence","false","-C","2","-X","ahostname","-I","tags=blaoen"});
-            final NodeSet set = main.createNodeSet();
+            final NodeSet set = main.createFilterNodeSelector();
             assertNotNull(set);
             assertNotNull(set.getInclude());
             assertFalse(set.getInclude().isBlank() );
@@ -944,7 +947,7 @@ public class TestExecTool extends AbstractBaseTest {
             //test precedence setting, Exclude dominant explicitly
             final ExecTool main = new ExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT,"--filter-exclude-precedence","true","-C","2","-I","ahostname","-X","tags=blaoen"});
-            final NodeSet set = main.createNodeSet();
+            final NodeSet set = main.createFilterNodeSelector();
             assertNotNull(set);
             assertNotNull(set.getInclude());
             assertFalse(set.getInclude().isBlank() );

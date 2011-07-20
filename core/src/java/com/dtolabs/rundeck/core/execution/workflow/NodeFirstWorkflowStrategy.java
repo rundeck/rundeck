@@ -26,16 +26,14 @@ package com.dtolabs.rundeck.core.execution.workflow;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.CoreException;
 import com.dtolabs.rundeck.core.NodesetEmptyException;
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.common.NodeFileParserException;
-import com.dtolabs.rundeck.core.execution.*;
-import com.dtolabs.rundeck.core.execution.commands.CommandInterpreter;
-import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
+import com.dtolabs.rundeck.core.common.*;
+import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
+import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.StatusResult;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
-import com.dtolabs.rundeck.core.utils.NodeSet;
 
 import java.util.*;
 
@@ -61,22 +59,22 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
         final HashMap<String, List<StatusResult>> results = new HashMap<String, List<StatusResult>>();
         final Map<String, Collection<String>> failures = new HashMap<String, Collection<String>>();
         try {
-            final NodeSet nodeSet = executionContext.getNodeSet();
+            final NodesSelector nodeSelector = executionContext.getNodeSelector();
 
             final List<ExecutionItem> iWorkflowCmdItems = workflow.getCommands();
             if (iWorkflowCmdItems.size() < 1) {
                 executionContext.getExecutionListener().log(Constants.WARN_LEVEL, "Workflow has 0 items");
             }
             //retrieve the node set
-            final Collection<INodeEntry> nodes;
+            final INodeSet nodes;
             final String project = executionContext.getFrameworkProject();
             try {
-                nodes = framework.filterNodes(nodeSet, project, executionContext.getNodesFile());
+                nodes = framework.filterNodeSet(nodeSelector, project, executionContext.getNodesFile());
             } catch (NodeFileParserException e) {
                 throw new CoreException("Error parsing node resource file: " + e.getMessage(), e);
             }
-            if (0 == nodes.size()) {
-                throw new NodesetEmptyException(nodeSet);
+            if (0 == nodes.getNodes().size()) {
+                throw new NodesetEmptyException(nodeSelector);
             }
             final WorkflowExecutionItem innerLoopItem = createInnerLoopItem(item);
             final WorkflowExecutor executor = framework.getWorkflowExecutionService().getExecutorForItem(innerLoopItem);

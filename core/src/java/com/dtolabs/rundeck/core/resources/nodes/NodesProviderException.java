@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+ * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,33 +15,33 @@
  */
 
 /*
-* NodesetEmptyException.java
+* NodesProviderException.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Jun 2, 2010 3:06:47 PM
-* $Id$
+* Created: 7/19/11 11:45 AM
+* 
 */
-package com.dtolabs.rundeck.core;
-
-import com.dtolabs.rundeck.core.common.NodesSelector;
+package com.dtolabs.rundeck.core.resources.nodes;
 
 /**
- * NodesetEmptyException is thrown when execution is not performed because no nodes matched the
- * filter parameters.
+ * NodesProviderException is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @version $Revision$
  */
-public class NodesetEmptyException extends CoreException {
-
-    private NodesSelector nodeset;
-    public NodesetEmptyException(final NodesSelector nodeset) {
-        super("No matched nodes: " + nodeset);
-        this.nodeset = nodeset;
+public class NodesProviderException extends Exception {
+    public NodesProviderException() {
+        super();
     }
 
+    public NodesProviderException(String msg) {
+        super(msg);
+    }
 
-    public NodesSelector getNodeset() {
-        return nodeset;
+    public NodesProviderException(Exception cause) {
+        super(cause);
+    }
+
+    public NodesProviderException(String msg, Exception cause) {
+        super(msg, cause);
     }
 }

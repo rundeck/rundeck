@@ -17,6 +17,11 @@
 package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.Constants;
+import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
+import com.dtolabs.rundeck.core.resources.nodes.FileNodesProvider;
+import com.dtolabs.rundeck.core.resources.nodes.NodesProvider;
+import com.dtolabs.rundeck.core.resources.nodes.NodesProviderException;
+import com.dtolabs.rundeck.core.resources.nodes.NodesProviderService;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import com.dtolabs.shared.resources.ResourceXMLGenerator;
 import org.apache.tools.ant.Project;
@@ -28,10 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Properties;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,6 +49,7 @@ public class FrameworkProject extends FrameworkResourceParent {
     public static final String NODES_XML = "resources.xml";
     public static final String PROJECT_RESOURCES_URL_PROPERTY = "project.resources.url";
     public static final String PROJECT_RESOURCES_FILE_PROPERTY = "project.resources.file";
+    public static final String PROJECT_RESOURCES_FILEFORMAT_PROPERTY = "project.resources.file.format";
     public static final String PROJECT_RESOURCES_ALLOWED_URL_PREFIX = "project.resources.allowedURL.";
     public static final String FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX = "framework.resources.allowedURL.";
     /**
@@ -66,7 +69,8 @@ public class FrameworkProject extends FrameworkResourceParent {
     /**
      * reference to PropertyLookup object providing access to project.properties
      */
-    private final PropertyLookup lookup;
+    private PropertyLookup lookup;
+    private List<NodesProvider> nodesProviderList;
 
     /**
      * Constructor
@@ -89,25 +93,13 @@ public class FrameworkProject extends FrameworkResourceParent {
         if ( ! (new File(getEtcDir(), PROP_FILENAME).exists()) ) {
             generateProjectPropertiesFile(false);
         }
-        final Properties ownProps = new Properties();
-        ownProps.setProperty("project.name", name);
-        final File fwkDepotPropertyFile = new File(projectResourceMgr.getFramework().getConfigDir(), PROP_FILENAME);
-        final Properties nodeWideDepotProps = PropertyLookup.fetchProperties(fwkDepotPropertyFile);
-        nodeWideDepotProps.putAll(ownProps);
         propertyFile = new File(getEtcDir(), PROP_FILENAME);
-        if (propertyFile.exists()) {
-            lookup = PropertyLookup.create(propertyFile,
-                    nodeWideDepotProps, projectResourceMgr.getFramework().getPropertyLookup());
-            getLogger().debug("loading existing project.properties: " + propertyFile.getAbsolutePath());
+        loadProperties();
 
-        } else {
-            lookup = PropertyLookup.create(fwkDepotPropertyFile,
-                    ownProps, projectResourceMgr.getFramework().getPropertyLookup());
-            getLogger().debug("loading instance-level project.properties: " + propertyFile.getAbsolutePath());
+        //new resources provider config
+        nodesProviderList = new ArrayList<NodesProvider>();
 
-        }
-        lookup.expand();
-
+        ///XXX: old resources config
         final String resfilepath = getNodesResourceFilePath();
         File resfile= new File(resfilepath);
         if(!resfile.isFile() && shouldUpdateNodesResourceFile()) {
@@ -116,37 +108,106 @@ public class FrameworkProject extends FrameworkResourceParent {
             } catch (UpdateUtils.UpdateException e) {
                 getLogger().error("Unable to retrieve resources file: " + e.getMessage());
             }
-        }else if(!resfile.isFile()){
-            generateResourcesFile(resfile);
         }
+
+
         initialize();
     }
 
-    private void generateResourcesFile(final File resfile) {
-
-        final Framework framework = projectResourceMgr.getFramework();
-        final NodeEntryImpl node = framework.createFrameworkNode();
-        node.setFrameworkProject(getName());
-        final NodesFileGenerator generator;
-        if(resfile.getName().endsWith(".xml")){
-            generator = new ResourceXMLGenerator(resfile);
-        }else if(resfile.getName().endsWith(".yaml")){
-            generator = new NodesYamlGenerator(resfile);
-        }else{
-            getLogger().error("Unable to generate resources file. Unrecognized extension for dest file: "+resfile.getAbsolutePath());
-            return;
+    private long propertiesLastReload=0L;
+    private synchronized void checkReloadProperties(){
+        if (needsPropertiesReload()) {
+            loadProperties();
         }
-        generator.addNode(node);
-        try {
-            generator.generate();
-        } catch (IOException e) {
-            getLogger().error("Unable to generate resources file: " + e.getMessage(), e);
-        } catch (NodesGeneratorException e) {
-            getLogger().error("Unable to generate resources file: " + e.getMessage(), e);
-        }
-
-        getLogger().debug("generated resources file: " + resfile.getAbsolutePath());
     }
+
+    private boolean needsPropertiesReload(){
+        final File fwkProjectPropertyFile = new File(projectResourceMgr.getFramework().getConfigDir(), PROP_FILENAME);
+        final long fwkPropsLastModified = fwkProjectPropertyFile.lastModified();
+        if(propertyFile.exists()){
+            return propertyFile.lastModified()>propertiesLastReload || fwkPropsLastModified>propertiesLastReload;
+        }else{
+            return fwkPropsLastModified > propertiesLastReload;
+        }
+    }
+    private synchronized void loadProperties() {
+        final Properties ownProps = new Properties();
+        ownProps.setProperty("project.name", getName());
+
+        //generic framework properties for a project
+        final File fwkProjectPropertyFile = new File(projectResourceMgr.getFramework().getConfigDir(), PROP_FILENAME);
+        final Properties nodeWideDepotProps = PropertyLookup.fetchProperties(fwkProjectPropertyFile);
+        nodeWideDepotProps.putAll(ownProps);
+
+        if (propertyFile.exists()) {
+            lookup = PropertyLookup.create(propertyFile,
+                    nodeWideDepotProps, projectResourceMgr.getFramework().getPropertyLookup());
+            getLogger().debug("loading existing project.properties: " + propertyFile.getAbsolutePath());
+            final long fwkPropsLastModified = fwkProjectPropertyFile.lastModified();
+            final long propsLastMod = propertyFile.lastModified();
+            propertiesLastReload = propsLastMod > fwkPropsLastModified ? propsLastMod : fwkPropsLastModified;
+        } else {
+            lookup = PropertyLookup.create(fwkProjectPropertyFile,
+                    ownProps, projectResourceMgr.getFramework().getPropertyLookup());
+            getLogger().debug("loading instance-level project.properties: " + propertyFile.getAbsolutePath());
+            propertiesLastReload = fwkProjectPropertyFile.lastModified();
+
+        }
+        lookup.expand();
+    }
+
+    private long nodesProvidersLastReload = 0L;
+    private void loadNodesProviders() {
+        System.err.println("FrameworkProject.loadNodesProviders");
+//        System.err.println(StringUtils.getStackTrace(new Exception()));
+        
+        //generate Configuration for file provider
+        if (hasProperty(PROJECT_RESOURCES_FILE_PROPERTY)) {
+            try {
+                nodesProviderList.add(loadNodesProvider("file", createFileProviderConfiguration()));
+            } catch (ExecutionServiceException e) {
+                logger.error("Failed to load file provider: " + e.getMessage(), e);
+            }
+        }
+        if(hasProperty(PROJECT_RESOURCES_URL_PROPERTY)) {
+            System.err.println("TODO: load URL provider");
+        }
+
+        //TODO: iterate through provider configurations, and load providers for each config
+
+        nodesProvidersLastReload= getPropertyFile().lastModified();
+    }
+    private synchronized Collection<NodesProvider> getNodesProviders() {
+        //determine if providers need to be reloaded
+        final long lastMod = getPropertyFile().lastModified();
+        if(lastMod> nodesProvidersLastReload){
+            nodesProviderList = new ArrayList<NodesProvider>();
+            loadNodesProviders();
+        }
+        return nodesProviderList;
+    }
+
+    private NodesProvider loadNodesProvider(String type, Properties configuration) throws ExecutionServiceException {
+
+        final NodesProviderService nodesProviderService =
+            getFrameworkProjectMgr().getFramework().getNodesProviderService();
+        return nodesProviderService.getProviderForConfiguration(type, configuration);
+    }
+
+    private Properties createFileProviderConfiguration() {
+        final FileNodesProvider.Configuration build = FileNodesProvider.Configuration.build();
+        build.file(getProperty(PROJECT_RESOURCES_FILE_PROPERTY));
+        if(hasProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY)){
+            build.format(getProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY));
+        }
+        build.project(getName());
+        build.generateFileAutomatically(true);
+        build.includeServerNode(true);
+
+        return build.getProperties();
+    }
+    
+
 
     /**
      * Create a new Depot object at the specified projects.directory
@@ -248,6 +309,24 @@ public class FrameworkProject extends FrameworkResourceParent {
         String path = getNodesResourceFilePath();
         return getNodes(new File(path));
     }
+    /**
+     * Returns the set of nodes for the project
+     *
+     * @return an instance of {@link INodeSet}
+     */
+    public INodeSet getNodeSet() throws NodeFileParserException {
+        //iterate through providers, and add nodes
+        final AdditiveListNodeSet list = new AdditiveListNodeSet();
+        for (final NodesProvider nodesProvider : getNodesProviders()) {
+            try {
+                list.addNodeSet(nodesProvider.getNodes());
+            } catch (NodesProviderException e) {
+                logger.error(e.getMessage(), e);
+            }
+        }
+        return list;
+
+    }
 
     private HashMap<File, Long> nodesFileTimes = new HashMap<File, Long>();
     private HashMap<File, Nodes> nodesCache = new HashMap<File, Nodes>();
@@ -257,6 +336,7 @@ public class FrameworkProject extends FrameworkResourceParent {
      *
      * @param nodesFile the source file
      * @return an instance of {@link Nodes}
+     * @deprecated 
      */
     public Nodes getNodes(final File nodesFile) throws NodeFileParserException {
         final Nodes.Format format;
@@ -277,8 +357,9 @@ public class FrameworkProject extends FrameworkResourceParent {
      * @param nodesFile the source file
      * @param format
      * @return an instance of {@link Nodes}
+     * @deprecated 
      */
-    public Nodes getNodes(final File nodesFile, final Nodes.Format format) throws NodeFileParserException {
+    Nodes getNodes(final File nodesFile, final Nodes.Format format) throws NodeFileParserException {
         final Long modtime = nodesFile.lastModified();
         if ( null == nodesCache.get(nodesFile) || !modtime.equals(nodesFileTimes.get(nodesFile)) ) {
             final Nodes nodes = Nodes.create( nodesFile, format);
@@ -492,11 +573,13 @@ public class FrameworkProject extends FrameworkResourceParent {
      * @return
      */
     public String getProperty(final String name) {
+        checkReloadProperties();
         return lookup.getProperty(name);
     }
 
 
     public boolean hasProperty(final String key) {
+        checkReloadProperties();
         return lookup.hasProperty(key);
     }
 

@@ -53,7 +53,7 @@ public class NodesXMLParser implements NodeFileParser, ResourceXMLReceiver {
      * @param file         nodes file
      * @param nodeReceiver Nodes object
      */
-    NodesXMLParser(final File file, final NodeReceiver nodeReceiver) {
+    public NodesXMLParser(final File file, final NodeReceiver nodeReceiver) {
         this.file = file;
         this.nodeReceiver = nodeReceiver;
     }

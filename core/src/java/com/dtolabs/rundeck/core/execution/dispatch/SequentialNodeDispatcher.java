@@ -25,11 +25,8 @@ package com.dtolabs.rundeck.core.execution.dispatch;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.NodesetFailureException;
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.common.NodeFileParserException;
+import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.*;
-import com.dtolabs.rundeck.core.utils.NodeSet;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -63,22 +60,21 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
     public DispatcherResult dispatch(final ExecutionContext context,
                                      final ExecutionItem item, final Dispatchable toDispatch) throws
         DispatcherException {
-        final NodeSet nodeset = context.getNodeSet();
-        Collection<INodeEntry> nodes = null;
+        final NodesSelector nodesSelector = context.getNodeSelector();
+        INodeSet nodes = null;
         try {
-            nodes = framework.filterNodes(nodeset, context.getFrameworkProject(), context.getNodesFile());
+            nodes = framework.filterNodeSet(nodesSelector, context.getFrameworkProject(), context.getNodesFile());
         } catch (NodeFileParserException e) {
             throw new DispatcherException(e);
         }
-        boolean keepgoing = nodeset.isKeepgoing();
-
-        context.getExecutionListener().log(4, "preparing for sequential execution on " + nodes.size() + " nodes");
-        final HashSet<String> nodeNames = new HashSet<String>();
-        final HashMap<String,Object> failures = new HashMap<String,Object>();
-        for (final Object node1 : nodes) {
-            final INodeEntry node = (INodeEntry) node1;
-            nodeNames.add(node.getNodename());
+        if(nodes.getNodes().size()<1) {
+            throw new DispatcherException("No nodes matched");
         }
+        boolean keepgoing = context.isKeepgoing();
+
+        context.getExecutionListener().log(4, "preparing for sequential execution on " + nodes.getNodes().size() + " nodes");
+        final HashSet<String> nodeNames = new HashSet<String>(nodes.getNodeNames());
+        final HashMap<String,Object> failures = new HashMap<String,Object>();
         FailedNodesListener failedListener = context.getExecutionListener().getFailedNodesListener();
         if (null != failedListener) {
             failedListener.matchedNodes(nodeNames);
@@ -87,7 +83,9 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
         final Thread thread = Thread.currentThread();
         boolean success = true;
         final HashMap<String, StatusResult> resultMap = new HashMap<String, StatusResult>();
-        for (final Object node1 : nodes) {
+        final Collection<INodeEntry> nodes1 = nodes.getNodes();
+        System.err.println("sequential dispatch executing on nodes: " + nodes1);
+        for (final Object node1 : nodes1) {
             if (thread.isInterrupted()
                 || thread instanceof ExecutionServiceThread && ((ExecutionServiceThread) thread).isAborted()) {
                 interrupted = true;
@@ -112,7 +110,8 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                     result = toDispatch.dispatch(interimcontext, node);
 
                 }
-
+                System.err.println(
+                    "sequential interpret command result: " + result + " for node: " + node.getNodename());
                 if (null != result) {
                     resultMap.put(node.getNodename(), result);
                 }

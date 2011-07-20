@@ -25,7 +25,8 @@ package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.utils.NodeSet;
+import com.dtolabs.rundeck.core.common.NodesSelector;
+import com.dtolabs.rundeck.core.common.SelectorUtils;
 
 import java.io.File;
 import java.util.*;
@@ -38,7 +39,9 @@ import java.util.*;
 public class ExecutionContextImpl implements ExecutionContext {
     private String frameworkProject;
     private String user;
-    private NodeSet nodeSet;
+    private NodesSelector nodeSet;
+    private int threadCount;
+    private boolean keepgoing;
     private String[] args;
     private int loglevel;
     private Map<String, Map<String, String>> dataContext;
@@ -46,11 +49,11 @@ public class ExecutionContextImpl implements ExecutionContext {
     private Framework framework;
     private File nodesFile;
 
-    private ExecutionContextImpl(final String frameworkProject, final String user, final NodeSet nodeSet,
+    private ExecutionContextImpl(final String frameworkProject, final String user, final NodesSelector nodeSet,
                                  final String[] args, final int loglevel,
                                  final Map<String, Map<String, String>> dataContext,
                                  final ExecutionListener executionListener,
-                                 final Framework framework, final File nodesFile) {
+                                 final Framework framework, final File nodesFile, final int threadCount, final boolean keepgoing) {
         this.frameworkProject = frameworkProject;
         this.user = user;
         this.nodeSet = nodeSet;
@@ -60,55 +63,59 @@ public class ExecutionContextImpl implements ExecutionContext {
         this.executionListener = executionListener;
         this.framework = framework;
         this.nodesFile = nodesFile;
+        this.threadCount=threadCount;
+        this.keepgoing=keepgoing;
     }
 
     /**
      * Create a new ExecutionContext with the specified values
      */
     public static ExecutionContextImpl createExecutionContextImpl(final String frameworkProject, final String user,
-                                                                  final NodeSet nodeSet,
+                                                                  final NodesSelector nodeSet,
                                                                   final String[] args, final int loglevel,
                                                                   final Map<String, Map<String, String>> dataContext,
                                                                   final ExecutionListener executionListener,
                                                                   final Framework framework) {
         return createExecutionContextImpl(frameworkProject, user, nodeSet, args, loglevel, dataContext,
-            executionListener, framework, null);
+            executionListener, framework, null,1,false);
+    }
+    /**
+     * Create a new ExecutionContext with the specified values
+     */
+    public static ExecutionContextImpl createExecutionContextImpl(final String frameworkProject, final String user,
+                                                                  final NodesSelector nodeSet,
+                                                                  final String[] args, final int loglevel,
+                                                                  final Map<String, Map<String, String>> dataContext,
+                                                                  final ExecutionListener executionListener,
+                                                                  final Framework framework, final int threadCount,
+                                                                  final boolean keepgoing) {
+        return createExecutionContextImpl(frameworkProject, user, nodeSet, args, loglevel, dataContext,
+            executionListener, framework, null,threadCount,keepgoing);
     }
 
     /**
      * Create a new ExecutionContext with the specified values
      */
     public static ExecutionContextImpl createExecutionContextImpl(final String frameworkProject, final String user,
-                                                                  final NodeSet nodeSet,
+                                                                  final NodesSelector nodeSet,
                                                                   final String[] args, final int loglevel,
                                                                   final Map<String, Map<String, String>> dataContext,
                                                                   final ExecutionListener executionListener,
-                                                                  final Framework framework, final File nodesFile) {
+                                                                  final Framework framework, final File nodesFile,
+                                                                  final int threadCount, final boolean keepgoing) {
         return new ExecutionContextImpl(frameworkProject, user, nodeSet, args, loglevel, dataContext,
-            executionListener, framework, nodesFile);
+            executionListener, framework, nodesFile,threadCount,keepgoing);
     }
 
-    /**
-     * Create a new ExecutionContext with a single node nodeset value, and all other values specified
-     */
-    public static ExecutionContextImpl createExecutionContextImpl(final String frameworkProject, final String user,
-                                                                  final INodeEntry singleNode,
-                                                                  final String[] args, final int loglevel,
-                                                                  final Map<String, Map<String, String>> dataContext,
-                                                                  final ExecutionListener executionListener,
-                                                                  final Framework framework, final File nodesFile) {
-        return new ExecutionContextImpl(frameworkProject, user, new NodeSet(singleNode), args, loglevel, dataContext,
-            executionListener, framework, nodesFile);
-    }
 
     /**
      * Create a new ExecutionContext with a single node nodeset value, and all other values from the input context
      */
     public static ExecutionContextImpl createExecutionContextImpl(final ExecutionContext context,
                                                                   final INodeEntry singleNode) {
-        return new ExecutionContextImpl(context.getFrameworkProject(), context.getUser(), new NodeSet(singleNode),
+        return new ExecutionContextImpl(context.getFrameworkProject(), context.getUser(), SelectorUtils.singleNode(singleNode.getNodename()),
             context.getArgs(), context.getLoglevel(), context.getDataContext(), context.getExecutionListener(),
-            context.getFramework(), context.getNodesFile());
+            context.getFramework(), context.getNodesFile(),context.getThreadCount(),context.isKeepgoing());
     }
 
     /**
@@ -116,9 +123,9 @@ public class ExecutionContextImpl implements ExecutionContext {
      */
     public static ExecutionContextImpl createExecutionContextImpl(final ExecutionContext context,
                                                                   final Map<String, Map<String, String>> dataContext) {
-        return new ExecutionContextImpl(context.getFrameworkProject(), context.getUser(), context.getNodeSet(),
+        return new ExecutionContextImpl(context.getFrameworkProject(), context.getUser(), context.getNodeSelector(),
             context.getArgs(), context.getLoglevel(), dataContext, context.getExecutionListener(),
-            context.getFramework(), context.getNodesFile());
+            context.getFramework(), context.getNodesFile(),context.getThreadCount(),context.isKeepgoing());
     }
 
     public String getFrameworkProject() {
@@ -129,7 +136,7 @@ public class ExecutionContextImpl implements ExecutionContext {
         return user;
     }
 
-    public NodeSet getNodeSet() {
+    public NodesSelector getNodeSelector() {
         return nodeSet;
     }
 
@@ -155,5 +162,21 @@ public class ExecutionContextImpl implements ExecutionContext {
 
     public File getNodesFile() {
         return nodesFile;
+    }
+
+    public int getThreadCount() {
+        return threadCount;
+    }
+
+    public void setThreadCount(int threadCount) {
+        this.threadCount = threadCount;
+    }
+
+    public boolean isKeepgoing() {
+        return keepgoing;
+    }
+
+    public void setKeepgoing(boolean keepgoing) {
+        this.keepgoing = keepgoing;
     }
 }

@@ -5,6 +5,8 @@ import com.dtolabs.rundeck.core.cli.CLIToolLogger
 import com.dtolabs.rundeck.core.cli.CLIUtils
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.common.NodesSelector
+import com.dtolabs.rundeck.core.common.SelectorUtils
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionItem
 import com.dtolabs.rundeck.core.execution.ExecutionListener
@@ -626,12 +628,14 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         datacontext.put("option",optsmap)
         datacontext.put("job",jobcontext?jobcontext:new HashMap<String,String>())
 
-        NodeSet nodeset
+        NodesSelector nodeselector
+        int threadCount=1
+        boolean keepgoing=false
 
         if (execMap.doNodedispatch) {
             //set nodeset for the context if doNodedispatch parameter is true
-            nodeset = filtersAsNodeSet(execMap)
-
+            NodeSet nodeset = filtersAsNodeSet(execMap)
+            nodeselector=nodeset
             // enhnacement to allow ${option.xyz} in tags and names
             if (nodeset != null) {
                 final nodesetProperties = ['name', 'tags', 'hostname', 'osfamily', 'osname', 'osversion', 'osarch']
@@ -643,23 +647,27 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                         nodeset.exclude[key] = DataContextUtils.replaceDataReferences(nodeset.exclude[key], datacontext)
                     }
                 }
+                threadCount=nodeset.threadCount
+                keepgoing=nodeset.keepgoing
                 //TODO: apply to attributes once nodefilters support attributes
             }
-        } else {
+        } else if(framework){
             //blank?
-            nodeset = new NodeSet()
+            nodeselector = SelectorUtils.singleNode(framework.frameworkNodeName)
+        }else{
+            nodeselector = null
         }
 
         //create thread object with an execution item, and start it
         final com.dtolabs.rundeck.core.execution.ExecutionContext item =  com.dtolabs.rundeck.core.execution.ExecutionContextImpl.createExecutionContextImpl(
             execMap.project,
             user.login,
-            nodeset,
+            nodeselector,
             args,
             loglevels[null != execMap.loglevel ? execMap.loglevel : 'WARN'],
             datacontext,
             listener,
-            framework)
+            framework,threadCount,keepgoing)
         return item
     }
 

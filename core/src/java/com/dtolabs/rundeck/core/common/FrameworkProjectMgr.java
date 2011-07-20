@@ -21,9 +21,7 @@ import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import org.apache.log4j.Logger;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * DepotMgr is a framework resource that provides interfaces for looking up other resources such
@@ -80,6 +78,7 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
         return project;
     }
 
+    final HashMap<String,FrameworkProject> projectCache= new HashMap<String, FrameworkProject>();
     /**
      * Create a project object without adding to child map
      * @param projectName
@@ -87,9 +86,16 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
      */
     private FrameworkProject createFrameworkProjectInt(String projectName) {
         final FrameworkProject project;
-        final File projectDir = new File(getBaseDir(), projectName);
-        // check if the FrameworkProject has its own module library
-        return FrameworkProject.create(projectName, getBaseDir(), this);
+        synchronized (projectCache) {
+            if (null != projectCache.get(projectName)) {
+                return projectCache.get(projectName);
+            }
+            final File projectDir = new File(getBaseDir(), projectName);
+            // check if the FrameworkProject has its own module library
+            project= FrameworkProject.create(projectName, getBaseDir(), this);
+            projectCache.put(projectName, project);
+        }
+        return project;
     }
 
     /**
