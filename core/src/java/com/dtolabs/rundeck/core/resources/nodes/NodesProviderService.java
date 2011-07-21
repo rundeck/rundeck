@@ -42,12 +42,13 @@ public class NodesProviderService extends PluggableProviderRegistryService<Nodes
     public static final String SERVICE_NAME = "NodesProvider";
 
 
-    public NodesProviderService(Framework framework) {
+    public NodesProviderService(final Framework framework) {
         super(framework);
 
 //        registry.put("file", FileNodesProvider.class);
 //        registry.put("url", URLNodesProvider.class);
         registry.put(FileNodesProviderFactory.SERVICE_PROVIDER_TYPE, FileNodesProviderFactory.class);
+        registry.put(DirectoryNodesProviderFactory.SERVICE_PROVIDER_TYPE, DirectoryNodesProviderFactory.class);
     }
 
     public String getName() {

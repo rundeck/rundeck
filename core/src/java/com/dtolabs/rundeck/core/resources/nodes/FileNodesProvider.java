@@ -24,7 +24,6 @@
 package com.dtolabs.rundeck.core.resources.nodes;
 
 import com.dtolabs.rundeck.core.common.*;
-import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.shared.resources.ResourceXMLGenerator;
 
 import java.io.File;
@@ -32,12 +31,11 @@ import java.io.IOException;
 import java.util.Properties;
 
 /**
- * FileNodesProvider is ...
+ * FileNodesProvider can parse files to provide node results
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class FileNodesProvider implements NodesProvider, Configurable {
-    public static final String SERVICE_PROVIDER_TYPE = "file";
     private Framework framework;
     private NodeSetImpl nodeSet;
     private Configuration configuration;
@@ -46,7 +44,6 @@ public class FileNodesProvider implements NodesProvider, Configurable {
     FileNodesProvider(final Framework framework) {
         this.framework = framework;
         nodeSet = new NodeSetImpl();
-        System.err.println("FileNodesProvider constructor");
     }
 
     public static class Configuration {
@@ -55,11 +52,13 @@ public class FileNodesProvider implements NodesProvider, Configurable {
         public static final String FILE = "file";
         public static final String PROJECT = "project";
         public static final String FORMAT = "format";
-        private Nodes.Format format;
-        private File nodesFile;
-        private String project;
-        private boolean generateFileAutomatically;
-        private boolean includeServerNode;
+        public static final String REQUIRE_FILE_EXISTS = "requireFileExists";
+        Nodes.Format format;
+        File nodesFile;
+        String project;
+        boolean generateFileAutomatically;
+        boolean includeServerNode;
+        boolean requireFileExists;
         final Properties configuration;
 
         Configuration() {
@@ -67,12 +66,24 @@ public class FileNodesProvider implements NodesProvider, Configurable {
         }
 
         Configuration(final Properties configuration) {
+            if (null == configuration) {
+                throw new NullPointerException("configuration");
+            }
             this.configuration = configuration;
             configure();
         }
 
+        Configuration(final Configuration configuration) {
+            this(configuration.getProperties());
+        }
+
+
         public static Configuration fromProperties(final Properties configuration) {
             return new Configuration(configuration);
+        }
+
+        public static Configuration clone(final Configuration configuration) {
+            return fromProperties(configuration.getProperties());
         }
 
         public static Configuration build() {
@@ -125,6 +136,12 @@ public class FileNodesProvider implements NodesProvider, Configurable {
             return this;
         }
 
+        public Configuration requireFileExists(boolean require) {
+            this.requireFileExists = require;
+            configuration.put(REQUIRE_FILE_EXISTS, Boolean.toString(requireFileExists));
+            return this;
+        }
+
         public Properties getProperties() {
             return configuration;
         }
@@ -142,7 +159,7 @@ public class FileNodesProvider implements NodesProvider, Configurable {
                     format = Nodes.Format.valueOf(configuration.getProperty(FORMAT));
                 } catch (IllegalArgumentException e) {
                 }
-            } else {
+            } else if (nodesFile != null) {
                 if (nodesFile.getName().endsWith(".xml")) {
                     format = Nodes.Format.resourcexml;
                 } else if (nodesFile.getName().endsWith(".yaml")) {
@@ -157,6 +174,9 @@ public class FileNodesProvider implements NodesProvider, Configurable {
                 includeServerNode = Boolean.parseBoolean(configuration.getProperty(
                     INCLUDE_SERVER_NODE));
             }
+            if (configuration.containsKey(REQUIRE_FILE_EXISTS)) {
+                requireFileExists = Boolean.parseBoolean(configuration.getProperty(REQUIRE_FILE_EXISTS));
+            }
         }
 
         void validate() throws ConfigurationException {
@@ -170,7 +190,7 @@ public class FileNodesProvider implements NodesProvider, Configurable {
                 try {
                     Nodes.Format.valueOf(configuration.getProperty(FORMAT));
                 } catch (IllegalArgumentException e) {
-                    throw new ConfigurationException(e);
+                    throw new ConfigurationException("format is not recognized: " + configuration.getProperty(FORMAT));
                 }
             } else if (null == format) {
                 throw new ConfigurationException(
@@ -186,6 +206,7 @@ public class FileNodesProvider implements NodesProvider, Configurable {
                    ", project='" + project + '\'' +
                    ", generateFileAutomatically=" + generateFileAutomatically +
                    ", includeServerNode=" + includeServerNode +
+                   ", requireFileExists=" + requireFileExists +
                    ", configuration=" + configuration +
                    '}';
         }
@@ -200,9 +221,7 @@ public class FileNodesProvider implements NodesProvider, Configurable {
      * Configure the provider
      */
     public void configure(final Configuration configuration) throws ConfigurationException {
-        System.err.println("FileNodesProvider configure: " + configuration);
-        this.configuration = configuration;
-        this.configuration.configure();
+        this.configuration = new Configuration(configuration);
         this.configuration.validate();
     }
 
@@ -222,20 +241,14 @@ public class FileNodesProvider implements NodesProvider, Configurable {
         NodesProviderException {
         final Long modtime = nodesFile.lastModified();
         if (0 == nodeSet.getNodes().size() || !modtime.equals(lastModTime)) {
-//            final Nodes nodes = Nodes.create(nodesFile, format);
-            //clear nodes
-            System.err.println("FileNodesProvider getNodes(reload): "+nodesFile);
             nodeSet = new NodeSetImpl();
             loadNodes(nodesFile, format);
             lastModTime = modtime;
-        } else {
-            System.err.println("FileNodesProvider getNodes(no load): " + nodesFile);
         }
         return nodeSet;
     }
 
     private void generateResourcesFile(final File resfile, final Nodes.Format format) {
-        System.err.println("FileNodesProvider generateResourcesFile");
         final NodeEntryImpl node = framework.createFrameworkNode();
         node.setFrameworkProject(configuration.project);
         final NodesFileGenerator generator;
@@ -269,11 +282,15 @@ public class FileNodesProvider implements NodesProvider, Configurable {
             final NodeEntryImpl node = framework.createFrameworkNode();
             nodeSet.putNode(node);
         }
-        final NodeFileParser parser = createParser(nodesFile, format);
-        try {
-            parser.parse();
-        } catch (NodeFileParserException e) {
-            throw new NodesProviderException(e);
+        if (nodesFile.isFile()) {
+            final NodeFileParser parser = createParser(nodesFile, format);
+            try {
+                parser.parse();
+            } catch (NodeFileParserException e) {
+                throw new NodesProviderException(e);
+            }
+        } else if (configuration.requireFileExists) {
+            throw new NodesProviderException("File does not exist: " + nodesFile);
         }
     }
 
@@ -316,6 +333,25 @@ public class FileNodesProvider implements NodesProvider, Configurable {
                 .includeServerNode(false)
                 .generateFileAutomatically(false)
                 .project(project)
+                .requireFileExists(true)
+        );
+        return prov.getNodes();
+    }
+    /**
+     * Utility method to directly parse the nodes from a file
+     */
+    public static INodeSet parseFile(final File file, final Nodes.Format format, final Framework framework, final String project) throws
+        NodesProviderException,
+        ConfigurationException {
+        final FileNodesProvider prov = new FileNodesProvider(framework);
+        prov.configure(
+            FileNodesProvider.Configuration.build()
+                .file(file)
+                .includeServerNode(false)
+                .generateFileAutomatically(false)
+                .project(project)
+                .format(format)
+                .requireFileExists(true)
         );
         return prov.getNodes();
     }

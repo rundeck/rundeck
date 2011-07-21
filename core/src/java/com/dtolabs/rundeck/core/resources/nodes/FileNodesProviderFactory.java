@@ -38,7 +38,7 @@ public class FileNodesProviderFactory implements NodesProviderFactory {
     public static final String SERVICE_PROVIDER_TYPE = "file";
     private Framework framework;
 
-    public FileNodesProviderFactory(Framework framework) {
+    public FileNodesProviderFactory(final Framework framework) {
         this.framework = framework;
     }
 
