@@ -693,7 +693,6 @@ public class Framework extends FrameworkResourceParent {
         NodeFileParserException {
         INodeSet unfiltered=null;
 
-        System.err.println("Framework.filterNodeSet, instance: " + hashCode());
         if (null != nodesFile) {
             try {
                 unfiltered = FileNodesProvider.parseFile(nodesFile, this, project);

@@ -17,11 +17,9 @@
 package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.Constants;
+import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
-import com.dtolabs.rundeck.core.resources.nodes.FileNodesProvider;
-import com.dtolabs.rundeck.core.resources.nodes.NodesProvider;
-import com.dtolabs.rundeck.core.resources.nodes.NodesProviderException;
-import com.dtolabs.rundeck.core.resources.nodes.NodesProviderService;
+import com.dtolabs.rundeck.core.resources.nodes.*;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import com.dtolabs.shared.resources.ResourceXMLGenerator;
 import org.apache.tools.ant.Project;
@@ -99,18 +97,6 @@ public class FrameworkProject extends FrameworkResourceParent {
         //new resources provider config
         nodesProviderList = new ArrayList<NodesProvider>();
 
-        ///XXX: old resources config
-        final String resfilepath = getNodesResourceFilePath();
-        File resfile= new File(resfilepath);
-        if(!resfile.isFile() && shouldUpdateNodesResourceFile()) {
-            try {
-                updateNodesResourceFile();
-            } catch (UpdateUtils.UpdateException e) {
-                getLogger().error("Unable to retrieve resources file: " + e.getMessage());
-            }
-        }
-
-
         initialize();
     }
 
@@ -165,18 +151,34 @@ public class FrameworkProject extends FrameworkResourceParent {
         if (hasProperty(PROJECT_RESOURCES_FILE_PROPERTY)) {
             try {
                 nodesProviderList.add(loadNodesProvider("file", createFileProviderConfiguration()));
+                System.err.println("Using nodes file provider for source: " + getProperty(PROJECT_RESOURCES_FILE_PROPERTY));
             } catch (ExecutionServiceException e) {
                 logger.error("Failed to load file provider: " + e.getMessage(), e);
             }
         }
         if(hasProperty(PROJECT_RESOURCES_URL_PROPERTY)) {
-            System.err.println("TODO: load URL provider");
+            try{
+                nodesProviderList.add(loadNodesProvider("url", createURLProviderConfiguration()));
+                System.err.println("Using nodes url provider for source: " + getProperty(
+                    PROJECT_RESOURCES_URL_PROPERTY));
+            } catch (ExecutionServiceException e) {
+                logger.error("Failed to load file provider: " + e.getMessage(), e);
+            }
         }
 
         //TODO: iterate through provider configurations, and load providers for each config
 
         nodesProvidersLastReload= getPropertyFile().lastModified();
     }
+
+    private Properties createURLProviderConfiguration() {
+        final URLNodesProvider.Configuration build = URLNodesProvider.Configuration.build();
+        build.url(getProperty(PROJECT_RESOURCES_URL_PROPERTY));
+        build.project(getName());
+
+        return build.getProperties();
+    }
+
     private synchronized Collection<NodesProvider> getNodesProviders() {
         //determine if providers need to be reloaded
         final long lastMod = getPropertyFile().lastModified();
@@ -402,7 +404,8 @@ public class FrameworkProject extends FrameworkResourceParent {
         if(!validateResourceProviderURL(providerURL)){
             throw new UpdateUtils.UpdateException("providerURL is not allowed: " + providerURL);
         }
-        UpdateUtils.updateFileFromUrl(providerURL, getNodesResourceFilePath(), username, password);
+        UpdateUtils.updateFileFromUrl(providerURL, getNodesResourceFilePath(), username, password,
+            URLFileUpdater.factory());
         logger.debug("Updated nodes resources file: " + getNodesResourceFilePath());
     }
 

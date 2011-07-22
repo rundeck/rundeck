@@ -49,6 +49,7 @@ public class NodesProviderService extends PluggableProviderRegistryService<Nodes
 //        registry.put("url", URLNodesProvider.class);
         registry.put(FileNodesProviderFactory.SERVICE_PROVIDER_TYPE, FileNodesProviderFactory.class);
         registry.put(DirectoryNodesProviderFactory.SERVICE_PROVIDER_TYPE, DirectoryNodesProviderFactory.class);
+        registry.put(URLNodesProviderFactory.SERVICE_PROVIDER_TYPE, URLNodesProviderFactory.class);
     }
 
     public String getName() {

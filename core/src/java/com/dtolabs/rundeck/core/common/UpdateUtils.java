@@ -23,13 +23,10 @@
 */
 package com.dtolabs.rundeck.core.common;
 
+import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.utils.Streams;
 import org.apache.log4j.Logger;
-import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.Project;
-import org.apache.tools.ant.Task;
-import org.apache.tools.ant.taskdefs.Get;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -38,16 +35,15 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 
 /**
- * UpdateUtils provides {@link #updateFileFromUrl(String, String)} to GET a file from remote URL and
- * store it to a file.  This utility will provide locks and synchronization to prevent two threads or jvms from
- * overwriting the destination file at the same time, and will use last modification time from the source URL to skip
- * URL acquisition based on file modification time.
+ * UpdateUtils provides {@link #updateFileFromUrl(String, String)} to GET a file from remote URL and store it to a file.
+ * This utility will provide locks and synchronization to prevent two threads or jvms from overwriting the destination
+ * file at the same time, and will use last modification time from the source URL to skip URL acquisition based on file
+ * modification time.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class UpdateUtils {
     private static Logger logger = Logger.getLogger(UpdateUtils.class);
-    static final boolean USETIMESTAMP = true;
 
     /**
      * Get the source URL and store it to a destination file path
@@ -61,6 +57,7 @@ public class UpdateUtils {
         UpdateException {
         updateFileFromUrl(sourceUrl, destinationFilePath, null, null);
     }
+
     /**
      * Get the source URL and store it to a destination file path
      *
@@ -71,10 +68,10 @@ public class UpdateUtils {
      */
     public static void updateFileFromFile(final File sourceFile, final String destinationFilePath) throws
         UpdateException {
-        if(!sourceFile.exists()) {
+        if (!sourceFile.exists()) {
             throw new UpdateException("Source file does not exist: " + sourceFile);
         }
-        if(!sourceFile.isFile()) {
+        if (!sourceFile.isFile()) {
             throw new UpdateException("Not a file: " + sourceFile);
         }
         if (sourceFile.length() < 1) {
@@ -82,11 +79,12 @@ public class UpdateUtils {
         }
 
         try {
-            updateFileFromInputStream(new FileInputStream(sourceFile),destinationFilePath);
+            updateFileFromInputStream(new FileInputStream(sourceFile), destinationFilePath);
         } catch (IOException e) {
             throw new UpdateException("Unable to update file: " + e.getMessage(), e);
         }
     }
+
     /**
      * Get the source URL and store it to a destination file path
      *
@@ -97,31 +95,7 @@ public class UpdateUtils {
      */
     public static void updateFileFromInputStream(final InputStream input, final String destinationFilePath) throws
         UpdateException {
-        final File destFile = new File(destinationFilePath);
-        final File lockFile = new File(destFile.getAbsolutePath() + ".lock");
-        final File newDestFile = new File(destFile.getAbsolutePath() + ".new");
-
-        //synchronize writing to file within this jvm
-        synchronized (UpdateUtils.class) {
-            try {
-                final FileChannel channel = new RandomAccessFile(lockFile, "rw").getChannel();
-
-                //acquire file lock to block external jvm (commandline) from writing to file
-                final FileLock lock = channel.lock();
-
-                try {
-                    Streams.copyStream(input, new FileOutputStream(newDestFile));
-
-                    moveFile(newDestFile, destFile);
-                } finally {
-                    lock.release();
-                    channel.close();
-                }
-            } catch (IOException e) {
-                throw new UpdateException("Unable to update file: " + e.getMessage(), e);
-            }
-        }
-
+        update(new FileStreamUpdater(input), new File(destinationFilePath));
     }
 
     /**
@@ -153,13 +127,30 @@ public class UpdateUtils {
      *
      * @param sourceUrl
      * @param destinationFilePath
-     *
      * @param username
      * @param password
+     *
      * @throws UpdateException
      */
     public static void updateFileFromUrl(final String sourceUrl, final String destinationFilePath,
                                          final String username, final String password) throws
+        UpdateException {
+        updateFileFromUrl(sourceUrl, destinationFilePath, username, password, URLFileUpdater.factory());
+    }
+
+    /**
+     * Get the source URL and store it to a destination file path
+     *
+     * @param sourceUrl
+     * @param destinationFilePath
+     * @param username
+     * @param password
+     *
+     * @throws UpdateException
+     */
+    public static void updateFileFromUrl(final String sourceUrl, final String destinationFilePath,
+                                         final String username, final String password,
+                                         final URLFileUpdaterFactory factory) throws
         UpdateException {
         String tusername = username;
         String tpassword = password;
@@ -182,7 +173,7 @@ public class UpdateUtils {
         final File destinationFile = new File(destinationFilePath);
         final long mtime = destinationFile.exists() ? destinationFile.lastModified() : 0;
 
-        get(url, destinationFile, tusername, tpassword);
+        update(factory.fileUpdaterFromURL(url, tusername, tpassword), destinationFile);
         if (destinationFile.lastModified() > mtime) {
             logger.info("updated file: " + destinationFile.getAbsolutePath());
         } else {
@@ -191,14 +182,16 @@ public class UpdateUtils {
 
     }
 
-    static void get(final URL srcUrl, final File destFile, final String username, final String password) throws UpdateException {
-        final Project p = new Project();
+    /**
+     * Update a destination file with an updater implementation, while maintaining appropriate
+     * locks around the action and file
+     */
+    public static void update(final FileUpdater updater, final File destFile) throws UpdateException {
+
         final File lockFile = new File(destFile.getAbsolutePath() + ".lock");
         final File newDestFile = new File(destFile.getAbsolutePath() + ".new");
 
         try {
-            final Task getTask = createTask(srcUrl, newDestFile, username, password);
-            getTask.setProject(p);
 
             //synchronize writing to file within this jvm
             synchronized (UpdateUtils.class) {
@@ -208,16 +201,16 @@ public class UpdateUtils {
                 final FileLock lock = channel.lock();
                 try {
                     FileUtils.copyFileStreams(destFile, newDestFile);
-                    if(!newDestFile.setLastModified(destFile.lastModified())) {
+                    if (!newDestFile.setLastModified(destFile.lastModified())) {
                         logger.warn("Unable to set modification time of temp file: " + newDestFile.getAbsolutePath());
                     }
-                    getTask.execute();
-
-                    moveFile(newDestFile, destFile);
-                } catch (BuildException e) {
-                    logger.error(
-                        "Error getting URL <" + srcUrl + ">" + (null != username ? "(user: " + username + ", pass: ****) " : "") + e
-                            .getMessage(), e);
+                    updater.updateFile(newDestFile);
+                    if(newDestFile.isFile() && newDestFile.length()>0){
+                        moveFile(newDestFile, destFile);
+                    }else {
+                        throw new UpdateException("Result file was empty or not present: " + newDestFile);
+                    }
+                } catch (FileUpdaterException e) {
                     throw new UpdateException(e);
                 } finally {
                     lock.release();
@@ -227,33 +220,6 @@ public class UpdateUtils {
         } catch (IOException e) {
             throw new UpdateException("Unable to get and write file: " + e.getMessage(), e);
         }
-    }
-
-    private static Task createTask(final URL fileUrl, final File destFile,
-                                   final String username, final String password) {
-
-        final Get getTask = new Get();
-        getTask.setDest(destFile);
-        if (null != username) {
-            getTask.setUsername(username);
-        }
-        if (null != password) {
-            getTask.setPassword(password);
-        }
-        getTask.setSrc(fileUrl);
-        getTask.setHttpUseCaches(false);
-        getTask.setMaxTime(60);
-        /**
-         * If it is an empty file, then ignore timestamp check and get it
-         */
-        if (destFile.length() == 0) {
-            getTask.setUseTimestamp(false);
-        } else {
-            getTask.setUseTimestamp(USETIMESTAMP);
-        }
-
-
-        return getTask;
     }
 
     /**
@@ -274,6 +240,21 @@ public class UpdateUtils {
 
         public UpdateException(final Throwable throwable) {
             super(throwable);
+        }
+    }
+
+    private static class FileStreamUpdater implements FileUpdater {
+        InputStream input;
+        public FileStreamUpdater(InputStream input) {
+            this.input=input;
+        }
+
+        public void updateFile(final File destinationFile) throws FileUpdaterException {
+            try {
+                Streams.copyStream(input, new FileOutputStream(destinationFile));
+            } catch (IOException e) {
+                throw new FileUpdaterException(e);
+            }
         }
     }
 }
