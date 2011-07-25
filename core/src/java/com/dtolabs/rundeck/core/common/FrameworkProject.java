@@ -142,31 +142,59 @@ public class FrameworkProject extends FrameworkResourceParent {
         lookup.expand();
     }
 
+    private ArrayList<Exception> providerExceptions;
     private long nodesProvidersLastReload = 0L;
     private void loadNodesProviders() {
-        System.err.println("FrameworkProject.loadNodesProviders");
-//        System.err.println(StringUtils.getStackTrace(new Exception()));
-        
+        providerExceptions = new ArrayList<Exception>();
         //generate Configuration for file provider
         if (hasProperty(PROJECT_RESOURCES_FILE_PROPERTY)) {
             try {
-                nodesProviderList.add(loadNodesProvider("file", createFileProviderConfiguration()));
-                System.err.println("Using nodes file provider for source: " + getProperty(PROJECT_RESOURCES_FILE_PROPERTY));
+                final Properties config = createFileProviderConfiguration();
+                logger.info("Provider (project.resources.file): loading with properties: " + config);
+                nodesProviderList.add(loadNodesProvider("file", config));
             } catch (ExecutionServiceException e) {
                 logger.error("Failed to load file provider: " + e.getMessage(), e);
+                providerExceptions.add(e);
             }
         }
         if(hasProperty(PROJECT_RESOURCES_URL_PROPERTY)) {
             try{
-                nodesProviderList.add(loadNodesProvider("url", createURLProviderConfiguration()));
-                System.err.println("Using nodes url provider for source: " + getProperty(
-                    PROJECT_RESOURCES_URL_PROPERTY));
+                final Properties config = createURLProviderConfiguration();
+                logger.info("Provider (project.resources.url): loading with properties: " + config);
+                nodesProviderList.add(loadNodesProvider("url", config));
             } catch (ExecutionServiceException e) {
                 logger.error("Failed to load file provider: " + e.getMessage(), e);
+                providerExceptions.add(e);
             }
         }
 
-        //TODO: iterate through provider configurations, and load providers for each config
+        int i=1;
+        boolean done=false;
+        while(!done) {
+            final String prefix = "nodes.provider." + i;
+            if (hasProperty(prefix +".type")) {
+                String providerType = getProperty(prefix + ".type");
+                Properties props = new Properties();
+                props.setProperty("project", getName());
+                int len= (prefix + ".config.").length();
+                for (final Object o : lookup.getPropertiesMap().keySet()) {
+                    String key=(String) o;
+                    if (key.startsWith(prefix + ".config.")) {
+                        props.setProperty(key.substring(len), getProperty(key));
+                    }
+                }
+                logger.info("Provider #" + i + " (" + providerType + "): loading with properties: " + props);
+                try {
+                    nodesProviderList.add(loadNodesProvider(providerType, props));
+                } catch (ExecutionServiceException e) {
+                    logger.error("Failed loading provider #" + i + ", skipping: " + e.getMessage(), e);
+                    providerExceptions.add(e);
+                }
+            }else{
+                done=true;
+            }
+            i++;
+        }
 
         nodesProvidersLastReload= getPropertyFile().lastModified();
     }
@@ -303,15 +331,6 @@ public class FrameworkProject extends FrameworkResourceParent {
         }
     }
     /**
-     * Returns a {@link Nodes} object conatining the resources.properties config data
-     *
-     * @return an instance of {@link Nodes}
-     */
-    public Nodes getNodes() throws NodeFileParserException {
-        String path = getNodesResourceFilePath();
-        return getNodes(new File(path));
-    }
-    /**
      * Returns the set of nodes for the project
      *
      * @return an instance of {@link INodeSet}
@@ -324,54 +343,10 @@ public class FrameworkProject extends FrameworkResourceParent {
                 list.addNodeSet(nodesProvider.getNodes());
             } catch (NodesProviderException e) {
                 logger.error(e.getMessage(), e);
+                providerExceptions.add(e);
             }
         }
         return list;
-
-    }
-
-    private HashMap<File, Long> nodesFileTimes = new HashMap<File, Long>();
-    private HashMap<File, Nodes> nodesCache = new HashMap<File, Nodes>();
-
-    /**
-     * Returns a {@link Nodes} object conatining the nodes config data.
-     *
-     * @param nodesFile the source file
-     * @return an instance of {@link Nodes}
-     * @deprecated 
-     */
-    public Nodes getNodes(final File nodesFile) throws NodeFileParserException {
-        final Nodes.Format format;
-        if (nodesFile.getName().endsWith(".xml")) {
-            format = Nodes.Format.resourcexml;
-        } else if (nodesFile.getName().endsWith(".yaml")) {
-            format = Nodes.Format.resourceyaml;
-        } else {
-            throw new NodeFileParserException(
-                "Unable to determine file format for file: " + nodesFile.getAbsolutePath());
-        }
-        return getNodes(nodesFile, format);
-
-    }
-    /**
-     * Returns a {@link Nodes} object conatining the nodes config data.
-     *
-     * @param nodesFile the source file
-     * @param format
-     * @return an instance of {@link Nodes}
-     * @deprecated 
-     */
-    Nodes getNodes(final File nodesFile, final Nodes.Format format) throws NodeFileParserException {
-        final Long modtime = nodesFile.lastModified();
-        if ( null == nodesCache.get(nodesFile) || !modtime.equals(nodesFileTimes.get(nodesFile)) ) {
-            final Nodes nodes = Nodes.create( nodesFile, format);
-            nodes.addFrameworkNode(this);
-            nodesFileTimes.put(nodesFile, modtime);
-            nodesCache.put(nodesFile, nodes);
-            return nodes;
-        } else {
-            return nodesCache.get(nodesFile);
-        }
 
     }
 
@@ -648,4 +623,10 @@ public class FrameworkProject extends FrameworkResourceParent {
         return d.getBaseDir().exists();
     }
 
+    /**
+     * Return the set of exceptions produced by the last attempt to invoke all node providers
+     */
+    public ArrayList<Exception> getProviderExceptions() {
+        return providerExceptions;
+    }
 }

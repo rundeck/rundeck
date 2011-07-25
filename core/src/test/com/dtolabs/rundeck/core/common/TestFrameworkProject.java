@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.core.common;
 
+import com.dtolabs.rundeck.core.resources.nodes.*;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import junit.framework.Test;
@@ -147,11 +148,11 @@ public class TestFrameworkProject extends AbstractBaseTest {
                                          getFrameworkInstance().getFrameworkProjectMgr());
         FileUtils.copyFileStreams(new File("src/test/com/dtolabs/rundeck/core/common/test-nodes1.xml"), nodesfile);
         assertTrue(nodesfile.exists());
-        Nodes nodes = project.getNodes();
+        INodeSet nodes = project.getNodeSet();
         assertNotNull(nodes);
-        assertEquals("nodes was incorrect size", 2, nodes.listNodes().size());
-        assertTrue("nodes did not have correct test node1", nodes.hasNode("test1"));
-        assertTrue("nodes did not have correct test node2", nodes.hasNode("testnode2"));
+        assertEquals("nodes was incorrect size", 2, nodes.getNodes().size());
+        assertNotNull("nodes did not have correct test node1", nodes.getNode("test1"));
+        assertNotNull("nodes did not have correct test node2", nodes.getNode("testnode2"));
     }
 
     public void testUpdateNodesResourceFile() throws Exception {
@@ -191,12 +192,12 @@ public class TestFrameworkProject extends AbstractBaseTest {
         FileUtils.copyFileStreams(resourcesFile, toFile);
         System.err.println("copied to file " + resourcesFile + " to " + toFile);
 
-        Nodes nodes = project.getNodes();
+        INodeSet nodes = project.getNodeSet();
         assertNotNull(nodes);
-        assertEquals("nodes was incorrect size", 3, nodes.listNodes().size());
-        assertTrue("nodes did not have correct test node1", nodes.hasNode("test1"));
-        assertTrue("nodes did not have correct test node2", nodes.hasNode("testnode2"));
-        assertTrue("nodes did not have correct test node2", nodes.hasNode("testnode3"));
+        assertEquals("nodes was incorrect size", 3, nodes.getNodes().size());
+        assertNotNull("nodes did not have correct test node1", nodes.getNode("test1"));
+        assertNotNull("nodes did not have correct test node2", nodes.getNode("testnode2"));
+        assertNotNull("nodes did not have correct test node2", nodes.getNode("testnode3"));
 
         //restore props and resources
         orig.store(new FileOutputStream(projectPropsFile), null);
@@ -237,12 +238,12 @@ public class TestFrameworkProject extends AbstractBaseTest {
             getFrameworkInstance().getFrameworkProjectMgr());
         project.updateNodesResourceFileFromUrl(nodesUrl,null,null);
 
-        Nodes nodes = project.getNodes();
+        INodeSet nodes = project.getNodeSet();
         assertNotNull(nodes);
-        assertEquals("nodes was incorrect size", 3, nodes.listNodes().size());
-        assertTrue("nodes did not have correct test node1", nodes.hasNode("test1"));
-        assertTrue("nodes did not have correct test node2", nodes.hasNode("testnode2"));
-        assertTrue("nodes did not have correct test node2", nodes.hasNode("testnode3"));
+        assertEquals("nodes was incorrect size", 3, nodes.getNodes().size());
+        assertNotNull("nodes did not have correct test node1", nodes.getNode("test1"));
+        assertNotNull("nodes did not have correct test node2", nodes.getNode("testnode2"));
+        assertNotNull("nodes did not have correct test node2", nodes.getNode("testnode3"));
 
         //restore props and resources
 
@@ -446,5 +447,167 @@ public class TestFrameworkProject extends AbstractBaseTest {
 
 
         System.out.println("TEST: propertyFile="+project.getPropertyFile());
+    }
+    static class testProvider implements NodesProvider{
+        INodeSet returnNodes;
+        int called=0;
+        public INodeSet getNodes() throws NodesProviderException {
+            called++;
+            return returnNodes;
+        }
+    }
+    static class testFactory implements NodesProviderFactory {
+        NodesProvider returnProvider;
+        Properties createConfiguration;
+        int called=0;
+        public NodesProvider createNodesProvider(Properties configuration) throws ConfigurationException {
+            called++;
+            createConfiguration=configuration;
+            return returnProvider;
+        }
+    }
+    public void testLoadNodesProvidersBasic() throws Exception {
+
+        final NodesProviderService service = NodesProviderService.getInstanceForFramework(getFrameworkInstance());
+        testProvider provider1 = new testProvider();
+        final NodeSetImpl set1 = new NodeSetImpl();
+        set1.putNode(new NodeEntryImpl("set1node1"));
+
+        provider1.returnNodes = set1;
+        testFactory factory1 = new testFactory();
+        factory1.returnProvider=provider1;
+
+
+        service.registerInstance("file", factory1);
+        service.registerInstance("url", factory1);
+        service.registerInstance("directory", factory1);
+
+
+        //default properties should contain project.resources.file
+        FrameworkProject project = FrameworkProject.create(PROJECT_NAME, new File(getFrameworkProjectsBase()), getFrameworkInstance().getFrameworkProjectMgr());
+        final INodeSet nodeSet = project.getNodeSet();
+        assertNotNull(nodeSet);
+        assertEquals(1, factory1.called);
+        assertEquals(1,provider1.called);
+        
+        assertEquals(1, nodeSet.getNodes().size());
+        assertNotNull(nodeSet.getNode("set1node1"));
+    }
+    public void testLoadNodesProvidersWithUrl() throws Exception {
+
+        final NodesProviderService service = NodesProviderService.getInstanceForFramework(getFrameworkInstance());
+        testProvider provider1 = new testProvider();
+        final NodeSetImpl set1 = new NodeSetImpl();
+        set1.putNode(new NodeEntryImpl("set1node1"));
+
+        provider1.returnNodes = set1;
+        testFactory factory1 = new testFactory();
+        factory1.returnProvider=provider1;
+
+        testProvider provider2 = new testProvider();
+        final NodeSetImpl set2 = new NodeSetImpl();
+        set2.putNode(new NodeEntryImpl("set2node1"));
+        provider2.returnNodes = set2;
+        testFactory factory2 = new testFactory();
+        factory2.returnProvider = provider2;
+
+
+        testProvider provider3 = new testProvider();
+        provider3.returnNodes = new NodeSetImpl();
+        testFactory factory3 = new testFactory();
+        factory3.returnProvider = provider3;
+
+
+        service.registerInstance("file", factory1);
+        service.registerInstance("url", factory2);
+        service.registerInstance("directory", factory3);
+
+        //backup a copy project.properties
+
+        //add framework.resources.url property
+        Properties props1 = new Properties();
+        props1.setProperty("project.resources.file", nodesfile.getAbsolutePath());
+        props1.setProperty("project.resources.url", "http://example.com/test1");
+        projectPropsFile.getParentFile().mkdirs();
+        props1.store(new FileOutputStream(projectPropsFile), null);
+
+        //default properties should contain project.resources.file
+        FrameworkProject project = FrameworkProject.create(PROJECT_NAME, new File(getFrameworkProjectsBase()), getFrameworkInstance().getFrameworkProjectMgr());
+        final INodeSet nodeSet = project.getNodeSet();
+        assertNotNull(nodeSet);
+        assertEquals(1, factory1.called);
+        assertEquals(1,provider1.called);
+        assertEquals(1, factory2.called);
+        assertEquals(1,provider2.called);
+        assertEquals(0, factory3.called);
+        assertEquals(0,provider3.called);
+
+        assertEquals(2, nodeSet.getNodes().size());
+        assertNotNull(nodeSet.getNode("set1node1"));
+        assertNotNull(nodeSet.getNode("set2node1"));
+        projectPropsFile.delete();
+    }
+    public void testLoadNodesProvidersMultiples() throws Exception {
+
+        final NodesProviderService service = NodesProviderService.getInstanceForFramework(getFrameworkInstance());
+        testProvider provider1 = new testProvider();
+        final NodeSetImpl set1 = new NodeSetImpl();
+        set1.putNode(new NodeEntryImpl("set1node1"));
+
+        provider1.returnNodes = set1;
+        testFactory factory1 = new testFactory();
+        factory1.returnProvider=provider1;
+
+        testProvider provider2 = new testProvider();
+        final NodeSetImpl set2 = new NodeSetImpl();
+        set2.putNode(new NodeEntryImpl("set2node1"));
+        provider2.returnNodes = set2;
+        testFactory factory2 = new testFactory();
+        factory2.returnProvider = provider2;
+
+
+        testProvider provider3 = new testProvider();
+        final NodeSetImpl set3 = new NodeSetImpl();
+        set3.putNode(new NodeEntryImpl("set3node1"));
+        provider3.returnNodes = set3;
+        testFactory factory3 = new testFactory();
+        factory3.returnProvider = provider3;
+
+
+        service.registerInstance("file", factory1);
+        service.registerInstance("url", factory2);
+        service.registerInstance("directory", factory3);
+
+        //backup a copy project.properties
+
+        //add framework.resources.url property
+        Properties props1 = new Properties();
+        props1.setProperty("project.resources.file", nodesfile.getAbsolutePath());
+        props1.setProperty("project.resources.url", "http://example.com/test1");
+        props1.setProperty("nodes.provider.1.type", "file");
+        props1.setProperty("nodes.provider.1.config.file", "/test/file/path");
+        props1.setProperty("nodes.provider.2.type", "url");
+        props1.setProperty("nodes.provider.2.config.url", "http://example.com/test2");
+        props1.setProperty("nodes.provider.3.type", "directory");
+        props1.setProperty("nodes.provider.3.config.directory", "/test/file/path3");
+        projectPropsFile.getParentFile().mkdirs();
+        props1.store(new FileOutputStream(projectPropsFile), null);
+
+        //default properties should contain project.resources.file
+        FrameworkProject project = FrameworkProject.create(PROJECT_NAME, new File(getFrameworkProjectsBase()), getFrameworkInstance().getFrameworkProjectMgr());
+        final INodeSet nodeSet = project.getNodeSet();
+        assertNotNull(nodeSet);
+        assertEquals(2, factory1.called);
+        assertEquals(2,provider1.called);
+        assertEquals(2, factory2.called);
+        assertEquals(2,provider2.called);
+        assertEquals(1, factory3.called);
+        assertEquals(1,provider3.called);
+
+        assertEquals(3, nodeSet.getNodes().size());
+        assertNotNull(nodeSet.getNode("set1node1"));
+        assertNotNull(nodeSet.getNode("set2node1"));
+        assertNotNull(nodeSet.getNode("set3node1"));
+        projectPropsFile.delete();
     }
 }

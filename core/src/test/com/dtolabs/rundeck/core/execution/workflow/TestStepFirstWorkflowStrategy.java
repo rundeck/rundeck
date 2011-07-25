@@ -210,9 +210,9 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
         {
             final FrameworkProject frameworkProject = testFramework.getFrameworkProjectMgr().getFrameworkProject(
                 TEST_PROJECT);
-            final Nodes nodes = frameworkProject.getNodes();
+            final INodeSet nodes = frameworkProject.getNodeSet();
             assertNotNull(nodes);
-            assertEquals(2, nodes.countNodes());
+            assertEquals(2, nodes.getNodes().size());
 
         }
 

@@ -632,40 +632,6 @@ public class Framework extends FrameworkResourceParent {
     }
 
     /**
-     * Attempt to update the nodes resources file, and read the list of nodes for a project
-     *
-     * @return Nodes object for the project
-     */
-    Nodes readNodesFile(final String project) throws NodeFileParserException {
-        final FrameworkProject frameworkProject = getFrameworkProjectMgr().getFrameworkProject(project);
-
-        final Nodes n;
-
-        ////////
-        //plugin point: update nodes file 
-        ////////
-
-        n = frameworkProject.getNodes();
-        return n;
-    }
-    /**
-     * Attempt to update the nodes resources file, and read the list of nodes for a project
-     *
-     * @return Nodes object for the project
-     */
-    Nodes readNodesFile(final String project, final File nodesFile) throws NodeFileParserException {
-        final FrameworkProject frameworkProject = getFrameworkProjectMgr().getFrameworkProject(project);
-
-        final Nodes n;
-
-        ////////
-        //plugin point: update nodes file
-        ////////
-
-        n = frameworkProject.getNodes(nodesFile);
-        return n;
-    }
-    /**
      * Read the nodes file for a project and return a filtered set of nodes
      *
      * @param nodeset node filter set

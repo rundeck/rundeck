@@ -101,7 +101,6 @@ class FrameworkController  {
         def filterErrors=[:]
         def project = framework.getFrameworkProjectMgr().getFrameworkProject(query.project)
         def nodes
-        final Nodes parsedNodes = project.getNodes()
         final INodeSet nodes1 = project.getNodeSet()
         allcount=nodes1.nodes.size()
         if(params.localNodeOnly){
@@ -216,10 +215,11 @@ class FrameworkController  {
 */
         def resources=[:]
 
+        def parseExceptions= project.getProviderExceptions()
         def model=[
             allnodes: allnodes,
-            nodesvalid: parsedNodes.valid,
-            nodeserror: parsedNodes.parserException,
+            nodesvalid: !parseExceptions,
+            nodeserror: parseExceptions,
 //            nodesfile:nodes1.file,
             params:params,
             total:total,
@@ -248,7 +248,7 @@ class FrameworkController  {
     def nodesFragment = {ExtNodeFilters query->
         def result = nodes(query)
         if(!result.nodesvalid){
-            request.error="Error parsing file \"${result.nodesfile}\": "+result.nodeserror? result.nodeserror.message:'no message'
+            request.error="Error parsing file \"${result.nodesfile}\": "+result.nodeserror? result.nodeserror*.message.join("\n"):'no message'
         }
         render(template:"allnodes",model: result)
     }
