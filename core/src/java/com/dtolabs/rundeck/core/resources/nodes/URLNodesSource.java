@@ -15,7 +15,7 @@
  */
 
 /*
-* URLNodesProvider.java
+* URLNodesSource.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 7/21/11 4:33 PM
@@ -40,12 +40,12 @@ import java.util.HashSet;
 import java.util.Properties;
 
 /**
- * URLNodesProvider is ...
+ * URLNodesSource produces nodes from a URL
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class URLNodesProvider implements NodesProvider, Configurable {
-    static final Logger logger = Logger.getLogger(URLNodesProvider.class.getName());
+public class URLNodesSource implements NodesSource, Configurable {
+    static final Logger logger = Logger.getLogger(URLNodesSource.class.getName());
     public static final int DEFAULT_TIMEOUT = 30;
     final private Framework framework;
     Configuration configuration;
@@ -55,7 +55,7 @@ public class URLNodesProvider implements NodesProvider, Configurable {
     private Nodes.Format contentFormat;
     URLFileUpdater.httpClientInteraction interaction;
 
-    public URLNodesProvider(final Framework framework) {
+    public URLNodesSource(final Framework framework) {
         this.framework = framework;
     }
 
@@ -188,9 +188,9 @@ public class URLNodesProvider implements NodesProvider, Configurable {
             this.configuration.project);
 
         tempFileName =  hashURL(this.configuration.nodesUrl.toExternalForm()) + ".temp";
-        destinationTempFile = new File(frameworkProject.getBaseDir(), "var/urlNodesProviderCache/" + tempFileName);
+        destinationTempFile = new File(frameworkProject.getBaseDir(), "var/urlNodesSourceCache/" + tempFileName);
         destinationCacheData = new File(frameworkProject.getBaseDir(),
-            "var/urlNodesProviderCache/" + tempFileName + ".cache.properties");
+            "var/urlNodesSourceCache/" + tempFileName + ".cache.properties");
         destinationTempFile.getParentFile().mkdirs();
     }
     private String hashURL(final String url) {
@@ -205,7 +205,7 @@ public class URLNodesProvider implements NodesProvider, Configurable {
         return Integer.toString(url.hashCode());
     }
 
-    public INodeSet getNodes() throws NodesProviderException {
+    public INodeSet getNodes() throws NodesSourceException {
         //update from URL if necessary
         URLFileUpdater updater = null;
         try {
@@ -229,7 +229,7 @@ public class URLNodesProvider implements NodesProvider, Configurable {
             logger.debug("Updated nodes resources file: " + destinationTempFile);
         } catch (UpdateUtils.UpdateException e) {
             if (!destinationTempFile.isFile() || destinationTempFile.length() < 1) {
-                throw new NodesProviderException(
+                throw new NodesSourceException(
                     "Error updating from URL: " + configuration.nodesUrl + ": " + e.getMessage(), e);
             } else {
                 logger.error("Error updating from URL: " + configuration.nodesUrl + ": " + e.getMessage(), e);
@@ -249,15 +249,15 @@ public class URLNodesProvider implements NodesProvider, Configurable {
         }
         //parse file
         if (null == contentFormat) {
-            throw new NodesProviderException("Unable to determine content format");
+            throw new NodesSourceException("Unable to determine content format");
         }
         logger.debug("Determined URL content format: " + contentFormat);
         if (destinationTempFile.isFile() && destinationTempFile.length() > 0) {
             try {
-                return FileNodesProvider.parseFile(destinationTempFile, contentFormat, framework,
+                return FileNodesSource.parseFile(destinationTempFile, contentFormat, framework,
                     configuration.project);
             } catch (ConfigurationException e) {
-                throw new NodesProviderException(e);
+                throw new NodesSourceException(e);
             }
         } else {
             return new NodeSetImpl();

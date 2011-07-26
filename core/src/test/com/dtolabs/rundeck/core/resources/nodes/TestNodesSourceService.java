@@ -41,10 +41,10 @@ import java.util.Properties;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class TestNodesProviderService extends AbstractBaseTest {
+public class TestNodesSourceService extends AbstractBaseTest {
     private static final String PROJ_NAME = "TestNodesProviderService";
 
-    public TestNodesProviderService(String name) {
+    public TestNodesSourceService(String name) {
         super(name);
     }
 
@@ -71,21 +71,21 @@ public class TestNodesProviderService extends AbstractBaseTest {
     }
 
 
-    class providerTest1 implements NodesProvider {
+    class sourceTest1 implements NodesSource {
         INodeSet toReturn;
 
-        public INodeSet getNodes() throws NodesProviderException {
+        public INodeSet getNodes() throws NodesSourceException {
             return toReturn;
         }
     }
 
-    class test1 implements NodesProviderFactory {
-        NodesProvider toReturn;
+    class test1 implements NodesSourceFactory {
+        NodesSource toReturn;
         Properties createNodesProviderConfiguration;
         boolean called;
         ConfigurationException toThrow;
 
-        public NodesProvider createNodesProvider(final Properties configuration) throws ConfigurationException {
+        public NodesSource createNodesSource(final Properties configuration) throws ConfigurationException {
             called=true;
             createNodesProviderConfiguration = configuration;
             if(null!=toThrow){
@@ -111,10 +111,10 @@ public class TestNodesProviderService extends AbstractBaseTest {
     }
 
     public void testGetProviderForConfiguration() throws Exception {
-        final NodesProviderService service = NodesProviderService.getInstanceForFramework(getFrameworkInstance());
+        final NodesSourceService service = NodesSourceService.getInstanceForFramework(getFrameworkInstance());
         {
             final test1 factory = new test1();
-            final providerTest1 provider = new providerTest1();
+            final sourceTest1 provider = new sourceTest1();
             final nodesettest nodesettest = new nodesettest();
             provider.toReturn = nodesettest;
             factory.toReturn = provider;
@@ -122,7 +122,7 @@ public class TestNodesProviderService extends AbstractBaseTest {
             service.registerInstance("test", factory);
 
             //no properties
-            final NodesProvider result = service.getProviderForConfiguration("test", null);
+            final NodesSource result = service.getSourceForConfiguration("test", null);
             assertNotNull(result);
             assertTrue(factory.called);
             assertNull(factory.createNodesProviderConfiguration);
@@ -131,7 +131,7 @@ public class TestNodesProviderService extends AbstractBaseTest {
         }
         {
             final test1 factory = new test1();
-            final providerTest1 provider = new providerTest1();
+            final sourceTest1 provider = new sourceTest1();
             final nodesettest nodesettest = new nodesettest();
             provider.toReturn = nodesettest;
             factory.toReturn = provider;
@@ -140,7 +140,7 @@ public class TestNodesProviderService extends AbstractBaseTest {
             final Properties properties = new Properties();
 
             //use properties
-            final NodesProvider result = service.getProviderForConfiguration("test", properties);
+            final NodesSource result = service.getSourceForConfiguration("test", properties);
             assertNotNull(result);
             assertTrue(factory.called);
             assertNotNull(factory.createNodesProviderConfiguration);
@@ -151,7 +151,7 @@ public class TestNodesProviderService extends AbstractBaseTest {
 
         {
             final test1 factory = new test1();
-            final providerTest1 provider = new providerTest1();
+            final sourceTest1 provider = new sourceTest1();
             final nodesettest nodesettest = new nodesettest();
             provider.toReturn = nodesettest;
             factory.toReturn = provider;
@@ -161,9 +161,9 @@ public class TestNodesProviderService extends AbstractBaseTest {
             final Properties properties = new Properties();
 
             //throw configuration exception
-            final NodesProvider result;
+            final NodesSource result;
             try {
-                result = service.getProviderForConfiguration("test", properties);
+                result = service.getSourceForConfiguration("test", properties);
                 fail("Should have thrown exception");
             } catch (ExecutionServiceException e) {
                 assertNotNull(e);

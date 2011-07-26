@@ -448,19 +448,19 @@ public class TestFrameworkProject extends AbstractBaseTest {
 
         System.out.println("TEST: propertyFile="+project.getPropertyFile());
     }
-    static class testProvider implements NodesProvider{
+    static class testSource implements NodesSource {
         INodeSet returnNodes;
         int called=0;
-        public INodeSet getNodes() throws NodesProviderException {
+        public INodeSet getNodes() throws NodesSourceException {
             called++;
             return returnNodes;
         }
     }
-    static class testFactory implements NodesProviderFactory {
-        NodesProvider returnProvider;
+    static class testFactory implements NodesSourceFactory {
+        NodesSource returnProvider;
         Properties createConfiguration;
         int called=0;
-        public NodesProvider createNodesProvider(Properties configuration) throws ConfigurationException {
+        public NodesSource createNodesSource(Properties configuration) throws ConfigurationException {
             called++;
             createConfiguration=configuration;
             return returnProvider;
@@ -468,8 +468,8 @@ public class TestFrameworkProject extends AbstractBaseTest {
     }
     public void testLoadNodesProvidersBasic() throws Exception {
 
-        final NodesProviderService service = NodesProviderService.getInstanceForFramework(getFrameworkInstance());
-        testProvider provider1 = new testProvider();
+        final NodesSourceService service = NodesSourceService.getInstanceForFramework(getFrameworkInstance());
+        testSource provider1 = new testSource();
         final NodeSetImpl set1 = new NodeSetImpl();
         set1.putNode(new NodeEntryImpl("set1node1"));
 
@@ -495,8 +495,8 @@ public class TestFrameworkProject extends AbstractBaseTest {
     }
     public void testLoadNodesProvidersWithUrl() throws Exception {
 
-        final NodesProviderService service = NodesProviderService.getInstanceForFramework(getFrameworkInstance());
-        testProvider provider1 = new testProvider();
+        final NodesSourceService service = NodesSourceService.getInstanceForFramework(getFrameworkInstance());
+        testSource provider1 = new testSource();
         final NodeSetImpl set1 = new NodeSetImpl();
         set1.putNode(new NodeEntryImpl("set1node1"));
 
@@ -504,7 +504,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         testFactory factory1 = new testFactory();
         factory1.returnProvider=provider1;
 
-        testProvider provider2 = new testProvider();
+        testSource provider2 = new testSource();
         final NodeSetImpl set2 = new NodeSetImpl();
         set2.putNode(new NodeEntryImpl("set2node1"));
         provider2.returnNodes = set2;
@@ -512,7 +512,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         factory2.returnProvider = provider2;
 
 
-        testProvider provider3 = new testProvider();
+        testSource provider3 = new testSource();
         provider3.returnNodes = new NodeSetImpl();
         testFactory factory3 = new testFactory();
         factory3.returnProvider = provider3;
@@ -549,8 +549,8 @@ public class TestFrameworkProject extends AbstractBaseTest {
     }
     public void testLoadNodesProvidersMultiples() throws Exception {
 
-        final NodesProviderService service = NodesProviderService.getInstanceForFramework(getFrameworkInstance());
-        testProvider provider1 = new testProvider();
+        final NodesSourceService service = NodesSourceService.getInstanceForFramework(getFrameworkInstance());
+        testSource provider1 = new testSource();
         final NodeSetImpl set1 = new NodeSetImpl();
         set1.putNode(new NodeEntryImpl("set1node1"));
 
@@ -558,7 +558,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         testFactory factory1 = new testFactory();
         factory1.returnProvider=provider1;
 
-        testProvider provider2 = new testProvider();
+        testSource provider2 = new testSource();
         final NodeSetImpl set2 = new NodeSetImpl();
         set2.putNode(new NodeEntryImpl("set2node1"));
         provider2.returnNodes = set2;
@@ -566,7 +566,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         factory2.returnProvider = provider2;
 
 
-        testProvider provider3 = new testProvider();
+        testSource provider3 = new testSource();
         final NodeSetImpl set3 = new NodeSetImpl();
         set3.putNode(new NodeEntryImpl("set3node1"));
         provider3.returnNodes = set3;
@@ -584,12 +584,12 @@ public class TestFrameworkProject extends AbstractBaseTest {
         Properties props1 = new Properties();
         props1.setProperty("project.resources.file", nodesfile.getAbsolutePath());
         props1.setProperty("project.resources.url", "http://example.com/test1");
-        props1.setProperty("nodes.provider.1.type", "file");
-        props1.setProperty("nodes.provider.1.config.file", "/test/file/path");
-        props1.setProperty("nodes.provider.2.type", "url");
-        props1.setProperty("nodes.provider.2.config.url", "http://example.com/test2");
-        props1.setProperty("nodes.provider.3.type", "directory");
-        props1.setProperty("nodes.provider.3.config.directory", "/test/file/path3");
+        props1.setProperty("nodes.source.1.type", "file");
+        props1.setProperty("nodes.source.1.config.file", "/test/file/path");
+        props1.setProperty("nodes.source.2.type", "url");
+        props1.setProperty("nodes.source.2.config.url", "http://example.com/test2");
+        props1.setProperty("nodes.source.3.type", "directory");
+        props1.setProperty("nodes.source.3.config.directory", "/test/file/path3");
         projectPropsFile.getParentFile().mkdirs();
         props1.store(new FileOutputStream(projectPropsFile), null);
 

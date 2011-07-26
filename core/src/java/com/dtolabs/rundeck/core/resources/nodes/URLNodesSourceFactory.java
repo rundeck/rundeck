@@ -15,33 +15,36 @@
  */
 
 /*
-* NodesProviderException.java
+* URLNodesSourceFactory.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 7/19/11 11:45 AM
+* Created: 7/21/11 4:32 PM
 * 
 */
 package com.dtolabs.rundeck.core.resources.nodes;
 
+import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.plugins.Plugin;
+
+import java.util.Properties;
+
 /**
- * NodesProviderException is ...
+ * URLNodesSourceFactory Creates NodesSources
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class NodesProviderException extends Exception {
-    public NodesProviderException() {
-        super();
+@Plugin (name = "url", service = "NodesSource")
+public class URLNodesSourceFactory implements NodesSourceFactory {
+    public static final String SERVICE_PROVIDER_TYPE = "url";
+    private Framework framework;
+
+    public URLNodesSourceFactory(final Framework framework) {
+        this.framework = framework;
     }
 
-    public NodesProviderException(String msg) {
-        super(msg);
-    }
-
-    public NodesProviderException(Exception cause) {
-        super(cause);
-    }
-
-    public NodesProviderException(String msg, Exception cause) {
-        super(msg, cause);
+    public NodesSource createNodesSource(final Properties configuration) throws ConfigurationException {
+        final URLNodesSource urlNodesSource = new URLNodesSource(framework);
+        urlNodesSource.configure(configuration);
+        return urlNodesSource;
     }
 }

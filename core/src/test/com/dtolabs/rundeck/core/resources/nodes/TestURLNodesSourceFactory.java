@@ -15,36 +15,23 @@
  */
 
 /*
-* NodesProviderServiceException.java
+* TestURLNodesProviderFactory.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 7/19/11 12:05 PM
+* Created: 7/22/11 2:17 PM
 * 
 */
 package com.dtolabs.rundeck.core.resources.nodes;
 
-import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
+import junit.framework.TestCase;
 
 /**
- * NodesProviderServiceException is ...
+ * TestURLNodesProviderFactory is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class NodesProviderServiceException extends ExecutionServiceException {
-    public NodesProviderServiceException() {
-        super(NodesProviderService.SERVICE_NAME);
-    }
-
-    public NodesProviderServiceException(String msg) {
-        super(msg, NodesProviderService.SERVICE_NAME);
-    }
-
-    public NodesProviderServiceException(Exception cause) {
-        super(cause, NodesProviderService.SERVICE_NAME);
-    }
-
-    public NodesProviderServiceException(String msg, Exception cause) {
-        super(msg, cause, NodesProviderService.SERVICE_NAME);
-
+public class TestURLNodesSourceFactory extends TestCase {
+    public void testblah(){
+        
     }
 }

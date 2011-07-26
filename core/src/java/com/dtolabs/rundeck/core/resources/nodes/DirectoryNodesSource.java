@@ -15,7 +15,7 @@
  */
 
 /*
-* DirectoryNodesProvider.java
+* DirectoryNodesSource.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 7/21/11 11:13 AM
@@ -37,23 +37,23 @@ import java.util.HashSet;
 import java.util.Properties;
 
 /**
- * DirectoryNodesProvider scans a directory for xml and yaml files, and loads all discovered files as nodes files
+ * DirectoryNodesSource scans a directory for xml and yaml files, and loads all discovered files as nodes files
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class DirectoryNodesProvider implements NodesProvider, Configurable {
-    static final Logger logger = Logger.getLogger(DirectoryNodesProvider.class.getName());
+public class DirectoryNodesSource implements NodesSource, Configurable {
+    static final Logger logger = Logger.getLogger(DirectoryNodesSource.class.getName());
     private final Framework framework;
 
-    public DirectoryNodesProvider(final Framework framework) {
+    public DirectoryNodesSource(final Framework framework) {
         this.framework = framework;
     }
 
     private Configuration configuration;
     long lastModTime = 0;
     private AdditiveListNodeSet listNodeSet = new AdditiveListNodeSet();
-    private ArrayList<NodesProvider> fileProviders = new ArrayList<NodesProvider>();
-    private HashMap<File, NodesProvider> providerCache = new HashMap<File, NodesProvider>();
+    private ArrayList<NodesSource> fileSources = new ArrayList<NodesSource>();
+    private HashMap<File, NodesSource> sourceCache = new HashMap<File, NodesSource>();
 
     public void configure(final Properties configuration) throws ConfigurationException {
 
@@ -101,29 +101,29 @@ public class DirectoryNodesProvider implements NodesProvider, Configurable {
 
     }
 
-    public INodeSet getNodes() throws NodesProviderException {
-        loadFileProviders(configuration.directory, configuration.project);
+    public INodeSet getNodes() throws NodesSourceException {
+        loadFileSources(configuration.directory, configuration.project);
         listNodeSet = new AdditiveListNodeSet();
         loadNodeSets();
         return listNodeSet;
     }
 
-    private void loadNodeSets() throws NodesProviderException {
-        for (final NodesProvider fileProvider : fileProviders) {
+    private void loadNodeSets() throws NodesSourceException {
+        for (final NodesSource fileSource: fileSources) {
             try {
-                listNodeSet.addNodeSet(fileProvider.getNodes());
-            } catch (NodesProviderException e) {
+                listNodeSet.addNodeSet(fileSource.getNodes());
+            } catch (NodesSourceException e) {
                 e.printStackTrace();
             }
         }
     }
 
     /**
-     * Discover new files in the directory, and add file providers
+     * Discover new files in the directory, and add file sources
      */
-    private void loadFileProviders(final File directory, final String project) {
-        //clear provider sequence
-        fileProviders.clear();
+    private void loadFileSources(final File directory, final String project) {
+        //clear source sequence
+        fileSources.clear();
         if (!directory.isDirectory()) {
             logger.warn("Not a directory: " + directory);
         }
@@ -132,36 +132,36 @@ public class DirectoryNodesProvider implements NodesProvider, Configurable {
                 return s.endsWith(".xml") || s.endsWith(".yaml");
             }
         });
-        //set of previously cached file providers by file
-        final HashSet<File> trackedFiles = new HashSet<File>(providerCache.keySet());
+        //set of previously cached file sources by file
+        final HashSet<File> trackedFiles = new HashSet<File>(sourceCache.keySet());
         if (null != files) {
             for (final File file : files) {
                 //remove file that we want to keep
                 trackedFiles.remove(file);
-                if (!providerCache.containsKey(file)) {
+                if (!sourceCache.containsKey(file)) {
                     try {
-                        final NodesProvider provider = framework.getNodesProviderService().getProviderForConfiguration(
+                        final NodesSource source = framework.getNodesSourceService().getSourceForConfiguration(
                             "file",
-                            FileNodesProvider.Configuration.build()
+                            FileNodesSource.Configuration.build()
                                 .project(project)
                                 .file(file)
                                 .generateFileAutomatically(false)
                                 .includeServerNode(false).getProperties()
                         );
-                        fileProviders.add(provider);
-                        providerCache.put(file, provider);
+                        fileSources.add(source);
+                        sourceCache.put(file, source);
 
                     } catch (ExecutionServiceException e) {
                         e.printStackTrace();
                     }
                 } else {
-                    fileProviders.add(providerCache.get(file));
+                    fileSources.add(sourceCache.get(file));
                 }
             }
         }
         //remaining trackedFiles are files that have been removed from the dir
         for (final File oldFile : trackedFiles) {
-            providerCache.remove(oldFile);
+            sourceCache.remove(oldFile);
         }
     }
 }

@@ -15,7 +15,7 @@
  */
 
 /*
-* ConfigurableNodesProvider.java
+* Configurable.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 7/19/11 11:29 AM
@@ -26,7 +26,7 @@ package com.dtolabs.rundeck.core.resources.nodes;
 import java.util.Properties;
 
 /**
- * ConfigurableNodesProvider is ...
+ * Configurable objects can be configured with properties.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */

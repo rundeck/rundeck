@@ -37,10 +37,10 @@ import java.util.Properties;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class TestDirectoryNodesProvider extends AbstractBaseTest {
+public class TestDirectoryNodesSource extends AbstractBaseTest {
     public static final String PROJ_NAME = "TestDirectoryNodesProvider";
 
-    public TestDirectoryNodesProvider(String name) {
+    public TestDirectoryNodesSource(String name) {
         super(name);
     }
 
@@ -70,25 +70,25 @@ public class TestDirectoryNodesProvider extends AbstractBaseTest {
 
     public void testConfiguration() {
         try {
-            DirectoryNodesProvider.Configuration config = new DirectoryNodesProvider.Configuration((Properties) null);
+            DirectoryNodesSource.Configuration config = new DirectoryNodesSource.Configuration((Properties) null);
             fail("Should throw NPE");
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
 
         Properties props = new Properties();
-        DirectoryNodesProvider.Configuration config = new DirectoryNodesProvider.Configuration(props);
+        DirectoryNodesSource.Configuration config = new DirectoryNodesSource.Configuration(props);
         assertNull(config.project);
         assertNull(config.directory);
 
         props.setProperty("project", PROJ_NAME);
-        config = new DirectoryNodesProvider.Configuration(props);
+        config = new DirectoryNodesSource.Configuration(props);
         assertNotNull(config.project);
         assertEquals(PROJ_NAME, config.project);
         assertNull(config.directory);
 
         props.setProperty("directory", "target/test");
-        config = new DirectoryNodesProvider.Configuration(props);
+        config = new DirectoryNodesSource.Configuration(props);
         assertNotNull(config.project);
         assertEquals(PROJ_NAME, config.project);
         assertNotNull(config.directory);
@@ -96,14 +96,14 @@ public class TestDirectoryNodesProvider extends AbstractBaseTest {
     }
     public void testValidation() throws Exception{
         try {
-            DirectoryNodesProvider.Configuration config = new DirectoryNodesProvider.Configuration((Properties) null);
+            DirectoryNodesSource.Configuration config = new DirectoryNodesSource.Configuration((Properties) null);
             fail("Should throw NPE");
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
 
         Properties props = new Properties();
-        DirectoryNodesProvider.Configuration config = new DirectoryNodesProvider.Configuration(props);
+        DirectoryNodesSource.Configuration config = new DirectoryNodesSource.Configuration(props);
         try{
             config.validate();
             fail();
@@ -112,7 +112,7 @@ public class TestDirectoryNodesProvider extends AbstractBaseTest {
         }
 
         props.setProperty("project", PROJ_NAME);
-        config = new DirectoryNodesProvider.Configuration(props);
+        config = new DirectoryNodesSource.Configuration(props);
         try {
             config.validate();
             fail();
@@ -124,7 +124,7 @@ public class TestDirectoryNodesProvider extends AbstractBaseTest {
         //set directory to point to a file instead of a directory
         props.setProperty("directory", testfile.getAbsolutePath());
 
-        config = new DirectoryNodesProvider.Configuration(props);
+        config = new DirectoryNodesSource.Configuration(props);
         try {
             config.validate();
             fail();
@@ -141,8 +141,8 @@ public class TestDirectoryNodesProvider extends AbstractBaseTest {
         Properties props = new Properties();
         props.setProperty("project", PROJ_NAME);
         props.setProperty("directory", directory.getAbsolutePath());
-        DirectoryNodesProvider.Configuration config = new DirectoryNodesProvider.Configuration(props);
-        final DirectoryNodesProvider directoryNodesProvider = new DirectoryNodesProvider(getFrameworkInstance());
+        DirectoryNodesSource.Configuration config = new DirectoryNodesSource.Configuration(props);
+        final DirectoryNodesSource directoryNodesProvider = new DirectoryNodesSource(getFrameworkInstance());
         directoryNodesProvider.configure(config);
 
         final INodeSet nodes = directoryNodesProvider.getNodes();
@@ -159,8 +159,8 @@ public class TestDirectoryNodesProvider extends AbstractBaseTest {
         Properties props = new Properties();
         props.setProperty("project", PROJ_NAME);
         props.setProperty("directory", directory.getAbsolutePath());
-        DirectoryNodesProvider.Configuration config = new DirectoryNodesProvider.Configuration(props);
-        final DirectoryNodesProvider directoryNodesProvider = new DirectoryNodesProvider(getFrameworkInstance());
+        DirectoryNodesSource.Configuration config = new DirectoryNodesSource.Configuration(props);
+        final DirectoryNodesSource directoryNodesProvider = new DirectoryNodesSource(getFrameworkInstance());
         directoryNodesProvider.configure(config);
 
         final INodeSet nodes = directoryNodesProvider.getNodes();
@@ -184,8 +184,8 @@ public class TestDirectoryNodesProvider extends AbstractBaseTest {
         Properties props = new Properties();
         props.setProperty("project", PROJ_NAME);
         props.setProperty("directory", directory.getAbsolutePath());
-        DirectoryNodesProvider.Configuration config = new DirectoryNodesProvider.Configuration(props);
-        final DirectoryNodesProvider directoryNodesProvider = new DirectoryNodesProvider(getFrameworkInstance());
+        DirectoryNodesSource.Configuration config = new DirectoryNodesSource.Configuration(props);
+        final DirectoryNodesSource directoryNodesProvider = new DirectoryNodesSource(getFrameworkInstance());
         directoryNodesProvider.configure(config);
 
         final INodeSet nodes = directoryNodesProvider.getNodes();
@@ -225,8 +225,8 @@ public class TestDirectoryNodesProvider extends AbstractBaseTest {
         Properties props = new Properties();
         props.setProperty("project", PROJ_NAME);
         props.setProperty("directory", directory.getAbsolutePath());
-        DirectoryNodesProvider.Configuration config = new DirectoryNodesProvider.Configuration(props);
-        final DirectoryNodesProvider directoryNodesProvider = new DirectoryNodesProvider(getFrameworkInstance());
+        DirectoryNodesSource.Configuration config = new DirectoryNodesSource.Configuration(props);
+        final DirectoryNodesSource directoryNodesProvider = new DirectoryNodesSource(getFrameworkInstance());
         directoryNodesProvider.configure(config);
 
         final INodeSet nodes = directoryNodesProvider.getNodes();
@@ -267,8 +267,8 @@ public class TestDirectoryNodesProvider extends AbstractBaseTest {
         Properties props = new Properties();
         props.setProperty("project", PROJ_NAME);
         props.setProperty("directory", directory.getAbsolutePath());
-        DirectoryNodesProvider.Configuration config = new DirectoryNodesProvider.Configuration(props);
-        final DirectoryNodesProvider directoryNodesProvider = new DirectoryNodesProvider(getFrameworkInstance());
+        DirectoryNodesSource.Configuration config = new DirectoryNodesSource.Configuration(props);
+        final DirectoryNodesSource directoryNodesProvider = new DirectoryNodesSource(getFrameworkInstance());
         directoryNodesProvider.configure(config);
 
         final INodeSet nodes = directoryNodesProvider.getNodes();
@@ -334,8 +334,8 @@ public class TestDirectoryNodesProvider extends AbstractBaseTest {
         Properties props = new Properties();
         props.setProperty("project", PROJ_NAME);
         props.setProperty("directory", directory.getAbsolutePath());
-        DirectoryNodesProvider.Configuration config = new DirectoryNodesProvider.Configuration(props);
-        final DirectoryNodesProvider directoryNodesProvider = new DirectoryNodesProvider(getFrameworkInstance());
+        DirectoryNodesSource.Configuration config = new DirectoryNodesSource.Configuration(props);
+        final DirectoryNodesSource directoryNodesProvider = new DirectoryNodesSource(getFrameworkInstance());
         directoryNodesProvider.configure(config);
 
         File file2 = new File(directory, "test1.yaml");
@@ -404,8 +404,8 @@ public class TestDirectoryNodesProvider extends AbstractBaseTest {
         Properties props = new Properties();
         props.setProperty("project", PROJ_NAME);
         props.setProperty("directory", directory.getAbsolutePath());
-        DirectoryNodesProvider.Configuration config = new DirectoryNodesProvider.Configuration(props);
-        final DirectoryNodesProvider directoryNodesProvider = new DirectoryNodesProvider(getFrameworkInstance());
+        DirectoryNodesSource.Configuration config = new DirectoryNodesSource.Configuration(props);
+        final DirectoryNodesSource directoryNodesProvider = new DirectoryNodesSource(getFrameworkInstance());
         directoryNodesProvider.configure(config);
 
         final INodeSet nodes = directoryNodesProvider.getNodes();

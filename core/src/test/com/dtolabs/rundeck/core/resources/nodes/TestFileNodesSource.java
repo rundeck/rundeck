@@ -38,10 +38,10 @@ import java.util.Properties;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class TestFileNodesProvider extends AbstractBaseTest {
+public class TestFileNodesSource extends AbstractBaseTest {
     public static final String PROJ_NAME = "TestFileNodesProvider";
 
-    public TestFileNodesProvider(String name) {
+    public TestFileNodesSource(String name) {
         super(name);
     }
 
@@ -68,7 +68,7 @@ public class TestFileNodesProvider extends AbstractBaseTest {
     }
 
     public void testConfigureProperties() throws Exception {
-        final FileNodesProvider fileNodesProvider = new FileNodesProvider(getFrameworkInstance());
+        final FileNodesSource fileNodesProvider = new FileNodesSource(getFrameworkInstance());
         try {
             fileNodesProvider.configure((Properties) null);
             fail("Should throw NPE");
@@ -97,7 +97,7 @@ public class TestFileNodesProvider extends AbstractBaseTest {
     public void testValidation() throws Exception {
 
         Properties props = new Properties();
-        FileNodesProvider.Configuration config = new FileNodesProvider.Configuration(props);
+        FileNodesSource.Configuration config = new FileNodesSource.Configuration(props);
 
         //missing project
         try{
@@ -108,7 +108,7 @@ public class TestFileNodesProvider extends AbstractBaseTest {
         }
 
         props.setProperty("project", PROJ_NAME);
-        config = new FileNodesProvider.Configuration(props);
+        config = new FileNodesSource.Configuration(props);
         //missing file
         try {
             config.validate();
@@ -120,7 +120,7 @@ public class TestFileNodesProvider extends AbstractBaseTest {
 
         props.setProperty("file", "src/test/com/dtolabs/rundeck/core/common/test-nodes1.xml");
         props.setProperty("format", "xml");
-        config = new FileNodesProvider.Configuration(props);
+        config = new FileNodesSource.Configuration(props);
         //invalid format
         try {
             config.validate();
@@ -130,7 +130,7 @@ public class TestFileNodesProvider extends AbstractBaseTest {
         }
 
         props.setProperty("format", "yaml");
-        config = new FileNodesProvider.Configuration(props);
+        config = new FileNodesSource.Configuration(props);
         //invalid format
         try {
             config.validate();
@@ -140,7 +140,7 @@ public class TestFileNodesProvider extends AbstractBaseTest {
         }
 
         props.setProperty("format", "resourcexml");
-        config = new FileNodesProvider.Configuration(props);
+        config = new FileNodesSource.Configuration(props);
         //validation should succeed
         try {
             config.validate();
@@ -150,7 +150,7 @@ public class TestFileNodesProvider extends AbstractBaseTest {
         }
 
         props.setProperty("format", "resourceyaml");
-        config = new FileNodesProvider.Configuration(props);
+        config = new FileNodesSource.Configuration(props);
         //validation should succeed
         try {
             config.validate();
@@ -162,14 +162,14 @@ public class TestFileNodesProvider extends AbstractBaseTest {
     public void testConfiguration() throws Exception {
 
         try {
-            FileNodesProvider.Configuration config = new FileNodesProvider.Configuration((Properties) null);
+            FileNodesSource.Configuration config = new FileNodesSource.Configuration((Properties) null);
             fail("Should throw NPE");
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
 
         Properties props = new Properties();
-        FileNodesProvider.Configuration config = new FileNodesProvider.Configuration(props);
+        FileNodesSource.Configuration config = new FileNodesSource.Configuration(props);
         assertNull(config.project);
         assertNull(config.format);
         assertNull(config.nodesFile);
@@ -177,7 +177,7 @@ public class TestFileNodesProvider extends AbstractBaseTest {
         assertFalse(config.includeServerNode);
 
         props.setProperty("project", PROJ_NAME);
-        config = new FileNodesProvider.Configuration(props);
+        config = new FileNodesSource.Configuration(props);
         assertNotNull(config.project);
         assertEquals(PROJ_NAME, config.project);
         assertNull(config.format);
@@ -186,7 +186,7 @@ public class TestFileNodesProvider extends AbstractBaseTest {
         assertFalse(config.includeServerNode);
 
         props.setProperty("format", "resourcexml");
-        config = new FileNodesProvider.Configuration(props);
+        config = new FileNodesSource.Configuration(props);
         assertNotNull(config.project);
         assertEquals(PROJ_NAME, config.project);
         assertNotNull(config.format);
@@ -196,7 +196,7 @@ public class TestFileNodesProvider extends AbstractBaseTest {
         assertFalse(config.includeServerNode);
 
         props.setProperty("format", "resourceyaml");
-        config = new FileNodesProvider.Configuration(props);
+        config = new FileNodesSource.Configuration(props);
         assertNotNull(config.project);
         assertEquals(PROJ_NAME, config.project);
         assertNotNull(config.format);
@@ -206,7 +206,7 @@ public class TestFileNodesProvider extends AbstractBaseTest {
         assertFalse(config.includeServerNode);
 
         props.setProperty("file", "src/test/com/dtolabs/rundeck/core/common/test-nodes1.xml");
-        config = new FileNodesProvider.Configuration(props);
+        config = new FileNodesSource.Configuration(props);
         assertNotNull(config.project);
         assertEquals(PROJ_NAME, config.project);
         assertNotNull(config.format);
@@ -217,7 +217,7 @@ public class TestFileNodesProvider extends AbstractBaseTest {
         assertFalse(config.includeServerNode);
 
         props.setProperty("generateFileAutomatically", "true");
-        config = new FileNodesProvider.Configuration(props);
+        config = new FileNodesSource.Configuration(props);
         assertNotNull(config.project);
         assertEquals(PROJ_NAME, config.project);
         assertNotNull(config.format);
@@ -229,7 +229,7 @@ public class TestFileNodesProvider extends AbstractBaseTest {
 
 
         props.setProperty("generateFileAutomatically", "false");
-        config = new FileNodesProvider.Configuration(props);
+        config = new FileNodesSource.Configuration(props);
         assertNotNull(config.project);
         assertEquals(PROJ_NAME, config.project);
         assertNotNull(config.format);
@@ -241,7 +241,7 @@ public class TestFileNodesProvider extends AbstractBaseTest {
 
 
         props.setProperty("includeServerNode", "true");
-        config = new FileNodesProvider.Configuration(props);
+        config = new FileNodesSource.Configuration(props);
         assertNotNull(config.project);
         assertEquals(PROJ_NAME, config.project);
         assertNotNull(config.format);
@@ -252,7 +252,7 @@ public class TestFileNodesProvider extends AbstractBaseTest {
         assertTrue(config.includeServerNode);
 
         props.setProperty("includeServerNode", "false");
-        config = new FileNodesProvider.Configuration(props);
+        config = new FileNodesSource.Configuration(props);
         assertNotNull(config.project);
         assertEquals(PROJ_NAME, config.project);
         assertNotNull(config.format);
@@ -265,12 +265,12 @@ public class TestFileNodesProvider extends AbstractBaseTest {
         //test using file extension of file to determine format, using xml
         props.remove("format");
         props.setProperty("file", "src/test/com/dtolabs/rundeck/core/common/test-nodes1.xml");
-        config = new FileNodesProvider.Configuration(props);
+        config = new FileNodesSource.Configuration(props);
         assertNotNull(config.format);
         assertEquals(Nodes.Format.resourcexml, config.format);
 
         props.setProperty("file", "src/test/com/dtolabs/rundeck/core/common/test-nodes1.yaml");
-        config = new FileNodesProvider.Configuration(props);
+        config = new FileNodesSource.Configuration(props);
         assertNotNull(config.format);
         assertEquals(Nodes.Format.resourceyaml, config.format);
 
@@ -284,7 +284,7 @@ public class TestFileNodesProvider extends AbstractBaseTest {
         props.setProperty("file", "src/test/com/dtolabs/rundeck/core/common/test-nodes1.xml");
         props.setProperty("generateFileAutomatically", "false");
         props.setProperty("includeServerNode", "false");
-        final FileNodesProvider fileNodesProvider = new FileNodesProvider(getFrameworkInstance());
+        final FileNodesSource fileNodesProvider = new FileNodesSource(getFrameworkInstance());
         fileNodesProvider.configure(props);
 
         final INodeSet nodes = fileNodesProvider.getNodes();
@@ -318,7 +318,7 @@ public class TestFileNodesProvider extends AbstractBaseTest {
         props.setProperty("file", testfile.getAbsolutePath());
         props.setProperty("generateFileAutomatically", "false");
         props.setProperty("includeServerNode", "false");
-        final FileNodesProvider fileNodesProvider = new FileNodesProvider(getFrameworkInstance());
+        final FileNodesSource fileNodesProvider = new FileNodesSource(getFrameworkInstance());
         fileNodesProvider.configure(props);
 
         final INodeSet nodes = fileNodesProvider.getNodes();
@@ -336,7 +336,7 @@ public class TestFileNodesProvider extends AbstractBaseTest {
         props.setProperty("file", testfile.getAbsolutePath());
         props.setProperty("generateFileAutomatically", "false");
         props.setProperty("includeServerNode", "true");
-        final FileNodesProvider fileNodesProvider = new FileNodesProvider(getFrameworkInstance());
+        final FileNodesSource fileNodesProvider = new FileNodesSource(getFrameworkInstance());
         fileNodesProvider.configure(props);
 
         final INodeSet nodes = fileNodesProvider.getNodes();
@@ -354,7 +354,7 @@ public class TestFileNodesProvider extends AbstractBaseTest {
         props.setProperty("file", testfile.getAbsolutePath());
         props.setProperty("generateFileAutomatically", "true");
         props.setProperty("includeServerNode", "true");
-        final FileNodesProvider fileNodesProvider = new FileNodesProvider(getFrameworkInstance());
+        final FileNodesSource fileNodesProvider = new FileNodesSource(getFrameworkInstance());
         fileNodesProvider.configure(props);
 
         final INodeSet nodes = fileNodesProvider.getNodes();
@@ -367,7 +367,7 @@ public class TestFileNodesProvider extends AbstractBaseTest {
 
     public void testParseFile() throws Exception {
         File testfile= new File("src/test/com/dtolabs/rundeck/core/common/test-nodes1.xml");
-        final INodeSet iNodeSet = FileNodesProvider.parseFile(testfile, getFrameworkInstance(), PROJ_NAME);
+        final INodeSet iNodeSet = FileNodesSource.parseFile(testfile, getFrameworkInstance(), PROJ_NAME);
         assertNotNull(iNodeSet);
         assertEquals(2, iNodeSet.getNodes().size());
         assertNotNull(iNodeSet.getNode("test1"));
@@ -390,7 +390,7 @@ public class TestFileNodesProvider extends AbstractBaseTest {
         bufferedWriter.close();
         assertTrue(testfile2.exists());
 
-        final INodeSet nodeSet2 = FileNodesProvider.parseFile(testfile2, getFrameworkInstance(), PROJ_NAME);
+        final INodeSet nodeSet2 = FileNodesSource.parseFile(testfile2, getFrameworkInstance(), PROJ_NAME);
         assertNotNull(nodeSet2);
         assertEquals(1, nodeSet2.getNodes().size());
         assertNotNull(nodeSet2.getNode("testyaml1"));
@@ -399,9 +399,9 @@ public class TestFileNodesProvider extends AbstractBaseTest {
         File dneFile = new File("build/DNEFile.xml");
 
         try {
-            final INodeSet result = FileNodesProvider.parseFile(dneFile, getFrameworkInstance(), PROJ_NAME);
+            final INodeSet result = FileNodesSource.parseFile(dneFile, getFrameworkInstance(), PROJ_NAME);
             fail();
-        } catch (NodesProviderException e) {
+        } catch (NodesSourceException e) {
             assertEquals("File does not exist: " + dneFile.getAbsolutePath(), e.getMessage());
         }
     }

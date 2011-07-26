@@ -37,9 +37,9 @@ import java.util.Properties;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class TestFileNodesProviderFactory extends AbstractBaseTest {
+public class TestFileNodesSourceFactory extends AbstractBaseTest {
     public static final String PROJ_NAME = "TestFileNodesProviderFactory";
-    public TestFileNodesProviderFactory(String name) {
+    public TestFileNodesSourceFactory(String name) {
         super(name);
     }
 
@@ -66,12 +66,12 @@ public class TestFileNodesProviderFactory extends AbstractBaseTest {
 
 
     public void testCreateNodesProvider() throws Exception {
-        final FileNodesProviderFactory fileNodesProviderFactory = new FileNodesProviderFactory(getFrameworkInstance());
+        final FileNodesSourceFactory fileNodesProviderFactory = new FileNodesSourceFactory(getFrameworkInstance());
         {
             Properties props = new Properties();
             props.put("project", PROJ_NAME);
             props.put("file", "src/test/com/dtolabs/rundeck/core/common/test-nodes1.xml");
-            final NodesProvider nodesProvider = fileNodesProviderFactory.createNodesProvider(props);
+            final NodesSource nodesProvider = fileNodesProviderFactory.createNodesSource(props);
             assertNotNull(nodesProvider);
         }
 

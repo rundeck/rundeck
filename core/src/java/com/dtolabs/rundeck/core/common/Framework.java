@@ -42,9 +42,9 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
 import com.dtolabs.rundeck.core.plugins.PluginManagerService;
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.core.resources.nodes.ConfigurationException;
-import com.dtolabs.rundeck.core.resources.nodes.FileNodesProvider;
-import com.dtolabs.rundeck.core.resources.nodes.NodesProviderException;
-import com.dtolabs.rundeck.core.resources.nodes.NodesProviderService;
+import com.dtolabs.rundeck.core.resources.nodes.FileNodesSource;
+import com.dtolabs.rundeck.core.resources.nodes.NodesSourceException;
+import com.dtolabs.rundeck.core.resources.nodes.NodesSourceService;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import org.apache.log4j.Logger;
@@ -171,7 +171,7 @@ public class Framework extends FrameworkResourceParent {
         NodeDispatcherService.getInstanceForFramework(this);
         ExecutionServiceFactory.getInstanceForFramework(this);
         WorkflowExecutionService.getInstanceForFramework(this);
-        NodesProviderService.getInstanceForFramework(this);
+        NodesSourceService.getInstanceForFramework(this);
     }
 
     private CentralDispatcher centralDispatcherMgr;
@@ -338,8 +338,8 @@ public class Framework extends FrameworkResourceParent {
     public NodeDispatcher getNodeDispatcherForContext(ExecutionContext context) throws ExecutionServiceException {
         return NodeDispatcherService.getInstanceForFramework(this).getNodeDispatcher(context);
     }
-    public NodesProviderService getNodesProviderService() {
-        return NodesProviderService.getInstanceForFramework(this);
+    public NodesSourceService getNodesSourceService() {
+        return NodesSourceService.getInstanceForFramework(this);
     }
 
     public ServiceProviderLoader getPluginManager(){
@@ -661,8 +661,8 @@ public class Framework extends FrameworkResourceParent {
 
         if (null != nodesFile) {
             try {
-                unfiltered = FileNodesProvider.parseFile(nodesFile, this, project);
-            } catch (NodesProviderException e) {
+                unfiltered = FileNodesSource.parseFile(nodesFile, this, project);
+            } catch (NodesSourceException e) {
                 throw new CoreException(e);
             } catch (ConfigurationException e) {
                 throw new CoreException(e);

@@ -215,7 +215,7 @@ class FrameworkController  {
 */
         def resources=[:]
 
-        def parseExceptions= project.getProviderExceptions()
+        def parseExceptions= project.getNodesSourceExceptions()
         def model=[
             allnodes: allnodes,
             nodesvalid: !parseExceptions,

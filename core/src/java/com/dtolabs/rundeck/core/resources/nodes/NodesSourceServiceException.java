@@ -15,21 +15,36 @@
  */
 
 /*
-* INodesProvider.java
+* NodesSourceServiceException.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 7/19/11 10:45 AM
+* Created: 7/19/11 12:05 PM
 * 
 */
 package com.dtolabs.rundeck.core.resources.nodes;
 
-import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 
 /**
- * INodesProvider is ...
+ * NodesSourceServiceException indicates an error from the NodesSourceService.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface NodesProvider {
-    public INodeSet getNodes() throws NodesProviderException;
+public class NodesSourceServiceException extends ExecutionServiceException {
+    public NodesSourceServiceException() {
+        super(NodesSourceService.SERVICE_NAME);
+    }
+
+    public NodesSourceServiceException(String msg) {
+        super(msg, NodesSourceService.SERVICE_NAME);
+    }
+
+    public NodesSourceServiceException(Exception cause) {
+        super(cause, NodesSourceService.SERVICE_NAME);
+    }
+
+    public NodesSourceServiceException(String msg, Exception cause) {
+        super(msg, cause, NodesSourceService.SERVICE_NAME);
+
+    }
 }

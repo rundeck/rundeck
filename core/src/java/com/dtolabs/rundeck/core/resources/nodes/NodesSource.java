@@ -15,36 +15,21 @@
  */
 
 /*
-* URLNodesProviderFactory.java
+* NodesSource.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 7/21/11 4:32 PM
+* Created: 7/19/11 10:45 AM
 * 
 */
 package com.dtolabs.rundeck.core.resources.nodes;
 
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.plugins.Plugin;
-
-import java.util.Properties;
+import com.dtolabs.rundeck.core.common.INodeSet;
 
 /**
- * URLNodesProviderFactory is ...
+ * NodesSource produces INodeSet
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-@Plugin (name = "url", service = "NodesProvider")
-public class URLNodesProviderFactory implements NodesProviderFactory {
-    public static final String SERVICE_PROVIDER_TYPE = "url";
-    private Framework framework;
-
-    public URLNodesProviderFactory(final Framework framework) {
-        this.framework = framework;
-    }
-
-    public NodesProvider createNodesProvider(final Properties configuration) throws ConfigurationException {
-        final URLNodesProvider urlNodesProvider = new URLNodesProvider(framework);
-        urlNodesProvider.configure(configuration);
-        return urlNodesProvider;
-    }
+public interface NodesSource {
+    public INodeSet getNodes() throws NodesSourceException;
 }

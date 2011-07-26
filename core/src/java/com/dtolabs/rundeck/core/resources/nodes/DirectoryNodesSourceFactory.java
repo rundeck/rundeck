@@ -15,10 +15,10 @@
  */
 
 /*
-* FileNodesProviderFactory.java
+* DirectoryFileNodesSourceFactory.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 7/20/11 9:22 AM
+* Created: 7/21/11 11:12 AM
 * 
 */
 package com.dtolabs.rundeck.core.resources.nodes;
@@ -26,25 +26,26 @@ package com.dtolabs.rundeck.core.resources.nodes;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 
-import java.util.*;
+import java.util.Properties;
 
 /**
- * FileNodesProviderFactory is ...
+ * DirectoryFileNodesSourceFactory is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-@Plugin (name = "file", service = "NodesProvider")
-public class FileNodesProviderFactory implements NodesProviderFactory {
-    public static final String SERVICE_PROVIDER_TYPE = "file";
+@Plugin (name = "directory", service = "NodesSource")
+public class DirectoryNodesSourceFactory implements NodesSourceFactory {
+    public static final String SERVICE_PROVIDER_TYPE = "directory";
     private Framework framework;
 
-    public FileNodesProviderFactory(final Framework framework) {
+    public DirectoryNodesSourceFactory(Framework framework) {
         this.framework = framework;
     }
 
-    public NodesProvider createNodesProvider(final Properties configuration) throws ConfigurationException {
-        final FileNodesProvider fileNodesProvider = new FileNodesProvider(framework);
-        fileNodesProvider.configure(FileNodesProvider.Configuration.fromProperties(configuration));
-        return fileNodesProvider;
+    public NodesSource createNodesSource(final Properties configuration) throws ConfigurationException {
+
+        final DirectoryNodesSource fileNodesSource = new DirectoryNodesSource(framework);
+        fileNodesSource.configure(DirectoryNodesSource.Configuration.fromProperties(configuration));
+        return fileNodesSource;
     }
 }

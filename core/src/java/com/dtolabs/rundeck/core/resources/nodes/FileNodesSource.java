@@ -15,7 +15,7 @@
  */
 
 /*
-* FileNodesProvider.java
+* FileNodesSource.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 7/19/11 11:28 AM
@@ -31,17 +31,17 @@ import java.io.IOException;
 import java.util.Properties;
 
 /**
- * FileNodesProvider can parse files to provide node results
+ * FileNodesSource can parse files to provide node results
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class FileNodesProvider implements NodesProvider, Configurable {
+public class FileNodesSource implements NodesSource, Configurable {
     private Framework framework;
     private NodeSetImpl nodeSet;
     private Configuration configuration;
     long lastModTime = 0;
 
-    FileNodesProvider(final Framework framework) {
+    FileNodesSource(final Framework framework) {
         this.framework = framework;
         nodeSet = new NodeSetImpl();
     }
@@ -218,14 +218,14 @@ public class FileNodesProvider implements NodesProvider, Configurable {
     }
 
     /**
-     * Configure the provider
+     * Configure the Source
      */
     public void configure(final Configuration configuration) throws ConfigurationException {
         this.configuration = new Configuration(configuration);
         this.configuration.validate();
     }
 
-    public INodeSet getNodes() throws NodesProviderException {
+    public INodeSet getNodes() throws NodesSourceException {
         return getNodes(configuration.nodesFile, configuration.format);
     }
 
@@ -238,7 +238,7 @@ public class FileNodesProvider implements NodesProvider, Configurable {
      * @return an instance of {@link Nodes}
      */
     public synchronized INodeSet getNodes(final File nodesFile, final Nodes.Format format) throws
-        NodesProviderException {
+        NodesSourceException {
         final Long modtime = nodesFile.lastModified();
         if (0 == nodeSet.getNodes().size() || !modtime.equals(lastModTime)) {
             nodeSet = new NodeSetImpl();
@@ -275,7 +275,7 @@ public class FileNodesProvider implements NodesProvider, Configurable {
         //getLogger().debug("generated resources file: " + resfile.getAbsolutePath());
     }
 
-    private void loadNodes(final File nodesFile, final Nodes.Format format) throws NodesProviderException {
+    private void loadNodes(final File nodesFile, final Nodes.Format format) throws NodesSourceException {
         if (!nodesFile.isFile() && configuration.generateFileAutomatically) {
             generateResourcesFile(nodesFile, format);
         } else if (configuration.includeServerNode) {
@@ -287,10 +287,10 @@ public class FileNodesProvider implements NodesProvider, Configurable {
             try {
                 parser.parse();
             } catch (NodeFileParserException e) {
-                throw new NodesProviderException(e);
+                throw new NodesSourceException(e);
             }
         } else if (configuration.requireFileExists) {
-            throw new NodesProviderException("File does not exist: " + nodesFile);
+            throw new NodesSourceException("File does not exist: " + nodesFile);
         }
     }
 
@@ -316,7 +316,7 @@ public class FileNodesProvider implements NodesProvider, Configurable {
      * Utility method to directly parse the nodes from a file
      */
     public static INodeSet parseFile(final String file, final Framework framework, final String project) throws
-        NodesProviderException, ConfigurationException {
+        NodesSourceException, ConfigurationException {
         return parseFile(new File(file), framework, project);
     }
 
@@ -324,11 +324,11 @@ public class FileNodesProvider implements NodesProvider, Configurable {
      * Utility method to directly parse the nodes from a file
      */
     public static INodeSet parseFile(final File file, final Framework framework, final String project) throws
-        NodesProviderException,
+        NodesSourceException,
         ConfigurationException {
-        final FileNodesProvider prov = new FileNodesProvider(framework);
+        final FileNodesSource prov = new FileNodesSource(framework);
         prov.configure(
-            FileNodesProvider.Configuration.build()
+            FileNodesSource.Configuration.build()
                 .file(file)
                 .includeServerNode(false)
                 .generateFileAutomatically(false)
@@ -341,11 +341,11 @@ public class FileNodesProvider implements NodesProvider, Configurable {
      * Utility method to directly parse the nodes from a file
      */
     public static INodeSet parseFile(final File file, final Nodes.Format format, final Framework framework, final String project) throws
-        NodesProviderException,
+        NodesSourceException,
         ConfigurationException {
-        final FileNodesProvider prov = new FileNodesProvider(framework);
+        final FileNodesSource prov = new FileNodesSource(framework);
         prov.configure(
-            FileNodesProvider.Configuration.build()
+            FileNodesSource.Configuration.build()
                 .file(file)
                 .includeServerNode(false)
                 .generateFileAutomatically(false)

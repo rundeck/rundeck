@@ -15,24 +15,33 @@
  */
 
 /*
-* NodesProviderFactory.java
+* NodesSourceException.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 7/20/11 9:21 AM
+* Created: 7/19/11 11:45 AM
 * 
 */
 package com.dtolabs.rundeck.core.resources.nodes;
 
-import java.util.*;
-
 /**
- * NodesProviderFactory creates NodesProvider instances
+ * NodesSourceException is an error with a NodesSource
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface NodesProviderFactory {
-    /**
-     * Return a nodes provider for the given configuration
-     */
-    public NodesProvider createNodesProvider(Properties configuration) throws ConfigurationException;
+public class NodesSourceException extends Exception {
+    public NodesSourceException() {
+        super();
+    }
+
+    public NodesSourceException(String msg) {
+        super(msg);
+    }
+
+    public NodesSourceException(Exception cause) {
+        super(cause);
+    }
+
+    public NodesSourceException(String msg, Exception cause) {
+        super(msg, cause);
+    }
 }

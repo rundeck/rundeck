@@ -50,6 +50,7 @@ public class FrameworkProject extends FrameworkResourceParent {
     public static final String PROJECT_RESOURCES_FILEFORMAT_PROPERTY = "project.resources.file.format";
     public static final String PROJECT_RESOURCES_ALLOWED_URL_PREFIX = "project.resources.allowedURL.";
     public static final String FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX = "framework.resources.allowedURL.";
+    public static final String NODES_SOURCE_PROP_PREFIX = "nodes.source";
     /**
      * Reference to deployments base directory
      */
@@ -68,7 +69,7 @@ public class FrameworkProject extends FrameworkResourceParent {
      * reference to PropertyLookup object providing access to project.properties
      */
     private PropertyLookup lookup;
-    private List<NodesProvider> nodesProviderList;
+    private List<NodesSource> nodesSourceList;
 
     /**
      * Constructor
@@ -94,8 +95,7 @@ public class FrameworkProject extends FrameworkResourceParent {
         propertyFile = new File(getEtcDir(), PROP_FILENAME);
         loadProperties();
 
-        //new resources provider config
-        nodesProviderList = new ArrayList<NodesProvider>();
+        nodesSourceList = new ArrayList<NodesSource>();
 
         initialize();
     }
@@ -142,36 +142,36 @@ public class FrameworkProject extends FrameworkResourceParent {
         lookup.expand();
     }
 
-    private ArrayList<Exception> providerExceptions;
-    private long nodesProvidersLastReload = 0L;
-    private void loadNodesProviders() {
-        providerExceptions = new ArrayList<Exception>();
-        //generate Configuration for file provider
+    private ArrayList<Exception> nodesSourceExceptions;
+    private long nodesSourcesLastReload = 0L;
+    private void loadNodesSources() {
+        nodesSourceExceptions = new ArrayList<Exception>();
+        //generate Configuration for file source
         if (hasProperty(PROJECT_RESOURCES_FILE_PROPERTY)) {
             try {
-                final Properties config = createFileProviderConfiguration();
-                logger.info("Provider (project.resources.file): loading with properties: " + config);
-                nodesProviderList.add(loadNodesProvider("file", config));
+                final Properties config = createFileSourceConfiguration();
+                logger.info("Source (project.resources.file): loading with properties: " + config);
+                nodesSourceList.add(loadNodesSource("file", config));
             } catch (ExecutionServiceException e) {
-                logger.error("Failed to load file provider: " + e.getMessage(), e);
-                providerExceptions.add(e);
+                logger.error("Failed to load file nodes source: " + e.getMessage(), e);
+                nodesSourceExceptions.add(e);
             }
         }
         if(hasProperty(PROJECT_RESOURCES_URL_PROPERTY)) {
             try{
-                final Properties config = createURLProviderConfiguration();
-                logger.info("Provider (project.resources.url): loading with properties: " + config);
-                nodesProviderList.add(loadNodesProvider("url", config));
+                final Properties config = createURLSourceConfiguration();
+                logger.info("Source (project.resources.url): loading with properties: " + config);
+                nodesSourceList.add(loadNodesSource("url", config));
             } catch (ExecutionServiceException e) {
-                logger.error("Failed to load file provider: " + e.getMessage(), e);
-                providerExceptions.add(e);
+                logger.error("Failed to load file nodes source: " + e.getMessage(), e);
+                nodesSourceExceptions.add(e);
             }
         }
 
         int i=1;
         boolean done=false;
         while(!done) {
-            final String prefix = "nodes.provider." + i;
+            final String prefix = NODES_SOURCE_PROP_PREFIX +"." + i;
             if (hasProperty(prefix +".type")) {
                 String providerType = getProperty(prefix + ".type");
                 Properties props = new Properties();
@@ -183,12 +183,12 @@ public class FrameworkProject extends FrameworkResourceParent {
                         props.setProperty(key.substring(len), getProperty(key));
                     }
                 }
-                logger.info("Provider #" + i + " (" + providerType + "): loading with properties: " + props);
+                logger.info("Source #" + i + " (" + providerType + "): loading with properties: " + props);
                 try {
-                    nodesProviderList.add(loadNodesProvider(providerType, props));
+                    nodesSourceList.add(loadNodesSource(providerType, props));
                 } catch (ExecutionServiceException e) {
-                    logger.error("Failed loading provider #" + i + ", skipping: " + e.getMessage(), e);
-                    providerExceptions.add(e);
+                    logger.error("Failed loading nodes source #" + i + ", skipping: " + e.getMessage(), e);
+                    nodesSourceExceptions.add(e);
                 }
             }else{
                 done=true;
@@ -196,36 +196,36 @@ public class FrameworkProject extends FrameworkResourceParent {
             i++;
         }
 
-        nodesProvidersLastReload= getPropertyFile().lastModified();
+        nodesSourcesLastReload = getPropertyFile().lastModified();
     }
 
-    private Properties createURLProviderConfiguration() {
-        final URLNodesProvider.Configuration build = URLNodesProvider.Configuration.build();
+    private Properties createURLSourceConfiguration() {
+        final URLNodesSource.Configuration build = URLNodesSource.Configuration.build();
         build.url(getProperty(PROJECT_RESOURCES_URL_PROPERTY));
         build.project(getName());
 
         return build.getProperties();
     }
 
-    private synchronized Collection<NodesProvider> getNodesProviders() {
-        //determine if providers need to be reloaded
+    private synchronized Collection<NodesSource> getNodesSources() {
+        //determine if sources need to be reloaded
         final long lastMod = getPropertyFile().lastModified();
-        if(lastMod> nodesProvidersLastReload){
-            nodesProviderList = new ArrayList<NodesProvider>();
-            loadNodesProviders();
+        if(lastMod> nodesSourcesLastReload){
+            nodesSourceList = new ArrayList<NodesSource>();
+            loadNodesSources();
         }
-        return nodesProviderList;
+        return nodesSourceList;
     }
 
-    private NodesProvider loadNodesProvider(String type, Properties configuration) throws ExecutionServiceException {
+    private NodesSource loadNodesSource(String type, Properties configuration) throws ExecutionServiceException {
 
-        final NodesProviderService nodesProviderService =
-            getFrameworkProjectMgr().getFramework().getNodesProviderService();
-        return nodesProviderService.getProviderForConfiguration(type, configuration);
+        final NodesSourceService nodesSourceService =
+            getFrameworkProjectMgr().getFramework().getNodesSourceService();
+        return nodesSourceService.getSourceForConfiguration(type, configuration);
     }
 
-    private Properties createFileProviderConfiguration() {
-        final FileNodesProvider.Configuration build = FileNodesProvider.Configuration.build();
+    private Properties createFileSourceConfiguration() {
+        final FileNodesSource.Configuration build = FileNodesSource.Configuration.build();
         build.file(getProperty(PROJECT_RESOURCES_FILE_PROPERTY));
         if(hasProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY)){
             build.format(getProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY));
@@ -336,14 +336,14 @@ public class FrameworkProject extends FrameworkResourceParent {
      * @return an instance of {@link INodeSet}
      */
     public INodeSet getNodeSet() throws NodeFileParserException {
-        //iterate through providers, and add nodes
+        //iterate through sources, and add nodes
         final AdditiveListNodeSet list = new AdditiveListNodeSet();
-        for (final NodesProvider nodesProvider : getNodesProviders()) {
+        for (final NodesSource nodesSource : getNodesSources()) {
             try {
-                list.addNodeSet(nodesProvider.getNodes());
-            } catch (NodesProviderException e) {
+                list.addNodeSet(nodesSource.getNodes());
+            } catch (NodesSourceException e) {
                 logger.error(e.getMessage(), e);
-                providerExceptions.add(e);
+                nodesSourceExceptions.add(e);
             }
         }
         return list;
@@ -626,7 +626,7 @@ public class FrameworkProject extends FrameworkResourceParent {
     /**
      * Return the set of exceptions produced by the last attempt to invoke all node providers
      */
-    public ArrayList<Exception> getProviderExceptions() {
-        return providerExceptions;
+    public ArrayList<Exception> getNodesSourceExceptions() {
+        return nodesSourceExceptions;
     }
 }
