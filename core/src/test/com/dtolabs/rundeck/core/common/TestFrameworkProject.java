@@ -16,7 +16,7 @@
 
 package com.dtolabs.rundeck.core.common;
 
-import com.dtolabs.rundeck.core.resources.nodes.*;
+import com.dtolabs.rundeck.core.resources.*;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import junit.framework.Test;
@@ -448,19 +448,19 @@ public class TestFrameworkProject extends AbstractBaseTest {
 
         System.out.println("TEST: propertyFile="+project.getPropertyFile());
     }
-    static class testSource implements NodesSource {
+    static class testSource implements ResourceModelSource {
         INodeSet returnNodes;
         int called=0;
-        public INodeSet getNodes() throws NodesSourceException {
+        public INodeSet getNodes() throws ResourceModelSourceException {
             called++;
             return returnNodes;
         }
     }
-    static class testFactory implements NodesSourceFactory {
-        NodesSource returnProvider;
+    static class testFactory implements ResourceModelSourceFactory {
+        ResourceModelSource returnProvider;
         Properties createConfiguration;
         int called=0;
-        public NodesSource createNodesSource(Properties configuration) throws ConfigurationException {
+        public ResourceModelSource createResourceModelSource(Properties configuration) throws ConfigurationException {
             called++;
             createConfiguration=configuration;
             return returnProvider;
@@ -468,7 +468,8 @@ public class TestFrameworkProject extends AbstractBaseTest {
     }
     public void testLoadNodesProvidersBasic() throws Exception {
 
-        final NodesSourceService service = NodesSourceService.getInstanceForFramework(getFrameworkInstance());
+        final ResourceModelSourceService service = ResourceModelSourceService.getInstanceForFramework(
+            getFrameworkInstance());
         testSource provider1 = new testSource();
         final NodeSetImpl set1 = new NodeSetImpl();
         set1.putNode(new NodeEntryImpl("set1node1"));
@@ -495,7 +496,8 @@ public class TestFrameworkProject extends AbstractBaseTest {
     }
     public void testLoadNodesProvidersWithUrl() throws Exception {
 
-        final NodesSourceService service = NodesSourceService.getInstanceForFramework(getFrameworkInstance());
+        final ResourceModelSourceService service = ResourceModelSourceService.getInstanceForFramework(
+            getFrameworkInstance());
         testSource provider1 = new testSource();
         final NodeSetImpl set1 = new NodeSetImpl();
         set1.putNode(new NodeEntryImpl("set1node1"));
@@ -549,7 +551,8 @@ public class TestFrameworkProject extends AbstractBaseTest {
     }
     public void testLoadNodesProvidersMultiples() throws Exception {
 
-        final NodesSourceService service = NodesSourceService.getInstanceForFramework(getFrameworkInstance());
+        final ResourceModelSourceService service = ResourceModelSourceService.getInstanceForFramework(
+            getFrameworkInstance());
         testSource provider1 = new testSource();
         final NodeSetImpl set1 = new NodeSetImpl();
         set1.putNode(new NodeEntryImpl("set1node1"));
@@ -584,12 +587,12 @@ public class TestFrameworkProject extends AbstractBaseTest {
         Properties props1 = new Properties();
         props1.setProperty("project.resources.file", nodesfile.getAbsolutePath());
         props1.setProperty("project.resources.url", "http://example.com/test1");
-        props1.setProperty("nodes.source.1.type", "file");
-        props1.setProperty("nodes.source.1.config.file", "/test/file/path");
-        props1.setProperty("nodes.source.2.type", "url");
-        props1.setProperty("nodes.source.2.config.url", "http://example.com/test2");
-        props1.setProperty("nodes.source.3.type", "directory");
-        props1.setProperty("nodes.source.3.config.directory", "/test/file/path3");
+        props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".1.type", "file");
+        props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".1.config.file", "/test/file/path");
+        props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".2.type", "url");
+        props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".2.config.url", "http://example.com/test2");
+        props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".3.type", "directory");
+        props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".3.config.directory", "/test/file/path3");
         projectPropsFile.getParentFile().mkdirs();
         props1.store(new FileOutputStream(projectPropsFile), null);
 

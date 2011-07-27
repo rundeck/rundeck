@@ -19,7 +19,7 @@ package com.dtolabs.rundeck.core.common;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
-import com.dtolabs.rundeck.core.resources.nodes.*;
+import com.dtolabs.rundeck.core.resources.*;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import com.dtolabs.shared.resources.ResourceXMLGenerator;
 import org.apache.tools.ant.Project;
@@ -50,7 +50,7 @@ public class FrameworkProject extends FrameworkResourceParent {
     public static final String PROJECT_RESOURCES_FILEFORMAT_PROPERTY = "project.resources.file.format";
     public static final String PROJECT_RESOURCES_ALLOWED_URL_PREFIX = "project.resources.allowedURL.";
     public static final String FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX = "framework.resources.allowedURL.";
-    public static final String NODES_SOURCE_PROP_PREFIX = "nodes.source";
+    public static final String RESOURCES_SOURCE_PROP_PREFIX = "resources.source";
     /**
      * Reference to deployments base directory
      */
@@ -69,7 +69,7 @@ public class FrameworkProject extends FrameworkResourceParent {
      * reference to PropertyLookup object providing access to project.properties
      */
     private PropertyLookup lookup;
-    private List<NodesSource> nodesSourceList;
+    private List<ResourceModelSource> nodesSourceList;
 
     /**
      * Constructor
@@ -95,7 +95,7 @@ public class FrameworkProject extends FrameworkResourceParent {
         propertyFile = new File(getEtcDir(), PROP_FILENAME);
         loadProperties();
 
-        nodesSourceList = new ArrayList<NodesSource>();
+        nodesSourceList = new ArrayList<ResourceModelSource>();
 
         initialize();
     }
@@ -144,16 +144,16 @@ public class FrameworkProject extends FrameworkResourceParent {
 
     private ArrayList<Exception> nodesSourceExceptions;
     private long nodesSourcesLastReload = 0L;
-    private void loadNodesSources() {
+    private void loadResourceModelSources() {
         nodesSourceExceptions = new ArrayList<Exception>();
         //generate Configuration for file source
         if (hasProperty(PROJECT_RESOURCES_FILE_PROPERTY)) {
             try {
                 final Properties config = createFileSourceConfiguration();
                 logger.info("Source (project.resources.file): loading with properties: " + config);
-                nodesSourceList.add(loadNodesSource("file", config));
+                nodesSourceList.add(loadResourceModelSource("file", config));
             } catch (ExecutionServiceException e) {
-                logger.error("Failed to load file nodes source: " + e.getMessage(), e);
+                logger.error("Failed to load file resource model source: " + e.getMessage(), e);
                 nodesSourceExceptions.add(e);
             }
         }
@@ -161,9 +161,9 @@ public class FrameworkProject extends FrameworkResourceParent {
             try{
                 final Properties config = createURLSourceConfiguration();
                 logger.info("Source (project.resources.url): loading with properties: " + config);
-                nodesSourceList.add(loadNodesSource("url", config));
+                nodesSourceList.add(loadResourceModelSource("url", config));
             } catch (ExecutionServiceException e) {
-                logger.error("Failed to load file nodes source: " + e.getMessage(), e);
+                logger.error("Failed to load file resource model source: " + e.getMessage(), e);
                 nodesSourceExceptions.add(e);
             }
         }
@@ -171,7 +171,7 @@ public class FrameworkProject extends FrameworkResourceParent {
         int i=1;
         boolean done=false;
         while(!done) {
-            final String prefix = NODES_SOURCE_PROP_PREFIX +"." + i;
+            final String prefix = RESOURCES_SOURCE_PROP_PREFIX +"." + i;
             if (hasProperty(prefix +".type")) {
                 String providerType = getProperty(prefix + ".type");
                 Properties props = new Properties();
@@ -185,9 +185,9 @@ public class FrameworkProject extends FrameworkResourceParent {
                 }
                 logger.info("Source #" + i + " (" + providerType + "): loading with properties: " + props);
                 try {
-                    nodesSourceList.add(loadNodesSource(providerType, props));
+                    nodesSourceList.add(loadResourceModelSource(providerType, props));
                 } catch (ExecutionServiceException e) {
-                    logger.error("Failed loading nodes source #" + i + ", skipping: " + e.getMessage(), e);
+                    logger.error("Failed loading resource model source #" + i + ", skipping: " + e.getMessage(), e);
                     nodesSourceExceptions.add(e);
                 }
             }else{
@@ -200,32 +200,32 @@ public class FrameworkProject extends FrameworkResourceParent {
     }
 
     private Properties createURLSourceConfiguration() {
-        final URLNodesSource.Configuration build = URLNodesSource.Configuration.build();
+        final URLResourceModelSource.Configuration build = URLResourceModelSource.Configuration.build();
         build.url(getProperty(PROJECT_RESOURCES_URL_PROPERTY));
         build.project(getName());
 
         return build.getProperties();
     }
 
-    private synchronized Collection<NodesSource> getNodesSources() {
+    private synchronized Collection<ResourceModelSource> getResourceModelSources() {
         //determine if sources need to be reloaded
         final long lastMod = getPropertyFile().lastModified();
         if(lastMod> nodesSourcesLastReload){
-            nodesSourceList = new ArrayList<NodesSource>();
-            loadNodesSources();
+            nodesSourceList = new ArrayList<ResourceModelSource>();
+            loadResourceModelSources();
         }
         return nodesSourceList;
     }
 
-    private NodesSource loadNodesSource(String type, Properties configuration) throws ExecutionServiceException {
+    private ResourceModelSource loadResourceModelSource(String type, Properties configuration) throws ExecutionServiceException {
 
-        final NodesSourceService nodesSourceService =
-            getFrameworkProjectMgr().getFramework().getNodesSourceService();
+        final ResourceModelSourceService nodesSourceService =
+            getFrameworkProjectMgr().getFramework().getResourceModelSourceService();
         return nodesSourceService.getSourceForConfiguration(type, configuration);
     }
 
     private Properties createFileSourceConfiguration() {
-        final FileNodesSource.Configuration build = FileNodesSource.Configuration.build();
+        final FileResourceModelSource.Configuration build = FileResourceModelSource.Configuration.build();
         build.file(getProperty(PROJECT_RESOURCES_FILE_PROPERTY));
         if(hasProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY)){
             build.format(getProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY));
@@ -338,10 +338,10 @@ public class FrameworkProject extends FrameworkResourceParent {
     public INodeSet getNodeSet() throws NodeFileParserException {
         //iterate through sources, and add nodes
         final AdditiveListNodeSet list = new AdditiveListNodeSet();
-        for (final NodesSource nodesSource : getNodesSources()) {
+        for (final ResourceModelSource nodesSource : getResourceModelSources()) {
             try {
                 list.addNodeSet(nodesSource.getNodes());
-            } catch (NodesSourceException e) {
+            } catch (ResourceModelSourceException e) {
                 logger.error(e.getMessage(), e);
                 nodesSourceExceptions.add(e);
             }
@@ -626,7 +626,7 @@ public class FrameworkProject extends FrameworkResourceParent {
     /**
      * Return the set of exceptions produced by the last attempt to invoke all node providers
      */
-    public ArrayList<Exception> getNodesSourceExceptions() {
+    public ArrayList<Exception> getResourceModelSourceExceptions() {
         return nodesSourceExceptions;
     }
 }

@@ -21,7 +21,7 @@
 * Created: 7/22/11 2:17 PM
 * 
 */
-package com.dtolabs.rundeck.core.resources.nodes;
+package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
@@ -42,7 +42,7 @@ import java.util.Properties;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class TestURLNodesSource extends AbstractBaseTest {
+public class TestURLResourceModelSource extends AbstractBaseTest {
     public static final String PROJ_NAME = "TestURLNodesProvider";
     public static final String YAML_NODES_TEST = "testnode1: \n"
                                                  + "  nodename: testnode1\n"
@@ -58,7 +58,7 @@ public class TestURLNodesSource extends AbstractBaseTest {
                                                 + " />"
                                                 + "</project>";
 
-    public TestURLNodesSource(String name) {
+    public TestURLResourceModelSource(String name) {
         super(name);
     }
 
@@ -86,7 +86,7 @@ public class TestURLNodesSource extends AbstractBaseTest {
     }
 
     public void testConfigureProperties() throws Exception {
-        final URLNodesSource provider = new URLNodesSource(getFrameworkInstance());
+        final URLResourceModelSource provider = new URLResourceModelSource(getFrameworkInstance());
         try {
             provider.configure((Properties) null);
             fail("Should throw NPE");
@@ -213,8 +213,8 @@ public class TestURLNodesSource extends AbstractBaseTest {
         }
     }
     public void testGetNodesYaml() throws Exception {
-        URLNodesSource provider = new URLNodesSource(getFrameworkInstance());
-        final URLNodesSource.Configuration build = URLNodesSource.Configuration.build();
+        URLResourceModelSource provider = new URLResourceModelSource(getFrameworkInstance());
+        final URLResourceModelSource.Configuration build = URLResourceModelSource.Configuration.build();
 
         build.project(PROJ_NAME);
         build.url("http://example.com/test");
@@ -240,8 +240,8 @@ public class TestURLNodesSource extends AbstractBaseTest {
 
     }
     public void testGetNodesXml() throws Exception {
-        URLNodesSource provider = new URLNodesSource(getFrameworkInstance());
-        final URLNodesSource.Configuration build = URLNodesSource.Configuration.build();
+        URLResourceModelSource provider = new URLResourceModelSource(getFrameworkInstance());
+        final URLResourceModelSource.Configuration build = URLResourceModelSource.Configuration.build();
 
         build.project(PROJ_NAME);
         build.url("http://example.com/test");
@@ -265,8 +265,8 @@ public class TestURLNodesSource extends AbstractBaseTest {
         assertNotNull(test1.releaseConnectionCalled);
     }
     public void testGetNodesCaching() throws Exception {
-        URLNodesSource provider = new URLNodesSource(getFrameworkInstance());
-        final URLNodesSource.Configuration build = URLNodesSource.Configuration.build();
+        URLResourceModelSource provider = new URLResourceModelSource(getFrameworkInstance());
+        final URLResourceModelSource.Configuration build = URLResourceModelSource.Configuration.build();
 
         build.project(PROJ_NAME);
         build.url("http://example.com/test");
@@ -326,8 +326,8 @@ public class TestURLNodesSource extends AbstractBaseTest {
      * Test use of file: url
      */
     public void testGetNodesFile() throws Exception{
-        URLNodesSource provider = new URLNodesSource(getFrameworkInstance());
-        final URLNodesSource.Configuration build = URLNodesSource.Configuration.build();
+        URLResourceModelSource provider = new URLResourceModelSource(getFrameworkInstance());
+        final URLResourceModelSource.Configuration build = URLResourceModelSource.Configuration.build();
 
         build.project(PROJ_NAME);
         build.url(new File("src/test/com/dtolabs/rundeck/core/common/test-nodes1.xml").toURI().toURL().toExternalForm());
@@ -348,8 +348,8 @@ public class TestURLNodesSource extends AbstractBaseTest {
         writer.close();
         tempyaml.deleteOnExit();
 
-        URLNodesSource provider2 = new URLNodesSource(getFrameworkInstance());
-        final URLNodesSource.Configuration build2 = URLNodesSource.Configuration.build();
+        URLResourceModelSource provider2 = new URLResourceModelSource(getFrameworkInstance());
+        final URLResourceModelSource.Configuration build2 = URLResourceModelSource.Configuration.build();
 
         build2.project(PROJ_NAME);
         build2.url(tempyaml.toURI().toURL().toExternalForm());

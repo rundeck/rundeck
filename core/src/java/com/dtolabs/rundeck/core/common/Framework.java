@@ -41,10 +41,10 @@ import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
 import com.dtolabs.rundeck.core.plugins.PluginManagerService;
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
-import com.dtolabs.rundeck.core.resources.nodes.ConfigurationException;
-import com.dtolabs.rundeck.core.resources.nodes.FileNodesSource;
-import com.dtolabs.rundeck.core.resources.nodes.NodesSourceException;
-import com.dtolabs.rundeck.core.resources.nodes.NodesSourceService;
+import com.dtolabs.rundeck.core.resources.ConfigurationException;
+import com.dtolabs.rundeck.core.resources.FileResourceModelSource;
+import com.dtolabs.rundeck.core.resources.ResourceModelSourceException;
+import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import org.apache.log4j.Logger;
@@ -171,7 +171,7 @@ public class Framework extends FrameworkResourceParent {
         NodeDispatcherService.getInstanceForFramework(this);
         ExecutionServiceFactory.getInstanceForFramework(this);
         WorkflowExecutionService.getInstanceForFramework(this);
-        NodesSourceService.getInstanceForFramework(this);
+        ResourceModelSourceService.getInstanceForFramework(this);
     }
 
     private CentralDispatcher centralDispatcherMgr;
@@ -338,8 +338,8 @@ public class Framework extends FrameworkResourceParent {
     public NodeDispatcher getNodeDispatcherForContext(ExecutionContext context) throws ExecutionServiceException {
         return NodeDispatcherService.getInstanceForFramework(this).getNodeDispatcher(context);
     }
-    public NodesSourceService getNodesSourceService() {
-        return NodesSourceService.getInstanceForFramework(this);
+    public ResourceModelSourceService getResourceModelSourceService() {
+        return ResourceModelSourceService.getInstanceForFramework(this);
     }
 
     public ServiceProviderLoader getPluginManager(){
@@ -661,8 +661,8 @@ public class Framework extends FrameworkResourceParent {
 
         if (null != nodesFile) {
             try {
-                unfiltered = FileNodesSource.parseFile(nodesFile, this, project);
-            } catch (NodesSourceException e) {
+                unfiltered = FileResourceModelSource.parseFile(nodesFile, this, project);
+            } catch (ResourceModelSourceException e) {
                 throw new CoreException(e);
             } catch (ConfigurationException e) {
                 throw new CoreException(e);

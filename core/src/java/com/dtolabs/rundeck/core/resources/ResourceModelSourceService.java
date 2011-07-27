@@ -15,13 +15,13 @@
  */
 
 /*
-* NodesSourceService.java
+* ResourceModelSourceService.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 7/19/11 10:53 AM
 * 
 */
-package com.dtolabs.rundeck.core.resources.nodes;
+package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
@@ -33,21 +33,21 @@ import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import java.util.Properties;
 
 /**
- * NodesSourceService provides NodeSource factories
+ * ResourceModelSourceService provides NodeSource factories
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class NodesSourceService extends PluggableProviderRegistryService<NodesSourceFactory> {
+public class ResourceModelSourceService extends PluggableProviderRegistryService<ResourceModelSourceFactory> {
 
-    public static final String SERVICE_NAME = "NodesSource";
+    public static final String SERVICE_NAME = "ResourceModelSource";
 
 
-    public NodesSourceService(final Framework framework) {
+    public ResourceModelSourceService(final Framework framework) {
         super(framework);
 
-        registry.put(FileNodesSourceFactory.SERVICE_PROVIDER_TYPE, FileNodesSourceFactory.class);
-        registry.put(DirectoryNodesSourceFactory.SERVICE_PROVIDER_TYPE, DirectoryNodesSourceFactory.class);
-        registry.put(URLNodesSourceFactory.SERVICE_PROVIDER_TYPE, URLNodesSourceFactory.class);
+        registry.put(FileResourceModelSourceFactory.SERVICE_PROVIDER_TYPE, FileResourceModelSourceFactory.class);
+        registry.put(DirectoryResourceModelSourceFactory.SERVICE_PROVIDER_TYPE, DirectoryResourceModelSourceFactory.class);
+        registry.put(URLResourceModelSourceFactory.SERVICE_PROVIDER_TYPE, URLResourceModelSourceFactory.class);
     }
 
     public String getName() {
@@ -55,38 +55,38 @@ public class NodesSourceService extends PluggableProviderRegistryService<NodesSo
     }
 
 
-    public static NodesSourceService getInstanceForFramework(final Framework framework) {
+    public static ResourceModelSourceService getInstanceForFramework(final Framework framework) {
         if (null == framework.getService(SERVICE_NAME)) {
-            final NodesSourceService service = new NodesSourceService(framework);
+            final ResourceModelSourceService service = new ResourceModelSourceService(framework);
             framework.setService(SERVICE_NAME, service);
             return service;
         }
-        return (NodesSourceService) framework.getService(SERVICE_NAME);
+        return (ResourceModelSourceService) framework.getService(SERVICE_NAME);
     }
 
 
     /**
-     * Return a NodesSource of a give type with a given configuration
+     * Return a ResourceModelSource of a give type with a given configuration
      */
-    public NodesSource getSourceForConfiguration(final String type, final Properties configuration) throws
+    public ResourceModelSource getSourceForConfiguration(final String type, final Properties configuration) throws
         ExecutionServiceException {
 
         //try to acquire supplier from registry
-        final NodesSourceFactory nodesSourceFactory = providerOfType(type);
+        final ResourceModelSourceFactory nodesSourceFactory = providerOfType(type);
         try {
-            return nodesSourceFactory.createNodesSource(configuration);
+            return nodesSourceFactory.createResourceModelSource(configuration);
         } catch (ConfigurationException e) {
-            throw new NodesSourceServiceException(e);
+            throw new ResourceModelSourceServiceException(e);
         }
     }
 
 
     public boolean isValidProviderClass(Class clazz) {
 
-        return NodesSource.class.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
+        return ResourceModelSource.class.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
     }
 
-    public NodesSourceFactory createProviderInstance(Class<NodesSourceFactory> clazz, String name) throws PluginException,
+    public ResourceModelSourceFactory createProviderInstance(Class<ResourceModelSourceFactory> clazz, String name) throws PluginException,
         ProviderCreationException {
         return createProviderInstanceFromType(clazz, name);
     }
@@ -95,7 +95,7 @@ public class NodesSourceService extends PluggableProviderRegistryService<NodesSo
         return false;
     }
 
-    public NodesSourceFactory createScriptProviderInstance(ScriptPluginProvider provider) throws PluginException {
+    public ResourceModelSourceFactory createScriptProviderInstance(ScriptPluginProvider provider) throws PluginException {
         //TODO
 //        ScriptPluginNodeExecutor.validateScriptPlugin(provider);
 //        return new ScriptPluginNodeExecutor(provider);

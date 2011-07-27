@@ -21,7 +21,7 @@
 * Created: 7/21/11 9:07 AM
 * 
 */
-package com.dtolabs.rundeck.core.resources.nodes;
+package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
@@ -37,9 +37,9 @@ import java.util.Properties;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class TestFileNodesSourceFactory extends AbstractBaseTest {
+public class TestFileResourceModelSourceFactory extends AbstractBaseTest {
     public static final String PROJ_NAME = "TestFileNodesProviderFactory";
-    public TestFileNodesSourceFactory(String name) {
+    public TestFileResourceModelSourceFactory(String name) {
         super(name);
     }
 
@@ -66,12 +66,12 @@ public class TestFileNodesSourceFactory extends AbstractBaseTest {
 
 
     public void testCreateNodesProvider() throws Exception {
-        final FileNodesSourceFactory fileNodesProviderFactory = new FileNodesSourceFactory(getFrameworkInstance());
+        final FileResourceModelSourceFactory fileNodesProviderFactory = new FileResourceModelSourceFactory(getFrameworkInstance());
         {
             Properties props = new Properties();
             props.put("project", PROJ_NAME);
             props.put("file", "src/test/com/dtolabs/rundeck/core/common/test-nodes1.xml");
-            final NodesSource nodesProvider = fileNodesProviderFactory.createNodesSource(props);
+            final ResourceModelSource nodesProvider = fileNodesProviderFactory.createResourceModelSource(props);
             assertNotNull(nodesProvider);
         }
 

@@ -21,7 +21,7 @@
 * Created: 7/21/11 9:06 AM
 * 
 */
-package com.dtolabs.rundeck.core.resources.nodes;
+package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
@@ -41,10 +41,10 @@ import java.util.Properties;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class TestNodesSourceService extends AbstractBaseTest {
+public class TestResourceModelSourceService extends AbstractBaseTest {
     private static final String PROJ_NAME = "TestNodesProviderService";
 
-    public TestNodesSourceService(String name) {
+    public TestResourceModelSourceService(String name) {
         super(name);
     }
 
@@ -71,21 +71,21 @@ public class TestNodesSourceService extends AbstractBaseTest {
     }
 
 
-    class sourceTest1 implements NodesSource {
+    class sourceTest1 implements ResourceModelSource {
         INodeSet toReturn;
 
-        public INodeSet getNodes() throws NodesSourceException {
+        public INodeSet getNodes() throws ResourceModelSourceException {
             return toReturn;
         }
     }
 
-    class test1 implements NodesSourceFactory {
-        NodesSource toReturn;
+    class test1 implements ResourceModelSourceFactory {
+        ResourceModelSource toReturn;
         Properties createNodesProviderConfiguration;
         boolean called;
         ConfigurationException toThrow;
 
-        public NodesSource createNodesSource(final Properties configuration) throws ConfigurationException {
+        public ResourceModelSource createResourceModelSource(final Properties configuration) throws ConfigurationException {
             called=true;
             createNodesProviderConfiguration = configuration;
             if(null!=toThrow){
@@ -111,7 +111,8 @@ public class TestNodesSourceService extends AbstractBaseTest {
     }
 
     public void testGetProviderForConfiguration() throws Exception {
-        final NodesSourceService service = NodesSourceService.getInstanceForFramework(getFrameworkInstance());
+        final ResourceModelSourceService service = ResourceModelSourceService.getInstanceForFramework(
+            getFrameworkInstance());
         {
             final test1 factory = new test1();
             final sourceTest1 provider = new sourceTest1();
@@ -122,7 +123,7 @@ public class TestNodesSourceService extends AbstractBaseTest {
             service.registerInstance("test", factory);
 
             //no properties
-            final NodesSource result = service.getSourceForConfiguration("test", null);
+            final ResourceModelSource result = service.getSourceForConfiguration("test", null);
             assertNotNull(result);
             assertTrue(factory.called);
             assertNull(factory.createNodesProviderConfiguration);
@@ -140,7 +141,7 @@ public class TestNodesSourceService extends AbstractBaseTest {
             final Properties properties = new Properties();
 
             //use properties
-            final NodesSource result = service.getSourceForConfiguration("test", properties);
+            final ResourceModelSource result = service.getSourceForConfiguration("test", properties);
             assertNotNull(result);
             assertTrue(factory.called);
             assertNotNull(factory.createNodesProviderConfiguration);
@@ -161,7 +162,7 @@ public class TestNodesSourceService extends AbstractBaseTest {
             final Properties properties = new Properties();
 
             //throw configuration exception
-            final NodesSource result;
+            final ResourceModelSource result;
             try {
                 result = service.getSourceForConfiguration("test", properties);
                 fail("Should have thrown exception");

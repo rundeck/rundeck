@@ -21,7 +21,7 @@
 * Created: 7/19/11 11:29 AM
 * 
 */
-package com.dtolabs.rundeck.core.resources.nodes;
+package com.dtolabs.rundeck.core.resources;
 
 import java.util.Properties;
 

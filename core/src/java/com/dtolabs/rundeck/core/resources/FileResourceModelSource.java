@@ -15,13 +15,13 @@
  */
 
 /*
-* FileNodesSource.java
+* FileResourceModelSource.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 7/19/11 11:28 AM
 * 
 */
-package com.dtolabs.rundeck.core.resources.nodes;
+package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.shared.resources.ResourceXMLGenerator;
@@ -31,17 +31,17 @@ import java.io.IOException;
 import java.util.Properties;
 
 /**
- * FileNodesSource can parse files to provide node results
+ * FileResourceModelSource can parse files to provide node results
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class FileNodesSource implements NodesSource, Configurable {
+public class FileResourceModelSource implements ResourceModelSource, Configurable {
     private Framework framework;
     private NodeSetImpl nodeSet;
     private Configuration configuration;
     long lastModTime = 0;
 
-    FileNodesSource(final Framework framework) {
+    FileResourceModelSource(final Framework framework) {
         this.framework = framework;
         nodeSet = new NodeSetImpl();
     }
@@ -225,7 +225,7 @@ public class FileNodesSource implements NodesSource, Configurable {
         this.configuration.validate();
     }
 
-    public INodeSet getNodes() throws NodesSourceException {
+    public INodeSet getNodes() throws ResourceModelSourceException {
         return getNodes(configuration.nodesFile, configuration.format);
     }
 
@@ -238,7 +238,7 @@ public class FileNodesSource implements NodesSource, Configurable {
      * @return an instance of {@link Nodes}
      */
     public synchronized INodeSet getNodes(final File nodesFile, final Nodes.Format format) throws
-        NodesSourceException {
+        ResourceModelSourceException {
         final Long modtime = nodesFile.lastModified();
         if (0 == nodeSet.getNodes().size() || !modtime.equals(lastModTime)) {
             nodeSet = new NodeSetImpl();
@@ -275,7 +275,7 @@ public class FileNodesSource implements NodesSource, Configurable {
         //getLogger().debug("generated resources file: " + resfile.getAbsolutePath());
     }
 
-    private void loadNodes(final File nodesFile, final Nodes.Format format) throws NodesSourceException {
+    private void loadNodes(final File nodesFile, final Nodes.Format format) throws ResourceModelSourceException {
         if (!nodesFile.isFile() && configuration.generateFileAutomatically) {
             generateResourcesFile(nodesFile, format);
         } else if (configuration.includeServerNode) {
@@ -287,10 +287,10 @@ public class FileNodesSource implements NodesSource, Configurable {
             try {
                 parser.parse();
             } catch (NodeFileParserException e) {
-                throw new NodesSourceException(e);
+                throw new ResourceModelSourceException(e);
             }
         } else if (configuration.requireFileExists) {
-            throw new NodesSourceException("File does not exist: " + nodesFile);
+            throw new ResourceModelSourceException("File does not exist: " + nodesFile);
         }
     }
 
@@ -316,7 +316,7 @@ public class FileNodesSource implements NodesSource, Configurable {
      * Utility method to directly parse the nodes from a file
      */
     public static INodeSet parseFile(final String file, final Framework framework, final String project) throws
-        NodesSourceException, ConfigurationException {
+        ResourceModelSourceException, ConfigurationException {
         return parseFile(new File(file), framework, project);
     }
 
@@ -324,11 +324,11 @@ public class FileNodesSource implements NodesSource, Configurable {
      * Utility method to directly parse the nodes from a file
      */
     public static INodeSet parseFile(final File file, final Framework framework, final String project) throws
-        NodesSourceException,
+        ResourceModelSourceException,
         ConfigurationException {
-        final FileNodesSource prov = new FileNodesSource(framework);
+        final FileResourceModelSource prov = new FileResourceModelSource(framework);
         prov.configure(
-            FileNodesSource.Configuration.build()
+            FileResourceModelSource.Configuration.build()
                 .file(file)
                 .includeServerNode(false)
                 .generateFileAutomatically(false)
@@ -341,11 +341,11 @@ public class FileNodesSource implements NodesSource, Configurable {
      * Utility method to directly parse the nodes from a file
      */
     public static INodeSet parseFile(final File file, final Nodes.Format format, final Framework framework, final String project) throws
-        NodesSourceException,
+        ResourceModelSourceException,
         ConfigurationException {
-        final FileNodesSource prov = new FileNodesSource(framework);
+        final FileResourceModelSource prov = new FileResourceModelSource(framework);
         prov.configure(
-            FileNodesSource.Configuration.build()
+            FileResourceModelSource.Configuration.build()
                 .file(file)
                 .includeServerNode(false)
                 .generateFileAutomatically(false)

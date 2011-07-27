@@ -15,13 +15,13 @@
  */
 
 /*
-* URLNodesSourceFactory.java
+* DirectoryFileResourceModelSourceFactory.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 7/21/11 4:32 PM
+* Created: 7/21/11 11:12 AM
 * 
 */
-package com.dtolabs.rundeck.core.resources.nodes;
+package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.plugins.Plugin;
@@ -29,22 +29,23 @@ import com.dtolabs.rundeck.core.plugins.Plugin;
 import java.util.Properties;
 
 /**
- * URLNodesSourceFactory Creates NodesSources
+ * DirectoryFileResourceModelSourceFactory is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-@Plugin (name = "url", service = "NodesSource")
-public class URLNodesSourceFactory implements NodesSourceFactory {
-    public static final String SERVICE_PROVIDER_TYPE = "url";
+@Plugin (name = "directory", service = "ResourceModelSource")
+public class DirectoryResourceModelSourceFactory implements ResourceModelSourceFactory {
+    public static final String SERVICE_PROVIDER_TYPE = "directory";
     private Framework framework;
 
-    public URLNodesSourceFactory(final Framework framework) {
+    public DirectoryResourceModelSourceFactory(Framework framework) {
         this.framework = framework;
     }
 
-    public NodesSource createNodesSource(final Properties configuration) throws ConfigurationException {
-        final URLNodesSource urlNodesSource = new URLNodesSource(framework);
-        urlNodesSource.configure(configuration);
-        return urlNodesSource;
+    public ResourceModelSource createResourceModelSource(final Properties configuration) throws ConfigurationException {
+
+        final DirectoryResourceModelSource fileResourceModelSource = new DirectoryResourceModelSource(framework);
+        fileResourceModelSource.configure(DirectoryResourceModelSource.Configuration.fromProperties(configuration));
+        return fileResourceModelSource;
     }
 }

@@ -15,36 +15,36 @@
  */
 
 /*
-* FileNodesSourceFactory.java
+* URLResourceModelSourceFactory.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 7/20/11 9:22 AM
+* Created: 7/21/11 4:32 PM
 * 
 */
-package com.dtolabs.rundeck.core.resources.nodes;
+package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 
-import java.util.*;
+import java.util.Properties;
 
 /**
- * FileNodesSourceFactory is ...
+ * URLResourceModelSourceFactory Creates ResourceModelSources
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-@Plugin (name = "file", service = "NodesSource")
-public class FileNodesSourceFactory implements NodesSourceFactory {
-    public static final String SERVICE_PROVIDER_TYPE = "file";
+@Plugin (name = "url", service = "ResourceModelSource")
+public class URLResourceModelSourceFactory implements ResourceModelSourceFactory {
+    public static final String SERVICE_PROVIDER_TYPE = "url";
     private Framework framework;
 
-    public FileNodesSourceFactory(final Framework framework) {
+    public URLResourceModelSourceFactory(final Framework framework) {
         this.framework = framework;
     }
 
-    public NodesSource createNodesSource(final Properties configuration) throws ConfigurationException {
-        final FileNodesSource fileNodesSource = new FileNodesSource(framework);
-        fileNodesSource.configure(FileNodesSource.Configuration.fromProperties(configuration));
-        return fileNodesSource;
+    public ResourceModelSource createResourceModelSource(final Properties configuration) throws ConfigurationException {
+        final URLResourceModelSource urlResourceModelSource = new URLResourceModelSource(framework);
+        urlResourceModelSource.configure(configuration);
+        return urlResourceModelSource;
     }
 }

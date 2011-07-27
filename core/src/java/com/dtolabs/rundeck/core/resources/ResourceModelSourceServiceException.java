@@ -15,36 +15,36 @@
  */
 
 /*
-* NodesSourceServiceException.java
+* ResourceModelSourceServiceException.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 7/19/11 12:05 PM
 * 
 */
-package com.dtolabs.rundeck.core.resources.nodes;
+package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 
 /**
- * NodesSourceServiceException indicates an error from the NodesSourceService.
+ * ResourceModelSourceServiceException indicates an error from the ResourceModelSourceService.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class NodesSourceServiceException extends ExecutionServiceException {
-    public NodesSourceServiceException() {
-        super(NodesSourceService.SERVICE_NAME);
+public class ResourceModelSourceServiceException extends ExecutionServiceException {
+    public ResourceModelSourceServiceException() {
+        super(ResourceModelSourceService.SERVICE_NAME);
     }
 
-    public NodesSourceServiceException(String msg) {
-        super(msg, NodesSourceService.SERVICE_NAME);
+    public ResourceModelSourceServiceException(String msg) {
+        super(msg, ResourceModelSourceService.SERVICE_NAME);
     }
 
-    public NodesSourceServiceException(Exception cause) {
-        super(cause, NodesSourceService.SERVICE_NAME);
+    public ResourceModelSourceServiceException(Exception cause) {
+        super(cause, ResourceModelSourceService.SERVICE_NAME);
     }
 
-    public NodesSourceServiceException(String msg, Exception cause) {
-        super(msg, cause, NodesSourceService.SERVICE_NAME);
+    public ResourceModelSourceServiceException(String msg, Exception cause) {
+        super(msg, cause, ResourceModelSourceService.SERVICE_NAME);
 
     }
 }

@@ -26,9 +26,9 @@ import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.commands.ExecCommand;
 import com.dtolabs.rundeck.core.execution.commands.ScriptFileCommand;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
-import com.dtolabs.rundeck.core.resources.nodes.ConfigurationException;
-import com.dtolabs.rundeck.core.resources.nodes.FileNodesSource;
-import com.dtolabs.rundeck.core.resources.nodes.NodesSourceException;
+import com.dtolabs.rundeck.core.resources.ConfigurationException;
+import com.dtolabs.rundeck.core.resources.FileResourceModelSource;
+import com.dtolabs.rundeck.core.resources.ResourceModelSourceException;
 import com.dtolabs.rundeck.core.utils.*;
 import org.apache.commons.cli.*;
 import org.apache.log4j.PropertyConfigurator;
@@ -1146,10 +1146,10 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
 
     private INodeSet loadLocalFile(String argNodesFile) {
         try {
-            return FileNodesSource.parseFile(argNodesFile, framework, argProject);
+            return FileResourceModelSource.parseFile(argNodesFile, framework, argProject);
         } catch (ConfigurationException e) {
             throw new CoreException("Error parsing nodes resource file: " + e.getMessage(), e);
-        } catch (NodesSourceException e) {
+        } catch (ResourceModelSourceException e) {
             throw new CoreException("Error parsing nodes resource file: " + e.getMessage(), e);
         }
     }

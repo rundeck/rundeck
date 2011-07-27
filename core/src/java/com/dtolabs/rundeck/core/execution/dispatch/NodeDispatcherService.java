@@ -27,9 +27,9 @@ import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.service.BaseProviderRegistryService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
-import com.dtolabs.rundeck.core.resources.nodes.ConfigurationException;
-import com.dtolabs.rundeck.core.resources.nodes.FileNodesSource;
-import com.dtolabs.rundeck.core.resources.nodes.NodesSourceException;
+import com.dtolabs.rundeck.core.resources.ConfigurationException;
+import com.dtolabs.rundeck.core.resources.FileResourceModelSource;
+import com.dtolabs.rundeck.core.resources.ResourceModelSourceException;
 
 /**
  * NodeProcessorService is ...
@@ -54,7 +54,7 @@ public class NodeDispatcherService extends BaseProviderRegistryService<NodeDispa
         try {
             INodeSet unfiltered;
             if(null!= context.getNodesFile()) {
-                unfiltered = FileNodesSource.parseFile(context.getNodesFile(), framework,
+                unfiltered = FileResourceModelSource.parseFile(context.getNodesFile(), framework,
                     context.getFrameworkProject());
             }else{
                 unfiltered=frameworkProject.getNodeSet();
@@ -62,7 +62,7 @@ public class NodeDispatcherService extends BaseProviderRegistryService<NodeDispa
             filtered = NodeFilter.filterNodes(nodeset, unfiltered);
         } catch (NodeFileParserException e) {
             throw new ExecutionServiceException(e, getName());
-        } catch (NodesSourceException e) {
+        } catch (ResourceModelSourceException e) {
             throw new ExecutionServiceException(e, getName());
         } catch (ConfigurationException e) {
             throw new ExecutionServiceException(e, getName());

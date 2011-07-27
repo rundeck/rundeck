@@ -15,13 +15,13 @@
  */
 
 /*
-* DirectoryNodesSource.java
+* DirectoryResourceModelSource.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 7/21/11 11:13 AM
 * 
 */
-package com.dtolabs.rundeck.core.resources.nodes;
+package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.AdditiveListNodeSet;
 import com.dtolabs.rundeck.core.common.Framework;
@@ -34,23 +34,23 @@ import java.io.FilenameFilter;
 import java.util.*;
 
 /**
- * DirectoryNodesSource scans a directory for xml and yaml files, and loads all discovered files as nodes files
+ * DirectoryResourceModelSource scans a directory for xml and yaml files, and loads all discovered files as nodes files
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class DirectoryNodesSource implements NodesSource, Configurable {
-    static final Logger logger = Logger.getLogger(DirectoryNodesSource.class.getName());
+public class DirectoryResourceModelSource implements ResourceModelSource, Configurable {
+    static final Logger logger = Logger.getLogger(DirectoryResourceModelSource.class.getName());
     private final Framework framework;
 
-    public DirectoryNodesSource(final Framework framework) {
+    public DirectoryResourceModelSource(final Framework framework) {
         this.framework = framework;
     }
 
     private Configuration configuration;
     long lastModTime = 0;
     private AdditiveListNodeSet listNodeSet = new AdditiveListNodeSet();
-    private ArrayList<NodesSource> fileSources = new ArrayList<NodesSource>();
-    private HashMap<File, NodesSource> sourceCache = new HashMap<File, NodesSource>();
+    private ArrayList<ResourceModelSource> fileSources = new ArrayList<ResourceModelSource>();
+    private HashMap<File, ResourceModelSource> sourceCache = new HashMap<File, ResourceModelSource>();
 
     public void configure(final Properties configuration) throws ConfigurationException {
 
@@ -98,18 +98,18 @@ public class DirectoryNodesSource implements NodesSource, Configurable {
 
     }
 
-    public INodeSet getNodes() throws NodesSourceException {
+    public INodeSet getNodes() throws ResourceModelSourceException {
         loadFileSources(configuration.directory, configuration.project);
         listNodeSet = new AdditiveListNodeSet();
         loadNodeSets();
         return listNodeSet;
     }
 
-    private void loadNodeSets() throws NodesSourceException {
-        for (final NodesSource fileSource: fileSources) {
+    private void loadNodeSets() throws ResourceModelSourceException {
+        for (final ResourceModelSource fileSource: fileSources) {
             try {
                 listNodeSet.addNodeSet(fileSource.getNodes());
-            } catch (NodesSourceException e) {
+            } catch (ResourceModelSourceException e) {
                 e.printStackTrace();
             }
         }
@@ -144,9 +144,9 @@ public class DirectoryNodesSource implements NodesSource, Configurable {
                 trackedFiles.remove(file);
                 if (!sourceCache.containsKey(file)) {
                     try {
-                        final NodesSource source = framework.getNodesSourceService().getSourceForConfiguration(
+                        final ResourceModelSource source = framework.getResourceModelSourceService().getSourceForConfiguration(
                             "file",
-                            FileNodesSource.Configuration.build()
+                            FileResourceModelSource.Configuration.build()
                                 .project(project)
                                 .file(file)
                                 .generateFileAutomatically(false)

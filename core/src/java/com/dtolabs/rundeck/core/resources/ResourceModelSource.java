@@ -15,33 +15,21 @@
  */
 
 /*
-* NodesSourceException.java
+* ResourceModelSource.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 7/19/11 11:45 AM
+* Created: 7/19/11 10:45 AM
 * 
 */
-package com.dtolabs.rundeck.core.resources.nodes;
+package com.dtolabs.rundeck.core.resources;
+
+import com.dtolabs.rundeck.core.common.INodeSet;
 
 /**
- * NodesSourceException is an error with a NodesSource
+ * ResourceModelSource produces INodeSet
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class NodesSourceException extends Exception {
-    public NodesSourceException() {
-        super();
-    }
-
-    public NodesSourceException(String msg) {
-        super(msg);
-    }
-
-    public NodesSourceException(Exception cause) {
-        super(cause);
-    }
-
-    public NodesSourceException(String msg, Exception cause) {
-        super(msg, cause);
-    }
+public interface ResourceModelSource {
+    public INodeSet getNodes() throws ResourceModelSourceException;
 }

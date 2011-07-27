@@ -15,24 +15,23 @@
  */
 
 /*
-* NodesSourceFactory.java
+* TestURLNodesProviderFactory.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 7/20/11 9:21 AM
+* Created: 7/22/11 2:17 PM
 * 
 */
-package com.dtolabs.rundeck.core.resources.nodes;
+package com.dtolabs.rundeck.core.resources;
 
-import java.util.*;
+import junit.framework.TestCase;
 
 /**
- * NodesSourceFactory creates NodesSource instances
+ * TestURLNodesProviderFactory is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface NodesSourceFactory {
-    /**
-     * Return a nodes source for the given configuration
-     */
-    public NodesSource createNodesSource(Properties configuration) throws ConfigurationException;
+public class TestURLResourceModelSourceFactory extends TestCase {
+    public void testblah(){
+        
+    }
 }
