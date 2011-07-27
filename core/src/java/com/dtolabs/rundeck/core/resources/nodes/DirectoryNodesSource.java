@@ -31,10 +31,7 @@ import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.FilenameFilter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * DirectoryNodesSource scans a directory for xml and yaml files, and loads all discovered files as nodes files
@@ -132,9 +129,16 @@ public class DirectoryNodesSource implements NodesSource, Configurable {
                 return s.endsWith(".xml") || s.endsWith(".yaml");
             }
         });
+
         //set of previously cached file sources by file
         final HashSet<File> trackedFiles = new HashSet<File>(sourceCache.keySet());
         if (null != files) {
+            //sort on filename
+            Arrays.sort(files, new Comparator<File>() {
+                public int compare(final File file, final File file1) {
+                    return file.getName().compareTo(file1.getName());
+                }
+            });
             for (final File file : files) {
                 //remove file that we want to keep
                 trackedFiles.remove(file);

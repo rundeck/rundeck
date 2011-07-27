@@ -430,4 +430,119 @@ public class TestDirectoryNodesSource extends AbstractBaseTest {
 
         FileUtils.deleteDir(directory);
     }
+
+    public void testGetNodesOrdering() throws Exception{
+        File directory = new File(frameworkProject.getBaseDir(), "testGetNodesOrdering");
+        directory.mkdirs();
+        assertTrue(directory.isDirectory());
+
+        File file1 = new File(directory, "testA.yaml");
+        final BufferedWriter writer1 = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
+            (file1))));
+        writer1.write("test1: \n"
+                             + "  hostname: test\n"
+                             + "  description: A description\n"
+                             + "  tags: a, b, c\n"
+                             + "  osArch: x86_64\n"
+                             + "  osFamily: unix\n"
+                             + "  osVersion: 10.6.5\n"
+                             + "  osName: Mac OS X\n"
+                             + "  username: a user\n"
+                             + "test2: \n"
+                             + "  hostname: test\n"
+                             + "  description: A description\n"
+                             + "  tags: a, b, c\n"
+                             + "  osArch: x86_64\n"
+                             + "  osFamily: unix\n"
+                             + "  osVersion: 10.6.5\n"
+                             + "  osName: Mac OS X\n"
+                             + "  username: a user\n"
+                             + "test3: \n"
+                             + "  hostname: test\n"
+                             + "  description: A description\n"
+                             + "  tags: a, b, c\n"
+                             + "  osArch: x86_64\n"
+                             + "  osFamily: unix\n"
+                             + "  osVersion: 10.6.5\n"
+                             + "  osName: Mac OS X\n"
+                             + "  username: a user\n");
+        writer1.flush();
+        writer1.close();
+
+        File file2 = new File(directory, "testB.yaml");
+        final BufferedWriter writer2 = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
+            (file2))));
+        writer2.write("test2: \n"
+                             + "  hostname: test\n"
+                             + "  description: B description\n"
+                             + "  tags: a, b, c\n"
+                             + "  osArch: x86_64\n"
+                             + "  osFamily: unix\n"
+                             + "  osVersion: 10.6.5\n"
+                             + "  osName: Mac OS X\n"
+                             + "  username: a user\n"
+                             + "test3: \n"
+                             + "  hostname: test\n"
+                             + "  description: B description\n"
+                             + "  tags: a, b, c\n"
+                             + "  osArch: x86_64\n"
+                             + "  osFamily: unix\n"
+                             + "  osVersion: 10.6.5\n"
+                             + "  osName: Mac OS X\n"
+                             + "  username: a user\n");
+        writer2.flush();
+        writer2.close();
+
+        File file3 = new File(directory, "testC.yaml");
+        final BufferedWriter writer3 = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
+            (file3))));
+        writer3.write("test3: \n"
+                             + "  hostname: test\n"
+                             + "  description: C description\n"
+                             + "  tags: a, b, c\n"
+                             + "  osArch: x86_64\n"
+                             + "  osFamily: unix\n"
+                             + "  osVersion: 10.6.5\n"
+                             + "  osName: Mac OS X\n"
+                             + "  username: a user\n");
+        writer3.flush();
+        writer3.close();
+
+
+        //test with single files.
+        Properties props = new Properties();
+        props.setProperty("project", PROJ_NAME);
+        props.setProperty("directory", directory.getAbsolutePath());
+        DirectoryNodesSource.Configuration config = new DirectoryNodesSource.Configuration(props);
+        final DirectoryNodesSource directoryNodesProvider = new DirectoryNodesSource(getFrameworkInstance());
+        directoryNodesProvider.configure(config);
+
+        final INodeSet nodes = directoryNodesProvider.getNodes();
+        assertNotNull(nodes);
+        assertEquals(3, nodes.getNodes().size());
+        assertNotNull(nodes.getNode("test1"));
+        assertNotNull(nodes.getNode("test2"));
+        assertNotNull(nodes.getNode("test3"));
+
+        assertEquals("A description", nodes.getNode("test1").getDescription());
+        assertEquals("B description", nodes.getNode("test2").getDescription());
+        assertEquals("C description", nodes.getNode("test3").getDescription());
+
+
+        //change modification time of a file
+        assertTrue(file1.setLastModified(System.currentTimeMillis()));
+        final INodeSet nodes2 = directoryNodesProvider.getNodes();
+        assertNotNull(nodes2);
+        assertEquals(3, nodes2.getNodes().size());
+        assertNotNull(nodes2.getNode("test1"));
+        assertNotNull(nodes2.getNode("test2"));
+        assertNotNull(nodes2.getNode("test3"));
+
+        assertEquals("A description", nodes2.getNode("test1").getDescription());
+        assertEquals("B description", nodes2.getNode("test2").getDescription());
+        assertEquals("C description", nodes2.getNode("test3").getDescription());
+
+
+        FileUtils.deleteDir(directory);
+    }
 }
