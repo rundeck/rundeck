@@ -49,13 +49,18 @@ Nodes have a number of basic properties but these properties can be
 extended to include arbitrary named key value pairs.
 
 You can configure RunDeck to retrieve and store resource model data
-from any source, so long as it meets the RunDeck resource model
-document requirement. 
+from multiple sources, and RunDeck defines several resource model
+document formats to facilitate the transfer of this information. 
 
-A *resource model provider* is an external service
-accessible via the HTTP GET method that returns data conforming to the
-RunDeck resource model document formats: [resource-v13(5) XML](resource-v13.html) or [resource-v13(5) YAML](resource-yaml-v13.html). 
+Resource Model data sources can be local files on disk, or remotely
+accessible services. A *resource model provider* is an external service
+accessible via the HTTP GET method that returns data in one of the supported
+resource document formats.
 
+RunDeck currently supports XML and YAML document formats. See [Resource Model Document formats](#resource-model-document-formats)).
+
+Each project can be configured to have multiple sources of Resource Model data. 
+See [Resource Model Sources](#resource-model-sources).
 
 ### Authorization
 

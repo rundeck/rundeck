@@ -155,14 +155,17 @@ tools like umask, Java home and classpath, and SSL options.
 #### project.properties
 
 RunDeck [project](#project) configuration file. One of these is
-generated at project setup time. There are two important settings in
-this file:
+generated at project setup time. 
 
-* `project.resources.file`: Path to the project resource model document
-  (see [resource-v10(5)](resource-v10.html) and [resource-yaml-v12(5)](resource-yaml-v12.html)).
-* `project.resources.url`: (Optional) The URL to an external
-  [Resource Model Provider](#resource-model-provider).
-* `project.resources.allowedURL.X`: a sequence of regular expressions (for `X` starting at 0 and increasing). These are matched against requested providerURL values when
+Property                          Description
+----------                        -------------
+`project.resources.file`          A local file path to read a resource model          document
+`project.resources.url`           The URL to an external [Resource Model Provider](#resource-model-provider).(Optional) 
+`project.resources.allowedURL.X`  A sequence of regular expressions (for `X` starting at 0 and increasing). 
+`resources.source.N...`               Defines a Resource model source see [Resource Model Sources](#resource-model-sources).
+----------------------------------
+
+The `project.resources.allowedURL.X` values are matched against requested providerURL values when
 the `/project/name/resources/refresh` API endpoint is called. See [Refreshing Resources for a Project](api/index.html#refreshing-resources-for-a-project).
 
 #### jaas-loginmodule.conf

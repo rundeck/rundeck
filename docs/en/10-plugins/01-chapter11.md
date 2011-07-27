@@ -2,11 +2,6 @@
 RunDeck Plugins
 ===========
 
-***RunDeck plugin system is currently under development, so this document
-is subject to change.***
-
-***[Insert BETA sticker here]***
-
 Plugins for RunDeck contain new Providers for some of the Services used by
 the RunDeck core.
 
@@ -49,11 +44,19 @@ you specify different ones to use.
 
 ![RunDeck Services and Providers](figures/fig1101.png)
 
-There are currently two types of Providers that can be used and developed for
-RunDeck:
+Services fall into different categories, which determine how and where they are used.
 
-1. Node Executor Providers - these define ways of executing a command on a Node (local or remote)
-2. File Copier Providers - these define ways of copying files to a Node
+*Service Categories*:
+
+1. **Node Execution services** - providers of these services operate in the context of a single Node definition, and
+  can be configured at Node scope or higher:
+
+    1. Node Executor - these providers define ways of executing a command on a Node (local or remote)
+    2. File Copier - these providers define ways of copying files to a Node.
+
+2. **Project services**
+
+    1. Resource Model Source - (aka "Resource Providers") these define ways of retrieving Node resources for a Project 
 
 Specifics of how providers of these plugins work is listed below.
 
@@ -61,7 +64,10 @@ RunDeck Plugins can contain more than one Provider.
 
 ## Using Providers
 
-The Providers are "enabled" for particular nodes on a node-specific basis,
+### Node Execution Services
+
+The two *Node services*, Node Executor and File Copier, are both configured similarly.
+They are configured for particular nodes on a node-specific basis,
 or set as a default provider for a project or for the system.
 
 If multiple providers are defined the most specific definition takes precedence
@@ -71,11 +77,11 @@ in this order:
 2. Project scope
 3. Framework scope
 
-### Node Specific
+#### Node Specific
 
 To enable a provider for a node, add an attribute to the node definition.
 
-Node Executor provider attributes:
+*Node Executor provider attributes*:
 
 `node-executor`
 
@@ -86,7 +92,7 @@ Node Executor provider attributes:
 :    specifies the provider name for the local (server) node.
 
 
-FileCopier provider attributes:
+*FileCopier provider attributes*:
 
 `file-copier`
 
@@ -103,9 +109,11 @@ Example Node in YAML specifying `stub` NodeExecutor and FileCopier:
         node-executor: stub
         file-copier: stub
 
-### Project or Framework Scope
+#### Project or Framework Scope
 
-You can define the default provider to use for nodes at either the Project or
+*Node Executor*
+
+You can define the default connection providers to use for nodes at either the Project or
 Framework scope (or both).  To do so, configure any of the following properties
 in the `project.properties` or the `framework.properties` files.  
 
@@ -116,6 +124,8 @@ in the `project.properties` or the `framework.properties` files.
 `service.NodeExecutor.default.local.provider`
 
 :   Specifies the default Node Executor provider for the  local node.
+
+*File Copier*
 
 `service.FileCopier.default.provider`
 
@@ -130,7 +140,54 @@ Example `project.properties` to set default local providers to `stub`:
     service.NodeExecutor.default.local.provider=stub
     service.FileCopier.default.local.provider=stub
 
-## When providers are invoked
+### Resource Model Sources
+
+The *Resource Model Sources* providers can be configured for a single project.
+
+You can define multiple Resource Model Sources for the project, and can mix and match
+the specific providers depending on your needs.
+
+When you define multiple Source providers in a project, then the resulting set of Nodes will 
+effectively be a merge of all the sources, in the order in which they are declared. This
+means that if two or more Sources provider a definition of a node with the same name, then
+the definition from lowest Source in the list will be used.
+
+The order that the providers are loaded (and thus the nodes are merged) is:
+
+1. project.resources.file source
+2. project.resources.url source
+3. All `resources.source.N` configurations in order starting at 1
+
+#### Resource Model Source configuration
+
+The `project.properties` file for each project allows you to configure the Resource Model Sources in these ways:
+
+* Define `project.resources.file` - this file path is used as a File Source path, with *autogeneration* and *includeServerNode* both true.
+* Define `project.resources.url` - this URL is used as a URL Source url, with caching enabled
+
+You may also define a list of more sources in this way:
+
+Starting at index `1`, define these properties for your Source numbered `N`:
+
+    resources.source.N.type=<provider-name>
+    resources.source.N.config.<property>=<value>
+    resources.source.N.config.<property2>=<value2>
+    ...
+
+Using one of the available Resource Model Source provider names for the `<provider-name>` value. For each Resource Model Source provider, 
+you can specify the configuration properties for the source.
+
+Example project.properties configuration of a default File provider, and two other providers:
+
+    project.resources.file=/home/rundeck/projects/example/etc/resources.xml
+    
+    resources.source.1.type=url
+    resources.source.1.url=http://server/nodes.yaml
+    
+    resources.source.2.type=directory
+    resources.source.2.directory=/home/rundeck/projects/example/resources
+
+## When Node Execution Service providers are invoked
 
 RunDeck executes Command items on Nodes.  The command may be part of a Workflow as defined
 in a Job, and it may be executed multiple times on different nodes.
@@ -164,6 +221,8 @@ The procedure for executing a "script" command is:
 
 RunDeck uses a few built-in providers to provide the default service:
 
+### Node Execution services
+
 For NodeExecutor, these providers:
 
 `local`
@@ -183,6 +242,88 @@ For FileCopier, these providers:
 `jsch-scp`
 
 :   remote copy of a command via SCP, requiring the "hostname" and  "username" attributes on a node.
+
+### Resource Model Sources
+
+RunDeck includes these built-in providers in the core installation:
+
+`file`
+
+:    Uses a file on the file system, in any of the supported Resources formats.
+
+`url`
+
+:    GETs a URL, and expects one of the supported Resources formats.
+
+`directory`
+
+:    looks at all files in a directory for suppored file extensions, and internally uses the `file` provider for
+     each file that matches.
+
+To configure these providers, refer to [Resource Model Source configuration](#resource-model-source-configuration) and use the following configuration properties.
+
+#### File Resource Model Source Configuration
+
+The `file` Resource Model Source provider reads a file in either XML or Yaml format.
+
+Name                          Value                           Notes
+-----                         ------                          ------
+`file`                        file path                       Path to a file on disk.
+`format`                      `resourcexml` or `resourceyaml` Can be used to declare the format explicitly. Otherwise the format is determined from the file extension. ".xml" and ".yaml"
+`requireFileExists`           true/false                      If true and the file is missing, causes a failure to load the nodes. (Default: false)
+`includeServerNode`           true/false                      If true, include the Project's server node automatically. (Default: false)
+`generateFileAutomatically`   true/false                      If true, create the file automatically if it is missing. (Default: false)
+----------------------------
+
+Table: Configuration properties for `file` Resource Model Source provider
+
+*Example:*
+
+    resources.source.1.type=file
+    resources.source.1.file=/home/rundeck/projects/example/etc/resources2.xml
+    resources.source.1.format=resourcexml
+    resources.source.1.requireFileExists=true
+    resources.source.1.includeServerNode=true
+    resources.source.1.generateFileAutomatically=true
+
+#### URL Resource Model Source Configuration
+
+The `url` Resource Model Source provider performs a HTTP GET request to retrieve the Nodes definition.
+
+Configuration properties:
+
+Name      Value       Notes
+-----     ------      ------
+`url`     URL         A valid URL, either `http:`, `https:` or `file:` protocol.
+`cache`   true/false  If true, use ETag/Last-Modified information from the server to only download new content if it has changed. If false, always download the content. (Default: true)
+`timeout` seconds     Number of seconds before request fails due to timeout. `0` means no timeout. (Default: 30) 
+----------------------------
+
+Table: Configuration properties for `url` Resource Model Source provider
+
+*Example:*
+
+    resources.source.1.type=url
+    resources.source.1.url=file:/home/rundeck/projects/example/etc/resources2.xml
+    resources.source.1.cache=true
+    resources.source.1.timeout=0
+
+#### Directory Resource Model Source Configuration
+
+The `directory` Resource Model Source provider lists all files in a directory, and loads each one that has a supported file extension
+as File Resource Model Source with all default configuration options.
+
+Name                          Value                           Notes
+-----                         ------                          ------
+`directory`                   directory path                  All files in the directory that have a supported file extension will be loaded
+----------------------------
+
+Table: Configuration properties for `directory` Resource Model Source provider
+
+*Example:*
+
+    resources.source.2.type=directory
+    resources.source.2.directory=/home/rundeck/projects/example/resources
 
 ## Pre-installed plugins
 
@@ -726,6 +867,7 @@ Then include the jar files in the Plugin's jar contents:
 
 * `NodeExecutor` - executes a command on a node
 * `FileCopier` - copies a file to a node
+* `NodesSource` - produces a set of Node definitions for a project
 
 ## Provider Lifecycle
 
@@ -768,6 +910,23 @@ Your provider class must implement the `com.dtolabs.rundeck.core.execution.servi
 
         public String copyScriptContent(final ExecutionContext context, String script, INodeEntry node) throws
             FileCopierException;
+    }
+
+More information is available in the Javadoc.
+
+### Resource Model Source Providers
+
+A Resource Model Source provider is actually a Factory class.  An instance of your Resource Model Source provider will be
+re-used, so each time a new Resource Model Source with a new configuration is required, your Factory class
+will be invoked to produce it.
+
+Your provider class must implement the `com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory` interface:
+
+    public interface ResourceModelSourceFactory {
+        /**
+         * Return a resource model source for the given configuration
+         */
+        public ResourceModelSource createResourceModelSource(Properties configuration) throws ConfigurationException;
     }
 
 More information is available in the Javadoc.

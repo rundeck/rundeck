@@ -170,6 +170,8 @@ distinguished with the word "server" in red text.
 
 ### Resource model
 
+The Resource Model is the set of available Nodes that RunDeck can dispatch commands to, and their associated metadata. Each RunDeck Project has its own Resource Model.
+
 The initial resource model will contain
 information just about the RunDeck server host and is useful just for
 running local commands on the RunDeck server. 
@@ -210,20 +212,19 @@ Each Project has a configuration file called [project.properties](#project.prope
 located at this path:
 `$RDECK_BASE/projects/`_project_`/etc/project.properties`.
 
-This configuration file contains two important properties for accessing and
+This configuration file contains two basic properties for accessing and
 storing resource model data:
 
-* `project.resources.file`: File path to store resource
-  model data (required).
+* `project.resources.file`: A local file path to read a resource model document
 * `project.resources.url`: URL to an external resource model provider (optional)
 
-You can configure RunDeck to retrieve and store resource model data
-from any source, so long as it meets the RunDeck resource model
-document requirement. Set the `project.resource.url` to the resource
-model provider of your choice.
+In addition, multiple pluggable "Resource Model Sources" can be configured for a project
+to retrieve additional Resource Model content from other sources. See [Resource Model Sources](#resource-model-sources).
 
-RunDeck reads the XML document retrieved from the `${project.resources.url}`
-site and stores it in the path defined by `${project.resources.file}`.
+You can configure RunDeck to retrieve and store resource model data
+from any source, so long as it can produce one of the RunDeck resource model
+document formats. (See [Resource Model Document formats](#resource-model-document-formats).) Set the `project.resource.url` to the resource
+model provider of your choice.
 
 Here's the XML document stored for the "examples" project that corresponds
 to the output printed by the `dispatch -v` shown earlier:
@@ -272,14 +273,24 @@ as an XML document, storing it in a source repository that is
 periodically exported to Rundeck. This method could be practical if
 your host infrastructure infrequently changes.
 
-The [resource-v13(5) XML](resource-v13.html) or
-[resource-v13(5) YAML](resource-yaml-v13.html) manuals contain reference
-information about the RunDeck resources document syntax.
-
 Check the RunDeck web site for resource model providers. If you are
 interested in creating your own, see the
 [Resource model provider](#resource-model-provider) section in the
 [Integration with External Data Providers](#integration-with-external-data-providers) chapter.
+
+### Resource Model Document formats
+
+RunDeck currently has two resource model document formats: 
+
+* [resource-v13(5) XML](resource-v13.html) (XML)
+* [resource-v13(5) YAML](resource-yaml-v13.html) (YAML)
+
+## Pluggable Resource Model Sources
+
+Each project can have multiple sources for Resource model information, and
+you can use or write plugins to enable new sources for entries in the Resource model.
+
+See [Resource Model Sources](#resource-model-sources).
 
 ## Command Execution
 
