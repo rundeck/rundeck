@@ -79,6 +79,20 @@ function _menuDidSelectProject(value){
                 <tr><td><g:message code="domain.Project.field.name" default="Project Name"/>:</td>
                     <td><g:textField name="project" size="50" autofocus="true"/></td></tr>
                 %{--<tr><td>Description:</td> <td><g:textField name="description" size="50"/></td></tr>--}%
+                <tr>
+                <td colspan="2" style="text-align: left;">
+                    <input type="checkbox" name="customResources" onchange="$('resourcesProviders').show();" id="custom"/>
+                    <label for="custom">
+                        <g:message code="domain.Project.field.resourcesUrlPrompt" default="Include custom Resources Providers?"/>
+                    </label>
+                </td>
+                </tr>
+                <tbody id="resourcesProviders" style="display:none">
+                <tr>
+                <td><g:message code="domain.Project.field.resourcesUrl" default="Resources Provider URL"/>:</td>
+                <td><g:textField name="resourcesUrl" size="50"/></td>
+                </tr>
+                </tbody>
             </table>
             <div class="buttons"><g:submitButton name="create" value="${g.message(code:'button.action.Create',default:'Create')}"/></div>
         </g:form>

@@ -77,6 +77,17 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
 
         return project;
     }
+    /**
+     * Add a new project to the map. Checks if project has its own module library and creates
+     * a ModuleLookup object accordingly.
+     *
+     * @param projectName Name of the project
+     */
+    public FrameworkProject createFrameworkProject(final String projectName, final Properties properties) {
+        final FrameworkProject project = createFrameworkProjectInt(projectName,properties);
+
+        return project;
+    }
 
     final HashMap<String,FrameworkProject> projectCache= new HashMap<String, FrameworkProject>();
     /**
@@ -84,7 +95,15 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
      * @param projectName
      * @return
      */
-    private FrameworkProject createFrameworkProjectInt(String projectName) {
+    private FrameworkProject createFrameworkProjectInt(final String projectName) {
+        return createFrameworkProjectInt(projectName, null);
+    }
+    /**
+     * Create a project object without adding to child map
+     * @param projectName
+     * @return
+     */
+    private FrameworkProject createFrameworkProjectInt(final String projectName,final Properties properties) {
         final FrameworkProject project;
         synchronized (projectCache) {
             if (null != projectCache.get(projectName)) {
@@ -92,7 +111,7 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
             }
             final File projectDir = new File(getBaseDir(), projectName);
             // check if the FrameworkProject has its own module library
-            project= FrameworkProject.create(projectName, getBaseDir(), this);
+            project= FrameworkProject.create(projectName, getBaseDir(), this, properties);
             projectCache.put(projectName, project);
         }
         return project;

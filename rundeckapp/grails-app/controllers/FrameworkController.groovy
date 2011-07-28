@@ -391,9 +391,16 @@ class FrameworkController  {
                 error="Project already exists: ${project}"
             }else{
                 def proj
+                //TODO: properties from user input
+                def Properties projProps = new Properties()
+                if(params.resourcesUrl){
+                    projProps[FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY]=params.resourcesUrl
+                }
+                System.err.println("create project with props: "+projProps);
                 try {
-                    proj=framework.getFrameworkProjectMgr().createFrameworkProject(project)
+                    proj=framework.getFrameworkProjectMgr().createFrameworkProject(project,projProps)
                 } catch (Error e) {
+                    log.error(e.message)
                     error= e.getMessage()
                 }
                 if(!error && proj){
@@ -405,6 +412,7 @@ class FrameworkController  {
         }
         if(error){
             request.error=error
+            flash.error=error
         }
         def projects=frameworkService.projects(framework)
         return [projects:projects,project:session.project]

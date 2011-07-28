@@ -16,18 +16,14 @@
 
 package com.dtolabs.rundeck.core.common;
 
-import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.resources.*;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import com.dtolabs.shared.resources.ResourceXMLGenerator;
-import org.apache.tools.ant.Project;
-import org.apache.tools.ant.filters.ExpandProperties;
-import org.apache.tools.ant.taskdefs.Copy;
-import org.apache.tools.ant.taskdefs.Property;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -78,8 +74,20 @@ public class FrameworkProject extends FrameworkResourceParent {
      * @param basedir the base directory for the Depot
      */
     public FrameworkProject(final String name, final File basedir, final IFrameworkProjectMgr resourceMgr) {
+        this(name, basedir, resourceMgr, null);
+    }
+    /**
+     * Constructor
+     *
+     * @param name    Name of the project
+     * @param basedir the base directory for the Depot
+     */
+    public FrameworkProject(final String name, final File basedir, final IFrameworkProjectMgr resourceMgr, final Properties properties) {
         super(name, basedir, resourceMgr);
         projectResourceMgr = resourceMgr;
+        if(!getBaseDir().exists()){
+            getBaseDir().mkdirs();
+        }
         resourcesBaseDir = new File(getBaseDir(), "resources");
         etcDir = new File(getBaseDir(), ETC_DIR_NAME);
         if (!etcDir.exists()) {
@@ -90,7 +98,7 @@ public class FrameworkProject extends FrameworkResourceParent {
         }
 
         if ( ! (new File(getEtcDir(), PROP_FILENAME).exists()) ) {
-            generateProjectPropertiesFile(false);
+            generateProjectPropertiesFile(false, properties);
         }
         propertyFile = new File(getEtcDir(), PROP_FILENAME);
         loadProperties();
@@ -248,6 +256,16 @@ public class FrameworkProject extends FrameworkResourceParent {
      */
     public static FrameworkProject create(final String name, final File projectsDir, final IFrameworkProjectMgr resourceMgr) {
         return new FrameworkProject(name, new File(projectsDir, name), resourceMgr);
+    }
+    /**
+     * Create a new Depot object at the specified projects.directory
+     * @param name
+     * @param projectsDir
+     * @param resourceMgr
+     * @return
+     */
+    public static FrameworkProject create(final String name, final File projectsDir, final IFrameworkProjectMgr resourceMgr, final Properties properties) {
+        return new FrameworkProject(name, new File(projectsDir, name), resourceMgr, properties);
     }
 
 
@@ -593,25 +611,32 @@ public class FrameworkProject extends FrameworkResourceParent {
      * @param overwrite Overwrite existing properties file
      */
     protected void generateProjectPropertiesFile(final boolean overwrite) {
-        Copy copyTask = new Copy();
-        Project antProject = new Project();
-        antProject.setProperty("project.name", getName());
-        Property propTask = new Property();
-        propTask.setProject(antProject);
-        propTask.setFile(new File(Constants.getFrameworkProperties(
-                getFrameworkProjectMgr().getFramework().getBaseDir().getAbsolutePath())));
-        propTask.execute();
-        copyTask.setProject(antProject);
-        copyTask.setOverwrite(overwrite);
-        final File destfile = new File(getEtcDir(), PROP_FILENAME);
-        copyTask.setTofile(destfile);
-        copyTask.setFile(new File(getFrameworkProjectMgr().getFramework().getConfigDir(), PROP_FILENAME));
-        copyTask.setFiltering(true);
-        copyTask.createFilterChain().add(new ExpandProperties());
+        generateProjectPropertiesFile(overwrite, null);
+    }
 
-        // execute the task
-        copyTask.execute();
-        getLogger().debug("generated project.properties: "+ destfile.getAbsolutePath());
+    /**
+     * Create project.properties file based on $RDECK_BASE/etc/project.properties
+     *
+     * @param overwrite Overwrite existing properties file
+     */
+    protected void generateProjectPropertiesFile(final boolean overwrite, final Properties properties) {
+        Properties newProps = new Properties();
+        newProps.setProperty("project.name", getName());
+        newProps.setProperty("project.resources.file", new File(getEtcDir(), "resources.xml").getAbsolutePath());
+        if(null!=properties){
+            newProps.putAll(properties);
+        }
+        final File destfile = new File(getEtcDir(), PROP_FILENAME);
+        if(destfile.exists() && !overwrite){
+            return;
+        }
+        try {
+            newProps.store(new FileOutputStream(destfile), "Project " + getName() + " configuration, generated");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        getLogger().debug("generated project.properties: " + destfile.getAbsolutePath());
     }
 
     /**
