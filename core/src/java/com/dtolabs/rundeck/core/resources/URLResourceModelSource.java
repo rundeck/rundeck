@@ -79,7 +79,7 @@ public class URLResourceModelSource implements ResourceModelSource, Configurable
                 return true;
             }
         }));
-        properties.add(PropertyUtil.integer(Configuration.TIMEOUT, "Timeout", "Timeout (in seconds) before requests fail", false, "30"));
+        properties.add(PropertyUtil.integer(Configuration.TIMEOUT, "Timeout", "Timeout (in seconds) before requests fail. 0 means no timeout.", false, "30"));
         properties.add(PropertyUtil.bool(Configuration.CACHE, "Cache results",
             "Refresh results only if modified?", true, "true"));
 

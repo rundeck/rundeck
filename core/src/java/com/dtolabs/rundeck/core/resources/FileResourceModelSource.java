@@ -53,7 +53,7 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
     static ArrayList<Property> properties = new ArrayList<Property>();
 
     static {
-        properties.add(PropertyUtil.string(Configuration.FILE, "File", "Path of the file", true, null));
+        properties.add(PropertyUtil.string(Configuration.FILE, "File Path", "Path of the file", true, null));
         final ArrayList<String> formats = new ArrayList<String>();
         for (final Nodes.Format format : Nodes.Format.values()) {
             formats.add(format.toString());
