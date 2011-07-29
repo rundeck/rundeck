@@ -22,10 +22,12 @@
 
 <%@ page contentType="text/html;charset=UTF-8" %>
 <g:set var="fieldname" value="${prefix+'config.'+prop.key}"/>
+<g:set var="origfieldname" value="${'orig.'+prefix+'config.'+prop.key}"/>
 
 <g:if test="${prop.type.toString()=='Boolean'}">
     <g:set var="fieldid" value="${g.rkey()}"/>
     <td>
+        <g:hiddenField name="${origfieldname}" value="${values&&values[prop.key]?values[prop.key]:''}"/>
     <g:checkBox name="${fieldname}" value="true" checked="${values&&values[prop.key]?values[prop.key]=='true':prop.defaultValue=='true'}" id="${fieldid}"/>
     </td>
     <td>
@@ -37,6 +39,7 @@
         <label class="${error ? 'fieldError' : ''}" for="${fieldid.encodeAsHTML()}">${prop.name.encodeAsHTML()}</label>:
     </td>
     <td>
+    <g:hiddenField name="${origfieldname}" value="${values&&values[prop.key]?values[prop.key]:''}"/>
     <g:if test="${prop.type.toString()=='FreeSelect'}">
         <g:textField name="${fieldname}" value="${values&&null!=values[prop.key]?values[prop.key]:prop.defaultValue}"
                      id="${fieldid}"/>
@@ -63,6 +66,7 @@
     <label class="${error ? 'fieldError' : ''}" for="${fieldid.encodeAsHTML()}">${prop.name.encodeAsHTML()}</label>:
     </td>
     <td>
+    <g:hiddenField name="${origfieldname}" value="${values&&values[prop.key]?values[prop.key]:''}"/>
     <g:textField name="${fieldname}" value="${values&&null!=values[prop.key]?values[prop.key]:prop.defaultValue}" id="${fieldid}"/>
 </g:else>
     <div class="info note">${prop.description.encodeAsHTML()}</div>

@@ -13,6 +13,8 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
+
+
  <%--
     createResourceModelConfig.gsp.gsp
     
@@ -23,22 +25,29 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 
 <span class="prompt">${description.title.encodeAsHTML()}</span>
-<span class="info">${description.description.encodeAsHTML()}</span>
-<div class="presentation">
-    <g:if test="${error}">
-        <span class="error note resourceConfigEdit">${error}</span>
-    </g:if>
-    <g:if test="${isEdit}">
-        <g:hiddenField name="isEdit" value="true" class="isEdit"/>
+<span class="desc">${description.description.encodeAsHTML()}</span>
+<div class="" style="margin-top:5px;">
+    <g:set var="rkey" value="${g.rkey()}"/><g:if test="${includeFormFields && saved}">
+        <g:hiddenField name="${prefix}saved" value="true" class="wasSaved"/>
     </g:if>
     <g:hiddenField name="prefix" value="${prefix}"/>
     <g:hiddenField name="${prefix+'type'}" value="${description.name}"/>
-
-    <table class="simpleForm">
-    <g:each in="${description.properties}" var="prop">
-        <tr>
-        <g:render template="pluginConfigPropertyField" model="${[prop:prop,prefix:prefix,error:report?.errors?report?.errors[prop.key]:null,values:values]}"/>
-        </tr>
-    </g:each>
+    <g:if test="${values}">
+        %{--<g:expander key="${rkey}" imgfirst="true">Details</g:expander>--}%
+    <span id="${rkey}_summary">
+        <g:each in="${description.properties}" var="prop">
+                <g:render template="pluginConfigPropertySummaryValue"
+                      model="${[prop:prop,prefix:prefix,values:values,includeFormFields:includeFormFields]}"/>
+        </g:each>
+    </span>
+    <table class="simpleForm" id="${rkey}" style="display:none;">
+        <g:each in="${description.properties}" var="prop">
+            <tr>
+                <g:render template="pluginConfigPropertyValue"
+                          model="${[prop:prop,prefix:prefix,values:values,includeFormFields:includeFormFields]}"/>
+            </tr>
+        </g:each>
     </table>
+    </g:if>
+
 </div>

@@ -1,5 +1,5 @@
 %{--
-  - Copyright 2011 DTO Labs, Inc. (http://dtolabs.com)
+  - Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -13,28 +13,27 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
- <%--
-    _pluginConfigPropertyValue.gsp
-    
-    Author: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-    Created: 7/28/11 12:03 PM
- --%>
+<%--
+   _pluginConfigPropertyValue.gsp
+
+   Author: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
+   Created: 7/28/11 12:03 PM
+--%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
-<td title="${prop.description.encodeAsHTML()}">${prop.name.encodeAsHTML()}:</td>
-<td>
+
+
 <g:if test="${prop.type.toString()=='Boolean'}">
     <g:if test="${values[prop.key]=='true'}">
-        <span class="configvalue">Yes</span>
+        <span class="configpair">
+            <span title="${prop.description.encodeAsHTML()}">${prop.name.encodeAsHTML()}:</span>
+            <span class="configvalue">Yes</span>
+        </span>
     </g:if>
-    <g:else>
-        No
-    </g:else>
 </g:if>
 <g:elseif test="${values[prop.key]}">
-    <span class="configvalue">${values[prop.key]?.encodeAsHTML()}</span>
+    <span class="configpair">
+        <span title="${prop.description.encodeAsHTML()}">${prop.name.encodeAsHTML()}:</span>
+        <span class="configvalue">${values[prop.key]?.encodeAsHTML()}</span>
+    </span>
 </g:elseif>
-<g:if test="${includeFormFields && values[prop.key]}">
-    <input type="hidden" name="${(prefix+ 'config.'+prop.key).encodeAsHTML()}" value="${values[prop.key]?.encodeAsHTML()}"/>
-</g:if>
-</td>
