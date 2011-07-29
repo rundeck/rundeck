@@ -65,6 +65,7 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
         DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
         domFactory.setNamespaceAware(true);
         builder = domFactory.newDocumentBuilder();
+        builder.setErrorHandler(null);
     }
 
     private File[] listDirFiles() {
