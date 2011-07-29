@@ -30,8 +30,9 @@ import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 import com.dtolabs.rundeck.core.utils.cache.FileCache;
 import org.apache.log4j.Logger;
 
-import java.io.*;
+import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -84,6 +85,9 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
         return managerRegistry.get(libextDir);
     }
 
+    public synchronized List<ProviderIdent> listProviders() {
+        return cache.listProviders();
+    }
 
     public synchronized <T> T loadProvider(final PluggableService<T> service, final String providerName) throws ProviderLoaderException {
         final ProviderIdent ident = new ProviderIdent(service.getName(), providerName);

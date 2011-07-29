@@ -15,36 +15,59 @@
  */
 
 /*
-* FileProviderLoader.java
+* Property.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 4/12/11 5:24 PM
+* Created: 7/27/11 4:53 PM
 * 
 */
-package com.dtolabs.rundeck.core.plugins;
-
-import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
-import com.dtolabs.rundeck.core.utils.cache.FileCache;
+package com.dtolabs.rundeck.core.plugins.configuration;
 
 import java.util.List;
 
 /**
- * ProviderLoader can load a provider instance for a service given a provider name.
+ * Property is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-interface ProviderLoader extends FileCache.Cacheable {
-    /**
-     * Return an provider instance for a service and provider name
-     */
-    public <T> T load(PluggableService<T> service, String providerName) throws ProviderLoaderException;
+public interface Property {
+    static enum Type {
+        String,
+        Boolean,
+        Integer,
+        Long,
+        Select,
+        FreeSelect,
+//        MultiSelect,
+//        MultiFreeSelect
+    }
+
+    static interface Validator {
+        public boolean isValid(String value) throws ValidationException;
+    }
 
     /**
-     * Return true if this loader can load the given ident
+     * Return descriptive name of the property
      */
-    public boolean isLoaderFor(ProviderIdent ident);
+    public String getName();
+
     /**
-     * List providers available
+     * Return property key to use
      */
-    public List<ProviderIdent> listProviders();
+    public String getKey();
+
+    /**
+     * Return description of the values of the property
+     */
+    public String getDescription();
+
+    public Type getType();
+
+    public Validator getValidator();
+
+    public boolean isRequired();
+
+    public String getDefaultValue();
+    public List<String> getSelectValues();
+
 }

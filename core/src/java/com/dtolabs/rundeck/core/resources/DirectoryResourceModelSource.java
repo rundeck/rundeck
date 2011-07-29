@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.common.AdditiveListNodeSet;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
+import com.dtolabs.rundeck.core.plugins.configuration.*;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -52,6 +53,31 @@ public class DirectoryResourceModelSource implements ResourceModelSource, Config
     private ArrayList<ResourceModelSource> fileSources = new ArrayList<ResourceModelSource>();
     private HashMap<File, ResourceModelSource> sourceCache = new HashMap<File, ResourceModelSource>();
 
+    static ArrayList<Property> properties = new ArrayList<Property>();
+
+    static {
+        properties.add(PropertyUtil.string(Configuration.DIRECTORY, "Directory Path", "Directory path to scan", true,
+            null));
+    }
+
+    public static Description DESCRIPTION = new Description() {
+        public String getName() {
+            return "directory";
+        }
+
+        public String getTitle() {
+            return "Directory";
+        }
+
+        public String getDescription() {
+            return "Scans a directory and loads all matching files";
+        }
+
+        public List<Property> getProperties() {
+
+            return properties;
+        }
+    };
     public void configure(final Properties configuration) throws ConfigurationException {
 
         final Configuration configuration1 = Configuration.fromProperties(configuration);
@@ -64,6 +90,8 @@ public class DirectoryResourceModelSource implements ResourceModelSource, Config
     }
 
     public static class Configuration {
+        public static final String DIRECTORY = "directory";
+        public static final String PROJECT = "project";
         String project;
         File directory;
 
@@ -76,11 +104,11 @@ public class DirectoryResourceModelSource implements ResourceModelSource, Config
         }
 
         public void configure(final Properties props) {
-            if (props.containsKey("project")) {
-                this.project = props.getProperty("project");
+            if (props.containsKey(PROJECT)) {
+                this.project = props.getProperty(PROJECT);
             }
-            if (props.containsKey("directory")) {
-                this.directory = new File(props.getProperty("directory"));
+            if (props.containsKey(DIRECTORY)) {
+                this.directory = new File(props.getProperty(DIRECTORY));
             }
         }
 

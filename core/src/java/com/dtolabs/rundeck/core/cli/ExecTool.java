@@ -26,7 +26,7 @@ import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.commands.ExecCommand;
 import com.dtolabs.rundeck.core.execution.commands.ScriptFileCommand;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
-import com.dtolabs.rundeck.core.resources.ConfigurationException;
+import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.resources.FileResourceModelSource;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException;
 import com.dtolabs.rundeck.core.utils.*;

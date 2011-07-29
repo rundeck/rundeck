@@ -25,10 +25,8 @@ package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkSupportService;
-import com.dtolabs.rundeck.core.execution.service.BaseProviderRegistryService;
+import com.dtolabs.rundeck.core.plugins.BaseProviderRegistryService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
-
-import java.util.*;
 
 /**
  * WorkflowExecutionService provides ability to execute workflows

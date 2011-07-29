@@ -25,8 +25,11 @@ package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
+import com.dtolabs.rundeck.core.plugins.configuration.Describable;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
 
-import java.util.*;
+import java.util.Properties;
 
 /**
  * FileResourceModelSourceFactory is ...
@@ -34,7 +37,7 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 @Plugin (name = "file", service = "ResourceModelSource")
-public class FileResourceModelSourceFactory implements ResourceModelSourceFactory {
+public class FileResourceModelSourceFactory implements ResourceModelSourceFactory, Describable {
     public static final String SERVICE_PROVIDER_TYPE = "file";
     private Framework framework;
 
@@ -46,5 +49,9 @@ public class FileResourceModelSourceFactory implements ResourceModelSourceFactor
         final FileResourceModelSource fileResourceModelSource = new FileResourceModelSource(framework);
         fileResourceModelSource.configure(FileResourceModelSource.Configuration.fromProperties(configuration));
         return fileResourceModelSource;
+    }
+
+    public Description getDescription() {
+        return FileResourceModelSource.DESCRIPTION;
     }
 }

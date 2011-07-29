@@ -41,7 +41,7 @@ import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
 import com.dtolabs.rundeck.core.plugins.PluginManagerService;
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
-import com.dtolabs.rundeck.core.resources.ConfigurationException;
+import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.resources.FileResourceModelSource;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;

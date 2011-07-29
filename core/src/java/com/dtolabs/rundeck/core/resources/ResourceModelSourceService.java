@@ -25,11 +25,15 @@ package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
-import com.dtolabs.rundeck.core.execution.service.PluggableProviderRegistryService;
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
+import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService;
 import com.dtolabs.rundeck.core.plugins.PluginException;
+import com.dtolabs.rundeck.core.plugins.ProviderIdent;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
+import com.dtolabs.rundeck.core.plugins.configuration.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -37,7 +41,8 @@ import java.util.Properties;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ResourceModelSourceService extends PluggableProviderRegistryService<ResourceModelSourceFactory> {
+public class ResourceModelSourceService extends PluggableProviderRegistryService<ResourceModelSourceFactory> implements
+    ConfigurableService<ResourceModelSource>, DescribableService {
 
     public static final String SERVICE_NAME = "ResourceModelSource";
 
@@ -46,7 +51,8 @@ public class ResourceModelSourceService extends PluggableProviderRegistryService
         super(framework);
 
         registry.put(FileResourceModelSourceFactory.SERVICE_PROVIDER_TYPE, FileResourceModelSourceFactory.class);
-        registry.put(DirectoryResourceModelSourceFactory.SERVICE_PROVIDER_TYPE, DirectoryResourceModelSourceFactory.class);
+        registry.put(DirectoryResourceModelSourceFactory.SERVICE_PROVIDER_TYPE,
+            DirectoryResourceModelSourceFactory.class);
         registry.put(URLResourceModelSourceFactory.SERVICE_PROVIDER_TYPE, URLResourceModelSourceFactory.class);
     }
 
@@ -80,13 +86,17 @@ public class ResourceModelSourceService extends PluggableProviderRegistryService
         }
     }
 
+    public ResourceModelSourceFactory getProviderForType(final String type) throws ExecutionServiceException {
+        return providerOfType(type);
+    }
 
     public boolean isValidProviderClass(Class clazz) {
 
-        return ResourceModelSource.class.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
+        return ResourceModelSourceFactory.class.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
     }
 
-    public ResourceModelSourceFactory createProviderInstance(Class<ResourceModelSourceFactory> clazz, String name) throws PluginException,
+    public ResourceModelSourceFactory createProviderInstance(Class<ResourceModelSourceFactory> clazz,
+                                                             String name) throws PluginException,
         ProviderCreationException {
         return createProviderInstanceFromType(clazz, name);
     }
@@ -95,10 +105,50 @@ public class ResourceModelSourceService extends PluggableProviderRegistryService
         return false;
     }
 
-    public ResourceModelSourceFactory createScriptProviderInstance(ScriptPluginProvider provider) throws PluginException {
+    public ResourceModelSourceFactory createScriptProviderInstance(ScriptPluginProvider provider) throws
+        PluginException {
         //TODO
 //        ScriptPluginNodeExecutor.validateScriptPlugin(provider);
 //        return new ScriptPluginNodeExecutor(provider);
         return null;
+    }
+
+    public ResourceModelSource getProviderForConfiguration(final String type,
+                                                           final Properties configuration) throws
+        ExecutionServiceException {
+        return getSourceForConfiguration(type, configuration);
+    }
+
+    public List<Description> listDescriptions() {
+        final ArrayList<Description> list = new ArrayList<Description>();
+        for (final ProviderIdent providerIdent : listProviders()) {
+            try {
+                final ResourceModelSourceFactory providerForType = getProviderForType(providerIdent.getProviderName());
+                if (providerForType instanceof Describable) {
+                    Describable desc = (Describable) providerForType;
+                    list.add(desc.getDescription());
+                }
+            } catch (ExecutionServiceException e) {
+                e.printStackTrace();
+            }
+
+        }
+        return list;
+    }
+
+    public List<ProviderIdent> listDescribableProviders() {
+        final ArrayList<ProviderIdent> list = new ArrayList<ProviderIdent>();
+        for (final ProviderIdent providerIdent : listProviders()) {
+            try {
+                final ResourceModelSourceFactory providerForType = getProviderForType(providerIdent.getProviderName());
+                if (providerForType instanceof Describable) {
+                    list.add(providerIdent);
+                }
+            } catch (ExecutionServiceException e) {
+                e.printStackTrace();
+            }
+
+        }
+        return list;
     }
 }

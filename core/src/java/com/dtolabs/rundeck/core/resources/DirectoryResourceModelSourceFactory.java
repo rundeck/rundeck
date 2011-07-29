@@ -25,6 +25,9 @@ package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
+import com.dtolabs.rundeck.core.plugins.configuration.Describable;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
 
 import java.util.Properties;
 
@@ -34,7 +37,7 @@ import java.util.Properties;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 @Plugin (name = "directory", service = "ResourceModelSource")
-public class DirectoryResourceModelSourceFactory implements ResourceModelSourceFactory {
+public class DirectoryResourceModelSourceFactory implements ResourceModelSourceFactory, Describable {
     public static final String SERVICE_PROVIDER_TYPE = "directory";
     private Framework framework;
 
@@ -47,5 +50,9 @@ public class DirectoryResourceModelSourceFactory implements ResourceModelSourceF
         final DirectoryResourceModelSource fileResourceModelSource = new DirectoryResourceModelSource(framework);
         fileResourceModelSource.configure(DirectoryResourceModelSource.Configuration.fromProperties(configuration));
         return fileResourceModelSource;
+    }
+
+    public Description getDescription() {
+        return DirectoryResourceModelSource.DESCRIPTION;
     }
 }

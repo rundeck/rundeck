@@ -30,7 +30,7 @@ import com.dtolabs.rundeck.core.utils.PairImpl;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class ProviderIdent extends PairImpl<String, String> {
+public class ProviderIdent extends PairImpl<String, String> {
     /**
      * Constructor
      * @param service service name
@@ -51,5 +51,21 @@ class ProviderIdent extends PairImpl<String, String> {
     @Override
     public String toString() {
         return "Provider(" + getService() + "," + getProviderName() + ")";
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ProviderIdent)) {
+            return false;
+        }
+        return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
     }
 }

@@ -15,36 +15,33 @@
  */
 
 /*
-* FileProviderLoader.java
+* ValidationException.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 4/12/11 5:24 PM
+* Created: 7/27/11 5:22 PM
 * 
 */
-package com.dtolabs.rundeck.core.plugins;
-
-import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
-import com.dtolabs.rundeck.core.utils.cache.FileCache;
-
-import java.util.List;
+package com.dtolabs.rundeck.core.plugins.configuration;
 
 /**
- * ProviderLoader can load a provider instance for a service given a provider name.
+ * ValidationException is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-interface ProviderLoader extends FileCache.Cacheable {
-    /**
-     * Return an provider instance for a service and provider name
-     */
-    public <T> T load(PluggableService<T> service, String providerName) throws ProviderLoaderException;
+public class ValidationException extends Exception {
+    public ValidationException() {
+        super();
+    }
 
-    /**
-     * Return true if this loader can load the given ident
-     */
-    public boolean isLoaderFor(ProviderIdent ident);
-    /**
-     * List providers available
-     */
-    public List<ProviderIdent> listProviders();
+    public ValidationException(String msg) {
+        super(msg);
+    }
+
+    public ValidationException(Exception cause) {
+        super(cause);
+    }
+
+    public ValidationException(String msg, Exception cause) {
+        super(msg, cause);
+    }
 }

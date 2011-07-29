@@ -198,6 +198,23 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
         return false;
     }
 
+    public List<ProviderIdent> listProviders() {
+        final ArrayList<ProviderIdent> providerIdents = new ArrayList<ProviderIdent>();
+        PluginMeta pluginMeta=null;
+        try {
+            pluginMeta = getPluginMeta();
+        } catch (IOException e) {
+            log.debug("Unable to load file meta: " + e.getMessage());
+        }
+        if (null == pluginMeta) {
+            return providerIdents;
+        }
+        for (final ProviderDef pluginDef : pluginMeta.getPluginDefs()) {
+            providerIdents.add(new ProviderIdent(pluginDef.getService(), pluginDef.getName()));
+        }
+        return providerIdents;
+    }
+
 
     /**
      * Get plugin metadatat from a zip file

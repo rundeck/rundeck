@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.plugins;
 import com.dtolabs.rundeck.core.utils.cache.FileCache;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * PluginScanner can scan some set of files for a plugin that supplies a given provider, and can create a {@link
@@ -43,6 +44,11 @@ interface PluginScanner extends FileCache.ItemCreator<ProviderLoader> {
      * Return a file plugin that can supply the given provider ident
      */
     public File scanForFile(ProviderIdent ident) throws PluginScannerException;
+    
+    /**
+     * List available providers
+     */
+    public List<ProviderIdent> listProviders();
 
     /**
      * Return true if the ident and file pair is no longer valid

@@ -21,11 +21,14 @@
 * Created: 4/14/11 3:53 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.service;
+package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.plugins.PluggableService;
-import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
+import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
+import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Overrides the {@link #providerOfType(String)} method to attempt to load a provider from the PluginManagerService.
@@ -60,5 +63,21 @@ public abstract class PluggableProviderRegistryService<T> extends BaseProviderRe
         }else {
             throw new MissingProviderException("Provider not found", getName(), providerName);
         }
+    }
+
+    @Override
+    public List<ProviderIdent> listProviders() {
+        final ArrayList<ProviderIdent> providerIdents = new ArrayList<ProviderIdent>(super.listProviders());
+
+        final ServiceProviderLoader pluginManager = framework.getPluginManager();
+        if (null != pluginManager) {
+            final List<ProviderIdent> providerIdents1 = pluginManager.listProviders();
+            for (final ProviderIdent providerIdent : providerIdents1) {
+                if (getName().equals(providerIdent.getService())) {
+                    providerIdents.add(providerIdent);
+                }
+            }
+        }
+        return providerIdents;
     }
 }

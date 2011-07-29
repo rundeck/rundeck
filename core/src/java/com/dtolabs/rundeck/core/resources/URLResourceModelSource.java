@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.resources;
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdaterBuilder;
+import com.dtolabs.rundeck.core.plugins.configuration.*;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.log4j.Logger;
 
@@ -35,9 +36,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * URLResourceModelSource produces nodes from a URL
@@ -61,6 +60,48 @@ public class URLResourceModelSource implements ResourceModelSource, Configurable
 
     final static HashSet<String> allowedProtocols = new HashSet<String>(Arrays.asList("http", "https", "file"));
 
+    static ArrayList<Property> properties = new ArrayList<Property>();
+
+    static {
+        properties.add(PropertyUtil.string(Configuration.URL, "URL", "URL for the remote resource model document", true,
+            null, new Property.Validator() {
+            public boolean isValid(String value) throws ValidationException {
+                final URL url;
+
+                try{
+                    url= new URL(value);
+                } catch (MalformedURLException e) {
+                    throw new ValidationException(e.getMessage());
+                }
+                if (null != url && !allowedProtocols.contains(url.getProtocol().toLowerCase())) {
+                    throw new ValidationException("url protocol not supported: " + url.getProtocol());
+                }
+                return true;
+            }
+        }));
+        properties.add(PropertyUtil.integer(Configuration.TIMEOUT, "Timeout", "Timeout (in seconds) before requests fail", false, "30"));
+        properties.add(PropertyUtil.bool(Configuration.CACHE, "Cache results",
+            "Refresh results only if modified?", true, "true"));
+
+    }
+    public static Description DESCRIPTION = new Description(){
+        public String getName() {
+            return "url";
+        }
+
+        public String getTitle() {
+            return "URL Source";
+        }
+
+        public String getDescription() {
+            return "Retrieves a URL containing node definitions in a supported format";
+        }
+
+        public List<Property> getProperties() {
+
+            return properties;
+        }
+    };
     public static class Configuration {
         public static final String URL = "url";
         public static final String PROJECT = "project";

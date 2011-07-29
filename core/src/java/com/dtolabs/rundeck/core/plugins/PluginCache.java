@@ -25,6 +25,8 @@ package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 
+import java.util.List;
+
 /**
  * PluginCache can use PluginScanners and find ProviderLoaders for ProviderIdents.
  *
@@ -44,4 +46,5 @@ public interface PluginCache {
      * @return loader for the provider
      */
     ProviderLoader getLoaderForIdent(ProviderIdent ident) throws ProviderLoaderException;
+    List<ProviderIdent> listProviders() ;
 }

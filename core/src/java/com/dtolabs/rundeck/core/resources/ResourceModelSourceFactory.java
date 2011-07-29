@@ -23,7 +23,9 @@
 */
 package com.dtolabs.rundeck.core.resources;
 
-import java.util.*;
+import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
+
+import java.util.Properties;
 
 /**
  * ResourceModelSourceFactory creates ResourceModelSource instances

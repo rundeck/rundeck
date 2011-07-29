@@ -36,10 +36,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
@@ -118,6 +115,14 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         final Plugin annotation = getPluginMetadata(cls);
         return ident.getFirst().equals(annotation.service()) &&
                ident.getSecond().equals(annotation.name());
+    }
+
+    /**
+     * Return true if the ident matches the Plugin annotation for the class
+     */
+    static ProviderIdent getProviderDeclaration(final Class cls) throws PluginException {
+        final Plugin annotation = getPluginMetadata(cls);
+        return new ProviderIdent(annotation.service(), annotation.name());
     }
 
     Attributes mainAttributes;
@@ -358,6 +363,19 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
             }
         }
         return false;
+    }
+
+    public List<ProviderIdent> listProviders() {
+        final ArrayList<ProviderIdent> providerIdents = new ArrayList<ProviderIdent>();
+        final String[] strings = getClassnames();
+        for (final String classname : strings) {
+            try {
+                providerIdents.add(getProviderDeclaration(loadClass(classname, file)));
+            } catch (PluginException e) {
+                e.printStackTrace();
+            }
+        }
+        return providerIdents;
     }
 
     /**

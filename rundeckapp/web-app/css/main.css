@@ -2377,3 +2377,8 @@ span.apitoken.empty {
     font-family: Courier, monospace;
     color: #bbb;
 }
+
+/** plugin configuration styles */
+.configvalue{
+    color: #33f;
+}

@@ -15,21 +15,25 @@
  */
 
 /*
-* Configurable.java
+* DescribableService.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 7/19/11 11:29 AM
+* Created: 7/28/11 11:14 AM
 * 
 */
-package com.dtolabs.rundeck.core.resources;
+package com.dtolabs.rundeck.core.plugins.configuration;
 
-import java.util.Properties;
+import com.dtolabs.rundeck.core.common.FrameworkSupportService;
+import com.dtolabs.rundeck.core.plugins.ProviderIdent;
+
+import java.util.List;
 
 /**
- * Configurable objects can be configured with properties.
+ * DescribableService is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface Configurable {
-    public void configure(Properties configuration) throws ConfigurationException;
+public interface DescribableService extends FrameworkSupportService {
+    public List<ProviderIdent> listDescribableProviders();
+    public List<Description> listDescriptions();
 }

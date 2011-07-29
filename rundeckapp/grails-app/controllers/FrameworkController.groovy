@@ -1,10 +1,18 @@
-import NodeFilter
+import com.dtolabs.rundeck.core.plugins.configuration.Describable
+import com.dtolabs.rundeck.core.plugins.configuration.Property.Type
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.shared.resources.ResourceXMLGenerator
 import com.dtolabs.utils.Streams
 import grails.converters.JSON
 import java.util.regex.PatternSyntaxException
-import com.dtolabs.rundeck.core.common.*
+import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.common.INodeSet
+import com.dtolabs.rundeck.core.common.FrameworkProject
+import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.Nodes
+import com.dtolabs.rundeck.core.common.NodesFileGenerator
+import com.dtolabs.rundeck.core.common.NodesYamlGenerator
 
 class FrameworkController  {
     FrameworkService frameworkService
@@ -379,6 +387,7 @@ class FrameworkController  {
     }
 
     def createProject={
+        def prefixKey= 'plugin'
         def project=params.project
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         def error=null
@@ -396,7 +405,24 @@ class FrameworkController  {
                 if(params.resourcesUrl){
                     projProps[FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY]=params.resourcesUrl
                 }
-                System.err.println("create project with props: "+projProps);
+                //parse plugin config properties, and convert to project.properties
+                def sourceConfigPrefix=FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
+                def ndx=1
+                while(params[prefixKey+'.'+ndx+'.type']){
+                    def type= params[prefixKey + '.' + ndx + '.type']
+                    final service = framework.getResourceModelSourceService()
+                    final provider = service.getProviderForType(type)
+                    if (!(provider instanceof Describable)) {
+                        error = "Invalid provider type: ${params.type}, not available for configuration"
+                    }else{
+                        projProps[sourceConfigPrefix+'.'+ndx+'.type']=type
+                        def props = parseResourceModelConfigInput(provider.description, prefixKey + '.' + ndx+'.', params)
+                        props.keySet().each{k->
+                            projProps[sourceConfigPrefix + '.' + ndx + '.config.'+k]=props[k]
+                        }
+                    }
+                    ndx++
+                }
                 try {
                     proj=framework.getFrameworkProjectMgr().createFrameworkProject(project,projProps)
                 } catch (Error e) {
@@ -415,7 +441,73 @@ class FrameworkController  {
             flash.error=error
         }
         def projects=frameworkService.projects(framework)
-        return [projects:projects,project:session.project]
+        final service = framework.getResourceModelSourceService()
+        final descriptions = service.listDescriptions()
+
+        return [projects:projects,project:session.project,resourceModelConfigDescriptions: descriptions, prefixKey:prefixKey]
+    }
+    def createResourceModelConfig={
+        def project = params.project
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        def error
+        if (!project) {
+            error = "Project name must be specified"
+        }
+        if(!params.type){
+            error = "Plugin provider type must be specified"
+        }
+        final service = framework.getResourceModelSourceService()
+        final provider = service.getProviderForType(params.type)
+        if(provider instanceof Describable){
+            def desc = provider.description
+            return[description:desc, project:project,prefix:params.prefix]
+        }else{
+            error="Invalid provider type: ${params.type}, not available for configuration"
+        }
+
+        flash.error=error
+    }
+    def saveResourceModelConfig = {
+        def project = params.project
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        def error
+        def prefix = params.prefix ?: ''
+        def String type=params[prefix+'type']
+        Properties props
+        def report
+        def desc
+        if (!type) {
+            error = "Plugin provider type must be specified"
+        }else{
+            final service = framework.getResourceModelSourceService()
+            final provider = service.getProviderForType(type)
+            if (!(provider instanceof Describable)) {
+                error = "Invalid provider type: ${params.type}, not available for configuration"
+            }
+
+            desc = provider.description
+            props=parseResourceModelConfigInput(desc, prefix, params)
+
+            report=Validator.validate(props,desc)
+            if(report.valid){
+                System.err.println("valid props: " + props);
+                return render(view:'viewResourceModelConfig',model:[project:project,prefix:prefix,includeFormFields:true,values:props,description:desc])
+            }
+        }
+        render(view:'createResourceModelConfig',model:[project:project,prefix:prefix,values:props,description:desc,report:report,error:error])
+    }
+
+    private def Properties parseResourceModelConfigInput(desc, prefix, final Map params) {
+        Properties props=new Properties()
+        desc.properties.each {prop ->
+            def v = params[prefix + "config." + prop.key]
+            if (prop.type == Type.Boolean) {
+                props.setProperty(prop.key, (v == 'true' || v == 'on') ? 'true' : 'false')
+            } else if (v) {
+                props.setProperty(prop.key, v)
+            }
+        }
+        return props
     }
 
     def projectSelect={

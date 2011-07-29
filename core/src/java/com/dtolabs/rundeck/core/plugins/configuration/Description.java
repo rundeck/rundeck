@@ -15,36 +15,36 @@
  */
 
 /*
-* FileProviderLoader.java
+* Description.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 4/12/11 5:24 PM
+* Created: 7/27/11 4:53 PM
 * 
 */
-package com.dtolabs.rundeck.core.plugins;
-
-import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
-import com.dtolabs.rundeck.core.utils.cache.FileCache;
+package com.dtolabs.rundeck.core.plugins.configuration;
 
 import java.util.List;
 
 /**
- * ProviderLoader can load a provider instance for a service given a provider name.
+ * Description is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-interface ProviderLoader extends FileCache.Cacheable {
+public interface Description {
     /**
-     * Return an provider instance for a service and provider name
+     * Return the provider name
      */
-    public <T> T load(PluggableService<T> service, String providerName) throws ProviderLoaderException;
-
+    public String getName();
     /**
-     * Return true if this loader can load the given ident
+     * Return the textual title of the provider
      */
-    public boolean isLoaderFor(ProviderIdent ident);
+    public String getTitle();
     /**
-     * List providers available
+     * Return the textual description of this provider.
      */
-    public List<ProviderIdent> listProviders();
+    public String getDescription();
+    /**
+     * Return the properties
+     */
+    public List<Property> getProperties();
 }

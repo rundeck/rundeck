@@ -115,6 +115,14 @@ class FilePluginCache implements PluginCache {
         }
     }
 
+    public List<ProviderIdent> listProviders() {
+        final ArrayList<ProviderIdent> providerIdents = new ArrayList<ProviderIdent>();
+        for (final PluginScanner scanner : scanners) {
+            providerIdents.addAll(scanner.listProviders());
+        }
+        return providerIdents;
+    }
+
     private boolean shouldRescan() {
         for (final PluginScanner scanner : scanners) {
             if(scanner.shouldRescan()){

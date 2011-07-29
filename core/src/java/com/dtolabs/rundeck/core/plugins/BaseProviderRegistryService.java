@@ -21,15 +21,19 @@
 * Created: 3/21/11 6:26 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.service;
+package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkSupportService;
-import com.dtolabs.rundeck.core.plugins.PluggableService;
+import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
+import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
+import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * BaseProviderRegistryService is an abstract base that provides a registry of available service providers based on
@@ -68,6 +72,15 @@ public abstract class BaseProviderRegistryService<T> implements FrameworkSupport
             return instance;
         }
         return instanceregistry.get(providerName);
+    }
+    public List<ProviderIdent> listProviders() {
+
+        HashSet<ProviderIdent> providers = new HashSet<ProviderIdent>();
+
+        for (final String s : registry.keySet()) {
+            providers.add(new ProviderIdent(getName(), s));
+        }
+        return new ArrayList<ProviderIdent>(providers);
     }
 
     private T createProviderInstanceOfType(final String providerName) throws ExecutionServiceException {

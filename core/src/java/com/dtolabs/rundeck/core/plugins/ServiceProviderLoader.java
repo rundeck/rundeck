@@ -23,8 +23,9 @@
 */
 package com.dtolabs.rundeck.core.plugins;
 
-import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
+
+import java.util.List;
 
 /**
  * ServiceProviderLoader creates a service provider instance given a provider name
@@ -44,4 +45,9 @@ public interface ServiceProviderLoader {
      */
     public <T> T loadProvider(PluggableService<T> service, String providerName) throws
         ProviderLoaderException;
+
+    /**
+     * List the available providers
+     */
+    public List<ProviderIdent> listProviders();
 }

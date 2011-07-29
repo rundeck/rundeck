@@ -79,6 +79,17 @@ abstract class DirPluginScanner implements PluginScanner {
         }
     }
 
+    public List<ProviderIdent> listProviders() {
+        final File[] files = extdir.listFiles(getFileFilter());
+        final List<ProviderIdent> providerIdents = new ArrayList<ProviderIdent>();
+        for (final File file : files) {
+            if (isValidPluginFile(file)) {
+                providerIdents.addAll(listProviders(file));
+            }
+        }
+        return providerIdents;
+    }
+
     /**
      * Return true if the entry has expired
      */
@@ -150,6 +161,10 @@ abstract class DirPluginScanner implements PluginScanner {
         final boolean loaderFor = fileProviderLoader.isLoaderFor(ident);
         debug("filecache result: " + fileProviderLoader + ", loaderForIdent: " + loaderFor);
         return null != fileProviderLoader && loaderFor;
+    }
+    private List<ProviderIdent> listProviders(final File file){
+        final ProviderLoader fileProviderLoader = filecache.get(file, this);
+        return fileProviderLoader.listProviders();
     }
 
     /**

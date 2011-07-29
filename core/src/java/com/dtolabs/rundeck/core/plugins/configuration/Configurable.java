@@ -15,36 +15,21 @@
  */
 
 /*
-* FileProviderLoader.java
+* Configurable.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 4/12/11 5:24 PM
+* Created: 7/19/11 11:29 AM
 * 
 */
-package com.dtolabs.rundeck.core.plugins;
+package com.dtolabs.rundeck.core.plugins.configuration;
 
-import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
-import com.dtolabs.rundeck.core.utils.cache.FileCache;
-
-import java.util.List;
+import java.util.Properties;
 
 /**
- * ProviderLoader can load a provider instance for a service given a provider name.
+ * Configurable objects can be configured with properties.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-interface ProviderLoader extends FileCache.Cacheable {
-    /**
-     * Return an provider instance for a service and provider name
-     */
-    public <T> T load(PluggableService<T> service, String providerName) throws ProviderLoaderException;
-
-    /**
-     * Return true if this loader can load the given ident
-     */
-    public boolean isLoaderFor(ProviderIdent ident);
-    /**
-     * List providers available
-     */
-    public List<ProviderIdent> listProviders();
+public interface Configurable {
+    public void configure(Properties configuration) throws ConfigurationException;
 }

@@ -24,10 +24,13 @@
 package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.*;
+import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.shared.resources.ResourceXMLGenerator;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -45,6 +48,43 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
         this.framework = framework;
         nodeSet = new NodeSetImpl();
     }
+
+
+    static ArrayList<Property> properties = new ArrayList<Property>();
+
+    static {
+        properties.add(PropertyUtil.string(Configuration.FILE, "File", "Path of the file", true, null));
+        final ArrayList<String> formats = new ArrayList<String>();
+        for (final Nodes.Format format : Nodes.Format.values()) {
+            formats.add(format.toString());
+        }
+        properties.add(PropertyUtil.select(Configuration.FORMAT, "Format", "Format of the file", false, null, formats));
+        properties.add(PropertyUtil.bool(Configuration.INCLUDE_SERVER_NODE, "Include Server Node",
+            "Automatically include the server node?", true, "false"));
+        properties.add(PropertyUtil.bool(Configuration.GENERATE_FILE_AUTOMATICALLY, "Generate",
+            "Automatically generate the file it is missing?", true, "false"));
+        properties.add(PropertyUtil.bool(Configuration.REQUIRE_FILE_EXISTS, "Require File Exists",
+            "Require that the file exists", true, "false"));
+
+    }
+    public static  com.dtolabs.rundeck.core.plugins.configuration.Description DESCRIPTION=new Description() {
+        public String getName() {
+            return "file";
+        }
+
+        public String getTitle() {
+            return "File";
+        }
+
+        public String getDescription() {
+            return "Reads a file containing node definitions in a supported format";
+        }
+
+        public List<Property> getProperties() {
+
+            return properties;
+        }
+    };
 
     public static class Configuration {
         public static final String GENERATE_FILE_AUTOMATICALLY = "generateFileAutomatically";
@@ -337,10 +377,12 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
         );
         return prov.getNodes();
     }
+
     /**
      * Utility method to directly parse the nodes from a file
      */
-    public static INodeSet parseFile(final File file, final Nodes.Format format, final Framework framework, final String project) throws
+    public static INodeSet parseFile(final File file, final Nodes.Format format, final Framework framework,
+                                     final String project) throws
         ResourceModelSourceException,
         ConfigurationException {
         final FileResourceModelSource prov = new FileResourceModelSource(framework);
