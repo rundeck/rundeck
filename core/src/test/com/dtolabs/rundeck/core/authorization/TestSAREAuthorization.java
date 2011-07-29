@@ -199,6 +199,18 @@ public class TestSAREAuthorization extends TestCase {
         
     }
     
+    public void testActionAuthorizationYmlNoMatchIssue() throws Exception {
+        Map<String,String> resource = declareScript("Script_123", "/AB3");
+        Subject subject = createSubject("yml_usr_2", "issue_not_match");
+        
+        Decision decision = authorization.evaluate(resource, subject, "foobar", null);
+        decision.explain().describe(System.out);
+        System.out.flush();
+        assertEquals("Decision for authoraztion for action: foobar is not GRANTED_ACTIONS_AND_COMMANDS_MATCHED.",
+                Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
+        assertTrue("Action granted authorization.", decision.isAuthorized());
+    }
+    
     public void testActionAuthorization() throws Exception {
         Map<String,String> resource = declareScript("myScript", "bar/baz/boo");
         Subject subject = createSubject("testActionAuthorization", "admin-action");
@@ -215,18 +227,13 @@ public class TestSAREAuthorization extends TestCase {
                 Code.REJECTED_COMMAND_NOT_MATCHED,  decision.explain().getCode());
         assertFalse("Action bobble_head should not have been authorized", decision.isAuthorized());
        
-        System.out.println(decision);
-        decision.explain().describe(System.out);
         
         /* Empty actions never match. */
         decision = authorization.evaluate(resource, subject, "", environment);
         assertEquals("Decision for empty action does not match", Code.REJECTED_NO_ACTION_PROVIDED,
                 decision.explain().getCode());
         assertFalse("An empty action should not select", decision.isAuthorized());
-
-        System.out.println(decision);
-        decision.explain().describe(System.out);        
-        
+          
         /* The given job=anyaction of group=foobar should allow any action. */
         decision = authorization.evaluate(declareScript("anyaction", "foobar"), subject, 
                 "my_wacky_action", environment);
@@ -295,6 +302,8 @@ public class TestSAREAuthorization extends TestCase {
     
 
     /**
+     * Create a RunDeck equivalent Job.
+     * 
      * @param scriptName
      * @param scriptGroup
      */

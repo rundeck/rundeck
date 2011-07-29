@@ -23,17 +23,46 @@
 */
 package com.dtolabs.rundeck.core.authorization.providers;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
- * Policy is ...
+ * Policy is contains a set of {@link AclContext} with corresponding usernames and/or groups
+ * associated with the each Acl.
+ * 
+ * The policy is a reference to a phycial policy stored on persistantly.
  *
- * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
+ * @author noahcampbell
  */
 public interface Policy {
-    public Set<String> getUsernames();
-
+    
+    /**
+     * Return the {@link AclContext} for this policy representation.
+     * 
+     * @return context
+     */
     AclContext getContext();
 
+    /**
+     * Return a list of usernames as strings associated with this policy.  The backing set should 
+     * rely on the natural sorting order of HashSet<String> otherwise unexpect behavior will occur.  
+     * 
+     * See {@link Collections#disjoint(java.util.Collection, java.util.Collection)} if you need
+     * to muck with the ordering.
+     * 
+     * @return usernames
+     */
+    public Set<String> getUsernames();
+
+    /**
+     * 
+     * Return a list of group objects associated with this policy.  The backing set should rely on
+     * the natural sorting order of HashSet<String> otherwise unexpect behavior will occur.  
+     * 
+     * See {@link Collections#disjoint(java.util.Collection, java.util.Collection)} if you need
+     * to muck with the ordering.
+     * 
+     * @return groups
+     */
     public Set<Object> getGroups();
 }

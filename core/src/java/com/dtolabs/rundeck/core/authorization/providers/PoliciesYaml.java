@@ -96,6 +96,11 @@ public class PoliciesYaml implements PolicyCollection {
         @Override
         public AclContext getContext() {
             return new AclContext() {
+                private String description = "Not Evaluated: " + super.toString();
+                
+                public String toString() {
+                    return "Context: " + description;
+                }
                 
                 @SuppressWarnings("rawtypes")
                 @Override
@@ -108,7 +113,7 @@ public class PoliciesYaml implements PolicyCollection {
                         return new ContextDecision(Code.REJECTED_NO_DESCRIPTION_PROVIDED, false, evaluations);
                     }
                     
-                    String description = (String)descriptionValue;
+                    description = (String)descriptionValue;
                     
                     Object rulesValue = rawInput.get("rules");
                     if( !(rulesValue instanceof Map) ) {

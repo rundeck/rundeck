@@ -296,7 +296,7 @@ public class PoliciesXml {
 
         @Override
         public String toString() {
-            return "Context";
+            return "Context: " + this.generatePolicyName(this.policy);
         }
     }
     

@@ -59,3 +59,15 @@ id: d5e598ae-403b-45c4-8f91-36c255101091
 by:
     username: yml_usr_3
     group: missing_rules
+    
+---
+
+description: Yaml Policy 4
+id: CD055D12-DAEF-4E4D-90B7-C100ADF8FD5F
+
+rules:
+    /AB3/.*:
+        actions: '*'
+
+by:
+    group: issue_not_match

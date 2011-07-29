@@ -30,6 +30,8 @@ import com.dtolabs.rundeck.core.authorization.Attribute;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.apache.log4j.Logger;
+
 
 import javax.naming.InvalidNameException;
 import javax.naming.ldap.LdapName;
@@ -46,6 +48,7 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class PoliciesDocument implements PolicyCollection {
+
     private Document document;
     private File file;
     private ArrayList<String> groupNames;
@@ -184,7 +187,7 @@ public class PoliciesDocument implements PolicyCollection {
             // * The username matches exactly 1 in the context.
             // * 1 subject group matches 1 group.  non disjoint sets.
             //
-            // First match stops the search.
+            // First match stops the search, for this particular policy.
 
             // TODO: time of day check.
 
@@ -201,7 +204,7 @@ public class PoliciesDocument implements PolicyCollection {
 
                 if (!Collections.disjoint(policyUsers, usernamePrincipals)) {
                     matchedContexts.add(policy.getContext());
-                    break;
+                    continue;
                 }
             }
 
