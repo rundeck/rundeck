@@ -9,7 +9,11 @@
         iconSpinner: '${resource(dir:"images",file:"icon-tiny-disclosure-waiting.gif")}',
         executionCancelExecution: '${createLink(controller:"execution",action:"cancelExecution")}.json',
         tailExecutionOutput: '${createLink(controller: "execution", action: "tailExecutionOutput")}',
-        reportsEventsFragment:"${createLink(controller:'reports',action:'eventsFragment')}"
+        reportsEventsFragment:"${createLink(controller:'reports',action:'eventsFragment')}",
+        frameworkViewResourceModelConfig: "${createLink(action: 'viewResourceModelConfig', controller: 'framework')}",
+        frameworkCheckResourceModelConfig: "${createLink(action: 'checkResourceModelConfig', controller: 'framework')}",
+        frameworkEditResourceModelConfig: "${createLink(action: 'editResourceModelConfig', controller: 'framework')}",
+        frameworkCreateResourceModelConfig: "${createLink(action: 'createResourceModelConfig', controller: 'framework')}"
     } ;
     //compatibility with WB javascript:
     var AppImages = {

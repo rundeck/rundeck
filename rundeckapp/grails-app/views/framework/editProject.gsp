@@ -1,19 +1,18 @@
-<%--
-  Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
-
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
- 
- --%>
+%{--
+  - Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -        http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  --}%
 <%--
    chooseProject.gsp
 
@@ -28,7 +27,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="nodes"/>
-    <title><g:message code="domain.Project.choose.title" default="Create a Project"/></title>
+    <title><g:message code="domain.Project.choose.title" default="Edit Project"/></title>
 
     <g:javascript library="prototype/effects"/>
     <g:javascript library="resourceModelConfig"/>
@@ -60,7 +59,7 @@
 <div class="pageTop">
     <span class="welcomeMessage floatl">
         %{--<g:message code="domain.Project.welcome.message" default="Welcome to RunDeck"/>--}%
-        <g:message code="domain.Project.create.message" default="Please create a new Project"/>
+        <g:message code="domain.Project.edit.message" default="Manage Project"/>: ${session.project.encodeAsHTML()}
     </span>
 </div>
 
@@ -69,10 +68,11 @@
         <div class="note error" style="${wdgt.styleVisible(if: (flash.error || request.error))}" id="editerror">
             ${flash.error}${request.error}
         </div>
-        <g:form action="createProject" method="post" onsubmit="return configControl.checkForm();">
-            <tmpl:editProjectForm />
+        <g:form action="saveProject" method="post" onsubmit="return configControl.checkForm();">
+            <g:render template="editProjectForm" model="${[editOnly:true,project:session.project]}"/>
             <div class="buttons">
-                <g:submitButton name="create" value="${g.message(code:'button.action.Create',default:'Create')}" />
+                <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" />
+                <g:submitButton name="save" value="${g.message(code:'button.action.Save',default:'Save')}" />
             </div>
         </g:form>
     </div>

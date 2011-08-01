@@ -1,3 +1,4 @@
+import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Property.Type
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
@@ -454,6 +455,96 @@ class FrameworkController  {
 
         return [projects:projects,project:session.project,resourceModelConfigDescriptions: descriptions, prefixKey:prefixKey,configs:configs]
     }
+    def saveProject={
+        def prefixKey= 'plugin'
+        def project=params.project
+        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        def error=null
+        def configs = []
+        if (!project) {
+            flash.error = "Project parameter is required"
+            return render(template: "/common/error")
+        }
+        if (params.cancel == 'Cancel') {
+            //cancel modification
+            return redirect(controller: 'menu', action: 'admin')
+        }
+        def fproject = frameworkService.getFrameworkProject(project, framework)
+        if(request.method=='POST'){
+            //only attempt project create if form POST is used
+            def Properties projProps = new Properties()
+            if (params.resourcesUrl) {
+                projProps[FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY] = params.resourcesUrl
+            }
+            //parse plugin config properties, and convert to project.properties
+            def sourceConfigPrefix = FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
+            def ndxes = [params.list('index')].flatten()
+
+            def count = 1
+            ndxes.each {ndx ->
+                def type = params[prefixKey + '.' + ndx + '.type']
+                if(!type) {
+                    log.warn("missing type def for prefix: " + prefixKey + '.' + ndx);
+                    return
+                }
+                final service = framework.getResourceModelSourceService()
+                final provider
+                try {
+                    provider= service.getProviderForType(type)
+                } catch (com.dtolabs.rundeck.core.execution.service.ExecutionServiceException e) {
+                }
+                def description
+                if (provider && provider instanceof Describable) {
+                    description=provider.description
+                }
+                projProps[sourceConfigPrefix + '.' + count + '.type'] = type
+                def props = parseResourceModelConfigInput(description, prefixKey + '.' + ndx + '.', params)
+                props.keySet().each {k ->
+                    projProps[sourceConfigPrefix + '.' + count + '.config.' + k] = props[k]
+                }
+                count++
+                configs << [type: type, props: props]
+            }
+
+            try {
+                fproject.updateProjectProperties(projProps)
+            } catch (Error e) {
+                log.error(e.message)
+                error= e.getMessage()
+            }
+            if(!error){
+                session.project=fproject.name
+                def result=userService.storeFilterPref(session.user, [project: fproject.name])
+                flash.message="Project ${project} saved"
+                return redirect(controller:'menu',action:'admin')
+            }
+        }
+        if(error){
+            request.error=error
+        }
+        final service = framework.getResourceModelSourceService()
+        final descriptions = service.listDescriptions()
+
+        def resourcesUrl = fproject.hasProperty(FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY) ? fproject.getProperty(FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY) : null
+        return render(view:'editProject',model: [resourcesUrl: resourcesUrl, project: params.project, resourceModelConfigDescriptions: descriptions, prefixKey: prefixKey, configs: configs])
+    }
+
+    def editProject = {
+        def prefixKey = 'plugin'
+        def project = params.project
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if(!project){
+            flash.error="Project parameter is required"
+            return render(template: "/common/error")
+        }
+        def fproject = frameworkService.getFrameworkProject(project,framework)
+        def configs = fproject.listResourceModelConfigurations()
+        final service = framework.getResourceModelSourceService()
+        final descriptions = service.listDescriptions()
+        def resourcesUrl=fproject.hasProperty(FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY)? fproject.getProperty(FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY):null
+
+        [resourcesUrl: resourcesUrl, project: params.project, resourceModelConfigDescriptions: descriptions, prefixKey: prefixKey, configs: configs]
+    }
     def createResourceModelConfig={
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         def error
@@ -464,7 +555,7 @@ class FrameworkController  {
         final provider = service.getProviderForType(params.type)
         if(provider instanceof Describable){
             def desc = provider.description
-            return [description:desc,prefix:params.prefix]
+            return [description:desc,prefix:params.prefix,type:params.type,isCreate:true]
         }else{
             error="Invalid provider type: ${params.type}, not available for configuration"
         }
@@ -483,16 +574,11 @@ class FrameworkController  {
         if (!type) {
             error = "Plugin provider type must be specified"
         }else{
-            final service = framework.getResourceModelSourceService()
-            final provider = service.getProviderForType(type)
-            if (!(provider instanceof Describable)) {
-                error = "Invalid provider type: ${params.type}, not available for configuration"
-            }
-
-            desc = provider.description
-            props=parseResourceModelConfigInput(desc, prefix, params)
-
-            report=Validator.validate(props,desc)
+            def validate = validateModelSourceConfig(framework, type, prefix, params)
+            error = validate.error
+            desc = validate.desc
+            props = validate.props
+            report = validate.report
             if(report.valid){
                 return render(template: 'viewResourceModelConfig',model:[project:project,prefix:prefix,includeFormFields:true,values:props,description:desc])
             }
@@ -513,25 +599,42 @@ class FrameworkController  {
         def desc
         def result=[valid:false]
         if (!type) {
-            error = "Plugin provider type must be specified"
+            result.error = "Plugin provider type must be specified"
         }else{
-            final service = framework.getResourceModelSourceService()
-            final provider = service.getProviderForType(type)
-            if (!(provider instanceof Describable)) {
-                error = "Invalid provider type: ${params.type}, not available for configuration"
-            }
-
-            desc = provider.description
-            props=parseResourceModelConfigInput(desc, prefix, params)
-
-            report=Validator.validate(props,desc)
-            if(report.valid){
-                result.valid=true
-            }
+            def validate = validateModelSourceConfig(framework, type, prefix, params)
+            result.valid=validate.valid
+            result.error=validate.error
         }
-        result.error=error
         render result as JSON
     }
+
+    private Map validateModelSourceConfig(Framework framework, String type, String prefix, Map params) {
+        Map result=[valid:false]
+        final service = framework.getResourceModelSourceService()
+        final provider
+        try {
+            provider = service.getProviderForType(type)
+        } catch (ExecutionServiceException e) {
+            result.error = e.message
+        }
+        if (provider && !(provider instanceof Describable)) {
+            result.error = "Invalid provider type: ${type}, not available for configuration"
+        } else {
+
+            result.desc = provider?.description
+            result.props = parseResourceModelConfigInput(result.desc, prefix, params)
+
+            if (result.desc) {
+                def report = Validator.validate(result.props, result.desc)
+                if (report.valid) {
+                    result.valid = true
+                }
+                result.report=report
+            }
+        }
+        return result
+    }
+
     def editResourceModelConfig = {
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         def error
@@ -543,19 +646,14 @@ class FrameworkController  {
         if (!type) {
             error = "Plugin provider type must be specified"
         } else {
-            final service = framework.getResourceModelSourceService()
-            final provider = service.getProviderForType(type)
-            if (!(provider instanceof Describable)) {
-                error = "Invalid provider type: ${params.type}, not available for configuration"
-            }
-
-            desc = provider.description
-            props = parseResourceModelConfigInput(desc, prefix, params)
-
-            report = Validator.validate(props, desc)
+            def validate = validateModelSourceConfig(framework, type, prefix, params)
+            error = validate.error
+            desc=validate.desc
+            props=validate.props
+            report=validate.report
         }
 
-        render(view: 'createResourceModelConfig', model: [ prefix: prefix, values: props, description: desc, report: report, error: error, isEdit:true])
+        render(view: 'createResourceModelConfig', model: [ prefix: prefix, values: props, description: desc, report: report, error: error, isEdit: "true"!=params.iscreate,type:type, isCreate:params.isCreate])
     }
     def viewResourceModelConfig = {
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
@@ -572,29 +670,35 @@ class FrameworkController  {
         if (!type) {
             error = "Plugin provider type must be specified"
         } else {
-            final service = framework.getResourceModelSourceService()
-            final provider = service.getProviderForType(type)
-            if (!(provider instanceof Describable)) {
-                error = "Invalid provider type: ${params.type}, not available for configuration"
-            }
-
-            desc = provider.description
-            props = parseResourceModelConfigInput(desc, useprefix, params)
-
-            report = Validator.validate(props, desc)
+            def validate = validateModelSourceConfig(framework, type, prefix, params)
+            error = validate.error
+            desc = validate.desc
+            props = validate.props
+            report = validate.report
         }
 
-        return render(template: 'viewResourceModelConfig',model:[ prefix: prefix, values: props, includeFormFields: true, description: desc, report: report, error: error, saved:true])
+        return render(template: 'viewResourceModelConfig',model:[ prefix: prefix, values: props, includeFormFields: true, description: desc, report: report, error: error, saved:true, type: type])
     }
 
     private def Properties parseResourceModelConfigInput(desc, prefix, final Map params) {
         Properties props=new Properties()
-        desc.properties.each {prop ->
-            def v = params[prefix + "config." + prop.key]
-            if (prop.type == Type.Boolean) {
-                props.setProperty(prop.key, (v == 'true' || v == 'on') ? 'true' : 'false')
-            } else if (v) {
-                props.setProperty(prop.key, v)
+        if(desc){
+            desc.properties.each {prop ->
+                def v = params[prefix + "config." + prop.key]
+                if (prop.type == Type.Boolean) {
+                    props.setProperty(prop.key, (v == 'true' || v == 'on') ? 'true' : 'false')
+                } else if (v) {
+                    props.setProperty(prop.key, v)
+                }
+            }
+        }else{
+            final cfgprefix = prefix + "config."
+            //just parse all properties with the given prefix
+            params.keySet().each{String k->
+                if(k.startsWith(cfgprefix)){
+                    def key=k.substring(cfgprefix.length())
+                    props.put(key,params[k])
+                }
             }
         }
         return props

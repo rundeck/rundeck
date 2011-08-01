@@ -1,5 +1,6 @@
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.FrameworkProject
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
 import java.lang.management.ManagementFactory
@@ -398,6 +399,16 @@ class MenuController {
             flash.title = "Unauthorized"
             response.setStatus(403)
             render(template: '/common/error', model: [:])
+        }
+        if(session.project){
+            Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+            def project=session.project
+            def fproject = frameworkService.getFrameworkProject(project, framework)
+            def configs = fproject.listResourceModelConfigurations()
+
+            final service = framework.getResourceModelSourceService()
+            final descriptions = service.listDescriptions()
+            return [configs:configs, resourcesUrl: fproject.hasProperty(FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY)?fproject.getProperty(FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY):null, resourceModelConfigDescriptions:descriptions]
         }
     }
 

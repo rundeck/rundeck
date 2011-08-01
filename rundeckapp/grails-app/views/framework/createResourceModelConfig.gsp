@@ -22,23 +22,39 @@
 
 <%@ page contentType="text/html;charset=UTF-8" %>
 
-<span class="prompt">${description.title.encodeAsHTML()}</span>
-<span class="info">${description.description.encodeAsHTML()}</span>
+<g:if test="${description}">
+    <span class="prompt">${description.title.encodeAsHTML()}</span>
+    <span class="info">${description.description.encodeAsHTML()}</span>
+</g:if>
 <div class="presentation">
     <g:if test="${error}">
         <span class="error note resourceConfigEdit">${error}</span>
     </g:if>
-    <g:if test="${isEdit}">
-        <g:hiddenField name="isEdit" value="true" class="isEdit"/>
+    <g:if test="${isCreate}">
+        <g:hiddenField name="isCreate" value="true" class="isCreate"/>
     </g:if>
+    <g:elseif test="${isEdit}">
+        <g:hiddenField name="isEdit" value="true" class="isEdit"/>
+    </g:elseif>
     <g:hiddenField name="prefix" value="${prefix}"/>
-    <g:hiddenField name="${prefix+'type'}" value="${description.name}"/>
-
-    <table class="simpleForm">
-    <g:each in="${description.properties}" var="prop">
-        <tr>
-        <g:render template="pluginConfigPropertyField" model="${[prop:prop,prefix:prefix,error:report?.errors?report?.errors[prop.key]:null,values:values]}"/>
-        </tr>
-    </g:each>
-    </table>
+    <g:hiddenField name="${prefix+'type'}" value="${type}"/>
+    <g:if test="${description}">
+        <table class="simpleForm">
+        <g:each in="${description.properties}" var="prop">
+            <tr>
+            <g:render template="pluginConfigPropertyField" model="${[prop:prop,prefix:prefix,error:report?.errors?report?.errors[prop.key]:null,values:values]}"/>
+            </tr>
+        </g:each>
+        </table>
+    </g:if>
+    <g:else>
+        <span>Properties:</span>
+        <ul>
+        <g:each var="prop" in="${values}">
+        <li>${prop.key.encodeAsHTML()}: ${prop.value.encodeAsHTML()} </li>
+            <input type="hidden" name="${(prefix + 'config.' + prop.key).encodeAsHTML()}"
+                   value="${prop.value?.encodeAsHTML()}"/>
+        </g:each>
+        </ul>
+    </g:else>
 </div>

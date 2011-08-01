@@ -24,30 +24,46 @@
 
 <%@ page contentType="text/html;charset=UTF-8" %>
 
-<span class="prompt">${description.title.encodeAsHTML()}</span>
-<span class="desc">${description.description.encodeAsHTML()}</span>
+<g:if test="${description}">
+    <span class="prompt">${description.title.encodeAsHTML()}</span>
+    <span class="desc">${description.description.encodeAsHTML()}</span>
+</g:if>
 <div class="" style="margin-top:5px;">
     <g:set var="rkey" value="${g.rkey()}"/><g:if test="${includeFormFields && saved}">
         <g:hiddenField name="${prefix}saved" value="true" class="wasSaved"/>
     </g:if>
     <g:hiddenField name="prefix" value="${prefix}"/>
-    <g:hiddenField name="${prefix+'type'}" value="${description.name}"/>
+    <g:hiddenField name="${prefix+'type'}" value="${type}"/>
     <g:if test="${values}">
-        %{--<g:expander key="${rkey}" imgfirst="true">Details</g:expander>--}%
-    <span id="${rkey}_summary">
-        <g:each in="${description.properties}" var="prop">
-                <g:render template="pluginConfigPropertySummaryValue"
-                      model="${[prop:prop,prefix:prefix,values:values,includeFormFields:includeFormFields]}"/>
-        </g:each>
-    </span>
-    <table class="simpleForm" id="${rkey}" style="display:none;">
-        <g:each in="${description.properties}" var="prop">
-            <tr>
-                <g:render template="pluginConfigPropertyValue"
+        <span id="${rkey}_summary">
+            <g:if test="${description}">
+            <g:each in="${description.properties}" var="prop">
+                    <g:render template="/framework/pluginConfigPropertySummaryValue"
                           model="${[prop:prop,prefix:prefix,values:values,includeFormFields:includeFormFields]}"/>
-            </tr>
-        </g:each>
-    </table>
+            </g:each>
+            </g:if>
+        </span>
+        <g:if test="${description}">
+            <table class="simpleForm" id="${rkey}" style="display:none;">
+            <g:each in="${description.properties}" var="prop">
+                <tr>
+                    <g:render template="/framework/pluginConfigPropertyValue"
+                              model="${[prop:prop,prefix:prefix,values:values,includeFormFields:includeFormFields]}"/>
+                </tr>
+            </g:each>
+            </table>
+        </g:if>
+        <g:elseif test="${includeFormFields}">
+            <g:expander key="${rkey}_inv">Properties</g:expander>
+            <ul id="${rkey}_inv" style="display:none" >
+                <g:each var="prop" in="${values}">
+                <li>${prop.key.encodeAsHTML()}: ${prop.value.encodeAsHTML()} </li>
+                    <input type="hidden" name="${(prefix + 'config.' + prop.key).encodeAsHTML()}"
+                           value="${prop.value?.encodeAsHTML()}"/>
+                </g:each>
+            </ul>
+        </g:elseif>
+
     </g:if>
 
 </div>

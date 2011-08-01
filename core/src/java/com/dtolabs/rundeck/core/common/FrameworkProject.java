@@ -176,35 +176,57 @@ public class FrameworkProject extends FrameworkResourceParent {
             }
         }
 
+        final List<Map> list = listResourceModelConfigurations();
         int i=1;
-        boolean done=false;
-        while(!done) {
-            final String prefix = RESOURCES_SOURCE_PROP_PREFIX +"." + i;
-            if (hasProperty(prefix +".type")) {
-                String providerType = getProperty(prefix + ".type");
-                Properties props = new Properties();
-                props.setProperty("project", getName());
-                int len= (prefix + ".config.").length();
-                for (final Object o : lookup.getPropertiesMap().keySet()) {
-                    String key=(String) o;
-                    if (key.startsWith(prefix + ".config.")) {
-                        props.setProperty(key.substring(len), getProperty(key));
-                    }
-                }
-                logger.info("Source #" + i + " (" + providerType + "): loading with properties: " + props);
-                try {
-                    nodesSourceList.add(loadResourceModelSource(providerType, props));
-                } catch (ExecutionServiceException e) {
-                    logger.error("Failed loading resource model source #" + i + ", skipping: " + e.getMessage(), e);
-                    nodesSourceExceptions.add(e);
-                }
-            }else{
-                done=true;
+        for (final Map map : list) {
+            final String providerType = (String) map.get("type");
+            final Properties props = (Properties) map.get("props");
+
+            logger.info("Source #" + i + " (" + providerType + "): loading with properties: " + props);
+            try {
+                nodesSourceList.add(loadResourceModelSource(providerType, props));
+            } catch (ExecutionServiceException e) {
+                logger.error("Failed loading resource model source #" + i + ", skipping: " + e.getMessage(), e);
+                nodesSourceExceptions.add(e);
             }
             i++;
         }
 
         nodesSourcesLastReload = getPropertyFile().lastModified();
+    }
+    /**
+     * list the configurations of resource model providers.  Returns a list of maps containing:
+     * <li>type - provider type name</li>
+     * <li>props - configuration properties</li>
+     */
+    public List<Map> listResourceModelConfigurations(){
+        final ArrayList<Map> list = new ArrayList<Map>();
+        int i = 1;
+        boolean done = false;
+        while (!done) {
+            final String prefix = RESOURCES_SOURCE_PROP_PREFIX + "." + i;
+            if (hasProperty(prefix + ".type")) {
+                final String providerType = getProperty(prefix + ".type");
+                final Properties props = new Properties();
+                props.setProperty("project", getName());
+                final int len = (prefix + ".config.").length();
+                for (final Object o : lookup.getPropertiesMap().keySet()) {
+                    final String key = (String) o;
+                    if (key.startsWith(prefix + ".config.")) {
+                        props.setProperty(key.substring(len), getProperty(key));
+                    }
+                }
+                logger.info("Source #" + i + " (" + providerType + "): loading with properties: " + props);
+                final HashMap<String, Object> map = new HashMap<String, Object>();
+                map.put("type", providerType);
+                map.put("props", props);
+                list.add(map);
+            } else {
+                done = true;
+            }
+            i++;
+        }
+        return list;
     }
 
     private Properties createURLSourceConfiguration() {
@@ -356,6 +378,7 @@ public class FrameworkProject extends FrameworkResourceParent {
     public INodeSet getNodeSet() throws NodeFileParserException {
         //iterate through sources, and add nodes
         final AdditiveListNodeSet list = new AdditiveListNodeSet();
+        nodesSourceExceptions = new ArrayList<Exception>();
         for (final ResourceModelSource nodesSource : getResourceModelSources()) {
             try {
                 list.addNodeSet(nodesSource.getNodes());
@@ -637,6 +660,12 @@ public class FrameworkProject extends FrameworkResourceParent {
         }
 
         getLogger().debug("generated project.properties: " + destfile.getAbsolutePath());
+    }
+    /**
+     * Update the project properties file
+     */
+    public void updateProjectProperties(final Properties properties){
+        generateProjectPropertiesFile(true, properties);
     }
 
     /**
