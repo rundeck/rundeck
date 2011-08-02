@@ -24,10 +24,13 @@
 package com.dtolabs.rundeck.core.plugins.configuration;
 
 /**
- * Describable is ...
+ * Describable object can produce a configuration description
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface Describable {
+    /**
+     * Return the configuration description
+     */
     public Description getDescription();
 }

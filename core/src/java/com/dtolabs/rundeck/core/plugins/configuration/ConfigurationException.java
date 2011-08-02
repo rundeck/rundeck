@@ -24,7 +24,7 @@
 package com.dtolabs.rundeck.core.plugins.configuration;
 
 /**
- * ConfigurationException is ...
+ * ConfigurationException indicates an error with configuration of a provider
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */

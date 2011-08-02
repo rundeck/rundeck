@@ -26,7 +26,7 @@ package com.dtolabs.rundeck.core.plugins.configuration;
 import java.util.List;
 
 /**
- * Description is ...
+ * Description defines configuration properties of a plugin provider
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */

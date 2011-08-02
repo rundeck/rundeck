@@ -26,32 +26,47 @@ package com.dtolabs.rundeck.core.plugins.configuration;
 import java.util.List;
 
 /**
- * PropertyUtil is ...
+ * PropertyUtil factory for specific property types
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class PropertyUtil {
+    /**
+     * Return a string property
+     */
     public static Property string(final String key, final String name, final String description, final boolean required,
                                   final String defaultValue, final Property.Validator validator) {
         return new StringProperty(key, name, description, required, defaultValue, validator);
     }
 
+    /**
+     * Return a string property
+     */
     public static Property string(final String key, final String name, final String description, final boolean required,
                                   final String defaultValue) {
         return new StringProperty(key, name, description, required, defaultValue, null);
     }
 
+    /**
+     * Return a boolean property
+     */
     public static Property bool(final String key, final String name, final String description, final boolean required,
                                 final String defaultValue) {
         return new BooleanProperty(key, name, description, required, defaultValue);
     }
 
+    /**
+     * Return an integer property
+     */
     public static Property integer(final String key, final String name, final String description,
                                    final boolean required,
                                    final String defaultValue) {
         return new IntegerProperty(key, name, description, required, defaultValue);
     }
 
+    /**
+     * Return a long property
+     */
     public static Property longProp(final String key, final String name, final String description,
                                     final boolean required, final String defaultValue) {
 
@@ -63,17 +78,19 @@ public class PropertyUtil {
      * Create a Select property with a list of values
      */
     public static Property select(final String key, final String name, final String description,
-                                    final boolean required, final String defaultValue, final List<String> selectValues) {
+                                  final boolean required, final String defaultValue, final List<String> selectValues) {
 
-        return new SelectProperty(key, name, description, required, defaultValue,selectValues);
+        return new SelectProperty(key, name, description, required, defaultValue, selectValues);
     }
+
     /**
      * Create a Free Select property with a list of values
      */
     public static Property freeSelect(final String key, final String name, final String description,
-                                    final boolean required, final String defaultValue, final List<String> selectValues) {
+                                      final boolean required, final String defaultValue,
+                                      final List<String> selectValues) {
 
-        return new FreeSelectProperty(key, name, description, required, defaultValue,selectValues);
+        return new FreeSelectProperty(key, name, description, required, defaultValue, selectValues);
     }
 
     static final class StringProperty extends PropertyBase {
@@ -87,10 +104,12 @@ public class PropertyUtil {
             return Type.String;
         }
     }
+
     static final class FreeSelectProperty extends PropertyBase {
         final List<String> selectValues;
+
         public FreeSelectProperty(final String key, final String name, final String description, final boolean required,
-                              final String defaultValue, final List<String> selectValues) {
+                                  final String defaultValue, final List<String> selectValues) {
             super(key, name, description, required, defaultValue, null);
             this.selectValues = selectValues;
         }
@@ -104,8 +123,10 @@ public class PropertyUtil {
             return selectValues;
         }
     }
+
     static final class SelectProperty extends PropertyBase {
         final List<String> selectValues;
+
         public SelectProperty(final String key, final String name, final String description, final boolean required,
                               final String defaultValue, final List<String> selectValues) {
             super(key, name, description, required, defaultValue, new SelectValidator(selectValues));
@@ -121,7 +142,8 @@ public class PropertyUtil {
             return selectValues;
         }
     }
-    static final class SelectValidator implements Property.Validator{
+
+    static final class SelectValidator implements Property.Validator {
 
         final List<String> selectValues;
 

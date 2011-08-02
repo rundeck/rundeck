@@ -24,7 +24,7 @@
 package com.dtolabs.rundeck.core.plugins.configuration;
 
 /**
- * ValidationException is ...
+ * ValidationException indicates an error validting a property value
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */

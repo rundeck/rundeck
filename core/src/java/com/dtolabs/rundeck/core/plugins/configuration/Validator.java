@@ -26,23 +26,42 @@ package com.dtolabs.rundeck.core.plugins.configuration;
 import java.util.*;
 
 /**
- * Validator is ...
+ * Validator utility class can create a validation report for a set of input properties and a configuration
+ * description.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class Validator {
+    /**
+     * A validation report
+     */
     public static class Report {
         private HashMap<String, String> errors = new HashMap<String, String>();
 
+        /**
+         * Return a map of errors, keyed by property name.
+         */
         public HashMap<String, String> getErrors() {
             return errors;
         }
+
+        /**
+         * Return true if all property values were valid
+         */
         public boolean isValid() {
             return 0 == errors.size();
         }
     }
 
-    public static Report validate(Properties props, Description desc) {
+    /**
+     * Validate a set of properties for a description, and return a report.
+     *
+     * @param props the input properties
+     * @param desc  the configuration description
+     *
+     * @return the validation report
+     */
+    public static Report validate(final Properties props, final Description desc) {
         final Report report = new Report();
         for (final Property property : desc.getProperties()) {
             final String key = property.getKey();

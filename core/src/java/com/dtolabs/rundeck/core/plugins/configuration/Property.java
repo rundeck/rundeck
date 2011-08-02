@@ -26,22 +26,46 @@ package com.dtolabs.rundeck.core.plugins.configuration;
 import java.util.List;
 
 /**
- * Property is ...
+ * Property describes a configuration property of a provider
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface Property {
+    /**
+     * Available property types
+     */
     static enum Type {
+        /**
+         * A simple string input property
+         */
         String,
+        /**
+         * A boolean input property
+         */
         Boolean,
+        /**
+         * An integer input property
+         */
         Integer,
+        /**
+         * A long input property
+         */
         Long,
+        /**
+         * A multiple selection input property
+         */
         Select,
+        /**
+         * A string input property with a select
+         */
         FreeSelect,
 //        MultiSelect,
 //        MultiFreeSelect
     }
 
+    /**
+     * Validator can validate a value
+     */
     static interface Validator {
         public boolean isValid(String value) throws ValidationException;
     }
@@ -61,13 +85,29 @@ public interface Property {
      */
     public String getDescription();
 
+    /**
+     * Return the property type
+     */
     public Type getType();
 
+    /**
+     * Return the validator for this property
+     */
     public Validator getValidator();
 
+    /**
+     * Return true if an empty value is not allowed
+     */
     public boolean isRequired();
 
+    /**
+     * Return the default value of the property, or default select value to select
+     */
     public String getDefaultValue();
+
+    /**
+     * Return a list of values for a select property
+     */
     public List<String> getSelectValues();
 
 }

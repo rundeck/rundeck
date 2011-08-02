@@ -29,7 +29,7 @@ import com.dtolabs.rundeck.core.plugins.ProviderIdent;
 import java.util.List;
 
 /**
- * DescribableService is ...
+ * DescribableService can list the configuration descriptions of the available providers
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */

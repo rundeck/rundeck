@@ -26,11 +26,11 @@ package com.dtolabs.rundeck.core.plugins.configuration;
 import java.util.List;
 
 /**
-* PropertyBase is ...
+* PropertyBase base implementation of Property
 *
 * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 */
-public abstract class PropertyBase implements Property {
+abstract class PropertyBase implements Property {
     private final String name;
     private final String key;
     private final String description;

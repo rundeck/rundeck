@@ -31,5 +31,10 @@ import java.util.Properties;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface Configurable {
+    /**
+     * Configure the object with the configuration properties.
+     * @param configuration the properties to use
+     * @throws ConfigurationException if there is an invalid configuration
+     */
     public void configure(Properties configuration) throws ConfigurationException;
 }

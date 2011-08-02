@@ -29,7 +29,8 @@ import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import java.util.Properties;
 
 /**
- * ConfigurableService is ...
+ * ConfigurableService can produce a provider instance of a certain type using
+ * configuration input.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
