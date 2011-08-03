@@ -102,15 +102,13 @@ public class ResourceModelSourceService extends PluggableProviderRegistryService
     }
 
     public boolean isScriptPluggable() {
-        return false;
+        return true;
     }
 
-    public ResourceModelSourceFactory createScriptProviderInstance(ScriptPluginProvider provider) throws
+    public ResourceModelSourceFactory createScriptProviderInstance(final ScriptPluginProvider provider) throws
         PluginException {
-        //TODO
-//        ScriptPluginNodeExecutor.validateScriptPlugin(provider);
-//        return new ScriptPluginNodeExecutor(provider);
-        return null;
+        ScriptPluginResourceModelSourceFactory.validateScriptPlugin(provider);
+        return new ScriptPluginResourceModelSourceFactory(provider,framework);
     }
 
     public ResourceModelSource getProviderForConfiguration(final String type,

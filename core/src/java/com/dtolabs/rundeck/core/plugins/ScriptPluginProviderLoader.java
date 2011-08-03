@@ -261,13 +261,13 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
             nextEntry = zipinput.getNextEntry();
         }
         if (!topfound) {
-            log.warn("Plugin not loaded: Found no " + basename + "/ dir within file: " + jar.getAbsolutePath());
+            log.error("Plugin not loaded: Found no " + basename + "/ dir within file: " + jar.getAbsolutePath());
         }
         if (!found) {
-            log.warn("Plugin not loaded: Found no " + basename + "/plugin.yaml within: " + jar.getAbsolutePath());
+            log.error("Plugin not loaded: Found no " + basename + "/plugin.yaml within: " + jar.getAbsolutePath());
         }
         if (!dirfound) {
-            log.warn("Plugin not loaded: Found no " + basename + "/contents dir within: " + jar.getAbsolutePath());
+            log.error("Plugin not loaded: Found no " + basename + "/contents dir within: " + jar.getAbsolutePath());
         }
         if (found && dirfound) {
             return metadata;

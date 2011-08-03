@@ -71,7 +71,10 @@ class ScriptPluginScanner extends DirPluginScanner {
             final ZipInputStream zipinput = new ZipInputStream(new FileInputStream(file));
             final PluginMeta metadata = ScriptPluginProviderLoader.loadMeta(file, zipinput);
             zipinput.close();
-            final boolean valid = ScriptPluginProviderLoader.validatePluginMeta(metadata, file);
+            boolean valid = false;
+            if(null!=metadata) {
+                valid = ScriptPluginProviderLoader.validatePluginMeta(metadata, file);
+            }
             if (!valid) {
                 log.warn("Skipping plugin file: metadata was invalid: " + file.getAbsolutePath());
             }

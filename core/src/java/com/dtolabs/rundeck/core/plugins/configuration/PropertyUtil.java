@@ -32,6 +32,15 @@ import java.util.List;
  */
 public class PropertyUtil {
     /**
+     * Return a property instance for a particular type
+     */
+    public static Property forType(final Property.Type type, final String key, final String name,
+                                   final String description, final boolean required,
+                                   final String defaultValue, final Property.Validator validator) {
+        return new Generic(key, name, description, required, defaultValue, validator, type);
+    }
+
+    /**
      * Return a string property
      */
     public static Property string(final String key, final String name, final String description, final boolean required,
@@ -218,4 +227,19 @@ public class PropertyUtil {
             return true;
         }
     };
+
+    private static class Generic extends PropertyBase {
+        private final Type type;
+
+        public Generic(final String key, final String name, final String description, final boolean required,
+                       final String defaultValue,
+                       final Validator validator, final Type type) {
+            super(key, name, description, required, defaultValue, validator);
+            this.type = type;
+        }
+
+        public Type getType() {
+            return type;
+        }
+    }
 }
