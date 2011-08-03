@@ -267,7 +267,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
      * @return the Task
      */
     private static Task genSetThreadLocalRefValue(final String refid, final String value) {
-        final setThreadLocalTask task = new setThreadLocalTask();
+        final SetThreadLocalTask task = new SetThreadLocalTask();
         task.setRefid(refid);
         task.setValue(value);
         return task;
@@ -278,7 +278,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
      * Task to set a threadlocal value given a refid. The refid should have been set in the project already, and be an
      * InheritableThreadLocal instance.  The value will be set for the threadlocal variable
      */
-    public static class setThreadLocalTask extends Task {
+    public static class SetThreadLocalTask extends Task {
         private String value;
         private String refid;
 

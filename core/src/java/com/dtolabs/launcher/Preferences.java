@@ -35,24 +35,16 @@ import java.util.Properties;
 
 public class Preferences {
 
-    public static String[] PREFS_ALLOWED_PROP_TYPES = Constants.PREFS_ALLOWED_PROP_TYPES;
-    public static String JAVA_HOME = Constants.JAVA_HOME;
-    public static String ENV_JAVA_HOME = System.getProperty("user.java_home");
+    public static final String JAVA_HOME = Constants.JAVA_HOME;
+    public static final String ENV_JAVA_HOME = System.getProperty("user.java_home");
 
     // required properties
-    public static String SYSTEM_RDECK_HOME = Constants.getSystemHomeDir();
-    public static String SYSTEM_RDECK_BASE = Constants.getSystemBaseDir();
+    public static final String SYSTEM_RDECK_HOME = Constants.getSystemHomeDir();
+    public static final String SYSTEM_RDECK_BASE = Constants.getSystemBaseDir();
 
     // location of default properties file which some of them can be overridden at setup time
-    public static String RUNDECK_DEFAULTS_PROPERTIES_NAME = Constants.getDefaultsPropertiesName();
+    public static final String RUNDECK_DEFAULTS_PROPERTIES_NAME = Constants.getDefaultsPropertiesName();
 
-    /**
-     * generate preferences file represented by preferences String
-     */
-    public static void generate(String args[], String preferences) throws Exception {
-        generate(args, preferences, null);
-
-    }
     /**
      * generate preferences file represented by preferences String
      */
@@ -129,9 +121,7 @@ public class Preferences {
 
         // load the default properties
         loadResourcesDefaults(defaultProperties, RUNDECK_DEFAULTS_PROPERTIES_NAME);
-        if(null!=inputProps) {
-            defaultProperties.putAll(inputProps);
-        }
+        defaultProperties.putAll(inputProps);
         parseNonReqOptionsAsProperties(defaultProperties, args);
 
         // expand all keyValues within defaultProperties against keys within same defaultProperties
@@ -150,7 +140,12 @@ public class Preferences {
         }
 
         // generate the preferences.properties file into ${rdeck.base}/etc from expandedDefaultProperties
-        expandedDefaultProperties.store(new FileOutputStream(preferences), "rdeck setup preferences");
+        final FileOutputStream fileOutputStream = new FileOutputStream(preferences);
+        try {
+            expandedDefaultProperties.store(fileOutputStream, "rdeck setup preferences");
+        } finally {
+            fileOutputStream.close();
+        }
 
     }
 

@@ -38,6 +38,7 @@ import org.yaml.snakeyaml.Yaml;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -670,12 +671,19 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
     private void listAction() throws JobsToolException {
         final Collection<IStoredJob> result;
         try {
-            result = framework.getCentralDispatcherMgr().listStoredJobs(this, null != argFile ? new FileOutputStream(
-                argFile) : null, format);
+            final FileOutputStream output = null != argFile ? new FileOutputStream(
+                argFile) : null;
+            try {
+                result = framework.getCentralDispatcherMgr().listStoredJobs(this, output, format);
+            } finally {
+                if(null!=output){
+                    output.close();
+                }
+            }
         } catch (CentralDispatcherException e) {
             final String msg = "Failed request to list the queue: " + e.getMessage();
             throw new JobsToolException(msg, e);
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             final String msg = "Failed request to list the queue: " + e.getMessage();
             throw new JobsToolException(msg, e);
         }

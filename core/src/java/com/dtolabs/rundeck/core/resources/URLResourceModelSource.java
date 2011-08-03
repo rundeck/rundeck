@@ -84,7 +84,7 @@ public class URLResourceModelSource implements ResourceModelSource, Configurable
             "Refresh results only if modified?", true, "true"));
 
     }
-    public static Description DESCRIPTION = new Description(){
+    public static final Description DESCRIPTION = new Description(){
         public String getName() {
             return "url";
         }

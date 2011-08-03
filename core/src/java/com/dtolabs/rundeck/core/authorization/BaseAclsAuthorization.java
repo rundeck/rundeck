@@ -103,7 +103,8 @@ public abstract class BaseAclsAuthorization implements Authorization, LegacyAuth
      * @return String[]
      */
     public String[] getMatchedRoles() {
-        return matchedRoles;
+        //return copy of mutable array
+        return null != matchedRoles ? matchedRoles.clone() : null;
     }
 
     /**

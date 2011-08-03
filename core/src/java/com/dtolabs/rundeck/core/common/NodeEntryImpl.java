@@ -51,7 +51,7 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
     /**
      * All attribute names for predefined properties.
      */
-    public static final String[] PROPERTY_ATTRIBUTE_NAMES = {
+    static final String[] PROPERTY_ATTRIBUTE_NAMES = {
         OS_NAME,
         OS_FAMILY,
         OS_VERSION,
@@ -373,5 +373,15 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
      */
     public String setAttribute(final String name, final String value) {
         return getAttributes().put(name, value);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
     }
 }

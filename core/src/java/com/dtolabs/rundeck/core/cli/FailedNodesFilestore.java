@@ -65,7 +65,12 @@ public class FailedNodesFilestore {
             }
             props.setProperty("failed.node.names", sb.toString());
             try {
-                props.store(new FileOutputStream(failedNodesFile), "Stored by " + ExecTool.class.getName());
+                final FileOutputStream fileOutputStream = new FileOutputStream(failedNodesFile);
+                try {
+                    props.store(fileOutputStream, "Stored by " + ExecTool.class.getName());
+                } finally {
+                    fileOutputStream.close();
+                }
                 return true;
             } catch (IOException e) {
                 e.printStackTrace();
@@ -128,7 +133,12 @@ public class FailedNodesFilestore {
         Properties failedprops = new Properties();
         final HashMap<String, String> includeMap = new HashMap<String, String>();
         try {
-            failedprops.load(new FileInputStream(failedNodesFile));
+            final FileInputStream fileInputStream = new FileInputStream(failedNodesFile);
+            try {
+                failedprops.load(fileInputStream);
+            } finally {
+                fileInputStream.close();
+            }
             final String propval = failedprops.getProperty("failed.node.names");
             if (null != propval && !"".equals(propval.trim())) {
                 final String failednodes = propval;

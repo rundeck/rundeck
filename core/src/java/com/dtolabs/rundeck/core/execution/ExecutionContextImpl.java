@@ -141,7 +141,7 @@ public class ExecutionContextImpl implements ExecutionContext {
     }
 
     public String[] getArgs() {
-        return args;
+        return null != args ? args.clone() : null;
     }
 
     public int getLoglevel() {

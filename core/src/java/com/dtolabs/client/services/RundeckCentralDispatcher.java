@@ -887,12 +887,7 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
         final String description = null != node1.selectSingleNode("description") ? node1.selectSingleNode("description")
             .getStringValue() : null;
         logger.debug("\t" + index + ": " + name + " [" + id + "] <" + url + ">");
-        int ndx = -1;
-        try {
-            ndx = Integer.parseInt(index);
-        } catch (NumberFormatException e) {
-
-        }
+        
         return StoredJobLoadResultImpl.createLoadResult(id, name, url,
             group, description, successful, skippedJob,
             message);

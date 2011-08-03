@@ -67,7 +67,7 @@ class BasicAuthenticator implements HttpAuthenticator {
 
     public boolean needsReAuthentication(int resultCode, HttpMethod method) {
         if (resultCode >= 300 && resultCode < 400) {
-            HttpState state = ClientState.resetHttpState();
+            ClientState.resetHttpState();
             return true;
         }
         return false;

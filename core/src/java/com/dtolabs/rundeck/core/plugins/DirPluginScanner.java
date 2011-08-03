@@ -158,7 +158,7 @@ abstract class DirPluginScanner implements PluginScanner {
      */
     private boolean test(final ProviderIdent ident, final File file) {
         final ProviderLoader fileProviderLoader = filecache.get(file, this);
-        final boolean loaderFor = fileProviderLoader.isLoaderFor(ident);
+        final boolean loaderFor = null != fileProviderLoader && fileProviderLoader.isLoaderFor(ident);
         debug("filecache result: " + fileProviderLoader + ", loaderForIdent: " + loaderFor);
         return null != fileProviderLoader && loaderFor;
     }

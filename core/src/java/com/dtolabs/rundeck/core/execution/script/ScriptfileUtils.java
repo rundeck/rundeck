@@ -139,16 +139,19 @@ public class ScriptfileUtils {
 
         final FileWriter writer = new FileWriter(scriptfile);
 
-        if (null != source) {
-            //write script content to temp file
-            writer.write(source);
-        }else if (null != reader) {
-            ScriptfileUtils.writeReader(reader, writer);
-        } else if (null != stream) {
-            ScriptfileUtils.writeStream(stream, writer);
+        try {
+            if (null != source) {
+                //write script content to temp file
+                writer.write(source);
+            }else if (null != reader) {
+                ScriptfileUtils.writeReader(reader, writer);
+            } else if (null != stream) {
+                ScriptfileUtils.writeStream(stream, writer);
+            }
+        } finally {
+            writer.close();
         }
 
-        writer.close();
         scriptfile.deleteOnExit();
 
         return scriptfile;

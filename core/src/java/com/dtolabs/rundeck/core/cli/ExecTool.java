@@ -189,7 +189,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
      * @return a new instance of CommandLine
      */
     public CommandLine parseArgs(String[] args) {
-        inputArgs = args;
+        inputArgs = args.clone();
         int lastArg = -1;
         for (int i = 0 ; i < args.length ; i++) {
             if ("--".equals(args[i])) {
@@ -268,14 +268,14 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
         }
 
         if (cli.hasOption('N')) {
-            if(!argNoQueue){
+            if (!argNoQueue) {
                 throw new IllegalArgumentException("-N option requires -L/--noqueue");
             }
             if (!new File(cli.getOptionValue('N')).exists()) {
                 throw new IllegalArgumentException("specified nodes file does not exist");
             }
             argNodesFile = cli.getOptionValue('N');
-            nodesFile=new File(argNodesFile);
+            nodesFile = new File(argNodesFile);
         }
         if (cli.hasOption("h")) {
             help();
@@ -291,8 +291,9 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
             }
         }
         if (!parsedFailedNodes) {
-            excludeMap = parseExcludeArgs(NodeSet.FILTER_KEYS);
-            includeMap = parseIncludeArgs(NodeSet.FILTER_KEYS);
+            final String[] keys = NodeSet.FILTER_KEYS_LIST.toArray(new String[NodeSet.FILTER_KEYS_LIST.size()]);
+            excludeMap = parseExcludeArgs(keys);
+            includeMap = parseIncludeArgs(keys);
         }
 
         argExcludePrecedence = determineExclusionPrecedenceForArgs(args, cli);
@@ -518,7 +519,6 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
         ExecutionResult result=null;
         Exception exception=null;
         final Date startDate=new Date();
-        final String user = getUser();
         try {
             //store inline script content (via STDIN or script property) to a temp file
             if(inlineScript){
@@ -936,11 +936,11 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
     }
 
     public String[] getArgsDeferred() {
-        return argsDeferred;
+        return null != argsDeferred ? argsDeferred.clone() : null;
     }
 
     public void setArgsDeferred(String[] argsDeferred) {
-        this.argsDeferred = argsDeferred;
+        this.argsDeferred = null != argsDeferred ? argsDeferred.clone() : null;
     }
 
     public boolean isArgExcludePrecedence() {

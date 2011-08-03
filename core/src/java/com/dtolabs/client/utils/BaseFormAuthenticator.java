@@ -28,6 +28,7 @@ import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.cookie.CookieSpec;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,7 +56,7 @@ public abstract class BaseFormAuthenticator implements HttpAuthenticator {
     /**
      * logger
      */
-    public static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(BaseFormAuthenticator.class);
+    public static final Logger logger = org.apache.log4j.Logger.getLogger(BaseFormAuthenticator.class);
 
     /**
      * path for java auth form submit: {@value}
@@ -243,11 +244,11 @@ public abstract class BaseFormAuthenticator implements HttpAuthenticator {
                 login.releaseConnection();
 
                 locHeader = login.getResponseHeader("Location");
-                location = locHeader.getValue();
+                location = null != locHeader ? locHeader.getValue() : null;
                 if (isLoginError(login)) {
                     logger.error("Form-based auth failed");
                     return false;
-                } else if (!location.equals(newUrl.toExternalForm())) {
+                } else if (null!=location && !location.equals(newUrl.toExternalForm())) {
 
                     logger.warn("Form-based auth succeeded, but last URL was unexpected");
                 }
@@ -257,7 +258,7 @@ public abstract class BaseFormAuthenticator implements HttpAuthenticator {
                         (res == HttpStatus.SC_SEE_OTHER) ||
                         (res == HttpStatus.SC_TEMPORARY_REDIRECT))) {
 
-                    if (locHeader == null) {
+                    if (location == null) {
                         throw new HttpClientException("Redirect with no Location header, request URL: " + newUrl);
                     }
                     final GetMethod get2 = new GetMethod(location);

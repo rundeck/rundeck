@@ -112,6 +112,11 @@ public class FrameworkResource implements IFrameworkResource {
      * @throws IOException thrown if file not found or can't write to file
      */
     protected void storeProperties(final Properties props, final File file) throws IOException {
-        props.store(new FileOutputStream(file), "auto generated. do not edit.");
+        final FileOutputStream fileOutputStream = new FileOutputStream(file);
+        try {
+            props.store(fileOutputStream, "auto generated. do not edit.");
+        } finally {
+            fileOutputStream.close();
+        }
     }
 }

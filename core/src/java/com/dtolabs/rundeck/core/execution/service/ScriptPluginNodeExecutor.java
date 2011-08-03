@@ -80,9 +80,9 @@ class ScriptPluginNodeExecutor implements NodeExecutor {
         //add some more data context values to allow templatized args
         final HashMap<String, String> scptexec = new HashMap<String, String>();
         scptexec.put("command", StringArrayUtil.asString(command, " "));
-        if (null != workingdir) {
-            scptexec.put("dir", workingdir.getAbsolutePath());
-        }
+//        if (null != workingdir) {
+//            scptexec.put("dir", workingdir.getAbsolutePath());
+//        }
         final Map<String, Map<String, String>> newDataContext = DataContextUtils.addContext("exec", scptexec,
             origDataContext);
 

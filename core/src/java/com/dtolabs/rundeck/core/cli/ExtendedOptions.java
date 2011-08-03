@@ -57,6 +57,9 @@ public class ExtendedOptions implements CLIToolOptions{
     }
 
     public String[] getExtendedOptions() {
-        return extendedOptions;
+//        final String[] strings = new String[extendedOptions.length];
+//        System.arraycopy(extendedOptions, 0, strings, 0, extendedOptions.length);
+//        return strings;
+        return null != extendedOptions ? extendedOptions.clone() : null;
     }
 }

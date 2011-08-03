@@ -60,7 +60,7 @@ public class DirectoryResourceModelSource implements ResourceModelSource, Config
             null));
     }
 
-    public static Description DESCRIPTION = new Description() {
+    public static final Description DESCRIPTION = new Description() {
         public String getName() {
             return "directory";
         }

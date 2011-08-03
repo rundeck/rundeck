@@ -109,7 +109,6 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
             if (null != projectCache.get(projectName)) {
                 return projectCache.get(projectName);
             }
-            final File projectDir = new File(getBaseDir(), projectName);
             // check if the FrameworkProject has its own module library
             project= FrameworkProject.create(projectName, getBaseDir(), this, properties);
             projectCache.put(projectName, project);

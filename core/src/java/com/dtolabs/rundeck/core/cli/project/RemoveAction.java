@@ -69,15 +69,15 @@ public class RemoveAction extends BaseAction {
      * @throws Throwable
      */
     public void exec() throws Throwable {
-        super.exec();
-        if (project == null) {
-            throw new IllegalStateException("project was null");
-        }
-        if (!framework.getFrameworkProjectMgr().existsFrameworkProject(project.getFrameworkProject())) {
-            throw new ProjectToolException("project does not exists: " + project.getFrameworkProject());
-        }
-        main.verbose("removing project: " + project.getFrameworkProject());
-        final FrameworkProject d = framework.getFrameworkProjectMgr().createFrameworkProject(project.getFrameworkProject());
+//        super.exec();
+//        if (project == null) {
+//            throw new IllegalStateException("project was null");
+//        }
+//        if (!framework.getFrameworkProjectMgr().existsFrameworkProject(project.getFrameworkProject())) {
+//            throw new ProjectToolException("project does not exists: " + project.getFrameworkProject());
+//        }
+//        main.verbose("removing project: " + project.getFrameworkProject());
+//        final FrameworkProject d = framework.getFrameworkProjectMgr().createFrameworkProject(project.getFrameworkProject());
 
         throw new RuntimeException("unimplemented: RemoveAction.exec");
     }

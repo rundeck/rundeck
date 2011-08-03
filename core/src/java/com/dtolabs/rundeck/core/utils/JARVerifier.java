@@ -58,7 +58,7 @@ public final class JARVerifier {
      * @param trustedCaCerts
      */
     public JARVerifier(X509Certificate[] trustedCaCerts) {
-        this.trustedCaCerts = trustedCaCerts;
+        this.trustedCaCerts = null != trustedCaCerts ? trustedCaCerts.clone() : null;
     }
 
     /**
@@ -76,10 +76,16 @@ public final class JARVerifier {
     public static JARVerifier create(String keystore, String alias, char[] passwd) throws IOException, KeyStoreException,
             NoSuchAlgorithmException,
             CertificateException {
-        FileInputStream fileIn = new FileInputStream(keystore);
         KeyStore keyStore = KeyStore.getInstance("JKS");
-
-        keyStore.load(fileIn, passwd);
+        FileInputStream fileIn=null;
+        try {
+            fileIn = new FileInputStream(keystore);
+            keyStore.load(fileIn, passwd);
+        } finally {
+            if(null!= fileIn){
+                fileIn.close();
+            }
+        }
         Certificate[] chain = keyStore.getCertificateChain(alias);
         if (chain == null) {
             Certificate cert = keyStore.getCertificate(alias);
@@ -90,7 +96,6 @@ public final class JARVerifier {
 
         }
         X509Certificate certChain[] = new X509Certificate[chain.length];
-        fileIn.close();
 
 
         CertificateFactory cf = CertificateFactory.getInstance("X.509");

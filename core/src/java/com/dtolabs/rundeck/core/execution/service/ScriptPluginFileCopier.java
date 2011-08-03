@@ -132,10 +132,10 @@ class ScriptPluginFileCopier implements FileCopier {
         final HashMap<String, String> scptexec = new HashMap<String, String>();
         //set up the data context to include the local temp file
         scptexec.put("file", tempfile.getAbsolutePath());
-        if (null != workingdir) {
+//        if (null != workingdir) {
             //set up the data context to include the working dir
-            scptexec.put("dir", workingdir.getAbsolutePath());
-        }
+//            scptexec.put("dir", workingdir.getAbsolutePath());
+//        }
         final Map<String, Map<String, String>> newDataContext = DataContextUtils.addContext("file-copy", scptexec,
             nodeContext);
 

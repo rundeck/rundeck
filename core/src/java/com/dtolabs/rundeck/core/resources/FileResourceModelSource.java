@@ -67,7 +67,7 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
             "Require that the file exists", true, "false"));
 
     }
-    public static  com.dtolabs.rundeck.core.plugins.configuration.Description DESCRIPTION=new Description() {
+    public static final Description DESCRIPTION=new Description() {
         public String getName() {
             return "file";
         }

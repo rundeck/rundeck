@@ -190,7 +190,14 @@ public class URLFileUpdater implements FileUpdater {
     private void updateFileUrl(final File destinationFile) throws FileUpdaterException {
         try {
             final File srfile = new File(new java.net.URI(url.toExternalForm()));
-            Streams.copyStream(new FileInputStream(srfile), new FileOutputStream(destinationFile));
+            final FileInputStream in = new FileInputStream(srfile);
+            final FileOutputStream out = new FileOutputStream(destinationFile);
+            try {
+                Streams.copyStream(in, out);
+            } finally {
+                in.close();
+                out.close();
+            }
         } catch (URISyntaxException e) {
             throw new FileUpdaterException("Invalid URI: " + url);
         } catch (FileNotFoundException e) {
@@ -341,7 +348,12 @@ public class URLFileUpdater implements FileUpdater {
         if (cacheFile.isFile()) {
             //try to load cache data if present
             try {
-                cacheProperties.load(new FileInputStream(cacheFile));
+                final FileInputStream fileInputStream = new FileInputStream(cacheFile);
+                try {
+                    cacheProperties.load(fileInputStream);
+                } finally {
+                    fileInputStream.close();
+                }
             } catch (IOException e) {
                 logger.debug("failed to load cache data from file: " + cacheFile);
             }
@@ -367,13 +379,20 @@ public class URLFileUpdater implements FileUpdater {
         }
         if (newprops.size() > 0) {
             try {
-                newprops.store(new FileOutputStream(cacheFile), "URLFileUpdater cache data for URL: "+url);
+                final FileOutputStream fileOutputStream = new FileOutputStream(cacheFile);
+                try {
+                    newprops.store(fileOutputStream, "URLFileUpdater cache data for URL: "+url);
+                } finally {
+                    fileOutputStream.close();
+                }
             } catch (IOException e) {
                 logger.debug(
                     "Failed to write cache header info to file: " + cacheFile + ", " + e.getMessage(), e);
             }
         } else if (cacheFile.exists()) {
-            cacheFile.delete();
+            if(!cacheFile.delete()) {
+                logger.warn("Unable to delete cachefile: " + cacheFile.getAbsolutePath());
+            }
         }
     }
 

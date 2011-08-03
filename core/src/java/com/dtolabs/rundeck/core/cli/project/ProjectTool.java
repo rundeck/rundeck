@@ -71,7 +71,6 @@ public class ProjectTool implements ActionMaker, CLITool {
 
 
     public ProjectTool() {
-        final File basedir = new File(Constants.getSystemBaseDir());
         /**
          * Initialize the log4j logger
          */

@@ -17,6 +17,9 @@
 package com.dtolabs.rundeck.core;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 
 /**
@@ -127,22 +130,6 @@ public final class Constants {
     public static String getFrameworkPreferences(final String rdeck_base) {
         return getFrameworkConfigDir(rdeck_base) + FILE_SEP + "preferences.properties";
     }
-
-    // list of allowed property types generated in the preferences.properties file
-    // this includes standard java system props and rdeck
-    // ensure this is sorted alphabeticaly
-    public static final String[] PREFS_ALLOWED_PROP_TYPES = {
-        "file",
-        "framework",
-        "java",
-        "jndi",
-        "line",
-        "modules",
-        "os",
-        "path",
-        "user",
-        "workbench"
-    };
 
 
     /**

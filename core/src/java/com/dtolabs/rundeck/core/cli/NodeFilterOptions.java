@@ -132,8 +132,9 @@ public class NodeFilterOptions implements CLIToolOptions {
             }
         }
         if (!parsedFailedNodes) {
-            excludeMap = parseExcludeArgs(NodeSet.FILTER_KEYS, cli);
-            includeMap = parseIncludeArgs(NodeSet.FILTER_KEYS, cli);
+            final String[] keys = NodeSet.FILTER_KEYS_LIST.toArray(new String[NodeSet.FILTER_KEYS_LIST.size()]);
+            excludeMap = parseExcludeArgs(keys, cli);
+            includeMap = parseIncludeArgs(keys, cli);
         }
         if (cli.hasOption(FILTER_INCLUDE)) {
             argIncludeNodes = cli.getOptionValue(FILTER_INCLUDE);

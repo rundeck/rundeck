@@ -51,7 +51,7 @@ public class ResourceXMLConstants {
     /**
      * Common attributes of all entity xml nodes
      */
-    public static final String[] commonProps = {
+    static final String[] commonProps = {
         COMMON_DESCRIPTION,
         COMMON_TAGS
     };
@@ -66,7 +66,7 @@ public class ResourceXMLConstants {
     /**
      * attributes of "node" nodes
      */
-    public static final String[] nodeProps = {
+    static final String[] nodeProps = {
         NODE_HOSTNAME,
         NODE_OS_ARCH,
         NODE_OS_FAMILY,

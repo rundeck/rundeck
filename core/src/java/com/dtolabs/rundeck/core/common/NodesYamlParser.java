@@ -69,62 +69,64 @@ public class NodesYamlParser implements NodeFileParser {
             throw new NullPointerException("file or inputStream was not set");
         }
         final Reader reader;
-        if (null != file) {
-            try {
-                reader = new FileReader(file);
-            } catch (FileNotFoundException e) {
-                throw new NodeFileParserException(e);
-            }
-        } else {
-            reader = new InputStreamReader(inputStream);
-        }
         final Yaml yaml = new Yaml(new SafeConstructor());
         try {
-            for (final Object o : yaml.loadAll(reader)) {
-                if (o instanceof Map) {
+            if (null != file) {
+                reader = new FileReader(file);
+            } else {
+                reader = new InputStreamReader(inputStream);
+            }
+            try {
+                for (final Object o : yaml.loadAll(reader)) {
+                    if (o instanceof Map) {
 
-                    //name->{node data} map
-                    final Map<String, Map<String, Object>> map = (Map<String, Map<String, Object>>) o;
-                    for (final String nodename : map.keySet()) {
-                        final Object obj = map.get(nodename);
-                        if (null == obj) {
-                            throw new NodeFileParserException("Empty node entry for: " + nodename);
-                        }
-                        if(!(obj instanceof Map)) {
-                            throw new NodeFileParserException(
-                                "Expected map data for node entry '" + nodename + "', but saw: " + obj.getClass()
-                                    .getName());
-                        }
-                        final Map<String, Object> entry = map.get(nodename);
+                        //name->{node data} map
+                        final Map<String, Map<String, Object>> map = (Map<String, Map<String, Object>>) o;
+                        for (final String nodename : map.keySet()) {
+                            final Object obj = map.get(nodename);
+                            if (null == obj) {
+                                throw new NodeFileParserException("Empty node entry for: " + nodename);
+                            }
+                            if(!(obj instanceof Map)) {
+                                throw new NodeFileParserException(
+                                    "Expected map data for node entry '" + nodename + "', but saw: " + obj.getClass()
+                                        .getName());
+                            }
+                            final Map<String, Object> entry = map.get(nodename);
 
-                        final HashMap<String, Object> newmap = new HashMap<String, Object>(entry);
-                        newmap.put("nodename", nodename);
-                        final NodeEntryImpl iNodeEntry;
-                        try {
-                            iNodeEntry = NodeEntryFactory.createFromMap(newmap);
-                        } catch (IllegalArgumentException e) {
-                            throw new NodeFileParserException(e);
-                        }
+                            final HashMap<String, Object> newmap = new HashMap<String, Object>(entry);
+                            newmap.put("nodename", nodename);
+                            final NodeEntryImpl iNodeEntry;
+                            try {
+                                iNodeEntry = NodeEntryFactory.createFromMap(newmap);
+                            } catch (IllegalArgumentException e) {
+                                throw new NodeFileParserException(e);
+                            }
 
-                        nodes.putNode(iNodeEntry);
-                    }
-                } else if (o instanceof Collection) {
-
-                    //list of {node data} maps
-                    final Collection<Map<String, Object>> map = (Collection<Map<String, Object>>) o;
-                    for (final Map<String, Object> nodemap : map) {
-                        final NodeEntryImpl iNodeEntry;
-                        try {
-                            iNodeEntry = NodeEntryFactory.createFromMap(nodemap);
-                        } catch (IllegalArgumentException e) {
-                            throw new NodeFileParserException(e);
+                            nodes.putNode(iNodeEntry);
                         }
-                        nodes.putNode(iNodeEntry);
+                    } else if (o instanceof Collection) {
+
+                        //list of {node data} maps
+                        final Collection<Map<String, Object>> map = (Collection<Map<String, Object>>) o;
+                        for (final Map<String, Object> nodemap : map) {
+                            final NodeEntryImpl iNodeEntry;
+                            try {
+                                iNodeEntry = NodeEntryFactory.createFromMap(nodemap);
+                            } catch (IllegalArgumentException e) {
+                                throw new NodeFileParserException(e);
+                            }
+                            nodes.putNode(iNodeEntry);
+                        }
                     }
                 }
+            } finally {
+                reader.close();
             }
         } catch (NodeFileParserException e) {
             throw e;
+        } catch (FileNotFoundException e) {
+            throw new NodeFileParserException(e);
         } catch (Exception e) {
             throw new NodeFileParserException(e);
         }

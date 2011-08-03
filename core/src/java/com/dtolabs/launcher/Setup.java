@@ -49,12 +49,12 @@ public class Setup implements CLIToolLogger {
     /**
      * setup usage statement
      */
-    public static String SETUP_USAGE = "rd-setup [-v] -n nodename [-N hostname] -s serverhostname [ --key=value ]";
+    public static final String SETUP_USAGE = "rd-setup [-v] -n nodename [-N hostname] -s serverhostname [ --key=value ]";
 
     /**
       * force a rewrite of the framework configuration files. always true
       */
-     public static boolean FORCE_FLAG = true;
+    public static final boolean FORCE_FLAG = true;
     private Parameters parameters = new Parameters();
     public static final String TEMPLATE_RESOURCES_PATH = "com/dtolabs/launcher/setup/templates";
 
@@ -141,8 +141,14 @@ public class Setup implements CLIToolLogger {
         final File preferences = new File(etcdir, "preferences.properties");
         final Properties prefs = new Properties();
         if(preferences.isFile()){
+            final FileInputStream fileInputStream;
             try {
-                prefs.load(new FileInputStream(preferences));
+                fileInputStream = new FileInputStream(preferences);
+                try {
+                    prefs.load(fileInputStream);
+                } finally {
+                    fileInputStream.close();
+                }
             } catch (IOException e) {
                 throw new SetupException("Error loading file: " + preferences.getAbsolutePath(), e);
             }
@@ -182,7 +188,12 @@ public class Setup implements CLIToolLogger {
         //load framework.properties
         final Properties frameworkProps = new Properties();
         try {
-            frameworkProps.load(new FileInputStream(new File(etcdir, "framework.properties")));
+            final FileInputStream fileInputStream = new FileInputStream(new File(etcdir, "framework.properties"));
+            try {
+                frameworkProps.load(fileInputStream);
+            } finally {
+                fileInputStream.close();
+            }
         } catch (IOException e) {
             throw new SetupException("unable to load frameworkproperties", e);
         }

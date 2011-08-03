@@ -199,7 +199,7 @@ public class FrameworkProject extends FrameworkResourceParent {
      * <li>type - provider type name</li>
      * <li>props - configuration properties</li>
      */
-    public List<Map> listResourceModelConfigurations(){
+    public synchronized List<Map> listResourceModelConfigurations(){
         final ArrayList<Map> list = new ArrayList<Map>();
         int i = 1;
         boolean done = false;
@@ -591,13 +591,13 @@ public class FrameworkProject extends FrameworkResourceParent {
      * @param name
      * @return
      */
-    public String getProperty(final String name) {
+    public synchronized String getProperty(final String name) {
         checkReloadProperties();
         return lookup.getProperty(name);
     }
 
 
-    public boolean hasProperty(final String key) {
+    public synchronized boolean hasProperty(final String key) {
         checkReloadProperties();
         return lookup.hasProperty(key);
     }
@@ -643,7 +643,7 @@ public class FrameworkProject extends FrameworkResourceParent {
      * @param overwrite Overwrite existing properties file
      */
     protected void generateProjectPropertiesFile(final boolean overwrite, final Properties properties) {
-        Properties newProps = new Properties();
+        final Properties newProps = new Properties();
         newProps.setProperty("project.name", getName());
         newProps.setProperty("project.resources.file", new File(getEtcDir(), "resources.xml").getAbsolutePath());
         if(null!=properties){
@@ -653,8 +653,14 @@ public class FrameworkProject extends FrameworkResourceParent {
         if(destfile.exists() && !overwrite){
             return;
         }
+
         try {
-            newProps.store(new FileOutputStream(destfile), "Project " + getName() + " configuration, generated");
+            final FileOutputStream fileOutputStream = new FileOutputStream(destfile);
+            try {
+                newProps.store(fileOutputStream, "Project " + getName() + " configuration, generated");
+            } finally {
+                fileOutputStream.close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -66,7 +66,7 @@ public class NodeSet extends ProjectComponent implements NodesSelector {
     /**
      * names of the filter attributes used by exclude/include that are exposed to the CLI interface
      */
-    public static final String[] FILTER_KEYS = {
+    private static final String[] FILTER_KEYS = {
         HOSTNAME,
         NAME,
         TYPE,
@@ -76,6 +76,10 @@ public class NodeSet extends ProjectComponent implements NodesSelector {
         OS_ARCH,
         OS_VERSION,
     };
+    /**
+     * names of the filter attributes used by exclude/include that are exposed to the CLI interface
+     */
+    public static final List<String> FILTER_KEYS_LIST = Collections.unmodifiableList(Arrays.asList(FILTER_KEYS));
 
     public String getSingleNodeName() {
         return singleNodeName;
@@ -147,7 +151,7 @@ public class NodeSet extends ProjectComponent implements NodesSelector {
     /**
      * Collection of names of attributes used by exclude/include that are exposed to the CLI interface
      */
-    public static final Collection<String> FILTER_KEYSET = new HashSet<String>(Arrays.asList(FILTER_KEYS));
+    public static final Collection<String> FILTER_KEYSET = new HashSet<String>(FILTER_KEYS_LIST);
     private Include includes;
 
     private Exclude excludes;

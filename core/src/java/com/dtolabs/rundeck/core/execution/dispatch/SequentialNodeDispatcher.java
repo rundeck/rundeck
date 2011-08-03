@@ -123,7 +123,7 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                         failures.put(node.getNodename(), result);
                     }else{
                         failures.put(node.getNodename(),
-                            "Failed execution, result was null: " + result);
+                            "Failed execution, result was null");
                     }
                     if (!keepgoing) {
                         break;

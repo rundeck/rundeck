@@ -106,7 +106,7 @@ public class ZipUtil {
      */
     public static void extractZip(final String path, final File dest, final String prefix, final String stripPrefix,
                                   final streamCopier copier) throws IOException {
-        extractZip(path, dest, prefix, new prefixStripper(stripPrefix), copier);
+        extractZip(path, dest, prefix, new PrefixStripper(stripPrefix), copier);
     }
 
     /**
@@ -193,10 +193,10 @@ public class ZipUtil {
     /**
      * Strips a prefix from input
      */
-    public static class prefixStripper implements renamer {
+    public static class PrefixStripper implements renamer {
         String prefix;
 
-        public prefixStripper(final String prefix) {
+        public PrefixStripper(final String prefix) {
             this.prefix = prefix;
         }
 
@@ -218,7 +218,7 @@ public class ZipUtil {
     /**
      * streamCopier that simply copies the stream without modification.
      */
-    public static class copyStreamCopier implements streamCopier {
+    public static class CopyStreamCopier implements streamCopier {
         public void copyStream(final InputStream in, final OutputStream out) throws IOException {
             ZipUtil.copyStream(in, out);
         }

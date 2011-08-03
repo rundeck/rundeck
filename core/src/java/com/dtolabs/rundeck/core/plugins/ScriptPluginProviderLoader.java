@@ -435,7 +435,7 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
     }
 
     @Override
-    public boolean equals(final Object o) {
+    public boolean equals(Object o) {
         if (this == o) {
             return true;
         }
@@ -443,22 +443,12 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
             return false;
         }
 
-        final ScriptPluginProviderLoader that = (ScriptPluginProviderLoader) o;
+        ScriptPluginProviderLoader that = (ScriptPluginProviderLoader) o;
 
-        if (!cachedir.equals(that.cachedir)) {
+        if (cachedir != null ? !cachedir.equals(that.cachedir) : that.cachedir != null) {
             return false;
         }
-        if (!file.equals(that.file)) {
-            return false;
-        }
-        if (fileExpandedDir != null ? !fileExpandedDir.equals(that.fileExpandedDir) : that.fileExpandedDir != null) {
-            return false;
-        }
-        if (metadata != null ? !metadata.equals(that.metadata) : that.metadata != null) {
-            return false;
-        }
-        if (pluginProviderDefs != null ? !pluginProviderDefs.equals(that.pluginProviderDefs)
-                                       : that.pluginProviderDefs != null) {
+        if (file != null ? !file.equals(that.file) : that.file != null) {
             return false;
         }
 
@@ -467,11 +457,8 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
 
     @Override
     public int hashCode() {
-        int result = file.hashCode();
-        result = 31 * result + cachedir.hashCode();
-        result = 31 * result + (fileExpandedDir != null ? fileExpandedDir.hashCode() : 0);
-        result = 31 * result + (metadata != null ? metadata.hashCode() : 0);
-        result = 31 * result + (pluginProviderDefs != null ? pluginProviderDefs.hashCode() : 0);
+        int result = file != null ? file.hashCode() : 0;
+        result = 31 * result + (cachedir != null ? cachedir.hashCode() : 0);
         return result;
     }
 }

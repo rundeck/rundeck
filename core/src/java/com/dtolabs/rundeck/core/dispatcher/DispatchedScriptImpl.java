@@ -53,7 +53,7 @@ public class DispatchedScriptImpl implements IDispatchedScript{
         this.script = script;
         this.scriptAsStream = scriptAsStream;
         this.serverScriptFilePath = serverScriptFilePath;
-        this.args = args;
+        this.args = null != args ? args.clone() : null;
         this.loglevel = loglevel;
     }
 
@@ -98,11 +98,11 @@ public class DispatchedScriptImpl implements IDispatchedScript{
     }
 
     public String[] getArgs() {
-        return args;
+        return null != args ? args.clone() : null;
     }
 
     public void setArgs(String[] args) {
-        this.args = args;
+        this.args = null != args ? args.clone() : null;
     }
 
     public int getLoglevel() {

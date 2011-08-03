@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.utils.NodeSet;
 import org.apache.log4j.Logger;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.*;
 
 
@@ -152,7 +153,7 @@ public class Nodes implements NodeReceiver {
     /**
      * Comparator for INodeBase objects
      */
-    public static class NodeEntryComparator implements Comparator<INodeBase> {
+    public static class NodeEntryComparator implements Comparator<INodeBase>,Serializable {
         /**
          * Creates a new instance of NodeEntryComparator
          */
