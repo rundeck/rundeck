@@ -54,6 +54,7 @@ public class ResourceModelSourceService extends PluggableProviderRegistryService
         registry.put(DirectoryResourceModelSourceFactory.SERVICE_PROVIDER_TYPE,
             DirectoryResourceModelSourceFactory.class);
         registry.put(URLResourceModelSourceFactory.SERVICE_PROVIDER_TYPE, URLResourceModelSourceFactory.class);
+        registry.put(ScriptResourceModelSourceFactory.SERVICE_PROVIDER_TYPE, ScriptResourceModelSourceFactory.class);
     }
 
     public String getName() {
