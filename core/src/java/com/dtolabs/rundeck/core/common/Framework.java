@@ -45,6 +45,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.resources.FileResourceModelSource;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser;
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import org.apache.log4j.Logger;
@@ -172,6 +174,7 @@ public class Framework extends FrameworkResourceParent {
         ExecutionServiceFactory.getInstanceForFramework(this);
         WorkflowExecutionService.getInstanceForFramework(this);
         ResourceModelSourceService.getInstanceForFramework(this);
+        ResourceFormatParserService.getInstanceForFramework(this);
     }
 
     private CentralDispatcher centralDispatcherMgr;
@@ -340,6 +343,9 @@ public class Framework extends FrameworkResourceParent {
     }
     public ResourceModelSourceService getResourceModelSourceService() {
         return ResourceModelSourceService.getInstanceForFramework(this);
+    }
+    public ResourceFormatParserService getResourceFormatParserService() {
+        return ResourceFormatParserService.getInstanceForFramework(this);
     }
 
     public ServiceProviderLoader getPluginManager(){

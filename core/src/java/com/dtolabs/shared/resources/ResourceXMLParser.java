@@ -31,10 +31,7 @@ import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.apache.log4j.Logger;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -58,6 +55,7 @@ public class ResourceXMLParser {
     static Logger log4j = Logger.getLogger(ResourceXMLParser.class.getName());
 
     private File file;
+    private InputStream input;
     private ResourceXMLReceiver receiver;
     public static final String DEFAULT_ENTITY_XPATH = NODE_ENTITY_TAG ;
     private String entityXpath = DEFAULT_ENTITY_XPATH;
@@ -70,6 +68,14 @@ public class ResourceXMLParser {
     public ResourceXMLParser(final File file) {
         this.file = file;
     }
+    /**
+     * Constructor for the ResourceXMLParser
+     *
+     * @param input     source file
+     */
+    public ResourceXMLParser(final InputStream input) {
+        this.input = input;
+    }
 
 
     /**
@@ -78,29 +84,41 @@ public class ResourceXMLParser {
      * @throws ResourceXMLParserException
      * @throws FileNotFoundException
      */
-    public void parse() throws ResourceXMLParserException, FileNotFoundException {
+    public void parse() throws ResourceXMLParserException, IOException {
         final EntityResolver resolver = createEntityResolver();
         final SAXReader reader = new SAXReader(false);
         reader.setEntityResolver(resolver);
 
         try {
 
-            final Document doc = reader.read(new FileInputStream(file));
-            final EntitySet set = new EntitySet();
-            final Element root = doc.getRootElement();
+            final InputStream in;
+            if(null!=file){
+                in = new FileInputStream(file);
+            }else{
+                in = input;
+            }
+            try{
+                final Document doc = reader.read(in);
+                final EntitySet set = new EntitySet();
+                final Element root = doc.getRootElement();
 
-            final List list = root.selectNodes(entityXpath);
-            for (final Object n : list) {
-                final Node node = (Node) n;
-                final Entity ent = parseEnt(node, set);
-                if (null != receiver) {
-                    if (!receiver.resourceParsed(ent)) {
-                        break;
+                final List list = root.selectNodes(entityXpath);
+                for (final Object n : list) {
+                    final Node node = (Node) n;
+                    final Entity ent = parseEnt(node, set);
+                    if (null != receiver) {
+                        if (!receiver.resourceParsed(ent)) {
+                            break;
+                        }
                     }
                 }
-            }
-            if (null != receiver) {
-                receiver.resourcesParsed(set);
+                if (null != receiver) {
+                    receiver.resourcesParsed(set);
+                }
+            }finally{
+                if(null!=file){
+                    in.close();
+                }
             }
 
         } catch (DocumentException e) {

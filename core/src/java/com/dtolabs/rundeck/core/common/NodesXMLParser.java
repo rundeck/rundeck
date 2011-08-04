@@ -32,6 +32,8 @@ import com.dtolabs.shared.resources.ResourceXMLReceiver;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.HashMap;
@@ -45,6 +47,7 @@ import java.util.HashMap;
  */
 public class NodesXMLParser implements NodeFileParser, ResourceXMLReceiver {
     final File file;
+    final InputStream input;
     final NodeReceiver nodeReceiver;
 
     /**
@@ -55,6 +58,18 @@ public class NodesXMLParser implements NodeFileParser, ResourceXMLReceiver {
      */
     public NodesXMLParser(final File file, final NodeReceiver nodeReceiver) {
         this.file = file;
+        this.input=null;
+        this.nodeReceiver = nodeReceiver;
+    }
+    /**
+     * Create NodesXmlParser
+     *
+     * @param input         nodes file
+     * @param nodeReceiver Nodes object
+     */
+    public NodesXMLParser(final InputStream input, final NodeReceiver nodeReceiver) {
+        this.input = input;
+        this.file=null;
         this.nodeReceiver = nodeReceiver;
     }
 
@@ -62,7 +77,12 @@ public class NodesXMLParser implements NodeFileParser, ResourceXMLReceiver {
      * Parse the project.xml formatted file and fill in the nodes found
      */
     public void parse() throws NodeFileParserException {
-        final ResourceXMLParser resourceXMLParser = new ResourceXMLParser(file);
+        final ResourceXMLParser resourceXMLParser;
+        if(null!=file){
+            resourceXMLParser=new ResourceXMLParser(file);
+        }else{
+            resourceXMLParser = new ResourceXMLParser(input);
+        }
         //parse both node and settings
         resourceXMLParser.setReceiver(this);
 //        long start = System.currentTimeMillis();
@@ -70,7 +90,7 @@ public class NodesXMLParser implements NodeFileParser, ResourceXMLReceiver {
             resourceXMLParser.parse();
         } catch (ResourceXMLParserException e) {
             throw new NodeFileParserException(e);
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             throw new NodeFileParserException(e);
         }
 //        System.err.println("parse: " + (System.currentTimeMillis() - start));

@@ -80,6 +80,9 @@ public abstract class BaseProviderRegistryService<T> implements FrameworkSupport
         for (final String s : registry.keySet()) {
             providers.add(new ProviderIdent(getName(), s));
         }
+        for (final String s : instanceregistry.keySet()) {
+            providers.add(new ProviderIdent(getName(), s));
+        }
         return new ArrayList<ProviderIdent>(providers);
     }
 

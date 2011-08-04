@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.common;
 
 
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
@@ -44,11 +45,11 @@ public class NodesYamlParser implements NodeFileParser {
     /**
      * Create parser for a file, and send parsed nodes to the nodes receiver
      *
-     * @param propfile
+     * @param file
      * @param nodes
      */
-    public NodesYamlParser(final File propfile, final NodeReceiver nodes) {
-        this.file = propfile;
+    public NodesYamlParser(final File file, final NodeReceiver nodes) {
+        this.file = file;
         this.nodes = nodes;
     }
 
