@@ -157,24 +157,29 @@ abstract class HttpClientChannel implements BaseHttpClient {
     /**
      * Create new URL with query parameters
      */
-    private String constructURLQuery(String urlbase, Map query) {
+    static String constructURLQuery(String urlbase, Map query) {
         StringBuffer sb = new StringBuffer(urlbase);
-        sb.append("?");
-        for (Iterator i = query.keySet().iterator(); i.hasNext();) {
-            String key = (String) i.next();
-            Object val = query.get(key);
-            if (null == val) {
-                val = "";
-            }
-            try {
-                sb.append(URLEncoder.encode(key, "UTF-8"))
-                    .append("=")
-                    .append(URLEncoder.encode(val.toString(), "UTF-8"));
-            } catch (java.io.UnsupportedEncodingException exc) {
-                throw new RuntimeException("URLEncoder barfed retardedly on UTF-8 encoding");
-            }
-            if (i.hasNext()) {
-                sb.append("&");
+        if(null!=query){
+            sb.append("?");
+            boolean seen=false;
+            for (final Object o : query.entrySet()) {
+                if (seen) {
+                    sb.append("&");
+                }
+                seen=true;
+                Map.Entry entry = (Map.Entry) o;
+                String key = (String) entry.getKey();
+                Object val = entry.getValue();
+                if (null == val) {
+                    val = "";
+                }
+                try {
+                    sb.append(URLEncoder.encode(key, "UTF-8"))
+                        .append("=")
+                        .append(URLEncoder.encode(val.toString(), "UTF-8"));
+                } catch (java.io.UnsupportedEncodingException exc) {
+                    throw new RuntimeException(exc);
+                }
             }
         }
         return sb.toString();
@@ -191,10 +196,10 @@ abstract class HttpClientChannel implements BaseHttpClient {
      * applies request properties from map onto the url connection object
      */
     private void setHeaders(Map map) {
-        Iterator keyIter = map.keySet().iterator();
-        while (keyIter.hasNext()) {
-            String key = (String) keyIter.next();
-            String value = (String) map.get(key);
+        for (final Object o : map.entrySet()) {
+            Map.Entry entry = (Map.Entry) o;
+            String key = (String) entry.getKey();
+            String value = (String) entry.getValue();
             setRequestHeader(key, value);
         }
     }

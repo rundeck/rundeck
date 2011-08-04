@@ -100,9 +100,8 @@ class ScriptPluginNodeExecutor implements NodeExecutor {
         //create system environment variables from the data context
         final Map<String, String> envMap = DataContextUtils.generateEnvVarsFromContext(newDataContext);
         final ArrayList<String> envlist = new ArrayList<String>();
-        for (final String key : envMap.keySet()) {
-            final String envval = envMap.get(key);
-            envlist.add(key + "=" + envval);
+        for (final Map.Entry<String, String> entry : envMap.entrySet()) {
+            envlist.add(entry.getKey() + "=" + entry.getValue());
         }
         final String[] envarr = envlist.toArray(new String[envlist.size()]);
 

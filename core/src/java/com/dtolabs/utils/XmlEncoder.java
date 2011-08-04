@@ -75,14 +75,15 @@ public class XmlEncoder {
      * @return a <code>String</code> value
      */
     private static String replace(String s, String oldString, String newString) {
-        String result = ""; 
-        int length = oldString.length(); 
+        StringBuffer sb = new StringBuffer();
+        int length = oldString.length();
         int pos = s.indexOf(oldString);
-        int lastPos = 0;        while (pos >= 0) {
-            result = result + s.substring(lastPos, pos) + newString;
-            lastPos = pos + length; 
+        int lastPos = 0;
+        while (pos >= 0) {
+            sb.append(s.substring(lastPos, pos)).append(newString);
+            lastPos = pos + length;
             pos = s.indexOf(oldString, lastPos);
-        }           
-        return result + s.substring(lastPos, s.length());
+        }
+        return sb.append(s.substring(lastPos, s.length())).toString();
     }           
 }

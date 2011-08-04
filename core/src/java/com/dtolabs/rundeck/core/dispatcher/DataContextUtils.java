@@ -225,13 +225,14 @@ public class DataContextUtils {
     public static Map<String, String> flattenDataContext(final Map<String, Map<String, String>> dataContext) {
         final Map<String, String> res = new HashMap<String, String>();
         if(null!=dataContext){
-            for (final String s : dataContext.keySet()) {
-                final String p = s + ".";
-                final Map<String, String> map = dataContext.get(s);
+            for (final Map.Entry<String, Map<String, String>> entry : dataContext.entrySet()) {
+
+                final String p = entry.getKey() + ".";
+                final Map<String, String> map = entry.getValue();
                 if(null!=map){
-                    for (final String s1 : map.keySet()) {
-                        if(null!=map.get(s1)){
-                            res.put(p + s1, map.get(s1));
+                    for (final Map.Entry<String, String> entry2 : map.entrySet()) {
+                        if(null!=map.get(entry2.getKey())){
+                            res.put(p + entry2.getKey(), entry2.getValue());
                         }
                     }
                 }
@@ -251,10 +252,10 @@ public class DataContextUtils {
     public static void configureReplaceTokens(final Map<String, String> data, final ReplaceTokens replaceTokens) {
         replaceTokens.setBeginToken('@');
         replaceTokens.setEndToken('@');
-        for (final String s : data.keySet()) {
+        for (final Map.Entry<String, String> entry : data.entrySet()) {
             final ReplaceTokens.Token token = new ReplaceTokens.Token();
-            token.setKey(s);
-            token.setValue(data.get(s));
+            token.setKey(entry.getKey());
+            token.setValue(entry.getValue());
             replaceTokens.addConfiguredToken(token);
         }
     }
@@ -272,9 +273,9 @@ public class DataContextUtils {
             return null;
         }
         final HashMap<String, String> envs = new HashMap<String, String>();
-        for (final String key : options.keySet()) {
-            if (null != key && null != options.get(key)) {
-                envs.put(generateEnvVarName(prefix + "." + key), options.get(key));
+        for (final Map.Entry<String, String> entry : options.entrySet()) {
+            if (null != entry.getKey() && null != entry.getValue()) {
+                envs.put(generateEnvVarName(prefix + "." + entry.getKey()), entry.getValue());
             }
         }
         return envs;
@@ -290,11 +291,12 @@ public class DataContextUtils {
         final Map<String, String> environment = generateEnvVarsFromContext(dataContext);
 
         if (null != environment) {
-            for (final String key : environment.keySet()) {
-                if (null != key && null != environment.get(key)) {
+            for (final Map.Entry<String, String> entry : environment.entrySet()) {
+                final String key = entry.getKey();
+                if (null != key && null != entry.getValue()) {
                     final Environment.Variable env = new Environment.Variable();
                     env.setKey(key);
-                    env.setValue(environment.get(key));
+                    env.setValue(entry.getValue());
                     execTask.addEnv(env);
                 }
             }
@@ -310,11 +312,12 @@ public class DataContextUtils {
     public static void addEnvVars( final ExtSSHExec sshexecTask, final Map<String, Map<String, String>> dataContext) {
         final Map<String, String> environment = generateEnvVarsFromContext(dataContext);
         if (null != environment) {
-            for (final String key : environment.keySet()) {
-                if (null != key && null != environment.get(key)) {
+            for (final Map.Entry<String, String> entry : environment.entrySet()) {
+                final String key = entry.getKey();
+                if (null != key && null != entry.getValue()) {
                     final Environment.Variable env = new Environment.Variable();
                     env.setKey(key);
-                    env.setValue(environment.get(key));
+                    env.setValue(entry.getValue());
                     sshexecTask.addEnv(env);
                 }
             }
@@ -327,10 +330,8 @@ public class DataContextUtils {
     public static Map<String, String> generateEnvVarsFromContext(final Map<String, Map<String, String>> dataContext) {
         final Map<String, String> context = new HashMap<String, String>();
         if (null != dataContext) {
-            for (final String dataKey : dataContext.keySet()) {
-
-                final Map<String, String> data = dataContext.get(dataKey);
-                final Map<String, String> envs = generateEnvVarsFromData(data, dataKey);
+            for (final Map.Entry<String, Map<String, String>> entry : dataContext.entrySet()) {
+                final Map<String, String> envs = generateEnvVarsFromData(entry.getValue(), entry.getKey());
                 if (null != envs) {
                     context.putAll(envs);
                 }

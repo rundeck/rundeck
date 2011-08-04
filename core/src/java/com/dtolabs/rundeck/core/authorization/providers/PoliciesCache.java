@@ -73,7 +73,7 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
     }
 
     public synchronized void add(final File file) throws PoliciesParseException {
-        PolicyCollection doc = getDocument(file);
+        getDocument(file);
     }
 
     private PolicyCollection createEntry(final File file) throws PoliciesParseException {

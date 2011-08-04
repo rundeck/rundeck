@@ -22,17 +22,15 @@ import com.dtolabs.rundeck.core.common.Framework;
  * Trivial implementation of the {@link Authenticator} interface.
  */
 public class NoAuthentication implements Authenticator {
-    private Framework framework;
 
-    public NoAuthentication(Framework framework) {
-        this.framework = framework;
+    public NoAuthentication(final Framework framework) {
     }
     /**
      * Returns an instnace of NoAuthentication
      *
      * @return
      */
-    public static Authenticator getAuthenticator(Framework framework) {
+    public static Authenticator getAuthenticator(final Framework framework) {
         return new NoAuthentication(framework);
     }
 

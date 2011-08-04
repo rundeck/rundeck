@@ -205,11 +205,13 @@ public class PoliciesYaml implements PolicyCollection {
         
         @Override
         public String toString() {
-            String result = "YamlPolicy[id:" + rawInput.get("id") + ", groups:";
-            for(Object group: getGroups()) {
-                result += group.toString() + " ";
+            StringBuffer sb = new StringBuffer("YamlPolicy[id:");
+            sb.append(rawInput.get("id")).append(", groups:");
+            for (Object group : getGroups()) {
+                sb.append(group.toString()).append(" ");
             }
-            return result + "]";
+            sb.append("]");
+            return sb.toString();
         }
     }
 }

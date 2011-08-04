@@ -349,10 +349,9 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
             list.add(argNodesFile);
         }
         if (null != filterArgs) {
-            for (String key : filterArgs.keySet()) {
-                String value = filterArgs.get(key);
-                list.add(key);
-                list.add(value);
+            for (final Map.Entry<String, String> entry : filterArgs.entrySet()) {
+                list.add(entry.getKey());
+                list.add(entry.getValue());
             }
         }
         if (null != argsDeferred && argsDeferred.length > 0) {

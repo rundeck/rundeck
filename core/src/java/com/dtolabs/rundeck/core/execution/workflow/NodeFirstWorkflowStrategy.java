@@ -34,6 +34,7 @@ import com.dtolabs.rundeck.core.execution.StatusResult;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
+import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 
 import java.util.*;
 
@@ -136,7 +137,11 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
 
             nodesuccess = dispatch.isSuccess();
 
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
+            exception = e;
+        } catch (DispatcherException e) {
+            exception = e;
+        } catch (ExecutionServiceException e) {
             exception = e;
         }
         final boolean success = nodesuccess;

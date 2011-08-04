@@ -382,11 +382,11 @@ public abstract class Mapper {
      */
     public static Map mapKeys(Mapper mapper, Map map, boolean allowNull) {
         HashMap h = new HashMap();
-        for (Iterator i = map.keySet().iterator(); i.hasNext();) {
-            Object k = i.next();
-            Object o = mapper.map(k);
+        for (Object e : map.entrySet()) {
+            Map.Entry entry = (Map.Entry) e;
+            Object o = mapper.map(entry.getKey());
             if (allowNull || o != null) {
-                h.put(o, map.get(k));
+                h.put(o, entry.getValue());
             }
         }
         return h;
@@ -418,12 +418,12 @@ public abstract class Mapper {
      */
     public static Map mapValues(Mapper mapper, Map map, boolean includeNull) {
         HashMap h = new HashMap();
-        for (Iterator i = map.keySet().iterator(); i.hasNext();) {
-            Object k = i.next();
-            Object v = map.get(k);
+        for (Object e : map.keySet()) {
+            Map.Entry entry = (Map.Entry) e;
+            Object v = entry.getValue();
             Object o = mapper.map(v);
             if (includeNull || o != null) {
-                h.put(k, o);
+                h.put(entry.getKey(), o);
             }
         }
         return h;
@@ -454,9 +454,10 @@ public abstract class Mapper {
      */
     public static Map mapEntries(Mapper mapper, Map map, boolean includeNull){
         HashMap h = new HashMap();
-        for (Iterator i = map.keySet().iterator(); i.hasNext();) {
-            Object k = i.next();
-            Object v = map.get(k);
+        for (Object e : map.entrySet()) {
+            Map.Entry entry = (Map.Entry) e;
+            Object k = entry.getKey();
+            Object v = entry.getValue();
             Object nk = mapper.map(k);
             Object o = mapper.map(v);
             if (includeNull || (o != null && nk != null)) {

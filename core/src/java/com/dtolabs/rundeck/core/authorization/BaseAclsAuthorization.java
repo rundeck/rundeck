@@ -162,9 +162,9 @@ public abstract class BaseAclsAuthorization implements Authorization, LegacyAuth
         final int day = rightNow.get(Calendar.DAY_OF_WEEK) - 1;
         final int hour = rightNow.get(Calendar.HOUR_OF_DAY);
         final int minute = rightNow.get(Calendar.MINUTE);
-        final String timeandday = new TimeanddayExp(new Integer(day).toString(),
-                                                    new Integer(hour).toString(),
-                                                    new Integer(minute).toString()).toString();
+        final String timeandday = new TimeanddayExp(Integer.toString(day),
+            Integer.toString(hour),
+            Integer.toString(minute)).toString();
 
 
         // Consult with an subclass to get a list of role memberships for user
@@ -236,9 +236,9 @@ public abstract class BaseAclsAuthorization implements Authorization, LegacyAuth
         final int day = rightNow.get(Calendar.DAY_OF_WEEK) - 1;
         final int hour = rightNow.get(Calendar.HOUR_OF_DAY);
         final int minute = rightNow.get(Calendar.MINUTE);
-        final String timeandday = new TimeanddayExp(new Integer(day).toString(),
-                                                    new Integer(hour).toString(),
-                                                    new Integer(minute).toString()).toString();
+        final String timeandday = new TimeanddayExp(Integer.toString(day),
+            Integer.toString(hour),
+            Integer.toString(minute)).toString();
 
         // consult with Jndi to get a list of role memberships for user
         final String roles[];

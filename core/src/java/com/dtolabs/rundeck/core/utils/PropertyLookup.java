@@ -196,12 +196,11 @@ public class PropertyLookup implements IPropertyLookup {
      */
     protected Properties difference(final Map map) {
         final Properties difference = new Properties();
-        for (Iterator iter = map.keySet().iterator(); iter.hasNext();) {
-            final String key = (String) iter.next();
-            final String val = (String) map.get(key);
-            if (properties.containsKey(key)) {
-                continue;
-            } else {
+        for (final Object o : map.entrySet()) {
+            final Map.Entry entry = (Map.Entry) o;
+            final String key = (String) entry.getKey();
+            final String val = (String) entry.getValue();
+            if (!properties.containsKey(key)) {
                 difference.setProperty(key, val);
             }
         }

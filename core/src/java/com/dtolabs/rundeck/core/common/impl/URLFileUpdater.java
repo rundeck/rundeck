@@ -191,12 +191,15 @@ public class URLFileUpdater implements FileUpdater {
         try {
             final File srfile = new File(new java.net.URI(url.toExternalForm()));
             final FileInputStream in = new FileInputStream(srfile);
-            final FileOutputStream out = new FileOutputStream(destinationFile);
-            try {
-                Streams.copyStream(in, out);
-            } finally {
+            try{
+                final FileOutputStream out = new FileOutputStream(destinationFile);
+                try {
+                    Streams.copyStream(in, out);
+                } finally {
+                    out.close();
+                }
+            }finally {
                 in.close();
-                out.close();
             }
         } catch (URISyntaxException e) {
             throw new FileUpdaterException("Invalid URI: " + url);

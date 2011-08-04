@@ -269,4 +269,11 @@ public class NodeFilterOptions implements CLIToolOptions {
         return true;
     }
 
+    public String getArgIncludeNodes() {
+        return argIncludeNodes;
+    }
+
+    public String getArgExcludeNodes() {
+        return argExcludeNodes;
+    }
 }

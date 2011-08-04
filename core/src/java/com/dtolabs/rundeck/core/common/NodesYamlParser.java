@@ -82,19 +82,17 @@ public class NodesYamlParser implements NodeFileParser {
 
                         //name->{node data} map
                         final Map<String, Map<String, Object>> map = (Map<String, Map<String, Object>>) o;
-                        for (final String nodename : map.keySet()) {
-                            final Object obj = map.get(nodename);
-                            if (null == obj) {
+                        for (final Map.Entry<String, Map<String, Object>> entry : map.entrySet()) {
+                            final String nodename = entry.getKey();
+                            if (null == entry.getValue()) {
                                 throw new NodeFileParserException("Empty node entry for: " + nodename);
                             }
-                            if(!(obj instanceof Map)) {
+                            if(!(entry.getValue() instanceof Map)) {
                                 throw new NodeFileParserException(
-                                    "Expected map data for node entry '" + nodename + "', but saw: " + obj.getClass()
+                                    "Expected map data for node entry '" + nodename + "', but saw: " + entry.getValue().getClass()
                                         .getName());
                             }
-                            final Map<String, Object> entry = map.get(nodename);
-
-                            final HashMap<String, Object> newmap = new HashMap<String, Object>(entry);
+                            final HashMap<String, Object> newmap = new HashMap<String, Object>(entry.getValue());
                             newmap.put("nodename", nodename);
                             final NodeEntryImpl iNodeEntry;
                             try {

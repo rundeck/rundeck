@@ -38,19 +38,20 @@ public class FileUtils {
         if (!dest.exists() || (dest.exists() && overwrite)) {
             // Create channel on the source
             final FileInputStream fileInputStream = new FileInputStream(src);
-            final FileChannel srcChannel = fileInputStream.getChannel();
-            // Create channel on the destination
-            final FileOutputStream fileOutputStream = new FileOutputStream(dest);
-            final FileChannel dstChannel = fileOutputStream.getChannel();
-            // Copy file contents from source to destination
-            try {
-                dstChannel.transferFrom(srcChannel, 0, srcChannel.size());
-            } finally {
-                // Close the channels
-                srcChannel.close();
-                dstChannel.close();
+            try{
+                final FileChannel srcChannel = fileInputStream.getChannel();
+                // Create channel on the destination
+                final FileOutputStream fileOutputStream = new FileOutputStream(dest);
+                // Copy file contents from source to destination
+                try {
+                    final FileChannel dstChannel = fileOutputStream.getChannel();
+                    dstChannel.transferFrom(srcChannel, 0, srcChannel.size());
+                } finally {
+                    // Close the channels
+                    fileOutputStream.close();
+                }
+            }finally{
                 fileInputStream.close();
-                fileOutputStream.close();
             }
         }
     }
@@ -63,24 +64,27 @@ public class FileUtils {
      *
      * @throws IOException
      */
-    public static void copyFileStreams(File fromFile, File toFile) throws IOException {
+    public static void copyFileStreams(final File fromFile, final File toFile) throws IOException {
         if (!fromFile.exists()) {
             return;
         }
 
-        FileInputStream fis = new FileInputStream(fromFile);
-        FileOutputStream fos = new FileOutputStream(toFile);
-        int read = 0;
-        try {
-            byte[] buf = new byte[1024];
-            while (-1 != read) {
-                read = fis.read(buf);
-                if (read >= 0) {
-                    fos.write(buf, 0, read);
+        final FileInputStream fis = new FileInputStream(fromFile);
+        try{
+            int read = 0;
+            final FileOutputStream fos = new FileOutputStream(toFile);
+            try {
+                final byte[] buf = new byte[1024];
+                while (-1 != read) {
+                    read = fis.read(buf);
+                    if (read >= 0) {
+                        fos.write(buf, 0, read);
+                    }
                 }
+            } finally {
+                fos.close();
             }
-        } finally {
-            fos.close();
+        }finally{
             fis.close();
         }
 

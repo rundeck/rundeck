@@ -125,8 +125,8 @@ public class TimeanddayExp {
       if (comma == -1 && hyphen == -1) {
          int unit = Integer.parseInt(exp);
          if (! checkInRange(unit, min, max) ) {
-            throw new NumberFormatException(type+": " + 
-               new Integer(unit).toString() + 
+            throw new NumberFormatException(type+": " +
+                                            Integer.toString(unit) +
                " cannot be greater than "+max + " or less than "+min);
          }
       } else if (comma > -1) {
@@ -135,8 +135,8 @@ public class TimeanddayExp {
          for (int i=0; i<expList.length; i++) {
             int unit = Integer.parseInt(expList[i]);
             if (! checkInRange(unit, min, max) ) {
-               throw new NumberFormatException(type+": " + 
-                  new Integer(unit).toString() + 
+               throw new NumberFormatException(type+": " +
+                                               Integer.toString(unit) +
                   " cannot be greater than "+max + " or less than "+min);
             }
          }
@@ -149,13 +149,13 @@ public class TimeanddayExp {
          int unit0 = Integer.parseInt(expRange[0]);
          int unit1 = Integer.parseInt(expRange[1]);
          if (! checkInRange(unit0, min, max) ) {
-            throw new NumberFormatException(type+": " + 
-               new Integer(unit0).toString() + 
+            throw new NumberFormatException(type+": " +
+                                            Integer.toString(unit0) +
                " cannot be greater than "+max + " or less than "+min);
          }
          if (! checkInRange(unit1, min, max) ) {
-            throw new NumberFormatException(type+": " + 
-               new Integer(unit1).toString() + 
+            throw new NumberFormatException(type+": " +
+                                            Integer.toString(unit1) +
                " cannot be greater than "+max + " or less than "+min);
          }
       } else {
@@ -180,7 +180,7 @@ public class TimeanddayExp {
       
       if (unit < min || unit > max) {
          return false;
-         //throw new NumberFormatException(type+": " + new Integer(unit).toString() + 
+         //throw new NumberFormatException(type+": " + new Integer(unit).toString() +
             //" cannot be greater than "+max + " or less than "+min);
       }
       return true;

@@ -269,8 +269,8 @@ public class NodeSet extends ProjectComponent implements NodesSelector {
         if (null == attrSelectors || null == values) {
             return false;
         }
-        for (String key : attrSelectors.keySet()) {
-            final boolean match = matchesInput(attrSelectors.get(key), values.get(key));
+        for (final Map.Entry<String, String> entry : attrSelectors.entrySet()) {
+            final boolean match = matchesInput(entry.getValue(), values.get(entry.getKey()));
             if (!match && matchAll) {
                 return false;
             } else if (match && !matchAll) {
@@ -407,24 +407,26 @@ public class NodeSet extends ProjectComponent implements NodesSelector {
      */
     public SetSelector populateSetSelector(Map map, SetSelector setselector) {
         HashMap<String,String> attrs = new HashMap<String, String>();
-        for (Iterator iter = map.keySet().iterator(); iter.hasNext();) {
-            String key = (String) iter.next();
+        for (final Object o : map.entrySet()) {
+            final Map.Entry entry = (Map.Entry) o;
+            final String key = (String) entry.getKey();
+            final String value = (String) entry.getValue();
             if (HOSTNAME.equals(key)) {
-                setselector.setHostname((String) map.get(key));
+                setselector.setHostname(value);
             } else if (OS_FAMILY.equals(key)) {
-                setselector.setOsfamily((String) map.get(key));
+                setselector.setOsfamily(value);
             } else if (OS_ARCH.equals(key)) {
-                setselector.setOsarch((String) map.get(key));
+                setselector.setOsarch(value);
             } else if (OS_NAME.equals(key)) {
-                setselector.setOsname((String) map.get(key));
+                setselector.setOsname(value);
             } else if (OS_VERSION.equals(key)) {
-                setselector.setOsversion((String) map.get(key));
+                setselector.setOsversion(value);
             } else if (NAME.equals(key)) {
-                setselector.setName((String) map.get(key));
+                setselector.setName(value);
             } else if (TAGS.equals(key)) {
-                setselector.setTags((String) map.get(key));
-            }else {
-                attrs.put(key, (String) map.get(key));
+                setselector.setTags(value);
+            } else {
+                attrs.put(key, value);
             }
         }
         setselector.setAttributesMap(attrs);
@@ -790,7 +792,7 @@ public class NodeSet extends ProjectComponent implements NodesSelector {
 
     public class Exclude extends SetSelector {
     }
-    public class Attribute{
+    public static class Attribute{
         private String name;
         private String value;
 
@@ -817,7 +819,7 @@ public class NodeSet extends ProjectComponent implements NodesSelector {
                    '}';
         }
     }
-    public class AttributeSet{
+    public static class AttributeSet{
         private String prefix;
 
         public String getPrefix() {

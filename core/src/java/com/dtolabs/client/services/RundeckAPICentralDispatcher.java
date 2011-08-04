@@ -1173,7 +1173,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      * Defines a wrapper around a DOM object, providing error/success boolean results, as well as utility methods for
      * returning embedded success or error messages.
      */
-    private class Envelope {
+    private static class Envelope {
         private Document doc;
 
         public Envelope(final Document doc) {

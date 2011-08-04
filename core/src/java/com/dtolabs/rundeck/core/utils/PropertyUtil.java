@@ -37,15 +37,13 @@ public class PropertyUtil {
      * given Properties object, and if so, all keys and their expanded keyValues will be resolved
      * into a new Properties object that will be returned.
      */
-    public static Properties expand(Map properties) {
-        Properties expandedProperties = new Properties();
-        for (Iterator iter = properties.keySet().iterator(); iter.hasNext();) {
-            String key = (String) iter.next();
-            //System.out.println("key: " + key);
-            String keyValue = (String) properties.get(key);
-            //System.out.println("keyValue: " + keyValue);
-            String expandedKeyValue = expand(keyValue, properties);
-            //System.out.println("expandedKeyValue: " + expandedKeyValue);
+    public static Properties expand(final Map properties) {
+        final Properties expandedProperties = new Properties();
+        for (final Object o : properties.entrySet()) {
+            final Map.Entry entry = (Map.Entry) o;
+            final String key = (String) entry.getKey();
+            final String keyValue = (String) entry.getValue();
+            final String expandedKeyValue = expand(keyValue, properties);
             expandedProperties.setProperty(key, expandedKeyValue);
         }
 

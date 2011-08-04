@@ -112,7 +112,7 @@ public final class JARVerifier {
     /**
      * An Exception thrown during verification.
      */
-    public final class VerifierException extends Exception {
+    public static final class VerifierException extends Exception {
         public VerifierException(Throwable throwable) {
             super(throwable);
         }

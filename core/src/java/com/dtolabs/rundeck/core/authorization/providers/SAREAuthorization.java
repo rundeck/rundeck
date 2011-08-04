@@ -109,9 +109,9 @@ public class SAREAuthorization implements Authorization {
         
         this.decisionsMade++;
         
-        long narrowStart = System.currentTimeMillis();
+//        long narrowStart = System.currentTimeMillis();
         List<AclContext> contexts = policies.narrowContext(subject, environment);
-        long narrowDuration = System.currentTimeMillis() - narrowStart;
+        //long narrowDuration = System.currentTimeMillis() - narrowStart;
         
         if(contexts.size() <= 0) {
             return authorize(false, "No context matches subject or environment", Code.REJECTED_NO_SUBJECT_OR_ENV_FOUND, resource, subject, action, environment, System.currentTimeMillis() - start);
@@ -119,7 +119,7 @@ public class SAREAuthorization implements Authorization {
         
         ContextDecision contextDecision = null;
         
-        long contextIncludeStart = System.currentTimeMillis();
+        //long contextIncludeStart = System.currentTimeMillis();
         for(AclContext ctx : contexts) {
             contextDecision = ctx.includes(resource, action);
             if(contextDecision.granted()) {

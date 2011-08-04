@@ -96,9 +96,9 @@ public class NodeEntryFactory {
         }
 
         //populate attributes with any keys outside of nodeprops
-        for (final String key : map.keySet()) {
-            if (!ResourceXMLConstants.allPropSet.contains(key)) {
-                nodeEntry.setAttribute(key, (String) map.get(key));
+        for (final Map.Entry<String, Object> entry : newmap.entrySet()) {
+            if (!ResourceXMLConstants.allPropSet.contains(entry.getKey())) {
+                nodeEntry.setAttribute(entry.getKey(), (String) entry.getValue());
             }
         }
 

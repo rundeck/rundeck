@@ -260,8 +260,8 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
      */
     protected Map<String, Collection<String>> convertFailures(Map<Integer, Object> failedMap) {
         final Map<String, Collection<String>> failures = new HashMap<String, Collection<String>>();
-        for (final Integer integer : failedMap.keySet()) {
-            final Object o = failedMap.get(integer);
+        for (final Map.Entry<Integer, Object> entry : failedMap.entrySet()) {
+            final Object o = entry.getValue();
             if (o instanceof DispatcherResult) {
                 //indicates dispatcher returned node results
                 DispatcherResult dispatcherResult = (DispatcherResult) o;

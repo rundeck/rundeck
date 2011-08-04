@@ -69,7 +69,11 @@ public class StepFirstWorkflowStrategy extends BaseWorkflowStrategy {
             if (!workflowsuccess) {
                 throw new WorkflowFailureException("Some steps in the workflow failed: " + failedList);
             }
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
+            exception = e;
+        } catch (WorkflowStepFailureException e) {
+            exception = e;
+        } catch (WorkflowFailureException e) {
             exception = e;
         }
         final boolean success = workflowsuccess;
