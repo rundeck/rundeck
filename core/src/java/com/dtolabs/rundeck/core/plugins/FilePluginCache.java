@@ -55,7 +55,6 @@ class FilePluginCache implements PluginCache {
      * Cache a file,pluginscanner for each ident
      */
     final private HashMap<ProviderIdent, cacheItem> cache = new HashMap<ProviderIdent, cacheItem>();
-    final private HashMap<ProviderIdent, Long> expire = new HashMap<ProviderIdent, Long>();
 
     /**
      * the filecache of loaders associated with files
@@ -87,7 +86,6 @@ class FilePluginCache implements PluginCache {
             filecache.remove(cacheItem.getFirst());
         }
         cache.remove(ident);
-        expire.remove(ident);
     }
 
     /**
@@ -169,7 +167,6 @@ class FilePluginCache implements PluginCache {
             log.debug("file scanned:" + candidate);
             final cacheItem cacheItem = new cacheItem(candidate, cscanner);
             cache.put(ident, cacheItem);
-            expire.put(ident, candidate.lastModified());
             return loadFileProvider(cacheItem);
         }
         return null;

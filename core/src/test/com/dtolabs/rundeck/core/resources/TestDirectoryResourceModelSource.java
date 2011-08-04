@@ -71,7 +71,7 @@ public class TestDirectoryResourceModelSource extends AbstractBaseTest {
 
     public void testConfiguration() {
         try {
-            DirectoryResourceModelSource.Configuration config = new DirectoryResourceModelSource.Configuration((Properties) null);
+            DirectoryResourceModelSource.Configuration config = new DirectoryResourceModelSource.Configuration(null);
             fail("Should throw NPE");
         } catch (NullPointerException e) {
             e.printStackTrace();
@@ -97,7 +97,7 @@ public class TestDirectoryResourceModelSource extends AbstractBaseTest {
     }
     public void testValidation() throws Exception{
         try {
-            DirectoryResourceModelSource.Configuration config = new DirectoryResourceModelSource.Configuration((Properties) null);
+            DirectoryResourceModelSource.Configuration config = new DirectoryResourceModelSource.Configuration(null);
             fail("Should throw NPE");
         } catch (NullPointerException e) {
             e.printStackTrace();

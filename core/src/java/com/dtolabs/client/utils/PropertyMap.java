@@ -44,7 +44,7 @@ public class PropertyMap {
     * return the map of the propertyfile input
     */
    public Map toMap() {
-      return (Map)this.keyvalues;
+      return this.keyvalues;
    }
 
    /**

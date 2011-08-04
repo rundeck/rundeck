@@ -1093,16 +1093,13 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
         HashMap<String,String> map = new HashMap<String,String>();
 
         if (null != values && values.length > 0) {
-            HashSet set = new HashSet();
-            set.addAll(Arrays.asList(keys));
-            for (int i = 0; i < values.length; i++) {
-                String exclude = values[i];
+            for (String exclude : values) {
                 int i1 = exclude.indexOf("=");
                 if (i1 > 0 && i1 <= exclude.length() - 1) {
                     String k = exclude.substring(0, i1);
                     String v = exclude.substring(i1 + 1);
                     map.put(k, v);
-                } else if (i1 < 0 ) {
+                } else if (i1 < 0) {
                     map.put(keys[0], exclude);
                 }
             }

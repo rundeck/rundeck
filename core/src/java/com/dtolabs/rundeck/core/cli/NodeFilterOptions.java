@@ -198,10 +198,7 @@ public class NodeFilterOptions implements CLIToolOptions {
         HashMap<String, String> map = new HashMap<String, String>();
 
         if (null != values && values.length > 0) {
-            HashSet set = new HashSet();
-            set.addAll(Arrays.asList(keys));
-            for (int i = 0 ; i < values.length ; i++) {
-                String exclude = values[i];
+            for (String exclude : values) {
                 int i1 = exclude.indexOf("=");
                 if (i1 > 0 && i1 <= exclude.length() - 1) {
                     String k = exclude.substring(0, i1);

@@ -31,13 +31,13 @@ public class StringArrayUtil {
      * @return string array of merged set
      */
     public static String[] merge(final String[] input, final String[] list) {
-        final List v = new ArrayList(Arrays.asList(list));
-        for (int i = 0; i < input.length; i++) {
-            if ((null != input[i]) && !v.contains(input[i])) {
-                v.add(input[i]);
+        final List<String> v = new ArrayList<String>(Arrays.asList(list));
+        for (final String anInput : input) {
+            if ((null != anInput) && !v.contains(anInput)) {
+                v.add(anInput);
             }
         }
-        return (String[]) v.toArray(new String[0]);
+        return v.toArray(new String[v.size()]);
     }
     /**
      * Subtract one string array from another
@@ -48,9 +48,9 @@ public class StringArrayUtil {
      * @return string array of merged set
      */
     public static String[] subtract(final String[] input, final String[] list) {
-        final Set difference = new HashSet(Arrays.asList(list));
+        final Set<String> difference = new HashSet<String>(Arrays.asList(list));
         difference.removeAll(Arrays.asList(input));
-        return (String[]) difference.toArray(new String[difference.size()]);
+        return difference.toArray(new String[difference.size()]);
     }
 
     /**
@@ -94,22 +94,20 @@ public class StringArrayUtil {
      * @return the set of all items not in both lists
      */
     public static String[] difference(final String[] list1, final String[] list2) {
-        HashSet set = new HashSet();
-        HashSet set1 = new HashSet(Arrays.asList(list1));
-        HashSet set2 = new HashSet(Arrays.asList(list2));
-        for (int i = 0; i < list1.length; i++) {
-            String s = list1[i];
-            if(!set2.contains(s)){
+        HashSet<String> set = new HashSet<String>();
+        HashSet<String> set1 = new HashSet<String>(Arrays.asList(list1));
+        HashSet<String> set2 = new HashSet<String>(Arrays.asList(list2));
+        for (final String s : list1) {
+            if (!set2.contains(s)) {
                 set.add(s);
             }
         }
-        for (int i = 0; i < list2.length; i++) {
-            String s = list2[i];
+        for (final String s : list2) {
             if (!set1.contains(s)) {
                 set.add(s);
             }
         }
-        return (String[]) set.toArray(new String[0]);
+        return set.toArray(new String[set.size()]);
     }
 
     /**
@@ -119,7 +117,7 @@ public class StringArrayUtil {
      * @return
      */
     public static boolean contains(final String[] list, final String value){
-        HashSet set = new HashSet(Arrays.asList(list));
+        HashSet<String> set = new HashSet<String>(Arrays.asList(list));
         return set.contains(value);
     }
 

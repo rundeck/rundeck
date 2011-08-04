@@ -257,7 +257,7 @@ public class PoliciesXml {
             
             Node parent = command.getParentNode();
             List<Node> hierarchy = new ArrayList<Node>();
-            while(parent.getNodeName() != "policies") {
+            while(!"policies".equals(parent.getNodeName())) {
                 hierarchy.add(parent);
                 parent = parent.getParentNode();
             }

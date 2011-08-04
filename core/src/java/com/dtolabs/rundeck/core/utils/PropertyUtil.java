@@ -164,7 +164,7 @@ public class PropertyUtil {
                     if (expVal == null) {
                         //throw new Exception("token expTok " + expTok + " is null");
                         //System.out.println("token expTok \"" + expTok + "\" is null");
-                        sb.append("${" + expTok + "}");
+                        sb.append("${").append(expTok).append("}");
                     }else{
                         sb.append(expVal);
                     }

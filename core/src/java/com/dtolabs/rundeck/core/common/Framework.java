@@ -426,7 +426,7 @@ public class Framework extends FrameworkResourceParent {
      * @return a Framework instance
      */
     public static Framework getInstance(final String rdeck_base_dir) {
-        return getInstance(rdeck_base_dir, (Authenticator) null, (LegacyAuthorization) null);
+        return getInstance(rdeck_base_dir, null, null);
     }
 
     /**
@@ -464,7 +464,7 @@ public class Framework extends FrameworkResourceParent {
      */
     public static Framework getInstance() {
         logger.debug("creating new Framework using info from com.dtolabs.rundeck.core.Constants");
-        return Framework.getInstance((String) null, (String) null);
+        return Framework.getInstance(null, null);
     }
 
     /**

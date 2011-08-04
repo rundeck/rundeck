@@ -89,7 +89,7 @@ public class TestURLResourceModelSource extends AbstractBaseTest {
     public void testConfigureProperties() throws Exception {
         final URLResourceModelSource provider = new URLResourceModelSource(getFrameworkInstance());
         try {
-            provider.configure((Properties) null);
+            provider.configure(null);
             fail("Should throw NPE");
         } catch (NullPointerException e) {
             e.printStackTrace();

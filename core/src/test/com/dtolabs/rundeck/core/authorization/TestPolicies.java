@@ -98,6 +98,6 @@ public class TestPolicies extends TestCase {
     public void testListAllRoles() throws Exception {
         List<String> results = policies.listAllRoles();
         assertEquals("Results did not return the correct number of policies.", 10, results.size());
-        results.containsAll(Arrays.asList(new String[]{"admin","foo","admin-environment","ou=Foo,dn=example,dn=com"}));
+        results.containsAll(Arrays.asList("admin","foo","admin-environment","ou=Foo,dn=example,dn=com"));
     }
 }

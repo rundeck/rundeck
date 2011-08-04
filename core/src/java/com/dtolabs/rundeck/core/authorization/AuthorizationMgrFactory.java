@@ -66,7 +66,7 @@ public class AuthorizationMgrFactory {
         try {
             final Class cls = Class.forName(classname);
             final Constructor method = cls.getDeclaredConstructor(new Class[]{Framework.class, File.class});
-            authorizationImpl = (LegacyAuthorization) method.newInstance(new Object[]{framework, baseDir});
+            authorizationImpl = (LegacyAuthorization) method.newInstance(framework, baseDir);
         } catch (InstantiationException e) {
             throw new AuthorizationException("error instantiating authorization class: " + classname, e);
         } catch (IllegalAccessException e) {

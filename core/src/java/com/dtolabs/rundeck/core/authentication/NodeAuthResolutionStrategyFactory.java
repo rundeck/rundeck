@@ -46,7 +46,7 @@ public class NodeAuthResolutionStrategyFactory {
         try {
             final Class cls = Class.forName(classname);
             final Method method = cls.getDeclaredMethod("create", new Class[]{Framework.class});
-            strategy = (INodeAuthResolutionStrategy) method.invoke(null, new Object[]{framework});
+            strategy = (INodeAuthResolutionStrategy) method.invoke(null, framework);
         } catch (ClassNotFoundException e) {
             throw new CoreException("error instantiating node authentication class: '" + classname+"'", e);
         } catch (IllegalAccessException e) {

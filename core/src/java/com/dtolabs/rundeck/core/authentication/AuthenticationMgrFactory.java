@@ -55,7 +55,7 @@ public class AuthenticationMgrFactory {
         try {
             final Class cls = Class.forName(classname);
             final Method method = cls.getDeclaredMethod("getAuthenticator", new Class[]{Framework.class});
-            auth = (Authenticator) method.invoke(null, new Object[]{framework});
+            auth = (Authenticator) method.invoke(null, framework);
         } catch (ClassNotFoundException e) {
             throw new AuthorizationException("error instantiating authorization class: " + classname, e);
         } catch (IllegalAccessException e) {
