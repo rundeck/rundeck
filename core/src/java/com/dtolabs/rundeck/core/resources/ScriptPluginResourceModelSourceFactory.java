@@ -53,13 +53,11 @@ class ScriptPluginResourceModelSourceFactory implements ResourceModelSourceFacto
     final Framework framework;
     Description providerDescription;
     final String format;
-    final Nodes.Format resformat;
 
     public ScriptPluginResourceModelSourceFactory(final ScriptPluginProvider provider, final Framework framework) {
         this.provider = provider;
         this.framework = framework;
         format = provider.getMetadata().get(RESOURCE_FORMAT_PROP);
-        resformat = Nodes.Format.valueOf(format);
     }
 
 
@@ -109,13 +107,7 @@ class ScriptPluginResourceModelSourceFactory implements ResourceModelSourceFacto
         if (!provider.getMetadata().containsKey(RESOURCE_FORMAT_PROP)) {
             throw new PluginException(RESOURCE_FORMAT_PROP + " script plugin property is required");
         }else{
-
             final String name = provider.getMetadata().get(RESOURCE_FORMAT_PROP);
-            try {
-                Nodes.Format.valueOf(name);
-            } catch (IllegalArgumentException e) {
-                throw new PluginException("Invalid format: " + name);
-            }
         }
     }
 

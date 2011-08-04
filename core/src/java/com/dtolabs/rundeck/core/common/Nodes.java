@@ -26,6 +26,7 @@ import java.util.*;
 
 /**
  * Parses the $RDECK_BASE/etc/nodes.properties file and provides various lookup methods.
+ * @deprecated
  */
 public class Nodes implements NodeReceiver {
     static Logger logger = Logger.getLogger(Nodes.class.getName());
@@ -60,6 +61,7 @@ public class Nodes implements NodeReceiver {
 
     /**
      * Parsing format options
+     * @deprecated
      */
     public static enum Format{
         resourcexml,

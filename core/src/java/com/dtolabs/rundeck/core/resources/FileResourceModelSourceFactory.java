@@ -27,7 +27,6 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
-import com.dtolabs.rundeck.core.plugins.configuration.Description;
 
 import java.util.Properties;
 
@@ -51,7 +50,8 @@ public class FileResourceModelSourceFactory implements ResourceModelSourceFactor
         return fileResourceModelSource;
     }
 
-    public Description getDescription() {
-        return FileResourceModelSource.DESCRIPTION;
+    public com.dtolabs.rundeck.core.plugins.configuration.Description getDescription() {
+        return new FileResourceModelSource.Description(
+            framework.getResourceFormatParserService().listFormats());
     }
 }

@@ -45,7 +45,6 @@ class ScriptPluginResourceModelSource implements ResourceModelSource, Configurab
     final private Framework framework;
     Properties configuration;
     private String format;
-    final Nodes.Format fileformat;
     private String project;
     Map<String, Map<String, String>> configDataContext;
 
@@ -53,13 +52,12 @@ class ScriptPluginResourceModelSource implements ResourceModelSource, Configurab
         this.provider = provider;
         this.framework = framework;
         this.format = provider.getMetadata().get(ScriptPluginResourceModelSourceFactory.RESOURCE_FORMAT_PROP);
-        fileformat = Nodes.Format.valueOf(format);
     }
 
     public INodeSet getNodes() throws ResourceModelSourceException {
         return ScriptResourceUtil.executeScript(provider.getScriptFile(), provider.getScriptArgs(),
             provider.getScriptInterpreter(),
-            provider.getName(), configDataContext, fileformat, framework, project, logger);
+            provider.getName(), configDataContext, format, framework, project, logger);
     }
 
     public void configure(final Properties configuration) throws ConfigurationException {

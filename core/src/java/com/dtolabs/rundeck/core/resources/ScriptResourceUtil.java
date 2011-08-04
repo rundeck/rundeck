@@ -39,7 +39,7 @@ import java.util.Map;
 class ScriptResourceUtil {
     public static INodeSet executeScript(final File scriptfile, final String scriptargs, final String scriptinterpreter,
                                          final String pluginname, final Map<String, Map<String, String>> dataContext,
-                                         final Nodes.Format fileformat, final Framework framework,
+                                         final String fileformat, final Framework framework,
                                          final String project, final Logger logger) throws ResourceModelSourceException {
 
         /*

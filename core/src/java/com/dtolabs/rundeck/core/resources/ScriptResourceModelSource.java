@@ -40,7 +40,7 @@ import java.util.*;
 public class ScriptResourceModelSource implements Configurable, ResourceModelSource {
     static Logger logger = Logger.getLogger(ScriptResourceModelSource.class.getName());
 
-    static ArrayList<Property> properties = new ArrayList<Property>();
+    static ArrayList<Property> scriptResourceProperties = new ArrayList<Property>();
 
     public static final String CONFIG_FILE = "file";
 
@@ -51,28 +51,37 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
     public static final String CONFIG_FORMAT = "format";
 
     static {
-        properties.add(PropertyUtil.string(CONFIG_FILE, "Script File Path", "Path to script file to execute", true,
+        scriptResourceProperties.add(PropertyUtil.string(CONFIG_FILE, "Script File Path",
+            "Path to script file to execute", true,
             null,
             new Property.Validator() {
                 public boolean isValid(String value) throws ValidationException {
                     return new File(value).isFile();
                 }
             }));
-        properties.add(PropertyUtil.string(CONFIG_INTERPRETER, "Interpreter", "Command interpreter to use (optional)",
+        scriptResourceProperties.add(PropertyUtil.string(CONFIG_INTERPRETER, "Interpreter",
+            "Command interpreter to use (optional)",
             false,
             null));
-        properties.add(PropertyUtil.string(CONFIG_ARGS, "Arguments", "Arguments to pass to the script (optional)",
+        scriptResourceProperties.add(PropertyUtil.string(CONFIG_ARGS, "Arguments",
+            "Arguments to pass to the script (optional)",
             false,
             null));
-        final ArrayList<String> formats = new ArrayList<String>();
-        for (final Nodes.Format format : Nodes.Format.values()) {
-            formats.add(format.toString());
-        }
-        properties.add(PropertyUtil.select(CONFIG_FORMAT, "Resource Format",
-            "Resources document format that the script will produce", true, null, formats));
+
     }
 
-    static final Description DESCRIPTION = new Description() {
+    static final class Description implements com.dtolabs.rundeck.core.plugins.configuration.Description {
+        final List<Property> properties;
+
+        Description(List<String> formats) {
+            final ArrayList<Property> properties1 = new ArrayList<Property>(scriptResourceProperties);
+            properties1.add(PropertyUtil.freeSelect(CONFIG_FORMAT, "Resource Format",
+                "Resources document format that the script will produce",
+                false, null, formats));
+            properties = Collections.unmodifiableList(properties1);
+
+        }
+
         public String getName() {
             return "script";
         }
@@ -86,12 +95,11 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
         }
 
         public List<Property> getProperties() {
-
             return properties;
         }
-    };
+    }
 
-    private Nodes.Format format;
+    private String format;
     private File scriptFile;
     private String interpreter;
     private String args;
@@ -122,11 +130,8 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
         if (!configuration.containsKey(CONFIG_FORMAT)) {
             throw new ConfigurationException(CONFIG_FORMAT + " is required");
         }
-        try {
-            format = Nodes.Format.valueOf(configuration.getProperty(CONFIG_FORMAT));
-        } catch (IllegalArgumentException e) {
-            throw new ConfigurationException("Unknown format: " + configuration.getProperty(CONFIG_FORMAT));
-        }
+        format = configuration.getProperty(CONFIG_FORMAT);
+        
         configDataContext = new HashMap<String, Map<String, String>>();
         final HashMap<String, String> configdata = new HashMap<String, String>();
         configdata.put("project", project);

@@ -25,11 +25,15 @@ package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser;
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserException;
+import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException;
 import com.dtolabs.shared.resources.ResourceXMLGenerator;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
@@ -50,24 +54,31 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
     }
 
 
-    static ArrayList<Property> properties = new ArrayList<Property>();
+    static ArrayList<Property> fileResourceProperties = new ArrayList<Property>();
 
     static {
-        properties.add(PropertyUtil.string(Configuration.FILE, "File Path", "Path of the file", true, null));
-        final ArrayList<String> formats = new ArrayList<String>();
-        for (final Nodes.Format format : Nodes.Format.values()) {
-            formats.add(format.toString());
-        }
-        properties.add(PropertyUtil.select(Configuration.FORMAT, "Format", "Format of the file", false, null, formats));
-        properties.add(PropertyUtil.bool(Configuration.INCLUDE_SERVER_NODE, "Include Server Node",
+        fileResourceProperties.add(PropertyUtil.string(Configuration.FILE, "File Path", "Path of the file", true,
+            null));
+        fileResourceProperties.add(PropertyUtil.bool(Configuration.INCLUDE_SERVER_NODE, "Include Server Node",
             "Automatically include the server node?", true, "false"));
-        properties.add(PropertyUtil.bool(Configuration.GENERATE_FILE_AUTOMATICALLY, "Generate",
+        fileResourceProperties.add(PropertyUtil.bool(Configuration.GENERATE_FILE_AUTOMATICALLY, "Generate",
             "Automatically generate the file it is missing?", true, "false"));
-        properties.add(PropertyUtil.bool(Configuration.REQUIRE_FILE_EXISTS, "Require File Exists",
+        fileResourceProperties.add(PropertyUtil.bool(Configuration.REQUIRE_FILE_EXISTS, "Require File Exists",
             "Require that the file exists", true, "false"));
 
     }
-    public static final Description DESCRIPTION=new Description() {
+
+    static final class Description implements com.dtolabs.rundeck.core.plugins.configuration.Description {
+        final List<Property> properties;
+
+        Description(List<String> formats) {
+            final ArrayList<Property> properties1 = new ArrayList<Property>(fileResourceProperties);
+            properties1.add(PropertyUtil.freeSelect(Configuration.FORMAT, "Format", "Format of the file",
+                false, null, formats));
+            properties = Collections.unmodifiableList(properties1);
+
+        }
+
         public String getName() {
             return "file";
         }
@@ -84,7 +95,7 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
 
             return properties;
         }
-    };
+    }
 
     public static class Configuration {
         public static final String GENERATE_FILE_AUTOMATICALLY = "generateFileAutomatically";
@@ -93,7 +104,7 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
         public static final String PROJECT = "project";
         public static final String FORMAT = "format";
         public static final String REQUIRE_FILE_EXISTS = "requireFileExists";
-        Nodes.Format format;
+        String format;
         File nodesFile;
         String project;
         boolean generateFileAutomatically;
@@ -130,19 +141,9 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
             return new Configuration();
         }
 
-        public Configuration format(final Nodes.Format format) {
-            this.format = format;
-            configuration.put(FORMAT, format.toString());
-            return this;
-        }
-
         public Configuration format(final String format) {
-            try {
-                this.format = Nodes.Format.valueOf(format);
-                configuration.put(FORMAT, format);
-            } catch (IllegalArgumentException e) {
-
-            }
+            this.format = format;
+            configuration.put(FORMAT, format);
             return this;
         }
 
@@ -195,16 +196,7 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
                 nodesFile = new File(configuration.getProperty(FILE));
             }
             if (configuration.containsKey(FORMAT)) {
-                try {
-                    format = Nodes.Format.valueOf(configuration.getProperty(FORMAT));
-                } catch (IllegalArgumentException e) {
-                }
-            } else if (nodesFile != null) {
-                if (nodesFile.getName().endsWith(".xml")) {
-                    format = Nodes.Format.resourcexml;
-                } else if (nodesFile.getName().endsWith(".yaml")) {
-                    format = Nodes.Format.resourceyaml;
-                }
+                format = configuration.getProperty(FORMAT);
             }
             if (configuration.containsKey(GENERATE_FILE_AUTOMATICALLY)) {
                 generateFileAutomatically = Boolean.parseBoolean(configuration.getProperty(
@@ -226,15 +218,12 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
             if (null == nodesFile) {
                 throw new ConfigurationException("file is required");
             }
-            if (configuration.containsKey(FORMAT)) {
-                try {
-                    Nodes.Format.valueOf(configuration.getProperty(FORMAT));
-                } catch (IllegalArgumentException e) {
-                    throw new ConfigurationException("format is not recognized: " + configuration.getProperty(FORMAT));
+            if(generateFileAutomatically) {
+                if (!"resourcexml".equals(format) && !"resourceyaml".equals(format) && !nodesFile.getName().endsWith(
+                    ".xml") && !nodesFile.getName().endsWith(".yaml")) {
+                    throw new ConfigurationException(
+                        "generateFileAutomatically is only supported with formats: resourcexml and resourceyaml");
                 }
-            } else if (null == format) {
-                throw new ConfigurationException(
-                    "Unable to determine file format for file: " + nodesFile.getAbsolutePath());
             }
         }
 
@@ -277,7 +266,7 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
      *
      * @return an instance of {@link Nodes}
      */
-    public synchronized INodeSet getNodes(final File nodesFile, final Nodes.Format format) throws
+    public synchronized INodeSet getNodes(final File nodesFile, final String format) throws
         ResourceModelSourceException {
         final Long modtime = nodesFile.lastModified();
         if (0 == nodeSet.getNodes().size() || !modtime.equals(lastModTime)) {
@@ -288,13 +277,14 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
         return nodeSet;
     }
 
-    private void generateResourcesFile(final File resfile, final Nodes.Format format) {
+    private void generateResourcesFile(final File resfile, final String format) {
         final NodeEntryImpl node = framework.createFrameworkNode();
         node.setFrameworkProject(configuration.project);
         final NodesFileGenerator generator;
-        if (format == Nodes.Format.resourcexml) {
+        //TODO: support generic generator interface
+        if ("resourcexml".equals(format) || resfile.getName().endsWith(".xml")) {
             generator = new ResourceXMLGenerator(resfile);
-        } else if (format == Nodes.Format.resourceyaml) {
+        } else if ("resourceyaml".equals(format) || resfile.getName().endsWith(".yaml")) {
             generator = new NodesYamlGenerator(resfile);
         } else {
 //            getLogger().error("Unable to generate resources file. Unrecognized extension for dest file: " + resfile
@@ -315,7 +305,7 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
         //getLogger().debug("generated resources file: " + resfile.getAbsolutePath());
     }
 
-    private void loadNodes(final File nodesFile, final Nodes.Format format) throws ResourceModelSourceException {
+    private void loadNodes(final File nodesFile, final String format) throws ResourceModelSourceException {
         if (!nodesFile.isFile() && configuration.generateFileAutomatically) {
             generateResourcesFile(nodesFile, format);
         } else if (configuration.includeServerNode) {
@@ -323,10 +313,10 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
             nodeSet.putNode(node);
         }
         if (nodesFile.isFile()) {
-            final NodeFileParser parser = createParser(nodesFile, format);
+            final ResourceFormatParser parser = createParser(nodesFile, format);
             try {
-                parser.parse();
-            } catch (NodeFileParserException e) {
+                nodeSet.putNodes(parser.parseDocument(nodesFile));
+            } catch (ResourceFormatParserException e) {
                 throw new ResourceModelSourceException(e);
             }
         } else if (configuration.requireFileExists) {
@@ -337,18 +327,20 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
     /**
      * Create a NodeFileParser given the project and the source file, using the predetermined format
      *
-     * @param propfile the nodes resource file
+     * @param file the nodes resource file
      *
      * @return a new parser based on the determined format
      */
-    protected NodeFileParser createParser(final File propfile, final Nodes.Format format) {
-        switch (format) {
-            case resourcexml:
-                return new NodesXMLParser(propfile, nodeSet);
-            case resourceyaml:
-                return new NodesYamlParser(propfile, nodeSet);
-            default:
-                throw new IllegalArgumentException("Nodes resource file format not valid: " + format);
+    protected ResourceFormatParser createParser(final File file, final String format) throws
+        ResourceModelSourceException {
+        try {
+            if (null != format) {
+                return framework.getResourceFormatParserService().getParserForFormat(format);
+            } else {
+                return framework.getResourceFormatParserService().getParserForFileExtension(file);
+            }
+        } catch (UnsupportedFormatException e) {
+            throw new ResourceModelSourceException(e);
         }
     }
 
@@ -381,7 +373,7 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
     /**
      * Utility method to directly parse the nodes from a file
      */
-    public static INodeSet parseFile(final File file, final Nodes.Format format, final Framework framework,
+    public static INodeSet parseFile(final File file, final String format, final Framework framework,
                                      final String project) throws
         ResourceModelSourceException,
         ConfigurationException {

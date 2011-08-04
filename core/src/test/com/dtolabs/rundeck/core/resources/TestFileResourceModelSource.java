@@ -122,24 +122,14 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
         props.setProperty("file", "src/test/com/dtolabs/rundeck/core/common/test-nodes1.xml");
         props.setProperty("format", "xml");
         config = new FileResourceModelSource.Configuration(props);
-        //invalid format
+        //should succeed
         try {
             config.validate();
-            fail("should not succeed");
         } catch (ConfigurationException e) {
-            assertEquals("format is not recognized: xml", e.getMessage());
+            fail("unexpected failure");
         }
 
-        props.setProperty("format", "yaml");
-        config = new FileResourceModelSource.Configuration(props);
-        //invalid format
-        try {
-            config.validate();
-            fail("should not succeed");
-        } catch (ConfigurationException e) {
-            assertEquals("format is not recognized: yaml", e.getMessage());
-        }
-
+        
         props.setProperty("format", "resourcexml");
         config = new FileResourceModelSource.Configuration(props);
         //validation should succeed
@@ -191,7 +181,7 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
         assertNotNull(config.project);
         assertEquals(PROJ_NAME, config.project);
         assertNotNull(config.format);
-        assertEquals(Nodes.Format.resourcexml, config.format);
+        assertEquals("resourcexml", config.format);
         assertNull(config.nodesFile);
         assertFalse(config.generateFileAutomatically);
         assertFalse(config.includeServerNode);
@@ -201,7 +191,7 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
         assertNotNull(config.project);
         assertEquals(PROJ_NAME, config.project);
         assertNotNull(config.format);
-        assertEquals(Nodes.Format.resourceyaml, config.format);
+        assertEquals("resourceyaml", config.format);
         assertNull(config.nodesFile);
         assertFalse(config.generateFileAutomatically);
         assertFalse(config.includeServerNode);
@@ -211,7 +201,7 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
         assertNotNull(config.project);
         assertEquals(PROJ_NAME, config.project);
         assertNotNull(config.format);
-        assertEquals(Nodes.Format.resourceyaml, config.format);
+        assertEquals("resourceyaml", config.format);
         assertNotNull(config.nodesFile);
         assertEquals(new File("src/test/com/dtolabs/rundeck/core/common/test-nodes1.xml"), config.nodesFile);
         assertFalse(config.generateFileAutomatically);
@@ -222,7 +212,7 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
         assertNotNull(config.project);
         assertEquals(PROJ_NAME, config.project);
         assertNotNull(config.format);
-        assertEquals(Nodes.Format.resourceyaml, config.format);
+        assertEquals("resourceyaml", config.format);
         assertNotNull(config.nodesFile);
         assertEquals(new File("src/test/com/dtolabs/rundeck/core/common/test-nodes1.xml"), config.nodesFile);
         assertTrue(config.generateFileAutomatically);
@@ -234,7 +224,7 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
         assertNotNull(config.project);
         assertEquals(PROJ_NAME, config.project);
         assertNotNull(config.format);
-        assertEquals(Nodes.Format.resourceyaml, config.format);
+        assertEquals("resourceyaml", config.format);
         assertNotNull(config.nodesFile);
         assertEquals(new File("src/test/com/dtolabs/rundeck/core/common/test-nodes1.xml"), config.nodesFile);
         assertFalse(config.generateFileAutomatically);
@@ -246,7 +236,7 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
         assertNotNull(config.project);
         assertEquals(PROJ_NAME, config.project);
         assertNotNull(config.format);
-        assertEquals(Nodes.Format.resourceyaml, config.format);
+        assertEquals("resourceyaml", config.format);
         assertNotNull(config.nodesFile);
         assertEquals(new File("src/test/com/dtolabs/rundeck/core/common/test-nodes1.xml"), config.nodesFile);
         assertFalse(config.generateFileAutomatically);
@@ -257,7 +247,7 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
         assertNotNull(config.project);
         assertEquals(PROJ_NAME, config.project);
         assertNotNull(config.format);
-        assertEquals(Nodes.Format.resourceyaml, config.format);
+        assertEquals("resourceyaml", config.format);
         assertNotNull(config.nodesFile);
         assertEquals(new File("src/test/com/dtolabs/rundeck/core/common/test-nodes1.xml"), config.nodesFile);
         assertFalse(config.generateFileAutomatically);
@@ -267,14 +257,11 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
         props.remove("format");
         props.setProperty("file", "src/test/com/dtolabs/rundeck/core/common/test-nodes1.xml");
         config = new FileResourceModelSource.Configuration(props);
-        assertNotNull(config.format);
-        assertEquals(Nodes.Format.resourcexml, config.format);
+        assertNull(config.format);
 
         props.setProperty("file", "src/test/com/dtolabs/rundeck/core/common/test-nodes1.yaml");
         config = new FileResourceModelSource.Configuration(props);
-        assertNotNull(config.format);
-        assertEquals(Nodes.Format.resourceyaml, config.format);
-
+        assertNull(config.format);
 
     }
 
@@ -347,23 +334,95 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
         assertFalse(testfile.exists());
     }
     public void testGetNodesGenerateFileAutomatically() throws Exception {
-        File testfile = new File(frameworkProject.getEtcDir(), "testresources2.yaml");
-        assertFalse(testfile.exists());
 
-        Properties props = new Properties();
-        props.setProperty("project", PROJ_NAME);
-        props.setProperty("file", testfile.getAbsolutePath());
-        props.setProperty("generateFileAutomatically", "true");
-        props.setProperty("includeServerNode", "true");
-        final FileResourceModelSource fileNodesProvider = new FileResourceModelSource(getFrameworkInstance());
-        fileNodesProvider.configure(props);
+        //explicit format resourceyaml
+        {
+            File testfile = new File(frameworkProject.getEtcDir(), "testresources2.blah");
+            assertFalse(testfile.exists());
 
-        final INodeSet nodes = fileNodesProvider.getNodes();
-        assertNotNull(nodes);
-        assertEquals(1, nodes.getNodes().size());
-        assertNotNull(nodes.getNode(getFrameworkInstance().getFrameworkNodeName()));
-        assertTrue(testfile.exists());
-        testfile.delete();
+            Properties props = new Properties();
+
+            props.setProperty("format", "resourceyaml");
+
+            props.setProperty("project", PROJ_NAME);
+            props.setProperty("file", testfile.getAbsolutePath());
+            props.setProperty("generateFileAutomatically", "true");
+            props.setProperty("includeServerNode", "true");
+            final FileResourceModelSource fileNodesProvider = new FileResourceModelSource(getFrameworkInstance());
+            fileNodesProvider.configure(props);
+
+            final INodeSet nodes = fileNodesProvider.getNodes();
+            assertNotNull(nodes);
+            assertEquals(1, nodes.getNodes().size());
+            assertNotNull(nodes.getNode(getFrameworkInstance().getFrameworkNodeName()));
+            assertTrue(testfile.exists());
+            testfile.delete();
+        }
+
+        //explicit format resourcexml
+        {
+            File testfile2 = new File(frameworkProject.getEtcDir(), "testresources2.blah");
+            assertFalse(testfile2.exists());
+
+            Properties props2 = new Properties();
+
+            props2.setProperty("format", "resourcexml");
+
+            props2.setProperty("project", PROJ_NAME);
+            props2.setProperty("file", testfile2.getAbsolutePath());
+            props2.setProperty("generateFileAutomatically", "true");
+            props2.setProperty("includeServerNode", "true");
+            final FileResourceModelSource provider2 = new FileResourceModelSource(getFrameworkInstance());
+            provider2.configure(props2);
+
+            final INodeSet nodes2 = provider2.getNodes();
+            assertNotNull(nodes2);
+            assertEquals(1, nodes2.getNodes().size());
+            assertNotNull(nodes2.getNode(getFrameworkInstance().getFrameworkNodeName()));
+            assertTrue(testfile2.exists());
+            testfile2.delete();
+        }
+
+        //implicit from filename
+        {
+            File testfile2 = new File(frameworkProject.getEtcDir(), "testresources2.yaml");
+            assertFalse(testfile2.exists());
+
+            Properties props2 = new Properties();
+            props2.setProperty("project", PROJ_NAME);
+            props2.setProperty("file", testfile2.getAbsolutePath());
+            props2.setProperty("generateFileAutomatically", "true");
+            props2.setProperty("includeServerNode", "true");
+            final FileResourceModelSource provider2 = new FileResourceModelSource(getFrameworkInstance());
+            provider2.configure(props2);
+
+            final INodeSet nodes2 = provider2.getNodes();
+            assertNotNull(nodes2);
+            assertEquals(1, nodes2.getNodes().size());
+            assertNotNull(nodes2.getNode(getFrameworkInstance().getFrameworkNodeName()));
+            assertTrue(testfile2.exists());
+            testfile2.delete();
+        }
+        //implicit from filename
+        {
+            File testfile2 = new File(frameworkProject.getEtcDir(), "testresources2.xml");
+            assertFalse(testfile2.exists());
+
+            Properties props2 = new Properties();
+            props2.setProperty("project", PROJ_NAME);
+            props2.setProperty("file", testfile2.getAbsolutePath());
+            props2.setProperty("generateFileAutomatically", "true");
+            props2.setProperty("includeServerNode", "true");
+            final FileResourceModelSource provider2 = new FileResourceModelSource(getFrameworkInstance());
+            provider2.configure(props2);
+
+            final INodeSet nodes2 = provider2.getNodes();
+            assertNotNull(nodes2);
+            assertEquals(1, nodes2.getNodes().size());
+            assertNotNull(nodes2.getNode(getFrameworkInstance().getFrameworkNodeName()));
+            assertTrue(testfile2.exists());
+            testfile2.delete();
+        }
     }
 
     public void testParseFile() throws Exception {

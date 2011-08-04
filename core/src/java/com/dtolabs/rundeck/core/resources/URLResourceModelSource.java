@@ -27,11 +27,16 @@ import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdaterBuilder;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser;
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserException;
+import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
@@ -51,7 +56,6 @@ public class URLResourceModelSource implements ResourceModelSource, Configurable
     private File destinationTempFile;
     private File destinationCacheData;
     private String tempFileName;
-    private Nodes.Format contentFormat;
     URLFileUpdater.httpClientInteraction interaction;
 
     public URLResourceModelSource(final Framework framework) {
@@ -68,8 +72,8 @@ public class URLResourceModelSource implements ResourceModelSource, Configurable
             public boolean isValid(String value) throws ValidationException {
                 final URL url;
 
-                try{
-                    url= new URL(value);
+                try {
+                    url = new URL(value);
                 } catch (MalformedURLException e) {
                     throw new ValidationException(e.getMessage());
                 }
@@ -79,12 +83,14 @@ public class URLResourceModelSource implements ResourceModelSource, Configurable
                 return true;
             }
         }));
-        properties.add(PropertyUtil.integer(Configuration.TIMEOUT, "Timeout", "Timeout (in seconds) before requests fail. 0 means no timeout.", false, "30"));
+        properties.add(PropertyUtil.integer(Configuration.TIMEOUT, "Timeout",
+            "Timeout (in seconds) before requests fail. 0 means no timeout.", false, "30"));
         properties.add(PropertyUtil.bool(Configuration.CACHE, "Cache results",
             "Refresh results only if modified?", true, "true"));
 
     }
-    public static final Description DESCRIPTION = new Description(){
+
+    public static final Description DESCRIPTION = new Description() {
         public String getName() {
             return "url";
         }
@@ -102,6 +108,7 @@ public class URLResourceModelSource implements ResourceModelSource, Configurable
             return properties;
         }
     };
+
     public static class Configuration {
         public static final String URL = "url";
         public static final String PROJECT = "project";
@@ -228,14 +235,17 @@ public class URLResourceModelSource implements ResourceModelSource, Configurable
         final FrameworkProject frameworkProject = framework.getFrameworkProjectMgr().getFrameworkProject(
             this.configuration.project);
 
-        tempFileName =  hashURL(this.configuration.nodesUrl.toExternalForm()) + ".temp";
-        destinationTempFile = new File(frameworkProject.getBaseDir(), "var/urlResourceModelSourceCache/" + tempFileName);
+        tempFileName = hashURL(this.configuration.nodesUrl.toExternalForm()) + ".temp";
+        destinationTempFile = new File(frameworkProject.getBaseDir(),
+            "var/urlResourceModelSourceCache/" + tempFileName);
         destinationCacheData = new File(frameworkProject.getBaseDir(),
             "var/urlResourceModelSourceCache/" + tempFileName + ".cache.properties");
-        if(!destinationTempFile.getParentFile().isDirectory() && !destinationTempFile.getParentFile().mkdirs()){
-            logger.warn("Unable to create destination directory: "+ destinationTempFile.getParentFile().getAbsolutePath());
+        if (!destinationTempFile.getParentFile().isDirectory() && !destinationTempFile.getParentFile().mkdirs()) {
+            logger.warn(
+                "Unable to create destination directory: " + destinationTempFile.getParentFile().getAbsolutePath());
         }
     }
+
     private String hashURL(final String url) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-1");
@@ -278,45 +288,30 @@ public class URLResourceModelSource implements ResourceModelSource, Configurable
                 logger.error("Error updating from URL: " + configuration.nodesUrl + ": " + e.getMessage(), e);
             }
         }
-        final Nodes.Format format;
-        if ("file".equalsIgnoreCase(configuration.nodesUrl.getProtocol())) {
-            final String urlStr = configuration.nodesUrl.toExternalForm();
-            format = urlStr.endsWith(".xml") ? Nodes.Format.resourcexml : urlStr.endsWith(".yaml")
-                                                                          || urlStr.endsWith(".yml")
-                                                                          ? Nodes.Format.resourceyaml : null;
-        } else {
-            format = determineFormat(null != updater ? updater.getContentType() : null);
+        final ResourceFormatParser parser;
+        try {
+            if ("file".equalsIgnoreCase(configuration.nodesUrl.getProtocol())) {
+                parser = framework.getResourceFormatParserService().getParserForFileExtension(new File(
+                    configuration.nodesUrl.toURI()));
+                logger.debug("Determined URL content format from file name: " + configuration.nodesUrl);
+            } else {
+                String mimetype = null != updater ? updater.getContentType() : null;
+                parser = framework.getResourceFormatParserService().getParserForMIMEType(mimetype);
+                logger.debug("Determined URL content format from MIME type: " + mimetype);
+            }
+        } catch (URISyntaxException e) {
+            throw new ResourceModelSourceException(e);
+        } catch (UnsupportedFormatException e) {
+            throw new ResourceModelSourceException(e);
         }
-        if (null != format) {
-            contentFormat = format;
-        }
-        //parse file
-        if (null == contentFormat) {
-            throw new ResourceModelSourceException("Unable to determine content format");
-        }
-        logger.debug("Determined URL content format: " + contentFormat);
         if (destinationTempFile.isFile() && destinationTempFile.length() > 0) {
             try {
-                return FileResourceModelSource.parseFile(destinationTempFile, contentFormat, framework,
-                    configuration.project);
-            } catch (ConfigurationException e) {
+                return parser.parseDocument(destinationTempFile);
+            } catch (ResourceFormatParserException e) {
                 throw new ResourceModelSourceException(e);
             }
         } else {
             return new NodeSetImpl();
         }
     }
-
-
-    private Nodes.Format determineFormat(final String contentType) {
-        if (null != contentType) {
-            if (contentType.endsWith("/xml")) {
-                return Nodes.Format.resourcexml;
-            } else if (contentType.endsWith("/yaml") || contentType.endsWith("/yml")) {
-                return Nodes.Format.resourceyaml;
-            }
-        }
-        return null;
-    }
-
 }

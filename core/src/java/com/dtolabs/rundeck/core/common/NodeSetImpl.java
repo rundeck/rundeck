@@ -58,4 +58,12 @@ public class NodeSetImpl implements INodeSet, NodeReceiver{
         return nodes.keySet();
     }
 
+    /**
+     * Add all nodes from a node set ot this node set
+     */
+    public void putNodes(final INodeSet set){
+        for (final INodeEntry iNodeEntry : set.getNodes()) {
+            putNode(iNodeEntry);
+        }
+    }
 }

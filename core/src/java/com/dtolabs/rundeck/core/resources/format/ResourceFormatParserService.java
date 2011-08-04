@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.resources.format;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
+import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
 import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService;
 import com.dtolabs.rundeck.core.plugins.PluginException;
@@ -119,8 +120,12 @@ public class ResourceFormatParserService extends PluggableProviderRegistryServic
      *
      * @throws ExecutionServiceException if no provider for the format exists
      */
-    public ResourceFormatParser getParserForFormat(final String format) throws ExecutionServiceException {
-        return providerOfType(format);
+    public ResourceFormatParser getParserForFormat(final String format) throws UnsupportedFormatException {
+        try {
+            return providerOfType(format);
+        } catch (ExecutionServiceException e) {
+            throw new UnsupportedFormatException("No provider available to parse format: " + format,e);
+        }
     }
 
     /**
