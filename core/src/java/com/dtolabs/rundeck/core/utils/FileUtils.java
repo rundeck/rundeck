@@ -126,7 +126,9 @@ public class FileUtils {
                 FileLock lock = channel.lock();
                 try{
                         FileUtils.copyFileStreams(file, newDestFile);
-                        newDestFile.setLastModified(file.lastModified());
+                        if(!newDestFile.setLastModified(file.lastModified())){
+                            //ignore
+                        }
                         String osName = System.getProperty("os.name");
                         if (!file.renameTo(newDestFile)) {
                             if (osName.toLowerCase().indexOf("windows") > -1 && newDestFile.exists()) {
@@ -179,8 +181,10 @@ public class FileUtils {
             throws IOException {
 
         if (sourceLocation.isDirectory()) {
-            if (!targetLocation.exists()) {
-                targetLocation.mkdir();
+            if (!targetLocation.isDirectory()) {
+                if(!targetLocation.mkdirs()) {
+                    throw new CoreException("Failed to create target directory: " + targetLocation);
+                }
             }
 
             String[] children = sourceLocation.list();

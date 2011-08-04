@@ -232,7 +232,9 @@ public class URLResourceModelSource implements ResourceModelSource, Configurable
         destinationTempFile = new File(frameworkProject.getBaseDir(), "var/urlResourceModelSourceCache/" + tempFileName);
         destinationCacheData = new File(frameworkProject.getBaseDir(),
             "var/urlResourceModelSourceCache/" + tempFileName + ".cache.properties");
-        destinationTempFile.getParentFile().mkdirs();
+        if(!destinationTempFile.getParentFile().isDirectory() && !destinationTempFile.getParentFile().mkdirs()){
+            logger.warn("Unable to create destination directory: "+ destinationTempFile.getParentFile().getAbsolutePath());
+        }
     }
     private String hashURL(final String url) {
         try {

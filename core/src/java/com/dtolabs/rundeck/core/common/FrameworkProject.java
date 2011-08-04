@@ -85,9 +85,6 @@ public class FrameworkProject extends FrameworkResourceParent {
     public FrameworkProject(final String name, final File basedir, final IFrameworkProjectMgr resourceMgr, final Properties properties) {
         super(name, basedir, resourceMgr);
         projectResourceMgr = resourceMgr;
-        if(!getBaseDir().exists()){
-            getBaseDir().mkdirs();
-        }
         resourcesBaseDir = new File(getBaseDir(), "resources");
         etcDir = new File(getBaseDir(), ETC_DIR_NAME);
         if (!etcDir.exists()) {
@@ -570,7 +567,9 @@ public class FrameworkProject extends FrameworkResourceParent {
         }
 
         updateNodesResourceFile(resfile);
-        resfile.delete();
+        if(!resfile.delete()) {
+            getLogger().warn("failed to remove temp file: " + resfile);
+        }
         getLogger().debug("generated resources file: " + resfile.getAbsolutePath());
     }
 

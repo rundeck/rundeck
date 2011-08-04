@@ -48,7 +48,9 @@ public abstract class FrameworkResourceParent extends FrameworkResource implemen
      */
     public IFrameworkResource createChild(final String name) {
         FrameworkResource resource = new FrameworkResource(name, new File(getBaseDir(), name), this);
-        resource.getBaseDir().mkdirs();
+        if(!resource.getBaseDir().mkdirs()) {
+            logger.warn("Unable to create basedir for resource: " + resource.getBaseDir());
+        }
         return resource;
     }
 

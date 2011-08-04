@@ -281,7 +281,9 @@ public class URLFileUpdater implements FileUpdater {
                 Streams.copyStream(interaction.getResponseBodyAsStream(), new FileOutputStream(destinationFile));
                 if (destinationFile.length() < 1) {
                     //file was empty!
-                    destinationFile.delete();
+                    if(!destinationFile.delete()) {
+                        logger.warn("Failed to remove empty file: " + destinationFile.getAbsolutePath());
+                    }
                 }
                 if (useCaching) {
                     cacheResponseInfo(interaction, cacheMetadata);
