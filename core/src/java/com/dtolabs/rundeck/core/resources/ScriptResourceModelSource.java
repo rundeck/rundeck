@@ -25,7 +25,6 @@ package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
-import com.dtolabs.rundeck.core.common.Nodes;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import org.apache.log4j.Logger;
 

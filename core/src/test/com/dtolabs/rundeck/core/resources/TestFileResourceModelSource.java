@@ -26,7 +26,6 @@ package com.dtolabs.rundeck.core.resources;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeSet;
-import com.dtolabs.rundeck.core.common.Nodes;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
@@ -401,7 +400,6 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
             assertEquals(1, nodes2.getNodes().size());
             assertNotNull(nodes2.getNode(getFrameworkInstance().getFrameworkNodeName()));
             assertTrue(testfile2.exists());
-            testfile2.delete();
         }
         //implicit from filename
         {
@@ -421,7 +419,6 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
             assertEquals(1, nodes2.getNodes().size());
             assertNotNull(nodes2.getNode(getFrameworkInstance().getFrameworkNodeName()));
             assertTrue(testfile2.exists());
-            testfile2.delete();
         }
     }
 

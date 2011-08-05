@@ -19,6 +19,9 @@ package com.dtolabs.rundeck.core.common;
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.resources.*;
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator;
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorException;
+import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import com.dtolabs.shared.resources.ResourceXMLGenerator;
 
@@ -447,7 +450,7 @@ public class FrameworkProject extends FrameworkResourceParent {
      *  3. project.properties no regexes are set, and framework.properites allows URL.
      */
     boolean isAllowedProviderURL(final String providerURL) {
-
+        checkReloadProperties();
         //whitelist the configured providerURL
         if (hasProperty(PROJECT_RESOURCES_URL_PROPERTY) && getProperty(PROJECT_RESOURCES_URL_PROPERTY).equals(
             providerURL)) {
@@ -525,44 +528,52 @@ public class FrameworkProject extends FrameworkResourceParent {
      * @param source the source nodes
      * @throws UpdateUtils.UpdateException if an error occurs while trying to update the resources file or generate
      * nodes
-     *
+     * @deprecated in favor of INodeSet interface
      */
     public void updateNodesResourceFile(final Nodes source) throws UpdateUtils.UpdateException {
-
-        final Nodes.Format format;
+        final NodeSetImpl nodeset = new NodeSetImpl();
+        nodeset.putNodes(source.listNodes());
+        updateNodesResourceFile(nodeset);
+    }
+    /**
+     * Update the resources file given an input Nodes set
+     *
+     * @param source the source nodes
+     * @throws UpdateUtils.UpdateException if an error occurs while trying to update the resources file or generate
+     * nodes
+     *
+     */
+    public void updateNodesResourceFile(final INodeSet nodeset) throws UpdateUtils.UpdateException {
         final String nodesResourceFilePath = getNodesResourceFilePath();
-        if (nodesResourceFilePath.endsWith(".xml")) {
-            format = Nodes.Format.resourcexml;
-        } else if (nodesResourceFilePath.endsWith(".yaml")) {
-            format = Nodes.Format.resourceyaml;
-        } else {
+        final ResourceFormatGenerator generator;
+        File destfile = new File(getNodesResourceFilePath());
+        try {
+            generator =
+                getFrameworkProjectMgr().getFramework().getResourceFormatGeneratorService()
+                    .getGeneratorForFileExtension(destfile);
+        } catch (UnsupportedFormatException e) {
             throw new UpdateUtils.UpdateException(
-                "Unable to determine file format for file: " + nodesResourceFilePath);
+                "Unable to determine file format for file: " + nodesResourceFilePath,e);
         }
         File resfile = null;
         try {
-            resfile = File.createTempFile("resource-temp", ".nodes");
+            resfile = File.createTempFile("resource-temp", destfile.getName());
             resfile.deleteOnExit();
         } catch (IOException e) {
             throw new UpdateUtils.UpdateException("Unable to create temp file: " + e.getMessage(), e);
         }
         //serialize nodes and replace the nodes resource file
-        final NodesFileGenerator generator;
-        if (Nodes.Format.resourcexml==format) {
-            generator = new ResourceXMLGenerator(resfile);
-        } else if (Nodes.Format.resourceyaml==format) {
-            generator = new NodesYamlGenerator(resfile);
-        } else {
-            getLogger().error("Unable to generate resources file. Unrecognized extension for dest file: " + resfile
-                .getAbsolutePath());
-            return;
-        }
-        generator.addNodes(source.listNodes());
+
         try {
-            generator.generate();
+            final FileOutputStream stream = new FileOutputStream(resfile);
+            try {
+                generator.generateDocument(nodeset, stream);
+            } finally {
+                stream.close();
+            }
         } catch (IOException e) {
             throw new UpdateUtils.UpdateException("Unable to generate resources file: " + e.getMessage(), e);
-        } catch (NodesGeneratorException e) {
+        } catch (ResourceFormatGeneratorException e) {
             throw new UpdateUtils.UpdateException("Unable to generate resources file: " + e.getMessage(), e);
         }
 

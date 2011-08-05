@@ -32,17 +32,21 @@ import java.util.TreeMap;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class NodeSetImpl implements INodeSet, NodeReceiver{
-    TreeMap<String,INodeEntry> nodes;
+public class NodeSetImpl implements INodeSet, NodeReceiver {
+    TreeMap<String, INodeEntry> nodes;
 
     public NodeSetImpl() {
         this(new HashMap<String, INodeEntry>());
     }
+
     public NodeSetImpl(final HashMap<String, INodeEntry> nodes) {
         this.nodes = new TreeMap<String, INodeEntry>(nodes);
     }
 
     public void putNode(INodeEntry node) {
+        if (null == node.getNodename()) {
+            throw new IllegalArgumentException("nodename is null");
+        }
         nodes.put(node.getNodename(), node);
     }
 
@@ -59,11 +63,25 @@ public class NodeSetImpl implements INodeSet, NodeReceiver{
     }
 
     /**
-     * Add all nodes from a node set ot this node set
+     * Add all nodes from a node set to this node set
      */
-    public void putNodes(final INodeSet set){
-        for (final INodeEntry iNodeEntry : set.getNodes()) {
+    public void putNodes(final INodeSet set) {
+        putNodes(set.getNodes());
+    }
+
+    /**
+     * Add all nodes from a collection to this node set
+     */
+    public void putNodes(final Collection<INodeEntry> set) {
+        for (final INodeEntry iNodeEntry : set) {
             putNode(iNodeEntry);
         }
+    }
+
+    @Override
+    public String toString() {
+        return "NodeSetImpl{" +
+               "nodes=" + nodes +
+               '}';
     }
 }

@@ -177,18 +177,13 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
         return getNodename().equals(node.getNodename());
     }
 
+    @Override
     public String toString() {
         return "NodeEntryImpl{" +
-               "nodename=" + getNodename() +
-               ",hostname=" + getHostname() +
-               ",osName=" + getOsName() +
-               ",osArch=" + getOsArch() +
-               ",osFamily=" + getOsFamily() +
-               ",osVersion=" + getOsVersion() +
-               ",username=" + getUsername() +
-               ",tags=" + tags +
-               ",attributes=" + attributes +
-               "}";
+               "tags=" + tags +
+               ", attributes=" + attributes +
+               ", project='" + project + '\'' +
+               '}';
     }
 
     /**
@@ -384,4 +379,5 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
     public int hashCode() {
         return super.hashCode();
     }
+
 }

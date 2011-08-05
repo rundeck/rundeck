@@ -45,6 +45,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.resources.FileResourceModelSource;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator;
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
@@ -175,6 +177,7 @@ public class Framework extends FrameworkResourceParent {
         WorkflowExecutionService.getInstanceForFramework(this);
         ResourceModelSourceService.getInstanceForFramework(this);
         ResourceFormatParserService.getInstanceForFramework(this);
+        ResourceFormatGeneratorService.getInstanceForFramework(this);
     }
 
     private CentralDispatcher centralDispatcherMgr;
@@ -346,6 +349,10 @@ public class Framework extends FrameworkResourceParent {
     }
     public ResourceFormatParserService getResourceFormatParserService() {
         return ResourceFormatParserService.getInstanceForFramework(this);
+    }
+
+    public ResourceFormatGeneratorService getResourceFormatGeneratorService() {
+        return ResourceFormatGeneratorService.getInstanceForFramework(this);
     }
 
     public ServiceProviderLoader getPluginManager(){

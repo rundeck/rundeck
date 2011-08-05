@@ -25,12 +25,11 @@ package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
-import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser;
-import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserException;
-import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException;
+import com.dtolabs.rundeck.core.resources.format.*;
 import com.dtolabs.shared.resources.ResourceXMLGenerator;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -218,13 +217,6 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
             if (null == nodesFile) {
                 throw new ConfigurationException("file is required");
             }
-            if(generateFileAutomatically) {
-                if (!"resourcexml".equals(format) && !"resourceyaml".equals(format) && !nodesFile.getName().endsWith(
-                    ".xml") && !nodesFile.getName().endsWith(".yaml")) {
-                    throw new ConfigurationException(
-                        "generateFileAutomatically is only supported with formats: resourcexml and resourceyaml");
-                }
-            }
         }
 
         @Override
@@ -277,32 +269,40 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
         return nodeSet;
     }
 
-    private void generateResourcesFile(final File resfile, final String format) {
+    private void generateResourcesFile(final File resfile, final String format) throws ResourceModelSourceException {
         final NodeEntryImpl node = framework.createFrameworkNode();
         node.setFrameworkProject(configuration.project);
-        final NodesFileGenerator generator;
-        //TODO: support generic generator interface
-        if ("resourcexml".equals(format) || resfile.getName().endsWith(".xml")) {
-            generator = new ResourceXMLGenerator(resfile);
-        } else if ("resourceyaml".equals(format) || resfile.getName().endsWith(".yaml")) {
-            generator = new NodesYamlGenerator(resfile);
-        } else {
-//            getLogger().error("Unable to generate resources file. Unrecognized extension for dest file: " + resfile
-//                .getAbsolutePath());
-            return;
-        }
-        if (configuration.includeServerNode) {
-            generator.addNode(node);
+        final ResourceFormatGenerator generator;
+        if (null!=format) {
             try {
-                generator.generate();
-            } catch (IOException e) {
-                //   getLogger().error("Unable to generate resources file: " + e.getMessage(), e);
-            } catch (NodesGeneratorException e) {
-                // getLogger().error("Unable to generate resources file: " + e.getMessage(), e);
+                generator = framework.getResourceFormatGeneratorService().getGeneratorForFormat(format);
+            } catch (UnsupportedFormatException e) {
+                throw new ResourceModelSourceException(e);
+            }
+        } else {
+            try {
+                generator = framework.getResourceFormatGeneratorService().getGeneratorForFileExtension(resfile);
+            } catch (UnsupportedFormatException e) {
+                throw new ResourceModelSourceException(e);
             }
         }
+        if (configuration.includeServerNode) {
+            NodeSetImpl nodes = new NodeSetImpl();
+            nodes.putNode(node);
 
-        //getLogger().debug("generated resources file: " + resfile.getAbsolutePath());
+            try {
+                final FileOutputStream stream = new FileOutputStream(resfile);
+                try {
+                    generator.generateDocument(nodes, stream);
+                } finally {
+                    stream.close();
+                }
+            } catch (IOException e) {
+                throw new ResourceModelSourceException(e);
+            } catch (ResourceFormatGeneratorException e) {
+                throw new ResourceModelSourceException(e);
+            }
+        }
     }
 
     private void loadNodes(final File nodesFile, final String format) throws ResourceModelSourceException {
@@ -315,7 +315,10 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
         if (nodesFile.isFile()) {
             final ResourceFormatParser parser = createParser(nodesFile, format);
             try {
-                nodeSet.putNodes(parser.parseDocument(nodesFile));
+                final INodeSet set = parser.parseDocument(nodesFile);
+                if(null!=set){
+                    nodeSet.putNodes(set);
+                }
             } catch (ResourceFormatParserException e) {
                 throw new ResourceModelSourceException(e);
             }
