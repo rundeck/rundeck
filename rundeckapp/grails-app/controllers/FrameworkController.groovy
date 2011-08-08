@@ -14,6 +14,8 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.Nodes
 import com.dtolabs.rundeck.core.common.NodesFileGenerator
 import com.dtolabs.rundeck.core.common.NodesYamlGenerator
+import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserException
 
 class FrameworkController  {
     FrameworkService frameworkService
@@ -802,31 +804,38 @@ class FrameworkController  {
         if(request.post){
             final contentType = request.contentType
             //try to parse loaded data
-            final Nodes.Format format
+            def extension
             if(contentType?.endsWith("/xml")){
-                format=Nodes.Format.resourcexml
+                extension="xml"
             }else if(contentType?.endsWith('/yaml')|| contentType?.endsWith('/x-yaml')){
-                format = Nodes.Format.resourceyaml
+                extension="yaml"
             }else {
+                //TODO: enable support of any mime type via parser service
                 flash.error = "Unexpected content type: ${contentType}"
                 return new ApiController().error()
             }
             //write content to temp file
-            File tempfile=File.createTempFile("post-input","data")
+            File tempfile=File.createTempFile("post-input","data.${extension}")
             tempfile.deleteOnExit()
             Streams.copyStream(request.getInputStream(),new FileOutputStream(tempfile))
 
 
-            final nodes = Nodes.create(tempfile, format)
-            if(!nodes.isValid()){
+            def INodeSet nodeset
+            try {
+                final parser = framework.getResourceFormatParserService().getParserForMIMEType(contentType)
+                nodeset=parser.parseDocument(tempfile)
+            } catch (UnsupportedFormatException e) {
                 //invalid data
-                flash.error = "Invalid data: ${nodes.getParserException().getMessage()}"
+                flash.error = "Unsupported format: ${e.getMessage()}"
+                return new ApiController().error()
+            }catch (ResourceFormatParserException e){
+                flash.error = "Invalid data: ${e.getMessage()}"
                 return new ApiController().error()
             }
 
             //finally update resources file with the new nodes data
             try {
-                project.updateNodesResourceFile nodes
+                project.updateNodesResourceFile nodeset
                 didsucceed=true
             } catch (Exception e) {
                 log.error("Failed updating nodes file: "+e.getMessage())
