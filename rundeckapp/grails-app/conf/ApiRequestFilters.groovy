@@ -27,8 +27,9 @@ public class ApiRequestFilters {
 
     public static final int V1 = 1
     public static final int V2 = 2
+    public static final int V3 = 3
     public final static int API_EARLIEST_VERSION=V1
-    public final static int API_CURRENT_VERSION=V2
+    public final static int API_CURRENT_VERSION=V3
     public final static int API_MIN_VERSION=API_EARLIEST_VERSION
     public final static int API_MAX_VERSION=API_CURRENT_VERSION
 

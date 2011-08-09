@@ -16,6 +16,7 @@ import com.dtolabs.rundeck.core.common.NodesFileGenerator
 import com.dtolabs.rundeck.core.common.NodesYamlGenerator
 import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserException
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorException
 
 class FrameworkController  {
     FrameworkService frameworkService
@@ -804,34 +805,43 @@ class FrameworkController  {
         if(request.post){
             final contentType = request.contentType
             //try to parse loaded data
-            def extension
-            if(contentType?.endsWith("/xml")){
-                extension="xml"
-            }else if(contentType?.endsWith('/yaml')|| contentType?.endsWith('/x-yaml')){
-                extension="yaml"
-            }else {
-                //TODO: enable support of any mime type via parser service
-                flash.error = "Unexpected content type: ${contentType}"
-                return new ApiController().error()
+            if(!(contentType?.endsWith("/xml")||contentType?.endsWith('/yaml')|| contentType?.endsWith('/x-yaml'))){
+                if (!new ApiController().requireVersion(ApiRequestFilters.V3)) {
+                    //require api V3 for any other content type
+                    return
+                }
             }
-            //write content to temp file
-            File tempfile=File.createTempFile("post-input","data.${extension}")
-            tempfile.deleteOnExit()
-            Streams.copyStream(request.getInputStream(),new FileOutputStream(tempfile))
 
-
-            def INodeSet nodeset
+            final parser
             try {
-                final parser = framework.getResourceFormatParserService().getParserForMIMEType(contentType)
-                nodeset=parser.parseDocument(tempfile)
+                parser = framework.getResourceFormatParserService().getParserForMIMEType(contentType)
             } catch (UnsupportedFormatException e) {
                 //invalid data
                 flash.error = "Unsupported format: ${e.getMessage()}"
                 return new ApiController().error()
+            }
+
+            //write content to temp file
+            File tempfile=File.createTempFile("post-input","data")
+            tempfile.deleteOnExit()
+            final stream = new FileOutputStream(tempfile)
+            try {
+                com.dtolabs.utils.Streams.copyStream(request.getInputStream(), stream)
+            } finally {
+                stream.close()
+            }
+
+            def INodeSet nodeset
+            try {
+                nodeset=parser.parseDocument(tempfile)
             }catch (ResourceFormatParserException e){
                 flash.error = "Invalid data: ${e.getMessage()}"
                 return new ApiController().error()
+            }catch (Exception e){
+                flash.error = "Error parsing data: ${e.getMessage()}"
+                return new ApiController().error()
             }
+            tempfile.delete()
 
             //finally update resources file with the new nodes data
             try {
@@ -953,12 +963,12 @@ class FrameworkController  {
         NodeSet nset = new NodeSet()
         nset.setSingleNodeName(params.name)
         def pject=frameworkService.getFrameworkProject(params.project,framework)
-        final Collection nodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nset,pject.getNodeSet()).nodes
-        if(!nodes || nodes.size()<1 ){
+        final INodeSet nodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nset,pject.getNodeSet())
+        if(!nodes || nodes.nodes.size()<1 ){
             flash.error=g.message(code:'api.error.item.doesnotexist',args:['Node Name',params.name])
             return chain(controller:'api',action:'error')
         }
-        return apiRenderNodeResult(nodes)
+        return apiRenderNodeResult(nodes, framework, params.project)
     }
     /**
      * API: /api/2/project/NAME/resources, version 2
@@ -983,6 +993,12 @@ class FrameworkController  {
             flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
             return chain(controller:'api',action:'error')
         }
+        if (request.format && !(request.format in ['xml','yaml'])) {
+            //expected another content type
+            if (!new ApiController().requireVersion(ApiRequestFilters.V3)) {
+                return
+            }
+        }
 
         //convert api parameters to node filter parameters
         def filters=extractApiNodeFilterParams(params)
@@ -998,26 +1014,53 @@ class FrameworkController  {
         }
         def pject=frameworkService.getFrameworkProject(params.project,framework)
 //        final Collection nodes = pject.getNodes().filterNodes(ExecutionService.filtersAsNodeSet(query))
-        final Collection nodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(ExecutionService.filtersAsNodeSet(query), pject.getNodeSet()).nodes
-        return apiRenderNodeResult(nodes)
+        final INodeSet nodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(ExecutionService.filtersAsNodeSet(query), pject.getNodeSet())
+        return apiRenderNodeResult(nodes,framework,params.project)
     }
-    def apiRenderNodeResult={nodes->
+    def apiRenderNodeResult={INodeSet nodes, Framework framework, String project->
 
+        if (!(request.format in ['xml', 'yaml'])) {
+            System.err.println("request.format: ${request.format}, params.format: ${params.format}");
+            //expected another content type
+            if (!new ApiController().requireVersion(ApiRequestFilters.V3)) {
+                return
+            }
+            //render specified format
+            final FrameworkProject frameworkProject = framework.getFrameworkProjectMgr().getFrameworkProject(project)
+            final service = framework.getResourceFormatGeneratorService()
+            ByteArrayOutputStream baos = new ByteArrayOutputStream()
+            final generator
+            try {
+                generator = service.getGeneratorForFormat(params.format?:'resourcexml')
+                generator.generateDocument(nodes,baos)
+            } catch (UnsupportedFormatException e) {
+                flash.error = g.message(code: 'api.error.resource.format.unsupported', args: [params.format])
+                return new ApiController().error()
+            }catch (ResourceFormatGeneratorException e){
+                flash.error = g.message(code: 'api.error.resource.format.generator', args: [e.message])
+                return new ApiController().error()
+            }catch (IOException e){
+                flash.error = g.message(code: 'api.error.resource.format.generator', args: [e.message])
+                return new ApiController().error()
+            }
+            final types = generator.getMIMETypes() as List
+            return render(contentType: types[0],encoding:"UTF-8",text:baos.toString())
+        }
         withFormat{
             xml{
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 final NodesFileGenerator generator = new ResourceXMLGenerator(baos)
-                nodes.each {INodeEntry node->
+                nodes.nodes.each {INodeEntry node->
                     generator.addNode(node)
                 }
                 generator.generate()
                 return render(contentType:"text/xml",encoding:"UTF-8",text:baos.toString())
             }
             yaml{
-                if(nodes.size()>0){
+                if(nodes.nodes.size()>0){
                     StringWriter sw = new StringWriter()
                     final NodesFileGenerator generator = new NodesYamlGenerator(sw)
-                    nodes.each {INodeEntry node->
+                    nodes.nodes.each {INodeEntry node->
                         generator.addNode(node)
                     }
                     generator.generate()
