@@ -45,12 +45,12 @@ abstract class DirPluginScanner implements PluginScanner {
     final FileCache<ProviderLoader> filecache;
     long lastScanAllCheckTime = -1;
     HashSet<String> scanned = new HashSet<String>();
-    long scaninterval ;
+    long scanintervalMs;
 
-    protected DirPluginScanner(final File extdir, final FileCache<ProviderLoader> filecache, final int rescanInterval) {
+    protected DirPluginScanner(final File extdir, final FileCache<ProviderLoader> filecache, final long rescanIntervalMs) {
         this.extdir = extdir;
         this.filecache = filecache;
-        this.scaninterval = rescanInterval;
+        this.scanintervalMs = rescanIntervalMs;
     }
 
     /**
@@ -82,9 +82,11 @@ abstract class DirPluginScanner implements PluginScanner {
     public List<ProviderIdent> listProviders() {
         final File[] files = extdir.listFiles(getFileFilter());
         final List<ProviderIdent> providerIdents = new ArrayList<ProviderIdent>();
-        for (final File file : files) {
-            if (isValidPluginFile(file)) {
-                providerIdents.addAll(listProviders(file));
+        if(null!=extdir && extdir.isDirectory() && null!=files){
+            for (final File file : files) {
+                if (isValidPluginFile(file)) {
+                    providerIdents.addAll(listProviders(file));
+                }
             }
         }
         return providerIdents;
@@ -110,7 +112,7 @@ abstract class DirPluginScanner implements PluginScanner {
      * interval
      */
     private boolean shouldScanAll(final File[] files) {
-        if (lastScanAllCheckTime > 0 && lastScanAllCheckTime + scaninterval > System.currentTimeMillis()) {
+        if (lastScanAllCheckTime > 0 && lastScanAllCheckTime + scanintervalMs > System.currentTimeMillis()) {
             //wait until scaninterval has passed to scanall again
             log.debug("shouldScanAll: false, interval");
             return false;
@@ -124,7 +126,12 @@ abstract class DirPluginScanner implements PluginScanner {
         }
         for (final File file : files) {
             final String s = memoFile(file);
-            if (!scanned.contains(s)) {
+            final boolean validPluginFile = isValidPluginFile(file);
+            if (validPluginFile && !scanned.contains(s)) {
+                log.debug("shouldScanAll: yes, file: " + s);
+                scanned.clear();
+                return true;
+            }else if(!validPluginFile && scanned.contains(s)){
                 log.debug("shouldScanAll: yes, file: " + s);
                 scanned.clear();
                 return true;
@@ -169,6 +176,9 @@ abstract class DirPluginScanner implements PluginScanner {
 
     /**
      * Rescan all files in the directory
+     * @param ident ident to scan for, or null
+     * @param files files
+     * @return file matching provider ident if specified
      */
     private File scanAll(final ProviderIdent ident, final File[] files) throws PluginScannerException {
         final List<File> candidates = new ArrayList<File>();
@@ -176,7 +186,7 @@ abstract class DirPluginScanner implements PluginScanner {
         for (final File file : files) {
             if (isValidPluginFile(file)) {
                 scanned.add(memoFile(file));
-                if (test(ident, file)) {
+                if (null!=ident && test(ident, file)) {
                     candidates.add(file);
                 }
             }
