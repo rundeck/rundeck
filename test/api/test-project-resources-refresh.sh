@@ -41,12 +41,12 @@ echo "project.resources.url=http://invaliddomain:1235/resources.xml" >> $TPROPS
 
 docurl -X POST  ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
-sh $DIR/api-test-error.sh ${file} "Error updating node resources file for project test: java.net.UnknownHostException: invaliddomain" || exit 2
+sh $DIR/api-test-error.sh ${file} "Error updating node resources file for project test: com.dtolabs.rundeck.core.common.FileUpdaterException: java.net.UnknownHostException: invaliddomain" || exit 2
 
 echo "OK"
 
 cp $TPROPS.testbackup $TPROPS
-
+sleep 1
 echo "TEST: /api/2/project/${proj}/resources/refresh (valid temp URL)"
 
 cat <<END > $TETC/testUpdateResources.xml
@@ -75,6 +75,7 @@ if [ -f $TPROPS.testbackup ] ; then
     cp $TPROPS.testbackup $TPROPS
 fi
 
+sleep 1
 # set allowed URL with port 1235
 echo "project.resources.allowedURL.0=http://invaliddomain:1235/resources.xml" >> $TPROPS
 
@@ -100,7 +101,7 @@ data="providerURL=http://invaliddomain:1235/resources.xml"
 # post data
 $CURL -H "$AUTHHEADER" -X POST --data-urlencode "${data}" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
-sh $DIR/api-test-error.sh ${file} "Error updating node resources file for project test: java.net.UnknownHostException: invaliddomain" || exit 2
+sh $DIR/api-test-error.sh ${file} "Error updating node resources file for project test: com.dtolabs.rundeck.core.common.FileUpdaterException: java.net.UnknownHostException: invaliddomain" || exit 2
 
 echo "OK"
 
@@ -122,7 +123,7 @@ echo "TEST: /api/2/project/${proj}/resources/refresh (POST) (valid provider URL)
 
 
 TEMPURL="file://$TETC/testUpdateResources.xml"
-
+sleep 1
 # set allowed URL for test file
 echo "project.resources.allowedURL.1=file://$TETC/testUpdateResources.xml" >> $TPROPS
 
