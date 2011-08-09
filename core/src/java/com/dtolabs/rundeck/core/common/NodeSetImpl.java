@@ -28,7 +28,7 @@ import java.util.HashMap;
 import java.util.TreeMap;
 
 /**
- * NodeSetImpl is ...
+ * Basic Implementation of INodeSet
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */

@@ -26,7 +26,7 @@ import java.util.*;
 
 /**
  * Parses the $RDECK_BASE/etc/nodes.properties file and provides various lookup methods.
- * @deprecated
+ * @deprecated use {@link INodeSet}
  */
 public class Nodes implements NodeReceiver {
     static Logger logger = Logger.getLogger(Nodes.class.getName());
