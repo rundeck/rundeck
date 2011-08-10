@@ -23,7 +23,6 @@
 */
 package com.dtolabs.rundeck.core.resources.format;
 
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.common.NodesGeneratorException;
 import com.dtolabs.rundeck.core.common.NodesYamlGenerator;
@@ -44,14 +43,14 @@ public class ResourceYamlFormatGenerator implements ResourceFormatGenerator {
 
     public static final Set<String> EXTENSIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("yaml",
         "yml")));
-    public static final Set<String> MIME_TYPES = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
-        "text/yaml", "text/x-yaml", "application/yaml", "application/x-yaml")));
+    public static final List<String> MIME_TYPES = Collections.unmodifiableList(Arrays.asList(
+        "text/yaml", "text/x-yaml", "application/yaml", "application/x-yaml"));
 
     public Set<String> getFileExtensions() {
         return EXTENSIONS;
     }
 
-    public Set<String> getMIMETypes() {
+    public List<String> getMIMETypes() {
         return MIME_TYPES;
     }
 

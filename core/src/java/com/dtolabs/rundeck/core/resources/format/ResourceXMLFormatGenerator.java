@@ -23,9 +23,7 @@
 */
 package com.dtolabs.rundeck.core.resources.format;
 
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
-import com.dtolabs.rundeck.core.common.NodesXMLParser;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.shared.resources.ResourceXMLGenerator;
 
@@ -45,14 +43,14 @@ public class ResourceXMLFormatGenerator implements ResourceFormatGenerator {
 
 
     public static final Set<String> EXTENSIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("xml")));
-    public static final Set<String> MIME_TYPES = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
-        "text/xml")));
+    public static final List<String> MIME_TYPES = Collections.unmodifiableList(Arrays.asList(
+        "text/xml"));
 
     public Set<String> getFileExtensions() {
         return EXTENSIONS;
     }
 
-    public Set<String> getMIMETypes() {
+    public List<String> getMIMETypes() {
         return MIME_TYPES;
     }
     

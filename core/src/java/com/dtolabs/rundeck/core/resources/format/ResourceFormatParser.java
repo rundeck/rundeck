@@ -36,12 +36,13 @@ import java.util.*;
  */
 public interface ResourceFormatParser {
     /**
-     * Return the list of file extensions that this format parser can parse
+     * Return the list of file extensions that this format parser can parse.
      */
     public Set<String> getFileExtensions();
 
     /**
-     * Return the list of MIME types that this format parser can parse
+     * Return the list of MIME types that this format parser can parse. This may include wildcards such as
+     * "*&#47;xml".
      */
     public Set<String> getMIMETypes();
 

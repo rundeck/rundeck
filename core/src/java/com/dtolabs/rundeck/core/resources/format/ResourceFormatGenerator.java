@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -44,9 +45,10 @@ public interface ResourceFormatGenerator {
     public Set<String> getFileExtensions();
 
     /**
-     * Return the list of MIME types that this format generator can generate
+     * Return the list of MIME types that this format generator can generate. If more than one
+     * are returned, then the first value will be used by default if necessary.
      */
-    public Set<String> getMIMETypes();
+    public List<String> getMIMETypes();
 
     /**
      * generate formatted output

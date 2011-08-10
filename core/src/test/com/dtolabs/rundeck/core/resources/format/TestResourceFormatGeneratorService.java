@@ -85,7 +85,7 @@ public class TestResourceFormatGeneratorService extends AbstractBaseTest {
 
     static class testGenerator implements ResourceFormatGenerator {
         HashSet<String> fileExtensions;
-        HashSet<String> mimeTypes;
+        List<String> mimeTypes;
         INodeSet generateNodeset;
         OutputStream generateStream;
 
@@ -93,7 +93,7 @@ public class TestResourceFormatGeneratorService extends AbstractBaseTest {
             return fileExtensions;
         }
 
-        public Set<String> getMIMETypes() {
+        public List<String> getMIMETypes() {
             return mimeTypes;
         }
 
@@ -158,7 +158,7 @@ public class TestResourceFormatGeneratorService extends AbstractBaseTest {
         final ResourceFormatGeneratorService service = new ResourceFormatGeneratorService(getFrameworkInstance());
         testGenerator generator = new testGenerator();
         generator.fileExtensions = new HashSet<String>();
-        generator.mimeTypes = new HashSet<String>();
+        generator.mimeTypes = new ArrayList<String>();
 
         service.registerInstance("testformat1", generator);
 
@@ -180,7 +180,7 @@ public class TestResourceFormatGeneratorService extends AbstractBaseTest {
         final ResourceFormatGeneratorService service = new ResourceFormatGeneratorService(getFrameworkInstance());
         testGenerator generator = new testGenerator();
         generator.fileExtensions = new HashSet<String>();
-        generator.mimeTypes = new HashSet<String>();
+        generator.mimeTypes = new ArrayList<String>();
 
         service.registerInstance("testformat1", generator);
         generator.mimeTypes.add("text/monkey");
