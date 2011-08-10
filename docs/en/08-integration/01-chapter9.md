@@ -1,12 +1,12 @@
 # Integration with External Data Providers
 
-RunDeck can integrate with external data by configuring the use of *Providers*.  Providers are third-party services or systems that export data that RunDeck can import. Additionally, RunDeck supports an external Editor for Node data.
+RunDeck can integrate with external data by configuring the use of *Providers* or *Sources*.  Providers are third-party services or systems that export data that RunDeck can import. Additionally, RunDeck supports an external Editor for Node data.
 
 RunDeck makes use of common data formats (XML, JSON & YAML).  Third-party software may produce these formats natively, however it is typical to have to massage the output of one system into the appropriate format to be consumed by RunDeck.  Since URLs and HTTP are a lowest-common-denominator for communication, RunDeck only requires that the data Providers make this data available as a file at a URL or on the local disk.
 
 There are a few types of external integration:
 
-[*Resource Model Provider*](#resource-model-provider)
+[*Resource Model Source*](#resource-model-source)
 :   Provides a set of Nodes in XML or YAML format. E.g. a CMDB or hosted virtual machines service. RunDeck can be configured to use a different provider for each Project, and can refresh the Resources it uses from this provider.
 
 [*Resource Editor*](#resource-editor)
@@ -15,27 +15,25 @@ There are a few types of external integration:
 [*Option Model Provider*](#option-model-provider)
 :   Provides a dataset in JSON format, used as input option values for Jobs. Each Job Option can be configured to load the set of allowed input values from a remote service, and the RunDeck GUI will prompt the user to choose from those values when running a Job.
 
-## Resource Model Provider
+## Resource Model Source
 
-The Resource model provider is a way to transfer Node definitions from other systems, tools or services into RunDeck. The means of providing the Resource model data can be done in whichever way suits your environment best.
+The Resource model source is a way to transfer Node definitions from other systems, tools or services into RunDeck. The means of providing the Resource model data can be done in whichever way suits your environment best.
+
+RunDeck supports plugins to provide different kinds of sources, but has built-in
+support for URLs or File based sources.
 
 Resource model data is a set of Node descriptors, each with a uniquely identifying name.  In addition to Name, some pieces of metadata are required (like `hostname`, and `username`), and some are optional.
 
-(See [resource.xml - node](resource-v13.html#node) and [resource-yaml-v13](resource-yaml-v13.html) for more information.)
+(See [Resource Model Document Formats](#resource-model-document-formats) for more information on what format the files need to be in.)
 
-The Resource model data, commonly referred to as resources.xml or resources.yaml, is stored on the server as a file.  Each Project in RunDeck has its own Resources file, and this file is used to determine what Nodes are available and how to connect to those Nodes and run commands. The Resource model data is assumed to be a static file, unless a Provider URL is configured, in which case an admin can tell the RunDeck server to refresh the Resource model from the URL.
+The Resource model data is stored on the server as a set of files.  Each Project in RunDeck has at least a single Resources file, and may have multiple additional sources (such as a URL or a directory containing multiple files). All of these sources will be combined into the set of all Nodes that are available for the project.  Each node's metadata can define how to connect to it and run commands.
 
 ### Requirements ###
 
 In order to provide the Resource model data to RunDeck:
 
-1. The data must be either:
-    * XML in [resource-v13 format](resource-v13.html)
-    * YAML in [resource-yaml-v13 format](resource-yaml-v13.html)
+1. The data must be in one of the supported [Resource Model Document Formats](#resource-model-document-formats)
 2. Each Node entry must have a unique `name` value. You may have to convert the external system's identifier to be unique, or create one yourself.
-3. The data must be *either*: 
-    * accessible on-disk from the RunDeck server, 
-    * OR accessible via a HTTP URL
 
 This means you can provide the data in the way that best suits your specific use-case.  Some examples:
 
@@ -45,22 +43,29 @@ This means you can provide the data in the way that best suits your specific use
     * You could do this with a cron-job, or via some external trigger.  RunDeck will simply read the resource.xml/resource.yaml file identified in the configuration file.
 * Data generated from a simple CGI script which interfaces with another third-party or external service.
     * You could run Apache and host a simple CGI script.  The CGI script would communicate to some other system and then return the XML/YAML content.  You could tell RunDeck to refresh the Resource model, which would in turn cause the CGI to access the external data and return the reformatted content.
+* Using a [Resource Model Source Plugin](#resource-model-source-plugins), the data could come from some other external source
 
 The Resource model data does not have to include the RunDeck server Node, as it is implicitly included.
 
 ### Configuration ###
 
-Resource model providers are defined on a per-project basis, in the [`project.properties`](#project.properties) file.
+Resource model sources are defined on a per-project basis, in the [`project.properties`](#project.properties) file.
 
-Define the file where the resource.xml will be stored on-disk.  Each new project will have a good default location, but you may change it.
+The only required configuration value is `project.resources.file`, which defines a single file containing resource model data stored on-disk.  Each new project will have a good default location, but you may change either the location or the file extension. The file
+extension determines the format of the data. (See [Resource Model Document Formats](#resource-model-document-formats).)
 
     project.resources.file = ..
     
-This file path is where RunDeck will read the contents from, and also where it will store it to if refreshing from a remote URL.  If you specify a file ending in ".xml" then the format is [resource-v13 XML](resource-v13.html).  If you specify a file ending in ".yaml" then the format is [resource-yaml-v13 YAML](resource-yaml-v13.html).
+This file path is where RunDeck will read the contents from, and also where it will store it to if refreshing from a remote URL.
+
+You may also specify a URL, which will be automatically retrieved and stored in a cache file. The Resource Model data within the content is merged with the previous file.
 
     project.resources.url = http://...
     
 This configures the remote URL for loading the Resources model data.
+
+In addition, multiple [Resource Model Source Plugin](#resource-model-source-plugins) can
+be configured to add additional sources of Resource Model data.
 
 ### Implementations and Examples ###
 
@@ -70,7 +75,7 @@ This configures the remote URL for loading the Resources model data.
 [CMDB]: http://en.wikipedia.org/wiki/Configuration_management_database
 [AJAX]: http://en.wikipedia.org/wiki/Ajax_(programming)
 
-#### Simple VCS resource model provider
+#### Simple VCS URL resource model source
 
 Putting the resources.xml/resources.yaml file under the control of a source code
 management tool is a simple solution to controlling and tracking
@@ -78,7 +83,7 @@ change to the resources.xml file.
 Any changes will be committed and the commit messages become an audit
 log. Most source code management tools provide a web interface to
 retrieve file revisions based on a URL and thus make it accessible as
-a resource model provider.
+a resource model source.
 
 Going back to the [Acme Anvils Example](#acme-anvils) section, imagine the
 administrator decides the VCS approach is a good first step to
@@ -149,9 +154,9 @@ Then modify the URL used as your project.resources.url, to specify a query param
 
 More configuration is available for the [java-ec2-nodes project](https://github.com/dtolabs/java-ec2-nodes).
 
-#### Third party resource model providers
+#### Third party URL resource model sources
 
-Resource model providers can be developed by third parties to integrate RunDeck with their tools. 
+URL Resource model sources can be developed by third parties to integrate RunDeck with their tools. 
 
 Check the list on our wiki: [https://github.com/dtolabs/rundeck/wiki/Resource-model-providers](https://github.com/dtolabs/rundeck/wiki/Resource-model-providers).
 
@@ -411,7 +416,7 @@ Resource Editor
 
 The Resource Editor integration is a way to link to a third-party system used for managing Node definitions from within RunDeck. Each Node entry in the resources.xml or resources.yaml can define a URL to provide an "Edit" link that will appear in the RunDeck Run page for that Node.
 
-This allows you to make use of the Resource Model Provider in a more seamless way.  RunDeck will load the Resource model from the third-party Provider system, and users of RunDeck can click straight to the Editor for those Nodes.  The Provider and the Editor could be the same system, or they could both be custom CGI scripts that integrate with a third system.
+This allows you to make use of the Resource Model Source in a more seamless way.  RunDeck will load the Resource model from the third-party Provider system, and users of RunDeck can click straight to the Editor for those Nodes.  The Provider and the Editor could be the same system, or they could both be custom CGI scripts that integrate with a third system.
 
 Some teams have acquired or developed tools to manage information
 about the hosts deployed in their networks. These tools have

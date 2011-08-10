@@ -216,15 +216,16 @@ This configuration file contains two basic properties for accessing and
 storing resource model data:
 
 * `project.resources.file`: A local file path to read a resource model document
-* `project.resources.url`: URL to an external resource model provider (optional)
+* `project.resources.url`: URL to an external resource model source (optional)
 
 In addition, multiple pluggable "Resource Model Sources" can be configured for a project
 to retrieve additional Resource Model content from other sources. See [Resource Model Sources](#resource-model-sources).
 
 You can configure RunDeck to retrieve and store resource model data
 from any source, so long as it can produce one of the RunDeck resource model
-document formats. (See [Resource Model Document formats](#resource-model-document-formats).) Set the `project.resource.url` to the resource
-model provider of your choice.
+document formats. (See 
+[Resource Model Document formats](#resource-model-document-formats).) Set the 
+`project.resource.url` to the URL resource model source of your choice.
 
 Here's the XML document stored for the "examples" project that corresponds
 to the output printed by the `dispatch -v` shown earlier:
@@ -264,7 +265,7 @@ another tool, perhaps Chef, Puppet, Nagios, Amazon EC2, RightScale or
 even an in-house database. One of these tools might be
 considered the authority of knowledge about the nodes
 deployed in your network. Therefore, it is best to create an interface
-to the authoritative tool and expose it as RunDeck resource model provider. This
+to the authoritative tool and expose it as RunDeck URL resource model source. This
 can be done as a simple CGI script that does a transformation from
 the tool's format to the one RunDeck understands.
 
@@ -273,19 +274,19 @@ as an XML document, storing it in a source repository that is
 periodically exported to Rundeck. This method could be practical if
 your host infrastructure infrequently changes.
 
-Check the RunDeck web site for resource model providers. If you are
+Check the RunDeck web site for URL resource model sources. If you are
 interested in creating your own, see the
-[Resource model provider](#resource-model-provider) section in the
+[Resource model source](#resource-model-source) section in the
 [Integration with External Data Providers](#integration-with-external-data-providers) chapter.
 
 ### Resource Model Document formats
 
 RunDeck currently has two resource model document formats built in: 
 
-* [resource-v13(5) XML](resource-v13.html) (XML)
-* [resource-v13(5) YAML](resource-yaml-v13.html) (YAML)
+* XML: [resource-v13(5) XML](resource-v13.html).  Format name: `resourcexml`.
+* Yaml: [resource-v13(5) YAML](resource-yaml-v13.html). Format name: `resourceyaml`.
 
-You can enable more formats using [Resource Format Plugins](#resource-format-plugins)
+You can enable more formats using [Resource Format Plugins](#resource-format-plugins).
 
 ## Pluggable Resource Model Sources
 

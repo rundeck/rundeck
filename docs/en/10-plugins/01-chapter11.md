@@ -200,20 +200,21 @@ Example `project.properties` to set default local providers to `stub`:
 
 ### Resource Model Sources
 
-The *Resource Model Sources* providers can be configured for a single project.
+The *Resource Model Sources* providers can be configured for a single project 
+in the `project.properties` file.
 
 You can define multiple Resource Model Sources for the project, and can mix and match
 the specific providers depending on your needs.
 
 When you define multiple Source providers in a project, then the resulting set of Nodes will 
 effectively be a merge of all the sources, in the order in which they are declared. This
-means that if two or more Sources provider a definition of a node with the same name, then
+means that if two or more Sources provide a definition of a node with the same name, then
 the definition from lowest Source in the list will be used.
 
 The order that the providers are loaded (and thus the nodes are merged) is:
 
-1. project.resources.file source
-2. project.resources.url source
+1. `project.resources.file`: A File Model Source with default configuration.
+2. `project.resources.url`: A URL Model Source with default configuration. (optional)
 3. All `resources.source.N` configurations in order starting at 1
 
 #### Resource Model Source configuration
@@ -352,13 +353,15 @@ The `file` Resource Model Source provider reads a file in either XML or Yaml for
 Name                          Value                           Notes
 -----                         ------                          ------
 `file`                        file path                       Path to a file on disk.
-`format`                      `resourcexml` or `resourceyaml` Can be used to declare the format explicitly. Otherwise the format is determined from the file extension. ".xml" and ".yaml"
+`format`                      format name                     Can be used to declare the format explicitly. Otherwise the format is determined from the `file`'s extension.
 `requireFileExists`           true/false                      If true and the file is missing, causes a failure to load the nodes. (Default: false)
 `includeServerNode`           true/false                      If true, include the Project's server node automatically. (Default: false)
 `generateFileAutomatically`   true/false                      If true, create the file automatically if it is missing. (Default: false)
 ----------------------------
 
 Table: Configuration properties for `file` Resource Model Source provider
+
+The value of `format` must be one of the supported [Resource Model Document Formats](#resource-model-document-formats). The built-in formats are: `resourcexml` or `resourceyaml`, but any format provided by a [Resource Format Plugin](#resource-format-plugins) can be specified as well.
 
 *Example:*
 
@@ -383,6 +386,9 @@ Name      Value       Notes
 ----------------------------
 
 Table: Configuration properties for `url` Resource Model Source provider
+
+The [Resource Model Document Format](#resource-model-document-formats) that is used is determined by the MIME type
+sent by the remote server. The built-in formats accept "\*/xml" and "\*/yaml" and "*/x-yaml". See [Resource Format Plugin](#resource-format-plugins).
 
 *Example:*
 

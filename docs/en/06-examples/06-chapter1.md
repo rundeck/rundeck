@@ -587,9 +587,9 @@ not include icons for editing or deleting the Job. Only workflow\_read
 and workflow\_actions were allowed in the `user.aclpolicy` file.
 
 
-## Resource model provider examples
+## Resource model source examples
 
-See [Chapter 9 - Resource Model Provider](#resource-model-provider).
+See [Chapter 9 - Resource Model Source](#resource-model-source).
 
 
 ## Resource editor examples

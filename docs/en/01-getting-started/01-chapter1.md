@@ -53,7 +53,7 @@ from multiple sources, and RunDeck defines several resource model
 document formats to facilitate the transfer of this information. 
 
 Resource Model data sources can be local files on disk, or remotely
-accessible services. A *resource model provider* is an external service
+accessible services. A *URL resource model source* is an external service
 accessible via the HTTP GET method that returns data in one of the supported
 resource document formats.
 

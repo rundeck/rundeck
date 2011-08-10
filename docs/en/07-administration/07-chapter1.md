@@ -160,7 +160,7 @@ generated at project setup time.
 Property                          Description
 ----------                        -------------
 `project.resources.file`          A local file path to read a resource model          document
-`project.resources.url`           The URL to an external [Resource Model Provider](#resource-model-provider).(Optional) 
+`project.resources.url`           The URL to an external [Resource Model Source](#resource-model-source).(Optional) 
 `project.resources.allowedURL.X`  A sequence of regular expressions (for `X` starting at 0 and increasing). 
 `resources.source.N...`               Defines a Resource model source see [Resource Model Sources](#resource-model-sources).
 ----------------------------------
