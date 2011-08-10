@@ -32,6 +32,59 @@ them.
 
 You can overwrite an old plugin with a newer version to update it.
 
+## About Plugins
+
+Plugins are files that contain one or more Service Provider implementations. Each
+plugin file could contain multiple Providers for different types of services,
+however typically each plugin file would contain only providers related in some
+fashion.
+
+RunDeck includes a number of "built-in" providers, as well as a few 
+"included" plugin files.
+
+In this document "plugin" and "provider" are used somewhat interchangably. When 
+referring to an actual file containing the provider implementations we will say
+"plugin file".
+
+![RunDeck Providers and Plugin Files](figures/fig1102.png)
+
+## Types of Plugins
+
+RunDeck supports several different types of plugins to perform different kinds 
+of services.
+
+### Node Execution Plugins
+
+These plugins define ways of executing commands on nodes, and copying files to nodes.  
+
+More information:
+
+* Configuration: [Node Execution Services](#node-execution-services)
+* Lifecycle: [When Node Execution Service providers are invoked](#when-node-execution-service-providers-are-invoked)
+* Built-in Providers: [Node Execution services](#node-execution-services-1)
+* Included Plugins: [Pre-installed plugins](#pre-installed-plugins)
+
+### Resource Model Source Plugins
+
+These plugins define mechanisms for retrieving Resource Model information from a
+specific kind of source (such as a URL, file, or set of files in a directory).
+
+More information:
+
+* Configuration: [Resource Model Sources](#resource-model-sources)
+* Built-in Providers: [Resource Model Sources](#resource-model-sources-1)
+
+### Resource Format Plugins
+
+These plugins define parsers and generators for different document formats, and
+are used by the Resource Model Source Plugins, as well as other parts of the
+RunDeck system.
+
+More information:
+
+* Configuration: [Resource Format Generators and Parsers](#resource-format-generators-and-parsers)
+* Built-in Providers: [Resource Format services](#resource-format-services)
+
 ## About Services and Providers
 
 The RunDeck core makes use of several different "Services" that provide
@@ -57,6 +110,11 @@ Services fall into different categories, which determine how and where they are 
 2. **Project services**
 
     1. Resource Model Source - (aka "Resource Providers") these define ways of retrieving Node resources for a Project 
+
+3. **Global services** (framework level)
+
+    1. Resource Format Parser - these define document format parsers
+    2. Resource Format Generators - these define document format generators
 
 Specifics of how providers of these plugins work is listed below.
 
@@ -186,6 +244,31 @@ Example project.properties configuration of a default File provider, and two oth
     
     resources.source.2.type=directory
     resources.source.2.directory=/home/rundeck/projects/example/resources
+
+### Resource Format Generators and Parsers
+
+Resource Format Generators and Parsers define support for file formats that can
+be generated from or parsed into a set of Resource Node definitions.
+
+These are used by other parts of the system, such as the Resource Model Sources.
+
+There is no configuration necessary to use these providers, however the specific
+Provider Name that each generator and parser defines has to be known in order
+to make use of the provider.  The specific Provider Name is used as the 
+"format name" when you want to use the parser or generator.
+
+For example, to enable a particular Resource Format parser to be used by a File
+Resource Model Source (see [File Resource Model Source Configuration](#file-resource-model-source-configuration)), you should specify
+the Provider Name for the parser as the format for the source:
+
+    resources.source.1.format=myformat
+
+This would specify the use of "myformat" provider.
+
+In other cases, the exact name of the provider may not be known (for example 
+when loading content from a remote URL).  Each Generator and Parser must define
+a list of MIME Type strings and file extensions that they support. These 
+are used to determine which parser/generator is to be used.
 
 ## When Node Execution Service providers are invoked
 
@@ -324,6 +407,39 @@ Table: Configuration properties for `directory` Resource Model Source provider
 
     resources.source.2.type=directory
     resources.source.2.directory=/home/rundeck/projects/example/resources
+
+### Resource Format services
+
+Resource Format services (Generators and Parsers) typically come in matched 
+pairs, with both a parser and generator for the same format name.
+
+RunDeck includes these built-in providers in the core installation:
+
+`resourcexml`
+
+:    Supports the Resource XML document format: [resource-v13(5) XML](resource-v13.html).
+
+    Supported MIME types:
+
+    * Generator: "text/xml"
+    * Parser: "*/xml"
+
+    Supported File extensions:
+
+    * ".xml"
+
+`resourceyaml`
+
+:    Supports the Resource YAML document format: [resource-v13(5) YAML](resource-yaml-v13.html).
+
+    Supported MIME types:
+
+    * Generator: "text/yaml", "text/x-yaml", "application/yaml", "application/x-yaml"
+    * Parser: "\*/yaml", "\*/x-yaml"
+
+    Supported File extensions:
+
+    * ".yml", ".yaml"
 
 ## Pre-installed plugins
 
@@ -867,7 +983,9 @@ Then include the jar files in the Plugin's jar contents:
 
 * `NodeExecutor` - executes a command on a node
 * `FileCopier` - copies a file to a node
-* `NodesSource` - produces a set of Node definitions for a project
+* `ResourceModelSource` - produces a set of Node definitions for a project
+* `ResourceFormatParser` - parses a document into a set of Node resources
+* `ResourceFormatGenerator` - generates a document from a set of Node resources
 
 ## Provider Lifecycle
 
@@ -931,11 +1049,77 @@ Your provider class must implement the `com.dtolabs.rundeck.core.resources.Resou
 
 More information is available in the Javadoc.
 
+### Resource Format Parser and Generator Providers
+
+Resource format Parser and Generator providers are used to serialize a set of
+Node resources into a textual format for transport or storage.
+
+Each Parser and Generator must declare the set of filename extensions (such as "xml" or "json") that it supports, as well as the set of MIME types that it supports (such as "text/xml" or "application/json".)  This lets other services retrieve the appropriate
+parser or generator when all that is known about the source or destination of serialized data is a filename or a MIME type.
+
+For Parsers, your provider class must implement the `com.dtolabs.rundeck.core.resources.format.ResourceFormatParser` interface:
+
+    public interface ResourceFormatParser {
+        /**
+         * Return the list of file extensions that this format parser can parse.
+         */
+        public Set<String> getFileExtensions();
+    
+        /**
+         * Return the list of MIME types that this format parser can parse. This may include wildcards such as
+         * "*&#47;xml".
+         */
+        public Set<String> getMIMETypes();
+    
+        /**
+         * Parse a file
+         */
+        public INodeSet parseDocument(File file) throws ResourceFormatParserException;
+    
+        /**
+         * Parse an input stream
+         */
+        public INodeSet parseDocument(InputStream input) throws ResourceFormatParserException;
+    }
+
+
+For Generators, your provider class must implement the `com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator` interface:
+
+    public interface ResourceFormatGenerator {
+    
+        /**
+         * Return the list of file extensions that this format generator can generate
+         */
+        public Set<String> getFileExtensions();
+    
+        /**
+         * Return the list of MIME types that this format generator can generate. If more than one
+         * are returned, then the first value will be used by default if necessary.
+         */
+        public List<String> getMIMETypes();
+    
+        /**
+         * generate formatted output
+         */
+        public void generateDocument(INodeSet nodeset, OutputStream stream) throws ResourceFormatGeneratorException,
+            IOException;
+    }
+
+More information is available in the Javadoc.
+
 Script Plugin Development
 -----------
 
 Script plugins can provide the same services as Java plugins, but they do so
-with a script that is invoked in an external system processes by the JVM. 
+with a script that is invoked in an external system processes by the JVM.
+
+These Services support Script Plugins:
+
+* `NodeExecutor`
+* `FileCopier`
+* `ResourceModelSource`
+
+**Note:** Currently, the Resource Format Parser and Generator services *do not* support Script Plugins.
 
 You must create a zip file with the following structure:
 

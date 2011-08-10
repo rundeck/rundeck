@@ -280,10 +280,12 @@ interested in creating your own, see the
 
 ### Resource Model Document formats
 
-RunDeck currently has two resource model document formats: 
+RunDeck currently has two resource model document formats built in: 
 
 * [resource-v13(5) XML](resource-v13.html) (XML)
 * [resource-v13(5) YAML](resource-yaml-v13.html) (YAML)
+
+You can enable more formats using [Resource Format Plugins](#resource-format-plugins)
 
 ## Pluggable Resource Model Sources
 
