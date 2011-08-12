@@ -155,9 +155,30 @@ public class ZipUtil {
                     }
                 }
                 if (null != copier) {
-                    copier.copyStream(jar.getInputStream(entry), new FileOutputStream(destFile));
+                    final FileOutputStream out = new FileOutputStream(destFile);
+                    try {
+                        final InputStream in = jar.getInputStream(entry);
+                        try {
+                            copier.copyStream(in, out);
+                        } finally {
+                            in.close();
+                        }
+                    } finally {
+                        out.close();
+                    }
                 } else {
-                    copyStream(jar.getInputStream(entry), new FileOutputStream(destFile));
+                    final FileOutputStream out = new FileOutputStream(destFile);
+
+                    try {
+                        final InputStream in = jar.getInputStream(entry);
+                        try {
+                            copyStream(in, out);
+                        } finally {
+                            in.close();
+                        }
+                    } finally {
+                        out.close();
+                    }
                 }
             }
         }
