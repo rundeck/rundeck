@@ -84,7 +84,6 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
         boolean success = true;
         final HashMap<String, StatusResult> resultMap = new HashMap<String, StatusResult>();
         final Collection<INodeEntry> nodes1 = nodes.getNodes();
-        System.err.println("sequential dispatch executing on nodes: " + nodes1);
         for (final Object node1 : nodes1) {
             if (thread.isInterrupted()
                 || thread instanceof ExecutionServiceThread && ((ExecutionServiceThread) thread).isAborted()) {
@@ -110,8 +109,6 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                     result = toDispatch.dispatch(interimcontext, node);
 
                 }
-                System.err.println(
-                    "sequential interpret command result: " + result + " for node: " + node.getNodename());
                 if (null != result) {
                     resultMap.put(node.getNodename(), result);
                 }

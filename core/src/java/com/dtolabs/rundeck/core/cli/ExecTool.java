@@ -561,9 +561,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
         }
         final String script = CLIUtils.generateArgline("dispatch", inputArgs);
         final Collection<INodeEntry> nodeEntryCollection = filterNodes(true).getNodes();
-        System.err.println("Filtered nodes: " + nodeEntryCollection);
         if (null != result && result.isSuccess()) {
-            System.err.println("Finished execution: " + result.getResultObject());
             final String resultString =
                 null != result.getResultObject() ?  result.getResultObject().toString() : "dispatch succeeded" ;
 
@@ -1130,7 +1128,6 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
 
         try {
             if (null != argNodesFile) {
-                System.err.println("use argNodesFile: "+argNodesFile+", project:" +argProject);
                 return loadLocalFile(argNodesFile);
             } else {
                 return project.getNodeSet();
@@ -1161,7 +1158,6 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
          */
         final INodeSet n = readNodesFile();
         debug("total unfiltered nodes=" + n.getNodeNames().size());
-        System.err.println("total unfiltered nodes=" + n.getNodeNames().size());
         final NodeSet filterNodeSelector = createFilterNodeSelector();
         if (0 == n.getNodeNames().size()) {
             verbose("Empty node list");
