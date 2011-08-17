@@ -8,7 +8,7 @@ TEMPLATES=../../templates
 
 all: manpages html roff
 
-manpages: dispatch.1.gz rd-jobs.1.gz rd-options.1.gz rd-setup.1.gz rd-queue.1.gz run.1.gz 
+manpages: dispatch.1.gz rd-jobs.1.gz rd-options.1.gz rd-setup.1.gz rd-queue.1.gz run.1.gz rd-project.1.gz
 
 rundeck-guide.1:
 	pandoc -s -w man ../0[1-9]-*/*.md -o rundeck-guide.1
@@ -19,7 +19,7 @@ rundeck-guide.1:
 %.1:
 	sed "s/@VERSION@/$(VERSION)/" $@.md | pandoc -s -w man -o $@
 
-PAGES = dispatch.1 rd-jobs.1 rd-options.1 rd-setup.1 rd-queue.1 run.1 
+PAGES = dispatch.1 rd-jobs.1 rd-options.1 rd-setup.1 rd-queue.1 run.1 rd-project.1
 
 publish : roff html
 
