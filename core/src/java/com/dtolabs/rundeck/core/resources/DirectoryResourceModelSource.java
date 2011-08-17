@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -152,9 +153,13 @@ public class DirectoryResourceModelSource implements ResourceModelSource, Config
         if (!directory.isDirectory()) {
             logger.warn("Not a directory: " + directory);
         }
+        //get supported parser extensions
+        final Set<String> exts = new HashSet<String>(
+            framework.getResourceFormatParserService().listSupportedFileExtensions());
         final File[] files = directory.listFiles(new FilenameFilter() {
             public boolean accept(final File file, final String s) {
-                return s.endsWith(".xml") || s.endsWith(".yaml");
+                return exts.contains(
+                    ResourceFormatParserService.getFileExtension(s));
             }
         });
 

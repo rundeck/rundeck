@@ -25,7 +25,6 @@ package com.dtolabs.rundeck.core.resources.format;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
-import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
 import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService;
 import com.dtolabs.rundeck.core.plugins.PluginException;
@@ -71,6 +70,21 @@ public class ResourceFormatParserService extends PluggableProviderRegistryServic
         }
         return list;
     }
+    /**
+     * List the available format identifiers provided by all parsers
+     */
+    public List<String> listSupportedFileExtensions() {
+        final ArrayList<String> list = new ArrayList<String>();
+        for (final ProviderIdent providerIdent : listProviders()) {
+            try {
+                final ResourceFormatParser resourceFormatParser = providerOfType(providerIdent.getProviderName());
+                list.addAll(resourceFormatParser.getFileExtensions());
+            } catch (ExecutionServiceException e) {
+                e.printStackTrace();
+            }
+        }
+        return list;
+    }
 
     /**
      * Return a parser for a file, based on the file extension.
@@ -83,13 +97,20 @@ public class ResourceFormatParserService extends PluggableProviderRegistryServic
      *                                    no extension
      */
     public ResourceFormatParser getParserForFileExtension(final File file) throws UnsupportedFormatException {
-        String extension = file.getName().lastIndexOf(".") > 0 ? file.getName().substring(file.getName().lastIndexOf(
-            ".")+1) : null;
+        String extension = getFileExtension(file.getName());
         if (null != extension) {
             return getParserForFileExtension(extension);
         } else {
             throw new UnsupportedFormatException("Could not determine format for file: " + file.getAbsolutePath());
         }
+    }
+
+    /**
+     * Return the file extension of the file, without ".", or null if the file name doesn't have an extension
+     */
+    public static String getFileExtension(final String name) {
+        final int i = name.lastIndexOf(".");
+        return i > 0 && i < (name.length() - 1) ? name.substring(name.lastIndexOf(".") + 1) : null;
     }
 
     /**
