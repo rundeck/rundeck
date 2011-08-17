@@ -332,11 +332,18 @@ public class Framework extends FrameworkResourceParent {
     }
 
     public FileCopier getFileCopierForNodeAndProject(INodeEntry node, final String project) throws ExecutionServiceException {
-        return FileCopierService.getInstanceForFramework(this).getProviderForNodeAndProject(node, project);
+        return getFileCopierService().getProviderForNodeAndProject(node, project);
+    }
+
+    public FileCopierService getFileCopierService() {
+        return FileCopierService.getInstanceForFramework(this);
     }
 
     public NodeExecutor getNodeExecutorForNodeAndProject(INodeEntry node, final String project) throws ExecutionServiceException {
-        return NodeExecutorService.getInstanceForFramework(this).getProviderForNodeAndProject(node, project);
+        return getNodeExecutorService().getProviderForNodeAndProject(node, project);
+    }
+    public NodeExecutorService getNodeExecutorService() throws ExecutionServiceException {
+        return NodeExecutorService.getInstanceForFramework(this);
     }
     public CommandInterpreter getCommandInterpreterForItem(ExecutionItem item) throws ExecutionServiceException {
         return CommandInterpreterService.getInstanceForFramework(this).getInterpreterForExecutionItem(item);

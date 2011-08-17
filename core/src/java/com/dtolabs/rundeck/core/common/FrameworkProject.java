@@ -611,6 +611,9 @@ public class FrameworkProject extends FrameworkResourceParent {
         checkReloadProperties();
         return lookup.hasProperty(key);
     }
+    public Map getProperties() {
+        return lookup.getPropertiesMap();
+    }
 
 
 
