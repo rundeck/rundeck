@@ -63,28 +63,81 @@ public class Validator {
      */
     public static Report validate(final Properties props, final Description desc) {
         final Report report = new Report();
-        for (final Property property : desc.getProperties()) {
-            final String key = property.getKey();
-            final String value = props.getProperty(key);
-            if (null == value || "".equals(value)) {
-                if (property.isRequired()) {
-                    report.errors.put(key, "required");
-                    continue;
-                }
-            } else {
-                //try to validate
-                final Property.Validator validator = property.getValidator();
-                if (null != validator) {
-                    try {
-                        if (!validator.isValid(value)) {
-                            report.errors.put(key, "Invalid value");
+        final List<Property> properties = desc.getProperties();
+        if(null!=properties){
+            for (final Property property : properties) {
+                final String key = property.getKey();
+                final String value = props.getProperty(key);
+                if (null == value || "".equals(value)) {
+                    if (property.isRequired()) {
+                        report.errors.put(key, "required");
+                        continue;
+                    }
+                } else {
+                    //try to validate
+                    final Property.Validator validator = property.getValidator();
+                    if (null != validator) {
+                        try {
+                            if (!validator.isValid(value)) {
+                                report.errors.put(key, "Invalid value");
+                            }
+                        } catch (ValidationException e) {
+                            report.errors.put(key, "Invalid value: " + e.getMessage());
                         }
-                    } catch (ValidationException e) {
-                        report.errors.put(key, "Invalid value: " + e.getMessage());
                     }
                 }
             }
         }
         return report;
+    }
+
+    /**
+     * Converts a set of input configuration keys using the description's configuration to property mapping, or the same
+     * input if the description has no mapping
+     */
+    public static Map<String, String> mapProperties(final Map<String, String> input, final Description desc) {
+        final Map<String, String> mapping = desc.getPropertiesMapping();
+        if (null == mapping) {
+            return input;
+        }
+        return performMapping(input, mapping, false);
+    }
+
+    /**
+     * Convert input keys via the supplied mapping.
+     * @param input data
+     * @param mapping map to convert key names
+     * @param skip if true, ignore input entries when the key is not present in the mapping
+     */
+    private static Map<String, String> performMapping(final Map<String, String> input,
+                                                      final Map<String, String> mapping, final boolean skip) {
+
+        final Map<String, String> props = new HashMap<String, String>();
+
+        for (final Map.Entry<String, String> entry : input.entrySet()) {
+            if (null != mapping.get(entry.getKey())) {
+                props.put(mapping.get(entry.getKey()), entry.getValue());
+            } else if(!skip) {
+                props.put(entry.getKey(), entry.getValue());
+            }
+
+        }
+        return props;
+    }
+
+    /**
+     * Reverses a set of properties mapped using the description's configuration to property mapping, or the same input
+     * if the description has no mapping
+     */
+    public static Map<String, String> demapProperties(final Map<String, String> input, final Description desc) {
+        final Map<String, String> mapping = desc.getPropertiesMapping();
+        if (null == mapping) {
+            return input;
+        }
+        final Map<String, String> rev = new HashMap<String, String>();
+        for (final Map.Entry<String, String> entry : mapping.entrySet()) {
+            rev.put(entry.getValue(), entry.getKey());
+        }
+        return performMapping(input, rev, true);
     }
 }

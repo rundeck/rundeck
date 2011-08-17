@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.plugins.configuration;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Description defines configuration properties of a plugin provider
@@ -47,4 +48,9 @@ public interface Description {
      * Return the properties
      */
     public List<Property> getProperties();
+
+    /**
+     * Return a map of config prop keys to external property names, allowing input values to be in properties files
+     */
+    public Map<String, String> getPropertiesMapping();
 }
