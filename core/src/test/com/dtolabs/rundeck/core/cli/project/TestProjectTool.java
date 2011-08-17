@@ -24,6 +24,8 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Properties;
 
 /**
  * TestProjectTool
@@ -78,6 +80,89 @@ public class TestProjectTool extends AbstractBaseTest {
 
     }
 
+    public void testCreateActionProperties() throws Throwable {
+
+
+        final ProjectTool setup = new ProjectTool();
+        final String[] args = new String[]{
+            "-o", "-p", PROJECT,
+            "--test1=value",
+            "--project.blah=something"
+        };
+        setup.parseArgs(args);
+        Action create = setup.createAction(ProjectTool.ACTION_CREATE);
+        assertTrue(create instanceof CreateAction);
+        CreateAction caction = (CreateAction) create;
+        assertNotNull(caction.getProperties());
+        assertEquals(2, caction.getProperties().size());
+        assertTrue(caction.getProperties().containsKey("test1"));
+        assertEquals("value", caction.getProperties().getProperty("test1"));
+        assertTrue(caction.getProperties().containsKey("project.blah"));
+        assertEquals("something", caction.getProperties().getProperty("project.blah"));
+
+    }
+
+    public void testParsePropertyArg() throws Exception {
+        final Properties properties = new Properties();
+        ProjectTool.parsePropertyArg(properties, "blah");
+        assertEquals(0, properties.size());
+        ProjectTool.parsePropertyArg(properties, "--blah");
+        assertEquals(0, properties.size());
+        ProjectTool.parsePropertyArg(properties, "--blah=");
+        assertEquals(1, properties.size());
+        assertTrue(properties.containsKey("blah"));
+        assertEquals("", properties.getProperty("blah"));
+        ProjectTool.parsePropertyArg(properties, "--blah=zamboni");
+        assertEquals(1, properties.size());
+        assertTrue(properties.containsKey("blah"));
+        assertEquals("zamboni", properties.getProperty("blah"));
+        ProjectTool.parsePropertyArg(properties, "--blah=zam=boni");
+        assertEquals(1, properties.size());
+        assertTrue(properties.containsKey("blah"));
+        assertEquals("zam=boni", properties.getProperty("blah"));
+        ProjectTool.parsePropertyArg(properties, "--blah=zam-boni");
+        assertEquals(1, properties.size());
+        assertTrue(properties.containsKey("blah"));
+        assertEquals("zam-boni", properties.getProperty("blah"));
+        ProjectTool.parsePropertyArg(properties, "--blah=zam boni");
+        assertEquals(1, properties.size());
+        assertTrue(properties.containsKey("blah"));
+        assertEquals("zam boni", properties.getProperty("blah"));
+    }
+
+    public void testParseExtendedProperties() throws Exception {
+        final Properties properties = new Properties();
+        String[] args1={"-z","--test1=1","--blah","something","--test2=2"};
+        ProjectTool.parseExtendedProperties(args1, properties);
+        assertEquals(2, properties.size());
+        assertTrue(properties.containsKey("test1"));
+        assertEquals("1", properties.getProperty("test1"));
+        assertTrue(properties.containsKey("test2"));
+        assertEquals("2", properties.getProperty("test2"));
+
+    }
+    public void testRemoveExtendedProperties() throws Exception {
+        String[] args1={"-z","--test1=1","--blah","something","--test2=2"};
+        String[] args2=ProjectTool.removeExtendedProperties(args1);
+        assertEquals(3, args2.length);
+        assertEquals(Arrays.asList("-z", "--blah", "something"), Arrays.asList(args2));
+    }
+
+    public void testIsExtendedPropertyArg() throws Exception {
+        assertFalse(ProjectTool.isExtendedPropertyArg("--a"));
+        assertFalse(ProjectTool.isExtendedPropertyArg("-a"));
+        assertFalse(ProjectTool.isExtendedPropertyArg("a"));
+        assertFalse(ProjectTool.isExtendedPropertyArg("-a="));
+        assertFalse(ProjectTool.isExtendedPropertyArg("-a=b"));
+        assertFalse(ProjectTool.isExtendedPropertyArg("-a=b=c"));
+        assertFalse(ProjectTool.isExtendedPropertyArg("a="));
+        assertFalse(ProjectTool.isExtendedPropertyArg("a=b"));
+        assertFalse(ProjectTool.isExtendedPropertyArg("a=b=c"));
+        assertTrue(ProjectTool.isExtendedPropertyArg("--a="));
+        assertTrue(ProjectTool.isExtendedPropertyArg("--a=b"));
+        assertTrue(ProjectTool.isExtendedPropertyArg("--a=b=c"));
+    }
+
 
     public void testGo() {
         final File dir = new File(projectsBasedir, PROJECT);
@@ -93,7 +178,8 @@ public class TestProjectTool extends AbstractBaseTest {
         setup.parseArgs(args);
         setup.executeAction();
 
-        assertTrue("project did not exist", getFrameworkInstance().getFrameworkProjectMgr().existsFrameworkProject(PROJECT));
+        assertTrue("project did not exist", getFrameworkInstance().getFrameworkProjectMgr().existsFrameworkProject(
+            PROJECT));
 
         final FrameworkProject d = getFrameworkInstance().getFrameworkProjectMgr().createFrameworkProject(PROJECT);
         assertEquals("project name did not match", d.getName(), PROJECT);

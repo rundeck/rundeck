@@ -24,6 +24,7 @@ import org.apache.log4j.Category;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Properties;
 
 
 /**
@@ -35,6 +36,7 @@ public class CreateAction extends BaseAction {
     static Category logger = Category.getInstance(CreateAction.class.getName());
 
     private boolean cygwin;
+    private Properties properties;
 
     /**
      * Create a new CreateAction, and parse the args from the CommandLine, using {@link BaseAction#parseBaseActionArgs(org.apache.commons.cli.CommandLine)} and
@@ -45,6 +47,18 @@ public class CreateAction extends BaseAction {
      */
     public CreateAction(final CLIToolLogger main, final Framework framework, final CommandLine cli) {
         this(main, framework, parseBaseActionArgs(cli), parseCreateActionArgs(cli));
+    }
+    /**
+     * Create a new CreateAction, and parse the args from the CommandLine, using {@link BaseAction#parseBaseActionArgs(org.apache.commons.cli.CommandLine)} and
+     * {@link #parseCreateActionArgs(org.apache.commons.cli.CommandLine)} to create the argument specifiers.
+     * @param main
+     * @param framework
+     * @param cli
+     * @param properties
+     */
+    public CreateAction(final CLIToolLogger main, final Framework framework, final CommandLine cli,
+                        final Properties properties) {
+        this(main, framework, parseBaseActionArgs(cli), parseCreateActionArgs(cli), properties);
     }
 
     /**
@@ -57,9 +71,25 @@ public class CreateAction extends BaseAction {
     public CreateAction(final CLIToolLogger main,
                         final Framework framework,
                         final BaseActionArgs baseArgs,
-                        final CreateActionArgs createArgs) {
+                        final CreateActionArgs createArgs,
+                        final Properties projectProperties) {
         super(main, framework, baseArgs);
+        properties = projectProperties;
         initArgs(createArgs);
+
+    }
+    /**
+     * Create a new CreateAction
+     * @param main
+     * @param framework framework object
+     * @param baseArgs base args
+     * @param createArgs
+     */
+    public CreateAction(final CLIToolLogger main,
+                        final Framework framework,
+                        final BaseActionArgs baseArgs,
+                        final CreateActionArgs createArgs) {
+        this(main, framework, baseArgs, createArgs, null);
     }
 
     public boolean isCygwin() {
@@ -68,6 +98,14 @@ public class CreateAction extends BaseAction {
 
     public void setCygwin(boolean cygwin) {
         this.cygwin = cygwin;
+    }
+
+    public Properties getProperties() {
+        return properties;
+    }
+
+    public void setProperties(Properties properties) {
+        this.properties = properties;
     }
 
     /**
@@ -130,7 +168,8 @@ public class CreateAction extends BaseAction {
             throw new ProjectToolException("failed creating project structure", e);
         }
         main.verbose("initializing project: " + project.getFrameworkProject());
-        final FrameworkProject d = framework.getFrameworkProjectMgr().createFrameworkProject(project.getFrameworkProject());
+        final FrameworkProject d = framework.getFrameworkProjectMgr().createFrameworkProject(
+            project.getFrameworkProject(), properties);
         if (!d.getBaseDir().exists() && !d.getBaseDir().mkdir()) {
             throw new ProjectToolException("Failed to create project dir: " + d.getBaseDir());
         }

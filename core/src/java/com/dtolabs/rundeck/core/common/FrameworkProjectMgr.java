@@ -82,6 +82,7 @@ public class FrameworkProjectMgr extends FrameworkResourceParent implements IFra
      * a ModuleLookup object accordingly.
      *
      * @param projectName Name of the project
+     * @param properties additional properties to include in the project's properties file
      */
     public FrameworkProject createFrameworkProject(final String projectName, final Properties properties) {
         final FrameworkProject project = createFrameworkProjectInt(projectName,properties);

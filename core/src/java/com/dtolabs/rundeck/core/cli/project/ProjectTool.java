@@ -24,7 +24,8 @@ import com.dtolabs.rundeck.core.common.Framework;
 import org.apache.commons.cli.*;
 import org.apache.log4j.PropertyConfigurator;
 
-import java.io.File;
+import java.util.ArrayList;
+import java.util.Properties;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -50,6 +51,7 @@ public class ProjectTool implements ActionMaker, CLITool {
      */
     protected CommandLine cli;
 
+    Properties extraProperties;
 
     /**
      * reference to the command line {@link org.apache.commons.cli.Options} instance.
@@ -62,9 +64,9 @@ public class ProjectTool implements ActionMaker, CLITool {
     static {
         options.addOption("h", "help", false, "print this message");
         options.addOption("p", "project", true, "project name");
-        options.addOption("a", "action", true, "action to run {create | remove}");
+        options.addOption("a", "action", true, "action to run {create}");
         options.addOption("v", "verbose", false, "verbose messages");
-        options.addOption("G", "cygwin", false, "for create, indicate that the node is using cygwin");
+//        options.addOption("G", "cygwin", false, "for create, indicate that the node is using cygwin");
         //options.addOption("N", "nodeslist", true, "Path to arbitrary nodes.properties file");
     }
 
@@ -76,6 +78,7 @@ public class ProjectTool implements ActionMaker, CLITool {
          */
         PropertyConfigurator.configure(Constants.getLog4jPropertiesFile().getAbsolutePath());
         framework = Framework.getInstance(Constants.getSystemBaseDir());
+        extraProperties=new Properties();
     }
     /**
      * Reference to the framework instance
@@ -130,12 +133,12 @@ public class ProjectTool implements ActionMaker, CLITool {
     public void help() {
         final HelpFormatter formatter = new HelpFormatter();
         formatter.printHelp(80,
-                "rd-project [options]",
+                "rd-project [options] [ --property=value ... ]",
                 "options:",
                 options,
                 "Examples:\n"
                 + "\trd-project -p project --action create; # Initialize project\n"
-                + "\trd-project -p project --action remove ; # Remove the project\n"
+//                + "\trd-project -p project --action remove ; # Remove the project\n"
                 + "\n");
     }
 
@@ -169,15 +172,47 @@ public class ProjectTool implements ActionMaker, CLITool {
      * @param args command line arg vector
      */
     public CommandLine parseArgs(final String[] args) throws ProjectToolException {
+        //extract any extra property definitions
+        parseExtendedProperties(args, extraProperties);
+        final String[] cleaned=removeExtendedProperties(args);
         final CommandLineParser parser = new PosixParser();
         try {
-            cli = parser.parse(options, args);
+            cli = parser.parse(options, cleaned);
         } catch (ParseException e) {
             help();
             throw new ProjectToolException(e);
         }
         initArgs();
         return cli;
+    }
+
+    static String[] removeExtendedProperties(String[] args) {
+        final ArrayList<String> list=new ArrayList<String>();
+        for (final String s : args) {
+            if(!isExtendedPropertyArg(s)) {
+                list.add(s);
+            }
+        }
+        return list.toArray(new String[list.size()]);
+    }
+
+    static boolean isExtendedPropertyArg(final String s) {
+        return s.startsWith("--") && s.indexOf("=") > 2;
+    }
+
+    static void parseExtendedProperties(String[] args, final Properties properties) {
+        for (final String s : args) {
+            parsePropertyArg(properties, s);
+        }
+    }
+
+    static void parsePropertyArg(Properties props, String s) {
+        if (isExtendedPropertyArg(s)) {
+            final int ei = s.indexOf("=");
+            String key = s.substring(2, ei);
+            String val = s.substring(ei + 1);
+            props.setProperty(key, val);
+        }
     }
 
     /**
@@ -217,7 +252,7 @@ public class ProjectTool implements ActionMaker, CLITool {
     public Action createAction(final String actionName) {
         try {
             if (ACTION_CREATE.equals(actionName)) {
-                return new CreateAction(this, framework, cli);
+                return new CreateAction(this, framework, cli, extraProperties);
             } else if (ACTION_REMOVE.equals(actionName)) {
                 return new RemoveAction(this, framework, cli);
             } else {

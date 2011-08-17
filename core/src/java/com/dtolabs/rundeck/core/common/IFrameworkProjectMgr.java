@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.core.common;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 
 import java.util.Collection;
+import java.util.Properties;
 
 /**
  * A set of interfaces for managing a set of Depots
@@ -72,4 +73,12 @@ public interface IFrameworkProjectMgr extends IFrameworkResourceParent, IPropert
      */
     FrameworkProject createFrameworkProject(String projectName);
 
+    /**
+     * Add a new project to the map. Checks if project has its own module library and creates
+     * a ModuleLookup object accordingly.
+     *
+     * @param projectName Name of the project
+     * @param properties additional properties to include in the project's properties file
+     */
+    FrameworkProject createFrameworkProject(String projectName, Properties properties);
 }
