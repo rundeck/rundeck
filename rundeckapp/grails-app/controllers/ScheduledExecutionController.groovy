@@ -2113,7 +2113,7 @@ class ScheduledExecutionController  {
                     return
                 }
                 def addrs = arr.findAll{it.trim()}.join(",")
-                Notification n = new Notification(eventTrigger: trigger, type: 'email', content: addrs)
+                Notification n = new Notification(eventTrigger: trigger, type: 'url', content: addrs)
                 scheduledExecution.addToNotifications(n)
                 if (!n.validate()) {
                     failed = true
