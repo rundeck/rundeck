@@ -18,7 +18,6 @@ package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
-import com.dtolabs.rundeck.core.common.NodeSetImpl;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
@@ -33,13 +32,15 @@ import java.util.Arrays;
 import java.util.Map;
 
 /**
- * Utility class for executing an external script and parsing the output in a particular format, returning INodeSet data.
+ * Utility class for executing an external script and parsing the output in a particular format, returning INodeSet
+ * data.
  */
 class ScriptResourceUtil {
     public static INodeSet executeScript(final File scriptfile, final String scriptargs, final String scriptinterpreter,
                                          final String pluginname, final Map<String, Map<String, String>> dataContext,
                                          final String fileformat, final Framework framework,
-                                         final String project, final Logger logger) throws ResourceModelSourceException {
+                                         final String project, final Logger logger) throws
+        ResourceModelSourceException {
 
         /*
         String dirstring = null;
@@ -55,8 +56,8 @@ class ScriptResourceUtil {
 
         int result = -1;
         boolean success = false;
-         Streams.StreamCopyThread errthread = null;
-         Streams.StreamCopyThread outthread = null;
+        Streams.StreamCopyThread errthread = null;
+        Streams.StreamCopyThread outthread = null;
 
         final File destinationTempFile;
         try {
@@ -68,14 +69,14 @@ class ScriptResourceUtil {
         logger.info("Tempfile: " + destinationTempFile.getAbsolutePath());
         final Process exec;
         try {
-            if(null!=scriptinterpreter){
+            if (null != scriptinterpreter) {
                 exec = execShellScript(logger, workingdir, scriptfile, scriptargs, dataContext, dataContext,
                     scriptinterpreter, pluginname);
-            }else{
+            } else {
                 exec = execScript(logger, workingdir, scriptfile, scriptargs, dataContext, dataContext, pluginname);
             }
         } catch (IOException e) {
-            throw new ResourceModelSourceException(e);
+            throw new ResourceModelSourceException("Script execution could not start: " + e.getMessage(), e);
         }
         try {
             errthread = Streams.copyStreamThread(exec.getErrorStream(), System.err);
@@ -98,11 +99,12 @@ class ScriptResourceUtil {
         if (null != outthread && null != outthread.getException()) {
             logger.error("[" + pluginname + "]: stream copy error: " + outthread.getException().getMessage(),
                 outthread.getException());
-        }if (null != errthread && null != errthread.getException()) {
+        }
+        if (null != errthread && null != errthread.getException()) {
             logger.error("[" + pluginname + "]: stream copy error: " + errthread.getException().getMessage(),
                 errthread.getException());
         }
-        if(!success) {
+        if (!success) {
             throw new ResourceModelSourceException("Script execution failed with result: " + result);
         }
 
@@ -136,22 +138,47 @@ class ScriptResourceUtil {
                                    final Map<String, Map<String, String>> newDataContext,
                                    final String interpreter, final String logName) throws IOException {
 
+        final ProcessBuilder processBuilder = buildProcess(workingdir, scriptfile, scriptargs, envContext,
+            newDataContext, interpreter);
+        logger.info("[" + logName + "] executing: " + processBuilder.command());
+        return processBuilder.start();
+    }
+
+    /**
+     * Build a ProcessBuilder to invoke a specified shell command and passing the arguments to the shell.
+     *
+     * @param workingdir     working dir
+     * @param scriptfile
+     * @param scriptargs     arguments to the shell
+     * @param envContext     Environment variable context
+     * @param newDataContext context data to replace in the scriptargs
+     * @param interpreter    the remote shell script, which will be split on whitespace
+     */
+    static ProcessBuilder buildProcess(final File workingdir, final File scriptfile, final String scriptargs,
+                                       final Map<String, Map<String, String>> envContext,
+                                       final Map<String, Map<String, String>> newDataContext,
+                                       final String interpreter) {
         final ArrayList<String> shells = new ArrayList<String>();
-        if(null!=interpreter) {
+        if (null != interpreter) {
             shells.addAll(Arrays.asList(interpreter.split(" ")));
         }
 
         //use script-copy attribute and replace datareferences
-        final String newargs = DataContextUtils.replaceDataReferences(scriptargs, newDataContext);
-        shells.add(scriptfile.getAbsolutePath() + " " + newargs);
+        if (null != scriptargs) {
+            final String newargs = DataContextUtils.replaceDataReferences(scriptargs, newDataContext);
+            shells.add(scriptfile.getAbsolutePath() + " " + newargs);
+        } else {
+            shells.add(scriptfile.getAbsolutePath());
+        }
 
         final ProcessBuilder processBuilder = new ProcessBuilder(shells).directory(workingdir);
         final Map<String, String> environment = processBuilder.environment();
         //create system environment variables from the data context
-        environment.putAll(DataContextUtils.generateEnvVarsFromContext(envContext));
+        if (null != envContext) {
+            environment.putAll(DataContextUtils.generateEnvVarsFromContext(envContext));
+        }
 
-        logger.info("[" + logName + "] executing: " +shells);
-        return processBuilder.start();
+        return processBuilder;
     }
 
     /**
@@ -165,11 +192,23 @@ class ScriptResourceUtil {
      * @param newDataContext context data to replace in the scriptargs
      * @param logName        name of plugin to use in logging
      */
-    static Process execScript(final Logger logger, final File workingdir, File scriptfile, final String scriptargs,
+    static Process execScript(final Logger logger, final File workingdir, final File scriptfile,
+                              final String scriptargs,
                               final Map<String, Map<String, String>> envContext,
                               final Map<String, Map<String, String>> newDataContext,
                               final String logName) throws IOException {
-        ArrayList<String> list = new ArrayList<String>();
+        ExecParams execArgs = buildExecParams(scriptfile, scriptargs, envContext, newDataContext);
+        String[] args = execArgs.getArgs();
+        String[] envarr = execArgs.getEnvarr();
+        final Runtime runtime = Runtime.getRuntime();
+        logger.info("[" + logName + "] executing: " + StringArrayUtil.asString(args, " "));
+        return runtime.exec(args, envarr, workingdir);
+    }
+
+    static ExecParams buildExecParams(final File scriptfile, final String scriptargs,
+                                      final Map<String, Map<String, String>> envContext,
+                                      final Map<String, Map<String, String>> newDataContext) {
+        final ArrayList<String> list = new ArrayList<String>();
         list.add(scriptfile.getAbsolutePath());
         if (null != scriptargs && !"".equals(scriptargs)) {
             list.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargs.split(" "), newDataContext)));
@@ -185,8 +224,25 @@ class ScriptResourceUtil {
         final String[] envarr = envlist.toArray(new String[envlist.size()]);
 
 
-        logger.info("[" + logName + "] executing: " + StringArrayUtil.asString(args, " "));
-        final Runtime runtime = Runtime.getRuntime();
-        return runtime.exec(args, envarr, workingdir);
+        return new ExecParams(args, envarr);
+    }
+
+    static class ExecParams {
+        private String[] args;
+        private String[] envarr;
+
+        ExecParams(String[] args, String[] envarr) {
+            this.args = args;
+            this.envarr = envarr;
+        }
+
+        public String[] getArgs() {
+            return args;
+        }
+
+        public String[] getEnvarr() {
+            return envarr;
+        }
+
     }
 }

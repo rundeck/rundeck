@@ -86,6 +86,9 @@ public class DataContextUtils {
      * @return string with values substituted, or original string
      */
     public static String replaceDataReferences(final String input, final Map<String, Map<String, String>> data) {
+        if(null==data){
+            return input;
+        }
         final Pattern p = Pattern.compile("\\$\\{([^\\s.]+)\\.([^\\s}]+)\\}");
         final Matcher m = p.matcher(input);
         final StringBuffer sb = new StringBuffer();
