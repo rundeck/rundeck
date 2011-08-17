@@ -23,4 +23,4 @@
  --%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
-<g:render template="renderPluginConfig"/>
+<g:render template="/framework/renderPluginConfig" model="${[project:project,prefix:prefix,includeFormFields:includeFormFields,values:values,description:description,type:type]}"/>
