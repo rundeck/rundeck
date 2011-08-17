@@ -59,15 +59,26 @@
 <div class="pageTop">
     <span class="welcomeMessage floatl">
         %{--<g:message code="domain.Project.welcome.message" default="Welcome to RunDeck"/>--}%
-        <g:message code="domain.Project.edit.message" default="Manage Project"/>: ${session.project.encodeAsHTML()}
+        <g:message code="domain.Project.edit.message" default="Configure Project"/>: ${session.project.encodeAsHTML()}
     </span>
 </div>
 
 <g:ifUserInAnyRoles roles="admin">
+
+    <div class="pageBody form note error" style="${wdgt.styleVisible(if: (flash.error || request.error || request.errors))}"
+         id="editerror">
+        ${flash.error?.encodeAsHTML()}${request.error?.encodeAsHTML()}
+        <g:if test="${request.errors}">
+            <ul>
+                <g:each in="${request.errors}" var="err">
+                    <g:if test="${err}">
+                        <li>${err.encodeAsHTML()}</li>
+                    </g:if>
+                </g:each>
+            </ul>
+        </g:if>
+    </div>
     <div class="pageBody form" style="width:500px;" id="createform">
-        <div class="note error" style="${wdgt.styleVisible(if: (flash.error || request.error))}" id="editerror">
-            ${flash.error}${request.error}
-        </div>
         <g:form action="saveProject" method="post" onsubmit="return configControl.checkForm();">
             <g:render template="editProjectForm" model="${[editOnly:true,project:session.project]}"/>
             <div class="buttons">

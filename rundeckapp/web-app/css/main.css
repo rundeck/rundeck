@@ -1422,6 +1422,14 @@ table.queryTable .prompt label{
     margin-bottom:5px;
 }
 
+.prompt.section {
+    display:block;
+    margin: 5px 0;
+    padding:5px;
+    font-size: 120%;
+    border-top:1px solid #ddd;
+}
+
 div.presentation{
     padding: 8px 16px 8px 16px;
 }
@@ -2380,7 +2388,7 @@ span.apitoken.empty {
 
 /** plugin configuration styles */
 .configvalue{
-    color: #33f;
+    color: #080;
 }
 .configpair{
     padding:2px;

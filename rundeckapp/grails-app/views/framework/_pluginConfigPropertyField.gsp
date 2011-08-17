@@ -21,8 +21,8 @@
  --%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
-<g:set var="fieldname" value="${prefix+'config.'+prop.key}"/>
-<g:set var="origfieldname" value="${'orig.'+prefix+'config.'+prop.key}"/>
+%{--<g:set var="fieldname" value="${}"/>--}%
+%{--<g:set var="origfieldname" value="${}"/>--}%
 
 <g:if test="${prop.type.toString()=='Boolean'}">
     <g:set var="fieldid" value="${g.rkey()}"/>
@@ -36,13 +36,13 @@
 <g:elseif test="${prop.type.toString()=='Select' || prop.type.toString()=='FreeSelect'}">
     <g:set var="fieldid" value="${g.rkey()}"/>
     <td>
-        <label class="${error ? 'fieldError' : ''}" for="${fieldid.encodeAsHTML()}">${prop.name.encodeAsHTML()}</label>:
+        <label class="${error ? 'fieldError' : ''}  ${prop.required ? 'required' : ''}" for="${fieldid.encodeAsHTML()}">${prop.name.encodeAsHTML()}</label>:
     </td>
     <td>
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.key]?values[prop.key]:''}"/>
     <g:if test="${prop.type.toString()=='FreeSelect'}">
         <g:textField name="${fieldname}" value="${values&&null!=values[prop.key]?values[prop.key]:prop.defaultValue}"
-                     id="${fieldid}"/>
+                     id="${fieldid}" size="40"/>
 
         <g:select name="${fieldid+'_sel'}" from="${prop.selectValues}" id="${fieldid}"
                   value="${values&&null!=values[prop.key]?values[prop.key]:prop.defaultValue}"
@@ -63,11 +63,12 @@
 <g:else>
     <g:set var="fieldid" value="${g.rkey()}"/>
     <td>
-    <label class="${error ? 'fieldError' : ''}" for="${fieldid.encodeAsHTML()}">${prop.name.encodeAsHTML()}</label>:
+    <label class="${error ? 'fieldError' : ''} ${prop.required?'required':''}" for="${fieldid.encodeAsHTML()}" >${prop.name.encodeAsHTML()}</label>:
     </td>
     <td>
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.key]?values[prop.key]:''}"/>
-    <g:textField name="${fieldname}" value="${values&&null!=values[prop.key]?values[prop.key]:prop.defaultValue}" id="${fieldid}"/>
+    <g:textField name="${fieldname}" value="${values&&null!=values[prop.key]?values[prop.key]:prop.defaultValue}"
+                 id="${fieldid}" size="40"/>
 </g:else>
     <div class="info note">${prop.description.encodeAsHTML()}</div>
     <g:if test="${error}">

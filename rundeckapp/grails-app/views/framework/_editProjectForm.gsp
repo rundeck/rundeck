@@ -27,12 +27,20 @@
 </g:if>
 <table class="simpleForm" cellspacing="0">
     <g:if test="${!editOnly}">
-    <tr>
-        <td><g:message code="domain.Project.field.name" default="Project Name"/>:</td>
-        <td>
-            <g:textField name="project" size="50" autofocus="true"/>
-        </td>
-    </tr>
+        <tr>
+            <td>
+                <label for="project" class="${projectNameError?'fieldError':''} required">
+                <g:message code="domain.Project.field.name" default="Project Name"/>:
+                </label>
+            </td>
+            <td>
+                <g:textField name="project" size="50" autofocus="true" value="${project}"/>
+
+                <g:if test="${projectNameError}">
+                    <div class="warn note">${projectNameError.encodeAsHTML()}</div>
+                </g:if>
+            </td>
+        </tr>
     </g:if>
 
     <tr>
@@ -43,20 +51,31 @@
         <td>
             <g:textField name="resourcesUrl" size="50" value="${resourcesUrl?:params.resourcesUrl}"/>
             <div class="info note">
-                An optional URL to a remote Resource Model Provider.
+                <g:message code="domain.Project.field.resourcesUrl.description" />
+            </div>
+        </td>
+    </tr>
+    <tr>
+
+        <td>
+            <g:message code="domain.Project.field.sshKeyPath" default="Default SSH Key File"/>:
+        </td>
+        <td>
+            <g:textField name="sshkeypath" size="50" value="${sshkeypath?:params.sshkeypath}"/>
+            <div class="info note">
+            <g:message code="domain.Project.field.sshKeyPath.description" />
             </div>
         </td>
     </tr>
 </table>
 <g:if test="${resourceModelConfigDescriptions}">
 
-    <span class="prompt">
-        Resource Model Sources:
+    <span class="section prompt">
+        <g:message code="framework.service.ResourceModelSource.label" />
     </span>
 
     <div class="presentation">
-        You can add additional custom sources, and their results will be used with the ordering shown.
-        Later sources will override earlier sources.
+        <g:message code="domain.Project.edit.ResourceModelSource.explanation" />
     </div>
 
     <div class="error note" id="errors" style="display:none;">
@@ -69,7 +88,8 @@
                     <div class="inpageconfig">
                         <g:set var="desc" value="${resourceModelConfigDescriptions.find {it.name==config.type}}"/>
                         <g:if test="${!desc}">
-                            <span class="warn note invalidProvider">Invalid Resurce Model Source configuration: Provider not found: ${config.type.encodeAsHTML()}</span>
+                            <span
+                                class="warn note invalidProvider">Invalid Resurce Model Source configuration: Provider not found: ${config.type.encodeAsHTML()}</span>
                         </g:if>
                         <g:render template="viewResourceModelConfig"
                                   model="${[prefix: prefixKey+'.'+(n+1)+'.', values: config.props, includeFormFields: true, description: desc, saved:true,type:config.type]}"/>
@@ -97,4 +117,95 @@
 
         <div id="sourcecancel" class="sourcechrome presentation"><button>Cancel</button></div>
     </div>
+</g:if>
+
+<g:if test="${nodeExecDescriptions}">
+    <span class="section prompt">Default <g:message code="framework.service.NodeExecutor.label" /></span>
+
+
+    <div class="presentation">
+        <span
+            class="info note"><g:message code="domain.Project.edit.NodeExecutor.explanation" /></span>
+        <g:each in="${nodeExecDescriptions}" var="description" status="nex">
+            <g:set var="nkey" value="${g.rkey()}"/>
+            <div>
+                <label>
+                    <g:radio
+                        name="defaultNodeExec"
+                        value="${nex}"
+                        class="nexec"
+                        id="${nkey+'_input'}"
+                        checked="${defaultNodeExec?defaultNodeExec==description.name:false}"/>
+                    <b>${description.title.encodeAsHTML()}</b> - ${description.description.encodeAsHTML()}
+                </label>
+                <g:hiddenField name="nodeexec.${nex}.type" value="${description.name}"/>
+                <g:set var="nodeexecprefix" value="nodeexec.${nex}.config."/>
+                <wdgt:eventHandler state="checked" for="${nkey+'_input'}">
+                    <wdgt:action visible="false" targetSelector="table.nexecDetails"/>
+                </wdgt:eventHandler>
+                <g:if test="${description}">
+                    <wdgt:eventHandler state="checked" for="${nkey+'_input'}">
+                        <wdgt:action visible="true" target="${nkey+'_det'}"/>
+                    </wdgt:eventHandler>
+                    <table class="simpleForm nexecDetails" id="${nkey + '_det'}"
+                           style="${wdgt.styleVisible(if: defaultNodeExec == description.name)}">
+                        <g:each in="${description.properties}" var="prop">
+                            <tr>
+                                <g:render
+                                    template="pluginConfigPropertyField"
+                                    model="${[prop:prop,prefix:nodeexecprefix,error:nodeexecreport?.errors?nodeexecreport?.errors[prop.key]:null,values:nodeexecconfig,
+                                fieldname:nodeexecprefix+prop.key,origfieldname:'orig.'+nodeexecprefix+prop.key]}"/>
+                            </tr>
+                        </g:each>
+                    </table>
+                </g:if>
+            </div>
+        </g:each>
+    </div>
+
+</g:if>
+<g:if test="${fileCopyDescriptions}">
+    <span class="section prompt">Default Node <g:message code="framework.service.FileCopier.label"/></span>
+
+
+    <div class="presentation">
+        <span
+            class="info note"><g:message code="domain.Project.edit.FileCopier.explanation" /></span>
+        <g:each in="${fileCopyDescriptions}" var="description" status="nex">
+            <g:set var="nkey" value="${g.rkey()}"/>
+            <div>
+                <label>
+                    <g:radio
+                        name="defaultFileCopy"
+                        value="${nex}"
+                        class="fcopy"
+                        id="${nkey+'_input'}"
+                        checked="${defaultFileCopy?defaultFileCopy==description.name:false}"/>
+                    <b>${description.title.encodeAsHTML()}</b> - ${description.description.encodeAsHTML()}
+                </label>
+                <g:hiddenField name="fcopy.${nex}.type" value="${description.name}"/>
+                <g:set var="fcopyprefix" value="fcopy.${nex}.config."/>
+                <wdgt:eventHandler state="checked" for="${nkey+'_input'}">
+                    <wdgt:action visible="false" targetSelector="table.fcopyDetails"/>
+                </wdgt:eventHandler>
+                <g:if test="${description}">
+                    <wdgt:eventHandler state="checked" for="${nkey+'_input'}">
+                        <wdgt:action visible="true" target="${nkey+'_det'}"/>
+                    </wdgt:eventHandler>
+                    <table class="simpleForm fcopyDetails" id="${nkey + '_det'}"
+                           style="${wdgt.styleVisible(if: defaultFileCopy == description.name)}">
+                        <g:each in="${description.properties}" var="prop">
+                            <tr>
+                                <g:render
+                                    template="pluginConfigPropertyField"
+                                    model="${[prop:prop,prefix:fcopyprefix,error:fcopyreport?.errors?fcopyreport?.errors[prop.key]:null,values:fcopyconfig,
+                                fieldname:fcopyprefix+prop.key,origfieldname:'orig.'+fcopyprefix+prop.key]}"/>
+                            </tr>
+                        </g:each>
+                    </table>
+                </g:if></div>
+        </g:each>
+
+    </div>
+
 </g:if>

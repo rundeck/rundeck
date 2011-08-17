@@ -4,6 +4,10 @@ import com.dtolabs.rundeck.core.common.FrameworkProject
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
 import java.lang.management.ManagementFactory
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
+import com.dtolabs.rundeck.core.execution.service.FileCopierService
+import com.dtolabs.rundeck.core.execution.impl.jsch.JschNodeExecutor
 
 class MenuController {
     FrameworkService frameworkService
@@ -399,8 +403,7 @@ class MenuController {
             flash.title = "Unauthorized"
             response.setStatus(403)
             render(template: '/common/error', model: [:])
-        }
-        if(session.project){
+        }else if (session.project){
             Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
             def project=session.project
             def fproject = frameworkService.getFrameworkProject(project, framework)
@@ -408,7 +411,50 @@ class MenuController {
 
             final service = framework.getResourceModelSourceService()
             final descriptions = service.listDescriptions()
-            return [configs:configs, resourcesUrl: fproject.hasProperty(FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY)?fproject.getProperty(FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY):null, resourceModelConfigDescriptions:descriptions]
+            final nodeexecdescriptions = framework.getNodeExecutorService().listDescriptions()
+            final filecopydescs = framework.getFileCopierService().listDescriptions()
+
+
+            final defaultNodeExec = fproject.hasProperty(NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY) ? fproject.getProperty(NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY) : null
+            final defaultFileCopy = fproject.hasProperty(FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY) ? fproject.getProperty(FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY) : null
+            final sshkeypath = fproject.hasProperty(JschNodeExecutor.PROJ_PROP_SSH_KEYPATH) ? fproject.getProperty(JschNodeExecutor.PROJ_PROP_SSH_KEYPATH) : null
+            final resourcesUrl = fproject.hasProperty(FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY) ? fproject.getProperty(FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY) : null
+            //load config for node exec
+            def nodeexec = [:]
+            if (defaultNodeExec) {
+                nodeexec.type= defaultNodeExec
+                try {
+                    final executor = framework.getNodeExecutorService().providerOfType(defaultNodeExec)
+                    final desc = executor.description
+                    nodeexec.config = Validator.demapProperties(fproject.getProperties(), desc)
+                } catch (ExecutionServiceException e) {
+                    log.error(e.message)
+                }
+            }
+            //load config for file copy
+            def fcopy = [:]
+            if (defaultFileCopy) {
+                fcopy.type=defaultFileCopy
+                try {
+                    final executor = framework.getFileCopierService().providerOfType(defaultFileCopy)
+                    final desc = executor.description
+                    fcopy.config = Validator.demapProperties(fproject.getProperties(), desc)
+                } catch (ExecutionServiceException e) {
+                    log.error(e.message)
+                }
+            }
+
+            return [configs:configs,
+                resourcesUrl:resourcesUrl,
+                sshkeypath:sshkeypath,
+                resourceModelConfigDescriptions:descriptions,
+                nodeexecconfig:nodeexec,
+                fcopyconfig:fcopy,
+                defaultNodeExec: defaultNodeExec,
+                defaultFileCopy: defaultFileCopy,
+                nodeExecDescriptions: nodeexecdescriptions,
+                fileCopyDescriptions: filecopydescs,
+            ]
         }
     }
 

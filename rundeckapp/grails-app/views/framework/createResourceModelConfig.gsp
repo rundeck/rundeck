@@ -42,7 +42,7 @@
         <table class="simpleForm">
         <g:each in="${description.properties}" var="prop">
             <tr>
-            <g:render template="pluginConfigPropertyField" model="${[prop:prop,prefix:prefix,error:report?.errors?report?.errors[prop.key]:null,values:values]}"/>
+            <g:render template="pluginConfigPropertyField" model="${[prop:prop,prefix:prefix,error:report?.errors?report?.errors[prop.key]:null,values:values,fieldname:prefix+'config.'+prop.key,origfieldname:'orig.'+prefix+'config.'+prop.key]}"/>
             </tr>
         </g:each>
         </table>

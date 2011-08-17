@@ -48,38 +48,52 @@
         </li>
         <li>
             <g:link controller="user" action="list">
-                <g:message code="gui.menu.SystemInfo" default="User Profiles"/>
+                <g:message code="gui.menu.UserProfiles" default="User Profiles"/>
             </g:link>
         </li>
     </ul>
 
     <div class="rounded" style="width:600px;">
-        <span class="prompt">Project: ${session.project.encodeAsHTML()}</span>
+        Project: <span class="prompt">${session.project.encodeAsHTML()}</span>
         -
         <g:link controller="framework" action="editProject" params="[project:session.project]" class="action textbtn">
-            <g:message code="gui.menu.ProjectEdit" default="Manage this Project"/>
+            <g:message code="gui.menu.ProjectEdit" default="Configure Project"/>
         </g:link>
 
         <div class="presentation ">
-            <div>
-                <g:message code="domain.Project.field.resourcesUrl" default="Resources Provider URL"/>:
-                <g:if test="${resourcesUrl}">
-                    ${resourcesUrl.encodeAsHTML()}
-                </g:if>
-                <g:else>
-                    <span class="info note">None set</span>
-                </g:else>
-            </div>
-            %{--<div class="info note">--}%
-            %{--An optional URL to a remote Resource Model Provider.--}%
-            %{--</div>--}%
+            <table class="simpleform">
 
-            <span class="">
-                Resource Model Sources:
-            </span>
+                <tr>
+                    <td><g:message code="domain.Project.field.resourcesUrl" default="Resources Provider URL"/>:</td>
+                    <td>
+                        <g:if test="${resourcesUrl}">
+                            <span class="configvalue">${resourcesUrl.encodeAsHTML()}</span>
+                        </g:if>
+                        <g:else>
+                            <span class="info note"><g:message code="message.none.set"/></span>
+                        </g:else>
+                    </td>
+                </tr>
+                <tr>
+                    <td><g:message code="domain.Project.field.sshKeyPath" default="Default SSH Key File"/>:</td>
+                    <td>
+                        <g:if test="${sshkeypath}">
+                            <span class="configvalue">${sshkeypath.encodeAsHTML()}</span>
+                        </g:if>
+                        <g:else>
+                            <span class="info note"><g:message code="message.none.set"/></span>
+                        </g:else>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <span class="prompt section">
+            <g:message code="framework.service.ResourceModelSource.label"/>
+        </span>
 
+        <div class="presentation">
             <g:if test="${!configs}">
-                <span class="info note">None set</span>
+                <span class="info note"><g:message code="message.none.set"/></span>
             </g:if>
 
             <ol id="configs">
@@ -87,20 +101,78 @@
                     <g:each var="config" in="${configs}" status="n">
                         <li>
                             <div class="inpageconfig">
-                                <g:set var="desc" value="${resourceModelConfigDescriptions.find {it.name==config.type}}"/>
+                                <g:set var="desc"
+                                       value="${resourceModelConfigDescriptions.find {it.name==config.type}}"/>
                                 <g:if test="${desc}">
 
-                                    <g:render template="/framework/viewResourceModelConfig" model="${[values: config.props, description: desc]}"/>
+                                    <g:render template="/framework/viewResourceModelConfig"
+                                              model="${[values: config.props, description: desc]}"/>
                                 </g:if>
                                 <g:else>
-                                    <span class="warn note">Invalid Resurce Model Source configuration: Provider not found: ${config.type.encodeAsHTML()}</span>
+                                    <span
+                                        class="warn note">Invalid Resurce Model Source configuration: Provider not found: ${config.type.encodeAsHTML()}</span>
                                 </g:else>
                             </div>
                         </li>
                     </g:each>
                 </g:if>
             </ol>
-        </div></div>
+        </div>
+        <span class="prompt section">
+            Default <g:message code="framework.service.NodeExecutor.label"/>
+        </span>
+
+        <div class="presentation">
+            <span
+                class="info note"><g:message code="domain.Project.edit.NodeExecutor.explanation"/></span>
+            <g:if test="${!nodeexecconfig}">
+                <span class="info note"><g:message code="message.none.set"/></span>
+            </g:if>
+
+            <g:if test="${nodeexecconfig}">
+                <div class="inpageconfig">
+                    <g:set var="desc" value="${nodeExecDescriptions.find {it.name==nodeexecconfig.type}}"/>
+                    <g:if test="${desc}">
+
+                        <g:render template="/framework/renderPluginConfig"
+                                  model="${[values: nodeexecconfig.config, description: desc]}"/>
+                    </g:if>
+                    <g:else>
+                        <span
+                            class="warn note"><g:message code="framework.service.error.missing-provider"
+                                                         args="[nodeexecconfig.type]"/></span>
+                    </g:else>
+                </div>
+            </g:if>
+        </div>
+        <span class="prompt section">
+            Default <g:message code="framework.service.FileCopier.label"/>
+        </span>
+
+        <div class="presentation">
+            <span
+                class="info note"><g:message code="domain.Project.edit.FileCopier.explanation"/></span>
+            <g:if test="${!fcopyconfig}">
+                <span class="info note"><g:message code="message.none.set" /></span>
+            </g:if>
+
+            <g:if test="${fcopyconfig}">
+                <div class="inpageconfig">
+                    <g:set var="desc" value="${fileCopyDescriptions.find {it.name==fcopyconfig.type}}"/>
+                    <g:if test="${desc}">
+
+                        <g:render template="/framework/renderPluginConfig"
+                                  model="${[values: fcopyconfig.config, description: desc]}"/>
+                    </g:if>
+                    <g:else>
+                        <span
+                            class="warn note"><g:message code="framework.service.error.missing-provider"
+                                                         args="[fcopyconfig.type]"/></span>
+                    </g:else>
+                </div>
+            </g:if>
+        </div>
+    </div>
 </div>
 </body>
 </html>
