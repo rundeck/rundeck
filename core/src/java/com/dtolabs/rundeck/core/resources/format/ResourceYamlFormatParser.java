@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.common.NodeFileParserException;
 import com.dtolabs.rundeck.core.common.NodeSetImpl;
 import com.dtolabs.rundeck.core.common.NodesYamlParser;
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.core.plugins.configuration.AbstractBaseDescription;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
@@ -77,7 +78,7 @@ public class ResourceYamlFormatParser implements ResourceFormatParser,Describabl
         return nodes;
     }
 
-    private static final Description DESCRIPTION = new Description() {
+    private static final Description DESCRIPTION = new AbstractBaseDescription() {
         public String getName() {
             return SERVICE_PROVIDER_TYPE;
         }
@@ -90,9 +91,6 @@ public class ResourceYamlFormatParser implements ResourceFormatParser,Describabl
             return "The RunDeck Resource YAML format 1.3";
         }
 
-        public List<Property> getProperties() {
-            return null;
-        }
     };
 
     public Description getDescription() {

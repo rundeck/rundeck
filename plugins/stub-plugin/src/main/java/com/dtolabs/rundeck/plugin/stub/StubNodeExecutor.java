@@ -31,7 +31,13 @@ import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.core.plugins.configuration.AbstractBaseDescription;
+import com.dtolabs.rundeck.core.plugins.configuration.Describable;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
+
+import java.util.List;
 
 /**
  * StubNodeExecutor is ...
@@ -39,7 +45,8 @@ import com.dtolabs.rundeck.core.utils.StringArrayUtil;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 @Plugin (name="stub",service = "NodeExecutor")
-public class StubNodeExecutor implements NodeExecutor {
+public class StubNodeExecutor implements NodeExecutor, Describable {
+    public static final String SERVICE_PROVIDER_NAME = "stub";
     private static final String STUB_EXEC_SUCCESS = "stub-exec-success";
     private static final String STUB_RESULT_CODE = "stub-result-code";
 
@@ -88,5 +95,22 @@ public class StubNodeExecutor implements NodeExecutor {
                 return "[Stub result: success? "+isSuccess()+", result code: "+getResultCode()+"]";
             }
         };
+    }
+
+    static final Description DESC= new AbstractBaseDescription(){
+        public String getName() {
+            return SERVICE_PROVIDER_NAME;
+        }
+
+        public String getTitle() {
+            return "Stub";
+        }
+
+        public String getDescription() {
+            return "Prints the command instead of executing it. (Useful for mocking processes.)";
+        }
+    };
+    public Description getDescription() {
+        return DESC;
     }
 }

@@ -23,10 +23,12 @@
 */
 package com.dtolabs.rundeck.core.execution.service;
 
+import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
+import com.dtolabs.rundeck.core.plugins.AbstractDescribableScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
@@ -41,11 +43,15 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class ScriptPluginNodeExecutor implements NodeExecutor {
-    private ScriptPluginProvider plugin;
+class ScriptPluginNodeExecutor extends AbstractDescribableScriptPlugin implements NodeExecutor {
 
-    public ScriptPluginNodeExecutor(final ScriptPluginProvider plugin) {
-        this.plugin = plugin;
+    ScriptPluginNodeExecutor(ScriptPluginProvider provider, Framework framework) {
+        super(provider, framework);
+    }
+
+    @Override
+    public boolean isAllowCustomProperties() {
+        return false;
     }
 
     static void validateScriptPlugin(final ScriptPluginProvider plugin) throws PluginException {
@@ -54,6 +60,7 @@ class ScriptPluginNodeExecutor implements NodeExecutor {
     public NodeExecutorResult executeCommand(final ExecutionContext executionContext, final String[] command,
                                              final INodeEntry node) throws ExecutionException {
         final File workingdir = null;
+        final ScriptPluginProvider plugin = getProvider();
         final File scriptfile = plugin.getScriptFile();
         final String pluginname = plugin.getName();
         executionContext.getExecutionListener().log(3,

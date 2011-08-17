@@ -87,10 +87,6 @@ public class ResourceModelSourceService extends PluggableProviderRegistryService
         }
     }
 
-    public ResourceModelSourceFactory getProviderForType(final String type) throws ExecutionServiceException {
-        return providerOfType(type);
-    }
-
     public boolean isValidProviderClass(Class clazz) {
 
         return ResourceModelSourceFactory.class.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
@@ -122,7 +118,7 @@ public class ResourceModelSourceService extends PluggableProviderRegistryService
         final ArrayList<Description> list = new ArrayList<Description>();
         for (final ProviderIdent providerIdent : listProviders()) {
             try {
-                final ResourceModelSourceFactory providerForType = getProviderForType(providerIdent.getProviderName());
+                final ResourceModelSourceFactory providerForType = providerOfType(providerIdent.getProviderName());
                 if (providerForType instanceof Describable) {
                     Describable desc = (Describable) providerForType;
                     list.add(desc.getDescription());
@@ -139,7 +135,7 @@ public class ResourceModelSourceService extends PluggableProviderRegistryService
         final ArrayList<ProviderIdent> list = new ArrayList<ProviderIdent>();
         for (final ProviderIdent providerIdent : listProviders()) {
             try {
-                final ResourceModelSourceFactory providerForType = getProviderForType(providerIdent.getProviderName());
+                final ResourceModelSourceFactory providerForType = providerOfType(providerIdent.getProviderName());
                 if (providerForType instanceof Describable) {
                     list.add(providerIdent);
                 }

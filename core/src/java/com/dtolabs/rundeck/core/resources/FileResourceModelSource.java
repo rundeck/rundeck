@@ -67,7 +67,7 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
 
     }
 
-    static final class Description implements com.dtolabs.rundeck.core.plugins.configuration.Description {
+    static final class Description extends AbstractBaseDescription {
         final List<Property> properties;
 
         Description(List<String> formats) {

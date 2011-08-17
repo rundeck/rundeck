@@ -32,14 +32,14 @@ import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.utils.Streams;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * ExternalScriptFileCopier plugin provides the FileCopier service by allowing an external script to handle the
@@ -63,7 +63,8 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 @Plugin (name = "script-copy", service = "FileCopier")
-public class ScriptFileCopier implements FileCopier {
+public class ScriptFileCopier implements FileCopier, Describable {
+    public static String SERVICE_PROVIDER_NAME = "script-copy";
     public static String SCRIPT_ATTRIBUTE = "script-copy";
     public static String DIR_ATTRIBUTE = "script-copy-dir";
     public static String SHELL_ATTRIBUTE = "script-copy-shell";
@@ -74,6 +75,64 @@ public class ScriptFileCopier implements FileCopier {
         "plugin.script-copy.default.remote-filepath";
     private static final String SCRIPT_COPY_DEFAULT_REMOTE_SHELL =
         "plugin.script-copy.default.shell";
+    public static final String CONFIG_COMMAND = "command";
+
+    public static final String CONFIG_INTERPRETER = "interpreter";
+
+    public static final String CONFIG_DIRECTORY = "directory";
+    public static final String CONFIG_FILEPATH = "filepath";
+
+    static final List<Property> properties = new ArrayList<Property>();
+    static final Map<String, String> CONFIG_MAPPING;
+
+    static {
+        properties.add(PropertyUtil.string(CONFIG_COMMAND, "Command",
+            "Shell command to execute the file copy",
+            true, null));
+        properties.add(PropertyUtil.string(CONFIG_FILEPATH, "Remote Filepath",
+            "Remote filepath destination for the script.",
+            false, null));
+        properties.add(PropertyUtil.string(CONFIG_INTERPRETER, "Interpreter",
+            "Shell or interpreter to pass the command string to. Not required.",
+            false, null));
+        properties.add(PropertyUtil.string(CONFIG_DIRECTORY, "Directory",
+            "Directory to execute within",
+            false, null));
+
+        final Map<String, String> mapping = new HashMap<String, String>();
+        mapping.put(CONFIG_COMMAND, SCRIPT_COPY_DEFAULT_COMMAND_PROPERTY);
+        mapping.put(CONFIG_FILEPATH, SCRIPT_COPY_DEFAULT_REMOTE_FILEPATH_PROPERTY);
+        mapping.put(CONFIG_INTERPRETER, SCRIPT_COPY_DEFAULT_REMOTE_SHELL);
+        mapping.put(CONFIG_DIRECTORY, SCRIPT_COPY_DEFAULT_DIR_PROPERTY);
+        CONFIG_MAPPING = Collections.unmodifiableMap(mapping);
+    }
+
+    public static final Description DESC = new AbstractBaseDescription() {
+        public String getName() {
+            return SERVICE_PROVIDER_NAME;
+        }
+
+        public String getTitle() {
+            return "Script Execution";
+        }
+
+        public String getDescription() {
+            return "Delegates file copying to an external script. Can be configured project-wide or on a per-node basis.";
+        }
+
+        public List<Property> getProperties() {
+            return properties;
+        }
+
+        @Override
+        public Map<String, String> getPropertiesMapping() {
+            return CONFIG_MAPPING;
+        }
+    };
+
+    public Description getDescription() {
+        return DESC;
+    }
 
     /**
      * Copy inputstream
@@ -168,7 +227,7 @@ public class ScriptFileCopier implements FileCopier {
 
         final Map<String, Map<String, String>> newDataContext = DataContextUtils.addContext("file-copy", scptexec,
             nodeContext);
-        
+
         final String copiedFilepath;
         if (null != attrRemoteFilepath) {
             copiedFilepath = DataContextUtils.replaceDataReferences(attrRemoteFilepath, newDataContext);

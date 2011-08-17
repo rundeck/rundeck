@@ -30,9 +30,14 @@ import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.core.plugins.configuration.AbstractBaseDescription;
+import com.dtolabs.rundeck.core.plugins.configuration.Describable;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.plugins.configuration.Property;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.List;
 
 /**
  * StubFileCopier stub provider for the FileCopier service
@@ -40,7 +45,8 @@ import java.io.InputStream;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 @Plugin (name = "stub",service = "FileCopier")
-public class StubFileCopier implements FileCopier {
+public class StubFileCopier implements FileCopier, Describable {
+    public static final String SERVICE_PROVIDER_NAME = "stub";
     public String copyFileStream(final ExecutionContext context, final InputStream input, final INodeEntry node) throws
         FileCopierException {
 
@@ -67,5 +73,23 @@ public class StubFileCopier implements FileCopier {
         context.getExecutionListener().log(Constants.WARN_LEVEL,
             "[stub] copy [" + linecount + " lines] to node " + node.getNodename() + ": " + resultpath);
         return resultpath;
+    }
+
+    final static Description DESC = new AbstractBaseDescription(){
+        public String getName() {
+            return SERVICE_PROVIDER_NAME;
+        }
+
+        public String getTitle() {
+            return "Stub";
+        }
+
+        public String getDescription() {
+            return "Prints information about file copy request instead of copying it. (Useful for mocking processes.)";
+        }
+    };
+
+    public Description getDescription() {
+        return DESC;
     }
 }

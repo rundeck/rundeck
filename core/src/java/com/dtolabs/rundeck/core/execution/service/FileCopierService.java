@@ -28,22 +28,29 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschScpFileCopier;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalFileCopier;
 import com.dtolabs.rundeck.core.plugins.PluginException;
+import com.dtolabs.rundeck.core.plugins.ProviderIdent;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
+import com.dtolabs.rundeck.core.plugins.configuration.Describable;
+import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * FileCopierService is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class FileCopierService extends NodeSpecifiedService<FileCopier> {
+public class FileCopierService extends NodeSpecifiedService<FileCopier> implements DescribableService {
     private static final String SERVICE_NAME = "FileCopier";
-    private static final String SERVICE_DEFAULT_PROVIDER_PROPERTY = "service." + SERVICE_NAME + ".default.provider";
+    public static final String SERVICE_DEFAULT_PROVIDER_PROPERTY = "service." + SERVICE_NAME + ".default.provider";
     private static final String SERVICE_DEFAULT_LOCAL_PROVIDER_PROPERTY =
         "service." + SERVICE_NAME + ".default.local.provider";
     public static final String REMOTE_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "file-copier";
     public static final String LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "local-file-copier";
-    private static final String DEFAULT_REMOTE_PROVIDER = JschScpFileCopier.SERVICE_PROVIDER_TYPE;
-    private static final String DEFAULT_LOCAL_PROVIDER = LocalFileCopier.SERVICE_PROVIDER_TYPE;
+    public static final String DEFAULT_REMOTE_PROVIDER = JschScpFileCopier.SERVICE_PROVIDER_TYPE;
+    public static final String DEFAULT_LOCAL_PROVIDER = LocalFileCopier.SERVICE_PROVIDER_TYPE;
 
     public String getName() {
         return SERVICE_NAME;
@@ -101,6 +108,42 @@ public class FileCopierService extends NodeSpecifiedService<FileCopier> {
 
     public FileCopier createScriptProviderInstance(final ScriptPluginProvider provider) throws PluginException {
         ScriptPluginFileCopier.validateScriptPlugin(provider);
-        return new ScriptPluginFileCopier(provider);
+        return new ScriptPluginFileCopier(provider, framework);
+    }
+
+    public List<Description> listDescriptions() {
+        final ArrayList<Description> list = new ArrayList<Description>();
+        for (final ProviderIdent providerIdent : listProviders()) {
+            try {
+                final FileCopier providerForType = providerOfType(providerIdent.getProviderName());
+                if (providerForType instanceof Describable) {
+                    final Describable desc = (Describable) providerForType;
+                    final Description description = desc.getDescription();
+                    if (null != description) {
+                        list.add(description);
+                    }
+                }
+            } catch (ExecutionServiceException e) {
+                e.printStackTrace();
+            }
+
+        }
+        return list;
+    }
+
+    public List<ProviderIdent> listDescribableProviders() {
+        final ArrayList<ProviderIdent> list = new ArrayList<ProviderIdent>();
+        for (final ProviderIdent providerIdent : listProviders()) {
+            try {
+                final FileCopier providerForType = providerOfType(providerIdent.getProviderName());
+                if (providerForType instanceof Describable) {
+                    list.add(providerIdent);
+                }
+            } catch (ExecutionServiceException e) {
+                e.printStackTrace();
+            }
+
+        }
+        return list;
     }
 }

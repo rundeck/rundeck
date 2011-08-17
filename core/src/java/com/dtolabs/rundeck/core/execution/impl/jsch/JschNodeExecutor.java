@@ -33,6 +33,10 @@ import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.impl.common.AntSupport;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.plugins.configuration.Describable;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.plugins.configuration.Property;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
 import com.dtolabs.rundeck.core.tasks.net.ExtSSHExec;
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
 import com.jcraft.jsch.JSchException;
@@ -40,13 +44,14 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 
 import java.text.MessageFormat;
+import java.util.*;
 
 /**
  * JschNodeExecutor is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class JschNodeExecutor implements NodeExecutor {
+public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String SERVICE_PROVIDER_TYPE = "jsch-ssh";
     public static final String FWK_PROP_AUTH_CANCEL_MSG = "framework.messages.error.ssh.authcancel";
     public static final String FWK_PROP_AUTH_CANCEL_MSG_DEFAULT =
@@ -58,6 +63,48 @@ public class JschNodeExecutor implements NodeExecutor {
 
     public JschNodeExecutor(final Framework framework) {
         this.framework = framework;
+    }
+
+    static final List<Property> CONFIG_PROPERTIES = new ArrayList<Property>();
+    static final Map<String,String> CONFIG_MAPPING ;
+
+    public static final String CONFIG_KEYPATH = "keypath";
+
+    static {
+//        CONFIG_PROPERTIES.add(PropertyUtil.string(CONFIG_KEYPATH, "SSH Keypath",
+//            "Path to a private SSH Key file, for use with SSH and SCP. Can be overridden by node attribute \""
+//            + NODE_ATTR_SSH_KEYPATH + "\".", true, null));
+
+        final Map<String, String> mapping = new HashMap<String, String>();
+        mapping.put(CONFIG_KEYPATH, PROJ_PROP_SSH_KEYPATH);
+        CONFIG_MAPPING = Collections.unmodifiableMap(mapping);
+    }
+
+
+    static final Description DESC = new Description() {
+        public String getName() {
+            return SERVICE_PROVIDER_TYPE;
+        }
+
+        public String getTitle() {
+            return "SSH";
+        }
+
+        public String getDescription() {
+            return "Executes a command on a remote node via SSH.";
+        }
+
+        public List<Property> getProperties() {
+            return CONFIG_PROPERTIES;
+        }
+
+        public Map<String, String> getPropertiesMapping() {
+            return CONFIG_MAPPING;
+        }
+    };
+
+    public Description getDescription() {
+        return DESC;
     }
 
     public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
@@ -130,7 +177,7 @@ public class JschNodeExecutor implements NodeExecutor {
             @Override
             public String toString() {
                 return "[jsch-ssh] result was " + (isSuccess() ? "success" : "failure") + ", resultcode: "
-                       + getResultCode()+(null!=resultmsg?": "+resultmsg:"");
+                       + getResultCode() + (null != resultmsg ? ": " + resultmsg : "");
 
             }
         };
@@ -176,7 +223,7 @@ public class JschNodeExecutor implements NodeExecutor {
     };
 
     static int getFrameworkSSHTimeout(final Framework framework) {
-        int timeout=0;
+        int timeout = 0;
         if (framework.getPropertyLookup().hasProperty(Constants.SSH_TIMEOUT_PROP)) {
             final String val = framework.getProperty(Constants.SSH_TIMEOUT_PROP);
             try {
@@ -189,6 +236,5 @@ public class JschNodeExecutor implements NodeExecutor {
         }
         return timeout;
     }
-
 
 }

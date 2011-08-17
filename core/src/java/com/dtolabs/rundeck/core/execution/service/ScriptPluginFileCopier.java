@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
+import com.dtolabs.rundeck.core.plugins.AbstractDescribableScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
@@ -44,11 +45,14 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class ScriptPluginFileCopier implements FileCopier {
-    private ScriptPluginProvider plugin;
+class ScriptPluginFileCopier extends AbstractDescribableScriptPlugin implements FileCopier {
+    @Override
+    public boolean isAllowCustomProperties() {
+        return false;
+    }
 
-    public ScriptPluginFileCopier(ScriptPluginProvider plugin) {
-        this.plugin = plugin;
+    ScriptPluginFileCopier(final ScriptPluginProvider provider, final Framework framework) {
+        super(provider, framework);
     }
 
     static void validateScriptPlugin(final ScriptPluginProvider plugin) throws PluginException {
@@ -95,6 +99,7 @@ class ScriptPluginFileCopier implements FileCopier {
         File workingdir = null;
         String scriptargs = null;
         String dirstring = null;
+        final ScriptPluginProvider plugin = getProvider();
         final String pluginname = plugin.getName();
         final File scriptfile = plugin.getScriptFile();
 

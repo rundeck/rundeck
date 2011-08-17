@@ -90,7 +90,7 @@ public class URLResourceModelSource implements ResourceModelSource, Configurable
 
     }
 
-    public static final Description DESCRIPTION = new Description() {
+    public static final Description DESCRIPTION = new AbstractBaseDescription() {
         public String getName() {
             return "url";
         }
@@ -283,32 +283,41 @@ public class URLResourceModelSource implements ResourceModelSource, Configurable
         } catch (UpdateUtils.UpdateException e) {
             if (!destinationTempFile.isFile() || destinationTempFile.length() < 1) {
                 throw new ResourceModelSourceException(
-                    "Error updating from URL: " + configuration.nodesUrl + ": " + e.getMessage(), e);
+                    "Error requesting URL Resource Model Source: " + configuration.nodesUrl + ": " + e.getMessage(), e);
             } else {
-                logger.error("Error updating from URL: " + configuration.nodesUrl + ": " + e.getMessage(), e);
+                logger.error("Error requesting URL Resource Model Source: " + configuration.nodesUrl + ": " + e.getMessage(), e);
             }
         }
         final ResourceFormatParser parser;
-        try {
-            if ("file".equalsIgnoreCase(configuration.nodesUrl.getProtocol())) {
+        if ("file".equalsIgnoreCase(configuration.nodesUrl.getProtocol())) {
+            try {
                 parser = framework.getResourceFormatParserService().getParserForFileExtension(new File(
                     configuration.nodesUrl.toURI()));
-                logger.debug("Determined URL content format from file name: " + configuration.nodesUrl);
-            } else {
-                String mimetype = null != updater ? updater.getContentType() : null;
-                parser = framework.getResourceFormatParserService().getParserForMIMEType(mimetype);
-                logger.debug("Determined URL content format from MIME type: " + mimetype);
+            } catch (UnsupportedFormatException e) {
+                throw new ResourceModelSourceException(
+                    "Error requesting URL Resource Model Source: " + configuration.nodesUrl + ": No supported format available for file extension", e);
+            } catch (URISyntaxException e) {
+                throw new ResourceModelSourceException(
+                    "Error requesting URL Resource Model Source: " + configuration.nodesUrl + ": " + e.getMessage(), e);
             }
-        } catch (URISyntaxException e) {
-            throw new ResourceModelSourceException(e);
-        } catch (UnsupportedFormatException e) {
-            throw new ResourceModelSourceException(e);
+            logger.debug("Determined URL content format from file name: " + configuration.nodesUrl);
+        } else {
+            final String mimetype = null != updater ? updater.getContentType() : null;
+            try {
+                parser = framework.getResourceFormatParserService().getParserForMIMEType(mimetype);
+            } catch (UnsupportedFormatException e) {
+                throw new ResourceModelSourceException(
+                    "Error requesting URL Resource Model Source: " + configuration.nodesUrl + ": Response content type is not supported: "+mimetype , e);
+            }
+            logger.debug("Determined URL content format from MIME type: " + mimetype);
         }
         if (destinationTempFile.isFile() && destinationTempFile.length() > 0) {
             try {
                 return parser.parseDocument(destinationTempFile);
             } catch (ResourceFormatParserException e) {
-                throw new ResourceModelSourceException(e);
+                throw new ResourceModelSourceException(
+                    "Error requesting URL Resource Model Source: " + configuration.nodesUrl
+                    + ": Content could not be parsed: "+e.getMessage(),e);
             }
         } else {
             return new NodeSetImpl();

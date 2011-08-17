@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.common.NodeFileParserException;
 import com.dtolabs.rundeck.core.common.NodeSetImpl;
 import com.dtolabs.rundeck.core.common.NodesXMLParser;
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.core.plugins.configuration.AbstractBaseDescription;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
@@ -78,7 +79,7 @@ public class ResourceXMLFormatParser implements ResourceFormatParser, Describabl
         return nodeReceiver;
     }
 
-    private static final Description DESCRIPTION = new Description() {
+    private static final Description DESCRIPTION = new AbstractBaseDescription() {
         public String getName() {
             return SERVICE_PROVIDER_TYPE;
         }
@@ -91,9 +92,6 @@ public class ResourceXMLFormatParser implements ResourceFormatParser, Describabl
             return "The RunDeck Resource XML format 1.3";
         }
 
-        public List<Property> getProperties() {
-            return null;
-        }
     };
 
     public Description getDescription() {

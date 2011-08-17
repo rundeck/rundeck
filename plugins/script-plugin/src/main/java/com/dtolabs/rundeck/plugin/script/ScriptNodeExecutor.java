@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
 import com.dtolabs.utils.Streams;
 
@@ -59,7 +60,8 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 @Plugin (name = "script-exec", service = "NodeExecutor")
-public class ScriptNodeExecutor implements NodeExecutor {
+public class ScriptNodeExecutor implements NodeExecutor, Describable {
+    public static String SERVICE_PROVIDER_NAME = "script-exec";
     public static String SCRIPT_ATTRIBUTE = "script-exec";
     public static String DIR_ATTRIBUTE = "script-exec-dir";
     public static String SHELL_ATTRIBUTE = "script-exec-shell";
@@ -67,6 +69,57 @@ public class ScriptNodeExecutor implements NodeExecutor {
     private static final String SCRIPT_EXEC_DEFAULT_DIR_PROPERTY = "plugin.script-exec.default.dir";
     private static final String SCRIPT_EXEC_DEFAULT_REMOTE_SHELL =
         "plugin.script-exec.default.shell";
+
+    static final List<Property> properties = new ArrayList<Property>();
+
+    public static final String CONFIG_COMMAND = "command";
+
+    public static final String CONFIG_INTERPRETER = "interpreter";
+
+    public static final String CONFIG_DIRECTORY = "directory";
+    static final Map<String, String> CONFIG_MAPPING;
+
+    static {
+        properties.add(PropertyUtil.string(CONFIG_COMMAND, "Command",
+            "Shell command to execute",
+            true, null));
+        properties.add(PropertyUtil.string(CONFIG_INTERPRETER, "Interpreter",
+            "Shell or interpreter to pass the command string to. Not required.",
+            false, null));
+        properties.add(PropertyUtil.string(CONFIG_DIRECTORY, "Directory",
+            "Directory to execute within",
+            false, null));
+
+
+        final Map<String, String> mapping = new HashMap<String, String>();
+        mapping.put(CONFIG_COMMAND, SCRIPT_EXEC_DEFAULT_COMMAND_PROPERTY);
+        mapping.put(CONFIG_INTERPRETER, SCRIPT_EXEC_DEFAULT_REMOTE_SHELL);
+        mapping.put(CONFIG_DIRECTORY, SCRIPT_EXEC_DEFAULT_DIR_PROPERTY);
+        CONFIG_MAPPING = Collections.unmodifiableMap(mapping);
+    }
+
+    public static final Description DESC = new AbstractBaseDescription() {
+        public String getName() {
+            return SERVICE_PROVIDER_NAME;
+        }
+
+        public String getTitle() {
+            return "Script Execution";
+        }
+
+        public String getDescription() {
+            return "Delegates command execution to an external script. Can be configured project-wide or on a per-node basis.";
+        }
+
+        public List<Property> getProperties() {
+            return properties;
+        }
+
+        @Override
+        public Map<String, String> getPropertiesMapping() {
+            return CONFIG_MAPPING;
+        }
+    };
 
     public NodeExecutorResult executeCommand(final ExecutionContext executionContext, final String[] command,
                                              final INodeEntry node) throws ExecutionException {
@@ -172,4 +225,7 @@ public class ScriptNodeExecutor implements NodeExecutor {
         };
     }
 
+    public Description getDescription() {
+        return DESC;
+    }
 }

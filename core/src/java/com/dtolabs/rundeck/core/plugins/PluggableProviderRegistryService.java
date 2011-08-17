@@ -43,7 +43,7 @@ public abstract class PluggableProviderRegistryService<T> extends BaseProviderRe
 
 
     @Override
-    protected T providerOfType(final String providerName) throws ExecutionServiceException {
+    public T providerOfType(final String providerName) throws ExecutionServiceException {
         T t = null;
         MissingProviderException caught = null;
         try {
