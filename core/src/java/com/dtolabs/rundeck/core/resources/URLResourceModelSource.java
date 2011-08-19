@@ -260,19 +260,18 @@ public class URLResourceModelSource implements ResourceModelSource, Configurable
 
     public INodeSet getNodes() throws ResourceModelSourceException {
         //update from URL if necessary
-        URLFileUpdater updater = null;
+        final URLFileUpdaterBuilder urlFileUpdaterBuilder = new URLFileUpdaterBuilder()
+            .setUrl(configuration.nodesUrl)
+            .setAcceptHeader("*/*")
+            .setTimeout(configuration.timeout);
+        if (configuration.useCache) {
+            urlFileUpdaterBuilder
+                .setCacheMetadataFile(destinationCacheData)
+                .setCachedContent(destinationTempFile)
+                .setUseCaching(true);
+        }
+        final URLFileUpdater updater = urlFileUpdaterBuilder.createURLFileUpdater();
         try {
-            final URLFileUpdaterBuilder urlFileUpdaterBuilder = new URLFileUpdaterBuilder()
-                .setUrl(configuration.nodesUrl)
-                .setAcceptHeader("*/xml,*/yaml,*/yml")
-                .setTimeout(configuration.timeout);
-            if (configuration.useCache) {
-                urlFileUpdaterBuilder
-                    .setCacheMetadataFile(destinationCacheData)
-                    .setCachedContent(destinationTempFile)
-                    .setUseCaching(true);
-            }
-            updater = urlFileUpdaterBuilder.createURLFileUpdater();
             if (null != interaction) {
                 //allow mock
                 updater.setInteraction(interaction);
@@ -302,12 +301,13 @@ public class URLResourceModelSource implements ResourceModelSource, Configurable
             }
             logger.debug("Determined URL content format from file name: " + configuration.nodesUrl);
         } else {
-            final String mimetype = null != updater ? updater.getContentType() : null;
+            final String mimetype = updater.getContentType();
             try {
                 parser = framework.getResourceFormatParserService().getParserForMIMEType(mimetype);
             } catch (UnsupportedFormatException e) {
                 throw new ResourceModelSourceException(
-                    "Error requesting URL Resource Model Source: " + configuration.nodesUrl + ": Response content type is not supported: "+mimetype , e);
+                    "Error requesting URL Resource Model Source: " + configuration.nodesUrl
+                    + ": Response content type is not supported: " + mimetype, e);
             }
             logger.debug("Determined URL content format from MIME type: " + mimetype);
         }
