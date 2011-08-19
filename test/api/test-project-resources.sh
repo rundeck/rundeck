@@ -52,7 +52,6 @@ fi
 
 #Check results list
 itemcount=$($XMLSTARLET sel -T -t -v "count(/project/node)" ${file})
-echo "$itemcount Nodes"
 if [ "0" == "$itemcount" ] ; then
     errorMsg "FAIL: expected multiple /project/node element"
     exit 2
@@ -61,14 +60,54 @@ fi
 echo "OK"
 
 
+echo "TEST: /api/2/project/${proj}/resources (GET) (YAML)"
+params="format=yaml"
+
+# get listing
+docurl ${runurl}?${params} > ${file} || fail "ERROR: failed request"
+
+#test curl.out for valid xml
+$XMLSTARLET val -w ${file} > /dev/null 2>&1
+validxml=$?
+if [ 0 == $validxml ] ; then
+    fail "Should not be XML"
+fi
+
+grep -e 'nodename:' -q ${file}
+if [ 0 != $? ] ; then
+    fail "Result does not appear correct"
+fi
+
+echo "OK"
+
+
+echo "TEST: /api/2/project/${proj}/resources (GET) (unsupported)"
+params="format=unsupported"
+
+docurl ${runurl}?${params} > ${file} || fail "ERROR: failed request"
+sh $DIR/api-test-error.sh ${file} "Unsupported API Version \"2\". API Request: /api/2/project/${proj}/resources. Reason: Minimum supported version: 3" || fail "ERROR: failed request"
+
+echo "OK"
+
+echo "TEST: /api/3/project/${proj}/resources (GET) (otherformat)"
+
+API3URL="${RDURL}/api/3"
+runurl3="${API3URL}/project/${proj}/resources"
+params="format=other"
+
+docurl ${runurl3}?${params} > ${file} || fail "ERROR: failed request"
+sh $DIR/api-test-error.sh ${file} "The format specified is unsupported: other" || fail "ERROR: failed request"
+
+echo "OK"
+
+echo "TEST: /api/2/project/${proj}/resources (POST) (xml)"
+
 TETC=$RDECK_BASE/projects/test/etc
 TRES=$TETC/resources.xml
 
 if [ ! -f $TRES.testbackup ] ; then
     cp $TRES $TRES.testbackup
 fi
-
-
 
 cat <<END > $TETC/testUpdateResources.xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -80,9 +119,6 @@ cat <<END > $TETC/testUpdateResources.xml
 </project>
 END
 
-echo "TEST: /api/2/project/${proj}/resources (POST) (xml)"
-
-
 # post data
 $CURL -H "$AUTHHEADER" -X POST -H 'Content-Type: text/xml' --data-binary "@$TETC/testUpdateResources.xml" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
@@ -90,7 +126,6 @@ sh $DIR/api-test-success.sh ${file} "Resources were successfully updated for pro
 
 echo "OK"
 
-#exit 0
 
 cat <<END > $TETC/testUpdateResources.yaml
 test1:
@@ -127,6 +162,48 @@ echo "TEST: /api/2/project/${proj}/resources (POST) (yaml)"
 $CURL -H "$AUTHHEADER" -X POST -H 'Content-Type: text/yaml' --data-binary "@$TETC/testUpdateResources.yaml" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
 
 sh $DIR/api-test-success.sh ${file} "Resources were successfully updated for project test" || exit 2
+
+echo "OK"
+
+
+echo "TEST: /api/2/project/${proj}/resources (POST) (unsupported)"
+
+cat <<END > $TETC/testUpdateResources.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE project PUBLIC "-//DTO Labs Inc.//DTD Resources Document 1.0//EN" "project.dtd">
+
+<project>
+  <node name="test1" type="Node" description="Rundeck test node" tags="test1,testboth" hostname="testhost1" osArch="x86_64" osFamily="unix" osName="Mac OS X" osVersion="10.6.6" username="rdeck" editUrl="" remoteUrl=""/>
+  <node name="test2" type="Node" description="Rundeck test node" tags="test2,testboth" hostname="testhost2" osArch="x86_64" osFamily="unix" osName="Mac OS X" osVersion="10.6.6" username="rdeck1" editUrl="" remoteUrl=""/>
+</project>
+END
+
+# post data
+$CURL -H "$AUTHHEADER" -X POST -H 'Content-Type: text/x-something' --data-binary "@$TETC/testUpdateResources.xml" ${runurl}?${params} > ${file} || fail "ERROR: failed request"
+
+sh $DIR/api-test-error.sh ${file} "Unsupported API Version \"2\". API Request: /api/2/project/test/resources. Reason: Minimum supported version: 3" || exit 2
+
+echo "OK"
+
+
+
+echo "TEST: /api/3/project/${proj}/resources (POST) (format=other)"
+params=""
+
+cat <<END > $TETC/testUpdateResources.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE project PUBLIC "-//DTO Labs Inc.//DTD Resources Document 1.0//EN" "project.dtd">
+
+<project>
+  <node name="test1" type="Node" description="Rundeck test node" tags="test1,testboth" hostname="testhost1" osArch="x86_64" osFamily="unix" osName="Mac OS X" osVersion="10.6.6" username="rdeck" editUrl="" remoteUrl=""/>
+  <node name="test2" type="Node" description="Rundeck test node" tags="test2,testboth" hostname="testhost2" osArch="x86_64" osFamily="unix" osName="Mac OS X" osVersion="10.6.6" username="rdeck1" editUrl="" remoteUrl=""/>
+</project>
+END
+
+# post data
+$CURL -H "$AUTHHEADER" -X POST -H 'Content-Type: text/x-something' --data-binary "@$TETC/testUpdateResources.xml" ${runurl3}?${params} > ${file} || fail "ERROR: failed request"
+
+sh $DIR/api-test-error.sh ${file} "Unsupported format: No provider available to parse MIME type: text/x-something" || exit 2
 
 echo "OK"
 

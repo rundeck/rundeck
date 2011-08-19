@@ -1194,8 +1194,9 @@ class FrameworkController  {
             flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
             return chain(controller:'api',action:'error')
         }
-        if (request.format && !(request.format in ['xml','yaml'])) {
+        if (params.format && !(params.format in ['xml','yaml']) || request.format && !(request.format in ['html','xml','yaml'])) {
             //expected another content type
+            def reqformat = params.format ?: request.format
             if (!new ApiController().requireVersion(ApiRequestFilters.V3)) {
                 return
             }
@@ -1220,22 +1221,22 @@ class FrameworkController  {
     }
     def apiRenderNodeResult={INodeSet nodes, Framework framework, String project->
 
-        if (!(request.format in ['xml', 'yaml'])) {
-            System.err.println("request.format: ${request.format}, params.format: ${params.format}");
+        if (params.format && !(params.format in ['xml', 'yaml']) || request.format && !(request.format in ['html', 'xml', 'yaml'])) {
             //expected another content type
             if (!new ApiController().requireVersion(ApiRequestFilters.V3)) {
                 return
             }
+            def reqformat=params.format?:request.format
             //render specified format
             final FrameworkProject frameworkProject = framework.getFrameworkProjectMgr().getFrameworkProject(project)
             final service = framework.getResourceFormatGeneratorService()
             ByteArrayOutputStream baos = new ByteArrayOutputStream()
             final generator
             try {
-                generator = service.getGeneratorForFormat(params.format?:'resourcexml')
+                generator = service.getGeneratorForFormat(reqformat?:'resourcexml')
                 generator.generateDocument(nodes,baos)
             } catch (UnsupportedFormatException e) {
-                flash.error = g.message(code: 'api.error.resource.format.unsupported', args: [params.format])
+                flash.error = g.message(code: 'api.error.resource.format.unsupported', args: [reqformat])
                 return new ApiController().error()
             }catch (ResourceFormatGeneratorException e){
                 flash.error = g.message(code: 'api.error.resource.format.generator', args: [e.message])

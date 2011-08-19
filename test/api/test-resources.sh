@@ -101,6 +101,32 @@ fi
 
 echo "OK"
 
+
+#test unsupported format
+params="project=${project}&format=unsupported"
+
+echo "TEST: /api/resources, format unsupported"
+
+# get listing
+docurl ${runurl}?${params} > ${file} || fail "failed request"
+sh $DIR/api-test-error.sh ${file} "The format specified is unsupported: unsupported" || fail "expected error"
+
+echo "OK"
+
+
+#test api v3 required to use other format
+
+echo "TEST: /api/2/resources, ?format=other requires v3"
+params="project=${project}&format=other"
+
+# get listing
+API2URL="${RDURL}/api/2"
+runurl="${API2URL}/resources"
+docurl ${runurl}?${params} > ${file} || fail "failed request"
+sh $DIR/api-test-error.sh ${file} "Unsupported API Version \"2\". API Request: /api/2/resources. Reason: Minimum supported version: 3" || fail "expected error"
+
+echo "OK"
+
 ####
 # test with preset resources.
 ####
