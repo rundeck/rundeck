@@ -30,6 +30,11 @@ var ResourceModelConfigControl = Class.create({
     top.appendChild(wrapper);
     $(parentNode).insert(top, {after:elem});
     var content = parentNode.removeChild(elem);
+    $(content).select('input').each(function(elem) {
+        if (elem.type == 'text') {
+            elem.observe('keypress', noenter);
+        }
+    });
 
     var hidden3 = new Element("input");
     hidden3.setAttribute("type", "hidden");

@@ -42,6 +42,11 @@
     function init(){
         configControl=new ResourceModelConfigControl('${prefixKey.encodeAsJavaScript()}');
         configControl.pageInit();
+        $$('input').each(function(elem){
+            if(elem.type=='text'){
+                elem.observe('keypress',noenter);
+            }
+        });
     }
     Event.observe(window, 'load', init);
     </g:javascript>
