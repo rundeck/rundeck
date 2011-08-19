@@ -7,7 +7,6 @@ import javax.security.auth.Subject;
 import javax.xml.xpath.XPathExpressionException;
 
 import com.dtolabs.rundeck.core.authorization.Attribute;
-import com.dtolabs.rundeck.core.authorization.providers.PoliciesXml.Context;
 
 public interface PolicyCollection {
     

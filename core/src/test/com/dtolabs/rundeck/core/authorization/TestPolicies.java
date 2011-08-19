@@ -20,8 +20,7 @@ import com.dtolabs.rundeck.core.authentication.Group;
 import com.dtolabs.rundeck.core.authentication.LdapGroup;
 import com.dtolabs.rundeck.core.authentication.Username;
 import com.dtolabs.rundeck.core.authorization.providers.AclContext;
-import com.dtolabs.rundeck.core.authorization.providers.PoliciesXml;
-import com.dtolabs.rundeck.core.authorization.providers.PoliciesXml.Context;
+import com.dtolabs.rundeck.core.authorization.providers.Policies;
 import junit.framework.TestCase;
 
 import javax.security.auth.Subject;
@@ -35,11 +34,11 @@ import java.util.Set;
 
 public class TestPolicies extends TestCase {
 
-    private PoliciesXml policies;
+    private Policies policies;
     
     public void setUp() throws Exception {
 
-        policies = PoliciesXml.load(getPath("com/dtolabs/rundeck/core/authorization"));
+        policies = Policies.load(getPath("com/dtolabs/rundeck/core/authorization"));
     }
 
     /**

@@ -66,7 +66,7 @@ public class PolicyNode implements Policy {
             String ns = group.getNamespaceURI();
             if (ns == null) {
                 groups.add(group.getNodeValue());
-            } else if (PoliciesXml.NS_LDAP.equalsIgnoreCase(ns) || PoliciesXml.NS_AD.equalsIgnoreCase(ns)) {
+            } else if (PoliciesDocument.NS_LDAP.equalsIgnoreCase(ns) || PoliciesDocument.NS_AD.equalsIgnoreCase(ns)) {
                 try {
                     groups.add(new LdapName(group.getNodeValue()));
                 } catch (InvalidNameException e) {
@@ -93,8 +93,8 @@ public class PolicyNode implements Policy {
         }
     }
 
-    public PoliciesXml.Context getContext() {
-        return new PoliciesXml.Context(policyNode);
+    public PoliciesDocument.Context getContext() {
+        return new PoliciesDocument.Context(policyNode);
     }
 
     public Set<Object> getGroups() {

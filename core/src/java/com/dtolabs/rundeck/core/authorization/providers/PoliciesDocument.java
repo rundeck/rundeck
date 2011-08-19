@@ -27,10 +27,11 @@ import com.dtolabs.rundeck.core.authentication.Group;
 import com.dtolabs.rundeck.core.authentication.LdapGroup;
 import com.dtolabs.rundeck.core.authentication.Username;
 import com.dtolabs.rundeck.core.authorization.Attribute;
+import com.dtolabs.rundeck.core.authorization.Explanation;
 import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.apache.log4j.Logger;
 
 
 import javax.naming.InvalidNameException;
@@ -40,15 +41,18 @@ import javax.xml.xpath.*;
 import javax.xml.namespace.NamespaceContext;
 import java.io.File;
 import java.util.*;
+import java.util.regex.Pattern;
 
 
 /**
- * PoliciesDocument wraps a Document and squeezes lemons.
+ * PoliciesDocument implements a policy collection defined by a XML Document.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class PoliciesDocument implements PolicyCollection {
 
+    static final String NS_AD = "http://dtolabs.com/rundeck/activedirectory";
+    static final String NS_LDAP = "http://dtolabs.com/rundeck/ldap";
     private Document document;
     private File file;
     private ArrayList<String> groupNames;
@@ -76,9 +80,9 @@ public class PoliciesDocument implements PolicyCollection {
 
             public String getNamespaceURI(String prefix) {
                 if (prefix.equals("ldap")) {
-                    return PoliciesXml.NS_LDAP;
+                    return NS_LDAP;
                 } else if (prefix.equals("ActiveDirectory")) {
-                    return PoliciesXml.NS_AD;
+                    return NS_AD;
                 } else {
                     return ""; // 1.6 = XMLConstants.NULL_NS_URI;
                 }
@@ -93,9 +97,9 @@ public class PoliciesDocument implements PolicyCollection {
         } catch (XPathExpressionException e) {
             throw new IllegalArgumentException(e);
         }
-
     }
 
+    final static private Map<String, XPathExpression> commandFilterCache = new HashMap<String, XPathExpression>();
     public PoliciesDocument(final Document document, final File file) {
         this.document = document;
         this.file=file;
@@ -104,7 +108,6 @@ public class PoliciesDocument implements PolicyCollection {
     /**
      * @see com.dtolabs.rundeck.core.authorization.providers.PolicyCollection#groupNames()
      */
-    @Override
     public Collection<String> groupNames() throws InvalidCollection {
         if (null != groupNames) {
             return groupNames;
@@ -129,7 +132,6 @@ public class PoliciesDocument implements PolicyCollection {
     /**
      * @see com.dtolabs.rundeck.core.authorization.providers.PolicyCollection#countPolicies()
      */
-    @Override
     public long countPolicies() throws InvalidCollection {
         if (count != Long.MIN_VALUE) {
             return count;
@@ -161,7 +163,6 @@ public class PoliciesDocument implements PolicyCollection {
     /**
      * @see com.dtolabs.rundeck.core.authorization.providers.PolicyCollection#matchedContexts(javax.security.auth.Subject, java.util.Set)
      */
-    @Override
     public Collection<AclContext> matchedContexts(Subject subject, Set<Attribute> environment) throws
         InvalidCollection {
         try {
@@ -249,5 +250,177 @@ public class PoliciesDocument implements PolicyCollection {
         return "PoliciesDocument{" +
                "file=" + file +
                '}';
+    }
+
+    public static class Context implements AclContext {
+        public Context(Node policy) {
+            super();
+            this.policy = policy;
+        }
+
+        final private Node policy;
+
+
+        /* (non-Javadoc)
+         * @see com.dtolabs.rundeck.core.authorization.providers.AclContext#includes(java.util.Map, java.lang.String)
+         */
+        public ContextDecision includes(Map<String, String> resource, String action) {
+            // keep track of each context and the the resulting grant or rejection
+            List<ContextEvaluation> evaluations = new ArrayList<ContextEvaluation>();
+
+            try {
+                StringBuilder filter = new StringBuilder();
+                Iterator<String> iter = resource.keySet().iterator();
+                while(iter.hasNext()) {
+
+                    String next = iter.next();
+
+                    if(next != null && next.length() > 0) {
+                        filter.append('@').append(next);
+                    }
+
+                    if(iter.hasNext()) {
+                        filter.append(" and ");
+                    }
+                }
+
+                String filterString = filter.toString();
+                if(!commandFilterCache.containsKey(filterString)) {
+                    commandFilterCache.put(filterString, xpath.compile("descendant-or-self::command["+filterString+"]"));
+                }
+
+                NodeList commands = (NodeList) commandFilterCache.get(filterString).evaluate(policy, XPathConstants.NODESET);
+
+                for(int i = 0; i < commands.getLength(); i++) {
+
+                    Node command = commands.item(i);
+                    NamedNodeMap attributes = command.getAttributes();
+
+                    // check actions.
+                    Node actionAttr = attributes.getNamedItem("actions");
+                    if(actionAttr == null) {
+                        // assume no actions can be taken.
+                        evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_NO_ACTIONS_DECLARED,
+                                generateJobName(this.policy, command)));
+                        continue;
+                    }
+
+                    String actionsNodeValue = actionAttr.getNodeValue();
+                    if(actionsNodeValue.length() <= 0) {
+                        evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_ACTIONS_DECLARED_EMPTY,
+                                generateJobName(this.policy, command)));
+                        continue;
+                    }
+
+                    // special case.  '*' matches anything.
+                    if(!"*".equals(actionsNodeValue)) {
+                        List<String> actions = Arrays.asList(actionsNodeValue.split(","));
+                        if(!actions.contains(action)) {
+                            evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_NO_ACTIONS_MATCHED,
+                                    generateJobName(this.policy, command)));
+                            continue;
+                        }
+                    }
+
+                    // all must match
+                    boolean matched = true;
+                    Iterator<String> resourceKeyIter = resource.keySet().iterator();
+                    while(matched && resourceKeyIter.hasNext()) {
+                        String key = resourceKeyIter.next();
+                        Node attr = attributes.getNamedItem(key);
+
+                        // if resource matches command attribute, either literally or via regex on command, continue.
+                        String matchField = attr.getNodeValue();
+
+                        // special case.
+                        if(matchField.equals("*")) {
+                            continue;
+                        }
+
+                        String input = resource.get(key);
+                        if(input == null || input.length() <= 0) {
+                            evaluations.add(
+                                    new ContextEvaluation(Explanation.Code.REJECTED_NO_RESOURCE_PROPERTY_PROVIDED,
+                                            generateJobName(policy, command)));
+                            matched = false;
+                            break;
+                        }
+
+                        if(!Pattern.matches(matchField, input)) {
+                            matched = false;
+                            evaluations.add(
+                                    new ContextEvaluation(Explanation.Code.REJECTED_RESOURCE_PROPERTY_NOT_MATCHED,
+                                            generateJobName(policy, command)));
+                            break;
+                        }
+
+                    }
+
+                    if(matched) {
+                        evaluations.add(new ContextEvaluation(Explanation.Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, generateJobName(policy, command)));
+                        return new ContextDecision(Explanation.Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, true, evaluations);
+                    }
+                }
+            } catch (XPathExpressionException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+                return new ContextDecision(Explanation.Code.REJECTED_CONTEXT_EVALUATION_ERROR, false);
+            }
+            evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_COMMAND_NOT_MATCHED, generatePolicyName(policy)));
+            return new ContextDecision(Explanation.Code.REJECTED_COMMAND_NOT_MATCHED, false, evaluations);
+        }
+
+        private String generatePolicyName(Node policy2) {
+            StringBuilder sb = new StringBuilder();
+            buildNodeString(policy2, sb);
+            return sb.toString();
+        }
+
+        private String generateJobName(Node policy2, Node command) {
+            StringBuilder sb = new StringBuilder();
+
+            Node parent = command.getParentNode();
+            List<Node> hierarchy = new ArrayList<Node>();
+            while(!"policies".equals(parent.getNodeName())) {
+                hierarchy.add(parent);
+                parent = parent.getParentNode();
+            }
+            Collections.reverse(hierarchy);
+            for(Node node : hierarchy) {
+                buildNodeString(node, sb);
+                sb.append(" / ");
+            }
+
+            buildNodeString(command, sb);
+            return sb.toString();
+        }
+
+        /**
+         * @param node
+         * @param sb
+         */
+        private void buildNodeString(Node node, StringBuilder sb) {
+            sb.append(node.getNodeName());
+            sb.append('[');
+            NamedNodeMap nodeAttributes = node.getAttributes();
+            for(int i = 0; i < nodeAttributes.getLength(); i++) {
+                Node item = nodeAttributes.item(i);
+
+                sb.append(item.getNodeName());
+                sb.append(':');
+                sb.append(item.getNodeValue());
+
+                // add space after if more attributes are comming.
+                if(i + 1 < nodeAttributes.getLength()) {
+                    sb.append(' ');
+                }
+            }
+            sb.append("] ");
+        }
+
+        @Override
+        public String toString() {
+            return "Context: " + this.generatePolicyName(this.policy);
+        }
     }
 }

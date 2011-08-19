@@ -24,7 +24,6 @@ import com.dtolabs.rundeck.core.authorization.Authorization;
 import com.dtolabs.rundeck.core.authorization.Decision;
 import com.dtolabs.rundeck.core.authorization.Explanation;
 import com.dtolabs.rundeck.core.authorization.Explanation.Code;
-import com.dtolabs.rundeck.core.authorization.providers.PoliciesXml.Context;
 import org.apache.log4j.Logger;
 
 import javax.security.auth.Subject;
@@ -45,7 +44,7 @@ public class SAREAuthorization implements Authorization {
     
     private final static Logger logger = Logger.getLogger(SAREAuthorization.class);
     
-    private final PoliciesXml policies;
+    private final Policies policies;
     private final File baseDirectory;
     private long decisionsMade;
     
@@ -58,7 +57,7 @@ public class SAREAuthorization implements Authorization {
      * @throws PoliciesParseException
      */
     public SAREAuthorization(File directory) throws IOException, PoliciesParseException {
-        policies = PoliciesXml.load(directory);
+        policies = Policies.load(directory);
         baseDirectory = directory;
     }
     
