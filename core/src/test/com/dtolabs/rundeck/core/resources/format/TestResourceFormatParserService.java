@@ -179,6 +179,12 @@ public class TestResourceFormatParserService extends AbstractBaseTest {
         final ResourceFormatParser monkeyParser = service.getParserForMIMEType("text/monkey");
         assertNotNull(monkeyParser);
         assertEquals(parser, monkeyParser);
+        try {
+            final ResourceFormatParser monkeyParser2= service.getParserForMIMEType(null);
+            fail("should throw exception");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Invalid MIME type: null", e.getMessage());
+        }
     }
     public void testGetParserForMIMETypeGlob() throws Exception{
         final ResourceFormatParserService service = new ResourceFormatParserService(getFrameworkInstance());
@@ -209,6 +215,7 @@ public class TestResourceFormatParserService extends AbstractBaseTest {
         assertTrue(ResourceFormatParserService.validMimeType("a/b"));
         assertTrue(ResourceFormatParserService.validMimeType("*/b"));
         assertTrue(ResourceFormatParserService.validMimeType("*/*"));
+        assertFalse(ResourceFormatParserService.validMimeType(null));
         assertFalse(ResourceFormatParserService.validMimeType("/b"));
         assertFalse(ResourceFormatParserService.validMimeType("a/"));
         assertFalse(ResourceFormatParserService.validMimeType("a/b/c"));

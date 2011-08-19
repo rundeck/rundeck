@@ -161,7 +161,7 @@ public class ResourceFormatParserService extends PluggableProviderRegistryServic
     public ResourceFormatParser getParserForMIMEType(final String mimeType) throws UnsupportedFormatException {
         //clean up encoding
         final String cleanMime;
-        if (mimeType.indexOf(";") > 0) {
+        if (null != mimeType && mimeType.indexOf(";") > 0) {
             cleanMime = mimeType.substring(0, mimeType.indexOf(";"));
         } else {
             cleanMime = mimeType;
@@ -190,6 +190,9 @@ public class ResourceFormatParserService extends PluggableProviderRegistryServic
     }
 
     static boolean validMimeType(final String cleanMime) {
+        if(null==cleanMime){
+            return false;
+        }
         final int l = cleanMime.indexOf("/");
         return l > 0 && l < cleanMime.length() - 1 && l == cleanMime.lastIndexOf("/");
     }
