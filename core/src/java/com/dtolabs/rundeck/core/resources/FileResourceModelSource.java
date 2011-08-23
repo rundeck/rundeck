@@ -58,10 +58,10 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
     static {
         fileResourceProperties.add(PropertyUtil.string(Configuration.FILE, "File Path", "Path of the file", true,
             null));
-        fileResourceProperties.add(PropertyUtil.bool(Configuration.INCLUDE_SERVER_NODE, "Include Server Node",
-            "Automatically include the server node?", true, "false"));
         fileResourceProperties.add(PropertyUtil.bool(Configuration.GENERATE_FILE_AUTOMATICALLY, "Generate",
-            "Automatically generate the file it is missing?", true, "false"));
+            "Automatically generate the file if it is missing?", true, "false"));
+        fileResourceProperties.add(PropertyUtil.bool(Configuration.INCLUDE_SERVER_NODE, "Include Server Node",
+            "Automatically include the server node in the generated file?", true, "false"));
         fileResourceProperties.add(PropertyUtil.bool(Configuration.REQUIRE_FILE_EXISTS, "Require File Exists",
             "Require that the file exists", true, "false"));
 

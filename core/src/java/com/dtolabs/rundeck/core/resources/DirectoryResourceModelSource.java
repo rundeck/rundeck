@@ -71,7 +71,7 @@ public class DirectoryResourceModelSource implements ResourceModelSource, Config
         }
 
         public String getDescription() {
-            return "Scans a directory and loads all matching files";
+            return "Scans a directory and loads all resource document files";
         }
 
         public List<Property> getProperties() {

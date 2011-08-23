@@ -76,7 +76,7 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
             final ArrayList<Property> properties1 = new ArrayList<Property>(scriptResourceProperties);
             properties1.add(PropertyUtil.freeSelect(CONFIG_FORMAT, "Resource Format",
                 "Resources document format that the script will produce",
-                false, null, formats));
+                true, null, formats));
             properties = Collections.unmodifiableList(properties1);
 
         }
