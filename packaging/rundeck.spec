@@ -109,6 +109,7 @@ requires: rundeck
 All configuration related artifacts are stored in this package.
 
 %files config
+%defattr(0644, rundeck, rundeck, 0775)
 # Client Configuration
 %config(noreplace) /etc/rundeck/framework.properties
 %config(noreplace) /etc/rundeck/admin.aclpolicy
