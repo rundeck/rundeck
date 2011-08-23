@@ -141,6 +141,9 @@ create a new project.
 
 ![Create project prompt](figures/fig0203-a.png)
 
+To start with, the only field you need to enter is the Project Name. You can
+change the other values later from the [GUI Admin Page](#gui-admin-page).
+
 After entering your project name, RunDeck initializes it and returns
 you to the "Run" page.
 
@@ -159,6 +162,10 @@ specify a project name, here we use "examples":
 
 After running this command, you can login into the graphical console
 and see the new project in the project menu.
+
+You can also add configuration properties when you create the project, for example:
+
+    rd-project -a create -p examples --project.ssh-keypath=/private/ssh.key
 
 The project setup process generates Project configuration in the server, and
 a bootstrap resource model.
@@ -293,7 +300,9 @@ You can enable more formats using [Resource Format Plugins](#resource-format-plu
 Each project can have multiple sources for Resource model information, and
 you can use or write plugins to enable new sources for entries in the Resource model.
 
-See [Resource Model Sources](#resource-model-sources).
+You can configure the sources via the GUI from the Admin page, see
+[GUI Admin Page](#gui-admin-page), or by modifying the project configuration file,
+see [Resource Model Sources](#resource-model-sources).
 
 ## Command Execution
 

@@ -344,11 +344,16 @@ RunDeck includes these built-in providers in the core installation:
 :    looks at all files in a directory for suppored file extensions, and internally uses the `file` provider for
      each file that matches.
 
+`script`
+
+:    Executes a script and parses the output as one of the supported formats
+
 To configure these providers, refer to [Resource Model Source configuration](#resource-model-source-configuration) and use the following configuration properties.
 
 #### File Resource Model Source Configuration
 
-The `file` Resource Model Source provider reads a file in either XML or Yaml format.
+The `file` Resource Model Source provider reads a file in one of the supported
+[Resource Model Document Formats](#resource-model-document-formats).
 
 Name                          Value                           Notes
 -----                         ------                          ------
@@ -413,6 +418,36 @@ Table: Configuration properties for `directory` Resource Model Source provider
 
     resources.source.2.type=directory
     resources.source.2.directory=/home/rundeck/projects/example/resources
+    
+#### Script Resource Model Source Configuration
+
+The `script` Resource Model Source provider executes a script file and reads
+the output of the script as one of the supported [Resource Model Document Formats](#resource-model-document-formats).
+
+Name             Value                           Notes
+-----            ------                          ------
+`file`           Script file path                If required by the `interpreter`, the file should be executable
+`interpreter`    Command or interpreter to use   e.g. "bash -c"
+`args`           Additional arguments to pass    The arguments will be added after the script file name to the executed commandline
+`format`         Format name                     Must be used to declare the format explicitly.
+----------------------------
+
+Table: Configuration properties for `script` Resource Model Source provider
+
+The script will be executed in this way:
+
+    [interpreter] file [args]
+
+All output on STDOUT will be passed to a Resource Format Parser to parse.  The
+format specified must be available.
+
+*Example:*
+
+    resources.source.2.type=script
+    resources.source.2.file=/home/rundeck/projects/example/etc/generate.sh
+    resources.source.2.interpreter=bash -c
+    resources.source.2.args=-project example
+    resources.source.2.format=resourceyaml
 
 ### Resource Format services
 
