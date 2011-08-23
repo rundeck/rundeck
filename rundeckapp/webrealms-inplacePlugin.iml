@@ -12,13 +12,32 @@
       <configuration>
         <webroots>
           <root url="file://$MODULE_DIR$/webrealms/web-app" relative="/" />
+          <root url="file://$MODULE_DIR$/webrealms/grails-app/views" relative="/" />
         </webroots>
+        <sourceRoots>
+          <root url="file://$MODULE_DIR$/webrealms/src/java" />
+          <root url="file://$MODULE_DIR$/webrealms/grails-app/utils" />
+          <root url="file://$MODULE_DIR$/webrealms/src/groovy" />
+          <root url="file://$MODULE_DIR$/webrealms/grails-app/controllers" />
+          <root url="file://$MODULE_DIR$/webrealms/grails-app/domain" />
+          <root url="file://$MODULE_DIR$/webrealms/grails-app/services" />
+          <root url="file://$MODULE_DIR$/webrealms/grails-app/taglib" />
+        </sourceRoots>
       </configuration>
     </facet>
   </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$/webrealms">
+      <sourceFolder url="file://$MODULE_DIR$/webrealms/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/webrealms/grails-app/utils" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/webrealms/src/groovy" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/webrealms/grails-app/controllers" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/webrealms/grails-app/domain" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/webrealms/grails-app/services" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/webrealms/grails-app/taglib" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/webrealms/test/unit" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/webrealms/test/integration" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/webrealms/target/classes" />
       <excludeFolder url="file://$MODULE_DIR$/webrealms/target/test-classes" />
       <excludeFolder url="file://$MODULE_DIR$/webrealms/web-app/plugins" />
@@ -27,9 +46,12 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library">
       <library name="Grails User Library">
-        <CLASSES />
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/webrealms/lib" />
+        </CLASSES>
         <JAVADOC />
         <SOURCES />
+        <jarDirectory url="file://$MODULE_DIR$/webrealms/lib" recursive="false" />
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="rundeck-grailsPlugins" />

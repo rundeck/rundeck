@@ -46,7 +46,7 @@
     <tr>
 
         <td>
-            <g:message code="domain.Project.field.resourcesUrl" default="Resources Provider URL"/>:
+            <g:message code="domain.Project.field.resourcesUrl" default="Resource Model Source URL"/>:
         </td>
         <td>
             <g:textField name="resourcesUrl" size="50" value="${resourcesUrl?:params.resourcesUrl}"/>
