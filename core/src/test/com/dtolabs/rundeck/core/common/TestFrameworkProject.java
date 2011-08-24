@@ -24,6 +24,8 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import java.io.*;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Properties;
 
 
@@ -447,7 +449,68 @@ public class TestFrameworkProject extends AbstractBaseTest {
         assertTrue(p.containsKey("project.resources.file"));
 
 
-        System.out.println("TEST: propertyFile="+project.getPropertyFile());
+    }
+    public void testGenerateProjectPropertiesFileOverwrite() throws IOException {
+        final FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
+                                         new File(getFrameworkProjectsBase()),
+                                         getFrameworkInstance().getFrameworkProjectMgr());
+        final Properties testprops = new Properties();
+        testprops.setProperty("test1", "value1");
+        testprops.setProperty("test2", "value2");
+        testprops.setProperty("test3.something", "value3");
+        testprops.setProperty("test3.somethingelse", "value3.else");
+        boolean overwrite = true;
+        project.generateProjectPropertiesFile(overwrite,testprops);
+
+        final File propFile = new File(project.getEtcDir(), "project.properties");
+        assertTrue("project.properties file was not generated",
+                propFile.exists());
+
+        final Properties p = new Properties();
+        p.load(new FileInputStream(propFile));
+        assertTrue(p.containsKey("project.resources.file"));
+        assertTrue(p.containsKey("test1"));
+        assertEquals("value1", p.getProperty("test1"));
+        assertTrue(p.containsKey("test2"));
+        assertEquals("value2",p.getProperty("test2"));
+        assertTrue(p.containsKey("test3.something"));
+        assertEquals("value3", p.getProperty("test3.something"));
+        assertTrue(p.containsKey("test3.somethingelse"));
+        assertEquals("value3.else", p.getProperty("test3.somethingelse"));
+    }
+    public void testMergeProjectPropertiesFile() throws IOException {
+        final FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
+            new File(getFrameworkProjectsBase()),
+            getFrameworkInstance().getFrameworkProjectMgr());
+        final Properties testprops = new Properties();
+        testprops.setProperty("test1", "value1");
+        testprops.setProperty("test2", "value2");
+        testprops.setProperty("test3.something", "value3");
+        testprops.setProperty("test3.somethingelse", "value3.else");
+        boolean overwrite = true;
+        project.generateProjectPropertiesFile(overwrite, testprops);
+
+        final File propFile = new File(project.getEtcDir(), "project.properties");
+        assertTrue("project.properties file was not generated",
+            propFile.exists());
+
+
+        //merge new values for some, and remove prefixes for others
+        final Properties testprops2 = new Properties();
+        testprops2.setProperty("test1", "xvalue1");
+        testprops2.setProperty("test2", "xvalue2");
+        project.mergeProjectProperties(testprops2, new HashSet<String>(Arrays.asList("test3.")));
+        
+
+        final Properties p = new Properties();
+        p.load(new FileInputStream(propFile));
+        assertTrue(p.containsKey("project.resources.file"));
+        assertTrue(p.containsKey("test1"));
+        assertEquals("xvalue1", p.getProperty("test1"));
+        assertTrue(p.containsKey("test2"));
+        assertEquals("xvalue2", p.getProperty("test2"));
+        assertFalse(p.containsKey("test3.something"));
+        assertFalse(p.containsKey("test3.somethingelse"));
     }
     static class testSource implements ResourceModelSource {
         INodeSet returnNodes;

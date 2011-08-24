@@ -23,9 +23,9 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorException;
 import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
-import com.dtolabs.shared.resources.ResourceXMLGenerator;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -97,10 +97,10 @@ public class FrameworkProject extends FrameworkResourceParent {
             }
         }
 
-        if ( ! (new File(getEtcDir(), PROP_FILENAME).exists()) ) {
+        propertyFile = new File(getEtcDir(), PROP_FILENAME);
+        if ( !propertyFile.exists()) {
             generateProjectPropertiesFile(false, properties);
         }
-        propertyFile = new File(getEtcDir(), PROP_FILENAME);
         loadProperties();
 
         nodesSourceList = new ArrayList<ResourceModelSource>();
@@ -656,15 +656,59 @@ public class FrameworkProject extends FrameworkResourceParent {
      * @param overwrite Overwrite existing properties file
      */
     protected void generateProjectPropertiesFile(final boolean overwrite, final Properties properties) {
+        generateProjectPropertiesFile(overwrite, properties, false, null);
+    }
+
+    /**
+     * Create project.properties file based on $RDECK_BASE/etc/project.properties
+     *
+     * @param overwrite Overwrite existing properties file
+     * @param properties properties to use
+     * @param merge if true, merge existing properties that are not replaced
+     * @param removePrefixes set of property prefixes to remove from original
+     */
+    protected void generateProjectPropertiesFile(final boolean overwrite, final Properties properties,
+                                                 final boolean merge, final Set<String> removePrefixes) {
+        final File destfile = getPropertyFile();
+        if (destfile.exists() && !overwrite) {
+            return;
+        }
         final Properties newProps = new Properties();
         newProps.setProperty("project.name", getName());
         newProps.setProperty("project.resources.file", new File(getEtcDir(), "resources.xml").getAbsolutePath());
-        if(null!=properties){
-            newProps.putAll(properties);
+        if(merge) {
+            final Properties orig = new Properties();
+
+            if(destfile.exists()){
+                try {
+                    final FileInputStream fileInputStream = new FileInputStream(destfile);
+                    try {
+                        orig.load(fileInputStream);
+                    } finally {
+                        fileInputStream.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            //add all original properties that are not in the incoming  properties, and are not
+            //matched by one of the remove prefixes
+            entry: for (final Object o : orig.entrySet()) {
+                Map.Entry entry=(Map.Entry) o;
+                //determine if
+                final String key = (String) entry.getKey();
+                for (final String replacePrefix : removePrefixes) {
+                    if(key.startsWith(replacePrefix)){
+                        //skip this key
+                        continue entry;
+                    }
+                }
+                newProps.put(entry.getKey(), entry.getValue());
+            }
         }
-        final File destfile = new File(getEtcDir(), PROP_FILENAME);
-        if(destfile.exists() && !overwrite){
-            return;
+        //overwrite original with the input properties
+        if (null != properties) {
+            newProps.putAll(properties);
         }
 
         try {
@@ -681,10 +725,13 @@ public class FrameworkProject extends FrameworkResourceParent {
         getLogger().debug("generated project.properties: " + destfile.getAbsolutePath());
     }
     /**
-     * Update the project properties file
+     * Update the project properties file by setting updating the given properties, and removing
+     * any properties that have a prefix in the removePrefixes set
+     * @param properties new properties to put in the file
+     * @param removePrefixes prefixes of properties to remove from the file
      */
-    public void updateProjectProperties(final Properties properties){
-        generateProjectPropertiesFile(true, properties);
+    public void mergeProjectProperties(final Properties properties, final Set<String> removePrefixes) {
+        generateProjectPropertiesFile(true, properties, true, removePrefixes);
     }
 
     /**

@@ -584,6 +584,7 @@ class FrameworkController  {
         if(request.method=='POST'){
             //only attempt project create if form POST is used
             def Properties projProps = new Properties()
+            def Set<String> removePrefixes=[]
             if (params.resourcesUrl) {
                 resourcesUrl=params.resourcesUrl
                 projProps[FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY] = params.resourcesUrl
@@ -655,10 +656,11 @@ class FrameworkController  {
                 count++
                 configs << [type: type, props: props]
             }
+            removePrefixes<< FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
 
             if(!error){
                 try {
-                    fproject.updateProjectProperties(projProps)
+                    fproject.mergeProjectProperties(projProps,removePrefixes)
                 } catch (Error e) {
                     log.error(e.message)
                     error= e.getMessage()
