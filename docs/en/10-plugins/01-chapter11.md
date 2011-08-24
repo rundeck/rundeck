@@ -930,8 +930,7 @@ You can also test some failure scenarios by configuring the following node attri
 You could, for example, disable or test an entire project's workflows or jobs by
 simply setting the `project.properties` node executor provider to `stub`.
 
-Plugin Development
-=============
+# Plugin Development
 
 This is a work in progress, and the plugin system is likely to change.
 
@@ -945,8 +944,7 @@ in a zip file with some metadata.   See [Script Plugin Development](#script-plug
 Either way, the resultant plugin archive file, either a .jar java archive, 
 or a .zip file archive, will be placed in the `$RDECK_BASE/libext` dir.
 
-Java Plugin Development
---------
+## Java Plugin Development
 
 Java plugins are distributed as .jar files containing the necessary classes for 
 one or more service provider, as well as any other java jar dependency files.
@@ -1052,6 +1050,14 @@ Your provider class must implement the `com.dtolabs.rundeck.core.execution.servi
             String[] command, INodeEntry node) throws ExecutionException;
     }
 
+
+A Node Executor can be me made Configurable on a per-project basis via the Web GUI by
+implementing the `com.dtolabs.rundeck.core.plugins.configuration.Describable`
+interface. It is up to your plugin implementation to use configuration properties
+from the `FrameworkProject` instance to configure itself. You must also be sure
+to return an appropriate mapping in the `getPropertiesMapping` method of the `Description` interface to declare the property names to be used in the 
+`project.properties` file.
+
 More information is available in the Javadoc.
 
 ### File Copier Providers
@@ -1071,6 +1077,14 @@ Your provider class must implement the `com.dtolabs.rundeck.core.execution.servi
             FileCopierException;
     }
 
+
+A File Copier can be me made Configurable on a per-project basis via the Web GUI by
+implementing the `com.dtolabs.rundeck.core.plugins.configuration.Describable`
+interface. It is up to your plugin implementation to use configuration properties
+from the `FrameworkProject` instance to configure itself. You must also be sure
+to return an appropriate mapping in the `getPropertiesMapping` method of the `Description` interface to declare the property names to be used in the 
+`project.properties` file.
+
 More information is available in the Javadoc.
 
 ### Resource Model Source Providers
@@ -1087,6 +1101,12 @@ Your provider class must implement the `com.dtolabs.rundeck.core.resources.Resou
          */
         public ResourceModelSource createResourceModelSource(Properties configuration) throws ConfigurationException;
     }
+
+A Resource Model Source provider can also be Configurable via the Web GUI by
+implementing the `com.dtolabs.rundeck.core.plugins.configuration.Describable`
+interface. This allows you to return a descriptor of the configuration parameters for your plugin, which is used by the GUI to render a web form. The
+properties the user configures are stored in the `project.properties` configuration file, and are passed to your factory method as the `configuration`
+properties.
 
 More information is available in the Javadoc.
 
@@ -1148,8 +1168,7 @@ For Generators, your provider class must implement the `com.dtolabs.rundeck.core
 
 More information is available in the Javadoc.
 
-Script Plugin Development
------------
+## Script Plugin Development
 
 Script plugins can provide the same services as Java plugins, but they do so
 with a script that is invoked in an external system processes by the JVM.
@@ -1229,8 +1248,13 @@ Required provider entries:
 * `service` - service name, one of these valid services:
     * `NodeExecutor`
     * `FileCopier`
+    * `ResourceModelSource`
 * `plugin-type` - must be "script" currently.
 * `script-file` - must be the name of a file relative to the `contents` directory
+
+For `ResourceModelSource` service, this additional entry is required:
+
+* `resource-format` - Must be the name of one of the supported [Resource Model Document Formats](#resource-model-document-formats).
 
 Optional entries:
 
@@ -1238,6 +1262,55 @@ Optional entries:
     script.  This can be a single binary path, e.g. `/bin/bash`, or include
     any args to the command, such as `/bin/bash -c`.
 * `script-args` - the arguments to use when executing the script file.
+
+### Configurable Resource Model Source Script Plugin
+ 
+The `ResourceModelSource` service allows the plugins to be configured via the RunDeck Web GUI. You are thus able to declare configuration properties for
+your plugin, which will be displayed as a web form when the Project is configured, or can be manually configured in the `project.properties` file.
+
+You can use these metadata entries to declare configuration properties for your
+plugin:
+
+For each configuration property you want to define, declare:
+
+* `config.X.type` - The type of property.  Must be one of:
+    * `String`
+    * `Boolean` must be "true" or "false"
+    * `Integer`
+    * `Long`
+    * `Select` must be on of a set of values
+    * `FreeSelect` may be one of a set of values
+* `config.X.name` - Name to identify the property
+* `config.X.title` - Title to display in the GUI (optional)
+* `config.X.description` - Description to display in the GUI (optional)
+* `config.X.required` - (true/false) if true, require a non-empty value (optional)
+* `config.X.default` - A default value to use (optional)
+* `config.X.values` - A comma-separated list of values to use for Select or FreeSelect. Required for Select/FreeSelect.
+
+Where X is a number starting at `1`, up to the number of configuration properties you want.
+
+When your script is invoked, each configuration property defined for the plugin will be set as `config.NAME` in the data context passed to your script (see below).
+
+Here is an example `providers` section for a Resource Model Source plugin that asks for two input properties from the user and produces "resourceyaml" formatted output:
+
+    providers:
+        - name: mysource
+          service: ResourceModelSource
+          plugin-type: script
+          script-interpreter: bash -c
+          script-file: generate.sh
+          resource-format: resourceyaml
+          config.1.type: Integer
+          config.1.name: count
+          config.1.title: Count
+          config.1.description: Enter the number of nodes to generate
+          config.2.type: FreeSelect
+          config.2.name: flavor
+          config.2.title: Flavor
+          config.2.description: Select a flavor
+          config.2.required: true
+          config.2.default: vanilla
+          config.2.values: vanilla,blueberry,strawberry,chocolate
 
 ### How script plugin providers are invoked
 
@@ -1258,6 +1331,7 @@ specific Service will provide some additional context properties that can be use
 * NodeExecutor will define `${exec.command}` containing the command to be executed
 * FileCopier will define `${file-copy.file}` containing the local path to the file
 that needs to be copied.
+* ResourceModelSource will define `${config.KEY}` for each configuration property KEY that is defined.
 
 In addition, all of the data-context properties that are available in the
 `script-args` are provided as environment variables to the 
@@ -1294,4 +1368,8 @@ For `FileCopier`
 :   The first line of output of `STDOUT` MUST be the filepath of the file copied 
     to the target node.  Other output is ignored. All output to `STDERR` will be
     captured for the job's output.
+
+For `ResourceModelSource`
+
+:   All output on `STDOUT` will be captured and passed to the p
 
