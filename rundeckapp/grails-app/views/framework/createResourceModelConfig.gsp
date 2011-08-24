@@ -42,7 +42,7 @@
         <table class="simpleForm">
         <g:each in="${description.properties}" var="prop">
             <tr>
-            <g:render template="pluginConfigPropertyField" model="${[prop:prop,prefix:prefix,error:report?.errors?report?.errors[prop.key]:null,values:values,fieldname:prefix+'config.'+prop.key,origfieldname:'orig.'+prefix+'config.'+prop.key]}"/>
+            <g:render template="pluginConfigPropertyField" model="${[prop:prop,prefix:prefix,error:report?.errors?report?.errors[prop.name]:null,values:values,fieldname:prefix+'config.'+prop.name,origfieldname:'orig.'+prefix+'config.'+prop.name]}"/>
             </tr>
         </g:each>
         </table>
@@ -51,8 +51,8 @@
         <span>Properties:</span>
         <ul>
         <g:each var="prop" in="${values}">
-        <li>${prop.key.encodeAsHTML()}: ${prop.value.encodeAsHTML()} </li>
-            <input type="hidden" name="${(prefix + 'config.' + prop.key).encodeAsHTML()}"
+        <li>${prop.name.encodeAsHTML()}: ${prop.value.encodeAsHTML()} </li>
+            <input type="hidden" name="${(prefix + 'config.' + prop.name).encodeAsHTML()}"
                    value="${prop.value?.encodeAsHTML()}"/>
         </g:each>
         </ul>

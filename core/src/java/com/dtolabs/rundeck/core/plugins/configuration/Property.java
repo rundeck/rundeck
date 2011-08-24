@@ -73,12 +73,12 @@ public interface Property {
     /**
      * Return descriptive name of the property
      */
-    public String getName();
+    public String getTitle();
 
     /**
      * Return property key to use
      */
-    public String getKey();
+    public String getName();
 
     /**
      * Return description of the values of the property

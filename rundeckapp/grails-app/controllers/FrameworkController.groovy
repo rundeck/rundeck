@@ -888,11 +888,11 @@ class FrameworkController  {
         Properties props=new Properties()
         if(desc){
             desc.properties.each {prop ->
-                def v = params[prefix + "config." + prop.key]
+                def v = params[prefix + "config." + prop.name]
                 if (prop.type == Type.Boolean) {
-                    props.setProperty(prop.key, (v == 'true' || v == 'on') ? 'true' : 'false')
+                    props.setProperty(prop.name, (v == 'true' || v == 'on') ? 'true' : 'false')
                 } else if (v) {
-                    props.setProperty(prop.key, v)
+                    props.setProperty(prop.name, v)
                 }
             }
         }else{

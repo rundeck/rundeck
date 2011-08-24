@@ -66,7 +66,7 @@ public class Validator {
         final List<Property> properties = desc.getProperties();
         if(null!=properties){
             for (final Property property : properties) {
-                final String key = property.getKey();
+                final String key = property.getName();
                 final String value = props.getProperty(key);
                 if (null == value || "".equals(value)) {
                     if (property.isRequired()) {

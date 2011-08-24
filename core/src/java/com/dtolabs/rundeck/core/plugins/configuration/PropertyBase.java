@@ -31,26 +31,26 @@ import java.util.List;
 * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 */
 abstract class PropertyBase implements Property {
+    private final String title;
     private final String name;
-    private final String key;
     private final String description;
     private final boolean required;
     private final String defaultValue;
     private final Validator validator;
 
-    public PropertyBase(final String key, final String name, final String description, final boolean required,
+    public PropertyBase(final String name, final String title, final String description, final boolean required,
                         final String defaultValue, final Validator validator) {
 
+        this.title = title;
         this.name = name;
-        this.key = key;
         this.description = description;
         this.required = required;
         this.defaultValue = defaultValue;
         this.validator = validator;
     }
 
-    public String getName() {
-        return name;
+    public String getTitle() {
+        return title;
     }
 
     public String getDescription() {
@@ -73,7 +73,7 @@ abstract class PropertyBase implements Property {
         return validator;
     }
 
-    public String getKey() {
-        return key;
+    public String getName() {
+        return name;
     }
 }

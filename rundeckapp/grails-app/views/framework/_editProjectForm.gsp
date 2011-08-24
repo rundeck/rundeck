@@ -153,8 +153,8 @@
                             <tr>
                                 <g:render
                                     template="pluginConfigPropertyField"
-                                    model="${[prop:prop,prefix:nodeexecprefix,error:nodeexecreport?.errors?nodeexecreport?.errors[prop.key]:null,values:nodeexecconfig,
-                                fieldname:nodeexecprefix+prop.key,origfieldname:'orig.'+nodeexecprefix+prop.key]}"/>
+                                    model="${[prop:prop,prefix:nodeexecprefix,error:nodeexecreport?.errors?nodeexecreport?.errors[prop.name]:null,values:nodeexecconfig,
+                                fieldname:nodeexecprefix+prop.name,origfieldname:'orig.'+nodeexecprefix+prop.name]}"/>
                             </tr>
                         </g:each>
                     </table>
@@ -198,8 +198,8 @@
                             <tr>
                                 <g:render
                                     template="pluginConfigPropertyField"
-                                    model="${[prop:prop,prefix:fcopyprefix,error:fcopyreport?.errors?fcopyreport?.errors[prop.key]:null,values:fcopyconfig,
-                                fieldname:fcopyprefix+prop.key,origfieldname:'orig.'+fcopyprefix+prop.key]}"/>
+                                    model="${[prop:prop,prefix:fcopyprefix,error:fcopyreport?.errors?fcopyreport?.errors[prop.name]:null,values:fcopyconfig,
+                                fieldname:fcopyprefix+prop.name,origfieldname:'orig.'+fcopyprefix+prop.name]}"/>
                             </tr>
                         </g:each>
                     </table>

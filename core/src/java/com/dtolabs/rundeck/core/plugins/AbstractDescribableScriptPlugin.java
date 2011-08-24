@@ -84,23 +84,23 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
             } catch (IllegalArgumentException e) {
                 throw new ConfigurationException("Invalid property type: " + typestr);
             }
-            final String key = metadata.get(prefix + CONFIG_NAME);
-            final String name = metadata.get(prefix + CONFIG_TITLE);
+            final String name = metadata.get(prefix + CONFIG_NAME);
+            final String title = metadata.get(prefix + CONFIG_TITLE);
             final String description = metadata.get(prefix + CONFIG_DESCRIPTION);
             final boolean required = Boolean.parseBoolean(metadata.get(prefix + CONFIG_REQUIRED));
             final String defaultValue = metadata.get(prefix + CONFIG_DEFAULT);
-            if (null == key) {
+            if (null == name) {
                 throw new ConfigurationException("Name required");
             }
             final String valuesstr = metadata.get(prefix + CONFIG_VALUES);
             final String[] split = null != valuesstr ? valuesstr.split(",") : null;
             final List<String> values = null != split ? Arrays.asList(split) : null;
             if (type == Property.Type.Select) {
-                properties.add(PropertyUtil.select(key, name, description, required, defaultValue, values));
+                properties.add(PropertyUtil.select(name, title, description, required, defaultValue, values));
             } else if (type == Property.Type.FreeSelect) {
-                properties.add(PropertyUtil.freeSelect(key, name, description, required, defaultValue, values));
+                properties.add(PropertyUtil.freeSelect(name, title, description, required, defaultValue, values));
             } else {
-                properties.add(PropertyUtil.forType(type, key, name, description, required, defaultValue, null));
+                properties.add(PropertyUtil.forType(type, name, title, description, required, defaultValue, null));
             }
         }
         return properties;

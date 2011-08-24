@@ -21,20 +21,20 @@
  --%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
-<td title="${prop.description.encodeAsHTML()}">${prop.name.encodeAsHTML()}:</td>
+<td title="${prop.description?.encodeAsHTML()}">${prop.title ? prop.title.encodeAsHTML() : prop.name.encodeAsHTML()}:</td>
 <td>
 <g:if test="${prop.type.toString()=='Boolean'}">
-    <g:if test="${values[prop.key]=='true'}">
+    <g:if test="${values[prop.name]=='true'}">
         <span class="configvalue">Yes</span>
     </g:if>
     <g:else>
         No
     </g:else>
 </g:if>
-<g:elseif test="${values[prop.key]}">
-    <span class="configvalue">${values[prop.key]?.encodeAsHTML()}</span>
+<g:elseif test="${values[prop.name]}">
+    <span class="configvalue">${values[prop.name]?.encodeAsHTML()}</span>
 </g:elseif>
-<g:if test="${includeFormFields && values[prop.key]}">
-    <input type="hidden" name="${(prefix+ 'config.'+prop.key).encodeAsHTML()}" value="${values[prop.key]?.encodeAsHTML()}"/>
+<g:if test="${includeFormFields && values[prop.name]}">
+    <input type="hidden" name="${(prefix+ 'config.'+prop.name).encodeAsHTML()}" value="${values[prop.name]?.encodeAsHTML()}"/>
 </g:if>
 </td>
