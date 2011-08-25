@@ -48,5 +48,8 @@ public class ContextDecision implements Explanation {
             out.println("\t" + ce);
         }
     }
-    
+
+    List<ContextEvaluation> getEvaluations() {
+        return evaluations;
+    }
 }

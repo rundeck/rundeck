@@ -268,19 +268,23 @@ public class PoliciesDocument implements PolicyCollection {
             // keep track of each context and the the resulting grant or rejection
             List<ContextEvaluation> evaluations = new ArrayList<ContextEvaluation>();
 
+            if (null != resource.get("type") && !"job".equals(resource.get("type"))) {
+
+                evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED, "Legacy format: Unsupported resource type "+ resource
+                    .get("type")));
+                return new ContextDecision(Explanation.Code.REJECTED, false, evaluations);
+            }
             try {
                 StringBuilder filter = new StringBuilder();
-                Iterator<String> iter = resource.keySet().iterator();
-                while(iter.hasNext()) {
-
-                    String next = iter.next();
-
-                    if(next != null && next.length() > 0) {
-                        filter.append('@').append(next);
+                for (final String next : resource.keySet()) {
+                    if("type".equals(next)){
+                        continue;
                     }
-
-                    if(iter.hasNext()) {
+                    if (filter.length() > 0) {
                         filter.append(" and ");
+                    }
+                    if (next != null && next.length() > 0) {
+                        filter.append('@').append(next);
                     }
                 }
 
@@ -324,9 +328,10 @@ public class PoliciesDocument implements PolicyCollection {
 
                     // all must match
                     boolean matched = true;
-                    Iterator<String> resourceKeyIter = resource.keySet().iterator();
-                    while(matched && resourceKeyIter.hasNext()) {
-                        String key = resourceKeyIter.next();
+                    for (final String key : resource.keySet()) {
+                        if ("type".equals(key)) {
+                            continue;
+                        }
                         Node attr = attributes.getNamedItem(key);
 
                         // if resource matches command attribute, either literally or via regex on command, continue.

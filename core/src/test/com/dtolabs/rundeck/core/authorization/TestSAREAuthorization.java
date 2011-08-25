@@ -67,12 +67,14 @@ public class TestSAREAuthorization extends TestCase {
     
     public void testAdminModulePrivileges() throws Exception {
         
-        Map<String,String> resource = declareScript("adhocScript", "foo/bar");
+        Map<String,String> resource = createJobResource("adhocScript", "foo/bar");
         Subject subject = createSubject("default", "admin", "foo");
         String action = "EXECUTE";
-        
-        assertTrue("'default' does not have access to 'foo/bar/adhocScript' to 'EXECUTE' with no environment specified.", 
-                authorization.evaluate(resource, subject, action, null).isAuthorized());
+
+        final Decision evaluate = authorization.evaluate(resource, subject, action, null);
+        evaluate.explain().describe(System.err);
+        assertTrue("'default' does not have access to 'foo/bar/adhocScript' to 'EXECUTE' with no environment specified.",
+                evaluate.isAuthorized());
         
         assertTrue("'default' does not have access to 'foo/bar/adhocScript' to 'EXECUTE' with no environment specified.",
                 authorization.evaluate(resource, subject, action, null).isAuthorized());
@@ -108,7 +110,7 @@ public class TestSAREAuthorization extends TestCase {
     
     public void testNoScriptAccess() throws Exception {
         
-        Map<String, String> resource = declareScript("adhocScript", "foo/bar");
+        Map<String, String> resource = createJobResource("adhocScript", "foo/bar");
         assertFalse("Policy should not have matched: group admin-no-script, does not have script access.", 
                 legacyvalidationAuthorization.evaluate(resource, 
                         createSubject("testNoScriptAccess", "admin-no-script"), 
@@ -129,7 +131,7 @@ public class TestSAREAuthorization extends TestCase {
     }
     
     public void testInvalidInput() throws Exception {
-        Map<String,String> resource = declareScript("", "bar/baz/boo");
+        Map<String,String> resource = createJobResource("", "bar/baz/boo");
         Subject subject = createSubject("testActionAuthorization", "admin-invalidinput");
         
         /* Check that workflow_run is actually a matching action */
@@ -140,14 +142,14 @@ public class TestSAREAuthorization extends TestCase {
         assertFalse("An empty job name should not be authorized.", decision.isAuthorized());
         
         try {
-            authorization.evaluate(declareScript(null, "test"), subject, "invalid_input_missing_key", null);
+            authorization.evaluate(createJobResource(null, "test"), subject, "invalid_input_missing_key", null);
             assertTrue("A null resource key should not be evaluated.", false);
         } catch (IllegalArgumentException e) {
             // ignore...this is expected.
         }
         
         try {
-            authorization.evaluate(declareScript("test_key_with_null_value", null), subject, "invalid_input_missing_value", null);
+            authorization.evaluate(createJobResource("test_key_with_null_value", null), subject, "invalid_input_missing_value", null);
             assertTrue("A null resource value should not be evaluated.", false);
         } catch (IllegalArgumentException e) {
             // ignore...this is expected.
@@ -157,7 +159,7 @@ public class TestSAREAuthorization extends TestCase {
     }
     
     public void testActionAuthorizationYml() throws Exception {
-        Map<String,String> resource = declareScript("myScript", "/yml/bar/baz/boo");
+        Map<String,String> resource = createJobResource("myScript", "/yml/bar/baz/boo");
         Subject subject = createSubject("yml_user_1", "yml_group_1");
         
         /* Check that workflow_run is actually a matching action */
@@ -166,13 +168,13 @@ public class TestSAREAuthorization extends TestCase {
                 Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
         assertTrue("Action not granted authorization.", decision.isAuthorized());
         
-        resource = declareScript("Script2", "/listAction");
+        resource = createJobResource("Script2", "/listAction");
         decision = authorization.evaluate(resource, subject, "action_list_2", null);
         assertEquals("Decision for successful authoraztion for action: action_list_2 does not match, but should.",
                 Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
         assertTrue("Action not granted authorization.", decision.isAuthorized());
         
-        resource = declareScript("Script3", "/wldcrd");
+        resource = createJobResource("Script3", "/wldcrd");
         decision = authorization.evaluate(resource, subject, "action_list_not_in_list_and_shouldn't_be", null);
         assertEquals("Decision for successful authoraztion for action: action_list_not_in_list_and_shouldn't_be does not match, but should.",
                 Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
@@ -182,25 +184,25 @@ public class TestSAREAuthorization extends TestCase {
     }
     
     public void testActionAuthorizationYmlInvalid() throws Exception {
-        Map<String,String> resource = declareScript("Script3", "/noactions");
+        Map<String,String> resource = createJobResource("Script3", "/noactions");
         Subject subject = createSubject("yml_usr_2", "broken");
         
         Decision decision = authorization.evaluate(resource, subject, "none", null);
         assertEquals("Decision for authoraztion for action: none is not REJECTED_NO_ACTIONS_DECLARED.",
                 Code.REJECTED, decision.explain().getCode());
-        assertTrue("Action granted authorization.", !decision.isAuthorized());
+        assertFalse("Action granted authorization.", decision.isAuthorized());
         
         subject = createSubject("yml_usr_3", "missing_rules");
         
         decision = authorization.evaluate(resource, subject, "none", null);
         assertEquals("Decision for authoraztion for action: none is not REJECTED_NO_RULES_DEFINED.",
                 Code.REJECTED_NO_RULES_DECLARED, decision.explain().getCode());
-        assertTrue("Action granted authorization.", !decision.isAuthorized());
+        assertFalse("Action granted authorization.", decision.isAuthorized());
         
     }
     
     public void testActionAuthorizationYmlNoMatchIssue() throws Exception {
-        Map<String,String> resource = declareScript("Script_123", "/AB3");
+        Map<String,String> resource = createJobResource("Script_123", "/AB3");
         Subject subject = createSubject("yml_usr_2", "issue_not_match");
         
         Decision decision = authorization.evaluate(resource, subject, "foobar", null);
@@ -212,7 +214,7 @@ public class TestSAREAuthorization extends TestCase {
     }
     
     public void testActionAuthorization() throws Exception {
-        Map<String,String> resource = declareScript("myScript", "bar/baz/boo");
+        Map<String,String> resource = createJobResource("myScript", "bar/baz/boo");
         Subject subject = createSubject("testActionAuthorization", "admin-action");
         
         /* Check that workflow_run is actually a matching action */
@@ -235,7 +237,7 @@ public class TestSAREAuthorization extends TestCase {
         assertFalse("An empty action should not select", decision.isAuthorized());
           
         /* The given job=anyaction of group=foobar should allow any action. */
-        decision = authorization.evaluate(declareScript("anyaction", "foobar"), subject, 
+        decision = authorization.evaluate(createJobResource("anyaction", "foobar"), subject,
                 "my_wacky_action", environment);
         assertEquals("my_wacky_action reason does not match.", 
                 Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
@@ -250,7 +252,7 @@ public class TestSAREAuthorization extends TestCase {
         final int resourcesCount = 100;
         final int actionsCount = 10;
         for(int i = 0; i < resourcesCount; i++) {
-            resources.add(declareScript(Integer.toString(i), "big/test/" + Integer.toString(i)));
+            resources.add(createJobResource(Integer.toString(i), "big/test/" + Integer.toString(i)));
         }
         Set<String> actions = new HashSet<String>();
         for(int i = 0; i < actionsCount; i++) {
@@ -265,7 +267,7 @@ public class TestSAREAuthorization extends TestCase {
     }
     
     public void off_testProjectEnvironment() throws Exception {
-        Map<String,String> resource = declareScript("adhocScript", "foo/bar");
+        Map<String,String> resource = createJobResource("adhocScript", "foo/bar");
         Subject subject = createSubject("testProjectEnvironment", "admin-environment");
         
         environment.add(new Attribute(URI.create("http://dtolabs.com/rundeck/env/project"), "Lion"));
@@ -280,7 +282,7 @@ public class TestSAREAuthorization extends TestCase {
     }
     
     public void off_testTimeOfDay() throws Exception {
-        declareScript("adhocScript", "foo/bar");
+        createJobResource("adhocScript", "foo/bar");
         String action = "READ";
         Subject subject = createSubject("testTimeOfDay", "admin-environment");
         
@@ -290,7 +292,7 @@ public class TestSAREAuthorization extends TestCase {
     }
     
     public void off_testNodeTarget() throws Exception {
-        declareScript("adhocScript", "foo/bar");
+        createJobResource("adhocScript", "foo/bar");
         String action = "READ";
         Subject subject = createSubject("testNodeTarget", "admin-environment");
         
@@ -307,8 +309,9 @@ public class TestSAREAuthorization extends TestCase {
      * @param scriptName
      * @param scriptGroup
      */
-    private Map<String, String> declareScript(String scriptName, String scriptGroup) {
+    private Map<String, String> createJobResource(String scriptName, String scriptGroup) {
         Map<String, String> resource = new HashMap<String, String>();
+        resource.put("type", "job");
         resource.put("job", scriptName);
         resource.put("group", scriptGroup);
         return resource;

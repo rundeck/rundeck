@@ -1,0 +1,48 @@
+description: QA can execute any QA jobs and can view Prod jobs, but not execute them
+for: # each entry in for: checks a specific type of resource
+  job: # name of type
+    - match: # map of attributes to perform regex match on
+        group: QA.* #checks only group, so includes any job in matching group
+      allow: ['*'] #allow/deny indicated explicitly
+      deny: [delete] # a match on this entry for this action will result in DENY, even if other matches allow
+    - match:
+        group: Production.*
+        name: Deploy
+      allow: [read] #this will allow workflow_read only
+  node:
+    - contains: # contains indicates attribute value is a member of a set
+        tag: production # tag set membership
+      deny: [command_exec]  #allow/deny explicitly
+
+# for backwards compat, if the old "rules" section exists, we could treat it as matching type='job'
+# and match on synthesized "group/name" path as it was before
+rules:
+  ^$:
+    actions: 'foobar'
+by:
+    group: 'qa_group'
+---
+description: Prod can execute all Prod jobs and can view QA jobs, but not execute them
+for: # each entry in for: checks a specific type of resource
+  job: # name of type
+    - match: # map of attributes to perform regex match on
+        group: QA.* #checks only group, so includes any job in matching group
+      allow: [read] #allow/deny indicated explicitly
+    - match:
+        group: Production.*
+      allow: ['*'] #this will allow workflow_read only
+  node:
+    - contains: # contains indicates attribute value is a member of a set
+        tag: production # tag set membership
+      allow: [command_exec]  #allow/deny explicitly
+    - contains: # contains indicates attribute value is a member of a set
+        tag: qa # tag set membership
+      allow: ['*']  #allow/deny explicitly
+
+# for backwards compat, if the old "rules" section exists, we could treat it as matching type='job'
+# and match on synthesized "group/name" path as it was before
+rules:
+  ^$:
+    actions: 'foobar'
+by:
+    group: 'prod_group'

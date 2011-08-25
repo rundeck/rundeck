@@ -37,9 +37,12 @@ public interface Explanation {
         REJECTED_RESOURCE_PROPERTY_NOT_MATCHED, 
         REJECTED_NO_RULES_DECLARED, 
         REJECTED_NO_DESCRIPTION_PROVIDED, 
+        REJECTED_NO_RESOURCE_TYPE,
+        REJECTED_INVALID_FOR_SECTION,
+        REJECTED_DENIED,
     };
     
     Code getCode();
     
-    void describe(PrintStream out);
+    public void describe(PrintStream out);
 }
