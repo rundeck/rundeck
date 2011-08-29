@@ -644,7 +644,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
     }
 
     public String getUser() {
-        return getFramework().getAuthenticationMgr().getUserInfoWithoutPrompt().getUsername();
+        return getFramework().getAuthenticationMgr().getUserInfo().getUsername();
     }
 
 

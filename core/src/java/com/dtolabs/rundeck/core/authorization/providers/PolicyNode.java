@@ -23,6 +23,7 @@
 */
 package com.dtolabs.rundeck.core.authorization.providers;
 
+import com.dtolabs.rundeck.core.authorization.Attribute;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.DOMException;
@@ -95,6 +96,15 @@ public class PolicyNode implements Policy {
 
     public PoliciesDocument.Context getContext() {
         return new PoliciesDocument.Context(policyNode);
+    }
+
+    public EnvironmentalContext getEnvironment() {
+        //XXX: backwards compatibility shim.
+        return new EnvironmentalContext() {
+            public boolean matches(Set<Attribute> environment) {
+                return true;
+            }
+        };
     }
 
     public Set<Object> getGroups() {

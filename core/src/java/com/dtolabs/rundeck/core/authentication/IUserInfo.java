@@ -32,7 +32,4 @@ package com.dtolabs.rundeck.core.authentication;
 public interface IUserInfo {
     /** the username */
     String getUsername();
-
-    /** the password */
-    String getPassword();
 }

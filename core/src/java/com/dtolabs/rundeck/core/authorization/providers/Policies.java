@@ -74,7 +74,7 @@ public class Policies {
         return p;
     }
 
-    public List<AclContext> narrowContext(Subject subject, Set<Attribute> environment) {
+    public List<AclContext> narrowContext(final Subject subject, final Set<Attribute> environment) {
 
         List<AclContext> matchedContexts = new ArrayList<AclContext>();
         for (final PolicyCollection f : cache) {

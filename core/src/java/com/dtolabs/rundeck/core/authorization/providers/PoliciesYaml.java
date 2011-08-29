@@ -8,8 +8,13 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
 
+import javax.naming.InvalidNameException;
+import javax.naming.ldap.LdapName;
 import javax.security.auth.Subject;
 
+import com.dtolabs.rundeck.core.authentication.Group;
+import com.dtolabs.rundeck.core.authentication.LdapGroup;
+import com.dtolabs.rundeck.core.authentication.Username;
 import org.yaml.snakeyaml.Yaml;
 
 import com.dtolabs.rundeck.core.authorization.Attribute;
@@ -28,7 +33,7 @@ public class PoliciesYaml implements PolicyCollection {
         try {
             for (Object yamlDoc : yaml.loadAll(stream)) {
                 final Object yamlDoc1 = yamlDoc;
-                if(yamlDoc1 instanceof Map) {
+                if (yamlDoc1 instanceof Map) {
                     all.add(new YamlPolicy((Map) yamlDoc1));
                 }
             }
@@ -51,9 +56,84 @@ public class PoliciesYaml implements PolicyCollection {
         return all.size();
     }
 
-    public Collection<AclContext> matchedContexts(Subject subject, Set<Attribute> environment)
+    public Collection<AclContext> matchedContexts(final Subject subject, final Set<Attribute> environment)
         throws InvalidCollection {
-        return PoliciesDocument.policyMatcher(subject, all);
+        return policyMatcher(subject, all, environment);
 
+    }
+
+    /**
+     * @param subject
+     *
+     * @return
+     *
+     * @throws javax.xml.xpath.XPathExpressionException
+     *
+     */
+    static Collection<AclContext> policyMatcher(final Subject subject, final Collection<? extends Policy> policyLister,
+                                                final Set<Attribute> environment)
+        throws InvalidCollection {
+        final ArrayList<AclContext> matchedContexts = new ArrayList<AclContext>();
+        int i = 0;
+        for (final Policy policy : policyLister) {
+            long userMatchStart = System.currentTimeMillis();
+
+
+            //todo: evaluate environment and context values for the policies
+            if(null!=policy.getEnvironment()){
+                final EnvironmentalContext environment1 = policy.getEnvironment();
+                if(!environment1.matches(environment)){
+                    continue;
+                }
+            }else if (null != environment && environment.size() > 0) {
+                continue;
+            }
+            
+
+            Set<Username> userPrincipals = subject.getPrincipals(Username.class);
+            if (userPrincipals.size() > 0) {
+                Set<String> policyUsers = policy.getUsernames();
+                Set<String> usernamePrincipals = new HashSet<String>();
+                for (Username username : userPrincipals) {
+                    usernamePrincipals.add(username.getName());
+                }
+
+                if (!Collections.disjoint(policyUsers, usernamePrincipals)) {
+                    matchedContexts.add(policy.getContext());
+                    continue;
+                }
+            }
+
+
+            Set<Group> groupPrincipals = subject.getPrincipals(Group.class);
+            if (groupPrincipals.size() > 0) {
+                // no username matched, check groups.
+                long groupCollectStart = System.currentTimeMillis();
+
+                Set<Object> policyGroups = policy.getGroups();
+                Set<Object> groupNames = new HashSet<Object>();
+                for (Group groupPrincipal : groupPrincipals) {
+                    if (groupPrincipal instanceof LdapGroup) {
+                        try {
+                            groupNames.add(new LdapName(groupPrincipal.getName()));
+                        } catch (InvalidNameException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                    } else {
+                        groupNames.add(groupPrincipal.getName());
+                    }
+                }
+
+                long collectDuration = System.currentTimeMillis() - groupCollectStart;
+                if (!Collections.disjoint(policyGroups, groupNames)) {
+                    matchedContexts.add(policy.getContext());
+                    continue;
+                }
+            }
+
+            i++;
+        }
+        return matchedContexts;
     }
 }

@@ -65,4 +65,10 @@ public interface Policy {
      * @return groups
      */
     public Set<Object> getGroups();
+
+    /**
+     * Return the environmental context to test the Policy against an input environment
+     *
+     */
+    public EnvironmentalContext getEnvironment();
 }

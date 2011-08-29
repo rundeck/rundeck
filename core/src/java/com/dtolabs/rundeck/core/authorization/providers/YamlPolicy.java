@@ -24,6 +24,7 @@
 */
 package com.dtolabs.rundeck.core.authorization.providers;
 
+import com.dtolabs.rundeck.core.authorization.Attribute;
 import com.dtolabs.rundeck.core.authorization.Explanation;
 import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.core.utils.PairImpl;
@@ -31,6 +32,8 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.collections.PredicateUtils;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -48,6 +51,7 @@ final class YamlPolicy implements Policy {
     public static final String JOB_TYPE = "job";
     public static final String RULES_SECTION = "rules";
     public static final String ACTIONS_SECTION = "actions";
+    public static final String CONTEXT_SECTION = "context";
     public Map policyInput;
 
     private Set<String> usernames = new HashSet<String>();
@@ -63,6 +67,67 @@ final class YamlPolicy implements Policy {
 
     public Set<String> getUsernames() {
         return usernames;
+    }
+
+    private EnvironmentalContext environment;
+    private boolean envchecked;
+
+    public EnvironmentalContext getEnvironment() {
+        synchronized (this) {
+            if (!envchecked) {
+                //create
+                final Object ctxClause = policyInput.get(CONTEXT_SECTION);
+                if (null != ctxClause && ctxClause instanceof Map) {
+                    Map ctx = (Map) ctxClause;
+
+                    environment = new YamlEnvironmentalContext(EnvironmentalContext.URI_BASE, ctx);
+                }
+                envchecked = true;
+            }
+        }
+        return environment;
+    }
+    static class YamlEnvironmentalContext implements EnvironmentalContext{
+        String uriPrefix;
+        Map ctx;
+        Map<URI, String> matcher = new HashMap<URI, String>();
+
+        YamlEnvironmentalContext(final String uriPrefix, final Map ctx) {
+            this.uriPrefix = uriPrefix;
+            this.ctx = ctx;
+            for (final Object o : ctx.entrySet()) {
+                Map.Entry entry=(Map.Entry) o;
+                if(entry.getKey() instanceof String){
+                    String path=(String) entry.getKey();
+                    if(entry.getValue() instanceof String) {
+                        String value = (String) entry.getValue();
+                        final URI uri;
+                        try {
+                            uri = new URI(uriPrefix + path);
+                        } catch (URISyntaxException e) {
+                            continue;
+                        }
+                        matcher.put(uri, value);
+                    }
+                }
+            }
+        }
+
+        public boolean matches(final Set<Attribute> environment) {
+            //return true if all declared environmental context attributes match in the input
+            Set<URI> matchedSet = new HashSet<URI>();
+            for (final Attribute attribute : environment) {
+                final String matchValue = matcher.get(attribute.property);
+                if (null != matchValue) {
+                    final RegexPredicate regexPredicate = new RegexPredicate(Pattern.compile(matchValue));
+                    if (regexPredicate.evaluate(attribute.value)) {
+                        matchedSet.add(attribute.property);
+                    }
+                }
+            }
+
+            return matchedSet.size()==matcher.keySet().size();
+        }
     }
 
     public Set<Object> getGroups() {

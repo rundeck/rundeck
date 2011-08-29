@@ -17,6 +17,8 @@
 package com.dtolabs.rundeck.core.authentication;
 
 
+import javax.security.auth.Subject;
+
 /**
  * Instances of classes that implement this class authenticate a user according to their implementation
  * strategies. The methods of this class return {@link com.dtolabs.rundeck.core.authentication.IUserInfo} objects that provide access to username
@@ -25,30 +27,6 @@ package com.dtolabs.rundeck.core.authentication;
  */
 
 public interface Authenticator {
-    /**
-     * Get the current UserInfo without prompting.  Both values of the IUserInfo may be null.
-     *
-     * @return
-     */
-    IUserInfo getUserInfoWithoutPrompt();
-
-    /**
-     * Clear and get the UserInfo again, causing a prompt.
-     *
-     * @return
-     * @throws com.dtolabs.rundeck.core.authentication.UserInfoException
-     * @throws com.dtolabs.rundeck.core.authentication.PromptCancelledException
-     */
-    IUserInfo getNewUserInfo() throws UserInfoException, PromptCancelledException;
-
-    /**
-     * Prompt for user info and, if not cancelled, set the result as the new user info.
-     *
-     * @return
-     * @throws UserInfoException
-     * @throws PromptCancelledException
-     */
-    IUserInfo getPromptUserInfo() throws UserInfoException, PromptCancelledException;
 
     /**
      * Get the UserInfo.  If needed, the user will be prompted for it.
@@ -57,5 +35,10 @@ public interface Authenticator {
      * @throws UserInfoException
      * @throws PromptCancelledException
      */
-    IUserInfo getUserInfo() throws UserInfoException, PromptCancelledException;
+    IUserInfo getUserInfo() throws UserInfoException;
+
+    /**
+     * Get the authenticated subject.
+     */
+    Subject getSubject() throws UserInfoException;
 }

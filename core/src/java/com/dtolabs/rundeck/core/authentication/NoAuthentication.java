@@ -18,6 +18,8 @@ package com.dtolabs.rundeck.core.authentication;
 
 import com.dtolabs.rundeck.core.common.Framework;
 
+import javax.security.auth.Subject;
+
 /**
  * Trivial implementation of the {@link Authenticator} interface.
  */
@@ -43,27 +45,6 @@ public class NoAuthentication implements Authenticator {
         return getUserInfo();
     }
 
-    /**
-     * wrapper call to {@link this#getUserInfo()}
-     *
-     * @return
-     * @throws UserInfoException
-     * @throws PromptCancelledException
-     */
-    public IUserInfo getNewUserInfo() throws UserInfoException, PromptCancelledException {
-        return getUserInfo();
-    }
-
-    /**
-     * wrapper call to {@link this#getUserInfo()}
-     *
-     * @return
-     * @throws UserInfoException
-     * @throws PromptCancelledException
-     */
-    public IUserInfo getPromptUserInfo() throws UserInfoException, PromptCancelledException {
-        return getUserInfo();
-    }
 
     /**
      * Returns an instance of {@link IUserInfo} setting the user name to the value of
@@ -73,7 +54,7 @@ public class NoAuthentication implements Authenticator {
      * @throws UserInfoException
      * @throws PromptCancelledException
      */
-    public IUserInfo getUserInfo() throws UserInfoException, PromptCancelledException {
+    public IUserInfo getUserInfo() throws UserInfoException  {
         final String username = System.getProperty("user.name");
         final String password = "";
         return new IUserInfo() {
@@ -85,5 +66,11 @@ public class NoAuthentication implements Authenticator {
                 return password;
             }
         };
+    }
+
+    public Subject getSubject() throws UserInfoException {
+        Subject subject = new Subject();
+        subject.getPrincipals().add(new Username(System.getProperty("user.name")));
+        return subject;
     }
 }
