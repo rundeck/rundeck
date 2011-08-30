@@ -57,7 +57,7 @@
                 <td><%=request.subject.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class).collect { it.name }.join(", ")%></td>
             </tr>
         </g:if>
-        <g:if test="${session.user==user.login && (g.isUserInRoleTest(role:'admin') || g.isUserInRoleTest(role:'admin_user'))}">
+        <g:if test="${session.user==user.login && (auth.resourceAllowedTest(kind:'user',action:['admin'],context:'application'))}">
             <g:set var="rkeytok" value="${g.rkey()}"/>
             <tr id="${rkeytok}" class="userapitoken">
                 <td>API Tokens:</td>

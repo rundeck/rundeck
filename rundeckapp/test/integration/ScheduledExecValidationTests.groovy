@@ -40,8 +40,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         //create mock of FrameworkService
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         fwkControl.demand.existsFrameworkProject {project, framework -> return true }
+        fwkControl.demand.authorizeProjectResourceAll{framework, resource, actions, project-> return true}
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         sec.frameworkService = fwkControl.createMock()
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
@@ -98,8 +100,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         //create mock of FrameworkService
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
-        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         fwkControl.demand.existsFrameworkProject {project, framework -> return true }
+        fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         sec.frameworkService = fwkControl.createMock()
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
@@ -158,6 +162,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
         fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
         fwkControl.demand.existsFrameworkProject{project,framework-> return true }
+        fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         sec.frameworkService=fwkControl.createMock()
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
@@ -209,6 +216,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         fwkControl.demand.existsFrameworkProject {project, framework -> return true }
+        fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         sec.frameworkService = fwkControl.createMock()
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
@@ -306,6 +316,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
         fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
         fwkControl.demand.existsFrameworkProject{project,framework-> return true }
+        fwkControl.demand.authorizeProjectJobAll {framework, job, actions, project -> return true}
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         sec.frameworkService=fwkControl.createMock()
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
@@ -432,6 +445,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
         fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
         fwkControl.demand.existsFrameworkProject{project,framework-> return true }
+        fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         sec.frameworkService=fwkControl.createMock()
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
@@ -502,6 +518,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
         fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
         fwkControl.demand.existsFrameworkProject{project,framework-> return true }
+        fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         sec.frameworkService=fwkControl.createMock()
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
@@ -567,6 +586,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
         fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
         fwkControl.demand.existsFrameworkProject{project,framework-> return true }
+        fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         sec.frameworkService=fwkControl.createMock()
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
@@ -633,6 +655,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
         fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
         fwkControl.demand.existsFrameworkProject{project,framework-> return true }
+        fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         sec.frameworkService=fwkControl.createMock()
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
@@ -699,6 +724,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
         fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
         fwkControl.demand.existsFrameworkProject{project,framework-> return true }
+        fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         sec.frameworkService=fwkControl.createMock()
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
@@ -784,6 +812,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
         fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
         fwkControl.demand.existsFrameworkProject{project,framework-> return true }
+        fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         sec.frameworkService=fwkControl.createMock()
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
@@ -2052,6 +2083,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals 'aCommand2',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
             def sesControl = mockFor(ScheduledExecutionService, true)
             sesControl.demand.getByIDorUUID{id-> return se }
@@ -2059,8 +2093,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:true,adhocRemoteString:'test command',]
             def results=sec._doupdate(params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded=results.success
+            def scheduledExecution=results.scheduledExecution
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -2185,8 +2219,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 workflow: new Workflow(commands:[new CommandExec(adhocRemoteString:'test command',adhocExecution:true)])
             )
             def results=sec._doupdateJob(se.id.toString(),params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -2227,6 +2261,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals 'aCommand',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
             def sesControl = mockFor(ScheduledExecutionService, true)
             sesControl.demand.getByIDorUUID {id -> return se }
@@ -2238,8 +2275,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params=[id:se.id.toString(),jobName:'monkey1',project:'testProject',description:'',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand',scheduled:true,crontabString:'0 21 */4 */4 */6 ? 2010-2040',useCrontabString:'true']
             def results=sec._doupdate(params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded=results.success
+            def scheduledExecution=results.scheduledExecution
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -2282,6 +2319,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals 'aCommand',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
             def sesControl = mockFor(ScheduledExecutionService, true)
             sesControl.demand.getByIDorUUID {id -> return se }
@@ -2293,8 +2333,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params=[id:se.id.toString(),scheduled:true,crontabString:'0 21 */4 */4 */6 3 2010-2040',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand']
             def results=sec._doupdate(params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -2325,6 +2365,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals 'aCommand',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
             def sesControl = mockFor(ScheduledExecutionService, true)
             sesControl.demand.getByIDorUUID {id -> return se }
@@ -2336,8 +2379,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params=[id:se.id.toString(),scheduled:true,crontabString:'0 21 */4 ? */6 ? 2010-2040',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand']
             def results=sec._doupdate(params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -2368,6 +2411,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals 'aCommand',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -2376,8 +2422,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params=[id:se.id.toString(),scheduled:true,crontabString:'0 21 */4 */4 */6 ? z2010-2040',useCrontabString:'true']
             def results=sec._doupdate(params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -2386,7 +2432,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertFalse succeeded
             assertTrue scheduledExecution.errors.hasErrors()
             assertTrue scheduledExecution.errors.hasFieldErrors('crontabString')
-            
+
         }
         if(true){//test set scheduled with invalid crontabString  (too few components)
             def se = new ScheduledExecution(jobName:'monkey1',project:'testProject',description:'',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand')
@@ -2408,6 +2454,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals 'aCommand',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -2416,8 +2465,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params=[id:se.id.toString(),scheduled:true,crontabString:'0 21 */4 */4 */6',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand']
             def results=sec._doupdate(params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -2448,6 +2497,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals 'aCommand',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -2456,8 +2508,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params=[id:se.id.toString(),scheduled:true,crontabString:'70 21 */4 */4 */6 ?',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand']
             def results=sec._doupdate(params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -2488,6 +2540,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals 'aCommand',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -2496,8 +2551,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params=[id:se.id.toString(),scheduled:true,crontabString:'0 70 */4 */4 */6 ?',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand']
             def results=sec._doupdate(params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -2528,6 +2583,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals 'aCommand',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -2536,8 +2594,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params=[id:se.id.toString(),scheduled:true,crontabString:'0 0 25 */4 */6 ?',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand']
             def results=sec._doupdate(params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -2568,6 +2626,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals 'aCommand',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -2576,8 +2637,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params=[id:se.id.toString(),scheduled:true,crontabString:'0 0 2 32 */6 ?',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand']
             def results=sec._doupdate(params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -2608,6 +2669,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals 'aCommand',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -2616,8 +2680,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params=[id:se.id.toString(),scheduled:true,crontabString:'0 0 2 3 13 ?',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand']
             def results=sec._doupdate(params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -2648,6 +2712,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals 'aCommand',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -2656,8 +2723,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params=[id:se.id.toString(),scheduled:true,crontabString:'0 0 2 ? 12 8',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand']
             def results=sec._doupdate(params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -2703,8 +2770,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 workflow: new Workflow(commands:[new CommandExec(adhocRemoteString:'test command',adhocExecution:true)]),
                 scheduled:true,crontabString:'0 21 */4 */4 */6 ? 2010-2040',useCrontabString:'true')
             def results=sec._doupdateJob(se.id.toString(),params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -2760,8 +2827,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 dayOfMonth:'*/4',dayOfWeek:'3',
                 workflow: new Workflow(commands:[new CommandExec(adhocRemoteString:'test command',adhocExecution:true)]))
             def results=sec._doupdateJob(se.id.toString(),params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -2803,8 +2870,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             def params=new ScheduledExecution(scheduled:true,crontabString:'0 21 */4 ? */6 ? 2010-2040',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',
                 workflow: new Workflow(commands:[new CommandExec(adhocRemoteString:'test command',adhocExecution:true)]))
             def results=sec._doupdateJob(se.id.toString(),params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -2840,8 +2907,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             def params=new ScheduledExecution(scheduled:true,crontabString:'0 21 */4 */4 */6 ? z2010-2040',useCrontabString:'true',
                 workflow: new Workflow(commands:[new CommandExec(adhocRemoteString:'test command',adhocExecution:true)]))
             def results=sec._doupdateJob(se.id.toString(),params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -2877,8 +2944,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             def params=new ScheduledExecution(scheduled:true,crontabString:'0 21 */4 */4 */6',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',
                 workflow: new Workflow(commands:[new CommandExec(adhocRemoteString:'test command',adhocExecution:true)]))
             def results=sec._doupdateJob(se.id.toString(),params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -2914,8 +2981,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             def params=new ScheduledExecution(scheduled:true,crontabString:'70 21 */4 */4 */6 ?',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',
                 workflow: new Workflow(commands:[new CommandExec(adhocRemoteString:'test command',adhocExecution:true)]))
             def results=sec._doupdateJob(se.id.toString(),params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -2951,8 +3018,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             def params=new ScheduledExecution(scheduled:true,crontabString:'0 70 */4 */4 */6 ?',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',
                 workflow: new Workflow(commands:[new CommandExec(adhocRemoteString:'test command',adhocExecution:true)]))
             def results=sec._doupdateJob(se.id.toString(),params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -2988,8 +3055,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             def params=new ScheduledExecution(scheduled:true,crontabString:'0 0 25 */4 */6 ?',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',
                 workflow: new Workflow(commands:[new CommandExec(adhocRemoteString:'test command',adhocExecution:true)]))
             def results=sec._doupdateJob(se.id.toString(),params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -3025,8 +3092,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             def params=new ScheduledExecution(scheduled:true,crontabString:'0 0 2 32 */6 ?',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',
                 workflow: new Workflow(commands:[new CommandExec(adhocRemoteString:'test command',adhocExecution:true)]))
             def results=sec._doupdateJob(se.id.toString(),params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -3062,8 +3129,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             def params=new ScheduledExecution(scheduled:true,crontabString:'0 0 2 3 13 ?',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',
                 workflow: new Workflow(commands:[new CommandExec(adhocRemoteString:'test command',adhocExecution:true)]))
             def results=sec._doupdateJob(se.id.toString(),params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -3099,8 +3166,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             def params=new ScheduledExecution(scheduled:true,crontabString:'0 0 2 ? 12 8',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'',
                 workflow: new Workflow(commands:[new CommandExec(adhocRemoteString:'test command',adhocExecution:true)]))
             def results=sec._doupdateJob(se.id.toString(),params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -3136,6 +3203,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals '',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -3144,8 +3214,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:'true',adhocRemoteString:'']
             def results=sec._doupdate(params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -3189,6 +3259,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals '',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -3197,8 +3270,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:'true',adhocLocalString:'test local']
             def results=sec._doupdate(params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -3249,6 +3322,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals '',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -3257,8 +3333,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:'true',adhocFilepath:'test file']
             def results=sec._doupdate(params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -3310,6 +3386,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals '',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -3318,8 +3397,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:'true',adhocRemoteString:'test remote']
             def results=sec._doupdate(params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -3370,6 +3449,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals '',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -3378,8 +3460,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:'true',adhocFilepath:'test file']
             def results=sec._doupdate(params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -3430,6 +3512,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals '',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -3438,8 +3523,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:'true',adhocRemoteString:'test remote']
             def results=sec._doupdate(params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -3490,6 +3575,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals '',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -3498,8 +3586,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:'true',adhocLocalString:'test local']
             def results=sec._doupdate(params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -3559,8 +3647,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 workflow:new Workflow(commands:[new CommandExec(adhocExecution:'true',adhocRemoteString:'')])
             )
             def results=sec._doupdateJob(se.id.toString(),params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -3608,8 +3696,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 workflow:new Workflow(commands:[new CommandExec(adhocExecution:'true',adhocRemoteString:'test remote')])
             )
             def results=sec._doupdateJob(se.id.toString(),params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -3665,6 +3753,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals 'aCommand', command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -3677,8 +3768,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 notifyOnfailure: 'true', notifyFailureRecipients: 'milk@store.com',
             ]
             def results = sec._doupdate(params)
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -3743,6 +3834,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals 'aCommand', command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
             
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -3755,8 +3849,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                  notifyFailureRecipients: 'milk@store.com',
             ]
             def results = sec._doupdate(params)
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -3822,6 +3916,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals 'aCommand', command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -3834,8 +3931,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 notifyFailureRecipients: 'milk@store.com',
             ]
             def results = sec._doupdate(params)
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -3889,6 +3986,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals 'aCommand', command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -3901,8 +4001,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 notifyFailureRecipients: 'milk@store.com',
             ]
             def results = sec._doupdate(params)
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -3958,6 +4058,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals 'aCommand',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -3968,8 +4071,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 notifications:[[eventTrigger:'onsuccess',type:'email',content:'spaghetti@nowhere.com'],[eventTrigger:'onfailure',type:'email',content:'milk@store.com']]
             ]
             def results=sec._doupdate(params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -4041,6 +4144,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals 'aCommand',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -4052,8 +4158,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 notifyOnfailure:'true',notifyFailureRecipients:'milk@store.com',
             ]
             def results=sec._doupdate(params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -4123,6 +4229,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals 'aCommand',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -4134,8 +4243,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 notifyOnfailure:'true',notifyFailureRecipients:'milkstore.com',
             ]
             def results=sec._doupdate(params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -4205,6 +4314,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals 'aCommand',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
 
             def params= new ScheduledExecution(jobName:'monkey1',project:'testProject',description:'',adhocExecution:true,adhocRemoteString:'test command',
@@ -4212,8 +4324,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 new Notification(eventTrigger:'onfailure',type:'email',content:'milk@store.com')
             ])
             def results=sec._doupdateJob(se.id,params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -4287,6 +4399,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertEquals 'aCommand',command
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService=fwkControl.createMock()
 
             def params= new ScheduledExecution(jobName:'monkey1',project:'testProject',description:'',adhocExecution:true,adhocRemoteString:'test command',
@@ -4294,8 +4409,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 new Notification(eventTrigger:'onfailure',type:'email',content:'milkstore.com')
             ])
             def results=sec._doupdateJob(se.id,params)
-            def succeeded=results[0]
-            def scheduledExecution=results[1]
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
             if(scheduledExecution && scheduledExecution.errors.hasErrors()){
                 scheduledExecution.errors.allErrors.each{
                     System.err.println(it);
@@ -4361,6 +4476,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             fwkControl.demand.getCommand {project, type, command, framework ->
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -4369,8 +4487,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params = [id: se.id.toString(), description: 'changed description',workflow:['commands[0]':[adhocExecution:true,adhocRemoteString:'test command2',]],'_workflow_data':true]
             def results = sec._doupdate(params)
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -4430,6 +4548,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             fwkControl.demand.getCommand {project, type, command, framework ->
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -4440,8 +4561,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 options:["options[0]":[name: 'test3', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"]]
             ]
             def results = sec._doupdate(params)
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -4496,6 +4617,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             fwkControl.demand.getCommand {project, type, command, framework ->
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -4504,8 +4628,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params = [id: se.id.toString(), description: 'changed description',_nooptions:true]
             def results = sec._doupdate(params)
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -4550,6 +4674,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             fwkControl.demand.getCommand {project, type, command, framework ->
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -4558,8 +4685,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand']
             def results = sec._doupdate(params)
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -4615,6 +4742,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             fwkControl.demand.getCommand {project, type, command, framework ->
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -4623,8 +4753,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: false, name: 'aResource', type: 'aType', command: 'aCommand', _nooptions:true]
             def results = sec._doupdate(params)
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -4659,6 +4789,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             fwkControl.demand.getCommand {project, type, command, framework ->
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -4669,8 +4802,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 options:["options[0]":[name: 'test3', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"]]
             ]
             def results = sec._doupdate(params)
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -4716,6 +4849,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             fwkControl.demand.getCommand {project, type, command, framework ->
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -4726,8 +4862,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 'option.test3':'val3',options:["options[0]":[name: 'test3', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"]]
             ]
             def results = sec._doupdate(params)
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -4782,6 +4918,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             fwkControl.demand.getCommand {project, type, command, framework ->
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -4793,8 +4932,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 "options[1]":[name: 'test2', defaultValue: 'd', enforced: true, values:['a','b','c','d']]]
             ]
             def results = sec._doupdate(params)
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -4851,6 +4990,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             fwkControl.demand.getCommand {project, type, command, framework ->
                 return null
             }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
 
             def sesControl = mockFor(ScheduledExecutionService, true)
@@ -4862,8 +5004,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                     "options[1]": [name: 'test2', defaultValue: 'val2', enforced: false, values: ['a', 'b', 'c', 'd'], multivalued:true, delimiter:"testdelim"]]
             ]
             def results = sec._doupdate(params)
-            def succeeded = results[0]
-            def scheduledExecution = results[1]
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
                     System.err.println(it);
@@ -5140,6 +5282,10 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             def fwkControl = mockFor(FrameworkService, true)
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             fwkControl.demand.projects {return []}
+            fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
             def seServiceControl = mockFor(ScheduledExecutionService,true)
 

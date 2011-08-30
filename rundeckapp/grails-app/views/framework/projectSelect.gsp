@@ -27,13 +27,13 @@
       projectSet<<['key':proj,'value':proj]
     }%
 </g:each>
-<g:ifUserInAnyRoles roles="admin,user_admin">
+<auth:resourceAllowed action="create" kind="project" context="application">
     <g:if test="${!params.nocreate}">
     %{
       projectSet<<[value:"Create new Project...",key:'-new-']
     }%
     </g:if>
-</g:ifUserInAnyRoles>
+</auth:resourceAllowed>
 <g:select from="${projectSet}" optionKey='key' optionValue='value' name="${params.key?params.key:'projectSelect'}" onchange="${params.callback?params.callback:'selectProject'}(this.value);" value="${params.selected?params.selected:project}" />
 <g:if test="${error}">
     <span class="error message">${error}</span>

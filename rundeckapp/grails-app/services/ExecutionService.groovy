@@ -713,18 +713,26 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         return thread.isSuccessful()
     }
 
-    def abortExecution(ScheduledExecution se, Execution e, String user){
+    def abortExecution(ScheduledExecution se, Execution e, String user, final def framework){
         def ident = scheduledExecutionService.getJobIdent(se,e)
         def statusStr
         def abortstate
         def jobstate
-        if(scheduledExecutionService.existsJob(ident.jobname, ident.groupname)){
+        def failedreason
+        if (se && !frameworkService.authorizeProjectJobAll(framework, se, [UserAuth.WF_KILL], se.project)
+            || !se && !frameworkService.authorizeProjectResourceAll(framework, [type: 'adhoc'], ['adhoc_kill'], se.project)) {
+            jobstate = ExecutionController.getExecutionState(e)
+            abortstate= ExecutionController.ABORT_FAILED
+            failedreason="unauthorized"
+            statusStr= jobstate
+        }else if (scheduledExecutionService.existsJob(ident.jobname, ident.groupname)){
             if(!e.abortedby){
                 e.abortedby=user
                 e.save()
             }
             def didcancel=scheduledExecutionService.interruptJob(ident.jobname, ident.groupname)
             abortstate=didcancel?ExecutionController.ABORT_PENDING:ExecutionController.ABORT_FAILED
+            failedreason=didcancel?'':'Unable to interrupt the running job'
             jobstate=ExecutionController.EXECUTION_RUNNING
         }else if(null==e.dateCompleted){
             saveExecutionState(
@@ -743,8 +751,9 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             jobstate=ExecutionController.getExecutionState(e)
             statusStr='previously '+jobstate
             abortstate=ExecutionController.ABORT_FAILED
+            failedreason =  'Job is not running'
         }
-        return [abortstate:abortstate,jobstate:jobstate,statusStr:statusStr]
+        return [abortstate:abortstate,jobstate:jobstate,statusStr:statusStr, failedreason: failedreason]
     }
 
     /**

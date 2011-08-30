@@ -5,85 +5,9 @@ class UtilityTagLib{
     def static  daysofweekkey = [Calendar.SUNDAY,Calendar.MONDAY,Calendar.TUESDAY,Calendar.WEDNESDAY,Calendar.THURSDAY,Calendar.FRIDAY,Calendar.SATURDAY];
     def public static daysofweekord = ScheduledExecution.daysofweeklist;
     def public static monthsofyearord = ScheduledExecution.monthsofyearlist;
-	static returnObjectForTags = ['rkey','isUserInRoleTest','w3cDateValue']
+	static returnObjectForTags = ['rkey','w3cDateValue']
     def frameworkService
-    def roleService
-
-    /**
-     * Render an enclosed body if user role membership matches the assertion.  Attributes:
-     *  'role'= name of role to check, 'member'= true/false [optional], 'altText'=failed assertion message [optional]
-     *
-     * if member is 'true' then the body is rendered if the user has the specified role.
-     * if member is 'false' then the body is rendered if the user DOES NOT have the specified role.
-     *
-     * otherwise if altText is set, it is rendered.
-     */
-    def ifUserInRole={attrs,body->
-
-        if(!attrs.role){
-            throw new Exception("role attribute required: "+attrs.role)
-        }
-        def hasrole=roleService.isUserInRole(request,attrs.role)
-        boolean has=(!attrs.member || attrs.member == "true")
-        if(has && hasrole){
-            out<<body()
-        }else if(!has && !hasrole){
-            out<<body()
-        }else if(attrs.altText){
-            out<<attrs.altText
-        }
-    }
-
-    /**
-     * Render an enclosed body if user role membership matches any of the roles.  Attributes:
-     *  'roles'= list of roles to check, 'member'= true/false [optional], 'altText'=failed assertion message [optional]
-     *
-     * if member is 'true' then the body is rendered if the user has the specified role.
-     * if member is 'false' then the body is rendered if the user DOES NOT have the specified role.
-     *
-     * otherwise if altText is set, it is rendered.
-     */
-    def ifUserInAnyRoles={attrs,body->
-        def roles=attrs.roles
-        if(!attrs.roles){
-            throw new Exception("roles attribute required: "+attrs.roles)
-        }
-        if(roles instanceof String ){
-            roles = roles.split(",") 
-        }
-        def hasrole=roleService.isUserInAnyRoles(request,roles)
-        boolean has=(!attrs.member || attrs.member == "true")
-        if(has && hasrole){
-            out<<body()
-        }else if(!has && !hasrole){
-            out<<body()
-        }else if(attrs.altText){
-            out<<attrs.altText
-        }
-    }
-    
-    /**
-     * Returns true if the user is in the specified role.
-     * Attributes:
-     *  'role'= name of role to check, 'member'= true/false [optional],
-     *
-     * if member is 'true' then true is returned if the user has the specified role.
-     * if member is 'false' then true is returned if the user DOES NOT have the specified role.
-     * otherwise false is returned
-     */
-    def isUserInRoleTest={attrs,body->
-        if(!attrs.role){
-            throw new Exception("role attribute required: "+attrs.role)
-        }
-        def hasrole=roleService.isUserInRole(request,attrs.role)
-        boolean has=(null==attrs.member || attrs.member == "true")
-        if(has && hasrole){
-            return true
-        }else if(!has && !hasrole){
-            return true
-        }
-        return false
-    }
+  
     private static Random rand=new java.util.Random()
     /**
      * Return a new random string every time it is called.  Attrs are:

@@ -116,14 +116,18 @@ class ExecutionJob implements InterruptableJob {
             if (! initMap.execution instanceof Execution) {
                 throw new RuntimeException("JobDataMap contained invalid Execution type: " + initMap.execution.getClass().getName())
             }
-           initMap.execution.refresh()
-            def roles = jobDataMap.get("userRoles")
-            if(null==roles){
-                throw new RuntimeException("userRoleList not found in job data map")
+            initMap.execution.refresh()
+            def subject = jobDataMap.get("userSubject")
+            if(subject){
+                initMap.framework = FrameworkService.getFrameworkForUserAndSubject(initMap.execution.user, subject, initMap.adbase)
+            }else{
+                def roles = jobDataMap.get("userRoles")
+                if (null == roles) {
+                    throw new RuntimeException("userRoleList not found in job data map")
+                }
+                def rolelist = Arrays.asList(roles.split(","))
+                initMap.framework = FrameworkService.getFrameworkForUserAndRoles(initMap.execution.user, rolelist, initMap.adbase)
             }
-            def rolelist = Arrays.asList(roles.split(","))
-            initMap.framework = FrameworkService.getFrameworkForUserAndRoles(initMap.execution.user,rolelist,initMap.adbase)
-
         }else{
             if(jobDataMap.get("executionId")){
                 initMap.executionId=jobDataMap.get("executionId")
@@ -135,12 +139,17 @@ class ExecutionJob implements InterruptableJob {
                     throw new RuntimeException("JobDataMap contained invalid Execution type: " + initMap.execution.getClass().getName())
                 }
                 initMap.execution.refresh()
-                def roles = jobDataMap.get("userRoles")
-                if(null==roles){
-                    throw new RuntimeException("userRoleList not found in job data map")
+                def subject = jobDataMap.get("userSubject")
+                if (subject) {
+                    initMap.framework = FrameworkService.getFrameworkForUserAndSubject(initMap.execution.user, subject, initMap.adbase)
+                } else {
+                    def roles = jobDataMap.get("userRoles")
+                    if (null == roles) {
+                        throw new RuntimeException("userRoleList not found in job data map")
+                    }
+                    def rolelist = Arrays.asList(roles.split(","))
+                    initMap.framework = FrameworkService.getFrameworkForUserAndRoles(initMap.execution.user, rolelist, initMap.adbase)
                 }
-                def rolelist = Arrays.asList(roles.split(","))
-                initMap.framework = FrameworkService.getFrameworkForUserAndRoles(initMap.execution.user,rolelist,initMap.adbase)
             }else{
                 initMap.framework = FrameworkService.getFrameworkForUserAndRoles(initMap.scheduledExecution.user,initMap.scheduledExecution.userRoles,initMap.adbase)
                 initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution, initMap.framework,initMap.scheduledExecution.user)

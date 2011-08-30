@@ -46,7 +46,7 @@
     </g:if>
     <g:if test="${execsuccess}">
         <div class="batchresset">
-            <span class="prompt info">${execsuccess.size()} Job${execsuccess.size()==1?' was':'s were'} successfully queued</span>
+            <span class="prompt info">${execsuccess.size()} Job Execution${execsuccess.size()==1?' was':'s were'} successfully queued</span>
 
             <div class="presentation">
                 <g:if test="${execsuccess.size()>0}">
@@ -105,11 +105,14 @@
                                     </g:else>
                                 </td>
                                 <td class="jobdesc" style="">${scheduledExecution.description.size()>100?scheduledExecution.description.substring(0,100).encodeAsHTML():scheduledExecution.description.encodeAsHTML()}</td>
-                                    <g:hasErrors bean="${scheduledExecution}">
                                         <td class="errors">
+                                <g:hasErrors bean="${scheduledExecution}">
                                             <g:renderErrors bean="${scheduledExecution}" as="list"/>
+                                </g:hasErrors>
+                                            <g:if test="${entry.errmsg}">
+                                                ${entry.errmsg.encodeAsHTML()}
+                                            </g:if>
                                         </td>
-                                    </g:hasErrors>
                             </tr>
                         </g:each>
                     </table>

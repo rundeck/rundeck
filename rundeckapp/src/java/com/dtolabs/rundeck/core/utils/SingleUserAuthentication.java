@@ -27,6 +27,8 @@ import com.dtolabs.rundeck.core.authentication.IUserInfo;
 import com.dtolabs.rundeck.core.authentication.UserInfoException;
 import com.dtolabs.rundeck.core.authentication.Authenticator;
 
+import javax.security.auth.Subject;
+
 
 /**
  * SingleUserAuthentication implements {@link Authenticator} and merely supplies a single username/password.
@@ -36,38 +38,24 @@ import com.dtolabs.rundeck.core.authentication.Authenticator;
  */
 public class SingleUserAuthentication implements Authenticator {
     private final String username;
-    private final String password;
+    private final Subject subject;
 
-    /**
-     * Create instance using a username and password
-     * @param username username
-     * @param password password
-     */
-    public SingleUserAuthentication(final String username, final String password) {
+
+    public SingleUserAuthentication(final String username, final Subject subject) {
         this.username = username;
-        this.password=password;
+        this.subject = subject;
     }
-    public final IUserInfo getUserInfoWithoutPrompt() {
+
+    public final IUserInfo getUserInfo() throws UserInfoException {
         return new IUserInfo(){
             public String getUsername() {
                 return username;
             }
 
-            public String getPassword() {
-                return password;
-            }
         };
     }
 
-    public final IUserInfo getNewUserInfo() throws UserInfoException{
-        return getUserInfoWithoutPrompt();
-    }
-
-    public final IUserInfo getPromptUserInfo() throws UserInfoException {
-        return getUserInfoWithoutPrompt();
-    }
-
-    public final IUserInfo getUserInfo() throws UserInfoException {
-        return getUserInfoWithoutPrompt();
+    public Subject getSubject() throws UserInfoException {
+        return subject;
     }
 }

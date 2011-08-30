@@ -1,2 +1,0 @@
-<g:if test="${user && key && g.isUserInRoleTest(role:key) || value}"><g:img file="icon-tiny-ok.png" width="12px" height="12px"/></g:if>
-<g:else><g:img file="icon-tiny-removex-gray.png" width="12px" height="12px"/></g:else>

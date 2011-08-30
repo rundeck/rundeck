@@ -6,7 +6,7 @@ import org.apache.commons.lang.RandomStringUtils
 
 class UserController {
     UserService userService
-    RoleService roleService
+    FrameworkService frameworkService
     def grailsApplication
 
     def index = {
@@ -46,7 +46,8 @@ class UserController {
         render(template:'/common/messages',model:[:])
     }
     def list={
-        if(!roleService.isUserInAnyRoles(request,['admin','user_admin'])){
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        if(!frameworkService.authorizeApplicationResourceType(framework,'user','admin')){
             flash.error="User Admin role required"
             flash.title="Unauthorized"
             return denied()
@@ -60,7 +61,8 @@ class UserController {
         if(!params.login){
             params.login=session.user
         }
-        if(params.login!=session.user && !roleService.isUserInAnyRoles(request,['admin','user_admin'])){
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if(params.login!=session.user && !frameworkService.authorizeApplicationResourceType(framework, 'user', 'admin')){
             flash.error="Unauthorized: admin role required"
             return render(template:"/common/error")
         }
@@ -95,7 +97,9 @@ class UserController {
         return model
     }
     def store={
-        if(params.login!=session.user && !roleService.isUserInAnyRoles(request,['admin','user_admin'])){
+
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if(params.login!=session.user && !frameworkService.authorizeApplicationResourceType(framework, 'user', 'admin')) {
             //require user_admin/admin if modifying a different user profile
             flash.error="Unauthorized: admin role required"
             return render(template:"/common/error")
@@ -119,7 +123,8 @@ class UserController {
     def update={
         //check auth to view profile
         //default to current user profile
-        if(params.login!=session.user && !roleService.isUserInAnyRoles(request,['admin','user_admin'])){
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if(params.login!=session.user && !frameworkService.authorizeApplicationResourceType(framework, 'user', 'admin')) {
             flash.error="Unauthorized: admin role required"
             return render(template:"/common/error")
         }
@@ -158,7 +163,8 @@ class UserController {
         //default to current user profile
         def login = params.login
         def result
-        if(!roleService.isUserInAnyRoles(request, ['admin', 'user_admin'])){
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if (!frameworkService.authorizeApplicationResourceType(framework, 'user', 'admin')) {
             def error = "Unauthorized: admin role required"
             log.error error
             result=[result: false, error: error] 
@@ -215,7 +221,8 @@ class UserController {
         def result
         def user
         def token
-        if (!roleService.isUserInAnyRoles(request, ['admin', 'user_admin'])) {
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if (!frameworkService.authorizeApplicationResourceType(framework, 'user', 'admin')) {
             def error = "Unauthorized: admin role required"
             log.error error
             result = [result: false, error: error]
@@ -248,7 +255,8 @@ class UserController {
     def clearApiToken={
         def login = params.login
         def result
-        if (!roleService.isUserInAnyRoles(request, ['admin', 'user_admin'])) {
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if (!frameworkService.authorizeApplicationResourceType(framework, 'user', 'admin')) {
             def error = "Unauthorized: admin role required"
             log.error error
             result=[result: false, error: error]

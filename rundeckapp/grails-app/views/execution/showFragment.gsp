@@ -31,16 +31,16 @@
                         Now Running&hellip;
                         </span>
                         </span>
-                    <auth:allowed job="${executionResource}" name="${UserAuth.WF_KILL}">
+                    <auth:jobAllowed job="${executionResource}" name="${UserAuth.WF_KILL}">
                         <span id="cancelresult" style="margin-left:10px">
                             <span class="action button textbtn act_cancel" onclick="docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <img src="${resource(dir:'images',file:'icon-tiny-removex.png')}" alt="Kill" width="12px" height="12px"/></span>
                         </span>
-                    </auth:allowed>
+                    </auth:jobAllowed>
 
             </g:else>
 
                     <span id="execRerun" style="${wdgt.styleVisible(if:null!=execution.dateCompleted)}" >
-                        <g:set var="jobRunAuth" value="${ auth.allowedTest(job:executionResource, action:[UserAuth.WF_CREATE,UserAuth.WF_READ])}"/>
+                        <g:set var="jobRunAuth" value="${ auth.jobAllowedTest(job:executionResource, action:[UserAuth.WF_CREATE,UserAuth.WF_READ])}"/>
                         <g:if test="${jobRunAuth }">
                             <g:link controller="scheduledExecution" action="createFromExecution" params="${[executionId:execution.id]}" class="action button" title="${g.message(code:'execution.action.saveAsJob', default:'Save as Job')}&hellip;" ><img src="${resource(dir:'images',file:'icon-small-add.png')}"  alt="run" width="14px" height="14px"/> <g:message code="execution.action.saveAsJob" default="Save as Job" />&hellip;</g:link>
                         </g:if>

@@ -28,9 +28,10 @@
     <%-- evaluate auth for the job on demand --%>
     <g:set var="jobauthorizations" value="${[:]}"/>
     <%
-        [UserAuth.WF_DELETE,UserAuth.WF_RUN,UserAuth.WF_CREATE,UserAuth.WF_READ,UserAuth.WF_UPDATE].each{action->
-            jobauthorizations[action]=auth.allowedTest(job:scheduledExecution,action:action)?[idKey]:[]
+        [UserAuth.WF_DELETE,UserAuth.WF_RUN,UserAuth.WF_READ,UserAuth.WF_UPDATE].each{action->
+            jobauthorizations[action]=auth.jobAllowedTest(job:scheduledExecution,action:action)?[idKey]:[]
         }
+        jobauthorizations[UserAuth.WF_CREATE]=auth.resourceAllowedTest(kind:'job',action: UserAuth.WF_CREATE)
     %>
 </g:if>
 <g:set var="jobAuths" value="${ jobauthorizations }"/>
@@ -42,7 +43,7 @@
                     <span class="icon button floatl" title="Delete ${g.message(code:'domain.ScheduledExecution.title')}" onclick="menus.showRelativeTo(this,'${ukey}jobDisplayDeleteConf${scheduledExecution.id}',-2,-2);return false;"><img src="${resource(dir:'images',file:'icon-small-removex.png')}" alt="delete" width="16px" height="16px"/></span>
                 </g:if>
                 </g:if>
-                <g:if test="${jobAuths[UserAuth.WF_CREATE]?.contains(idKey) }">
+                <g:if test="${jobAuths[UserAuth.WF_CREATE] && jobAuths[UserAuth.WF_READ]?.contains(idKey) }">
                     <g:link controller="scheduledExecution" title="Copy Job" action="copy" id="${scheduledExecution.extid}" class="icon button floatl"><img src="${resource(dir:'images',file:'icon-small-copy.png')}" alt="copy" width="16px" height="16px"/></g:link>
                 </g:if>
                 <g:if test="${!execPage}">

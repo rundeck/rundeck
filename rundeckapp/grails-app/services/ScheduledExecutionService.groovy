@@ -15,6 +15,8 @@ import com.dtolabs.rundeck.core.authentication.Username;
 import com.dtolabs.rundeck.core.authorization.Decision;
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authorization.Attribute
+import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
 
 /**
  *  ScheduledExecutionService manages scheduling jobs with the Quartz scheduler
@@ -328,10 +330,19 @@ class ScheduledExecutionService {
     }
 
     def userAuthorizedForJob(request,ScheduledExecution se, Framework framework){
-        def resource = ["job": se.getJobName(), "group": se.getGroupPath() ?: ""]
-        def environment = Collections.emptySet();
+        def resource = ["job": se.getJobName(), "group": se.getGroupPath() ?: "",type:'job']
+        def environment = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE+"project"),
+            se.project))
         def Decision d = framework.getAuthorizationMgr().evaluate(resource, request.subject,
             UserAuth.WF_READ, environment)
+        return d.isAuthorized()
+    }
+    def userAuthorizedForAdhoc(request,ScheduledExecution se, Framework framework){
+        def resource = [type:'adhoc']
+        def environment = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"),
+            se.project))
+        def Decision d = framework.getAuthorizationMgr().evaluate(resource, request.subject,
+            'adhoc_run', environment)
         return d.isAuthorized()
     }
 
@@ -440,6 +451,53 @@ class ScheduledExecutionService {
             nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
         } catch (Exception exc) {
             throw new RuntimeException("caught exception while adding job: " +exc.getMessage(), exc)
+        }
+        return e.id
+    }
+
+    /**
+     * Schedule a stored job to execute immediately.
+     */
+    def long scheduleTempJob(ScheduledExecution se, String user, Subject subject, Execution e) {
+
+        def jobDetail = createJobDetail(se, "TEMP:" + user + ":" + se.id + ":" + e.id, user + ":run:" + se.id)
+        jobDetail.getJobDataMap().put("userSubject", subject)
+        jobDetail.getJobDataMap().put("executionId", e.id.toString())
+
+        def Trigger trigger = TriggerUtils.makeImmediateTrigger(0, 0)
+        trigger.setName(jobDetail.getName() + "Trigger")
+        def nextTime
+        try {
+            log.info("scheduling immediate job run: " + jobDetail.getName())
+            nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
+        } catch (Exception exc) {
+            throw new RuntimeException("caught exception while adding job: " + exc.getMessage(), exc)
+        }
+        return e.id
+    }
+
+    /**
+     * Schedule a temp job to execute immediately.
+     */
+    def long scheduleTempJob(String user, Subject subject, Map params, Execution e) {
+        def ident = getJobIdent(null, e);
+        def jobDetail = new JobDetail(ident.jobname, ident.groupname, ExecutionJob)
+        jobDetail.setDescription("Execute command: " + e)
+        jobDetail.getJobDataMap().put("isTempExecution", "true")
+        jobDetail.getJobDataMap().put("executionId", e.id.toString())
+        jobDetail.getJobDataMap().put("rdeck.base", frameworkService.getRundeckBase())
+        jobDetail.getJobDataMap().put("userSubject", subject)
+//        jobDetail.addJobListener("sessionBinderListener")
+        jobDetail.addJobListener("defaultGrailsServiceInjectorJobListener")
+
+        def Trigger trigger = TriggerUtils.makeImmediateTrigger(0, 0)
+        trigger.setName(jobDetail.getName() + "Trigger")
+        def nextTime
+        try {
+            log.info("scheduling temp job: " + jobDetail.getName())
+            nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
+        } catch (Exception exc) {
+            throw new RuntimeException("caught exception while adding job: " + exc.getMessage(), exc)
         }
         return e.id
     }

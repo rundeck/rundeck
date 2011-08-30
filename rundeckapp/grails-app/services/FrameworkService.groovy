@@ -7,6 +7,10 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 
 import com.dtolabs.rundeck.core.Constants
+import javax.security.auth.Subject
+import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
+import com.dtolabs.rundeck.core.authentication.Username
+import com.dtolabs.rundeck.core.authentication.Group
 
 /**
  * Interfaces with the core Framework object
@@ -22,6 +26,7 @@ class FrameworkService implements ApplicationContextAware {
 
     def ApplicationContext applicationContext
     def ExecutionService executionService
+    def projects
 
     // implement ApplicationContextAware interface
     def void setApplicationContext(ApplicationContext ac) throws BeansException {
@@ -65,7 +70,12 @@ class FrameworkService implements ApplicationContextAware {
      * Return a list of FrameworkProject objects
      */
     def projects (Framework framework) {
-        return new ArrayList(framework.getFrameworkProjectMgr().listFrameworkProjects())
+        //authorize the list of projects
+        def projs = framework.getFrameworkProjectMgr().listFrameworkProjects()
+        def allowed=projs.findAll { FrameworkProject fp->
+            authorizeApplicationResource(framework,[type:'project',name:fp.getName()],'read')
+        }
+        return new ArrayList(allowed)
     }
 
     def existsFrameworkProject(String project, Framework framework) {
@@ -88,6 +98,75 @@ class FrameworkService implements ApplicationContextAware {
 
         return framework.getAuthorizationMgr().authorizeScript(user,project,script)
     }
+    def authorizeProjectResource(Framework framework, Map resource, String action, String project){
+
+        def Decision decision=framework.getAuthorizationMgr().evaluate(
+            resource,
+            framework.getAuthenticationMgr().subject,
+            action,
+            Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), project)))
+        return decision.isAuthorized()
+    }
+    def authorizeProjectResourceAll(Framework framework, Map resource, Collection actions, String project){
+
+        def decisions=framework.getAuthorizationMgr().evaluate(
+            [resource] as Set,
+            framework.getAuthenticationMgr().subject,
+            actions as Set,
+            Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), project)))
+        return !(decisions.find {!it.authorized})
+    }
+    def authorizeProjectJobAll(Framework framework, ScheduledExecution job, Collection actions, String project){
+
+        def decisions=framework.getAuthorizationMgr().evaluate(
+            [[type:'job',job:job.jobName,group:job.groupPath?:'']] as Set,
+            framework.getAuthenticationMgr().subject,
+            actions as Set,
+            Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), project)))
+        return !(decisions.find {!it.authorized})
+    }
+
+    def authorizeApplicationResource(Framework framework, Map resource, String action) {
+
+        def Decision decision = framework.getAuthorizationMgr().evaluate(
+            resource,
+            framework.getAuthenticationMgr().subject,
+            action,
+            Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
+        return decision.isAuthorized()
+    }
+
+    def authorizeApplicationResourceAll(Framework framework, Map resource, Collection actions) {
+
+
+        def Set decisions = framework.getAuthorizationMgr().evaluate(
+            [resource] as Set,
+            framework.getAuthenticationMgr().subject,
+            actions as Set,
+            Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
+
+        return !(decisions.find {!it.authorized})
+    }
+    def authorizeApplicationResourceType(Framework framework, String resourceType, String action) {
+
+        def Decision decision =framework.getAuthorizationMgr().evaluate(
+            [type: 'resource', kind: resourceType],
+            framework.getAuthenticationMgr().subject,
+            action,
+            Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
+        return decision.isAuthorized()
+    }
+    def authorizeApplicationResourceTypeAll(Framework framework, String resourceType, Collection actions) {
+
+
+        def Set decisions =framework.getAuthorizationMgr().evaluate(
+            [[type: 'resource', kind: resourceType]] as Set,
+            framework.getAuthenticationMgr().subject,
+            actions as Set,
+            Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
+
+        return !(decisions.find {!it.authorized})
+    }
     def getFrameworkFromUserSession( session, request){
         if (!initialized) {
             initialize()
@@ -96,11 +175,11 @@ class FrameworkService implements ApplicationContextAware {
             String rundeckbase=getRundeckBase()
 
             //determine list of possible acl roles
-            List l = BaseAclsAuthorization.listRoles(new File(Constants.getFrameworkConfigDir(rundeckbase)))
+//            List l = BaseAclsAuthorization.listRoles(new File(Constants.getFrameworkConfigDir(rundeckbase)))
             
-            List rolelist = getUserRoleList(request,l)
-            session.roles=rolelist
-            session.Framework = getFrameworkForUserAndRoles(session.user, rolelist, rundeckbase)
+//            List rolelist = getUserRoleList(request,l)
+//            session.roles=rolelist
+            session.Framework = getFrameworkForUserAndSubject(session.user, request.subject, rundeckbase)
         }
         return session.Framework;
     }
@@ -113,8 +192,25 @@ class FrameworkService implements ApplicationContextAware {
     public static Framework getFrameworkForUserAndRoles(String user, List rolelist, String rundeckbase){
         def Framework fw = Framework.getInstance(rundeckbase)
         if(null!=user && null != rolelist){
-            def authen = new SingleUserAuthentication(user,"")
+            //create fake subject
+            Subject subject = new Subject()
+            subject.getPrincipals().add(new Username(user))
+            rolelist.each{ String s->
+                subject.getPrincipals().add(new Group(s))
+            }
+            def authen = new SingleUserAuthentication(user,subject)
             def author = new SingleUserAclsAuthorization(fw,new File(Constants.getFrameworkConfigDir(rundeckbase)), user, rolelist.toArray(new String[0]))
+            fw.setAuthenticationMgr(authen)
+            fw.setAuthorizationMgr(author)
+        }
+        fw.setAllowUserInput(false)
+        return fw
+    }
+    public static Framework getFrameworkForUserAndSubject(String user, Subject subject, String rundeckbase){
+        def Framework fw = Framework.getInstance(rundeckbase)
+        if(null!=user && null!=subject){
+            def authen = new SingleUserAuthentication(user,subject)
+            def author = new UserSubjectAuthorization(fw,new File(Constants.getFrameworkConfigDir(rundeckbase)), user, subject)
             fw.setAuthenticationMgr(authen)
             fw.setAuthorizationMgr(author)
         }

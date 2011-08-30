@@ -7,15 +7,27 @@ import java.util.regex.Matcher
 class ReportsController {
     def reportService
     def userService
-    def frameworkService
+    def FrameworkService frameworkService
     def scheduledExecutionService
 
+    private unauthorized(String action, boolean fragment = false) {
+        if (!fragment) {
+            response.setStatus(403)
+        }
+        flash.title = "Unauthorized"
+        flash.error = "${request.remoteUser} is not authorized to: ${action}"
+        response.setHeader(Constants.X_RUNDECK_ACTION_UNAUTHORIZED_HEADER, flash.error)
+        render(template: fragment ? '/common/errorFragment' : '/common/error', model: [:])
+    }
     def index = { ReportQuery query->
        //find previous executions
         def usedFilter
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-        FrameworkController.autosetSessionProject(session,framework)
 
+        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'event'], ['read'],
+            session.project)) {
+            return unauthorized("Read Events for project ${session.project}")
+        }
         def User u = userService.findOrCreateUser(session.user)
         def filterPref= userService.parseKeyValuePref(u.filterPref)
         if(params.size()<1 && !params.filterName && u && params.formInput!='true' && actionName=='index'){
@@ -91,7 +103,12 @@ class ReportsController {
     def since = { ReportQuery query->
        //find previous executions
         def usedFilter
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
 
+        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'event'], ['read'],
+            session.project)) {
+            return unauthorized("Read Events for project ${session.project}")
+        }
         def User u = userService.findOrCreateUser(session.user)
         
         if(params.filterName){
@@ -183,21 +200,45 @@ class ReportsController {
     }
     def clearFragment={ ReportQuery query ->
         params['Clear']='clear'
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+
+        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'event'], ['read'],
+            session.project)) {
+            return unauthorized("Read Events for project ${session.project}", true)
+        }
         def results = index(query)
         results.params=params
         render(view:'eventsFragment',model:results)
     }
     def eventsFragment={ ReportQuery query ->
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+
+        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'event'], ['read'],
+            session.project)) {
+            return unauthorized("Read Events for project ${session.project}",true)
+        }
         def results = index(query)
         results.params=params
         return results
     }
     def jobsFragment={ ExecQuery query ->
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+
+        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'event'], ['read'],
+            session.project)) {
+            return unauthorized("Read Events for project ${session.project}", true)
+        }
         def results = jobs(query)
         results.params=params
         render(view:'eventsFragment',model:results)
     }
     def timelineFragment={ ReportQuery query ->
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+
+        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'event'], ['read'],
+            session.project)) {
+            return unauthorized("Read Events for project ${session.project}", true)
+        }
         def results = index(query)
         render(view:'eventsFragment',model:results)
     }
@@ -260,7 +301,12 @@ class ReportsController {
    
     def commands = {ExecQuery query ->
         //find previous executions
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
 
+        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'event'], ['read'],
+            session.project)) {
+            return unauthorized("Read Events for project ${session.project}")
+        }
         def options = [:]
         if (params['execRptCustomView']) {
             params.each {String k, v ->
@@ -291,7 +337,12 @@ class ReportsController {
 
     def jobs = {ExecQuery query ->
         //find previous executions
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
 
+        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'event'], ['read'],
+            session.project)) {
+            return unauthorized("Read Events for project ${session.project}")
+        }
         def options = [:]
         if (params['jobRptCustomView']) {
             params.each {String k, v ->
@@ -358,6 +409,11 @@ class ReportsController {
         if(!exists){
             flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
             return chain(controller:'api',action:'error')
+        }
+        if(!frameworkService.authorizeProjectResourceAll(framework,[type:'resource',kind:'event'],['create'],
+            params.project)){
+            flash.error =g.message(code: 'api.error.item.unauthorized', args: ['Create Event','Project',params.project])
+            return chain(controller: 'api', action: 'error')
         }
 
         //required parameters
@@ -460,7 +516,11 @@ class ReportsController {
             flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
             return chain(controller:'api',action:'error')
         }
-
+        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'event'], ['read'],
+            params.project)) {
+            flash.error = g.message(code: 'api.error.item.unauthorized', args: ['Read Events', 'Project',params.project])
+            return chain(controller: 'api', action: 'error')
+        }
         params.projFilter=params.project
         query.projFilter = params.project
 

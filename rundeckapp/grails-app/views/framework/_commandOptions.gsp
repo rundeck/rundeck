@@ -122,5 +122,5 @@ used by _editOptions.gsp template
     <g:if test="${selectedargstring}"><div>Old value: ${selectedargstring}</div></g:if>
 </g:elseif>
 <g:else>
-    <span class="info note">None for this command</span>
+    <span class="info note">None for this job</span>
 </g:else>

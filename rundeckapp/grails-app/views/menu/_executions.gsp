@@ -113,7 +113,7 @@
                                         </g:else>
                                     <!--</td>-->
                                     <span id="cancelcol-${execution.id}" colspan="2">
-                                        <auth:allowed job="${scheduledExecution?scheduledExecution:[jobName:'adhoc',groupPath:'adhoc']}" name="${UserAuth.WF_KILL}">
+                                        <auth:jobAllowed job="${scheduledExecution?scheduledExecution:[jobName:'adhoc',groupPath:'adhoc']}" name="${UserAuth.WF_KILL}">
                                         <span  class="action button small textbtn" id="cancellink-${execution.id}" onclick="['cancelconf-${execution.id}','cancellink-${execution.id}'].each(Element.toggle)">Kill <g:if test="${!small}"><g:message code="domain.ScheduledExecution.title"/> Now</g:if> <img src="${resource(dir:'images',file:'icon-tiny-removex.png')}" alt="" width="12px" height="12px"/></span>
                                         <span id="cancelconf-${execution.id}" style="display:none" class="confirmMessage">
                                             Really kill this job?
@@ -121,7 +121,7 @@
                                             <span  class="action button small textbtn" onclick="['cancelconf-${execution.id}','cancellink-${execution.id}'].each(Element.toggle);">No</span>
                                             <span  class="action button small textbtn" onclick="canceljob('${execution.id}','cancelcol-${execution.id}');">Yes</span>
                                         </span>
-                                        </auth:allowed>
+                                        </auth:jobAllowed>
                                     </span>
                                 </g:else>
                                 </td>

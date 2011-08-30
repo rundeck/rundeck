@@ -612,7 +612,7 @@
     <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
 </g:if>
 <div id="nodesContent">
-    <g:set var="run_authorized" value="${auth.allowedTest(job:[jobName:'adhoc_run', groupPath:'ui'], action:UserAuth.WF_RUN)}"/>
+    <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:'adhoc_run')}"/>
     <g:set var="run_enabled" value="${run_authorized && total>0}"/>
 
     <g:if test="${session.project }">
@@ -708,11 +708,14 @@
             </g:if>
             <td style="text-align:left;vertical-align:top;" id="${rkey}nodescontent">
 
-                <g:ifUserInAnyRoles roles="admin,nodes_admin">
+
+                <g:set var="adminauth"
+                       value="${auth.resourceAllowedTest(kind:'node',action:['refresh'])}"/>
+                <g:if test="${adminauth}">
                     <g:if test="${selectedProject && selectedProject.shouldUpdateNodesResourceFile()}">
                         <span class="floatr"><g:link action="reloadNodes" params="${[project:selectedProject.name]}" class="action button" title="Click to update the resources.xml file from the source URL, for project ${selectedProject.name}" onclick="\$(this.parentNode).loading();">Update Nodes for project ${selectedProject.name}</g:link></span>
                     </g:if>
-                </g:ifUserInAnyRoles>
+                </g:if>
                 <g:if test="${!params.nofilters}">
                 <div style="margin: 10px 0 5px 0;" id="${rkey}nodesfilterholder" >
                     %{--<g:if test="${wasfiltered}">--}%

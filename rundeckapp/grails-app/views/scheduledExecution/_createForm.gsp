@@ -26,21 +26,24 @@
             </g:javascript>
             <div id="schedCreateButtons">
                 <g:actionSubmit id="createFormCancelButton" value="Cancel" onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"/>
-                <g:if test="${auth.allowedTest(job:[jobName:'create', groupPath:'ui'], action:[UserAuth.WF_CREATE])}">
+                <g:if test="${auth.resourceAllowedTest( kind:'job',action:[UserAuth.WF_CREATE])}">
                     <g:actionSubmit action="save" value="Create"  class="cformAllowSave cformAllowSaveOnly"
                         style="${wdgt.styleVisible(if:scheduledExecution.scheduled || wasSaved)}"/>
                 </g:if>
 
-                <g:if test="${auth.allowedTest(job:[jobName:'create', groupPath:'ui'], action:[UserAuth.WF_RUN,UserAuth.WF_CREATE])}">
+                <g:if test="${auth.resourceAllowedTest( kind:'job', action:[UserAuth.WF_RUN,UserAuth.WF_CREATE])}">
                     <g:actionSubmit action="saveAndExec" value="Create And Run"  class="cformAllowSave cformAllowRun"
                         style="${ wdgt.styleVisible(unless:scheduledExecution.scheduled || !wasSaved) }"/>
                 </g:if>
-                <g:if test="${auth.allowedTest(job:[jobName:'adhoc_run', groupPath:'ui'], action:UserAuth.WF_RUN)}">
+                <g:if test="${auth.adhocAllowedTest(action:'adhoc_run')}">
                     <g:actionSubmit action="execAndForget" value="Run And Forget"  class="cformAllowRunAndForget cformAllowRun"
                         style="${ wdgt.styleVisible(if:!scheduledExecution.scheduled && !wasSaved) }" />
                 </g:if>
-                <g:if test="${auth.allowedTest(has:false, job:[jobName:'run_and_forget', groupPath:'ui'], action:UserAuth.WF_RUN)}">
+                <g:if test="${auth.resourceAllowedTest( has:false, kind:'job', action:[UserAuth.WF_RUN])}">
                     <span class="error message cformAllowRunAndForget cformAllowRun">Not authorized to Run Jobs</span>
+                </g:if>
+                <g:if test="${auth.resourceAllowedTest( has:false, kind:'job', action:[UserAuth.WF_CREATE])}">
+                    <span class="error message cformAllowRunAndForget cformAllowRun">Not authorized to Save Jobs</span>
                 </g:if>
             </div>
             <div id="schedCreateSpinner" class="spinner block" style="display:none;">

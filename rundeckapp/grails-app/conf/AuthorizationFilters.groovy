@@ -2,7 +2,8 @@ import javax.security.auth.Subject;
 
 import com.dtolabs.rundeck.core.authentication.Group;
 import com.dtolabs.rundeck.core.authentication.Username
-import com.dtolabs.client.utils.Constants;
+import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.core.common.Framework;
 
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
@@ -30,155 +31,13 @@ import com.dtolabs.client.utils.Constants;
 
 public class AuthorizationFilters {
     def userService
-    def roleService
-
-    /*
-        Define static authorization lists to use with authSet definitions
-     */
-    /* Workflow authorization requirement definitions */
-    private static _wf_create = UserAuth.WF_CREATE
-    private static _wf_read = UserAuth.WF_READ
-    private static _wf_update = UserAuth.WF_UPDATE
-    private static _wf_delete = UserAuth.WF_DELETE
-    private static _wf_run = UserAuth.WF_RUN
-    private static _wf_kill = UserAuth.WF_KILL
-    private static _wf_read_update = [UserAuth.WF_READ, UserAuth.WF_UPDATE]
-    private static _wf_create_update = [UserAuth.WF_CREATE, UserAuth.WF_UPDATE]
-    private static _wf_create_run = [UserAuth.WF_CREATE, UserAuth.WF_RUN]
-
-    /* Events authorization requirement definitions */
-    private static _ev_create = UserAuth.EV_CREATE
-    private static _ev_read = UserAuth.EV_READ
-    private static _ev_update = UserAuth.EV_UPDATE
-    private static _ev_delete = UserAuth.EV_DELETE
-
-    /* Resource authorization requirement definitions */
-    private static _rs_create = UserAuth.RS_CREATE
-    private static _rs_delete = UserAuth.RS_DELETE
-    private static _rs_read = UserAuth.RS_READ
-    private static _rs_update = UserAuth.RS_UPDATE
-
-    /**
-     * Authorization definitions.  This is a map of controller->[action->[required authorization list]]
-     * if the user does not have all of authorization flags defined in the list, then the action is denied
-     */
-    def authSet = [
-        /*
-            Workflow authorization actions for ScheduledExecutionController and ExecutionController
-         */
-        'scheduledExecution': [
-            //create
-            'create': _wf_create,
-            'createFromExecution': [_wf_create,_wf_read],
-            'copy': _wf_create,
-            'save': _wf_create,
-            '_dosave': _wf_create,
-            //read
-            'show': _wf_read,
-            'apiJobExport': _wf_read,
-            //update
-            'update': _wf_update,
-            '_doupdate': _wf_update,
-            'edit': _wf_read_update,
-            'renderEditFragment': _wf_read_update,
-            //delete
-            'delete': _wf_delete,
-            'deleteBulk': _wf_delete,
-            'apiJobDelete': _wf_delete,
-
-            //run
-            'execute': _wf_run,
-            'executeInline': _wf_run,
-            'runJobNow': _wf_run,
-            'executeNow': _wf_run,
-            'apiJobRun': _wf_run,
-            'apiRunCommand': _wf_run,
-            'apiRunScript': _wf_run,
-
-            //combinations//
-            //create+update
-            'upload': _wf_create_update,
-            'apiJobsImport': _wf_create_update,
-
-            //create+run//
-            'uploadAndExec': _wf_create_run,
-            'saveAndExec': _wf_create_run,
-            'execAndForget': _wf_create_run,
-        ],
-        'execution': [
-            //read
-            'follow': _wf_read,
-            'show': _wf_read,
-            'apiExecution': _wf_read,
-            'downloadOutput': _wf_read,
-            'tailExecutionOutput': _wf_read,
-
-            //kill
-            'cancelExecution': _wf_kill,
-            'apiExecutionAbort': _wf_kill,
-        ],
-
-        /*
-            MenuController authorizations
-         */
-        'menu': [
-            //read
-            'workflows': _wf_read,
-            'workflowsFragment': _wf_read,
-            'jobs': _wf_read,
-            'jobsFragment': _wf_read,
-            'nowrunning': _wf_read,
-            'nowrunningFragment': _wf_read,
-            'nowrunningData': _wf_read,
-            'apiExecutionsRunning': _wf_read,
-            'queueFragment': _wf_read,
-            'apiJobsList': _wf_read,
-            'apiJobsExport': _wf_read,
-        ],
-        /*
-            ReportsController authorizations
-         */
-        'reports': [
-            //read
-            'index': _ev_read,
-            'eventsFragment': _ev_read,
-            'timelineFragment': _ev_read,
-            'commands': _ev_read,
-            'jobs': _ev_read,
-            'query': _ev_read,
-            'apiHistory': _ev_read,
-        ],
-        /*
-            FrameworkController authorizations
-         */
-        'framework': [
-            //read
-//            '*': _rs_read,
-            'nodes': _rs_read,
-            'nodesData': _rs_read,
-            'nodesFragment': _rs_read,
-            'listFrameworkResourceInstances': _rs_read,
-            'apiProjects': _rs_read,
-            'apiProject': _rs_read,
-            'apiResource': _rs_read,
-            'apiResources': _rs_read,
-            'apiProjectResources': [_rs_read, _rs_create, _rs_update],
-            'apiProjectResourcesRefresh': [_rs_read, _rs_create, _rs_update],
-        ],
-        /*
-            ReportsController authorizations
-         */
-        'feed': [
-            //read
-//            '*': _ev_read,
-        ],
-    ]
+    def FrameworkService frameworkService
 
     def filters = {
         /**
          * Set the session.user to logged in user only when not performing user login/logout 
          */
-        loginCheck(controller: 'user', action: '(logout|login|error|denied|deniedFragment)', invert: true) {
+        loginCheck(controller: 'user', action: '(logout|login|error)', invert: true) {
             before = {
                 if (request.remoteUser) {
                     session.user = request.remoteUser
@@ -191,12 +50,6 @@ public class AuthorizationFilters {
                     }
                     
                     request.subject = subject
-
-                    //check user role membership for verification
-                    def foundroles=roleService.listMappedRoleMembership(request)
-                    if(!foundroles){
-                        log.warn("User ${session.user} has no role membership in mapped roles");
-                    }
                 }else if (request.api_version) {
                     //allow authentication token to be used 
                     def authtoken = params.authtoken? params.authtoken : request.getHeader('X-RunDeck-Auth-Token')
@@ -236,29 +89,8 @@ public class AuthorizationFilters {
          */
         authorizationCheck(controller: '*', action: '*') {
             before = {
-                def authc = authSet[controllerName]
-                def authReq
-                if (authc) {
-                    authReq = authc[actionName]
-                }
-                if (!authReq && authc) {
-                    //look for controller/* auth requirement
-                    authReq = authc['*']
-                }
-                def roletest
-                if (authReq) {
-                    if (authReq instanceof String) {
-                        authReq = [authReq]
-                    }
-                    //get user authorizations
-                    def User user
-                    if(session && session.user){
-                        def admintest = roleService.isUserInRole(request, 'admin') || request.subject?.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class)?.find{it.name=='admin'}
-                        roletest = admintest || roleService.isUserInAllRoles(request, authReq)
-                    }
-                }
-
-                if (request.invalidApiAuthentication || (authReq && !roletest)) {
+               
+                if (request.invalidApiAuthentication ) {
                     response.setStatus(403)
                     def authid = session.user ?: "(${request.invalidAuthToken ?: 'unauthenticated'})"
                     log.error("${authid} UNAUTHORIZED for ${controllerName}/${actionName}");

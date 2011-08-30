@@ -1,6 +1,6 @@
 import com.dtolabs.rundeck.core.common.Framework
 import java.text.SimpleDateFormat
-import grails.converters.JSON
+
 import com.dtolabs.client.utils.Constants
 
 
@@ -105,16 +105,22 @@ class ExecutionController {
                 }
             }
         }
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         def ScheduledExecution se = e.scheduledExecution
+        def abortresult=executionService.abortExecution(se, e, session.user, framework)
 
-        def abortresult=executionService.abortExecution(se,e,session.user)
 
         def didcancel=abortresult.abortstate in [ABORT_ABORTED,ABORT_PENDING]
+
+        def reasonstr=abortresult.failedreason
         withFormat{
             json{
                 render(contentType:"text/json"){
                     delegate.cancelled(didcancel)
                     delegate.status(abortresult.statusStr?abortresult.statusStr:(didcancel?'killed':'failed'))
+                    if(reasonstr){
+                        delegate.'reason'(reasonstr)
+                    }
                 }
             }
             xml {
@@ -628,14 +634,18 @@ class ExecutionController {
             return chain(controller: 'api', action: 'renderError')
         }
         def ScheduledExecution se = e.scheduledExecution
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        def abortresult=executionService.abortExecution(se, e, session.user, framework)
 
-        def abortresult=executionService.abortExecution(se,e,session.user)
-
+        def reportstate=[status: abortresult.abortstate]
+        if(abortresult.failedreason){
+            reportstate.reason= abortresult.failedreason
+        }
         return new ApiController().success{ delegate->
             delegate.'success'{
                 message("Execution status: ${abortresult.statusStr?abortresult.statusStr:abortresult.jobstate}")
             }
-            delegate.'abort'(status:abortresult.abortstate){
+            delegate.'abort'(reportstate){
                 execution(id:params.id, status: abortresult.jobstate)
             }
 

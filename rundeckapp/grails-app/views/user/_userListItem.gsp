@@ -35,11 +35,13 @@
                 &lt;${user.email}&gt;
             </g:if>
         </span>
-        <g:ifUserInAnyRoles roles="admin,user_admin">
+
+        <g:set var="adminauth" value="${auth.resourceAllowedTest(kind:'user',action:['admin'],context:'application')}"/>
+        <g:if test="${adminauth}">
         <span class="useredit">
             <g:link action="edit" params="[login:user.login]"><g:img file="icon-tiny-edit.png" width="12px" height="12px"/></g:link>
         </span>
-        </g:ifUserInAnyRoles>
+        </g:if>
     </td>
 </tr>
 <tr class="${index!=null && (index%2)==1?'alternateRow':''}" id="udetail_${user.login}" style="display:none">

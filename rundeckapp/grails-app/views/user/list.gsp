@@ -11,10 +11,11 @@ e<html>
     <div class="floatl">
         <span class="welcomeMessage">Users</span>
 
+        <g:if test="${auth.resourceAllowedTest(kind:'user',action:['admin'],context:'application')}">
         <span class="buttons">
             <g:link action="create" class="button textaction">New Profile &hellip;</g:link>
         </span>
-
+        </g:if>
     </div>
     <div class="clear"></div>
 </div>

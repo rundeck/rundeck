@@ -15,7 +15,7 @@
 </div>
 
 <g:if test="${!scheduledExecution.adhocExecution }">
-<span class="prompt">Command Options:</span>
+<span class="prompt">Job Options:</span>
 <div class="presentation">
     <g:hasErrors bean="${scheduledExecution}" field="argString">
         <div class="fieldError">

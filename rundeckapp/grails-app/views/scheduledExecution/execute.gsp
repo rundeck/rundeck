@@ -12,7 +12,7 @@
   <body>
 
 <div class="pageBody solo frame">
-    <tmpl:execOptionsForm model="[scheduledExecution:scheduledExecution,crontab:crontab]"/>
+    <tmpl:execOptionsForm model="[scheduledExecution:scheduledExecution,crontab:crontab,authorized:authorized]"/>
 </div>
   </body>
 </html>

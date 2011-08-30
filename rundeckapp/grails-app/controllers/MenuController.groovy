@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschNodeExecutor
+import com.dtolabs.rundeck.core.authorization.Attribute
 
 class MenuController {
     FrameworkService frameworkService
@@ -15,7 +16,6 @@ class MenuController {
     UserService userService
     ScheduledExecutionService scheduledExecutionService
     MenuService menuService
-    RoleService roleService
     def quartzScheduler
     def list = {
         def results = index(params)
@@ -147,7 +147,6 @@ class MenuController {
     def jobsFragment = {ScheduledExecutionQuery query ->
         long start=System.currentTimeMillis()
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-        FrameworkController.autosetSessionProject(session,framework)
         def usedFilter=null
         
         if(params.filterName){
@@ -243,17 +242,19 @@ class MenuController {
                 jobnames[sched.generateFullName()]=[]
             }
             jobnames[sched.generateFullName()]<<sched.id.toString()
-            res.add(["job": sched.jobName, "group": sched.groupPath?:''])
+            res.add(["job": sched.jobName, "group": sched.groupPath?:'',type:'job'])
         }
         // Filter the groups by what the user is authorized to see.
 
         def authorization = frameworkService.getFrameworkFromUserSession(request.session, request).getAuthorizationMgr()
-        def decisions = authorization.evaluate(res, request.subject, new HashSet([UserAuth.WF_CREATE,UserAuth.WF_READ,UserAuth.WF_DELETE,UserAuth.WF_RUN,UserAuth.WF_UPDATE,UserAuth.WF_KILL]), Collections.emptySet())
-//        def decisions = authorization.evaluate(res, request.subject, new HashSet([UserAuth.WF_READ]), Collections.emptySet())
+        def env = Collections.singleton(new Attribute(URI.create("http://dtolabs.com/rundeck/env/project"), session.project))
+        def decisions = authorization.evaluate(res, request.subject, new HashSet([UserAuth.WF_READ,UserAuth.WF_DELETE,UserAuth.WF_RUN,UserAuth.WF_UPDATE,UserAuth.WF_KILL]), env)
         log.debug("listWorkflows(evaluate): "+(System.currentTimeMillis()-preeval));
 
         long viewable=System.currentTimeMillis()
 
+        def authCreate = frameworkService.authorizeProjectResource(framework, [type: 'resource', kind: 'job'], UserAuth.WF_CREATE, session.project)
+        
 
         def Map jobauthorizations=[:]
 
@@ -264,6 +265,7 @@ class MenuController {
             }.flatten())
         }
 
+        jobauthorizations[UserAuth.WF_CREATE]=authCreate
         def authorizemap=[:]
         def pviewmap=[:]
         def newschedlist=[]
@@ -275,7 +277,7 @@ class MenuController {
         def jobgroups=[:]
         schedlist.each{ ScheduledExecution se->
             authorizemap[se.id.toString()]=jobauthorizations[UserAuth.WF_READ]?.contains(se.id.toString())
-            if(authorizemap[se.id.toString()] || roleService.isUserInAnyRoles(request,['admin','job_view_unauthorized'])){
+            if(authorizemap[se.id.toString()]){
                 newschedlist<<se
                 if(!jobgroups[se.groupPath?:'']){
                     jobgroups[se.groupPath?:'']=[se]
@@ -397,14 +399,14 @@ class MenuController {
     }
 
     def admin={
-
-        if (!roleService.isUserInAnyRoles(request, ['admin', 'user_admin'])) {
-            flash.error = "User Admin role required"
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if (!frameworkService.authorizeApplicationResourceAll(framework,[type:'project',name:session.project],['admin','read'])) {
+            flash.error = "User ${session.user} unauthorized for: Project Admin"
             flash.title = "Unauthorized"
             response.setStatus(403)
             render(template: '/common/error', model: [:])
         }else if (session.project){
-            Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+
             def project=session.project
             def fproject = frameworkService.getFrameworkProject(project, framework)
             def configs = fproject.listResourceModelConfigurations()
@@ -459,7 +461,8 @@ class MenuController {
     }
 
     def systemInfo = {
-        if (!roleService.isUserInAnyRoles(request, ['admin', 'user_admin'])) {
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        if (!frameworkService.authorizeApplicationResource(framework,[type:'resource',kind:'system'],'read')) {
             flash.error = "User Admin role required"
             flash.title = "Unauthorized"
             response.setStatus(403)

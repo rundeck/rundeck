@@ -23,12 +23,12 @@ import com.dtolabs.rundeck.core.execution.service.FileCopierService
 
 import org.codehaus.groovy.grails.web.servlet.mvc.GrailsParameterMap
 import com.dtolabs.rundeck.core.common.ProviderService
+import com.dtolabs.client.utils.Constants
 
 class FrameworkController  {
     FrameworkService frameworkService
     ExecutionService executionService
     UserService userService
-    RoleService roleService
     // the delete, save and update actions only
     // accept POST requests
     def static allowedMethods = [
@@ -40,6 +40,15 @@ class FrameworkController  {
         redirect(action:"nodes")        
     }
 
+    private unauthorized(String action, boolean fragment = false) {
+        if (!fragment) {
+            response.setStatus(403)
+        }
+        request.title = "Unauthorized"
+        request.error = "${request.remoteUser} is not authorized to: ${action}"
+        response.setHeader(Constants.X_RUNDECK_ACTION_UNAUTHORIZED_HEADER, request.error)
+        render(template: fragment ? '/common/errorFragment' : '/common/error', model: [:])
+    }
     /**
      * This action returns a json object informing about whether the user is authorized
      * to run scripts in the current project context.
@@ -59,7 +68,7 @@ class FrameworkController  {
     }
 
     /**
-     * Nodes action lists nodes in resources view, also called by nodesFragment and nodesData to
+     * Nodes action lists nodes in resources view, also called by nodesFragment to
      * render a set of nodes via ajax
      */
     def nodes = { ExtNodeFilters query->
@@ -99,7 +108,6 @@ class FrameworkController  {
                 query.nodeIncludeName = framework.getFrameworkNodeName()
             }
         }
-        FrameworkController.autosetSessionProject(session,framework)
         if(query && !query.project && session.project){
             query.project=session.project
         }
@@ -109,6 +117,9 @@ class FrameworkController  {
                 params:params,
                 total:0,
                 query:query]
+        }
+        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'node'], ['read'], query.project)) {
+            return unauthorized("Read Nodes for project ${query.project}")
         }
         def allnodes = [:]
         def totalexecs = [:]
@@ -264,22 +275,16 @@ class FrameworkController  {
      * nodesFragment renders a set of nodes in HTML snippet, for ajax
      */
     def nodesFragment = {ExtNodeFilters query->
+
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'node'], ['read'], query.project)) {
+            return unauthorized("Read Nodes for project ${query.project}",true)
+        }
         def result = nodes(query)
         if(!result.nodesvalid){
             request.error="Error parsing file \"${result.nodesfile}\": "+result.nodeserror? result.nodeserror*.message.join("\n"):'no message'
         }
         render(template:"allnodes",model: result)
-    }
-    /**
-     * Render JSON data for queried nodes
-     */
-    def nodesData = {ExtNodeFilters query->
-        def result = nodes(query)
-        if(params.project){
-            render result.allnodes[params.project].nodeSet.nodes as JSON
-        }else{
-            render result.allnodes as JSON
-        }
     }
 
     /**
@@ -306,30 +311,30 @@ class FrameworkController  {
      */
     def performNodeReload = {String url=null->
         if(params.project){
-            if(roleService.isUserInAnyRoles(request,['admin','nodes_admin'])){
-                Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-                def project=framework.getFrameworkProjectMgr().getFrameworkProject(params.project)
-               //if reload parameter is specified, and user is admin, reload from source URL
-                try {
-                    if(url){
-                        if(!(url==~ /(?i)^(https?|file):\/\/.*$/)){
-                            log.error("Error updating node resources file for project ${project.name}: invalid URL: " + url)
-                            flash.error = "Error updating node resources file for project ${project.name}: invalid URL: " + url
-                            return false
-                        }
-                        project.updateNodesResourceFileFromUrl(url, null, null)
-                        return true
-                    }else{
-                        return project.updateNodesResourceFile()
-                    }
-                } catch (Exception e) {
-                    log.error("Error updating node resources file for project ${project.name}: "+e.message)
-                    flash.error="Error updating node resources file for project ${project.name}: "+e.message
-                }
-            }else{
-                def msg= "user: ${session.user} UNAUTHORIZED for performNodeReload"
+            Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+            if(!frameworkService.authorizeProjectResource(framework,[type:'resource',kind:'node'],'refresh',params.project)){
+                def msg = "user: ${session.user} UNAUTHORIZED for performNodeReload"
                 log.error(msg)
                 flash.error = msg
+                return false
+            }
+            def project=framework.getFrameworkProjectMgr().getFrameworkProject(params.project)
+           //if reload parameter is specified, and user is admin, reload from source URL
+            try {
+                if(url){
+                    if(!(url==~ /(?i)^(https?|file):\/\/.*$/)){
+                        log.error("Error updating node resources file for project ${project.name}: invalid URL: " + url)
+                        flash.error = "Error updating node resources file for project ${project.name}: invalid URL: " + url
+                        return false
+                    }
+                    project.updateNodesResourceFileFromUrl(url, null, null)
+                    return true
+                }else{
+                    return project.updateNodesResourceFile()
+                }
+            } catch (Exception e) {
+                log.error("Error updating node resources file for project ${project.name}: "+e.message)
+                flash.error="Error updating node resources file for project ${project.name}: "+e.message
             }
         }
         return false
@@ -400,6 +405,9 @@ class FrameworkController  {
         def prefixKey= 'plugin'
         def project=params.project
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        if(!frameworkService.authorizeApplicationResourceTypeAll(framework,'project',['create'])){
+            return unauthorized("Create a Project")
+        }
         def errors=[]
         def configs
         final defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
@@ -573,6 +581,9 @@ class FrameworkController  {
             //cancel modification
             return redirect(controller: 'menu', action: 'admin')
         }
+        if (!frameworkService.authorizeApplicationResourceAll(framework, [type:'project',name:project], ['admin'])) {
+            return unauthorized("Update Project ${project}")
+        }
         def fproject = frameworkService.getFrameworkProject(project, framework)
 
         def resourcesUrl = fproject.hasProperty(FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY) ? fproject.getProperty(FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY) : null
@@ -708,6 +719,9 @@ class FrameworkController  {
         if(!project){
             flash.error="Project parameter is required"
             return render(template: "/common/error")
+        }
+        if (!frameworkService.authorizeApplicationResourceAll(framework, [type: 'project', name: project], ['admin'])) {
+            return unauthorized("Update Project ${project}")
         }
         def fproject = frameworkService.getFrameworkProject(project,framework)
         def configs = fproject.listResourceModelConfigurations()
@@ -937,8 +951,7 @@ class FrameworkController  {
         render params.project
     }
 
-    static autosetSessionProject( session, Framework framework) {
-        def projects=new ArrayList(framework.getFrameworkProjectMgr().listFrameworkProjects())
+    static autosetSessionProject(session, final ArrayList projects) {
         if(null==session.project && 1==projects.size()){
             session.project=projects[0].name
         }else if(0==projects.size()){
@@ -1002,6 +1015,10 @@ class FrameworkController  {
         if (!exists) {
             flash.error = g.message(code: 'api.error.item.doesnotexist', args: ['project', params.project])
             return new ApiController().error()
+        }
+        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'node'], ['create','update'], params.project)) {
+            flash.error = g.message(code: 'api.error.item.unauthorized', args: ['Update Nodes', 'Project', params.project])
+            return chain(controller: 'api', action: 'error')
         }
         final FrameworkProject project = frameworkService.getFrameworkProject(params.project, framework)
 
@@ -1135,6 +1152,10 @@ class FrameworkController  {
             flash.error=g.message(code:'api.error.parameter.required',args:['project'])
             return chain(controller:'api',action:'error')
         }
+        if (!frameworkService.authorizeApplicationResourceAll(framework, [type:'project',name:params.project], ['read'])) {
+            flash.error = g.message(code: 'api.error.item.unauthorized', args: ['Read','Project',params.project])
+            return chain(controller: 'api', action: 'error')
+        }
         def exists=frameworkService.existsFrameworkProject(params.project,framework)
         if(!exists){
             flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
@@ -1165,6 +1186,10 @@ class FrameworkController  {
         if(!exists){
             flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
             return chain(controller:'api',action:'error')
+        }
+        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'node'], ['read'], params.project)) {
+            flash.error = g.message(code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project])
+            return chain(controller: 'api', action: 'error')
         }
 
         NodeSet nset = new NodeSet()
@@ -1199,6 +1224,10 @@ class FrameworkController  {
         if(!exists){
             flash.error=g.message(code:'api.error.item.doesnotexist',args:['project',params.project])
             return chain(controller:'api',action:'error')
+        }
+        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'node'], ['read'], params.project)) {
+            flash.error = g.message(code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project])
+            return chain(controller: 'api', action: 'error')
         }
         if (params.format && !(params.format in ['xml','yaml']) || request.format && !(request.format in ['html','xml','yaml'])) {
             //expected another content type

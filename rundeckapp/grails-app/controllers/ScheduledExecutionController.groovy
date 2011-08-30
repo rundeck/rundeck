@@ -23,6 +23,8 @@ import org.apache.log4j.MDC
 import org.apache.commons.httpclient.auth.AuthScope
 import org.apache.commons.httpclient.UsernamePasswordCredentials
 
+import javax.security.auth.Subject
+
 class ScheduledExecutionController  {
     def Scheduler quartzScheduler
     def ExecutionService executionService
@@ -157,6 +159,9 @@ class ScheduledExecutionController  {
             flash.error="No Job found for id: " + params.id
             response.setStatus (404)
             return error.call()
+        }
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_READ], session.project)) {
+            return unauthorized("Read Job ${params.id}")
         }
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         def User user = User.findByLogin(session.user)
@@ -558,8 +563,13 @@ class ScheduledExecutionController  {
     */
     def delete = {
         log.info("ScheduledExecutionController: delete : params: " + params)
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if(scheduledExecution) {
+            if(!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_DELETE],
+                scheduledExecution.project)){
+                return unauthorized("Delete Job: ${params.id}")
+            }
             def changeinfo=[user:session.user,method:'delete',change:'delete']
             def jobname = scheduledExecution.generateJobScheduledName()
             def groupname = scheduledExecution.generateJobGroupName()
@@ -597,6 +607,7 @@ class ScheduledExecutionController  {
             flash.error = "idlist parameter is required"
             return error.call()
         }
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         def ids=params.idlist.split(",")
         def errs=[]
         ids.each{
@@ -617,10 +628,16 @@ class ScheduledExecutionController  {
             def groupname = scheduledExecution.generateJobGroupName()
             def jobtitle=scheduledExecution.jobName
             if(params.deleteAffirm){
-                scheduledExecution.delete()
-                scheduledExecutionService.deleteJob(jobname,groupname)
+                if(frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_DELETE], scheduledExecution.project)){
+                    scheduledExecution.delete()
+                    scheduledExecutionService.deleteJob(jobname, groupname)
+                    msgs << "Job '${jobtitle}' was successfully deleted."
+                }else{
+
+                    msgs << "Unauthorized to delete Job: ${scheduledExecution.id}"
+                }
+
             }
-            msgs << "Job '${jobtitle}' was successfully deleted."
         }
         flash.message="Deleted ${list.size()} Jobs: [${params.idlist}]"
         flash.messages=msgs
@@ -636,6 +653,10 @@ class ScheduledExecutionController  {
         if(!scheduledExecution) {
             flash.message = "ScheduledExecution not found with id ${params.id}"
             return redirect(action:index, params:params)
+        }
+
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_UPDATE, UserAuth.WF_READ], session.project)) {
+            return unauthorized("Update Job ${params.id}")
         }
         //clear session workflow
         if(session.editWF ){
@@ -653,10 +674,6 @@ class ScheduledExecutionController  {
         return [ scheduledExecution:scheduledExecution, crontab:crontab,params:params,
             nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
             authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework), projects: frameworkService.projects(framework)]
-    }
-
-    def renderEditFragment = {
-        render(template:'editForm', model:edit(params))
     }
 
     static Logger jobChangeLogger = Logger.getLogger("com.dtolabs.rundeck.data.jobs.changes")
@@ -699,15 +716,22 @@ class ScheduledExecutionController  {
     def update = {
         def changeinfo=[method:'update',change:'modify',user:session.user]
         def result = _doupdate(params,changeinfo)
-        def scheduledExecution=result[1]
-        def success = result[0]
+        def scheduledExecution=result.scheduledExecution
+        def success = result.success
         if(!scheduledExecution){
             flash.message = "ScheduledExecution not found with id ${params.id}"
             log.info("update: there was no object by id: " +params.id+". redirecting to edit.")
             redirect(controller:'menu',action:'jobs')
+        }else if(result.unauthorized){
+            return unauthorized(result.message)
         }else if (!success){
-            log.debug scheduledExecution.errors.allErrors.collect {g.message(error: it)}.join(", ")
-            request.message="Error updating scheduled command "
+            if(scheduledExecution.errors){
+                log.debug scheduledExecution.errors.allErrors.collect {g.message(error: it)}.join(", ")
+            }
+            flash.message="Error updating scheduled command "
+            if(result.message >2){
+                flash.message= flash.message+": "+result.message
+            }
             log.debug("update operation failed. redirecting to edit ...")
 
             if(!scheduledExecution.isAttached()) {
@@ -748,9 +772,13 @@ class ScheduledExecutionController  {
         boolean failed=false
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
 
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_UPDATE], session.project)) {
+            return [success:false,scheduledExecution:scheduledExecution,message:"Update Job ${scheduledExecution.extid}",unauthorized:true]
+        }
+
         def crontab = [:]
         if(!scheduledExecution) {
-            return [false,null]
+            return [success:false]
         }
         def oldjobname = scheduledExecution.generateJobScheduledName()
         def oldjobgroup = scheduledExecution.generateJobGroupName()
@@ -1059,13 +1087,13 @@ class ScheduledExecutionController  {
             session.editWF?.remove(scheduledExecution.id.toString())
             session.undoWF?.remove(scheduledExecution.id.toString())
             session.redoWF?.remove(scheduledExecution.id.toString())
-            return [true,scheduledExecution]
+            return [success:true,scheduledExecution:scheduledExecution]
         } else {
             todiscard.each{
                 it.discard()
             }
             scheduledExecution.discard()
-            return [false, scheduledExecution]
+            return [success:false, scheduledExecution: scheduledExecution]
         }
 
     }
@@ -1301,6 +1329,10 @@ class ScheduledExecutionController  {
 
     def copy = {
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        //authorize
+        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'job'], [UserAuth.WF_CREATE], session.project)) {
+            return unauthorized("Create a Job")
+        }
         def user = (session?.user) ? session.user : "anonymous"
         def rolelist = (session?.roles) ? session.roles : []
         log.info("ScheduledExecutionController: create : params: " + params)
@@ -1311,6 +1343,9 @@ class ScheduledExecutionController  {
             log.info("update: there was no object by id: " +params.id+". redirecting to menu.")
             redirect(action:index)
             return;
+        }
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_READ], session.project)) {
+            return unauthorized("Read Job ${params.id}")
         }
         def newScheduledExecution = new ScheduledExecution()
         newScheduledExecution.properties = new java.util.HashMap(scheduledExecution.properties)
@@ -1338,6 +1373,11 @@ class ScheduledExecutionController  {
      * action to populate the Create form with execution info from a previous (transient) execution
      */
     def createFromExecution={
+
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'job'], [UserAuth.WF_CREATE],session.project) && !frameworkService.authorizeProjectResource(framework,[type:'adhoc'],'adhoc_run',session.project)) {
+            return unauthorized("Create a Job")
+        }
         log.info("ScheduledExecutionController: create : params: " + params)
         Execution execution = Execution.get(params.executionId)
         if(!execution){
@@ -1371,9 +1411,23 @@ class ScheduledExecutionController  {
         def model=create.call()
         render(view:'create',model:model)
     }
+    private  unauthorized(String action, boolean fragment=false){
+        if(!fragment){
+            response.setStatus(403)
+        }
+        flash.title = "Unauthorized"
+        flash.error = "${request.remoteUser} is not authorized to: ${action}"
+        response.setHeader(Constants.X_RUNDECK_ACTION_UNAUTHORIZED_HEADER, flash.error)
+        render(template: fragment?'/common/errorFragment':'/common/error', model: [:])
+    }
     def create = {
 
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        //authorize
+        if(!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'job'], [UserAuth.WF_CREATE], session.project) && !frameworkService.authorizeProjectResource(framework, [type: 'adhoc'], 'adhoc_run', session.project)){
+            return unauthorized("Create a Job")
+        }
+
         def projects = frameworkService.projects(framework)
         def user = (session?.user) ? session.user : "anonymous"
         def rolelist = (session?.roles) ? session.roles : []
@@ -1418,13 +1472,14 @@ class ScheduledExecutionController  {
     }
 
 
-    def renderCreateFragment = {
-        render(template:'createForm', model:create(params))
-    }
-
     def saveAndExec = {
         log.info("ScheduledExecutionController: saveAndExec : params: " + params)
         def changeinfo = [user: session.user, change: 'create', method: 'saveAndExec']
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'job'], [UserAuth.WF_CREATE], session.project)) {
+            unauthorized("Create a Job")
+            return [success: false]
+        }
         def scheduledExecution = _dosave(params,changeinfo)
         if(scheduledExecution.id){
             params.id=scheduledExecution.extid
@@ -1435,7 +1490,6 @@ class ScheduledExecutionController  {
                 return redirect(action:show,id:scheduledExecution.extid)
             }
         }else{
-            Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
 
             scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
             flash.message=g.message(code:'ScheduledExecutionController.save.failed')
@@ -1446,136 +1500,82 @@ class ScheduledExecutionController  {
      * Action to upload jobs.xml and execute it immediately.
      */
     def uploadAndExecute = {
-        log.info("ScheduledExecutionController: uploadAndExecute " + params)
-
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-        params["user"] = (session?.user) ? session.user : "anonymous"
-        def rolelist = (session?.roles) ? session.roles : []
-
-        if(!(request instanceof MultipartHttpServletRequest)){
+        log.info("ScheduledExecutionController: upload " + params)
+        def fileformat = params.fileformat ?: 'xml'
+        def parseresult
+        if (request instanceof MultipartHttpServletRequest) {
+            def file = request.getFile("xmlBatch")
+            if (!file || file.empty) {
+                flash.message = "No file was uploaded."
+                return
+            }
+            parseresult = parseUploadedFile(file.getInputStream(), fileformat)
+        } else if (params.xmlBatch) {
+            String fileContent = params.xmlBatch
+            parseresult = parseUploadedFile(fileContent, fileformat)
+        } else {
             return
         }
-        def file=request.getFile("xmlBatch")
-        if(!file){
-            flash.message="No file was uploaded."
-            return
-        }
-        def results
-        try{
-            results= file.getInputStream().decodeJobsXML()
-        }catch(Exception e){
-            flash.error=e.toString()
-            if(!params.xmlreq){
-                render(view:'upload')
-                return;
-            }else{
-                return xmlerror.call();
-            }
-        }
-        if(!results){
-            flash.error="No jobs definitions found"
-            if(!params.xmlreq){
-                render(view:'upload')
-                return;
-            }else{
-                return xmlerror.call();
-            }
-        }
-        //results is a collection of Maps, each defining a job.
+        def jobset
 
-        def jobs=[]
-        def jobsi=[]
-        def i=1
-        def msgs = []
-        def errjobs = []
-        def skipjobs = []
-        flash.errors=[]
-
-        results.each{jobdata->
-            def ScheduledExecution scheduledExecution
-
-            def errmsg
-            def failed
-            try{
-                def result= _dovalidate(jobdata instanceof ScheduledExecution?jobdata.properties:jobdata)
-                scheduledExecution=result.scheduledExecution
-                failed=result.failed
-                if(failed){
-                    errmsg = scheduledExecution.errors?scheduledExecution.errors.allErrors.collect {err-> g.message(error:err)}.join("<br>"):'Failed to validate job definition'
-                    log.error(errmsg)
-                }
-            }catch(Exception e){
-                scheduledExecution=jobdata
-                errmsg=e.getMessage()
-                log.error(e.getMessage())
-            }
-            if(failed || errmsg){
-                errjobs<<[scheduledExecution:scheduledExecution,entrynum:i,errmsg:errmsg]
-                flash.errors<<"Job #${i}: "+errmsg
-            }else{
-                jobs<<scheduledExecution
-                jobsi<<[scheduledExecution:scheduledExecution, entrynum:i]
-            }
-            i++
-        }
-        def reserrors=[]
-        def ressuccess=[]
-        if(errjobs){
-            if(!params.xmlreq){
-                return render(view:'upload',model:[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true])
-            }else{
-                return xmlerror.call();
-            }
-        }
-        //run the jobs and forward to nowrunning
-        jobsi.each{ Map map->
-            def ScheduledExecution scheduledExecution=map.scheduledExecution
-            def entrynum=map.entrynum
-            def properties=[:]
-            properties.putAll(scheduledExecution.properties)
-            properties.user=params.user
-            properties.request = request
-            def execresults = _transientExecute(scheduledExecution,properties,framework,rolelist)
-//            System.err.println("transient execute result: ${execresults}");
-            execresults.entrynum=entrynum
-            if(execresults.error){
-                reserrors<<execresults
+        if (parseresult.error) {
+            flash.error = parseresult.error
+            if (params.xmlreq) {
+                return xmlerror()
             } else {
-                ressuccess<<execresults
+                render(view: 'upload')
+                return
             }
         }
-        
+        jobset = parseresult.jobset
+        def changeinfo = [user: session.user, method: 'upload']
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        def loadresults = loadJobs(jobset, params.dupeOption, changeinfo, framework)
 
-        if(!params.xmlreq){
-            return render(view:'upload', model:[execerrors:reserrors,execsuccess:ressuccess, errjobs: errjobs, messages: msgs, didupload: true])
-        }else{
-            //TODO: update jobs upload task to submit XML content directly instead of via uploaded file, and use proper
-            //TODO: grails content negotiation
+        def jobs = loadresults.jobs
+        def jobsi = loadresults.jobsi
+        def msgs = loadresults.msgs
+        def errjobs = loadresults.errjobs
+        def skipjobs = loadresults.skipjobs
 
-//            response.setHeader("Content-Disposition","attachment; filename=\"upload-result.xml\"")
-            response.setHeader(Constants.X_RUNDECK_RESULT_HEADER,"Jobs XML Uploaded. Succeeded: ${ressuccess.size()}, Failed: ${reserrors.size()}")
-                render(contentType:"text/xml"){
-                    result{
-                        succeeded(count:ressuccess.size()){
-                            ressuccess.each{ Map job ->
-                                delegate.'execution'(index:job.entrynum){
-                                    id(job.id.toString())
-                                    name(job.execution.toString())
-                                    url(g.createLink(controller:'execution',action:'follow',id:job.id))
-                                }
-                            }
-                        }
-                        failed(count:reserrors.size()){
+        def reserrors = []
+        def ressuccess=[]
 
-                            reserrors.each{ Map job ->
-                                delegate.'execution'(index:job.entrynum){
-                                    delegate.'error'(job.error.toString())
-                                    delegate.'message'(job.message.toString())
-                                }
-                            }
-                        }
-                    }
+        if(!errjobs){
+            //run the jobs and forward to nowrunning
+            jobsi.each{ Map map->
+                def ScheduledExecution scheduledExecution=map.scheduledExecution
+                def entrynum=map.entrynum
+                def properties=[:]
+                properties.putAll(scheduledExecution.properties)
+                properties.user=params.user
+                properties.request = request
+                def execresults = executeScheduledExecution(scheduledExecution,framework,request.subject,[user:request.remoteUser])
+    //            System.err.println("transient execute result: ${execresults}");
+                execresults.entrynum=entrynum
+                if(execresults.error || !execresults.success){
+                    reserrors<<execresults
+                } else {
+                    ressuccess<<execresults
                 }
+            }
+        }
+
+        if (!params.xmlreq) {
+
+            render(view: 'upload',model:[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, execerrors:reserrors,execsuccess:ressuccess,
+                nextExecutions: scheduledExecutionService.nextExecutionTimes(jobs.grep { it.scheduled }),
+                messages: msgs,
+                didupload: true])
+        } else {
+            //TODO: update commander's jobs upload task to submit XML content directly instead of via uploaded file, and use proper
+            //TODO: grails content negotiation
+            response.setHeader(Constants.X_RUNDECK_RESULT_HEADER, "Jobs Uploaded. Succeeded: ${jobs.size()}, Failed: ${errjobs.size()}, Skipped: ${skipjobs.size()}")
+            render(contentType: "text/xml") {
+                result(error: false) {
+                    renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
+                }
+            }
         }
 
     }
@@ -1603,14 +1603,13 @@ class ScheduledExecutionController  {
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         params["user"] = (session?.user) ? session.user : "anonymous"
         params.request = request
-        def rolelist = (session?.roles) ? session.roles : []
         params.jobName='Temporary_Job'
         params.groupPath='adhoc'
         def result= _dovalidate(params)
         def ScheduledExecution scheduledExecution=result.scheduledExecution
         def failed=result.failed
         if(!failed){
-            return _transientExecute(scheduledExecution,params,framework,rolelist)
+            return _transientExecute(scheduledExecution,params,framework,request.subject)
         }else{
             return [failed:true,message:'Job configuration was incorrect.',scheduledExecution:scheduledExecution,params:params]
         }
@@ -1647,9 +1646,9 @@ class ScheduledExecutionController  {
     * Execute a transient ScheduledExecution and return execution data: [execution:Execution,id:Long]
      * if there is an error, return [error:'type',message:errormesg,...]
      */
-    def _transientExecute={ScheduledExecution scheduledExecution, Map params, Framework framework, List rolelist->
+    def _transientExecute={ScheduledExecution scheduledExecution, Map params, Framework framework, Subject subject->
         def object
-        def isauth = scheduledExecutionService.userAuthorizedForJob(params.request,scheduledExecution,framework)
+        def isauth = scheduledExecutionService.userAuthorizedForAdhoc(params.request,scheduledExecution,framework)
         if (!isauth){
             def msg=g.message(code:'unauthorized.job.run.user',args:[params.user])
             return [error:'unauthorized',message:msg]
@@ -1664,7 +1663,7 @@ class ScheduledExecutionController  {
             return [error:'failed',message:exc.getMessage()]
         }
 
-        def eid = scheduledExecutionService.scheduleTempJob(params.user,rolelist,params,e);
+        def eid = scheduledExecutionService.scheduleTempJob(params.user, subject,params,e);
         return [execution:e,id:eid]
     }
 
@@ -2291,7 +2290,7 @@ class ScheduledExecutionController  {
     /**
      * Given list of imported jobs, create, update or skip them as defined by the dupeOption parameter.
      */
-    private def loadJobs={ jobset, option, changeinfo=[:] ->
+    private def loadJobs={ jobset, option, changeinfo=[:], Framework framework->
         def jobs=[]
         def jobsi=[]
         def i=1
@@ -2342,26 +2341,32 @@ class ScheduledExecutionController  {
                 def success=false
                 def errmsg
                 jobchange.change = 'modify'
-                try{
-                    def result
-                    if(jobdata instanceof ScheduledExecution){
-                        result = _doupdateJob(scheduledExecution.id,jobdata,jobchange)
-                    }else{
-                        jobdata.id=scheduledExecution.uuid?:scheduledExecution.id
-                        result = _doupdate(jobdata, jobchange)
-                    }
+                if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_UPDATE],scheduledExecution.project)) {
+                    errmsg = "Unauthorized: Update Job ${scheduledExecution.id}"
+                }else{
+                    try{
+                        def result
+                        if(jobdata instanceof ScheduledExecution){
+                            result = _doupdateJob(scheduledExecution.id,jobdata,jobchange)
+                            success = result[0]
+                            scheduledExecution = result[1]
+                        }else{
+                            jobdata.id=scheduledExecution.uuid?:scheduledExecution.id
+                            result = _doupdate(jobdata, jobchange)
+                            success=result.success
+                            scheduledExecution=result.scheduledExecution
+                        }
 
-                    success = result[0]
-                    scheduledExecution=result[1]
-                    if(!success && scheduledExecution && scheduledExecution.hasErrors()){
-                        errmsg=scheduledExecution.errors.allErrors.collect {g.message(error: it)}.join("\n")
-                    }else{
-                        logJobChange(jobchange, scheduledExecution.properties)
+                        if(!success && scheduledExecution && scheduledExecution.hasErrors()){
+                            errmsg="Validation errors"
+                        }else{
+                            logJobChange(jobchange, scheduledExecution.properties)
+                        }
+                    }catch(Exception e){
+                        errmsg=e.getMessage()
+                        System.err.println("caught exception: "+errmsg);
+                        e.printStackTrace()
                     }
-                }catch(Exception e){
-                    errmsg=e.getMessage()
-                    System.err.println("caught exception: "+errmsg);
-                    e.printStackTrace()
                 }
                 if(!success){
                     errjobs<<[scheduledExecution:scheduledExecution,entrynum:i,errmsg:errmsg]
@@ -2371,25 +2376,32 @@ class ScheduledExecutionController  {
                 }
             }else if(option=="create" || !scheduledExecution){
                 def errmsg
-                try{
-                    jobchange.change='create'
-                    scheduledExecution = _dosave(jobdata, jobchange)
-                    if(scheduledExecution && scheduledExecution.hasErrors()){
-                        errmsg=scheduledExecution.errors.allErrors.collect {g.message(error: it)}.join("\n")
-                    }else{
-                        logJobChange(jobchange, scheduledExecution.properties)
-                    }
-                }catch(Exception e){
-                    System.err.println("caught exception");
-                    e.printStackTrace()
-                    scheduledExecution=jobdata
-                    errmsg=e.getMessage()
-                }
-                if(!scheduledExecution.id){
-                    errjobs<<[scheduledExecution:scheduledExecution,entrynum:i,errmsg:errmsg]
+
+                if (!frameworkService.authorizeProjectResourceAll(framework, [type:'resource',kind:'job'],
+                    [UserAuth.WF_CREATE],jobdata.project)) {
+                    errmsg="Unauthorized: Create Job"
+                    errjobs << [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]
                 }else{
-                    jobs<<scheduledExecution
-                    jobsi<<[scheduledExecution:scheduledExecution, entrynum:i]
+                    try{
+                        jobchange.change='create'
+                        scheduledExecution = _dosave(jobdata, jobchange)
+                        if(scheduledExecution && scheduledExecution.hasErrors()){
+                            errmsg = "Validation errors"
+                        }else{
+                            logJobChange(jobchange, scheduledExecution.properties)
+                        }
+                    }catch(Exception e){
+                        System.err.println("caught exception");
+                        e.printStackTrace()
+                        scheduledExecution=jobdata
+                        errmsg=e.getMessage()
+                    }
+                    if(!scheduledExecution.id){
+                        errjobs<<[scheduledExecution:scheduledExecution,entrynum:i,errmsg:errmsg]
+                    }else{
+                        jobs<<scheduledExecution
+                        jobsi<<[scheduledExecution:scheduledExecution, entrynum:i]
+                    }
                 }
             }
 
@@ -2400,6 +2412,9 @@ class ScheduledExecutionController  {
     }
     def upload ={
         log.info("ScheduledExecutionController: upload " + params)
+
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        
         def fileformat = params.fileformat ?: 'xml'
         def parseresult
         if(request instanceof MultipartHttpServletRequest){
@@ -2428,7 +2443,7 @@ class ScheduledExecutionController  {
         }
         jobset=parseresult.jobset
         def changeinfo = [user: session.user,method:'upload']
-        def loadresults = loadJobs(jobset,params.dupeOption,changeinfo)
+        def loadresults = loadJobs(jobset,params.dupeOption,changeinfo,framework)
 
         def jobs = loadresults.jobs
         def jobsi = loadresults.jobsi
@@ -2457,14 +2472,21 @@ class ScheduledExecutionController  {
     def execute = {
 
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-        def model=edit(params)
+        def scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
+        if(!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_RUN], scheduledExecution.project)){
+            return unauthorized("Execute Job ${scheduledExecution.extid}")
+        }
+        def model = _prepareExecute(scheduledExecution, framework)
+        return model
+    }
 
-        def ScheduledExecution scheduledExecution = model.scheduledExecution
-
+    private _prepareExecute(ScheduledExecution scheduledExecution, final def framework){
+        def model=[scheduledExecution:scheduledExecution]
+        model.authorized=true
         //test nodeset to make sure there are matches
         if(scheduledExecution.doNodedispatch){
             NodeSet nset = ExecutionService.filtersAsNodeSet(scheduledExecution)
-            def project=frameworkService.getFrameworkProject(scheduledExecution.project,framework)
+            def project=frameworkService.getFrameworkProject(scheduledExecution.project, framework)
 //            def nodes=project.getNodes().filterNodes(nset)
             def nodes= com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nset, project.getNodeSet()).nodes
             if(!nodes || nodes.size()<1){
@@ -2490,10 +2512,15 @@ class ScheduledExecutionController  {
                 model.failedNodes=e.failedNodeList
             }
         }
-        model
+        return model
     }
     def executeFragment = {
-        def model = execute()
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        def scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_RUN], scheduledExecution.project)) {
+            return unauthorized("Execute Job ${scheduledExecution.extid}",true)
+        }
+        def model = _prepareExecute(scheduledExecution, framework)
         if(params.dovalidate){
             model.jobexecOptionErrors=session.jobexecOptionErrors
             model.selectedoptsmap=session.selectedoptsmap
@@ -2533,9 +2560,8 @@ class ScheduledExecutionController  {
         }
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         params["user"] = (session?.user) ? session.user : "anonymous"
-        def rolelist = (session?.roles) ? session.roles : []
         def scheduledExecution = jobs[0]
-        def result = executeScheduledExecution(scheduledExecution,framework,rolelist,params)
+        def result = executeScheduledExecution(scheduledExecution,framework,request.subject,params)
         if(result.error){
             flash.error=result.message
             return error()
@@ -2617,13 +2643,16 @@ class ScheduledExecutionController  {
     def runJob = {
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         params["user"] = (session?.user) ? session.user : "anonymous"
-        def rolelist = (session?.roles) ? session.roles : []
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if (!scheduledExecution) {
 //            response.setStatus (404)
             return [error:"No Job found for id: " + params.id,code:404]
         }
-        def result = executeScheduledExecution(scheduledExecution,framework,rolelist,params)
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_RUN],
+            scheduledExecution.project)) {
+            return [success:false,failed:true,error:'unauthorized',message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
+        }
+        def result = executeScheduledExecution(scheduledExecution,framework, request.subject,params)
 
         if (result.error){
             result.failed=true
@@ -2634,7 +2663,7 @@ class ScheduledExecutionController  {
             return [success:true, message:"immediate execution scheduled", id:result.executionId]
         }
     }
-    def executeScheduledExecution = {ScheduledExecution scheduledExecution, Framework framework, List rolelist,params->
+    def executeScheduledExecution = {ScheduledExecution scheduledExecution, Framework framework, Subject subject,params->
         def User user = User.findByLogin(params.user)
         if(!user){
             def msg = g.message(code:'unauthorized.job.run.user',args:[params.user])
@@ -2642,12 +2671,17 @@ class ScheduledExecutionController  {
             flash.error=msg
             return [error:'unauthorized',message:msg]
         }
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_RUN],
+            scheduledExecution.project)) {
+//            unauthorized("Execute Job ${scheduledExecution.extid}")
+            return [success: false,error:'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
+        }
 
         def extra = params.extra
 
         try{
-            def Execution e= executionService.createExecution(scheduledExecution,framework,params.user,extra)
-            def eid=scheduledExecutionService.scheduleTempJob(scheduledExecution,params.user,rolelist,e);
+            def Execution e= executionService.createExecution(scheduledExecution,framework, user.login,extra)
+            def eid=scheduledExecutionService.scheduleTempJob(scheduledExecution,user.login,subject,e);
             return [executionId:eid,name:scheduledExecution.jobName, execution:e]
         }catch(ExecutionServiceValidationException exc){
             return [error:'invalid',message:exc.getMessage(),options:exc.getOptions(),errors:exc.getErrors()]
@@ -2830,7 +2864,8 @@ class ScheduledExecutionController  {
         }
         def jobset = parseresult.jobset
         def changeinfo = [user: session.user,method:'apiJobsImport']
-        def loadresults = loadJobs(jobset,params.dupeOption,changeinfo)
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        def loadresults = loadJobs(jobset,params.dupeOption,changeinfo,framework)
 
         def jobs = loadresults.jobs
         def jobsi = loadresults.jobsi
@@ -2854,6 +2889,12 @@ class ScheduledExecutionController  {
             flash.errorCode = "api.error.item.doesnotexist"
             flash.errorArgs = ['Job ID',params.id]
             return chain(controller: 'api', action: 'renderError')
+        }
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_READ], session.project)) {
+            request.errorCode = "api.error.item.unauthorized"
+            request.errorArgs = ['Read','Job ID', params.id]
+            return new ApiController().renderError()
         }
 
         withFormat{
@@ -2880,9 +2921,15 @@ class ScheduledExecutionController  {
             return chain(controller: 'api', action: 'renderError')
         }
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_RUN],
+            scheduledExecution.project)) {
+            request.errorCode = "api.error.item.unauthorized"
+            request.errorArgs = ['Run', 'Job ID', params.id]
+            return new ApiController().renderError()
+        }
         def inparams = [extra:[:]]
         inparams["user"] = (session?.user) ? session.user : "anonymous"
-        def rolelist = (session?.roles) ? session.roles : []
 
         if (params.argString) {
             inparams.extra["argString"] = params.argString
@@ -2903,7 +2950,7 @@ class ScheduledExecutionController  {
             }
         }
 
-        def result = executeScheduledExecution(scheduledExecution, framework, rolelist, inparams)
+        def result = executeScheduledExecution(scheduledExecution, framework, request.subject, inparams)
         if (result.error) {
             flash.error = result.message
             return chain(controller: "api", action: "error")
@@ -2920,6 +2967,13 @@ class ScheduledExecutionController  {
         if (!scheduledExecution) {
             flash.error = g.message(code:"api.error.item.doesnotexist",args:['Job ID',params.id])
             return chain(controller: 'api', action: 'error')
+        }
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if(!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_DELETE],
+            scheduledExecution.project)){
+            request.errorCode = "api.error.item.unauthorized"
+            request.errorArgs = ['Delete','Job ID', params.id]
+            return new ApiController().renderError()
         }
         def changeinfo = [user: session.user, method: 'apiJobDelete', change: 'delete']
         def jobdata=scheduledExecution.properties

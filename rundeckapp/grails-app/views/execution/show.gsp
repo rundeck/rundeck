@@ -36,12 +36,12 @@
             browsemode: ${followmode == 'browse'},
             nodemode: ${followmode == 'node'},
             execData: {node:"${session.Framework.getFrameworkNodeHostname()}"},
-            <auth:allowed job="${executionResource}" name="${UserAuth.WF_KILL}">
+            <auth:jobAllowed job="${executionResource}" name="${UserAuth.WF_KILL}">
             killjobhtml: '<span class="action button textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <img src="${resource(dir: 'images', file: 'icon-tiny-removex.png')}" alt="Kill" width="12px" height="12px"/></span>',
-            </auth:allowed>
-            <auth:allowed job="${executionResource}" name="${UserAuth.WF_KILL}" has="false">
+            </auth:jobAllowed>
+            <auth:jobAllowed job="${executionResource}" name="${UserAuth.WF_KILL}" has="false">
             killjobhtml: "",
-            </auth:allowed>
+            </auth:jobAllowed>
             totalDuration : 0 + ${scheduledExecution?.totalTime ? scheduledExecution.totalTime : -1},
             totalCount: 0 + ${scheduledExecution?.execCount ? scheduledExecution.execCount : -1}
             <g:if test="${scheduledExecution}">
@@ -169,19 +169,18 @@
                         Now Running&hellip;
                         </span>
                         </span>
-                    <auth:allowed job="${executionResource}" name="${UserAuth.WF_KILL}">
+                    <auth:jobAllowed job="${executionResource}" name="${UserAuth.WF_KILL}">
                         <span id="cancelresult" style="margin-left:10px">
                             <span class="action button textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <img src="${resource(dir:'images',file:'icon-tiny-removex.png')}" alt="Kill" width="12px" height="12px"/></span>
                         </span>
-                    </auth:allowed>
+                    </auth:jobAllowed>
 
             </g:else>
 
                     <span id="execRetry" style="${wdgt.styleVisible(if:null!=execution.dateCompleted && null!=execution.failedNodeList)}; margin-right:10px;">
                         <g:if test="${scheduledExecution}">
-                            <g:set var="jobRunAuth" value="${ auth.allowedTest(job:executionResource,action:UserAuth.WF_RUN)}"/>
-                            <g:set var="canRun" value="${ ( !authMap || authMap[scheduledExecution.id.toString()] ||jobAuthorized ) && jobRunAuth}"/>
-                            <g:if test="${ canRun}">
+                            <g:set var="jobRunAuth" value="${ auth.jobAllowedTest(job:executionResource,action:UserAuth.WF_RUN)}"/>
+                            <g:if test="${ jobRunAuth}">
                                 <g:link controller="scheduledExecution" action="execute" id="${scheduledExecution.extid}" params="${[retryFailedExecId:execution.id]}" title="Run Job on the failed nodes" class="action button" style="margin-left:10px" >
                                     <img src="${resource(dir:'images',file:'icon-small-run.png')}" alt="run" width="16px" height="16px"/>
                                     Retry Failed Nodes  &hellip;
@@ -189,8 +188,7 @@
                             </g:if>
                         </g:if>
                         <g:else>
-                            <g:set var="jobRunAuth" value="${ auth.allowedTest(job:executionResource,action:[UserAuth.WF_CREATE,UserAuth.WF_READ])}"/>
-                            <g:set var="canRun" value="${ jobRunAuth}"/>
+                            <g:set var="canRun" value="${ auth.jobAllowedTest(job:executionResource, action:[UserAuth.WF_READ]) && (auth.resourceAllowedTest(kind:'job', action:[UserAuth.WF_CREATE]) || auth.adhocAllowedTest(action:['adhoc_run']))}"/>
                             <g:if test="${canRun}">
                                 <g:link controller="scheduledExecution" action="createFromExecution" params="${[executionId:execution.id,failedNodes:true]}" class="action button" title="Retry on the failed nodes&hellip;" style="margin-left:10px">
                                     <img src="${resource(dir:'images',file:'icon-small-run.png')}"  alt="run" width="16px" height="16px"/>
@@ -200,8 +198,7 @@
                         </g:else>
                     </span>
                     <span id="execRerun" style="${wdgt.styleVisible(if:null!=execution.dateCompleted)}" >
-                        <g:set var="jobRunAuth" value="${ auth.allowedTest(job:executionResource, action:[UserAuth.WF_CREATE,UserAuth.WF_READ])}"/>
-                        <g:if test="${jobRunAuth }">
+                        <g:if test="${auth.jobAllowedTest(job:executionResource, action:[UserAuth.WF_READ]) && (auth.resourceAllowedTest(kind:'job', action:[UserAuth.WF_CREATE]) || auth.adhocAllowedTest(action:['adhoc_run'])) }">
                             <g:link controller="scheduledExecution" action="createFromExecution" params="${[executionId:execution.id]}" class="action button" title="Rerun or Save this Execution&hellip;" ><img src="${resource(dir:'images',file:'icon-small-run.png')}"  alt="run" width="16px" height="16px"/> Rerun or Save &hellip;</g:link>
                         </g:if>
                     </span>

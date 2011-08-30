@@ -68,7 +68,9 @@
     </span>
 </div>
 
-<g:ifUserInAnyRoles roles="admin">
+<g:set var="adminauth"
+       value="${auth.resourceAllowedTest(type:'resource',kind:'project',action:['create'],context:'application')}"/>
+<g:if test="${adminauth}">
 
     <div class="pageBody form note error" style="${wdgt.styleVisible(if: (flash.error || request.error || request.errors))}"
          id="editerror">
@@ -92,11 +94,11 @@
             </div>
         </g:form>
     </div>
-</g:ifUserInAnyRoles>
-<g:ifUserInAnyRoles roles="admin" member="false">
+</g:if>
+<g:else>
     <div class="pageBody">
         <div class="error note"><g:message code="unauthorized.project.create"/></div>
     </div>
-</g:ifUserInAnyRoles>
+</g:else>
 </body>
 </html>

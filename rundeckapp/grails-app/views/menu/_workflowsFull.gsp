@@ -99,11 +99,11 @@
 
                 <div class="jobscontent head">
     <g:if test="${!params.compact}">
-        <auth:allowed job="[jobName:'create',groupPath:'ui']" name="${UserAuth.WF_CREATE}">
+        <auth:resourceAllowed kind="job" action="${UserAuth.WF_CREATE}">
         <div class=" floatr" >
             <g:link controller="scheduledExecution" action="create" class="button ">New <g:message code="domain.ScheduledExecution.title"/>&hellip;</g:link>
         </div>
-        </auth:allowed>
+        </auth:resourceAllowed>
     </g:if>
 
                 <g:if test="${wasfiltered}">
@@ -181,7 +181,7 @@
                     <g:timerEnd key="groupTree"/>
                 </g:if>
     <g:timerStart key="tail"/>
-                <g:if test="${unauthorizedcount && !g.isUserInRoleTest(role:'admin') && !g.isUserInRoleTest(role:'job_view_unauthorized')}">
+                <g:if test="${unauthorizedcount}">
                     <div class="note info">
                         ${unauthorizedcount} <g:message code="unauthorized.hidden.message" />
                     </div>
