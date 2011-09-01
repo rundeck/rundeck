@@ -582,6 +582,7 @@ class ExecutionController {
                         }
                     }
                     description(ExecutionService.summarizeJob(e.scheduledExecution, e))
+                    argstring(e.argString)
                 }
             }
         }
