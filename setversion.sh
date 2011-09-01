@@ -56,6 +56,6 @@ perl  -i'.orig' -p -e "s#^version\s*=.*\$#version = '$VERSION'#" `pwd`/core/buil
 echo MODIFIED: `pwd`/core/build.gradle
 
 #modify plugins/build.gradle
-perl  -i'.orig' -p -e "s#^version\s*=.*\$#version = '$VERSION'#" `pwd`/plugins/build.gradle
+perl  -i'.orig' -p -e "s#^(\s*)version\s*=.*\$#\1version = '$VERSION'#" `pwd`/plugins/build.gradle
 
 echo MODIFIED: `pwd`/plugins/build.gradle
