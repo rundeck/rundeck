@@ -183,8 +183,9 @@ final class YamlPolicy implements Policy {
         return resource.get("group") + "/" + resource.get("job");
     }
 
+
     /**
-     * parse the by: clause.
+     * parse the by: clause, allow single string or list of strings for username and grop values
      */
     private void parseByClause() {
         final Object byClause = policyInput.get("by");
@@ -194,22 +195,35 @@ final class YamlPolicy implements Policy {
         if (!(byClause instanceof Map)) {
             return;
         }
-        @SuppressWarnings ("rawtypes") final
-        Map by = (Map) byClause;
-        @SuppressWarnings ("rawtypes") final
-        Set<Map.Entry> entries = by.entrySet();
-        for (@SuppressWarnings ("rawtypes") final Map.Entry policyGroup : entries) {
+        final Map by = (Map) byClause;
 
-            if ("username".equals(policyGroup.getKey())) {
-                usernames.add(policyGroup.getValue().toString());
+        final Object u = by.get("username");
+        final Object g = by.get("group");
+
+        if (null != u) {
+            if (u instanceof String) {
+                usernames.add((String) u);
+            } else if (u instanceof Collection) {
+                for (final Object o : (Collection) u) {
+                    if (o instanceof String) {
+                        usernames.add((String) o);
+                    }
+                }
             }
-
-            if ("group".equals(policyGroup.getKey())) {
-                groups.add(policyGroup.getValue());
-            }
-
-            // TODO Support LDAP
         }
+
+        if (null != g) {
+            if (g instanceof String) {
+                groups.add(g);
+            } else if (g instanceof Collection) {
+                for (final Object o : (Collection) g) {
+                    if (o instanceof String) {
+                        groups.add(o);
+                    }
+                }
+            }
+        }
+
     }
 
     @Override

@@ -57,8 +57,9 @@ public class TestPoliciesYaml extends TestCase {
     public void testGroupNames() throws Exception {
         PoliciesYaml policies = new PoliciesYaml(test1);
         final Collection<String> strings = policies.groupNames();
-        assertEquals(2, strings.size());
+        assertEquals(3, strings.size());
         assertTrue(strings.contains("qa_group"));
         assertTrue(strings.contains("prod_group"));
+        assertTrue(strings.contains("dev_group"));
     }
 }

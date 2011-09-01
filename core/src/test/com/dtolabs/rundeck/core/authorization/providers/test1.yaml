@@ -20,7 +20,7 @@ rules:
   ^$:
     actions: 'foobar'
 by:
-    group: 'qa_group'
+    group: ['qa_group','dev_group']
 ---
 description: Prod can execute all Prod jobs and can view QA jobs, but not execute them
 for: # each entry in for: checks a specific type of resource
