@@ -74,6 +74,8 @@ authorization to restrict some users to only a subset of actions. This
 enables a self-service type interface, where some users have
 access to only a limited set of executable actions.
 
+See: [Authorization](#authorization-1).
+
 ### Project
 
 A *project* is a place to separate management activity.
