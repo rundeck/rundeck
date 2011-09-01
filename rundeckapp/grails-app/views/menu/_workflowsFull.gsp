@@ -1,3 +1,4 @@
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <%--
  Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
 
@@ -99,7 +100,7 @@
 
                 <div class="jobscontent head">
     <g:if test="${!params.compact}">
-        <auth:resourceAllowed kind="job" action="${UserAuth.WF_CREATE}">
+        <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}">
         <div class=" floatr" >
             <g:link controller="scheduledExecution" action="create" class="button ">New <g:message code="domain.ScheduledExecution.title"/>&hellip;</g:link>
         </div>

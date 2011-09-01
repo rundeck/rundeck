@@ -9,6 +9,7 @@ import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschNodeExecutor
 import com.dtolabs.rundeck.core.authorization.Attribute
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 
 class MenuController {
     FrameworkService frameworkService
@@ -248,12 +249,12 @@ class MenuController {
 
         def authorization = frameworkService.getFrameworkFromUserSession(request.session, request).getAuthorizationMgr()
         def env = Collections.singleton(new Attribute(URI.create("http://dtolabs.com/rundeck/env/project"), session.project))
-        def decisions = authorization.evaluate(res, request.subject, new HashSet([UserAuth.WF_READ,UserAuth.WF_DELETE,UserAuth.WF_RUN,UserAuth.WF_UPDATE,UserAuth.WF_KILL]), env)
+        def decisions = authorization.evaluate(res, request.subject, new HashSet([AuthConstants.ACTION_READ,AuthConstants.ACTION_DELETE,AuthConstants.ACTION_RUN,AuthConstants.ACTION_UPDATE,AuthConstants.ACTION_KILL]), env)
         log.debug("listWorkflows(evaluate): "+(System.currentTimeMillis()-preeval));
 
         long viewable=System.currentTimeMillis()
 
-        def authCreate = frameworkService.authorizeProjectResource(framework, [type: 'resource', kind: 'job'], UserAuth.WF_CREATE, session.project)
+        def authCreate = frameworkService.authorizeProjectResource(framework, [type: 'resource', kind: 'job'], AuthConstants.ACTION_CREATE, session.project)
         
 
         def Map jobauthorizations=[:]
@@ -265,7 +266,7 @@ class MenuController {
             }.flatten())
         }
 
-        jobauthorizations[UserAuth.WF_CREATE]=authCreate
+        jobauthorizations[AuthConstants.ACTION_CREATE]=authCreate
         def authorizemap=[:]
         def pviewmap=[:]
         def newschedlist=[]
@@ -276,7 +277,7 @@ class MenuController {
          */
         def jobgroups=[:]
         schedlist.each{ ScheduledExecution se->
-            authorizemap[se.id.toString()]=jobauthorizations[UserAuth.WF_READ]?.contains(se.id.toString())
+            authorizemap[se.id.toString()]=jobauthorizations[AuthConstants.ACTION_READ]?.contains(se.id.toString())
             if(authorizemap[se.id.toString()]){
                 newschedlist<<se
                 if(!jobgroups[se.groupPath?:'']){
@@ -400,7 +401,7 @@ class MenuController {
 
     def admin={
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if (!frameworkService.authorizeApplicationResourceAll(framework,[type:'project',name:session.project],['admin','read'])) {
+        if (!frameworkService.authorizeApplicationResourceAll(framework,[type:'project',name:session.project],[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ])) {
             flash.error = "User ${session.user} unauthorized for: Project Admin"
             flash.title = "Unauthorized"
             response.setStatus(403)

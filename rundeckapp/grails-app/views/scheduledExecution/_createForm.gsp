@@ -1,4 +1,4 @@
-<g:set var="wasSaved" value="${(params?.saved=='true') || iscopy  || scheduledExecution?.id || scheduledExecution?.jobName}"/>
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %><g:set var="wasSaved" value="${(params?.saved=='true') || iscopy  || scheduledExecution?.id || scheduledExecution?.jobName}"/>
 
 <div class="pageBody form">
     <g:form method="post" onsubmit="if(typeof(validateJobEditForm)=='function'){return validateJobEditForm(this);}">
@@ -26,23 +26,23 @@
             </g:javascript>
             <div id="schedCreateButtons">
                 <g:actionSubmit id="createFormCancelButton" value="Cancel" onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"/>
-                <g:if test="${auth.resourceAllowedTest( kind:'job',action:[UserAuth.WF_CREATE])}">
+                <g:if test="${auth.resourceAllowedTest( kind:'job',action:[AuthConstants.ACTION_CREATE])}">
                     <g:actionSubmit action="save" value="Create"  class="cformAllowSave cformAllowSaveOnly"
                         style="${wdgt.styleVisible(if:scheduledExecution.scheduled || wasSaved)}"/>
                 </g:if>
 
-                <g:if test="${auth.resourceAllowedTest( kind:'job', action:[UserAuth.WF_RUN,UserAuth.WF_CREATE])}">
+                <g:if test="${auth.resourceAllowedTest( kind:'job', action:[AuthConstants.ACTION_CREATE])}">
                     <g:actionSubmit action="saveAndExec" value="Create And Run"  class="cformAllowSave cformAllowRun"
                         style="${ wdgt.styleVisible(unless:scheduledExecution.scheduled || !wasSaved) }"/>
                 </g:if>
-                <g:if test="${auth.adhocAllowedTest(action:'adhoc_run')}">
+                <g:if test="${auth.adhocAllowedTest(action:AuthConstants.ACTION_RUN)}">
                     <g:actionSubmit action="execAndForget" value="Run And Forget"  class="cformAllowRunAndForget cformAllowRun"
                         style="${ wdgt.styleVisible(if:!scheduledExecution.scheduled && !wasSaved) }" />
                 </g:if>
-                <g:if test="${auth.resourceAllowedTest( has:false, kind:'job', action:[UserAuth.WF_RUN])}">
-                    <span class="error message cformAllowRunAndForget cformAllowRun">Not authorized to Run Jobs</span>
-                </g:if>
-                <g:if test="${auth.resourceAllowedTest( has:false, kind:'job', action:[UserAuth.WF_CREATE])}">
+                %{--<g:if test="${auth.resourceAllowedTest( has:false, kind:'job', action:[AuthConstants.RUN])}">--}%
+                    %{--<span class="error message cformAllowRunAndForget cformAllowRun">Not authorized to Run Jobs</span>--}%
+                %{--</g:if>--}%
+                <g:if test="${auth.resourceAllowedTest( has:false, kind:'job', action:[AuthConstants.ACTION_CREATE])}">
                     <span class="error message cformAllowRunAndForget cformAllowRun">Not authorized to Save Jobs</span>
                 </g:if>
             </div>

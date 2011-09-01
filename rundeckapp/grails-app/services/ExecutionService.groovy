@@ -39,6 +39,7 @@ import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.support.WebApplicationContextUtils
 import com.dtolabs.rundeck.core.execution.commands.*
 import com.dtolabs.rundeck.core.execution.workflow.*
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -719,8 +720,8 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         def abortstate
         def jobstate
         def failedreason
-        if (se && !frameworkService.authorizeProjectJobAll(framework, se, [UserAuth.WF_KILL], se.project)
-            || !se && !frameworkService.authorizeProjectResourceAll(framework, [type: 'adhoc'], ['adhoc_kill'], se.project)) {
+        if (se && !frameworkService.authorizeProjectJobAll(framework, se, [AuthConstants.ACTION_KILL], se.project)
+            || !se && !frameworkService.authorizeProjectResourceAll(framework, [type: 'adhoc'], [AuthConstants.ACTION_KILL], e.project)) {
             jobstate = ExecutionController.getExecutionState(e)
             abortstate= ExecutionController.ABORT_FAILED
             failedreason="unauthorized"

@@ -1,3 +1,4 @@
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 e<html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
@@ -11,7 +12,7 @@ e<html>
     <div class="floatl">
         <span class="welcomeMessage">Users</span>
 
-        <g:if test="${auth.resourceAllowedTest(kind:'user',action:['admin'],context:'application')}">
+        <g:if test="${auth.resourceAllowedTest(kind:'user',action:[AuthConstants.ACTION_ADMIN],context:'application')}">
         <span class="buttons">
             <g:link action="create" class="button textaction">New Profile &hellip;</g:link>
         </span>

@@ -24,6 +24,7 @@ import org.apache.commons.httpclient.auth.AuthScope
 import org.apache.commons.httpclient.UsernamePasswordCredentials
 
 import javax.security.auth.Subject
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 
 class ScheduledExecutionController  {
     def Scheduler quartzScheduler
@@ -160,7 +161,7 @@ class ScheduledExecutionController  {
             response.setStatus (404)
             return error.call()
         }
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_READ], session.project)) {
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_READ], session.project)) {
             return unauthorized("Read Job ${params.id}")
         }
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
@@ -566,7 +567,7 @@ class ScheduledExecutionController  {
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if(scheduledExecution) {
-            if(!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_DELETE],
+            if(!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_DELETE],
                 scheduledExecution.project)){
                 return unauthorized("Delete Job: ${params.id}")
             }
@@ -628,7 +629,7 @@ class ScheduledExecutionController  {
             def groupname = scheduledExecution.generateJobGroupName()
             def jobtitle=scheduledExecution.jobName
             if(params.deleteAffirm){
-                if(frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_DELETE], scheduledExecution.project)){
+                if(frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_DELETE], scheduledExecution.project)){
                     scheduledExecution.delete()
                     scheduledExecutionService.deleteJob(jobname, groupname)
                     msgs << "Job '${jobtitle}' was successfully deleted."
@@ -655,7 +656,7 @@ class ScheduledExecutionController  {
             return redirect(action:index, params:params)
         }
 
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_UPDATE, UserAuth.WF_READ], session.project)) {
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_READ], session.project)) {
             return unauthorized("Update Job ${params.id}")
         }
         //clear session workflow
@@ -772,7 +773,7 @@ class ScheduledExecutionController  {
         boolean failed=false
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
 
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_UPDATE], session.project)) {
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_UPDATE], session.project)) {
             return [success:false,scheduledExecution:scheduledExecution,message:"Update Job ${scheduledExecution.extid}",unauthorized:true]
         }
 
@@ -1330,7 +1331,7 @@ class ScheduledExecutionController  {
     def copy = {
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         //authorize
-        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'job'], [UserAuth.WF_CREATE], session.project)) {
+        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'job'], [AuthConstants.ACTION_CREATE], session.project)) {
             return unauthorized("Create a Job")
         }
         def user = (session?.user) ? session.user : "anonymous"
@@ -1344,7 +1345,7 @@ class ScheduledExecutionController  {
             redirect(action:index)
             return;
         }
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_READ], session.project)) {
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_READ], session.project)) {
             return unauthorized("Read Job ${params.id}")
         }
         def newScheduledExecution = new ScheduledExecution()
@@ -1375,7 +1376,7 @@ class ScheduledExecutionController  {
     def createFromExecution={
 
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'job'], [UserAuth.WF_CREATE],session.project) && !frameworkService.authorizeProjectResource(framework,[type:'adhoc'],'adhoc_run',session.project)) {
+        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'job'], [AuthConstants.ACTION_CREATE],session.project) && !frameworkService.authorizeProjectResource(framework,[type:'adhoc'], AuthConstants.ACTION_RUN,session.project)) {
             return unauthorized("Create a Job")
         }
         log.info("ScheduledExecutionController: create : params: " + params)
@@ -1424,7 +1425,7 @@ class ScheduledExecutionController  {
 
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         //authorize
-        if(!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'job'], [UserAuth.WF_CREATE], session.project) && !frameworkService.authorizeProjectResource(framework, [type: 'adhoc'], 'adhoc_run', session.project)){
+        if(!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'job'], [AuthConstants.ACTION_CREATE], session.project) && !frameworkService.authorizeProjectResource(framework, [type: 'adhoc'], AuthConstants.ACTION_RUN, session.project)){
             return unauthorized("Create a Job")
         }
 
@@ -1476,7 +1477,7 @@ class ScheduledExecutionController  {
         log.info("ScheduledExecutionController: saveAndExec : params: " + params)
         def changeinfo = [user: session.user, change: 'create', method: 'saveAndExec']
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'job'], [UserAuth.WF_CREATE], session.project)) {
+        if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'job'], [AuthConstants.ACTION_CREATE], session.project)) {
             unauthorized("Create a Job")
             return [success: false]
         }
@@ -2341,7 +2342,7 @@ class ScheduledExecutionController  {
                 def success=false
                 def errmsg
                 jobchange.change = 'modify'
-                if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_UPDATE],scheduledExecution.project)) {
+                if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_UPDATE],scheduledExecution.project)) {
                     errmsg = "Unauthorized: Update Job ${scheduledExecution.id}"
                 }else{
                     try{
@@ -2378,7 +2379,7 @@ class ScheduledExecutionController  {
                 def errmsg
 
                 if (!frameworkService.authorizeProjectResourceAll(framework, [type:'resource',kind:'job'],
-                    [UserAuth.WF_CREATE],jobdata.project)) {
+                    [AuthConstants.ACTION_CREATE],jobdata.project)) {
                     errmsg="Unauthorized: Create Job"
                     errjobs << [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]
                 }else{
@@ -2473,7 +2474,7 @@ class ScheduledExecutionController  {
 
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         def scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
-        if(!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_RUN], scheduledExecution.project)){
+        if(!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_RUN], scheduledExecution.project)){
             return unauthorized("Execute Job ${scheduledExecution.extid}")
         }
         def model = _prepareExecute(scheduledExecution, framework)
@@ -2517,7 +2518,7 @@ class ScheduledExecutionController  {
     def executeFragment = {
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         def scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_RUN], scheduledExecution.project)) {
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_RUN], scheduledExecution.project)) {
             return unauthorized("Execute Job ${scheduledExecution.extid}",true)
         }
         def model = _prepareExecute(scheduledExecution, framework)
@@ -2648,7 +2649,7 @@ class ScheduledExecutionController  {
 //            response.setStatus (404)
             return [error:"No Job found for id: " + params.id,code:404]
         }
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_RUN],
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_RUN],
             scheduledExecution.project)) {
             return [success:false,failed:true,error:'unauthorized',message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
         }
@@ -2671,7 +2672,7 @@ class ScheduledExecutionController  {
             flash.error=msg
             return [error:'unauthorized',message:msg]
         }
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_RUN],
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_RUN],
             scheduledExecution.project)) {
 //            unauthorized("Execute Job ${scheduledExecution.extid}")
             return [success: false,error:'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
@@ -2891,7 +2892,7 @@ class ScheduledExecutionController  {
             return chain(controller: 'api', action: 'renderError')
         }
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_READ], session.project)) {
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_READ], session.project)) {
             request.errorCode = "api.error.item.unauthorized"
             request.errorArgs = ['Read','Job ID', params.id]
             return new ApiController().renderError()
@@ -2922,7 +2923,7 @@ class ScheduledExecutionController  {
         }
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
 
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_RUN],
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_RUN],
             scheduledExecution.project)) {
             request.errorCode = "api.error.item.unauthorized"
             request.errorArgs = ['Run', 'Job ID', params.id]
@@ -2969,7 +2970,7 @@ class ScheduledExecutionController  {
             return chain(controller: 'api', action: 'error')
         }
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if(!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [UserAuth.WF_DELETE],
+        if(!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_DELETE],
             scheduledExecution.project)){
             request.errorCode = "api.error.item.unauthorized"
             request.errorArgs = ['Delete','Job ID', params.id]

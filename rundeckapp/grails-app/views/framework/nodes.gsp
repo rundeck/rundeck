@@ -1,3 +1,4 @@
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <html>
 <head>
     <g:set var="rkey" value="${g.rkey()}" />
@@ -612,7 +613,7 @@
     <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
 </g:if>
 <div id="nodesContent">
-    <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:'adhoc_run')}"/>
+    <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN)}"/>
     <g:set var="run_enabled" value="${run_authorized && total>0}"/>
 
     <g:if test="${session.project }">
@@ -697,9 +698,9 @@
                     <div>
 
                         <div class=" " style="text-align:right;">
-                            <g:submitButton  name="Filter" id="nodefiltersubmit"/>
+                            <g:submitButton  name="Filter" id="nodefiltersubmit" value="Filter"/>
 
-                            <g:submitButton name="Clear" onclick="return _clearNodeFilters();"/>
+                            <g:submitButton name="Clear" onclick="return _clearNodeFilters();" value="Clear"/>
                         </div>
                     </div>
                 </div>
@@ -710,7 +711,7 @@
 
 
                 <g:set var="adminauth"
-                       value="${auth.resourceAllowedTest(kind:'node',action:['refresh'])}"/>
+                       value="${auth.resourceAllowedTest(kind:'node',action:[AuthConstants.ACTION_REFRESH])}"/>
                 <g:if test="${adminauth}">
                     <g:if test="${selectedProject && selectedProject.shouldUpdateNodesResourceFile()}">
                         <span class="floatr"><g:link action="reloadNodes" params="${[project:selectedProject.name]}" class="action button" title="Click to update the resources.xml file from the source URL, for project ${selectedProject.name}" onclick="\$(this.parentNode).loading();">Update Nodes for project ${selectedProject.name}</g:link></span>

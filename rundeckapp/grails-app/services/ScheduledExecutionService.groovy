@@ -1,5 +1,3 @@
-import java.util.Collections;
-
 import javax.security.auth.Subject;
 
 import org.quartz.Scheduler
@@ -7,16 +5,16 @@ import org.quartz.JobDetail
 import org.quartz.Trigger
 import org.quartz.CronTrigger
 import org.quartz.TriggerUtils
-import org.quartz.Job
+
 import org.quartz.JobExecutionContext
 import org.quartz.InterruptableJob
 
-import com.dtolabs.rundeck.core.authentication.Username;
 import com.dtolabs.rundeck.core.authorization.Decision;
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.authentication.Group
+
 import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 
 /**
  *  ScheduledExecutionService manages scheduling jobs with the Quartz scheduler
@@ -334,7 +332,7 @@ class ScheduledExecutionService {
         def environment = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE+"project"),
             se.project))
         def Decision d = framework.getAuthorizationMgr().evaluate(resource, request.subject,
-            UserAuth.WF_READ, environment)
+            AuthConstants.ACTION_READ, environment)
         return d.isAuthorized()
     }
     def userAuthorizedForAdhoc(request,ScheduledExecution se, Framework framework){
@@ -342,7 +340,7 @@ class ScheduledExecutionService {
         def environment = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"),
             se.project))
         def Decision d = framework.getAuthorizationMgr().evaluate(resource, request.subject,
-            'adhoc_run', environment)
+            AuthConstants.ACTION_RUN, environment)
         return d.isAuthorized()
     }
 

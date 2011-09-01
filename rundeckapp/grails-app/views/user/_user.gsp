@@ -1,3 +1,4 @@
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <%--
  Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
 
@@ -57,7 +58,7 @@
                 <td><%=request.subject.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class).collect { it.name }.join(", ")%></td>
             </tr>
         </g:if>
-        <g:if test="${session.user==user.login && (auth.resourceAllowedTest(kind:'user',action:['admin'],context:'application'))}">
+        <g:if test="${session.user==user.login && (auth.resourceAllowedTest(kind:'user',action:[AuthConstants.ACTION_ADMIN],context:'application'))}">
             <g:set var="rkeytok" value="${g.rkey()}"/>
             <tr id="${rkeytok}" class="userapitoken">
                 <td>API Tokens:</td>

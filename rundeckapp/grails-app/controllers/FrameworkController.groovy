@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import org.codehaus.groovy.grails.web.servlet.mvc.GrailsParameterMap
 import com.dtolabs.rundeck.core.common.ProviderService
 import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 
 class FrameworkController  {
     FrameworkService frameworkService
@@ -312,7 +313,7 @@ class FrameworkController  {
     def performNodeReload = {String url=null->
         if(params.project){
             Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-            if(!frameworkService.authorizeProjectResource(framework,[type:'resource',kind:'node'],'refresh',params.project)){
+            if(!frameworkService.authorizeProjectResource(framework,[type:'resource',kind:'node'], AuthConstants.ACTION_REFRESH,params.project)){
                 def msg = "user: ${session.user} UNAUTHORIZED for performNodeReload"
                 log.error(msg)
                 flash.error = msg
@@ -581,7 +582,7 @@ class FrameworkController  {
             //cancel modification
             return redirect(controller: 'menu', action: 'admin')
         }
-        if (!frameworkService.authorizeApplicationResourceAll(framework, [type:'project',name:project], ['admin'])) {
+        if (!frameworkService.authorizeApplicationResourceAll(framework, [type:'project',name:project], [AuthConstants.ACTION_ADMIN])) {
             return unauthorized("Update Project ${project}")
         }
         def fproject = frameworkService.getFrameworkProject(project, framework)
@@ -720,7 +721,7 @@ class FrameworkController  {
             flash.error="Project parameter is required"
             return render(template: "/common/error")
         }
-        if (!frameworkService.authorizeApplicationResourceAll(framework, [type: 'project', name: project], ['admin'])) {
+        if (!frameworkService.authorizeApplicationResourceAll(framework, [type: 'project', name: project], [AuthConstants.ACTION_ADMIN])) {
             return unauthorized("Update Project ${project}")
         }
         def fproject = frameworkService.getFrameworkProject(project,framework)

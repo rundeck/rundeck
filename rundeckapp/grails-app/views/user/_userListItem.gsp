@@ -1,3 +1,4 @@
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <%--
  Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
 
@@ -36,7 +37,7 @@
             </g:if>
         </span>
 
-        <g:set var="adminauth" value="${auth.resourceAllowedTest(kind:'user',action:['admin'],context:'application')}"/>
+        <g:set var="adminauth" value="${auth.resourceAllowedTest(kind:'user',action:[AuthConstants.ACTION_ADMIN],context:'application')}"/>
         <g:if test="${adminauth}">
         <span class="useredit">
             <g:link action="edit" params="[login:user.login]"><g:img file="icon-tiny-edit.png" width="12px" height="12px"/></g:link>

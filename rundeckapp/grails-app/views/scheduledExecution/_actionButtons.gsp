@@ -1,3 +1,4 @@
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <%--
  Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
 
@@ -28,10 +29,10 @@
     <%-- evaluate auth for the job on demand --%>
     <g:set var="jobauthorizations" value="${[:]}"/>
     <%
-        [UserAuth.WF_DELETE,UserAuth.WF_RUN,UserAuth.WF_READ,UserAuth.WF_UPDATE].each{action->
+        [AuthConstants.ACTION_DELETE,AuthConstants.ACTION_RUN,AuthConstants.ACTION_READ,AuthConstants.ACTION_UPDATE].each{action->
             jobauthorizations[action]=auth.jobAllowedTest(job:scheduledExecution,action:action)?[idKey]:[]
         }
-        jobauthorizations[UserAuth.WF_CREATE]=auth.resourceAllowedTest(kind:'job',action: UserAuth.WF_CREATE)
+        jobauthorizations[AuthConstants.ACTION_CREATE]=auth.resourceAllowedTest(kind:'job',action: AuthConstants.ACTION_CREATE)
     %>
 </g:if>
 <g:set var="jobAuths" value="${ jobauthorizations }"/>
@@ -39,19 +40,19 @@
         <span class="group floatr" id="${ukey}jobDisplayButtons${scheduledExecution.id}">
             <g:if test="${!small }">
                 <g:if test="${!execPage}">
-                <g:if test="${jobAuths[UserAuth.WF_DELETE]?.contains(idKey) }">
+                <g:if test="${jobAuths[AuthConstants.ACTION_DELETE]?.contains(idKey) }">
                     <span class="icon button floatl" title="Delete ${g.message(code:'domain.ScheduledExecution.title')}" onclick="menus.showRelativeTo(this,'${ukey}jobDisplayDeleteConf${scheduledExecution.id}',-2,-2);return false;"><img src="${resource(dir:'images',file:'icon-small-removex.png')}" alt="delete" width="16px" height="16px"/></span>
                 </g:if>
                 </g:if>
-                <g:if test="${jobAuths[UserAuth.WF_CREATE] && jobAuths[UserAuth.WF_READ]?.contains(idKey) }">
+                <g:if test="${jobAuths[AuthConstants.ACTION_CREATE] && jobAuths[AuthConstants.ACTION_READ]?.contains(idKey) }">
                     <g:link controller="scheduledExecution" title="Copy Job" action="copy" id="${scheduledExecution.extid}" class="icon button floatl"><img src="${resource(dir:'images',file:'icon-small-copy.png')}" alt="copy" width="16px" height="16px"/></g:link>
                 </g:if>
                 <g:if test="${!execPage}">
-                <g:if test="${jobAuths[UserAuth.WF_UPDATE]?.contains(idKey) }">
+                <g:if test="${jobAuths[AuthConstants.ACTION_UPDATE]?.contains(idKey) }">
                     <g:link controller="scheduledExecution" title="Edit Job" action="edit" id="${scheduledExecution.extid}" class="icon button floatl"><img src="${resource(dir:'images',file:'icon-small-edit.png')}" alt="edit" width="16px" height="16px"/></g:link>
                 </g:if>
                 </g:if>
-                <g:if test="${jobAuths[UserAuth.WF_READ]?.contains(idKey) }">
+                <g:if test="${jobAuths[AuthConstants.ACTION_READ]?.contains(idKey) }">
                     <span class="icon action button textbtn floatl obs_bubblepopup" id="downloadlink" title="Download Job definition file"><img src="${resource(dir: 'images', file: 'icon-small-file.png')}" alt="download" width="13px" height="16px"/></span>
                     <div  id="downloadlink_popup" style="display:none;">
                         <span class="prompt">Select a format:</span>
@@ -62,7 +63,7 @@
                     </div>
                 </g:if>
             </g:if>
-            <g:if test="${jobAuthorized || jobAuths[UserAuth.WF_RUN]?.contains(idKey) }">
+            <g:if test="${jobAuthorized || jobAuths[AuthConstants.ACTION_RUN]?.contains(idKey) }">
                 <g:link controller="scheduledExecution" action="execute" id="${scheduledExecution.extid}" class="icon button floatl" onclick="loadExec(${scheduledExecution.id});return false;"><img src="${resource(dir:'images',file:'icon-small-run.png')}" title="Run ${g.message(code:'domain.ScheduledExecution.title')}&hellip;" alt="run" width="16px" height="16px"/></g:link>
             </g:if>
             <g:elseif test="${ !jobAuthorized }">

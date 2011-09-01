@@ -1,4 +1,4 @@
-<g:if test="${!options}">
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %><g:if test="${!options}">
     <g:set var="options" value="[job:true,user:true,stat:true,out:true,duration:true,cmdinf:true]"/>
 </g:if>
 <g:if test="${executions?.size()>0}">
@@ -154,7 +154,7 @@
                                     </g:if>
                                     <g:if test="${options?.duration}">
                                     <td id="cancelcol-${execution.id}">
-                                        <auth:jobAllowed job="${scheduledExecution}" name="${UserAuth.WF_KILL}">
+                                        <auth:jobAllowed job="${scheduledExecution}" name="${AuthConstants.ACTION_KILL}">
                                         <span  class="action button small textbtn" id="cancellink-${execution.id}" onclick="['cancelconf-${execution.id}','cancellink-${execution.id}'].each(Element.toggle)">Kill <g:message code="domain.ScheduledExecution.title"/> Now <img src="${resource(dir:'images',file:'icon-tiny-removex.png')}" alt="" width="12px" height="12px"/></span>
                                         <span id="cancelconf-${execution.id}" style="display:none" class="confirmMessage">
                                             Really kill this job?

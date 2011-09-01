@@ -1,3 +1,4 @@
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <script type="text/javascript">
 //<!--
 var menus = new MenuController();
@@ -100,7 +101,7 @@ function doCreateProject(){
         <span class="headright">
             <g:set var="adminauth" value="${false}"/>
             <g:if test="${session.project}">
-            <g:set var="adminauth" value="${auth.resourceAllowedTest(type:'project',name:session.project,action:['admin','read'],context:'application')}"/>
+            <g:set var="adminauth" value="${auth.resourceAllowedTest(type:'project',name:session.project,action:[AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_READ],context:'application')}"/>
             <g:if test="${adminauth}">
                 <g:link controller="menu" action="admin"><img src="${resource(dir:'images',file:'icon-small-admin.png')}" width="16px" height="16px" alt=""/>
                     Admin</g:link>

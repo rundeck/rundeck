@@ -3,6 +3,7 @@ import javax.servlet.http.HttpSession
 import java.security.SecureRandom
 import grails.converters.JSON
 import org.apache.commons.lang.RandomStringUtils
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 
 class UserController {
     UserService userService
@@ -47,7 +48,7 @@ class UserController {
     }
     def list={
         def Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-        if(!frameworkService.authorizeApplicationResourceType(framework,'user','admin')){
+        if(!frameworkService.authorizeApplicationResourceType(framework,'user', AuthConstants.ACTION_ADMIN)){
             flash.error="User Admin role required"
             flash.title="Unauthorized"
             return denied()
@@ -62,7 +63,7 @@ class UserController {
             params.login=session.user
         }
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if(params.login!=session.user && !frameworkService.authorizeApplicationResourceType(framework, 'user', 'admin')){
+        if(params.login!=session.user && !frameworkService.authorizeApplicationResourceType(framework, 'user', AuthConstants.ACTION_ADMIN)){
             flash.error="Unauthorized: admin role required"
             return render(template:"/common/error")
         }
@@ -90,7 +91,7 @@ class UserController {
         if(u){
            return redirect(action:edit)
         }
-        u = new User(login:params.login,authorization:UserAuth.createDefault())
+        u = new User(login:params.login)
         u.dashboardPref="1,2,3,4"
 
         def model=[user: u,newRegistration:true]
@@ -99,7 +100,7 @@ class UserController {
     def store={
 
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if(params.login!=session.user && !frameworkService.authorizeApplicationResourceType(framework, 'user', 'admin')) {
+        if(params.login!=session.user && !frameworkService.authorizeApplicationResourceType(framework, 'user', AuthConstants.ACTION_ADMIN)) {
             //require user_admin/admin if modifying a different user profile
             flash.error="Unauthorized: admin role required"
             return render(template:"/common/error")
@@ -124,7 +125,7 @@ class UserController {
         //check auth to view profile
         //default to current user profile
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if(params.login!=session.user && !frameworkService.authorizeApplicationResourceType(framework, 'user', 'admin')) {
+        if(params.login!=session.user && !frameworkService.authorizeApplicationResourceType(framework, 'user', AuthConstants.ACTION_ADMIN)) {
             flash.error="Unauthorized: admin role required"
             return render(template:"/common/error")
         }
@@ -164,7 +165,7 @@ class UserController {
         def login = params.login
         def result
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if (!frameworkService.authorizeApplicationResourceType(framework, 'user', 'admin')) {
+        if (!frameworkService.authorizeApplicationResourceType(framework, 'user', AuthConstants.ACTION_ADMIN)) {
             def error = "Unauthorized: admin role required"
             log.error error
             result=[result: false, error: error] 
@@ -222,7 +223,7 @@ class UserController {
         def user
         def token
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if (!frameworkService.authorizeApplicationResourceType(framework, 'user', 'admin')) {
+        if (!frameworkService.authorizeApplicationResourceType(framework, 'user', AuthConstants.ACTION_ADMIN)) {
             def error = "Unauthorized: admin role required"
             log.error error
             result = [result: false, error: error]
@@ -256,7 +257,7 @@ class UserController {
         def login = params.login
         def result
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if (!frameworkService.authorizeApplicationResourceType(framework, 'user', 'admin')) {
+        if (!frameworkService.authorizeApplicationResourceType(framework, 'user', AuthConstants.ACTION_ADMIN)) {
             def error = "Unauthorized: admin role required"
             log.error error
             result=[result: false, error: error]
