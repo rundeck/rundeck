@@ -1,10 +1,34 @@
-<policies>
-  <policy description="User group has access to run and kill jobs.">
-    <context project="*">
-      <command group="*" job="*" actions="workflow_run,workflow_kill"/>
-    </context>
-    <by>
-      <group name="user"/>
-    </by>
-  </policy>
-</policies>
+description: User project level access control.
+context:
+  project: '.*' # all projects
+for:
+  resource:
+    - equals:
+        kind: node
+      allow: [read] # allow read node sources
+    - equals:
+        kind: event
+      allow: [read,create] # allow read/create events
+  adhoc:
+    - allow: [run,kill] # allow running/killing adhoc jobs
+  job: 
+    - allow: [read,run,kill] # allow read/run/kill of all jobs
+by:
+  group: user
+
+---
+
+description: User Application level access control.
+context:
+  application: 'rundeck'
+for:
+  resource:
+    - equals:
+        kind: system
+      allow: [read] # allow read of system info
+  project:
+    - match:
+        name: '.*'
+      allow: [read] # allow view of all projects
+by:
+  group: user

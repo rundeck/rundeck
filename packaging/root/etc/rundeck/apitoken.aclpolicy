@@ -1,9 +1,37 @@
-description: API access via Token Authencation ACL
-
-rules: 
-  .*:
-      actions: '*'
-  
+description: API project level access control
+context:
+  project: '.*' # all projects
+for:
+  resource:
+    - equals:
+        kind: job
+      allow: [create] # allow create jobs
+    - equals:
+        kind: node
+      allow: [read,create,update,refresh] # allow refresh node sources
+    - equals:
+        kind: event
+      allow: [read,create] # allow read/create events
+  adhoc:
+    - allow: [run,kill] # allow running/killing adhoc jobs
+  job: 
+    - allow: [read,update,delete,run,kill] # allow read/write/delete/run/kill of all jobs
 by:
   group: api_token_group
 
+---
+
+description: API Application level access control
+context:
+  application: 'rundeck'
+for:
+  resource:
+    - equals:
+        kind: system
+      allow: [read] # allow read of system info
+  project:
+    - match:
+        name: '.*'
+      allow: [read] # allow view of all projects
+by:
+  group: api_token_group
