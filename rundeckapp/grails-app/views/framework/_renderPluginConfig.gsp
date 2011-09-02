@@ -55,9 +55,9 @@
             <g:expander key="${rkey}_inv">Properties</g:expander>
             <ul id="${rkey}_inv" style="display:none">
                 <g:each var="prop" in="${values}">
-                    <li>${prop.name.encodeAsHTML()}: ${prop.value.encodeAsHTML()}</li>
-                    <input type="hidden" name="${(prefix + 'config.' + prop.name).encodeAsHTML()}"
-                           value="${prop.value?.encodeAsHTML()}"/>
+                    <li>${prop?.key.encodeAsHTML()}: ${prop?.value.encodeAsHTML()}</li>
+                    <input type="hidden" name="${(prefix + 'config.' + prop?.key).encodeAsHTML()}"
+                           value="${prop?.value?.encodeAsHTML()}"/>
                 </g:each>
             </ul>
         </g:elseif>
