@@ -39,7 +39,7 @@
                     
                     <g:if test="${node.tags}">
                         <span class="nodetags">
-                            <g:each var="tag" in="${node.tags}">
+                            <g:each var="tag" in="${node.tags.sort()}">
                                 <span class="tag">${tag}</span>
                             </g:each>
                         </span>
