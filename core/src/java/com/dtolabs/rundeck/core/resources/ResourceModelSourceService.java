@@ -84,6 +84,8 @@ public class ResourceModelSourceService extends PluggableProviderRegistryService
             return nodesSourceFactory.createResourceModelSource(configuration);
         } catch (ConfigurationException e) {
             throw new ResourceModelSourceServiceException(e);
+        } catch (Throwable e){
+            throw new ResourceModelSourceServiceException(e);
         }
     }
 

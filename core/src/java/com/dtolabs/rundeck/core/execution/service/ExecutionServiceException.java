@@ -41,12 +41,12 @@ public class ExecutionServiceException extends Exception {
         this.serviceName = serviceName;
     }
 
-    public ExecutionServiceException(Exception cause, String serviceName) {
+    public ExecutionServiceException(Throwable cause, String serviceName) {
         super(cause);
         this.serviceName = serviceName;
     }
 
-    public ExecutionServiceException(String msg, Exception cause, String serviceName) {
+    public ExecutionServiceException(String msg, Throwable cause, String serviceName) {
         super(msg + " for Service: " + serviceName, cause);
         this.serviceName = serviceName;
     }

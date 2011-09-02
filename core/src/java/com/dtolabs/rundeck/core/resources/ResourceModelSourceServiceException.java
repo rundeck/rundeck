@@ -39,11 +39,11 @@ public class ResourceModelSourceServiceException extends ExecutionServiceExcepti
         super(msg, ResourceModelSourceService.SERVICE_NAME);
     }
 
-    public ResourceModelSourceServiceException(Exception cause) {
+    public ResourceModelSourceServiceException(Throwable cause) {
         super(cause, ResourceModelSourceService.SERVICE_NAME);
     }
 
-    public ResourceModelSourceServiceException(String msg, Exception cause) {
+    public ResourceModelSourceServiceException(String msg, Throwable cause) {
         super(msg, cause, ResourceModelSourceService.SERVICE_NAME);
 
     }
