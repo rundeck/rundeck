@@ -42,6 +42,9 @@ public class AdditiveListNodeSet implements INodeSet {
     }
 
     public void addNodeSet(final INodeSet nodeSet) {
+        if(null==nodeSet){
+            return;
+        }
         nodeSetList.add(nodeSet);
         nodeNames.addAll(nodeSet.getNodeNames());
         for (final String name : nodeSet.getNodeNames()) {
