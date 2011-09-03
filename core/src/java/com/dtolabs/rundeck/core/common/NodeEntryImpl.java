@@ -112,6 +112,11 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
         setAttribute(NAME, nodename);
     }
 
+    @Override
+    public String getNodename() {
+        return getAttribute(NAME);
+    }
+
     public Set getTags() {
         return tags;
     }
