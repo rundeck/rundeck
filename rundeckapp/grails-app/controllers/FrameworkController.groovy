@@ -588,6 +588,8 @@ class FrameworkController  {
             if (params.resourcesUrl) {
                 resourcesUrl=params.resourcesUrl
                 projProps[FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY] = params.resourcesUrl
+            }else{
+                removePrefixes<< FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY
             }
 
             if (params.defaultNodeExec) {
@@ -625,6 +627,8 @@ class FrameworkController  {
             if (params.sshkeypath) {
                 sshkeypath = params.sshkeypath
                 projProps[JschNodeExecutor.PROJ_PROP_SSH_KEYPATH] = sshkeypath
+            } else {
+                removePrefixes << JschNodeExecutor.PROJ_PROP_SSH_KEYPATH
             }
 
             //parse plugin config properties, and convert to project.properties
