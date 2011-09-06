@@ -2,6 +2,21 @@
 
 set -e
 
+setperm() {
+  local user="$1"
+  local group="$2"
+  local mode="$3"
+  local file="$4"
+  shift 4
+
+  # Only do something when no setting exists - if it was set, then it's already
+  # been unpacked using the appropriate ownership and permissions.
+  if ! dpkg-statoverride --list "$file" >/dev/null 2>&1; then
+    chown "$user":"$group" "$file"
+    chmod "$mode" "$file"
+  fi
+}
+
 case "$1" in
   configure)
     # If the package has default file it could be sourced, so that
@@ -15,8 +30,6 @@ case "$1" in
     [ -z "$SERVER_USER" ] && SERVER_USER=rundeck
     [ -z "$SERVER_NAME" ] && SERVER_NAME="Rundeck user account"
     [ -z "$SERVER_GROUP" ] && SERVER_GROUP=rundeck
-    [ -z "$SERVER_VAR" ] && SERVER_VAR=/var/rundeck
-    [ -z "$SERVER_TEMP" ] && SERVER_TEMP=/var/rundeck
 
     # create user to avoid running server as root
     # 1. create group if not existing
@@ -46,21 +59,16 @@ case "$1" in
                $SERVER_USER
 
     # 5. adjust file and directory permissions
-    if ! dpkg-statoverride --list $SERVER_HOME >/dev/null
-    then
-        chown -R $SERVER_USER:adm $SERVER_HOME
-        chmod u=rwx,g=rxs,o= $SERVER_HOME
-    fi
-    if ! dpkg-statoverride --list $SERVER_VAR >/dev/null
-    then
-        chown -R $SERVER_USER:adm $SERVER_VAR
-        chmod u=rwx,g=rxs,o= $SERVER_VAR
-    fi
-    if ! dpkg-statoverride --list $SERVER_TEMP >/dev/null
-    then
-        chown -R $SERVER_USER:adm $SERVER_TEMP
-        chmod u=rwx,g=rxs,o= $SERVER_TEMP
-    fi
+    setperm rundeck rundeck 0750 /var/lib/rundeck/work
+    setperm rundeck rundeck 0750 /var/lib/rundeck/data
+    setperm rundeck adm 2751 /var/lib/rundeck/logs
+    setperm rundeck rundeck 0750 /var/lib/rundeck/var/tmp
+    setperm rundeck rundeck 0750 /var/rundeck
+    setperm rundeck rundeck 0750 /var/rundeck/projects
+    setperm rundeck adm 2751 /var/log/rundeck
+    for file in `find /etc/rundeck -type f`; do
+      setperm rundeck rundeck 0640 $file
+    done
     ;;
 
   abort-upgrade|abort-remove|abort-deconfigure)
