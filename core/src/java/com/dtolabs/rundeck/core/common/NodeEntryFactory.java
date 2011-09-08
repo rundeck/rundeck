@@ -75,8 +75,14 @@ public class NodeEntryFactory {
             newmap.put("tags", set);
         } else if (null != newmap.get("tags") && newmap.get("tags") instanceof Collection) {
             Collection tags = (Collection) newmap.get("tags");
-            HashSet data = new HashSet(tags);
+            HashSet data = new HashSet();
+            for (final Object tag : tags) {
+                data.add(tag.toString());
+            }
             newmap.put("tags", data);
+        }else if (null != newmap.get("tags")) {
+            Object o = newmap.get("tags");
+            newmap.put("tags", new HashSet(Arrays.asList(o.toString())));
         }
         try {
             BeanUtils.populate(nodeEntry, newmap);
