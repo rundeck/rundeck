@@ -1,5 +1,5 @@
 Package: rundeck
-Version: 1.3
+Version: %VERSION%
 Section: utils
 Priority: optional
 Architecture: all

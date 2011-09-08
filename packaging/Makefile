@@ -66,6 +66,8 @@ deb:
 	@mkdir -p debdist/usr/share/man/man{1,5}
 	@mkdir -p debdist/usr/share/man/en/man{1,5}
 	@cp -R debroot/* debdist
+	@# set version
+	@cat debroot/DEBIAN/control | sed -e "s/%VERSION%/$(VERSION)/" > debdist/DEBIAN/control
 	@cp ../docs/en/manpages/man1/*.1.gz debdist/usr/share/man/man1
 	@cp ../docs/en/manpages/man5/*.5.gz debdist/usr/share/man/man5
 	@cp ../docs/en/manpages/man1/*.1.gz debdist/usr/share/man/en/man1
