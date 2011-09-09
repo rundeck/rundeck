@@ -6,3 +6,6 @@ rss.enabled=true
 grails.serverURL=http://${server.hostname}:${server.http.port}${server.web.context}
 dataSource.dbCreate = update
 dataSource.url = jdbc:hsqldb:file:${server.datastore.path};shutdown=true
+
+#note, make sure this is set to "true" if you are using Oracle or Mysql
+rundeck.v14.rdbsupport=true

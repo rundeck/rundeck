@@ -51,6 +51,10 @@ environments {
     }
     development{
         grails.serverURL="http://localhost:9090/rundeck"
+        rundeck.v14.rdbsupport = "true"
+    }
+    test {
+        rundeck.v14.rdbsupport = "true"
     }
 }
 

@@ -1,3 +1,5 @@
+import org.codehaus.groovy.grails.commons.ConfigurationHolder
+
 class User {
     String login
     String password
@@ -7,6 +9,12 @@ class User {
     Date dateCreated
     Date lastUpdated
     
+    static mapping = {
+        def config = ConfigurationHolder.config
+        if (config.rundeck.v14.rdbsupport == 'true') {
+            table "rduser"
+        }
+    }
     String dashboardPref
     String filterPref
     static hasMany = [reportfilters:ReportFilter,jobfilters:ScheduledExecutionFilter,nodefilters:NodeFilter]
