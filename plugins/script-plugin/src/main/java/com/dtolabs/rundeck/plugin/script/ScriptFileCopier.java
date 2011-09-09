@@ -196,7 +196,7 @@ public class ScriptFileCopier implements FileCopier, Describable {
         if (null != node.getAttributes().get(DIR_ATTRIBUTE)) {
             dirstring = node.getAttributes().get(DIR_ATTRIBUTE);
         }
-        if (null != dirstring) {
+        if (null != dirstring && !"".equals(dirstring)) {
             workingdir = new File(dirstring);
         }
 

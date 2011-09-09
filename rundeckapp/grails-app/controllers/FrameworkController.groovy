@@ -25,6 +25,7 @@ import org.codehaus.groovy.grails.web.servlet.mvc.GrailsParameterMap
 import com.dtolabs.rundeck.core.common.ProviderService
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import com.dtolabs.rundeck.core.plugins.configuration.Description
 
 class FrameworkController  {
     FrameworkService frameworkService
@@ -483,7 +484,9 @@ class FrameworkController  {
                     projProps[sourceConfigPrefix + '.' + count + '.type'] = type
                     def props = parseResourceModelConfigInput(provider.description, prefixKey + '.' + ndx + '.', params)
                     props.keySet().each {k ->
-                        projProps[sourceConfigPrefix + '.' + count + '.config.' + k] = props[k]
+                        if (props[k]) {
+                            projProps[sourceConfigPrefix + '.' + count + '.config.' + k] = props[k]
+                        }
                     }
                     count++
                     configs << [type: type, props: props]
@@ -544,20 +547,24 @@ class FrameworkController  {
             prefixKey:prefixKey,configs:configs]
     }
 
-    private def addProjectServiceProperties(GrailsParameterMap params, Properties projProps, final def ndx, final String param, final String default_provider_prop, final ProviderService service) {
+    private def addProjectServiceProperties(GrailsParameterMap params, Properties projProps, final def ndx, final String param, final String default_provider_prop, final ProviderService service, Set removePrefixes=null) {
         def type, config
         (type, config) = parseServiceConfigInput(params, param, ndx)
         projProps[default_provider_prop] = type
 
         final executor = service.providerOfType(type)
-        final desc = executor.description
+        final Description desc = executor.description
         addPropertiesForDescription(config, projProps, desc)
+        if(null!=removePrefixes) {
+            removePrefixes.addAll(desc.getPropertiesMapping().values())
+        }
     }
 
     private List parseServiceConfigInput(GrailsParameterMap params, String param, ndx) {
         final nparams = params."${param}"?."${ndx}"
         def type = nparams?.type
         def config = nparams?.config
+        config = config?.subMap(config?.keySet().findAll{config[it]})
         return [type, config]
     }
 
@@ -613,7 +620,7 @@ class FrameworkController  {
                     error = validation.error ?: "Node Executor configuration was invalid"
                 }else{
                     try {
-                        addProjectServiceProperties(params, projProps, ndx, "nodeexec", NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY, framework.getNodeExecutorService())
+                        addProjectServiceProperties(params, projProps, ndx, "nodeexec", NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY, framework.getNodeExecutorService(), removePrefixes)
                     } catch (ExecutionServiceException e) {
                         log.error(e.message)
                         error = e.getMessage()
@@ -629,7 +636,7 @@ class FrameworkController  {
                     error=validation.error?:"File copier configuration was invalid"
                 }else{
                     try {
-                        addProjectServiceProperties(params, projProps, ndx, "fcopy", FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY,framework.getFileCopierService())
+                        addProjectServiceProperties(params, projProps, ndx, "fcopy", FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY,framework.getFileCopierService(), removePrefixes)
                     } catch (ExecutionServiceException e) {
                         log.error(e.message)
                         error = e.getMessage()
@@ -667,7 +674,9 @@ class FrameworkController  {
                 projProps[sourceConfigPrefix + '.' + count + '.type'] = type
                 def props = parseResourceModelConfigInput(description, prefixKey + '.' + ndx + '.', params)
                 props.keySet().each {k ->
-                    projProps[sourceConfigPrefix + '.' + count + '.config.' + k] = props[k]
+                    if(props[k]){
+                        projProps[sourceConfigPrefix + '.' + count + '.config.' + k] = props[k]
+                    }
                 }
                 count++
                 configs << [type: type, props: props]
