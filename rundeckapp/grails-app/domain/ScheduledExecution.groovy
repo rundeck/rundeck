@@ -71,12 +71,6 @@ class ScheduledExecution extends ExecutionContext {
         adhocFilepath(nullable:true, blank:true)
         uuid(unique: true, nullable:true, blank:false)
     }
-    static mapping = {
-        def config = ConfigurationHolder.config
-        if (config.rundeck.v14.rdbsupport == 'true') {
-            user column: "rduser"
-        }
-    }
     public static final daysofweeklist = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
     public static final monthsofyearlist = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 
