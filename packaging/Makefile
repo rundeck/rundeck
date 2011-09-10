@@ -6,6 +6,9 @@ endif
 ifndef RELEASE
 RELEASE=$(shell grep version.release.number= ${PWD}/../version.properties | cut -d= -f 2)
 endif
+ifndef TAG
+TAG=$(shell grep version.tag= ${PWD}/../version.properties | cut -d= -f 2)
+endif
 
 TAG?=snapshot
 
@@ -14,7 +17,7 @@ RPMBUILD_DEFINES+= --define "_version ${VERSION}"
 RPMBUILD_DEFINES+= --define "_release ${RELEASE}"
 
 ifndef BUILD_NUMBER
-ALPHATAG?=$(shell date "+%Y%m%d%H%M")$(TAG)
+ALPHATAG?=$(TAG)-$(shell date "+%Y%m%d%H%M")
 else
 ALPHATAG?=$(TAG)
 RPMBUILD_DEFINES+= --define "_buildnumber $(BUILD_NUMBER)"
