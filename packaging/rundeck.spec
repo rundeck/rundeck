@@ -91,7 +91,7 @@ fi
 /var/lib/rundeck/cli/rundeck-core-%{version}.jar
 /var/lib/rundeck/cli/xerces-2.6.0.jar
 /var/lib/rundeck/cli/xml-apis-2.6.0.jar
-/var/lib/rundeck/cli/snakeyaml-1.7.jar
+/var/lib/rundeck/cli/snakeyaml-1.9.jar
 
 # CLI Tools
 %attr(755, root, root) /usr/bin/run
