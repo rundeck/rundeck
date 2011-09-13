@@ -14,6 +14,10 @@ Documentation for Rundeck is available below.  For more information see:
 
 * [Rundeck User Manual](RunDeck-Guide.html)
 
+## Upgrading
+
+* [Upgrade Guide](upgrading/index.html)
+
 ## Rundeck API
 
 * [Rundeck API](api/index.html)

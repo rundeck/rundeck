@@ -22,16 +22,22 @@ $(DIST)/html : dist
 $(DIST)/html/api : $(DIST)/html
 	mkdir -p $(DIST)/html/api
 
-html : $(DIST)/html/api
+$(DIST)/html/upgrading : $(DIST)/html
+	mkdir -p $(DIST)/html/upgrading
+
+html : $(DIST)/html/api $(DIST)/html/upgrading
 	@ $(ECHO) Generating HTML book version $(VERSION)
 	# set version
 	@sed "s/@VERSION@/$(VERSION)/" title.txt.template > title.txt
 	$(PANDOC) --number-sections --toc -s title.txt 0[0-9]-*/*.md 1[0-9]-*/*.md --css=$(CSS) --template=templates/html.template --include-before=templates/before.html --include-after=templates/after.html -o $(DIST)/html/RunDeck-Guide.html
 	@sed "s/@VERSION@/$(APIVERS)/" api/title.txt.template > api/title.txt
 	$(PANDOC) --number-sections --toc -s api/title.txt api/*.md --css=$(CSS) --template=templates/html.template --include-before=templates/before.html --include-after=templates/after.html -o $(DIST)/html/api/index.html
-	-rm title.txt api/title.txt
+	@sed "s/@VERSION@/$(VERSION)/" upgrading/title.txt.template > upgrading/title.txt
+	$(PANDOC) --number-sections --toc -s upgrading/title.txt upgrading/*.md --css=$(CSS) --template=templates/html.template --include-before=templates/before.html --include-after=templates/after.html -o $(DIST)/html/upgrading/index.html
+	-rm title.txt api/title.txt upgrading/title.txt
 	cp $(CSS) $(DIST)/html
 	cp $(CSS) $(DIST)/html/api/
+	cp $(CSS) $(DIST)/html/upgrading/
 
 $(DIST)/html/figures : dist
 	mkdir -p $(DIST)/html/figures

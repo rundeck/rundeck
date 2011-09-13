@@ -296,6 +296,10 @@ to the `java` command:
 
 For more information about using SSL, see [Administration - Configuring Rundeck for SSL](#configuring-rundeck-for-ssl)
 
+## Upgrading RunDeck
+
+If you are upgrading RunDeck from a previous version, please read the [RunDeck Upgrade Guide](upgrading/index.html).
+
 ## First-Time Setup
 
 ### Logins 
