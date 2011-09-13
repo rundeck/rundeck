@@ -157,6 +157,10 @@ echo "OK"
 
 echo "TEST: Report execution status failed..."
 
+# sleep 1 second to increment date value
+sleep 1
+xtime=$(date "+%F-%T")
+
 reportparams="title=test-failed&status=failed&nodesuccesscount=1&nodefailcount=3&summary=test-failed+is+ok+${xtime}"
 
 params="project=${proj}&${reportparams}"
