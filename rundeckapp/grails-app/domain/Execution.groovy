@@ -1,4 +1,4 @@
-
+import org.codehaus.groovy.grails.commons.ConfigurationHolder
 /**
 * Execution
 */
@@ -48,6 +48,18 @@ class Execution extends ExecutionContext {
         abortedby(nullable:true, blank:true)
     }
 
+    static mapping = {
+        def config = ConfigurationHolder.config
+        if (config.rundeck.v14.rdbsupport == 'true') {
+
+            //mapping overrides superclass, so we need to relist these
+            user column: "rduser"
+            argString type: 'text'
+            
+            failedNodeList type: 'text'
+            outputfilepath type: 'text'
+        }
+    }
 
 
     public String toString() {

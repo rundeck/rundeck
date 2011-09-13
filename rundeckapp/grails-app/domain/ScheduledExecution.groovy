@@ -75,8 +75,16 @@ class ScheduledExecution extends ExecutionContext {
         def config = ConfigurationHolder.config
         if (config.rundeck.v14.rdbsupport == 'true') {
             user column: "rduser"
+            argString type: 'text'
+            
+            notifySuccessRecipients type: 'text'
+            notifyFailureRecipients type: 'text'
+            notifySuccessUrl type: 'text'
+            notifyFailureUrl type: 'text'
         }
     }
+
+
     public static final daysofweeklist = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
     public static final monthsofyearlist = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 
