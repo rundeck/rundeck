@@ -6,7 +6,8 @@ import com.dtolabs.rundeck.core.authentication.Username;
 import com.dtolabs.rundeck.core.authentication.Group;
 import com.dtolabs.rundeck.core.authorization.Attribute;
 import com.dtolabs.rundeck.core.authorization.Authorization
-import com.dtolabs.rundeck.core.authorization.Decision;
+import com.dtolabs.rundeck.core.authorization.Decision
+import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
 
 class AuthTagLib {
     def static namespace="auth"
@@ -46,7 +47,7 @@ class AuthTagLib {
         
         def resource = ["job": attrs.job?.jobName, "group": (attrs.job?.groupPath ?: ""), type: 'job']
 
-        def env = Collections.singleton(new Attribute(URI.create("http://dtolabs.com/rundeck/env/project"), session.project))
+        def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE+"project"), session.project))
 
         def decision = authr.evaluate(resource, request.subject, action, env)
         
@@ -81,7 +82,7 @@ class AuthTagLib {
 
         def resource = [ type: 'adhoc']
 
-        def env = Collections.singleton(new Attribute(URI.create("http://dtolabs.com/rundeck/env/project"), session.project))
+        def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), session.project))
 
         def decision = authr.evaluate(resource, request.subject, action, env)
 
@@ -121,9 +122,9 @@ class AuthTagLib {
 
         def env
         if ('application'==attrs.context){
-            env=Collections.singleton(new Attribute(URI.create("http://dtolabs.com/rundeck/env/application"), 'rundeck'))
+            env=Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"application"), 'rundeck'))
         }else{
-            env=Collections.singleton(new Attribute(URI.create("http://dtolabs.com/rundeck/env/project"), session.project))
+            env=Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), session.project))
         }
         def resource = [type: attrs.type?:'resource']
         def tagattrs=[:]
@@ -182,9 +183,9 @@ class AuthTagLib {
         def Authorization authr = framework.getAuthorizationMgr()
         def env
         if ('application' == attrs.context) {
-            env = Collections.singleton(new Attribute(URI.create("http://dtolabs.com/rundeck/env/application"), 'rundeck'))
+            env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"application"), 'rundeck'))
         } else {
-            env = Collections.singleton(new Attribute(URI.create("http://dtolabs.com/rundeck/env/project"), session.project))
+            env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), session.project))
         }
         def resource = [type: attrs.type ?: 'resource']
         def tagattrs = [:]
@@ -234,7 +235,7 @@ class AuthTagLib {
 
         def Set resources = [[type: 'adhoc']]
 
-        def env = Collections.singleton(new Attribute(URI.create("http://dtolabs.com/rundeck/env/project"), session.project))
+        def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), session.project))
 
 
         def decisions = authr.evaluate(resources, request.subject, tests, env)
@@ -281,7 +282,7 @@ class AuthTagLib {
         
         def Set resources = [ ["job": attrs.job?.jobName, "group": (attrs.job?.groupPath ?: ""), type:'job'] ]
 
-        def env = Collections.singleton(new Attribute(URI.create("http://dtolabs.com/rundeck/env/project"), session.project))
+        def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), session.project))
 
 
         def decisions = authr.evaluate(resources, request.subject, tests, env)
