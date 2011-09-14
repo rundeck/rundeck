@@ -69,7 +69,8 @@ class ScheduledExecutionController  {
     def list = {redirect(action:index,params:params) }
 
     def groupTreeFragment = {
-        def tree = scheduledExecutionService.getGroupTree()
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        def tree = scheduledExecutionService.getGroupTree(params.project,framework)
         render(template:"/menu/groupTree",model:[jobgroups:tree,jscallback:params.jscallback])
     }
 
@@ -1464,8 +1465,9 @@ class ScheduledExecutionController  {
             unauthorized("Create a Job")
             return [success: false]
         }
-        def scheduledExecution = _dosave(params,changeinfo)
-        if(scheduledExecution.id){
+        def result = _dosave(params,changeinfo)
+        def scheduledExecution = result.scheduledExecution
+        if(result.success && scheduledExecution && scheduledExecution.id){
             params.id=scheduledExecution.extid
             logJobChange(changeinfo, scheduledExecution.properties)
             if(!scheduledExecution.scheduled){
@@ -1475,7 +1477,9 @@ class ScheduledExecutionController  {
             }
         }else{
 
-            scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
+            if(scheduledExecution){
+                scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
+            }
             flash.message=g.message(code:'ScheduledExecutionController.save.failed')
             return render(view:'create',model:[scheduledExecution:scheduledExecution,params:params, projects: frameworkService.projects(framework)])
         }
@@ -2181,16 +2185,23 @@ class ScheduledExecutionController  {
                 params.jobName="Inline Script Job"
             }
         }
+
         def result= _dovalidate(params instanceof ScheduledExecution?params.properties:params)
         def scheduledExecution=result.scheduledExecution
         failed=result.failed
         //try to save workflow
+
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_CREATE], session.project)) {
+            scheduledExecution.discard()
+            return [success: false, error: "Unauthorized: Create Job ${scheduledExecution.generateFullName()}", unauthorized: true, scheduledExecution:scheduledExecution]
+        }
         if(!failed && null!=scheduledExecution.workflow){
             if(!scheduledExecution.workflow.save(flush:true)){
                 log.error(scheduledExecution.workflow.errors.allErrors.collect{g.message(error:it)}.join("\n"))
                 failed=true;
             }
         }
+
         //set UUID if not submitted
         if(!scheduledExecution.uuid){
             scheduledExecution.uuid=UUID.randomUUID().toString()
@@ -2216,24 +2227,34 @@ class ScheduledExecutionController  {
             session.editWF?.remove('_new')
             session.undoWF?.remove('_new')
             session.redoWF?.remove('_new')
-            return scheduledExecution
+            return [success:true,scheduledExecution: scheduledExecution]
 
         } else {
             scheduledExecution.discard()
-            return scheduledExecution
+            return [success:false,scheduledExecution: scheduledExecution]
         }
     }
 
     def save = {
         def changeinfo=[user:session.user,change:'create',method:'save']
-        def scheduledExecution = _dosave(params,changeinfo)
-        if(scheduledExecution.id){
+        def result = _dosave(params,changeinfo)
+        def scheduledExecution = result.scheduledExecution
+        if(result.success && scheduledExecution.id){
             flash.savedJob=scheduledExecution
             flash.savedJobMessage="Created new Job"
             logJobChange(changeinfo,scheduledExecution.properties)
             redirect(controller:'scheduledExecution',action:'show',params:[id:scheduledExecution.extid])
+        }else if(result.unauthorized){
+            if(scheduledExecution){
+                scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
+            }
+            request.message=result.error
+            Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+            render(view:'create',model:[scheduledExecution:scheduledExecution,params:params, projects: frameworkService.projects(framework)])
         }else{
-            scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
+            if(scheduledExecution){
+                scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
+            }
             request.message=g.message(code:'ScheduledExecutionController.save.failed')
             Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
             render(view:'create',model:[scheduledExecution:scheduledExecution,params:params, projects: frameworkService.projects(framework)])
@@ -2364,9 +2385,12 @@ class ScheduledExecutionController  {
                 }else{
                     try{
                         jobchange.change='create'
-                        scheduledExecution = _dosave(jobdata, jobchange)
-                        if(scheduledExecution && scheduledExecution.hasErrors()){
+                        def result = _dosave(jobdata, jobchange)
+                        scheduledExecution = result.scheduledExecution
+                        if(!result.success && scheduledExecution && scheduledExecution.hasErrors()){
                             errmsg = "Validation errors"
+                        }else if(!result.success){
+                            errmsg = result.error?:"Failed to save job"
                         }else{
                             logJobChange(jobchange, scheduledExecution.properties)
                         }
@@ -2376,8 +2400,10 @@ class ScheduledExecutionController  {
                         scheduledExecution=jobdata
                         errmsg=e.getMessage()
                     }
-                    if(!scheduledExecution.id){
+                    if(scheduledExecution && !scheduledExecution.id){
                         errjobs<<[scheduledExecution:scheduledExecution,entrynum:i,errmsg:errmsg]
+                    }else if (!scheduledExecution ){
+                        errjobs<<[scheduledExecution:jobdata,entrynum:i,errmsg:errmsg]
                     }else{
                         jobs<<scheduledExecution
                         jobsi<<[scheduledExecution:scheduledExecution, entrynum:i]

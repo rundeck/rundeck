@@ -10,6 +10,7 @@ import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschNodeExecutor
 import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
 
 class MenuController {
     FrameworkService frameworkService
@@ -248,7 +249,7 @@ class MenuController {
         // Filter the groups by what the user is authorized to see.
 
         def authorization = frameworkService.getFrameworkFromUserSession(request.session, request).getAuthorizationMgr()
-        def env = Collections.singleton(new Attribute(URI.create("http://dtolabs.com/rundeck/env/project"), session.project))
+        def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), session.project))
         def decisions = authorization.evaluate(res, request.subject, new HashSet([AuthConstants.ACTION_READ,AuthConstants.ACTION_DELETE,AuthConstants.ACTION_RUN,AuthConstants.ACTION_UPDATE,AuthConstants.ACTION_KILL]), env)
         log.debug("listWorkflows(evaluate): "+(System.currentTimeMillis()-preeval));
 

@@ -993,6 +993,7 @@ Type      Properties                         Actions  Description
 "                                            `delete` Delete a job
 "                                            `run`    Run a job
 "                                            `kill`   Kill a running job
+"                                            `create` Create the matching job
 `node`    "rundeck_server", "nodename", ...  `read`   View the node in the UI
 "                                            `run`    Run jobs/adhoc on the node
 ----------------------------

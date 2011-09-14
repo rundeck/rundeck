@@ -226,14 +226,28 @@ class ScheduledExecutionService {
     /**
      * return a map of defined group path to count of the number of jobs with that exact path
      */
-    def getGroups(){
-        def groups = ScheduledExecution.executeQuery("select distinct se.groupPath, count(*) from ScheduledExecution se where se.groupPath is not null group by se.groupPath" )
+    def getGroups(project, Framework framework){
         def groupMap=[:]
 
-        groups.each{
-            def l = Arrays.asList(it)
-            if(l[0]){
-                groupMap[l[0]]=l[1]
+        //collect all jobs and authorize the user for the set of available Job actions
+        Set res = new HashSet()
+        def schedlist= ScheduledExecution.list()
+        schedlist.each { ScheduledExecution sched ->
+            res.add(["job": sched.jobName, "group": sched.groupPath ?: '', type: 'job'])
+        }
+        // Filter the groups by what the user is authorized to see.
+
+        def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE+"project"), project))
+        def decisions = framework.getAuthorizationMgr().evaluate(res, framework.getAuthenticationMgr().subject,
+            new HashSet([AuthConstants.ACTION_READ]), env)
+
+        decisions.each{
+            if(it.authorized){
+                if(null!= groupMap[it.resource['group']]){
+                    groupMap[it.resource['group']]= groupMap[it.resource['group']]+1
+                }else{
+                    groupMap[it.resource['group']]=1
+                }
             }
         }
         return groupMap
@@ -308,8 +322,8 @@ class ScheduledExecutionService {
           ]
      * </pre>
      */
-    def Map getGroupTree(){
-        def groupMap = getGroups()
+    def Map getGroupTree(project, Framework framework){
+        def groupMap = getGroups(project, framework)
         def tree=[:]
         groupMap.keySet().each{
             tree[it]=[]

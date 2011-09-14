@@ -407,7 +407,7 @@ var applinks={
                         'groupChooserContent',
                         '${createLink(controller:"scheduledExecution",action:"groupTreeFragment")}',
                         {
-                        parameters: "jscallback=groupChosen",
+                        parameters: {jscallback:"groupChosen",project:"${session.project.encodeAsJavaScript()}"},
                          onSuccess: function(transport) {
                             new MenuController().showRelativeTo(elem,'groupChooser');
                          },

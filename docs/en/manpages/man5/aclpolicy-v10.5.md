@@ -307,7 +307,7 @@ This document grants full permissions to an 'admin' role:
       adhoc:
         - allow: [run,kill] # allow running/killing adhoc jobs
       job: 
-        - allow: [read,update,delete,run,kill] # allow read/write/delete/run/kill of all jobs
+        - allow: [create,read,update,delete,run,kill] # allow create/read/write/delete/run/kill of all jobs
     by:
       group: admin
     

@@ -1,6 +1,7 @@
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %><g:set var="wasSaved" value="${(params?.saved=='true') || iscopy  || scheduledExecution?.id || scheduledExecution?.jobName}"/>
 
 <div class="pageBody form">
+    <g:render template="/common/errorFragment"/>
     <g:form method="post" onsubmit="if(typeof(validateJobEditForm)=='function'){return validateJobEditForm(this);}">
         <g:render template="edit" model="['scheduledExecution':scheduledExecution, 'crontab':crontab,authorized:authorized]"/>
         <div class="buttons">

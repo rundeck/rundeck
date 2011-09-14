@@ -45,6 +45,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         fwkControl.demand.existsFrameworkProject {project, framework -> return true }
         fwkControl.demand.authorizeProjectResourceAll{framework, resource, actions, project-> return true}
+        fwkControl.demand.authorizeProjectJobAll {framework, scheduledExecution, actions, project -> return true}
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         sec.frameworkService = fwkControl.createMock()
@@ -105,6 +106,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         fwkControl.demand.existsFrameworkProject {project, framework -> return true }
         fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.authorizeProjectJobAll {framework, scheduledExecution, actions, project -> return true}
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         sec.frameworkService = fwkControl.createMock()
@@ -166,6 +168,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
         fwkControl.demand.existsFrameworkProject{project,framework-> return true }
         fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.authorizeProjectJobAll {framework, scheduledExecution, actions, project -> return true}
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         sec.frameworkService=fwkControl.createMock()
@@ -220,6 +223,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         fwkControl.demand.existsFrameworkProject {project, framework -> return true }
         fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.authorizeProjectJobAll {framework, scheduledExecution, actions, project -> return true}
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         sec.frameworkService = fwkControl.createMock()
@@ -451,6 +455,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
         fwkControl.demand.existsFrameworkProject{project,framework-> return true }
         fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.authorizeProjectJobAll {framework, scheduledExecution, actions, project -> return true}
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         sec.frameworkService=fwkControl.createMock()
@@ -524,6 +529,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
         fwkControl.demand.existsFrameworkProject{project,framework-> return true }
         fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.authorizeProjectJobAll {framework, scheduledExecution, actions, project -> return true}
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         sec.frameworkService=fwkControl.createMock()
@@ -592,6 +598,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
         fwkControl.demand.existsFrameworkProject{project,framework-> return true }
         fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.authorizeProjectJobAll {framework, scheduledExecution, actions, project -> return true}
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         sec.frameworkService=fwkControl.createMock()
@@ -661,6 +668,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
         fwkControl.demand.existsFrameworkProject{project,framework-> return true }
         fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.authorizeProjectJobAll {framework, scheduledExecution, actions, project -> return true}
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         sec.frameworkService=fwkControl.createMock()

@@ -89,7 +89,7 @@ class ScheduledExecution extends ExecutionContext {
     public static final daysofweeklist = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
     public static final monthsofyearlist = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 
-    String toString() { "$jobName - $description" }
+    String toString() { generateFullName()+" - $description" }
     Map toMap(){
         HashMap map = new HashMap()
         map.name=jobName
