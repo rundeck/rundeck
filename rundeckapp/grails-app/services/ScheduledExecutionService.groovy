@@ -508,6 +508,9 @@ class ScheduledExecutionService {
         jobDetail.setDescription(se.description)
         jobDetail.getJobDataMap().put("scheduledExecutionId",se.id.toString())
         jobDetail.getJobDataMap().put("rdeck.base",frameworkService.getRundeckBase())
+        if(se.scheduled){
+            jobDetail.getJobDataMap().put("userRoles",se.userRoleList)
+        }
 //            jobDetail.addJobListener("sessionBinderListener")
         jobDetail.addJobListener("defaultGrailsServiceInjectorJobListener")
         return jobDetail

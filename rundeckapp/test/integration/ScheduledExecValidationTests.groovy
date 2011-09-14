@@ -17,6 +17,9 @@ import grails.test.GrailsUnitTestCase
 import com.dtolabs.rundeck.core.common.Framework
 import org.springframework.mock.web.MockMultipartHttpServletRequest
 import org.springframework.mock.web.MockMultipartFile
+import javax.security.auth.Subject
+import com.dtolabs.rundeck.core.authentication.Username
+import com.dtolabs.rundeck.core.authentication.Group
 
 /*
  * ScheduledExecValidationTests.java
@@ -2243,8 +2246,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
     }
 
     public void testDoUpdateScheduled(){
-        def sec = new ScheduledExecutionController()
         if(true){//test set scheduled with crontabString
+            def sec = new ScheduledExecutionController()
             def se = new ScheduledExecution(jobName:'monkey1',project:'testProject',description:'blah',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand')
             se.save()
 
@@ -2275,7 +2278,12 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertNotNull(schedEx)
             }
             sec.scheduledExecutionService=sesControl.createMock()
-
+            final subject = new Subject()
+            subject.principals << new Username('test')
+            ['userrole','test'].each { group ->
+                subject.principals << new Group(group);
+            }
+            sec.request.setAttribute("subject", subject)
             def params=[id:se.id.toString(),jobName:'monkey1',project:'testProject',description:'blah',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand',scheduled:true,crontabString:'0 21 */4 */4 */6 ? 2010-2040',useCrontabString:'true']
             def results=sec._doupdate(params)
             def succeeded=results.success
@@ -2300,9 +2308,12 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertEquals '*/6',execution.month
             assertEquals '?',execution.dayOfWeek
             assertEquals '2010-2040',execution.year
+            assertTrue execution.userRoles.contains('userrole')
+            assertTrue execution.userRoles.contains('test')
 
         }
         if(true){//test set scheduled with invalid crontabString (invalid dayOfMonth/dayOfWeek combo)
+            def sec = new ScheduledExecutionController()
             def se = new ScheduledExecution(jobName:'monkey1',project:'testProject',description:'blah',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand')
             se.save()
 
@@ -2349,6 +2360,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
         }
         if(true){//test set scheduled with invalid crontabString (invalid dayOfMonth/dayOfWeek combo, two ?)
+            def sec = new ScheduledExecutionController()
             def se = new ScheduledExecution(jobName:'monkey1',project:'testProject',description:'blah',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand')
             se.save()
 
@@ -2395,6 +2407,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
         }
         if(true){//test set scheduled with invalid crontabString (invalid year char)
+            def sec = new ScheduledExecutionController()
             def se = new ScheduledExecution(jobName:'monkey1',project:'testProject',description:'blah',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand')
             se.save()
 
@@ -2438,6 +2451,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
         }
         if(true){//test set scheduled with invalid crontabString  (too few components)
+            def sec = new ScheduledExecutionController()
             def se = new ScheduledExecution(jobName:'monkey1',project:'testProject',description:'blah',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand')
             se.save()
 
@@ -2481,6 +2495,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
         }
         if(true){//test set scheduled with invalid crontabString  (wrong seconds value)
+            def sec = new ScheduledExecutionController()
             def se = new ScheduledExecution(jobName:'monkey1',project:'testProject',description:'blah',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand')
             se.save()
 
@@ -2524,6 +2539,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
         }
         if(true){//test set scheduled with invalid crontabString  (wrong minutes value)
+            def sec = new ScheduledExecutionController()
             def se = new ScheduledExecution(jobName:'monkey1',project:'testProject',description:'blah',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand')
             se.save()
 
@@ -2567,6 +2583,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
         }
         if(true){//test set scheduled with invalid crontabString  (wrong hour value)
+            def sec = new ScheduledExecutionController()
             def se = new ScheduledExecution(jobName:'monkey1',project:'testProject',description:'blah',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand')
             se.save()
 
@@ -2610,6 +2627,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
         }
         if(true){//test set scheduled with invalid crontabString  (wrong day of month value)
+            def sec = new ScheduledExecutionController()
             def se = new ScheduledExecution(jobName:'monkey1',project:'testProject',description:'blah',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand')
             se.save()
 
@@ -2653,6 +2671,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
         }
         if(true){//test set scheduled with invalid crontabString  (wrong month value)
+            def sec = new ScheduledExecutionController()
             def se = new ScheduledExecution(jobName:'monkey1',project:'testProject',description:'blah',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand')
             se.save()
 
@@ -2696,6 +2715,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
         }
         if(true){//test set scheduled with invalid crontabString  (wrong day of week value)
+            def sec = new ScheduledExecutionController()
             def se = new ScheduledExecution(jobName:'monkey1',project:'testProject',description:'blah',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand')
             se.save()
 
@@ -2768,7 +2788,12 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertNotNull(schedEx)
             }
             sec.scheduledExecutionService=sesControl.createMock()
-
+            final subject = new Subject()
+            subject.principals << new Username('test')
+            ['user'].each { group ->
+                subject.principals << new Group(group);
+            }
+            sec.request.setAttribute("subject", subject)
             def params=new ScheduledExecution(jobName:'monkey1',project:'testProject',description:'blah',
                 workflow: new Workflow(commands:[new CommandExec(adhocRemoteString:'test command',adhocExecution:true)]),
                 scheduled:true,crontabString:'0 21 */4 */4 */6 ? 2010-2040',useCrontabString:'true')
@@ -2825,7 +2850,12 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 assertNotNull(schedEx)
             }
             sec.scheduledExecutionService=sesControl.createMock()
-
+            final subject = new Subject()
+            subject.principals << new Username('test')
+            ['user'].each { group ->
+                subject.principals << new Group(group);
+            }
+            sec.request.setAttribute("subject", subject)
             def params=new ScheduledExecution(scheduled:true,crontabString:'0 21 */4 */4 */6 3 2010-2040',useCrontabString:'true',jobName:'monkey1',project:'testProject',description:'blah',
                 dayOfMonth:'*/4',dayOfWeek:'3',
                 workflow: new Workflow(commands:[new CommandExec(adhocRemoteString:'test command',adhocExecution:true)]))

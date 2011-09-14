@@ -25,6 +25,7 @@ import org.apache.commons.httpclient.UsernamePasswordCredentials
 
 import javax.security.auth.Subject
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import com.dtolabs.rundeck.core.authentication.Group
 
 class ScheduledExecutionController  {
     def Scheduler quartzScheduler
@@ -835,17 +836,8 @@ class ScheduledExecutionController  {
         }
         if(scheduledExecution.scheduled){
             scheduledExecution.populateTimeDateFields(params)
-//                if(!scheduledExecution.user){
-                scheduledExecution.user = user
-                scheduledExecution.userRoles = rolelist
-//                }else{/
-                //TODO: determine rolelist for selected user
-//                    if(params.user==user){
-//                        scheduledExecution.userRoles=rolelist
-//                    }else{
-//                        scheduledExecution.userRoles=[]
-//                    }
-//                }
+            scheduledExecution.user = user
+            scheduledExecution.userRoleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
             if(!CronExpression.isValidExpression(params.crontabString?params.crontabString:scheduledExecution.generateCrontabExression())){
                 failed=true;
                 scheduledExecution.errors.rejectValue('crontabString','scheduledExecution.crontabString.invalid.message')
@@ -1151,18 +1143,9 @@ class ScheduledExecutionController  {
             failed=true
         }
         if(scheduledExecution.scheduled){
-//            scheduledExecution.populateTimeDateFields(params)
-//                if(!scheduledExecution.user){
-                scheduledExecution.user = user
-                scheduledExecution.userRoles = rolelist
-//                }else{/
-                //TODO: determine rolelist for selected user
-//                    if(params.user==user){
-//                        scheduledExecution.userRoles=rolelist
-//                    }else{
-//                        scheduledExecution.userRoles=[]
-//                    }
-//                }
+            scheduledExecution.user = user
+            scheduledExecution.userRoleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
+
             if(scheduledExecution.crontabString && (!CronExpression.isValidExpression(scheduledExecution.crontabString)
                                                     || !scheduledExecution.parseCrontabString(scheduledExecution.crontabString))){
                 failed=true;
@@ -1442,7 +1425,7 @@ class ScheduledExecutionController  {
         scheduledExecution.minute = String.valueOf(cal.get(java.util.Calendar.MINUTE))
         scheduledExecution.hour = String.valueOf(cal.get(java.util.Calendar.HOUR_OF_DAY))
         scheduledExecution.user = user
-        scheduledExecution.userRoles = rolelist
+        scheduledExecution.userRoleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
         if(params.project ){
 
             if(!frameworkService.existsFrameworkProject(params.project,framework) ) {
@@ -1712,12 +1695,8 @@ class ScheduledExecutionController  {
 
         def valid= scheduledExecution.validate()
         if(scheduledExecution.scheduled){
-//            if(!scheduledExecution.user){
-                scheduledExecution.user = user
-                scheduledExecution.userRoles = rolelist
-//            }else{
-                //TODO: allow other users name and determine rolelist for selected user
-//            }
+            scheduledExecution.user = user
+            scheduledExecution.userRoleList = request.subject.getPrincipals(Group.class).collect{it.name}.join(",")
 
             scheduledExecution.populateTimeDateFields(params)
 
