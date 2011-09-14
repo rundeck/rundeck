@@ -73,7 +73,7 @@
     <g:javascript>
         var nodeFilterData_${rkey}=${jsdata.encodeAsJSON()};
         function _EOUpdateMatchedNodes(){
-            _updateMatchedNodes(nodeFilterData_${rkey},'matchednodes_${rkey}','${scheduledExecution?.project}');
+            _updateMatchedNodes(nodeFilterData_${rkey},'matchednodes_${rkey}','${scheduledExecution?.project}',false,{requireRunAuth:true});
         }
         fireWhenReady('matchednodes_${rkey}',_EOUpdateMatchedNodes);
     </g:javascript>

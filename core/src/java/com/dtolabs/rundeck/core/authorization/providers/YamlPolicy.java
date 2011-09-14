@@ -664,7 +664,7 @@ final class YamlPolicy implements Policy {
                         final String actions = (String) actionsKey;
                         if ("*".equals(actions) || actions.contains(action)) {
                             evaluations.add(new ContextEvaluation(Explanation.Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED,
-                                super.toString() + ": rule: " + rule + " action: " + actions));
+                                "Legacy rule: " + rule + " action: " + actions));
                             return new ContextDecision(Explanation.Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, true,
                                 evaluations);
                         }
@@ -672,7 +672,7 @@ final class YamlPolicy implements Policy {
                         final List actions = (List) actionsKey;
                         if (actions.contains(action)) {
                             evaluations.add(new ContextEvaluation(Explanation.Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED,
-                                super.toString() + ": rule: " + rule + " action: " + actions));
+                                 "Legacy rule: " + rule + " action: " + actions));
                             return new ContextDecision(Explanation.Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, true,
                                 evaluations);
                         }
@@ -695,7 +695,7 @@ final class YamlPolicy implements Policy {
      * for: type: section of the policy def.
      */
     static class YamlAclContext implements AclContext {
-        private String description = "Not Evaluated: " + super.toString();
+        private String description = "Not Evaluated: " ;
         Map policyDef;
         private final ConcurrentHashMap<String, AclContext> typeContexts = new ConcurrentHashMap<String, AclContext>();
         TypeContextFactory typeContextFactory;

@@ -16,6 +16,8 @@ for:
     - allow: [run,kill] # allow running/killing adhoc jobs
   job: 
     - allow: [read,update,delete,run,kill] # allow read/write/delete/run/kill of all jobs
+  node:
+    - allow: [read,run] # allow read/run for all nodes
 by:
   group: api_token_group
 

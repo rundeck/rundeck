@@ -57,7 +57,7 @@ public class TestPolicies extends TestCase {
     }
     
     public void testPoliciesStructural() throws Exception {
-        assertEquals("Policy count mismatch", 10, policies.count());
+        assertEquals("Policy count mismatch", 12, policies.count());
     }
     
     public void testSelectOnPrincipal() throws Exception {
@@ -96,7 +96,7 @@ public class TestPolicies extends TestCase {
     
     public void testListAllRoles() throws Exception {
         List<String> results = policies.listAllRoles();
-        assertEquals("Results did not return the correct number of policies.", 10, results.size());
+        assertEquals("Results did not return the correct number of policies.", 12, results.size());
         results.containsAll(Arrays.asList("admin","foo","admin-environment","ou=Foo,dn=example,dn=com"));
     }
 }

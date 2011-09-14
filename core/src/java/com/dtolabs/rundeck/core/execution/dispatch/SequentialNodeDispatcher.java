@@ -28,10 +28,7 @@ import com.dtolabs.rundeck.core.NodesetFailureException;
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.*;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 /**
  * SequentialNodeDispatcher is ...
@@ -63,7 +60,9 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
         final NodesSelector nodesSelector = context.getNodeSelector();
         INodeSet nodes = null;
         try {
-            nodes = framework.filterNodeSet(nodesSelector, context.getFrameworkProject(), context.getNodesFile());
+            nodes = framework.filterAuthorizedNodes(context.getFrameworkProject(),
+                new HashSet<String>(Arrays.asList("read", "run")),
+                framework.filterNodeSet(nodesSelector, context.getFrameworkProject(), context.getNodesFile()));
         } catch (NodeFileParserException e) {
             throw new DispatcherException(e);
         }

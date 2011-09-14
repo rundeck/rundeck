@@ -13,6 +13,8 @@ for:
     - allow: [run,kill] # allow running/killing adhoc jobs
   job: 
     - allow: [read,run,kill] # allow read/run/kill of all jobs
+  node:
+    - allow: [read,run] # allow read/run for all nodes
 by:
   group: user
 

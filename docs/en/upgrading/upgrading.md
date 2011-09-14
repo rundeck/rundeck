@@ -237,8 +237,10 @@ Authorizations you need to grant to run jobs:
 
 * 'read' access to some of the projects, at the Application context
   * This determines what projects a user can see, and is necessary for any access to jobs
-* 'read' access to nodes in a project context
+* 'read' access to node resources in a project context
   * this allows the user to view the nodes for a project, and is necessary to run jobs or adhoc executions
+* 'read' and 'run' actions to specific nodes in a project context
+  * this allows the user to view specific nodes, and 'run' allows executing jobs or adhoc executions on the node
 
 Other authorizations you may want to grant:
 
@@ -263,7 +265,7 @@ For Application context: To grant read access to certain projects:
 
 The following are all at Project context:
 
-To grant read access to nodes:
+To grant read access generic Node resources:
 
     description: read access to nodes
     context:
@@ -273,10 +275,21 @@ To grant read access to nodes:
         - equals:
             kind: node
           allow: [read] # view the nodes  
-          allow: [create,update,refresh] # deny modification of nodes
+          deny: [create,update,refresh] # deny modification of nodes
     by:
       group: 'user'
 
+To grant read and run access to all nodes:
+
+    description: read access to nodes
+    context:
+      project: '.*' # all projects
+    for:
+      node:
+        - allow: [read,run] # view the nodes  
+    by:
+      group: 'user'
+      
 To grant read access to history events:
 
     description: read access to history
@@ -365,6 +378,8 @@ This file grants all authorizations to 'admin' role, and explicitly enumerates t
         - allow: [run,kill] # allow running/killing adhoc jobs
       job: 
         - allow: [read,update,delete,run,kill] # allow read/write/delete/run/kill of all jobs
+      node:
+        - allow: [read,run] # allow read/run for nodes
     by:
       group: admin
 

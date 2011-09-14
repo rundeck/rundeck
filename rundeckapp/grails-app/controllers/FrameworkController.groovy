@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.core.common.ProviderService
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.common.NodeSetImpl
 
 class FrameworkController  {
     FrameworkService frameworkService
@@ -126,37 +127,47 @@ class FrameworkController  {
         def allnodes = [:]
         def totalexecs = [:]
         def total=0
-        def allcount=0
+        def allcount=null
         NodeSet nset = ExecutionService.filtersAsNodeSet(query)
         def projects=[]
         def filterErrors=[:]
         def project = framework.getFrameworkProjectMgr().getFrameworkProject(query.project)
-        def nodes
-        final INodeSet nodes1 = project.getNodeSet()
-        allcount=nodes1.nodes.size()
+        def INodeSet nodeset
+
+        INodeSet nodes1 = project.getNodeSet()
+//        allcount=nodes1.nodes.size()
         if(params.localNodeOnly){
-            nodes=[nodes1.getNode(framework.getFrameworkNodeName())]
+            nodeset=new NodeSetImpl()
+            nodeset.putNode(nodes1.getNode(framework.getFrameworkNodeName()))
         }
         else if (nset && !(nset.include.blank && nset.exclude.blank)){
             //match using nodeset unless all filters are blank
             try {
-                nodes= com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nset,nodes1).nodes
+                nodeset = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nset, nodes1)
             } catch (PatternSyntaxException e) {
                 request.error='<pre>'+e.getMessage()+'</pre>'
                 filterErrors['filter']='<pre>'+e.getMessage()+'</pre>'
-                nodes=[]
+                nodeset=new NodeSetImpl()
             }
         }else if("true"==params.defaultAllNodes){
             //match all nodes if filters are all blank
-            nodes = nodes1.getNodes()
+            nodeset=nodes1
         }else{
             //match only local node if filters are blank
-            nodes=[nodes1.getNode(framework.getFrameworkNodeName())]
+            nodeset = new NodeSetImpl()
+            nodeset.putNode(nodes1.getNode(framework.getFrameworkNodeName()))
         }
 //            nodes = nodes.sort { INodeEntry a, INodeEntry b -> return a.nodename.compareTo(b.nodename) }
-        total=nodes.size()
+        //filter nodes by read authorization
+
+        def readnodes = framework.filterAuthorizedNodes(query.project, ['read'] as Set, nodeset)
+        def runnodes = framework.filterAuthorizedNodes(query.project, ['run'] as Set, readnodes)
+        def noderunauthmap = [:]
+
+
+        def nodes=params.requireRunAuth=='true'? runnodes.nodes:readnodes.nodes
+        total= nodes.size()
         def tagsummary=[:]
-        
         def page=-1;
         def max=-1;
         def remaining=false;
@@ -184,6 +195,9 @@ class FrameworkController  {
                 count++;
                 if(params.fullresults){
                     allnodes[nd.nodename]=[node:nd,projects:[project],project:project,executions:[],resources:[],islocal:nd.nodename==framework.getFrameworkNodeName()]
+                }
+                if(params.requireRunAuth == 'true'  || runnodes.getNode(nd.nodename)){
+                    noderunauthmap[nd.nodename]=true
                 }
                 //summarize tags
                 def tags = nd.getTags()
@@ -251,6 +265,7 @@ class FrameworkController  {
             allnodes: allnodes,
             nodesvalid: !parseExceptions,
             nodeserror: parseExceptions,
+            nodeauthrun:noderunauthmap,
 //            nodesfile:nodes1.file,
             params:params,
             total:total,
@@ -272,6 +287,7 @@ class FrameworkController  {
             model['filterName']=usedFilter
         }
         return model
+
     }
     /**
      * nodesFragment renders a set of nodes in HTML snippet, for ajax

@@ -1,0 +1,18 @@
+description: test multi file policy defs
+for:
+  job:
+    - match:
+        group: QA.*
+      allow: ['*']
+      # no deny clause
+    - match:
+        group: Production.*
+        name: Deploy
+      allow: [read]
+  node:
+    - contains:
+        tag: production
+      deny: [command_exec]
+
+by:
+    group: ['multi1']

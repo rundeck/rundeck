@@ -33,11 +33,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * PoliciesCache retains PolicyDocument objects for inserted Files, and reloads them if file modification time changes.
@@ -117,7 +113,8 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
     }
 
     public Iterator<PolicyCollection> iterator() {
-        return new cacheIterator(Arrays.asList(listDirFiles()).iterator());
+        final File[] files = listDirFiles();
+        return new cacheIterator(null!=files?Arrays.asList(files).iterator(): new ArrayList<File>().iterator());
     }
 
     /**

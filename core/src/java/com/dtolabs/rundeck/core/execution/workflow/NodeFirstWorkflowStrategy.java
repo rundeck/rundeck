@@ -70,7 +70,9 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
             final INodeSet nodes;
             final String project = executionContext.getFrameworkProject();
             try {
-                nodes = framework.filterNodeSet(nodeSelector, project, executionContext.getNodesFile());
+                nodes = framework.filterAuthorizedNodes(project,
+                    new HashSet<String>(Arrays.asList("read", "run")),
+                    framework.filterNodeSet(nodeSelector, project, executionContext.getNodesFile()));
             } catch (NodeFileParserException e) {
                 throw new CoreException("Error parsing node resource file: " + e.getMessage(), e);
             }

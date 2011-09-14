@@ -66,7 +66,7 @@
                     <g:javascript>
                         _g_nodeFilterData['${rkey}']=${jsdata.encodeAsJSON()};
                     </g:javascript>
-                    <span class="action textbtn  textbtn query " title="Display matching nodes" onclick="_updateMatchedNodes(_g_nodeFilterData['${rkey}'],'matchednodes_${rkey}','${execdata?.project}');">
+                    <span class="action textbtn  textbtn query " title="Display matching nodes" onclick="_updateMatchedNodes(_g_nodeFilterData['${rkey}'],'matchednodes_${rkey}','${execdata?.project}',false,{requireRunAuth:true});">
                         <g:render template="/framework/displayNodeFilters" model="${[displayParams:execdata]}"/>
                     </span>
 
@@ -131,7 +131,7 @@
         <tr>
             <td>Node:</td>
             <td id="matchednodes_${rkey}" class="matchednodes embed"  colspan="3">
-                <span class="action textbtn depress2 receiver"  title="Display matching nodes" onclick="_updateMatchedNodes({},'matchednodes_${rkey}','${execdata?.project}',true)">Show Matches</span>
+                <span class="action textbtn depress2 receiver"  title="Display matching nodes" onclick="_updateMatchedNodes({},'matchednodes_${rkey}','${execdata?.project}', true, {requireRunAuth:true})">Show Matches</span>
                 
             </td>
         </tr>

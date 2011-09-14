@@ -13,7 +13,7 @@
                 <th></th>
             </tr>
         </g:if>
-        <g:render template="nodesTableContent" model="${[nodes:nodes,params:params,total:total,allcount:allcount,page:page,max:max]}"/>
+        <g:render template="nodesTableContent" model="${[nodes:nodes,params:params,total:total,allcount:allcount,page:page,max:max,nodeauthrun:nodeauthrun]}"/>
     </table>
     <g:if test="${page==0 && (page+1*max<total)}">
         <div id="nodesPaging">

@@ -47,6 +47,11 @@
                     <span class="desc">
                         ${node.description}
                     </span>
+                    <g:if test="${!nodeauthrun[node.nodename]}">
+                    <span class="desc" title="Not authorized to run on this node">
+                        !
+                    </span>
+                    </g:if>
 
                     <g:if test="${node.attributes?.remoteUrl}">
                         <g:set var="nodecontextdata" value="${DataContextUtils.nodeData(node)}"/>

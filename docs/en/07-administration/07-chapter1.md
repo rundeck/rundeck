@@ -836,6 +836,8 @@ File listing: admin.aclpolicy example
         - allow: [run,kill] # allow running/killing adhoc jobs
       job: 
         - allow: [read,update,delete,run,kill] # allow read/write/delete/run/kill of all jobs
+      node:
+        - allow: [read,run] # allow read/run for all nodes
     by:
       group: admin
     
@@ -982,15 +984,17 @@ Type       Resource Kind     Actions   Description
 
 Table: Project scope generic type actions
 
-Type      Properties     Actions  Description
------     -----------    -------- ------------
-`adhoc`                  `run`    Run and adhoc execution
-"                        `kill`   Kill an adhoc execution
-`job`     "name","group" `read`   View a Job
-"                        `update` Modify a job
-"                        `delete` Delete a job
-"                        `run`    Run a job
-"                        `kill`   Kill a running job
+Type      Properties                         Actions  Description
+-----     -----------                        -------- ------------
+`adhoc`                                      `run`    Run and adhoc execution
+"                                            `kill`   Kill an adhoc execution
+`job`     "name","group"                     `read`   View a Job
+"                                            `update` Modify a job
+"                                            `delete` Delete a job
+"                                            `run`    Run a job
+"                                            `kill`   Kill a running job
+`node`    "rundeck_server", "nodename", ...  `read`   View the node in the UI
+"                                            `run`    Run jobs/adhoc on the node
 ----------------------------
 
 Table: Project scope specific resource actions
@@ -1011,6 +1015,8 @@ way:
         - equals:
             name: bob
           allow: [run]
+
+Note, for `node` resources, the properties available are all the attributes that are defined on the node, so you can apply authorizations based on tag, osName, hostname, etc. The special `rundeck_server` property will be set to "true" for the RunDeck server node only, and "false" for all other nodes.
 
 #### Access control policy actions example
 

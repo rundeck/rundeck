@@ -72,6 +72,12 @@
                 </td>
                 <td class="hostname"  title="Hostname">
                         ${node.hostname.encodeAsHTML()}
+                    <g:if test="${null!=nodeauthrun && !nodeauthrun[node.nodename]}">
+                        <span title="Not authorized to 'run' on this node">
+                            <img src="${resource(dir: 'images', file: 'icon-tiny-warn.png')}" alt="Node" width="12px"
+                                 height="12px"/>
+                        </span>
+                    </g:if>
                 </td>
                 <td>
                     <g:if test="${node.attributes?.remoteUrl}">

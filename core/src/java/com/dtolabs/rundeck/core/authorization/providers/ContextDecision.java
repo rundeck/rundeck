@@ -44,9 +44,24 @@ public class ContextDecision implements Explanation {
     }
 
     public void describe(PrintStream out) {
-        for(ContextEvaluation ce : this.evaluations) {
-            out.println("\t" + ce);
+        out.println(toString());
+    }
+
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append(granted() ? "GRANTED" : "REJECTED");
+        sb.append(", reason: ");
+        sb.append(id.toString());
+        sb.append(", evaluations: ");
+        if (null != evaluations && evaluations.size() > 0) {
+            for (ContextEvaluation ce : this.evaluations) {
+                sb.append("\t").append(ce.toString());
+            }
+        }else {
+            sb.append("None");
         }
+        return sb.toString();
     }
 
     List<ContextEvaluation> getEvaluations() {

@@ -38,9 +38,7 @@ import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Parallel;
 import org.apache.tools.ant.taskdefs.Sequential;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 /**
@@ -77,7 +75,9 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         final NodesSelector nodeSelector = context.getNodeSelector();
         INodeSet nodes = null;
         try {
-            nodes = framework.filterNodeSet(nodeSelector, context.getFrameworkProject(), context.getNodesFile());
+            nodes = framework.filterAuthorizedNodes(context.getFrameworkProject(),
+                new HashSet<String>(Arrays.asList("read", "run")),
+                framework.filterNodeSet(nodeSelector, context.getFrameworkProject(), context.getNodesFile()));
         } catch (NodeFileParserException e) {
             throw new DispatcherException(e);
         }

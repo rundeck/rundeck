@@ -117,20 +117,37 @@ public class SAREAuthorization implements Authorization {
         }
         
         ContextDecision contextDecision = null;
-        
+        ContextDecision lastDecision = null;
+
         //long contextIncludeStart = System.currentTimeMillis();
+        boolean granted=false;
+        boolean denied=false;
         for(AclContext ctx : contexts) {
-            contextDecision = ctx.includes(resource, action);
-            if(contextDecision.granted()) {
-                return createAuthorize(true, contextDecision, resource, subject, action, environment, System.currentTimeMillis() - start);
+            final ContextDecision includes = ctx.includes(resource, action);
+            if (Code.REJECTED_DENIED == includes.getCode()) {
+                contextDecision = includes;
+                denied=true;
+            }else if (includes.granted()) {
+                contextDecision = includes;
+                granted=true;
             }
+            lastDecision = includes;
+        }
+        if(denied){
+            return authorize(false, "Denied by rule.",
+                Code.REJECTED_DENIED, resource, subject, action, environment,
+                System.currentTimeMillis() - start);
+        }
+        if(granted){
+            return createAuthorize(true, contextDecision, resource, subject, action, environment,
+                System.currentTimeMillis() - start);
         }
 
-        if(contextDecision == null) {
+        if(lastDecision == null) {
             return authorize(false, "No resource or action matched.", 
                 Code.REJECTED_NO_RESOURCE_OR_ACTION_MATCH, resource, subject, action, environment, System.currentTimeMillis() - start);
         } else {
-            return createAuthorize(false, contextDecision, resource, subject, action, environment, System.currentTimeMillis() - start);
+            return createAuthorize(false, lastDecision, resource, subject, action, environment, System.currentTimeMillis() - start);
         }
     }
     
@@ -240,7 +257,11 @@ public class SAREAuthorization implements Authorization {
                         }
                     }
                     builder.append(">");
-                    
+                    builder.append(": authorized: ");
+                    builder.append(isAuthorized());
+                    builder.append(": ");
+                    builder.append(explanation.toString());
+
                     this.representation = builder.toString();
                 }
                 return this.representation;

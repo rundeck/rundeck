@@ -22,9 +22,8 @@ import com.dtolabs.rundeck.core.authentication.AuthenticationMgrFactory;
 import com.dtolabs.rundeck.core.authentication.Authenticator;
 import com.dtolabs.rundeck.core.authentication.INodeAuthResolutionStrategy;
 import com.dtolabs.rundeck.core.authentication.NodeAuthResolutionStrategyFactory;
-import com.dtolabs.rundeck.core.authorization.Authorization;
-import com.dtolabs.rundeck.core.authorization.AuthorizationMgrFactory;
-import com.dtolabs.rundeck.core.authorization.LegacyAuthorization;
+import com.dtolabs.rundeck.core.authorization.*;
+import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcher;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherMgrFactory;
@@ -57,9 +56,8 @@ import org.apache.tools.ant.Project;
 import org.apache.tools.ant.input.InputHandler;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
+import java.net.URI;
+import java.util.*;
 
 
 /**
@@ -695,6 +693,45 @@ public class Framework extends FrameworkResourceParent {
         }
         INodeSet filtered = NodeFilter.filterNodes(nodeset, unfiltered);
         return filtered;
+    }
+
+    /**
+     * Return the nodeset consisting only of the input nodes where the specified actions are all authorized
+     */
+    public INodeSet filterAuthorizedNodes(final String project, final Set<String> actions, final INodeSet unfiltered) {
+        if (null != actions && actions.size() > 0) {
+            //select only nodes with all allowed actions
+            final HashSet<Map<String, String>> resources = new HashSet<Map<String, String>>();
+            for (final INodeEntry iNodeEntry : unfiltered.getNodes()) {
+                HashMap<String, String> resdef = new HashMap<String, String>(iNodeEntry.getAttributes());
+                resdef.putAll(iNodeEntry.getAttributes());
+                resdef.put("type", "node");
+                resdef.put("rundeck_server", Boolean.toString(isLocalNode(iNodeEntry)));
+                resources.add(resdef);
+            }
+            final Set<Decision> decisions = getAuthorizationMgr().evaluate(resources,
+                getAuthenticationMgr().getSubject(),
+                actions,
+                Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), project)));
+            final NodeSetImpl authorized = new NodeSetImpl();
+            HashMap<String, Set<String>> authorizations = new HashMap<String, Set<String>>();
+            for (final Decision decision : decisions) {
+                if (decision.isAuthorized() && actions.contains(decision.getAction())) {
+                    final String nodename = decision.getResource().get("nodename");
+                    if(null==authorizations.get(nodename)) {
+                        authorizations.put(nodename, new HashSet<String>());
+                    }
+                    authorizations.get(nodename).add(decision.getAction());
+                }
+            }
+            for (final Map.Entry<String, Set<String>> entry : authorizations.entrySet()) {
+                if(entry.getValue().size()==actions.size()) {
+                    authorized.putNode(unfiltered.getNode(entry.getKey()));
+                }
+            }
+            return authorized;
+        }
+        return unfiltered;
     }
 
     public File getConfigDir() {

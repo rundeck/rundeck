@@ -1,0 +1,9 @@
+description: test multi file policy defs
+for:
+  job:
+    - match:
+        group: QA.*
+      allow: ['*']
+      deny: [delete,blah]
+by:
+    group: ['multi1']

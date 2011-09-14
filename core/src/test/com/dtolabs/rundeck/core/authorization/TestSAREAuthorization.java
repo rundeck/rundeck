@@ -19,6 +19,7 @@
  */
 package com.dtolabs.rundeck.core.authorization;
 
+import java.io.File;
 import java.net.URI;
 import java.util.Date;
 import java.util.HashMap;
@@ -46,9 +47,10 @@ public class TestSAREAuthorization extends TestCase {
     private Set<Attribute> environment = new HashSet<Attribute>();
     
     public void setUp() throws Exception {
-        authorization = new SAREAuthorization(TestPolicies.getPath("com/dtolabs/rundeck/core/authorization"));
-        legacyAuthorization = new SAREAuthorization(TestPolicies.getPath("com/dtolabs/rundeck/core/authorization/legacyconv"));
-        legacyvalidationAuthorization = new SAREAuthorization(TestPolicies.getPath("com/dtolabs/rundeck/core/authorization/legacyconv"));
+        authorization = new SAREAuthorization(new File("src/test/com/dtolabs/rundeck/core/authorization"));
+        legacyAuthorization = new SAREAuthorization(new File("src/test/com/dtolabs/rundeck/core/authorization/legacyconv"));
+        legacyvalidationAuthorization = new SAREAuthorization(new File(
+            "src/test/com/dtolabs/rundeck/core/authorization/legacyconv"));
     }
     
     public void tearDown() throws Exception {
@@ -157,32 +159,64 @@ public class TestSAREAuthorization extends TestCase {
         
         
     }
-    
+
     public void testActionAuthorizationYml() throws Exception {
-        Map<String,String> resource = createJobResource("myScript", "/yml/bar/baz/boo");
+        Map<String, String> resource = createJobResource("myScript", "/yml/bar/baz/boo");
         Subject subject = createSubject("yml_user_1", "yml_group_1");
-        
+
         /* Check that workflow_run is actually a matching action */
-        Decision decision = authorization.evaluate(resource, subject, "pattern_match", null);      
+        Decision decision = authorization.evaluate(resource, subject, "pattern_match", null);
         assertEquals("Decision for successful authoraztion for action: pattern_match does not match, but should.",
-                Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
+            Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
         assertTrue("Action not granted authorization.", decision.isAuthorized());
-        
+
         resource = createJobResource("Script2", "/listAction");
         decision = authorization.evaluate(resource, subject, "action_list_2", null);
         assertEquals("Decision for successful authoraztion for action: action_list_2 does not match, but should.",
-                Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
+            Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
         assertTrue("Action not granted authorization.", decision.isAuthorized());
-        
+
         resource = createJobResource("Script3", "/wldcrd");
         decision = authorization.evaluate(resource, subject, "action_list_not_in_list_and_shouldn't_be", null);
-        assertEquals("Decision for successful authoraztion for action: action_list_not_in_list_and_shouldn't_be does not match, but should.",
-                Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
+        assertEquals(
+            "Decision for successful authoraztion for action: action_list_not_in_list_and_shouldn't_be does not match, but should.",
+            Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
         assertTrue("Action not granted authorization.", decision.isAuthorized());
-        
-        
+
+
     }
-    
+
+
+    public void testActionAuthorizationMultifile() throws Exception {
+        Map<String, String> resource = createJobResource("test1", "QA blah");
+        Subject subject = createSubject("user1", "multi1");
+
+        Decision decision = authorization.evaluate(resource, subject, "read", null);
+        assertEquals(Code.GRANTED, decision.explain().getCode());
+        assertTrue(decision.isAuthorized());
+
+        Decision decision2 = authorization.evaluate(resource, subject, "update", null);
+        assertEquals(Code.GRANTED, decision2.explain().getCode());
+        assertTrue(decision2.isAuthorized());
+
+
+        Decision decision3 = authorization.evaluate(resource, subject, "blee", null);
+        assertEquals(Code.GRANTED, decision3.explain().getCode());
+        assertTrue(decision3.isAuthorized());
+
+
+        //test deny actions: delete, blah
+
+        Decision decision4 = authorization.evaluate(resource, subject, "delete", null);
+        assertEquals(Code.REJECTED_DENIED, decision4.explain().getCode());
+        assertFalse(decision4.isAuthorized());
+
+        Decision decision5 = authorization.evaluate(resource, subject, "blah", null);
+        assertEquals(Code.REJECTED_DENIED, decision5.explain().getCode());
+        assertFalse(decision5.isAuthorized());
+
+    }
+
     public void testActionAuthorizationYmlInvalid() throws Exception {
         Map<String,String> resource = createJobResource("Script3", "/noactions");
         Subject subject = createSubject("yml_usr_2", "broken");
@@ -208,6 +242,7 @@ public class TestSAREAuthorization extends TestCase {
         Decision decision = authorization.evaluate(resource, subject, "foobar", null);
         decision.explain().describe(System.out);
         System.out.flush();
+        System.out.println(decision.toString());
         assertEquals("Decision for authoraztion for action: foobar is not GRANTED_ACTIONS_AND_COMMANDS_MATCHED.",
                 Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
         assertTrue("Action granted authorization.", decision.isAuthorized());
