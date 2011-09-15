@@ -42,7 +42,7 @@
                     <span class="icon button floatl" title="Delete ${g.message(code:'domain.ScheduledExecution.title')}" onclick="menus.showRelativeTo(this,'${ukey}jobDisplayDeleteConf${scheduledExecution.id}',-2,-2);return false;"><img src="${resource(dir:'images',file:'icon-small-removex.png')}" alt="delete" width="16px" height="16px"/></span>
                 </g:if>
                 </g:if>
-                <g:if test="${jobAuths[UserAuth.WF_CREATE]?.contains(idKey) }">
+                <g:if test="${jobAuths[UserAuth.WF_READ]?.contains(idKey) && auth.allowedTest(job:[jobName:'create',groupPath:'ui'],action:UserAuth.WF_CREATE)}">
                     <g:link controller="scheduledExecution" title="Copy Job" action="copy" id="${scheduledExecution.extid}" class="icon button floatl"><img src="${resource(dir:'images',file:'icon-small-copy.png')}" alt="copy" width="16px" height="16px"/></g:link>
                 </g:if>
                 <g:if test="${!execPage}">

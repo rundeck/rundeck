@@ -22,6 +22,7 @@ import org.apache.log4j.MDC
 
 import org.apache.commons.httpclient.auth.AuthScope
 import org.apache.commons.httpclient.UsernamePasswordCredentials
+import com.dtolabs.rundeck.core.authorization.Authorization
 
 class ScheduledExecutionController  {
     def Scheduler quartzScheduler
@@ -766,8 +767,15 @@ class ScheduledExecutionController  {
         if (nonopts.uuid != scheduledExecution.uuid) {
             changeinfo.extraInfo = " (internalID:${scheduledExecution.id})"
         }
+        def origjobname=scheduledExecution.jobName
+        def origgrouppath=scheduledExecution.groupPath
         scheduledExecution.properties = nonopts
-        
+        if(origgrouppath!=scheduledExecution.groupPath || origjobname!=scheduledExecution.jobName){
+            if (!scheduledExecutionService.userAuthorizedForJobCreate(request, scheduledExecution, framework)) {
+                request.error = "User is unauthorized to create the job ${scheduledExecution.groupPath}/${scheduledExecution.jobName}"
+                failed=true
+            }
+        }
         final Map oldopts = params.findAll{it.key=~/^(name|command|type|adhocExecution|adhocFilepath|adhoc.*String)$/}
         if(oldopts && !params.workflow){
             //construct workflow with one item from these options
@@ -1110,7 +1118,15 @@ class ScheduledExecutionController  {
         }
         //clear filter params
         scheduledExecution.clearFilterFields()
+        def origjobname = scheduledExecution.jobName
+        def origgrouppath = scheduledExecution.groupPath
         scheduledExecution.properties = newprops
+        if (origgrouppath != scheduledExecution.groupPath || origjobname != scheduledExecution.jobName) {
+            if (!scheduledExecutionService.userAuthorizedForJobCreate(request, scheduledExecution, framework)) {
+                request.error="User is unauthorized to create the job ${scheduledExecution.groupPath}/${scheduledExecution.jobName}"
+                failed = true
+            }
+        }
 
         //clear old mode job properties
         scheduledExecution.adhocExecution=false;
@@ -1438,7 +1454,7 @@ class ScheduledExecutionController  {
             Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
 
             scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
-            flash.message=g.message(code:'ScheduledExecutionController.save.failed')
+            request.message=g.message(code:'ScheduledExecutionController.save.failed')
             return render(view:'create',model:[scheduledExecution:scheduledExecution,params:params, projects: frameworkService.projects(framework)])
         }
     }
@@ -2205,6 +2221,12 @@ class ScheduledExecutionController  {
         def result= _dovalidate(params instanceof ScheduledExecution?params.properties:params)
         def scheduledExecution=result.scheduledExecution
         failed=result.failed
+
+        if(!scheduledExecutionService.userAuthorizedForJobCreate(request,scheduledExecution,framework)){
+            request.error = "User is unauthorized to create the job ${scheduledExecution.groupPath}/${scheduledExecution.jobName}"
+            scheduledExecution.discard()
+            return scheduledExecution
+        }
         //try to save workflow
         if(!failed && null!=scheduledExecution.workflow){
             if(!scheduledExecution.workflow.save(flush:true)){

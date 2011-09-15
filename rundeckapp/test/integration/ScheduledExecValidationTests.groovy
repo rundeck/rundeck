@@ -46,6 +46,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
         mock2.demand.nextExecutionTimes {joblist -> return [] }
+        mock2.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return true }
         sec.scheduledExecutionService = mock2.createMock()
 
         def xml = '''
@@ -104,6 +105,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
         mock2.demand.nextExecutionTimes {joblist -> return [] }
+        mock2.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return true }
         sec.scheduledExecutionService = mock2.createMock()
         def xml = '''
 -
@@ -161,6 +163,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         sec.frameworkService=fwkControl.createMock()
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return true }
         mock2.demand.nextExecutionTimes{joblist-> return [] }
         sec.scheduledExecutionService=mock2.createMock()
 
@@ -212,6 +215,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         sec.frameworkService = fwkControl.createMock()
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return true }
         mock2.demand.nextExecutionTimes {joblist -> return [] }
         sec.scheduledExecutionService = mock2.createMock()
 
@@ -435,6 +439,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         sec.frameworkService=fwkControl.createMock()
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return true }
         mock2.demand.nextExecutionTimes{joblist-> return [] }
         sec.scheduledExecutionService=mock2.createMock()
 
@@ -505,6 +510,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         sec.frameworkService=fwkControl.createMock()
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return true }
         mock2.demand.nextExecutionTimes{joblist-> return [] }
         sec.scheduledExecutionService=mock2.createMock()
 
@@ -570,6 +576,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         sec.frameworkService=fwkControl.createMock()
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return true }
         mock2.demand.nextExecutionTimes{joblist-> return [] }
         sec.scheduledExecutionService=mock2.createMock()
 
@@ -636,6 +643,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         sec.frameworkService=fwkControl.createMock()
         //mock the scheduledExecutionService
         def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return true }
         mock2.demand.nextExecutionTimes{joblist-> return [] }
         sec.scheduledExecutionService=mock2.createMock()
 

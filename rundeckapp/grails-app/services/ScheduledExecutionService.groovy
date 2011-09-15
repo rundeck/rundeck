@@ -335,6 +335,14 @@ class ScheduledExecutionService {
         return d.isAuthorized()
     }
 
+    def userAuthorizedForJobCreate(request,ScheduledExecution se, Framework framework){
+        def resource = ["job": se.getJobName(), "group": se.getGroupPath() ?: ""]
+        def environment = Collections.emptySet();
+        def Decision d = framework.getAuthorizationMgr().evaluate(resource, request.subject,
+            UserAuth.WF_CREATE, environment)
+        return d.isAuthorized()
+    }
+
     def scheduleJob(ScheduledExecution se, String oldJobName, String oldGroupName) {
         
         def jobDetail = createJobDetail(se)
