@@ -19,6 +19,7 @@
  */
 package com.dtolabs.rundeck.core.authorization;
 
+import java.io.File;
 import java.net.URI;
 import java.util.Date;
 import java.util.HashMap;
@@ -46,9 +47,11 @@ public class TestSAREAuthorization extends TestCase {
     private Set<Attribute> environment = new HashSet<Attribute>();
     
     public void setUp() throws Exception {
-        authorization = new SAREAuthorization(TestPolicies.getPath("com/dtolabs/rundeck/core/authorization"));
-        legacyAuthorization = new SAREAuthorization(TestPolicies.getPath("com/dtolabs/rundeck/core/authorization/legacyconv"));
-        legacyvalidationAuthorization = new SAREAuthorization(TestPolicies.getPath("com/dtolabs/rundeck/core/authorization/legacyconv"));
+        authorization = new SAREAuthorization(new File("src/test/com/dtolabs/rundeck/core/authorization"));
+        legacyAuthorization = new SAREAuthorization(new File(
+            "src/test/com/dtolabs/rundeck/core/authorization/legacyconv"));
+        legacyvalidationAuthorization = new SAREAuthorization(new File(
+            "src/test/com/dtolabs/rundeck/core/authorization/legacyconv"));
     }
     
     public void tearDown() throws Exception {
@@ -202,15 +205,18 @@ public class TestSAREAuthorization extends TestCase {
     public void testActionAuthorization() throws Exception {
         Map<String,String> resource = declareScript("myScript", "bar/baz/boo");
         Subject subject = createSubject("testActionAuthorization", "admin-action");
+
+        HashSet<Attribute> testEnv = new HashSet<Attribute>();
+        testEnv.add(new Attribute(new URI(AuthConstants.PROJECT_URI), "test-actions-environment"));
         
         /* Check that workflow_run is actually a matching action */
-        Decision decision = authorization.evaluate(resource, subject, "workflow_run", null);      
+        Decision decision = authorization.evaluate(resource, subject, "workflow_run", testEnv);
         assertEquals("Decision for successful authoraztion for action: workflow_run does not match, but should.",
                 Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
         assertTrue("Action not granted authorization.", decision.isAuthorized());
        
         /* bobble_head action doesn't exist, so should not be authorized */
-        decision = authorization.evaluate(resource, subject, "bobble_head", environment);
+        decision = authorization.evaluate(resource, subject, "bobble_head", testEnv);
         assertEquals("Decision does not contain the proper explanation. ", 
                 Code.REJECTED_COMMAND_NOT_MATCHED,  decision.explain().getCode());
         assertFalse("Action bobble_head should not have been authorized", decision.isAuthorized());
@@ -219,7 +225,7 @@ public class TestSAREAuthorization extends TestCase {
         decision.explain().describe(System.out);
         
         /* Empty actions never match. */
-        decision = authorization.evaluate(resource, subject, "", environment);
+        decision = authorization.evaluate(resource, subject, "", testEnv);
         assertEquals("Decision for empty action does not match", Code.REJECTED_NO_ACTION_PROVIDED,
                 decision.explain().getCode());
         assertFalse("An empty action should not select", decision.isAuthorized());
@@ -229,14 +235,14 @@ public class TestSAREAuthorization extends TestCase {
         
         /* The given job=anyaction of group=foobar should allow any action. */
         decision = authorization.evaluate(declareScript("anyaction", "foobar"), subject, 
-                "my_wacky_action", environment);
+                "my_wacky_action", testEnv);
         assertEquals("my_wacky_action reason does not match.", 
                 Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
         assertTrue("foobar/barbaz was denied even though it allows any action.", decision.isAuthorized());
         
         
         decision = authorization.evaluate(declareModule("foobar", "moduleName"), subject, 
-                "execute", null);
+                "execute", testEnv);
         assertFalse("foobar/moduleName was granted authorization when it shouldn't.", decision.isAuthorized());
         
         Set<Map<String,String>> resources = new HashSet<Map<String,String>>();
@@ -250,11 +256,97 @@ public class TestSAREAuthorization extends TestCase {
             actions.add("Action" + Integer.toString(i));
         }
         long start = System.currentTimeMillis();
-        authorization.evaluate(resources, subject, actions, environment);
+        authorization.evaluate(resources, subject, actions, testEnv);
         long end = System.currentTimeMillis() - start;
         System.out.println("Took " + end + "ms for " + resourcesCount + " resources and " + actionsCount + " actions.");
         
         
+    }
+    public void testYamlProjectContext() throws Exception {
+        Map<String,String> resource = declareScript("zilch", "");
+        Subject subject = createSubject("monkey_user1", "blah");
+
+        HashSet<Attribute> testEnv = new HashSet<Attribute>();
+        testEnv.add(new Attribute(new URI(AuthConstants.PROJECT_URI), "test-yaml-project"));
+
+        //authorized action "foobar" only.
+        Decision decision = authorization.evaluate(resource, subject, "foobar", testEnv);
+
+        assertEquals(Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
+        assertTrue("Action not granted authorization.", decision.isAuthorized());
+
+        //action is not authorized
+        decision = authorization.evaluate(resource, subject, "zumbo", testEnv);
+        assertEquals(Code.REJECTED, decision.explain().getCode());
+        assertFalse(decision.isAuthorized());
+
+        // /blah.* allows "test_action" only
+        resource = declareScript("flah", "blahzoo");
+        decision = authorization.evaluate(resource, subject, "test_action", testEnv);
+        assertEquals("resource: "+resource,Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
+        assertTrue(decision.isAuthorized());
+
+        //action is not authorized
+        decision = authorization.evaluate(resource, subject, "zumbo", testEnv);
+        assertEquals(Code.REJECTED, decision.explain().getCode());
+        assertFalse(decision.isAuthorized());
+
+        resource = declareScript("asdf", "blah dfj");
+        decision = authorization.evaluate(resource, subject, "test_action", testEnv);
+        assertEquals(Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
+        assertTrue(decision.isAuthorized());
+
+        // /monkey/.* allows * action
+        resource = declareScript("flah", "monkey");
+        decision = authorization.evaluate(resource, subject, "whatever", testEnv);
+        assertEquals(Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
+        assertTrue(decision.isAuthorized());
+
+        //action is  authorized
+        decision = authorization.evaluate(resource, subject, "zumbo", testEnv);
+        assertEquals(Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
+        assertTrue(decision.isAuthorized());
+
+        //wont match because regex requires path
+        resource = declareScript("monkey", "");
+        decision = authorization.evaluate(resource, subject, "whatever", testEnv);
+        assertEquals(Code.REJECTED, decision.explain().getCode());
+        assertFalse(decision.isAuthorized());
+
+        //finally, test project regular expression match
+        resource = declareScript("monkey", "shankey");
+        decision = authorization.evaluate(resource, subject, "eat", testEnv);
+        assertEquals(Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
+        assertTrue(decision.isAuthorized());
+
+        //change project
+
+        HashSet<Attribute> testEnv2 = new HashSet<Attribute>();
+        testEnv2.add(new Attribute(new URI(AuthConstants.PROJECT_URI), "test-super-project"));
+
+        resource = declareScript("test", "shankey/blahb/ee");
+        decision = authorization.evaluate(resource, subject, "eat", testEnv2);
+        assertEquals(Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
+        assertTrue(decision.isAuthorized());
+
+        resource = declareScript("test", "shankey/blahb/ee");
+        decision = authorization.evaluate(resource, subject, "drink", testEnv2);
+        assertEquals(Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, decision.explain().getCode());
+        assertTrue(decision.isAuthorized());
+
+        //disallowed action
+        resource = declareScript("test", "shankey/blahb/ee");
+        decision = authorization.evaluate(resource, subject, "foobar", testEnv2);
+        assertEquals(Code.REJECTED, decision.explain().getCode());
+        assertFalse(decision.isAuthorized());
+
+        //verify project match required
+        resource = declareScript("test", "monkey");
+        decision = authorization.evaluate(resource, subject, "foobar", testEnv2);
+        assertEquals(Code.REJECTED, decision.explain().getCode());
+        assertFalse(decision.isAuthorized());
+
+
     }
     
     public void off_testProjectEnvironment() throws Exception {

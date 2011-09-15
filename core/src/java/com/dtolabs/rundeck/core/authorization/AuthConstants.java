@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+ * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,31 +15,22 @@
  */
 
 /*
-* Policy.java
+* AuthConstants.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: Nov 16, 2010 12:31:26 PM
+* Created: 9/15/11 9:42 AM
 * 
 */
-package com.dtolabs.rundeck.core.authorization.providers;
+package com.dtolabs.rundeck.core.authorization;
 
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
- * Policy is ...
+ * AuthConstants is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface Policy {
-    public Set<String> getUsernames();
-
-    AclContext getContext();
-
-    public Set<Object> getGroups();
-
-    /**
-     * Return environment context for the policy
-     */
-    public Map<String, String> getEnvironmentContext();
+public class AuthConstants {
+    public static final String URI_BASE = "http://dtolabs.com/rundeck/env/";
+    public static final String PROJECT_URI = URI_BASE + "project";
 }

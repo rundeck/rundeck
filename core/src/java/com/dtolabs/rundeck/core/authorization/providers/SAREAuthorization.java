@@ -143,13 +143,10 @@ public class SAREAuthorization implements Authorization {
         
         Decision decision = internalEvaluate(resource, subject, action, environment);
         StringBuilder sb = new StringBuilder();
-        sb.append("Evaluating ").append(decision).append(" (").append(decision.evaluationDuration()).append("ms)").append(':');
-        
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        PrintStream pw = new PrintStream(out, true);
-        decision.explain().describe(pw);
-        sb.append(out.toString());
-        
+        sb.append("Evaluating ").append(decision).append(" (").append(decision.evaluationDuration()).append(
+            "ms)").append(':');
+        sb.append(decision.explain().toString());
+//        System.err.println(sb.toString());
         logger.info(sb.toString());
 
         return decision;

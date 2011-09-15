@@ -23,6 +23,7 @@
 */
 package com.dtolabs.rundeck.core.authorization.providers;
 
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.DOMException;
@@ -31,8 +32,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.naming.ldap.LdapName;
 import javax.naming.InvalidNameException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * PolicyNode provides the Policy interface on top of a DOM Node
@@ -43,6 +43,7 @@ public class PolicyNode implements Policy {
     Node policyNode;
     HashSet<String> usernames;
     Set<Object> groups;
+    private Map<String,String> environmentContext;
 
     public PolicyNode(Node policyNode) throws XPathExpressionException {
         this.policyNode = policyNode;
@@ -56,6 +57,7 @@ public class PolicyNode implements Policy {
     private void init() throws XPathExpressionException {
         initUsernames();
         initGroups();
+        initContext();
     }
 
     private void initGroups() throws XPathExpressionException {
@@ -80,6 +82,22 @@ public class PolicyNode implements Policy {
         }
 
     }
+    private void initContext() throws XPathExpressionException {
+        NodeList ctxNodes = (NodeList) PoliciesDocument.context.evaluate(policyNode, XPathConstants.NODESET);
+        HashMap<String, String> cmap = new HashMap<String, String>();
+        if (1 != ctxNodes.getLength()) {
+            final Map<String, String> empty = Collections.emptyMap();
+            environmentContext = Collections.unmodifiableMap(empty);
+            return;
+        }
+        final Node group = ctxNodes.item(0);
+        final NamedNodeMap attributes = group.getAttributes();
+        for(int i=0;i<attributes.getLength();i++){
+            final Node item = attributes.item(i);
+            cmap.put(item.getNodeName(), item.getTextContent());
+        }
+        environmentContext = Collections.unmodifiableMap(cmap);
+    }
 
     private void initUsernames() throws XPathExpressionException {
 
@@ -99,5 +117,9 @@ public class PolicyNode implements Policy {
 
     public Set<Object> getGroups() {
         return groups;
+    }
+
+    public Map<String, String> getEnvironmentContext() {
+        return environmentContext;
     }
 }

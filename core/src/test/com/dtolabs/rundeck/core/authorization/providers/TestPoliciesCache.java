@@ -46,22 +46,7 @@ public class TestPoliciesCache extends TestCase {
 
 
     public void setUp() throws Exception {
-        policiesCache = new PoliciesCache(getPath("com/dtolabs/rundeck/core/authorization"));
-    }
-
-    /**
-     * @return
-     */
-    public static File getPath(String name) {
-
-        URL url = ClassLoader.getSystemResource(name);
-        File f;
-        try {
-            f = new File(url.toURI());
-        } catch (URISyntaxException e) {
-            f = new File(url.getPath());
-        }
-        return f;
+        policiesCache = new PoliciesCache(new File("src/test/com/dtolabs/rundeck/core/authorization"));
     }
 
 

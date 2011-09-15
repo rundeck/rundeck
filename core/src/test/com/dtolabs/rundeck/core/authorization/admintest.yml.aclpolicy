@@ -19,6 +19,8 @@
 
 description: Yaml Policy 1
 id: a4c072fd-1d02-4341-96a7-51038dc5b557
+context:
+  project: '*'
 rules:
   ^$:
     actions: 'foobar'
@@ -42,7 +44,8 @@ by:
 
 description: Yaml Policy 2
 id: F76EACCC-1DFC-447B-9E72-CC06905A2924
-
+context:
+  project: '*'
 rules:
   /noactions/.*:
     foobar: dingbat
@@ -55,7 +58,36 @@ by:
 
 description: Yaml Policy 3
 id: d5e598ae-403b-45c4-8f91-36c255101091
-
+context:
+  project: '*'
 by:
     username: yml_usr_3
     group: missing_rules
+
+---
+
+description: Yaml Policy test 4
+context:
+  project: 'test-yaml-project'
+rules:
+  ^/zilch$:
+    actions: 'foobar'
+  ^blah.*:
+    actions: 'test_action'
+  ^monkey/.*:
+    actions: '*'
+by:
+  username: monkey_user1
+  group: monkey_test
+
+---
+
+description: Yaml Policy test 4
+context:
+  project: 'test-.*-project'
+rules:
+  ^shankey/.*:
+    actions: ['eat','drink']
+by:
+  username: monkey_user1
+  group: monkey_test

@@ -42,7 +42,6 @@ public class PoliciesYaml implements PolicyCollection {
         }
     }
 
-    @Override
     public Collection<String> groupNames() throws InvalidCollection {
         List<String> groups = new ArrayList<String>();
         for(YamlPolicy policy: all) {
@@ -53,15 +52,14 @@ public class PoliciesYaml implements PolicyCollection {
         return groups;
     }
 
-    @Override
     public long countPolicies() throws InvalidCollection {
         return all.size();
     }
 
-    @Override
     public Collection<AclContext> matchedContexts(Subject subject, Set<Attribute> environment)
             throws InvalidCollection {
-        return PoliciesDocument.policyMatcher(subject, all);
+        HashMap<String, String> envMap = PoliciesDocument.createEnvironmentMap(environment);
+        return PoliciesDocument.policyMatcher(subject, all, envMap);
         
     }
     
@@ -76,29 +74,31 @@ public class PoliciesYaml implements PolicyCollection {
         
         private Set<String> usernames = new HashSet<String>();
         private Set<Object> groups = new HashSet<Object>();
+        private Map<String, String> environmentContext = new HashMap<String, String>();
         private static ConcurrentHashMap<String, Pattern> patternCache = new ConcurrentHashMap<String, Pattern>();
         
         public YamlPolicy(Object yamlDoc) {
             rawInput = (Map)yamlDoc;
             parseByClause();
+            parseEnvironmentcontext();
         }
 
-        @Override
+        public Map<String, String> getEnvironmentContext() {
+            return environmentContext;
+        }
+
         public Set<String> getUsernames() {
             return usernames;
         }
         
-        @Override
         public Set<Object> getGroups() {
             return groups;
         }
         
-        @Override
         public AclContext getContext() {
             return new AclContext() {
                 
                 @SuppressWarnings("rawtypes")
-                @Override
                 public ContextDecision includes(Map<String, String> resourceMap, String action) {
                     String resource = defineResource(resourceMap);
                     List<ContextEvaluation> evaluations = new ArrayList<ContextEvaluation>();
@@ -162,6 +162,9 @@ public class PoliciesYaml implements PolicyCollection {
                             }
                             
                             evaluations.add(new ContextEvaluation(Code.REJECTED_NO_ACTIONS_MATCHED, "No actions matched"));
+//                        }else {
+//                            evaluations.add(new ContextEvaluation(Code.REJECTED_COMMAND_NOT_MATCHED,
+//                                resource+": Did not match rule: " + rule));
                         }
                     }
                     return new ContextDecision(Code.REJECTED, false, evaluations);
@@ -195,6 +198,27 @@ public class PoliciesYaml implements PolicyCollection {
                 }
 
                 // TODO Support LDAP
+            }
+        }
+
+        /**
+         * parse the by: clause.
+         */
+        private void parseEnvironmentcontext() {
+            Object forClause = rawInput.get("context");
+            if(forClause == null) return;
+            if(! (forClause instanceof Map)) return;
+            @SuppressWarnings("rawtypes")
+            Map forMap = (Map)forClause;
+            @SuppressWarnings("rawtypes")
+            Set<Map.Entry> entries = forMap.entrySet();
+            for(@SuppressWarnings("rawtypes") Map.Entry entry : entries) {
+                if(entry.getKey() instanceof String) {
+                    String key = (String) entry.getKey();
+                    if(entry.getValue() instanceof String) {
+                        environmentContext.put(key, (String) entry.getValue());
+                    }
+                }
             }
         }
         

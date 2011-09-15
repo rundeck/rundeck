@@ -39,26 +39,12 @@ public class TestPolicies extends TestCase {
     
     public void setUp() throws Exception {
 
-        policies = PoliciesXml.load(getPath("com/dtolabs/rundeck/core/authorization"));
+        policies = PoliciesXml.load(new File("src/test/com/dtolabs/rundeck/core/authorization"));
     }
 
-    /**
-     * @return
-     */
-    public static File getPath(String name) {
-        
-        URL url = ClassLoader.getSystemResource(name);
-        File f;
-        try {
-          f = new File(url.toURI());
-        } catch(URISyntaxException e) {
-          f = new File(url.getPath());
-        }
-        return f;
-    }
     
     public void testPoliciesStructural() throws Exception {
-        assertEquals("Policy count mismatch", 9, policies.count());
+        assertEquals("Policy count mismatch", 11, policies.count());
     }
     
     public void testSelectOnPrincipal() throws Exception {
@@ -72,7 +58,7 @@ public class TestPolicies extends TestCase {
         Set<Attribute> environment = new HashSet<Attribute>();
         List<AclContext> contexts = policies.narrowContext(formalSubject, environment);
         assertNotNull("Context is null.", contexts);
-        assertEquals("Incorrect number of contexts returned when matching on username.", 1, contexts.size());
+        assertEquals("Incorrect number of contexts returned when matching on username.", 2, contexts.size());
          
         formalSubject = new Subject();
         formalSubject.getPrincipals().add(new Username("yml_usr_1"));
@@ -96,7 +82,7 @@ public class TestPolicies extends TestCase {
     
     public void testListAllRoles() throws Exception {
         List<String> results = policies.listAllRoles();
-        assertEquals("Results did not return the correct number of policies.", 9, results.size());
+        assertEquals("Results did not return the correct number of policies.", 11, results.size());
         results.containsAll(Arrays.asList(new String[]{"admin","foo","admin-environment","ou=Foo,dn=example,dn=com"}));
     }
 }

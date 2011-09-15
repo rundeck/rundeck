@@ -51,27 +51,12 @@ public class TestPoliciesDocument extends TestCase {
     }
 
     public void setUp() throws Exception {
-        testdir = getPath("com/dtolabs/rundeck/core/authorization");
+        testdir = new File("src/test/com/dtolabs/rundeck/core/authorization");
         test1 = new File(testdir, "test1.aclpolicy");
         test2 = new File(testdir, "admintest.aclpolicy");
         DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
         domFactory.setNamespaceAware(true);
         builder = domFactory.newDocumentBuilder();
-    }
-
-    /**
-     * @return
-     */
-    public static File getPath(String name) {
-
-        URL url = ClassLoader.getSystemResource(name);
-        File f;
-        try {
-            f = new File(url.toURI());
-        } catch (URISyntaxException e) {
-            f = new File(url.getPath());
-        }
-        return f;
     }
 
     protected void tearDown() throws Exception {
