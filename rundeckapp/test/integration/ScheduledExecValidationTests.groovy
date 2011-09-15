@@ -2063,6 +2063,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             sec.frameworkService=fwkControl.createMock()
             def sesControl = mockFor(ScheduledExecutionService, true)
             sesControl.demand.getByIDorUUID{id-> return se }
+            sesControl.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return true}
             sec.scheduledExecutionService=sesControl.createMock()
 
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:true,adhocRemoteString:'test command',]
@@ -2123,6 +2124,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 return null
             }
             sec.frameworkService=fwkControl.createMock()
+            def sesMock = mockFor(ScheduledExecutionService,true)
+            sesMock.demand.userAuthorizedForJobCreate{request, scheduledExecution, framework-> return true}
+            sec.scheduledExecutionService=sesMock.createMock()
 
             def params=new ScheduledExecution(jobName:'monkey2',project:'testProject2',description:'',adhocExecution:true,adhocRemoteString:'test command',
                 workflow: new Workflow(commands:[new CommandExec(adhocRemoteString:'test command',adhocExecution:true)])
@@ -2187,6 +2191,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 return null
             }
             sec.frameworkService=fwkControl.createMock()
+            def sesMock = mockFor(ScheduledExecutionService, true)
+            sesMock.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return true}
+            sec.scheduledExecutionService = sesMock.createMock()
 
             def params=new ScheduledExecution(jobName:'monkey2',project:'testProject2',description:'',
                 doNodedispatch:true, nodeIncludeName:"nodename",
@@ -3148,6 +3155,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def sesControl = mockFor(ScheduledExecutionService, true)
             sesControl.demand.getByIDorUUID {id -> return se }
+            sesControl.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return true}
             sec.scheduledExecutionService = sesControl.createMock()
 
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:'true',adhocRemoteString:'']
@@ -3201,6 +3209,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def sesControl = mockFor(ScheduledExecutionService, true)
             sesControl.demand.getByIDorUUID {id -> return se }
+            sesControl.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return true}
             sec.scheduledExecutionService = sesControl.createMock()
 
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:'true',adhocLocalString:'test local']
@@ -3261,6 +3270,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def sesControl = mockFor(ScheduledExecutionService, true)
             sesControl.demand.getByIDorUUID {id -> return se }
+            sesControl.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return true}
             sec.scheduledExecutionService = sesControl.createMock()
 
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:'true',adhocFilepath:'test file']
@@ -3322,6 +3332,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def sesControl = mockFor(ScheduledExecutionService, true)
             sesControl.demand.getByIDorUUID {id -> return se }
+            sesControl.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return true}
             sec.scheduledExecutionService = sesControl.createMock()
 
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:'true',adhocRemoteString:'test remote']
@@ -3382,6 +3393,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def sesControl = mockFor(ScheduledExecutionService, true)
             sesControl.demand.getByIDorUUID {id -> return se }
+            sesControl.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return true}
             sec.scheduledExecutionService = sesControl.createMock()
 
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:'true',adhocFilepath:'test file']
@@ -3442,6 +3454,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def sesControl = mockFor(ScheduledExecutionService, true)
             sesControl.demand.getByIDorUUID {id -> return se }
+            sesControl.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return true}
             sec.scheduledExecutionService = sesControl.createMock()
 
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:'true',adhocRemoteString:'test remote']
@@ -3502,6 +3515,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def sesControl = mockFor(ScheduledExecutionService, true)
             sesControl.demand.getByIDorUUID {id -> return se }
+            sesControl.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return true}
             sec.scheduledExecutionService = sesControl.createMock()
 
             def params=[id:se.id.toString(),jobName:'monkey2',project:'testProject2',description:'',adhocExecution:'true',adhocLocalString:'test local']
@@ -3562,6 +3576,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 return null
             }
             sec.frameworkService=fwkControl.createMock()
+            def sesMock = mockFor(ScheduledExecutionService, true)
+            sesMock.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return true}
+            sec.scheduledExecutionService = sesMock.createMock()
 
             def params=new ScheduledExecution(jobName:'monkey2',project:'testProject2',description:'',
                 workflow:new Workflow(commands:[new CommandExec(adhocExecution:'true',adhocRemoteString:'')])
@@ -3611,6 +3628,9 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
                 return true
             }
             sec.frameworkService=fwkControl.createMock()
+            def sesMock = mockFor(ScheduledExecutionService, true)
+            sesMock.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return true}
+            sec.scheduledExecutionService = sesMock.createMock()
 
             def params=new ScheduledExecution(jobName:'monkey2',project:'testProject2',description:'',
                 workflow:new Workflow(commands:[new CommandExec(adhocExecution:'true',adhocRemoteString:'test remote')])
@@ -5152,6 +5172,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             def seServiceControl = mockFor(ScheduledExecutionService,true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
+            seServiceControl.demand.userAuthorizedForJob {user,schedexec, framework -> return true }
             seServiceControl.demand.userAuthorizedForJob {user,schedexec, framework -> return true }
             sec.scheduledExecutionService = seServiceControl.createMock()
 

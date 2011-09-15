@@ -15,6 +15,8 @@ import com.dtolabs.rundeck.core.authentication.Username;
 import com.dtolabs.rundeck.core.authorization.Decision;
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authorization.AuthConstants
+import com.dtolabs.rundeck.core.authorization.Attribute
 
 /**
  *  ScheduledExecutionService manages scheduling jobs with the Quartz scheduler
@@ -329,17 +331,17 @@ class ScheduledExecutionService {
 
     def userAuthorizedForJob(request,ScheduledExecution se, Framework framework){
         def resource = ["job": se.getJobName(), "group": se.getGroupPath() ?: ""]
-        def environment = Collections.emptySet();
+        def env = Collections.singleton(new Attribute(new URI(AuthConstants.PROJECT_URI), se.project))
         def Decision d = framework.getAuthorizationMgr().evaluate(resource, request.subject,
-            UserAuth.WF_READ, environment)
+            UserAuth.WF_READ, env)
         return d.isAuthorized()
     }
 
     def userAuthorizedForJobCreate(request,ScheduledExecution se, Framework framework){
         def resource = ["job": se.getJobName(), "group": se.getGroupPath() ?: ""]
-        def environment = Collections.emptySet();
+        def env = Collections.singleton(new Attribute(new URI(AuthConstants.PROJECT_URI), se.project))
         def Decision d = framework.getAuthorizationMgr().evaluate(resource, request.subject,
-            UserAuth.WF_CREATE, environment)
+            UserAuth.WF_CREATE, env)
         return d.isAuthorized()
     }
 

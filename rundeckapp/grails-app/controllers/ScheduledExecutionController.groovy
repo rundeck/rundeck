@@ -167,7 +167,11 @@ class ScheduledExecutionController  {
 
         def total = Execution.countByScheduledExecution(scheduledExecution)
 
-        //todo: authorize job for workflow_read
+        if(!scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework)){
+            response.setStatus(401)
+            flash.error="Unauthorized"
+            return render(template:"/common/error")
+        }
 
 
         withFormat{
@@ -769,10 +773,13 @@ class ScheduledExecutionController  {
         }
         def origjobname=scheduledExecution.jobName
         def origgrouppath=scheduledExecution.groupPath
+        def origproject=scheduledExecution.project
         scheduledExecution.properties = nonopts
-        if(origgrouppath!=scheduledExecution.groupPath || origjobname!=scheduledExecution.jobName){
+        if (origgrouppath != scheduledExecution.groupPath
+            || origjobname != scheduledExecution.jobName
+            || origproject != scheduledExecution.project) {
             if (!scheduledExecutionService.userAuthorizedForJobCreate(request, scheduledExecution, framework)) {
-                request.error = "User is unauthorized to create the job ${scheduledExecution.groupPath}/${scheduledExecution.jobName}"
+                request.error = "User is unauthorized to create the job ${scheduledExecution.groupPath ?: ''}/${scheduledExecution.jobName} (project ${scheduledExecution.project})"
                 failed=true
             }
         }
@@ -1120,10 +1127,13 @@ class ScheduledExecutionController  {
         scheduledExecution.clearFilterFields()
         def origjobname = scheduledExecution.jobName
         def origgrouppath = scheduledExecution.groupPath
+        def origproject = scheduledExecution.project
         scheduledExecution.properties = newprops
-        if (origgrouppath != scheduledExecution.groupPath || origjobname != scheduledExecution.jobName) {
+        if (origgrouppath != scheduledExecution.groupPath
+            || origjobname != scheduledExecution.jobName
+            || origproject != scheduledExecution.project ) {
             if (!scheduledExecutionService.userAuthorizedForJobCreate(request, scheduledExecution, framework)) {
-                request.error="User is unauthorized to create the job ${scheduledExecution.groupPath}/${scheduledExecution.jobName}"
+                request.error="User is unauthorized to create the job ${scheduledExecution.groupPath?:''}/${scheduledExecution.jobName} (project ${scheduledExecution.project})"
                 failed = true
             }
         }
@@ -1327,6 +1337,11 @@ class ScheduledExecutionController  {
             log.info("update: there was no object by id: " +params.id+". redirecting to menu.")
             redirect(action:index)
             return;
+        }
+        if (!scheduledExecutionService.userAuthorizedForJob(request, scheduledExecution, framework)) {
+            response.setStatus(401)
+            flash.error = "Unauthorized"
+            return render(template: "/common/error")
         }
         def newScheduledExecution = new ScheduledExecution()
         newScheduledExecution.properties = new java.util.HashMap(scheduledExecution.properties)
@@ -2223,7 +2238,7 @@ class ScheduledExecutionController  {
         failed=result.failed
 
         if(!scheduledExecutionService.userAuthorizedForJobCreate(request,scheduledExecution,framework)){
-            request.error = "User is unauthorized to create the job ${scheduledExecution.groupPath}/${scheduledExecution.jobName}"
+            request.error = "User is unauthorized to create the job ${scheduledExecution.groupPath ?: ''}/${scheduledExecution.jobName} (project ${scheduledExecution.project})"
             scheduledExecution.discard()
             return scheduledExecution
         }

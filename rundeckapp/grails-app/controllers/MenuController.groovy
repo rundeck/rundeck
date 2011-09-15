@@ -3,6 +3,8 @@ import com.dtolabs.rundeck.core.common.Framework
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
 import java.lang.management.ManagementFactory
+import com.dtolabs.rundeck.core.authorization.Attribute
+import com.dtolabs.rundeck.core.authorization.AuthConstants
 
 class MenuController {
     FrameworkService frameworkService
@@ -243,7 +245,8 @@ class MenuController {
         // Filter the groups by what the user is authorized to see.
 
         def authorization = frameworkService.getFrameworkFromUserSession(request.session, request).getAuthorizationMgr()
-        def decisions = authorization.evaluate(res, request.subject, new HashSet([UserAuth.WF_CREATE,UserAuth.WF_READ,UserAuth.WF_DELETE,UserAuth.WF_RUN,UserAuth.WF_UPDATE,UserAuth.WF_KILL]), Collections.emptySet())
+        def env = Collections.singleton(new Attribute(new URI(AuthConstants.PROJECT_URI), query.projFilter))
+        def decisions = authorization.evaluate(res, request.subject, new HashSet([UserAuth.WF_CREATE,UserAuth.WF_READ,UserAuth.WF_DELETE,UserAuth.WF_RUN,UserAuth.WF_UPDATE,UserAuth.WF_KILL]), env)
 //        def decisions = authorization.evaluate(res, request.subject, new HashSet([UserAuth.WF_READ]), Collections.emptySet())
         log.debug("listWorkflows(evaluate): "+(System.currentTimeMillis()-preeval));
 

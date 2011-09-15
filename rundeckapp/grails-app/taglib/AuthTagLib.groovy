@@ -5,7 +5,8 @@ import javax.security.auth.Subject
 import com.dtolabs.rundeck.core.authentication.Username;
 import com.dtolabs.rundeck.core.authentication.Group;
 import com.dtolabs.rundeck.core.authorization.Attribute;
-import com.dtolabs.rundeck.core.authorization.Authorization;
+import com.dtolabs.rundeck.core.authorization.Authorization
+import com.dtolabs.rundeck.core.authorization.AuthConstants;
 
 class AuthTagLib {
     def static namespace="auth"
@@ -45,7 +46,12 @@ class AuthTagLib {
         
         def resource = ["job": attrs.job?.jobName, "group": (attrs.job?.groupPath ?: "")]
 
-        def env = Collections.emptySet() // empty for now.
+        def env
+        if (session.project) {
+            env = Collections.singleton(new Attribute(new URI(AuthConstants.PROJECT_URI), session.project))
+        } else {
+            env = Collections.emptySet()
+        }
         
         def decision = authr.evaluate(resource, request.subject, action, env)
         
@@ -97,7 +103,12 @@ class AuthTagLib {
         
         def Set resource = [ ["job": attrs.job?.jobName, "group": (attrs.job?.groupPath ?: "")] ]
 
-        def env = Collections.emptySet() // empty for now.
+        def env
+        if(session.project){
+            env = Collections.singleton(new Attribute(new URI(AuthConstants.PROJECT_URI),session.project))
+        }else{
+            env = Collections.emptySet()
+        }
         
         authr.evaluate(resource, request.subject, tests, env).each{ def decision ->
             // has == true, authorized == true => auth = true
