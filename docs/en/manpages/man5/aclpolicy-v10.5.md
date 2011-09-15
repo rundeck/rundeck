@@ -29,6 +29,8 @@ log file.
 An example policy document.
 
     description: Yaml Policy 1
+    context:
+      project: 'test.*'
     rules:
       ^$:
         actions: 'foobar'
@@ -52,7 +54,26 @@ policy definition: `decription`, `rules`, `by`.
 
 It's recommended that this description be short and descriptive as it appears
 in the log output.
-    
+
+## `context` 
+
+Context specifies the environmental context that the policy applies to.
+
+You can specify a project name, regex, or "*" to apply only to the matching projects:
+
+    context:
+      project: project1
+
+Regex:
+
+    context:
+      project: "qa.*$"
+
+The string "*" can be used to apply to all projects:
+
+    context:
+      project: '*'
+
 ## `by` Element
     
 Within a `by` can be any number of `username` and `group` elements.
