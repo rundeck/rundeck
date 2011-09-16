@@ -38,7 +38,9 @@
     <script type="text/javascript" src="${resource(dir:'js',file:'application.js')}"></script>
     <script type="text/javascript" src="${resource(dir:'js',file:'menus.js')}"></script>
     <g:if test="${pageProperty(name:'meta.rssfeed')}">
-        <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="${pageProperty(name:'meta.rssfeed')}"/>
+        <g:ifServletContextAttribute attribute="RSS_ENABLED" value="true">
+            <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="${pageProperty(name:'meta.rssfeed')}"/>
+        </g:ifServletContextAttribute>
     </g:if>
     <g:layoutHead/>
 </head>
