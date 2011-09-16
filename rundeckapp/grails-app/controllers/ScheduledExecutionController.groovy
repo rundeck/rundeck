@@ -160,7 +160,6 @@ class ScheduledExecutionController  {
             return error.call()
         }
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
-        def User user = User.findByLogin(session.user)
         //list executions using query params and pagination params
 
         def executions=Execution.findAllByScheduledExecution(scheduledExecution,[offset: params.offset?params.offset:0, max: params.max?params.max:10, sort:'dateStarted', order:'desc'])
@@ -1457,16 +1456,21 @@ class ScheduledExecutionController  {
         log.info("ScheduledExecutionController: saveAndExec : params: " + params)
         def changeinfo = [user: session.user, change: 'create', method: 'saveAndExec']
         def scheduledExecution = _dosave(params,changeinfo)
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         if(scheduledExecution.id){
             params.id=scheduledExecution.extid
             logJobChange(changeinfo, scheduledExecution.properties)
+            if (!scheduledExecutionService.userAuthorizedForJobAction(request, scheduledExecution, framework, UserAuth.WF_RUN)) {
+                flash.error = "Unauthorized to run job: ${scheduledExecution.generateFullName()} (project ${scheduledExecution.project})"
+                return redirect(action: show, id: scheduledExecution.extid)
+            }
             if(!scheduledExecution.scheduled){
                 return redirect(action:execute,id:scheduledExecution.extid)
             }else{
                 return redirect(action:show,id:scheduledExecution.extid)
             }
         }else{
-            Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+
 
             scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
             request.message=g.message(code:'ScheduledExecutionController.save.failed')
@@ -1680,7 +1684,7 @@ class ScheduledExecutionController  {
      */
     def _transientExecute={ScheduledExecution scheduledExecution, Map params, Framework framework, List rolelist->
         def object
-        def isauth = scheduledExecutionService.userAuthorizedForJob(params.request,scheduledExecution,framework)
+        def isauth = scheduledExecutionService.userAuthorizedForJobAction(params.request,scheduledExecution,framework,UserAuth.WF_RUN)
         if (!isauth){
             def msg=g.message(code:'unauthorized.job.run.user',args:[params.user])
             return [error:'unauthorized',message:msg]
@@ -2497,7 +2501,12 @@ class ScheduledExecutionController  {
         def model=edit(params)
 
         def ScheduledExecution scheduledExecution = model.scheduledExecution
-
+        if (!scheduledExecutionService.userAuthorizedForJobAction(request, scheduledExecution, framework,UserAuth.WF_RUN)) {
+            response.setStatus 403
+            request.error= "Unauthorized to run job: ${scheduledExecution.generateFullName()} (project ${scheduledExecution.project})"
+            request.unauthorized=true
+            return render(template:"/common/error")
+        }
         //test nodeset to make sure there are matches
         if(scheduledExecution.doNodedispatch){
             NodeSet nset = ExecutionService.filtersAsNodeSet(scheduledExecution)
@@ -2536,6 +2545,9 @@ class ScheduledExecutionController  {
             session.jobexecOptionErrors=null
             session.selectedoptsmap=null
             model.options=null
+        }
+        if(request.unauthorized){
+            return render(template: '/common/errorFragment', model: model)
         }
         render(template:'execOptionsForm',model:model)
     }
@@ -2650,7 +2662,7 @@ class ScheduledExecutionController  {
             redirect(controller:"execution", action:"follow",id:results.id)
         }
     }
-    def runJob = {
+    private runJob(){
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         params["user"] = (session?.user) ? session.user : "anonymous"
         def rolelist = (session?.roles) ? session.roles : []
@@ -2677,6 +2689,13 @@ class ScheduledExecutionController  {
             log.error(msg)
             flash.error=msg
             return [error:'unauthorized',message:msg]
+        }
+
+        if (!scheduledExecutionService.userAuthorizedForJobAction(request, scheduledExecution, framework, UserAuth.WF_RUN)) {
+            def msg = g.message(code: 'unauthorized.job.run.user', args: [params.user])
+            log.error(msg)
+            flash.error = msg
+            return [error: 'unauthorized', message: msg]
         }
 
         def extra = params.extra
