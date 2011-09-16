@@ -5185,4 +5185,110 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertEquals(se.jobName,copied.jobName)
         }
     }
+
+    public void testShow() {
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', groupPath: 'some/where', description: 'a job', project: 'AProject', argString: '-a b -c d', adhocExecution: false, uuid: 'monkey')
+
+        se.save()
+        ScheduledExecutionController sec = new ScheduledExecutionController()
+
+        def seServiceControl = mockFor(ScheduledExecutionService, true)
+        seServiceControl.demand.getByIDorUUID {id -> return se }
+        seServiceControl.demand.userAuthorizedForJob {user, schedexec, framework -> return true }
+        seServiceControl.demand.nextExecutionTime { schedexec -> return null }
+        sec.scheduledExecutionService = seServiceControl.createMock()
+
+        def fwServiceControl = mockFor(FrameworkService, true)
+        fwServiceControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        sec.frameworkService = fwServiceControl.createMock()
+
+        sec.params.id = 'monkey'
+        sec.request.setAttribute('format', 'html')
+        sec.show()
+        assertNull sec.response.redirectedUrl
+        assertEquals 200,sec.response.status
+
+    }
+
+    public void testEdit() {
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', groupPath: 'some/where', description: 'a job', project: 'AProject', argString: '-a b -c d', adhocExecution: false, uuid: 'monkey')
+
+        se.save()
+        ScheduledExecutionController sec = new ScheduledExecutionController()
+
+        def seServiceControl = mockFor(ScheduledExecutionService, true)
+        def x
+        seServiceControl.demand.getByIDorUUID {id -> x=id;return se }
+        seServiceControl.demand.userAuthorizedForJob {user, schedexec, framework -> return true }
+        seServiceControl.demand.userAuthorizedForJob {user, schedexec, framework -> return true }
+        seServiceControl.demand.nextExecutionTime { schedexec -> return null }
+        sec.scheduledExecutionService = seServiceControl.createMock()
+
+        def fwServiceControl = mockFor(FrameworkService, true)
+        fwServiceControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwServiceControl.demand.projects {return null }
+        sec.frameworkService = fwServiceControl.createMock()
+
+        sec.params.id = 'monkey'
+        sec.edit()
+        assertNull sec.flash.error
+        assertNull sec.response.redirectedUrl
+        assertEquals 200,sec.response.status
+        assertNotNull sec.modelAndView
+        assertNotNull sec.modelAndView.model
+        def copied = sec.modelAndView.model.scheduledExecution
+        assertNotNull(copied)
+        assertEquals se,copied
+
+    }
+
+    public void testSaveAndExecFullAuth() {
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', groupPath: 'some/where', description: 'a job', project: 'AProject', argString: '-a b -c d', adhocExecution: false, uuid: 'monkey')
+
+        se.save()
+        ScheduledExecutionController sec = new ScheduledExecutionController()
+
+        def seServiceControl = mockFor(ScheduledExecutionService, true)
+        def x
+        seServiceControl.demand.getByIDorUUID {id -> x = id; return se }
+        seServiceControl.demand.userAuthorizedForJobAction {user, schedexec, framework, action -> return true }
+        seServiceControl.demand.nextExecutionTime { schedexec -> return null }
+        sec.scheduledExecutionService = seServiceControl.createMock()
+
+        def fwServiceControl = mockFor(FrameworkService, true)
+        fwServiceControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwServiceControl.demand.projects {return null }
+        sec.frameworkService = fwServiceControl.createMock()
+        sec.metaClass.static."_dosave"= { params , changeinfo-> return [id:'blah']}
+        sec.metaClass.static."logJobChange"= { changeinfo , properties-> }
+
+        sec.saveAndExec()
+        assertNull sec.flash.error
+        assertEquals "/job/execute", sec.response.redirectedUrl
+    }
+    public void testSaveAndExecNoRun() {
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', groupPath: 'some/where', description: 'a job', project: 'AProject', argString: '-a b -c d', adhocExecution: false, uuid: 'monkeytest1')
+
+        se.save()
+        ScheduledExecutionController sec = new ScheduledExecutionController()
+
+        def seServiceControl = mockFor(ScheduledExecutionService, true)
+        def x
+        seServiceControl.demand.getByIDorUUID {id -> x = id; return se }
+        seServiceControl.demand.userAuthorizedForJobAction {user, schedexec, framework, action -> return false }
+        seServiceControl.demand.nextExecutionTime { schedexec -> return null }
+        sec.scheduledExecutionService = seServiceControl.createMock()
+
+        def fwServiceControl = mockFor(FrameworkService, true)
+        fwServiceControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwServiceControl.demand.projects {return null }
+        sec.frameworkService = fwServiceControl.createMock()
+        sec.metaClass.static."_dosave"= { params , changeinfo-> return se}
+        sec.metaClass.static."logJobChange"= { changeinfo , properties-> }
+
+        sec.saveAndExec()
+        assertTrue sec.flash.error.contains("Unauthorized to run job: ")
+        assertEquals "/job/show/monkeytest1", sec.response.redirectedUrl
+    }
+
 }
