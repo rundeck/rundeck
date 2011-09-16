@@ -3,7 +3,9 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="events"/>
+    <g:ifServletContextAttribute attribute="RSS_ENABLED" value="true">
     <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="${createLink(controller:"feed",action:"index",params:paginateParams?paginateParams:[:])}"/>
+    </g:ifServletContextAttribute>
     <title><g:message code="gui.menu.Events"/></title>
     <g:javascript>
                 
@@ -182,7 +184,9 @@
 
 
 <div class="pageBody solo">
+    <g:ifServletContextAttribute attribute="RSS_ENABLED" value="true">
     <a title="RSS 2.0" class="floatr" href="${createLink(controller:"feed",action:"index",params:paginateParams)}" id="rsslink"><img src="${resource(dir:'images',file:'feed.png')}" width="14px" height="14px" alt=""/> RSS</a>
+    </g:ifServletContextAttribute>
     <g:render template="/common/messages"/>
 
     <span class="badgeholder"  id="eventsCountBadge" style="display:none"><span class="badge newcontent active" id="eventsCountContent" onclick="boxctl.reloadTabForName('events');" title="click to load new events"></span></span>

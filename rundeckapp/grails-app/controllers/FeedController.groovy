@@ -2,6 +2,9 @@ class FeedController {
     ReportService reportService
 
     def index = {ReportQuery query ->
+        if(!checkEnabled()){
+            return 
+        }
         if(null!=query && !params.find{ it.key.endsWith('Filter')}){
             query.recentFilter="1d"
             params.recentFilter="1d"
@@ -17,6 +20,9 @@ class FeedController {
 
 
     def commands = {ExecQuery query ->
+        if (!checkEnabled()) {
+            return
+        }
         if(null!=query && !params.find{ it.key.endsWith('Filter')}){
             query.recentFilter="1d"
             params.recentFilter="1d"
@@ -31,6 +37,9 @@ class FeedController {
     }
 
     def jobs = {ExecQuery query ->
+        if (!checkEnabled()) {
+            return
+        }
         if(null!=query && !params.find{ it.key.endsWith('Filter')}){
             query.recentFilter="1d"
             params.recentFilter="1d"
@@ -45,11 +54,13 @@ class FeedController {
     }
 
     protected checkEnabled() {
-        if ('true' == servletContext.getAttribute('RSS_ENABLED')) {
-
-        } else {
-            redirect(controller: 'menu', action: 'index')
+        if ('true' != servletContext.getAttribute('RSS_ENABLED')) {
+            response.setStatus 404
+            flash.error="Not found"
+            render(template:"/common/error")
+            return false
         }
+        return true
     }
 }
 

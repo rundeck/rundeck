@@ -11,10 +11,11 @@
 
 <div class="pageTop">
     <g:render template="menusPageTop" model="[menu:'events',submenu:'commands']"/>
-
+    <g:ifServletContextAttribute attribute="RSS_ENABLED" value="true">
         <div class="floatr">
             <a title="RSS 2.0" href="${createLink(controller:"feed",action:"commands",params:paginateParams)}"><img src="${resource(dir:'images',file:'feed.png')}" width="14px" height="14px" alt=""/> RSS</a>
         </div>
+    </g:ifServletContextAttribute>
 </div>
 <div class="pageBody">
     <g:set var="wasfiltered" value="${paginateParams}"/>
