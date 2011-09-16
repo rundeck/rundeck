@@ -68,8 +68,7 @@ class ReportsController {
         }
         def curdate=new Date()
         def model= reportService.getCombinedReports(query)
-//        System.err.println("("+actionName+"): lastDate: "+model.lastDate);
-//        System.err.println("("+actionName+"): usedFilter: "+usedFilter+", p: "+params.filterName);
+        filterUnauthorizedReports(model, framework)
         if(model.lastDate<1 && query.recentFilter ){
             model.lastDate=curdate.time
         }else if (model.lastDate<1 && query.doendafterFilter  && (!query.doendbeforeFilter || curdate.time<query.endbeforeFilter.time)){
@@ -86,6 +85,28 @@ class ReportsController {
         }
         model.filterPref=filterPref
         return model
+    }
+
+    private def filterUnauthorizedReports(model, Framework framework) {
+        def authreports = []
+        model.reports.each {rpt ->
+            if (rpt instanceof ExecReport) {
+                ExecReport erpt = (ExecReport) rpt
+                if (erpt.jcJobId) {
+                    ScheduledExecution se = ScheduledExecution.get(erpt.jcJobId)
+                    if (se && !scheduledExecutionService.userAuthorizedForJobAction(request, se, framework, UserAuth.EV_READ)) {
+                        return
+                    }
+                } else {
+                    def project = erpt.ctxProject
+                    if (!scheduledExecutionService.userAuthorizedForAdhocAction(request, project, framework, UserAuth.EV_READ)) {
+                        return
+                    }
+                }
+                authreports << rpt
+            }
+        }
+        model.reports = authreports
     }
 
     def since = { ReportQuery query->
@@ -489,6 +510,7 @@ class ReportsController {
             query.configureFilter()
         }
         def model=reportService.getCombinedReports(query)
+        filterUnauthorizedReports(model, framework)
         model = reportService.finishquery(query,params,model)
 
         def statusMap=[succeed:ExecutionController.EXECUTION_SUCCEEDED,
