@@ -20,10 +20,20 @@ class ExecutionController {
         redirect(controller:'menu',action:'index')
     }
     def follow ={
-        return render(view:'show',model:show())
+        def model = show()
+        if (model.error) {
+            response.setStatus 403
+            return render(template: '/common/error')
+        }
+        return render(view:'show',model:model)
     }
     def followFragment ={
-        return render(view:'showFragment',model:show())
+        def model= show()
+        if(model.unauthorized){
+            response.setStatus 403
+            return render(template:'/common/errorFragment')
+        }
+        return render(view:'showFragment',model:model)
     }
     def show ={
         def Execution e = Execution.get(params.id)
@@ -32,6 +42,19 @@ class ExecutionController {
             flash.error = "Execution not found for id: "+params.id
             return render(template:"/common/error")
         }
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if(e.scheduledExecution){
+            if (!scheduledExecutionService.userAuthorizedForJobAction(request, e.scheduledExecution, framework, UserAuth.WF_READ)) {
+                def msg = g.message(code: 'unauthorized.job.read', args: [params.user])
+                log.error(msg)
+                return [unauthorized: true, error: msg]
+            }
+        }else if (!scheduledExecutionService.userAuthorizedForAdhocAction(request, e.project, framework, UserAuth.WF_READ)) {
+            def msg = g.message(code: 'unauthorized.job.read', args: [params.user])
+            log.error(msg)
+            flash.error = msg
+            return [unauthorized:true,error:msg]
+        }
         def filesize=-1
         if(null!=e.outputfilepath){
             def file = new File(e.outputfilepath)
@@ -39,7 +62,6 @@ class ExecutionController {
                 filesize = file.length()
             }
         }
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         if(e.scheduledExecution){
             def ScheduledExecution scheduledExecution = e.scheduledExecution //ScheduledExecution.get(e.scheduledExecutionId)
 
@@ -105,7 +127,21 @@ class ExecutionController {
                 }
             }
         }
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         def ScheduledExecution se = e.scheduledExecution
+        if (se) {
+            if (!scheduledExecutionService.userAuthorizedForJobAction(request, se, framework, UserAuth.WF_KILL)) {
+                def msg = g.message(code: 'unauthorized.job.kill', args: [params.user])
+                log.error(msg)
+                flash.error = msg
+                return render(template: "/common/error")
+            }
+        } else if (!scheduledExecutionService.userAuthorizedForAdhocAction(request, e.project, framework, UserAuth.WF_KILL)) {
+            def msg = g.message(code: 'unauthorized.job.kill', args: [params.user])
+            log.error(msg)
+            flash.error = msg
+            return render(template: "/common/error")
+        }
 
         def abortresult=executionService.abortExecution(se,e,session.user)
 
@@ -136,6 +172,21 @@ class ExecutionController {
             flash.error="No Execution found for id: " + params.id
             flash.message="No Execution found for id: " + params.id
             return
+        }
+
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if (e.scheduledExecution) {
+            if (!scheduledExecutionService.userAuthorizedForJobAction(request, e.scheduledExecution, framework, UserAuth.WF_READ)) {
+                def msg = g.message(code: 'unauthorized.job.read', args: [params.user])
+                log.error(msg)
+                flash.error = msg
+                return render(template: "/common/error")
+            }
+        } else if (!scheduledExecutionService.userAuthorizedForAdhocAction(request, e.project, framework, UserAuth.WF_READ)) {
+            def msg = g.message(code: 'unauthorized.job.read', args: [params.user])
+            log.error(msg)
+            flash.error = msg
+            return render(template: "/common/error")
         }
 
         def jobcomplete = e.dateCompleted!=null
@@ -199,6 +250,20 @@ class ExecutionController {
                 }
             }
             return;
+        }
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if (e.scheduledExecution) {
+            if (!scheduledExecutionService.userAuthorizedForJobAction(request, e.scheduledExecution, framework, UserAuth.WF_READ)) {
+                def msg = g.message(code: 'unauthorized.job.read', args: [params.user])
+                log.error(msg)
+                flash.error = msg
+                return render(template: "/common/error")
+            }
+        } else if (!scheduledExecutionService.userAuthorizedForAdhocAction(request, e.project, framework, UserAuth.WF_READ)) {
+            def msg = g.message(code: 'unauthorized.job.read', args: [params.user])
+            log.error(msg)
+            flash.error = msg
+            return render(template: "/common/error")
         }
         def long start = System.currentTimeMillis()
 
