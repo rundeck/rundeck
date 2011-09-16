@@ -634,12 +634,18 @@ class ScheduledExecutionController  {
 
     def edit = {
         log.info("ScheduledExecutionController: edit : params: " + params)
-        def scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
+        def model=prepEdit(params.id)
+        
+        render(view:'edit',model: model)
+    }
+
+    private prepEdit (id){
+        def scheduledExecution = scheduledExecutionService.getByIDorUUID(id)
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         def crontab = [:]
-        if(!scheduledExecution) {
-            flash.message = "ScheduledExecution not found with id ${params.id}"
-            return redirect(action:index, params:params)
+        if (!scheduledExecution) {
+            flash.message = "ScheduledExecution not found with id ${id}"
+            return redirect(action: index, params: params)
         }
         if (!scheduledExecutionService.userAuthorizedForJob(request, scheduledExecution, framework)) {
             response.setStatus(403)
@@ -647,25 +653,25 @@ class ScheduledExecutionController  {
             return render(template: "/common/error")
         }
         //clear session workflow
-        if(session.editWF ){
+        if (session.editWF) {
             session.removeAttribute('editWF');
             session.removeAttribute('undoWF');
             session.removeAttribute('redoWF');
         }
         //clear session opts
-        if(session.editOPTS ){
+        if (session.editOPTS) {
             session.removeAttribute('editOPTS');
             session.removeAttribute('undoOPTS');
             session.removeAttribute('redoOPTS');
         }
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
-        render(view:'edit',model: [ scheduledExecution:scheduledExecution, crontab:crontab,params:params,
-            nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
-            authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework), projects: frameworkService.projects(framework)])
+        return [scheduledExecution: scheduledExecution, crontab: crontab, params: params,
+            nextExecutionTime: scheduledExecutionService.nextExecutionTime(scheduledExecution),
+            authorized: scheduledExecutionService.userAuthorizedForJob(request, scheduledExecution, framework), projects: frameworkService.projects(framework)]
     }
-
     def renderEditFragment = {
-        render(template:'editForm', model:edit(params))
+        def model = prepEdit(params.id)
+        render(template:'editForm', model:model)
     }
 
     static Logger jobChangeLogger = Logger.getLogger("com.dtolabs.rundeck.data.jobs.changes")
@@ -2503,7 +2509,7 @@ class ScheduledExecutionController  {
     def execute = {
 
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-        def model=edit(params)
+        def model = prepEdit(params.id)
 
         def ScheduledExecution scheduledExecution = model.scheduledExecution
         if (!scheduledExecutionService.userAuthorizedForJobAction(request, scheduledExecution, framework,UserAuth.WF_RUN)) {
