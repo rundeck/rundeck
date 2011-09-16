@@ -167,7 +167,7 @@ class ScheduledExecutionController  {
         def total = Execution.countByScheduledExecution(scheduledExecution)
 
         if(!scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework)){
-            response.setStatus(401)
+            response.setStatus(403)
             flash.error="Unauthorized"
             return render(template:"/common/error")
         }
@@ -641,6 +641,11 @@ class ScheduledExecutionController  {
             flash.message = "ScheduledExecution not found with id ${params.id}"
             return redirect(action:index, params:params)
         }
+        if (!scheduledExecutionService.userAuthorizedForJob(request, scheduledExecution, framework)) {
+            response.setStatus(403)
+            flash.error = "Unauthorized"
+            return render(template: "/common/error")
+        }
         //clear session workflow
         if(session.editWF ){
             session.removeAttribute('editWF');
@@ -654,9 +659,9 @@ class ScheduledExecutionController  {
             session.removeAttribute('redoOPTS');
         }
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
-        return [ scheduledExecution:scheduledExecution, crontab:crontab,params:params,
+        render(view:'edit',model: [ scheduledExecution:scheduledExecution, crontab:crontab,params:params,
             nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
-            authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework), projects: frameworkService.projects(framework)]
+            authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework), projects: frameworkService.projects(framework)])
     }
 
     def renderEditFragment = {
@@ -1338,7 +1343,7 @@ class ScheduledExecutionController  {
             return;
         }
         if (!scheduledExecutionService.userAuthorizedForJob(request, scheduledExecution, framework)) {
-            response.setStatus(401)
+            response.setStatus(403)
             flash.error = "Unauthorized"
             return render(template: "/common/error")
         }
