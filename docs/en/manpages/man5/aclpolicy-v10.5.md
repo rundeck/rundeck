@@ -115,21 +115,17 @@ Known path/actions combinations are:
 -------------------------------------------------------------------------------
 Group     Job               Actions
 --------  ----------------- ----------------------------------------------
-adhoc      Temporary_Job    workflow_read
+adhoc      Temporary_Job    workflow_read, workflow_run
 
-adhoc       adhoc           workflow_read, workflow_kill, workflow_read
+adhoc       adhoc           workflow_read, workflow_kill, events_read
 
 ui          adhoc_run       workflow_run
 
 ui          create          workflow_create, workflow_run
 
-ui          run_and_forget  workflow_run
-
 *           *               workflow_read, workflow_create, workflow_update, 
                             workflow_delete, workflow_kill, workflow_run, 
-                            events_read, events_create, events_update, 
-                            events_delete, resources_read, resources_create, 
-                            resources_update, resources_delete
+                            events_read
 
 -------------------------------------------------------------------------------                           
 

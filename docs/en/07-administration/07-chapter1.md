@@ -720,7 +720,7 @@ might see these actions as a granular set of roles.
 `user_admin`
 ~   Modify user profiles.
 `workflow_read`
-~   Read and view jobs.
+~   Read and view jobs and executions for the jobs and "adhoc" executions.
 `workflow_create`
 ~   Create new jobs.
 `workflow_update`
@@ -728,11 +728,11 @@ might see these actions as a granular set of roles.
 `workflow_delete`
 ~   Remove jobs.
 `workflow_kill`
-~   Kill running jobs.
+~   Kill running jobs. applies to Jobs, and "adhoc" jobs.
 `workflow_run`
 ~   Execute a job.
 `events_read`
-~   List and view history.
+~   List and view history. applies to Jobs, and "adhoc" jobs.
 `events_create`
 ~   Create new events.
 `events_update`
