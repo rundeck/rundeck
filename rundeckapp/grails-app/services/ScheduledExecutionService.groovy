@@ -338,6 +338,13 @@ class ScheduledExecutionService {
             action, env)
         return d.isAuthorized()
     }
+    def userAuthorizedForAdhocAction(request, project,Framework framework, final String action){
+        def resource = ["job": 'adhoc', "group": 'adhoc']
+        def env = Collections.singleton(new Attribute(new URI(AuthConstants.PROJECT_URI), project))
+        def Decision d = framework.getAuthorizationMgr().evaluate(resource, request.subject,
+            action, env)
+        return d.isAuthorized()
+    }
 
     def scheduleJob(ScheduledExecution se, String oldJobName, String oldGroupName) {
         
