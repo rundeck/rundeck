@@ -201,6 +201,251 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         assertEquals "project1",job.project
     }
 
+
+    public void testUploadCreateUnauthorized() {
+        def sec = new ScheduledExecutionController()
+
+        sec.metaClass.request = new MockMultipartHttpServletRequest()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.existsFrameworkProject {project, framework -> return true }
+        sec.frameworkService = fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return false }
+        mock2.demand.nextExecutionTimes {joblist -> return [] }
+        sec.scheduledExecutionService = mock2.createMock()
+
+        def xml = '''
+<joblist>
+    <job>
+        <name>test1</name>
+        <group>testgroup</group>
+        <description>desc</description>
+        <context>
+            <project>project1</project>
+        </context>
+        <sequence>
+            <command><exec>echo test</exec></command>
+        </sequence>
+    </job>
+</joblist>
+'''
+        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
+        def result = sec.upload()
+        //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
+        assertNotNull result
+        assertTrue result.didupload
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        assertEquals  1, result.errjobs.size()
+        assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
+        assertEquals 0, result.jobs.size()
+        assertNotNull result.errjobs[0]
+        def job = result.errjobs[0]
+        assertNotNull job.errmsg
+        assertTrue job.errmsg.contains("User is unauthorized to create the job")
+        assertTrue "wrong class ${job.class}", job.scheduledExecution instanceof ScheduledExecution
+        assertEquals "test1", job.scheduledExecution.jobName
+        assertEquals "testgroup", job.scheduledExecution.groupPath
+        assertEquals "desc", job.scheduledExecution.description
+        assertEquals "project1", job.scheduledExecution.project
+    }
+
+    public void testUploadUpdateGroupUnauthorized() {
+        def sec = new ScheduledExecutionController()
+
+        sec.metaClass.request = new MockMultipartHttpServletRequest()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.existsFrameworkProject {project, framework -> return true }
+        sec.frameworkService = fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return false }
+        mock2.demand.nextExecutionTimes {joblist -> return [] }
+        sec.scheduledExecutionService = mock2.createMock()
+        //create original job
+        final CommandExec exec = new CommandExec(adhocExecution: true, adhocRemoteString: "echo original test")
+        exec.save()
+        def wf = new Workflow(commands: [exec])
+        wf.save()
+        def se = new ScheduledExecution(jobName: 'test1', groupPath: "testgroup", project: 'project1', description: 'new desc',
+            workflow: wf,uuid:'testjob'
+        )
+        se.save()
+        assertNotNull se.id
+
+        def xml = '''
+<joblist>
+    <job>
+        <uuid>testjob</uuid>
+        <name>test1</name>
+        <group>anothergroup</group>
+        <description>desc</description>
+        <context>
+            <project>project1</project>
+        </context>
+        <sequence>
+            <command><exec>echo test</exec></command>
+        </sequence>
+    </job>
+</joblist>
+'''
+        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
+        //set update
+        sec.params.dupeOption = 'update'
+        def result = sec.upload()
+        //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
+        assertNotNull result
+        assertTrue result.didupload
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        assertEquals 1, result.errjobs.size()
+        assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
+        assertEquals 0, result.jobs.size()
+        assertNotNull result.errjobs[0]
+        def job = result.errjobs[0]
+        assertNotNull job.errmsg
+        assertTrue job.errmsg.contains("User is unauthorized to create the job")
+        assertTrue "wrong class ${job.class}", job.scheduledExecution instanceof ScheduledExecution
+        assertEquals "test1", job.scheduledExecution.jobName
+        assertEquals "anothergroup", job.scheduledExecution.groupPath
+        assertEquals "desc", job.scheduledExecution.description
+        assertEquals "project1", job.scheduledExecution.project
+    }
+
+    public void testUploadUpdateJobnameUnauthorized() {
+        def sec = new ScheduledExecutionController()
+
+        sec.metaClass.request = new MockMultipartHttpServletRequest()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.existsFrameworkProject {project, framework -> return true }
+        sec.frameworkService = fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return false }
+        mock2.demand.nextExecutionTimes {joblist -> return [] }
+        sec.scheduledExecutionService = mock2.createMock()
+        //create original job
+        final CommandExec exec = new CommandExec(adhocExecution: true, adhocRemoteString: "echo original test")
+        exec.save()
+        def wf = new Workflow(commands: [exec])
+        wf.save()
+        def se = new ScheduledExecution(jobName: 'test1', groupPath: "testgroup", project: 'project1', description: 'new desc',
+            workflow: wf,uuid:'testjob'
+        )
+        se.save()
+        assertNotNull se.id
+
+        def xml = '''
+<joblist>
+    <job>
+        <uuid>testjob</uuid>
+        <name>blahjob</name>
+        <group>testgroup</group>
+        <description>desc</description>
+        <context>
+            <project>project1</project>
+        </context>
+        <sequence>
+            <command><exec>echo test</exec></command>
+        </sequence>
+    </job>
+</joblist>
+'''
+        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
+        //set update
+        sec.params.dupeOption = 'update'
+        def result = sec.upload()
+        //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
+        assertNotNull result
+        assertTrue result.didupload
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        assertEquals 1, result.errjobs.size()
+        assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
+        assertEquals 0, result.jobs.size()
+        assertNotNull result.errjobs[0]
+        def job = result.errjobs[0]
+        assertNotNull job.errmsg
+        assertTrue job.errmsg.contains("User is unauthorized to create the job")
+    }
+
+    public void testUploadUpdateProjectUnauthorized() {
+        def sec = new ScheduledExecutionController()
+
+        sec.metaClass.request = new MockMultipartHttpServletRequest()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.existsFrameworkProject {project, framework -> return true }
+        sec.frameworkService = fwkControl.createMock()
+        //mock the scheduledExecutionService
+        def mock2 = mockFor(ScheduledExecutionService, true)
+        mock2.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return false }
+        mock2.demand.nextExecutionTimes {joblist -> return [] }
+        sec.scheduledExecutionService = mock2.createMock()
+        //create original job
+        final CommandExec exec = new CommandExec(adhocExecution: true, adhocRemoteString: "echo original test")
+        exec.save()
+        def wf = new Workflow(commands: [exec])
+        wf.save()
+        def se = new ScheduledExecution(jobName: 'test1', groupPath: "testgroup", project: 'project1', description: 'new desc',
+            workflow: wf,uuid:'testjob'
+        )
+        se.save()
+        assertNotNull se.id
+
+        def xml = '''
+<joblist>
+    <job>
+        <uuid>testjob</uuid>
+        <name>test1</name>
+        <group>testgroup</group>
+        <description>desc</description>
+        <context>
+            <project>project2</project>
+        </context>
+        <sequence>
+            <command><exec>echo test</exec></command>
+        </sequence>
+    </job>
+</joblist>
+'''
+        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
+        //set update
+        sec.params.dupeOption = 'update'
+        def result = sec.upload()
+        //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
+        assertNotNull result
+        assertTrue result.didupload
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        assertEquals 1, result.errjobs.size()
+        assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
+        assertEquals 0, result.jobs.size()
+        assertNotNull result.errjobs[0]
+        def job = result.errjobs[0]
+        assertNotNull job.errmsg
+        assertTrue job.errmsg.contains("User is unauthorized to create the job")
+    }
     /**
      * test application/x-www-form-urlencoded instead of multipart
      */
@@ -2102,6 +2347,142 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertNull execution.options
         }
     }
+
+    public void testDoUpdateCreateUnauthorized() {
+        def sec = new ScheduledExecutionController()
+        if (true) {
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: true, adhocRemoteString: 'test command',groupPath: "blue")
+            se.save()
+
+            assertNotNull se.id
+
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.existsFrameworkProject {project, framework ->
+                assertEquals 'testProject', project
+                return true
+            }
+            fwkControl.demand.getCommand {project, type, command, framework ->
+                assertEquals 'testProject', project
+                assertEquals 'aType2', type
+                assertEquals 'aCommand2', command
+                return null
+            }
+            sec.frameworkService = fwkControl.createMock()
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sesControl.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return false}
+            sec.scheduledExecutionService = sesControl.createMock()
+
+            //change the job name and verify jobCreate authorization is required
+            def params = [id: se.id.toString(), jobName: 'monkey2', project: 'testProject', description: '', adhocExecution: true, adhocRemoteString: 'test command',groupPath:'blue']
+            def results = sec._doupdate(params)
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            assertFalse succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = scheduledExecution
+            assertTrue results.size()>2
+            assertNotNull results[2]
+            def errors= results[2]
+            assertEquals 1,errors.size()
+            assertTrue errors[0].contains("User is unauthorized to create the job")
+        }
+        if (true) {
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: true, adhocRemoteString: 'test command', groupPath: "blue")
+            se.save()
+
+            assertNotNull se.id
+
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.existsFrameworkProject {project, framework ->
+                assertEquals 'testProject', project
+                return true
+            }
+            fwkControl.demand.getCommand {project, type, command, framework ->
+                assertEquals 'testProject', project
+                assertEquals 'aType2', type
+                assertEquals 'aCommand2', command
+                return null
+            }
+            sec.frameworkService = fwkControl.createMock()
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sesControl.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return false}
+            sec.scheduledExecutionService = sesControl.createMock()
+
+            //change the group name and verify jobCreate authorization is required
+            def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: true, adhocRemoteString: 'test command', groupPath: 'red']
+            def results = sec._doupdate(params)
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            assertFalse succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = scheduledExecution
+            assertTrue results.size() > 2
+            assertNotNull results[2]
+            def errors = results[2]
+            assertEquals 1, errors.size()
+            assertTrue errors[0].contains("User is unauthorized to create the job")
+        }
+        if (true) {
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: true, adhocRemoteString: 'test command', groupPath: "blue")
+            se.save()
+
+            assertNotNull se.id
+
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.existsFrameworkProject {project, framework ->
+                assertEquals 'testProject2', project
+                return true
+            }
+            fwkControl.demand.getCommand {project, type, command, framework ->
+                assertEquals 'testProject2', project
+                assertEquals 'aType2', type
+                assertEquals 'aCommand2', command
+                return null
+            }
+            sec.frameworkService = fwkControl.createMock()
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sesControl.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return false}
+            sec.scheduledExecutionService = sesControl.createMock()
+
+            //change the project and verify jobCreate authorization is required
+            def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject2', description: '', adhocExecution: true, adhocRemoteString: 'test command', groupPath:'blue']
+            def results = sec._doupdate(params)
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            assertFalse succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = scheduledExecution
+            assertTrue results.size() > 2
+            assertNotNull results[2]
+            def errors = results[2]
+            assertEquals 1, errors.size()
+            assertTrue errors[0].contains("User is unauthorized to create the job")
+        }
+    }
     public void testDoUpdateJob(){
         def sec = new ScheduledExecutionController()
         if(true){//test update basic job details
@@ -2164,6 +2545,127 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             assertNull execution.notifications
             assertNull execution.options
+        }
+    }
+
+    public void testDoUpdateJobCreateUnauthorized() {
+        def sec = new ScheduledExecutionController()
+        if (true) {
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: true, adhocRemoteString: 'test command',groupPath: 'blue')
+            se.save()
+
+            assertNotNull se.id
+
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.existsFrameworkProject {project, framework ->
+                assertEquals 'testProject', project
+                return true
+            }
+            sec.frameworkService = fwkControl.createMock()
+            def sesMock = mockFor(ScheduledExecutionService, true)
+            sesMock.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return false}
+            sec.scheduledExecutionService = sesMock.createMock()
+
+            //change job name
+            def params = new ScheduledExecution(jobName: 'monkey2', project: 'testProject', groupPath: 'blue',description: '', adhocExecution: true, adhocRemoteString: 'test command',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)])
+            )
+            def results = sec._doupdateJob(se.id.toString(), params)
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            assertFalse succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = scheduledExecution
+            assertTrue results.size() > 2
+            assertNotNull results[2]
+            def errors = results[2]
+            assertEquals 1, errors.size()
+            assertTrue errors[0].contains("User is unauthorized to create the job")
+        }
+        if (true) {
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: true, adhocRemoteString: 'test command',groupPath: 'blue')
+            se.save()
+
+            assertNotNull se.id
+
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.existsFrameworkProject {project, framework ->
+                assertEquals 'testProject', project
+                return true
+            }
+            sec.frameworkService = fwkControl.createMock()
+            def sesMock = mockFor(ScheduledExecutionService, true)
+            sesMock.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return false}
+            sec.scheduledExecutionService = sesMock.createMock()
+
+            //change group name
+            def params = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', groupPath: 'red',description: '', adhocExecution: true, adhocRemoteString: 'test command',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)])
+            )
+            def results = sec._doupdateJob(se.id.toString(), params)
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            assertFalse succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = scheduledExecution
+            assertTrue results.size() > 2
+            assertNotNull results[2]
+            def errors = results[2]
+            assertEquals 1, errors.size()
+            assertTrue errors[0].contains("User is unauthorized to create the job")
+        }
+        if (true) {
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: '', adhocExecution: true, adhocRemoteString: 'test command',groupPath: 'blue')
+            se.save()
+
+            assertNotNull se.id
+
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.existsFrameworkProject {project, framework ->
+                assertEquals 'testProject2', project
+                return true
+            }
+            sec.frameworkService = fwkControl.createMock()
+            def sesMock = mockFor(ScheduledExecutionService, true)
+            sesMock.demand.userAuthorizedForJobCreate {request, scheduledExecution, framework -> return false}
+            sec.scheduledExecutionService = sesMock.createMock()
+
+            //change project name
+            def params = new ScheduledExecution(jobName: 'monkey1', project: 'testProject2', groupPath: 'blue',description: '', adhocExecution: true, adhocRemoteString: 'test command',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)])
+            )
+            def results = sec._doupdateJob(se.id.toString(), params)
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            assertFalse succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = scheduledExecution
+            assertTrue results.size() > 2
+            assertNotNull results[2]
+            def errors = results[2]
+            assertEquals 1, errors.size()
+            assertTrue errors[0].contains("User is unauthorized to create the job")
         }
     }
     public void testDoUpdateJobShouldReplaceFilters(){
@@ -5259,7 +5761,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         fwServiceControl.demand.getFrameworkFromUserSession {session, request -> return null }
         fwServiceControl.demand.projects {return null }
         sec.frameworkService = fwServiceControl.createMock()
-        sec.metaClass.static."_dosave"= { params , changeinfo-> return [id:'blah']}
+        sec.metaClass.static."_dosave"= { params , changeinfo-> return [success:true,scheduledExecution:[id:'blah']]}
         sec.metaClass.static."logJobChange"= { changeinfo , properties-> }
 
         sec.saveAndExec()
@@ -5283,7 +5785,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
         fwServiceControl.demand.getFrameworkFromUserSession {session, request -> return null }
         fwServiceControl.demand.projects {return null }
         sec.frameworkService = fwServiceControl.createMock()
-        sec.metaClass.static."_dosave"= { params , changeinfo-> return se}
+        sec.metaClass.static."_dosave"= { params , changeinfo-> return [success: true,scheduledExecution:se]}
         sec.metaClass.static."logJobChange"= { changeinfo , properties-> }
 
         sec.saveAndExec()

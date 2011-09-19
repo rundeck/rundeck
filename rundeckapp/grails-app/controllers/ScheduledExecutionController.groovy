@@ -744,6 +744,7 @@ class ScheduledExecutionController  {
     def _doupdate = { params, changeinfo=[:] ->
         log.debug("ScheduledExecutionController: update : attempting to update: "+params.id +
                  ". params: " + params)
+        def errors=[]
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         def user = (session?.user) ? session.user : "anonymous"
         def rolelist = (session?.roles) ? session.roles : []
@@ -765,7 +766,8 @@ class ScheduledExecutionController  {
 
         def crontab = [:]
         if(!scheduledExecution) {
-            return [false,null]
+            errors<<"Not found: ${params.id}"
+            return [false,null, errors]
         }
         def oldjobname = scheduledExecution.generateJobScheduledName()
         def oldjobgroup = scheduledExecution.generateJobGroupName()
@@ -789,7 +791,9 @@ class ScheduledExecutionController  {
             || origjobname != scheduledExecution.jobName
             || origproject != scheduledExecution.project) {
             if (!scheduledExecutionService.userAuthorizedForJobCreate(request, scheduledExecution, framework)) {
-                request.error = "User is unauthorized to create the job ${scheduledExecution.groupPath ?: ''}/${scheduledExecution.jobName} (project ${scheduledExecution.project})"
+                def msg= "User is unauthorized to create the job ${scheduledExecution.groupPath ?: ''}/${scheduledExecution.jobName} (project ${scheduledExecution.project})"
+                request.error = msg
+                errors << msg
                 failed=true
             }
         }
@@ -1042,7 +1046,10 @@ class ScheduledExecutionController  {
         }
         if(params.notifications && 'false'!=params.notified){
             //create notifications
-            failed=_updateNotifications(params, scheduledExecution)
+            def notifupdatefailed=_updateNotifications(params, scheduledExecution)
+            if(notifupdatefailed){
+                failed=true
+            }
         }
 
         //try to save workflow
@@ -1090,13 +1097,14 @@ class ScheduledExecutionController  {
                 it.discard()
             }
             scheduledExecution.discard()
-            return [false, scheduledExecution]
+            return [false, scheduledExecution,errors]
         }
 
     }
     def _doupdateJob = {id, ScheduledExecution params, changeinfo=[:] ->
         log.debug("ScheduledExecutionController: update : attempting to update: "+id +
                  ". params: " + params)
+        def errors=[]
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         def user = (session?.user) ? session.user : "anonymous"
         def rolelist = (session?.roles) ? session.roles : []
@@ -1116,7 +1124,8 @@ class ScheduledExecutionController  {
 
         def crontab = [:]
         if(!scheduledExecution) {
-            return [false,null]
+            errors<<"Not found: ${id}"
+            return [false,null,errors]
         }
         def oldjobname = scheduledExecution.generateJobScheduledName()
         def oldjobgroup = scheduledExecution.generateJobGroupName()
@@ -1143,7 +1152,9 @@ class ScheduledExecutionController  {
             || origjobname != scheduledExecution.jobName
             || origproject != scheduledExecution.project ) {
             if (!scheduledExecutionService.userAuthorizedForJobCreate(request, scheduledExecution, framework)) {
-                request.error="User is unauthorized to create the job ${scheduledExecution.groupPath?:''}/${scheduledExecution.jobName} (project ${scheduledExecution.project})"
+                def msg="User is unauthorized to create the job ${scheduledExecution.groupPath?:''}/${scheduledExecution.jobName} (project ${scheduledExecution.project})"
+                request.error=msg
+                errors<<msg
                 failed = true
             }
         }
@@ -1282,7 +1293,10 @@ class ScheduledExecutionController  {
         }
         if(params.notifications){
             //create notifications
-            failed=_updateNotifications(params, scheduledExecution)
+            def notifupdatefailed=_updateNotifications(params, scheduledExecution)
+            if(notifupdatefailed){
+                failed=true
+            }
         }
 
         //try to save workflow
@@ -1330,7 +1344,7 @@ class ScheduledExecutionController  {
                 it.discard()
             }
             scheduledExecution.discard()
-            return [false, scheduledExecution]
+            return [false, scheduledExecution,errors]
         }
 
     }
@@ -1466,9 +1480,10 @@ class ScheduledExecutionController  {
     def saveAndExec = {
         log.info("ScheduledExecutionController: saveAndExec : params: " + params)
         def changeinfo = [user: session.user, change: 'create', method: 'saveAndExec']
-        def scheduledExecution = _dosave(params,changeinfo)
+        def result = _dosave(params, changeinfo)
+        def scheduledExecution = result.scheduledExecution
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if(scheduledExecution.id){
+        if(result.success){
             params.id=scheduledExecution.extid
             logJobChange(changeinfo, scheduledExecution.properties)
             if (!scheduledExecutionService.userAuthorizedForJobAction(request, scheduledExecution, framework, UserAuth.WF_RUN)) {
@@ -1482,8 +1497,9 @@ class ScheduledExecutionController  {
             }
         }else{
 
-
-            scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
+            if(scheduledExecution){
+                scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
+            }
             request.message=g.message(code:'ScheduledExecutionController.save.failed')
             return render(view:'create',model:[scheduledExecution:scheduledExecution,params:params, projects: frameworkService.projects(framework)])
         }
@@ -2255,7 +2271,7 @@ class ScheduledExecutionController  {
         if(!scheduledExecutionService.userAuthorizedForJobCreate(request,scheduledExecution,framework)){
             request.error = "User is unauthorized to create the job ${scheduledExecution.groupPath ?: ''}/${scheduledExecution.jobName} (project ${scheduledExecution.project})"
             scheduledExecution.discard()
-            return scheduledExecution
+            return [success:false,unauthorized:true,error:request.error,scheduledExecution:scheduledExecution]
         }
         //try to save workflow
         if(!failed && null!=scheduledExecution.workflow){
@@ -2289,18 +2305,19 @@ class ScheduledExecutionController  {
             session.editWF?.remove('_new')
             session.undoWF?.remove('_new')
             session.redoWF?.remove('_new')
-            return scheduledExecution
+            return [success:true,scheduledExecution:scheduledExecution]
 
         } else {
             scheduledExecution.discard()
-            return scheduledExecution
+            return [success:false,scheduledExecution:scheduledExecution]
         }
     }
 
     def save = {
         def changeinfo=[user:session.user,change:'create',method:'save']
-        def scheduledExecution = _dosave(params,changeinfo)
-        if(scheduledExecution.id){
+        def result = _dosave(params, changeinfo)
+        def scheduledExecution = result.scheduledExecution
+        if(result.success){
             flash.savedJob=scheduledExecution
             flash.savedJobMessage="Created new Job"
             logJobChange(changeinfo,scheduledExecution.properties)
@@ -2405,10 +2422,12 @@ class ScheduledExecutionController  {
 
                     success = result[0]
                     scheduledExecution=result[1]
-                    if(!success && scheduledExecution && scheduledExecution.hasErrors()){
-                        errmsg=scheduledExecution.errors.allErrors.collect {g.message(error: it)}.join("\n")
-                    }else{
+                    if(success){
                         logJobChange(jobchange, scheduledExecution.properties)
+                    }else if (!success && scheduledExecution && scheduledExecution.hasErrors()){
+                        errmsg=scheduledExecution.errors.allErrors.collect {g.message(error: it)}.join("\n")
+                    }else if(result.size()>2){
+                        errmsg=result[2].join(", ")
                     }
                 }catch(Exception e){
                     errmsg=e.getMessage()
@@ -2425,11 +2444,14 @@ class ScheduledExecutionController  {
                 def errmsg
                 try{
                     jobchange.change='create'
-                    scheduledExecution = _dosave(jobdata, jobchange)
-                    if(scheduledExecution && scheduledExecution.hasErrors()){
-                        errmsg=scheduledExecution.errors.allErrors.collect {g.message(error: it)}.join("\n")
-                    }else{
+                    def result = _dosave(jobdata, jobchange)
+                    scheduledExecution = result.scheduledExecution
+                    if(result.success){
                         logJobChange(jobchange, scheduledExecution.properties)
+                    }else if (scheduledExecution && scheduledExecution.hasErrors()){
+                        errmsg=scheduledExecution.errors.allErrors.collect {g.message(error: it)}.join("\n")
+                    }else if(result.error){
+                        errmsg = result.error
                     }
                 }catch(Exception e){
                     System.err.println("caught exception");
