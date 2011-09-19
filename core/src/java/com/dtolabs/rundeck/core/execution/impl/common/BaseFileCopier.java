@@ -29,10 +29,9 @@ import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
+import com.dtolabs.utils.Streams;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -44,8 +43,9 @@ public class BaseFileCopier {
     public static final String FILE_COPY_DESTINATION_DIR = "file-copy-destination-dir";
 
     /**
-     * Copy the embedded script content, or the script source stream, or script string into a temp file, and replace \
-     * embedded tokens with values from the dataContext. Marks the file as executable and delete-on-exit.
+     * Copy a script file, script source stream, or script string into a temp file, and replace \
+     * embedded tokens with values from the dataContext for the latter two. Marks the file as executable and delete-on-exit. This will not
+     * rewrite any content if the input is originally a file.
      *
      * @param context  execution context
      * @param original local system file, or null
@@ -72,7 +72,19 @@ public class BaseFileCopier {
         File tempfile = null;
         try {
             if (null != original) {
-                tempfile = DataContextUtils.replaceTokensInFile(original, dataContext, framework);
+                //don't replace tokens
+                tempfile = ScriptfileUtils.createTempFile(framework);
+                final FileInputStream in = new FileInputStream(original);
+                try{
+                    final FileOutputStream out = new FileOutputStream(tempfile);
+                    try {
+                        Streams.copyStream(in, out);
+                    } finally {
+                        out.close();
+                    }
+                } finally {
+                    in.close();
+                }
             } else if (null != script) {
                 tempfile = DataContextUtils.replaceTokensInScript(script,
                     dataContext, framework);

@@ -135,7 +135,7 @@ public class ScriptfileUtils {
          * Prepare a file to save the content
          */
         final File scriptfile;
-        scriptfile = File.createTempFile("dispatch", ".tmp", new File(framework.getProperty("framework.var.dir")));
+        scriptfile = createTempFile(framework);
 
         final FileWriter writer = new FileWriter(scriptfile);
 
@@ -152,9 +152,17 @@ public class ScriptfileUtils {
             writer.close();
         }
 
-        scriptfile.deleteOnExit();
-
         return scriptfile;
+    }
+
+    /**
+     * Create a temp file in the framework 
+     */
+    public static File createTempFile(final Framework framework) throws IOException {
+        final File dispatch = File.createTempFile("dispatch", ".tmp", new File(framework.getProperty(
+            "framework.var.dir")));
+        dispatch.deleteOnExit();
+        return dispatch;
     }
 
     /**
