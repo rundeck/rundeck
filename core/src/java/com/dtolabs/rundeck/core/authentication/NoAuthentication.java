@@ -56,14 +56,9 @@ public class NoAuthentication implements Authenticator {
      */
     public IUserInfo getUserInfo() throws UserInfoException  {
         final String username = System.getProperty("user.name");
-        final String password = "";
         return new IUserInfo() {
             public String getUsername() {
                 return username;
-            }
-
-            public String getPassword() {
-                return password;
             }
         };
     }

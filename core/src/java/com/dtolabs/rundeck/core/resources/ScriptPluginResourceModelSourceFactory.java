@@ -57,8 +57,6 @@ class ScriptPluginResourceModelSourceFactory extends AbstractDescribableScriptPl
         }
         if (!provider.getMetadata().containsKey(RESOURCE_FORMAT_PROP)) {
             throw new PluginException(RESOURCE_FORMAT_PROP + " script plugin property is required");
-        } else {
-            final String name = provider.getMetadata().get(RESOURCE_FORMAT_PROP);
         }
     }
 

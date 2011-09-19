@@ -88,13 +88,9 @@ final class YamlPolicy implements Policy {
         return environment;
     }
     static class YamlEnvironmentalContext implements EnvironmentalContext{
-        String uriPrefix;
-        Map ctx;
         Map<URI, String> matcher = new HashMap<URI, String>();
 
         YamlEnvironmentalContext(final String uriPrefix, final Map ctx) {
-            this.uriPrefix = uriPrefix;
-            this.ctx = ctx;
             for (final Object o : ctx.entrySet()) {
                 Map.Entry entry=(Map.Entry) o;
                 if(entry.getKey() instanceof String){
@@ -615,7 +611,7 @@ final class YamlPolicy implements Policy {
     /**
      * Makes a decision for a job resource based on the "rules: " section
      */
-    class LegacyRulesContext implements AclContext {
+    static class LegacyRulesContext implements AclContext {
         private final Map rules;
 
         private ConcurrentHashMap<String, Pattern> patternCache = new ConcurrentHashMap<String, Pattern>();

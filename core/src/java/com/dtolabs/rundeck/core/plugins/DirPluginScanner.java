@@ -80,12 +80,15 @@ abstract class DirPluginScanner implements PluginScanner {
     }
 
     public List<ProviderIdent> listProviders() {
-        final File[] files = extdir.listFiles(getFileFilter());
+
         final List<ProviderIdent> providerIdents = new ArrayList<ProviderIdent>();
-        if(null!=extdir && extdir.isDirectory() && null!=files){
-            for (final File file : files) {
-                if (isValidPluginFile(file)) {
-                    providerIdents.addAll(listProviders(file));
+        if(null!=extdir && extdir.isDirectory() ){
+            final File[] files = extdir.listFiles(getFileFilter());
+            if(null!=files){
+                for (final File file : files) {
+                    if (isValidPluginFile(file)) {
+                        providerIdents.addAll(listProviders(file));
+                    }
                 }
             }
         }

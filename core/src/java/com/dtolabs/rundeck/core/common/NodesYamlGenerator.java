@@ -93,17 +93,29 @@ public class NodesYamlGenerator implements NodesFileGenerator {
         if (null == maps || maps.size() < 1) {
             throw new NodesGeneratorException("Node set is empty");
         }
-        final Writer writeout;
-        if (null != writer) {
-            writeout = writer;
-        } else if (null != destfile) {
-            writeout = new FileWriter(destfile);
-        } else {
-            writeout = new OutputStreamWriter(outputStream);
-        }
         final DumperOptions dumperOptions = new DumperOptions();
         dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         Yaml yaml = new Yaml(dumperOptions);
-        yaml.dump(maps, writeout);
+
+        if (null != writer) {
+            yaml.dump(maps, writer);
+        } else if (null != destfile) {
+            final Writer writeout = new FileWriter(destfile);
+            try {
+                yaml.dump(maps, writeout);
+            } finally {
+                writeout.close();
+            }
+        } else {
+            final Writer writeout = new OutputStreamWriter(outputStream);
+            try {
+                yaml.dump(maps, writeout);
+            } finally {
+                writeout.close();
+
+            }
+        }
+
+
     }
 }
