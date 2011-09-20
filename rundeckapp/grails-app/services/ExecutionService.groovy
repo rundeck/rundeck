@@ -1529,8 +1529,8 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                 final List<String> stringList = CLIUtils.splitArgLine(newargstring);
                 newargs = stringList.toArray(new String[stringList.size()]);
 
-                if (null != executionContext.dataContext && null != jitem.args) {
-                    newargs = DataContextUtils.replaceDataReferences(jitem.args, executionContext.getDataContext())
+                if (null != executionContext.dataContext && null != newargs) {
+                    newargs = DataContextUtils.replaceDataReferences(newargs, executionContext.getDataContext())
                 }
                 //construct job data context
                 def jobcontext = new HashMap<String, String>()
