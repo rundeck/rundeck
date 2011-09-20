@@ -77,7 +77,7 @@ fi
 
 # try to run job by name and project
 
-$RDECK_BASE/tools/bin/run -j 'test/simple exec test' -p test
+$RDECK_BASE/tools/bin/run -j 'test/simple script test' -p test
 if [ 0 != $? ] ; then
 	echo Failed to run job by name: $!
 	exit 2
