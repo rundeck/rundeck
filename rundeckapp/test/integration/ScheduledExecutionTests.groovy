@@ -34,17 +34,6 @@ class ScheduledExecutionTests extends GrailsUnitTestCase {
             se."${key}"=""
             assertFalse "ScheduledExecution shouldn't validate for blank value of ${key}",se.validate()
         }
-        List blankNotNullFields = [ 'description']
-        blankNotNullFields.each { key ->
-            se = new ScheduledExecution()
-            se.properties=props
-            assertTrue se.validate()
-            //change values for project
-            se."${key}"=null
-            assertFalse "ScheduledExecution shouldn't validate for null value of ${key}",se.validate()
-            se."${key}"=""
-            assertTrue "ScheduledExecution shouldn't validate for blank value of ${key}",se.validate()
-        }
     }
 
     void testUserRoles(){

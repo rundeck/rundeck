@@ -913,7 +913,6 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertNotNull(execution.errors)
             assertTrue(execution.errors.hasErrors())
             assertTrue(execution.errors.hasFieldErrors('project'))
-            assertTrue(execution.errors.hasFieldErrors('description'))
             assertTrue(execution.errors.hasFieldErrors('jobName'))
             assertFalse(execution.errors.hasFieldErrors('name'))
             assertFalse(execution.errors.hasFieldErrors('type'))
