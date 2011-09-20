@@ -154,7 +154,7 @@ echo "TEST: job/id/executions?status=succeeded should succeed with 1 results"
 runurl="${APIURL}/job/${jobid}/executions"
 params="status=succeeded"
 
-sleep 3
+sleep 6
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
@@ -395,7 +395,7 @@ else
 fi
 
 # let job finish
-sleep 3
+sleep 6
 
 ###
 # Test result of /job/ID/executions?status=failed is 1 list
@@ -547,6 +547,7 @@ echo "OK"
 
 # now submit req
 runurl="${APIURL}/execution/${execid}/abort"
+params=""
 
 # get listing
 docurl  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"

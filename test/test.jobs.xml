@@ -2,7 +2,7 @@
 
 <joblist> 
   <job> 
-    <id>1</id>  
+    <uuid>1</uuid>
     <name>simple exec test</name>  
     <description>Exec the uptime command</description>  
     <additional/>  
