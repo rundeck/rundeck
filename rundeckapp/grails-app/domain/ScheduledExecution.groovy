@@ -64,7 +64,7 @@ class ScheduledExecution extends ExecutionContext {
         argString(nullable:true)
         seconds(nullable:true)
         year(nullable:true)
-        description(nullable:false,blank:true)
+        description(nullable:true)
         adhocExecution(nullable:true)
         adhocRemoteString(nullable:true, blank:true)
         adhocLocalString(nullable:true, blank:true)
