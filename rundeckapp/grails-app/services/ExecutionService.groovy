@@ -715,6 +715,9 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
     }
 
     def abortExecution(ScheduledExecution se, Execution e, String user, final def framework){
+        def eid=e.id
+        def dateCompleted = e.dateCompleted
+        e.discard()
         def ident = scheduledExecutionService.getJobIdent(se,e)
         def statusStr
         def abortstate
@@ -727,18 +730,19 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             failedreason="unauthorized"
             statusStr= jobstate
         }else if (scheduledExecutionService.existsJob(ident.jobname, ident.groupname)){
-            if(!e.abortedby){
-                e.abortedby=user
-                e.save()
+            Execution e2 = Execution.lock(eid)
+            if(!e2.abortedby){
+                e2.abortedby=user
+                e2.save(flush:true)
             }
             def didcancel=scheduledExecutionService.interruptJob(ident.jobname, ident.groupname)
             abortstate=didcancel?ExecutionController.ABORT_PENDING:ExecutionController.ABORT_FAILED
             failedreason=didcancel?'':'Unable to interrupt the running job'
             jobstate=ExecutionController.EXECUTION_RUNNING
-        }else if(null==e.dateCompleted){
+        }else if(null==dateCompleted){
             saveExecutionState(
                 se?se.id:null,
-                e.id,
+                eid,
                     [
                     status:String.valueOf(false),
                     dateCompleted:new Date(),
