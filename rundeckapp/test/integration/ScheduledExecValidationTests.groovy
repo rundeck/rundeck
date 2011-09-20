@@ -30,7 +30,7 @@ import com.dtolabs.rundeck.core.authentication.Group
  */
 
 public class ScheduledExecValidationTests extends GrailsUnitTestCase{
-
+    def sessionFactory
     protected void setUp() {
         super.setUp();
     }
@@ -3279,6 +3279,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertTrue exec.errors.hasFieldErrors('adhocExecution')
 
         }
+        sessionFactory.currentSession.clear()
+        sessionFactory.currentSession.flush()
         if(true){//test update from one adhoc type to another; remote -> local
             def se = new ScheduledExecution(jobName:'monkey1',project:'testProject',description:'blah',
                 adhocExecution:true,adhocRemoteString:'test remote',
@@ -4253,7 +4255,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             def na2 = new Notification(eventTrigger:'onfailure',type:'email',content:'monkey@example.com')
             se.addToNotifications(na1)
             se.addToNotifications(na2)
-            se.save()
+            se.save(flush:true)
 
             assertNotNull se.id
 
@@ -4423,7 +4425,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             def na2 = new Notification(eventTrigger:'onfailure',type:'email',content:'monkey@example.com')
             se.addToNotifications(na1)
             se.addToNotifications(na2)
-            se.save()
+            se.save(flush:true)
 
             assertNotNull se.id
 
