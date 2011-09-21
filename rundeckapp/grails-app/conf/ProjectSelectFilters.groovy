@@ -73,9 +73,7 @@ public class ProjectSelectFilters {
                     def Framework fw = frameworkService.getFrameworkFromUserSession(session, request)
 
 
-
-                    def selected = session.project
-                    //check project exists
+                    def selected = params.project
                     if (selected && !frameworkService.existsFrameworkProject(selected, fw)) {
                         selected = null
                     }
@@ -84,7 +82,8 @@ public class ProjectSelectFilters {
                         return
                     }
 
-                    selected = params.project
+                    selected = session.project
+                    //check project exists
                     if (selected && !frameworkService.existsFrameworkProject(selected, fw)) {
                         selected = null
                     }
