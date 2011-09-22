@@ -1,5 +1,8 @@
 description: Admin Access ACL
 
+context:
+  project: '*'
+
 rules: 
   .*:
       actions: '*'
