@@ -92,7 +92,7 @@
                                         </td>
                                         </g:if>
                                         <g:if test="${options?.desc}">
-                                        <td class="jobdesc">${scheduledExecution.description.encodeAsHTML()}</td>
+                                        <td class="jobdesc">${scheduledExecution.description?.encodeAsHTML()}</td>
                                         </g:if>
                                     </g:if>
                                     <g:else>

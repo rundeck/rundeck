@@ -104,7 +104,7 @@
                                         ${scheduledExecution.jobName.encodeAsHTML()}
                                     </g:else>
                                 </td>
-                                <td class="jobdesc" style="">${scheduledExecution.description.size()>100?scheduledExecution.description.substring(0,100).encodeAsHTML():scheduledExecution.description.encodeAsHTML()}</td>
+                                <td class="jobdesc" style="">${scheduledExecution.description?.size()>100?scheduledExecution.description.substring(0,100).encodeAsHTML():scheduledExecution.description?.encodeAsHTML()}</td>
                                         <td class="errors">
                                 <g:hasErrors bean="${scheduledExecution}">
                                             <g:renderErrors bean="${scheduledExecution}" as="list"/>
@@ -141,7 +141,7 @@
                                 <td class="jobname" >
                                     ${scheduledExecution.jobName.encodeAsHTML()}
                                 </td>
-                                <td class="jobdesc" style="">${scheduledExecution.description.size()>100?scheduledExecution.description.substring(0,100).encodeAsHTML():scheduledExecution.description.encodeAsHTML()}</td>
+                                <td class="jobdesc" style="">${scheduledExecution.description?.size()>100?scheduledExecution.description.substring(0,100).encodeAsHTML():scheduledExecution.description?.encodeAsHTML()}</td>
                                 <td class="sepL">
                                     Existing:
                                 </td>
