@@ -12,6 +12,7 @@
 <div class="pageBody form">
     <g:form controller="scheduledExecution" method="post">
         <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized,jobexecOptionErrors:jobexecOptionErrors]}"/>
+        <input name="extra._replaceNodeFilters" value="true" type="hidden"/>
 
         <g:if test="${nodesetvariables }">
             <div class="message note">
@@ -21,6 +22,17 @@
         <g:elseif test="${nodesetempty }">
             <div class="error note">
                 <g:message code="scheduledExecution.nodeset.empty.warning"/>
+            </div>
+        </g:elseif>
+        <g:elseif test="${nodes}">
+            <span class="prompt">Nodes:</span>
+            <div class="presentation">
+                <g:each var="node" in="${nodes}">
+                    <p>
+                    <input id="${node.nodename}" type="checkbox" name="extra.nodeIncludeName" value="${node.nodename}" checked="true"/>
+                    <label for="${node.nodename}">${node.nodename}</label>
+                    </p>
+                </g:each>
             </div>
         </g:elseif>
         <div class="buttons" id="formbuttons">
