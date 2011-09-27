@@ -2499,6 +2499,9 @@ class ScheduledExecutionController  {
                 //error
                 model.nodesetempty=true
             }
+            else {
+                model.nodes=nodes
+            }
             //check nodeset filters for variable expansion
             def varfound=NodeSet.FILTER_ENUM.find{filter->
                 (nset.include?filter.value(nset.include)?.contains("\${"):false)||(nset.exclude?filter.value(nset.exclude)?.contains("\${"):false)

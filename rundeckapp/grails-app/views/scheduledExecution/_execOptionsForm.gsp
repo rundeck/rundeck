@@ -23,6 +23,17 @@
                 <g:message code="scheduledExecution.nodeset.empty.warning"/>
             </div>
         </g:elseif>
+        <g:elseif test="${nodes}">
+            <span class="prompt">Nodes:</span>
+            <div class="presentation">
+                <g:each var="node" in="${nodes}">
+                    <p>
+                    <input id="${node.nodename}" type="checkbox" name="nodes" value="${node.nodename}" checked="true"/>
+                    <label for="${node.nodename}">${node.nodename}</label>
+                    </p>
+                </g:each>
+            </div>
+        </g:elseif>
         <div class="buttons" id="formbuttons">
 
             <g:actionSubmit id="execFormCancelButton" value="Cancel"/>
