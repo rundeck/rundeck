@@ -27,12 +27,20 @@
         <g:elseif test="${nodes}">
             <span class="prompt">Nodes:</span>
             <div class="presentation">
-                <g:each var="node" in="${nodes}">
-                    <p>
-                    <input id="${node.nodename}" type="checkbox" name="extra.nodeIncludeName" value="${node.nodename}" checked="true"/>
-                    <label for="${node.nodename}">${node.nodename}</label>
-                    </p>
+                <table>
+                <g:each var="node" in="${nodes}" status="index">
+                    <g:if test="${index % 10 == 0}">
+                        <tr>
+                    </g:if>
+                    <td>
+                        <input id="${node.nodename}" type="checkbox" name="extra.nodeIncludeName" value="${node.nodename}" checked="true"/>
+                        <label for="${node.nodename}">${node.nodename}</label>
+                    </td>
+                    <g:if test="${(index % 10 == 9) || (index+1 == nodes.size())}">
+                        </tr>
+                    </g:if>
                 </g:each>
+                </table>
             </div>
         </g:elseif>
         <div class="buttons" id="formbuttons">
