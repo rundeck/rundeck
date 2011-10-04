@@ -798,7 +798,12 @@ class ScheduledExecutionController  {
             changeinfo.extraInfo = " (internalID:${scheduledExecution.id})"
         }
         scheduledExecution.properties = nonopts
-        
+
+        //fix potential null/blank issue after upgrading rundeck to 1.3.1/1.4
+        if (!scheduledExecution.description) {
+            scheduledExecution.description = ''
+        }
+
         final Map oldopts = params.findAll{it.key=~/^(name|command|type|adhocExecution|adhocFilepath|adhoc.*String)$/}
         if(oldopts && !params.workflow){
             //construct workflow with one item from these options
@@ -1133,6 +1138,12 @@ class ScheduledExecutionController  {
         //clear filter params
         scheduledExecution.clearFilterFields()
         scheduledExecution.properties = newprops
+
+        //fix potential null/blank issue after upgrading rundeck to 1.3.1/1.4
+        if (!scheduledExecution.description) {
+            scheduledExecution.description = ''
+        }
+
 
         //clear old mode job properties
         scheduledExecution.adhocExecution=false;
@@ -1666,6 +1677,12 @@ class ScheduledExecutionController  {
         final Map nonopts = params.findAll {!it.key.startsWith("option.") && it.key != 'workflow'&& it.key != 'options'&& it.key != 'notifications'}
         final Map oldopts = params.findAll{it.key=~/^(name|command|type|adhocExecution|adhocFilepath|adhoc.*String)$/}
         scheduledExecution.properties = nonopts
+
+        //fix potential null/blank issue after upgrading rundeck to 1.3.1/1.4
+        if(!scheduledExecution.description){
+            scheduledExecution.description=''
+        }
+
         if(oldopts && !params.workflow){
             //construct workflow with one item from these options
             oldopts.project=scheduledExecution.project

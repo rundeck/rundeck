@@ -29,7 +29,7 @@
                                    <div style="overflow:hidden; text-overflow: ellipsis; height:16px;">
                                        <span class="action textbtn" title="Choose this job" onclick="${jobsjscallback}('${scheduledExecution.jobName}','${scheduledExecution.groupPath}');">${scheduledExecution.jobName.encodeAsHTML()}</span>
 
-                                       <span class="jobdesc" title="${scheduledExecution.description.encodeAsHTML()}">${scheduledExecution.description.encodeAsHTML()}</span>
+                                       <span class="jobdesc" title="${scheduledExecution.description?.encodeAsHTML()}">${scheduledExecution.description?.encodeAsHTML()}</span>
                                    </div>
                                </td>
                             </tr>
@@ -47,7 +47,7 @@
                                     &bull; <span class="action textbtn" onclick="selectProject('${scheduledExecution.project.encodeAsJavaScript()}');" title="Select this project">${scheduledExecution.project.encodeAsHTML()}</span> 
                                 </span>
                                 </g:if>
-                                <span class="jobdesc" title="${scheduledExecution.description.encodeAsHTML()}">${scheduledExecution.description.encodeAsHTML()}</span>
+                                <span class="jobdesc" title="${scheduledExecution.description?.encodeAsHTML()}">${scheduledExecution.description?.encodeAsHTML()}</span>
                                 <span class="info note ${!execCount?'none':''}" style="margin-left:10px;">
                                     <g:link controller="reports" action="index" params="${[jobIdFilter:scheduledExecution.id]}" title="View all Executions of this job">Executions (${execCount})</g:link>
                                 </span>

@@ -48,7 +48,7 @@
                                             <g:link
                                             title="${'View '+g.message(code:'domain.ScheduledExecution.title')}" controller="scheduledExecution" action="show" id="${scheduledExecution.extid}">${scheduledExecution.jobName.encodeAsHTML()}</g:link>
                                         </td>
-                                        <td class="jobdesc">${scheduledExecution.description.encodeAsHTML()}</td>
+                                        <td class="jobdesc">${scheduledExecution.description?.encodeAsHTML()}</td>
                                     </g:if>
                                     <g:else>
                                         <td class="jobname transient ">
