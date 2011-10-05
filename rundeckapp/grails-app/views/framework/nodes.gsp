@@ -277,7 +277,7 @@
                 elem='nodelist';
             }
             var view=page==0?'table':'tableContent';
-            _updateMatchedNodes(nodeFilterData_${rkey},elem,'${query.project}',false,{view:view,expanddetail:true,inlinepaging:true,page:page,max:pagingMax});
+            _updateMatchedNodes(nodeFilterData_${rkey},elem,'${session.project}',false,{view:view,expanddetail:true,inlinepaging:true,page:page,max:pagingMax});
         }
         function _loadNextNodesPageTable(max,total,tbl,elem){
             if(!nodespage){
@@ -472,6 +472,13 @@
                 lastRunExec = data.lastExecId;
                 loadHistory();
             }
+            if(name=='nodetable'){
+                if(data.total && data.total!="0"){
+                    enableRunBar();
+                }else{
+                    disableRunBar();
+                }
+            }
         }
         /**
          * now running
@@ -614,7 +621,7 @@
 </g:if>
 <div id="nodesContent">
     <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN)}"/>
-    <g:set var="run_enabled" value="${run_authorized && total>0}"/>
+    <g:set var="run_enabled" value="${run_authorized }"/>
 
     <g:if test="${session.project }">
         <div class="runbox" id="runbox">

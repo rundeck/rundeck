@@ -70,39 +70,59 @@ class FrameworkController  {
         render( [authorized:auth,found:projectexists,project:params.project] as JSON)
     }
 
-    /**
-     * Nodes action lists nodes in resources view, also called by nodesFragment to
-     * render a set of nodes via ajax
-     */
-    def nodes = { ExtNodeFilters query->
+    def nodes ={ ExtNodeFilters query ->
 
         def User u = userService.findOrCreateUser(session.user)
-        def usedFilter=null
-        if(!params.filterName && u && query.nodeFilterIsEmpty() && params.formInput!='true'){
+        def usedFilter = null
+        if (!params.filterName && u && query.nodeFilterIsEmpty() && params.formInput != 'true') {
             Map filterpref = userService.parseKeyValuePref(u.filterPref)
-            if(filterpref['nodes']){
-                params.filterName=filterpref['nodes']
+            if (filterpref['nodes']) {
+                params.filterName = filterpref['nodes']
             }
         }
-        if(params.filterName){
+        if (params.filterName) {
             //load a named filter and create a query from it
-            if(u){
-                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName,u)
-                if(filter){
+            if (u) {
+                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
+                if (filter) {
                     def query2 = filter.createExtNodeFilters()
                     //XXX: node query doesn't use pagination, as it is not an actual DB query
-                    query=query2
-                    def props=query.properties
+                    query = query2
+                    def props = query.properties
                     params.putAll(props)
-                    usedFilter=params.filterName
+                    usedFilter = params.filterName
                 }
             }
         }
 
-        if(params['Clear']){
-            query=new ExtNodeFilters()
-            usedFilter=null
+        if (params['Clear']) {
+            query = new ExtNodeFilters()
+            usedFilter = null
         }
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if (query.nodeFilterIsEmpty()) {
+            if (params.formInput == 'true' && 'true' != params.defaultLocalNode) {
+                query.nodeIncludeName = '.*'
+            } else {
+                query.nodeIncludeName = framework.getFrameworkNodeName()
+            }
+        }
+        if (query && !query.project && session.project) {
+            query.project = session.project
+        }
+        def model=[query:query,params:params]
+
+        if (usedFilter) {
+            model['filterName'] = usedFilter
+        }
+        return model
+    }
+    /**
+     * Nodes action lists nodes in resources view, also called by nodesFragment to
+     * render a set of nodes via ajax
+     */
+    def nodesdata (ExtNodeFilters query){
+
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         if(query.nodeFilterIsEmpty()){
             if(params.formInput=='true' && 'true'!=params.defaultLocalNode){
@@ -283,11 +303,8 @@ class FrameworkController  {
             model.selectedProject=framework.getFrameworkProjectMgr().getFrameworkProject(query.project)
         }
 
-        if(usedFilter){
-            model['filterName']=usedFilter
-        }
-        return model
 
+        return model
     }
     /**
      * nodesFragment renders a set of nodes in HTML snippet, for ajax
@@ -298,7 +315,47 @@ class FrameworkController  {
         if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'node'], ['read'], query.project)) {
             return unauthorized("Read Nodes for project ${query.project}",true)
         }
-        def result = nodes(query)
+        def User u = userService.findOrCreateUser(session.user)
+        def usedFilter = null
+        if (!params.filterName && u && query.nodeFilterIsEmpty() && params.formInput != 'true') {
+            Map filterpref = userService.parseKeyValuePref(u.filterPref)
+            if (filterpref['nodes']) {
+                params.filterName = filterpref['nodes']
+            }
+        }
+        if (params.filterName) {
+            //load a named filter and create a query from it
+            if (u) {
+                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
+                if (filter) {
+                    def query2 = filter.createExtNodeFilters()
+                    //XXX: node query doesn't use pagination, as it is not an actual DB query
+                    query = query2
+                    def props = query.properties
+                    params.putAll(props)
+                    usedFilter = params.filterName
+                }
+            }
+        }
+
+        if (params['Clear']) {
+            query = new ExtNodeFilters()
+            usedFilter = null
+        }
+        if (query.nodeFilterIsEmpty()) {
+            if (params.formInput == 'true' && 'true' != params.defaultLocalNode) {
+                query.nodeIncludeName = '.*'
+            } else {
+                query.nodeIncludeName = framework.getFrameworkNodeName()
+            }
+        }
+        if (query && !query.project && session.project) {
+            query.project = session.project
+        }
+        def result = nodesdata(query)
+        if (usedFilter) {
+            result['filterName'] = usedFilter
+        }
         if(!result.nodesvalid){
             request.error="Error parsing file \"${result.nodesfile}\": "+result.nodeserror? result.nodeserror*.message.join("\n"):'no message'
         }

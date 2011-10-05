@@ -32,6 +32,8 @@
         }
     </g:javascript>
 </g:if>
+<g:render template="/common/boxinfo" model="${[name:'nodetable',model:[total:nodes?.size()]]}"/>
+
 <div id="remoteEditholder" style="display:none" class="popout">
     <span id="remoteEditHeader">
             <span class="welcomeMessage">Edit node: <g:img file="icon-small-Node.png" width="16px" height="16px"/> <span id="editNodeIdent"></span></span>
