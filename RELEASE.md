@@ -1,11 +1,13 @@
-Release 1.3.1
+Release 1.3.2
 ===========
 
-Date: 9/23/2011
+Date: 10/5/2011
 
 This release fixes a number of bugs, and merges in some fixes drawn from the
 development branch, as well as updates the ACL Policy support to improve 
 authorization checks.
+
+Release 1.3.2 fixes one issue with Tomcat based war deployments.
 
 ## Changes
 
@@ -35,6 +37,12 @@ Changes to fix issues with Oracle/Mysql backend:
 These changes should not affect Rundeck 1.3 upgrades with File-based installations.
 
 ## Closed Issues:
+
+1.3.2:
+
+* [#453 Fix issues with Tomcat war deployment](http://rundeck.lighthouseapp.com/projects/59277/tickets/453-fix-issues-with-tomcat-war-deployment)
+
+1.3.1:
 
 * [#448 - RSS cannot be disabled](http://rundeck.lighthouseapp.com/projects/59277/tickets/448)
 * [#447 - Default option filtering not honored from workflow (1.3.1)](http://rundeck.lighthouseapp.com/projects/59277/tickets/447)
