@@ -7,7 +7,7 @@ This release fixes a number of bugs, and merges in some fixes drawn from the
 development branch, as well as updates the ACL Policy support to improve 
 authorization checks.
 
-Release 1.3.2 fixes one issue with Tomcat based war deployments.
+Release 1.3.2 fixes an issue with Tomcat based war deployments, and upgrades the included mysql-connector jar.
 
 ## Changes
 
@@ -41,6 +41,7 @@ These changes should not affect Rundeck 1.3 upgrades with File-based installatio
 1.3.2:
 
 * [#453 Fix issues with Tomcat war deployment](http://rundeck.lighthouseapp.com/projects/59277/tickets/453-fix-issues-with-tomcat-war-deployment)
+* [#456 Request Mysql connector Jar Update](http://rundeck.lighthouseapp.com/projects/59277-development/tickets/456-request-mysql-connector-jar-update)
 
 1.3.1:
 
