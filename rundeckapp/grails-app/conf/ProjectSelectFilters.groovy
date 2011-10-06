@@ -58,7 +58,7 @@ public class ProjectSelectFilters {
          * on first user login, set the session.project if it is not set, to the last user project selected, or
          * to the first project in the available list 
          */
-        projectSelection(controller: 'framework', action: '(createProject|selectProject|projectSelect)',invert:true) {
+        projectSelection(controller: 'framework', action: '(createProject|selectProject|projectSelect|(create|save|check|edit|view)ResourceModelConfig)',invert:true) {
             before = {
                 if (request.api_version || request.is_api_req) {
                     //only default the project if not an api request
