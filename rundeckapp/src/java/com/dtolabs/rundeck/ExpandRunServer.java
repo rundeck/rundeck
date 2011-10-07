@@ -92,6 +92,7 @@ public class ExpandRunServer {
 
     File serverdir;
     File configDir;
+    File datadir;
     File thisJar;
     String coreJarName;
     boolean debug = false;
@@ -246,6 +247,7 @@ public class ExpandRunServer {
         this.basedir = cl.getOptionValue('b', new File(thisJar.getAbsolutePath()).getParentFile().getAbsolutePath());  // TODO: is the first getAbsolutePath required?
         this.serverdir = new File(cl.getOptionValue("serverdir", basedir+"/server"));
         this.configDir = new File(cl.getOptionValue("c", serverdir + "/config"));
+        this.datadir = new File(cl.getOptionValue("datadir", serverdir + "/data"));
         DEBUG("configDir is " + configDir.getAbsolutePath());
         final File toolsdir = new File(basedir, "tools");
         final File toolslibdir = new File(toolsdir, "lib");
@@ -260,7 +262,10 @@ public class ExpandRunServer {
         }
 
         final Properties defaults = loadDefaults(CONFIG_DEFAULTS_PROPERTIES);
-        Properties configuration = new Properties();
+        Properties configuration = createConfiguration(defaults);
+        configuration.put("realm.properties.location", forwardSlashPath(configDir.getAbsolutePath())
+                                                       + "/realm.properties");
+        DEBUG("Runtime configuration properties: " + configuration);
         
         if(!cl.hasOption(FLAG_SKIPINSTALL)) {
             final File libdir = new File(serverdir, "lib");
@@ -276,22 +281,12 @@ public class ExpandRunServer {
             extractBin(bindir, new File(serverdir, "exp/webapp/WEB-INF/lib/" + coreJarName));
             copyToolLibs(toolslibdir, new File(serverdir, "exp/webapp/WEB-INF/lib/" + coreJarName));
         
-            
-            configuration = createConfiguration(defaults);
-
-            configuration.put("realm.properties.location", forwardSlashPath(configDir.getAbsolutePath()) + "/realm.properties");
-
-            DEBUG("Runtime configuration properties: " + configuration);
-     
             expandTemplates(configuration, serverdir, rewrite);
             setScriptFilesExecutable(new File(serverdir, "sbin"));
             extractLauncherContents(new File(basedir, "docs"), "docs", "docs/");
             extractLauncherContents(new File(basedir, "libext"), "libext", "libext/");
-        } else {
-            configuration.putAll(defaults);
-            configuration.put(SERVER_DATASTORE_PATH, forwardSlashPath(cl.getOptionValue("datadir",
-                serverdir.getAbsolutePath())));
-            configuration.put(RUNDECK_SERVER_CONFIG_DIR, forwardSlashPath(this.configDir.getAbsolutePath()));
+        }else{
+            DEBUG("--" + FLAG_SKIPINSTALL + ": Not extracting.");
         }
         
         if(cl.hasOption('p')) {
@@ -531,9 +526,10 @@ public class ExpandRunServer {
             properties.put("server.hostname", localhostname);
         }
         properties.put("rdeck.base", forwardSlashPath(basedir));
-        properties.put(SERVER_DATASTORE_PATH, forwardSlashPath(serverdir.getAbsolutePath()) + "/data/grailsdb");
+        properties.put(SERVER_DATASTORE_PATH, forwardSlashPath(datadir.getAbsolutePath()) + "/grailsdb");
         properties.put("rundeck.log.dir", forwardSlashPath(serverdir.getAbsolutePath()) + "/logs");
         properties.put("rundeck.launcher.jar.location", forwardSlashPath(thisJar.getAbsolutePath()));
+        properties.put(RUNDECK_SERVER_CONFIG_DIR, forwardSlashPath(this.configDir.getAbsolutePath()));
         for (final String configProperty : configProperties) {
             if (null != System.getProperty(configProperty)) {
                 properties.put(configProperty, forwardSlashPath(System.getProperty(configProperty)));
