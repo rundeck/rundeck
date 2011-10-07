@@ -574,7 +574,7 @@ class FrameworkController  {
                 errors << projectNameError
             }else if(!errors){
 
-                System.err.println("create project, properties: ${projProps}");
+                log.debug("create project, properties: ${projProps}");
                 def proj
                 try {
                     proj=framework.getFrameworkProjectMgr().createFrameworkProject(project,projProps)
