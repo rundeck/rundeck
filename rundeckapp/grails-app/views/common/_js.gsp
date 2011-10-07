@@ -133,7 +133,8 @@
                 params['nodeExclude'+key]=data['nodeExclude'+key];
             }
         }
-        if(data.nodeExcludePrecedence==="true"){
+        if(typeof(data.nodeExcludePrecedence) == 'string' && data.nodeExcludePrecedence==="true"
+            || typeof(data.nodeExcludePrecedence)=='boolean' && data.nodeExcludePrecedence){
             params.nodeExcludePrecedence="true";
         }else{
             params.nodeExcludePrecedence="false";
