@@ -69,4 +69,23 @@ public class BaseNodeFilters {
 
     static filterKeys = [hostname: '',  tags: 'Tags', 'os-name': 'OsName', 'os-family': 'OsFamily',
     'os-arch': 'OsArch', 'os-version': 'OsVersion','name':'Name']
-}
+
+    public String toString ( ) {
+    return "BaseNodeFilters{" +
+           (nodeInclude?"nodeInclude='" + nodeInclude + '\'':'') +
+    (nodeExclude?", nodeExclude='" + nodeExclude + '\'':'') +
+    (nodeIncludeName?", nodeIncludeName='" + nodeIncludeName + '\'' : '') +
+    (nodeExcludeName?", nodeExcludeName='" + nodeExcludeName + '\'' : '') +
+    (nodeIncludeTags?", nodeIncludeTags='" + nodeIncludeTags + '\'' : '') +
+    (nodeExcludeTags?", nodeExcludeTags='" + nodeExcludeTags + '\'' : '') +
+    (nodeIncludeOsName?", nodeIncludeOsName='" + nodeIncludeOsName + '\'' : '') +
+    (nodeExcludeOsName?", nodeExcludeOsName='" + nodeExcludeOsName + '\'' : '') +
+    (nodeIncludeOsFamily?", nodeIncludeOsFamily='" + nodeIncludeOsFamily + '\'' : '') +
+    (nodeExcludeOsFamily?", nodeExcludeOsFamily='" + nodeExcludeOsFamily + '\'' : '') +
+    (nodeIncludeOsArch?", nodeIncludeOsArch='" + nodeIncludeOsArch + '\'' : '') +
+    (nodeExcludeOsArch?", nodeExcludeOsArch='" + nodeExcludeOsArch + '\'' : '') +
+    (nodeIncludeOsVersion?", nodeIncludeOsVersion='" + nodeIncludeOsVersion + '\'' : '') +
+    (nodeExcludeOsVersion?", nodeExcludeOsVersion='" + nodeExcludeOsVersion + '\'' : '') +
+    (nodeExcludePrecedence?", nodeExcludePrecedence=" + nodeExcludePrecedence : '') +
+    '}' ;
+    }}
