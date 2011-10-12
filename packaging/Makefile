@@ -86,5 +86,10 @@ deb:
 	fakeroot dpkg-deb --build debdist
 	@mv debdist.deb rundeck-$(VERSION)-$(RELEASE)$(DEB_TAG).deb
 
-clean:
-	rm -rf target rpmdist debdist rundeck-*.deb
+clean: rpmclean debclean
+
+rpmclean:
+	rm -rf rpmdist
+
+debclean:
+	rm -rf debdist rundeck-*.deb
