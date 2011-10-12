@@ -21,6 +21,7 @@ class BaseReport {
         def config = ConfigurationHolder.config
         if (config.rundeck.v14.rdbsupport == 'true') {
             message type: 'text'
+            title type: 'text'
         }
     }
    static constraints = {
