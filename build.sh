@@ -60,19 +60,6 @@ export LOCALREPOURL=file:$LOCALREPO
 export LOCALDEPSREPO=$BASEDIR/dependencies
 export LOCALDEPSREPOURL=file:$LOCALDEPSREPO
 
-
-mkdir -p $LOCALREPO/jetty/zips
-if [ ! -f $LOCALREPO/jetty/zips/jetty-${JETTYVERS}.zip ] ; then
-    if [ ! -z "$PKGREPO" -a -f $PKGREPO/jetty/zips/jetty-${JETTYVERS}.zip ] ; then
-        cp $PKGREPO/jetty/zips/jetty-${JETTYVERS}.zip $LOCALREPO/jetty/zips/
-    else
-        # get ant zip dependency to local repo if it doesn't exist
-        echo "Downloading jetty-${JETTYVERS}.zip ... "
-        cd $LOCALREPO/jetty/zips
-        $GET http://dist.codehaus.org/jetty/jetty-${JETTYVERS}/jetty-${JETTYVERS}.zip
-    fi
-fi
-
 # extract grails to local dir for use during build of Run Deck
 if [ ! -f $BUILD_ROOT/local/grails-$GRAILSVERS/bin/grails ] ; then 
     if [ ! -z "$PKGREPO" -a -f $PKGREPO/grails/zips/grails-$GRAILSVERS.zip ] ; then
@@ -165,7 +152,7 @@ export PATH=$PATH:$GRAILS_HOME/bin
 GWORKDIR=$BASEDIR/rundeckapp/work
 
 #echo 'y' to the command to quell y/n prompt on second time running it:
-yes | $GRAILS_HOME/bin/grails $PROXY_DEFS -Dgrails.project.work.dir=$GWORKDIR install-plugin jetty
+yes | $GRAILS_HOME/bin/grails $PROXY_DEFS -Dgrails.project.work.dir=$GWORKDIR install-plugin $BASEDIR/dependencies/grails-jetty/zips/grails-jetty-1.2-SNAPSHOT.zip
 if [ 0 != $? ]
 then
    echo "failed to install jetty plugin"
