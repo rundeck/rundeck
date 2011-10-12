@@ -25,6 +25,7 @@ endif
 
 ifndef GA_RELEASE
 RPMBUILD_DEFINES+= --define "_alphatag $(ALPHATAG)"
+DEB_TAG="-$(ALPHATAG)"
 endif
 
 .PHONY: rpm deb
@@ -83,7 +84,7 @@ deb:
 	@unzip -oq ../rundeckapp/target/rundeck-$(VERSION).war -d debdist/var/lib/rundeck/exp/webapp/
 	@ln -s /etc/rundeck/log4j.properties; mv log4j.properties debdist/var/lib/rundeck/exp/webapp/WEB-INF/classes
 	fakeroot dpkg-deb --build debdist
-	@mv debdist.deb rundeck-$(VERSION)-$(RELEASE).deb
+	@mv debdist.deb rundeck-$(VERSION)-$(RELEASE)$(DEB_TAG).deb
 
 clean:
 	rm -rf target rpmdist debdist
