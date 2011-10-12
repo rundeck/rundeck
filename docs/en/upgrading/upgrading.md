@@ -16,17 +16,13 @@ for the domain classes that used these names.
 The new table/field names are only used if a new config value is in specified
 in the rundeck-config.properties file:
 
-    rundeck.v14.rdbsupport=true
+    rundeck.v14.rdbsupport=false
 
-This value is set by default on new installations, so if you have a previous
+This value is set to false by default on new installations, so if you have a previous
 1.3 installation using the file-based datasource, upgrading to 1.4 should not
-cause any issues as the rundeck-config.properties file will not be modified
-when you upgrade.
+cause any issues.
 
-The only potential conflict with this change is:
-
-* If you use the file-based data from 1.3 or earlier with a new 1.4 installation
-    * if you do that, make sure to remove or change the config value to "false"
+To configure a relational database backend, you must set this to "true".  See the section in the RunDeck Guide Administration chapter: [Enable rdbsupport](../RunDeck-Guide.html#enable-rdbsupport).
 
 # ACL Policy changes
 
