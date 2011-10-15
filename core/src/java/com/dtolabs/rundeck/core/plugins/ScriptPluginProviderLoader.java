@@ -148,13 +148,11 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
             }
             fileExpandedDir = dir;
             final File script = new File(fileExpandedDir, pluginDef.getScriptFile());
-            if (null == pluginDef.getScriptInterpreter()) {
-                //set executable bit for script-file of the provider
-                try {
-                    ScriptfileUtils.setExecutePermissions(script);
-                } catch (IOException e) {
-                    log.warn("Unable to set executable bit for script file: " + script + ": " + e.getMessage());
-                }
+            //set executable bit for script-file of the provider
+            try {
+                ScriptfileUtils.setExecutePermissions(script);
+            } catch (IOException e) {
+                log.warn("Unable to set executable bit for script file: " + script + ": " + e.getMessage());
             }
             debug("expanded plugin dir! " + fileExpandedDir);
         } else {
