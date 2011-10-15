@@ -628,8 +628,8 @@ class FrameworkController  {
         final executor = service.providerOfType(type)
         final Description desc = executor.description
         addPropertiesForDescription(config, projProps, desc)
-        if(null!=removePrefixes) {
-            removePrefixes.addAll(desc.getPropertiesMapping().values())
+        if(null!=removePrefixes && desc.propertiesMapping) {
+            removePrefixes.addAll(desc.propertiesMapping.values())
         }
     }
 
