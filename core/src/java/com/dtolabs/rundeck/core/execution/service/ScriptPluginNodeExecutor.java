@@ -96,11 +96,18 @@ class ScriptPluginNodeExecutor extends AbstractDescribableScriptPlugin implement
         final ArrayList<String> arglist = new ArrayList<String>();
         if(null!= scriptinterpreter) {
             arglist.addAll(Arrays.asList(scriptinterpreter.split(" ")));
-        }
-        arglist.add(scriptfile.getAbsolutePath());
-        if(null!=scriptargs) {
-            arglist.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargs.split(" "),
-                newDataContext)));
+            StringBuffer sbuf = new StringBuffer(scriptfile.getAbsolutePath());
+            if (null != scriptargs) {
+                sbuf.append(" ");
+                sbuf.append(DataContextUtils.replaceDataReferences(scriptargs, newDataContext));
+            }
+            arglist.add(sbuf.toString());
+        }else{
+            arglist.add(scriptfile.getAbsolutePath());
+            if(null!=scriptargs) {
+                arglist.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargs.split(" "),
+                    newDataContext)));
+            }
         }
         final String[] finalargs = arglist.toArray(new String[arglist.size()]);
 
