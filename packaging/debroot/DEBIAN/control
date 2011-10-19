@@ -3,7 +3,7 @@ Version: %VERSION%
 Section: utils
 Priority: optional
 Architecture: all
-Depends: openssh-client, openjdk-6-jdk, adduser (>= 3.11)
+Depends: openssh-client, java6-runtime, adduser (>= 3.11)
 Maintainer: Noah Campbell <noahcampbell@gmail.com>
 Description: No ordinary wooden deck. You can build a bon fire on this deck.
  Rundeck provides a single console for dispatching commands across many 
