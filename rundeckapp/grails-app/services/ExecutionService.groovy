@@ -1054,6 +1054,40 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
     }
 
     /**
+     * evaluate the options in the input argString, and if any Options defined for the Job have required=true, have a
+     * defaultValue, and have null value in the input properties, then append the default option value to the argString
+     */
+    def List addArgListOptionDefaults(ScheduledExecution scheduledExecution, args) throws ExecutionServiceException {
+        def sb = []
+        def optparams = [:]
+        if (args && args instanceof String) {
+            optparams = args ? frameworkService.parseOptsFromString(args) : [:]
+
+        } else if (args && args instanceof String[]) {
+            optparams = frameworkService.parseOptsFromArray(args)
+            sb.addAll(args as List)
+        }
+
+        final options = scheduledExecution.options
+        if (options) {
+            def defaultoptions = [:]
+            options.each {Option opt ->
+                if (opt.required && null == optparams[opt.name] && opt.defaultValue) {
+                    defaultoptions[opt.name] = opt.defaultValue
+                }
+            }
+            if (defaultoptions) {
+
+                for (String key: defaultoptions.keySet().sort()) {
+                    sb<< "-"+key
+                    sb<< defaultoptions[key]
+                }
+            }
+        }
+        return sb
+    }
+
+    /**
      * evaluate the options in the input properties, and if any Options defined for the Job have regex constraints,
      * require the values in the properties to match the regular expressions.  Throw ExecutionServiceException if
      * any options don't match.
@@ -1528,14 +1562,18 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
 //                    se.refresh()
                 //replace data context within arg string
                 String[] newargs = jitem.args
+                //create node context for node and substitute data references in command
+                final Map<String, Map<String, String>> nodeDataContext =
+                DataContextUtils.addContext("node", DataContextUtils.nodeData(iNodeEntry), executionContext.getDataContext());
+
+                if (null != nodeDataContext && null != newargs) {
+                    newargs = DataContextUtils.replaceDataReferences(newargs, nodeDataContext)
+                }
                 //try to set defaults for any missing args
-                def newargstring = addArgStringOptionDefaults(se, newargs)
-                final List<String> stringList = CLIUtils.splitArgLine(newargstring);
+                def stringList = addArgListOptionDefaults(se, newargs)
                 newargs = stringList.toArray(new String[stringList.size()]);
 
-                if (null != executionContext.dataContext && null != newargs) {
-                    newargs = DataContextUtils.replaceDataReferences(newargs, executionContext.getDataContext())
-                }
+                System.err.println("arglist: ${stringList}, context: ${nodeDataContext}")
                 //construct job data context
                 def jobcontext = new HashMap<String, String>()
                 jobcontext.id = se.id.toString()
