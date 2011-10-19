@@ -704,7 +704,6 @@ public class Framework extends FrameworkResourceParent {
             final HashSet<Map<String, String>> resources = new HashSet<Map<String, String>>();
             for (final INodeEntry iNodeEntry : unfiltered.getNodes()) {
                 HashMap<String, String> resdef = new HashMap<String, String>(iNodeEntry.getAttributes());
-                resdef.putAll(iNodeEntry.getAttributes());
                 resdef.put("type", "node");
                 resdef.put("rundeck_server", Boolean.toString(isLocalNode(iNodeEntry)));
                 resources.add(resdef);

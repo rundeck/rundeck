@@ -372,7 +372,12 @@ public class NodeEntryImpl extends NodeBaseImpl implements INodeEntry, INodeDesc
      * @param value attribute value
      */
     public String setAttribute(final String name, final String value) {
-        return getAttributes().put(name, value);
+        if(null!=value){
+            return getAttributes().put(name, value);
+        }else{
+            getAttributes().remove(name);
+            return value;
+        }
     }
 
     @Override
