@@ -29,6 +29,7 @@ import com.dtolabs.shared.resources.ResourceXMLConstants;
 import com.dtolabs.shared.resources.ResourceXMLParser;
 import com.dtolabs.shared.resources.ResourceXMLParserException;
 import com.dtolabs.shared.resources.ResourceXMLReceiver;
+import com.dtolabs.utils.Mapper;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -116,11 +117,14 @@ public class NodesXMLParser implements NodeFileParser, ResourceXMLReceiver {
         node.setOsVersion(entity.getProperty(NODE_OS_VERSION));
         node.setDescription(entity.getProperty(COMMON_DESCRIPTION));
         final String tags = entity.getProperty(COMMON_TAGS);
-        final HashSet tags1;
+        final HashSet<String> tags1;
         if (null != tags && !"".equals(tags)) {
-            tags1 = new HashSet<String>(Arrays.asList(tags.split(",")));
+            tags1 = new HashSet<String>();
+            for (final String s : tags.split(",")) {
+                tags1.add(s.trim());
+            }
         } else {
-            tags1 = new HashSet();
+            tags1 = new HashSet<String>();
         }
         node.setTags(tags1);
 
