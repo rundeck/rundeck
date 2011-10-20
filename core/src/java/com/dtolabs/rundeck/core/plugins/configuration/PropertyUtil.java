@@ -25,6 +25,8 @@ package com.dtolabs.rundeck.core.plugins.configuration;
 
 import java.util.List;
 
+import static com.dtolabs.rundeck.core.plugins.configuration.Property.Type.*;
+
 /**
  * PropertyUtil factory for specific property types
  *
@@ -32,18 +34,32 @@ import java.util.List;
  */
 public class PropertyUtil {
     /**
-     * Return a property instance for a particular type
+     * Return a property instance for a particular simple type
      */
     public static Property forType(final Property.Type type, final String name, final String title,
                                    final String description, final boolean required,
-                                   final String defaultValue, final Property.Validator validator) {
-        return new Generic(name, title, description, required, defaultValue, validator, type);
+                                   final String defaultValue, final List<String> values) {
+        switch (type) {
+            case Integer:
+                return integer(name, title, description, required, defaultValue);
+            case Boolean:
+                return bool(name, title, description, required, defaultValue);
+            case Long:
+                return longProp(name, title, description, required, defaultValue);
+            case Select:
+                return PropertyUtil.select(name, title, description, required, defaultValue, values);
+            case FreeSelect:
+                return PropertyUtil.freeSelect(name, title, description, required, defaultValue, values);
+            default:
+                return string(name, title, description, required, defaultValue);
+        }
     }
 
     /**
      * Return a string property
      */
-    public static Property string(final String name, final String title, final String description, final boolean required,
+    public static Property string(final String name, final String title, final String description,
+                                  final boolean required,
                                   final String defaultValue, final Property.Validator validator) {
         return new StringProperty(name, title, description, required, defaultValue, validator);
     }
@@ -51,7 +67,8 @@ public class PropertyUtil {
     /**
      * Return a string property
      */
-    public static Property string(final String name, final String title, final String description, final boolean required,
+    public static Property string(final String name, final String title, final String description,
+                                  final boolean required,
                                   final String defaultValue) {
         return new StringProperty(name, title, description, required, defaultValue, null);
     }
@@ -110,21 +127,22 @@ public class PropertyUtil {
         }
 
         public Type getType() {
-            return Type.String;
+            return String;
         }
     }
 
     static final class FreeSelectProperty extends PropertyBase {
         final List<String> selectValues;
 
-        public FreeSelectProperty(final String name, final String title, final String description, final boolean required,
+        public FreeSelectProperty(final String name, final String title, final String description,
+                                  final boolean required,
                                   final String defaultValue, final List<String> selectValues) {
             super(name, title, description, required, defaultValue, null);
             this.selectValues = selectValues;
         }
 
         public Type getType() {
-            return Type.FreeSelect;
+            return FreeSelect;
         }
 
         @Override
@@ -143,7 +161,7 @@ public class PropertyUtil {
         }
 
         public Type getType() {
-            return Type.Select;
+            return Select;
         }
 
         @Override
@@ -172,7 +190,7 @@ public class PropertyUtil {
         }
 
         public Type getType() {
-            return Type.Boolean;
+            return Boolean;
         }
     }
 
@@ -189,7 +207,7 @@ public class PropertyUtil {
         }
 
         public Type getType() {
-            return Type.Integer;
+            return Integer;
         }
 
     }
@@ -197,7 +215,7 @@ public class PropertyUtil {
     static final Property.Validator integerValidator = new Property.Validator() {
         public boolean isValid(final String value) throws ValidationException {
             try {
-                Integer.parseInt(value);
+                java.lang.Integer.parseInt(value);
             } catch (NumberFormatException e) {
                 throw new ValidationException("Not a valid integer");
             }
@@ -212,7 +230,7 @@ public class PropertyUtil {
         }
 
         public Type getType() {
-            return Type.Long;
+            return Long;
         }
 
     }
@@ -220,7 +238,7 @@ public class PropertyUtil {
     static final Property.Validator longValidator = new Property.Validator() {
         public boolean isValid(final String value) throws ValidationException {
             try {
-                Long.parseLong(value);
+                java.lang.Long.parseLong(value);
             } catch (NumberFormatException e) {
                 throw new ValidationException("Not a valid integer");
             }

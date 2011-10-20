@@ -1271,23 +1271,22 @@ your plugin, which will be displayed as a web form when the Project is configure
 You can use these metadata entries to declare configuration properties for your
 plugin:
 
-For each configuration property you want to define, declare:
+Create a `config` entry in each provider definition, containing a sequence of
+map entries for each configuration property you want to define. In the map entry include:
 
-* `config.X.type` - The type of property.  Must be one of:
+* `type` - The type of property.  Must be one of:
     * `String`
     * `Boolean` must be "true" or "false"
     * `Integer`
     * `Long`
     * `Select` must be on of a set of values
     * `FreeSelect` may be one of a set of values
-* `config.X.name` - Name to identify the property
-* `config.X.title` - Title to display in the GUI (optional)
-* `config.X.description` - Description to display in the GUI (optional)
-* `config.X.required` - (true/false) if true, require a non-empty value (optional)
-* `config.X.default` - A default value to use (optional)
-* `config.X.values` - A comma-separated list of values to use for Select or FreeSelect. Required for Select/FreeSelect.
-
-Where X is a number starting at `1`, up to the number of configuration properties you want.
+* `name` - Name to identify the property
+* `title` - Title to display in the GUI (optional)
+* `description` - Description to display in the GUI (optional)
+* `required` - (true/false) if true, require a non-empty value (optional)
+* `default` - A default value to use (optional)
+* `values` - A comma-separated list of values to use for Select or FreeSelect. Required for Select/FreeSelect.
 
 When your script is invoked, each configuration property defined for the plugin will be set as `config.NAME` in the data context passed to your script (see below).
 
@@ -1300,17 +1299,18 @@ Here is an example `providers` section for a Resource Model Source plugin that a
           script-interpreter: bash -c
           script-file: generate.sh
           resource-format: resourceyaml
-          config.1.type: Integer
-          config.1.name: count
-          config.1.title: Count
-          config.1.description: Enter the number of nodes to generate
-          config.2.type: FreeSelect
-          config.2.name: flavor
-          config.2.title: Flavor
-          config.2.description: Select a flavor
-          config.2.required: true
-          config.2.default: vanilla
-          config.2.values: vanilla,blueberry,strawberry,chocolate
+          config:
+            - type: Integer
+              name: count
+              title: Count
+              description: Enter the number of nodes to generate
+            - type: FreeSelect
+              name: flavor
+              title: Flavor
+              description: Select a flavor
+              required: true
+              default: vanilla
+              values: vanilla,blueberry,strawberry,chocolate
 
 ### How script plugin providers are invoked
 

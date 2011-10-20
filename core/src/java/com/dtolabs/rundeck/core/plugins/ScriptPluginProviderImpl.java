@@ -68,7 +68,7 @@ class ScriptPluginProviderImpl implements ScriptPluginProvider {
         return plugindef.getScriptInterpreter();
     }
 
-    public Map<String, String> getMetadata() {
+    public Map<String, Object> getMetadata() {
         return plugindef.getPluginData();
     }
 }

@@ -31,34 +31,48 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class ProviderDef {
-    private Map<String, String> pluginData;
+    public static final String META_NAME = "name";
+    public static final String META_SERVICE = "service";
+    public static final String META_SCRIPT_FILE = "script-file";
+    public static final String META_SCRIPT_ARGS = "script-args";
+    public static final String META_SCRIPT_INTERPRETER = "script-interpreter";
+    public static final String META_PLUGIN_TYPE = "plugin-type";
+    private Map<String, Object> pluginData;
 
-    public ProviderDef(final Map<String, String> pluginData) {
+    public ProviderDef(final Map<String, Object> pluginData) {
         this.pluginData = pluginData;
+    }
+    private String getString(final String key){
+
+        final Object o = pluginData.get(key);
+        if(o instanceof String){
+            return (String)o;
+        }
+        return null;
     }
 
     public String getName() {
-        return pluginData.get("name");
+        return getString(META_NAME);
     }
 
 
     public String getService() {
-        return pluginData.get("service");
+        return getString(META_SERVICE);
     }
 
     public String getScriptFile() {
-        return pluginData.get("script-file");
+        return getString(META_SCRIPT_FILE);
     }
 
     public String getScriptArgs() {
-        return pluginData.get("script-args");
+        return getString(META_SCRIPT_ARGS);
     }
     public String getScriptInterpreter() {
-        return pluginData.get("script-interpreter");
+        return getString(META_SCRIPT_INTERPRETER);
     }
 
     public String getPluginType() {
-        return pluginData.get("plugin-type");
+        return getString(META_PLUGIN_TYPE);
     }
 
     @Override
@@ -68,7 +82,7 @@ public class ProviderDef {
                '}';
     }
 
-    public Map<String, String> getPluginData() {
+    public Map<String, Object> getPluginData() {
         return pluginData;
     }
 }

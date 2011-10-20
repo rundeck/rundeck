@@ -63,5 +63,5 @@ public interface ScriptPluginProvider {
     /**
      * Return any interpreter specification to run the script
      */
-    public Map<String,String> getMetadata();
+    public Map<String,Object> getMetadata();
 }

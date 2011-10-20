@@ -44,7 +44,12 @@ class ScriptPluginResourceModelSourceFactory extends AbstractDescribableScriptPl
 
     public ScriptPluginResourceModelSourceFactory(final ScriptPluginProvider provider, final Framework framework) {
         super(provider, framework);
-        format = provider.getMetadata().get(RESOURCE_FORMAT_PROP);
+        final Object o = provider.getMetadata().get(RESOURCE_FORMAT_PROP);
+        if(o instanceof String){
+            format = (String)o;
+        }else {
+            throw new IllegalArgumentException(RESOURCE_FORMAT_PROP + " was not a string");
+        }
     }
 
 
@@ -55,8 +60,9 @@ class ScriptPluginResourceModelSourceFactory extends AbstractDescribableScriptPl
         } catch (ConfigurationException e) {
             throw new PluginException(e);
         }
-        if (!provider.getMetadata().containsKey(RESOURCE_FORMAT_PROP)) {
-            throw new PluginException(RESOURCE_FORMAT_PROP + " script plugin property is required");
+        if (!provider.getMetadata().containsKey(RESOURCE_FORMAT_PROP) || !(provider.getMetadata().get(
+            RESOURCE_FORMAT_PROP) instanceof String)) {
+            throw new PluginException(RESOURCE_FORMAT_PROP + " script plugin property string is required");
         }
     }
 

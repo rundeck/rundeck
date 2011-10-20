@@ -50,7 +50,10 @@ class ScriptPluginResourceModelSource implements ResourceModelSource, Configurab
     public ScriptPluginResourceModelSource(final ScriptPluginProvider provider, final Framework framework) {
         this.provider = provider;
         this.framework = framework;
-        this.format = provider.getMetadata().get(ScriptPluginResourceModelSourceFactory.RESOURCE_FORMAT_PROP);
+        final Object o = provider.getMetadata().get(ScriptPluginResourceModelSourceFactory.RESOURCE_FORMAT_PROP);
+        if(o instanceof String) {
+            this.format = (String) o;
+        }
     }
 
     public INodeSet getNodes() throws ResourceModelSourceException {
@@ -63,6 +66,10 @@ class ScriptPluginResourceModelSource implements ResourceModelSource, Configurab
         this.configuration = configuration;
         if (!configuration.containsKey("project")) {
             throw new ConfigurationException("project is required");
+        }
+        if(null==format) {
+            throw new ConfigurationException(
+                ScriptPluginResourceModelSourceFactory.RESOURCE_FORMAT_PROP + " is required");
         }
         this.project = configuration.getProperty("project");
         final Map<String, String> configData = new HashMap<String, String>();

@@ -36,13 +36,13 @@ public class PluginMeta {
     private String date;
     private String version;
     private String rundeckPluginVersion;
-    private List<Map<String, String>> providers;
+    private List<Map<String, Object>> providers;
     private List<ProviderDef> pluginDefs;
 
     public List<ProviderDef> getPluginDefs() {
         if (null == pluginDefs && null!=providers) {
             pluginDefs = new ArrayList<ProviderDef>();
-            for (final Map<String, String> provider : providers) {
+            for (final Map<String, Object> provider : providers) {
                 pluginDefs.add(new ProviderDef(provider));
             }
         }
@@ -81,11 +81,11 @@ public class PluginMeta {
         this.version = version;
     }
 
-    public List<Map<String, String>> getProviders() {
+    public List<Map<String, Object>> getProviders() {
         return providers;
     }
 
-    public void setProviders(List<Map<String, String>> providers) {
+    public void setProviders(List<Map<String, Object>> providers) {
         this.providers = providers;
     }
 

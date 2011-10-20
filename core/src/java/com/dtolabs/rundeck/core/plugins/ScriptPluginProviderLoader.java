@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.utils.ZipUtil;
 import com.dtolabs.rundeck.core.utils.cache.FileCache;
 import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.JavaBeanLoader;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -250,8 +251,12 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
             }
             if (!found && !nextEntry.isDirectory() && nextEntry.getName().equals(basename + "/plugin.yaml")) {
 //                debug("Found metadata: " + nextEntry.getName());
-                metadata = loadMetadataYaml(zipinput);
-                found = true;
+                try {
+                    metadata = loadMetadataYaml(zipinput);
+                    found = true;
+                } catch (Throwable e) {
+                    log.error("Error parsing metadata file plugin.yaml: " + e.getMessage(), e);
+                }
             }
             if (dirfound && found) {
                 break;
@@ -277,9 +282,9 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
      * return loaded yaml plugin metadata from the stream
      */
     static PluginMeta loadMetadataYaml(final InputStream stream) {
-        final JavaBeanLoader<PluginMeta> yaml = new JavaBeanLoader<PluginMeta>(PluginMeta.class);
+        final Yaml yaml = new Yaml();
 
-        return yaml.load(stream);
+        return yaml.loadAs(stream, PluginMeta.class);
     }
 
     /**

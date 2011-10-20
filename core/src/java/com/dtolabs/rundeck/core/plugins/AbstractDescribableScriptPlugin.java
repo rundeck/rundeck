@@ -73,45 +73,68 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
     static private List<Property> createProperties(final ScriptPluginProvider provider) throws ConfigurationException {
         final ArrayList<Property> properties = new ArrayList<Property>();
         int i = 1;
-        final Map<String, String> metadata = provider.getMetadata();
-        while (metadata.containsKey(CONFIG_PROP_PREFIX + "." + i + "." + CONFIG_TYPE)) {
-            final String prefix = CONFIG_PROP_PREFIX + "." + i + ".";
-            i++;
-            final String typestr = metadata.get(prefix + CONFIG_TYPE);
-            final Property.Type type;
-            try {
-                type = Property.Type.valueOf(typestr);
-            } catch (IllegalArgumentException e) {
-                throw new ConfigurationException("Invalid property type: " + typestr);
-            }
-            final String name = metadata.get(prefix + CONFIG_NAME);
-            final String title = metadata.get(prefix + CONFIG_TITLE);
-            final String description = metadata.get(prefix + CONFIG_DESCRIPTION);
-            final boolean required = Boolean.parseBoolean(metadata.get(prefix + CONFIG_REQUIRED));
-            final String defaultValue = metadata.get(prefix + CONFIG_DEFAULT);
-            if (null == name) {
-                throw new ConfigurationException("Name required");
-            }
-            final String valuesstr = metadata.get(prefix + CONFIG_VALUES);
-            final String[] split = null != valuesstr ? valuesstr.split(",") : null;
-            final List<String> values = null != split ? Arrays.asList(split) : null;
-            if (type == Property.Type.Select) {
-                properties.add(PropertyUtil.select(name, title, description, required, defaultValue, values));
-            } else if (type == Property.Type.FreeSelect) {
-                properties.add(PropertyUtil.freeSelect(name, title, description, required, defaultValue, values));
-            } else {
-                properties.add(PropertyUtil.forType(type, name, title, description, required, defaultValue, null));
+        final Map<String, Object> metadata = provider.getMetadata();
+        final Object config = metadata.get("config");
+        if(config instanceof List){
+            final List configs=(List) config;
+            for (final Object citem : configs) {
+                if(citem instanceof Map){
+                    Map<String,Object> itemmeta=(Map<String,Object>) citem;
+                    final String typestr = metaStringProp(itemmeta, CONFIG_TYPE);
+                    final Property.Type type;
+                    try {
+                        type = Property.Type.valueOf(typestr);
+                    } catch (IllegalArgumentException e) {
+                        throw new ConfigurationException("Invalid property type: " + typestr);
+                    }
+                    final String name = metaStringProp(itemmeta, CONFIG_NAME);
+                    final String title = metaStringProp(itemmeta,CONFIG_TITLE);
+                    final String description = metaStringProp(itemmeta,CONFIG_DESCRIPTION);
+                    final Object reqValue = itemmeta.get(CONFIG_REQUIRED);
+                    final boolean required;
+                    if (reqValue instanceof Boolean) {
+                        required = (Boolean) reqValue;
+                    } else {
+                        required = reqValue instanceof String && Boolean.parseBoolean((String) reqValue);
+                    }
+
+                    final Object defObj = itemmeta.get(CONFIG_DEFAULT);
+                    final String defaultValue = null != defObj ? defObj.toString() : null;
+                    if (null == name) {
+                        throw new ConfigurationException("Name required");
+                    }
+                    final String valuesstr = metaStringProp(itemmeta,CONFIG_VALUES);
+                    final String[] split = null != valuesstr ? valuesstr.split(",") : null;
+                    final List<String> values;
+                    if(null!=split){
+                        final ArrayList<String> valuesA = new ArrayList<String>();
+                        for (final String s : split) {
+                            valuesA.add(s.trim());
+                        }
+                        values = valuesA;
+                    }else{
+                        values=null;
+                    }
+
+                    properties.add(PropertyUtil.forType(type, name, title, description, required, defaultValue,
+                        values));
+                }
             }
         }
         return properties;
     }
 
+    private static String metaStringProp(final Map<String, Object> metadata, final String prop) {
+        return metaStringProp(metadata, prop, null);
+    }
+    private static String metaStringProp(final Map<String, Object> metadata, final String prop, final String defString){
+        final Object titleobj = metadata.get(prop);
+        return null != titleobj && titleobj instanceof String ? (String) titleobj : defString;
+    }
     protected static Description createDescription(final ScriptPluginProvider provider,
                                                  final boolean allowCustomProperties) throws ConfigurationException {
-        final String title = null != provider.getMetadata().get(TITLE_PROP) ? provider.getMetadata().get(TITLE_PROP)
-                                                                            : provider.getName() + " Script Plugin";
-        final String description = null != provider.getMetadata().get(DESCRIPTION_PROP) ? provider.getMetadata().get(
-            DESCRIPTION_PROP) : "";
+        final String title = metaStringProp(provider.getMetadata(), TITLE_PROP, provider.getName() + " Script Plugin");
+        final String description = metaStringProp(provider.getMetadata(), DESCRIPTION_PROP, "");
         final List<Property> properties = allowCustomProperties ? createProperties(provider) : null;
 
         return new AbstractBaseDescription() {
