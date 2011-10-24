@@ -164,7 +164,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../maven/repository/jetty/jars/jetty-6.1.21.jar!/" />
+          <root url="jar://$MODULE_DIR$/../dependencies/jetty/jars/jetty-6.1.21.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -173,7 +173,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../dependencies/snakeyaml/jars/snakeyaml-1.7.jar!/" />
+          <root url="jar://$MODULE_DIR$/../dependencies/snakeyaml/jars/snakeyaml-1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
