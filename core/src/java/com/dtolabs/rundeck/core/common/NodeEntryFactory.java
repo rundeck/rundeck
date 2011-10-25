@@ -69,20 +69,23 @@ public class NodeEntryFactory {
             if ("".equals(tags.trim())) {
                 data = new String[0];
             } else {
-                data = tags.split(", *");
+                data = tags.split(",");
             }
-            HashSet set = new HashSet(Arrays.asList(data));
+            final HashSet set = new HashSet();
+            for (final String s : data) {
+                set.add(s.trim());
+            }
             newmap.put("tags", set);
         } else if (null != newmap.get("tags") && newmap.get("tags") instanceof Collection) {
             Collection tags = (Collection) newmap.get("tags");
             HashSet data = new HashSet();
             for (final Object tag : tags) {
-                data.add(tag.toString());
+                data.add(tag.toString().trim());
             }
             newmap.put("tags", data);
         }else if (null != newmap.get("tags")) {
             Object o = newmap.get("tags");
-            newmap.put("tags", new HashSet(Arrays.asList(o.toString())));
+            newmap.put("tags", new HashSet(Arrays.asList(o.toString().trim())));
         }
         try {
             BeanUtils.populate(nodeEntry, newmap);
