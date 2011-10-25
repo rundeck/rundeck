@@ -669,6 +669,7 @@ Then restart RunDeck to ensure it picks up the change and you're done.
         };
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+**Note**: The `bindDn` and `bindPassword` must escape any special characters with `\` character. Special characters include `\` (backslash), as well as `!` (exclamation).
 
 (2) To override the default JAAS configuration file, you will need to supply the RunDeck server with the proper path to the new one, and a `loginmodule.name` Java system property to identify the new login module by name.
 
