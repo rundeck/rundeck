@@ -13,12 +13,12 @@ Unfortunately, RunDeck 1.3 and earlier used domain class names that conflicted w
 To fix this, we have changed the table/field mappings to "rduser" and "rdoption"
 for the domain classes that used these names.
 
-The new table/field names are only used if a new config value is in specified
+The new table/field names are only used if a new config value is set to `true`
 in the rundeck-config.properties file:
 
-    rundeck.v14.rdbsupport=false
+    rundeck.v14.rdbsupport=true
 
-This value is set to false by default on new installations, so if you have a previous
+This value is set to `false` by default on new installations, so if you have a previous
 1.3 installation using the file-based datasource, upgrading to 1.4 should not
 cause any issues.
 
