@@ -54,7 +54,7 @@ Example `project.properties` configuration to add a JSON resource file:
 
     resources.source.1.type=file
     resources.source.1.config.file=/Users/greg/rundeck140/resources.json
-    resources.source.1.format=resourcejson
+    resources.source.1.config.format=resourcejson
 
 Note: the `format` does not have to be specified if the file extension is `.json`.
 
