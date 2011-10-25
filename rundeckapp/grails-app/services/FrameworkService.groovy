@@ -174,11 +174,6 @@ class FrameworkService implements ApplicationContextAware {
         if(!session.Framework){
             String rundeckbase=getRundeckBase()
 
-            //determine list of possible acl roles
-//            List l = BaseAclsAuthorization.listRoles(new File(Constants.getFrameworkConfigDir(rundeckbase)))
-            
-//            List rolelist = getUserRoleList(request,l)
-//            session.roles=rolelist
             session.Framework = getFrameworkForUserAndSubject(session.user, request.subject, rundeckbase)
         }
         return session.Framework;
@@ -216,11 +211,6 @@ class FrameworkService implements ApplicationContextAware {
         }
         fw.setAllowUserInput(false)
         return fw
-    }
-
-    def List getUserRoleList(request, List availableRoles){
-        List rolelist = availableRoles.findAll {request.isUserInRole(it)}
-        return rolelist
     }
 
     /**

@@ -140,15 +140,6 @@ class BootStrap {
              servletContext.setAttribute("logging.ant.metadata","true")
          }
 
-         //configure mapped role definitions
-         if(grailsApplication.config.mappedRoles && grailsApplication.config.mappedRoles instanceof Map){
-             def rolemap=[:]
-             rolemap.putAll(grailsApplication.config.mappedRoles)
-             servletContext.setAttribute("MAPPED_ROLES",rolemap)
-         }else{
-             servletContext.setAttribute("MAPPED_ROLES",[:])
-         }
-
 
          //configure System.out and System.err so that remote command execution will write to a specific print stream
          if("test"!=GrailsUtil.environment){

@@ -11,7 +11,6 @@ import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
 
 class AuthTagLib {
     def static namespace="auth"
-    def userService
     def FrameworkService frameworkService
     static returnObjectForTags = ['jobAllowedTest','adhocAllowedTest', 'resourceAllowedTest']
     
@@ -275,8 +274,7 @@ class AuthTagLib {
         }
         
                 
-//            def authorized = userService.userHasAuthorization(request.remoteUser,name)
-        
+
         def framework = frameworkService.getFrameworkFromUserSession(request.session, request)
         def Authorization authr = framework.getAuthorizationMgr()
         

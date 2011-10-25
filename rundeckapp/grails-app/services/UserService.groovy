@@ -16,11 +16,6 @@ class UserService {
         return user
     }
 
-    def boolean userHasAuthorization(String login, String auth){
-        
-        throw new Exception("Not supported.")
-    }
-
     /**
      * Parse a "key=value,key=value" string and return a Map of string->String
      */
