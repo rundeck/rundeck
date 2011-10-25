@@ -7,5 +7,5 @@
         ${node.description.encodeAsHTML()}
     </span>
     
-    <g:render template="nodeDetailsSimple" bean="${node}" var="node"/>
+    <g:render template="/framework/nodeDetailsSimple" bean="${node}" var="node"/>
 </div>

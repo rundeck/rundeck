@@ -26,6 +26,8 @@ import org.apache.commons.httpclient.UsernamePasswordCredentials
 import javax.security.auth.Subject
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.common.INodeEntry
+import org.apache.commons.collections.list.TreeList
 
 class ScheduledExecutionController  {
     def Scheduler quartzScheduler
@@ -2518,6 +2520,70 @@ class ScheduledExecutionController  {
             }
             else {
                 model.nodes=nodes
+                model.nodemap=[:]
+                model.tagsummary=[:]
+                model.grouptags=[:]
+                //summarize node groups
+                def namegroups=[other: new TreeList()]
+                nodes.each{INodeEntry node->
+                    def name=node.nodename
+                    model.nodemap[name]=node
+                    def matcher = (name=~ /^(.*\D)(\d+)/)
+                    def matcher2 = (name =~ /^(\d+)(\D.*)/)
+                    def groupname
+                    if(matcher.matches()){
+                        def pat=matcher.group(1)
+                        def num = matcher.group(2)
+                        groupname= pat + '.*'
+
+                    }else if(matcher2.matches()){
+                        def pat = matcher2.group(2)
+                        def num = matcher2.group(1)
+                        groupname= '.*' + pat
+
+                    }else{
+                        groupname='other'
+                    }
+                    if (!namegroups[groupname]) {
+                        namegroups[groupname] = new TreeList()
+                    }
+                    namegroups[groupname] << name
+                    //summarize tags
+                    def tags = node.getTags()
+                    if (tags) {
+                        tags.each { tag ->
+                            if (!model.tagsummary[tag]) {
+                                model.tagsummary[tag] = 1
+                            } else {
+                                model.tagsummary[tag]++
+                            }
+                            if(!model.grouptags[groupname]){
+                                model.grouptags[groupname]=[(tag):1]
+                            }else if (!model.grouptags[groupname][tag]) {
+                                model.grouptags[groupname][tag]=1
+                            }else{
+                                model.grouptags[groupname][tag]++
+                            }
+                        }
+                    }
+                }
+                def singles=[]
+                namegroups.keySet().grep {it!='other'&&namegroups[it].size() == 1}.each{
+                    namegroups['other'].addAll(namegroups[it])
+                    model.grouptags[it]?.each{k,v->
+                        model.grouptags['other'][k]+=v
+                    }
+                    singles<<it
+                }
+                singles.each{
+                    namegroups.remove(it)
+                    model.grouptags.remove(it)
+                }
+                if(!namegroups['other']){
+                    namegroups.remove('other')
+                }
+
+                model.namegroups=namegroups
             }
             //check nodeset filters for variable expansion
             def varfound=NodeSet.FILTER_ENUM.find{filter->
@@ -2538,6 +2604,7 @@ class ScheduledExecutionController  {
                 model.failedNodes=e.failedNodeList
             }
         }
+        model.localNodeName=framework.getFrameworkNodeName()
         return model
     }
     def executeFragment = {

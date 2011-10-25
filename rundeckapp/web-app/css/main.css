@@ -1696,6 +1696,10 @@ span.tag,a.tag{
     -webkit-border-radius: 3px;
     border-radius: 3px;
 }
+span.tag.tagselected, a.tag.tagselected {
+    background: #fff;
+    border:1px solid #ccf;
+}
 span.tag.rundeckserver,a.tag.rundeckserver{
     color:black;
     font-weight:bold;
