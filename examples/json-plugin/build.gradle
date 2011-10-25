@@ -1,0 +1,63 @@
+version = '1.4.0'
+defaultTasks 'clean','build'
+apply plugin: 'java'
+sourceCompatibility = 1.5
+archivesBaseName = "rundeck-$project.name"
+rundeckPluginVersion= '1.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile files("${rootProject.projectDir}/../../core/build/libs/rundeck-core-${version}.jar")
+    testCompile(
+        //[group: 'junit', name: 'junit', version: '3.8.1',ext:'jar']
+    )
+}
+jar {
+    manifest {
+        attributes 'Rundeck-Plugin-Version': rundeckPluginVersion, 'Rundeck-Plugin-Archive': 'true'
+    }
+}
+
+//specific build values for this plugin
+
+configurations{
+    //declare custom pluginLibs configuration to include only libs for this plugin
+    pluginLibs 
+    
+    //declare compile to extend from pluginLibs so it inherits the dependencies
+    compile{
+        extendsFrom pluginLibs
+    }
+}
+dependencies {
+    //add lib/*.jar files to pluginLibs
+    pluginLibs fileTree(dir: 'lib', include: '*.jar')
+}
+
+// task to copy plugin libs to output/lib dir
+task copyToLib(type: Copy) {
+    into "$buildDir/output/lib"
+    from configurations.pluginLibs
+}
+
+jar {
+    //include contents of output dir
+    from "$buildDir/output"
+    manifest {
+        //create space-separated list of pluginLibs
+        def libList = configurations.pluginLibs.collect{relativePath(it)}.join(' ') 
+        attributes 'Rundeck-Plugin-Classnames': 'com.dtolabs.rundeck.plugin.resources.format.json.JsonResourceFormatParser,com.dtolabs.rundeck.plugin.resources.format.json.JsonResourceFormatGenerator', 'Rundeck-Plugin-Libs': "${libList}"
+    }
+}
+
+//set jar task to depend on copyToLib
+jar.dependsOn(copyToLib)
+
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '0.9-rc-3'
+    jarPath = 'wrapper'
+}
