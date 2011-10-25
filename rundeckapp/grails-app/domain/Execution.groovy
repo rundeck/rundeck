@@ -58,6 +58,7 @@ class Execution extends ExecutionContext {
             
             failedNodeList type: 'text'
             outputfilepath type: 'text'
+            nodeIncludeName type: 'text'
         }
     }
 
