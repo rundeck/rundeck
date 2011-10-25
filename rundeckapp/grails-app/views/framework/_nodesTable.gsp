@@ -2,6 +2,7 @@
     <span class="warn note">None</span>
 </g:if>
 <g:if test="${nodes && nodes.size()>0}">
+    <g:render template="tagsummary" model="${[tagsummary:tagsummary,link:[action:'nodes',controller:'framework',param:'nodeIncludeTags']]}"/>
     <table cellpadding="0" cellspacing="0" width="100%" id="nodesTable">
         <g:if test="${!page || page=='0'}">
             <tr>
