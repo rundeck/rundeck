@@ -1,3 +1,4 @@
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
 <g:set var="ukey" value="${g.rkey()}"/>
         <div class="jobslist ${small?'small':''}">
@@ -18,7 +19,7 @@
                 </tr>
                         </g:if>
                     <% def j=0 %>
-                    <g:each in="${jobslist}" var="scheduledExecution">
+                    <g:each in="${runAuthRequired?jobslist.findAll{jobauthorizations[AuthConstants.ACTION_RUN].contains(it.id.toString())}:jobslist}" var="scheduledExecution">
                         <g:set var="execCount" value="${scheduledExecution.id?Execution.countByScheduledExecution(scheduledExecution):0}"/>
                         <g:set var="nextExecution"
                                value="${ (nextExecutions)? nextExecutions[scheduledExecution.id] : null}"/>

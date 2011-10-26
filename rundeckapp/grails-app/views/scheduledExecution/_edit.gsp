@@ -86,7 +86,7 @@ var applinks={
                 'jobChooserContent',
                 '${createLink(controller:"menu",action:"jobsPicker")}',
                 {
-                parameters: {jobsjscallback:'jobChosen',projFilter:project},
+                parameters: {jobsjscallback:'jobChosen',projFilter:project,runAuthRequired:true},
                  onSuccess: function(transport) {
                     new MenuController().showRelativeTo(elem,target);
                      $('jobChooseSpinner').hide();

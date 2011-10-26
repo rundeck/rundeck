@@ -95,7 +95,7 @@
         %{ divcounts++;}%
         <g:if test="${jobgroups[group.key]}">
             <div class="jobGroups subjobs">
-            <g:render template="jobslist" model="[jobslist:jobgroups[group.key],total:jobgroups[group.key]?.size(),nowrunning:nowrunning,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,headers:false,wasfiltered:wasfiltered,small:small?true:false,jobsjscallback:jobsjscallback]"/>
+            <g:render template="jobslist" model="[jobslist:jobgroups[group.key],total:jobgroups[group.key]?.size(),nowrunning:nowrunning,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,headers:false,wasfiltered:wasfiltered,small:small?true:false,jobsjscallback:jobsjscallback,runAuthRequired:runAuthRequired]"/>
             </div>
         </g:if>
 
@@ -106,7 +106,7 @@
     <g:if test="${currentJobs}">
         <g:timerStart key="_groupTree2.gsp-jobslist"/>
         <div>
-        <g:render template="jobslist" model="[jobslist:currentJobs,total:currentJobs?.size(),nowrunning:nowrunning,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,headers:false,wasfiltered:wasfiltered,small:small?true:false,jobsjscallback:jobsjscallback]"/>
+        <g:render template="jobslist" model="[jobslist:currentJobs,total:currentJobs?.size(),nowrunning:nowrunning,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,headers:false,wasfiltered:wasfiltered,small:small?true:false,jobsjscallback:jobsjscallback,runAuthRequired:runAuthRequired]"/>
         </div>
         <g:timerEnd key="_groupTree2.gsp-jobslist"/>
     </g:if>

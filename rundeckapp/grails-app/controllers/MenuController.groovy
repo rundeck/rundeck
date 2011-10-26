@@ -206,7 +206,7 @@ class MenuController {
         if(params.jobsjscallback){
             results.jobsjscallback=params.jobsjscallback
         }
-        return results
+        return results + [runAuthRequired:params.runAuthRequired]
     }
     def listWorkflows(ScheduledExecutionQuery query,Framework framework,String user) {
         long start=System.currentTimeMillis()
