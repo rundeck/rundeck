@@ -40,6 +40,7 @@ import org.springframework.web.context.support.WebApplicationContextUtils
 import com.dtolabs.rundeck.core.execution.commands.*
 import com.dtolabs.rundeck.core.execution.workflow.*
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import com.dtolabs.rundeck.execution.UnauthorizedStatusResult
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -1556,35 +1557,44 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             }
             def com.dtolabs.rundeck.core.execution.ExecutionContext newContext
             def WorkflowExecutionItem newExecItem
+            def InterpreterResult iresult
             ScheduledExecution.withTransaction{status->
 
                 ScheduledExecution se = ScheduledExecution.get(id)//.findByJobNameAndGroupPath(name, group)
-//                    se.refresh()
-                //replace data context within arg string
-                String[] newargs = jitem.args
-                //create node context for node and substitute data references in command
-                final Map<String, Map<String, String>> nodeDataContext =
-                DataContextUtils.addContext("node", DataContextUtils.nodeData(iNodeEntry), executionContext.getDataContext());
+                if (!frameworkService.authorizeProjectJobAll(executionContext.getFramework(), se, [AuthConstants.ACTION_RUN], se.project)) {
+                    def msg= "Unauthorized to execute job ${jitem.jobIdentifier}: ${se.extid}"
+                    executionContext.getExecutionListener().log(0,"Job ref [${jitem.jobIdentifier}] failed: " + msg);
+                    iresult = new InterpreterResultImpl(new UnauthorizedStatusResult(msg))
+                }else{
+    //                    se.refresh()
+                    //replace data context within arg string
+                    String[] newargs = jitem.args
+                    //create node context for node and substitute data references in command
+                    final Map<String, Map<String, String>> nodeDataContext =
+                    DataContextUtils.addContext("node", DataContextUtils.nodeData(iNodeEntry), executionContext.getDataContext());
 
-                if (null != nodeDataContext && null != newargs) {
-                    newargs = DataContextUtils.replaceDataReferences(newargs, nodeDataContext)
+                    if (null != nodeDataContext && null != newargs) {
+                        newargs = DataContextUtils.replaceDataReferences(newargs, nodeDataContext)
+                    }
+                    //try to set defaults for any missing args
+                    def stringList = addArgListOptionDefaults(se, newargs)
+                    newargs = stringList.toArray(new String[stringList.size()]);
+
+                    //construct job data context
+                    def jobcontext = new HashMap<String, String>()
+                    jobcontext.id = se.id.toString()
+                    jobcontext.uuid = se.uuid
+                    jobcontext.name = se.jobName
+                    jobcontext.group = se.groupPath
+                    jobcontext.project = se.project
+                    jobcontext.username = executionContext.getUser()
+                    newExecItem = createExecutionItemForExecutionContext(se, executionContext.getFramework(), executionContext.getUser())
+                    newContext= createContext(se, executionContext.getFramework(), executionContext.getUser(), jobcontext, executionContext.getExecutionListener(),newargs)
                 }
-                //try to set defaults for any missing args
-                def stringList = addArgListOptionDefaults(se, newargs)
-                newargs = stringList.toArray(new String[stringList.size()]);
 
-                System.err.println("arglist: ${stringList}, context: ${nodeDataContext}")
-                //construct job data context
-                def jobcontext = new HashMap<String, String>()
-                jobcontext.id = se.id.toString()
-                jobcontext.uuid = se.uuid
-                jobcontext.name = se.jobName
-                jobcontext.group = se.groupPath
-                jobcontext.project = se.project
-                jobcontext.username = executionContext.getUser()
-                newExecItem = createExecutionItemForExecutionContext(se, executionContext.getFramework(), executionContext.getUser())
-                newContext= createContext(se, executionContext.getFramework(), executionContext.getUser(), jobcontext, executionContext.getExecutionListener(),newargs)
-
+            }
+            if(null!=iresult){
+                return iresult
             }
             def WorkflowExecutionService service = executionContext.getFramework().getWorkflowExecutionService()
 
