@@ -121,6 +121,9 @@ runurl="${APIURL}/job/${jobid}/run"
 params=""
 execargs=""
 
+# let job finish executing
+sleep 2
+
 # get listing
 $CURL -H "$AUTHHEADER" --data-urlencode "argString=${execargs}" ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
