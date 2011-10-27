@@ -336,6 +336,42 @@ class ScheduledExecutionService {
         return list;
     }
 
+    def deleteScheduledExecution(ScheduledExecution scheduledExecution){
+        scheduledExecution = ScheduledExecution.lock(scheduledExecution.id)
+        def jobname = scheduledExecution.generateJobScheduledName()
+        def groupname = scheduledExecution.generateJobGroupName()
+        def errmsg=null
+        def success = false
+        Execution.withTransaction {
+            //find any currently running executions for this job, and if so, throw exception
+            def found = Execution.createCriteria().get {
+                delegate.'scheduledExecution' {
+                    eq('id', scheduledExecution.id)
+                }
+                isNotNull('dateStarted')
+                isNull('dateCompleted')
+                lock true
+            }
+
+            if (found) {
+                errmsg = 'Cannot delete Job "' + scheduledExecution.jobName + '" [' + scheduledExecution.extid + ']: it is currently being executed (execution [' + found.id + '])'
+                return [success:false,error:errmsg]
+            }
+            //unlink any Execution records
+            scheduledExecution.executions.each {Execution exec ->
+                exec.scheduledExecution = null
+            }
+            try {
+                scheduledExecution.delete(flush: true)
+                deleteJob(jobname, groupname)
+                success = true
+            } catch (org.springframework.dao.OptimisticLockingFailureException e) {
+                scheduledExecution.discard()
+                errmsg = 'Cannot delete Job "' + scheduledExecution.jobName + '" [' + scheduledExecution.extid + ']: it may have been modified or executed by another user'
+            }
+        }
+        return [success:success,error:errmsg]
+    }
     def deleteJob(String jobname, String groupname){
         log.info("deleting job from scheduler")
         quartzScheduler.deleteJob(jobname,groupname)

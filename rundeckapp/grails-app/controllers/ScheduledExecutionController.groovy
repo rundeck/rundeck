@@ -576,25 +576,18 @@ class ScheduledExecutionController  {
                 return unauthorized("Delete Job: ${params.id}")
             }
             def changeinfo=[user:session.user,method:'delete',change:'delete']
-            def jobname = scheduledExecution.generateJobScheduledName()
-            def groupname = scheduledExecution.generateJobGroupName()
             def jobdata=scheduledExecution.properties
             def jobtitle=scheduledExecution.jobName
-            //unlink any Execution records
-            def torem=[]
-            def execs = scheduledExecution.executions
-            execs.each{Execution exec->
-                torem<<exec
+            def result = scheduledExecutionService.deleteScheduledExecution(scheduledExecution)
+
+            if (!result.success) {
+                flash.error = result.error
+                return redirect(action: show, id: params.id)
+            }else{
+                logJobChange(changeinfo, jobdata)
+                flash.message = "Job '${jobtitle}' was successfully deleted."
+                redirect(action:index, params:[:])
             }
-            torem.each{Execution exec->
-                scheduledExecution.removeFromExecutions(exec)
-                exec.scheduledExecution=null
-            }
-            scheduledExecution.delete(flush:true)
-            scheduledExecutionService.deleteJob(jobname,groupname)
-            logJobChange(changeinfo, jobdata)
-            flash.message = "Job '${jobtitle}' was successfully deleted."
-            redirect(action:index, params:[:])
         } else {
             flash.message = "ScheduledExecution not found with id ${params.id}"
             redirect(action:index, params:params)
@@ -3069,28 +3062,22 @@ class ScheduledExecutionController  {
             return new ApiController().renderError()
         }
         def changeinfo = [user: session.user, method: 'apiJobDelete', change: 'delete']
-        def jobdata=scheduledExecution.properties
-        def jobname = scheduledExecution.generateJobScheduledName()
-        def groupname = scheduledExecution.generateJobGroupName()
-        def jobtitle="["+params.id+"] "+scheduledExecution.generateFullName()
-        //unlink any Execution records
-        def torem=[]
-        def execs = scheduledExecution.executions
-        execs.each{Execution exec->
-            torem<<exec
-        }
-        torem.each{Execution exec->
-            scheduledExecution.removeFromExecutions(exec)
-            exec.scheduledExecution=null
-        }
-        scheduledExecution.delete(flush:true)
-        scheduledExecutionService.deleteJob(jobname,groupname)
-        logJobChange(changeinfo,jobdata)
-        def resmsg= g.message(code:'api.success.job.delete.message',args:[jobtitle])
+        def jobdata = scheduledExecution.properties
+        def jobtitle = "[" + params.id + "] " + scheduledExecution.generateFullName()
+        def result=scheduledExecutionService.deleteScheduledExecution(scheduledExecution)
 
-        return new ApiController().success{ delegate->
-            delegate.'success'{
-                message(resmsg)
+
+        if (!result.success) {
+            flash.error = result.error
+            return new ApiController().error()
+        }else{
+            logJobChange(changeinfo,jobdata)
+            def resmsg= g.message(code:'api.success.job.delete.message',args:[jobtitle])
+
+            return new ApiController().success{ delegate->
+                delegate.'success'{
+                    message(resmsg)
+                }
             }
         }
     }

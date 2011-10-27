@@ -933,7 +933,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
 
 
     def Execution createExecution(ScheduledExecution se, Framework framework, String user, Map extra=[:]) throws ExecutionServiceException{
-        def ScheduledExecution scheduledExec = ScheduledExecution.get(se.id)
+        def ScheduledExecution scheduledExec = ScheduledExecution.lock(se.id)
         se = scheduledExec
         se.refresh()
 
@@ -945,6 +945,11 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             }
             isNotNull('dateStarted')
             isNull('dateCompleted')
+            lock true
+        }
+
+        if (found) {
+            throw new ExecutionServiceException('Job "' + se.jobName + '" [' + se.id + '] is currently being executed (execution [' + found.id + '])')
         }
 
         log.info("createExecution for ScheduledExecution: ${se.id}")
@@ -970,10 +975,6 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         validateInputOptionValues(scheduledExec, props)
         if (optparams) {
             props.argString = generateJobArgline(scheduledExec, optparams)
-        }
-
-        if(found){
-            throw new ExecutionServiceException('Job "'+se.jobName+'" ['+se.id+'] is currently being executed (execution ['+found.id+'])')
         }
 
         //create duplicate workflow
@@ -1253,18 +1254,18 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             ScheduledExecution.withTransaction{
             scheduledExecution = ScheduledExecution.get(schedId)
             execution = execution.merge()
-            jobname=scheduledExecution.groupPath?scheduledExecution.generateFullName():scheduledExecution.jobName
-            jobid=scheduledExecution.id
             if (scheduledExecution) {
+                jobname = scheduledExecution.groupPath ? scheduledExecution.generateFullName() : scheduledExecution.jobName
+                jobid = scheduledExecution.id
 
-                    log.debug("saveExecutionState, schedExec version: "+scheduledExecution.version)
-                    try{
-                        updateScheduledExecState(scheduledExecution,execution)
-                    }catch(org.springframework.dao.OptimisticLockingFailureException e){
-                        log.error("lock problem, refreshing to try again: "+e)
-                        scheduledExecution.refresh()
-                        updateScheduledExecState(scheduledExecution,execution)
-                    }
+                log.debug("saveExecutionState, schedExec version: "+scheduledExecution.version)
+                try{
+                    updateScheduledExecState(scheduledExecution,execution)
+                }catch(org.springframework.dao.OptimisticLockingFailureException e){
+                    log.error("lock problem, refreshing to try again: "+e)
+                    scheduledExecution.refresh()
+                    updateScheduledExecState(scheduledExecution,execution)
+                }
 
             }
             }
