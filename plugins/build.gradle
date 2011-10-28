@@ -1,6 +1,6 @@
 
 allprojects{
-    version = '1.4.0'
+    version = '1.4.0.1'
     defaultTasks 'clean','build'
 }
 task wrapper(type: Wrapper) {
