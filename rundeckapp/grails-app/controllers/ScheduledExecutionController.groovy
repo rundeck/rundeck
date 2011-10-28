@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.common.INodeEntry
 import org.apache.commons.collections.list.TreeList
+import org.codehaus.groovy.grails.commons.ConfigurationHolder
 
 class ScheduledExecutionController  {
     def Scheduler quartzScheduler
@@ -2511,7 +2512,7 @@ class ScheduledExecutionController  {
                 //error
                 model.nodesetempty=true
             }
-            else {
+            else if(ConfigurationHolder.config.gui.execution.summarizedNodes != 'false') {
                 model.nodes=nodes
                 model.nodemap=[:]
                 model.tagsummary=[:]
@@ -2563,8 +2564,14 @@ class ScheduledExecutionController  {
                 def singles=[]
                 namegroups.keySet().grep {it!='other'&&namegroups[it].size() == 1}.each{
                     namegroups['other'].addAll(namegroups[it])
-                    model.grouptags[it]?.each{k,v->
-                        model.grouptags['other'][k]+=v
+                    model.grouptags[it]?.each{tag,v->
+                        if (!model.grouptags['other']) {
+                            model.grouptags['other'] = [(tag): v]
+                        } else if (!model.grouptags['other'][tag]) {
+                            model.grouptags['other'][tag] = v
+                        } else {
+                            model.grouptags['other'][tag] += v
+                        }
                     }
                     singles<<it
                 }
@@ -2577,6 +2584,8 @@ class ScheduledExecutionController  {
                 }
 
                 model.namegroups=namegroups
+            }else{
+                model.nodes = nodes
             }
             //check nodeset filters for variable expansion
             def varfound=NodeSet.FILTER_ENUM.find{filter->

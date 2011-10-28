@@ -33,9 +33,6 @@
                   .*\D(\d+)
                   (\d+)\D.*
                 --%>
-                <g:if test="${!namegroups && nodes}">
-                    <g:set var="namegroups" value="${[All:nodes]}"/>
-                </g:if>
                 <g:if test="${namegroups}">
                     <div>
                         Select:
@@ -109,7 +106,7 @@
                         <tr>
                     </g:if>
                     <td>
-                        <label for="${node.nodename}" class="node_entry ${localNodeName&& localNodeName==node.nodename? 'server' : ''} node_ident obs_tooltip"
+                        <label for="${node.nodename}" class=" ${localNodeName&& localNodeName==node.nodename? 'server' : ''} node_ident obs_tooltip"
                                id="${node.nodename}_key">
                             <input id="${node.nodename}" type="checkbox" name="extra.nodeIncludeName"
                                    value="${node.nodename}" checked="true"/> ${node.nodename.encodeAsHTML()}</label>
