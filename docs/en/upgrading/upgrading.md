@@ -373,7 +373,7 @@ This file grants all authorizations to 'admin' role, and explicitly enumerates t
       adhoc:
         - allow: [run,kill] # allow running/killing adhoc jobs
       job: 
-        - allow: [read,update,delete,run,kill] # allow read/write/delete/run/kill of all jobs
+        - allow: [create,read,update,delete,run,kill] # allow create/read/write/delete/run/kill of all jobs
       node:
         - allow: [read,run] # allow read/run for nodes
     by:
