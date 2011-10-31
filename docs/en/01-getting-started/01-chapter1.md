@@ -282,6 +282,7 @@ to the `java` command:
 
 * `server.http.port` The HTTP port to use for the server, default "4440"
 * `server.https.port` The HTTPS port to use or the server, default "4443"
+* `server.http.host` Address/hostname to listen on, default is all addresses "0.0.0.0"
 * `server.hostname` Hostname to use for the server, default is the system hostname
 * `server.web.context` Web context path to use, such as "/rundeck". Default is "/".
 * `rdeck.base` RunDeck Basedir to use, default is the directory containing the launcher jar
