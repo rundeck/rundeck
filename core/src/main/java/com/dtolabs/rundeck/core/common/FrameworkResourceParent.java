@@ -146,7 +146,7 @@ public abstract class FrameworkResourceParent extends FrameworkResource implemen
         HashSet childnames = new HashSet();
         FilenameFilter filter = new FilenameFilter() {
             public boolean accept(File dir, String name) {
-                return name.matches("^[-\\._a-zA-Z0-9+]+$");
+                return name.matches(VALID_RESOURCE_NAME_REGEX);
             }
         };
         final String[] list = getBaseDir().list(filter);

@@ -27,6 +27,7 @@ import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.common.NodeSetImpl
+import com.dtolabs.rundeck.core.common.FrameworkResource
 
 class FrameworkController  {
     FrameworkService frameworkService
@@ -575,6 +576,9 @@ class FrameworkController  {
             }
             if(!project){
                 projectNameError= "Project name is required"
+                errors << projectNameError
+            }else if(!(project=~FrameworkResource.VALID_RESOURCE_NAME_REGEX)){
+                projectNameError= "Project name can only contain these characters: [a-zA-Z0-9_-+.]"
                 errors << projectNameError
             }else if (framework.getFrameworkProjectMgr().existsFrameworkProject(project)){
                 projectNameError= "Project already exists: ${project}"

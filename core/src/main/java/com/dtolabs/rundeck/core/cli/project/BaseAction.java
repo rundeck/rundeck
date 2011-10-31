@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.cli.Action;
 import com.dtolabs.rundeck.core.cli.CLIToolLogger;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
+import com.dtolabs.rundeck.core.common.FrameworkResource;
 import com.dtolabs.rundeck.core.common.context.FrameworkProjectContext;
 import com.dtolabs.rundeck.core.common.context.IDepotContext;
 import org.apache.commons.cli.CommandLine;
@@ -32,8 +33,6 @@ import java.io.File;
  */
 public class BaseAction implements Action {
     final File FWK_PROP_FILE ;
-
-    final static String PROJECT_NAME_REGEX = "[a-zA-Z0-9_-]*";
 
     final protected CLIToolLogger main;
     final protected Framework framework;
@@ -72,10 +71,10 @@ public class BaseAction implements Action {
         final String project = cli.getOptionValue('p');
         // validate that project name is just alpha-numeric
         if (null != project
-                && !project.matches(PROJECT_NAME_REGEX)) {
+                && !project.matches(FrameworkResource.VALID_RESOURCE_NAME_REGEX)) {
            throw new ProjectToolException(
                    "Error: CreateAction: project names can only contain these characters: "
-                           +PROJECT_NAME_REGEX);
+                           + FrameworkResource.VALID_RESOURCE_NAME_REGEX);
         }
         return createArgs(project, cli.hasOption('v'));
     }
