@@ -267,6 +267,7 @@ class ReportsController {
             params.saveFilter=true
             chain(controller:'reports',action:'index',params:params)
         }
+        filter.fillProperties()
         if(!filter.save(flush:true)){
             flash.error=filter.errors.allErrors.collect { g.message(error:it) }.join("\n")
             params.saveFilter=true

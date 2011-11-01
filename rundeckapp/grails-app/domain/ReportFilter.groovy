@@ -60,6 +60,28 @@ class ReportFilter {
         jobFilter(nullable:true)
         jobIdFilter(nullable:true)
         nodeFilter(nullable:true)
+        typeFilter(nullable:true)
+        titleFilter(nullable:true)
+        tagsFilter(nullable:true)
+        reportIdFilter(nullable:true)
+        objFilter(nullable:true)
+        messageFilter(nullable:true)
+        maprefUriFilter(nullable:true)
+        cmdFilter(nullable:true)
+        userFilter(nullable:true)
+        statFilter(nullable:true)
+        recentFilter(nullable:true)
+        startafterFilter(nullable:true)
+        startbeforeFilter(nullable:true)
+        endafterFilter(nullable:true)
+        endbeforeFilter(nullable:true)
+    }
+    public void fillProperties(){
+        ['type','title','tags','reportId','obj','message','maprefUri','cmd','user','stat','recent'].each{
+            if(!this[it+'Filter']){
+                this[it+'Filter']=''
+            }
+        }
     }
 
     public ReportQuery createQuery(){
