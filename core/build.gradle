@@ -17,8 +17,8 @@ repositories {
 }
 dependencies {
     compile( 
-        [group: 'ant', name: 'ant', version: '1.8.1',ext:'jar'],
-        [group: 'ant-launcher', name: 'ant-launcher', version: '1.8.1',ext:'jar'],
+        [group: 'org.apache.ant', name: 'ant', version: '1.7.1',ext:'jar'],
+        [group: 'org.apache.ant', name: 'ant-launcher', version: '1.7.1',ext:'jar'],
         [group: 'log4j', name: 'log4j', version: '1.2.15',ext:'jar'],
         [group: 'commons-codec', name: 'commons-codec', version: '1.3',ext:'jar'],
         [group: 'commons-httpclient', name: 'commons-httpclient', version: '3.0.1',ext:'jar'],
@@ -31,7 +31,7 @@ dependencies {
         [group: 'dom4j', name: 'dom4j', version: '1.6.1',ext:'jar'],
         [group: 'jaxen', name: 'jaxen', version: '1.1',ext:'jar'],
         [group: 'commons-cli', name: 'commons-cli', version: '1.0',ext:'jar'],
-        [group: 'ant-jsch', name: 'ant-jsch', version: '1.8.1',ext:'jar'],
+        [group: 'ant-jsch', name: 'ant-jsch', version: '1.7.1',ext:'jar'],
         [group: 'jsch', name: 'jsch', version: '0.1.42',ext:'jar'],
         [group: 'org.yaml',name:'snakeyaml',version:'1.9']
     )

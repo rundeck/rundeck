@@ -268,9 +268,8 @@ public class ExtSSHExec extends SSHBase {
     private void executeCommand(Session session, String cmd, StringBuffer sb)
         throws BuildException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        TeeOutputStream tee =
-            new TeeOutputStream(out,
-                                KeepAliveOutputStream.wrapSystemOut());
+        TeeOutputStream tee = 
+            new TeeOutputStream(out, new KeepAliveOutputStream(System.out));
 
         InputStream istream = null ;
         if (inputFile != null) {
