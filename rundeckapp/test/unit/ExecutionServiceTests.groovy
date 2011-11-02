@@ -1,6 +1,7 @@
 import java.util.logging.LogRecord
 import java.text.SimpleDateFormat
 import grails.test.GrailsUnitTestCase
+import org.codehaus.groovy.grails.commons.ConfigurationHolder
 
 class ExecutionServiceTests extends GrailsUnitTestCase {
 
@@ -580,6 +581,8 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
     void testCreateContext(){
         mockDomain(Execution)
         mockDomain(User)
+        ConfigurationHolder.metaClass.getConfig = {-> [:] }
+
         def testService = new ExecutionService()
         def frameworkService = new FrameworkService()
         testService.frameworkService = frameworkService

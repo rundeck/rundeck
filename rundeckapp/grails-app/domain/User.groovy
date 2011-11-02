@@ -11,7 +11,7 @@ class User {
     
     static mapping = {
         def config = ConfigurationHolder.config
-        if (config.rundeck.v14.rdbsupport == 'true') {
+        if (config?.rundeck?.v14?.rdbsupport == 'true') {
             table "rduser"
         }
     }

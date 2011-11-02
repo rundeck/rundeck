@@ -2174,9 +2174,9 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect nodefilters include os-arch",'x86,sparc',doc.job[0].nodefilters[0].include[0].'os-arch'[0].text()
             assertEquals "incorrect nodefilters include os-version",1,doc.job[0].nodefilters[0].include[0].'os-version'.size()
             assertEquals "incorrect nodefilters include os-version",'4\\..*',doc.job[0].nodefilters[0].include[0].'os-version'[0].text()
-            def tname=doc.job[0].nodefilters[0].include[0].find{it.name=='name'}.text()
+            def tname=doc.job[0].nodefilters[0].include[0].'name'[0].text()
             assertEquals "incorrect nodefilters include name",'mynode',tname
-            assertEquals "incorrect nodefilters include name",1,doc.job[0].nodefilters[0].include[0].findAll{it.name=='name'}.size()
+            assertEquals "incorrect nodefilters include name",1,doc.job[0].nodefilters[0].include[0].'name'.size()
 
 
         //set node dispatch to true, and assert 'exclude' nodefilters are generated
@@ -2223,8 +2223,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect nodefilters exclude os-arch",'x86,sparc',doc.job[0].nodefilters[0].exclude[0].'os-arch'[0].text()
             assertEquals "incorrect nodefilters exclude os-version",1,doc.job[0].nodefilters[0].exclude[0].'os-version'.size()
             assertEquals "incorrect nodefilters exclude os-version",'4\\..*',doc.job[0].nodefilters[0].exclude[0].'os-version'[0].text()
-            assertEquals "incorrect nodefilters exclude name",1,doc.job[0].nodefilters[0].exclude[0].findAll{it.name=='name'}.size()
-            assertEquals "incorrect nodefilters exclude name",'mynode',doc.job[0].nodefilters[0].exclude[0].find{it.name=='name'}.text()
+            assertEquals "incorrect nodefilters exclude name",1,doc.job[0].nodefilters[0].exclude[0].'name'.size()
+            assertEquals "incorrect nodefilters exclude name",'mynode',doc.job[0].nodefilters[0].exclude[0].'name'[0].text()
 
 
         //set node dispatch to true, and assert both 'include' and 'exclude' nodefilters are generated
@@ -2278,8 +2278,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect nodefilters exclude os-arch",'x86,sparc',doc.job[0].nodefilters[0].exclude[0].'os-arch'[0].text()
             assertEquals "incorrect nodefilters exclude os-version",1,doc.job[0].nodefilters[0].exclude[0].'os-version'.size()
             assertEquals "incorrect nodefilters exclude os-version",'4\\..*',doc.job[0].nodefilters[0].exclude[0].'os-version'[0].text()
-            assertEquals "incorrect nodefilters exclude name",1,doc.job[0].nodefilters[0].exclude[0].findAll{it.name=='name'}.size()
-            assertEquals "incorrect nodefilters exclude name",'mynode',doc.job[0].nodefilters[0].exclude[0].find{it.name=='name'}.text()
+            assertEquals "incorrect nodefilters exclude name",1,doc.job[0].nodefilters[0].exclude[0].'name'.size()
+            assertEquals "incorrect nodefilters exclude name",'mynode',doc.job[0].nodefilters[0].exclude[0].'name'[0].text()
 
             assertEquals "missing nodefilters include",1,doc.job[0].nodefilters[0].include.size()
             assertEquals "incorrect number of nodefilters include elements",7,doc.job[0].nodefilters[0].include[0].children().size()
@@ -2295,8 +2295,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect nodefilters include os-arch",'686',doc.job[0].nodefilters[0].include[0].'os-arch'[0].text()
             assertEquals "incorrect nodefilters include os-version",1,doc.job[0].nodefilters[0].include[0].'os-version'.size()
             assertEquals "incorrect nodefilters include os-version",'10\\..*',doc.job[0].nodefilters[0].include[0].'os-version'[0].text()
-            assertEquals "incorrect nodefilters include name",1,doc.job[0].nodefilters[0].include[0].findAll{it.name=='name'}.size()
-            assertEquals "incorrect nodefilters include name",'annode',doc.job[0].nodefilters[0].include[0].find{it.name=='name'}.text()
+            assertEquals "incorrect nodefilters include name",1,doc.job[0].nodefilters[0].include[0].'name'.size()
+            assertEquals "incorrect nodefilters include name",'annode',doc.job[0].nodefilters[0].include[0].'name'[0].text()
 
     }
 

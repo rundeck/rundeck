@@ -905,6 +905,11 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             def params=[:]
             def results=sec._dovalidate(params)
+            if (results.scheduledExecution.errors.hasErrors()) {
+                results.scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
             assertTrue(results.failed)
             assertNotNull(results.scheduledExecution)
             assertTrue(results.scheduledExecution instanceof ScheduledExecution)
@@ -913,6 +918,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertNotNull(execution.errors)
             assertTrue(execution.errors.hasErrors())
             assertTrue(execution.errors.hasFieldErrors('project'))
+            assertTrue(execution.errors.hasFieldErrors('workflow'))
+            assertFalse(!!execution.jobName)
             assertTrue(execution.errors.hasFieldErrors('jobName'))
             assertFalse(execution.errors.hasFieldErrors('name'))
             assertFalse(execution.errors.hasFieldErrors('type'))

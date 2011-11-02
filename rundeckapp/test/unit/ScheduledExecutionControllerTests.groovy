@@ -15,7 +15,7 @@
  */
 import grails.test.GrailsUnitTestCase
 import grails.test.ControllerUnitTestCase
-
+import org.codehaus.groovy.grails.commons.ConfigurationHolder
 
 /*
 * ScheduledExecutionControllerTests.java
@@ -47,6 +47,7 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
     public void testExpandUrl() {
         mockDomain(ScheduledExecution)
         mockDomain(Option)
+        ConfigurationHolder.metaClass.getConfig = {-> [:] }
         ScheduledExecution se = new ScheduledExecution(jobName: 'blue', groupPath:'some/where',description:'a job',project:'AProject',argString:'-a b -c d',adhocExecution:false)
 
         final Option option = new Option(name: 'test1', enforced: false)

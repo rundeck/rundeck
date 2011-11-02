@@ -34,7 +34,7 @@ class ScheduledExecution extends ExecutionContext {
     static constraints = {
         workflow(nullable:true)
         options(nullable:true)
-        jobName(blank:false)
+        jobName(blank:false,nullable:false)
         groupPath(nullable:true)
         nextExecution(nullable:true)
         nodeKeepgoing(nullable:true)
@@ -74,7 +74,7 @@ class ScheduledExecution extends ExecutionContext {
 
     static mapping = {
         def config = ConfigurationHolder.config
-        if (config.rundeck.v14.rdbsupport == 'true') {
+        if (config?.rundeck?.v14?.rdbsupport == 'true') {
             user column: "rduser"
             argString type: 'text'
             nodeIncludeName type: 'text'
