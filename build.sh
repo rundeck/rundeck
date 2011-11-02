@@ -30,7 +30,7 @@ BASEDIR=`pwd`
 # VERS will be determined from "version.properties" file in root
 
 #grails version for rundeckapp
-GRAILSVERS=1.2.0
+GRAILSVERS=1.3.7
 JETTYVERS=6.1.21
 
 # this is to provide a workaround for a grails bug for this version of

@@ -1,4 +1,4 @@
-<plugin name='webrealms' version='0.3' grailsVersion='1.2.0 &gt; *'>
+<plugin name='webrealms' version='0.3' grailsVersion='1.3.7 &gt; *'>
   <author>Greg Schueler</author>
   <authorEmail>greg@dtosolutions.com</authorEmail>
   <title>Allows configuration of web.xml to support UserRealms and security constraints</title>
@@ -10,12 +10,6 @@
     <resource>DefaultWebrealmsConfig</resource>
     <resource>UrlMappings</resource>
   </resources>
-  <dependencies>
-    <resolvers>
-      <resolver type='grailsPlugins' name='grailsPlugins' />
-      <resolver type='mavenLocal' />
-      <resolver type='mavenCentral' />
-    </resolvers>
-  </dependencies>
+  <dependencies />
   <behavior />
 </plugin>
