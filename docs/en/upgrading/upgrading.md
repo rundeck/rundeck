@@ -6,6 +6,26 @@ existing RunDeck installation.
 1. [Database table and field name changes to support Mysql & Oracle](#database-changes)
 2. [ACL Policy file format and behavior changes](#acl-policy-changes)
 
+**Note:** before upgrading, it is a good idea to back up your RunDeck installation using the instructions here: [Backup and Recovery](http://rundeck.org/docs/RunDeck-Guide.html#backup-and-recovery).
+
+# Upgrade procedure
+
+## System packaging
+
+If you are using RPM or Debian packaging, refer to the basic [Install Instructions](http://rundeck.org/downloads.html), and simply upgrade the package.
+
+## Launcher Jar
+
+For the Rundeck Launcher jar, you can follow this basic procedure:
+
+1. Stop the currently running RunDeck java process
+2. Copy the new `rundeck-launcher-1.4x.jar` file either to your `$RDECK_BASE` directory, or wherever you had your previous jar
+3. Remove these directories from your previous `$RDECK_BASE`:
+    * `$RDECK_BASE/server/lib`
+    * `$RDECK_BASE/server/exp`
+    * `$RDECK_BASE/tools`
+4. You can now start Rundeck with the new launcher jar, either specifying the `-b basedir` option, or leaving it off to use the directory the launcher jar is in.
+
 # Database changes
 
 Unfortunately, RunDeck 1.3 and earlier used domain class names that conflicted with some reserved words in Mysql and Oracle, specifically "user" and "option".
