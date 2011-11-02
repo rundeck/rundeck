@@ -4,7 +4,7 @@
     <facet type="web" name="GrailsWeb">
       <configuration>
         <webroots>
-          <root url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/mail-0.9/grails-app/views" relative="/" />
+          <root url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/mail-0.9/grails-app/views" relative="/" />
         </webroots>
         <sourceRoots />
       </configuration>
@@ -12,49 +12,63 @@
   </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/hibernate-1.2.0">
-      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/hibernate-1.2.0/target/classes" />
-      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/hibernate-1.2.0/target/test-classes" />
-      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/hibernate-1.2.0/web-app/plugins" />
+    <content url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/hibernate-1.3.7">
+      <excludeFolder url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/hibernate-1.3.7/target/classes" />
+      <excludeFolder url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/hibernate-1.3.7/target/test-classes" />
+      <excludeFolder url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/hibernate-1.3.7/web-app/plugins" />
     </content>
-    <content url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT">
-      <sourceFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT/src/groovy" isTestSource="false" />
-      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT/target/classes" />
-      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT/target/test-classes" />
-      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT/web-app/plugins" />
+    <content url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT">
+      <sourceFolder url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT/src/groovy" isTestSource="false" />
+      <excludeFolder url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT/target/classes" />
+      <excludeFolder url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT/target/test-classes" />
+      <excludeFolder url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT/web-app/plugins" />
     </content>
-    <content url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/mail-0.9">
-      <sourceFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/mail-0.9/src/groovy" isTestSource="false" />
-      <sourceFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/mail-0.9/grails-app/services" isTestSource="false" />
-      <sourceFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/mail-0.9/grails-app/taglib" isTestSource="false" />
-      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/mail-0.9/target/classes" />
-      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/mail-0.9/target/test-classes" />
-      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/mail-0.9/web-app/plugins" />
+    <content url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/mail-0.9">
+      <sourceFolder url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/mail-0.9/src/groovy" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/mail-0.9/grails-app/services" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/mail-0.9/grails-app/taglib" isTestSource="false" />
+      <excludeFolder url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/mail-0.9/target/classes" />
+      <excludeFolder url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/mail-0.9/target/test-classes" />
+      <excludeFolder url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/mail-0.9/web-app/plugins" />
     </content>
-    <content url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/quartz-0.4.2">
-      <sourceFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/quartz-0.4.2/src/java" isTestSource="false" />
-      <sourceFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/quartz-0.4.2/src/groovy" isTestSource="false" />
-      <sourceFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/quartz-0.4.2/grails-app/services" isTestSource="false" />
-      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/quartz-0.4.2/target/classes" />
-      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/quartz-0.4.2/target/test-classes" />
-      <excludeFolder url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/quartz-0.4.2/web-app/plugins" />
+    <content url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/quartz-0.4.2">
+      <sourceFolder url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/quartz-0.4.2/src/java" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/quartz-0.4.2/src/groovy" isTestSource="false" />
+      <sourceFolder url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/quartz-0.4.2/grails-app/services" isTestSource="false" />
+      <excludeFolder url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/quartz-0.4.2/target/classes" />
+      <excludeFolder url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/quartz-0.4.2/target/test-classes" />
+      <excludeFolder url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/quartz-0.4.2/web-app/plugins" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="PROVIDED" name="dispatch-build" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="grails-1.3.7" level="application" />
     <orderEntry type="module-library" exported="">
       <library name="Grails User Library">
         <CLASSES>
-          <root url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/mail-0.9/lib" />
-          <root url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/quartz-0.4.2/lib" />
+          <root url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/quartz-0.4.2/lib" />
+          <root url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/mail-0.9/lib" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/geronimo-spec/geronimo-spec-jta/jars/geronimo-spec-jta-1.0.1B-rc4.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.mortbay.jetty/servlet-api/jars/servlet-api-2.5-20081211.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.mortbay.jetty/jetty-util/jars/jetty-util-6.1.21.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.jcraft/jsch/jars/jsch-0.1.42.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.ant/ant-jsch/jars/ant-jsch-1.7.1.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.yaml/snakeyaml/jars/snakeyaml-1.9.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/tomcat/jasper-runtime/jars/jasper-runtime-5.5.15.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.mortbay.jetty/jsp-api-2.0/jars/jsp-api-2.0-6.1.21.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/tomcat/jasper-compiler/jars/jasper-compiler-5.5.15.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.eclipse.jdt/core/jars/core-3.1.1.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/tomcat/jasper-compiler-jdt/jars/jasper-compiler-jdt-5.5.15.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/javax.mail/mail/jars/mail-1.4.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.mortbay.jetty/jetty-naming/jars/jetty-naming-6.1.21.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/dom4j/dom4j/jars/dom4j-1.6.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
-        <jarDirectory url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/mail-0.9/lib" recursive="false" />
-        <jarDirectory url="file://$USER_HOME$/.grails/1.2.0/projects/rundeckapp/plugins/quartz-0.4.2/lib" recursive="false" />
+        <jarDirectory url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/mail-0.9/lib" recursive="false" />
+        <jarDirectory url="file://$USER_HOME$/.grails/1.3.7/projects/rundeckapp/plugins/quartz-0.4.2/lib" recursive="false" />
       </library>
     </orderEntry>
-    <orderEntry type="library" scope="PROVIDED" name="grails-1.2.0" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="dispatch-build" level="project" />
   </component>
   <component name="POM File Configuration" pomFile="" />
 </module>
