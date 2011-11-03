@@ -11,7 +11,7 @@ grails.project.dependency.resolution = {
         build 'org.yaml:snakeyaml:1.9','org.apache.ant:ant:1.7.1','org.apache.ant:ant-jsch:1.7.1','com.jcraft:jsch:0.1.42'
         test 'org.yaml:snakeyaml:1.9','org.apache.ant:ant:1.7.1','org.apache.ant:ant-jsch:1.7.1','com.jcraft:jsch:0.1.42'
         compile 'org.yaml:snakeyaml:1.9','org.apache.ant:ant:1.7.1','org.apache.ant:ant-jsch:1.7.1','com.jcraft:jsch:0.1.42'
-        runtime 'org.yaml:snakeyaml:1.9','org.apache.ant:ant:1.7.1','org.apache.ant:ant-jsch:1.7.1','com.jcraft:jsch:0.1.42'
+        runtime 'org.yaml:snakeyaml:1.9', 'org.apache.ant:ant:1.7.1', 'org.apache.ant:ant-launcher:1.7.1','org.apache.ant:ant-jsch:1.7.1','com.jcraft:jsch:0.1.42'
     }
     grails.plugin.location.'webrealms' = "webrealms"
 }
