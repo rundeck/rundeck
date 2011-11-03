@@ -354,6 +354,9 @@ public class ExpandRunServer {
         final String jarpath = jettyLibPath;
         for (final String jarName : jars) {
             ZipUtil.extractZip(thisJar.getAbsolutePath(), toolslibdir, jarpath + "/" + jarName, jarpath + "/");
+            if(!new File(toolslibdir,jarName).exists()) {
+                ERR("Failed to extract dependent jar for tools into "+ toolslibdir.getAbsolutePath()+": " + jarName);
+            }
         }
 
         //finally, copy corejar to toolslibdir
