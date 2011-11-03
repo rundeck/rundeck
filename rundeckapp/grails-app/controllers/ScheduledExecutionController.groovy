@@ -1092,7 +1092,7 @@ class ScheduledExecutionController  {
         }
 
     }
-    def _doupdateJob = {id, ScheduledExecution params, changeinfo=[:] ->
+    public List _doupdateJob (id, ScheduledExecution params, changeinfo=[:]){
         log.debug("ScheduledExecutionController: update : attempting to update: "+id +
                  ". params: " + params)
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
@@ -1641,7 +1641,7 @@ class ScheduledExecutionController  {
     * Execute a transient ScheduledExecution and return execution data: [execution:Execution,id:Long]
      * if there is an error, return [error:'type',message:errormesg,...]
      */
-    def _transientExecute={ScheduledExecution scheduledExecution, Map params, Framework framework, Subject subject->
+    Map _transientExecute(ScheduledExecution scheduledExecution, Map params, Framework framework, Subject subject){
         def object
         def isauth = scheduledExecutionService.userAuthorizedForAdhoc(params.request,scheduledExecution,framework)
         if (!isauth){
@@ -2174,7 +2174,7 @@ class ScheduledExecutionController  {
 
     /**
     */
-    def _dosave = { params, changeinfo=[:]->
+    public Map _dosave ( params, changeinfo=[:]){
         log.info("ScheduledExecutionController: save : params: " + params)
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         def user = (session?.user) ? session.user : "anonymous"
@@ -2758,7 +2758,7 @@ class ScheduledExecutionController  {
             return [success:true, message:"immediate execution scheduled", id:result.executionId]
         }
     }
-    def executeScheduledExecution = {ScheduledExecution scheduledExecution, Framework framework, Subject subject,params->
+    public Map executeScheduledExecution (ScheduledExecution scheduledExecution, Framework framework, Subject subject,params){
         def User user = User.findByLogin(params.user)
         if(!user){
             def msg = g.message(code:'unauthorized.job.run.user',args:[params.user])
@@ -2787,7 +2787,7 @@ class ScheduledExecutionController  {
         }
     }
 
-    def Map lookupLastExecutions(List scheduledExecutions) {
+    public Map lookupLastExecutions(List scheduledExecutions) {
         def map = [ : ]
         log.info("looking up lastExecutions for ["+scheduledExecutions.size()+ "] objects")
         scheduledExecutions.each {             
@@ -2800,7 +2800,7 @@ class ScheduledExecutionController  {
         return map
     }
 
-    def lookupLastExecutions(ScheduledExecution se) {
+    public lookupLastExecutions(ScheduledExecution se) {
         def executions = []
         def criteria = Execution.createCriteria()
         def results = criteria.list {
