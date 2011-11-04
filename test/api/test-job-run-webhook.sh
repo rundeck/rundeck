@@ -26,8 +26,8 @@ xmlhost=$($XMLSTARLET esc $(hostname))
 cat > $DIR/temp.out <<END
 <joblist>
    <job>
-      <name>cli job</name>
-      <group>api-test/job-run</group>
+      <name>webhook job</name>
+      <group>api-test/job-run-webhook</group>
       <description></description>
       <loglevel>INFO</loglevel>
       <context>
