@@ -10,15 +10,25 @@ import org.apache.log4j.Level
 import org.apache.log4j.net.SocketAppender
 import grails.util.GrailsUtil
 import com.dtolabs.launcher.Setup
-
+import org.codehaus.groovy.grails.plugins.web.filters.FilterConfig
+import org.codehaus.groovy.grails.plugins.web.filters.FilterToHandlerAdapter
 
 class BootStrap {
 
     def grailsApplication
     def scheduledExecutionService
     def executionService
+    def filterInterceptor
 
      def init = { servletContext ->
+
+         filterInterceptor.handlers.sort { FilterToHandlerAdapter handler1,
+                                           FilterToHandlerAdapter handler2 ->
+             FilterConfig filter1 = handler1.filterConfig
+             FilterConfig filter2 = handler2.filterConfig
+             filter1.name <=> filter2.name
+         }
+
          def String rdeckBase
          if(!grailsApplication.config.rdeck.base){
              //look for system property
