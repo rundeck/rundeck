@@ -410,7 +410,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
     }
 
 
-    public logExecution(uri,project,user,issuccess,framework,execId,Date startDate=null, jobExecId=null, jobName=null, jobSummary=null,iscancelled=false, nodesummary=null, abortedby=null){
+    public logExecution(uri,project,user,issuccess,execId,Date startDate=null, jobExecId=null, jobName=null, jobSummary=null,iscancelled=false, nodesummary=null, abortedby=null){
 
         def reportMap=[:]
         def internalLog = org.apache.log4j.Logger.getLogger("ExecutionService")
@@ -444,7 +444,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         reportMap.author=user
         reportMap.title= jobSummary?jobSummary:"RunDeck Job Execution"
         reportMap.status= issuccess ? "succeed":iscancelled?"cancel":"fail"
-        reportMap.node= null!=nodesummary?nodesummary: framework.getFrameworkNodeName()
+        reportMap.node= null!=nodesummary?nodesummary: frameworkService.getFrameworkNodeName()
 
         reportMap.message=(issuccess?'Job completed successfully':iscancelled?('Job killed by: '+(abortedby?:user)):'Job failed')
         reportMap.dateCompleted=new Date()
@@ -1287,8 +1287,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                 failedCount=failed.size()
                 totalCount=matched.size()
             }
-            def Framework fw = frameworkService.getFramework()
-            logExecution(null, execution.project, execution.user, "true" == execution.status, fw, exId,
+            logExecution(null, execution.project, execution.user, "true" == execution.status, exId,
                 execution.dateStarted, jobid, jobname, summarizeJob(scheduledExecution, execution), props.cancelled,
                 node, execution.abortedby)
             notificationService.triggerJobNotification(props.status == 'true' ? 'success' : 'failure', schedId, [execution: execution,nodestatus:[succeeded:sucCount,failed:failedCount,total:totalCount]])

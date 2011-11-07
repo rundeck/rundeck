@@ -164,8 +164,13 @@ class FrameworkService implements ApplicationContextAware {
             framework.getAuthenticationMgr().subject,
             actions as Set,
             Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
-
         return !(decisions.find {!it.authorized})
+    }
+
+    def getFrameworkNodeName() {
+        def Framework fw = Framework.getInstance(rundeckbase)
+        fw.setAuthorizationMgr(new DenyAuthorization(fw, new File(Constants.getFrameworkConfigDir(rundeckbase))))
+        return fw.getFrameworkNodeName()
     }
     def getFrameworkFromUserSession( session, request){
         if (!initialized) {
@@ -177,9 +182,6 @@ class FrameworkService implements ApplicationContextAware {
             session.Framework = getFrameworkForUserAndSubject(session.user, request.subject, rundeckbase)
         }
         return session.Framework;
-    }
-    def getFramework(){
-        return getFrameworkForUserAndRoles(null,null)
     }
     def getFrameworkForUserAndRoles(String user, List rolelist){
         return getFrameworkForUserAndRoles(user, rolelist, getRundeckBase())
@@ -197,6 +199,9 @@ class FrameworkService implements ApplicationContextAware {
             def author = new SingleUserAclsAuthorization(fw,new File(Constants.getFrameworkConfigDir(rundeckbase)), user, rolelist.toArray(new String[0]))
             fw.setAuthenticationMgr(authen)
             fw.setAuthorizationMgr(author)
+        }else{
+            System.err.println("getFrameworkForUserAndRoles: No user/subject authorization")
+            throw new RuntimeException("Cannot get framework without user, roles: ${user}, ${rolelist}")
         }
         fw.setAllowUserInput(false)
         return fw
@@ -208,6 +213,9 @@ class FrameworkService implements ApplicationContextAware {
             def author = new UserSubjectAuthorization(fw,new File(Constants.getFrameworkConfigDir(rundeckbase)), user, subject)
             fw.setAuthenticationMgr(authen)
             fw.setAuthorizationMgr(author)
+        } else {
+            System.err.println("getFrameworkForUserAndSubject: No user/subject authorization")
+            throw new RuntimeException("Cannot get framework without user, subject: ${user}, ${subject}")
         }
         fw.setAllowUserInput(false)
         return fw
