@@ -58,7 +58,7 @@ public class ProjectSelectFilters {
          * on first user login, set the session.project if it is not set, to the last user project selected, or
          * to the first project in the available list 
          */
-        projectSelection(controller: 'framework', action: '(createProject|selectProject|projectSelect|(create|save|check|edit|view)ResourceModelConfig)',invert:true) {
+        projectSelection(controller: 'framework', action: '(createProject|selectProject|projectSelect|noProjectAccess|(create|save|check|edit|view)ResourceModelConfig)',invert:true) {
             before = {
                 if (request.api_version || request.is_api_req) {
                     //only default the project if not an api request
@@ -108,7 +108,11 @@ public class ProjectSelectFilters {
                     }
                     session.project = selected
                     if (!selected) {
-                        redirect(action: 'createProject', controller: 'framework')
+                        if (!frameworkService.authorizeApplicationResourceTypeAll(fw, 'project', ['create'])) {
+                            redirect(action: 'noProjectAccess', controller: 'framework')
+                        }else{
+                            redirect(action: 'createProject', controller: 'framework')
+                        }
                         return false
                     }
                 }

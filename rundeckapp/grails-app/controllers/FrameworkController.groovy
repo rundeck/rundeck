@@ -52,6 +52,14 @@ class FrameworkController  {
         response.setHeader(Constants.X_RUNDECK_ACTION_UNAUTHORIZED_HEADER, request.error)
         render(template: fragment ? '/common/errorFragment' : '/common/error', model: [:])
     }
+
+    def noProjectAccess = {
+        response.setStatus(403)
+        request.title = "Unauthorized"
+        request.error = "No authorized access to projects. Contact your administrator."
+        response.setHeader(Constants.X_RUNDECK_ACTION_UNAUTHORIZED_HEADER, request.error)
+        return render(template:  '/common/error', model: [:])
+    }
     /**
      * This action returns a json object informing about whether the user is authorized
      * to run scripts in the current project context.
