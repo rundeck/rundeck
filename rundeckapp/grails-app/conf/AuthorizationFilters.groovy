@@ -104,7 +104,7 @@ public class AuthorizationFilters {
         /**
          * Check the user has authorization for the actions.
          */
-        authorizationCheck(controller: '*', action: '*') {
+        postLoginAuthorizationCheck(controller: '*', action: '*') {
             before = {
                
                 if (request.invalidApiAuthentication ) {
