@@ -44,24 +44,6 @@ jar {
         attributes 'Rundeck-Version': version,'Rundeck-Tools-Dependencies':configurations.runtime.collect { "$it.name" }.join(" ") 
     }
 }
-sourceSets {
-    main {
-        java {
-            srcDir 'src/java'
-        }
-        resources {
-            srcDirs =['src/resources','src/java']
-        }
-    }
-    test {
-        java {
-            srcDir 'src/test'
-        }
-        resources {
-            srcDirs = ['src/resources','src/test']
-        }
-    }
-}
 
 test{
     systemProperties 'rdeck.base': "$projectDir/build/rdeck_base"
@@ -69,10 +51,10 @@ test{
 }
 
 task expandTemplate << {
-    ant.delete(file:"$projectDir/src/java/com/dtolabs/rundeck/core/VersionConstants.java")
+    ant.delete(file:"$projectDir/src/main/java/com/dtolabs/rundeck/core/VersionConstants.java")
     copy{
-        from "$projectDir/src/java/com/dtolabs/rundeck/core/VersionConstants.java.template"
-        into "$projectDir/src/java/com/dtolabs/rundeck/core/"
+        from "$projectDir/src/main/templates/com/dtolabs/rundeck/core/VersionConstants.java.template"
+        into "$projectDir/src/main/java/com/dtolabs/rundeck/core/"
         rename { String fileName ->
             fileName.replace('.template', '')
         }
