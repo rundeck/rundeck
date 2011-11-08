@@ -38,9 +38,8 @@ public abstract class AbstractBaseTest extends TestCase {
     //
     // junit exported java properties (e.g. from maven's project.properties)
     //
-    public static String ANT_HOME = System.getProperty("ant.home");
-    public static String RDECK_HOME = System.getProperty("rdeck.home");
-    public static String RDECK_BASE = System.getProperty("rdeck.base");
+    public static String RDECK_HOME = System.getProperty("rdeck.home","target");
+    public static String RDECK_BASE = System.getProperty("rdeck.base","target/rdeck_base");
 
     //
     // derived modules and projects base
@@ -56,13 +55,6 @@ public abstract class AbstractBaseTest extends TestCase {
     public static String[] SETUP_ARGS = {
         "-n", localNodeHostname
     };
-
-
-    private static String antHome;
-
-    public String getAntHome() {
-        return antHome;
-    }
 
     private static String homeDir;
 
@@ -117,7 +109,6 @@ public abstract class AbstractBaseTest extends TestCase {
     protected void configureFramework()
             throws BuildException {
 
-        antHome = ANT_HOME;
         homeDir = RDECK_HOME;
         baseDir = RDECK_BASE;
         projectsBase = PROJECTS_BASE;
@@ -137,6 +128,11 @@ public abstract class AbstractBaseTest extends TestCase {
 
         final ArrayList argsList = new ArrayList(Arrays.asList(SETUP_ARGS));
         argsList.add("--framework.ssh.keypath=" + dummykey.getAbsolutePath());
+        argsList.add("-d");
+        argsList.add(new File(baseDir).getAbsolutePath());
+        argsList.add("-H" );
+        argsList.add(new File(homeDir).getAbsolutePath());
+
 
         try {
             System.out.println("Running Setup");

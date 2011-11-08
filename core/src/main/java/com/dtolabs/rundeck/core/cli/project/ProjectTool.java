@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 import org.apache.commons.cli.*;
 import org.apache.log4j.PropertyConfigurator;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Properties;
 import java.util.regex.Pattern;
@@ -79,6 +80,16 @@ public class ProjectTool implements ActionMaker, CLITool {
         PropertyConfigurator.configure(Constants.getLog4jPropertiesFile().getAbsolutePath());
         framework = Framework.getInstance(Constants.getSystemBaseDir());
         extraProperties=new Properties();
+    }
+
+    public ProjectTool(final File baseDir) {
+        /**
+         * Initialize the log4j logger
+         */
+        PropertyConfigurator.configure(new File(Constants.getLog4jProperties(baseDir.getAbsolutePath()))
+            .getAbsolutePath());
+        framework = Framework.getInstance(baseDir.getAbsolutePath());
+        extraProperties = new Properties();
     }
     /**
      * Reference to the framework instance

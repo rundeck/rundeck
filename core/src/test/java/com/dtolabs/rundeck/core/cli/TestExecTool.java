@@ -117,8 +117,7 @@ public class TestExecTool extends AbstractBaseTest {
 
         {
             //test missing -p option when multiple projects exist
-            ExecTool main = new ExecTool();
-            main.setFramework(getFrameworkInstance());
+            ExecTool main = newExecTool();
 
             try {
                 main.parseArgs(
@@ -135,7 +134,7 @@ public class TestExecTool extends AbstractBaseTest {
 
     public void testParseNodeDispatchArgs() throws Exception {
         {
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-I", "tags=priority1"});
             assertNotNull(main.cli);
             assertTrue(main.cli.hasOption("I"));
@@ -153,7 +152,7 @@ public class TestExecTool extends AbstractBaseTest {
         }
         //use -I flag without key name, which should default to 'hostname' (first allowed key)
         {
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-I", "tags=priority1", "-I", "floof"});
             assertNotNull(main.cli);
             assertTrue(main.cli.hasOption("I"));
@@ -173,7 +172,7 @@ public class TestExecTool extends AbstractBaseTest {
         }
         //use multiple allowed keys
         {
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-I", "tags=priority1", "-I", "os-name=floof"});
 
             Map exmap = main.parseExcludeArgs(nodeKeys);
@@ -190,7 +189,7 @@ public class TestExecTool extends AbstractBaseTest {
 
 
          {
-         ExecTool main = new ExecTool();
+         ExecTool main = newExecTool();
          main.parseArgs(new String[]{"-I", "tags=priority1", "-I", "potato=floof"});
 
          Map exmap = main.parseExcludeArgs(nodeKeys);
@@ -207,7 +206,7 @@ public class TestExecTool extends AbstractBaseTest {
 
         //use mix of include and exclude
         {
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-X", "strongbad", "-I", "os-name=Testux"});
 
             Map exmap = main.parseExcludeArgs(nodeKeys);
@@ -223,7 +222,7 @@ public class TestExecTool extends AbstractBaseTest {
 
     public void testFilterNodes() {
         {
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT});
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
@@ -231,7 +230,7 @@ public class TestExecTool extends AbstractBaseTest {
             assertEquals("wrong size", 4, c.size());
         }
         {
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-X", "homestar", "-I", "os-name=Testux"});
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
@@ -243,7 +242,7 @@ public class TestExecTool extends AbstractBaseTest {
         }
 
         {
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-X", "strongbad,homestar",
                 "-I", "os-family=unix"});
             Map exmap = main.parseExcludeArgs(nodeKeys);
@@ -257,7 +256,7 @@ public class TestExecTool extends AbstractBaseTest {
 
     public void testDefaultNodeFormatter() {
         {
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT});
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
@@ -268,7 +267,7 @@ public class TestExecTool extends AbstractBaseTest {
             assertEquals("doesn't contain correct result", "cheat homestar strongbad test1", result);
         }
         {
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-X", "homestar", "-I", "os-name=Testux"});
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
@@ -283,7 +282,7 @@ public class TestExecTool extends AbstractBaseTest {
         }
 
         {
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-X", "strongbad,homestar",
                 "-I", "os-family=unix"});
             Map exmap = main.parseExcludeArgs(nodeKeys);
@@ -305,7 +304,7 @@ public class TestExecTool extends AbstractBaseTest {
     }
     public void testListAction() {
         {
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-v"});
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
@@ -317,7 +316,7 @@ public class TestExecTool extends AbstractBaseTest {
             assertEquals(4, formatter.nodes.size());
         }
         {
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-v", "-X", "homestar", "-I", "os-name=Testux"});
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
@@ -333,7 +332,7 @@ public class TestExecTool extends AbstractBaseTest {
         }
 
         {
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-v", "-X", "strongbad,homestar",
                 "-I", "os-family=unix"});
             Map exmap = main.parseExcludeArgs(nodeKeys);
@@ -347,16 +346,20 @@ public class TestExecTool extends AbstractBaseTest {
         }
     }
 
+    private ExecTool newExecTool() {
+        return new ExecTool(getFrameworkInstance());
+    }
+
 
     /*public void testScriptFileActionArgs() throws Exception {
 
         {
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", "TestExecTool", "-s", testScriptFile.getAbsolutePath()});
             assertNull("incorrect args", main.getArgsDeferred());
         }
         {
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.parseArgs(
                 new String[]{"-p", "TestExecTool", "-s", testScriptFile.getAbsolutePath(), "--", "test", "args"});
             assertNotNull("incorrect args", main.getArgsDeferred());
@@ -366,7 +369,7 @@ public class TestExecTool extends AbstractBaseTest {
                 main.argsDeferredString);
         }
         {
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.parseArgs(
                 new String[]{"-p", "TestExecTool", "-s", testScriptFile.getAbsolutePath(), "--", "test", "args",
                     "with a space"});
@@ -377,7 +380,7 @@ public class TestExecTool extends AbstractBaseTest {
                 main.argsDeferredString);
         }
         {
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", "TestExecTool", "-S", "--", "test", "args"});
             main.setInlineScriptContent("test content");
             assertNotNull("incorrect args", main.getArgsDeferred());
@@ -835,7 +838,7 @@ public class TestExecTool extends AbstractBaseTest {
         int index = 0;
         for (String testData : testStrings) {
             index++;
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             File t = File.createTempFile(TEST_EXEC_TOOL_PROJECT, ".txt");
             t.deleteOnExit();
 
@@ -853,7 +856,7 @@ public class TestExecTool extends AbstractBaseTest {
 
     public void testCreateNodeSet() throws Exception {
         {
-            final ExecTool main = new ExecTool();
+            final ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT});
             final NodeSet set = main.createFilterNodeSelector();
             assertNotNull(set);
@@ -865,7 +868,7 @@ public class TestExecTool extends AbstractBaseTest {
             assertEquals(false,set.isKeepgoing());
         }
         {
-            final ExecTool main = new ExecTool();
+            final ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT,"-K"});
             final NodeSet set = main.createFilterNodeSelector();
             assertNotNull(set);
@@ -877,7 +880,7 @@ public class TestExecTool extends AbstractBaseTest {
             assertEquals(true,set.isKeepgoing());
         }
         {
-            final ExecTool main = new ExecTool();
+            final ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT,"-C","2"});
             final NodeSet set = main.createFilterNodeSelector();
             assertNotNull(set);
@@ -889,7 +892,7 @@ public class TestExecTool extends AbstractBaseTest {
             assertEquals(false,set.isKeepgoing());
         }
         {
-            final ExecTool main = new ExecTool();
+            final ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT,"-C","2","-I","ahostname","-X","tags=blaoen","-I","os-family=test","-X","os-version=3"});
             final NodeSet set = main.createFilterNodeSelector();
             assertNotNull(set);
@@ -906,7 +909,7 @@ public class TestExecTool extends AbstractBaseTest {
         }
         {
             //test precedence setting, Include dominant in first position
-            final ExecTool main = new ExecTool();
+            final ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT,"-C","2","-I","ahostname","-X","tags=blaoen"});
             final NodeSet set = main.createFilterNodeSelector();
             assertNotNull(set);
@@ -919,7 +922,7 @@ public class TestExecTool extends AbstractBaseTest {
         }
         {
             //test precedence setting, Exclude dominant in first position
-            final ExecTool main = new ExecTool();
+            final ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT,"-C","2","-X","ahostname","-I","tags=blaoen"});
             final NodeSet set = main.createFilterNodeSelector();
             assertNotNull(set);
@@ -932,7 +935,7 @@ public class TestExecTool extends AbstractBaseTest {
         }
         {
             //test precedence setting, Include dominant explicitly
-            final ExecTool main = new ExecTool();
+            final ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT,"--filter-exclude-precedence","false","-C","2","-X","ahostname","-I","tags=blaoen"});
             final NodeSet set = main.createFilterNodeSelector();
             assertNotNull(set);
@@ -945,7 +948,7 @@ public class TestExecTool extends AbstractBaseTest {
         }
         {
             //test precedence setting, Exclude dominant explicitly
-            final ExecTool main = new ExecTool();
+            final ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT,"--filter-exclude-precedence","true","-C","2","-I","ahostname","-X","tags=blaoen"});
             final NodeSet set = main.createFilterNodeSelector();
             assertNotNull(set);
@@ -1082,24 +1085,24 @@ public class TestExecTool extends AbstractBaseTest {
 
     public void testQueueOption() throws Exception {
         {
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "--noqueue"});
             assertTrue(main.isArgNoQueue());
         }
         {
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-" + ExecTool.NO_QUEUE_FLAG});
             assertTrue(main.isArgNoQueue());
         }
 
         //test old -Q/--queue have no effect
         {
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-Q" });
             assertFalse(main.isArgNoQueue());
         }
         {
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "--queue" });
             assertFalse(main.isArgNoQueue());
         }
@@ -1107,7 +1110,7 @@ public class TestExecTool extends AbstractBaseTest {
         final Framework framework = getFrameworkInstance();
 
         {
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.setFramework(framework);
             final testCentralDispatcher test = new testCentralDispatcher();
             framework.setCentralDispatcherMgr(test);
@@ -1127,7 +1130,7 @@ public class TestExecTool extends AbstractBaseTest {
             assertEquals("testProject", test.passedinScript.getFrameworkProject());
         }
         {
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.setFramework(framework);
             final testCentralDispatcher test = new testCentralDispatcher();
             framework.setCentralDispatcherMgr(test);
@@ -1148,7 +1151,7 @@ public class TestExecTool extends AbstractBaseTest {
         {
             //test script path input available as InputStream when queueing dispatch
 
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.setFramework(framework);
             final testCentralDispatcher test = new testCentralDispatcher();
             framework.setCentralDispatcherMgr(test);
@@ -1169,7 +1172,7 @@ public class TestExecTool extends AbstractBaseTest {
         {
             //test the node filter arguments
 
-            ExecTool main = new ExecTool();
+            ExecTool main = newExecTool();
             main.setFramework(framework);
             final testCentralDispatcher test = new testCentralDispatcher();
             framework.setCentralDispatcherMgr(test);

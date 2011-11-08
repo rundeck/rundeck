@@ -61,15 +61,19 @@ public class TestProjectTool extends AbstractBaseTest {
 
 
     public void testConstruction() {
-        final ProjectTool setup = new ProjectTool();
+        final ProjectTool setup = createProjectTool();
         assertNotNull(setup);
+    }
+
+    private ProjectTool createProjectTool() {
+        return new ProjectTool(new File(getBaseDir()));
     }
 
 
     public void testCreateActions() throws Throwable {
 
 
-        final ProjectTool setup = new ProjectTool();
+        final ProjectTool setup = createProjectTool();
         final String[] args = new String[]{
             "-o", "-p", PROJECT,
         };
@@ -83,7 +87,7 @@ public class TestProjectTool extends AbstractBaseTest {
     public void testCreateActionProperties() throws Throwable {
 
 
-        final ProjectTool setup = new ProjectTool();
+        final ProjectTool setup = createProjectTool();
         final String[] args = new String[]{
             "-o", "-p", PROJECT,
             "--test1=value",
@@ -169,7 +173,7 @@ public class TestProjectTool extends AbstractBaseTest {
         if (dir.exists()) {
             FileUtils.deleteDir(dir);
         }
-        final ProjectTool setup = new ProjectTool();
+        final ProjectTool setup = createProjectTool();
         final String[] args = new String[]{
             "-p", PROJECT,
             "-b", setupXml.getAbsolutePath(),
