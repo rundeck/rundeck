@@ -26,12 +26,12 @@ dependencies {
         [group: 'commons-collections', name: 'commons-collections', version: '3.2.1',ext:'jar'],
         [group: 'commons-logging', name: 'commons-logging', version: '1.1',ext:'jar'],
         [group: 'commons-lang', name: 'commons-lang', version: '2.4',ext:'jar'],
-        [group: 'xerces', name: 'xerces', version: '2.6.0',ext:'jar'],
+        [group: 'xerces', name: 'xercesImpl', version: '2.6.0',ext:'jar'],
         [group: 'dom4j', name: 'dom4j', version: '1.6.1',ext:'jar'],
         [group: 'jaxen', name: 'jaxen', version: '1.1',ext:'jar'],
         [group: 'commons-cli', name: 'commons-cli', version: '1.0',ext:'jar'],
         [group: 'org.apache.ant', name: 'ant-jsch', version: '1.7.1',ext:'jar'],
-        [group: 'jsch', name: 'jsch', version: '0.1.42',ext:'jar'],
+        [group: 'com.jcraft', name: 'jsch', version: '0.1.42',ext:'jar'],
         [group: 'org.yaml',name:'snakeyaml',version:'1.9']
     )
     testCompile(
