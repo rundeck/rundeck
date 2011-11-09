@@ -166,7 +166,7 @@ class ScheduledExecutionController  {
             response.setStatus (404)
             return error.call()
         }
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_READ], session.project)) {
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
             return unauthorized("Read Job ${params.id}")
         }
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
@@ -654,7 +654,7 @@ class ScheduledExecutionController  {
             return redirect(action:index, params:params)
         }
 
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_READ], session.project)) {
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_READ], scheduledExecution.project)) {
             return unauthorized("Update Job ${params.id}")
         }
         //clear session workflow
@@ -771,7 +771,7 @@ class ScheduledExecutionController  {
         boolean failed=false
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
 
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_UPDATE], session.project)) {
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_UPDATE], scheduledExecution.project)) {
             return [success:false,scheduledExecution:scheduledExecution,message:"Update Job ${scheduledExecution.extid}",unauthorized:true]
         }
 
@@ -1336,7 +1336,7 @@ class ScheduledExecutionController  {
             redirect(action:index)
             return;
         }
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_READ], session.project)) {
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
             return unauthorized("Read Job ${params.id}")
         }
         def newScheduledExecution = new ScheduledExecution()
@@ -2204,7 +2204,7 @@ class ScheduledExecutionController  {
         failed=result.failed
         //try to save workflow
 
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_CREATE], session.project)) {
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_CREATE], scheduledExecution.project)) {
             scheduledExecution.discard()
             return [success: false, error: "Unauthorized: Create Job ${scheduledExecution.generateFullName()}", unauthorized: true, scheduledExecution:scheduledExecution]
         }
@@ -2986,7 +2986,7 @@ class ScheduledExecutionController  {
             return chain(controller: 'api', action: 'renderError')
         }
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_READ], session.project)) {
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
             request.errorCode = "api.error.item.unauthorized"
             request.errorArgs = ['Read','Job ID', params.id]
             return new ApiController().renderError()
