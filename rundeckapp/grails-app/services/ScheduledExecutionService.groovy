@@ -237,9 +237,8 @@ class ScheduledExecutionService {
         }
         // Filter the groups by what the user is authorized to see.
 
-        def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE+"project"), project))
-        def decisions = framework.getAuthorizationMgr().evaluate(res, framework.getAuthenticationMgr().subject,
-            new HashSet([AuthConstants.ACTION_READ]), env)
+        def decisions = frameworkService.authorizeProjectResources(framework,res,
+            new HashSet([AuthConstants.ACTION_READ]),project)
 
         decisions.each{
             if(it.authorized){
@@ -378,20 +377,10 @@ class ScheduledExecutionService {
     }
 
     def userAuthorizedForJob(request,ScheduledExecution se, Framework framework){
-        def resource = ["job": se.getJobName(), "group": se.getGroupPath() ?: "",type:'job']
-        def environment = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE+"project"),
-            se.project))
-        def Decision d = framework.getAuthorizationMgr().evaluate(resource, request.subject,
-            AuthConstants.ACTION_READ, environment)
-        return d.isAuthorized()
+        return frameworkService.authorizeProjectJobAll(framework,se,[AuthConstants.ACTION_READ],se.project)
     }
     def userAuthorizedForAdhoc(request,ScheduledExecution se, Framework framework){
-        def resource = [type:'adhoc']
-        def environment = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"),
-            se.project))
-        def Decision d = framework.getAuthorizationMgr().evaluate(resource, request.subject,
-            AuthConstants.ACTION_RUN, environment)
-        return d.isAuthorized()
+        return frameworkService.authorizeProjectResource(framework,[type: 'adhoc'], AuthConstants.ACTION_RUN,se.project)
     }
 
     def scheduleJob(ScheduledExecution se, String oldJobName, String oldGroupName) {
