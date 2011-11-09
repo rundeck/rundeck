@@ -8,7 +8,7 @@
   <packaging>war</packaging>
   <version>1.4.0.1</version>
   
-  <name>RunDeck</name>
+  <name>RunDeck App</name>
   <description>RunDeck Command and Job Console</description>
   <url>http://rundeck.org</url>
   
