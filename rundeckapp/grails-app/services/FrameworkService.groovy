@@ -98,8 +98,22 @@ class FrameworkService implements ApplicationContextAware {
 
         return framework.getAuthorizationMgr().authorizeScript(user,project,script)
     }
-    def authorizeProjectResource(Framework framework, Map resource, String action, String project){
 
+    def Set authorizeProjectResources(Framework framework, Set resources, Set actions, String project) {
+        if (null == project) {
+            throw new IllegalArgumentException("null project")
+        }
+        def Set decisions = framework.getAuthorizationMgr().evaluate(
+            resources,
+            framework.getAuthenticationMgr().subject,
+            actions,
+            Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), project)))
+        return decisions
+    }
+    def authorizeProjectResource(Framework framework, Map resource, String action, String project){
+        if (null == project) {
+            throw new IllegalArgumentException("null project")
+        }
         def Decision decision=framework.getAuthorizationMgr().evaluate(
             resource,
             framework.getAuthenticationMgr().subject,
@@ -108,7 +122,9 @@ class FrameworkService implements ApplicationContextAware {
         return decision.isAuthorized()
     }
     def authorizeProjectResourceAll(Framework framework, Map resource, Collection actions, String project){
-
+        if(null==project){
+            throw new IllegalArgumentException("null project")
+        }
         def decisions=framework.getAuthorizationMgr().evaluate(
             [resource] as Set,
             framework.getAuthenticationMgr().subject,
@@ -117,7 +133,9 @@ class FrameworkService implements ApplicationContextAware {
         return !(decisions.find {!it.authorized})
     }
     def authorizeProjectJobAll(Framework framework, ScheduledExecution job, Collection actions, String project){
-
+        if (null == project) {
+            throw new IllegalArgumentException("null project")
+        }
         def decisions=framework.getAuthorizationMgr().evaluate(
             [[type:'job',job:job.jobName,group:job.groupPath?:'']] as Set,
             framework.getAuthenticationMgr().subject,
@@ -168,8 +186,9 @@ class FrameworkService implements ApplicationContextAware {
     }
 
     def getFrameworkNodeName() {
-        def Framework fw = Framework.getInstance(rundeckbase)
-        fw.setAuthorizationMgr(new DenyAuthorization(fw, new File(Constants.getFrameworkConfigDir(rundeckbase))))
+        def rdbase= getRundeckBase()
+        def Framework fw = Framework.getInstance(rdbase)
+        fw.setAuthorizationMgr(new DenyAuthorization(fw, new File(Constants.getFrameworkConfigDir(rdbase))))
         return fw.getFrameworkNodeName()
     }
     def getFrameworkFromUserSession( session, request){
