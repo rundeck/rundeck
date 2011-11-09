@@ -1,7 +1,14 @@
-Release 1.4
+Release 1.4.0.2
 ===========
 
-Date: 10/27/2011
+Date: 11/9/2011
+
+* 1.4.0.2
+    * [#467 - user not in aclpolicy can perform unauthorized actions](http://rundeck.lighthouseapp.com/projects/59277/tickets/467-user-not-in-aclpolicy-can-perform-unauthorized-actions)
+    * [#469 - Create job via API can fail due to authorization bug](http://rundeck.lighthouseapp.com/projects/59277/tickets/469-create-job-via-api-can-fail-due-to-authorization-bug)
+* 1.4.0.1
+    * [#464 - NPE on Execute page](http://rundeck.lighthouseapp.com/projects/59277/tickets/464-npe-on-execute-page)
+
 
 Tickets: 
 
