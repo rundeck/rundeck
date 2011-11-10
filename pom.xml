@@ -13,6 +13,7 @@
 
     <modules>
         <module>core</module>
+        <module>plugins</module>
         <module>rundeckapp</module>
     </modules>
 

@@ -10,7 +10,7 @@
   <groupId>com.dtolabs.rundeck</groupId>
   <artifactId>rundeck-stub-plugin</artifactId>
   <version>1.4.0.1</version>
-  <name>RunDeck Stub Plugins</name>
+  <name>RunDeck Stub Plugin</name>
   <url>http://rundeck.org</url>
   <inceptionYear>2011</inceptionYear>
   <licenses>
@@ -20,4 +20,19 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.3.2</version>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Rundeck-Plugin-Classnames>com.dtolabs.rundeck.plugin.stub.StubFileCopier,com.dtolabs.rundeck.plugin.stub.StubNodeExecutor</Rundeck-Plugin-Classnames>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

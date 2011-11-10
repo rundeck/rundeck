@@ -1,6 +1,7 @@
+pluginClassNames='com.dtolabs.rundeck.plugin.script.ScriptFileCopier,com.dtolabs.rundeck.plugin.script.ScriptNodeExecutor'
 jar {
     manifest {
-        attributes 'Rundeck-Plugin-Classnames': 'com.dtolabs.rundeck.plugin.script.ScriptFileCopier,com.dtolabs.rundeck.plugin.script.ScriptNodeExecutor'
+        attributes 'Rundeck-Plugin-Classnames': pluginClassNames
     }
 }
 
@@ -20,7 +21,7 @@ task createPom << {
             inceptionYear '2011'
             packaging 'jar'
             version version
-            name "RunDeck Script Plugins"
+            name "RunDeck Script Plugin"
             url 'http://rundeck.org'
             licenses {
                 license {
@@ -33,6 +34,22 @@ task createPom << {
                 groupId 'com.dtolabs.rundeck'
                 artifactId "rundeck-bundled-plugins"
                 version(version)
+            }
+            build{
+                plugins{
+                    plugin{
+                        groupId 'org.apache.maven.plugins'
+                        artifactId 'maven-jar-plugin'
+                        version '2.3.2'
+                        configuration{
+                            archive{
+                              manifestEntries{
+                                'Rundeck-Plugin-Classnames'(pluginClassNames)
+                              }
+                            }
+                        }
+                    }
+                }
             }
         }
     }.writeTo("pom.xml")

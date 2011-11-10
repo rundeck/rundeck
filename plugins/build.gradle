@@ -2,6 +2,7 @@
 allprojects{
     version = '1.4.0.1'
     defaultTasks 'clean','build'
+    rundeckPluginVersion= '1.0'
 }
 task wrapper(type: Wrapper) {
     gradleVersion = '0.9-rc-3'
@@ -13,7 +14,6 @@ subprojects{
     apply plugin: 'java'
     sourceCompatibility = 1.5
     archivesBaseName = "rundeck-$project.name"
-    rundeckPluginVersion= '1.0'
 
     repositories {
         mavenCentral()
@@ -61,6 +61,23 @@ task createPom << {
                     artifactId 'rundeck-core'
                     groupId 'com.dtolabs.rundeck'
                     version version
+                }
+            }
+            build{
+                plugins{
+                    plugin{
+                        groupId 'org.apache.maven.plugins'
+                        artifactId 'maven-jar-plugin'
+                        version '2.3.2'
+                        configuration{
+                            archive{
+                              manifestEntries{
+                                'Rundeck-Plugin-Version'(rundeckPluginVersion)
+                                'Rundeck-Plugin-Archive'('true')
+                              }
+                            }
+                        }
+                    }
                 }
             }
         }
