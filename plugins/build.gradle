@@ -33,3 +33,37 @@ subprojects{
 
 }
 
+
+apply plugin: 'maven'
+task createPom << {
+    pom {
+        project {
+            artifactId 'rundeck-bundled-plugins'
+            groupId "com.dtolabs.rundeck"
+            inceptionYear '2011'
+            packaging 'pom'
+            version version
+            name "RunDeck Bundled Plugins"
+            url 'http://rundeck.org'
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+            modules{
+                module 'stub-plugin'
+                module 'script-plugin'
+            }
+            dependencies{
+                dependency{
+                    artifactId 'rundeck-core'
+                    groupId 'com.dtolabs.rundeck'
+                    version version
+                }
+            }
+        }
+    }.writeTo("pom.xml")
+}
+
