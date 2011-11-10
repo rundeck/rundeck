@@ -16,6 +16,16 @@
     </license>
   </licenses>
   <build>
+    <resources>
+      <resource>
+        <targetPath>META-INF</targetPath>
+        <filtering>true</filtering>
+        <directory>src/main/meta</directory>
+      </resource>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
@@ -135,4 +145,9 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+  <properties>
+    <version_ident>1.4.0.1.0</version_ident>
+    <version>1.4.0.1</version>
+    <version_build>0</version_build>
+  </properties>
 </project>

@@ -51,14 +51,11 @@ test{
 }
 
 task expandTemplate << {
-    ant.delete(file:"$projectDir/src/main/java/com/dtolabs/rundeck/core/VersionConstants.java")
+    ant.delete(file:"$projectDir/src/main/resources/META-INF/com/dtolabs/rundeck/core/application.properties")
     copy{
-        from "$projectDir/src/main/templates/com/dtolabs/rundeck/core/VersionConstants.java.template"
-        into "$projectDir/src/main/java/com/dtolabs/rundeck/core/"
-        rename { String fileName ->
-            fileName.replace('.template', '')
-        }
-        filter(ReplaceTokens, tokens: ['version.number':version,'version.build':buildNum,'version.ident':version+'.'+buildNum])
+        expand('version':version,'version_build':buildNum,'version_ident':version+'.'+buildNum)
+        from "$projectDir/src/main/meta/com/dtolabs/rundeck/core/application.properties"
+        into "$projectDir/src/main/resources/META-INF/com/dtolabs/rundeck/core/"
     }   
 }
 
@@ -106,7 +103,22 @@ task createPom << {
                     distribution 'repo'
                 }
             }
+            properties{
+                'version'(version)
+                'version_build'(buildNum)
+                'version_ident'(version+'.'+buildNum)
+            }
             build {
+                resources{
+                    resource{
+                        directory 'src/main/meta'
+                        targetPath 'META-INF'
+                        filtering=true
+                    }
+                    resource{
+                        directory 'src/main/resources'
+                    }
+                }
                 plugins{
                     plugin{
                         groupId 'org.apache.maven.plugins'

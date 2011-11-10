@@ -5,7 +5,6 @@ build
 rundeckapp/stacktrace.log
 rundeckapp/grails-app/i18n/messages.properties.orig
 rundeckapp/lib/rundeck-core-*.jar
-core/src/main/java/com/dtolabs/rundeck/core/VersionConstants.java
 core/target
 rundeckapp/env.bash
 rundeckapp/work
