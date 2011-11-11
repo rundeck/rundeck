@@ -281,7 +281,12 @@ public class URLFileUpdater implements FileUpdater {
                 determineContentType(interaction);
 
                 //write to file
-                Streams.copyStream(interaction.getResponseBodyAsStream(), new FileOutputStream(destinationFile));
+                FileOutputStream output=new FileOutputStream(destinationFile);
+                try{
+                    Streams.copyStream(interaction.getResponseBodyAsStream(), output);
+                }finally{
+                    output.close();
+                }
                 if (destinationFile.length() < 1) {
                     //file was empty!
                     if(!destinationFile.delete()) {
