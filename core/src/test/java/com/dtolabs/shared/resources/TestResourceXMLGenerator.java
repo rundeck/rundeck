@@ -150,7 +150,7 @@ public class TestResourceXMLGenerator extends TestCase {
         }
         {  //test to outputstream
             assertTrue(test1.delete());
-            final ResourceXMLGenerator gen = new ResourceXMLGenerator(new FileOutputStream(test1));
+            final ResourceXMLGenerator gen = new ResourceXMLGenerator(test1);
             //add a node
             final NodeEntryImpl node = new NodeEntryImpl("test1", "test1name");
             node.setDescription("test desc");

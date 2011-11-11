@@ -178,7 +178,12 @@ public class ResourceXMLGenerator implements NodesFileGenerator {
         }
 
         if (null != file) {
-            serializeDocToStream(new FileOutputStream(file), doc);
+            FileOutputStream out=new FileOutputStream(file);
+            try{
+                serializeDocToStream(out, doc);
+            }finally{
+                out.close();
+            }
         } else if (null != output) {
             serializeDocToStream(output, doc);
         }
