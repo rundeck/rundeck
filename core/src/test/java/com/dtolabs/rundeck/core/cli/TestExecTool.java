@@ -99,6 +99,8 @@ public class TestExecTool extends AbstractBaseTest {
         FrameworkProject d2 = getFrameworkInstance().getFrameworkProjectMgr().createFrameworkProject(
             TEST_EXEC_TOOL_PROJ2);
         FileUtils.deleteDir(d2.getBaseDir());
+
+
         getFrameworkInstance().getFrameworkProjectMgr().remove(TEST_EXEC_TOOL_PROJ2);
 //        ExecutionServiceFactory.resetDefaultExecutorClasses();
         getFrameworkInstance().setService(CommandInterpreterService.SERVICE_NAME, null);
@@ -244,11 +246,11 @@ public class TestExecTool extends AbstractBaseTest {
         {
             ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-X", "strongbad,homestar",
-                "-I", "os-family=unix"});
+                "-I", "os-family=fakeos"});
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
             final Collection c = main.filterNodes().getNodes();
-            assertEquals("wrong size", 2, c.size());
+            assertEquals("wrong size", 1, c.size());
         }
     }
 
@@ -284,14 +286,14 @@ public class TestExecTool extends AbstractBaseTest {
         {
             ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-X", "strongbad,homestar",
-                "-I", "os-family=unix"});
+                "-I", "os-family=fakeos"});
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
             final Collection c = main.filterNodes().getNodes();
-            assertEquals("wrong size", 2, c.size());
+            assertEquals("wrong size", 1, c.size());
             final String result = new ExecTool.DefaultNodeFormatter().formatResults(c).toString();
             assertNotNull(result);
-            assertEquals("doesn't contain correct result", "cheat test1", result);
+            assertEquals("doesn't contain correct result", "cheat", result);
         }
     }
 
@@ -334,7 +336,7 @@ public class TestExecTool extends AbstractBaseTest {
         {
             ExecTool main = newExecTool();
             main.parseArgs(new String[]{"-p", TEST_EXEC_TOOL_PROJECT, "-v", "-X", "strongbad,homestar",
-                "-I", "os-family=unix"});
+                "-I", "os-family=fakeos"});
             Map exmap = main.parseExcludeArgs(nodeKeys);
             Map incmap = main.parseIncludeArgs(nodeKeys);
             final Collection c = main.filterNodes().getNodes();
@@ -342,7 +344,7 @@ public class TestExecTool extends AbstractBaseTest {
             main.setNodeFormatter(formatter);
             main.listAction();
             assertNotNull(formatter.nodes);
-            assertEquals(2, formatter.nodes.size());
+            assertEquals(1, formatter.nodes.size());
         }
     }
 
@@ -841,16 +843,24 @@ public class TestExecTool extends AbstractBaseTest {
             ExecTool main = newExecTool();
             File t = File.createTempFile(TEST_EXEC_TOOL_PROJECT, ".txt");
             t.deleteOnExit();
-
-            OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(t));
-            osw.write(testData);
-            osw.flush();
-            osw.close();
+            FileOutputStream fos=new FileOutputStream(t);
+            try{
+	            OutputStreamWriter osw = new OutputStreamWriter(fos);
+	            osw.write(testData);
+	            osw.flush();
+	            osw.close();
+            }finally{
+            	fos.close();
+            }
 
             InputStream ins = new FileInputStream(t);
-            File temp = main.writeInputToFile(ins);
-            //compare file contents
-            assertTrue("File contents were not the same (data " + index + ")", utils.contentEquals(t, temp, true));
+            try{
+	            File temp = main.writeInputToFile(ins);
+	            //compare file contents
+	            assertTrue("File contents were not the same (data " + index + ")", utils.contentEquals(t, temp, true));
+            }finally{
+            	ins.close();
+            }
         }
     }
 

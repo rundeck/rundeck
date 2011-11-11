@@ -18,7 +18,7 @@
   <node name="homestar" type="Node" description="this is the testnode1 node" tags="boring,priority1"
         hostname="homestar"
         osArch="arm"
-        osFamily="unix"
+        osFamily="fakeos"
         osName="Testux"
         osVersion="10.5.1"
         username="username1"
@@ -28,7 +28,7 @@
   <node name="cheat" type="Node" description="registered Node asdf" tags="boring"
         hostname="the@cheat"
         osArch="i386"
-        osFamily="unix"
+        osFamily="fakeos"
         osName="Testux"
         osVersion="5.1"
       >
@@ -37,7 +37,7 @@
   <node name="strongbad" type="Node" description="This is the third test node" tags="priority1,elf"
         hostname="strongbad"
         osArch="i686"
-        osFamily="unix"
+        osFamily="fakeos"
         osName="Mac OS Xzz"
         osVersion="3.7"
       >
