@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+ * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,15 +23,12 @@ import org.apache.log4j.Logger;
 import java.io.File;
 
 /**
- * Provides trivial ALLOW implementation of {@link Authorization} interface.
- *
- * @author alexh
+ * Provides trivial DENY implementation of {@link com.dtolabs.rundeck.core.authorization.Authorization} interface.
  */
-public class NoAuthorization extends BaseAuthorization{
-    private final static Logger logger = Logger.getLogger(NoAuthorization.class);
+public class DenyAuthorization extends BaseAuthorization {
+    private final static Logger logger = Logger.getLogger(DenyAuthorization.class);
 
-
-    public NoAuthorization(final Framework framework, final File aclBaseDir) {
+    public DenyAuthorization(final Framework framework, final File aclBaseDir) {
         super(framework, aclBaseDir);
     }
 
@@ -42,17 +39,17 @@ public class NoAuthorization extends BaseAuthorization{
 
     @Override
     protected String getDescription() {
-        return this.getClass().getName() + "NoAuthorization: All authorization allowed.";
+        return this.getClass().getName() + ": Deny all authorization.";
     }
 
     @Override
     protected Explanation.Code getResultCode() {
-        return Explanation.Code.GRANTED_NO_AUTHORIZATION_ATTEMPTED;
+        return Explanation.Code.REJECTED_DENIED;
     }
 
     @Override
     protected boolean isAuthorized() {
-        return true;
+        return false;
     }
 
     /**
@@ -65,7 +62,7 @@ public class NoAuthorization extends BaseAuthorization{
      * @return
      */
     public static Authorization create(final Framework framework, final File aclBasedir) {
-        return new NoAuthorization(framework, aclBasedir);
+        return new DenyAuthorization(framework, aclBasedir);
     }
 
 }

@@ -248,14 +248,12 @@ class MenuController {
         }
         // Filter the groups by what the user is authorized to see.
 
-        def authorization = frameworkService.getFrameworkFromUserSession(request.session, request).getAuthorizationMgr()
-        def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), session.project))
-        def decisions = authorization.evaluate(res, request.subject, new HashSet([AuthConstants.ACTION_READ,AuthConstants.ACTION_DELETE,AuthConstants.ACTION_RUN,AuthConstants.ACTION_UPDATE,AuthConstants.ACTION_KILL]), env)
+        def decisions = frameworkService.authorizeProjectResources(framework,res, new HashSet([AuthConstants.ACTION_READ, AuthConstants.ACTION_DELETE, AuthConstants.ACTION_RUN, AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_KILL]),query.projFilter)
         log.debug("listWorkflows(evaluate): "+(System.currentTimeMillis()-preeval));
 
         long viewable=System.currentTimeMillis()
 
-        def authCreate = frameworkService.authorizeProjectResource(framework, [type: 'resource', kind: 'job'], AuthConstants.ACTION_CREATE, session.project)
+        def authCreate = frameworkService.authorizeProjectResource(framework, [type: 'resource', kind: 'job'], AuthConstants.ACTION_CREATE, query.projFilter)
         
 
         def Map jobauthorizations=[:]

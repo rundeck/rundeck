@@ -58,6 +58,7 @@ skipcount=$($XMLSTARLET sel -T -t -v "/result/skipped/@count" $DIR/curl.out)
 
 if [ "1" != "$succount" ] ; then
     errorMsg  "Upload was not successful."
+    echo $($XMLSTARLET sel -T -t -m "/result/failed" -v "job/error" $DIR/curl.out)
     exit 2
 else
     echo "OK"
