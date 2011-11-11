@@ -21,6 +21,17 @@ To build clean:
 
     make clean
 
+Maven2 Build
+======
+
+You can use maven2 to build the war and plugin artifacts. It does not build the standalone launcher Jar (yet).
+
+    MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=192m" mvn clean package
+
+produces: `rundeckapp/target/rundeck-X.Y.war`
+
+Note: the underlying Grails build requires the MaxPermSize to be increased in the MAVEN_OPTS as shown above.
+
 Installation
 ======
 
