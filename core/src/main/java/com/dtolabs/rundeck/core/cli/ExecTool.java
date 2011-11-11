@@ -537,6 +537,13 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
 
             //submit the execution request to the service layer
             result = service.executeItem(this, createExecutionItem());
+            if(null!=scriptAsStream){
+                try{
+                    scriptAsStream.close();
+                }catch(IOException e){
+                    error("Error closing stream: "+e.getMessage());
+                }
+            }
             if(!result.isSuccess()){
                 if (null != result.getResultObject()) {
                     error(result.getResultObject().toString());
