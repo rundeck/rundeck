@@ -1,0 +1,72 @@
+archivesBaseName = 'rundeck-launcher'
+defaultTasks 'clean','launcherJar'
+configurations{
+    warBundle
+    jettyServerLib
+}
+
+dependencies {
+    compile(
+        //[group: 'log4j', name: 'log4j', version: '1.2.16',ext:'jar'],
+        [group: 'commons-cli', name: 'commons-cli', version: '1.0',ext:'jar'],
+    )
+    warBundle(
+        [group: 'com.dtolabs.rundeck', name: 'rundeck', version: version,ext:'war']
+    )
+    jettyServerLib project(":jetty")
+}
+/*task serverJar(type:Jar) {
+    baseName = serverLibName
+    from sourceSets.main.classes
+    manifest {
+        attributes 'Rundeck-Version': version
+    }
+}*/
+
+task expandCli << {
+    //copy libs to a tools lib dir
+    ant.mkdir(dir:"$projectDir/build/launcher-contents")
+    dep = configurations.compile.allDependencies.find { dep -> dep.name == 'commons-cli' }
+    FileTree cliJar = zipTree(configurations.compile.files(dep).find{it})
+    println "found file: ${cliJar}"
+    copy{
+        from cliJar
+        exclude 'META-INF/**'
+        into "$projectDir/build/launcher-contents"
+    }
+}
+task expandWar << {
+    //copy libs to a tools lib dir
+    ant.mkdir(dir:"$projectDir/build/launcher-contents/pkgs/webapp")
+    FileTree rundeckWar = zipTree(configurations.warBundle.files.find{ file -> file})
+    copy{
+        from rundeckWar
+        into "$projectDir/build/launcher-contents/pkgs/webapp"
+    }
+}
+
+task copyJettyServerLib << {
+    ant.mkdir(dir:"$projectDir/build/launcher-contents/lib")
+    serverlibjar = configurations.jettyServerLib.files.find{ file -> file}
+    copy{
+        from serverlibjar
+        into "$projectDir/build/launcher-contents/lib"
+    }
+}
+
+task launcherJar(type:Jar) {
+    from "$projectDir/build/launcher-contents"
+    from sourceSets.main.classes
+    exclude 'com/dtolabs/rundeck/RunServer.class'
+    manifest {
+        attributes 'Rundeck-Version': version, 'Main-Class':"com.dtolabs.rundeck.ExpandRunServer", "Rundeck-Start-Class":"com.dtolabs.rundeck.RunServer", "Rundeck-Jetty-Libs":"servlet-api-2.5-20081211.jar jetty-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-naming-${jettyVersion}.jar jetty-plus-${jettyVersion}.jar", "Rundeck-Jetty-Lib-Path":"pkgs/webapp/WEB-INF/lib"
+    }
+}
+
+//copyServerLib.dependsOn << serverJar
+//includeClasses.dependsOn << compileJava
+//includeClasses.dependsOn << processResources
+launcherJar.dependsOn << expandCli
+launcherJar.dependsOn << expandWar
+launcherJar.dependsOn << copyJettyServerLib
+

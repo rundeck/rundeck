@@ -1,0 +1,23 @@
+allprojects{
+    apply plugin: 'java'
+    sourceCompatibility = 1.5
+    version = '1.4.0.1'
+    jettyVersion='6.1.21'
+    defaultTasks 'clean','assemble'
+    repositories {
+        mavenCentral()
+        add(new org.apache.ivy.plugins.resolver.FileSystemResolver()) {
+            name = 'localdeps'
+            addArtifactPattern "$projectDir/../dependencies/[module]/[ext]s/[module]-[revision](-[classifier]).[ext]"
+            addArtifactPattern "$projectDir/../rundeckapp/target/[module]-[revision](-[classifier]).[ext]"
+            descriptor = 'optional'
+            checkmodified = true
+        }
+    }
+    apply plugin: 'idea'
+}
+task wrapper(type: Wrapper) {
+    gradleVersion = '0.9-rc-3'
+    jarPath = 'wrapper'
+}
+
