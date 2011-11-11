@@ -1,9 +1,12 @@
 allprojects{
+    version = '1.4.0.1'
+    defaultTasks 'clean','assemble'
+    apply plugin: 'idea'
+}
+subprojects{
     apply plugin: 'java'
     sourceCompatibility = 1.5
-    version = '1.4.0.1'
     jettyVersion='6.1.21'
-    defaultTasks 'clean','assemble'
     repositories {
         mavenCentral()
         add(new org.apache.ivy.plugins.resolver.FileSystemResolver()) {
@@ -14,7 +17,6 @@ allprojects{
             checkmodified = true
         }
     }
-    apply plugin: 'idea'
 }
 task wrapper(type: Wrapper) {
     gradleVersion = '0.9-rc-3'
