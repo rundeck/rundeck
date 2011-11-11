@@ -255,25 +255,6 @@
       </exclusions>
     </dependency>
 
-    <!-- 
-    jetty dependencies only for jetty-related
-    code in src dir, yet to be moved to separate
-    code module
-    -->
-    <dependency>
-      <groupId>org.mortbay.jetty</groupId>
-      <artifactId>jetty</artifactId>
-      <version>6.1.21</version>
-      <scope>compile</scope>
-    </dependency>
-    
-    <dependency>
-      <groupId>org.mortbay.jetty</groupId>
-      <artifactId>jetty-plus</artifactId>
-      <version>6.1.21</version>
-      <scope>compile</scope>
-    </dependency>
-    
     <!-- quartz dependency -->
     <dependency>
       <groupId>org.quartz-scheduler</groupId>

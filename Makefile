@@ -20,7 +20,7 @@ plugs= $(shell for i in plugins/*-plugin ; do v=` basename $$i`; echo $$i/build/
 
 core = core/build/libs/rundeck-core-$(VERSION).jar
 war = rundeckapp/target/rundeck-$(VERSION).war
-launcher = rundeckapp/target/rundeck-launcher-$(VERSION).jar
+launcher = rundeck-launcher/launcher/build/libs/rundeck-launcher-$(VERSION).jar
 
 .PHONY: clean rundeck docs makedocs plugins
 
@@ -39,7 +39,8 @@ makedocs:
 $(core): $(CORE_FILES)
 	./build.sh rundeck_core
 
-$(war): $(launcher)
+$(war): $(RUNDECK_FILES)
+	./build.sh rundeck_war
 
 $(plugs): $(core) $(PLUGIN_FILES)
 	cd plugins && ./gradlew	
@@ -59,7 +60,7 @@ docs: makedocs
 	cp docs/en/dist/man/man1/*.1 ./rundeckapp/target/launcher-contents/docs/man/man1
 	cp docs/en/dist/man/man5/*.5 ./rundeckapp/target/launcher-contents/docs/man/man5
 
-$(launcher): $(core) plugins $(RUNDECK_FILES)
+$(launcher): $(core) plugins  $(war)
 	./build.sh rundeckapp
 
 .PHONY: test

@@ -135,7 +135,7 @@ echo "core build complete"
 
 }
 
-build_rundeckapp(){
+build_rundeck_war(){
 #####################
 #
 # Run Deck build
@@ -175,7 +175,7 @@ then
 fi
 
 #run war phase
-yes | $GRAILS_HOME/bin/grails $PROXY_DEFS -Dgrails.project.work.dir=$GWORKDIR prod build-launcher
+yes | $GRAILS_HOME/bin/grails $PROXY_DEFS -Dgrails.project.work.dir=$GWORKDIR prod war
 if [ 0 != $? ]
 then
    echo "Run Deck build failed"
@@ -191,16 +191,33 @@ then
    exit 2
 fi  
 
-# artifacts: rundeck-launcher-X.jar
-mkdir -p $LOCALREPO/rundeck-launcher/jars/
-cp target/rundeck-launcher-$VERS.jar $LOCALREPO/rundeck-launcher/jars/rundeck-launcher-$VERS.jar
-if [ 0 != $? ]
-then
-   echo "Rundeck build failed: cannot copy target/rundeck-launcher-$VERS.jar"
-   exit 2
-fi
 export PATH=$MYPATH
 export GRAILS_HOME=
+}
+
+build_rundeckapp(){
+#########################
+#
+
+cd $BASEDIR/rundeck-launcher
+echo "Launcher build starting..."
+echo ./gradlew $PROXY_DEFS -PbuildNum=$RELNUM clean assemble
+./gradlew $PROXY_DEFS -PbuildNum=$RELNUM clean assemble
+if [ 0 != $? ]
+then
+   echo "Launcher build assemble failed: $!"
+   exit 2
+fi
+
+mkdir -p $LOCALREPO/rundeck-launcher/jars/
+cp launcher/build/libs/rundeck-launcher-$VERS.jar $LOCALREPO/rundeck-launcher/jars/rundeck-launcher-$VERS.jar
+if [ 0 != $? ]
+then
+   echo "Rundeck build failed: cannot copy launcher/build/libs/rundeck-launcher-$VERS.jar"
+   exit 2
+fi
+echo "Launcher build complete"
+
 }
 
 do_release_increment(){
@@ -235,6 +252,7 @@ if [ -z "$*" ] ; then
 
     prepare_build
     build_rundeck_core
+    build_rundeck_war
     build_rundeckapp
 else
     prepare_build
@@ -242,6 +260,9 @@ else
         case "$i" in
             rundeck_core)
                 build_rundeck_core
+                ;;
+            rundeck_war)
+                build_rundeck_war
                 ;;
             rundeckapp)
                 build_rundeckapp

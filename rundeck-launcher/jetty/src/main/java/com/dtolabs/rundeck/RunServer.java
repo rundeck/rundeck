@@ -31,6 +31,7 @@ import java.util.Properties;
  */
 public class RunServer {
 
+    public static final String SERVER_HTTP_HOST = "server.http.host";
     int port = Integer.getInteger("server.http.port", 4440);
     int httpsPort = Integer.getInteger("server.https.port", 4443);
     File basedir;
@@ -125,6 +126,7 @@ public class RunServer {
     private void configureHTTPConnector(final Server server) {
         final SocketConnector connector = new SocketConnector();
         connector.setPort(port);
+        connector.setHost(System.getProperty(SERVER_HTTP_HOST, null));
         server.addConnector(connector);
     }
 
@@ -138,6 +140,7 @@ public class RunServer {
         connector.setKeyPassword(keyPassword);
         connector.setTruststore(truststore);
         connector.setTrustPassword(truststorePassword);
+        connector.setHost(System.getProperty(SERVER_HTTP_HOST, null));
         server.addConnector(connector);
     }
 
