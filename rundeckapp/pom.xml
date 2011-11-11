@@ -6,7 +6,7 @@
   <groupId>com.dtolabs.rundeck</groupId>
   <artifactId>rundeck</artifactId>
   <packaging>war</packaging>
-  <version>1.4.0.1</version>
+  <version>1.4.0.2</version>
   
   <name>RunDeck App</name>
   <description>RunDeck Command and Job Console</description>
