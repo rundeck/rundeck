@@ -63,6 +63,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         super.tearDown();
         File projectdir = new File(getFrameworkProjectsBase(), PROJECT_NAME);
         FileUtils.deleteDir(projectdir);
+        getFrameworkInstance().getFrameworkProjectMgr().remove(PROJECT_NAME);
     }
 
     public void testCreateDepotStructure() throws IOException {
@@ -73,7 +74,24 @@ public class TestFrameworkProject extends AbstractBaseTest {
         FrameworkProject.createFileStructure(projectDir);
         assertTrue(new File(projectDir, FrameworkProject.ETC_DIR_NAME).exists());
     }
+    public void writeProps(final Properties props, final File outputFile) throws IOException{
 
+        FileOutputStream fos = new FileOutputStream(outputFile);
+        try{
+            props.store(fos,null);
+        }finally{
+            fos.close();
+        }
+    }
+    public void loadProps(final Properties props, final File file) throws IOException{
+
+        FileInputStream fis = new FileInputStream(file);
+        try{
+            props.load(fis);
+        }finally{
+            fis.close();
+        }
+    }
     public void testConstruction() {
         if (projectBasedir.exists()) {
             projectBasedir.delete();
@@ -168,10 +186,11 @@ public class TestFrameworkProject extends AbstractBaseTest {
 
         //set the nodes resources url property
         Properties orig = new Properties();
-        orig.load(new InputStreamReader(new FileInputStream(projectPropsFile)));
-
+        loadProps(orig,projectPropsFile);
+        
         Properties newProps = new Properties();
-        newProps.load(new InputStreamReader(new FileInputStream(projectPropsFile)));
+        loadProps(newProps,projectPropsFile);
+        
         final File filesrc = new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes2.xml");
         final File tempfile = File.createTempFile("test", ".xml");
         FileUtils.copyFileStreams(filesrc, tempfile);
@@ -179,7 +198,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         
         newProps.setProperty("project.resources.url", providerURL);
 
-        newProps.store(new FileOutputStream(projectPropsFile),null);
+        writeProps(newProps,projectPropsFile);
 
         project = FrameworkProject.create(PROJECT_NAME,
             new File(getFrameworkProjectsBase()),
@@ -203,7 +222,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         assertNotNull("nodes did not have correct test node2", nodes.getNode("testnode3"));
 
         //restore props and resources
-        orig.store(new FileOutputStream(projectPropsFile), null);
+        writeProps(orig,projectPropsFile);
         FileUtils.copyFileStreams(new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"), resourcesFile);
     }
 
@@ -229,12 +248,12 @@ public class TestFrameworkProject extends AbstractBaseTest {
 
         //set the nodes resources url property
         Properties orig = new Properties();
-        orig.load(new InputStreamReader(new FileInputStream(projectPropsFile)));
+        loadProps(orig,projectPropsFile);
 
         Properties newProps = new Properties();
-        newProps.load(new InputStreamReader(new FileInputStream(projectPropsFile)));
+        loadProps(newProps,projectPropsFile);
         newProps.setProperty("project.resources.url", nodesUrl);
-        newProps.store(new FileOutputStream(projectPropsFile), null);
+        writeProps(newProps,projectPropsFile);
         
         project = FrameworkProject.create(PROJECT_NAME,
             new File(getFrameworkProjectsBase()),
@@ -250,7 +269,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
 
         //restore props and resources
 
-        orig.store(new FileOutputStream(projectPropsFile), null);
+        writeProps(orig,projectPropsFile);
         FileUtils.copyFileStreams(new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"), nodesfile);
     }
     public void testValidateResourceProviderURL() throws Exception{
@@ -292,10 +311,10 @@ public class TestFrameworkProject extends AbstractBaseTest {
 
         //set project providerURL and allowed URL regexes
         Properties orig = new Properties();
-        orig.load(new InputStreamReader(new FileInputStream(projectPropsFile)));
+        loadProps(orig,projectPropsFile);
 
         Properties newProps = new Properties();
-        newProps.load(new InputStreamReader(new FileInputStream(projectPropsFile)));
+        loadProps(newProps,projectPropsFile);
         final String providerURL = new File(
             "src/test/resources/com/dtolabs/rundeck/core/common/test-nodes2.xml")
             .toURI().toURL().toExternalForm();
@@ -306,7 +325,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         newProps.setProperty(FrameworkProject.PROJECT_RESOURCES_ALLOWED_URL_PREFIX + "2",
             "^https://example.com/.*?/monkey$");
 
-        newProps.store(new FileOutputStream(projectPropsFile), null);
+        writeProps(newProps,projectPropsFile);
 
         project = FrameworkProject.create(PROJECT_NAME,
             new File(getFrameworkProjectsBase()),
@@ -346,10 +365,10 @@ public class TestFrameworkProject extends AbstractBaseTest {
         final File frameworkProps = new File(getFrameworkInstance().getBaseDir(),
             "/etc/framework.properties");
         Properties origFProps = new Properties();
-        origFProps.load(new InputStreamReader(new FileInputStream(frameworkProps)));
+        loadProps(origFProps,frameworkProps);
 
         Properties newFProps = new Properties();
-        newFProps.load(new InputStreamReader(new FileInputStream(frameworkProps)));
+        loadProps(newFProps,frameworkProps);
         newFProps.setProperty(FrameworkProject.FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX+"0", "^https?://example.com/test[\\d]$");
         newFProps.setProperty(FrameworkProject.FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX + "1",
             "^http://example.com/test2/(elf|bologna)$");
@@ -358,7 +377,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         newFProps.setProperty(FrameworkProject.FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX+"3",
             "^file:///tmp/test.*$");
 
-        newFProps.store(new FileOutputStream(frameworkProps), null);
+        writeProps(newFProps,frameworkProps);
 
         //load framework instance
         Framework framework = Framework.getInstance(getFrameworkInstance().getBaseDir().getAbsolutePath(),
@@ -396,7 +415,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
 
 
         //remove project specific props
-        orig.store(new FileOutputStream(projectPropsFile), null);
+        writeProps(orig,projectPropsFile);
         project = FrameworkProject.create(PROJECT_NAME, new File(getFrameworkProjectsBase()),
             framework.getFrameworkProjectMgr());
 
@@ -429,7 +448,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         assertFalse(project.isAllowedProviderURL("http://example.com/blah/monkey"));
 
         //restore fprops
-        origFProps.store(new FileOutputStream(frameworkProps), null);
+        writeProps(origFProps,frameworkProps);
     }
 
 
@@ -445,7 +464,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
                 propFile.exists());
 
         final Properties p = new Properties();
-        p.load(new FileInputStream(propFile));
+        loadProps(p,propFile);
         assertTrue(p.containsKey("project.resources.file"));
 
 
@@ -467,7 +486,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
                 propFile.exists());
 
         final Properties p = new Properties();
-        p.load(new FileInputStream(propFile));
+        loadProps(p,propFile);
         assertTrue(p.containsKey("project.resources.file"));
         assertTrue(p.containsKey("test1"));
         assertEquals("value1", p.getProperty("test1"));
@@ -503,7 +522,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         
 
         final Properties p = new Properties();
-        p.load(new FileInputStream(propFile));
+        loadProps(p,propFile);
         assertTrue(p.containsKey("project.resources.file"));
         assertTrue(p.containsKey("test1"));
         assertEquals("xvalue1", p.getProperty("test1"));
@@ -595,7 +614,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         props1.setProperty("project.resources.file", nodesfile.getAbsolutePath());
         props1.setProperty("project.resources.url", "http://example.com/test1");
         projectPropsFile.getParentFile().mkdirs();
-        props1.store(new FileOutputStream(projectPropsFile), null);
+        writeProps(props1,projectPropsFile);
 
         //default properties should contain project.resources.file
         FrameworkProject project = FrameworkProject.create(PROJECT_NAME, new File(getFrameworkProjectsBase()), getFrameworkInstance().getFrameworkProjectMgr());
@@ -658,7 +677,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".3.type", "directory");
         props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".3.config.directory", "/test/file/path3");
         projectPropsFile.getParentFile().mkdirs();
-        props1.store(new FileOutputStream(projectPropsFile), null);
+        writeProps(props1,projectPropsFile);
 
         //default properties should contain project.resources.file
         FrameworkProject project = FrameworkProject.create(PROJECT_NAME, new File(getFrameworkProjectsBase()), getFrameworkInstance().getFrameworkProjectMgr());
