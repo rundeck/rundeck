@@ -494,7 +494,7 @@ class ExecutionController {
                     }else{
                         mesg = list[list.size()-1].trim()
                     }
-                    msgbuf= [time:time, level:level, mesg:mesg+lSep]
+                    msgbuf= [time:time, level:level, mesg:mesg+"\n"]
                     if(list.size()>=ExecutionService.EXEC_FORMAT_SEQUENCE.size() ){
                         for(def i=2;i<list.size()-1;i++){
                             msgbuf[ExecutionService.EXEC_FORMAT_SEQUENCE[i]]=list[i].trim()
@@ -514,7 +514,7 @@ class ExecutionController {
                 }
             }else if(line=~/\^\^\^$/ && msgbuf){
                 def temp = line.substring(0,line.length()-3)
-                buf << temp + lSep
+                buf << temp + "\n"
                 msgbuf.mesg+=buf.toString()
                     if(!callback(msgbuf)){
                         done=true
@@ -523,7 +523,7 @@ class ExecutionController {
                 msgbuf=[:]
                 storeoffset=offset
             }else{
-                buf << line + lSep
+                buf << line + "\n"
             }
             tstart=System.currentTimeMillis();
             line = fr.readLine()//kept
