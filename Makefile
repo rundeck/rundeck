@@ -3,7 +3,7 @@ SHELL=/bin/bash
 VERSION=$(shell grep version.number= ${PWD}/version.properties | cut -d= -f 2)
 RELEASE=$(shell grep version.release.number= ${PWD}/version.properties | cut -d= -f 2)
 
-GRAILSVERS=1.2.0
+GRAILSVERS=1.3.7
 JETTYVERS=6.1.21
 
 GRAILS_HOME=${PWD}/build/local/grails-${GRAILSVERS}
