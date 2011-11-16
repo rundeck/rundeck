@@ -24,8 +24,6 @@
 package com.dtolabs.rundeck.core.execution.impl.jsch;
 
 import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.core.CoreException;
-import com.dtolabs.rundeck.core.authentication.INodeAuthResolutionStrategy;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
@@ -42,7 +40,6 @@ import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Echo;
 import org.apache.tools.ant.taskdefs.Sequential;
-import org.apache.tools.ant.taskdefs.optional.ssh.Scp;
 
 import java.io.*;
 import java.text.MessageFormat;
@@ -56,7 +53,6 @@ import java.util.Map;
  */
 public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Describable {
     public static final String SERVICE_PROVIDER_TYPE = "jsch-scp";
-
 
 
     static final Description DESC = new Description() {
@@ -84,6 +80,7 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
     public Description getDescription() {
         return DESC;
     }
+
     private Framework framework;
 
     public JschScpFileCopier(Framework framework) {
@@ -108,8 +105,9 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
     }
 
 
-    private String copyFile(final ExecutionContext context, File scriptfile, InputStream input, String script,
-                            INodeEntry node) throws FileCopierException {
+    private String copyFile(final ExecutionContext context, final File scriptfile, final InputStream input,
+                            final String script, final INodeEntry node) throws FileCopierException {
+
         Project project = new Project();
         final Sequential seq = new Sequential();
         seq.setProject(project);
@@ -121,7 +119,16 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
 
 
 //        logger.debug("temp file for node " + node.getNodename() + ": " + temp.getAbsolutePath() + ", datacontext: " + dataContext);
-        final Task scp = createScp(context, node, project, remotefile, localTempfile, JschNodeExecutor.keyfilefinder);
+        final Task scp;
+        final JschNodeExecutor.NodeSSHConnectionInfo nodeAuthentication = new JschNodeExecutor.NodeSSHConnectionInfo(node,
+            framework, context);
+        try {
+
+            scp = SSHTaskBuilder.buildScp(node, project, remotefile, localTempfile, nodeAuthentication,
+                context.getLoglevel());
+        } catch (SSHTaskBuilder.BuilderException e) {
+            throw new FileCopierException(e);
+        }
 
         /**
          * Copy the file over
@@ -130,7 +137,7 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
                                       + "' to: '" + node.getNodename() + ":" + remotefile + "'", project));
         seq.addTask(scp);
 
-        String errormsg=null;
+        String errormsg = null;
         try {
             seq.execute();
         } catch (BuildException e) {
@@ -154,85 +161,6 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
         }
         return remotefile;
     }
-
-
-    /**
-     * Create Scp task to copy the scriptfile
-     *
-     * @param nodeentry  node
-     * @param project    project
-     * @param remotepath path
-     * @param sourceFile
-     *
-     * @param finder
-     * @return Scp object
-     */
-    protected Scp createScp(final ExecutionContext context, final INodeEntry nodeentry, final Project project,
-                            final String remotepath,
-                            final File sourceFile, final SSHTaskBuilder.KeyfileFinder finder) {
-        final INodeAuthResolutionStrategy nodeAuth = framework.getNodeAuthResolutionStrategy();
-
-        final Scp scp = new Scp();
-        scp.setFailonerror(true);
-        scp.setTrust(true); // set this true to avoid  "reject HostKey" errors
-
-        scp.setProject(project);
-
-        scp.setHost(nodeentry.extractHostname());
-        scp.setUsername(nodeentry.extractUserName());
-
-        // If the node entry contains a non-default port, configure the connection to use it.
-        if (nodeentry.containsPort()) {
-            final int portNum;
-            try {
-                portNum = Integer.parseInt(nodeentry.extractPort());
-            } catch (NumberFormatException e) {
-                throw new CoreException("extracted port value was not parseable as an integer: "
-                                        + nodeentry.extractPort(), e);
-            }
-            scp.setPort(portNum);
-        }
-
-        if (nodeAuth.isKeyBasedAuthentication(nodeentry)) {
-            /**
-             * Configure keybased authentication
-             */
-            final String sshKeypath = finder != null ? finder.getKeyfilePathForNode(nodeentry, framework,
-                context.getFrameworkProject()) : null;
-            final boolean keyFileExists = null != sshKeypath && !"".equals(sshKeypath) && new File(sshKeypath).exists();
-            if (!keyFileExists) {
-                throw new CoreException("SSH Keyfile does not exist: " + sshKeypath);
-            }
-            scp.setKeyfile(sshKeypath);
-
-        } else if (nodeAuth.isPasswordBasedAuthentication(nodeentry)) {
-            /**
-             * Configure password based authentication
-             */
-            final String password = nodeAuth.fetchPassword(nodeentry);
-            if (null == password) {
-                throw new CoreException("Null password resulted from fetched for node: "
-                                        + nodeentry.getNodename());
-            }
-            scp.setPassword(password);
-
-        } else {
-
-            throw new CoreException("Unknown node authentication configuration for node: " + nodeentry.getNodename());
-        }
-        //XXX:TODO use node attributes to specify timeout
-        /**
-         * Set the local and remote file paths
-         */
-        scp.setLocalFile(sourceFile.getAbsolutePath());
-        final String sshUriPrefix = nodeentry.extractUserName() + "@" + nodeentry.extractHostname() + ":";
-        scp.setRemoteTofile(sshUriPrefix + remotepath);
-
-        scp.setPassphrase(""); // set empty otherwise password will be required
-        scp.setVerbose(context.getLoglevel() >= Project.MSG_VERBOSE);
-        return scp;
-    }
-
 
     private Echo createEcho(final String message, final Project project, final String logLevel) {
         final Echo echo = new Echo();

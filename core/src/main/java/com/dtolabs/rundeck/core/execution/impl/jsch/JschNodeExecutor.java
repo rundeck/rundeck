@@ -36,7 +36,6 @@ import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
 import com.dtolabs.rundeck.core.tasks.net.ExtSSHExec;
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
 import com.jcraft.jsch.JSchException;
@@ -57,8 +56,19 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String FWK_PROP_AUTH_CANCEL_MSG_DEFAULT =
         "Authentication failure connecting to node: \"{0}\". Make sure your resource definitions and credentials are up to date.";
     public static final String NODE_ATTR_SSH_KEYPATH = "ssh-keypath";
-    public static final String FWK_PROP_SSH_KEYPATH = "framework.ssh-keypath";
-    public static final String PROJ_PROP_SSH_KEYPATH = "project.ssh-keypath";
+
+    public static final String PROJ_PROP_PREFIX = "project.";
+    public static final String FWK_PROP_PREFIX = "framework.";
+
+    public static final String FWK_PROP_SSH_KEYPATH = FWK_PROP_PREFIX + NODE_ATTR_SSH_KEYPATH;
+    public static final String PROJ_PROP_SSH_KEYPATH = PROJ_PROP_PREFIX + NODE_ATTR_SSH_KEYPATH;
+
+    public static final String NODE_ATTR_SSH_AUTHENTICATION = "ssh-authentication";
+    public static final String NODE_ATTR_SSH_PASSWORD_OPTION = "ssh-password-option";
+
+
+    public static final String FWK_PROP_SSH_AUTHENTICATION = FWK_PROP_PREFIX + NODE_ATTR_SSH_AUTHENTICATION;
+    public static final String PROJ_PROP_SSH_AUTHENTICATION = PROJ_PROP_PREFIX + NODE_ATTR_SSH_AUTHENTICATION;
     private Framework framework;
 
     public JschNodeExecutor(final Framework framework) {
@@ -66,9 +76,10 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     }
 
     static final List<Property> CONFIG_PROPERTIES = new ArrayList<Property>();
-    static final Map<String,String> CONFIG_MAPPING ;
+    static final Map<String, String> CONFIG_MAPPING;
 
     public static final String CONFIG_KEYPATH = "keypath";
+    public static final String CONFIG_AUTHENTICATION = "authentication";
 
     static {
 //        CONFIG_PROPERTIES.add(PropertyUtil.string(CONFIG_KEYPATH, "SSH Keypath",
@@ -77,6 +88,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
         final Map<String, String> mapping = new HashMap<String, String>();
         mapping.put(CONFIG_KEYPATH, PROJ_PROP_SSH_KEYPATH);
+        mapping.put(CONFIG_AUTHENTICATION, PROJ_PROP_SSH_AUTHENTICATION);
         CONFIG_MAPPING = Collections.unmodifiableMap(mapping);
     }
 
@@ -126,10 +138,14 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
         boolean success = false;
         final ExtSSHExec sshexec;
-        final int timeout = getFrameworkSSHTimeout(framework);
         //perform jsch sssh command
+        final NodeSSHConnectionInfo nodeAuthentication = new NodeSSHConnectionInfo(node, framework,
+            context);
+        final int timeout = nodeAuthentication.getSSHTimeout();
         try {
-            sshexec = buildSSHTask(context, node, command, project, framework);
+
+            sshexec = SSHTaskBuilder.build(node, command, project, context.getDataContext(),
+                nodeAuthentication, context.getLoglevel());
         } catch (SSHTaskBuilder.BuilderException e) {
             throw new ExecutionException(e);
         }
@@ -184,33 +200,42 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     }
 
 
-    private ExtSSHExec buildSSHTask(final ExecutionContext context, final INodeEntry nodeentry, final String[] args,
-                                    final Project project, final Framework framework) throws
-        SSHTaskBuilder.BuilderException {
+    final static class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
+        final INodeEntry node;
+        final Framework framework;
+        final ExecutionContext context;
+        FrameworkProject frameworkProject;
 
-        //XXX:TODO use node attributes to specify timeout
+        NodeSSHConnectionInfo(final INodeEntry node, final Framework framework, final ExecutionContext context) {
 
-        /**
-         * configure an SSH timeout
-         */
-        final int timeout = getFrameworkSSHTimeout(framework);
-        final String frameworkProject = context.getFrameworkProject();
+            this.node = node;
+            this.framework = framework;
+            this.context = context;
+            this.frameworkProject = framework.getFrameworkProjectMgr().getFrameworkProject(
+                context.getFrameworkProject());
+        }
 
-        return SSHTaskBuilder.build(nodeentry, args, project, framework, timeout, context.getDataContext(),
-            frameworkProject, keyfilefinder);
-    }
+        public SSHTaskBuilder.AuthenticationType getAuthenticationType() {
+            if (null != node.getAttributes().get(NODE_ATTR_SSH_AUTHENTICATION)) {
+                return SSHTaskBuilder.AuthenticationType.valueOf(node.getAttributes().get(
+                    NODE_ATTR_SSH_AUTHENTICATION));
+            }
 
-    /**
-     * Keyfile finder looks for node attribute "ssh-keypath", then looks for project and framework level default
-     * "default.ssh.keypath", then looks for framework level "framework.ssh.keypath"
-     */
-    final static SSHTaskBuilder.KeyfileFinder keyfilefinder = new SSHTaskBuilder.KeyfileFinder() {
-        public String getKeyfilePathForNode(final INodeEntry node, final Framework framework, final String project) {
+            if (frameworkProject.hasProperty(PROJ_PROP_SSH_AUTHENTICATION)) {
+                return SSHTaskBuilder.AuthenticationType.valueOf(frameworkProject.getProperty(
+                    PROJ_PROP_SSH_AUTHENTICATION));
+            } else if (framework.hasProperty(FWK_PROP_SSH_AUTHENTICATION)) {
+                return SSHTaskBuilder.AuthenticationType.valueOf(framework.getProperty(FWK_PROP_SSH_AUTHENTICATION));
+            } else {
+                return SSHTaskBuilder.AuthenticationType.privateKey;
+            }
+        }
+
+        public String getPrivateKeyfilePath() {
             if (null != node.getAttributes().get(NODE_ATTR_SSH_KEYPATH)) {
                 return node.getAttributes().get(NODE_ATTR_SSH_KEYPATH);
             }
 
-            final FrameworkProject frameworkProject = framework.getFrameworkProjectMgr().getFrameworkProject(project);
             if (frameworkProject.hasProperty(PROJ_PROP_SSH_KEYPATH)) {
                 return frameworkProject.getProperty(PROJ_PROP_SSH_KEYPATH);
             } else if (framework.hasProperty(FWK_PROP_SSH_KEYPATH)) {
@@ -220,21 +245,48 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                 return framework.getProperty(Constants.SSH_KEYPATH_PROP);
             }
         }
-    };
 
-    static int getFrameworkSSHTimeout(final Framework framework) {
-        int timeout = 0;
-        if (framework.getPropertyLookup().hasProperty(Constants.SSH_TIMEOUT_PROP)) {
-            final String val = framework.getProperty(Constants.SSH_TIMEOUT_PROP);
-            try {
-                timeout = Integer.parseInt(val);
-            } catch (NumberFormatException e) {
-//                debug("ssh timeout property '" + Constants.SSH_TIMEOUT_PROP
-//                      + "' had a non integer value: " + val
-//                      + " defaulting to: 0 (forever)");
+        private String evaluateOption(final String optionName) {
+            final Map<String, String> option = context.getDataContext().get("option");
+            if (null != option) {
+                return option.get(optionName);
+            } else {
+                return null;
             }
         }
-        return timeout;
+
+
+        public String getPassword() {
+            if (null != node.getAttributes().get(NODE_ATTR_SSH_PASSWORD_OPTION)) {
+                return evaluateOption(node.getAttributes().get(NODE_ATTR_SSH_PASSWORD_OPTION));
+            } else {
+                return null;
+            }
+        }
+
+        public int getSSHTimeout() {
+            int timeout = 0;
+            if (framework.getPropertyLookup().hasProperty(Constants.SSH_TIMEOUT_PROP)) {
+                final String val = framework.getProperty(Constants.SSH_TIMEOUT_PROP);
+                try {
+                    timeout = Integer.parseInt(val);
+                } catch (NumberFormatException e) {
+                }
+            }
+            return timeout;
+        }
+
+        public String getUsername() {
+            if (null != node.getUsername() || node.containsUserName()) {
+                return node.extractUserName();
+            } else if (frameworkProject.hasProperty("project.ssh.user")
+                       && !"".equals(frameworkProject.getProperty("project.ssh.user").trim())) {
+                return frameworkProject.getProperty("project.ssh.user").trim();
+            } else {
+                return framework.getProperty(Constants.SSH_USER_PROP);
+            }
+        }
     }
+
 
 }

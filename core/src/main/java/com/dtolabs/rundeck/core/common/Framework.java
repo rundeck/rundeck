@@ -20,8 +20,6 @@ import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.CoreException;
 import com.dtolabs.rundeck.core.authentication.AuthenticationMgrFactory;
 import com.dtolabs.rundeck.core.authentication.Authenticator;
-import com.dtolabs.rundeck.core.authentication.INodeAuthResolutionStrategy;
-import com.dtolabs.rundeck.core.authentication.NodeAuthResolutionStrategyFactory;
 import com.dtolabs.rundeck.core.authorization.*;
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcher;
@@ -148,19 +146,6 @@ public class Framework extends FrameworkResourceParent {
             }
         }
 
-        if (null==nodeAuthResolutionStrategy) {
-            final String nodeAuthClassname;
-            if (lookup.hasProperty(NODEAUTH_CLS_PROP)) {
-                nodeAuthClassname = lookup.getProperty(NODEAUTH_CLS_PROP);
-            } else {
-                nodeAuthClassname = Constants.DEFAULT_NODE_AUTHSTRATEGY_CLASSNAME;
-                logger.info("Framework setting, "+NODEAUTH_CLS_PROP+", not set. "
-                        + "Defaulted to " + nodeAuthClassname);
-            }
-            nodeAuthResolutionStrategy = NodeAuthResolutionStrategyFactory.create(nodeAuthClassname, this);
-
-        }
-
         //plugin manager service inited first.  any pluggable services will then be
         //able to try to load providers via the plugin manager
         if(!hasProperty(FRAMEWORK_PLUGINS_ENABLED) || "true".equals(getProperty(FRAMEWORK_PLUGINS_ENABLED))){
@@ -208,12 +193,6 @@ public class Framework extends FrameworkResourceParent {
      */
     public Authenticator getAuthenticationMgr() {
         return authenticationMgr;
-    }
-
-    private INodeAuthResolutionStrategy nodeAuthResolutionStrategy;
-
-    public INodeAuthResolutionStrategy getNodeAuthResolutionStrategy() {
-        return nodeAuthResolutionStrategy;
     }
 
     /**

@@ -307,12 +307,22 @@ public class DataContextUtils {
     }
 
     /**
+     * Can be configured with environment variables
+     */
+    public static interface EnvironmentConfigurable{
+
+        /**
+         * Add an environment variable
+         */
+        void addEnv(Environment.Variable env);
+    }
+    /**
      * add Env elements to pass environment variables to the ExtSSHExec
      *
      * @param environment environment variables
      * @param sshexecTask task
      */
-    public static void addEnvVars( final ExtSSHExec sshexecTask, final Map<String, Map<String, String>> dataContext) {
+    public static void addEnvVars( final EnvironmentConfigurable sshexecTask, final Map<String, Map<String, String>> dataContext) {
         final Map<String, String> environment = generateEnvVarsFromContext(dataContext);
         if (null != environment) {
             for (final Map.Entry<String, String> entry : environment.entrySet()) {
