@@ -62,6 +62,11 @@
                                    size="40" placeholder="Default value"/>
                         </label>
                     </td>
+                    <td>
+                        <div>Secure Input</div>
+                        <label><g:radio name="secureInput" value="false" checked="${!option || !option?.secureInput}"/> No</label>
+                        <label><g:radio name="secureInput" value="true" checked="${option?.secureInput}"/> Yes</label>
+                    </td>
                 </tr>
             </table>
 

@@ -357,6 +357,9 @@ class EditOptsController {
         if(null==params.multivalued){
             params.multivalued=false
         }
+        if(null==params.secureInput){
+            params.secureInput=false
+        }
         opt.properties = params
         if(params.valuesType == 'list'){
             opt.valuesUrl=null
