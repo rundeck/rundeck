@@ -493,13 +493,16 @@ class ScheduledExecutionService {
     }
 
     /**
-     * Schedule a stored job to execute immediately.
+     * Schedule a stored job to execute immediately, include a set of params in the data map
      */
-    def long scheduleTempJob(ScheduledExecution se, String user, Subject subject, Execution e) {
+    def long scheduleTempJob(ScheduledExecution se, String user, Subject subject, Execution e, Map extra=null) {
 
         def jobDetail = createJobDetail(se, "TEMP:" + user + ":" + se.id + ":" + e.id, user + ":run:" + se.id)
         jobDetail.getJobDataMap().put("userSubject", subject)
         jobDetail.getJobDataMap().put("executionId", e.id.toString())
+        if(extra){
+            jobDetail.getJobDataMap().put("extraParams", extra)
+        }
 
         def Trigger trigger = TriggerUtils.makeImmediateTrigger(0, 0)
         trigger.setName(jobDetail.getName() + "Trigger")
