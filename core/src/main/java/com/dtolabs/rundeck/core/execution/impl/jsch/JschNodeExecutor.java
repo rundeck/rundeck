@@ -39,6 +39,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import com.dtolabs.rundeck.core.tasks.net.ExtSSHExec;
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
 import com.jcraft.jsch.JSchException;
+import org.apache.log4j.Logger;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 
@@ -51,6 +52,7 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class JschNodeExecutor implements NodeExecutor, Describable {
+    public static final Logger logger = Logger.getLogger(JschNodeExecutor.class.getName());
     public static final String SERVICE_PROVIDER_TYPE = "jsch-ssh";
     public static final String FWK_PROP_AUTH_CANCEL_MSG = "framework.messages.error.ssh.authcancel";
     public static final String FWK_PROP_AUTH_CANCEL_MSG_DEFAULT =
@@ -65,6 +67,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
     public static final String NODE_ATTR_SSH_AUTHENTICATION = "ssh-authentication";
     public static final String NODE_ATTR_SSH_PASSWORD_OPTION = "ssh-password-option";
+    public static final String DEFAULT_SSH_PASSWORD_OPTION = "option.ssh-password";
 
 
     public static final String FWK_PROP_SSH_AUTHENTICATION = FWK_PROP_PREFIX + NODE_ATTR_SSH_AUTHENTICATION;
@@ -247,12 +250,28 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         }
 
         private String evaluateOption(final String optionName) {
-            final Map<String, String> option = context.getDataContext().get("option");
-            if (null != option) {
-                return option.get(optionName);
-            } else {
+            if(null==optionName) {
+                logger.debug("option name was null");
                 return null;
             }
+            if(null== context.getPrivateDataContext()){
+                logger.debug("private context was null");
+                return null;
+            }
+            final String[] opts = optionName.split("\\.", 2);
+            if (null != opts && 2 == opts.length) {
+                final Map<String, String> option = context.getPrivateDataContext().get(opts[0]);
+                if (null != option) {
+                    final String value = option.get(opts[1]);
+                    if(null==value){
+                        logger.debug("private context '" + optionName + "' was null");
+                    }
+                    return value;
+                }else {
+                    logger.debug("private context '" + opts[0] + "' was null");
+                }
+            }
+            return null;
         }
 
 
@@ -260,7 +279,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             if (null != node.getAttributes().get(NODE_ATTR_SSH_PASSWORD_OPTION)) {
                 return evaluateOption(node.getAttributes().get(NODE_ATTR_SSH_PASSWORD_OPTION));
             } else {
-                return null;
+                return evaluateOption(DEFAULT_SSH_PASSWORD_OPTION);
             }
         }
 

@@ -277,9 +277,8 @@ public class SSHTaskBuilder {
                 final String password = sshConnectionInfo.getPassword();
                 final boolean valid = null != password && !"".equals(password);
                 if (!valid) {
-                    throw new BuilderException("SSH Password was not valid");
+                    throw new BuilderException("SSH Password was not set");
                 }
-                project.log("Using ssh password: ****", Project.MSG_DEBUG);
                 sshbase.setPassword(password);
                 break;
         }

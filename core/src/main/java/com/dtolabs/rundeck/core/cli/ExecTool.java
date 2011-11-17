@@ -1059,6 +1059,10 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
         return null;
     }
 
+    public Map<String, Map<String, String>> getPrivateDataContext() {
+        return null;
+    }
+
     public File getNodesFile() {
         return nodesFile;
     }
