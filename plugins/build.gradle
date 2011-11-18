@@ -1,6 +1,6 @@
 
 allprojects{
-    version = '1.4.0.2'
+    version = '1.4.1'
     defaultTasks 'clean','build'
     rundeckPluginVersion= '1.0'
 }

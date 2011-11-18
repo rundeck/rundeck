@@ -2,7 +2,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 apply plugin: 'java'
 sourceCompatibility = 1.5
-version = '1.4.0.2'
+version = '1.4.1'
 archivesBaseName = 'rundeck-core'
 defaultTasks 'clean','assemble'
 repositories {
@@ -53,7 +53,7 @@ test{
 task expandTemplate << {
     ant.delete(file:"$projectDir/src/main/resources/META-INF/com/dtolabs/rundeck/core/application.properties")
     copy{
-        expand('version':version,'version_build':buildNum,'version_ident':version+'.'+buildNum)
+        expand('version':version,'version_build':buildNum,'version_ident':version+'-'+buildNum)
         from "$projectDir/src/main/meta/com/dtolabs/rundeck/core/application.properties"
         into "$projectDir/src/main/resources/META-INF/com/dtolabs/rundeck/core/"
     }   
@@ -106,7 +106,7 @@ task createPom << {
             properties{
                 'version'(version)
                 'version_build'(buildNum)
-                'version_ident'(version+'.'+buildNum)
+                'version_ident'(version+'-'+buildNum)
             }
             build {
                 resources{

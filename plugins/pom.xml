@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.dtolabs.rundeck</groupId>
   <artifactId>rundeck-bundled-plugins</artifactId>
-  <version>1.4.0.2</version>
+  <version>1.4.1</version>
   <packaging>pom</packaging>
   <name>RunDeck Bundled Plugins</name>
   <url>http://rundeck.org</url>
@@ -19,14 +19,6 @@
   <build>
     <plugins>
       <plugin>
-	<artifactId>maven-compiler-plugin</artifactId>
-	<version>2.3.2</version>
-	<configuration>
-	  <source>1.6</source>
-	  <target>1.6</target>
-	</configuration>
-      </plugin>
-      <plugin>
         <artifactId>maven-jar-plugin</artifactId>
         <version>2.3.2</version>
         <configuration>
@@ -36,6 +28,14 @@
               <Rundeck-Plugin-Archive>true</Rundeck-Plugin-Archive>
             </manifestEntries>
           </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.3.2</version>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
         </configuration>
       </plugin>
     </plugins>
@@ -48,7 +48,7 @@
     <dependency>
       <groupId>com.dtolabs.rundeck</groupId>
       <artifactId>rundeck-core</artifactId>
-      <version>1.4.0.2</version>
+      <version>1.4.1</version>
     </dependency>
   </dependencies>
 </project>
