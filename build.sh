@@ -68,7 +68,7 @@ if [ ! -f $BUILD_ROOT/local/grails-$GRAILSVERS/bin/grails ] ; then
     else
         # get grails bin distribution
         cd $BUILD_ROOT/dl
-        $GET http://dist.codehaus.org/grails/grails-$GRAILSVERS.zip
+        $GET http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/grails-$GRAILSVERS.zip
         cd $BUILD_ROOT/local
         unzip $BUILD_ROOT/dl/grails-$GRAILSVERS.zip
     fi
