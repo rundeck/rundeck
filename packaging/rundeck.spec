@@ -74,9 +74,9 @@ fi
 
 # CLI Lib Support
 %dir /var/lib/rundeck/cli
-/var/lib/rundeck/cli/ant-1.8.1.jar
-/var/lib/rundeck/cli/ant-jsch-1.8.1.jar
-/var/lib/rundeck/cli/ant-launcher-1.8.1.jar
+/var/lib/rundeck/cli/ant-1.7.1.jar
+/var/lib/rundeck/cli/ant-jsch-1.7.1.jar
+/var/lib/rundeck/cli/ant-launcher-1.7.1.jar
 /var/lib/rundeck/cli/commons-beanutils-1.8.0.jar
 /var/lib/rundeck/cli/commons-cli-1.0.jar
 /var/lib/rundeck/cli/commons-codec-1.3.jar
@@ -87,10 +87,9 @@ fi
 /var/lib/rundeck/cli/dom4j-1.6.1.jar
 /var/lib/rundeck/cli/jaxen-1.1.jar
 /var/lib/rundeck/cli/jsch-0.1.42.jar
-/var/lib/rundeck/cli/log4j-1.2.15.jar
+/var/lib/rundeck/cli/log4j-1.2.16.jar
 /var/lib/rundeck/cli/rundeck-core-%{version}.jar
-/var/lib/rundeck/cli/xerces-2.6.0.jar
-/var/lib/rundeck/cli/xml-apis-2.6.0.jar
+/var/lib/rundeck/cli/xercesImpl-2.6.0.jar
 /var/lib/rundeck/cli/snakeyaml-1.9.jar
 
 # CLI Tools
