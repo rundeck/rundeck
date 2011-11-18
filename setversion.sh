@@ -44,11 +44,27 @@ perl  -i'.orig' -p -e "s#^version\.tag\s*=.*\$#version.tag=$TAG#" `pwd`/version.
 
 echo MODIFIED: `pwd`/version.properties
 
+#alter pom.xml version
+
+XML=$(which xmlstarlet)
+if [ -z "$XML" ] ; then
+    XML=$(which xml)
+fi
+$XML ed -P -S -N p=http://maven.apache.org/POM/4.0.0 -u "/p:project/p:version" -v "$VERSION" pom.xml > pom_new.xml
+mv pom_new.xml pom.xml
+
+echo MODIFIED: `pwd`/pom.xml
+
 #alter grails i18n messages main.app.version.num=1.0.0
 perl  -i'.orig' -p -e "s#^app\.version\s*=.*\$#app.version=$VERSION#" `pwd`/rundeckapp/application.properties
 perl  -i'.orig' -p -e "s#^build\.ident\s*=.*\$#build.ident=$VERSION-$RELEASE$IDENT_TAG#" `pwd`/rundeckapp/application.properties
 
 echo MODIFIED: `pwd`/rundeckapp/application.properties
+
+$XML ed -P -S -N p=http://maven.apache.org/POM/4.0.0 -u "/p:project/p:version" -v "$VERSION" rundeckapp/pom.xml > rundeckapp/pom_new.xml
+mv rundeckapp/pom_new.xml rundeckapp/pom.xml
+
+echo MODIFIED: `pwd`/rundeckapp/pom.xml
 
 #modify core/build.gradle
 perl  -i'.orig' -p -e "s#^version\s*=.*\$#version = '$VERSION'#" `pwd`/core/build.gradle
