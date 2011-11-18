@@ -110,6 +110,20 @@
           </module>
         </modules>
       </facet-type>
+      <facet-type id="Spring">
+        <modules>
+          <module name="rundeck">
+            <files>
+              <file url="file://$PROJECT_DIR$/web-app/WEB-INF/applicationContext.xml" />
+            </files>
+          </module>
+          <module name="webrealms-inplacePlugin">
+            <files>
+              <file url="file://$PROJECT_DIR$/webrealms/web-app/WEB-INF/applicationContext.xml" />
+            </files>
+          </module>
+        </modules>
+      </facet-type>
       <facet-type id="web">
         <modules>
           <module name="rundeck" />
@@ -268,7 +282,12 @@
     <option name="Update Plugins" value="false" />
     <option name="Update Snapshots" value="false" />
     <option name="Skip Tests" value="false" />
-    <pom-list />
+    <pom-list>
+      <pom>
+        <option name="path" value="$PROJECT_DIR$/pom.xml" />
+        <plugin-list />
+      </pom>
+    </pom-list>
   </component>
   <component name="Palette2">
     <group name="Swing">
@@ -405,7 +424,6 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/rundeck.iml" filepath="$PROJECT_DIR$/rundeck.iml" />
       <module fileurl="file://$PROJECT_DIR$/rundeck-grailsPlugins.iml" filepath="$PROJECT_DIR$/rundeck-grailsPlugins.iml" />
-      <module fileurl="file://$PROJECT_DIR$/webrealms-inplacePlugin.iml" filepath="$PROJECT_DIR$/webrealms-inplacePlugin.iml" />
     </modules>
   </component>
   <component name="ProjectResources">
@@ -496,6 +514,110 @@
       </CLASSES>
       <JAVADOC />
       <SOURCES />
+    </library>
+    <library name="grails-1.3.7">
+      <CLASSES>
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/dist/grails-bootstrap-1.3.7.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/dist/grails-core-1.3.7.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/dist/grails-crud-1.3.7.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/dist/grails-docs-1.3.7.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/dist/grails-gorm-1.3.7.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/dist/grails-osgi-1.3.7.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/dist/grails-resources-1.3.7.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/dist/grails-scripts-1.3.7.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/dist/grails-spring-1.3.7.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/dist/grails-test-1.3.7.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/dist/grails-web-1.3.7.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/dist/grails-webflow-1.3.7.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/ant-1.7.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/ant-junit-1.7.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/ant-launcher-1.7.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/ant-nodeps-1.7.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/ant-trax-1.7.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/antlr-2.7.6.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/aopalliance-1.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/aspectjrt-1.6.8.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/aspectjweaver-1.6.8.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/cglib-nodep-2.1_3.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/commons-beanutils-1.8.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/commons-cli-1.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/commons-codec-1.4.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/commons-collections-3.2.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/commons-dbcp-1.3.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/commons-el-1.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/commons-fileupload-1.2.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/commons-io-1.4.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/commons-lang-2.4.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/commons-pool-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/commons-validator-1.3.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/concurrentlinkedhashmap-lru-1.0_jdk5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/core-renderer-R8.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/dom4j-1.6.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/ehcache-core-1.7.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/ejb3-persistence-1.0.2.GA.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/gant_groovy1.7-1.9.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/gpars-0.9.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/groovy-all-1.7.8.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/hibernate-annotations-3.4.0.GA.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/hibernate-commons-annotations-3.1.0.GA.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/hibernate-core-3.3.1.GA.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/hibernate-ehcache-3.3.1.GA.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/hibernate-validator-3.1.0.GA.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/hsqldb-1.8.0.10.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/itext-2.0.8.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/ivy-2.2.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/jansi-1.2.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/javassist-3.11.0.GA.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/jcl-over-slf4j-1.5.8.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/jline-0.9.94.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/jsp-api-2.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/jsp-api-2.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/jsr107cache-1.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/jsr166y-070108.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/jstl-1.1.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/jta-1.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/jul-to-slf4j-1.5.8.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/junit-4.8.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/log4j-1.2.16.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/ognl-2.7.3.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/org.springframework.aop-3.0.5.RELEASE.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/org.springframework.asm-3.0.5.RELEASE.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/org.springframework.aspects-3.0.5.RELEASE.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/org.springframework.beans-3.0.5.RELEASE.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/org.springframework.binding-2.0.8.RELEASE.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/org.springframework.context-3.0.5.RELEASE.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/org.springframework.context.support-3.0.5.RELEASE.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/org.springframework.core-3.0.5.RELEASE.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/org.springframework.expression-3.0.5.RELEASE.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/org.springframework.instrument-3.0.5.RELEASE.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/org.springframework.instrument.tomcat-3.0.5.RELEASE.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/org.springframework.jdbc-3.0.5.RELEASE.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/org.springframework.jms-3.0.5.RELEASE.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/org.springframework.js-2.0.8.RELEASE.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/org.springframework.orm-3.0.5.RELEASE.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/org.springframework.oxm-3.0.5.RELEASE.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/org.springframework.test-3.0.5.RELEASE.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/org.springframework.transaction-3.0.5.RELEASE.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/org.springframework.web-3.0.5.RELEASE.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/org.springframework.web.servlet-3.0.5.RELEASE.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/org.springframework.webflow-2.0.8.RELEASE.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/oro-2.0.8.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/radeox-1.0-b2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/serializer-2.7.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/servlet-api-2.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/sitemesh-2.4.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/slf4j-api-1.5.8.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/slf4j-log4j12-1.5.8.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/standard-1.1.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/svnkit-1.3.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/../../grails-1.3.7/lib/xpp3_min-1.1.3.4.O.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="file://$PROJECT_DIR$/../../grails-1.3.7/doc/api" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="file://$PROJECT_DIR$/../../grails-1.3.7/src/java" />
+      </SOURCES>
     </library>
     <library name="temp library (plugins)">
       <CLASSES>

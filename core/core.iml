@@ -152,7 +152,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="ant-1.8" level="application" />
     <orderEntry type="library" name="jsch-1.42" level="application" />
     <orderEntry type="module-library">
       <library>
@@ -181,6 +180,7 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="ant-1.7" level="application" />
     <javadoc-paths>
       <root url="file://$MODULE_DIR$/../../pkgs/apache-ant-1.8.1/docs/manual/api" />
     </javadoc-paths>

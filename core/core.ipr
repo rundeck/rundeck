@@ -93,6 +93,9 @@
           <setting name="log-level" value="LIFECYCLE" />
         </setting>
       </setting>
+      <setting name="main_panel">
+        <setting name="current-tab" value="Task Tree" />
+      </setting>
     </setting>
   </component>
   <component name="IdProvider" IDEtalkID="48BED7A3BBCF3323B91068465D3FF55D" />
@@ -250,7 +253,12 @@
     <option name="Update Plugins" value="false" />
     <option name="Update Snapshots" value="false" />
     <option name="Skip Tests" value="false" />
-    <pom-list />
+    <pom-list>
+      <pom>
+        <option name="path" value="$PROJECT_DIR$/pom.xml" />
+        <plugin-list />
+      </pom>
+    </pom-list>
   </component>
   <component name="PEExternalization">
     <option name="IGNORE_METHOD_NAMES" value="" />
