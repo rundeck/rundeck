@@ -12,7 +12,7 @@
 <div class="pageBody form">
     <g:form controller="scheduledExecution" method="post">
         <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized,jobexecOptionErrors:jobexecOptionErrors]}"/>
-        <input name="extra._replaceNodeFilters" value="true" type="hidden"/>
+
 
         <g:if test="${nodesetvariables }">
             <div class="message note">
@@ -27,6 +27,8 @@
         <g:elseif test="${nodes}">
             <g:set var="COLS" value="${6}"/>
             <span class="prompt">Nodes:</span>
+            <label><input name="extra._replaceNodeFilters" value="true" type="checkbox"
+                          id="doReplaceFilters"/> Change the Target Nodes</label>
             <div class="presentation matchednodes embed jobmatchednodes group_section">
                 <%--
                  split node names into groups, in several patterns
@@ -34,7 +36,7 @@
                   (\d+)\D.*
                 --%>
                 <g:if test="${namegroups}">
-                    <div>
+                    <div class="group_select_control" style="display:none">
                         Select:
                         <span class="action button selectall">All</span>
                         <span class="action button selectnone">None</span>
@@ -63,7 +65,7 @@
 
                             <div id="${expkey}" style="display:none;" class="presentation group_section rounded">
                                 <g:if test="${namegroups.size()>1}">
-                                <div>
+                                <div class="group_select_control" style="display:none">
                                     Select:
                                     <span class="action button selectall" >All</span>
                                     <span class="action button selectnone" >None</span>
@@ -83,6 +85,7 @@
                                                    id="${node.nodename}_key">
                                                 <input id="${node.nodename}" type="checkbox" name="extra.nodeIncludeName"
                                                        value="${node.nodename}"
+                                                    disabled="true"
                                                     tag="${node.tags?.join(' ').encodeAsHTML()}"
                                                        checked="true"/> ${node.nodename.encodeAsHTML()}</label>
 
@@ -109,7 +112,7 @@
                         <label for="${node.nodename}" class=" ${localNodeName&& localNodeName==node.nodename? 'server' : ''} node_ident obs_tooltip"
                                id="${node.nodename}_key">
                             <input id="${node.nodename}" type="checkbox" name="extra.nodeIncludeName"
-                                   value="${node.nodename}" checked="true"/> ${node.nodename.encodeAsHTML()}</label>
+                                   value="${node.nodename}" disabled="true" checked="true"/> ${node.nodename.encodeAsHTML()}</label>
 
                         <g:render template="/framework/nodeTooltipView"
                                   model="[node:node,key:node.nodename+'_key',islocal:localNodeName && localNodeName==node.nodename]"/>
@@ -175,6 +178,23 @@
                             } else {
                                 $(el).removeClassName('tagselected');
                             }
+                        });
+                    });
+                    $$('#doReplaceFilters').each(function(e){
+                        Event.observe(e,'change',function(evt){
+
+                            $$('div.jobmatchednodes input').each(function(cb) {
+                                if (cb.type == 'checkbox') {
+                                    [cb].each(e.checked?Field.enable:Field.disable);
+                                    if(!e.checked){
+                                        $$('.group_select_control').each(Element.hide);
+                                        cb.checked=true;
+                                    }else{
+                                        $$('.group_select_control').each(Element.show);
+                                    }
+                                }
+                            });
+
                         });
                     });
                 });
