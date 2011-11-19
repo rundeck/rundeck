@@ -66,7 +66,7 @@ public class TestURLResourceModelSource extends AbstractBaseTest {
     FrameworkProject frameworkProject;
 
     public void setUp() {
-
+        super.setUp();
         final Framework frameworkInstance = getFrameworkInstance();
         frameworkProject = frameworkInstance.getFrameworkProjectMgr().createFrameworkProject(
             PROJ_NAME);

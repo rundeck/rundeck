@@ -44,7 +44,7 @@ public class TestFileResourceModelSourceFactory extends AbstractBaseTest {
     }
 
     public void setUp() {
-
+        super.setUp();
         final Framework frameworkInstance = getFrameworkInstance();
         final FrameworkProject frameworkProject = frameworkInstance.getFrameworkProjectMgr().createFrameworkProject(
             PROJ_NAME);
