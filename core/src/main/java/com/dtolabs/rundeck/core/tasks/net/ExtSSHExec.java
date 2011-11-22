@@ -63,6 +63,9 @@ public class ExtSSHExec extends SSHBase {
     private String inputProperty = null;   // like <exec>
     private File inputFile = null;   // like <exec>
     private boolean append = false;   // like <exec>
+    private InputStream inputStream=null;
+    private OutputStream secondaryStream=null;
+    private DisconnectHolder disconnectHolder=null;
 
     private Resource commandResource = null;
     private List<Environment.Variable> envVars=null;
@@ -187,6 +190,40 @@ public class ExtSSHExec extends SSHBase {
     }
 
     /**
+     * Return the disconnectHolder
+     */
+    public DisconnectHolder getDisconnectHolder() {
+        return disconnectHolder;
+    }
+
+    /**
+     * Set a disconnectHolder
+     */
+    public void setDisconnectHolder(final DisconnectHolder disconnectHolder) {
+        this.disconnectHolder = disconnectHolder;
+    }
+
+    /**
+     * Allows disconnecting the ssh connection
+     */
+    public static interface Disconnectable{
+        /**
+         * Disconnect
+         */
+        public void disconnect();
+    }
+
+    /**
+     * Interface for receiving access to Disconnectable
+     */
+    public static interface DisconnectHolder{
+        /**
+         * Set disconnectable
+         */
+        public void setDisconnectable(Disconnectable disconnectable);
+    }
+
+    /**
      * Execute the command on the remote host.
      *
      * @exception BuildException  Most likely a network error or bad parameter.
@@ -220,6 +257,16 @@ public class ExtSSHExec extends SSHBase {
         StringBuffer output = new StringBuffer();
         try {
             session = openSession();
+
+            if(null!=getDisconnectHolder()){
+                final Session sub=session;
+                getDisconnectHolder().setDisconnectable(new Disconnectable() {
+                    public void disconnect() {
+                        sub.disconnect();
+                    }
+                });
+            }
+
             /* called once */
             if (command != null) {
                 if (getVerbose()) {
@@ -267,9 +314,28 @@ public class ExtSSHExec extends SSHBase {
 
     private void executeCommand(Session session, String cmd, StringBuffer sb)
         throws BuildException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        TeeOutputStream tee = 
-            new TeeOutputStream(out, new KeepAliveOutputStream(System.out));
+        final ByteArrayOutputStream out ;
+        final OutputStream tee;
+        final OutputStream teeout;
+        if(null!=outputFile || null!=outputProperty){
+            out = new ByteArrayOutputStream();
+        }else{
+            out=null;
+        }
+        if(null!=getSecondaryStream() && null!=out) {
+            teeout= new TeeOutputStream(out, getSecondaryStream());
+        } else if(null!= getSecondaryStream()){
+            teeout= getSecondaryStream();
+        }else if(null==out){
+            teeout=out;
+        }else{
+            teeout=null;
+        }
+        if(null!=teeout){
+            tee = new TeeOutputStream(teeout, new KeepAliveOutputStream(System.out));
+        }else{
+            tee= new KeepAliveOutputStream(System.out);
+        }
 
         InputStream istream = null ;
         if (inputFile != null) {
@@ -290,6 +356,10 @@ public class ExtSSHExec extends SSHBase {
             }        	
         }
 
+        if(getInputStream()!=null){
+            istream=getInputStream();
+        }
+
         try {
             final ChannelExec channel;
             session.setTimeout((int) maxwait);
@@ -297,7 +367,7 @@ public class ExtSSHExec extends SSHBase {
             channel = (ChannelExec) session.openChannel("exec");
             channel.setCommand(cmd);
             channel.setOutputStream(tee);
-            channel.setExtOutputStream(tee);
+            channel.setExtOutputStream(new KeepAliveOutputStream(System.err), true);
             if (istream != null) {
                 channel.setInputStream(istream);
             }
@@ -341,13 +411,13 @@ public class ExtSSHExec extends SSHBase {
                 }
             } else {
                 //success
-                if (outputFile != null) {
+                if (outputFile != null && null != out) {
                     writeToFile(out.toString(), append, outputFile);
                 }
 
                 // this is the wrong test if the remote OS is OpenVMS,
                 // but there doesn't seem to be a way to detect it.
-                exitStatus =channel.getExitStatus();
+                exitStatus = channel.getExitStatus();
                 int ec = channel.getExitStatus();
                 if (ec != 0) {
                     String msg = "Remote command failed with exit status " + ec;
@@ -382,7 +452,9 @@ public class ExtSSHExec extends SSHBase {
                 log("Caught exception: " + e.getMessage(), Project.MSG_ERR);
             }
         } finally {
-            sb.append(out.toString());
+            if(null!=out){
+                sb.append(out.toString());
+            }
             FileUtils.close(istream);
         }
     }
@@ -478,4 +550,25 @@ public class ExtSSHExec extends SSHBase {
         return session;
     }
 
+    public InputStream getInputStream() {
+        return inputStream;
+    }
+
+    /**
+     * Set an inputstream for pty input to the session
+     */
+    public void setInputStream(final InputStream inputStream) {
+        this.inputStream = inputStream;
+    }
+
+    public OutputStream getSecondaryStream() {
+        return secondaryStream;
+    }
+
+    /**
+     * Set a secondary outputstream to read from the connection
+     */
+    public void setSecondaryStream(final OutputStream secondaryStream) {
+        this.secondaryStream = secondaryStream;
+    }
 }

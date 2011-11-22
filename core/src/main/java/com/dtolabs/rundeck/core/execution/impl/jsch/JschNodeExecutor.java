@@ -43,6 +43,9 @@ import org.apache.log4j.Logger;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 
+import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -152,8 +155,40 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         } catch (SSHTaskBuilder.BuilderException e) {
             throw new ExecutionException(e);
         }
+
+        //Sudo support
+        final ResponderThread thread;
+        final Responder responder;
+        //TODO: use node attribute to define sudo command invocation
+        if ("sudo".equals(command[0]) || command[0].startsWith("sudo ")) {
+            //TODO: use node attribute to define sudo password secure option name
+            responder = new SudoResponder(node.getAttributes().get("sudo-password")+"\n");
+            final PipedInputStream responderInput = new PipedInputStream();
+            final PipedOutputStream responderOutput = new PipedOutputStream();
+            final PipedInputStream jschInput = new PipedInputStream();
+            final PipedOutputStream jschOutput = new PipedOutputStream();
+            try {
+                responderInput.connect(jschOutput);
+                jschInput.connect(responderOutput);
+            } catch (IOException e) {
+                throw new ExecutionException(e);
+            }
+            final DisconnectResponderResultHandler resultHandler = new DisconnectResponderResultHandler();
+            thread = new ResponderThread(responder, responderInput, responderOutput, resultHandler);
+            sshexec.setAllocatePty(true);
+            sshexec.setInputStream(jschInput);
+            sshexec.setSecondaryStream(jschOutput);
+            sshexec.setDisconnectHolder(resultHandler);
+        } else {
+            thread = null;
+            responder=null;
+        }
+
         String errormsg = null;
         try {
+            if (null != thread) {
+                thread.start();
+            }
             sshexec.execute();
             success = true;
         } catch (BuildException e) {
@@ -180,6 +215,18 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             }
             context.getExecutionListener().log(0, errormsg);
         }
+        if (null != thread) {
+            if(thread.isAlive()){
+                thread.stopResponder();
+            }
+            try {
+                thread.join(5000);
+            } catch (InterruptedException e) {
+            }
+            if (!thread.isAlive() && thread.isFailed()) {
+                context.getExecutionListener().log(0, responder.toString() + " failed: " + thread.getFailureReason());
+            }
+        }
         final int resultCode = sshexec.getExitStatus();
         final boolean status = success;
         final String resultmsg = null != errormsg ? errormsg : null;
@@ -202,6 +249,25 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         };
     }
 
+    /**
+     * Responder thread result handler which closes the SSH connection on failure
+     */
+    private final static class DisconnectResponderResultHandler implements ResponderThread.ResultHandler,
+        ExtSSHExec.DisconnectHolder {
+        ExtSSHExec.Disconnectable disconnectable;
+
+        public void setDisconnectable(final ExtSSHExec.Disconnectable disconnectable) {
+            this.disconnectable = disconnectable;
+        }
+
+        public void handleResult(final boolean success, final String reason) {
+            if (!success) {
+                if (null != disconnectable) {
+                    disconnectable.disconnect();
+                }
+            }
+        }
+    }
 
     final static class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
         final INodeEntry node;
@@ -250,11 +316,11 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         }
 
         private String evaluateOption(final String optionName) {
-            if(null==optionName) {
+            if (null == optionName) {
                 logger.debug("option name was null");
                 return null;
             }
-            if(null== context.getPrivateDataContext()){
+            if (null == context.getPrivateDataContext()) {
                 logger.debug("private context was null");
                 return null;
             }
@@ -263,11 +329,11 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                 final Map<String, String> option = context.getPrivateDataContext().get(opts[0]);
                 if (null != option) {
                     final String value = option.get(opts[1]);
-                    if(null==value){
+                    if (null == value) {
                         logger.debug("private context '" + optionName + "' was null");
                     }
                     return value;
-                }else {
+                } else {
                     logger.debug("private context '" + opts[0] + "' was null");
                 }
             }
@@ -308,4 +374,65 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     }
 
 
+    /**
+     * Sudo responder.
+     *
+     * TODO: allow patterns to be overridden
+     */
+    private class SudoResponder implements Responder {
+        private String password;
+
+        private SudoResponder(final String password) {
+            this.password = password;
+        }
+
+        public String getInputSuccessPattern() {
+            return "^\\[sudo\\] password for .+: .*";
+        }
+
+        public int getInputMaxLines() {
+            return 12;
+        }
+
+        public String getResponseSuccessPattern() {
+            return null;
+        }
+
+        public int getResponseMaxLines() {
+            return 3;
+        }
+
+        public String getResponseFailurePattern() {
+            return "^.*try again.*";//Sorry, try again
+        }
+
+        public String getInputFailurePattern() {
+            return null;
+        }
+
+        public long getResponseMaxTimeout() {
+            return 5000;
+        }
+
+        public long getInputMaxTimeout() {
+            return 5000;
+        }
+
+        public boolean isFailOnInputThreshold() {
+            return true;
+        }
+
+        public boolean isFailOnResponseThreshold() {
+            return false;
+        }
+
+        public String getInputString() {
+            return password;
+        }
+
+        @Override
+        public String toString() {
+            return "Sudo execution password response";
+        }
+    }
 }
