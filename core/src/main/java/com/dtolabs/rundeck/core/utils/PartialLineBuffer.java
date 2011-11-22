@@ -23,6 +23,8 @@
 */
 package com.dtolabs.rundeck.core.utils;
 
+import java.io.IOException;
+import java.io.Reader;
 import java.util.*;
 
 /**
@@ -68,6 +70,25 @@ public class PartialLineBuffer {
             }
 
         }
+    }
+
+    char[] cbuf = new char[1024];
+
+    /**
+     * Read some chars from a reader, and return the number of characters read
+     *
+     * @param reader input reader
+     *
+     * @return characters read
+     *
+     * @throws IOException if thrown by underlying read action
+     */
+    public int read(final Reader reader) throws IOException {
+        final int c = reader.read(cbuf);
+        if (c > 0) {
+            addData(cbuf, 0, c);
+        }
+        return c;
     }
 
     /**
@@ -129,10 +150,16 @@ public class PartialLineBuffer {
     public String getPartialLine(final boolean mark) {
         if (mark && newdata) {
             newdata = false;
+            if (partialLine.endsWith("\r")) {
+                return partialLine.substring(0, partialLine.length() - 1);
+            }
             return partialLine;
         } else if (mark && !newdata) {
             return null;
         } else {
+            if (null != partialLine && partialLine.endsWith("\r")) {
+                return partialLine.substring(0, partialLine.length() - 1);
+            }
             return partialLine;
         }
     }

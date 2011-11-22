@@ -21,7 +21,7 @@
 * Created: 11/21/11 10:26 AM
 *
 */
-package com.dtolabs.rundeck.core.execution.impl.jsch;
+package com.dtolabs.rundeck.core.execution.utils;
 
 import com.dtolabs.rundeck.core.utils.PartialLineBuffer;
 import org.apache.log4j.Logger;
@@ -45,17 +45,12 @@ import java.util.regex.Pattern;
  * <p/>
  * Example: wait for "[sudo] password for user: ", write a password, and fail on "try again" response:
  * <p/>
- * <ul>
- * <li>inputSuccessPattern: '^\[sudo\] password for .+: '</li>
- * <li>responseFailurePattern: '^.*try again.*'</li>
- * <li>failOnResponseThreshold: false</li>
- * <li>InputMaxLines: 12</li>
- * <li>inputString: 'password'</li>
- * </ul>
+ * <ul> <li>inputSuccessPattern: '^\[sudo\] password for .+: '</li> <li>responseFailurePattern: '^.*try again.*'</li>
+ * <li>failOnResponseThreshold: false</li> <li>InputMaxLines: 12</li> <li>inputString: 'password'</li> </ul>
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ResponderThread extends Thread {
+public class ResponderThread extends Thread implements ResponderStopper {
     static Logger logger = Logger.getLogger(ResponderThread.class.getName());
     private Responder responder;
     private OutputStream outputStream;
@@ -93,21 +88,30 @@ public class ResponderThread extends Thread {
         this.interrupt();
     }
 
+    public boolean isResponderStopped() {
+        return stopped;
+    }
+
     private void runResponder() {
         int step = 0;
         try {
             //look for input pattern
+            final PartialLineBuffer buffer = new PartialLineBuffer();
             if (null != responder.getInputSuccessPattern() || null != responder.getInputFailurePattern()) {
                 logger.debug("Awaiting input: " + responder.getInputSuccessPattern() + ";" + responder
                     .getInputFailurePattern());
-                boolean detected = false;
+                boolean detected;
                 try {
                     detected = detect(responder.getInputSuccessPattern(),
                         responder.getInputFailurePattern(),
                         responder.getInputMaxTimeout(),
-                        responder.getInputMaxLines());
+                        responder.getInputMaxLines(), reader, this, buffer);
                     logger.debug("Success detected? " + detected);
                     if (stopped) {
+                        return;
+                    }
+                    if (!detected) {
+                        fail(step, "Expected input was not seen");
                         return;
                     }
                 } catch (ThreshholdException e) {
@@ -117,20 +121,18 @@ public class ResponderThread extends Thread {
                         return;
                     }
                 }
-                if (!detected) {
-                    fail(step, "Expected input was not seen");
-                    return;
-                }
             }
             step++;
 
-            logger.debug("Writing to output");
-            //write responseString
-            outputStream.write(responder.getInputString().getBytes());
-            logger.debug("Wrote to output");
+            if(null!=responder.getInputString()){
+                logger.debug("Writing to output");
+                //write responseString
+                outputStream.write(responder.getInputString().getBytes());
+                logger.debug("Wrote to output");
+            }
             step++;
 
-            if (null != responder.getInputSuccessPattern() || null != responder.getInputFailurePattern()) {
+            if (null != responder.getResponseSuccessPattern() || null != responder.getResponseFailurePattern()) {
                 //detect success/failure response
                 boolean succeeded = false;
                 try {
@@ -139,11 +141,16 @@ public class ResponderThread extends Thread {
                     succeeded = detect(responder.getResponseSuccessPattern(),
                         responder.getResponseFailurePattern(),
                         responder.getResponseMaxTimeout(),
-                        responder.getResponseMaxLines());
+                        responder.getResponseMaxLines(), reader, this, buffer);
                     if (stopped) {
                         return;
                     }
+                    success = succeeded;
+                    if (!succeeded) {
+                        fail(step, "Did not see the correct response");
+                    }
                     logger.debug("Success detected? " + succeeded);
+                    return;
                 } catch (ThreshholdException e) {
                     if (responder.isFailOnResponseThreshold()) {
                         logger.debug("Threshold met " + reason(e));
@@ -151,11 +158,6 @@ public class ResponderThread extends Thread {
                         return;
                     }
                 }
-                success = succeeded;
-                if (!succeeded) {
-                    fail(step, "Did not see the correct response");
-                }
-                return;
             }
             success = true;
         } catch (IOException e) {
@@ -198,8 +200,9 @@ public class ResponderThread extends Thread {
      * Look for the detect pattern in the input, if seen return true.  If the failure pattern is detected, return false.
      * If a max timeout or max number of lines to read is exceeded, throw threshhold error.
      */
-    private boolean detect(final String detectPattern, final String failurePattern, final long timeout,
-                           final int maxLines) throws IOException, ThreshholdException {
+    static boolean detect(final String detectPattern, final String failurePattern, final long timeout,
+                          final int maxLines, final InputStreamReader reader,
+                          final ResponderStopper thread, final PartialLineBuffer buffer) throws IOException, ThreshholdException {
         if (null == detectPattern && null == failurePattern) {
             throw new IllegalArgumentException("detectPattern or failurePattern required");
         }
@@ -217,28 +220,9 @@ public class ResponderThread extends Thread {
         } else {
             failure = null;
         }
-        final PartialLineBuffer buffer = new PartialLineBuffer();
-        final char[] cbuf = new char[1024];
         outer:
-        while (System.currentTimeMillis() < start + timeout && linecount < maxLines && !stopped) {
-            if (!reader.ready()) {
-                try {
-                    sleep(500);
-                } catch (InterruptedException e) {
-                    logger.error("interrupted wait");
-                }
-                logger.error("!ready");
-                continue;
-            }
-            final int c = reader.read(cbuf);
-            if (c < 0) {
-                //eol
-                logger.error("read -1");
-            } else if (c > 0) {
-                buffer.addData(cbuf, 0, c);
-
-                logger.debug("read " + c);
-            }
+        while (System.currentTimeMillis() < start + timeout && linecount < maxLines && !thread.isResponderStopped()) {
+            //check buffer first, it may already contain data
             String line = buffer.readLine();
             while (null != line) {
                 logger.debug("read line: " + line);
@@ -263,27 +247,50 @@ public class ResponderThread extends Thread {
                     return false;
                 }
             }
+
+//            if (!reader.ready()) {
+//                try {
+//                    sleep(500);
+//                } catch (InterruptedException e) {
+//                    //ignore
+//                }
+//                continue;
+//            }
+            final int c = buffer.read(reader);
+            if (c < 0) {
+                //end of stream
+                logger.debug("end of input");
+            } else if (c > 0) {
+                logger.debug("read " + c);
+            }
+
         }
         if (linecount >= maxLines) {
-            throw new ThreshholdException(maxLines, "input lines");
+            throw new ThreshholdException(maxLines, ThresholdType.lines);
         } else if (System.currentTimeMillis() >= start + timeout) {
-            throw new ThreshholdException(timeout, "milliseconds");
+            throw new ThreshholdException(timeout, ThresholdType.milliseconds);
         } else {
             //
             return false;
         }
     }
-
+    /**
+     * Threshold type
+     */
+    static enum ThresholdType{
+        milliseconds,
+        lines,
+    }
     static final class ThreshholdException extends Exception {
         private Object value;
-        private String type;
+        private ThresholdType type;
 
-        ThreshholdException(final Object value, final String type) {
+        ThreshholdException(final Object value, final ThresholdType type) {
             this.value = value;
             this.type = type;
         }
 
-        ThreshholdException(final String s, final Object value, final String type) {
+        ThreshholdException(final String s, final Object value, final ThresholdType type) {
             super(s);
             this.value = value;
             this.type = type;
@@ -293,7 +300,7 @@ public class ResponderThread extends Thread {
             return value;
         }
 
-        public String getType() {
+        public ThresholdType getType() {
             return type;
         }
     }

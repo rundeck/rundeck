@@ -144,7 +144,7 @@ public class TestPartialLineBuffer extends TestCase {
 
         assertEquals("Test10", partialLineBuffer.readLine());
         assertNull(partialLineBuffer.readLine());
-        assertEquals("Test11\r", partialLineBuffer.getPartialLine());
+        assertEquals("Test11", partialLineBuffer.getPartialLine());
         assertNull(partialLineBuffer.getPartialLine());
     }
 
@@ -156,7 +156,7 @@ public class TestPartialLineBuffer extends TestCase {
 
         assertEquals("Test10", partialLineBuffer.readLine());
         assertNull(partialLineBuffer.readLine());
-        assertEquals("Test11\r", partialLineBuffer.getPartialLine());
+        assertEquals("Test11", partialLineBuffer.getPartialLine());
         assertNull(partialLineBuffer.getPartialLine());
 
         //append to line
@@ -178,7 +178,7 @@ public class TestPartialLineBuffer extends TestCase {
 
         assertEquals("Test10", partialLineBuffer.readLine());
         assertNull(partialLineBuffer.readLine());
-        assertEquals("Test11\r", partialLineBuffer.getPartialLine());
+        assertEquals("Test11", partialLineBuffer.getPartialLine());
         assertNull(partialLineBuffer.getPartialLine());
 
         //append to line
@@ -199,7 +199,7 @@ public class TestPartialLineBuffer extends TestCase {
 
         assertEquals("Test10", partialLineBuffer.readLine());
         assertNull(partialLineBuffer.readLine());
-        assertEquals("Test11\r", partialLineBuffer.getPartialLine());
+        assertEquals("Test11", partialLineBuffer.getPartialLine());
         assertNull(partialLineBuffer.getPartialLine());
 
         //append to line
@@ -220,7 +220,7 @@ public class TestPartialLineBuffer extends TestCase {
 
         assertEquals("Test10", partialLineBuffer.readLine());
         assertNull(partialLineBuffer.readLine());
-        assertEquals("Test11\r", partialLineBuffer.getPartialLine());
+        assertEquals("Test11", partialLineBuffer.getPartialLine());
         assertNull(partialLineBuffer.getPartialLine());
 
         //append to line
@@ -241,7 +241,7 @@ public class TestPartialLineBuffer extends TestCase {
 
         assertEquals("Test10", partialLineBuffer.readLine());
         assertNull(partialLineBuffer.readLine());
-        assertEquals("Test11\r", partialLineBuffer.getPartialLine());
+        assertEquals("Test11", partialLineBuffer.getPartialLine());
         assertNull(partialLineBuffer.getPartialLine());
 
         //append to line

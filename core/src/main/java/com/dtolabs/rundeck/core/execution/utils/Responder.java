@@ -21,7 +21,7 @@
 * Created: 11/21/11 10:16 AM
 *
 */
-package com.dtolabs.rundeck.core.execution.impl.jsch;
+package com.dtolabs.rundeck.core.execution.utils;
 
 /**
  * Responder defines a pattern of response to some input from a stream.
