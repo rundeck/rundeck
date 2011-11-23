@@ -865,6 +865,9 @@ div.optslist{
 span.optgroup{
     white-space:nowrap;
 }
+span.optgroup.secure{
+    text-decoration: underline;
+}
 .singlelabel{
     font-family: courier,monospace;
     background: #ddd;
