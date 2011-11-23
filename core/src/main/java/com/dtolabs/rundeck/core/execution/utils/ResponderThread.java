@@ -115,9 +115,16 @@ public class ResponderThread extends Thread implements ResponderStopper {
                         return;
                     }
                 } catch (ThreshholdException e) {
-                    if (responder.isFailOnInputThreshold()) {
+                    if (responder.isFailOnInputLinesThreshold() && e.getType() == ThresholdType.lines) {
                         logger.debug("Threshold met " + reason(e));
                         fail(step, reason(e));
+                        return;
+                    }else if (responder.isFailOnInputTimeoutThreshold() && e.getType() == ThresholdType.milliseconds) {
+                        logger.debug("Threshold met " + reason(e));
+                        fail(step, reason(e));
+                        return;
+                    } else if (responder.isSuccessOnInputThreshold()) {
+                        success = true;
                         return;
                     }
                 }
@@ -201,8 +208,8 @@ public class ResponderThread extends Thread implements ResponderStopper {
      * If a max timeout or max number of lines to read is exceeded, throw threshhold error.
      */
     static boolean detect(final String detectPattern, final String failurePattern, final long timeout,
-                          final int maxLines, final InputStreamReader reader,
-                          final ResponderStopper thread, final PartialLineBuffer buffer) throws IOException, ThreshholdException {
+                          final int maxLines, final InputStreamReader reader, final ResponderStopper thread,
+                          final PartialLineBuffer buffer) throws IOException, ThreshholdException {
         if (null == detectPattern && null == failurePattern) {
             throw new IllegalArgumentException("detectPattern or failurePattern required");
         }
@@ -248,14 +255,14 @@ public class ResponderThread extends Thread implements ResponderStopper {
                 }
             }
 
-//            if (!reader.ready()) {
-//                try {
-//                    sleep(500);
-//                } catch (InterruptedException e) {
-//                    //ignore
-//                }
-//                continue;
-//            }
+            if (!reader.ready()) {
+                try {
+                    sleep(500);
+                } catch (InterruptedException e) {
+                    //ignore
+                }
+                continue;
+            }
             final int c = buffer.read(reader);
             if (c < 0) {
                 //end of stream

@@ -270,7 +270,9 @@ public class TestResponderThread extends TestCase {
         private String responseFailurePattern;
         private int inputMaxLines;
         private long inputMaxTimeout;
-        private boolean failOnInputThreshold;
+        private boolean failOnInputLinesThreshold;
+        private boolean failOnInputTimeoutThreshold;
+        private boolean successOnInputThreshold;
         private int responseMaxLines;
         private long responseMaxTimeout;
         private boolean failOnResponseThreshold;
@@ -300,8 +302,8 @@ public class TestResponderThread extends TestCase {
             return inputMaxTimeout;
         }
 
-        public boolean isFailOnInputThreshold() {
-            return failOnInputThreshold;
+        public boolean isFailOnInputLinesThreshold() {
+            return failOnInputLinesThreshold;
         }
 
         public int getResponseMaxLines() {
@@ -319,13 +321,21 @@ public class TestResponderThread extends TestCase {
         public String getInputString() {
             return inputString;
         }
+
+        public boolean isSuccessOnInputThreshold() {
+            return successOnInputThreshold;
+        }
+
+        public boolean isFailOnInputTimeoutThreshold() {
+            return failOnInputTimeoutThreshold;
+        }
     }
     public void testRunResponderDefault(){
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final testResponder testResponder = new testResponder();
-        testResponder.failOnInputThreshold = true;
+        testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
         final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
         responderThread.run();
@@ -341,7 +351,7 @@ public class TestResponderThread extends TestCase {
         testResponder.inputSuccessPattern = "^Test2: .*";
         testResponder.inputMaxLines = 5;
         testResponder.inputMaxTimeout = 1000;
-        testResponder.failOnInputThreshold = true;
+        testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
         final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
         responderThread.run();
@@ -358,13 +368,32 @@ public class TestResponderThread extends TestCase {
         testResponder.inputSuccessPattern = "^TestZ: .*";
         testResponder.inputMaxLines = 5;
         testResponder.inputMaxTimeout = 1000;
-        testResponder.failOnInputThreshold = true;
+        testResponder.failOnInputLinesThreshold = true;
+        testResponder.failOnInputTimeoutThreshold = true;
         testResponder.failOnResponseThreshold = true;
         final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
         responderThread.run();
         assertFalse(responderThread.isSuccess());
         assertTrue(responderThread.isFailed());
         assertEquals("Failed waiting for input prompt: Expected input was not seen in 5 lines", responderThread.getFailureReason());
+        assertFalse(responderThread.isResponderStopped());
+    }
+    public void testRunResponderInputSuccessMissTimeout(){
+        ByteArrayInputStream bais = new ByteArrayInputStream(
+            "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        final testResponder testResponder = new testResponder();
+        testResponder.inputSuccessPattern = "^TestZ: .*";
+        testResponder.inputMaxLines = 20;
+        testResponder.inputMaxTimeout = 1000;
+        testResponder.failOnInputLinesThreshold = true;
+        testResponder.failOnInputTimeoutThreshold = true;
+        testResponder.failOnResponseThreshold = true;
+        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
+        responderThread.run();
+        assertFalse(responderThread.isSuccess());
+        assertTrue(responderThread.isFailed());
+        assertEquals("Failed waiting for input prompt: Expected input was not seen in 1000 milliseconds", responderThread.getFailureReason());
         assertFalse(responderThread.isResponderStopped());
     }
 
@@ -376,7 +405,8 @@ public class TestResponderThread extends TestCase {
         testResponder.inputSuccessPattern = "^TestZ: .*";
         testResponder.inputMaxLines = 5;
         testResponder.inputMaxTimeout = 1000;
-        testResponder.failOnInputThreshold = false;
+        testResponder.failOnInputLinesThreshold = false;
+        testResponder.failOnInputTimeoutThreshold = false;
         testResponder.failOnResponseThreshold = true;
         testResponder.inputString = "Test";
         final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
@@ -388,6 +418,30 @@ public class TestResponderThread extends TestCase {
         assertEquals("Test", baos.toString());
     }
 
+    public void testRunResponderInputSuccessOnInputThreshold() {
+        ByteArrayInputStream bais = new ByteArrayInputStream(
+            "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        final testResponder testResponder = new testResponder();
+        testResponder.inputSuccessPattern = "^TestZ: .*";
+        testResponder.inputMaxLines = 5;
+        testResponder.inputMaxTimeout = 1000;
+        testResponder.successOnInputThreshold = true; //set to true
+        testResponder.failOnInputLinesThreshold = false;
+        testResponder.failOnInputTimeoutThreshold = false;
+        testResponder.failOnResponseThreshold = true;
+        testResponder.inputString = "Test";
+        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
+        responderThread.run();
+        assertTrue(responderThread.isSuccess());
+        assertFalse(responderThread.isFailed());
+        assertNull(responderThread.getFailureReason());
+        assertFalse(responderThread.isResponderStopped());
+
+        //result is no output 
+        assertEquals("", baos.toString());
+    }
+
     public void testRunResponderInputFailure() {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
@@ -396,7 +450,7 @@ public class TestResponderThread extends TestCase {
         testResponder.inputFailurePattern = "^Test2: .*";
         testResponder.inputMaxLines = 5;
         testResponder.inputMaxTimeout = 1000;
-        testResponder.failOnInputThreshold = true;
+        testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
         final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
         responderThread.run();
@@ -414,7 +468,7 @@ public class TestResponderThread extends TestCase {
         testResponder.inputFailurePattern = "^TestZ: .*";
         testResponder.inputMaxLines = 5;
         testResponder.inputMaxTimeout = 1000;
-        testResponder.failOnInputThreshold = true;
+        testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
         final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
         responderThread.run();
@@ -432,7 +486,7 @@ public class TestResponderThread extends TestCase {
         testResponder.inputFailurePattern = "^TestZ: .*";
         testResponder.inputMaxLines = 5;
         testResponder.inputMaxTimeout = 1000;
-        testResponder.failOnInputThreshold = false;
+        testResponder.failOnInputLinesThreshold = false;
         testResponder.failOnResponseThreshold = true;
         final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
         responderThread.run();
@@ -454,7 +508,7 @@ public class TestResponderThread extends TestCase {
         testResponder.inputMaxTimeout = 1000;
         testResponder.responseMaxLines = 5;
         testResponder.responseMaxTimeout = 1000;
-        testResponder.failOnInputThreshold = true;
+        testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
 
         final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
@@ -476,7 +530,7 @@ public class TestResponderThread extends TestCase {
         testResponder.inputMaxTimeout = 1000;
         testResponder.responseMaxLines = 5;
         testResponder.responseMaxTimeout = 1000;
-        testResponder.failOnInputThreshold = true;
+        testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
 
         final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
@@ -499,7 +553,7 @@ public class TestResponderThread extends TestCase {
         testResponder.inputMaxTimeout = 1000;
         testResponder.responseMaxLines = 5;
         testResponder.responseMaxTimeout = 1000;
-        testResponder.failOnInputThreshold = true;
+        testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = false;
 
         final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
@@ -521,7 +575,7 @@ public class TestResponderThread extends TestCase {
         testResponder.inputMaxTimeout = 1000;
         testResponder.responseMaxLines = 5;
         testResponder.responseMaxTimeout = 1000;
-        testResponder.failOnInputThreshold = true;
+        testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
 
         final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
@@ -544,7 +598,7 @@ public class TestResponderThread extends TestCase {
         testResponder.inputMaxTimeout = 1000;
         testResponder.responseMaxLines = 5;
         testResponder.responseMaxTimeout = 1000;
-        testResponder.failOnInputThreshold = true;
+        testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
 
         final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
@@ -567,7 +621,7 @@ public class TestResponderThread extends TestCase {
         testResponder.inputMaxTimeout = 1000;
         testResponder.responseMaxLines = 5;
         testResponder.responseMaxTimeout = 1000;
-        testResponder.failOnInputThreshold = true;
+        testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = false;
 
         final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
@@ -589,7 +643,7 @@ public class TestResponderThread extends TestCase {
         testResponder.inputMaxTimeout = 1000;
         testResponder.responseMaxLines = 5;
         testResponder.responseMaxTimeout = 1000;
-        testResponder.failOnInputThreshold = true;
+        testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
         testResponder.inputString = "Test";
 
@@ -613,7 +667,7 @@ public class TestResponderThread extends TestCase {
         testResponder.inputMaxTimeout = 1000;
         testResponder.responseMaxLines = 5;
         testResponder.responseMaxTimeout = 1000;
-        testResponder.failOnInputThreshold = true;
+        testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
         testResponder.inputString = "Test";
 
@@ -637,7 +691,7 @@ public class TestResponderThread extends TestCase {
         testResponder.inputMaxTimeout = 1000;
         testResponder.responseMaxLines = 5;
         testResponder.responseMaxTimeout = 1000;
-        testResponder.failOnInputThreshold = true;
+        testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
         testResponder.inputString = "Test";
 
@@ -662,7 +716,7 @@ public class TestResponderThread extends TestCase {
         testResponder.inputMaxTimeout = 1000;
         testResponder.responseMaxLines = 5;
         testResponder.responseMaxTimeout = 1000;
-        testResponder.failOnInputThreshold = true;
+        testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
         testResponder.inputString = "Test";
 
@@ -687,7 +741,7 @@ public class TestResponderThread extends TestCase {
         testResponder.inputMaxTimeout = 1000;
         testResponder.responseMaxLines = 5;
         testResponder.responseMaxTimeout = 1000;
-        testResponder.failOnInputThreshold = true;
+        testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
         testResponder.inputString = "Test";
 
@@ -711,7 +765,7 @@ public class TestResponderThread extends TestCase {
         testResponder.inputMaxTimeout = 1000;
         testResponder.responseMaxLines = 5;
         testResponder.responseMaxTimeout = 1000;
-        testResponder.failOnInputThreshold = true;
+        testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
         testResponder.inputString = "Test";
 
@@ -745,7 +799,7 @@ public class TestResponderThread extends TestCase {
         testResponder.inputMaxTimeout = 1000;
         testResponder.responseMaxLines = 5;
         testResponder.responseMaxTimeout = 1000;
-        testResponder.failOnInputThreshold = true;
+        testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
         testResponder.inputString = "Test";
 

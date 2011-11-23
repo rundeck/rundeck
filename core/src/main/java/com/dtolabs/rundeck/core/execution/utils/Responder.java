@@ -67,9 +67,14 @@ public interface Responder {
     public long getInputMaxTimeout();
 
     /**
-     * Return true if input threshold indicates failure
+     * Return true if input max lines threshold indicates failure
      */
-    public boolean isFailOnInputThreshold();
+    public boolean isFailOnInputLinesThreshold();
+    
+    /**
+     * Return true if input max timeout threshold indicates failure
+     */
+    public boolean isFailOnInputTimeoutThreshold();
 
     /**
      * Return a regex to detect response to input was successful
@@ -100,4 +105,9 @@ public interface Responder {
      * Return input string to send after successful input pattern (including any newline characters as necessary)
      */
     public String getInputString();
+
+    /**
+     * Return true if input threshold indicates success
+     */
+    public boolean isSuccessOnInputThreshold();
 }
