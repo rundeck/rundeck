@@ -160,7 +160,7 @@ public class ScriptfileUtils {
      */
     public static File createTempFile(final Framework framework) throws IOException {
         final File dispatch = File.createTempFile("dispatch", ".tmp", new File(framework.getProperty(
-            "framework.var.dir")));
+            "framework.tmp.dir")));
         dispatch.deleteOnExit();
         return dispatch;
     }
