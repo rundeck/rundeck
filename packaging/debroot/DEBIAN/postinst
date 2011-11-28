@@ -62,6 +62,7 @@ case "$1" in
     setperm rundeck rundeck 0750 /var/lib/rundeck/work
     setperm rundeck rundeck 0750 /var/lib/rundeck/data
     setperm rundeck adm 2751 /var/lib/rundeck/logs
+    setperm rundeck rundeck 0750 /var/lib/rundeck/var
     setperm rundeck rundeck 0750 /var/lib/rundeck/var/tmp
     setperm rundeck rundeck 0750 /var/rundeck
     setperm rundeck rundeck 0750 /var/rundeck/projects
