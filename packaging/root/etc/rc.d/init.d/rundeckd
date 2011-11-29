@@ -67,7 +67,7 @@ case "$1" in
 		fi
 		;;
 	status)
-		status $rundeckd
+		status -p /var/run/rundeck.pid $rundeckd
 		RETVAL=$?
 		;;
 	*)
