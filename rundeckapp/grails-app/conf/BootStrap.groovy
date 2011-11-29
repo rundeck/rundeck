@@ -33,10 +33,10 @@ class BootStrap {
          if(!grailsApplication.config.rdeck.base){
              //look for system property
              rdeckBase=System.getProperty('rdeck.base')
-             System.err.println("using rdeck.base system property: ${rdeckBase}");
+             log.info("using rdeck.base system property: ${rdeckBase}");
          }else{
              rdeckBase=grailsApplication.config.rdeck.base
-             System.err.println("using rdeck.base config property: ${rdeckBase}");
+             log.info("using rdeck.base config property: ${rdeckBase}");
          }
          if("test"!=GrailsUtil.environment){
              if(!rdeckBase){
@@ -124,10 +124,8 @@ class BootStrap {
          }
          if(grailsApplication.config.execution.follow.buffersize){
              servletContext.setAttribute("execution.follow.buffersize",grailsApplication.config.execution.follow.buffersize)
-             log.info("Execution Output Follow buffer size = "+grailsApplication.config.execution.follow.buffersize)
          }else{
              servletContext.setAttribute("execution.follow.buffersize",(50*1024).toString())
-             log.info("Execution Output Follow buffer size (default) = "+(50*1024).toString())
          }
          if(grailsApplication.config.output.markdown.enabled){
              servletContext.setAttribute("output.markdown.enabled",grailsApplication.config.output.markdown.enabled=="true"?"true":"false")
@@ -167,9 +165,6 @@ class BootStrap {
              appCtx.executionService.sysThreadBoundErr=newErr
              appCtx.executionService.defaultLogLevel=servletContext.getAttribute("LOGLEVEL_DEFAULT")
 
-             System.err.println("Installed outputstreams.")
-
-             System.err.println("--------------------------------------")
              executionService.cleanupRunningJobs()
              scheduledExecutionService.rescheduleJobs()
              scheduledExecutionService.convertNonWorkflowJobs()
