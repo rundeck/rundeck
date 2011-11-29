@@ -21,18 +21,20 @@
 . /etc/rundeck/profile
 
 prog="rundeckd"
-rundeckd="${JAVA_HOME:-/usr}/bin/java ${RDECK_JVM} -cp ${BOOTSTRAP_CP}:/etc/rundeck com.dtolabs.rundeck.RunServer /etc/rundeck 4440"
 RETVAL=0
-PID_FILE=/var/run/rundeckd.pid
+PIDFILE=/var/run/$prog.pid
+DAEMON="${JAVA_HOME:-/usr}/bin/java"
+DAEMON_ARGS="${RDECK_JVM} -cp ${BOOTSTRAP_CP}:/etc/rundeck com.dtolabs.rundeck.RunServer /etc/rundeck 4440"
+rundeckd="$DAEMON $DAEMON_ARGS"
 
 start() {
 	echo -n $"Starting $prog: "
 	cd /var/log/rundeck
 	nohup su -s /bin/bash rundeck -c "$rundeckd" 2>&1 >>/var/log/rundeck/service.log &
 
- 	RETVAL=$?	
+	RETVAL=$?
 	PID=$!
-	echo $PID > /var/run/rundeckd.pid
+	echo $PID > $PIDFILE
 	if [ $RETVAL -eq 0 ]; then 
 		touch /var/run/$prog
 		log_success_msg
@@ -45,7 +47,7 @@ start() {
 
 stop() {
 	echo -n $"Stopping $prog: "
-	killproc -p /var/run/rundeckd.pid "$rundeckd"
+	killproc -p $PIDFILE "$rundeckd"
 	RETVAL=$?
 	echo
 	[ $RETVAL -eq 0 ] && rm -f /var/run/$prog
@@ -55,7 +57,7 @@ stop() {
 ### NOT USED
 reload() {
 	echo -n $"Reloading $prog: "
-	killproc -p /var/run/rundeckd.pid "$rundeckd" -HUP
+	killproc -p $PIDFILE "$rundeckd" -HUP
 	RETVAL=$?
 	echo
 	return $RETVAL
@@ -83,7 +85,7 @@ case "$1" in
 		fi
 		;;
 	status)
-		status $rundeckd
+		status_of_proc -p $PIDFILE $DAEMON $prog
 		RETVAL=$?
 		;;
 	*)
