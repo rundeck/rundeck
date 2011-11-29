@@ -41,7 +41,7 @@ log4j.logger.org.codehaus.groovy.grails.beans.factory=warn,stdout
 log4j.additivity.org.codehaus.groovy.grails.beans.factory=false
 
 # This logger is for Grails' public APIs within the grails. package
-log4j.logger.grails=warn,stdout
+log4j.logger.grails=info,stdout
 log4j.additivity.grails=false        
 
 #
