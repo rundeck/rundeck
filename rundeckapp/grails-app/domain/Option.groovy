@@ -138,8 +138,8 @@ public class Option implements Comparable{
                 opt.delimiter=data.delimiter
             }
         }
-        if(data.secureInput){
-            opt.secureInput=Boolean.valueOf(data.secureInput)
+        if(data.secure){
+            opt.secureInput=Boolean.valueOf(data.secure)
         }
         return opt
     }

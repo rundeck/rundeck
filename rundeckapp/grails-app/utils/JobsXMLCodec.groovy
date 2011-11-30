@@ -248,6 +248,12 @@ class JobsXMLCodec {
                 }else{
                     x.remove('enforced')
                 }
+                if(x.secure){
+                    //convert 'secure' to @secure
+                    BuilderUtil.addAttribute(x,'secure',x.remove('secure'))
+                }else{
+                    x.remove('secure')
+                }
                 if(x.required){
                     //convert 'required' to attribute
                     BuilderUtil.makeAttribute(x,'required')
