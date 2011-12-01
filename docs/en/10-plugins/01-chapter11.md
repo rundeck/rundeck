@@ -341,6 +341,10 @@ This will allow remote command and script execution on the nodes.
 
 See below for more configuration options.
 
+**Sudo Password Authentication**
+
+The SSH Provider also includes support for a secondary Sudo Password Authentication. This simulates a user writing a password to the terminal into a password prompt when invoking a "sudo" command that requires password authentication.
+
 ##### Configuring SCP File Copier
 
 In addition to the general SSH configuration mentioned for in this section, some additional configuration can be done for SCP. 
@@ -441,6 +445,88 @@ Job:
               <project>project</project>
               <options>
                 <option required='true' name='sshPassword1' secure='true' />
+              </options>
+            </context>
+            ...
+        </job>
+    </joblist>
+
+
+##### Configuring Secondary Sudo Password Authentication
+
+The SSH provider supports a secondary authentication mechanism: Sudo password authentication.  This is useful if your security requirements are such that you require the SSH connection to be under a specific user's account instead of a generic "rundeck" account, and you still need to allow "sudo" level commands to be executed requiring a password to be entered.
+
+This works in the following way:
+
+* On Job execution, the user is prompted to enter a Sudo password
+* After connecting to the remote node via SSH, a command requiring "sudo" authentication is issued, such as "sudo -u otheruser /sbin/some-command"
+* The remote node will prompt for a sudo password, expecting user input
+* The SSH Provider will write the password to the remote node
+* The sudo command will execute as if a user had entered the command
+
+Similarly to SSH Password authentication, Sudo Password Authentication requires:
+
+* A Job must be defined specifying a Secure Option to prompt the user for the password
+* Target nodes must be configured for Sudo authentication
+* When the user executes the Job, they are prompted for the password.  The Secure Option value for the password is not stored in the database, and is used only for that execution.
+
+Therefore Sudo Password Authentication has several requirements and some limitations:
+
+1. Sudo Password authenticated nodes can only be executed on via a defined Job, not via Ad-hoc commands (yet).
+2. Each Job that will execute on Sudo Password Authenticated Nodes must define a Secure Option to prompt the user for the Sudo password before execution.
+3. All Nodes using Sudo password authentication for a Job must have an equivalent Secure Option defined, or may use the same option name (or the default) if they share sudo authentication passwords.
+
+Passwords for the nodes are input either via the GUI or arguments to the job if executed via CLI or API.
+
+To enable Sudo Password Authentication, set the `sudo-command-enabled` to `true` for each node.
+
+* `sudo-command-enabled` - set to "true" to enable Sudo Password Authentication: *required*.
+
+ You can also configure these attributes, which also have equivalent properties to set at the Project and RunDeck scopes. Simply set the `project.NAME` in project.properties, or `framework.NAME` in framework.properties:
+ 
+* `sudo-command-pattern` - a regular expression to detect when a command execution should expect to require Sudo authentication. Default pattern is `^sudo$`.
+* `sudo-password-option` - an option reference ("option.NAME") to define which secure option value to use as password.  The default is `option.sudoPassword`.
+* `sudo-prompt-pattern` - a regular expression to detect the password prompt for the Sudo authentication. The default pattern is `^\[sudo\] password for .+: .*`
+* `sudo-failure-pattern` - a regular expression to detect the password failure response.  The default pattern is `^.*try again.*`.
+* `sudo-prompt-max-lines` - maximum lines to read when expecting the password prompt. (default: `12`).
+* `sudo-prompt-max-timeout` - maximum milliseconds to wait for input when expecting the password prompt. (default `5000`)
+* `sudo-response-max-lines` - maximum lines to read when looking for failure response. (default: `1`).
+* `sudo-response-max-timeout` - maximum milliseconds to wait for response when detecting the failure response. (default `5000`)
+* `sudo-fail-on-prompt-max-lines` - true/false. If true, fail execution if max lines are reached looking for password prompt. (default: `false`)
+* `sudo-success-on-prompt-threshold` - true/false. If true, succeed (without writing password), if the input max lines are reached without detecting password prompt. (default: `true`).
+* `sudo-fail-on-prompt-timeout` - true/false. If true, fail execution if timeout reached looking for password prompt. (default: `true`)
+* `sudo-fail-on-response-timeout` - true/false. If true, fail on timeout looking for failure message. (default: `false`)
+
+Note: the default values have been set for the unix "sudo" command, but can be overridden if you need to customize the interaction.
+
+Next, configure a Job, and include an Option definition where `secureInput` is set to `true`.  The name of this option can be anything you want, but the default value of `sudoPassword` recognized by the plugin can be used.
+
+If the value is not `sudoPassword`, then make sure to set the following attribute on each Node for password authentication:
+
+* `sudo-password-option` = "`option.NAME`" where NAME is the name of the Job's secure option.
+
+An example Node and Job option configuration are below:
+
+    <node name="egon" description="egon" osFamily="unix"
+        username="rundeck"
+        hostname="egon"
+        sudo-command-enabled="true"
+        sudo-password-option="option.sudoPassword2" />
+
+Job:
+
+    <joblist>
+        <job>
+             <sequence keepgoing='false' strategy='node-first'>
+              <command>
+                <exec>sudo apachectl restart</exec>
+              </command>
+            </sequence>
+
+            <context>
+              <project>project</project>
+              <options>
+                <option required='true' name='sudoPassword2' secure='true' description="Sudo authentication password"/>
               </options>
             </context>
             ...
