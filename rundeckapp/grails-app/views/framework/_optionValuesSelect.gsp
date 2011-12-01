@@ -28,11 +28,11 @@
     <g:set var="optName" value="${optionSelect.name}"/>
     
     <%-- Print out the input box for random input --%>
-    <g:if test="${!optionSelect.enforced && !optionSelect.multivalued || err}">
+    <g:if test="${!optionSelect.enforced && !optionSelect.multivalued || err || optionSelect.secureInput}">
         <g:if test="${optionSelect.secureInput}">
             <g:passwordField name="${realFieldName}"
                 class="optionvaluesfield"
-                value="${selectedvalue?selectedvalue:selectedoptsmap && selectedoptsmap[optName]?selectedoptsmap[optName]:optionSelect.defaultValue?optionSelect.defaultValue:''}"
+                value="${optionSelect.defaultValue?optionSelect.defaultValue:''}"
                 maxlength="256" size="40"
                 id="${rkey}"/>
         </g:if>
@@ -48,7 +48,7 @@
     </g:if>
 
     <%-- The Dropdown list --%>
-    <g:if test="${(values || optionSelect.values || optionSelect.multivalued) && !err}">
+    <g:if test="${!optionSelect.secureInput && (values || optionSelect.values || optionSelect.multivalued) && !err}">
         
     
         <g:set var="labelsSet" value="${values && values instanceof Map?values.keySet():values?values:optionSelect.values?optionSelect.values:[]}"/>

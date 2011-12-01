@@ -62,10 +62,33 @@
                                    size="40" placeholder="Default value"/>
                         </label>
                     </td>
-                    <td>
-                        <div>Secure Input</div>
-                        <label><g:radio name="secureInput" value="false" checked="${!option || !option?.secureInput}"/> No</label>
-                        <label><g:radio name="secureInput" value="true" checked="${option?.secureInput}"/> Yes</label>
+                    <td id="secinputfields">
+                        <div>Secure Input
+                            <span class=" action obs_tooltip" id="secInputHelp"><g:img file="icon-small-help.png"
+                                                                                       width="16px" height="16px"/></span>
+                        </div>
+
+                        <div class="popout tooltipcontent helpText" id="secInputHelp_tooltip"
+                             style="display:none; background:white; position:absolute; width:300px;">
+                            <g:message code="form.option.secureInput.description"/>
+                        </div>
+                        
+                        <label><g:radio name="secureInput" value="false" checked="${!option || !option?.secureInput}"
+                                        id="secfalse_${rkey}"/> No</label>
+                        <label><g:radio name="secureInput" value="true" checked="${option?.secureInput}" id="sectrue_${rkey}"/> Yes</label>
+
+                        <wdgt:eventHandler for="sectrue_${rkey}" state="unempty" inline="true" oneway="true">
+                            <wdgt:action target="mvfalse_${rkey}" check="true" />
+                            <wdgt:action targetSelector=".opt_sec_disabled" visible="false" />
+                            <wdgt:action targetSelector=".opt_sec_enabled" visible="true" />
+                        </wdgt:eventHandler>
+                        <wdgt:eventHandler for="secfalse_${rkey}" state="unempty" inline="true" oneway="true">
+                            <wdgt:action targetSelector=".opt_sec_disabled" visible="true"/>
+                            <wdgt:action targetSelector=".opt_sec_enabled" visible="false"/>
+                        </wdgt:eventHandler>
+                        <g:javascript>
+                            fireWhenReady('secInputHelp', initTooltipForElements.curry('.obs_tooltip'));
+                        </g:javascript>
                     </td>
                 </tr>
             </table>
@@ -129,14 +152,14 @@
             </div>
         </div>
         <div>
-            <span class="prompt">Multi-valued</span>
-            <div class="presentation">
+            <span class="prompt ${hasErrors(bean: option, field: 'multivalued', 'fieldError')}">Multi-valued</span>
+            <div class="presentation opt_sec_disabled" style="${wdgt.styleVisible(unless: option?.secureInput)}">
                 <div>
                     <span class="info note"><g:message code="form.option.multivalued.description"/></span>
                 </div>
                 <div>
-                    <label><g:radio name="multivalued" value="false" checked="${!option || !option.multivalued}"/> No</label>
-                    <label><g:radio name="multivalued" value="true" checked="${option?.multivalued}" id="cdelimiter_${rkey}"/>
+                    <label><g:radio name="multivalued" value="false" checked="${!option || !option.multivalued}" id="mvfalse_${rkey}"/> No</label>
+                    <label class="${hasErrors(bean: option, field: 'multivalued', 'fieldError')}"><g:radio name="multivalued" value="true" checked="${option?.multivalued}" id="cdelimiter_${rkey}"/>
                     Yes
                     </label>
                     with
@@ -148,10 +171,13 @@
                     <wdgt:eventHandler for="cdelimiter_${rkey}" state="unempty" target="vdelimiter_${rkey}" focus="true" inline="true"/>
                 </div>
             </div>
+            <div class="presentation opt_sec_enabled" id="mvsecnote" style="${wdgt.styleVisible(if: option?.secureInput)}">
+                <span class="warn note"><g:message code="form.option.multivalued.secure-conflict.message"/></span>
+            </div>
         </div>
         <div id="preview_${rkey}" style="${wdgt.styleVisible(if:option?.name)}">
             <span class="prompt">Usage</span>
-            <div class="presentation">
+            <div class="presentation opt_sec_disabled" style="${wdgt.styleVisible(unless: option?.secureInput)}">
                 <span class="info note">The option values will be available to scripts in these forms:</span>
                 <div>
                     Bash: <code>$<span id="bashpreview${rkey}">${option?.name?DataContextUtils.generateEnvVarName('option.'+option.name).encodeAsHTML():''}</span></code>
@@ -162,6 +188,10 @@
                 <div>
                     Script Content: <code>@option.<span id="scptpreview${rkey}">${option?.name?.encodeAsHTML()}</span>@</code>
                 </div>
+            </div>
+
+            <div class="presentation opt_sec_enabled" style="${wdgt.styleVisible(if: option?.secureInput)}">
+                <span class="warn note"><g:message code="form.option.usage.secure.message"/></span>
             </div>
         </div>
         <g:javascript>
