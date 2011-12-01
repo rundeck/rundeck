@@ -1191,7 +1191,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                     if (!failedkeys[opt.name]) {
                         failedkeys[opt.name] = ''
                     }
-                    final String msg = "Option '${opt.name}' value: ${optparams[opt.name]} does not allow multiple values.\n"
+                    final String msg = "Option '${opt.name}' value: ${opt.secureInput ? '***' : optparams[opt.name]} does not allow multiple values.\n"
                     sb << msg
                     failedkeys[opt.name] += msg
                     return
@@ -1245,7 +1245,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                             if (!failedkeys[opt.name]) {
                                 failedkeys[opt.name] = ''
                             }
-                            final String msg = "Option '${opt.name}' doesn't match regular expression: '${opt.regex}', value: ${optparams[opt.name]}\n"
+                            String msg = opt.secureInput? "Option '${opt.name}' value was not valid\n":"Option '${opt.name}' doesn't match regular expression ${opt.regex}, value: ${optparams[opt.name]}\n"
                             sb << msg
                             failedkeys[opt.name] += msg
                             return
@@ -1256,7 +1256,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                         if(!failedkeys[opt.name]){
                             failedkeys[opt.name]=''
                         }
-                        final String msg = "Option '${opt.name}' value: ${optparams[opt.name]} was not in the allowed values: ${opt.values}\n"
+                        final String msg = opt.secureInput ? "Option '${opt.name}' value was not valid\n" : "Option '${opt.name}' value: ${optparams[opt.name]} was not in the allowed values: ${opt.values}\n"
                         sb << msg
                         failedkeys[opt.name]+=msg
                         return

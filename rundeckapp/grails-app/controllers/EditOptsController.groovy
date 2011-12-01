@@ -322,6 +322,9 @@ class EditOptsController {
         if(opt.multivalued && !opt.delimiter){
             opt.errors.rejectValue('delimiter', 'option.delimiter.blank.message')
         }
+        if(opt.multivalued && opt.secureInput){
+            opt.errors.rejectValue('multivalued', 'option.multivalued.secure-conflict.message')
+        }
         return result
     }
 
