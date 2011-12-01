@@ -327,6 +327,127 @@ For FileCopier, these providers:
 
 :   remote copy of a command via SCP, requiring the "hostname" and  "username" attributes on a node.
 
+#### SSH Provider
+
+The SSH Node Executor and File Copier are included as the default providers for RunDeck.
+
+Out of the box typical node configuration to make use of these is simple. 
+
+* Set the `hostname` attribute for the nodes.  It can be in the format "hostname:port" to indicate that a non-default port should be used. The default port is 22.
+* Set the `username` attribute for the nodes to the username to connect to the remote node.
+* set up public/private key authentication from the RunDeck server to the nodes
+
+This will allow remote command and script execution on the nodes.
+
+See below for more configuration options.
+
+##### Configuring SCP File Copier
+
+In addition to the general SSH configuration mentioned for in this section, some additional configuration can be done for SCP. 
+
+When a Script is executed on a remote node, it is copied over via SCP first, and then executed.  In addition to the SSH connection properties, these node attributes
+can be configured for SCP:
+
+* `file-copy-destination-dir`: The directory on the remote node to copy the script file to before executing it. The default value is `C:/WINDOWS/TEMP/` on Windows nodes, and `/tmp` for other nodes.
+* `osFamily`: specify "windows" for windows nodes.
+
+##### Configuring SSH Authentication type
+
+SSH authentication can be done in two ways, via password or public/private key.
+
+By default, public/private key is used, but this can be changed on a node, project, or framework scope.
+
+The mechanism used is determined by the `ssh-authentication` property.  This property can have two different values:
+
+* `password`
+* `privateKey` (default)
+
+When connecting to a particular Node, this sequence is used to determine the correct authentication mechanism:
+
+1. **Node level**: `ssh-authentication` attribute on the Node. Applies only to the target node.
+2. **Project level**: `project.ssh-authentication` property in `project.properties`.  Applies to any project node by default.
+3. **RunDeck level**: `framework.ssh-authentication` property in `framework.properties`. Applies to all projects by default.
+
+If none of those values are set, then the default public/private key authentication is used.
+
+##### Configuring SSH Username
+
+The username used to connect via SSH is taken from the `username` Node attribute:
+
+* `username="user1"`
+
+This value can also include a property reference if you want to dynamically change it, for example to the name of the current RunDeck user, or the username submitted as a Job Option value:
+
+* `${job.username}` - uses the username of the user executing the RunDeck execution.
+* `${option.someUsername}` - uses the value of a job option named "someUsername".
+
+If the `username` node attribute is not set, then the static value provided via project or framework configuration is used. The username for a node is determined by looking for a value in this order:
+
+1. **Node level**: `username` node attribute. Can contain property references to dynamically set it from Option or Execution values.
+2. **Project level**: `project.ssh.user` property in `project.properties` file for the project.
+3. **RunDeck level**: `framework.ssh.user` property in `framework.properties` file for the RunDeck installation.
+
+##### Configuring SSH private keys
+
+The default authentication mechanism is public/private key.
+
+The built-in SSH connector allows the private key to be specified in several different ways.  You can configure it per-node, per-project, or per-RunDeck instance.
+
+When connecting to the remote node, RunDeck will look for a property/attribute specifying the location of the private key file, in this order, with the first match having precedence:
+
+1. **Node level**: `ssh-keypath` attribute on the Node. Applies only to the target node.
+2. **Project level**: `project.ssh-keypath` property in `project.properties`.  Applies to any project node by default.
+3. **RunDeck level**: `framework.ssh-keypath` property in `framework.properties`. Applies to all projects by default.
+4. **RunDeck level**:  `framework.ssh.keypath` property in `framework.properties`. Applies to all projects by default (included for compatibility with Rundeck < 1.3). (default value: `~/.ssh/id_rsa`).
+
+##### Configuring SSH Password Authentication
+
+Password authentication works in the following way:
+
+* A Job must be defined specifying a Secure Option to prompt the user for the password
+* Target nodes must be configured for password authentication
+* When the user executes the Job, they are prompted for the password.  The Secure Option value for the password is not stored in the database, and is used only for that execution.
+
+Therefore Password authentication has several requirements and some limitations:
+
+1. Password-authenticated nodes can only be executed on via a defined Job, not via Ad-hoc commands (yet).
+2. Each Job that will execute on password-authenticated Nodes must define a Secure Option to prompt the user for the password before execution.
+3. All Nodes using password authentication for a Job must have an equivalent Secure Option defined, or may use the same option name (or the default) if they share authentication passwords.
+
+Passwords for the nodes are input either via the GUI or arguments to the job if executed via CLI or API.
+
+To enable SSH Password authentication, first make sure the `ssh-authentication` value is set as described in [Configuring SSH Authentication type](#configuring-ssh-authentication-type).
+
+Next, configure a Job, and include an Option definition where `secureInput` is set to `true`.  The name of this option can be anything you want, but the default value of `sshPassword` assumed by the node configuration is easiest.
+
+If the value is not `sshPassword`, then make sure to set the following attribute on each Node for password authentication:
+
+* `ssh-password-option` = "`option.NAME`" where NAME is the name of the Job's secure option.
+
+An example Node and Job option configuration are below:
+
+    <node name="egon" description="egon" osFamily="unix"
+        username="rundeck"
+        hostname="egon"
+        ssh-authentication="password"
+        ssh-password-option="option.sshPassword1" />
+
+Job:
+
+    <joblist>
+        <job>
+            ...
+            <context>
+              <project>project</project>
+              <options>
+                <option required='true' name='sshPassword1' secure='true' />
+              </options>
+            </context>
+            ...
+        </job>
+    </joblist>
+
+
 ### Resource Model Sources
 
 RunDeck includes these built-in providers in the core installation:

@@ -725,18 +725,8 @@ can be configured for SCP:
 
 In addition, for both SSH and SCP, you must either configure a public/private keypair for the remote node or configure the node for SSH Password authentication.
 
-See the Chapter: [Administration - SSH](#ssh), specifically:
-
-* [Configuring SSH Authentication type](#configuring-ssh-authentication-type)
-* [Configuring SSH Private Keys](#configuring-ssh-private-keys)
-* [Configuring SSH Password Authentication](#configuring-ssh-password-authentication)
-
-The SSH plugin is used by default for non-local nodes, however you can also configure it explicitly using these provider names:
-
-* NodeExecutor provider: `jsch-ssh`
-* FileCopier provider: `jsch-scp`
-
-The Local plugin is used by default on the local (server) node.  You configure the local plugin if necessary with the provider name `local`.
+* See [Administration - SSH](#ssh) for more information on setting up your SSH server
+* See [SSH Provider](#ssh-provider) for more information on the configuration of Nodes for SSH
 
 #### Included Plugins
 
