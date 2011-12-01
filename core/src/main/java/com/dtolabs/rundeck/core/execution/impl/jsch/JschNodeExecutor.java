@@ -97,14 +97,14 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final long DEFAULT_SUDO_PROMPT_MAX_TIMEOUT = 5000;
     public static final String NODE_ATTR_SUDO_RESPONSE_MAX_TIMEOUT = "sudo-response-max-timeout";
     public static final long DEFAULT_SUDO_RESPONSE_MAX_TIMEOUT = 5000;
-    public static final String NODE_ATTR_SUDO_FAIL_ON_INPUT_MAX_LINES = "sudo-fail-on-input-max-lines";
-    public static final boolean DEFAULT_SUDO_FAIL_ON_INPUT_MAX_LINES = false;
-    public static final String NODE_ATTR_SUDO_FAIL_ON_INPUT_TIMEOUT = "sudo-fail-on-input-timeout";
-    public static final boolean DEFAULT_SUDO_FAIL_ON_INPUT_TIMEOUT = true;
+    public static final String NODE_ATTR_SUDO_FAIL_ON_PROMPT_MAX_LINES = "sudo-fail-on-prompt-max-lines";
+    public static final boolean DEFAULT_SUDO_FAIL_ON_PROMPT_MAX_LINES = false;
+    public static final String NODE_ATTR_SUDO_FAIL_ON_PROMPT_TIMEOUT = "sudo-fail-on-prompt-timeout";
+    public static final boolean DEFAULT_SUDO_FAIL_ON_PROMPT_TIMEOUT = true;
     public static final String NODE_ATTR_SUDO_FAIL_ON_RESPONSE_TIMEOUT = "sudo-fail-on-response-timeout";
     public static final boolean DEFAULT_SUDO_FAIL_ON_RESPONSE_TIMEOUT = false;
-    public static final String NODE_ATTR_SUDO_SUCCESS_ON_INPUT_THRESHOLD = "sudo-success-on-input-threshold";
-    public static final boolean DEFAULT_SUDO_SUCCESS_ON_INPUT_THRESHOLD = true;
+    public static final String NODE_ATTR_SUDO_SUCCESS_ON_PROMPT_THRESHOLD = "sudo-success-on-prompt-threshold";
+    public static final boolean DEFAULT_SUDO_SUCCESS_ON_PROMPT_THRESHOLD = true;
 
     private Framework framework;
 
@@ -533,15 +533,15 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                 responseMaxTimeout = resolveLongProperty(NODE_ATTR_SUDO_RESPONSE_MAX_TIMEOUT,
                     DEFAULT_SUDO_RESPONSE_MAX_TIMEOUT, node, frameworkProject, framework);
 
-                failOnInputLinesThreshold = resolveBooleanProperty(NODE_ATTR_SUDO_FAIL_ON_INPUT_MAX_LINES,
-                    DEFAULT_SUDO_FAIL_ON_INPUT_MAX_LINES, node, frameworkProject, framework);
+                failOnInputLinesThreshold = resolveBooleanProperty(NODE_ATTR_SUDO_FAIL_ON_PROMPT_MAX_LINES,
+                    DEFAULT_SUDO_FAIL_ON_PROMPT_MAX_LINES, node, frameworkProject, framework);
 
-                failOnInputTimeoutThreshold = resolveBooleanProperty(NODE_ATTR_SUDO_FAIL_ON_INPUT_TIMEOUT,
-                    DEFAULT_SUDO_FAIL_ON_INPUT_TIMEOUT, node, frameworkProject, framework);
+                failOnInputTimeoutThreshold = resolveBooleanProperty(NODE_ATTR_SUDO_FAIL_ON_PROMPT_TIMEOUT,
+                    DEFAULT_SUDO_FAIL_ON_PROMPT_TIMEOUT, node, frameworkProject, framework);
                 failOnResponseThreshold = resolveBooleanProperty(NODE_ATTR_SUDO_FAIL_ON_RESPONSE_TIMEOUT,
                     DEFAULT_SUDO_FAIL_ON_RESPONSE_TIMEOUT, node, frameworkProject, framework);
-                successOnInputThreshold = resolveBooleanProperty(NODE_ATTR_SUDO_SUCCESS_ON_INPUT_THRESHOLD,
-                    DEFAULT_SUDO_SUCCESS_ON_INPUT_THRESHOLD, node, frameworkProject, framework);
+                successOnInputThreshold = resolveBooleanProperty(NODE_ATTR_SUDO_SUCCESS_ON_PROMPT_THRESHOLD,
+                    DEFAULT_SUDO_SUCCESS_ON_PROMPT_THRESHOLD, node, frameworkProject, framework);
             }
         }
 
