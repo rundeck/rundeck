@@ -52,7 +52,7 @@ function yellowfade(id,perc,time,rate,ramp,test,rgb1,rgb2){
         if(test){
         $(id).innerHTML+=", newperc: "+newperc+", newramp: "+newramp+", delay: "+(1000/rate) ;
         }
-        var tostr = "yellowfade('"+id+"',"+newperc+","+time+","+rate+","+newramp+", "+test+",new Array("+rgbstart[0]+","+rgbstart[1]+","+rgbstart[2]+"),new Array("+rgbend[0]+","+rgbend[1]+","+rgbend[2]+"));";
+        var tostr = "yellowfade('"+ $(id).identify()+"',"+newperc+","+time+","+rate+","+newramp+", "+test+",new Array("+rgbstart[0]+","+rgbstart[1]+","+rgbstart[2]+"),new Array("+rgbend[0]+","+rgbend[1]+","+rgbend[2]+"));";
         if(test){
             $(id).innerHTML+="<br>"+tostr;
         }
