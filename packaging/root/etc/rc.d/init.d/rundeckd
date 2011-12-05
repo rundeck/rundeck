@@ -33,7 +33,7 @@ start() {
 
 stop() {
 	echo -n $"Stopping $prog: "
-	killproc -p /var/run/rundeckd.pid "$rundeckd"
+	killproc -p $PID_FILE "$rundeckd"
 	RETVAL=$?
 	echo
 	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/$prog
@@ -43,7 +43,7 @@ stop() {
 ### NOT USED
 reload() {
 	echo -n $"Reloading $prog: "
-	killproc -p /var/run/rundeckd.pid "$rundeckd" -HUP
+	killproc -p $PID_FILE "$rundeckd" -HUP
 	RETVAL=$?
 	echo
 	return $RETVAL
@@ -67,7 +67,7 @@ case "$1" in
 		fi
 		;;
 	status)
-		status -p /var/run/rundeck.pid $rundeckd
+		status -p $PID_FILE $rundeckd
 		RETVAL=$?
 		;;
 	*)
