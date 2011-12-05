@@ -126,7 +126,7 @@ class ScheduledExecutionController  {
     def detailFragment = {
 //        def model=show()
 
-        log.info("ScheduledExecutionController: show : params: " + params)
+        log.debug("ScheduledExecutionController: show : params: " + params)
         def crontab = [:]
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
@@ -156,7 +156,7 @@ class ScheduledExecutionController  {
             offset:params.offset?params.offset:0])
     }
     def show = {
-        log.info("ScheduledExecutionController: show : params: " + params)
+        log.debug("ScheduledExecutionController: show : params: " + params)
         def crontab = [:]
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
@@ -568,7 +568,7 @@ class ScheduledExecutionController  {
     /**
     */
     def delete = {
-        log.info("ScheduledExecutionController: delete : params: " + params)
+        log.debug("ScheduledExecutionController: delete : params: " + params)
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if(scheduledExecution) {
@@ -600,7 +600,7 @@ class ScheduledExecutionController  {
      * Only allowed via DELETE http method
     */
     def deleteBulk = {
-        log.info("ScheduledExecutionController: deleteBulk : params: " + params)
+        log.debug("ScheduledExecutionController: deleteBulk : params: " + params)
         def list=[]
         if(!params.idlist){
             flash.error = "idlist parameter is required"
@@ -645,7 +645,7 @@ class ScheduledExecutionController  {
     }
 
     def edit = {
-        log.info("ScheduledExecutionController: edit : params: " + params)
+        log.debug("ScheduledExecutionController: edit : params: " + params)
         def scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         def crontab = [:]
@@ -719,7 +719,7 @@ class ScheduledExecutionController  {
         def success = result.success
         if(!scheduledExecution){
             flash.message = "ScheduledExecution not found with id ${params.id}"
-            log.info("update: there was no object by id: " +params.id+". redirecting to edit.")
+            log.warn("update: there was no object by id: " +params.id+". redirecting to edit.")
             redirect(controller:'menu',action:'jobs')
         }else if(result.unauthorized){
             return unauthorized(result.message)
@@ -1074,7 +1074,7 @@ class ScheduledExecutionController  {
             }else if(oldsched && oldjobname && oldjobgroup){
                 scheduledExecutionService.deleteJob(oldjobname,oldjobgroup)
             }
-            log.info("update : save operation succeeded. redirecting to show...")
+            log.debug("update : save operation succeeded. redirecting to show...")
             session.editOPTS?.remove(scheduledExecution.id.toString())
             session.undoOPTS?.remove(scheduledExecution.id.toString())
             session.redoOPTS?.remove(scheduledExecution.id.toString())
@@ -1300,7 +1300,7 @@ class ScheduledExecutionController  {
             }else if(oldsched && oldjobname && oldjobgroup){
                 scheduledExecutionService.deleteJob(oldjobname,oldjobgroup)
             }
-            log.info("update : save operation succeeded. redirecting to show...")
+            log.debug("update : save operation succeeded. redirecting to show...")
             session.editOPTS?.remove(scheduledExecution.id.toString())
             session.undoOPTS?.remove(scheduledExecution.id.toString())
             session.redoOPTS?.remove(scheduledExecution.id.toString())
@@ -1327,12 +1327,12 @@ class ScheduledExecutionController  {
         }
         def user = (session?.user) ? session.user : "anonymous"
         def rolelist = (session?.roles) ? session.roles : []
-        log.info("ScheduledExecutionController: create : params: " + params)
+        log.debug("ScheduledExecutionController: create : params: " + params)
 
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if(!scheduledExecution){
             flash.message = "ScheduledExecution not found with id ${params.id}"
-            log.info("update: there was no object by id: " +params.id+". redirecting to menu.")
+            log.debug("update: there was no object by id: " +params.id+". redirecting to menu.")
             redirect(action:index)
             return;
         }
@@ -1370,7 +1370,7 @@ class ScheduledExecutionController  {
         if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'job'], [AuthConstants.ACTION_CREATE],session.project) && !frameworkService.authorizeProjectResource(framework,[type:'adhoc'], AuthConstants.ACTION_RUN,session.project)) {
             return unauthorized("Create a Job")
         }
-        log.info("ScheduledExecutionController: create : params: " + params)
+        log.debug("ScheduledExecutionController: create : params: " + params)
         Execution execution = Execution.get(params.executionId)
         if(!execution){
             flash.message = "Execution not found with id ${params.executionId}"
@@ -1423,7 +1423,7 @@ class ScheduledExecutionController  {
         def projects = frameworkService.projects(framework)
         def user = (session?.user) ? session.user : "anonymous"
         def rolelist = (session?.roles) ? session.roles : []
-        log.info("ScheduledExecutionController: create : params: " + params)
+        log.debug("ScheduledExecutionController: create : params: " + params)
         def scheduledExecution = new ScheduledExecution()
         scheduledExecution.loglevel = servletContext.getAttribute("LOGLEVEL_DEFAULT")?servletContext.getAttribute("LOGLEVEL_DEFAULT"):"WARN"
         scheduledExecution.properties = params
@@ -1459,13 +1459,13 @@ class ScheduledExecutionController  {
             session.removeAttribute('redoOPTS');
         }
 
-        log.info("ScheduledExecutionController: create : now returning model data to view...")
+        log.debug("ScheduledExecutionController: create : now returning model data to view...")
         return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],projects:projects]
     }
 
 
     def saveAndExec = {
-        log.info("ScheduledExecutionController: saveAndExec : params: " + params)
+        log.debug("ScheduledExecutionController: saveAndExec : params: " + params)
         def changeinfo = [user: session.user, change: 'create', method: 'saveAndExec']
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         if (!frameworkService.authorizeProjectResourceAll(framework, [type: 'resource', kind: 'job'], [AuthConstants.ACTION_CREATE], session.project)) {
@@ -1495,7 +1495,7 @@ class ScheduledExecutionController  {
      * Action to upload jobs.xml and execute it immediately.
      */
     def uploadAndExecute = {
-        log.info("ScheduledExecutionController: upload " + params)
+        log.debug("ScheduledExecutionController: upload " + params)
         def fileformat = params.fileformat ?: 'xml'
         def parseresult
         if (request instanceof MultipartHttpServletRequest) {
@@ -1583,7 +1583,7 @@ class ScheduledExecutionController  {
         if(results.failed){
             results.error=results.message
         } else {
-            log.info("ExecutionController: immediate execution scheduled (${results.id})")
+            log.debug("ExecutionController: immediate execution scheduled (${results.id})")
         }
         return render(contentType:'application/json'){
             if(results.error){
@@ -1632,7 +1632,7 @@ class ScheduledExecutionController  {
             Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
             render(view:'create',model:[scheduledExecution:scheduledExecution,params:params, projects: frameworkService.projects(framework)])
         } else {
-            log.info("ExecutionController: immediate execution scheduled (${results.id})")
+            log.debug("ExecutionController: immediate execution scheduled (${results.id})")
             redirect(controller:"execution", action:"follow",id:results.id)
         }
     }
@@ -2175,7 +2175,7 @@ class ScheduledExecutionController  {
     /**
     */
     public Map _dosave ( params, changeinfo=[:]){
-        log.info("ScheduledExecutionController: save : params: " + params)
+        log.debug("ScheduledExecutionController: save : params: " + params)
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         def user = (session?.user) ? session.user : "anonymous"
         def rolelist = (session?.roles) ? session.roles : []
@@ -2430,7 +2430,7 @@ class ScheduledExecutionController  {
         return [jobs:jobs,jobsi:jobsi,msgs:msgs,errjobs:errjobs,skipjobs:skipjobs]
     }
     def upload ={
-        log.info("ScheduledExecutionController: upload " + params)
+        log.debug("ScheduledExecutionController: upload " + params)
 
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         
@@ -2753,7 +2753,7 @@ class ScheduledExecutionController  {
             result.failed=true
             return result
         }else{
-            log.info("ExecutionController: immediate execution scheduled")
+            log.debug("ExecutionController: immediate execution scheduled")
 //            redirect(controller:"execution", action:"follow",id:result.executionId)
             return [success:true, message:"immediate execution scheduled", id:result.executionId]
         }
@@ -2789,10 +2789,10 @@ class ScheduledExecutionController  {
 
     public Map lookupLastExecutions(List scheduledExecutions) {
         def map = [ : ]
-        log.info("looking up lastExecutions for ["+scheduledExecutions.size()+ "] objects")
+        log.debug("looking up lastExecutions for ["+scheduledExecutions.size()+ "] objects")
         scheduledExecutions.each {             
             def last = lookupLastExecutions(it)
-            log.info("lookupLastExecutions : found ["+last.size()+"] executions for id: "+it.id )
+            log.debug("lookupLastExecutions : found ["+last.size()+"] executions for id: "+it.id )
             if (last.size() > 0) {
                 map[it.id] = last[0]
             } 
@@ -2811,9 +2811,9 @@ class ScheduledExecutionController  {
             maxResults(1)
             order("dateCompleted", "desc")
         }
-        log.info("lookupLastExecutions: results count " + results.count())
+        log.debug("lookupLastExecutions: results count " + results.count())
         results.each {
-            log.info("Execution added to result: " + it)
+            log.debug("Execution added to result: " + it)
             executions << it
         }
         return executions
@@ -2931,7 +2931,7 @@ class ScheduledExecutionController  {
      * API: /jobs/import, version 1
      */
     def apiJobsImport= {
-        log.info("ScheduledExecutionController: upload " + params)
+        log.debug("ScheduledExecutionController: upload " + params)
         def fileformat = params.format ?: 'xml'
         def parseresult
         if (!params.xmlBatch) {
@@ -2978,7 +2978,7 @@ class ScheduledExecutionController  {
      * API: export job definition: /job/{id}, version 1
      */
     def apiJobExport={
-        log.info("ScheduledExecutionController: /api/job GET : params: " + params)
+        log.debug("ScheduledExecutionController: /api/job GET : params: " + params)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if (!scheduledExecution) {
             flash.errorCode = "api.error.item.doesnotexist"
@@ -3057,7 +3057,7 @@ class ScheduledExecutionController  {
      * API: DELETE job definition: /job/{id}, version 1
      */
     def apiJobDelete={
-        log.info("ScheduledExecutionController: /api/job DELETE : params: " + params)
+        log.debug("ScheduledExecutionController: /api/job DELETE : params: " + params)
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if (!scheduledExecution) {
             flash.error = g.message(code:"api.error.item.doesnotexist",args:['Job ID',params.id])
