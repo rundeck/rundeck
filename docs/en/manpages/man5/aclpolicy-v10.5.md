@@ -205,7 +205,7 @@ For set membership matches, such as matching a Node that must have three
 different tags, you can use `contains`
 
     contains:
-      tag: [a,b,c]
+      tags: [a,b,c]
 
 The `match` and `contains` allow a list of property values, and all of them
 must match the resource's property for the rule to match.  This allows the basic

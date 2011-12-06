@@ -1069,11 +1069,13 @@ Type      Properties                         Actions  Description
 "                                            `run`    Run a job
 "                                            `kill`   Kill a running job
 "                                            `create` Create the matching job
-`node`    "rundeck_server", "nodename", ...  `read`   View the node in the UI
+`node`    "rundeck_server", "nodename", ...  `read`   View the node in the UI (see [Node resource properties](#node-resource-properties))
 "                                            `run`    Run jobs/adhoc on the node
 ----------------------------
 
 Table: Project scope specific resource actions
+
+Note: see [Node resource properties](#node-resource-properties) for more node resource properties for authorization.
 
 Recall that defining rules for a resource type is done in this way:
 
@@ -1092,7 +1094,27 @@ way:
             name: bob
           allow: [run]
 
-Note, for `node` resources, the properties available are all the attributes that are defined on the node, so you can apply authorizations based on tag, osName, hostname, etc. The special `rundeck_server` property will be set to "true" for the RunDeck server node only, and "false" for all other nodes.
+#### Node resource properties
+
+The properties available are the attributes that are defined on the node, so you can apply authorizations based on tag, osName, hostname, etc. The special `rundeck_server` property will be set to "true" for the RunDeck server node only, and "false" for all other nodes.
+
+Any custom attributes can be used as well.
+
+Name             Description
+-----            -----------
+`nodename`       Name of the node
+`username`       Authentication username
+`hostname`       Hostname of the node
+`description`    Description of the node
+`tags`           Set of tags.  Can use with the `contains:` filter.
+`osName`         Operating System name
+`osFamily`       Operating System family, e.g. "unix" or "windows"
+`osVersion`      Operating System version
+`osArch`         Operating System architecture
+`rundeck_server` A value set to "true" if the node is the Rundeck server node
+----------------------------
+
+Table: Pre-defined Node resource properties for authorization filters
 
 #### Access control policy actions example
 
