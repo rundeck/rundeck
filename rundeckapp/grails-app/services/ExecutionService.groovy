@@ -956,7 +956,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             throw new ExecutionServiceException('Job "' + se.jobName + '" [' + se.id + '] is currently being executed (execution [' + found.id + '])')
         }
 
-        log.info("createExecution for ScheduledExecution: ${se.id}")
+        log.debug("createExecution for ScheduledExecution: ${se.id}")
         def props =[:]
         props.putAll(se.properties)
         if(!props.user){
@@ -970,20 +970,9 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             props.putAll(extra)
         }
 
-        //evaluate embedded Job options for Regex match against input values
-
-        def optparams = ExecutionService.filterOptParams(props)
-        if(optparams){
-            validateOptionValues(scheduledExec, optparams)
-            optparams=removeSecureOptionEntries(scheduledExec,optparams)
-        }else{
-            if(props.argString){
-                optparams = frameworkService.parseOptsFromString(props.argString)
-                validateOptionValues(scheduledExec, optparams)
-                optparams =removeSecureOptionEntries(scheduledExec, optparams)
-            }
-            optparams=addOptionDefaults(scheduledExec, optparams)
-        }
+        //evaluate embedded Job options for validation
+        HashMap optparams = validateJobInputOptions(props, scheduledExec)
+        optparams = removeSecureOptionEntries(scheduledExec, optparams)
 
         props.argString = generateJobArgline(scheduledExec, optparams)
 
@@ -1033,8 +1022,26 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
     }
 
     /**
-     * evaluate the options in the input argString, and if any Options defined for the Job have required=true, have a
-     * defaultValue, and have null value in the input properties, then append the default option value to the argString
+     * Parse input "option.NAME" values, or a single "argString" value. Add default missing defaults for required
+     * options. Validate the values for the Job options and throw exception if validation fails. Return a map of name
+     * to value for the parsed options.
+     * @param props
+     * @param scheduledExec
+     * @return
+     */
+    private HashMap validateJobInputOptions(Map props, ScheduledExecution scheduledExec) {
+        def optparams = filterOptParams(props)
+        if (!optparams && props.argString) {
+            optparams = frameworkService.parseOptsFromString(props.argString)
+        }
+        optparams = addOptionDefaults(scheduledExec, optparams)
+        validateOptionValues(scheduledExec, optparams)
+        return optparams
+    }
+
+    /**
+     * evaluate the options and return a map of the values of any secure options, using defaults for required options if
+     * they are not present
      */
     def Map selectSecureOptionInput(ScheduledExecution scheduledExecution, Map params) throws ExecutionServiceException {
         def results=[:]
@@ -1049,7 +1056,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             options.each {Option opt ->
                 if (opt.secureInput && optparams[opt.name]) {
                     results[opt.name]= optparams[opt.name]
-                }else if (opt.secureInput && opt.defaultValue) {
+                }else if (opt.secureInput && opt.defaultValue && opt.required) {
                     results[opt.name] = opt.defaultValue
                 }
             }
@@ -1110,7 +1117,6 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
      * defaultValue, and have null value in the input properties, then append the default option value to the argString
      */
     def Map addOptionDefaults(ScheduledExecution scheduledExecution, Map optparams) throws ExecutionServiceException {
-        def StringBuffer sb = new StringBuffer()
         def newmap = new HashMap(optparams)
 
         final options = scheduledExecution.options
