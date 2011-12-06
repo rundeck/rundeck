@@ -64,6 +64,9 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String FWK_PROP_AUTH_CANCEL_MSG = "framework.messages.error.ssh.authcancel";
     public static final String FWK_PROP_AUTH_CANCEL_MSG_DEFAULT =
         "Authentication failure connecting to node: \"{0}\". Make sure your resource definitions and credentials are up to date.";
+    public static final String FWK_PROP_AUTH_FAIL_MSG = "framework.messages.error.ssh.authfail";
+    public static final String FWK_PROP_AUTH_FAIL_MSG_DEFAULT =
+        "Authentication failure connecting to node: \"{0}\". Password incorrect.";
     public static final String NODE_ATTR_SSH_KEYPATH = "ssh-keypath";
 
     public static final String PROJ_PROP_PREFIX = "project.";
@@ -234,8 +237,14 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                 if (framework.getPropertyLookup().hasProperty(FWK_PROP_AUTH_CANCEL_MSG)) {
                     msgformat = framework.getProperty(FWK_PROP_AUTH_CANCEL_MSG);
                 }
-                errormsg = MessageFormat.format(msgformat, node.getNodename(),
-                    e.getMessage());
+                errormsg = MessageFormat.format(msgformat, node.getNodename(), e.getMessage());
+            }else if (null != e.getCause() && e.getCause() instanceof JSchException && e.getCause().getMessage()
+                .contains("Auth fail")) {
+                String msgformat = FWK_PROP_AUTH_FAIL_MSG_DEFAULT;
+                if (framework.getPropertyLookup().hasProperty(FWK_PROP_AUTH_FAIL_MSG)) {
+                    msgformat = framework.getProperty(FWK_PROP_AUTH_FAIL_MSG);
+                }
+                errormsg = MessageFormat.format(msgformat, node.getNodename(), e.getMessage());
             } else {
                 errormsg = e.getMessage();
             }
