@@ -197,7 +197,7 @@ class ExecutionJob implements InterruptableJob {
         } catch (Exception exc) {
             throw new RuntimeException("Execution failed: "+exc.getMessage(), exc)
         }
-        log.info("ExecutionJob: execution successful? " + success +", interrupted? "+_interrupted)
+        log.debug("ExecutionJob: execution successful? " + success +", interrupted? "+_interrupted)
         return [success:success,execmap:execmap]
 
     }
@@ -244,7 +244,6 @@ class ExecutionJob implements InterruptableJob {
         if (! se instanceof ScheduledExecution) {
             throw new RuntimeException("JobDataMap contained invalid ScheduledExecution type: " + se.getClass().getName())
         }
-        log.info("returning ScheduledExecution object.")
         return se
     }
 
