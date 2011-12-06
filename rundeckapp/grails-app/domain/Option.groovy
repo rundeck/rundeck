@@ -49,6 +49,8 @@ public class Option implements Comparable{
     String valuesList
     Boolean multivalued
     String delimiter
+    Boolean secureInput
+    
     static belongsTo=[scheduledExecution:ScheduledExecution]
     static transients=['valuesList','valuesUrlString']
 
@@ -64,6 +66,7 @@ public class Option implements Comparable{
         scheduledExecution(nullable:true)
         delimiter(nullable:true)
         multivalued(nullable:true)
+        secureInput(nullable:true)
     }
 
     static mapping = {
@@ -103,6 +106,9 @@ public class Option implements Comparable{
             map.multivalued=multivalued
             map.delimiter=delimiter?:','
         }
+        if(secureInput){
+            map.secure=secureInput
+        }
         return map
     }
 
@@ -131,6 +137,9 @@ public class Option implements Comparable{
             if(data.delimiter){
                 opt.delimiter=data.delimiter
             }
+        }
+        if(data.secure){
+            opt.secureInput=Boolean.valueOf(data.secure)
         }
         return opt
     }
@@ -167,7 +176,7 @@ public class Option implements Comparable{
      */
     public Option createClone(){
         Option opt = new Option()
-        ['name','description','defaultValue','enforced','required','values','valuesList','valuesUrl','regex','multivalued','delimiter'].each{k->
+        ['name','description','defaultValue','enforced','required','values','valuesList','valuesUrl','regex','multivalued','delimiter','secureInput'].each{k->
             opt[k]=this[k]
         }
         if(!opt.valuesList && values){
@@ -187,6 +196,7 @@ public class Option implements Comparable{
         ", valuesUrl=" + valuesUrl +
         ", regex='" + regex + '\'' +
         ", multivalued='" + multivalued + '\'' +
+        ", secureInput='" + secureInput + '\'' +
         ", delimiter='" + delimiter + '\'' +
         '}' ;
     }

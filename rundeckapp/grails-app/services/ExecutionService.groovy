@@ -458,7 +458,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
     /**
      * starts an execution in a separate thread, returning a map of [thread:Thread, loghandler:LogHandler]
      */
-    def Map executeAsyncBegin(Framework framework, Execution execution, ScheduledExecution scheduledExecution=null){
+    def Map executeAsyncBegin(Framework framework, Execution execution, ScheduledExecution scheduledExecution=null, Map extraParams = null){
         execution.refresh()
         String lognamespace="rundeck"
         if(execution.workflow){
@@ -496,8 +496,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
 
             //create listener to handle log messages and Ant build events
             ExecutionListener executionListener = new WorkflowExecutionListenerImpl(recorder, loghandler,false,null);
-            com.dtolabs.rundeck.core.execution.ExecutionContext executioncontext = createContext(execution, framework, execution.user, jobcontext, executionListener)
-
+            com.dtolabs.rundeck.core.execution.ExecutionContext executioncontext = createContext(execution, framework, execution.user, jobcontext, executionListener, null,extraParams)
             final cis = CommandInterpreterService.getInstanceForFramework(framework);
             cis.registerInstance(JobExecutionItem.COMMAND_TYPE, this)
 
@@ -617,7 +616,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
     /**
      * Return an ExecutionItem instance for the given workflow Execution, suitable for the ExecutionService layer
      */
-    public com.dtolabs.rundeck.core.execution.ExecutionContext createContext(ExecutionContext execMap, Framework framework, String userName = null, Map<String, String> jobcontext, ExecutionListener listener, String[] inputargs=null) {
+    public com.dtolabs.rundeck.core.execution.ExecutionContext createContext(ExecutionContext execMap, Framework framework, String userName = null, Map<String, String> jobcontext, ExecutionListener listener, String[] inputargs=null, Map extraParams=null) {
         def User user = User.findByLogin(userName ? userName : execMap.user)
         if (!user) {
             throw new Exception("User ${userName ? userName : execMap.user} is not authorized to run this Job.")
@@ -659,6 +658,10 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         }else{
             nodeselector = null
         }
+        def Map<String, Map<String, String>> privatecontext = new HashMap<String, Map<String, String>>()
+        if (null != extraParams) {
+            privatecontext.put("option", extraParams)
+        }
 
         //create thread object with an execution item, and start it
         final com.dtolabs.rundeck.core.execution.ExecutionContext item =  com.dtolabs.rundeck.core.execution.ExecutionContextImpl.createExecutionContextImpl(
@@ -668,6 +671,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             args,
             loglevels[null != execMap.loglevel ? execMap.loglevel : 'WARN'],
             datacontext,
+            privatecontext,
             listener,
             framework,threadCount,keepgoing)
         return item
@@ -952,7 +956,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             throw new ExecutionServiceException('Job "' + se.jobName + '" [' + se.id + '] is currently being executed (execution [' + found.id + '])')
         }
 
-        log.info("createExecution for ScheduledExecution: ${se.id}")
+        log.debug("createExecution for ScheduledExecution: ${se.id}")
         def props =[:]
         props.putAll(se.properties)
         if(!props.user){
@@ -966,16 +970,11 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             props.putAll(extra)
         }
 
-        //evaluate embedded Job options for Regex match against input values
+        //evaluate embedded Job options for validation
+        HashMap optparams = validateJobInputOptions(props, scheduledExec)
+        optparams = removeSecureOptionEntries(scheduledExec, optparams)
 
-        def optparams = ExecutionService.filterOptParams(props)
-        if(!optparams){
-            props.argString=addArgStringOptionDefaults(scheduledExec, props.argString)
-        }
-        validateInputOptionValues(scheduledExec, props)
-        if (optparams) {
-            props.argString = generateJobArgline(scheduledExec, optparams)
-        }
+        props.argString = generateJobArgline(scheduledExec, optparams)
 
         //create duplicate workflow
         if(se.workflow){
@@ -1023,6 +1022,65 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
     }
 
     /**
+     * Parse input "option.NAME" values, or a single "argString" value. Add default missing defaults for required
+     * options. Validate the values for the Job options and throw exception if validation fails. Return a map of name
+     * to value for the parsed options.
+     * @param props
+     * @param scheduledExec
+     * @return
+     */
+    private HashMap validateJobInputOptions(Map props, ScheduledExecution scheduledExec) {
+        def optparams = filterOptParams(props)
+        if (!optparams && props.argString) {
+            optparams = frameworkService.parseOptsFromString(props.argString)
+        }
+        optparams = addOptionDefaults(scheduledExec, optparams)
+        validateOptionValues(scheduledExec, optparams)
+        return optparams
+    }
+
+    /**
+     * evaluate the options and return a map of the values of any secure options, using defaults for required options if
+     * they are not present
+     */
+    def Map selectSecureOptionInput(ScheduledExecution scheduledExecution, Map params) throws ExecutionServiceException {
+        def results=[:]
+        def optparams
+        if (params.argString) {
+            optparams = frameworkService.parseOptsFromString(params.argString)
+        }else{
+            optparams = ExecutionService.filterOptParams(params)
+        }
+        final options = scheduledExecution.options
+        if (options) {
+            options.each {Option opt ->
+                if (opt.secureInput && optparams[opt.name]) {
+                    results[opt.name]= optparams[opt.name]
+                }else if (opt.secureInput && opt.defaultValue && opt.required) {
+                    results[opt.name] = opt.defaultValue
+                }
+            }
+        }
+        return results
+    }
+    /**
+     * evaluate the options in the input argString, and if any Options defined for the Job have required=true, have a
+     * defaultValue, and have null value in the input properties, then append the default option value to the argString
+     */
+    def Map removeSecureOptionEntries(ScheduledExecution scheduledExecution, Map params) throws ExecutionServiceException {
+        def results=new HashMap(params)
+        final options = scheduledExecution.options
+        if (options) {
+            options.each {Option opt ->
+                if (opt.secureInput ) {
+                    results.remove(opt.name)
+                }
+            }
+        }
+        return results
+    }
+
+    /**
      * evaluate the options in the input argString, and if any Options defined for the Job have required=true, have a
      * defaultValue, and have null value in the input properties, then append the default option value to the argString
      */
@@ -1053,6 +1111,27 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             }
         }
         return sb.toString()
+    }
+    /**
+     * evaluate the options in the input argString, and if any Options defined for the Job have required=true, have a
+     * defaultValue, and have null value in the input properties, then append the default option value to the argString
+     */
+    def Map addOptionDefaults(ScheduledExecution scheduledExecution, Map optparams) throws ExecutionServiceException {
+        def newmap = new HashMap(optparams)
+
+        final options = scheduledExecution.options
+        if (options) {
+            def defaultoptions=[:]
+            options.each {Option opt ->
+                if (opt.required && null==optparams[opt.name] && opt.defaultValue) {
+                    defaultoptions[opt.name]=opt.defaultValue
+                }
+            }
+            if(defaultoptions){
+                newmap.putAll(defaultoptions)
+            }
+        }
+        return newmap
     }
 
     /**
@@ -1095,12 +1174,21 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
      * any options don't match.
      */
     def boolean validateInputOptionValues(ScheduledExecution scheduledExecution, Map props) throws ExecutionServiceException{
-        def fail=false
-        def StringBuffer sb = new StringBuffer()
         def optparams = ExecutionService.filterOptParams(props)
         if(!optparams && props.argString){
             optparams = parseJobOptsFromString(scheduledExecution,props.argString)
         }
+        return validateOptionValues(scheduledExecution,optparams)
+    }
+    /**
+     * evaluate the options value map, and if any Options defined for the Job have regex constraints,
+     * require the values in the properties to match the regular expressions.  Throw ExecutionServiceException if
+     * any options don't match.
+     */
+    def boolean validateOptionValues(ScheduledExecution scheduledExecution, Map optparams) throws ExecutionServiceException{
+        def fail = false
+        def StringBuffer sb = new StringBuffer()
+
         def failedkeys=[:]
         if (scheduledExecution.options) {
             scheduledExecution.options.each {Option opt ->
@@ -1109,7 +1197,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                     if (!failedkeys[opt.name]) {
                         failedkeys[opt.name] = ''
                     }
-                    final String msg = "Option '${opt.name}' value: ${optparams[opt.name]} does not allow multiple values.\n"
+                    final String msg = "Option '${opt.name}' value: ${opt.secureInput ? '***' : optparams[opt.name]} does not allow multiple values.\n"
                     sb << msg
                     failedkeys[opt.name] += msg
                     return
@@ -1163,7 +1251,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                             if (!failedkeys[opt.name]) {
                                 failedkeys[opt.name] = ''
                             }
-                            final String msg = "Option '${opt.name}' doesn't match regular expression: '${opt.regex}', value: ${optparams[opt.name]}\n"
+                            String msg = opt.secureInput? "Option '${opt.name}' value was not valid\n":"Option '${opt.name}' doesn't match regular expression ${opt.regex}, value: ${optparams[opt.name]}\n"
                             sb << msg
                             failedkeys[opt.name] += msg
                             return
@@ -1174,7 +1262,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                         if(!failedkeys[opt.name]){
                             failedkeys[opt.name]=''
                         }
-                        final String msg = "Option '${opt.name}' value: ${optparams[opt.name]} was not in the allowed values: ${opt.values}\n"
+                        final String msg = opt.secureInput ? "Option '${opt.name}' value was not valid\n" : "Option '${opt.name}' value: ${optparams[opt.name]} was not in the allowed values: ${opt.values}\n"
                         sb << msg
                         failedkeys[opt.name]+=msg
                         return
@@ -1589,6 +1677,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                     jobcontext.project = se.project
                     jobcontext.username = executionContext.getUser()
                     newExecItem = createExecutionItemForExecutionContext(se, executionContext.getFramework(), executionContext.getUser())
+                    //TODO: if allowed,pass private data context to new context
                     newContext= createContext(se, executionContext.getFramework(), executionContext.getUser(), jobcontext, executionContext.getExecutionListener(),newargs)
                 }
 

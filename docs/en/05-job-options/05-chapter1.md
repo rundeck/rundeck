@@ -52,6 +52,17 @@ level of procedure formalization.
   value be somewhat open ended consider how you can create
   safeguards to control their choice.
 
+## Secure Options
+
+The built-in [SSH Provider](#ssh-provider) for node execution allows using passwords for SSH and/or Sudo authentication mechanisms, and the passwords are supplied by Secure Options defined in a Job.
+
+A Secure Option will always show a password prompt in the GUI, instead of a normal text field or drop down menu.
+
+Secure Options have some limitations compared to regular options:
+
+* The values entered by the user are not available for normal script and command option value expansion. This means that they can only be used for the purposes of the SSH Provider at the moment.
+* Secure Options do not support allow Multi-valued input
+* Secure option values are not stored with the Execution as are the other option values.
 
 ## Options editor
 
@@ -102,6 +113,10 @@ Identification
      description will be provided as help text to users running the Job.
      
      The Default Value will be pre-selected in the GUI when the option is presented.
+
+Secure Input
+
+:   Set to true to define a Secure Option.  The multi-valued option will be disabled.
 
 Allowed values
 

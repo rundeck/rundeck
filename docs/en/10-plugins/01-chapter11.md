@@ -327,6 +327,213 @@ For FileCopier, these providers:
 
 :   remote copy of a command via SCP, requiring the "hostname" and  "username" attributes on a node.
 
+#### SSH Provider
+
+The SSH Node Executor and File Copier are included as the default providers for RunDeck.
+
+Out of the box typical node configuration to make use of these is simple. 
+
+* Set the `hostname` attribute for the nodes.  It can be in the format "hostname:port" to indicate that a non-default port should be used. The default port is 22.
+* Set the `username` attribute for the nodes to the username to connect to the remote node.
+* set up public/private key authentication from the RunDeck server to the nodes
+
+This will allow remote command and script execution on the nodes.
+
+See below for more configuration options.
+
+**Sudo Password Authentication**
+
+The SSH Provider also includes support for a secondary Sudo Password Authentication. This simulates a user writing a password to the terminal into a password prompt when invoking a "sudo" command that requires password authentication.
+
+##### Configuring SCP File Copier
+
+In addition to the general SSH configuration mentioned for in this section, some additional configuration can be done for SCP. 
+
+When a Script is executed on a remote node, it is copied over via SCP first, and then executed.  In addition to the SSH connection properties, these node attributes
+can be configured for SCP:
+
+* `file-copy-destination-dir`: The directory on the remote node to copy the script file to before executing it. The default value is `C:/WINDOWS/TEMP/` on Windows nodes, and `/tmp` for other nodes.
+* `osFamily`: specify "windows" for windows nodes.
+
+##### Configuring SSH Authentication type
+
+SSH authentication can be done in two ways, via password or public/private key.
+
+By default, public/private key is used, but this can be changed on a node, project, or framework scope.
+
+The mechanism used is determined by the `ssh-authentication` property.  This property can have two different values:
+
+* `password`
+* `privateKey` (default)
+
+When connecting to a particular Node, this sequence is used to determine the correct authentication mechanism:
+
+1. **Node level**: `ssh-authentication` attribute on the Node. Applies only to the target node.
+2. **Project level**: `project.ssh-authentication` property in `project.properties`.  Applies to any project node by default.
+3. **RunDeck level**: `framework.ssh-authentication` property in `framework.properties`. Applies to all projects by default.
+
+If none of those values are set, then the default public/private key authentication is used.
+
+##### Configuring SSH Username
+
+The username used to connect via SSH is taken from the `username` Node attribute:
+
+* `username="user1"`
+
+This value can also include a property reference if you want to dynamically change it, for example to the name of the current RunDeck user, or the username submitted as a Job Option value:
+
+* `${job.username}` - uses the username of the user executing the RunDeck execution.
+* `${option.someUsername}` - uses the value of a job option named "someUsername".
+
+If the `username` node attribute is not set, then the static value provided via project or framework configuration is used. The username for a node is determined by looking for a value in this order:
+
+1. **Node level**: `username` node attribute. Can contain property references to dynamically set it from Option or Execution values.
+2. **Project level**: `project.ssh.user` property in `project.properties` file for the project.
+3. **RunDeck level**: `framework.ssh.user` property in `framework.properties` file for the RunDeck installation.
+
+##### Configuring SSH private keys
+
+The default authentication mechanism is public/private key.
+
+The built-in SSH connector allows the private key to be specified in several different ways.  You can configure it per-node, per-project, or per-RunDeck instance.
+
+When connecting to the remote node, RunDeck will look for a property/attribute specifying the location of the private key file, in this order, with the first match having precedence:
+
+1. **Node level**: `ssh-keypath` attribute on the Node. Applies only to the target node.
+2. **Project level**: `project.ssh-keypath` property in `project.properties`.  Applies to any project node by default.
+3. **RunDeck level**: `framework.ssh-keypath` property in `framework.properties`. Applies to all projects by default.
+4. **RunDeck level**:  `framework.ssh.keypath` property in `framework.properties`. Applies to all projects by default (included for compatibility with Rundeck < 1.3). (default value: `~/.ssh/id_rsa`).
+
+##### Configuring SSH Password Authentication
+
+Password authentication works in the following way:
+
+* A Job must be defined specifying a Secure Option to prompt the user for the password
+* Target nodes must be configured for password authentication
+* When the user executes the Job, they are prompted for the password.  The Secure Option value for the password is not stored in the database, and is used only for that execution.
+
+Therefore Password authentication has several requirements and some limitations:
+
+1. Password-authenticated nodes can only be executed on via a defined Job, not via Ad-hoc commands (yet).
+2. Each Job that will execute on password-authenticated Nodes must define a Secure Option to prompt the user for the password before execution.
+3. All Nodes using password authentication for a Job must have an equivalent Secure Option defined, or may use the same option name (or the default) if they share authentication passwords.
+
+Passwords for the nodes are input either via the GUI or arguments to the job if executed via CLI or API.
+
+To enable SSH Password authentication, first make sure the `ssh-authentication` value is set as described in [Configuring SSH Authentication type](#configuring-ssh-authentication-type).
+
+Next, configure a Job, and include an Option definition where `secureInput` is set to `true`.  The name of this option can be anything you want, but the default value of `sshPassword` assumed by the node configuration is easiest.
+
+If the value is not `sshPassword`, then make sure to set the following attribute on each Node for password authentication:
+
+* `ssh-password-option` = "`option.NAME`" where NAME is the name of the Job's secure option.
+
+An example Node and Job option configuration are below:
+
+    <node name="egon" description="egon" osFamily="unix"
+        username="rundeck"
+        hostname="egon"
+        ssh-authentication="password"
+        ssh-password-option="option.sshPassword1" />
+
+Job:
+
+    <joblist>
+        <job>
+            ...
+            <context>
+              <project>project</project>
+              <options>
+                <option required='true' name='sshPassword1' secure='true' />
+              </options>
+            </context>
+            ...
+        </job>
+    </joblist>
+
+
+##### Configuring Secondary Sudo Password Authentication
+
+The SSH provider supports a secondary authentication mechanism: Sudo password authentication.  This is useful if your security requirements are such that you require the SSH connection to be under a specific user's account instead of a generic "rundeck" account, and you still need to allow "sudo" level commands to be executed requiring a password to be entered.
+
+This works in the following way:
+
+* On Job execution, the user is prompted to enter a Sudo password
+* After connecting to the remote node via SSH, a command requiring "sudo" authentication is issued, such as "sudo -u otheruser /sbin/some-command"
+* The remote node will prompt for a sudo password, expecting user input
+* The SSH Provider will write the password to the remote node
+* The sudo command will execute as if a user had entered the command
+
+Similarly to SSH Password authentication, Sudo Password Authentication requires:
+
+* A Job must be defined specifying a Secure Option to prompt the user for the password
+* Target nodes must be configured for Sudo authentication
+* When the user executes the Job, they are prompted for the password.  The Secure Option value for the password is not stored in the database, and is used only for that execution.
+
+Therefore Sudo Password Authentication has several requirements and some limitations:
+
+1. Sudo Password authenticated nodes can only be executed on via a defined Job, not via Ad-hoc commands (yet).
+2. Each Job that will execute on Sudo Password Authenticated Nodes must define a Secure Option to prompt the user for the Sudo password before execution.
+3. All Nodes using Sudo password authentication for a Job must have an equivalent Secure Option defined, or may use the same option name (or the default) if they share sudo authentication passwords.
+
+Passwords for the nodes are input either via the GUI or arguments to the job if executed via CLI or API.
+
+To enable Sudo Password Authentication, set the `sudo-command-enabled` to `true` for each node.
+
+* `sudo-command-enabled` - set to "true" to enable Sudo Password Authentication: *required*.
+
+ You can also configure these attributes, which also have equivalent properties to set at the Project and RunDeck scopes. Simply set the `project.NAME` in project.properties, or `framework.NAME` in framework.properties:
+ 
+* `sudo-command-pattern` - a regular expression to detect when a command execution should expect to require Sudo authentication. Default pattern is `^sudo$`.
+* `sudo-password-option` - an option reference ("option.NAME") to define which secure option value to use as password.  The default is `option.sudoPassword`.
+* `sudo-prompt-pattern` - a regular expression to detect the password prompt for the Sudo authentication. The default pattern is `^\[sudo\] password for .+: .*`
+* `sudo-failure-pattern` - a regular expression to detect the password failure response.  The default pattern is `^.*try again.*`.
+* `sudo-prompt-max-lines` - maximum lines to read when expecting the password prompt. (default: `12`).
+* `sudo-prompt-max-timeout` - maximum milliseconds to wait for input when expecting the password prompt. (default `5000`)
+* `sudo-response-max-lines` - maximum lines to read when looking for failure response. (default: `1`).
+* `sudo-response-max-timeout` - maximum milliseconds to wait for response when detecting the failure response. (default `5000`)
+* `sudo-fail-on-prompt-max-lines` - true/false. If true, fail execution if max lines are reached looking for password prompt. (default: `false`)
+* `sudo-success-on-prompt-threshold` - true/false. If true, succeed (without writing password), if the input max lines are reached without detecting password prompt. (default: `true`).
+* `sudo-fail-on-prompt-timeout` - true/false. If true, fail execution if timeout reached looking for password prompt. (default: `true`)
+* `sudo-fail-on-response-timeout` - true/false. If true, fail on timeout looking for failure message. (default: `false`)
+
+Note: the default values have been set for the unix "sudo" command, but can be overridden if you need to customize the interaction.
+
+Next, configure a Job, and include an Option definition where `secureInput` is set to `true`.  The name of this option can be anything you want, but the default value of `sudoPassword` recognized by the plugin can be used.
+
+If the value is not `sudoPassword`, then make sure to set the following attribute on each Node for password authentication:
+
+* `sudo-password-option` = "`option.NAME`" where NAME is the name of the Job's secure option.
+
+An example Node and Job option configuration are below:
+
+    <node name="egon" description="egon" osFamily="unix"
+        username="rundeck"
+        hostname="egon"
+        sudo-command-enabled="true"
+        sudo-password-option="option.sudoPassword2" />
+
+Job:
+
+    <joblist>
+        <job>
+             <sequence keepgoing='false' strategy='node-first'>
+              <command>
+                <exec>sudo apachectl restart</exec>
+              </command>
+            </sequence>
+
+            <context>
+              <project>project</project>
+              <options>
+                <option required='true' name='sudoPassword2' secure='true' description="Sudo authentication password"/>
+              </options>
+            </context>
+            ...
+        </job>
+    </joblist>
+
+
 ### Resource Model Sources
 
 RunDeck includes these built-in providers in the core installation:

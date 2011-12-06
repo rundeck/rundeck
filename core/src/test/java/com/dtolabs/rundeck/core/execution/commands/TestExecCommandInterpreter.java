@@ -141,6 +141,10 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
                 return null;
             }
 
+            public Map<String, Map<String, String>> getPrivateDataContext() {
+                return null;
+            }
+
             public ExecutionListener getExecutionListener() {
                 return null;
             }
@@ -239,6 +243,10 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
             }
 
             public Map<String, Map<String, String>> getDataContext() {
+                return null;
+            }
+
+            public Map<String, Map<String, String>> getPrivateDataContext() {
                 return null;
             }
 

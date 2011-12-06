@@ -723,15 +723,10 @@ can be configured for SCP:
 * `file-copy-destination-dir`: The directory on the remote node to copy the script file to before executing it. The default value is `C:/WINDOWS/TEMP/` on Windows nodes, and `/tmp` for other nodes.
 * `osFamily`: specify "windows" for windows nodes.
 
-In addition, for both SSH and SCP, you must also have the private key of the public/private keypair for the remote 
-node available on the server.  See [Configuring SSH Private Keys](#configuring-ssh-private-keys).
+In addition, for both SSH and SCP, you must either configure a public/private keypair for the remote node or configure the node for SSH Password authentication.
 
-The SSH plugin is used by default for non-local nodes, however you can also configure it explicitly using these provider names:
-
-* NodeExecutor provider: `jsch-ssh`
-* FileCopier provider: `jsch-scp`
-
-The Local plugin is used by default on the local (server) node.  You configure the local plugin if necessary with the provider name `local`.
+* See [Administration - SSH](#ssh) for more information on setting up your SSH server
+* See [SSH Provider](#ssh-provider) for more information on the configuration of Nodes for SSH
 
 #### Included Plugins
 

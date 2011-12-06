@@ -5,6 +5,170 @@ import org.codehaus.groovy.grails.commons.ConfigurationHolder
 
 class ExecutionServiceTests extends GrailsUnitTestCase {
 
+    void testCreateExecutionRunning(){
+        mockDomain(ScheduledExecution)
+        mockDomain(Workflow)
+        mockDomain(Execution)
+
+        ScheduledExecution se = new ScheduledExecution(
+            jobName: 'blue',
+            project: 'AProject',
+            adhocExecution: true,
+            adhocFilepath: '/this/is/a/path',
+            groupPath: 'some/where',
+            description: 'a job',
+            argString: '-a b -c d',
+            workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+        )
+        se.save()
+
+        ScheduledExecution.metaClass.static.lock={id-> return se}
+        def myCriteria = new Expando();
+        myCriteria.get = {Closure cls -> return [id:123]}
+        Execution.metaClass.static.createCriteria = {myCriteria }
+
+        ExecutionService svc = new ExecutionService()
+        try{
+            svc.createExecution(se,null,"user1")
+            fail("should fail")
+        }catch(ExecutionServiceException e){
+            assertTrue(e.message.contains('is currently being executed'))
+        }
+    }
+    void testCreateExecutionSimple(){
+        ConfigurationHolder.config=[:]
+        mockDomain(ScheduledExecution)
+        mockDomain(Workflow)
+        mockDomain(CommandExec)
+        mockDomain(Execution)
+
+        ScheduledExecution se = new ScheduledExecution(
+            jobName: 'blue',
+            project: 'AProject',
+            adhocExecution: true,
+            adhocFilepath: '/this/is/a/path',
+            groupPath: 'some/where',
+            description: 'a job',
+            argString: '-a b -c d',
+            workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+        )
+        se.save()
+
+        ScheduledExecution.metaClass.static.lock={id-> return se}
+        def myCriteria = new Expando();
+        myCriteria.get = {Closure cls -> return null}
+        Execution.metaClass.static.createCriteria = {myCriteria }
+
+        mockLogging(ExecutionService)
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService=fsvc
+
+        Execution e=svc.createExecution(se,null,"user1")
+
+        assertNotNull(e)
+        assertEquals('-a b -c d',e.argString)
+        assertEquals(se, e.scheduledExecution)
+        assertNotNull(e.dateStarted)
+        assertNull(e.dateCompleted)
+        def execs=se.executions
+        assertEquals(1,execs.size())
+        def exec1=execs.iterator().next()
+        assertEquals(exec1,e)
+    }
+    void testCreateExecutionOptionsValidation(){
+        ConfigurationHolder.config=[:]
+        mockDomain(ScheduledExecution)
+        mockDomain(Workflow)
+        mockDomain(CommandExec)
+        mockDomain(Execution)
+        mockDomain(Option)
+
+        ScheduledExecution se = new ScheduledExecution(
+            jobName: 'blue',
+            project: 'AProject',
+            adhocExecution: true,
+            adhocFilepath: '/this/is/a/path',
+            groupPath: 'some/where',
+            description: 'a job',
+            workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+        )
+        def opt1 = new Option(name: 'test1', defaultValue: 'val1', enforced: false, valuesUrl: "http://test.com/test")
+        def opt2 = new Option(name: 'test2', defaultValue: 'val2a', enforced: true, values: ['val2c', 'val2a', 'val2b'])
+        def opt3 = new Option(name: 'test3', defaultValue: 'val3', enforced: false, required: true, regex: '^.*3$')
+        def opt4 = new Option(name: 'test4', defaultValue: 'val4', enforced: false, required: true, secureInput: true)
+        se.addToOptions(opt1)
+        se.addToOptions(opt2)
+        se.addToOptions(opt3)
+        se.addToOptions(opt4)
+        se.save()
+
+        ScheduledExecution.metaClass.static.lock={id-> return se}
+        def myCriteria = new Expando();
+        myCriteria.get = {Closure cls -> return null}
+        Execution.metaClass.static.createCriteria = {myCriteria }
+
+        mockLogging(ExecutionService)
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService=fsvc
+
+        test:{
+            Execution e=svc.createExecution(se,null,"user1",[argString:'-test1 asdf -test2 val2b -test4 asdf4'])
+
+            assertNotNull(e)
+            assertEquals('-test1 asdf -test2 val2b -test3 val3',e.argString)
+            assertEquals(se, e.scheduledExecution)
+            assertNotNull(e.dateStarted)
+            assertNull(e.dateCompleted)
+            def execs=se.executions
+            assertEquals(1,execs.size())
+            def exec1=execs.iterator().next()
+            assertEquals(exec1,e)
+        }
+        test:{
+            Execution e=svc.createExecution(se,null,"user1",[argString:'-test2 val2b -test4 asdf4'])
+
+            assertNotNull(e)
+            assertEquals('-test2 val2b -test3 val3',e.argString)
+            assertEquals(se, e.scheduledExecution)
+            assertNotNull(e.dateStarted)
+            assertNull(e.dateCompleted)
+            def execs=se.executions
+            assertEquals(2,execs.size())
+        }
+        test:{
+            Execution e=svc.createExecution(se,null,"user1",[argString:'-test2 val2b -test3 monkey3'])
+
+            assertNotNull(e)
+            assertEquals('-test2 val2b -test3 monkey3',e.argString)
+            assertEquals(se, e.scheduledExecution)
+            assertNotNull(e.dateStarted)
+            assertNull(e.dateCompleted)
+            def execs=se.executions
+            assertEquals(3,execs.size())
+        }
+        test: {
+            //enforced value failure on test2
+            try {
+                Execution e = svc.createExecution(se, null, "user1", [argString: '-test2 val2D -test3 monkey4'])
+                fail("shouldn't succeed")
+            } catch (ExecutionServiceException e) {
+                assertTrue(e.message.contains("was not in the allowed values"))
+            }
+        }
+        test: {
+            //regex failure on test3
+            try {
+                Execution e = svc.createExecution(se, null, "user1", [argString: '-test2 val2b -test3 monkey4'])
+                fail("shouldn't succeed")
+            } catch (ExecutionServiceException e) {
+                assertTrue(e.message.contains("doesn't match regular expression"))
+            }
+        }
+
+
+    }
     void testParseLogDetail() {
         def s1 = "[greg@localhost Test.shellutil whoami][WARN] some more text"
         def t1 = HtTableLogger.parseLogDetail(s1)

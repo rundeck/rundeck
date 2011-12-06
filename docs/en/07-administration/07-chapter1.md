@@ -467,11 +467,13 @@ Or:
 
 ## SSH
 
-RunDeck uses [SSH] for remote execution. 
+RunDeck by default uses [SSH] for remote execution.
 You do _not_ need to have root account access on either the server or
 the remote hosts.  
 
 [SSH]: http://en.wikipedia.org/wiki/Secure_Shell
+
+See more about settings up Nodes and Jobs for SSH execution in the section about built-in providers: [SSH Provider](#ssh-provider).
 
 ### SSH configuration requirements
 
@@ -479,13 +481,18 @@ the remote hosts.
   ssh commands to the client machines. 
 * SSH is assumed to be installed and configured appropriately to allow
   this access.   
-* No passphrase should be set.
-* SSH should not prompt for a password. There are many resources
+* SSH can be configured for either *password* based authentication or *public/private key* based authentication.
+* For public/private key authentication:
+    * No passphrase should be set on the private key.
+    * SSH should not prompt for a password. There are many resources
 available on how to configure ssh to use public key authentication
 instead of passwords such as:
 [Password-less logins with OpenSSH](http://www.debian-administration.org/articles/152)
 or
 [How-To: Password-less SSH](http://www.cs.wustl.edu/~mdeters/how-to/ssh/)
+* For password authentication:
+    * each Node definition must be configured to allow password authentication
+    * each Job definition that will use it must be configured correctly
 
 ### SSH key generation
 
@@ -560,16 +567,6 @@ environment.
 
 [Cygwin]: http://www.cygwin.org
 
-### Configuring SSH private keys
-
-The built-in SSH connector allows the private key to be specified in several different ways.  You can configure it per-node, per-project, or per-RunDeck instance.
-
-When connecting to the remote node, RunDeck will look for a property/attribute specifying the location of the private key file, in this order, with the first match having precedence:
-
-1. **Node level**: `ssh-keypath` attribute on the Node. Applies only to the target node.
-2. **Project level**: `project.ssh-keypath` property in `project.properties`.  Applies to any project node by default.
-3. **RunDeck level**: `framework.ssh-keypath` property in `framework.properties`. Applies to all projects by default.
-4. **RunDeck level**:  `framework.ssh.keypath` property in `framework.properties`. Applies to all projects by default (included for compatibility with Rundeck < 1.3). (default value: `~/.ssh/id_rsa`).
 
 ### Passing environment variables through remote command
 

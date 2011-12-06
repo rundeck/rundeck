@@ -89,6 +89,11 @@ public interface ExecutionContext {
      */
     public Map<String, Map<String, String>> getDataContext();
 
+    /**
+     * Return the data context in the private scope
+     */
+    public Map<String, Map<String, String>> getPrivateDataContext();
+
     public ExecutionListener getExecutionListener();
 
     /**

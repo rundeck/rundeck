@@ -466,6 +466,14 @@ public class WidgetTagLib {
                 funcaction+='console.log(\'jshandler trigger\');'+funcaction
             }
         }
+        if(attrs.jstargethandler){
+
+            funcaction+=attrs.jstargethandler.encodeAsJavaScript()+'($('+ftarget+'));'
+
+            if(Environment.current == Environment.DEVELOPMENT && attrs.debug){
+                funcaction+='console.log(\'jstargethandler trigger\');'+funcaction
+            }
+        }
         if(attrs.focus=='true'){
 
             funcaction+='$('+ftarget+').focus();'

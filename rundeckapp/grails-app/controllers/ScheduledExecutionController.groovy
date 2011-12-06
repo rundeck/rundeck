@@ -2776,7 +2776,9 @@ class ScheduledExecutionController  {
 
         try{
             def Execution e= executionService.createExecution(scheduledExecution,framework, user.login,extra)
-            def eid=scheduledExecutionService.scheduleTempJob(scheduledExecution,user.login,subject,e);
+            def extraMap = executionService.selectSecureOptionInput(scheduledExecution, extra)
+            def eid=scheduledExecutionService.scheduleTempJob(scheduledExecution,user.login,subject,e,extraMap);
+
             return [executionId:eid,name:scheduledExecution.jobName, execution:e]
         }catch(ExecutionServiceValidationException exc){
             return [error:'invalid',message:exc.getMessage(),options:exc.getOptions(),errors:exc.getErrors()]

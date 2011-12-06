@@ -45,6 +45,7 @@ public class ExecutionContextImpl implements ExecutionContext {
     private String[] args;
     private int loglevel;
     private Map<String, Map<String, String>> dataContext;
+    private Map<String, Map<String, String>> privateDataContext;
     private ExecutionListener executionListener;
     private Framework framework;
     private File nodesFile;
@@ -67,6 +68,26 @@ public class ExecutionContextImpl implements ExecutionContext {
         this.keepgoing=keepgoing;
     }
 
+    private ExecutionContextImpl(final String frameworkProject, final String user, final NodesSelector nodeSet,
+                                 final String[] args, final int loglevel,
+                                 final Map<String, Map<String, String>> dataContext,
+                                 final Map<String, Map<String, String>> privateDataContext,
+                                 final ExecutionListener executionListener,
+                                 final Framework framework, final File nodesFile, final int threadCount, final boolean keepgoing) {
+        this.frameworkProject = frameworkProject;
+        this.user = user;
+        this.nodeSet = nodeSet;
+        this.args = args;
+        this.loglevel = loglevel;
+        this.dataContext = dataContext;
+        this.privateDataContext = privateDataContext;
+        this.executionListener = executionListener;
+        this.framework = framework;
+        this.nodesFile = nodesFile;
+        this.threadCount=threadCount;
+        this.keepgoing=keepgoing;
+    }
+
     /**
      * Create a new ExecutionContext with the specified values
      */
@@ -78,6 +99,20 @@ public class ExecutionContextImpl implements ExecutionContext {
                                                                   final Framework framework) {
         return createExecutionContextImpl(frameworkProject, user, nodeSet, args, loglevel, dataContext,
             executionListener, framework, null,1,false);
+    }
+    /**
+     * Create a new ExecutionContext with the specified values
+     */
+    public static ExecutionContextImpl createExecutionContextImpl(final String frameworkProject, final String user,
+                                                                  final NodesSelector nodeSet,
+                                                                  final String[] args, final int loglevel,
+                                                                  final Map<String, Map<String, String>> dataContext,
+                                                                  final Map<String, Map<String, String>> privateDataContext,
+                                                                  final ExecutionListener executionListener,
+                                                                  final Framework framework, final int threadCount,
+                                                                  final boolean keepgoing) {
+        return createExecutionContextImpl(frameworkProject, user, nodeSet, args, loglevel, dataContext, privateDataContext,
+            executionListener, framework, null,threadCount,keepgoing);
     }
     /**
      * Create a new ExecutionContext with the specified values
@@ -106,6 +141,20 @@ public class ExecutionContextImpl implements ExecutionContext {
         return new ExecutionContextImpl(frameworkProject, user, nodeSet, args, loglevel, dataContext,
             executionListener, framework, nodesFile,threadCount,keepgoing);
     }
+    /**
+     * Create a new ExecutionContext with the specified values
+     */
+    public static ExecutionContextImpl createExecutionContextImpl(final String frameworkProject, final String user,
+                                                                  final NodesSelector nodeSet,
+                                                                  final String[] args, final int loglevel,
+                                                                  final Map<String, Map<String, String>> dataContext,
+                                                                  final Map<String, Map<String, String>> privateDataContext,
+                                                                  final ExecutionListener executionListener,
+                                                                  final Framework framework, final File nodesFile,
+                                                                  final int threadCount, final boolean keepgoing) {
+        return new ExecutionContextImpl(frameworkProject, user, nodeSet, args, loglevel, dataContext, privateDataContext,
+            executionListener, framework, nodesFile,threadCount,keepgoing);
+    }
 
 
     /**
@@ -113,9 +162,11 @@ public class ExecutionContextImpl implements ExecutionContext {
      */
     public static ExecutionContextImpl createExecutionContextImpl(final ExecutionContext context,
                                                                   final INodeEntry singleNode) {
-        return new ExecutionContextImpl(context.getFrameworkProject(), context.getUser(), SelectorUtils.singleNode(singleNode.getNodename()),
-            context.getArgs(), context.getLoglevel(), context.getDataContext(), context.getExecutionListener(),
-            context.getFramework(), context.getNodesFile(),context.getThreadCount(),context.isKeepgoing());
+        return new ExecutionContextImpl(context.getFrameworkProject(), context.getUser(), SelectorUtils.singleNode(
+            singleNode.getNodename()),
+            context.getArgs(), context.getLoglevel(), context.getDataContext(), context.getPrivateDataContext(),
+            context.getExecutionListener(), context.getFramework(), context.getNodesFile(), context.getThreadCount(),
+            context.isKeepgoing());
     }
 
     /**
@@ -124,8 +175,9 @@ public class ExecutionContextImpl implements ExecutionContext {
     public static ExecutionContextImpl createExecutionContextImpl(final ExecutionContext context,
                                                                   final Map<String, Map<String, String>> dataContext) {
         return new ExecutionContextImpl(context.getFrameworkProject(), context.getUser(), context.getNodeSelector(),
-            context.getArgs(), context.getLoglevel(), dataContext, context.getExecutionListener(),
-            context.getFramework(), context.getNodesFile(),context.getThreadCount(),context.isKeepgoing());
+            context.getArgs(), context.getLoglevel(), dataContext, context.getPrivateDataContext(),
+            context.getExecutionListener(),
+            context.getFramework(), context.getNodesFile(), context.getThreadCount(), context.isKeepgoing());
     }
 
     public String getFrameworkProject() {
@@ -178,5 +230,9 @@ public class ExecutionContextImpl implements ExecutionContext {
 
     public void setKeepgoing(boolean keepgoing) {
         this.keepgoing = keepgoing;
+    }
+
+    public Map<String, Map<String, String>> getPrivateDataContext() {
+        return privateDataContext;
     }
 }

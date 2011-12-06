@@ -2081,6 +2081,46 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertTrue(rejopt.errors.hasErrors())
             assertTrue(rejopt.errors.hasFieldErrors('delimiter'))
         }
+        if(true){//secure option with multi-valued is invalid
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession{session,request-> return null }
+            fwkControl.demand.existsFrameworkProject{project,framework->
+                assertEquals 'testProject',project
+                return true
+            }
+            fwkControl.demand.getCommand{project,type,command,framework->
+                assertEquals 'testProject',project
+                assertEquals 'aType',type
+                assertEquals 'aCommand',command
+                return null
+            }
+            sec.frameworkService=fwkControl.createMock()
+
+            def params=[jobName:'monkey1',project:'testProject',description:'blah',adhocExecution:false,name:'aResource',type:'aType',command:'aCommand',
+                   options:["options[0]":[name:'opt3', defaultValue: 'val3', enforced: false, multivalued:true, secureInput:true]]
+            ]
+            def results=sec._dovalidate(params)
+            if(results.scheduledExecution.errors.hasErrors()){
+                results.scheduledExecution.errors.allErrors.each{
+                    System.err.println(it);
+                }
+            }
+            assertTrue results.failed
+            assertNotNull(results.scheduledExecution)
+            assertTrue(results.scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = results.scheduledExecution
+            assertNotNull(execution)
+            final def org.springframework.validation.Errors errors = execution.errors
+            assertNotNull(errors)
+            assertTrue(errors.hasErrors())
+            assertTrue(errors.hasFieldErrors('options'))
+            final Object rejset = errors.getFieldError('options').getRejectedValue()
+            assertNotNull(rejset)
+            assertLength(1, rejset as Object[])
+            final Option rejopt = rejset.iterator().next()
+            assertTrue(rejopt.errors.hasErrors())
+            assertTrue(rejopt.errors.hasFieldErrors('multivalued'))
+        }
     }
     public void testDoUpdate(){
         def sec = new ScheduledExecutionController()

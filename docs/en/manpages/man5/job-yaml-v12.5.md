@@ -272,6 +272,10 @@ Optional map entries are:
 
 :    A string used to conjoin multiple input values.  (Required if `multivalued` is "true")
 
+`secure`
+
+:   "true/false" - whether the option is a secure input option. Not compatible with "multivalued"
+
 Example:
 
     test:
