@@ -15,6 +15,7 @@ import javax.security.auth.Subject;
 import com.dtolabs.rundeck.core.authentication.Group;
 import com.dtolabs.rundeck.core.authentication.LdapGroup;
 import com.dtolabs.rundeck.core.authentication.Username;
+import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
 
 import com.dtolabs.rundeck.core.authorization.Attribute;
@@ -23,19 +24,23 @@ import com.dtolabs.rundeck.core.authorization.Attribute;
  * @author noahcampbell
  */
 public class PoliciesYaml implements PolicyCollection {
-
+    static Logger logger = Logger.getLogger(PoliciesYaml.class.getName());
     private final Set<YamlPolicy> all = new HashSet<YamlPolicy>();
+    File file;
 
 
     public PoliciesYaml(final File file) throws IOException {
         final Yaml yaml = new Yaml();
-        final FileInputStream stream = new FileInputStream(file);
+        this.file = file;
+        final FileInputStream stream = new FileInputStream(this.file);
+        int index=1;
         try {
             for (Object yamlDoc : yaml.loadAll(stream)) {
                 final Object yamlDoc1 = yamlDoc;
                 if (yamlDoc1 instanceof Map) {
-                    all.add(new YamlPolicy((Map) yamlDoc1));
+                    all.add(new YamlPolicy((Map) yamlDoc1, file, index));
                 }
+                index++;
             }
         } finally {
             stream.close();
@@ -58,7 +63,7 @@ public class PoliciesYaml implements PolicyCollection {
 
     public Collection<AclContext> matchedContexts(final Subject subject, final Set<Attribute> environment)
         throws InvalidCollection {
-        return policyMatcher(subject, all, environment);
+        return policyMatcher(subject, all, environment, file);
 
     }
 
@@ -71,7 +76,7 @@ public class PoliciesYaml implements PolicyCollection {
      *
      */
     static Collection<AclContext> policyMatcher(final Subject subject, final Collection<? extends Policy> policyLister,
-                                                final Set<Attribute> environment)
+                                                final Set<Attribute> environment, final File file)
         throws InvalidCollection {
         final ArrayList<AclContext> matchedContexts = new ArrayList<AclContext>();
         int i = 0;
@@ -79,13 +84,17 @@ public class PoliciesYaml implements PolicyCollection {
             long userMatchStart = System.currentTimeMillis();
 
 
-            //todo: evaluate environment and context values for the policies
             if(null!=policy.getEnvironment()){
                 final EnvironmentalContext environment1 = policy.getEnvironment();
+                if(!environment1.isValid()) {
+                    logger.warn(policy.toString()+ ": Context section not valid: " + environment1.toString());
+                }
                 if(!environment1.matches(environment)){
+                    logger.debug(policy.toString() + ": environment not matched: " + environment1.toString());
                     continue;
                 }
             }else if (null != environment && environment.size() > 0) {
+                logger.debug(policy.toString() + ": empty environment not matched");
                 continue;
             }
             
@@ -101,6 +110,8 @@ public class PoliciesYaml implements PolicyCollection {
                 if (!Collections.disjoint(policyUsers, usernamePrincipals)) {
                     matchedContexts.add(policy.getContext());
                     continue;
+                }else if(policyUsers.size()>0){
+                    logger.debug(policy.toString() + ": username not matched: "+ policyUsers);
                 }
             }
 
@@ -129,11 +140,14 @@ public class PoliciesYaml implements PolicyCollection {
                 if (!Collections.disjoint(policyGroups, groupNames)) {
                     matchedContexts.add(policy.getContext());
                     continue;
+                }else if(policyGroups.size()>0){
+                    logger.debug(policy.toString() + ": group not matched: " + policyGroups);
                 }
             }
 
             i++;
         }
+        logger.debug(file.getAbsolutePath() + ": matched contexts: " + matchedContexts.size());
         return matchedContexts;
     }
 }

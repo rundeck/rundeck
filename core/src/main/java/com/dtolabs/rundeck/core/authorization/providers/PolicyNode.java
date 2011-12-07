@@ -101,6 +101,10 @@ public class PolicyNode implements Policy {
     public EnvironmentalContext getEnvironment() {
         //XXX: backwards compatibility shim.
         return new EnvironmentalContext() {
+            public boolean isValid() {
+                return true;
+            }
+
             public boolean matches(Set<Attribute> environment) {
                 return true;
             }

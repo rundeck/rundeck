@@ -31,13 +31,16 @@ import com.dtolabs.rundeck.core.utils.PairImpl;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.collections.PredicateUtils;
+import org.apache.log4j.Logger;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * YamlPolicy implements a policy from a yaml document input or map.
@@ -45,7 +48,7 @@ import java.util.regex.Pattern;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 final class YamlPolicy implements Policy {
-
+    final static Logger logger = Logger.getLogger(YamlPolicy.class.getName());
     public static final String TYPE_PROPERTY = "type";
     public static final String FOR_SECTION = "for";
     public static final String JOB_TYPE = "job";
@@ -58,11 +61,24 @@ final class YamlPolicy implements Policy {
     private Set<Object> groups = new HashSet<Object>();
     AclContext aclContext;
 
+    private File sourceFile;
+    private int sourceIndex;
 
-    public YamlPolicy(final Map yamlDoc) {
-        policyInput = yamlDoc;
+    YamlPolicy(final Map policyInput, final File sourceFile, final int sourceIndex) {
+        this.policyInput = policyInput;
+        this.sourceFile = sourceFile;
+        this.sourceIndex = sourceIndex;
         parseByClause();
         createAclContext();
+    }
+
+    public YamlPolicy(final Map yamlDoc) {
+        this(yamlDoc, null, -1);
+    }
+    String identify() {
+        return null != policyInput.get("id") ? policyInput.get("id").toString()
+                                             : (null != sourceFile ? (sourceFile.getAbsolutePath()) : "(unknown file)")
+                                               + (sourceIndex >= 0 ? "[" + sourceIndex + "]" : "");
     }
 
     public Set<String> getUsernames() {
@@ -89,24 +105,48 @@ final class YamlPolicy implements Policy {
     }
     static class YamlEnvironmentalContext implements EnvironmentalContext{
         Map<URI, String> matcher = new HashMap<URI, String>();
-
+        private boolean valid=false;
+        private String validation;
         YamlEnvironmentalContext(final String uriPrefix, final Map ctx) {
+            boolean invalidentry=false;
+            ArrayList<String> errors = new ArrayList<String>();
             for (final Object o : ctx.entrySet()) {
                 Map.Entry entry=(Map.Entry) o;
                 if(entry.getKey() instanceof String){
                     String path=(String) entry.getKey();
+                    final URI uri;
+                    try {
+                        uri = new URI(uriPrefix + path);
+                    } catch (URISyntaxException e) {
+                        errors.add("Context section: " + entry.getKey() + ": invalid URI: " + e.getMessage());
+                        invalidentry = true;
+                        continue;
+                    }
                     if(entry.getValue() instanceof String) {
                         String value = (String) entry.getValue();
-                        final URI uri;
-                        try {
-                            uri = new URI(uriPrefix + path);
-                        } catch (URISyntaxException e) {
-                            continue;
-                        }
                         matcher.put(uri, value);
+                    }else {
+                        errors.add(
+                            "Context section: " + entry.getKey() + ": expected 'String', saw: " + entry.getValue()
+                                .getClass().getName());
+                        invalidentry = true;
                     }
+                } else {
+                    errors.add("Context section key expected 'String', saw: " + entry.getKey().getClass().getName());
+                    invalidentry = true;
                 }
             }
+            if(errors.size()>0) {
+                final StringBuffer sb = new StringBuffer();
+                for (final String error : errors) {
+                    if(sb.length()>0) {
+                        sb.append("; ");
+                    }
+                    sb.append(error);
+                }
+                validation = sb.toString();
+            }
+            valid = !invalidentry && matcher.size() >= 1;
         }
 
         public boolean matches(final Set<Attribute> environment) {
@@ -115,14 +155,47 @@ final class YamlPolicy implements Policy {
             for (final Attribute attribute : environment) {
                 final String matchValue = matcher.get(attribute.property);
                 if (null != matchValue) {
-                    final RegexPredicate regexPredicate = new RegexPredicate(Pattern.compile(matchValue));
-                    if (regexPredicate.evaluate(attribute.value)) {
-                        matchedSet.add(attribute.property);
+                    Pattern compile;
+                    try {
+                        compile = Pattern.compile(matchValue);
+                    } catch (PatternSyntaxException e){
+                        compile=null;
+                    }
+                    if(null!=compile){
+                        final RegexPredicate regexPredicate = new RegexPredicate(compile);
+                        if (regexPredicate.evaluate(attribute.value)) {
+                            matchedSet.add(attribute.property);
+                        }
+                    }else{
+                        if(matchValue.equals(attribute.value)) {
+                            matchedSet.add(attribute.property);
+                        }
                     }
                 }
             }
 
-            return matchedSet.size()==matcher.keySet().size();
+            return valid && matchedSet.size()==matcher.keySet().size();
+        }
+
+        public boolean isValid() {
+            return valid;
+        }
+
+        @Override
+        public String toString() {
+            return "YamlEnvironmentalContext{" +
+                   (valid?
+                   ", valid=" + valid +
+                   ", context='" + matcher + '\'' +
+                   '}'
+            :
+                   ", valid=" + valid +
+                   ", validation='" + getValidation() + '\'' +
+                   '}');
+        }
+
+        public String getValidation() {
+            return validation;
         }
     }
 
@@ -172,7 +245,7 @@ final class YamlPolicy implements Policy {
      * Create acl context  for specific rule in a type context
      */
     ContextMatcher createTypeRuleContext(final Map section, final int i) {
-        return new TypeRuleContextMatcher(section, i);
+        return new TypeRuleContextMatcher(section, i,this);
     }
 
     private static String createLegacyJobResourcePath(final Map<String, String> resource) {
@@ -225,7 +298,7 @@ final class YamlPolicy implements Policy {
     @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer("YamlPolicy[id:");
-        sb.append(policyInput.get("id")).append(", groups:");
+        sb.append(identify()).append(", groups:");
         for (final Object group : getGroups()) {
             sb.append(group.toString()).append(" ");
         }
@@ -336,23 +409,42 @@ final class YamlPolicy implements Policy {
         public static final String DENY_ACTIONS = "deny";
         Map ruleSection;
         int index;
+        YamlPolicy policy;
 
 
         TypeRuleContextMatcher(final Map ruleSection, final int index) {
+            this(ruleSection, index, null);
+        }
+        TypeRuleContextMatcher(final Map ruleSection, final int index, final YamlPolicy policy) {
             this.ruleSection = ruleSection;
             this.index = index;
+            this.policy = policy;
         }
 
         @Override
         public String toString() {
-            return "[rule: " + index + ": " + ruleSection + "]";
+            return identify();
+        }
+
+        private String identify() {
+            return (null!=policy?policy.identify():"(unknown policy)")+"[rule: " + index + ": " + ruleSection + "]";
         }
 
         private static ConcurrentHashMap<String, Pattern> patternCache = new ConcurrentHashMap<String, Pattern>();
 
         private Pattern patternForRegex(final String regex) {
             if (!patternCache.containsKey(regex)) {
-                patternCache.putIfAbsent(regex, Pattern.compile(regex));
+                Pattern compile=null;
+                try {
+                    compile = Pattern.compile(regex);
+                } catch (Exception e) {
+                    //invalid regex
+                }
+                if(null==compile) {
+                    //create equality match regex
+                    compile = Pattern.compile("^" + Pattern.quote(regex) + "$");
+                }
+                patternCache.putIfAbsent(regex, compile);
             }
             return patternCache.get(regex);
         }
@@ -383,7 +475,7 @@ final class YamlPolicy implements Policy {
                         "Invalid action type."));
                 }
                 if (0 == actions.size()) {
-                    //xxx:warn
+                    logger.warn(identify() + ": No actions defined in Deny section");
                 } else if (actions.contains("*") || actions.contains(action)) {
                     evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED_DENIED,
                         this + " for actions: " + actions));
@@ -407,7 +499,7 @@ final class YamlPolicy implements Policy {
                         "Invalid action type."));
                 }
                 if (0 == actions.size()) {
-                    //xxx:warn
+                    logger.warn(identify() + ": No actions defined in Allow section");
                 } else if (actions.contains("*") || actions.contains(action)) {
                     evaluations.add(new ContextEvaluation(Explanation.Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED,
                         this + " for actions: " + actions));
@@ -540,8 +632,8 @@ final class YamlPolicy implements Policy {
                 //match single test
                 tests.add(predicateTransformer.convert((String) test));
             } else {
-                //xxx:warn
                 //unexpected format, do not match
+                logger.error(identify() + ": cannot evaluate unexpected type: " + test.getClass().getName());
                 return false;
             }
 
@@ -579,7 +671,6 @@ final class YamlPolicy implements Policy {
             } else if (item instanceof List) {
                 items.addAll((List<String>) item);
             } else {
-                //xxx:warn
                 //unexpected, will reject everything
                 items = null;
             }

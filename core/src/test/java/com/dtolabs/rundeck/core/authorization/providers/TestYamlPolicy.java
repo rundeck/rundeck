@@ -23,6 +23,7 @@
 */
 package com.dtolabs.rundeck.core.authorization.providers;
 
+import com.dtolabs.rundeck.core.authorization.Attribute;
 import com.dtolabs.rundeck.core.authorization.Explanation;
 import com.dtolabs.rundeck.core.utils.Converter;
 import junit.framework.TestCase;
@@ -31,6 +32,8 @@ import org.apache.commons.collections.PredicateUtils;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -1574,6 +1577,38 @@ public class TestYamlPolicy extends TestCase {
             assertFalse(typeRuleContext.ruleMatchesMatchSection(resmap, ruleSection));
 
         }
+        {
+            //invalid regex match becomes eequality match
+            final Object load = yaml.load("match: \n"
+                                          + "  name: 'abc[def'\n"
+                                          + "allow: '*'");
+            assertTrue(load instanceof Map);
+            final Map ruleSection = (Map) load;
+            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+                ruleSection, 1);
+
+            final HashMap<String, String> resmap = new HashMap<String, String>();
+
+            //false result for no match
+            assertFalse(typeRuleContext.ruleMatchesMatchSection(resmap, ruleSection));
+
+            resmap.put("name", "something");
+            assertFalse(typeRuleContext.ruleMatchesMatchSection(resmap, ruleSection));
+            resmap.put("name", "blah");
+            assertFalse(typeRuleContext.ruleMatchesMatchSection(resmap, ruleSection));
+            resmap.put("name", "ablahz");
+            assertFalse(typeRuleContext.ruleMatchesMatchSection(resmap, ruleSection));
+
+            resmap.put("name", "abcdef");
+            assertFalse(typeRuleContext.ruleMatchesMatchSection(resmap, ruleSection));
+
+            resmap.put("name", "abc[def");
+            assertTrue(typeRuleContext.ruleMatchesMatchSection(resmap, ruleSection));
+
+            resmap.remove("name");
+            assertFalse(typeRuleContext.ruleMatchesMatchSection(resmap, ruleSection));
+
+        }
     }
 
     public void testTypeRuleContextMatcherEqualsRule() {
@@ -1925,6 +1960,118 @@ public class TestYamlPolicy extends TestCase {
 
         assertTrue(multiple.evaluate(strings2));
         assertTrue(multiple.evaluate("nomatch, blah, test1, test2"));
+    }
+
+    public void testYamlEnvironmentalContext() throws URISyntaxException {
+        {
+            final Map context=new HashMap();
+            context.put("project", "abc");
+            final YamlPolicy.YamlEnvironmentalContext test = new YamlPolicy.YamlEnvironmentalContext(
+                "test://", context);
+
+            assertTrue(test.isValid());
+            final HashSet<Attribute> env = new HashSet<Attribute>();
+
+            //empty env
+            assertFalse(test.matches(env));
+
+            //single matching env
+            env.add(new Attribute(new URI("test://project"), "abc"));
+            assertTrue(test.matches(env));
+
+            //multi attrs, matches context value
+            env.add(new Attribute(new URI("test://application"), "bloo"));
+            assertTrue(test.matches(env));
+        }
+        {
+            final Map context=new HashMap();
+            context.put("project", "ab[c");
+            final YamlPolicy.YamlEnvironmentalContext test = new YamlPolicy.YamlEnvironmentalContext(
+                "test://", context);
+
+            assertTrue(test.isValid());
+            final HashSet<Attribute> env = new HashSet<Attribute>();
+
+            //invalid regex should be equality check
+            env.add(new Attribute(new URI("test://project"), "abc"));
+            assertFalse(test.matches(env));
+
+            env.clear();
+            env.add(new Attribute(new URI("test://project"), "ab[c"));
+            assertTrue(test.matches(env));
+
+        }
+    }
+
+    public void testYamlEnvironmentalContextMultiple() throws URISyntaxException {
+        final Map context=new HashMap();
+        context.put("project", "abc");
+        context.put("application", "bloo");
+        final YamlPolicy.YamlEnvironmentalContext test = new YamlPolicy.YamlEnvironmentalContext(
+            "test://", context);
+
+        assertTrue(test.isValid());
+        final HashSet<Attribute> env = new HashSet<Attribute>();
+        assertFalse(test.matches(env));
+        env.add(new Attribute(new URI("test://project"), "abc"));
+        assertFalse(test.matches(env));
+        env.add(new Attribute(new URI("test://application"), "bloo"));
+        assertTrue(test.matches(env));
+
+        final HashSet<Attribute> env2 = new HashSet<Attribute>();
+        env2.add(new Attribute(new URI("test://application"), "bloo"));
+        assertFalse(test.matches(env2));
+    }
+
+    public void testYamlEnvironmentalContextInvalid() throws URISyntaxException {
+        {
+            final Map context=new HashMap();
+            ///value is not a string
+            context.put("project", new ArrayList());
+            final YamlPolicy.YamlEnvironmentalContext test = new YamlPolicy.YamlEnvironmentalContext(
+                "test://", context);
+
+            assertFalse(test.isValid());
+            assertTrue(test.getValidation().contains("Context section: project: expected 'String', saw"));
+            final HashSet<Attribute> env = new HashSet<Attribute>();
+            assertFalse(test.matches(env));
+            env.add(new Attribute(new URI("test://project"), "abc"));
+            assertFalse(test.matches(env));
+            env.add(new Attribute(new URI("test://application"), "bloo"));
+            assertFalse(test.matches(env));
+        }
+        {
+            final Map context=new HashMap();
+            //key is not a string
+            context.put(new HashMap(), "monkey");
+            final YamlPolicy.YamlEnvironmentalContext test = new YamlPolicy.YamlEnvironmentalContext(
+                "test://", context);
+
+            assertFalse(test.isValid());
+            assertTrue(test.getValidation().contains("Context section key expected 'String', saw"));
+            final HashSet<Attribute> env = new HashSet<Attribute>();
+            assertFalse(test.matches(env));
+            env.add(new Attribute(new URI("test://project"), "abc"));
+            assertFalse(test.matches(env));
+            env.add(new Attribute(new URI("test://application"), "bloo"));
+            assertFalse(test.matches(env));
+        }
+        {
+            final Map context = new HashMap();
+            //key is not a valid URI component
+            context.put(" project", "monkey");
+            final YamlPolicy.YamlEnvironmentalContext test = new YamlPolicy.YamlEnvironmentalContext(
+                "test://", context);
+
+            assertFalse(test.isValid());
+            assertTrue(test.getValidation().contains("invalid URI"));
+            final HashSet<Attribute> env = new HashSet<Attribute>();
+            assertFalse(test.matches(env));
+            env.add(new Attribute(new URI("test://project"), "abc"));
+            assertFalse(test.matches(env));
+            env.add(new Attribute(new URI("test://application"), "bloo"));
+            assertFalse(test.matches(env));
+        }
     }
 
     private static class TestLegacyContextFactory implements YamlPolicy.LegacyContextFactory {

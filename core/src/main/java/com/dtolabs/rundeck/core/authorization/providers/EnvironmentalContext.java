@@ -42,4 +42,8 @@ public interface EnvironmentalContext {
      * Return true if the context matches the input environment
      */
     public boolean matches(Set<Attribute> environment);
+    /**
+     * Return true if the context definition is valid
+     */
+    public boolean isValid();
 }

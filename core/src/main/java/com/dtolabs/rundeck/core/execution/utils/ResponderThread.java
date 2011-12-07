@@ -236,8 +236,10 @@ public class ResponderThread extends Thread implements ResponderStopper {
                 start = System.currentTimeMillis();
                 linecount++;
                 if (null != success && success.matcher(line).matches()) {
+                    logger.debug("success matched");
                     return true;
                 } else if (null != failure && failure.matcher(line).matches()) {
+                    logger.debug("failure matched");
                     return false;
                 }
                 if (linecount >= maxLines) {
@@ -249,8 +251,10 @@ public class ResponderThread extends Thread implements ResponderStopper {
             if (null != line) {
                 logger.debug("read partial: " + line);
                 if (null != success && success.matcher(line).matches()) {
+                    logger.debug("success matched partial");
                     return true;
                 } else if (null != failure && failure.matcher(line).matches()) {
+                    logger.debug("failure matched partial");
                     return false;
                 }
             }
@@ -272,9 +276,14 @@ public class ResponderThread extends Thread implements ResponderStopper {
             }
 
         }
+        if(thread.isResponderStopped()){
+            logger.debug("detect stopped");
+        }
         if (linecount >= maxLines) {
+            logger.debug("max input lines");
             throw new ThreshholdException(maxLines, ThresholdType.lines);
         } else if (System.currentTimeMillis() >= start + timeout) {
+            logger.debug("max timeout");
             throw new ThreshholdException(timeout, ThresholdType.milliseconds);
         } else {
             //
