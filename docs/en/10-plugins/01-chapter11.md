@@ -490,7 +490,7 @@ To enable Sudo Password Authentication, set the `sudo-command-enabled` to `true`
 * `sudo-failure-pattern` - a regular expression to detect the password failure response.  The default pattern is `^.*try again.*`.
 * `sudo-prompt-max-lines` - maximum lines to read when expecting the password prompt. (default: `12`).
 * `sudo-prompt-max-timeout` - maximum milliseconds to wait for input when expecting the password prompt. (default `5000`)
-* `sudo-response-max-lines` - maximum lines to read when looking for failure response. (default: `1`).
+* `sudo-response-max-lines` - maximum lines to read when looking for failure response. (default: `2`).
 * `sudo-response-max-timeout` - maximum milliseconds to wait for response when detecting the failure response. (default `5000`)
 * `sudo-fail-on-prompt-max-lines` - true/false. If true, fail execution if max lines are reached looking for password prompt. (default: `false`)
 * `sudo-success-on-prompt-threshold` - true/false. If true, succeed (without writing password), if the input max lines are reached without detecting password prompt. (default: `true`).

@@ -95,7 +95,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String NODE_ATTR_SUDO_PROMPT_MAX_LINES = "sudo-prompt-max-lines";
     public static final int DEFAULT_SUDO_PROMPT_MAX_LINES = 12;
     public static final String NODE_ATTR_SUDO_RESPONSE_MAX_LINES = "sudo-response-max-lines";
-    public static final int DEFAULT_SUDO_RESPONSE_MAX_LINES = 1;
+    public static final int DEFAULT_SUDO_RESPONSE_MAX_LINES = 2;
     public static final String NODE_ATTR_SUDO_PROMPT_MAX_TIMEOUT = "sudo-prompt-max-timeout";
     public static final long DEFAULT_SUDO_PROMPT_MAX_TIMEOUT = 5000;
     public static final String NODE_ATTR_SUDO_RESPONSE_MAX_TIMEOUT = "sudo-response-max-timeout";
@@ -258,7 +258,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                 thread.join(5000);
             } catch (InterruptedException e) {
             }
-            if (!thread.isAlive() && thread.isFailed()) {
+            if (thread.isFailed()) {
                 context.getExecutionListener().log(0,
                     sudoResponder.toString() + " failed: " + thread.getFailureReason());
             }
@@ -514,12 +514,10 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
         private void init(final INodeEntry node, final FrameworkProject frameworkProject,
                           final Framework framework, final ExecutionContext context) {
-            sudoEnabled = determineSudoEnabled(node, context);
+            sudoEnabled = determineSudoEnabled(node);
             if (sudoEnabled) {
                 final String sudoPassword = determineSudoPassword(node, context);
-                if (null != sudoPassword) {
-                    inputString = sudoPassword + "\n";
-                }
+                inputString = (null != sudoPassword ? sudoPassword : "") + "\n";
 
                 sudoCommandPattern = resolveProperty(NODE_ATTR_SUDO_COMMAND_PATTERN, DEFAULT_SUDO_COMMAND_PATTERN, node,
                     frameworkProject, framework);
@@ -570,12 +568,9 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         /**
          * Determine if sudo should be used: sudo-enabled property must be "true" and the sudo password must be set
          */
-        private boolean determineSudoEnabled(final INodeEntry node, final ExecutionContext context) {
+        private boolean determineSudoEnabled(final INodeEntry node) {
             if (null != node.getAttributes().get(NODE_ATTR_SUDO_COMMAND_ENABLED)) {
-                final boolean enabled = Boolean.parseBoolean(node.getAttributes().get(NODE_ATTR_SUDO_COMMAND_ENABLED));
-                if (enabled && null != determineSudoPassword(node, context)) {
-                    return true;
-                }
+                return  Boolean.parseBoolean(node.getAttributes().get(NODE_ATTR_SUDO_COMMAND_ENABLED));
             }
             return false;
         }
