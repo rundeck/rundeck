@@ -75,6 +75,8 @@ var applinks={
             var project=$F('schedEditFrameworkProject');
             if(!project){
                 $('jobChooseSpinner').innerHTML="Please choose a project";
+                $('jobChooseSpinner').show();
+                doyft('schedEditFrameworkProjectHolder');
                 return;
             }
             $('jobChooseSpinner').loading();
@@ -376,6 +378,7 @@ var applinks={
             </span>
 
             <span class="action button" onclick="loadGroupChooser(this);" id="groupChooseBtn" title="Select an existing group to use">Choose &hellip; <g:img file="icon-tiny-disclosure.png" width="12px" height="12px"/></span>
+            <span id="groupChooseSpinner"></span>
             <div class="popout" id="groupChooser" style="display:none; width:300px; padding: 5px; background:white; position:absolute;">
                 <div style="margin-bottom:5px;">
                     <span class="info note">Click on the name of the group to use</span>
@@ -403,16 +406,27 @@ var applinks={
                     $('groupChooserContent').innerHTML='<img src="'+ appLinks.iconSpinner+'" alt=""/> Loading...';
                     $(elem).addClassName('selected');
                     $('groupChooseBtn').down('img').src=AppImages.disclosureOpen;
+                    var project = $F('schedEditFrameworkProject');
+                    if (!project) {
+                        $('groupChooseSpinner').innerHTML = "Please choose a project";
+                        $('groupChooseSpinner').show();
+                        doyft('schedEditFrameworkProjectHolder');
+                        return;
+                    }
+                    $('groupChooseSpinner').loading();
+                    $('groupChooseSpinner').show();
                     new Ajax.Updater(
                         'groupChooserContent',
                         '${createLink(controller:"scheduledExecution",action:"groupTreeFragment")}',
                         {
-                        parameters: {jscallback:"groupChosen",project:"${session.project.encodeAsJavaScript()}"},
+                        parameters: {jscallback:"groupChosen",project:project},
                          onSuccess: function(transport) {
                             new MenuController().showRelativeTo(elem,'groupChooser');
+                             $('groupChooseSpinner').hide();
                          },
                          onFailure: function() {
                              showError("Error performing request: groupTreeFragment");
+                             $('jobChooseSpinner').hide();
                          }
                         });
                 }
