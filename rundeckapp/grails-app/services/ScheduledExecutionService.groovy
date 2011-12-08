@@ -231,7 +231,7 @@ class ScheduledExecutionService {
 
         //collect all jobs and authorize the user for the set of available Job actions
         Set res = new HashSet()
-        def schedlist= ScheduledExecution.list()
+        def schedlist= ScheduledExecution.findAllByProject(project)
         schedlist.each { ScheduledExecution sched ->
             res.add(["job": sched.jobName, "group": sched.groupPath ?: '', type: 'job'])
         }
