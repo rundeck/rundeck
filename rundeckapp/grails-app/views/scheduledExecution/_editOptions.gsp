@@ -78,3 +78,13 @@
         fireWhenReady('matchednodes_${rkey}',_EOUpdateMatchedNodes);
     </g:javascript>
 </g:if>
+<g:javascript>
+    fireWhenReady('optionSelect', function() {
+        $$('input[type=text]').each(function(e) {
+            Event.observe(e, 'keydown', noenter);
+        });
+        $$('input[type=password]').each(function(e) {
+            Event.observe(e, 'keydown', noenter);
+        });
+    });
+</g:javascript>
