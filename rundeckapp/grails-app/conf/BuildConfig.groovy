@@ -11,11 +11,16 @@ grails.project.dependency.resolution = {
         //include snakeyaml from deps dir
         flatDir name:'sourceDeps', dirs:'../dependencies/snakeyaml/jars'
     }
+
+    grails.war.resources = {def stagingDir ->
+        delete(file: "${stagingDir}/WEB-INF/lib/commons-collections-3.1.jar")
+    }
+
     dependencies {
-        build 'org.yaml:snakeyaml:1.9','org.apache.ant:ant:1.7.1','org.apache.ant:ant-jsch:1.7.1','com.jcraft:jsch:0.1.42','log4j:log4j:1.2.16'
-        test 'org.yaml:snakeyaml:1.9','org.apache.ant:ant:1.7.1','org.apache.ant:ant-jsch:1.7.1','com.jcraft:jsch:0.1.42','log4j:log4j:1.2.16'
-        compile 'org.yaml:snakeyaml:1.9','org.apache.ant:ant:1.7.1','org.apache.ant:ant-jsch:1.7.1','com.jcraft:jsch:0.1.42','log4j:log4j:1.2.16'
-        runtime 'org.yaml:snakeyaml:1.9', 'org.apache.ant:ant:1.7.1', 'org.apache.ant:ant-launcher:1.7.1','org.apache.ant:ant-jsch:1.7.1','com.jcraft:jsch:0.1.42', 'org.springframework:spring-test:3.0.5.RELEASE','log4j:log4j:1.2.16'
+        build 'org.yaml:snakeyaml:1.9','org.apache.ant:ant:1.7.1','org.apache.ant:ant-jsch:1.7.1','com.jcraft:jsch:0.1.42','log4j:log4j:1.2.16','commons-collections:commons-collections:3.2.1'
+        test 'org.yaml:snakeyaml:1.9','org.apache.ant:ant:1.7.1','org.apache.ant:ant-jsch:1.7.1','com.jcraft:jsch:0.1.42','log4j:log4j:1.2.16','commons-collections:commons-collections:3.2.1'
+        compile 'org.yaml:snakeyaml:1.9','org.apache.ant:ant:1.7.1','org.apache.ant:ant-jsch:1.7.1','com.jcraft:jsch:0.1.42','log4j:log4j:1.2.16','commons-collections:commons-collections:3.2.1'
+        runtime 'org.yaml:snakeyaml:1.9', 'org.apache.ant:ant:1.7.1', 'org.apache.ant:ant-launcher:1.7.1','org.apache.ant:ant-jsch:1.7.1','com.jcraft:jsch:0.1.42', 'org.springframework:spring-test:3.0.5.RELEASE','log4j:log4j:1.2.16'    ,'commons-collections:commons-collections:3.2.1'
     }
     grails.plugin.location.'webrealms' = "webrealms"
 }
