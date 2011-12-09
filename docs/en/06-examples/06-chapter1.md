@@ -396,16 +396,11 @@ File listing: start.xml
          <group>anvils/web</group>  
         <context> 
           <project>anvils</project>  
-            <options> 
-             <option name="method" enforcedvalues="true" required="true" 
-              values="normal,kill" /> 
-           </options> 
         </context>  
         <sequence threadcount="1" keepgoing="false" strategy="node-first"> 
          <command> 
           <script><![CDATA[#!/bin/sh
-     echo Web started. after a $1 shutdown]]></script>  
-           <scriptargs>${option.method}</scriptargs> 
+     echo Web started.]]></script>
          </command> 
       </sequence>  
         <nodefilters excludeprecedence="true"> 
@@ -421,8 +416,7 @@ File listing: start.xml
     </joblist>
 
 Defines Job, /anvils/web/start, that also executes a shell script to
-Nodes tagged "web". The shell script is passed a single argument,
-``${option.method}``, containing the value chosen in the Job run form.
+Nodes tagged "web".
 
 
 File listing: restart.xml
@@ -442,31 +436,26 @@ File listing: restart.xml
          </context>  
          <sequence threadcount="1" keepgoing="false" strategy="node-first"> 
           <command> 
-            <jobref name="stop" group="apps/web"> 
+            <jobref name="stop" group="anvils/web">
               <arg line="-method ${option.method}"/> 
             </jobref> 
           </command>  
           <command> 
-            <jobref name="start" group="apps/web"> 
-              <arg line="-method ${option.method}"/> 
+            <jobref name="start" group="anvils/web">
             </jobref> 
           </command> 
-        </sequence>  
-        <nodefilters excludeprecedence="true"> 
-         <include> 
-           <tags>web</tags> 
-         </include> 
-        </nodefilters>  
-         <dispatch> 
-           <threadcount>1</threadcount>  
-           <keepgoing>true</keepgoing> 
-         </dispatch> 
+        </sequence>
        </job>	
     </joblist>
 
 
 Defines Job, /anvils/web/Restart, that executes a sequence of Job calls,
 using the ``jobref`` tag.
+
+Note that we don't define a `<nodefilters>` or `<dispatch>` section, because we
+only want this sequence to execute **once**, on the server node.  The Job
+references will each be called once, and the "start" and "stop" Jobs will
+each be dispatched to the nodes they define.
 
 Saving the XML definitions files located on the RunDeck server,
 one can load them using the [rd-jobs](rd-jobs.html) command.
@@ -493,7 +482,7 @@ the Jobs page. Hovering over the "Restart" job name reveals job detail.
 
 You will see the composition of the "Restart" job as a workflow
 calling the jobs: stop and start. The "Restart" job passes the
-``-method`` option value to the lower level stop and start Jobs.
+``-method`` option value to the lower level stop Job.
 
 ## Running the job
 
