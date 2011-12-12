@@ -99,7 +99,15 @@ class FrameworkService implements ApplicationContextAware {
         return framework.getAuthorizationMgr().authorizeScript(user,project,script)
     }
 
-    def Set authorizeProjectResources(Framework framework, Set resources, Set actions, String project) {
+    /**
+     * return the decision set for all actions on all resources in the project context
+     * @param framework
+     * @param resources
+     * @param actions
+     * @param project
+     * @return
+     */
+    def Set authorizeProjectResources( framework, Set resources, Set actions, String project) {
         if (null == project) {
             throw new IllegalArgumentException("null project")
         }
@@ -110,18 +118,34 @@ class FrameworkService implements ApplicationContextAware {
             Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), project)))
         return decisions
     }
-    def authorizeProjectResource(Framework framework, Map resource, String action, String project){
+    /**
+     * return true if the action is authorized for the resource in the project context
+     * @param framework
+     * @param resource
+     * @param action
+     * @param project
+     * @return
+     */
+    def boolean authorizeProjectResource(framework, Map resource, String action, String project){
         if (null == project) {
             throw new IllegalArgumentException("null project")
         }
-        def Decision decision=framework.getAuthorizationMgr().evaluate(
+        def decision=framework.getAuthorizationMgr().evaluate(
             resource,
             framework.getAuthenticationMgr().subject,
             action,
             Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), project)))
-        return decision.isAuthorized()
+        return decision.authorized
     }
-    def authorizeProjectResourceAll(Framework framework, Map resource, Collection actions, String project){
+    /**
+     * Return true if all actions are authorized for the resource in the project context
+     * @param framework
+     * @param resource
+     * @param actions
+     * @param project
+     * @return
+     */
+    def boolean authorizeProjectResourceAll(framework, Map resource, Collection actions, String project){
         if(null==project){
             throw new IllegalArgumentException("null project")
         }
@@ -132,7 +156,16 @@ class FrameworkService implements ApplicationContextAware {
             Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), project)))
         return !(decisions.find {!it.authorized})
     }
-    def authorizeProjectJobAll(Framework framework, ScheduledExecution job, Collection actions, String project){
+
+    /**
+     * Return true if the user is authorized for all actions for the job in the project context
+     * @param framework
+     * @param job
+     * @param actions
+     * @param project
+     * @return true/false
+     */
+    def authorizeProjectJobAll( framework, ScheduledExecution job, Collection actions, String project){
         if (null == project) {
             throw new IllegalArgumentException("null project")
         }
@@ -144,17 +177,31 @@ class FrameworkService implements ApplicationContextAware {
         return !(decisions.find {!it.authorized})
     }
 
-    def authorizeApplicationResource(Framework framework, Map resource, String action) {
+    /**
+     * return true if the action is authorized for the resource in the application context
+     * @param framework
+     * @param resource
+     * @param action
+     * @return
+     */
+    def boolean authorizeApplicationResource(framework, Map resource, String action) {
 
-        def Decision decision = framework.getAuthorizationMgr().evaluate(
+        def decision = framework.getAuthorizationMgr().evaluate(
             resource,
             framework.getAuthenticationMgr().subject,
             action,
             Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
-        return decision.isAuthorized()
+        return decision.authorized
     }
 
-    def authorizeApplicationResourceAll(Framework framework, Map resource, Collection actions) {
+    /**
+     * return true if all of the actions are authorized for the resource in the application context
+     * @param framework
+     * @param resource
+     * @param actions
+     * @return
+     */
+    def boolean authorizeApplicationResourceAll(framework, Map resource, Collection actions) {
 
 
         def Set decisions = framework.getAuthorizationMgr().evaluate(
@@ -165,16 +212,30 @@ class FrameworkService implements ApplicationContextAware {
 
         return !(decisions.find {!it.authorized})
     }
-    def authorizeApplicationResourceType(Framework framework, String resourceType, String action) {
+    /**
+     * return true if the action is authorized for the resource type in the application context
+     * @param framework
+     * @param resourceType
+     * @param action
+     * @return
+     */
+    def boolean authorizeApplicationResourceType(framework, String resourceType, String action) {
 
-        def Decision decision =framework.getAuthorizationMgr().evaluate(
+        def decision =framework.getAuthorizationMgr().evaluate(
             [type: 'resource', kind: resourceType],
             framework.getAuthenticationMgr().subject,
             action,
             Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
-        return decision.isAuthorized()
+        return decision.authorized
     }
-    def authorizeApplicationResourceTypeAll(Framework framework, String resourceType, Collection actions) {
+    /**
+     * return true if all of the actions are authorized for the resource type in the application context
+     * @param framework
+     * @param resourceType
+     * @param actions
+     * @return
+     */
+    def boolean authorizeApplicationResourceTypeAll(framework, String resourceType, Collection actions) {
 
 
         def Set decisions =framework.getAuthorizationMgr().evaluate(

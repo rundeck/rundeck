@@ -1,3 +1,5 @@
+import com.dtolabs.rundeck.core.authorization.Attribute
+
 class FrameworkServiceTests extends GroovyTestCase {
 
     Properties props1
@@ -101,6 +103,533 @@ class FrameworkServiceTests extends GroovyTestCase {
             assertEquals("flam jamps", m1['test2'])
             assertNotNull(m1['isboolean'])
             assertEquals("true", m1['isboolean'])
+        }
+    }
+    void testAuthorizeProjectJobAll(){
+        FrameworkService test= new FrameworkService();
+        test:{
+            //single authorization is true
+            ScheduledExecution job = new ScheduledExecution(jobName: 'name1',groupPath:'blah/blee')
+            def expected=[type:'job',name:'name1',group:'blah/blee']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
+            def evalClos={ Set resources, subject, Set actions, Collection env-> 
+                assertEquals 1,resources.size()
+                def res1=resources.iterator().next()
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 1,actions.size()
+                assertEquals 'test',actions.iterator().next()
+                Attribute attr=env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/project",attr.property.toString()
+                assertEquals "testProject",attr.value
+                return [[authorized:true]]
+            }
+            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
+            assertTrue(test.authorizeProjectJobAll(tfwk,job,['test'],'testProject'))
+        }
+        test:{
+            //single authorization is false
+            ScheduledExecution job = new ScheduledExecution(jobName: 'name1',groupPath:'blah/blee')
+            def expected=[type:'job',name:'name1',group:'blah/blee']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
+            def evalClos={ Set resources, subject, Set actions, Collection env->
+                assertEquals 1,resources.size()
+                def res1=resources.iterator().next()
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 1,actions.size()
+                assertEquals 'test',actions.iterator().next()
+                Attribute attr = env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/project", attr.property.toString()
+                assertEquals "testProject", attr.value
+                return [[authorized:false]]
+            }
+            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
+            assertFalse(test.authorizeProjectJobAll(tfwk,job,['test'],'testProject'))
+        }
+        test:{
+            //one of multiple authorization is false
+            ScheduledExecution job = new ScheduledExecution(jobName: 'name1',groupPath:'blah/blee')
+            def expected=[type:'job',name:'name1',group:'blah/blee']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
+            def evalClos={ Set resources, subject, Set actions, Collection env->
+                assertEquals 1,resources.size()
+                def res1=resources.iterator().next()
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 1,actions.size()
+                assertEquals 'test',actions.iterator().next()
+                Attribute attr = env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/project", attr.property.toString()
+                assertEquals "testProject", attr.value
+                return [[authorized:false],[authorized:true]]
+            }
+            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
+            assertFalse(test.authorizeProjectJobAll(tfwk,job,['test'],'testProject'))
+        }
+        test:{
+            //all of multiple authorization is false
+            ScheduledExecution job = new ScheduledExecution(jobName: 'name1',groupPath:'blah/blee')
+            def expected=[type:'job',name:'name1',group:'blah/blee']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
+            def evalClos={ Set resources, subject, Set actions, Collection env->
+                assertEquals 1,resources.size()
+                def res1=resources.iterator().next()
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 1,actions.size()
+                assertEquals 'test',actions.iterator().next()
+                Attribute attr = env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/project", attr.property.toString()
+                assertEquals "testProject", attr.value
+                return [[authorized:false],[authorized:false]]
+            }
+            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
+            assertFalse(test.authorizeProjectJobAll(tfwk,job,['test'],'testProject'))
+        }
+        test:{
+            //all of multiple authorization is true
+            ScheduledExecution job = new ScheduledExecution(jobName: 'name1',groupPath:'blah/blee')
+            def expected=[type:'job',name:'name1',group:'blah/blee']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
+            def evalClos={ Set resources, subject, Set actions, Collection env->
+                assertEquals 1,resources.size()
+                def res1=resources.iterator().next()
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 1,actions.size()
+                assertEquals 'test',actions.iterator().next()
+                Attribute attr = env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/project", attr.property.toString()
+                assertEquals "testProject", attr.value
+                return [[authorized:true],[authorized:true]]
+            }
+            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
+            assertTrue(test.authorizeProjectJobAll(tfwk,job,['test'],'testProject'))
+        }
+    }
+    void testAuthorizeProjectResources(){
+        FrameworkService test= new FrameworkService();
+        test:{
+            def expected=[type:'job',name:'name1',group:'blah/blee']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
+            def evalClos={ Set resources, subject, Set actions, Collection env->
+                assertEquals 1,resources.size()
+                def res1=resources.iterator().next()
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 1,actions.size()
+                assertEquals 'test',actions.iterator().next()
+                Attribute attr=env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/project",attr.property.toString()
+                assertEquals "testProject",attr.value
+                return [[authorized:true]]
+            }
+            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
+            def resources = [[type: 'job', name: 'name1', group: 'blah/blee']] as Set
+            final result = test.authorizeProjectResources(tfwk, resources, ['test'] as Set, 'testProject')
+        }
+    }
+    void testAuthorizeProjectResource(){
+        FrameworkService test= new FrameworkService();
+        test:{
+            def expected=[type:'job',name:'name1',group:'blah/blee']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
+            def evalClos={ Map res1, subject, String action, Collection env->
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 'test',action
+                Attribute attr=env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/project",attr.property.toString()
+                assertEquals "testProject",attr.value
+                return [authorized:true]
+            }
+            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
+            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+            assertTrue test.authorizeProjectResource(tfwk, resource, 'test', 'testProject')
+        }
+    }
+    void testAuthorizeProjectResourceAll(){
+        FrameworkService test= new FrameworkService();
+        test:{
+            def expected=[type:'job',name:'name1',group:'blah/blee']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
+            def evalClos={ Set resources, subject, Set actions, Collection env->
+                assertEquals 1,resources.size()
+                def res1=resources.iterator().next()
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 2, actions.size()
+                assertTrue actions.contains('test')
+                assertTrue actions.contains('test2')
+                Attribute attr=env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/project",attr.property.toString()
+                assertEquals "testProject",attr.value
+                return [[authorized:true]]
+            }
+            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
+            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+            assertTrue test.authorizeProjectResourceAll(tfwk, resource, ['test','test2'], 'testProject')
+        }
+        test:{
+            def expected=[type:'job',name:'name1',group:'blah/blee']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
+            def evalClos={ Set resources, subject, Set actions, Collection env->
+                assertEquals 1,resources.size()
+                def res1=resources.iterator().next()
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 2, actions.size()
+                assertTrue actions.contains('test')
+                assertTrue actions.contains('test2')
+                Attribute attr=env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/project",attr.property.toString()
+                assertEquals "testProject",attr.value
+                return [[authorized:false]]
+            }
+            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
+            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+            assertFalse test.authorizeProjectResourceAll(tfwk, resource, ['test','test2'], 'testProject')
+        }
+        test:{
+            def expected=[type:'job',name:'name1',group:'blah/blee']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
+            def evalClos={ Set resources, subject, Set actions, Collection env->
+                assertEquals 1,resources.size()
+                def res1=resources.iterator().next()
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 2, actions.size()
+                assertTrue actions.contains('test')
+                assertTrue actions.contains('test2')
+                Attribute attr=env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/project",attr.property.toString()
+                assertEquals "testProject",attr.value
+                return [[authorized:false],[authorized:true]]
+            }
+            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
+            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+            assertFalse test.authorizeProjectResourceAll(tfwk, resource, ['test','test2'], 'testProject')
+        }
+        test:{
+            def expected=[type:'job',name:'name1',group:'blah/blee']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
+            def evalClos={ Set resources, subject, Set actions, Collection env->
+                assertEquals 1,resources.size()
+                def res1=resources.iterator().next()
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 2, actions.size()
+                assertTrue actions.contains('test')
+                assertTrue actions.contains('test2')
+                Attribute attr=env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/project",attr.property.toString()
+                assertEquals "testProject",attr.value
+                return [[authorized:false],[authorized:false]]
+            }
+            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
+            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+            assertFalse test.authorizeProjectResourceAll(tfwk, resource, ['test','test2'], 'testProject')
+        }
+        test:{
+            def expected=[type:'job',name:'name1',group:'blah/blee']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
+            def evalClos={ Set resources, subject, Set actions, Collection env->
+                assertEquals 1,resources.size()
+                def res1=resources.iterator().next()
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 2, actions.size()
+                assertTrue actions.contains('test')
+                assertTrue actions.contains('test2')
+                Attribute attr=env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/project",attr.property.toString()
+                assertEquals "testProject",attr.value
+                return [[authorized:true],[authorized:true]]
+            }
+            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
+            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+            assertTrue test.authorizeProjectResourceAll(tfwk, resource, ['test','test2'], 'testProject')
+        }
+    }
+    void testAuthorizeApplicationResource(){
+        FrameworkService test= new FrameworkService();
+        test:{
+            def expected=[type:'job',name:'name1',group:'blah/blee']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
+            def evalClos={ Map res1, subject, String action, Collection env->
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 'testAction', action
+                Attribute attr=env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/application",attr.property.toString()
+                assertEquals "rundeck",attr.value
+                return [authorized:true]
+            }
+            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
+            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+            assertTrue test.authorizeApplicationResource(tfwk, resource, 'testAction')
+        }
+        test:{
+            def expected=[type:'job',name:'name1',group:'blah/blee']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
+            def evalClos = { Map res1, subject, String action, Collection env ->
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 'testAction', action
+                Attribute attr = env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
+                assertEquals "rundeck", attr.value
+                return [authorized:false]
+            }
+            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
+            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+            assertFalse test.authorizeApplicationResource(tfwk, resource, 'testAction')
+        }
+    }
+    void testAuthorizeApplicationResourceAll(){
+        FrameworkService test= new FrameworkService();
+        test:{
+            def expected=[type:'job',name:'name1',group:'blah/blee']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr= { return [  subject: 'subject1'] }
+            def evalClos={ Set resources, subject, Set actions, Collection env->
+                assertEquals 1,resources.size()
+                def res1=resources.iterator().next()
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 2, actions.size()
+                assertTrue actions.contains('testAction')
+                assertTrue actions.contains('testAction2')
+                Attribute attr=env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/application",attr.property.toString()
+                assertEquals "rundeck",attr.value
+                return [[authorized:true]]
+            }
+            tfwk.getAuthorizationMgr= { return [ evaluate:evalClos] }
+            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+            assertTrue test.authorizeApplicationResourceAll(tfwk, resource, ['testAction','testAction2'])
+        }
+        test: {
+            def expected = [type: 'job', name: 'name1', group: 'blah/blee']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr = { return [subject: 'subject1'] }
+            def evalClos = { Set resources, subject, Set actions, Collection env ->
+                assertEquals 1, resources.size()
+                def res1 = resources.iterator().next()
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 2, actions.size()
+                assertTrue actions.contains('testAction')
+                assertTrue actions.contains('testAction2')
+                Attribute attr = env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
+                assertEquals "rundeck", attr.value
+                return [[authorized: false]]
+            }
+            tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
+            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+            assertFalse test.authorizeApplicationResourceAll(tfwk, resource, ['testAction', 'testAction2'])
+        }
+        test: {
+            def expected = [type: 'job', name: 'name1', group: 'blah/blee']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr = { return [subject: 'subject1'] }
+            def evalClos = { Set resources, subject, Set actions, Collection env ->
+                assertEquals 1, resources.size()
+                def res1 = resources.iterator().next()
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 2, actions.size()
+                assertTrue actions.contains('testAction')
+                assertTrue actions.contains('testAction2')
+                Attribute attr = env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
+                assertEquals "rundeck", attr.value
+                return [[authorized: false],[authorized:true]]
+            }
+            tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
+            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+            assertFalse test.authorizeApplicationResourceAll(tfwk, resource, ['testAction', 'testAction2'])
+        }
+        test: {
+            def expected = [type: 'job', name: 'name1', group: 'blah/blee']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr = { return [subject: 'subject1'] }
+            def evalClos = { Set resources, subject, Set actions, Collection env ->
+                assertEquals 1, resources.size()
+                def res1 = resources.iterator().next()
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 2, actions.size()
+                assertTrue actions.contains('testAction')
+                assertTrue actions.contains('testAction2')
+                Attribute attr = env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
+                assertEquals "rundeck", attr.value
+                return [[authorized: false],[authorized:false]]
+            }
+            tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
+            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+            assertFalse test.authorizeApplicationResourceAll(tfwk, resource, ['testAction', 'testAction2'])
+        }
+        test: {
+            def expected = [type: 'job', name: 'name1', group: 'blah/blee']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr = { return [subject: 'subject1'] }
+            def evalClos = { Set resources, subject, Set actions, Collection env ->
+                assertEquals 1, resources.size()
+                def res1 = resources.iterator().next()
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 2, actions.size()
+                assertTrue actions.contains('testAction')
+                assertTrue actions.contains('testAction2')
+                Attribute attr = env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
+                assertEquals "rundeck", attr.value
+                return [[authorized: true],[authorized:true]]
+            }
+            tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
+            def resource = [type: 'job', name: 'name1', group: 'blah/blee']
+            assertTrue test.authorizeApplicationResourceAll(tfwk, resource, ['testAction', 'testAction2'])
+        }
+    }
+
+    void testAuthorizeApplicationResourceType() {
+        FrameworkService test = new FrameworkService();
+        test: {
+            def expected = [type: 'resource', kind:'aType']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr = { return [subject: 'subject1'] }
+            def evalClos = { Map res1, subject, String action, Collection env ->
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 'testAction', action
+                Attribute attr = env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
+                assertEquals "rundeck", attr.value
+                return [authorized: true]
+            }
+            tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
+            assertTrue test.authorizeApplicationResourceType(tfwk, 'aType', 'testAction')
+        }
+    }
+    void testAuthorizeApplicationResourceTypeAll() {
+        FrameworkService test = new FrameworkService();
+        test: {
+            def expected = [type: 'resource', kind:'aType']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr = { return [subject: 'subject1'] }
+            def evalClos = { Set resources, subject, Set actions, Collection env ->
+                assertEquals 1,resources.size()
+                def res1=resources.iterator().next()
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 2, actions.size()
+                assertTrue  actions.contains('testAction')
+                assertTrue  actions.contains('testAction2')
+                Attribute attr = env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
+                assertEquals "rundeck", attr.value
+                return [[authorized: true]]
+            }
+            tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
+            assertTrue test.authorizeApplicationResourceTypeAll(tfwk, 'aType', ['testAction','testAction2'])
+        }
+        test: {
+            def expected = [type: 'resource', kind:'aType']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr = { return [subject: 'subject1'] }
+            def evalClos = { Set resources, subject, Set actions, Collection env ->
+                assertEquals 1,resources.size()
+                def res1=resources.iterator().next()
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 2, actions.size()
+                assertTrue  actions.contains('testAction')
+                assertTrue  actions.contains('testAction2')
+                Attribute attr = env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
+                assertEquals "rundeck", attr.value
+                return [[authorized: false]]
+            }
+            tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
+            assertFalse test.authorizeApplicationResourceTypeAll(tfwk, 'aType', ['testAction','testAction2'])
+        }
+        test: {
+            def expected = [type: 'resource', kind:'aType']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr = { return [subject: 'subject1'] }
+            def evalClos = { Set resources, subject, Set actions, Collection env ->
+                assertEquals 1,resources.size()
+                def res1=resources.iterator().next()
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 2, actions.size()
+                assertTrue  actions.contains('testAction')
+                assertTrue  actions.contains('testAction2')
+                Attribute attr = env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
+                assertEquals "rundeck", attr.value
+                return [[authorized: false],[authorized:false]]
+            }
+            tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
+            assertFalse test.authorizeApplicationResourceTypeAll(tfwk, 'aType', ['testAction','testAction2'])
+        }
+        test: {
+            def expected = [type: 'resource', kind:'aType']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr = { return [subject: 'subject1'] }
+            def evalClos = { Set resources, subject, Set actions, Collection env ->
+                assertEquals 1,resources.size()
+                def res1=resources.iterator().next()
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 2, actions.size()
+                assertTrue  actions.contains('testAction')
+                assertTrue  actions.contains('testAction2')
+                Attribute attr = env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
+                assertEquals "rundeck", attr.value
+                return [[authorized: false],[authorized:true]]
+            }
+            tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
+            assertFalse test.authorizeApplicationResourceTypeAll(tfwk, 'aType', ['testAction','testAction2'])
+        }
+        test: {
+            def expected = [type: 'resource', kind:'aType']
+            def tfwk = new Expando()
+            tfwk.getAuthenticationMgr = { return [subject: 'subject1'] }
+            def evalClos = { Set resources, subject, Set actions, Collection env ->
+                assertEquals 1,resources.size()
+                def res1=resources.iterator().next()
+                assertEquals expected, res1
+                assertEquals 'subject1', subject
+                assertEquals 2, actions.size()
+                assertTrue  actions.contains('testAction')
+                assertTrue  actions.contains('testAction2')
+                Attribute attr = env.iterator().next()
+                assertEquals "http://dtolabs.com/rundeck/env/application", attr.property.toString()
+                assertEquals "rundeck", attr.value
+                return [[authorized: true],[authorized:true]]
+            }
+            tfwk.getAuthorizationMgr = { return [evaluate: evalClos] }
+            assertTrue test.authorizeApplicationResourceTypeAll(tfwk, 'aType', ['testAction','testAction2'])
         }
     }
 }
