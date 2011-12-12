@@ -137,7 +137,7 @@ class FrameworkService implements ApplicationContextAware {
             throw new IllegalArgumentException("null project")
         }
         def decisions=framework.getAuthorizationMgr().evaluate(
-            [[type:'job',job:job.jobName,group:job.groupPath?:'']] as Set,
+            [[type:'job',name:job.jobName,group:job.groupPath?:'']] as Set,
             framework.getAuthenticationMgr().subject,
             actions as Set,
             Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), project)))
