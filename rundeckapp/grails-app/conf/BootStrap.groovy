@@ -51,7 +51,8 @@ class BootStrap {
              }
              //see if initialization system property is set
              def configDir = Constants.getFrameworkConfigDir(rdeckBase)
-             if (!new File(configDir).isDirectory()){
+             File fprops = new File(configDir, "framework.properties")
+             if (!fprops.exists()){
                  log.info("Performing rundeck first-run initialization...")
                  //setup the base dir
                  Setup setup=new Setup()
@@ -81,11 +82,10 @@ class BootStrap {
                  setup.performSetup()
                  log.info("Rundeck initialization complete.")
              }
-             File f = new File(configDir, "framework.properties")
-             if (! f.exists()) {
-                 throw new RuntimeException("framework configuration file not found: " + f.getAbsolutePath())
+             if (! fprops.exists()) {
+                 throw new RuntimeException("framework configuration file not found: " + fprops.getAbsolutePath())
              }
-             InputStream is = new FileInputStream(f);
+             InputStream is = new FileInputStream(fprops);
              Properties properties = new Properties()
              try{
                 properties.load(is)
@@ -97,7 +97,7 @@ class BootStrap {
 
              Properties props2 = com.dtolabs.rundeck.core.utils.PropertyUtil.expand(properties)
              servletContext.setAttribute("FRAMEWORK_PROPERTIES", props2)
-             log.info("loaded configuration: " + f.getAbsolutePath())
+             log.info("loaded configuration: " + fprops.getAbsolutePath())
 
              if(properties.containsKey("framework.node")){
                  servletContext.setAttribute("FRAMEWORK_NODE", properties.getProperty("framework.node"))
