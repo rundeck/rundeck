@@ -127,16 +127,13 @@ public class SAREAuthorization implements Authorization {
             if (Code.REJECTED_DENIED == includes.getCode()) {
                 contextDecision = includes;
                 denied=true;
+                return createAuthorize(false, contextDecision, resource, subject, action, environment,
+                    System.currentTimeMillis() - start);
             }else if (includes.granted()) {
                 contextDecision = includes;
                 granted=true;
             }
             lastDecision = includes;
-        }
-        if(denied){
-            return authorize(false, "Denied by rule.",
-                Code.REJECTED_DENIED, resource, subject, action, environment,
-                System.currentTimeMillis() - start);
         }
         if(granted){
             return createAuthorize(true, contextDecision, resource, subject, action, environment,
@@ -159,13 +156,7 @@ public class SAREAuthorization implements Authorization {
         
         Decision decision = internalEvaluate(resource, subject, action, environment);
         StringBuilder sb = new StringBuilder();
-        sb.append("Evaluating ").append(decision).append(" (").append(decision.evaluationDuration()).append("ms)").append(':');
-        
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        PrintStream pw = new PrintStream(out, true);
-        decision.explain().describe(pw);
-        sb.append(out.toString());
-        
+        sb.append("Evaluating ").append(decision).append(" (").append(decision.evaluationDuration()).append("ms)");
         logger.info(sb.toString());
 
         return decision;
