@@ -244,7 +244,7 @@ class MenuController {
                 jobnames[sched.generateFullName()]=[]
             }
             jobnames[sched.generateFullName()]<<sched.id.toString()
-            res.add(["name": sched.jobName, "group": sched.groupPath?:'',type:'job'])
+            res.add(frameworkService.authResourceForJob(sched))
         }
         // Filter the groups by what the user is authorized to see.
 
@@ -261,7 +261,7 @@ class MenuController {
         //produce map: [actionName:[id1,id2,...],actionName2:[...]] for all allowed actions for jobs
         decisions.findAll { it.authorized}.groupBy { it.action }.each{k,v->
             jobauthorizations[k] = new HashSet(v.collect {
-                jobnames[ScheduledExecution.generateFullName(it.resource.group,it.resource.job)]
+                jobnames[ScheduledExecution.generateFullName(it.resource.group,it.resource.name)]
             }.flatten())
         }
 
