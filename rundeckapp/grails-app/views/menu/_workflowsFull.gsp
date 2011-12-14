@@ -182,11 +182,6 @@
                     <g:timerEnd key="groupTree"/>
                 </g:if>
     <g:timerStart key="tail"/>
-                <g:if test="${unauthorizedcount}">
-                    <div class="note info">
-                        ${unauthorizedcount} <g:message code="unauthorized.hidden.message" />
-                    </div>
-                </g:if>
             </td>
         </tr>
     </table>

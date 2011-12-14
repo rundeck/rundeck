@@ -36,11 +36,6 @@
             <g:if test="${ groupTree}">
                 <g:render template="groupTree" model="${[small:true,groupTree:groupTree.subs,currentJobs:groupTree['jobs']?groupTree['jobs']:[],wasfiltered:wasfiltered?true:false,nowrunning:nowrunning,nextExecutions:nextExecutions,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
             </g:if>
-            <g:if test="${unauthorizedcount}">
-                <div class="note warn">
-                    ${unauthorizedcount} <g:message code="unauthorized.hidden.message" />
-                </div>
-            </g:if>
         </td>
     </tr>
 </table>
