@@ -364,6 +364,50 @@ class FrameworkServiceTests extends GroovyTestCase {
             assertTrue test.authorizeProjectResourceAll(tfwk, resource, ['test','test2'], 'testProject')
         }
     }
+    void testAuthResourceForJob(){
+
+        FrameworkService test = new FrameworkService();
+        test:{
+            ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee')
+            def expected = [type: 'job', name: 'name1', group: 'blah/blee']
+            assertEquals expected,test.authResourceForJob(job)
+        }
+        test:{
+            ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah')
+            def expected = [type: 'job', name: 'name1', group: 'blah']
+            assertEquals expected,test.authResourceForJob(job)
+        }
+        test:{
+            ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: '')
+            def expected = [type: 'job', name: 'name1', group: '']
+            assertEquals expected,test.authResourceForJob(job)
+        }
+        test:{
+            ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: null)
+            def expected = [type: 'job', name: 'name1', group: '']
+            assertEquals expected,test.authResourceForJob(job)
+        }
+    }
+    void testAuthResourceForJobParams(){
+
+        FrameworkService test = new FrameworkService();
+        test:{
+            def expected = [type: 'job', name: 'name1', group: 'blah/blee']
+            assertEquals expected,test.authResourceForJob('name1','blah/blee')
+        }
+        test:{
+            def expected = [type: 'job', name: 'name1', group: 'blah']
+            assertEquals expected,test.authResourceForJob('name1','blah')
+        }
+        test:{
+            def expected = [type: 'job', name: 'name1', group: '']
+            assertEquals expected,test.authResourceForJob('name1','')
+        }
+        test:{
+            def expected = [type: 'job', name: 'name1', group: '']
+            assertEquals expected,test.authResourceForJob('name1',null)
+        }
+    }
     void testAuthorizeApplicationResource(){
         FrameworkService test= new FrameworkService();
         test:{

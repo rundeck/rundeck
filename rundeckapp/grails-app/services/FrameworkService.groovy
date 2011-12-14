@@ -100,6 +100,24 @@ class FrameworkService implements ApplicationContextAware {
     }
 
     /**
+     * Return the resource definition for a job for use by authorization checks
+     * @param se
+     * @return
+     */
+    def Map authResourceForJob(ScheduledExecution se){
+        return authResourceForJob(se.jobName,se.groupPath)
+    }
+
+    /**
+     * Return the resource definition for a job for use by authorization checks, using parameters as input
+     * @param se
+     * @return
+     */
+    def Map authResourceForJob(String name, String groupPath){
+        return [type:'job',name:name,group:groupPath?:'']
+    }
+
+    /**
      * return the decision set for all actions on all resources in the project context
      * @param framework
      * @param resources
@@ -170,7 +188,7 @@ class FrameworkService implements ApplicationContextAware {
             throw new IllegalArgumentException("null project")
         }
         def decisions=framework.getAuthorizationMgr().evaluate(
-            [[type:'job',name:job.jobName,group:job.groupPath?:'']] as Set,
+            [authResourceForJob(job)] as Set,
             framework.getAuthenticationMgr().subject,
             actions as Set,
             Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), project)))

@@ -226,14 +226,14 @@ class ScheduledExecutionService {
     /**
      * return a map of defined group path to count of the number of jobs with that exact path
      */
-    def getGroups(project, Framework framework){
+    def Map getGroups(project, framework){
         def groupMap=[:]
 
         //collect all jobs and authorize the user for the set of available Job actions
         Set res = new HashSet()
         def schedlist= ScheduledExecution.findAllByProject(project)
         schedlist.each { ScheduledExecution sched ->
-            res.add(["job": sched.jobName, "group": sched.groupPath ?: '', type: 'job'])
+            res.add(frameworkService.authResourceForJob(sched))
         }
         // Filter the groups by what the user is authorized to see.
 

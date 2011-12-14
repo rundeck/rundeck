@@ -44,7 +44,7 @@ class AuthTagLib {
         def framework = frameworkService.getFrameworkFromUserSession(request.session, request)
         def Authorization authr = framework.getAuthorizationMgr()
         
-        def resource = ["job": attrs.job?.jobName, "group": (attrs.job?.groupPath ?: ""), type: 'job']
+        def resource = frameworkService.authResourceForJob(attrs.job?.jobName, attrs.job?.groupPath)
 
         def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE+"project"), session.project))
 
@@ -278,7 +278,7 @@ class AuthTagLib {
         def framework = frameworkService.getFrameworkFromUserSession(request.session, request)
         def Authorization authr = framework.getAuthorizationMgr()
         
-        def Set resources = [ ["job": attrs.job?.jobName, "group": (attrs.job?.groupPath ?: ""), type:'job'] ]
+        def Set resources = [frameworkService.authResourceForJob(attrs.job?.jobName, attrs.job?.groupPath) ]
 
         def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), session.project))
 

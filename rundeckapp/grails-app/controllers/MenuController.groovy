@@ -244,7 +244,7 @@ class MenuController {
                 jobnames[sched.generateFullName()]=[]
             }
             jobnames[sched.generateFullName()]<<sched.id.toString()
-            res.add(["job": sched.jobName, "group": sched.groupPath?:'',type:'job'])
+            res.add(["name": sched.jobName, "group": sched.groupPath?:'',type:'job'])
         }
         // Filter the groups by what the user is authorized to see.
 
