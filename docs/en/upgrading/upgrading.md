@@ -1,3 +1,18 @@
+# Important Changes in RunDeck 1.4.1
+
+In RunDeck 1.4.0.x, the new ACL Policy format used an incorrect property key ("job") to check Job Authorizations by name.  The correct key was used in all documentation, but not in the underlying code.  The correct key is "name".
+
+This issue has been fixed in RunDeck 1.4.1, however if you were using the incorrect key previously, you will have to change your aclpolicy files to the correct key.
+
+The [Project Scope Resources and Actions](../RunDeck-Guide.html#project-scope-resources-and-actions) section shows the correct way to authorize Job resources by name:
+
+    for:
+      job:
+        - equals:
+            name: bob
+          allow: [run]
+
+
 # Important Changes in RunDeck 1.4
 
 These changes in version 1.4 are important to note if you are upgrading an
