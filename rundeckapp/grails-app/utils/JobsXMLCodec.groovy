@@ -260,6 +260,14 @@ class JobsXMLCodec {
                 }else{
                     x.remove('required')
                 }
+                if(x.multivalued){
+                    //convert 'multivalued' and delimiter to attribute
+                    BuilderUtil.makeAttribute(x,'multivalued')
+                    BuilderUtil.makeAttribute(x,'delimiter')
+                }else{
+                    x.remove('multivalued')
+                    x.remove('delimiter')
+                }
                 optslist<<x
             }
             map.context[BuilderUtil.pluralize('option')]=optslist
