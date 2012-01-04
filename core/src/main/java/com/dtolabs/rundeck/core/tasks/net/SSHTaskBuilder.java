@@ -271,7 +271,12 @@ public class SSHTaskBuilder {
                 }
                 project.log("Using ssh keyfile: " + sshKeypath, Project.MSG_DEBUG);
                 sshbase.setKeyfile(sshKeypath);
-                sshbase.setPassphrase(""); // set empty otherwise password will be required
+                final String passphrase=sshConnectionInfo.getPrivateKeyPassphrase();
+                if(null!=passphrase){
+                    sshbase.setPassphrase(passphrase);
+                }else{
+                    sshbase.setPassphrase(""); // set empty otherwise password will be required
+                }
                 break;
             case password:
                 final String password = sshConnectionInfo.getPassword();
@@ -349,6 +354,11 @@ public class SSHTaskBuilder {
         public AuthenticationType getAuthenticationType();
 
         public String getPrivateKeyfilePath();
+
+        /**
+         * Return the private key passphrase if set, or null.
+         */
+        public String getPrivateKeyPassphrase();
 
         public String getPassword();
 

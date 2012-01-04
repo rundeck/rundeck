@@ -80,6 +80,8 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String DEFAULT_SSH_PASSWORD_OPTION = "option.sshPassword";
     public static final String NODE_ATTR_SUDO_PASSWORD_OPTION = "sudo-password-option";
     public static final String DEFAULT_SUDO_PASSWORD_OPTION = "option.sudoPassword";
+    public static final String NODE_ATTR_SSH_KEY_PASSPHRASE_OPTION = "ssh-key-passphrase-option";
+    public static final String DEFAULT_SSH_KEY_PASSPHRASE_OPTION = "option.sshKeyPassphrase";
 
 
     public static final String FWK_PROP_SSH_AUTHENTICATION = FWK_PROP_PREFIX + NODE_ATTR_SSH_AUTHENTICATION;
@@ -329,6 +331,15 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                 //return default framework level
                 return framework.getProperty(Constants.SSH_KEYPATH_PROP);
             }
+        }
+
+        public String getPrivateKeyPassphrase() {
+            if (null != node.getAttributes().get(NODE_ATTR_SSH_KEY_PASSPHRASE_OPTION)) {
+                return evaluateSecureOption(node.getAttributes().get(NODE_ATTR_SSH_KEY_PASSPHRASE_OPTION), context);
+            } else {
+                return evaluateSecureOption(DEFAULT_SSH_KEY_PASSPHRASE_OPTION, context);
+            }
+
         }
 
         static String evaluateSecureOption(final String optionName, final ExecutionContext context) {

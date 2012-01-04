@@ -145,6 +145,7 @@ public class TestSSHTaskBuilder extends TestCase {
         String password;
         int SSHTimeout;
         String username;
+        private String privateKeyPassphrase;
 
         public SSHTaskBuilder.AuthenticationType getAuthenticationType() {
             return authenticationType;
@@ -164,6 +165,10 @@ public class TestSSHTaskBuilder extends TestCase {
 
         public String getUsername() {
             return username;
+        }
+
+        public String getPrivateKeyPassphrase() {
+            return privateKeyPassphrase;
         }
     }
 
@@ -263,6 +268,30 @@ public class TestSSHTaskBuilder extends TestCase {
         assertEquals(33, test.port);
         assertEquals(testKeyfile.getAbsolutePath(), test.keyfile);
         assertEquals("", test.passphrase);
+        assertEquals(null, test.password);
+        assertEquals(600, test.timeout);
+        assertEquals("usernameValue", test.username);
+        assertEquals(false, test.verbose);
+
+        //never changes
+        assertInvariable(state, test);
+    }
+    public void testBuildSSHKeyPassphrase() throws Exception {
+        final testState state = new testState();
+        final testSSHExecInterface test = new testSSHExecInterface();
+
+        state.node.setHostname("hostname:33");
+        state.sshConnectionInfo.SSHTimeout = 600;
+        state.sshConnectionInfo.username = "usernameValue";
+        state.sshConnectionInfo.privateKeyPassphrase = "passphraseValue";
+
+        runBuildSSH(state, test);
+
+        assertEquals(CLIUtils.generateArgline(null, state.strings), test.command);
+        assertEquals("hostname", test.host);
+        assertEquals(33, test.port);
+        assertEquals(testKeyfile.getAbsolutePath(), test.keyfile);
+        assertEquals("passphraseValue", test.passphrase);
         assertEquals(null, test.password);
         assertEquals(600, test.timeout);
         assertEquals("usernameValue", test.username);
