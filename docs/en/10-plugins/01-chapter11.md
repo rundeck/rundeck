@@ -404,6 +404,57 @@ When connecting to the remote node, RunDeck will look for a property/attribute s
 3. **RunDeck level**: `framework.ssh-keypath` property in `framework.properties`. Applies to all projects by default.
 4. **RunDeck level**:  `framework.ssh.keypath` property in `framework.properties`. Applies to all projects by default (included for compatibility with Rundeck < 1.3). (default value: `~/.ssh/id_rsa`).
 
+If you private key is encrypted with a passphrase, then you can use a "Secure Option" to prompt the user to enter the passphrase when executing on the Node.  See below.
+
+##### Configuring SSH Private Key Passphrase
+
+Using a passphrase for privateKey authentication works in the following way:
+
+* A Job must be defined specifying a Secure Option to prompt the user for the key's passphrase.
+* Target nodes must be configured to use privateKey authentication.
+* When the user executes the Job, they are prompted for the key's passphrase.  The Secure Option value for the passphrase is not stored in the database, and is used only for that execution.
+
+Therefore Private Key Passphrase authentication has several requirements and some limitations:
+
+1. Private Key-authenticated nodes requiring passphrases can only be executed on via a defined Job, not via Ad-hoc commands (yet).
+2. Each Job that will execute on such Nodes must define a Secure Option to prompt the user for the key's passphrase before execution.
+3. All Nodes using passphrase protected private keys for a Job must have a matching Secure Option defined, or may use the same option name (or the default) if they share the key's passphrase (e.g. using the same private key).
+
+Passphrases are input either via the GUI or arguments to the job if executed via CLI or API.
+
+To enable SSH Private Key authentication, first make sure the `ssh-authentication` value is set as described in [Configuring SSH Authentication type](#configuring-ssh-authentication-type).  Second, configure the path to the private key file, as described in [Configuring SSH private keys](#configuring-ssh-private-keys).
+
+Next, configure a Job, and include an Option definition where `secureInput` is set to `true`.  The name of this option can be anything you want, but the default value of `sshKeyPassphrase` assumed by the node configuration is easiest.
+
+If the value is not `sshKeyPassphrase`, then make sure to set the following attribute on each Node for password authentication:
+
+* `ssh-key-passphrase-option` = "`option.NAME`" where NAME is the name of the Job's secure option.
+
+An example Node and Job option configuration are below:
+
+    <node name="egon" description="egon" osFamily="unix"
+        username="rundeck"
+        hostname="egon"
+        ssh-keypath="/path/to/privatekey_rsa"
+        ssh-authentication="privateKey"
+        ssh-password-option="option.sshKeyPassphrase" />
+
+Job:
+
+    <joblist>
+        <job>
+            ...
+            <context>
+              <project>project</project>
+              <options>
+                <option required='true' name='sshKeyPassphrase' secure='true'
+                  description="Passphrase for SSH Private Key"/>
+              </options>
+            </context>
+            ...
+        </job>
+    </joblist>
+
 ##### Configuring SSH Password Authentication
 
 Password authentication works in the following way:
