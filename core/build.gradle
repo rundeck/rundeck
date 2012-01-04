@@ -31,7 +31,7 @@ dependencies {
         [group: 'jaxen', name: 'jaxen', version: '1.1',ext:'jar'],
         [group: 'commons-cli', name: 'commons-cli', version: '1.0',ext:'jar'],
         [group: 'org.apache.ant', name: 'ant-jsch', version: '1.7.1',ext:'jar'],
-        [group: 'com.jcraft', name: 'jsch', version: '0.1.42',ext:'jar'],
+        [group: 'com.jcraft', name: 'jsch', version: '0.1.45',ext:'jar'],
         [group: 'org.yaml',name:'snakeyaml',version:'1.9']
     )
     testCompile(
