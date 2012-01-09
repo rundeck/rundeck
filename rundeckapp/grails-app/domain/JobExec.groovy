@@ -33,6 +33,8 @@ public class JobExec extends CommandExec implements IWorkflowJobItem{
     static constraints = {
         jobName(nullable: false, blank: false)
         jobGroup(nullable: true, blank: true)
+        nodeRankAttribute(nullable:true)
+        nodeRankOrderAscending(nullable:true)
     }
 
     public String toString() {

@@ -40,6 +40,8 @@ class Execution extends ExecutionContext {
         nodeKeepgoing(nullable:true)
         doNodedispatch(nullable:true)
         nodeThreadcount(nullable:true)
+        nodeRankOrderAscending(nullable: true)
+        nodeRankAttribute(nullable: true)
         adhocExecution(nullable:true)
         adhocRemoteString(nullable:true, blank:true)
         adhocLocalString(nullable:true, blank:true)

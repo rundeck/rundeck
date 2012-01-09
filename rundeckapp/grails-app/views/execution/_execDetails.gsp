@@ -150,6 +150,12 @@
             <td class="displabel">Keep going:</td>
             <td>${execdata?.nodeKeepgoing}</td>
         </tr>
+        <tr>
+            <td>Node Rank Property:</td>
+            <td>${execdata?.nodeRankAttribute? execdata?.nodeRankAttribute.encodeAsHTML() : 'Node Name'}</td>
+            <td class="displabel">Node Rank Order:</td>
+            <td>${execdata?.nodeRankOrderAscending?'ascending':'descending'}</td>
+        </tr>
     </g:if>
     <g:if test="${execdata instanceof ScheduledExecution && execdata.notifications}">
         <tr>

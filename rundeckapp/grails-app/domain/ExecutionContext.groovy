@@ -26,5 +26,7 @@ abstract class ExecutionContext extends BaseNodeFilters{
     String adhocLocalString
     String adhocFilepath
     Boolean adhocExecution=false
+    String nodeRankAttribute
+    Boolean nodeRankOrderAscending=true
 }
 

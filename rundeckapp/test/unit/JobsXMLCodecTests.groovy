@@ -661,6 +661,142 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertTrue "incorrect nodefilter doNodedispatch",jobs[0].doNodedispatch
     }
 
+    void testDecodeDispatch() {
+        /** node filter job  */
+        def filter1 = """<joblist>
+  <job>
+    <id>8</id>
+    <name>punch2</name>
+    <description>dig it potato</description>
+    <loglevel>WARN</loglevel>
+    <group>simple</group>
+    <context>
+      <project>zig</project>
+      <type>RoboDog</type>
+      <object>myDog1</object>
+      <command>Excel</command>
+      <options>
+        <option name='clip' value='true' />
+      </options>
+    </context>
+    <sequence><command><exec>test</exec></command></sequence>
+    <nodefilters>
+        <include>
+            <hostname>centos5</hostname>
+        </include>
+    </nodefilters>
+    <dispatch>
+      <threadcount>2</threadcount>
+      <keepgoing>true</keepgoing>
+    </dispatch>
+  </job>
+</joblist>
+"""
+        def jobs = JobsXMLCodec.decode(filter1)
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+        assertTrue "incorrect nodefilter doNodedispatch", jobs[0].doNodedispatch
+        assertEquals "incorrect nodefilter doNodedispatch",2, jobs[0].nodeThreadcount
+        assertEquals "incorrect nodefilter doNodedispatch",true, jobs[0].nodeKeepgoing
+        assertNull "incorrect nodefilter doNodedispatch", jobs[0].nodeRankAttribute
+        assertTrue "incorrect nodefilter doNodedispatch", jobs[0].nodeRankOrderAscending
+
+        /** node filter job  */
+        def filter2 = """<joblist>
+  <job>
+    <id>8</id>
+    <name>punch2</name>
+    <description>dig it potato</description>
+    <loglevel>WARN</loglevel>
+    <group>simple</group>
+    <context>
+      <project>zig</project>
+      <type>RoboDog</type>
+      <object>myDog1</object>
+      <command>Excel</command>
+      <options>
+        <option name='clip' value='true' />
+      </options>
+    </context>
+    <sequence><command><exec>test</exec></command></sequence>
+    <nodefilters>
+        <include>
+            <hostname>centos5</hostname>
+            <tags>a+b,c</tags>
+            <os-name>Win.*</os-name>
+            <os-family>windows</os-family>
+            <os-arch>x86,sparc</os-arch>
+            <os-version>4\\..*</os-version>
+            <name>mynodename</name>
+        </include>
+    </nodefilters>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+      <rankAttribute>testRank</rankAttribute>
+      <rankOrder>ascending</rankOrder>
+    </dispatch>
+  </job>
+</joblist>
+"""
+        jobs = JobsXMLCodec.decode(filter2)
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+        assertTrue "incorrect nodefilter doNodedispatch", jobs[0].doNodedispatch
+        assertEquals "incorrect nodefilter doNodedispatch", 1, jobs[0].nodeThreadcount
+        assertEquals "incorrect nodefilter doNodedispatch", false, jobs[0].nodeKeepgoing
+        assertEquals "incorrect nodefilter doNodedispatch", "testRank",jobs[0].nodeRankAttribute
+        assertTrue "incorrect nodefilter doNodedispatch", jobs[0].nodeRankOrderAscending
+
+        /** node filter job  */
+        def filter3 = """<joblist>
+  <job>
+    <id>8</id>
+    <name>punch2</name>
+    <description>dig it potato</description>
+    <loglevel>WARN</loglevel>
+    <group>simple</group>
+    <context>
+      <project>zig</project>
+      <type>RoboDog</type>
+      <object>myDog1</object>
+      <command>Excel</command>
+      <options>
+        <option name='clip' value='true' />
+      </options>
+    </context>
+    <sequence><command><exec>test</exec></command></sequence>
+    <nodefilters excludeprecedence="false">
+        <exclude>
+            <hostname>centos5</hostname>
+            <tags>a+b,c</tags>
+            <os-name>Win.*</os-name>
+            <os-family>windows</os-family>
+            <os-arch>x86,sparc</os-arch>
+            <os-version>4\\..*</os-version>
+            <name>mynodename</name>
+        </exclude>
+    </nodefilters>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+      <rankAttribute>nodename</rankAttribute>
+      <rankOrder>descending</rankOrder>
+    </dispatch>
+  </job>
+</joblist>
+"""
+        jobs = JobsXMLCodec.decode(filter3)
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+        assertTrue "incorrect nodefilter doNodedispatch", jobs[0].doNodedispatch
+        assertEquals "incorrect nodefilter doNodedispatch", 1, jobs[0].nodeThreadcount
+        assertEquals "incorrect nodefilter doNodedispatch", false, jobs[0].nodeKeepgoing
+        assertEquals "incorrect nodefilter doNodedispatch", "nodename", jobs[0].nodeRankAttribute
+        assertFalse "incorrect nodefilter doNodedispatch", jobs[0].nodeRankOrderAscending
+    }
+
+
     void testDecodeScheduled(){
    /** scheduled job */
     def sched1 = """<joblist>

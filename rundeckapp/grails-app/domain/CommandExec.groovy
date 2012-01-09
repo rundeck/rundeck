@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import org.springframework.validation.Errors
+
 import com.dtolabs.rundeck.execution.IWorkflowCmdItem
 
 /*
@@ -68,6 +68,8 @@ public class CommandExec extends ExecutionContext implements IWorkflowCmdItem {
         adhocRemoteString(nullable:true)
         adhocLocalString(nullable:true)
         adhocFilepath(nullable:true)
+        nodeRankAttribute(nullable:true)
+        nodeRankOrderAscending(nullable:true)
 
     }
 

@@ -664,16 +664,21 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         }
 
         //create thread object with an execution item, and start it
-        final com.dtolabs.rundeck.core.execution.ExecutionContext item =  com.dtolabs.rundeck.core.execution.ExecutionContextImpl.createExecutionContextImpl(
-            execMap.project,
-            user.login,
-            nodeselector,
-            args,
-            loglevels[null != execMap.loglevel ? execMap.loglevel : 'WARN'],
-            datacontext,
-            privatecontext,
-            listener,
-            framework,threadCount,keepgoing)
+        final com.dtolabs.rundeck.core.execution.ExecutionContext item =  new com.dtolabs.rundeck.core.execution.ExecutionContextImpl.Builder()
+            .frameworkProject(execMap.project)
+            .user(user.login)
+            .nodeSelector(nodeselector)
+            .args(args)
+            .loglevel(loglevels[null != execMap.loglevel ? execMap.loglevel : 'WARN'])
+            .dataContext(datacontext)
+            .privateDataContext(privatecontext)
+            .executionListener(listener)
+            .framework(framework)
+            .threadCount(threadCount)
+            .keepgoing(keepgoing)
+            .nodeRankAttribute(execMap.nodeRankAttribute)
+            .nodeRankOrderAscending(execMap.nodeRankOrderAscending)
+            .build()
         return item
     }
 
@@ -874,6 +879,8 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                                     nodeExcludePrecedence:params.nodeExcludePrecedence,
                                     nodeThreadcount:params.nodeThreadcount,
                                     nodeKeepgoing:params.nodeKeepgoing,
+                                    nodeRankOrderAscending:params.nodeRankOrderAscending,
+                                    nodeRankAttribute:params.nodeRankAttribute,
                                     workflow:params.workflow,
                                     argString:params.argString
             )

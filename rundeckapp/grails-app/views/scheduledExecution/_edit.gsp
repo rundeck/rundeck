@@ -983,6 +983,45 @@ var applinks={
             </td>
         </tr>
         <tr>
+            <td>
+                <label for="schedJobnodeRankAttribute" class=" ${hasErrors(bean:scheduledExecution,field:'nodeRankAttribute','fieldError')}">
+                    Rank Property
+                </label>
+            </td>
+            <td>
+                <g:hasErrors bean="${scheduledExecution}" field="nodeRankAttribute">
+                    <div class="fieldError">
+                        <g:renderErrors bean="${scheduledExecution}" as="list" field="nodeRankAttribute"/>
+                    </div>
+                </g:hasErrors>
+                <span class="input">
+                    <input type='text' name="nodeRankAttribute" value="${scheduledExecution?.nodeRankAttribute?.encodeAsHTML()}" id="schedJobnodeRankAttribute" size="20"/>
+                    <g:hasErrors bean="${scheduledExecution}" field="nodeRankAttribute">
+                        <img src="${resource( dir:'images',file:'icon-small-warn.png' )}" alt="Error"  width="16px" height="16px"/>
+                    </g:hasErrors>
+                </span>
+                <span class="info note">
+                    Node property to order by. Default is node name.
+                </span>
+            </td>
+        </tr>
+        <tr>
+            <td>Rank Order?</td>
+            <td>
+                <label>
+                    <g:radio name="nodeRankOrderAscending" value="false"
+                             checked="${!scheduledExecution?.nodeRankOrderAscending}"
+                             id="nodeRankOrderDescending"/>
+                    Descending</label>
+
+                <label>
+                    <g:radio name="nodeRankOrderAscending" value="true"
+                             checked="${scheduledExecution?.nodeRankOrderAscending}"
+                             id="nodeRankOrderAscending"/>
+                    Ascending</label>
+            </td>
+        </tr>
+        <tr>
             <td>Keep going on error?</td>
             <td>
                 <label>

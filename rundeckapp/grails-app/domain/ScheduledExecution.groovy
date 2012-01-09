@@ -60,6 +60,8 @@ class ScheduledExecution extends ExecutionContext {
         totalTime(nullable:true)
         execCount(nullable:true)
         nodeThreadcount(nullable:true)
+        nodeRankOrderAscending(nullable:true)
+        nodeRankAttribute(nullable:true)
         project(nullable:false,blank:false)
         argString(nullable:true)
         seconds(nullable:true)
@@ -126,6 +128,10 @@ class ScheduledExecution extends ExecutionContext {
         if(doNodedispatch){
             def yfilters=["":"hostname"]
             map.nodefilters=[dispatch:[threadcount:nodeThreadcount,keepgoing:nodeKeepgoing,excludePrecedence:nodeExcludePrecedence]]
+            if(nodeRankAttribute){
+                map.nodefilters.dispatch.rankAttribute= nodeRankAttribute
+            }
+            map.nodefilters.dispatch.rankOrder= nodeRankOrderAscending?'ascending':'descending'
             final Collection inclFilters = BaseNodeFilters.filterKeys.keySet().findAll {this["nodeInclude"+filterKeys[it]]}
             if(inclFilters){
                 map.nodefilters.include=[:]
@@ -212,6 +218,12 @@ class ScheduledExecution extends ExecutionContext {
             }
             if(data.nodefilters.dispatch.containsKey('excludePrecedence')){
                 se.nodeExcludePrecedence = data.nodefilters.dispatch.excludePrecedence
+            }
+            if(data.nodefilters.dispatch.containsKey('rankAttribute')){
+                se.nodeRankAttribute = data.nodefilters.dispatch.rankAttribute
+            }
+            if(data.nodefilters.dispatch.containsKey('rankOrder')){
+                se.nodeRankOrderAscending = data.nodefilters.dispatch.rankOrder=='ascending'
             }
             if(data.nodefilters.include){
                 se.doNodedispatch = true
