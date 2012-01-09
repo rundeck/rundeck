@@ -1,0 +1,73 @@
+<!--
+  ~ Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+  ~
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~
+  ~      http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~  Unless required by applicable law or agreed to in writing, software
+  ~  distributed under the License is distributed on an "AS IS" BASIS,
+  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  See the License for the specific language governing permissions and
+  ~  limitations under the License.
+  -->
+
+<project>
+  <node name="testnode1" type="SubNode" description="this is the test1 node" tags="boring,priority1"
+        hostname="host1.local"
+        osArch="i386"
+        osFamily="unix"
+        osName="Mac OS X"
+        osVersion="10.5.1"
+        username="username1"
+        editUrl="TestEditUrl1"
+        rank="50"
+        colorRank="A"
+      >
+
+  </node>
+  <node name="testnode2" type="Node" description="registered Node asdf" tags="boring"
+        hostname="testnode2"
+        osArch="x86"
+        osFamily="windows"
+        osName="Windows XP"
+        osVersion="5.1"
+        remoteUrl="TestRemoteUrl2"
+        rank="40"
+      >
+  </node>
+  <node name="testnode3" type="Node" description="This is the third test node" tags="priority1,elf"
+        hostname="testnode3.local"
+        osArch="intel"
+        osFamily="solaris"
+        osName="Solaris Something"
+        osVersion="3.7"
+        editUrl="TestEditUrl3"
+        remoteUrl="TestRemoteUrl3"
+        rank="30"
+        colorRank="B"
+      />
+  <node name="testnode4" type="Node" description="This is the fourth test node" tags="priority1,elf"
+        hostname="testnode3.local"
+        osArch="intel"
+        osFamily="solaris"
+        osName="Solaris Something"
+        osVersion="3.7"
+        editUrl="TestEditUrl3"
+        remoteUrl="TestRemoteUrl3"
+        rank="20"
+      />
+  <node name="testnode5" type="Node" description="This is the fifth test node" tags="priority1,elf"
+        hostname="testnode3.local"
+        osArch="intel"
+        osFamily="solaris"
+        osName="Solaris Something"
+        osVersion="3.7"
+        editUrl="TestEditUrl3"
+        remoteUrl="TestRemoteUrl3"
+        rank="10"
+        colorRank="C"
+      />
+</project>

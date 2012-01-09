@@ -100,7 +100,16 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         boolean success = false;
         final HashMap<String, StatusResult> resultMap = new HashMap<String, StatusResult>();
         final HashMap<String, Object> failureMap = new HashMap<String, Object>();
-        for (final INodeEntry node: nodes.getNodes()) {
+        final Collection<INodeEntry> nodes1 = nodes.getNodes();
+        //reorder based on configured rank property and order
+        final String rankProperty = null != context.getNodeRankAttribute() ? context.getNodeRankAttribute() : "nodename";
+        final boolean rankAscending = context.isNodeRankOrderAscending();
+        final INodeEntryComparator comparator = new INodeEntryComparator(rankProperty);
+        final TreeSet<INodeEntry> orderedNodes = new TreeSet<INodeEntry>(
+            rankAscending ? comparator : Collections.reverseOrder(comparator));
+
+        orderedNodes.addAll(nodes1);
+        for (final INodeEntry node: orderedNodes) {
             final Callable tocall;
             if (null != item) {
                 tocall = execItemCallable(context, item, resultMap, node, failureMap);

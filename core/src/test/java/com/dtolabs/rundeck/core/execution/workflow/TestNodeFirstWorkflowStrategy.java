@@ -57,6 +57,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
     Framework testFramework;
     String testnode;
     private File extResourcesfile;
+    private File extResourcesfile2;
     private static final String TEST_PROJECT = "TestNodeFirstWorkflowStrategy";
 
     public TestNodeFirstWorkflowStrategy(String name) {
@@ -82,6 +83,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             throw new RuntimeException("Caught Setup exception: " + e.getMessage(), e);
         }
         extResourcesfile = new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes2.xml");
+        extResourcesfile2 = new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes4.xml");
     }
 
     protected void tearDown() throws Exception {
@@ -423,6 +425,162 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                 assertEquals(SelectorUtils.singleNode("testnode3"), executionContext.getNodeSelector());
             }
         }
+    }
+
+    public void testMultipleNodesRanked() {
+
+        {
+            //default (name), default order
+            final ArrayList<String> expected = new ArrayList<String>();
+            expected.add("testnode1");
+            expected.add("testnode2");
+            expected.add("testnode3");
+            expected.add("testnode4");
+            expected.add("testnode5");
+
+            assertRankedNodeResult(expected, null, null);
+        }
+        {
+            //default (name), ascending
+            final ArrayList<String> expected = new ArrayList<String>();
+            expected.add("testnode1");
+            expected.add("testnode2");
+            expected.add("testnode3");
+            expected.add("testnode4");
+            expected.add("testnode5");
+
+            assertRankedNodeResult(expected, true, null);
+        }
+        {
+            //default (name), descending
+
+            final ArrayList<String> expected = new ArrayList<String>();
+            expected.add("testnode5");
+            expected.add("testnode4");
+            expected.add("testnode3");
+            expected.add("testnode2");
+            expected.add("testnode1");
+
+            assertRankedNodeResult(expected, false, null);
+        }
+        {
+            //set to attribute "rank" ascending
+
+            final ArrayList<String> expected = new ArrayList<String>();
+            expected.add("testnode5");
+            expected.add("testnode4");
+            expected.add("testnode3");
+            expected.add("testnode2");
+            expected.add("testnode1");
+
+            assertRankedNodeResult(expected, true, "rank");
+        }
+        {
+            //set to attribute "rank" descending
+
+            final ArrayList<String> expected = new ArrayList<String>();
+            expected.add("testnode1");
+            expected.add("testnode2");
+            expected.add("testnode3");
+            expected.add("testnode4");
+            expected.add("testnode5");
+
+
+            assertRankedNodeResult(expected, false, "rank");
+        }
+        {
+            //set to attribute "colorRank" ascending
+
+            final ArrayList<String> expected = new ArrayList<String>();
+            expected.add("testnode1");
+            expected.add("testnode3");
+            expected.add("testnode5");
+            expected.add("testnode2");
+            expected.add("testnode4");
+
+
+            assertRankedNodeResult(expected, true, "colorRank");
+        }
+        {
+            //set to attribute "colorRank" descending
+
+            final ArrayList<String> expected = new ArrayList<String>();
+            expected.add("testnode4");
+            expected.add("testnode2");
+            expected.add("testnode5");
+            expected.add("testnode3");
+            expected.add("testnode1");
+
+            assertRankedNodeResult(expected, false, "colorRank");
+        }
+    }
+
+    private void assertRankedNodeResult(final ArrayList<String> expected, final Boolean nodeRankOrderAscending,
+                                        final String rankAttribute) {
+
+        //default ranking should be node name ascending
+        final ArrayList<ExecutionItem> commands = new ArrayList<ExecutionItem>();
+        final testWorkflowCmdItem item = new testWorkflowCmdItem();
+        item.type = "my-type";
+        commands.add(item);
+        final WorkflowImpl workflow = new WorkflowImpl(commands, 1, false,
+            WorkflowStrategy.NODE_FIRST);
+        final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
+        final NodeFirstWorkflowStrategy strategy = new NodeFirstWorkflowStrategy(testFramework);
+        final NodeSet nodeset = new NodeSet();
+        nodeset.createInclude().setName(".*");
+        final ExecutionContextImpl.Builder builder = new ExecutionContextImpl.Builder();
+        if(null!=nodeRankOrderAscending){
+            builder.nodeRankOrderAscending(nodeRankOrderAscending); //rank order
+        }
+        builder.nodeRankAttribute(rankAttribute); //rank attribute
+        final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+            builder
+                .frameworkProject(TEST_PROJECT)
+                .user("user1")
+                .nodeSelector(nodeset)
+                .executionListener(new testListener())
+                .framework(testFramework)
+                .nodesFile(extResourcesfile2)
+                .build();
+
+        //setup testInterpreter for all command types
+        final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
+            testFramework);
+        testInterpreter interpreterMock = new testInterpreter();
+        testInterpreter failMock = new testInterpreter();
+        failMock.shouldThrowException = true;
+        interpreterService.registerInstance("my-type", interpreterMock);
+        interpreterService.registerInstance("exec", failMock);
+        interpreterService.registerInstance("script", failMock);
+        interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_NODE_FIRST, failMock);
+        interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
+
+        for (final String s : expected) {
+            //set resturn result
+            interpreterMock.resultList.add(new InterpreterResult() {
+                public boolean isSuccess() {
+                    return true;
+                }
+            });
+        }
+
+        final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
+
+        assertNotNull(result);
+        if (!result.isSuccess() && null != result.getException()) {
+            result.getException().printStackTrace(System.err);
+        }
+        assertNull("threw exception: " + result.getException(), result.getException());
+        assertTrue(result.isSuccess());
+        assertEquals(5, interpreterMock.executionItemList.size());
+        assertEquals(5, interpreterMock.executionContextList.size());
+        assertEquals(5, interpreterMock.nodeEntryList.size());
+        ArrayList<String> tested = new ArrayList<String>();
+        for (final INodeEntry iNodeEntry : interpreterMock.nodeEntryList) {
+            tested.add(iNodeEntry.getNodename());
+        }
+        assertEquals(expected, tested);
     }
 
     public void testMultipleItemsAndNodes() {

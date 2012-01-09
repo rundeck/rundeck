@@ -83,7 +83,14 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
         boolean success = true;
         final HashMap<String, StatusResult> resultMap = new HashMap<String, StatusResult>();
         final Collection<INodeEntry> nodes1 = nodes.getNodes();
-        for (final Object node1 : nodes1) {
+        //reorder based on configured rank property and order
+        final String rankProperty = null != context.getNodeRankAttribute() ? context.getNodeRankAttribute() : "nodename";
+        final boolean rankAscending = context.isNodeRankOrderAscending();
+        final INodeEntryComparator comparator = new INodeEntryComparator(rankProperty);
+        final TreeSet<INodeEntry> orderedNodes = new TreeSet<INodeEntry>(
+            rankAscending ? comparator : Collections.reverseOrder(comparator));
+        orderedNodes.addAll(nodes1);
+        for (final Object node1 : orderedNodes) {
             if (thread.isInterrupted()
                 || thread instanceof ExecutionServiceThread && ((ExecutionServiceThread) thread).isAborted()) {
                 interrupted = true;
