@@ -100,7 +100,8 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                     break;
                 }
                 final StatusResult result;
-                final ExecutionContext interimcontext = ExecutionContextImpl.createExecutionContextImpl(context, node);
+                final ExecutionContext interimcontext = new ExecutionContextImpl.Builder(context).nodeSelector(
+                    SelectorUtils.singleNode(node.getNodename())).build();
                 if (null != item) {
                     result = framework.getExecutionService().interpretCommand(
                         interimcontext, item, node);

@@ -49,135 +49,136 @@ public class ExecutionContextImpl implements ExecutionContext {
     private ExecutionListener executionListener;
     private Framework framework;
     private File nodesFile;
+    private String nodeRankAttribute;
+    private boolean nodeRankOrderAscending=true;
 
-    private ExecutionContextImpl(final String frameworkProject, final String user, final NodesSelector nodeSet,
-                                 final String[] args, final int loglevel,
-                                 final Map<String, Map<String, String>> dataContext,
-                                 final ExecutionListener executionListener,
-                                 final Framework framework, final File nodesFile, final int threadCount, final boolean keepgoing) {
-        this.frameworkProject = frameworkProject;
-        this.user = user;
-        this.nodeSet = nodeSet;
-        this.args = args;
-        this.loglevel = loglevel;
-        this.dataContext = dataContext;
-        this.executionListener = executionListener;
-        this.framework = framework;
-        this.nodesFile = nodesFile;
-        this.threadCount=threadCount;
-        this.keepgoing=keepgoing;
-    }
-
-    private ExecutionContextImpl(final String frameworkProject, final String user, final NodesSelector nodeSet,
-                                 final String[] args, final int loglevel,
-                                 final Map<String, Map<String, String>> dataContext,
-                                 final Map<String, Map<String, String>> privateDataContext,
-                                 final ExecutionListener executionListener,
-                                 final Framework framework, final File nodesFile, final int threadCount, final boolean keepgoing) {
-        this.frameworkProject = frameworkProject;
-        this.user = user;
-        this.nodeSet = nodeSet;
-        this.args = args;
-        this.loglevel = loglevel;
-        this.dataContext = dataContext;
-        this.privateDataContext = privateDataContext;
-        this.executionListener = executionListener;
-        this.framework = framework;
-        this.nodesFile = nodesFile;
-        this.threadCount=threadCount;
-        this.keepgoing=keepgoing;
+    private ExecutionContextImpl(final Builder builder) {
+        this.frameworkProject = builder.frameworkProject;
+        this.user = builder.user;
+        this.nodeSet = builder.nodeSet;
+        this.args = builder.args;
+        this.loglevel = builder.loglevel;
+        this.dataContext = builder.dataContext;
+        this.privateDataContext = builder.privateDataContext;
+        this.executionListener = builder.executionListener;
+        this.framework = builder.framework;
+        this.nodesFile = builder.nodesFile;
+        this.threadCount = builder.threadCount;
+        this.keepgoing = builder.keepgoing;
+        this.nodeRankAttribute = builder.nodeRankAttribute;
+        this.nodeRankOrderAscending = builder.nodeRankOrderAscending;
     }
 
-    /**
-     * Create a new ExecutionContext with the specified values
-     */
-    public static ExecutionContextImpl createExecutionContextImpl(final String frameworkProject, final String user,
-                                                                  final NodesSelector nodeSet,
-                                                                  final String[] args, final int loglevel,
-                                                                  final Map<String, Map<String, String>> dataContext,
-                                                                  final ExecutionListener executionListener,
-                                                                  final Framework framework) {
-        return createExecutionContextImpl(frameworkProject, user, nodeSet, args, loglevel, dataContext,
-            executionListener, framework, null,1,false);
-    }
-    /**
-     * Create a new ExecutionContext with the specified values
-     */
-    public static ExecutionContextImpl createExecutionContextImpl(final String frameworkProject, final String user,
-                                                                  final NodesSelector nodeSet,
-                                                                  final String[] args, final int loglevel,
-                                                                  final Map<String, Map<String, String>> dataContext,
-                                                                  final Map<String, Map<String, String>> privateDataContext,
-                                                                  final ExecutionListener executionListener,
-                                                                  final Framework framework, final int threadCount,
-                                                                  final boolean keepgoing) {
-        return createExecutionContextImpl(frameworkProject, user, nodeSet, args, loglevel, dataContext, privateDataContext,
-            executionListener, framework, null,threadCount,keepgoing);
-    }
-    /**
-     * Create a new ExecutionContext with the specified values
-     */
-    public static ExecutionContextImpl createExecutionContextImpl(final String frameworkProject, final String user,
-                                                                  final NodesSelector nodeSet,
-                                                                  final String[] args, final int loglevel,
-                                                                  final Map<String, Map<String, String>> dataContext,
-                                                                  final ExecutionListener executionListener,
-                                                                  final Framework framework, final int threadCount,
-                                                                  final boolean keepgoing) {
-        return createExecutionContextImpl(frameworkProject, user, nodeSet, args, loglevel, dataContext,
-            executionListener, framework, null,threadCount,keepgoing);
-    }
+    public static class Builder {
+        private String frameworkProject;
+        private String user;
+        private NodesSelector nodeSet;
+        private String[] args;
+        private int loglevel;
+        private Map<String, Map<String, String>> dataContext;
+        private Map<String, Map<String, String>> privateDataContext;
+        private ExecutionListener executionListener;
+        private Framework framework;
+        private File nodesFile;
+        private int threadCount;
+        private boolean keepgoing;
+        private String nodeRankAttribute;
+        private boolean nodeRankOrderAscending=true;
 
-    /**
-     * Create a new ExecutionContext with the specified values
-     */
-    public static ExecutionContextImpl createExecutionContextImpl(final String frameworkProject, final String user,
-                                                                  final NodesSelector nodeSet,
-                                                                  final String[] args, final int loglevel,
-                                                                  final Map<String, Map<String, String>> dataContext,
-                                                                  final ExecutionListener executionListener,
-                                                                  final Framework framework, final File nodesFile,
-                                                                  final int threadCount, final boolean keepgoing) {
-        return new ExecutionContextImpl(frameworkProject, user, nodeSet, args, loglevel, dataContext,
-            executionListener, framework, nodesFile,threadCount,keepgoing);
-    }
-    /**
-     * Create a new ExecutionContext with the specified values
-     */
-    public static ExecutionContextImpl createExecutionContextImpl(final String frameworkProject, final String user,
-                                                                  final NodesSelector nodeSet,
-                                                                  final String[] args, final int loglevel,
-                                                                  final Map<String, Map<String, String>> dataContext,
-                                                                  final Map<String, Map<String, String>> privateDataContext,
-                                                                  final ExecutionListener executionListener,
-                                                                  final Framework framework, final File nodesFile,
-                                                                  final int threadCount, final boolean keepgoing) {
-        return new ExecutionContextImpl(frameworkProject, user, nodeSet, args, loglevel, dataContext, privateDataContext,
-            executionListener, framework, nodesFile,threadCount,keepgoing);
-    }
+        public Builder() {
+        }
 
+        public Builder(final ExecutionContext original) {
+            this.frameworkProject = original.getFrameworkProject();
+            this.user = original.getUser();
+            this.nodeSet = original.getNodeSelector();
+            this.args = original.getArgs();
+            this.loglevel = original.getLoglevel();
+            this.dataContext = original.getDataContext();
+            this.privateDataContext = original.getPrivateDataContext();
+            this.executionListener = original.getExecutionListener();
+            this.framework = original.getFramework();
+            this.nodesFile = original.getNodesFile();
+            this.threadCount = original.getThreadCount();
+            this.keepgoing = original.isKeepgoing();
+            this.nodeRankAttribute = original.getNodeRankAttribute();
+            this.nodeRankOrderAscending = original.isNodeRankOrderAscending();
 
-    /**
-     * Create a new ExecutionContext with a single node nodeset value, and all other values from the input context
-     */
-    public static ExecutionContextImpl createExecutionContextImpl(final ExecutionContext context,
-                                                                  final INodeEntry singleNode) {
-        return new ExecutionContextImpl(context.getFrameworkProject(), context.getUser(), SelectorUtils.singleNode(
-            singleNode.getNodename()),
-            context.getArgs(), context.getLoglevel(), context.getDataContext(), context.getPrivateDataContext(),
-            context.getExecutionListener(), context.getFramework(), context.getNodesFile(), context.getThreadCount(),
-            context.isKeepgoing());
-    }
+        }
 
-    /**
-     * Create a new ExecutionContext from an original substituting a specific datacontext.
-     */
-    public static ExecutionContextImpl createExecutionContextImpl(final ExecutionContext context,
-                                                                  final Map<String, Map<String, String>> dataContext) {
-        return new ExecutionContextImpl(context.getFrameworkProject(), context.getUser(), context.getNodeSelector(),
-            context.getArgs(), context.getLoglevel(), dataContext, context.getPrivateDataContext(),
-            context.getExecutionListener(),
-            context.getFramework(), context.getNodesFile(), context.getThreadCount(), context.isKeepgoing());
+        public Builder frameworkProject(String frameworkProject) {
+            this.frameworkProject = frameworkProject;
+            return this;
+        }
+
+        public Builder user(String user) {
+            this.user = user;
+            return this;
+        }
+
+        public Builder nodeSelector(NodesSelector nodeSet) {
+            this.nodeSet = nodeSet;
+            return this;
+        }
+
+        public Builder args(String[] args) {
+            this.args = args;
+            return this;
+        }
+
+        public Builder loglevel(int loglevel) {
+            this.loglevel = loglevel;
+            return this;
+        }
+
+        public Builder dataContext(Map<String, Map<String, String>> dataContext) {
+            this.dataContext = dataContext;
+            return this;
+        }
+
+        public Builder privateDataContext(Map<String, Map<String, String>> privateDataContext) {
+            this.privateDataContext = privateDataContext;
+            return this;
+        }
+
+        public Builder executionListener(ExecutionListener executionListener) {
+            this.executionListener = executionListener;
+            return this;
+        }
+
+        public Builder framework(Framework framework) {
+            this.framework = framework;
+            return this;
+        }
+
+        public Builder nodesFile(File nodesFile) {
+            this.nodesFile = nodesFile;
+            return this;
+        }
+
+        public Builder threadCount(int threadCount) {
+            this.threadCount = threadCount;
+            return this;
+        }
+
+        public Builder keepgoing(boolean keepgoing) {
+            this.keepgoing = keepgoing;
+            return this;
+        }
+
+        public Builder nodeRankAttribute(final String nodeRankAttribute) {
+            this.nodeRankAttribute = nodeRankAttribute;
+            return this;
+        }
+
+        public Builder nodeRankOrderAscending(boolean nodeRankOrderAscending) {
+            this.nodeRankOrderAscending = nodeRankOrderAscending;
+            return this;
+        }
+
+        public ExecutionContextImpl build() {
+            return new ExecutionContextImpl(this);
+        }
     }
 
     public String getFrameworkProject() {
@@ -220,19 +221,19 @@ public class ExecutionContextImpl implements ExecutionContext {
         return threadCount;
     }
 
-    public void setThreadCount(int threadCount) {
-        this.threadCount = threadCount;
-    }
-
     public boolean isKeepgoing() {
         return keepgoing;
     }
 
-    public void setKeepgoing(boolean keepgoing) {
-        this.keepgoing = keepgoing;
-    }
-
     public Map<String, Map<String, String>> getPrivateDataContext() {
         return privateDataContext;
+    }
+
+    public String getNodeRankAttribute() {
+        return nodeRankAttribute;
+    }
+
+    public boolean isNodeRankOrderAscending() {
+        return nodeRankOrderAscending;
     }
 }

@@ -86,7 +86,8 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
                     public StatusResult dispatch(final ExecutionContext context, final INodeEntry node) throws
                         DispatcherException {
                         //use single node context
-                        return executor.executeWorkflow(ExecutionContextImpl.createExecutionContextImpl(context, node),
+                        return executor.executeWorkflow(new ExecutionContextImpl.Builder(context).nodeSelector(
+                            SelectorUtils.singleNode(node.getNodename())).build(),
                             innerLoopItem);
                     }
                 });

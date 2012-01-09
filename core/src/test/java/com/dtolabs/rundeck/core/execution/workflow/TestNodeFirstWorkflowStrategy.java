@@ -228,15 +228,12 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
             final NodeFirstWorkflowStrategy strategy = new NodeFirstWorkflowStrategy(testFramework);
             final com.dtolabs.rundeck.core.execution.ExecutionContext context =
-                com.dtolabs.rundeck.core.execution.ExecutionContextImpl.createExecutionContextImpl(
-                    TEST_PROJECT,
-                    "user1",
-                    nodeset,
-                    null,
-                    0,
-                    null,
-                    new testListener(),
-                    testFramework);
+                new ExecutionContextImpl.Builder()
+                    .frameworkProject(TEST_PROJECT)
+                    .user("user1")
+                    .nodeSelector(nodeset)
+                    .executionListener(new testListener())
+                    .framework(testFramework).build();
 
             //setup testInterpreter for all command types
             final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
@@ -324,16 +321,15 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
             final NodeFirstWorkflowStrategy strategy = new NodeFirstWorkflowStrategy(testFramework);
             final com.dtolabs.rundeck.core.execution.ExecutionContext context =
-                com.dtolabs.rundeck.core.execution.ExecutionContextImpl.createExecutionContextImpl(
-                    TEST_PROJECT,
-                    "user1",
-                    nodeset,
-                    null,
-                    0,
-                    null,
-                    new testListener(),
-                    testFramework,
-                    extResourcesfile,1,false);//specify ext resources file
+                new ExecutionContextImpl.Builder()
+                    .frameworkProject(TEST_PROJECT)
+                    .user("user1")
+                    .nodeSelector(nodeset)
+                    .executionListener(new testListener())
+                    .framework(testFramework)
+                    .nodesFile(extResourcesfile)
+                    .build();
+                    //specify ext resources file
 
             //setup testInterpreter for all command types
             final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
@@ -449,15 +445,13 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
             final NodeFirstWorkflowStrategy strategy = new NodeFirstWorkflowStrategy(testFramework);
             final com.dtolabs.rundeck.core.execution.ExecutionContext context =
-                com.dtolabs.rundeck.core.execution.ExecutionContextImpl.createExecutionContextImpl(
-                    TEST_PROJECT,
-                    "user1",
-                    nodeset,
-                    null,
-                    0,
-                    null,
-                    new testListener(),
-                    testFramework);
+                new ExecutionContextImpl.Builder()
+                    .frameworkProject(TEST_PROJECT)
+                    .user("user1")
+                    .nodeSelector(nodeset)
+                    .executionListener(new testListener())
+                    .framework(testFramework)
+                    .build();
 
             //setup testInterpreter for all command types
             final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(

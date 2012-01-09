@@ -250,8 +250,8 @@ class ExecutionServiceImpl implements ExecutionService {
         final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
         NodeExecutorResult result = null;
         try {
-            final ExecutionContextImpl nodeContext = ExecutionContextImpl.createExecutionContextImpl(context,
-                nodeDataContext);
+            final ExecutionContextImpl nodeContext = new ExecutionContextImpl.Builder(context).dataContext(
+                nodeDataContext).build();
             result = nodeExecutor.executeCommand(nodeContext, nodeCommand, node);
         } finally {
             loggingReformatter.resetOutputStreams();
