@@ -1007,6 +1007,14 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
         return argThreadCount;
     }
 
+    public String getNodeRankAttribute() {
+        return null;
+    }
+
+    public boolean isNodeRankOrderAscending() {
+        return true;
+    }
+
     public boolean isKeepgoing() {
         return argKeepgoing;
     }

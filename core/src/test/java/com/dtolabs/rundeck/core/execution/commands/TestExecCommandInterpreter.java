@@ -125,6 +125,14 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
                 return 1;
             }
 
+            public String getNodeRankAttribute() {
+                return null;
+            }
+
+            public boolean isNodeRankOrderAscending() {
+                return false;
+            }
+
             public boolean isKeepgoing() {
                 return false;
             }
@@ -229,6 +237,14 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
 
             public int getThreadCount() {
                 return 1;
+            }
+
+            public String getNodeRankAttribute() {
+                return null;
+            }
+
+            public boolean isNodeRankOrderAscending() {
+                return false;
             }
 
             public boolean isKeepgoing() {

@@ -63,6 +63,17 @@ public interface ExecutionContext {
      * Return node dispatch threadcount
      */
     int getThreadCount();
+
+    /**
+     * Return the node rank attribute to use for ranking
+     */
+    public String getNodeRankAttribute();
+
+    /**
+     * Return true if the node rank order is ascending
+     */
+    public boolean isNodeRankOrderAscending();
+
     /**
      * return node dispatch keepgoing
      */

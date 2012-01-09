@@ -179,6 +179,14 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
                 return 1;
             }
 
+            public String getNodeRankAttribute() {
+                return null;
+            }
+
+            public boolean isNodeRankOrderAscending() {
+                return false;
+            }
+
             public boolean isKeepgoing() {
                 return false;
             }
@@ -317,6 +325,14 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
 
             public int getThreadCount() {
                 return 1;
+            }
+
+            public String getNodeRankAttribute() {
+                return null;
+            }
+
+            public boolean isNodeRankOrderAscending() {
+                return false;
             }
 
             public boolean isKeepgoing() {
@@ -465,6 +481,14 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
                 return 1;
             }
 
+            public String getNodeRankAttribute() {
+                return null;
+            }
+
+            public boolean isNodeRankOrderAscending() {
+                return false;
+            }
+
             public boolean isKeepgoing() {
                 return false;
             }
@@ -592,6 +616,14 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
                 return 1;
             }
 
+            public String getNodeRankAttribute() {
+                return null;
+            }
+
+            public boolean isNodeRankOrderAscending() {
+                return false;
+            }
+
             public boolean isKeepgoing() {
                 return false;
             }
@@ -715,6 +747,14 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
 
             public int getThreadCount() {
                 return 1;
+            }
+
+            public String getNodeRankAttribute() {
+                return null;
+            }
+
+            public boolean isNodeRankOrderAscending() {
+                return false;
             }
 
             public boolean isKeepgoing() {
@@ -862,6 +902,14 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
                 return 1;
             }
 
+            public String getNodeRankAttribute() {
+                return null;
+            }
+
+            public boolean isNodeRankOrderAscending() {
+                return false;
+            }
+
             public boolean isKeepgoing() {
                 return false;
             }
@@ -1003,6 +1051,14 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
 
             public int getThreadCount() {
                 return 1;
+            }
+
+            public String getNodeRankAttribute() {
+                return null;
+            }
+
+            public boolean isNodeRankOrderAscending() {
+                return false;
             }
 
             public boolean isKeepgoing() {

@@ -103,6 +103,14 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                     return nodeSet.getThreadCount();
                 }
 
+                public String getNodeRankAttribute() {
+                    return null;
+                }
+
+                public boolean isNodeRankOrderAscending() {
+                    return false;
+                }
+
                 public boolean isKeepgoing() {
                     return nodeSet.isKeepgoing();
                 }
@@ -162,6 +170,14 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
 
                 public int getThreadCount() {
                     return nodeSet.getThreadCount();
+                }
+
+                public String getNodeRankAttribute() {
+                    return null;
+                }
+
+                public boolean isNodeRankOrderAscending() {
+                    return false;
                 }
 
                 public boolean isKeepgoing() {
@@ -225,6 +241,14 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                     return nodeSet.getThreadCount();
                 }
 
+                public String getNodeRankAttribute() {
+                    return null;
+                }
+
+                public boolean isNodeRankOrderAscending() {
+                    return false;
+                }
+
                 public boolean isKeepgoing() {
                     return nodeSet.isKeepgoing();
                 }
@@ -284,6 +308,14 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
 
                 public int getThreadCount() {
                     return nodeSet.getThreadCount();
+                }
+
+                public String getNodeRankAttribute() {
+                    return null;
+                }
+
+                public boolean isNodeRankOrderAscending() {
+                    return false;
                 }
 
                 public boolean isKeepgoing() {
@@ -355,6 +387,14 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                     return nodeSet.getThreadCount();
                 }
 
+                public String getNodeRankAttribute() {
+                    return null;
+                }
+
+                public boolean isNodeRankOrderAscending() {
+                    return false;
+                }
+
                 public boolean isKeepgoing() {
                     return nodeSet.isKeepgoing();
                 }
@@ -412,6 +452,14 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
 
                 public int getThreadCount() {
                     return nodeSet.getThreadCount();
+                }
+
+                public String getNodeRankAttribute() {
+                    return null;
+                }
+
+                public boolean isNodeRankOrderAscending() {
+                    return false;
                 }
 
                 public boolean isKeepgoing() {
