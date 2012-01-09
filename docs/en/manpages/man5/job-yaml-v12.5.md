@@ -386,7 +386,15 @@ Specifies the Nodes to use for the job,  and the node-dispatch options.  Contain
     `threadcount`
 
     :    Number of threads to use for parallel dispatch (default "1")
+    
+    `rankAttribute`
 
+    :    Name of the Node attribute to use for ordering the sequence of nodes (default is the node name)
+
+    `rankOrder`
+
+    :    Order direction for node ranking. Either "ascending" or "descending" (default "ascending")
+    
 The `nodefilters` must also contain ONE of `include` or `exclude` filter specifiers.
 
 `include`/`exclude`
@@ -428,6 +436,8 @@ Example:
         threadcount: 1
         keepgoing: false
         excludePrecedence: true
+        rankAttribute: rank
+        rankOrder: descending
       include:
         tags: web
         name: web-.*

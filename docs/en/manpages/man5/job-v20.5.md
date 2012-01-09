@@ -467,11 +467,21 @@ general information.
 
 :    keep going flag
 
+[rankAttribute](#rankAttribute)
+
+:    Name of the Node attribute to use for ordering the sequence of nodes (default is "nodename")
+
+[rankOrder](#rankOrder)
+
+:    Order direction for node ranking. Either "ascending" or "descending" (default "ascending")
+
 *Example*
 
     <dispatch>
       <threadcount>1</threadcount>
       <keepgoing>false</keepgoing>
+      <rankAttribute>nodename</rankAttribute>
+      <rankOrder>descending</rankOrder>
     </dispatch>
 
 ### threadcount
@@ -483,7 +493,21 @@ a positive integer.
 
 Boolean describing if the [dispatch](#dispatch) should continue of an error
 occurs (true/false). If true, continue if an error occurs.
-     
+
+### rankAttribute
+
+This is the name of a Node attribute that determines the order in which the Nodes are traversed.  The default value of "nodename" will rank the nodes based on their names.
+
+This can be any attribute of a Node, even attributes that do not exist on some nodes.  For example you can set it to "rank", then any Nodes with a "rank" attribute will be ordered before any other nodes, and they will be used in the order of the rank attribute value.
+
+The values in the rank attribute are compared first numerically if they are valid integers, but otherwise they are compared alphanumerically.  Nodes which do not have the specified rank attribute will be ordered by node name and treated as if they come after all nodes which do have the rank attribute (if in ascending order).
+
+### rankOrder
+
+This determines whether the rank attribute should be used to order the nodes in ascending or descending order.
+
+Possible values: "ascending", or "descending".  The default if not specified is "ascending".
+
 ## loglevel 
 
 The [job](#job) logging level. The lower the more profuse the messages.
