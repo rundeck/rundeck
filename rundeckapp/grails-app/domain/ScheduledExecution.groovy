@@ -131,7 +131,7 @@ class ScheduledExecution extends ExecutionContext {
             if(nodeRankAttribute){
                 map.nodefilters.dispatch.rankAttribute= nodeRankAttribute
             }
-            map.nodefilters.dispatch.rankOrder= nodeRankOrderAscending?'ascending':'descending'
+            map.nodefilters.dispatch.rankOrder= (null== nodeRankOrderAscending || nodeRankOrderAscending)?'ascending':'descending'
             final Collection inclFilters = BaseNodeFilters.filterKeys.keySet().findAll {this["nodeInclude"+filterKeys[it]]}
             if(inclFilters){
                 map.nodefilters.include=[:]

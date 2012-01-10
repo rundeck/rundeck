@@ -151,10 +151,10 @@
             <td>${execdata?.nodeKeepgoing}</td>
         </tr>
         <tr>
-            <td>Node Rank Property:</td>
+            <td><g:message code="scheduledExecution.property.nodeRankAttribute.label"/>:</td>
             <td>${execdata?.nodeRankAttribute? execdata?.nodeRankAttribute.encodeAsHTML() : 'Node Name'}</td>
-            <td class="displabel">Node Rank Order:</td>
-            <td>${execdata?.nodeRankOrderAscending?'ascending':'descending'}</td>
+            <td class="displabel"><g:message code="scheduledExecution.property.nodeRankOrder.label"/>:</td>
+            <td><g:message code="scheduledExecution.property.nodeRankOrder.${null==execdata?.nodeRankOrderAscending || execdata?.nodeRankOrderAscending?'ascending':'descending'}.label"/></td>
         </tr>
     </g:if>
     <g:if test="${execdata instanceof ScheduledExecution && execdata.notifications}">

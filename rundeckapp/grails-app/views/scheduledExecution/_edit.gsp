@@ -985,7 +985,7 @@ var applinks={
         <tr>
             <td>
                 <label for="schedJobnodeRankAttribute" class=" ${hasErrors(bean:scheduledExecution,field:'nodeRankAttribute','fieldError')}">
-                    Rank Property
+                    <g:message code="scheduledExecution.property.nodeRankAttribute.label" />
                 </label>
             </td>
             <td>
@@ -1001,24 +1001,24 @@ var applinks={
                     </g:hasErrors>
                 </span>
                 <span class="info note">
-                    Node property to order by. Default is node name.
+                    <g:message code="scheduledExecution.property.nodeRankAttribute.description" />
                 </span>
             </td>
         </tr>
         <tr>
-            <td>Rank Order?</td>
+            <td><g:message code="scheduledExecution.property.nodeRankOrder.label" /></td>
             <td>
                 <label>
-                    <g:radio name="nodeRankOrderAscending" value="false"
-                             checked="${!scheduledExecution?.nodeRankOrderAscending}"
-                             id="nodeRankOrderDescending"/>
-                    Descending</label>
-
-                <label>
                     <g:radio name="nodeRankOrderAscending" value="true"
-                             checked="${scheduledExecution?.nodeRankOrderAscending}"
+                             checked="${scheduledExecution?.nodeRankOrderAscending || null==scheduledExecution?.nodeRankOrderAscending}"
                              id="nodeRankOrderAscending"/>
-                    Ascending</label>
+                    <g:message code="scheduledExecution.property.nodeRankOrder.ascending.label" /></label>
+                <label>
+                    <g:radio name="nodeRankOrderAscending" value="false"
+                             checked="${!scheduledExecution?.nodeRankOrderAscending && null!=scheduledExecution?.nodeRankOrderAscending}"
+                             id="nodeRankOrderDescending"/>
+                    <g:message code="scheduledExecution.property.nodeRankOrder.descending.label" /></label>
+
             </td>
         </tr>
         <tr>
