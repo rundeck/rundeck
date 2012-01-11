@@ -29,6 +29,7 @@ class ScheduledExecution extends ExecutionContext {
     String notifyFailureRecipients
     String notifySuccessUrl
     String notifyFailureUrl
+    Boolean multipleExecutions = false
     static transients = ['adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients', 'notifySuccessUrl', 'notifyFailureUrl','crontabString']
 
     static constraints = {
@@ -72,6 +73,7 @@ class ScheduledExecution extends ExecutionContext {
         adhocLocalString(nullable:true, blank:true)
         adhocFilepath(nullable:true, blank:true)
         uuid(unique: true, nullable:true, blank:false)
+        multipleExecutions(nullable: true)
     }
 
     static mapping = {
@@ -124,6 +126,9 @@ class ScheduledExecution extends ExecutionContext {
             }else{
                 map.schedule.weekday=[day:dayOfWeek ]
             }
+        }
+        if(multipleExecutions){
+            map.multipleExecutions=true
         }
         if(doNodedispatch){
             def yfilters=["":"hostname"]
@@ -209,6 +214,9 @@ class ScheduledExecution extends ExecutionContext {
                     se.dayOfMonth = '?'
                 }
             }
+        }
+        if(data.multipleExecutions){
+            se.multipleExecutions=data.multipleExecutions?true:false
         }
         if(data.nodefilters){
 

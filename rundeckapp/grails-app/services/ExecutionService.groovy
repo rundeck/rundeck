@@ -948,19 +948,21 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         se = scheduledExec
         se.refresh()
 
-        //find any currently running executions for this job, and if so, throw exception
-        def c = Execution.createCriteria()
-        def found = c.get {
-            scheduledExecution {
-                eq('id', se.id)
+        if (!se.multipleExecutions){
+            //find any currently running executions for this job, and if so, throw exception
+            def c = Execution.createCriteria()
+            def found = c.get {
+                scheduledExecution {
+                    eq('id', se.id)
+                }
+                isNotNull('dateStarted')
+                isNull('dateCompleted')
+                lock true
             }
-            isNotNull('dateStarted')
-            isNull('dateCompleted')
-            lock true
-        }
 
-        if (found) {
-            throw new ExecutionServiceException('Job "' + se.jobName + '" [' + se.id + '] is currently being executed (execution [' + found.id + '])')
+            if (found) {
+                throw new ExecutionServiceException('Job "' + se.jobName + '" [' + se.id + '] is currently being executed (execution [' + found.id + '])')
+            }
         }
 
         log.debug("createExecution for ScheduledExecution: ${se.id}")

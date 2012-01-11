@@ -20,6 +20,14 @@
             </tr>
         </g:if>
     </g:if>
+    <g:if test="${execdata!=null && execdata.id && execdata instanceof ScheduledExecution && execdata.multipleExecutions}">
+        <tr>
+        <td ><g:message code="scheduledExecution.property.multipleExecutions.label"/></td>
+        <td colspan="3">
+            <g:message code="yes" />
+        </td>
+        </tr>
+    </g:if>
 
     <g:if test="${execdata instanceof ExecutionContext && execdata?.workflow}">
         <tr>

@@ -487,6 +487,30 @@ var applinks={
             </g:else>
         </td>
     </tr>
+    <tr>
+        <td>
+            <g:message code="scheduledExecution.property.multipleExecutions.label" />
+        </td>
+        <td>
+            <label>
+                <g:radio value="false" name="multipleExecutions"
+                         checked="${!scheduledExecution.multipleExecutions}"
+                         id="multipleFalse"/>
+                <g:message code="no" />
+            </label>
+
+            <label>
+                <g:radio name="multipleExecutions" value="true"
+                         checked="${scheduledExecution.multipleExecutions}"
+                         id="multipleTrue"/>
+                <g:message code="yes" />
+            </label>
+
+            <span class="info note">
+                <g:message code="scheduledExecution.property.multipleExecutions.description" />
+            </span>
+        </td>
+    </tr>
     </tbody>
     <tr>
         <td class="${hasErrors(bean:scheduledExecution,field:'project','fieldError')} required" id="schedProjErr">Project</td>

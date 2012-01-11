@@ -35,6 +35,37 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             assertTrue(e.message.contains('is currently being executed'))
         }
     }
+    void testCreateExecutionRunningMultiple(){
+        mockDomain(ScheduledExecution)
+        mockDomain(Workflow)
+        mockDomain(CommandExec)
+        mockDomain(Execution)
+
+        ScheduledExecution se = new ScheduledExecution(
+            jobName: 'blue',
+            project: 'AProject',
+            adhocExecution: true,
+            adhocFilepath: '/this/is/a/path',
+            groupPath: 'some/where',
+            description: 'a job',
+            argString: '-a b -c d',
+            multipleExecutions: true,
+            workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+        )
+        se.save()
+
+        ScheduledExecution.metaClass.static.lock={id-> return se}
+        def myCriteria = new Expando();
+        myCriteria.get = {Closure cls -> return [id:123]}
+        Execution.metaClass.static.createCriteria = {myCriteria }
+        mockLogging(ExecutionService)
+
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService = fsvc
+        def execution=svc.createExecution(se,null,"user1")
+        assertNotNull(execution)
+    }
     void testCreateExecutionSimple(){
         ConfigurationHolder.config=[:]
         mockDomain(ScheduledExecution)
