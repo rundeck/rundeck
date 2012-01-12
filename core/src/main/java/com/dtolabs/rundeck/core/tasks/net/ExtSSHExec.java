@@ -326,7 +326,7 @@ public class ExtSSHExec extends SSHBase {
             teeout= new TeeOutputStream(out, getSecondaryStream());
         } else if(null!= getSecondaryStream()){
             teeout= getSecondaryStream();
-        }else if(null==out){
+        }else if(null!=out){
             teeout=out;
         }else{
             teeout=null;
