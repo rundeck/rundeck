@@ -34,6 +34,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.impl.common.AntSupport;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.execution.utils.LeadPipeOutputStream;
 import com.dtolabs.rundeck.core.execution.utils.Responder;
 import com.dtolabs.rundeck.core.execution.utils.ResponderThread;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
@@ -199,7 +200,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             final PipedInputStream responderInput = new PipedInputStream();
             final PipedOutputStream responderOutput = new PipedOutputStream();
             final PipedInputStream jschInput = new PipedInputStream();
-            final PipedOutputStream jschOutput = new PipedOutputStream();
+            final PipedOutputStream jschOutput = new LeadPipeOutputStream();
             try {
                 responderInput.connect(jschOutput);
                 jschInput.connect(responderOutput);
