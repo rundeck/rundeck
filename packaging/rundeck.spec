@@ -86,7 +86,7 @@ fi
 /var/lib/rundeck/cli/commons-logging-1.1.jar
 /var/lib/rundeck/cli/dom4j-1.6.1.jar
 /var/lib/rundeck/cli/jaxen-1.1.jar
-/var/lib/rundeck/cli/jsch-0.1.42.jar
+/var/lib/rundeck/cli/jsch-0.1.45.jar
 /var/lib/rundeck/cli/log4j-1.2.16.jar
 /var/lib/rundeck/cli/rundeck-core-%{version}.jar
 /var/lib/rundeck/cli/xercesImpl-2.6.0.jar
