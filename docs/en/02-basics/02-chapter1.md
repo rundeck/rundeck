@@ -26,6 +26,12 @@ To get started, go to the URL for your RunDeck server.
 Login to the web app with the credentials defined by the RunDeck user
 directory configuration. 
 
+The default port for the web interface is `4440`, so try this URL:
+
+<http://localhost:4440>
+
+You will be shown the Login page.  The default username and password are `admin`/`admin`, so enter those in the fields.
+
 #### Navigation
 
 The RunDeck page header contains global navigation control to move
