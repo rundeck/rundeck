@@ -1,10 +1,14 @@
-# Important Changes in RunDeck 1.4.1
+% Upgrade Guide
+% Greg Schueler
+% September 12, 2011
 
-In RunDeck 1.4.0.x, the new ACL Policy format used an incorrect property key ("job") to check Job Authorizations by name.  The correct key was used in all documentation, but not in the underlying code.  The correct key is "name".
+## Important Changes in Rundeck 1.4.1
 
-This issue has been fixed in RunDeck 1.4.1, however if you were using the incorrect key previously, you will have to change your aclpolicy files to the correct key.
+In Rundeck 1.4.0.x, the new ACL Policy format used an incorrect property key ("job") to check Job Authorizations by name.  The correct key was used in all documentation, but not in the underlying code.  The correct key is "name".
 
-The [Project Scope Resources and Actions](../RunDeck-Guide.html#project-scope-resources-and-actions) section shows the correct way to authorize Job resources by name:
+This issue has been fixed in Rundeck 1.4.1, however if you were using the incorrect key previously, you will have to change your aclpolicy files to the correct key.
+
+The [Project Scope Resources and Actions](../administration/authorization.html#project-scope-resources-and-actions) section shows the correct way to authorize Job resources by name:
 
     for:
       job:
@@ -13,27 +17,27 @@ The [Project Scope Resources and Actions](../RunDeck-Guide.html#project-scope-re
           allow: [run]
 
 
-# Important Changes in RunDeck 1.4
+## Important Changes in Rundeck 1.4
 
 These changes in version 1.4 are important to note if you are upgrading an
-existing RunDeck installation.
+existing Rundeck installation.
 
 1. [Database table and field name changes to support Mysql & Oracle](#database-changes)
 2. [ACL Policy file format and behavior changes](#acl-policy-changes)
 
-**Note:** before upgrading, it is a good idea to back up your RunDeck installation using the instructions here: [Backup and Recovery](http://rundeck.org/docs/RunDeck-Guide.html#backup-and-recovery).
+**Note:** before upgrading, it is a good idea to back up your Rundeck installation using the instructions here: [Backup and Recovery](../administration/backup-and-recovery.html).
 
-# Upgrade procedure
+## Upgrade procedure
 
-## System packaging
+### System packaging
 
 If you are using RPM or Debian packaging, refer to the basic [Install Instructions](http://rundeck.org/downloads.html), and simply upgrade the package.
 
-## Launcher Jar
+### Launcher Jar
 
 For the Rundeck Launcher jar, you can follow this basic procedure:
 
-1. Stop the currently running RunDeck java process
+1. Stop the currently running Rundeck java process
 2. Copy the new `rundeck-launcher-1.4x.jar` file either to your `$RDECK_BASE` directory, or wherever you had your previous jar
 3. Remove these directories from your previous `$RDECK_BASE`:
     * `$RDECK_BASE/server/lib`
@@ -41,9 +45,9 @@ For the Rundeck Launcher jar, you can follow this basic procedure:
     * `$RDECK_BASE/tools`
 4. You can now start Rundeck with the new launcher jar, either specifying the `-b basedir` option, or leaving it off to use the directory the launcher jar is in.
 
-# Database changes
+## Database changes
 
-Unfortunately, RunDeck 1.3 and earlier used domain class names that conflicted with some reserved words in Mysql and Oracle, specifically "user" and "option".
+Unfortunately, Rundeck 1.3 and earlier used domain class names that conflicted with some reserved words in Mysql and Oracle, specifically "user" and "option".
 
 To fix this, we have changed the table/field mappings to "rduser" and "rdoption"
 for the domain classes that used these names.
@@ -57,31 +61,31 @@ This value is set to `false` by default on new installations, so if you have a p
 1.3 installation using the file-based datasource, upgrading to 1.4 should not
 cause any issues.
 
-To configure a relational database backend, you must set this to "true".  See the section in the RunDeck Guide Administration chapter: [Enable rdbsupport](../RunDeck-Guide.html#enable-rdbsupport).
+To configure a relational database backend, you must set this to "true".  See the section in the Rundeck Guide Administration chapter: [Enable rdbsupport](../administration/relational-database.html#enable-rdbsupport).
 
-# ACL Policy changes
+## ACL Policy changes
 
-NOTE: If you are installing RunDeck 1.4 from scratch, your installation will come with default aclpolicy files will get you up and running, this document is merely a guide for people upgrading from RunDeck 1.3 or earlier who have customized their aclpolicy files.
+NOTE: If you are installing Rundeck 1.4 from scratch, your installation will come with default aclpolicy files will get you up and running, this document is merely a guide for people upgrading from Rundeck 1.3 or earlier who have customized their aclpolicy files.
 
-## Shortest Path
+### Shortest Path
 
 The simplest way to upgrade is to add or replace the "admin.aclpolicy" file with
 the [Example admin.aclpolicy](#example-admin.aclpolicy) at the end of this document. 
 
 This will give full authorization to 'admin' role users.
 
-## Authorization and Acl Policy changes
+### Authorization and Acl Policy changes
 
-The authorization system in RunDeck 1.4 has been updated.  Previously some authorizations only for Job-related actions were declared in the "*.aclpolicy" files located in your `etc` directory for RunDeck, and some GUI layer authorizations were defined as "Mapped Roles" in your `rundeck-config.properties` file.
+The authorization system in Rundeck 1.4 has been updated.  Previously some authorizations only for Job-related actions were declared in the "*.aclpolicy" files located in your `etc` directory for Rundeck, and some GUI layer authorizations were defined as "Mapped Roles" in your `rundeck-config.properties` file.
 
 We've removed the "Mapped Roles" completely, and revamped the ACL Policy code to support authorization of these types of Application-layer actions, as well as improved the ACL policy layer to support restricting access to resources other than just Jobs.
 
-The consequence of these changes is that if you upgrade from RunDeck 1.3 or earlier, your authorization configuration will have to change.  If you don't modify your configuration, you will log into RunDeck and likely be told you don't have authorization to see certain resources or perform certain actions.
+The consequence of these changes is that if you upgrade from Rundeck 1.3 or earlier, your authorization configuration will have to change.  If you don't modify your configuration, you will log into Rundeck and likely be told you don't have authorization to see certain resources or perform certain actions.
 
 These are the changes you will have to make when you upgrade
 
 * convert your old aclpolicy Job authorization rules to the new format
-* add new authorizations rules for the new types of authorization checks in RunDeck 1.4
+* add new authorizations rules for the new types of authorization checks in Rundeck 1.4
 * translate any custom "Mapped Role" definitions into .aclpolicy files
 
 Practically, this means you will have to:
@@ -97,11 +101,11 @@ Highlights of the benefits of the new authorization changes:
 * Project level access control is now supported
 * "Deny" rules can now be declared
 * Application level access control is also supported, replacing the Role mapping
-* The RunDeck server no longer uses role-mapping and instead defers to the aclpolicy for all authorizations
+* The Rundeck server no longer uses role-mapping and instead defers to the aclpolicy for all authorizations
 
-## Managing ACL Policy files
+### Managing ACL Policy files
 
-The `*.aclpolicy` files live in the RunDeck `etc` dir.
+The `*.aclpolicy` files live in the Rundeck `etc` dir.
 
 Each file can contain multiple policy definitions, and there can be multiple files in the directory.
 
@@ -115,7 +119,7 @@ Leaving your old aclpolicy files in place will not cause any problems, because e
 
 Note: to add multiple policy definitions to a single file, use the YAML document separator "---" on a line by itself between the definitions.
 
-## Format
+### Format
 
 The updated ACL Policy file format lets you allow and deny actions on particular resources for certain users and in certain contexts.
 
@@ -151,7 +155,7 @@ The important new features are:
 
 :   The subject is the user or account to authorize the action for. They can be identified by name, or by group (role) membership in the `by` section.
 
-## Action names
+### Action names
 
 Action names have changed from the previous formats.
 
@@ -168,7 +172,7 @@ Instead of `workflow_X` and `event_Y` type action names, the actions have been s
 
 The actions are now specified directly on a resource or type in the aclpolicy definition.
 
-## Converting XML aclpolicy files
+### Converting XML aclpolicy files
 
 You may have the old XML format in your current installation.
 
@@ -219,7 +223,7 @@ Here is a [XMLStarlet](http://xmlstar.sourceforge.net/) command to convert your 
         -o 'by:' -n \
         -o '  group: &quot;' -v '@name' -o '&quot;' -n $FILE > $NEWFILE
 
-## Converting older YAML files
+### Converting older YAML files
 
 Your yaml aclpolicy file may be out of date, and look like this:
 
@@ -260,9 +264,9 @@ Note, if you need to authorize actions on adhoc executions, use the 'adhoc' reso
       adhoc:
         - allow: [run,kill]
 
-## Adding the new Authorizations
+### Adding the new Authorizations
 
-The old ACL Policies only defined authorizations on Job actions and some adhoc execution actions.  If you converted an old file as described above you will now have give access to some actions on Jobs in one or more projects, but this is not sufficient to use all features of RunDeck.
+The old ACL Policies only defined authorizations on Job actions and some adhoc execution actions.  If you converted an old file as described above you will now have give access to some actions on Jobs in one or more projects, but this is not sufficient to use all features of Rundeck.
 
 Authorizations you need to grant to run jobs:
 
@@ -349,9 +353,9 @@ To allow Job creation:
 
 You can add any or all of these policies, or combine them with your job policies.
 
-## Converting Mapped Roles
+### Converting Mapped Roles
 
-Mapped roles defined in `rundeck-config.properties` were used to authorize actions in the RunDeck GUI in Rundeck 1.3 and earlier.
+Mapped roles defined in `rundeck-config.properties` were used to authorize actions in the Rundeck GUI in Rundeck 1.3 and earlier.
 
 Here is the list of old "application roles", and how to translate them into the new aclpolicy format:
 
@@ -387,7 +391,7 @@ Here is the list of old "application roles", and how to translate them into the 
 
 :   This is equivalent to allowing "read" action on a "job" resource.  If "read" is not allowed for a job it is not shown in the GUI.  If "run" is not allowed for a job but "read" is, it will be shown but not be runnable.
     
-## Example admin.aclpolicy
+### Example admin.aclpolicy
 
 This file grants all authorizations to 'admin' role, and explicitly enumerates the actions granted for each resource.  It could be simplified into a much shorter file by allowing '*' and not explicitly matching the resources.
 

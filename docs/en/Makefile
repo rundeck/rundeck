@@ -1,50 +1,37 @@
 include ../Makefile.inc
 
 #APIVERS=1
-APIVERS=$(shell cat api/version.txt)
+APIVERS=$(shell cat api/version.info)
 
 DIRS = manpages
-CSS = RunDeck-Guide.css
+CSS = style.css
 DIST = dist
+DATE = $(shell date "+%m-%d-%Y% %H:%M")
+ifndef VERSION
+VERSION=$(shell grep version.number= ../../version.properties | cut -d= -f 2)
+endif
+
+EDAM=groovy edam.groovy
 
 .PHONY: man html clean
 
-all : dist man html figures
+all : man html resources
 
-dist :
-	mkdir -p $(DIST)
 man : 
-	$(MAKE) VERSION=$(VERSION) -C manpages
+	mkdir -p $(DIST)
+	$(MAKE) VERSION=$(VERSION) -C manpages/man1
+	$(MAKE) VERSION=$(VERSION) -C manpages/man5
 
-$(DIST)/html : dist
+html:
 	mkdir -p $(DIST)/html
+	$(EDAM) -o $(DIST)/html -r -O 'recurseDirPatternIgnore=(dist|figures)' -V "VERSION=$(VERSION)" -V "APIVERS=$(APIVERS)"
 
-$(DIST)/html/api : $(DIST)/html
-	mkdir -p $(DIST)/html/api
-
-$(DIST)/html/upgrading : $(DIST)/html
-	mkdir -p $(DIST)/html/upgrading
-
-html : $(DIST)/html/api $(DIST)/html/upgrading
-	@ $(ECHO) Generating HTML book version $(VERSION)
-	# set version
-	@sed "s/@VERSION@/$(VERSION)/" title.txt.template > title.txt
-	$(PANDOC) --number-sections --toc -s title.txt 0[0-9]-*/*.md 1[0-9]-*/*.md --css=$(CSS) --template=templates/html.template --include-before=templates/before.html --include-after=templates/after.html -o $(DIST)/html/RunDeck-Guide.html
-	@sed "s/@VERSION@/$(APIVERS)/" api/title.txt.template > api/title.txt
-	$(PANDOC) --number-sections --toc -s api/title.txt api/*.md --css=$(CSS) --template=templates/html.template --include-before=templates/before.html --include-after=templates/after.html -o $(DIST)/html/api/index.html
-	@sed "s/@VERSION@/$(VERSION)/" upgrading/title.txt.template > upgrading/title.txt
-	$(PANDOC) --number-sections --toc -s upgrading/title.txt upgrading/*.md --css=$(CSS) --template=templates/html.template --include-before=templates/before.html --include-after=templates/after.html -o $(DIST)/html/upgrading/index.html
-	-rm title.txt api/title.txt upgrading/title.txt
-	cp $(CSS) $(DIST)/html
-	cp $(CSS) $(DIST)/html/api/
-	cp $(CSS) $(DIST)/html/upgrading/
-
-$(DIST)/html/figures : dist
+resources :  $(CSS) ../figures/*.png
 	mkdir -p $(DIST)/html/figures
-
-figures : $(DIST)/html/figures
 	- cp ../figures/*.png $(DIST)/html/figures
+	cp $(CSS) $(DIST)/html/
 
 clean :
 	rm -fr $(DIST)
-	$(MAKE) -C manpages clean
+	$(MAKE) -C manpages/man1 clean
+	$(MAKE) -C manpages/man5 clean
