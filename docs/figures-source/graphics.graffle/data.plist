@@ -158,7 +158,7 @@
 	<key>MasterSheets</key>
 	<array/>
 	<key>ModificationDate</key>
-	<string>2012-01-20 23:35:12 +0000</string>
+	<string>2012-01-21 00:08:50 +0000</string>
 	<key>Modifier</key>
 	<string>Alex Honor</string>
 	<key>NotesVisible</key>
@@ -2994,6 +2994,65 @@ service}</string>
 			<array>
 				<dict>
 					<key>Bounds</key>
+					<string>{{798.2948, 411.92896}, {52, 15}}</string>
+					<key>Class</key>
+					<string>ShapedGraphic</string>
+					<key>FitText</key>
+					<string>YES</string>
+					<key>Flow</key>
+					<string>Resize</string>
+					<key>FontInfo</key>
+					<dict>
+						<key>Font</key>
+						<string>SynchroLET</string>
+						<key>Size</key>
+						<real>10</real>
+					</dict>
+					<key>ID</key>
+					<integer>199</integer>
+					<key>Shape</key>
+					<string>Rectangle</string>
+					<key>Style</key>
+					<dict>
+						<key>shadow</key>
+						<dict>
+							<key>Draws</key>
+							<string>NO</string>
+						</dict>
+						<key>stroke</key>
+						<dict>
+							<key>Color</key>
+							<dict>
+								<key>b</key>
+								<string>0.00465119</string>
+								<key>g</key>
+								<string>0.00465119</string>
+								<key>r</key>
+								<string>0.00465119</string>
+							</dict>
+							<key>Draws</key>
+							<string>NO</string>
+						</dict>
+					</dict>
+					<key>Text</key>
+					<dict>
+						<key>Pad</key>
+						<integer>0</integer>
+						<key>Text</key>
+						<string>{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf230
+{\fonttbl\f0\fnil\fcharset0 SynchroLET;}
+{\colortbl;\red255\green255\blue255;\red67\green47\blue31;}
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\qc
+
+\f0\b\fs22 \cf2 packages}</string>
+						<key>VerticalPad</key>
+						<integer>0</integer>
+					</dict>
+					<key>Wrap</key>
+					<string>NO</string>
+				</dict>
+				<dict>
+					<key>Bounds</key>
 					<string>{{569.8595, 367.02881}, {47, 15}}</string>
 					<key>Class</key>
 					<string>ShapedGraphic</string>
@@ -3279,7 +3338,7 @@ service}</string>
 				</dict>
 				<dict>
 					<key>Bounds</key>
-					<string>{{711.97009, 196.64078}, {46, 15}}</string>
+					<string>{{595.47003, 196.64078}, {93, 15}}</string>
 					<key>Class</key>
 					<string>ShapedGraphic</string>
 					<key>FitText</key>
@@ -3300,7 +3359,7 @@ service}</string>
 						<key>ID</key>
 						<integer>159</integer>
 						<key>Position</key>
-						<real>0.35190808773040771</real>
+						<real>0.16257938742637634</real>
 						<key>RotationType</key>
 						<integer>0</integer>
 					</dict>
@@ -3338,7 +3397,7 @@ service}</string>
 {\colortbl;\red255\green255\blue255;\red67\green47\blue31;}
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\qc
 
-\f0\b\fs22 \cf2 Job info}</string>
+\f0\b\fs22 \cf2 WORKFLOW status}</string>
 						<key>VerticalPad</key>
 						<integer>0</integer>
 					</dict>
@@ -4559,7 +4618,7 @@ patch}</string>
 				</dict>
 				<dict>
 					<key>Bounds</key>
-					<string>{{555.06915, 532.70374}, {63, 28}}</string>
+					<string>{{519.06909, 532.70374}, {63, 28}}</string>
 					<key>Class</key>
 					<string>ShapedGraphic</string>
 					<key>FitText</key>
@@ -4580,7 +4639,7 @@ patch}</string>
 						<key>ID</key>
 						<integer>126</integer>
 						<key>Position</key>
-						<real>0.63847494125366211</real>
+						<real>0.5488884449005127</real>
 						<key>RotationType</key>
 						<integer>0</integer>
 					</dict>
@@ -5959,7 +6018,7 @@ Lib}</string>
 				</dict>
 				<dict>
 					<key>Bounds</key>
-					<string>{{455.58615, 511.75372}, {71, 15}}</string>
+					<string>{{351.58612, 511.75372}, {83, 15}}</string>
 					<key>Class</key>
 					<string>ShapedGraphic</string>
 					<key>FitText</key>
@@ -5980,7 +6039,7 @@ Lib}</string>
 						<key>ID</key>
 						<integer>60</integer>
 						<key>Position</key>
-						<real>0.68345683813095093</real>
+						<real>0.26766195893287659</real>
 						<key>RotationType</key>
 						<integer>0</integer>
 					</dict>
@@ -6018,7 +6077,7 @@ Lib}</string>
 {\colortbl;\red255\green255\blue255;\red67\green47\blue31;}
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\qc
 
-\f0\b\fs22 \cf2 CONFIG CLASS}</string>
+\f0\b\fs22 \cf2 CONFIG CLASSES}</string>
 						<key>VerticalPad</key>
 						<integer>0</integer>
 					</dict>
@@ -6756,7 +6815,7 @@ STEPS}</string>
 				</dict>
 				<dict>
 					<key>Bounds</key>
-					<string>{{661.80835, 211.49081}, {101, 15}}</string>
+					<string>{{695.80829, 211.49081}, {101, 15}}</string>
 					<key>Class</key>
 					<string>ShapedGraphic</string>
 					<key>FitText</key>
@@ -6777,7 +6836,7 @@ STEPS}</string>
 						<key>ID</key>
 						<integer>32</integer>
 						<key>Position</key>
-						<real>0.48797714710235596</real>
+						<real>0.59843862056732178</real>
 						<key>RotationType</key>
 						<integer>0</integer>
 					</dict>
@@ -7083,7 +7142,7 @@ STEPS}</string>
 				</dict>
 				<dict>
 					<key>Bounds</key>
-					<string>{{994.81641, 255.59647}, {50, 36}}</string>
+					<string>{{994.81641, 255.59647}, {50, 19}}</string>
 					<key>Class</key>
 					<string>ShapedGraphic</string>
 					<key>FitText</key>
@@ -7131,8 +7190,7 @@ STEPS}</string>
 {\colortbl;\red255\green255\blue255;\red67\green47\blue31;}
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\qc
 
-\f0\b\fs28 \cf2 SPLUNK\
-repo}</string>
+\f0\b\fs28 \cf2 SPLUNK}</string>
 						<key>VerticalPad</key>
 						<integer>0</integer>
 					</dict>
