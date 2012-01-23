@@ -1,36 +1,19 @@
 include ../../../Makefile.inc
 
 DIST = ../../dist
-CSS=RunDeck-Guide.css
-TEMPLATES=../../templates
-.SUFFIXES: .5.gz .5
+MANSFX=5
+.SUFFIXES: .5
 .PHONY: all
 
-all: manpages html roff
+PAGES = *.md
 
-manpages: aclpolicy-v10.5.gz job-v20.5.gz resource-v13.5.gz job-yaml-v12.5.gz resource-yaml-v13.5.gz
-
-%.5.gz: %.5
-	gzip < $< > $@
-
-%.5:
-	pandoc -s -w man $@.md -o $@
-
-PAGES = aclpolicy-v10.5 job-v20.5 resource-v13.5 job-yaml-v12.5 resource-yaml-v13.5
-
-publish : roff html
+all: roff
 
 roff : 
 	$(ECHO) Generating system man pages
 	mkdir -p $(DIST)/man/man5
-	-for f in $(PAGES); do ( $(PANDOC) -s -w man $$f.md -o $(DIST)/man/man5/$$f; ); done
-
-html :
-	$(ECHO) Generating html for system man pages
-	mkdir -p $(DIST)/html
-	-for f in $(PAGES); do ( $(PANDOC) -s   --css=$(CSS) --template=$(TEMPLATES)/html.template --include-before=$(TEMPLATES)/before.html --include-after=$(TEMPLATES)/after.html $$f.md -o $(DIST)/html/$${f%.5}.html; ); done
+	-for f in $(PAGES); do ( $(PANDOC) -s -w man $$f -o $(DIST)/man/man5/$${f%.md}.$(MANSFX); ); done
 
 clean :
-	rm -f *.5 *.5.gz
-
+	rm -rf $(DIST)/man/man5
 
