@@ -177,7 +177,7 @@ inside the script via a named token. Option values can be accessed in
 one of several ways:
 
 Value passed as an environment variable:
-:    Bash: $RD\_OPTION\__NAME_ [^1]
+:    Bash: $RD\_OPTION\__NAME_ (**See note below**)
 
 Value passed as an argument to a script:
 :    Commandline Arguments: ${option._name_}
@@ -251,7 +251,7 @@ Replacement token
         fi 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-[^1]: To pass environment variables through remote command
+**Note**: To pass environment variables through remote command
 dispatches, it is required to properly configure the SSH server on the
 remote end. See the AcceptEnv directive in the "sshd\_config(5)"
 manual page for instructions. Use a wild card pattern to permit RD\_

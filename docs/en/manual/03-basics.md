@@ -439,7 +439,7 @@ The ``uptime`` command is queued and executed. The output can be followed by
 going to the URL returned in the output (eg, http://strongbad:4440/execution/follow/7). 
 
 Sometimes it is desirable to execute the command
-directly, and not queue it [^noqueue]. Use the ``--noqueue`` option to execute
+directly, and not queue it. Use the ``--noqueue`` option to execute
 and follow the output from the console.
 
     $ dispatch -I os-family=unix  --noqueue -- uptime
@@ -447,7 +447,7 @@ and follow the output from the console.
     [alexh@strongbad dispatch][INFO] 10:34  up 2 days, 18:51, 2 users, load averages: 0.55 0.80 0.75
     [examples@ubuntu dispatch][INFO]  10:35:01 up 2 days, 18:40,  2 users,  load average: 0.00, 0.01, 0.00
 
-[^noqueue]: The "--noqueue" flag is useful for testing and debugging execution
+**Note**: The "--noqueue" flag is useful for testing and debugging execution
 but undermines visibility since execution is not managed through the central execution
 queue.
 
