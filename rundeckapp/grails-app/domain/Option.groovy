@@ -73,7 +73,6 @@ public class Option implements Comparable{
         def config = ConfigurationHolder.config
         if (config.rundeck.v14.rdbsupport=='true') {
             table "rdoption"
-            valuesUrl type:'text'
         }
     }
     /**
