@@ -118,38 +118,48 @@ the viewvc URL, obtaining the latest revision.
 
 For Rundeck, we would like to have a way of querying the EC2 service to see what EC2 Instances are available for use as Rundeck Nodes.
 
-Amazon has a well-defined API for communication with their services, which allows us to pull out the EC2 data, and generate XML.
+Amazon has a well-defined API for communication with their services, which would allow us to pull out the EC2 data, and generate XML if we wanted to. We could write a script that produces that data and use that script on a server to produce data via a URL, or we could use that script with the [script resource model source plugin](../manual/plugins.html#script-resource-model-source-configuration) to generate it. This would give us complete control of the output, but does require extra work.
 
-For this purpose, DTO Labs has created a Java-based implementation of this mechanism as the [java-ec2-nodes](https://github.com/dtolabs/java-ec2-nodes) project.
+However, there is already a plugin to do this for you: the [Rundeck EC2 Nodes Plugin](https://github.com/gschueler/rundeck-ec2-nodes-plugin).
 
-* [java-ec2-nodes](https://github.com/dtolabs/java-ec2-nodes) project source code
-* [download the binary distribution](https://github.com/dtolabs/java-ec2-nodes/archives/master).
+* [rundeck-ec2-nodes-plugin](https://github.com/gschueler/rundeck-ec2-nodes-plugin) project source code on github
+* [download the binary distribution](https://github.com/gschueler/rundeck-ec2-nodes-plugin/downloads).
 
 Use is fairly simple:
 
-1. Unpack the distribution file "java-ec2-nodes-0.1-bin.zip".  This contains the required java Libs and a Perl based CGI script.
-2. Create an `AWSCredentials.properties` to specify your AWS credentials. (Available at [this page](http://aws.amazon.com/security-credentials).) Place the file within the expanded java-ec2-nodes directory.
-    This file should contain:
+1. Copy the plugin file "rundeck-ec2-nodes-plugin-1.2.jar" into your `$RDECK_BASE/libext` directory. The plugin contains all of the required dependencies.
+2. Login to Rundeck with an administrator account, and click the "Admin" link in the page header for your project then click the "Configure Project" link, *or* create a new project.
+3. In the project configuration page, under **Resource Model Sources** click the "Add Source" button.
+4. Click "Add" for the "AWS EC2 Resources" type.
+5. Enter the configuration details (see below) for the plugin and click "Save".
+6. Click "Save" for the Project Configuration.
 
-        accessKey=<your access key>
-        secretKey=<your secret key>
-        
-4. Place the generatenodes.cgi file within a webroot folder of an Apache server, and configure Apache to allow `Options +ExecCGI` for that folder.
-4. Modify the "$basedir" variable in generatenodes.cgi to point to the dir containing the zip contents you unpacked.
+Minimal configuration details for the plugin includes your AWS access credentials you can find here <http://aws.amazon.com/security-credentials>.
 
-Finally, you should be able to do HTTP GET for the CGI (e.g. `http://myserver/scripts/generatenodes.cgi`) and see an XML file returned.  Note that the CGI allows query parameters to be used as API filters, e.g. `?tag:mytag=myvalue`.  (These filters are specific to the [EC2 API](http://docs.amazonwebservices.com/AWSEC2/latest/APIReference/ApiReference-query-DescribeInstances.html).)
+*Access Key*
+:    Specify your AWS Access key.
 
-Once you have the CGI producing valid XML, you can set the `project.resources.url` property in your project's project.properties file to be the URl to the CGI.  
+*Secret Key*
+:    Specify your AWS Secret Key
+
+Read about the other configuration details in the [readme](https://github.com/gschueler/rundeck-ec2-nodes-plugin/blob/master/Readme.md) for the rundeck-ec2-nodes-plugin.
 
 Finally, within Rundeck, you can Refresh the Nodes from within the Run tab.  You should see a Node entry for each EC2 Instance that is available.
 
-You can easily manage the set of Nodes that gets returned from EC2 by organizing them by use of EC2 Tags, and applying query Filters to the EC2 API query.
+You can manage the set of Nodes that gets returned from the plugin by organizing your EC2 instances using EC2 Tags, as well as adding EC2 Filters to the plugin configuration.
 
-In the EC2 interface, modify an Instance and add a Tag.  Set the Tag name to "Rundeck-Project" and the value to "MyProject" (or your project name).  
+The EC2 plugin will automatically add tags for the nodes based on an EC2 Instance Tag named "Rundeck-Tags", as well as the Instance's state.  You can also add "Mapping parameters" to the EC2 Plugin configuration to add additional tags.
 
-Then modify the URL used as your project.resources.url, to specify a query parameter of `?tag:Rundeck-Project=MyProject`.  Then Rundeck will only see those Instances with that tag as Nodes within that Rundeck project.
+You can add filters to the EC2 Plugin configuration under the "Filter Params" configuration area, with the sytanx of: `filter=value;filter2=value2`. The available filter names are listed in [AWS API - DescribeInstances](http://docs.amazonwebservices.com/AWSEC2/latest/APIReference/ApiReference-query-DescribeInstances.html).
 
-More configuration is available for the [java-ec2-nodes project](https://github.com/dtolabs/java-ec2-nodes).
+You can also configure your EC2 Plugin manually or automatically by creating or modifying the [project.properties](configuration#project.properties) file, and defining a [Resource Model Source](../manual/plugins.html#resource-model-sources) provider, like this:
+
+    resources.source.1.type=aws-ec2
+    resources.source.1.config.accessKey=...
+    resources.source.1.config.privateKey=...
+    resources.source.1.config.filter=...
+
+More configuration is available for the [rundeck-ec2-nodes-plugin project](https://github.com/gschueler/rundeck-ec2-nodes-plugin).
 
 #### Third party URL resource model sources
 
