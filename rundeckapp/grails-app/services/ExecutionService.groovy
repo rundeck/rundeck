@@ -1631,21 +1631,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             } else {
                 name = jitem.jobIdentifier
             }
-            def c = ScheduledExecution.createCriteria()
-            def schedlist = c.list {
-                and {
-                    eq('jobName', name)
-                    if (!group) {
-                        or {
-                            eq('groupPath', '')
-                            isNull('groupPath')
-                        }
-                    } else {
-                        eq('groupPath', group)
-                    }
-                    eq('project', executionContext.getFrameworkProject())
-                }
-            }
+            def schedlist = ScheduledExecution.findAllScheduledExecutions(group,name,executionContext.getFrameworkProject())
             if (schedlist && 1 == schedlist.size()) {
                 id = schedlist[0].id
             }else{

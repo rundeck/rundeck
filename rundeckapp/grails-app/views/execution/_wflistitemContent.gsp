@@ -24,7 +24,7 @@
 
  --%><div id="wfivis_${i}" style="${wdgt.styleVisible(unless:i==highlight)}">
     <div class="pflowitem wfctrlholder"><span class="pflow item " id="wfitem_${i}" >
-        <g:render template="/execution/wfItemView" model="${[item:item,edit:edit,noimgs:noimgs]}"/>
+        <g:render template="/execution/wfItemView" model="${[item:item,edit:edit,noimgs:noimgs,workflow:workflow,project:project]}"/>
     </span>
 
     <g:if test="${edit}">

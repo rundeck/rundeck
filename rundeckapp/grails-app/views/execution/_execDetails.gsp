@@ -33,7 +33,7 @@
         <tr>
             <td>Workflow:</td>
             <td colspan="3">
-                <g:render template="/execution/execDetailsWorkflow" model="${[workflow:execdata.workflow,context:execdata,noimgs:noimgs]}"/>
+                <g:render template="/execution/execDetailsWorkflow" model="${[workflow:execdata.workflow,context:execdata,noimgs:noimgs,project:execdata.project]}"/>
             </td>
         </tr>
         <g:if test="${execdata instanceof ScheduledExecution && execdata.options}">

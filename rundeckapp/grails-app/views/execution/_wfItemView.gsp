@@ -25,7 +25,7 @@
             <span class="${edit?'autohilite autoedit':''} wfitem ${jobitem?'jobtype':'exectype'}" title="${edit?'Click to edit':''}">
 
             <g:if test="${jobitem}">
-                <g:set var="foundjob" value="${edit?null:ScheduledExecution.findByJobNameAndGroupPath(item.jobName,item.jobGroup?item.jobGroup:null)}"/>
+                <g:set var="foundjob" value="${edit?null:ScheduledExecution.findScheduledExecution(item.jobGroup?item.jobGroup:null,item.jobName,project)}"/>
                 <g:if test="${foundjob}">
                 <g:link controller="scheduledExecution" action="show" id="${foundjob.extid}"><g:if test="${!noimgs}"><g:img file="icon-small-job.png" width="16px" height="16px"/> </g:if>${item.jobGroup?item.jobGroup.encodeAsHTML()+'/':''}${item.jobName.encodeAsHTML()}</g:link>
                 </g:if>

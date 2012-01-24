@@ -2317,31 +2317,12 @@ class ScheduledExecutionController  {
             def jobchange=new HashMap(changeinfo)
             if(option=="update" || option=="skip"){
                 //look for dupe by name and group path and project
-                def c = ScheduledExecution.createCriteria()
                 def schedlist
                 //first look for uuid
                 if(jobdata.uuid){
-                    schedlist = c.list {
-                        and {
-                            eq('uuid', jobdata.uuid)
-                        }
-                    }
+                    schedlist = ScheduledExecution.findAllByUuid(jobdata.uuid)
                 }else{
-//                if(!schedlist){
-                    schedlist= c.list{
-                        and{
-                            eq('jobName',jobdata.jobName)
-                            if(!jobdata.groupPath){
-                                or{
-                                    eq('groupPath', '')
-                                    isNull('groupPath')
-                                }
-                            }else{
-                                eq('groupPath',jobdata.groupPath)
-                            }
-                            eq('project',jobdata.project)
-                        }
-                    }
+                    schedlist = ScheduledExecution.findAllScheduledExecutions(jobdata.groupPath, jobdata.jobName, jobdata.project)
                 }
                 if(schedlist && 1==schedlist.size()){
                     scheduledExecution=schedlist[0]
@@ -2628,7 +2609,7 @@ class ScheduledExecutionController  {
 
     def runJobByName = {
         //lookup job
-        if(!params.jobName && !params.id){
+        if(!(params.jobName  && params.project || params.id)){
             flash.error="jobName or id is required"
             response.setStatus (404)
             return error()
@@ -2643,10 +2624,8 @@ class ScheduledExecutionController  {
                 return error()
             }
             jobs = [get]
-        }else if (params.groupPath) {
-            jobs = ScheduledExecution.findAllByJobNameAndGroupPath(params.jobName, params.groupPath)
         }else{
-            jobs = ScheduledExecution.findAllByJobName(params.jobName)
+            jobs = ScheduledExecution.findAllScheduledExecutions(params.groupPath, params.jobName, params.project)
         }
         if(!jobs || jobs.size()<1 || jobs.size()>1){
             flash.error="No unique job matched the input: ${params.jobName}, ${params.groupPath}. found (${jobs.size()})"

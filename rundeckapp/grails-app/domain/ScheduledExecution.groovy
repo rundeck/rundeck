@@ -567,5 +567,47 @@ class ScheduledExecution extends ExecutionContext {
     def getExtid(){
         return this.uuid?:this.id.toString()
     }
+
+    /**
+     * Find all ScheduledExecutions with the given group, name and project
+     * @param group
+     * @param name
+     * @param project
+     * @return
+     */
+    static List findAllScheduledExecutions(String group, String name, String project){
+        def c = ScheduledExecution.createCriteria()
+        def schedlist = c.list {
+            and {
+                eq('jobName', name)
+                if (!group) {
+                    or {
+                        eq('groupPath', '')
+                        isNull('groupPath')
+                    }
+                } else {
+                    eq('groupPath', group)
+                }
+                eq('project', project)
+            }
+        }
+        return schedlist
+    }
+
+    /**
+     * Find the only ScheduledExecution with the given group, name and project
+     * @param group
+     * @param name
+     * @param project
+     * @return
+     */
+    static ScheduledExecution findScheduledExecution(String group, String name, String project) {
+        def schedlist = ScheduledExecution.findAllScheduledExecutions(group,name,project)
+        if(schedlist && 1 == schedlist.size()){
+            return schedlist[0]
+        }else{
+            return null
+        }
+    }
 }
 

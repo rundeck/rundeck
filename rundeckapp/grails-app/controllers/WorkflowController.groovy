@@ -115,7 +115,7 @@ class WorkflowController {
         _pushUndoAction(params.scheduledExecutionId, result.undo)
         _clearRedoStack(params.scheduledExecutionId)
 
-        return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: params.edit, highlight: toi])
+        return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: params.edit, highlight: toi, project:session.project])
     }
 
     /**
@@ -141,7 +141,7 @@ class WorkflowController {
         _pushUndoAction(params.scheduledExecutionId, result.undo)
         _clearRedoStack(params.scheduledExecutionId)
 
-        return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: params.edit])
+        return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: params.edit, project: session.project])
     }
 
 
@@ -169,7 +169,7 @@ class WorkflowController {
             _pushRedoAction(params.scheduledExecutionId, result.undo)
         }
 
-        return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: params.edit, highlight: num])
+        return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: params.edit, highlight: num, project: session.project])
     }
 
 
@@ -198,7 +198,7 @@ class WorkflowController {
             _pushUndoAction(params.scheduledExecutionId, result.undo)
         }
 
-        return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: params.edit, highlight: num])
+        return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: params.edit, highlight: num, project: session.project])
     }
 
     /**
@@ -211,7 +211,7 @@ class WorkflowController {
         session.redoWF?.remove(uid)
         def Workflow editwf = _getSessionWorkflow()
 
-        return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: true])
+        return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: true, project: session.project])
     }
 
 

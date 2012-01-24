@@ -571,7 +571,7 @@ var applinks={
             <td>Workflow:</td>
             <td>
                 <g:set var="editwf" value="${session.editWF && session.editWF[scheduledExecution.id.toString()]?session.editWF[scheduledExecution.id.toString()]:scheduledExecution.workflow}"/>
-                <g:render template="/execution/execDetailsWorkflow" model="${[workflow:editwf,context:scheduledExecution,edit:true,error:scheduledExecution?.errors?.hasFieldErrors('workflow')]}"/>
+                <g:render template="/execution/execDetailsWorkflow" model="${[workflow:editwf,context:scheduledExecution,edit:true,error:scheduledExecution?.errors?.hasFieldErrors('workflow'),project:scheduledExecution?.project?:projects?.size()==1?projects[0].name:session.project?:'']}"/>
                 <g:hiddenField name="_sessionwf" value="true"/>
                 <g:if test="${null==editwf || null==editwf.commands || 0==editwf.commands.size()}">
                     <g:javascript>
