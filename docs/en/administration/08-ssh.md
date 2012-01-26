@@ -110,3 +110,8 @@ manual page for instructions.
 
 Use a wild card pattern to permit `RD_` prefixed variables to provide
 open access to Rundeck generated environment variables.
+
+Example in sshd_config:
+
+    # pass Rundeck variables
+    AcceptEnv RD_*

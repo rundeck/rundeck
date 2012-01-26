@@ -206,6 +206,52 @@ Once the Workflow steps have been defined and order, changes are
 permanently saved after pressing the "Create" button if new or the
 "Update" button if the Job is being modified.
 
+## Context Variables
+
+When a Job step is executed, it has a set of "context" variables that you can access in the Job step. There are several sets of context variables, including: the Job context `job`, the Node context `node`, and the Option context `option`.
+
+Job context variables:
+
+* `job.name`: Name of the Job
+* `job.group`: Group of the Job
+* `job.id`: ID of the Job
+* `job.username`: Username of the user executing the Job
+* `job.project`: Project name
+
+Node context variables:
+
+* `node.name`: Name of the Node being executed on
+* `node.hostname`: Hostname of the Node
+* `node.username`: Usernae of the remote user
+* `node.description`: Description of the node
+* `node.tags`: Comma-separated list of tags
+* `node.os-*`: OS properties of the Node: `name`,`version`,`arch`,`family`
+* `node.*`: All Node attributes defined on the Node.
+
+Option context variables are referred to as `option.NAME` (more about [Job Options](job-options.html) in the next chapter.)
+
+### Context Variable Usage
+
+Context variables can be used in a few ways in a Job step, with slightly different sytanxes:
+
+* Commands, Script Arguments and Job Reference Arguments
+
+    :     `${ctx.name}`
+
+* Inline Script Content (*see note*)
+
+    :     `@ctx.name@`
+
+    **Note**: The "Inline Script Content" variable expansion is **not** available for "Script File" steps.  The Script File is not rewritten at all when used for execution.
+
+* Environment Variables (*see note*)
+
+    :     `$RD_CTX_NAME`
+
+    The syntax for Environment variables is that all letters become uppercase, punctuation is replaced with underscore, and the name is prefixed with `RD_`.
+
+    **Note**: See the chapter [Administration - SSH - Passing Environment Variables Through Remote Commands](../administration/ssh.html#passing-environment-variables-through-remote-command) for information about requirements of the SSH server.
+
 ## Summary
 
 At this point you should understand what a Job workflow is, the kinds

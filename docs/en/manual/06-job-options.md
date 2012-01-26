@@ -173,24 +173,19 @@ See [Chapter 9 - Option Model Provider](job-options.html#option-model-provider).
 ## Script usage
 
 Option values can be passed to scripts as an argument or referenced
-inside the script via a named token. Option values can be accessed in
-one of several ways:
+inside the script via a named token. Each option value is defined in the Options context variables as `option.NAME`.
 
-Value passed as an environment variable:
-:    Bash: $RD\_OPTION\__NAME_ (**See note below**)
+See the [Job Workflows - Context Variables](job-workflows.html#context-variables) Section.
 
-Value passed as an argument to a script:
-:    Commandline Arguments: ${option._name_}
+**Example:**
 
-Value referenced as a replacement token inside the script:
-:    Script Content: @option._name_@
-
-A single example helps illustrate these methods. Imagine a trivial script
-is wrapped in a Job named "hello" and has an option named "message".
+A Job named "hello" and has an option named "message".
 
 The "hello" Job option signature would be: `-message <>`.
 
 ![Option usage](../figures/fig0504.png)
+
+The arguments passed to the script are defined as `${option.message}`.
 
 Here's the content of this simple script. 
 
@@ -244,20 +239,12 @@ Replacement token
 :    If the option is unset the token will be left alone inside the
      script. You might write your script a bit more defensively and
      change the implementation like so:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}         
+
         message=@option.message@
-        if [ "$message" == "@option.message@" ] ; then
+        atsign="@"
+        if [ "$message" == "${atsign}option.message${atsign}" ] ; then
            message=mydefault
-        fi 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-**Note**: To pass environment variables through remote command
-dispatches, it is required to properly configure the SSH server on the
-remote end. See the AcceptEnv directive in the "sshd\_config(5)"
-manual page for instructions. Use a wild card pattern to permit RD\_
-prefixed variables to provide open access to Rundeck generated
-environment variables.
-
+        fi
 
 ## Calling a Job with options
 
