@@ -1665,8 +1665,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
 
                     //construct job data context
                     def jobcontext = new HashMap<String, String>()
-                    jobcontext.id = se.id.toString()
-                    jobcontext.uuid = se.uuid
+                    jobcontext.id = se.extid
                     jobcontext.name = se.jobName
                     jobcontext.group = se.groupPath
                     jobcontext.project = se.project
