@@ -29,7 +29,7 @@ used by _editOptions.gsp template
             <tr>
                 <td class="${hasError?'fieldError':''} remoteoptionfield" id="${fieldNamekey}"><span style="display:none;" class="remotestatus"></span> ${optName}:</td>
                 <td>
-                    <g:if test="${optionSelect.valuesUrl !=null}">
+                    <g:if test="${optionSelect.realValuesUrl !=null}">
                         <g:set var="holder" value="${rkey+'_'+optName+'_hold'}"/>
                         <span id="${holder}" >
                         </span>

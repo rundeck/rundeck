@@ -1466,7 +1466,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertFalse "incorrect enforced", opt0.enforced
             assertFalse "incorrect enforced", opt0.required
             assertEquals "incorrect regex", "abc", opt0.regex
-            assertNull "incorrect values size", opt0.valuesUrl
+            assertNull "incorrect values size", opt0.realValuesUrl
             assertNotNull "incorrect values size", opt0.values
             assertEquals "incorrect values size", 3, opt0.values.size()
             def values=[]
@@ -1543,7 +1543,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect defaultValue", "789", opt0.defaultValue
             assertEquals "incorrect enforced", "false", opt0.enforced.toString()
             assertEquals "incorrect regex", "abc", opt0.regex
-            assertNull "incorrect values size", opt0.valuesUrl
+            assertNull "incorrect values size", opt0.realValuesUrl
             assertNotNull "incorrect values size", opt0.values
             assertEquals "incorrect values size", 3, opt0.values.size()
             def values=[]
@@ -1590,9 +1590,9 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect enforced", "false", opt1.enforced.toString()
             assertEquals "incorrect regex", "abc", opt1.regex
             assertNull "incorrect values size", opt1.values
-            assertNotNull "missing valuesUrl", opt1.valuesUrl
-            assertTrue "missing valuesUrl", opt1.valuesUrl instanceof URL
-            assertEquals "incorrect valuesUrl", "http://monkey/somewhere",opt1.valuesUrl.toExternalForm()
+            assertNotNull "missing valuesUrl", opt1.realValuesUrl
+            assertTrue "missing valuesUrl", opt1.realValuesUrl instanceof URL
+            assertEquals "incorrect valuesUrl", "http://monkey/somewhere",opt1.realValuesUrl.toExternalForm()
 
     }
 
@@ -1640,7 +1640,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertNull "incorrect regex", opt1.secureInput
         assertNull "incorrect regex", opt1.regex
         assertNull "incorrect values size", opt1.values
-        assertNull "missing valuesUrl", opt1.valuesUrl
+        assertNull "missing valuesUrl", opt1.realValuesUrl
 
         def xml2 = """<joblist>
   <job>
@@ -1762,7 +1762,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertEquals "incorrect secure", "true", opt1.secureInput.toString()
         assertNull "incorrect regex", opt1.regex
         assertNull "incorrect values size", opt1.values
-        assertNull "missing valuesUrl", opt1.valuesUrl
+        assertNull "missing valuesUrl", opt1.realValuesUrl
 
     }
 

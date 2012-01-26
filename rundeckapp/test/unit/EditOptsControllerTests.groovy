@@ -25,7 +25,7 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertFalse option.enforced
             assertNull option.values
             assertNull option.valuesList
-            assertNull option.valuesUrl
+            assertNull option.realValuesUrl
             assertNull option.valuesUrlString
             assertNull option.regex
             assertNull option.defaultValue
@@ -48,7 +48,7 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertTrue option.values.contains('b')
             assertTrue option.values.contains('c')
             assertNull option.valuesList
-            assertNull option.valuesUrl
+            assertNull option.realValuesUrl
             assertNull option.valuesUrlString
             assertNull option.regex
             assertNull option.defaultValue
@@ -67,8 +67,8 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertFalse option.enforced
             assertNull option.values
             assertNull option.valuesList
-            assertNotNull option.valuesUrl
-            assertEquals 'http://test.com', option.valuesUrl.toExternalForm()
+            assertNotNull option.realValuesUrl
+            assertEquals 'http://test.com', option.realValuesUrl.toExternalForm()
             assertEquals 'http://test.com', option.valuesUrlString
             assertNull option.regex
             assertNull option.defaultValue
@@ -87,8 +87,8 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertTrue option.enforced
             assertNull option.values
             assertNull option.valuesList
-            assertNotNull option.valuesUrl
-            assertEquals 'http://test.com', option.valuesUrl.toExternalForm()
+            assertNotNull option.realValuesUrl
+            assertEquals 'http://test.com', option.realValuesUrl.toExternalForm()
             assertEquals 'http://test.com', option.valuesUrlString
             assertNull option.regex
             assertNull option.defaultValue
@@ -107,8 +107,8 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertFalse option.enforced
             assertNull option.values
             assertNull option.valuesList
-            assertNotNull option.valuesUrl
-            assertEquals 'http://test.com', option.valuesUrl.toExternalForm()
+            assertNotNull option.realValuesUrl
+            assertEquals 'http://test.com', option.realValuesUrl.toExternalForm()
             assertEquals 'http://test.com', option.valuesUrlString
             assertNotNull option.regex
             assertEquals 'testregex',option.regex
@@ -128,7 +128,7 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertEquals 'a',test2.defaultValue
             assertTrue test2.enforced
             assertFalse test2.required
-            assertNull test2.valuesUrl
+            assertNull test2.realValuesUrl
             assertNull test2.regex
             assertNotNull test2.values
             assertEquals 3, test2.values.size()
@@ -311,6 +311,7 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertEquals 'optname',result.undo.name
             assertNotNull result.undo.params
 
+            System.err.println("undo: ${result.undo}");
             //apply undo
             def result2 = ctrl._applyOptionAction(optsmap,result.undo)
             assertNull result2.error
@@ -324,7 +325,7 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertNull option.defaultValue
             assertFalse option.enforced
             assertFalse option.required
-            assertEquals 'http://test.com',option.valuesUrl.toExternalForm()
+            assertEquals 'http://test.com',option.realValuesUrl.toExternalForm()
             assertEquals 'testregex',option.regex
             assertTrue  null==option.values || 0==option.values.size()
             assertNull option.valuesList
@@ -346,7 +347,7 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertEquals 'a',test2.defaultValue
             assertTrue test2.enforced
             assertFalse test2.required
-            assertNull test2.valuesUrl
+            assertNull test2.realValuesUrl
             assertNull test2.regex
             assertNotNull test2.values
             assertEquals 3, test2.values.size()
@@ -369,7 +370,7 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertNull option.defaultValue
             assertFalse option.enforced
             assertFalse option.required
-            assertEquals 'http://test.com',option.valuesUrl.toExternalForm()
+            assertEquals 'http://test.com',option.realValuesUrl.toExternalForm()
             assertEquals 'testregex',option.regex
             assertTrue  null==option.values || 0==option.values.size()
             assertNull option.valuesList
@@ -390,7 +391,7 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertEquals 'a',test2.defaultValue
             assertTrue test2.enforced
             assertFalse test2.required
-            assertNull test2.valuesUrl
+            assertNull test2.realValuesUrl
             assertNull test2.regex
             assertNotNull test2.values
             assertEquals 3, test2.values.size()
@@ -413,7 +414,7 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertNull option.defaultValue
             assertFalse option.enforced
             assertFalse option.required
-            assertEquals 'http://test.com',option.valuesUrl.toExternalForm()
+            assertEquals 'http://test.com',option.realValuesUrl.toExternalForm()
             assertEquals 'testregex',option.regex
             assertTrue  null==option.values || 0==option.values.size()
             assertNull option.valuesList

@@ -44,6 +44,10 @@ public class Option implements Comparable{
     SortedSet values
     static hasMany = [values:String]
     URL valuesUrl
+    /**
+     * supercedes valuesUrl and allows longer values. 
+     */
+    URL valuesUrlLong
     String valuesUrlString
     String regex
     String valuesList
@@ -52,7 +56,7 @@ public class Option implements Comparable{
     Boolean secureInput
     
     static belongsTo=[scheduledExecution:ScheduledExecution]
-    static transients=['valuesList','valuesUrlString']
+    static transients=['valuesList','valuesUrlString','realValuesUrl']
 
     static constraints={
         name(nullable:false,blank:false)
@@ -62,6 +66,7 @@ public class Option implements Comparable{
         required(nullable:true)
         values(nullable:true)
         valuesUrl(nullable:true)
+        valuesUrlLong(nullable:true)
         regex(nullable:true)
         scheduledExecution(nullable:true)
         delimiter(nullable:true)
@@ -73,6 +78,7 @@ public class Option implements Comparable{
         def config = ConfigurationHolder.config
         if (config.rundeck.v14.rdbsupport=='true') {
             table "rdoption"
+            valuesUrlLong length:3000
         }
     }
     /**
@@ -92,9 +98,8 @@ public class Option implements Comparable{
         if(defaultValue){
             map.value=defaultValue
         }
-        //valuesUrl: valuesUrl.toExternalForm(), regex: regex, values: values
-        if(valuesUrl){
-            map.valuesUrl=valuesUrl.toExternalForm()
+        if(getRealValuesUrl()){
+            map.valuesUrl=getRealValuesUrl().toExternalForm()
         }
         if(regex){
             map.regex=regex
@@ -124,7 +129,7 @@ public class Option implements Comparable{
             opt.defaultValue = data.value
         }
         if(data.valuesUrl){
-            opt.valuesUrl=new URL(data.valuesUrl)
+            opt.realValuesUrl=new URL(data.valuesUrl)
         }
         if(null!=data.regex){
             opt.regex=data.regex
@@ -154,6 +159,30 @@ public class Option implements Comparable{
         }
     }
 
+    def beforeUpdate(){
+        if (valuesUrl) {
+            if (!valuesUrlLong) {
+                this.valuesUrlLong = valuesUrl
+            }
+            this.valuesUrl = null
+        }
+    }
+
+    def beforeInsert() {
+        if (valuesUrl) {
+            if(!valuesUrlLong){
+                this.valuesUrlLong=valuesUrl
+            }
+            this.valuesUrl = null
+        }
+    }
+    public URL getRealValuesUrl(){
+        return valuesUrl?:valuesUrlLong
+    }
+    public void setRealValuesUrl(URL url){
+        this.valuesUrl=null
+        this.valuesUrlLong=url
+    }
     /**
      * Convert the valuesList string member into the values set member
      */
@@ -176,7 +205,7 @@ public class Option implements Comparable{
      */
     public Option createClone(){
         Option opt = new Option()
-        ['name','description','defaultValue','enforced','required','values','valuesList','valuesUrl','regex','multivalued','delimiter','secureInput'].each{k->
+        ['name','description','defaultValue','enforced','required','values','valuesList','valuesUrl','valuesUrlLong','regex','multivalued','delimiter','secureInput'].each{k->
             opt[k]=this[k]
         }
         if(!opt.valuesList && values){
@@ -193,7 +222,7 @@ public class Option implements Comparable{
         ", enforced=" + enforced +
         ", required=" + required +
         ", values=" + values +
-        ", valuesUrl=" + valuesUrl +
+        ", valuesUrl=" + getRealValuesUrl() +
         ", regex='" + regex + '\'' +
         ", multivalued='" + multivalued + '\'' +
         ", secureInput='" + secureInput + '\'' +

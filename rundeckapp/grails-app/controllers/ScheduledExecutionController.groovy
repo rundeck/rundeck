@@ -259,9 +259,9 @@ class ScheduledExecutionController  {
         if (scheduledExecution.options && scheduledExecution.options.find {it.name == params.option}) {
             def Option opt = scheduledExecution.options.find {it.name == params.option}
             def values=[]
-            if (opt.valuesUrl) {
+            if (opt.realValuesUrl) {
                 //load expand variables in URL source
-                String srcUrl = expandUrl(opt, opt.valuesUrl.toExternalForm(), scheduledExecution)
+                String srcUrl = expandUrl(opt, opt.realValuesUrl.toExternalForm(), scheduledExecution)
                 String cleanUrl=srcUrl.replaceAll("^(https?://)([^:@/]+):[^@/]*@",'$1$2:****@');
                 def remoteResult=[:]
                 def result=null
@@ -2342,6 +2342,7 @@ class ScheduledExecutionController  {
                     try{
                         def result
                         if(jobdata instanceof ScheduledExecution){
+                            //xxx:try/catch the update
                             result = _doupdateJob(scheduledExecution.id,jobdata,jobchange)
                             success = result[0]
                             scheduledExecution = result[1]

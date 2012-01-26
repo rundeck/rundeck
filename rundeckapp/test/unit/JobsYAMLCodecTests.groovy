@@ -345,8 +345,8 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertFalse "wrong option name", opt2.enforced != null && opt2.enforced
         assertFalse "wrong option name", opt2.required != null && opt2.required
         assertNull "wrong option values", opt2.values
-        assertNotNull "missing valuesUrl ", opt2.valuesUrl
-        assertEquals "missing valuesUrl ", "http://something.com", opt2.valuesUrl.toExternalForm()
+        assertNotNull "missing valuesUrl ", opt2.realValuesUrl
+        assertEquals "missing valuesUrl ", "http://something.com", opt2.realValuesUrl.toExternalForm()
         assertEquals "wrong option regex", "\\d+", opt2.regex
         }
 

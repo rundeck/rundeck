@@ -1116,8 +1116,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertNotNull(opt1)
             assertEquals("wrong option name", "test3", opt1.name)
             assertEquals("wrong option name", "val3", opt1.defaultValue)
-            assertNotNull("wrong option name", opt1.valuesUrl)
-            assertEquals("wrong option name", "http://test.com/test3", opt1.valuesUrl.toExternalForm())
+            assertNotNull("wrong option name", opt1.realValuesUrl)
+            assertEquals("wrong option name", "http://test.com/test3", opt1.realValuesUrl.toExternalForm())
             assertFalse("wrong option name", opt1.enforced)
         }
     }
@@ -1857,8 +1857,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertNotNull(next)
             assertEquals("wrong option name", "test3", next.name)
             assertEquals("wrong option name", "val3", next.defaultValue)
-            assertNotNull("wrong option name", next.valuesUrl)
-            assertEquals("wrong option name", "http://test.com/test3", next.valuesUrl.toExternalForm())
+            assertNotNull("wrong option name", next.realValuesUrl)
+            assertEquals("wrong option name", "http://test.com/test3", next.realValuesUrl.toExternalForm())
             assertFalse("wrong option name", next.enforced)
         }
         if(true){//test job with old-style options
@@ -1901,8 +1901,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertNotNull(next)
             assertEquals("wrong option name", "test3", next.name)
             assertEquals("wrong option name", "val3", next.defaultValue)
-            assertNotNull("wrong option name", next.valuesUrl)
-            assertEquals("wrong option name", "http://test.com/test3", next.valuesUrl.toExternalForm())
+            assertNotNull("wrong option name", next.realValuesUrl)
+            assertEquals("wrong option name", "http://test.com/test3", next.realValuesUrl.toExternalForm())
             assertFalse("wrong option name", next.enforced)
 
             //test argString of defined command workflow item
@@ -2036,7 +2036,7 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertNotNull(next)
             assertEquals("wrong option name", "opt3", next.name)
             assertEquals("wrong option name", "val3", next.defaultValue)
-            assertNull("wrong option name", next.valuesUrl)
+            assertNull("wrong option name", next.realValuesUrl)
             assertFalse("wrong option name", next.enforced)
             assertTrue("wrong option name", next.multivalued)
             assertEquals("wrong option name", ' ',next.delimiter)
@@ -4677,8 +4677,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertNotNull(next)
             assertEquals("wrong option name", "test3", next.name)
             assertEquals("wrong option name", "val3", next.defaultValue)
-            assertNotNull("wrong option name", next.valuesUrl)
-            assertEquals("wrong option name", "http://test.com/test3", next.valuesUrl.toExternalForm())
+            assertNotNull("wrong option name", next.realValuesUrl)
+            assertEquals("wrong option name", "http://test.com/test3", next.realValuesUrl.toExternalForm())
             assertFalse("wrong option name", next.enforced)
 
         }
@@ -4796,15 +4796,15 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertNotNull(next)
             assertEquals("wrong option name", "test1", next.name)
             assertEquals("wrong option name", "val1", next.defaultValue)
-            assertNotNull("wrong option name", next.valuesUrl)
-            assertEquals("wrong option name", "http://test.com/test", next.valuesUrl.toExternalForm())
+            assertNotNull("wrong option name", next.realValuesUrl)
+            assertEquals("wrong option name", "http://test.com/test", next.realValuesUrl.toExternalForm())
             assertFalse("wrong option name", next.enforced)
             assert iterator.hasNext()
             final Option next2 = iterator.next()
             assertNotNull(next2)
             assertEquals("wrong option name", "test2", next2.name)
             assertEquals("wrong option name", "val2", next2.defaultValue)
-            assertNull("wrong option name", next2.valuesUrl)
+            assertNull("wrong option name", next2.realValuesUrl)
             assertTrue("wrong option name", next2.enforced)
             assertNotNull("wrong option name", next2.values)
             assertLength(3, next2.values as Object[])
@@ -4913,8 +4913,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertNotNull(next)
             assertEquals("wrong option name", "test3", next.name)
             assertEquals("wrong option name", "val3", next.defaultValue)
-            assertNotNull("wrong option name", next.valuesUrl)
-            assertEquals("wrong option name", "http://test.com/test3", next.valuesUrl.toExternalForm())
+            assertNotNull("wrong option name", next.realValuesUrl)
+            assertEquals("wrong option name", "http://test.com/test3", next.realValuesUrl.toExternalForm())
             assertFalse("wrong option name", next.enforced)
 
         }
@@ -4973,8 +4973,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertNotNull(next)
             assertEquals("wrong option name", "test3", next.name)
             assertEquals("wrong option name", "val3", next.defaultValue)
-            assertNotNull("wrong option name", next.valuesUrl)
-            assertEquals("wrong option name", "http://test.com/test3", next.valuesUrl.toExternalForm())
+            assertNotNull("wrong option name", next.realValuesUrl)
+            assertEquals("wrong option name", "http://test.com/test3", next.realValuesUrl.toExternalForm())
             assertFalse("wrong option name", next.enforced)
 
             assertNotNull execution.workflow
@@ -5043,14 +5043,14 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertNotNull(next)
             assertEquals("wrong option name", "test1", next.name)
             assertEquals("wrong option name", "val3", next.defaultValue)
-            assertNotNull("wrong option name", next.valuesUrl)
-            assertEquals("wrong option name", "http://test.com/test3", next.valuesUrl.toExternalForm())
+            assertNotNull("wrong option name", next.realValuesUrl)
+            assertEquals("wrong option name", "http://test.com/test3", next.realValuesUrl.toExternalForm())
             assertFalse("wrong option name", next.enforced)
             final Option next2 = iterator.next()
             assertNotNull(next2)
             assertEquals("wrong option name", "test2", next2.name)
             assertEquals("wrong option name", "d", next2.defaultValue)
-            assertNull("wrong option name", next2.valuesUrl)
+            assertNull("wrong option name", next2.realValuesUrl)
             assertTrue("wrong option name", next2.enforced)
 
         }
@@ -5229,8 +5229,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertNotNull(next)
             assertEquals("wrong option name", "test3", next.name)
             assertEquals("wrong option name", "val3", next.defaultValue)
-            assertNotNull("wrong option name", next.valuesUrl)
-            assertEquals("wrong option name", "http://test.com/test3", next.valuesUrl.toExternalForm())
+            assertNotNull("wrong option name", next.realValuesUrl)
+            assertEquals("wrong option name", "http://test.com/test3", next.realValuesUrl.toExternalForm())
             assertFalse("wrong option name", next.enforced)
 
         }
@@ -5286,14 +5286,14 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertNotNull(next)
             assertEquals("wrong option name", "test1", next.name)
             assertEquals("wrong option name", "val3", next.defaultValue)
-            assertNotNull("wrong option name", next.valuesUrl)
-            assertEquals("wrong option name", "http://test.com/test3", next.valuesUrl.toExternalForm())
+            assertNotNull("wrong option name", next.realValuesUrl)
+            assertEquals("wrong option name", "http://test.com/test3", next.realValuesUrl.toExternalForm())
             assertFalse("wrong option name", next.enforced)
             final Option next2 = iterator.next()
             assertNotNull(next2)
             assertEquals("wrong option name", "test2", next2.name)
             assertEquals("wrong option name", "d", next2.defaultValue)
-            assertNull("wrong option name", next2.valuesUrl)
+            assertNull("wrong option name", next2.realValuesUrl)
             assertTrue("wrong option name", next2.enforced)
 
         }

@@ -39,9 +39,9 @@
         <span class="valueslist" id="vls_${rkey}">${opts ? opts.size() :0} Value${1==opts?.size()?'':'s'}</span>
         </span>
     </g:if>
-    <g:elseif test="${option.valuesUrl}">
+    <g:elseif test="${option.realValuesUrl}">
         <span class="valuesSet">
-        <span class="valuesUrl" title="Values loaded from Remote URL: ${option.valuesUrl.toString().encodeAsHTML()}">URL</span>
+        <span class="valuesUrl" title="Values loaded from Remote URL: ${option.realValuesUrl.toString().encodeAsHTML()}">URL</span>
         </span>
     </g:elseif>
 

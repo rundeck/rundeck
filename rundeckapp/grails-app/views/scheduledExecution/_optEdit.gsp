@@ -101,7 +101,7 @@
             <span class="prompt">Allowed Values</span>
             <div class="presentation inputset">
                 <div>
-                    <label class="left ${hasErrors(bean:option,field:'values','fieldError')}"><g:radio name="valuesType" value="list" checked="${!option || !option.valuesUrl && params.valuesType!='url' ?true:false}" id="vtrlist_${rkey}"/> List:</label>
+                    <label class="left ${hasErrors(bean:option,field:'values','fieldError')}"><g:radio name="valuesType" value="list" checked="${!option || !option.realValuesUrl && params.valuesType!='url' ?true:false}" id="vtrlist_${rkey}"/> List:</label>
                     <g:set var="listvalue" value="${option?.valuesList}"/>
                     <g:set var="listjoin" value="${option?.values }"/>
                     <g:textField name="valuesList" class="right" value="${listvalue? listvalue.encodeAsHTML() : listjoin ? listjoin.join(',')?.encodeAsHTML():''}" size="60" placeholder="Comma separated list" id="vlist_${rkey}"/>
@@ -109,8 +109,8 @@
                     <wdgt:eventHandler for="vtrlist_${rkey}" state="unempty" target="vlist_${rkey}" focus="true" inline="true"/>
                 </div>
                 <div>
-                    <label class="left ${hasErrors(bean:option,field:'valuesUrl','fieldError')}"><g:radio name="valuesType" value="url" checked="${option?.valuesUrl || option?.valuesUrlString || params.valuesType=='url'?true:false}"  id="vtrurl_${rkey}"/> Remote URL:</label>
-                    <input type="url" class="right" name="valuesUrl" value="${option?.valuesUrlString? option.valuesUrlString.encodeAsHTML() : option?.valuesUrl?.encodeAsHTML() }" size="60" placeholder="Remote URL" id="vurl_${rkey}"/>
+                    <label class="left ${hasErrors(bean:option,field:'valuesUrl','fieldError')}"><g:radio name="valuesType" value="url" checked="${option?.realValuesUrl || option?.valuesUrlString || params.valuesType=='url'?true:false}"  id="vtrurl_${rkey}"/> Remote URL:</label>
+                    <input type="url" class="right" name="valuesUrl" value="${option?.valuesUrlString? option.valuesUrlString.encodeAsHTML() : option?.realValuesUrl?.encodeAsHTML() }" size="60" placeholder="Remote URL" id="vurl_${rkey}"/>
                     <div class="info note right">A URL to a Remote JSON service. See <a href="${resource(dir: 'docs')}/RunDeck-Guide.html#option-model-provider" target="_blank">RunDeck Guide - Option model provider</a></div>
                     <wdgt:eventHandler for="vurl_${rkey}" state="unempty" target="vtrurl_${rkey}" check="true" inline="true" action="keydown"/>
                     <wdgt:eventHandler for="vtrurl_${rkey}" state="unempty" target="vurl_${rkey}" focus="true" inline="true"/>

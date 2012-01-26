@@ -289,7 +289,7 @@ class EditOptsController {
                 opt.errors.rejectValue('defaultValue', 'option.defaultValue.notallowed.message')
             }
         }
-        if (opt.enforced && (!opt.values && !opt.valuesList && !opt.valuesUrl)) {
+        if (opt.enforced && (!opt.values && !opt.valuesList && !opt.realValuesUrl)) {
             if (params && params.valuesType == 'url') {
                 opt.errors.rejectValue('valuesUrl', 'option.enforced.emptyvalues.message')
             } else {
@@ -342,6 +342,12 @@ class EditOptsController {
             params.values = null
             params.valuesList = null
             params.valuesUrlString = params.valuesUrl
+            if(params.valuesUrl){
+                params.realValuesUrl = new URL(params.valuesUrl)
+            }else{
+                params.realValuesUrl=null
+            }
+            params.remove('valuesUrl')
         }
         if (params.enforcedType == 'none') {
             params.regex = null
@@ -365,7 +371,7 @@ class EditOptsController {
         }
         opt.properties = params
         if(params.valuesType == 'list'){
-            opt.valuesUrl=null
+            opt.realValuesUrl=null
         }else if(params.valuesType == 'url'){
             opt.values=null
             opt.valuesList=null
@@ -381,9 +387,13 @@ class EditOptsController {
         def params = [:]
         params.putAll(opt.properties)
         if (opt.values) {
-            params.valueType = 'list'
+            params.valuesType = 'list'
         } else if (params.valuesUrl) {
-            params.valueType = 'url'
+            params.valuesType = 'url'
+            params.valuesUrl = opt.realValuesUrl?.toExternalForm()
+            params.remove('valuesUrlString')
+            params.remove('valuesUrlLong')
+            params.remove('realValuesUrl')
         }
         if (opt.regex) {
             params.enforcedType = 'regex'
@@ -393,7 +403,7 @@ class EditOptsController {
             params.enforcedType = 'none'
         }
         params.valuesList = opt.produceValuesList()
-        params.remove('values')
+        ['values','mapping','log','errors','class', 'metaClass', 'constraints', 'belongsTo', 'scheduledExecution', 'hasMany'].each{params.remove(it)}
         return params
     }
 
