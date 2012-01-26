@@ -5,7 +5,7 @@
     <groupId>com.dtolabs.rundeck</groupId>
     <artifactId>rundeck-project</artifactId>
     <packaging>pom</packaging>
-    <version>1.4.1</version>
+    <version>1.4.2</version>
     <name>RunDeck parent project</name>
     <url>http://rundeck.org</url>
 
