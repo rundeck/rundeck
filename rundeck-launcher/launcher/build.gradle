@@ -1,8 +1,16 @@
 archivesBaseName = 'rundeck-launcher'
 defaultTasks 'clean','launcherJar'
+
+launcherMainClass = "com.dtolabs.rundeck.ExpandRunServer"
+launcherStartClass = "com.dtolabs.rundeck.RunServer"
+launcherJettyLibs = "servlet-api-2.5-20081211.jar jetty-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-naming-${jettyVersion}.jar jetty-plus-${jettyVersion}.jar"
+launcherJettyLibsUnexpanded = 'servlet-api-2.5-20081211.jar jetty-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-naming-${jettyVersion}.jar jetty-plus-${jettyVersion}.jar'
+launcherJettyLibPath = "pkgs/webapp/WEB-INF/lib"
+
 configurations{
     warBundle
     jettyServerLib
+    pluginFiles
 }
 
 dependencies {
@@ -13,22 +21,18 @@ dependencies {
     warBundle(
         [group: 'com.dtolabs.rundeck', name: 'rundeck', version: version,ext:'war']
     )
-    jettyServerLib project(":jetty")
+    pluginFiles(
+        [group: 'com.dtolabs.rundeck', name: 'rundeck-script-plugin', version: version,ext:'jar'],            
+        [group: 'com.dtolabs.rundeck', name: 'rundeck-stub-plugin', version: version,ext:'jar']
+    )
+    jettyServerLib project(":rundeck-jetty-server")
 }
-/*task serverJar(type:Jar) {
-    baseName = serverLibName
-    from sourceSets.main.classes
-    manifest {
-        attributes 'Rundeck-Version': version
-    }
-}*/
 
 task expandCli << {
     //copy libs to a tools lib dir
     ant.mkdir(dir:"$projectDir/build/launcher-contents")
     dep = configurations.compile.allDependencies.find { dep -> dep.name == 'commons-cli' }
     FileTree cliJar = zipTree(configurations.compile.files(dep).find{it})
-    println "found file: ${cliJar}"
     copy{
         from cliJar
         exclude 'META-INF/**'
@@ -53,20 +57,115 @@ task copyJettyServerLib << {
         into "$projectDir/build/launcher-contents/lib"
     }
 }
+task copyPluginLibs << {
+    ant.mkdir(dir:"$projectDir/build/launcher-contents/libext")
+    configurations.pluginFiles.files.each{ pluginFile->
+        copy{
+            from pluginFile
+            into "$projectDir/build/launcher-contents/libext"
+        }
+    }
+}
+
 
 task launcherJar(type:Jar) {
     from "$projectDir/build/launcher-contents"
     from sourceSets.main.classes
     exclude 'com/dtolabs/rundeck/RunServer.class'
     manifest {
-        attributes 'Rundeck-Version': version, 'Main-Class':"com.dtolabs.rundeck.ExpandRunServer", "Rundeck-Start-Class":"com.dtolabs.rundeck.RunServer", "Rundeck-Jetty-Libs":"servlet-api-2.5-20081211.jar jetty-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-naming-${jettyVersion}.jar jetty-plus-${jettyVersion}.jar", "Rundeck-Jetty-Lib-Path":"pkgs/webapp/WEB-INF/lib"
+        attributes 'Rundeck-Version': version, 'Main-Class':"${launcherMainClass}", "Rundeck-Start-Class":"${launcherStartClass}", "Rundeck-Jetty-Libs":"${launcherJettyLibs}", "Rundeck-Jetty-Lib-Path":"${launcherJettyLibPath}"
     }
 }
 
-//copyServerLib.dependsOn << serverJar
-//includeClasses.dependsOn << compileJava
-//includeClasses.dependsOn << processResources
 launcherJar.dependsOn << expandCli
 launcherJar.dependsOn << expandWar
 launcherJar.dependsOn << copyJettyServerLib
+launcherJar.dependsOn << copyPluginLibs
 
+
+apply plugin: 'maven'
+task createPom << {
+    pom {
+        project {
+            artifactId archivesBaseName
+            groupId "com.dtolabs.rundeck"
+            inceptionYear '2011'
+            packaging 'jar'
+            version version
+            name "Rundeck Launcher"
+            url 'http://rundeck.org'
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+            properties{
+                'jettyVersion'(jettyVersion)
+                'launcherStartClass'(launcherStartClass)
+                'launcherMainClass'(launcherMainClass)
+                'launcherJettyLibPath'(launcherJettyLibPath)
+            }
+            build {
+                plugins{
+                    plugin{
+                        groupId 'org.apache.maven.plugins'
+                        artifactId 'maven-assembly-plugin'
+                        version '2.2.2'
+                        configuration{
+                            appendAssemblyId('false')
+                            descriptors{
+                                descriptor('src/main/assembly/src.xml')
+                            }
+                            archive{
+                              manifestEntries{
+                                'Rundeck-Version'('${project.version}')  
+                                'Rundeck-Start-Class'('${launcherStartClass}')
+                                'Main-Class'('${launcherMainClass}')
+                                'Rundeck-Jetty-Libs'(launcherJettyLibsUnexpanded)
+                                'Rundeck-Jetty-Lib-Path'('${launcherJettyLibPath}')
+                              }
+                            }
+                        }
+                        executions{
+                            execution{
+                                id 'make-assembly'
+                                phase 'package'
+                                goals{
+                                    goal 'single'
+                                }
+                            }
+                        }
+                    }
+                    plugin{
+                        groupId 'org.apache.maven.plugins'
+                        artifactId 'maven-jar-plugin'
+                        version '2.3.2'
+                        configuration{
+                            classifier 'code'
+                        }
+                    }
+                }
+            }
+            dependencies{
+                (configurations.warBundle.dependencies).each{ dep ->
+                    dependency{
+                        groupId dep.group
+                        artifactId dep.name
+                        version dep.version
+                        type 'war'
+                    }
+                }
+                (configurations.jettyServerLib.dependencies + configurations.pluginFiles.dependencies).each{ dep ->
+                    dependency{
+                        groupId dep.group
+                        artifactId dep.name
+                        version dep.version
+                        type 'jar'
+                    }
+                }
+            }
+        }
+    }.writeTo("pom.xml")
+}

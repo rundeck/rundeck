@@ -1,7 +1,8 @@
 allprojects{
-    version = '1.4.0.1'
+    version = '1.4.2'
     defaultTasks 'clean','assemble'
     apply plugin: 'idea'
+    group  = 'com.dtolabs.rundeck'
 }
 subprojects{
     apply plugin: 'java'
@@ -11,8 +12,10 @@ subprojects{
         mavenCentral()
         add(new org.apache.ivy.plugins.resolver.FileSystemResolver()) {
             name = 'localdeps'
-            addArtifactPattern "$projectDir/../dependencies/[module]/[ext]s/[module]-[revision](-[classifier]).[ext]"
-            addArtifactPattern "$projectDir/../rundeckapp/target/[module]-[revision](-[classifier]).[ext]"
+            addArtifactPattern "$projectDir/../../dependencies/[module]/[ext]s/[module]-[revision](-[classifier]).[ext]"
+            addArtifactPattern "$projectDir/../../rundeckapp/target/[module]-[revision](-[classifier]).[ext]"
+            addArtifactPattern "$projectDir/../../plugins/script-plugin/build/libs/[module]-[revision](-[classifier]).[ext]"
+            addArtifactPattern "$projectDir/../../plugins/stub-plugin/build/libs/[module]-[revision](-[classifier]).[ext]"
             descriptor = 'optional'
             checkmodified = true
         }
@@ -23,3 +26,28 @@ task wrapper(type: Wrapper) {
     jarPath = 'wrapper'
 }
 
+apply plugin: 'maven'
+task createPom << {
+    pom {
+        project {
+            artifactId 'rundeck-launcher-parent'
+            groupId "com.dtolabs.rundeck"
+            inceptionYear '2011'
+            packaging 'pom'
+            version version
+            name "RunDeck Launcher Parent"
+            url 'http://rundeck.org'
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+            modules{
+                module 'rundeck-jetty-server'
+                module 'launcher'
+            }
+        }
+    }.writeTo("pom.xml")
+}

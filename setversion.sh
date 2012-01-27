@@ -77,3 +77,9 @@ perl  -i'.orig' -p -e "s#^(\s*)version\s*=.*\$#\1version = '$VERSION'#" `pwd`/pl
 cd plugins/ && ./gradlew createPom && cd ..
 
 echo MODIFIED: `pwd`/plugins/build.gradle
+
+#modify rundeck-launcher/build.gradle
+perl  -i'.orig' -p -e "s#^(\s*)version\s*=.*\$#\1version = '$VERSION'#" `pwd`/rundeck-launcher/build.gradle
+cd rundeck-launcher/ && ./gradlew createPom && cd ..
+
+echo MODIFIED: `pwd`/rundeck-launcher/build.gradle
