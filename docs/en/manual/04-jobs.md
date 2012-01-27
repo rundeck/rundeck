@@ -284,10 +284,24 @@ In the GUI, the "Dispatch to Nodes" checkbox lets you enable node dispatching.  
 
 ![Node Filtering interface](../figures/fig0305-b.png)
 
+#### Filters
+
 You can click the different filter fields "Name", and "Tags" to enter filter values for those fields.  As you update the values you will see the "Matched Nodes" section updated to reflect the list of nodes that will match the inputs.  You can click "More" to see more of the available inclusion filters, and you can click "Extended Filters" to enter
 exclusion filters for the same fields.
 
+#### Threadcount
+
 You can set the maximum number of simultaneous threads to use by changing the "Thread Count" box.  A value of 1 means all node dispatches happen sequentially, and any greater value means that the node dispatches will happen in parallel.
+
+#### Rank order
+
+You can change the order in which nodes are executed on by setting the "Rank Attribute" and "Rank Order".  By default nodes are ordered by name ("nodename" attribute) in ascending order.  You can change the node attribute to sort on by entering it here, for example "rank", and you can change the order to descending to sort in reverse. 
+
+If the attribute you use has an integer number value, then the nodes will be sorted numerically by that attribute, rather than lexically. Otherwise the sort is based on the string value rather than the integer value.
+
+Any nodes without the specified attribute will then be sorted by their names.
+
+#### Keepgoing
 
 If you set "Keep going on error?" to "Yes", then if any node dispatches fail for any reason, the rest will continue to be executed until all have been executed.  At the end of the workflow for all nodes, the Job Execution will fail if any of the nodes had failed.
 
