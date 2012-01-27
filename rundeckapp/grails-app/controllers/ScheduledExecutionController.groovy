@@ -2703,6 +2703,7 @@ class ScheduledExecutionController  {
                 results.options=null
                 return render(view:'execute',model:results)
             }else{
+                results.error= results.message
                 return render(template:"/common/error",model:results)
             }
         }else if (results.error){
