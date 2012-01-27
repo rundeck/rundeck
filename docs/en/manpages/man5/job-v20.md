@@ -113,7 +113,6 @@ Execute the Unix 'who' command
       <job>
         <name>who's logged in?</name>
         <description>Runs the unix who command</description>
-        <additional/>
         <group>sysadm/users</group>
         <context>
           <project>default</project>
@@ -142,7 +141,6 @@ Execute a Bash script
       <job>
         <name>a simple script</name>
         <description>Runs a trivial bash script</description>
-        <additional/>
         <group>sysadm/users</group>
         <context>
           <project>default</project>
@@ -168,7 +166,6 @@ Execute a sequence of other commands, scripts and jobs:
       <job>
         <name>test coreutils</name>
         <description/>
-        <additional/>
         <context>
           <project>default</project>
         </context>
@@ -209,11 +206,6 @@ included.
 
 The job description is a sub-element of [job](#job) and allows a short
 description of the job.
-
-## additional 
-
-The additional element is a sub-element of [job](#job) and provides a
-place to declare additional user information. 
 
 ## group 
 
