@@ -42,6 +42,7 @@
           <systemPropertyVariables>
             <rdeck.base>${project.build.directory}/rdeck_base</rdeck.base>
           </systemPropertyVariables>
+          <redirectTestOutputToFile>true</redirectTestOutputToFile>
         </configuration>
       </plugin>
       <plugin>
