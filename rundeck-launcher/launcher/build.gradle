@@ -111,6 +111,15 @@ task createPom << {
                 plugins{
                     plugin{
                         groupId 'org.apache.maven.plugins'
+                        artifactId 'maven-compiler-plugin'
+                        version '2.3.2'
+                        configuration{
+                            'source'('1.5')
+                            'target'('1.5')
+                        }
+                    }
+                    plugin{
+                        groupId 'org.apache.maven.plugins'
                         artifactId 'maven-assembly-plugin'
                         version '2.2.2'
                         configuration{
