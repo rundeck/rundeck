@@ -266,6 +266,16 @@ For the first saved Job example, create a Job that calls the info script.
      -    Press the "output >>" link to go to the execution follow page.
      ![Simple saved job output](../figures/fig0305.png)
 
+### Multiple Executions
+
+By default, a saved job is "Single Execution": it can only have a single execution running at a time.  This is useful if the steps the Job performs might be interfered with if another separate process was also performing them on the same Node(s).
+
+However, in some cases it is useful to allow a Job to be executed more than once simultaneously.
+
+You can make a job allow "Multiple Executions" by toggling the value to Yes in the Job editor field shown below:
+
+![Multiple executions](../figures/fig-manual-jobs-multiexec.png)
+
 ### Node dispatching and filtering
 
 When you create a job you can choose between either running the job only locally (on the Rundeck server), or dispatching it to multiple nodes (including the Rundeck server if you want).

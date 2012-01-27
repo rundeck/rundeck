@@ -77,6 +77,10 @@ In addition, these optional entries can be present:
 
 :    Job group name
 
+`multipleExecutions`
+
+:    'true/false': if true, the job can have more than one execution at once.
+
 [`options`](#options)
 
 :    Set of Options for the Job

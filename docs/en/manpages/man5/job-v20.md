@@ -68,6 +68,10 @@ element is allowed.
 
 :    group name
 
+[multipleExecutions](#multipleexecutions)
+
+:    If the job can be executed multiple times simultaneously
+
 [context](#context)
 
 :    command context
@@ -222,8 +226,18 @@ directory structure.
     <job>
         <name>who</name>
         <description>who is logged in?</description>
-        <additional/>
         <group>/sysadm/users</group>
+    </job>
+
+## multipleExecutions
+
+Boolean value: 'true/false'.  If 'true', then the job can be run multiple times at once.  Otherwise, the Job can only have a single execution at a time.
+
+    <job>
+        <name>who</name>
+        <description>who is logged in?</description>
+        <group>/sysadm/users</group>
+        <multipleExecutions>true</multipleExecutions>
     </job>
 
 ## schedule
