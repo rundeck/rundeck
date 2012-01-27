@@ -158,23 +158,31 @@ def outfileName(title,index,file,toc){
 }
 def readToc(File tocfile){
     def toc=[]
+    def dirs=[]
     if(tocfile.exists()){
         tocfile.eachLine { line ->
             def match=line=~/^(\d+):([^:]+):(.+)$/
             if(match.matches()){
-                def fdef=[index:match.group(1).toInteger(),file:new File(tocfile.parentFile,match.group(2)),title:match.group(3).trim()]
-                fdef.outfile=outfileName(fdef.title,fdef.index,fdef.file,toc)
-                toc<<fdef
+                def file=new File(tocfile.parentFile,match.group(2))
+                if(file.isFile()){
+                    def fdef=[index:match.group(1).toInteger(),file:file,title:match.group(3).trim()]
+                    fdef.outfile=outfileName(fdef.title,fdef.index,fdef.file,toc)
+                    toc<<fdef
+                }else if (file.isDirectory()){
+                    dirs<<file
+                }
             }
         }
     }
-    return toc
+    return [toc:toc,dirs:dirs]
 }
-def getToc(File dir){
+def getToc(File dir, File routputdir){
     def nameRegex='^(toc|'+options.indexFileName+')\\.(md|txt)$'
     def mdfiles=dir.listFiles().findAll{(it.name=~/\.(md|txt)$/) && !(it.name=~nameRegex)}
     def tocfile=new File(dir,"toc.conf")
-    def readtoc=readToc(tocfile)
+    def readfile=readToc(tocfile)
+    def readtoc=readfile.toc
+    def readdirs=readfile.dirs
     def toc=[]
     if(!tocfile.exists()){
         addTempFile tocfile,true
@@ -198,7 +206,7 @@ def getToc(File dir){
         
         toc=readtoc
     }
-    return toc
+    return [toc:toc,dirs:readdirs]
 }
 
 def createTocMdFile(File dir,toc,title,content=null, subdirs=null){
@@ -684,7 +692,9 @@ def run(File docsdir, File tdir, File outputdir, rdepth=0, crumbs=[]){
     }
     //todo: parse edam.conf
     parseConf(docsdir)
-    def toc= getToc(docsdir)
+    def readtoc= getToc(docsdir,routputdir)
+    def toc=readtoc.toc
+    def dirs=readtoc.dirs
     def pages=prepareAll(toc,docsdir)
     def subdirs=[]
     if(rdepth!=0){
@@ -696,7 +706,7 @@ def run(File docsdir, File tdir, File outputdir, rdepth=0, crumbs=[]){
         }else if(scrumb){
             scrumb<<[dir:docsdir,placeholder:true]
         }
-        docsdir.eachDirMatch(compile(options.recurseDirPattern)){dir->
+        def dirclos={dir->
            if(dir.name!='templates' && dir!=routputdir && !(dir.name=~options.recurseDirPatternIgnore)){
                 flags=new HashMap(stash.flags)
                 pagevars=new HashMap(stash.pagevars)
@@ -709,6 +719,11 @@ def run(File docsdir, File tdir, File outputdir, rdepth=0, crumbs=[]){
                     subdirs<<[dir:dir,index:result.toc[0],toc:result.toc]
                 }
            }
+        }
+        if(!dirs){
+            docsdir.eachDirMatch(compile(options.recurseDirPattern),dirclos)
+        }else{
+            dirs.each(dirclos)
         }
         //unstash
         flags=stash.flags
