@@ -1,6 +1,6 @@
 archivesBaseName = 'rundeck-launcher'
 defaultTasks 'clean','launcherJar'
-
+dependsOn(':rundeck-jetty-server')
 launcherMainClass = "com.dtolabs.rundeck.ExpandRunServer"
 launcherStartClass = "com.dtolabs.rundeck.RunServer"
 launcherJettyLibs = "servlet-api-2.5-20081211.jar jetty-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-naming-${jettyVersion}.jar jetty-plus-${jettyVersion}.jar"
