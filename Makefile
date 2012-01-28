@@ -9,7 +9,15 @@ JETTYVERS=6.1.21
 GRAILS_HOME=${PWD}/build/local/grails-${GRAILSVERS}
 #PATH=$PATH:$GRAILS_HOME/bin
 
-GARGS += -Dgrails.project.work.dir=${PWD}/rundeckapp/work
+PROXY_DEFS=
+ifdef http_proxy
+	# assume that http_proxy is of format http://<host>:<port> or <host>:<port>
+gradle_proxy_host=$(shell echo ${http_proxy}|sed 's/http:\/\///'|awk -F ':' '{ print $1 }')
+gradle_proxy_port=$(shell echo ${http_proxy}|awk -F ':' '{ print $NF }')
+PROXY_DEFS="-Dhttp.proxyHost=$gradle_proxy_host -Dhttp.proxyPort=$gradle_proxy_port"
+endif
+
+GARGS += -Dgrails.project.work.dir=${PWD}/rundeckapp/work $(PROXY_DEFS)
 
 GRAILS=$(GRAILS_HOME)/bin/grails $(GARGS)
 
@@ -22,7 +30,9 @@ core = core/build/libs/rundeck-core-$(VERSION).jar
 war = rundeckapp/target/rundeck-$(VERSION).war
 launcher = rundeck-launcher/launcher/build/libs/rundeck-launcher-$(VERSION).jar
 
-.PHONY: clean rundeck docs makedocs plugins
+
+
+.PHONY: clean rundeck docs makedocs plugins war launcher
 
 rundeck:  $(launcher)
 	@echo $(VERSION)-$(RELEASE)
@@ -37,31 +47,35 @@ makedocs:
 	$(MAKE) -C docs
 
 $(core): $(CORE_FILES)
-	./build.sh rundeck_core
+	cd core; ./gradlew $(PROXY_DEFS) -PbuildNum=$(RELEASE) clean check assemble javadoc
+	#./build.sh rundeck_core
+
+war: $(war)
 
 $(war): $(RUNDECK_FILES)
-	./build.sh rundeck_war
+	echo make war
+	cp $(core) rundeckapp/lib/
+	#echo 'y' to the command to quell y/n prompt on second time running it:
+	cd rundeckapp; yes | $(GRAILS)  install-plugin ${PWD}/dependencies/grails-jetty/zips/grails-jetty-1.2-SNAPSHOT.zip
+	cd rundeckapp; $(GRAILS)  clean
+	cd rundeckapp; $(GRAILS)   test-app
+	cd rundeckapp; yes | $(GRAILS) prod war
+	#./build.sh rundeck_war
 
 $(plugs): $(core) $(PLUGIN_FILES)
 	cd plugins && ./gradlew	
 
 plugins: $(plugs)
-	-rm -rf ./rundeckapp/target/launcher-contents/libext 
-	mkdir -p ./rundeckapp/target/launcher-contents/libext
-	for i in $(plugs) ; do cp $$i ./rundeckapp/target/launcher-contents/libext/ ; done
 
 docs: makedocs
-	-rm -rf ./rundeckapp/target/launcher-contents/docs ./rundeckapp/web-app/docs
-	mkdir -p ./rundeckapp/target/launcher-contents/docs/man/man1
-	mkdir -p ./rundeckapp/target/launcher-contents/docs/man/man5
 	mkdir -p ./rundeckapp/web-app/docs
-	cp -r docs/en/dist/html/* ./rundeckapp/target/launcher-contents/docs
 	cp -r docs/en/dist/html/* ./rundeckapp/web-app/docs
-	cp docs/en/dist/man/man1/*.1 ./rundeckapp/target/launcher-contents/docs/man/man1
-	cp docs/en/dist/man/man5/*.5 ./rundeckapp/target/launcher-contents/docs/man/man5
 
-$(launcher): $(core) plugins  $(war)
-	./build.sh rundeckapp
+launcher: $(launcher)
+
+$(launcher): $(core) plugins $(war)
+	cd rundeck-launcher; ./gradlew $(PROXY_DEFS) -PbuildNum=$(RELEASE) clean assemble
+	#./build.sh rundeckapp
 
 .PHONY: test
 test: $(war)
@@ -71,6 +85,7 @@ test: $(war)
 clean:
 	-rm $(core) $(war) $(launcher) $(plugs)
 	$(MAKE) -C docs clean
+	cd rundeck-launcher; ./gradlew clean
 
 	pushd rundeckapp; $(GRAILS) clean; popd
 
