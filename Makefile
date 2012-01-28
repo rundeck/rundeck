@@ -62,7 +62,7 @@ war: $(war)
 
 grails: $(GRAILS_HOME)
 
-$(GRAILS_HOME): ${PWD}/build/local/grails-$(GRAILSVERS).zip
+$(GRAILS_HOME):
 	mkdir -p ${PWD}/build/local
 ifndef GET
 	echo "Couldn't find wget or curl, need one or the other!" 1>&2
