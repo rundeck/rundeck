@@ -52,7 +52,7 @@ $(core): $(CORE_FILES)
 
 war: $(war)
 
-$(war): $(RUNDECK_FILES)
+$(war): $(core) $(RUNDECK_FILES)
 	echo make war
 	cp $(core) rundeckapp/lib/
 	#echo 'y' to the command to quell y/n prompt on second time running it:
@@ -73,7 +73,7 @@ docs: makedocs
 
 launcher: $(launcher)
 
-$(launcher): $(core) plugins $(war)
+$(launcher): plugins $(war)
 	cd rundeck-launcher; ./gradlew $(PROXY_DEFS) -PbuildNum=$(RELEASE) clean assemble
 	#./build.sh rundeckapp
 

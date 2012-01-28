@@ -50,7 +50,7 @@ rpm:
 	@cp ../docs/en/manpages/man5/*.5.gz rpmdist/SOURCES/usr/share/man/en/man5
 	@cp -R ../core/build/tools/lib/*.jar rpmdist/SOURCES/var/lib/rundeck/cli
 	@cp ../core/build/libs/rundeck-core-*.jar rpmdist/SOURCES/var/lib/rundeck/cli
-	@cp ../rundeckapp/target/rundeck-server-*.jar rpmdist/SOURCES/var/lib/rundeck/bootstrap	
+	@cp ../rundeck-launcher/rundeck-jetty-server/build/libs/rundeck-jetty-server-*.jar rpmdist/SOURCES/var/lib/rundeck/bootstrap
 	@cp ../plugins/*-plugin/build/libs/*-plugin*.jar rpmdist/SOURCES/var/lib/rundeck/libext
 	@find ../core/src/main/resources/com/dtolabs/rundeck/core/cli/templates ! -regex ".*.bat$$" -and -type f | sed -e /rd-check/d -e /rd-setup/d | xargs -I Z cp Z rpmdist/SOURCES/usr/bin
 	@unzip -oq ../rundeckapp/target/rundeck-$(VERSION).war -d rpmdist/SOURCES/var/lib/rundeck/exp/webapp/
@@ -78,7 +78,7 @@ deb:
 	@cp ../docs/en/manpages/man5/*.5.gz debdist/usr/share/man/en/man5
 	@cp -R ../core/build/tools/lib/*.jar debdist/var/lib/rundeck/cli
 	@cp ../core/build/libs/rundeck-core-*.jar debdist/var/lib/rundeck/cli
-	@cp ../rundeckapp/target/rundeck-server-*.jar debdist/var/lib/rundeck/bootstrap
+	@cp ../rundeck-launcher/rundeck-jetty-server/build/libs/rundeck-jetty-server-*.jar debdist/var/lib/rundeck/bootstrap
 	@cp ../plugins/*-plugin/build/libs/*-plugin*.jar debdist/var/lib/rundeck/libext
 	@find ../core/src/main/resources/com/dtolabs/rundeck/core/cli/templates ! -regex ".*.bat$$" -and -type f | sed -e /rd-check/d -e /rd-setup/d | xargs -I Z cp Z debdist/usr/bin
 	@unzip -oq ../rundeckapp/target/rundeck-$(VERSION).war -d debdist/var/lib/rundeck/exp/webapp/
