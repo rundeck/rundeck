@@ -20,6 +20,15 @@ endif
 GARGS += -Dgrails.project.work.dir=${PWD}/rundeckapp/work $(PROXY_DEFS)
 
 GRAILS=$(GRAILS_HOME)/bin/grails $(GARGS)
+HASWGET=$(shell which wget)
+HASCURL=$(shell which curl)
+GET=
+ifneq ($(strip $(HASWGET)),)
+GET=$(HASWGET) -N -nd
+endif
+ifneq ($(strip $(HASCURL)),)
+GET=$(HASCURL) -O
+endif
 
 RUNDECK_FILES=$(shell find rundeckapp/{src,test,grails-app,scripts} -name "*.java" -o -name "*.groovy" -o -name "*.gsp")
 CORE_FILES=$(shell find core/src -name "*.java" -o -name "*.templates" -o -path "*/src/sh/*")
@@ -37,10 +46,10 @@ launcher = rundeck-launcher/launcher/build/libs/rundeck-launcher-$(VERSION).jar
 rundeck:  $(launcher)
 	@echo $(VERSION)-$(RELEASE)
 
-rpm: docs $(war) $(plugs)
+rpm: docs $(launcher) $(plugs)
 	cd packaging; $(MAKE) VERSION=$(VERSION) RELEASE=$(RELEASE) rpmclean rpm
 
-deb: docs $(war) $(plugs)
+deb: docs $(launcher) $(plugs)
 	cd packaging; $(MAKE) VERSION=$(VERSION) RELEASE=$(RELEASE) debclean deb
 
 makedocs:
@@ -48,11 +57,31 @@ makedocs:
 
 $(core): $(CORE_FILES)
 	cd core; ./gradlew $(PROXY_DEFS) -PbuildNum=$(RELEASE) clean check assemble javadoc
-	#./build.sh rundeck_core
 
 war: $(war)
 
-$(war): $(core) $(RUNDECK_FILES)
+grails: $(GRAILS_HOME)
+
+$(GRAILS_HOME): ${PWD}/build/local/grails-$(GRAILSVERS).zip
+	mkdir -p ${PWD}/build/local
+ifndef GET
+	echo "Couldn't find wget or curl, need one or the other!" 1>&2
+	exit 1
+endif
+
+	@echo "Get/expand grails distribution..."
+	@if [ ! -f ${PWD}/build/local/grails-$(GRAILSVERS)/bin/grails ] ; then \
+		if [ ! -z "${PKGREPO}" -a -f ${PKGREPO}/grails/zips/grails-$(GRAILSVERS).zip ] ; then \
+			cd ${PWD}/build/local ; \
+			unzip ${PKGREPO}/grails/zips/grails-$(GRAILSVERS).zip ; \
+		else \
+			cd ${PWD}/build/local ; \
+			$(GET) http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/grails-$(GRAILSVERS).zip ; \
+			unzip ${PWD}/build/local/grails-$(GRAILSVERS).zip ; \
+		fi \
+	fi
+
+$(war): $(core) $(RUNDECK_FILES) $(GRAILS_HOME)
 	echo make war
 	cp $(core) rundeckapp/lib/
 	#echo 'y' to the command to quell y/n prompt on second time running it:
@@ -60,7 +89,6 @@ $(war): $(core) $(RUNDECK_FILES)
 	cd rundeckapp; $(GRAILS)  clean
 	cd rundeckapp; $(GRAILS)   test-app
 	cd rundeckapp; yes | $(GRAILS) prod war
-	#./build.sh rundeck_war
 
 $(plugs): $(core) $(PLUGIN_FILES)
 	cd plugins && ./gradlew	
@@ -75,7 +103,6 @@ launcher: $(launcher)
 
 $(launcher): plugins $(war)
 	cd rundeck-launcher; ./gradlew $(PROXY_DEFS) -PbuildNum=$(RELEASE) clean assemble
-	#./build.sh rundeckapp
 
 .PHONY: test
 test: $(war)
