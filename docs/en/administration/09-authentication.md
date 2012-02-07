@@ -1,5 +1,14 @@
 % Authentication
 
+**Note:** The underlying security mechanism relies on JAAS, so you are free to use what ever JAAS provider you feel is suitable for your environment. See [JAAS](http://en.wikipedia.org/wiki/Java_Authentication_and_Authorization_Service) and specifically for Jetty, [JAAS for Jetty](http://docs.codehaus.org/display/JETTY/JAAS).
+
+Rundeck has two basic ways of defining authentication.
+
+1. A text file containing usernames, passwords and role definitions. Usually called [realm.properties](#realm.properties).
+2. [LDAP](#ldap)
+
+By default a new installation uses the realm.properties method.
+
 ### realm.properties
 
 These instructions explain how to manage user credentials for 
@@ -50,74 +59,53 @@ Then add this to the `realm.properties` file with a line like so:
 
 Then restart Rundeck to ensure it picks up the change and you're done.
 
+### LDAP
 
-### Active Directory
+LDAP and Active Directory configurations are created in the same way, but your LDAP structure may be different than Active Directory's structure.
 
-*note* Because the underlying security mechanism relies on JAAS, you are free to use what ever JAAS provider you feel is suitable for your environment.
+Rundeck includes a JAAS login module you can use for LDAP directory authentication, called `JettyCachingLdapLoginModule`.  This is an enhanced version of the default Jetty JAAS Ldap login module that caches authorization results for a period of time.
 
-(1)  Setup the LDAP login module configuration file
+You must change some configuration values to change the authentication module to use.
 
-    Create a `jaas-activedirectory.conf` file in the same directory as the `jaas-loginmodule.conf` file.
+#### Configuration
+
+(1)  Setup the LDAP login module configuration file (see the [Login module configuration](#login-module-configuration) section).
+
+    Create a `jaas-ldap.conf` file in the same directory as the `jaas-loginmodule.conf` file.
     
     * RPM install: /etc/rundeck/
     * Launcher install: $RDECK_BASE/server/config
-    
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    activedirectory {
-        com.dtolabs.rundeck.jetty.jaas.JettyCachingLdapLoginModule required
-        debug="true"
-        contextFactory="com.sun.jndi.ldap.LdapCtxFactory"
-        providerUrl="ldap://localhost:389"
-        bindDn="cn=Manager,dc=rundeck,dc=com"
-        bindPassword="secret"
-        authenticationMethod="simple"
-        forceBindingLogin="true"
-        userBaseDn="ou=users,dc=rundeck,dc=com"
-        userRdnAttribute="cn"
-        userIdAttribute="cn"
-        userPasswordAttribute="unicodePwd"
-        userObjectClass="user"
-        roleBaseDn="ou=roles,dc=rundeck,dc=com"
-        roleNameAttribute="cn"
-        roleMemberAttribute="member"
-        roleObjectClass="group"
-        cacheDurationMillis="300000"
-        reportStatistics="true";
-        };
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-**Note**: The `bindDn` and `bindPassword` must escape any special characters with `\` character. Special characters include `\` (backslash), as well as `!` (exclamation).
 
 (2) To override the default JAAS configuration file, you will need to supply the Rundeck server with the proper path to the new one, and a `loginmodule.name` Java system property to identify the new login module by name.
 
     The JAAS configuration file location is specified differently between the Launcher and the RPM.
-    
+
     **For the Launcher**:  the `loginmodule.conf.name` Java system property is used to identify the *name* of the config file, which must be located in the `$RDECK_BASE/server/config` dir.
-    
+
     You can simply specify the system properties on the java commandline:
-    
-        java -Dloginmodule.conf.name=jaas-activedirectory.conf \
-            -Dloginmodule.name=activedirectory \
+
+        java -Dloginmodule.conf.name=jaas-ldap.conf \
+            -Dloginmodule.name=ldap \
             -jar rundeck-launcher-x.x.jar
-            
+
     Otherwise, if you are starting the Launcher via the supplied `rundeckd` script, you can modify the `RDECK_JVM` value in the `$RDECK_BASE/etc/profile` file to add two JVM arguments:
-    
-        export RDECK_JVM="-Dloginmodule.conf.name=jaas-activedirectory.conf \
-            -Dloginmodule.name=activedirectory"
-    
+
+        export RDECK_JVM="-Dloginmodule.conf.name=jaas-ldap.conf \
+            -Dloginmodule.name=ldap"
+
     Note: more information about using the launcher and useful properties are under [Getting Started - Launcher Options](installation.html#launcher-options).
-    
+
     **For the RPM installation**: the absolute path to the JAAS config file must be specified with the `java.security.auth.login.config` property.
-    
+
     Update the `RDECK_JVM` in `/etc/rundeck/profile` by changing the following two JVM arguments:
-    
+
         export RDECK_JVM="-Djava.security.auth.login.config=/etc/rundeck/jaas-loginmodule.conf \
                -Dloginmodule.name=RDpropertyfilelogin \
-           
+
     to
-    
-        export RDECK_JVM="-Djava.security.auth.login.config=/etc/rundeck/jaas-activedirectory.conf \
-               -Dloginmodule.name=activedirectory \
+
+        export RDECK_JVM="-Djava.security.auth.login.config=/etc/rundeck/jaas-ldap.conf \
+               -Dloginmodule.name=ldap \
 
 
 (3) Restart rundeckd
@@ -126,7 +114,129 @@ Then restart Rundeck to ensure it picks up the change and you're done.
 
 (4) Attempt to logon
 
-    If everything was configured correctly, you will be able to access Rundeck using your AD credentials.  If something did not go smoothly, look at `/var/log/rundeck/service.log` for stack traces that may indicate what is wrong.
+    If everything was configured correctly, you will be able to access Rundeck using your AD credentials.  If something did not go smoothly, look at `/var/log/rundeck/service.log` for stack traces that may indicate what is wrong.    
+
+#### Login module configuration
+
+Here is an example configuration file:
+
+~~~~
+rundecklogin {
+    com.dtolabs.rundeck.jetty.jaas.JettyCachingLdapLoginModule required
+      debug="true"
+      contextFactory="com.sun.jndi.ldap.LdapCtxFactory"
+      providerUrl="ldap://server:389"
+      bindDn="cn=Manager,dc=example,dc=com"
+      bindPassword="secrent"
+      authenticationMethod="simple"
+      forceBindingLogin="false"
+      userBaseDn="ou=People,dc=test1,dc=example,dc=com"
+      userRdnAttribute="uid"
+      userIdAttribute="uid"
+      userPasswordAttribute="userPassword"
+      userObjectClass="account"
+      roleBaseDn="ou=Groups,dc=test1,dc=example,dc=com"
+      roleNameAttribute="cn"
+      roleUsernameMemberAttribute="memberUid"
+      roleMemberAttribute="memberUid"
+      roleObjectClass="posixGroup"
+      cacheDurationMillis="300000"
+      reportStatistics="true";
+};
+~~~~
+
+The `JettyCachingLdapLoginModule` has these configuration properties:
+
+debug
+:    "true/false" - turn on or off debug output
+
+contextFactory
+:    The LDAP context factory class, e.g. "com.sun.jndi.ldap.LdapCtxFactory"
+
+providerUrl
+:    ldap URL for the server, e.g. "ldap://server:389"
+
+bindDn
+:    Optional. If not using "binding" authentication, set this to the root DN that should bind, e.g. "cn=Manager,dc=example,dc=com"
+
+bindPassword
+:    password for root DN. **Note**: The `bindDn` and `bindPassword` must escape any special characters with `\` character. Special characters include `\` (backslash), as well as `!` (exclamation).
+
+authenticationMethod
+:    Authentication method, e.g. "simple"
+
+forceBindingLogin
+:    "true/false" - if true, bind as the user that is authenticating, otherwise bind as the manager and perform a search to verify user password
+
+forceBindingLoginUseRootContextForRoles
+:    "true/false" - if true and forceBindingLogin is true, then role membership searches will be performed in the root context, rather than in the bound user context.
+
+userBaseDn
+:    base DN to search for users, example: "ou=People,dc=test1,dc=example,dc=com"
+
+userRdnAttribute
+:    Attribute name for username, used when searching for user role membership by DN, default "uid".
+
+userIdAttribute
+:    Attribute name to identify user by username, default "cn".
+
+userPasswordAttribute
+:    Attribute name for user password, default "userPassword".
+
+userObjectClass
+:    Attribute name for user object class, default "inetOrgPerson".
+
+roleBaseDn
+:    Base DN for role membership search, e.g. "ou=Groups,dc=test1,dc=example,dc=com".
+
+roleNameAttribute
+:    Attribute name for role name, default "roleName".
+
+roleMemberAttribute
+:    Attribute name for a role that would contain a user's DN, default "uniqueMember".
+
+roleUsernameMemberAttribute
+:    Attribute name for a role that would contain a user's username. If set, this overrides the `roleMemberAttribute` behavior.
+
+roleObjectClass
+:    Object class for role, default "groupOfUniqueNames".
+
+rolePrefix
+:    Prefix string to remove from role names before returning to the application, e.g. "rundeck_".
+
+cacheDurationMillis
+:   Duration that authorization should be cached, in milliseconds. Default "0". A value of "0" indicates no caching should be used.
+
+reportStatistics
+:    "true/false" - if true, output cache statistics to the log.
+
+#### Active Directory
+
+Here is an example configuration for Active Directory
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+activedirectory {
+    com.dtolabs.rundeck.jetty.jaas.JettyCachingLdapLoginModule required
+    debug="true"
+    contextFactory="com.sun.jndi.ldap.LdapCtxFactory"
+    providerUrl="ldap://localhost:389"
+    bindDn="cn=Manager,dc=rundeck,dc=com"
+    bindPassword="secret"
+    authenticationMethod="simple"
+    forceBindingLogin="true"
+    userBaseDn="ou=users,dc=rundeck,dc=com"
+    userRdnAttribute="cn"
+    userIdAttribute="cn"
+    userPasswordAttribute="unicodePwd"
+    userObjectClass="user"
+    roleBaseDn="ou=roles,dc=rundeck,dc=com"
+    roleNameAttribute="cn"
+    roleMemberAttribute="member"
+    roleObjectClass="group"
+    cacheDurationMillis="300000"
+    reportStatistics="true";
+    };
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #### Communicating over secure ldap (ldaps://)
 
