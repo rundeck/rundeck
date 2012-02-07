@@ -724,14 +724,14 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             return encryptedPassword;
         }
 
-        if ("{MD5}".startsWith(encryptedPassword.toUpperCase())) {
+        if (encryptedPassword.toUpperCase().startsWith("{MD5}")) {
             return "MD5:"
-                    + encryptedPassword.substring("{MD5}".length(), encryptedPassword.length());
+                   + encryptedPassword.substring("{MD5}".length(), encryptedPassword.length());
         }
 
-        if ("{CRYPT}".startsWith(encryptedPassword.toUpperCase())) {
+        if (encryptedPassword.toUpperCase().startsWith("{CRYPT}")) {
             return "CRYPT:"
-                    + encryptedPassword.substring("{CRYPT}".length(), encryptedPassword.length());
+                   + encryptedPassword.substring("{CRYPT}".length(), encryptedPassword.length());
         }
 
         return encryptedPassword;
