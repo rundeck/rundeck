@@ -122,7 +122,7 @@ You may wish to monitor the internal operation of your Rundeck server via JMX.
 JMX provides introspection on the JVM, the application server, 
 and classes all through a consistent interface. 
 These various components are exposed to the management console 
-via JMX managed beans Ñ MBeans for short.
+via JMX managed beans - MBeans for short.
 
 _Note_: For more background information on JMX, see 
 "[Java theory and practice: Instrumenting applications with JMX.](http://www.ibm.com/developerworks/library/j-jtp09196/)". 
