@@ -6,9 +6,18 @@ APIVERS=$(shell cat api/version.info)
 DIRS = manpages
 CSS = style.css
 DIST = dist
-DATE = $(shell date "+%m-%d-%Y% %H:%M")
-ifndef VERSION
-VERSION=$(shell grep version.number= ../../version.properties | cut -d= -f 2)
+DATE = $(shell date "+%Y-%m-%dT%H:%M:%S%Z")
+HRDATE = $(shell date "+%B %e %Y, %H:%M %Z")
+VERSION=
+ifndef RVERSION
+RVERSION=$(shell grep version.number= ../../version.properties | cut -d= -f 2)
+VERSION=$(RVERSION)
+endif
+ifndef TAG
+TAG=$(shell grep version.tag= ../../version.properties | cut -d= -f 2)
+ifneq ($(TAG),GA)
+VERSION=$(RVERSION)-$(TAG)
+endif
 endif
 
 EDAM=groovy edam.groovy
@@ -24,12 +33,11 @@ man :
 
 html: oldlinks
 	mkdir -p $(DIST)/html
-	$(EDAM) -o $(DIST)/html -r -O 'recurseDirPatternIgnore=(dist|figures|oldlinks|temp)' -V "VERSION=$(VERSION)" -V "APIVERS=$(APIVERS)"
+	$(EDAM) -o $(DIST)/html -r -O 'recurseDirPatternIgnore=(dist|figures|oldlinks|temp)' -V "VERSION=$(VERSION)" -V "APIVERS=$(APIVERS)" -V "DATE=$(DATE)" -V "HRDATE=$(HRDATE)"
 
 oldlinks: oldlinks/*.md
 	mkdir -p $(DIST)/html
-	$(EDAM) -o $(DIST)/html -d oldlinks -t templates
-
+	$(EDAM) -o $(DIST)/html -d oldlinks -t templates -V "DATE=$(DATE)" -V "HRDATE=$(HRDATE)"
 
 resources :  $(CSS) ../figures/*.png
 	mkdir -p $(DIST)/html/figures
