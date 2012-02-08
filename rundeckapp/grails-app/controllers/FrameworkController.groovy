@@ -59,6 +59,7 @@ class FrameworkController  {
         request.title = "Unauthorized"
         request.error = "No authorized access to projects. Contact your administrator."
         response.setHeader(Constants.X_RUNDECK_ACTION_UNAUTHORIZED_HEADER, request.error)
+        log.error("'${request.remoteUser}' has no authorized access. Roles: "+ request.subject?.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class)?.collect { it.name }?.join(", "))
         return render(template:  '/common/error', model: [:])
     }
     /**
