@@ -169,11 +169,6 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             throw new ExecutionException(
                 "Hostname must be set to connect to remote node '" + node.getNodename() + "'");
         }
-        if (null == node.extractUserName()) {
-            throw new ExecutionException(
-                "Username must be set to connect to remote node '" + node.getNodename() + "'");
-        }
-
 
         final ExecutionListener listener = context.getExecutionListener();
         final Project project = new Project();
@@ -390,8 +385,8 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         }
 
         public String getUsername() {
-            if (null != node.getUsername() || node.containsUserName()) {
-                final String user = node.extractUserName();
+            final String user = node.extractUserName();
+            if (null!=user && !"".equals(user.trim())) {
                 if (user.contains("${")) {
                     return DataContextUtils.replaceDataReferences(user, context.getDataContext());
                 }
