@@ -28,6 +28,8 @@ import com.dtolabs.rundeck.core.NodesetFailureException;
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.*;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
 
 /**
@@ -138,9 +140,14 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
             } catch (Throwable e) {
                 success = false;
                 failures.put(node.getNodename(), "Error dispatching command to the node: " + e.getMessage());
-
                 context.getExecutionListener().log(Constants.ERR_LEVEL,
                     "Failed dispatching to node " + node.getNodename() + ": " + e.getMessage());
+
+                final StringWriter stringWriter = new StringWriter();
+                e.printStackTrace(new PrintWriter(stringWriter));
+                context.getExecutionListener().log(Constants.DEBUG_LEVEL,
+                    "Failed dispatching to node " + node.getNodename() + ": " + stringWriter.toString());
+
                 if (!keepgoing) {
                     if (failures.size() > 0 && null != failedListener) {
                         //tell listener of failed node list
