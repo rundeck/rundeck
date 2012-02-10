@@ -15,7 +15,7 @@ manpages: $(patsubst %.md,%.5.gz,$(wildcard $(PAGES)))
 	    gzip < $< > $@
 
 %.5: %.md
-	    sed "s/@VERSION@/$(VERSION)/" $*.md | pandoc -s -w man -o $@
+	    sed "s/\$${VERSION}/$(VERSION)/" $*.md | pandoc -s -w man -o $@
 
 roff :
 	$(ECHO) Generating system man pages

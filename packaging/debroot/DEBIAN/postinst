@@ -4,10 +4,12 @@ set -e
 
 setperm() {
   local user="$1"
-  local group="$2"
-  local mode="$3"
-  local file="$4"
-  shift 4
+  shift
+  local group="$1"
+  shift
+  local mode="$1"
+  shift
+  local file="$@"
 
   # Only do something when no setting exists - if it was set, then it's already
   # been unpacked using the appropriate ownership and permissions.
@@ -67,9 +69,8 @@ case "$1" in
     setperm rundeck rundeck 0750 /var/rundeck
     setperm rundeck rundeck 0750 /var/rundeck/projects
     setperm rundeck adm 2751 /var/log/rundeck
-    for file in `find /etc/rundeck -type f`; do
-      setperm rundeck rundeck 0640 $file
-    done
+    find /etc/rundeck -maxdepth 2 -type f -print0 | xargs -0 chown rundeck:rundeck
+    find /etc/rundeck -maxdepth 2 -type f -print0 | xargs -0 chmod 0640
     ;;
 
   abort-upgrade|abort-remove|abort-deconfigure)
