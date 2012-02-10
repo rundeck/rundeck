@@ -26,7 +26,6 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertNull option.values
             assertNull option.valuesList
             assertNull option.realValuesUrl
-            assertNull option.valuesUrlString
             assertNull option.regex
             assertNull option.defaultValue
         }
@@ -49,7 +48,6 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertTrue option.values.contains('c')
             assertNull option.valuesList
             assertNull option.realValuesUrl
-            assertNull option.valuesUrlString
             assertNull option.regex
             assertNull option.defaultValue
         }
@@ -69,7 +67,6 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertNull option.valuesList
             assertNotNull option.realValuesUrl
             assertEquals 'http://test.com', option.realValuesUrl.toExternalForm()
-            assertEquals 'http://test.com', option.valuesUrlString
             assertNull option.regex
             assertNull option.defaultValue
         }
@@ -89,7 +86,6 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertNull option.valuesList
             assertNotNull option.realValuesUrl
             assertEquals 'http://test.com', option.realValuesUrl.toExternalForm()
-            assertEquals 'http://test.com', option.valuesUrlString
             assertNull option.regex
             assertNull option.defaultValue
         }
@@ -109,7 +105,6 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertNull option.valuesList
             assertNotNull option.realValuesUrl
             assertEquals 'http://test.com', option.realValuesUrl.toExternalForm()
-            assertEquals 'http://test.com', option.valuesUrlString
             assertNotNull option.regex
             assertEquals 'testregex',option.regex
             assertNull option.defaultValue

@@ -391,7 +391,6 @@ class EditOptsController {
         } else if (params.valuesUrl) {
             params.valuesType = 'url'
             params.valuesUrl = opt.realValuesUrl?.toExternalForm()
-            params.remove('valuesUrlString')
             params.remove('valuesUrlLong')
             params.remove('realValuesUrl')
         }

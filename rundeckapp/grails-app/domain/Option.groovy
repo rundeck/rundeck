@@ -48,7 +48,6 @@ public class Option implements Comparable{
      * supercedes valuesUrl and allows longer values. 
      */
     URL valuesUrlLong
-    String valuesUrlString
     String regex
     String valuesList
     Boolean multivalued
@@ -56,7 +55,7 @@ public class Option implements Comparable{
     Boolean secureInput
     
     static belongsTo=[scheduledExecution:ScheduledExecution]
-    static transients=['valuesList','valuesUrlString','realValuesUrl']
+    static transients=['valuesList','realValuesUrl']
 
     static constraints={
         name(nullable:false,blank:false)
