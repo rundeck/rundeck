@@ -16,16 +16,16 @@ See more about settings up Nodes and Jobs for SSH execution in the section about
   this access.   
 * SSH can be configured for either *password* based authentication or *public/private key* based authentication.
 * For public/private key authentication:
-    * No passphrase should be set on the private key.
-    * SSH should not prompt for a password. There are many resources
+    * There are many resources
 available on how to configure ssh to use public key authentication
 instead of passwords such as:
-[Password-less logins with OpenSSH](http://www.debian-administration.org/articles/152)
-or
-[How-To: Password-less SSH](http://www.cs.wustl.edu/~mdeters/how-to/ssh/)
+[Password-less logins with OpenSSH](http://www.debian-administration.org/articles/152) or [How-To: Password-less SSH](http://www.cs.wustl.edu/~mdeters/how-to/ssh/).
+    * If your private key file has a passphrase, each Job definition that will execute on the node must be configured correctly.
 * For password authentication:
     * each Node definition must be configured to allow password authentication
     * each Job definition that will use it must be configured correctly
+
+For information on configuring Nodes, Jobs and Password options for jobs, see the [User Manual - Plugins - SSH Provider](../manual/plugins.html#ssh-provider) section.
 
 ## SSH key generation
 

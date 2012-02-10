@@ -336,18 +336,13 @@ class EditOptsController {
      * @param params input map of parameters
      */
     Option _setOptionFromParams (Option opt, Map params ){
+        def valuesUrl
         if (params.valuesType == 'list') {
             params.remove('valuesUrl')
         } else if (params.valuesType == 'url') {
             params.values = null
             params.valuesList = null
-            params.valuesUrlString = params.valuesUrl
-            if(params.valuesUrl){
-                params.realValuesUrl = new URL(params.valuesUrl)
-            }else{
-                params.realValuesUrl=null
-            }
-            params.remove('valuesUrl')
+            valuesUrl = params.valuesUrl
         }
         if (params.enforcedType == 'none') {
             params.regex = null
@@ -375,6 +370,11 @@ class EditOptsController {
         }else if(params.valuesType == 'url'){
             opt.values=null
             opt.valuesList=null
+            if(valuesUrl){
+                opt.realValuesUrl=new URL(valuesUrl)
+            }else{
+                opt.realValuesUrl = null
+            }
         }
         opt.convertValuesList()
         return opt
@@ -391,7 +391,6 @@ class EditOptsController {
         } else if (params.valuesUrl) {
             params.valuesType = 'url'
             params.valuesUrl = opt.realValuesUrl?.toExternalForm()
-            params.remove('valuesUrlString')
             params.remove('valuesUrlLong')
             params.remove('realValuesUrl')
         }
