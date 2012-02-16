@@ -13,14 +13,21 @@
 prog="rundeckd"
 rundeckd="${JAVA_HOME:-/usr}/bin/java ${RDECK_JVM} -cp ${BOOTSTRAP_CP}:/etc/rundeck com.dtolabs.rundeck.RunServer /etc/rundeck 4440"
 RETVAL=0
-PID_FILE=/var/run/rundeckd.pid
+PID_FILE=/var/run/${prog}.pid
+servicelog=/var/log/rundeck/service.log
 
 start() {
 	echo -n $"Starting $prog: "
-	nohup runuser -l rundeck -c "$rundeckd" 2>&1 >>/var/log/rundeck/service.log &
+	if ! touch $servicelog; then
+		echo No access to $servicelog. This usually means you need to be root
+		echo_failure
+		echo
+		return 1
+	fi
+	nohup runuser -l rundeck -c "$rundeckd" 2>&1 >>$servicelog &
  	RETVAL=$?	
 	PID=$!
-	echo $PID > /var/run/rundeckd.pid
+	echo $PID > $PID_FILE
 	if [ $RETVAL -eq 0 ]; then 
 		touch /var/lock/subsys/$prog
 		echo_success
@@ -33,7 +40,7 @@ start() {
 
 stop() {
 	echo -n $"Stopping $prog: "
-	killproc -p /var/run/rundeckd.pid "$rundeckd"
+	killproc -p $PID_FILE "$rundeckd"
 	RETVAL=$?
 	echo
 	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/$prog
@@ -43,7 +50,7 @@ stop() {
 ### NOT USED
 reload() {
 	echo -n $"Reloading $prog: "
-	killproc -p /var/run/rundeckd.pid "$rundeckd" -HUP
+	killproc -p $PID_FILE "$rundeckd" -HUP
 	RETVAL=$?
 	echo
 	return $RETVAL
@@ -67,7 +74,7 @@ case "$1" in
 		fi
 		;;
 	status)
-		status $rundeckd
+		status -p $PID_FILE $rundeckd
 		RETVAL=$?
 		;;
 	*)
