@@ -96,8 +96,8 @@ class MenuController {
         * redirect to configured start page, or default to Run page
          */
         def startpage='run'
-        if(grailsApplication.config.gui.startpage){
-            startpage=grailsApplication.config.gui.startpage
+        if(grailsApplication.config.rundeck.gui.startpage){
+            startpage=grailsApplication.config.rundeck.gui.startpage
         }
         switch (startpage){
             case 'run':

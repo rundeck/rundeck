@@ -26,4 +26,7 @@ these properties in the [rundeck-config.properties](configuration.html#rundeck-c
 `rundeck.gui.realJobTree` Displaying a real tree in the Jobs   false
                           overview instead of collapsing            
                           empty groups. **Default: true**           
+`rundeck.gui.startpage`   Change the default page shown after  'jobs'
+                          login. values: 'run','jobs' or 
+                          'history'. Default: 'run'.
 -------------------------------------------------------------------------------
