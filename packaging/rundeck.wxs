@@ -1,0 +1,152 @@
+<?xml version="1.0"?>
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+  <Product Name='RunDeck $(var.VERSION)' Id='*'
+           UpgradeCode='4413eb42-e830-4a69-af2c-3c327f96f5e8'
+           Language='1033'
+		   Codepage='1252'
+		   Version='$(var.VERSION)'
+		   Manufacturer='rundeck.org'>
+    <Package Description='RunDeck Windows Installer package'
+             Comments='This is RunDeck Windows Installer database'
+             Manufacturer='rundeck.org'
+             InstallerVersion='130'
+             Compressed='yes'/>
+
+	<Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR"/>
+
+    <Icon Id="rundeck.ico" SourceFile="$(var.SOURCES)\..\..\rundeck.ico"/>
+    <Property Id="ARPPRODUCTICON" Value="rundeck.ico" />
+
+    <Media Id='1' Cabinet='rundeck.cab' EmbedCab='yes'/>
+
+    <Directory Id='TARGETDIR' Name='SourceDir'>
+      <Directory Id='ProgramFilesFolder' Name='pFiles'>
+        <Directory Id='OrganizationDir' Name='DTO Labs'>
+	      <Directory Id='INSTALLDIR' Name='RunDeck'>
+	   	    <Directory Id="DesktopFolder" Name="RunDeck">
+		      <Component Id="DesktopShortcut">
+    	        <Condition>INSTALLDESKTOPSHORTCUT</Condition>
+		        <CreateFolder/>
+		        <RegistryKey Root="HKCU" Key="Software\RunDeck"
+                             Action="createAndRemoveOnUninstall">
+                  <RegistryValue Name="DTSC" Value="1" Type="integer" KeyPath="yes"/>
+                </RegistryKey>
+                <Shortcut Id="DesktopShortcut" Directory="DesktopFolder"
+                          Name="RunDeck"
+                          Target="[INSTALLDIR]rundeck.cmd"
+                          Icon="rundeck.ico"/>			
+              </Component>
+	      </Directory>
+              <Directory Id="AppDataFolder">
+		 <Directory Id="Microsoft" Name="Microsoft">
+		 <Component Id="MicrosoftFolder">
+			<CreateFolder Directory="Microsoft" />
+			<RemoveFolder Id="Microsoft" On="uninstall" />
+			<RegistryKey Root="HKCU" Key="Software\RunDeck\QL"
+                               Action="createAndRemoveOnUninstall">
+                    <RegistryValue Name="QLMIC" Value="1" Type="integer" KeyPath="yes"/>
+                  </RegistryKey>
+		 </Component>
+		 <Directory Id="InternetExplorer" Name="Internet Explorer">
+		 <Component Id="InternetExplorerFolder">
+			<CreateFolder Directory="InternetExplorer" />
+			<RemoveFolder Id="InternetExplorer" On="uninstall" />
+			<RegistryKey Root="HKCU" Key="Software\RunDeck\QL"
+                               Action="createAndRemoveOnUninstall">
+                    <RegistryValue Name="QLIE" Value="1" Type="integer" KeyPath="yes"/>
+                  </RegistryKey>
+		 </Component>
+		<Directory Id="QuickLaunchFolder" Name="Quick Launch">
+                <Component Id="QuickLaunchShortcut">
+                  <Condition>INSTALLQUICKLAUNCHSHORTCUT</Condition>
+                  <RegistryKey Root="HKCU" Key="Software\RunDeck\QL"
+                               Action="createAndRemoveOnUninstall">
+                    <RegistryValue Name="QLSC" Value="1" Type="integer" KeyPath="yes"/>
+                  </RegistryKey>
+                  <Shortcut Id="QuickLaunchShortcut"
+                            Directory="QuickLaunchFolder"
+                            Name="RunDeck"
+                            Target="[INSTALLDIR]rundeck.cmd"
+                            Icon="rundeck.ico"/>
+                  <RemoveFolder Id="QuickLaunchFolder" On="uninstall" />
+                </Component>
+              </Directory>
+		</Directory>
+		</Directory>
+		</Directory>
+		    <Directory Id="ProgramMenuFolder">
+			  <Directory Id="DTOProgramMenu" Name="DTO Labs">
+                <Directory Id="RDProgramMenu" Name="RunDeck" />
+			  </Directory>
+		    </Directory>
+	      </Directory>
+        </Directory>
+      </Directory>
+    </Directory>
+    <DirectoryRef Id="RDProgramMenu">
+      <Component Id="ProgamMenuShortcut">
+	    <CreateFolder Directory="DTOProgramMenu" />
+	    <CreateFolder Directory="RDProgramMenu" />
+	    <Shortcut Id="RDStartMenuShortcut" 
+                  Name="RunDeck"
+                  Description="Start RunDeck"
+                  Target="[INSTALLDIR]rundeck.cmd"
+                  Icon="rundeck.ico"/>
+        <RemoveFolder Id="ProgramMenuFolder" On="uninstall"/>
+        <RemoveFolder Id="RDTOProgramMenu" Directory="DTOProgramMenu" On="uninstall"/>
+	    <RemoveFolder Id="RRDProgramMenu" Directory="RDProgramMenu" On="uninstall"/>
+        <RegistryValue Root="HKCU" Key="Software\Rundeck" Name="installed"
+                       Type="integer" Value="1" KeyPath="yes"/>
+      </Component>
+    </DirectoryRef>   
+
+    <InstallExecuteSequence>
+      <RemoveExistingProducts After="InstallInitialize"/>
+    </InstallExecuteSequence>
+
+   <Feature Id='RunDeckFeature'
+            Title='RunDeck'
+            Display='expand'
+            Level='1'
+            ConfigurableDirectory='INSTALLDIR'>
+      <ComponentGroupRef Id='RunDeckComponentGroup'/>
+    </Feature>
+    <Feature Id="DesktopShortcut"
+             Title="Desktop Shortcut Feature"
+             Level="1">
+      <ComponentRef Id="DesktopShortcut" />
+    </Feature>
+    <Feature Id="QuickLaunchShortcut"
+             Title="QuickLaunch Shortcut Feature"
+             Level="1">
+      <ComponentRef Id="QuickLaunchShortcut" />
+	<ComponentRef Id="InternetExplorerFolder" />
+	<ComponentRef Id="MicrosoftFolder" />
+      </Feature>
+    <Feature Id="ProgramMenuShortcut"
+             Title="Program Menu Shortcut Feature"
+             Level="1">
+      <ComponentRef Id="ProgamMenuShortcut" />	    
+    </Feature>
+    <Property Id="JDK"> 
+      <RegistrySearch Id="regJDK" Root="HKLM" Type="raw"
+                      Key="SOFTWARE\JavaSoft" Name="Java Development Kit" /> 
+    </Property> 
+
+    <Condition Message="Please install Java Development Kit (JDK) to proceed with RunDeck Installation."> 
+      <![CDATA[ JDK = "" ]]> 
+    </Condition>
+    
+    <UIRef Id="RunDeck_WixUI_InstallUI" />
+    <UIRef Id="WixUI_ErrorProgressText" />
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.SOURCES)\..\..\LICENSE.rtf" />
+    <!-- 493 by 58 pixels, this bitmap will appear at the top of all but the first page of the installer -->
+    <!--WixVariable Id="WixUIBannerBmp" Value="$(var.SOURCES)\..\..\rundeck-banner.bmp"/-->
+    <!-- 493 by 312 pixels, this bitmap will appear on the first page of the installer.-->
+    <!--WixVariable Id="WixUIDialogBmp" Value="$(var.SOURCES)\..\..\rundeck-dialog.bmp"/-->
+	
+    <UI>
+      <InstallUISequence></InstallUISequence>
+    </UI>
+  </Product>
+</Wix>
