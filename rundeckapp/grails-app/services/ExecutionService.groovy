@@ -677,7 +677,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             .threadCount(threadCount)
             .keepgoing(keepgoing)
             .nodeRankAttribute(execMap.nodeRankAttribute)
-            .nodeRankOrderAscending(execMap.nodeRankOrderAscending?true:false)
+            .nodeRankOrderAscending(null == execMap.nodeRankOrderAscending || execMap.nodeRankOrderAscending)
             .build()
         return item
     }

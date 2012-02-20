@@ -80,6 +80,7 @@ import org.mortbay.log.Log;
  *    roleBaseDn="ou=groups,dc=example,dc=com"
  *    roleNameAttribute="cn"
  *    roleMemberAttribute="uniqueMember"
+ *    roleUsernameMemberAttribute="memberUid"
  *    roleObjectClass="groupOfUniqueNames"
  *    rolePrefix="rundeck"
  *    cacheDurationMillis="500"
@@ -177,9 +178,14 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     private String _roleObjectClass = "groupOfUniqueNames";
 
     /**
-     * name of the attribute that a username would be under a role class
+     * name of the attribute that a user DN would be under a role class
      */
     private String _roleMemberAttribute = "uniqueMember";
+
+    /**
+     * name of the attribute that a username would be under a role class
+     */
+    private String _roleUsernameMemberAttribute=null;
 
     /**
      * the name of the attribute that a role would be stored under
@@ -346,16 +352,18 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             NamingException {
         String userDn = _userRdnAttribute + "=" + username + "," + _userBaseDn;
 
-        return getUserRolesByDn(dirContext, userDn);
+        return getUserRolesByDn(dirContext, userDn, username);
     }
 
     @SuppressWarnings("unchecked")
-    private List getUserRolesByDn(DirContext dirContext, String userDn) throws LoginException,
+    private List getUserRolesByDn(DirContext dirContext, String userDn, String username) throws LoginException,
             NamingException {
         ArrayList roleList = new ArrayList();
 
-        if (dirContext == null || _roleBaseDn == null || _roleMemberAttribute == null
+        if (dirContext == null || _roleBaseDn == null || (_roleMemberAttribute == null
+                                                          && _roleUsernameMemberAttribute == null)
                 || _roleObjectClass == null) {
+            Log.warn("JettyCachingLdapLoginModule: No user roles found: roleBaseDn, roleObjectClass and roleMemberAttribute or roleUsernameMemberAttribute must be specified.");
             return roleList;
         }
 
@@ -364,10 +372,15 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
 
         String filter = "(&(objectClass={0})({1}={2}))";
-        Object[] filterArguments = { _roleObjectClass, _roleMemberAttribute, userDn };
-        NamingEnumeration results = dirContext.search(_roleBaseDn, filter, filterArguments, ctls);
+        final NamingEnumeration results;
+        if(null!=_roleUsernameMemberAttribute){
+            Object[] filterArguments = { _roleObjectClass, _roleUsernameMemberAttribute, username };
+            results = dirContext.search(_roleBaseDn, filter, filterArguments, ctls);
+        }else{
+            Object[] filterArguments = { _roleObjectClass, _roleMemberAttribute, userDn };
+            results = dirContext.search(_roleBaseDn, filter, filterArguments, ctls);
+        }
 
-        Log.debug("Found user roles?: " + results.hasMoreElements());
 
         while (results.hasMoreElements()) {
             SearchResult result = (SearchResult) results.nextElement();
@@ -394,6 +407,11 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
                     roleList.add(roles.next());
                 }
             }
+        }
+        if (roleList.size() < 1) {
+            Log.warn("JettyCachingLdapLoginModule: User '" + username + "' has no role membership; role query configuration may be incorrect");
+        }else{
+            Log.debug("JettyCachingLdapLoginModule: User '" + username + "' has roles: " + roleList);
         }
 
         return roleList;
@@ -529,12 +547,12 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         DirContext dirContext = new InitialDirContext(environment);
 
-	// use _rootContext to find roles, if configured to doso
-	if ( _forceBindingLoginUseRootContextForRoles ) {
-	    dirContext = _rootContext;
-	    Log.debug("Using _rootContext for role lookup.");
-	}
-        List roles = getUserRolesByDn(dirContext, userDn);
+        // use _rootContext to find roles, if configured to doso
+        if ( _forceBindingLoginUseRootContextForRoles ) {
+            dirContext = _rootContext;
+            Log.debug("Using _rootContext for role lookup.");
+        }
+        List roles = getUserRolesByDn(dirContext, userDn, username);
 
         UserInfo userInfo = new UserInfo(username, null, roles);
         if(_cacheDuration > 0) {
@@ -603,6 +621,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         _userPasswordAttribute = getOption(options, "userPasswordAttribute", _userPasswordAttribute);
         _roleObjectClass = getOption(options, "roleObjectClass", _roleObjectClass);
         _roleMemberAttribute = getOption(options, "roleMemberAttribute", _roleMemberAttribute);
+        _roleUsernameMemberAttribute = getOption(options, "roleUsernameMemberAttribute", _roleUsernameMemberAttribute);
         _roleNameAttribute = getOption(options, "roleNameAttribute", _roleNameAttribute);
         _debug = Boolean.parseBoolean(String.valueOf(getOption(options, "debug", Boolean
                 .toString(_debug))));
@@ -705,14 +724,14 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             return encryptedPassword;
         }
 
-        if ("{MD5}".startsWith(encryptedPassword.toUpperCase())) {
+        if (encryptedPassword.toUpperCase().startsWith("{MD5}")) {
             return "MD5:"
-                    + encryptedPassword.substring("{MD5}".length(), encryptedPassword.length());
+                   + encryptedPassword.substring("{MD5}".length(), encryptedPassword.length());
         }
 
-        if ("{CRYPT}".startsWith(encryptedPassword.toUpperCase())) {
+        if (encryptedPassword.toUpperCase().startsWith("{CRYPT}")) {
             return "CRYPT:"
-                    + encryptedPassword.substring("{CRYPT}".length(), encryptedPassword.length());
+                   + encryptedPassword.substring("{CRYPT}".length(), encryptedPassword.length());
         }
 
         return encryptedPassword;

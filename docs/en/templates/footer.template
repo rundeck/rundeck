@@ -4,5 +4,7 @@
 
 <br/>
 &copy;2012 DTO Solutions
+<br/>
+<span class="generated-date" title="${DATE}">${DATE}</span>
 
 </footer>

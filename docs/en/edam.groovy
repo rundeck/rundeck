@@ -495,7 +495,7 @@ def generateAll(allpages,toc,templates,File dir, File outdir, crumbs, subdirs){
         if(flags.doNav || flags.recursive){
             pargs.addAll(['-A',navfileBot])
         }
-        pargs.addAll(['-A',templates.footer])
+        pargs.addAll(['-A',expandFile(templates.footer)])
         def htemplate=expandFile(templates.html)
         def cssPath= options.cssRelative=='true'? '../'*crumbs.size() : '' 
         def outfile=new File(outdir,titem.outfile)
