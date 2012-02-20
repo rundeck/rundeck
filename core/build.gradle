@@ -137,6 +137,7 @@ task createPom << {
                             systemPropertyVariables{
                                 'rdeck.base'('${project.build.directory}/rdeck_base')
                             }
+                            redirectTestOutputToFile 'true'
                         }
                     }
                     plugin{
