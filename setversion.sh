@@ -68,7 +68,7 @@ echo MODIFIED: `pwd`/rundeckapp/pom.xml
 
 #modify core/build.gradle
 perl  -i'.orig' -p -e "s#^version\s*=.*\$#version = '$VERSION'#" `pwd`/core/build.gradle
-cd core/ && ./gradlew createPom && cd ..
+cd core/ && ./gradlew -PbuildNum=${RELEASE} createPom && cd ..
 
 echo MODIFIED: `pwd`/core/build.gradle
 
