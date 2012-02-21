@@ -69,12 +69,22 @@ You must change some configuration values to change the authentication module to
 
 #### Configuration
 
+Configuring LDAP consists of defining a JAAS config file (e.g. "jaas-ldap.conf"), and changing the server startup script to use this file and use the correct Login Module configuration inside it.
+
 (1)  Setup the LDAP login module configuration file (see the [Login module configuration](#login-module-configuration) section).
 
     Create a `jaas-ldap.conf` file in the same directory as the `jaas-loginmodule.conf` file.
     
     * RPM install: /etc/rundeck/
     * Launcher install: $RDECK_BASE/server/config
+    
+    Make sure the name of your Login Module configuration is the same as you use in the next step.  The Login Module configuration is defined like this:
+    
+        myloginmodule {
+            ...
+        }
+    
+    Where "myloginmodule" is the name.
 
 (2) To override the default JAAS configuration file, you will need to supply the Rundeck server with the proper path to the new one, and a `loginmodule.name` Java system property to identify the new login module by name.
 
@@ -121,7 +131,7 @@ You must change some configuration values to change the authentication module to
 Here is an example configuration file:
 
 ~~~~
-rundecklogin {
+ldap {
     com.dtolabs.rundeck.jetty.jaas.JettyCachingLdapLoginModule required
       debug="true"
       contextFactory="com.sun.jndi.ldap.LdapCtxFactory"
