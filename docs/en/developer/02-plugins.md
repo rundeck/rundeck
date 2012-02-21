@@ -439,5 +439,5 @@ For `FileCopier`
 
 For `ResourceModelSource`
 
-:   All output on `STDOUT` will be captured and passed to the p
+:   All output on `STDOUT` will be captured and passed to a `ResourceFormatParser` for the specified `resource-format` to create the Node definitions.
 
