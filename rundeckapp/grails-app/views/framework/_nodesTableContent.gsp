@@ -28,7 +28,6 @@
             <g:set var="executions" value="${nodedata.executions}"/>
             <g:set var="resources" value="${nodedata.resources}"/>
             <g:set var="resName" value="${node.nodename}"/>
-            <g:set var="resHost" value="${node.hostname}"/>
 
             <tr class="${i%2==1?'alternateRow':''} node_entry ${nodedata.islocal?'server':''}">
                 <td class="objIdent" title="Name">
@@ -68,10 +67,12 @@
                 </td>
 
                 <td class="username"  title="Username">
+                    <g:if test="${node.username}">
                         ${node.username?.encodeAsHTML()} <span class="atsign">@</span>
+                    </g:if>
                 </td>
                 <td class="hostname"  title="Hostname">
-                        ${node.hostname.encodeAsHTML()}
+                        ${node.hostname?.encodeAsHTML()}
                     <g:if test="${null!=nodeauthrun && !nodeauthrun[node.nodename]}">
                         <span title="Not authorized to 'run' on this node">
                             <img src="${resource(dir: 'images', file: 'icon-tiny-warn.png')}" alt="Node" width="12px"

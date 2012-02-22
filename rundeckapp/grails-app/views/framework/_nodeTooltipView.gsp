@@ -4,7 +4,7 @@
         ${node.nodename.encodeAsHTML()}
     </span>
     <span class="desc">
-        ${node.description.encodeAsHTML()}
+        ${node.description?.encodeAsHTML()}
     </span>
     
     <g:render template="/framework/nodeDetailsSimple" bean="${node}" var="node"/>

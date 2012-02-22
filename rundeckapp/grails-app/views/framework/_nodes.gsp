@@ -45,7 +45,7 @@
                         </span>
                     </g:if>
                     <span class="desc">
-                        ${node.description}
+                        ${node.description?.encodeAsHTML()}
                     </span>
                     <g:if test="${!nodeauthrun[node.nodename]}">
                     <span class="desc" title="Not authorized to run on this node">
