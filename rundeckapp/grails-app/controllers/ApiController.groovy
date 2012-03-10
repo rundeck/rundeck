@@ -1,4 +1,6 @@
 import java.lang.management.ManagementFactory
+import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 
 /**
  * Contains utility actions for API access and responses
@@ -6,6 +8,7 @@ import java.lang.management.ManagementFactory
 class ApiController {
     def defaultAction = "invalid"
     def quartzScheduler
+    def frameworkService
     
     def invalid = {
         response.setStatus(404)
@@ -94,6 +97,12 @@ class ApiController {
      * /api/1/system/info: display stats and info about the server
      */
     def apiSystemInfo={
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if (!frameworkService.authorizeApplicationResource(framework, [type: 'resource', kind: 'system'], AuthConstants.ACTION_READ)) {
+            response.setStatus(403)
+            request.error = g.message(code: 'api.error.item.unauthorized', args: ['Read System Info', 'Rundeck', ""])
+            return error()
+        }
         Date nowDate=new Date();
         String nodeName= servletContext.getAttribute("FRAMEWORK_NODE")
         String appVersion= grailsApplication.metadata['app.version']
