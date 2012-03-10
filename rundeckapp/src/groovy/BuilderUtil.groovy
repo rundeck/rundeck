@@ -63,7 +63,7 @@ class BuilderUtil{
             //iterate
             if(key instanceof String && ((String)key).length()>1 && ((String)key).endsWith(PLURAL_SUFFIX)){
                 String keys=(String)key
-                String name=keys-PLURAL_SUFFIX;
+                String name=keys.substring(0,keys.size()-PLURAL_SUFFIX.size());
                 String rekey=name+PLURAL_REPL;
                 builder."${rekey}"(){
                     for(Object o: (Collection)obj){
@@ -155,7 +155,7 @@ class BuilderUtil{
        if(key.endsWith(PLURAL_SUFFIX)){
            return key
        }else if(key.endsWith(PLURAL_REPL)){
-           def k=key-PLURAL_REPL
+           def k=key.substring(0,key.size()-PLURAL_REPL.size());
            return k+PLURAL_SUFFIX
        }
        return key+PLURAL_SUFFIX
