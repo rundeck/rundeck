@@ -458,7 +458,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
     /**
      * starts an execution in a separate thread, returning a map of [thread:Thread, loghandler:LogHandler]
      */
-    def Map executeAsyncBegin(Framework framework, Execution execution, ScheduledExecution scheduledExecution=null, Map extraParams = null){
+    def Map executeAsyncBegin(Framework framework, Execution execution, ScheduledExecution scheduledExecution=null, Map extraParams = null, Map extraParamsExposed = null){
         execution.refresh()
         String lognamespace="rundeck"
         if(execution.workflow){
@@ -496,7 +496,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
 
             //create listener to handle log messages and Ant build events
             ExecutionListener executionListener = new WorkflowExecutionListenerImpl(recorder, loghandler,false,null);
-            com.dtolabs.rundeck.core.execution.ExecutionContext executioncontext = createContext(execution, framework, execution.user, jobcontext, executionListener, null,extraParams)
+            com.dtolabs.rundeck.core.execution.ExecutionContext executioncontext = createContext(execution, framework, execution.user, jobcontext, executionListener, null,extraParams, extraParamsExposed)
             final cis = CommandInterpreterService.getInstanceForFramework(framework);
             cis.registerInstance(JobExecutionItem.COMMAND_TYPE, this)
 
@@ -616,7 +616,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
     /**
      * Return an ExecutionItem instance for the given workflow Execution, suitable for the ExecutionService layer
      */
-    public com.dtolabs.rundeck.core.execution.ExecutionContext createContext(ExecutionContext execMap, Framework framework, String userName = null, Map<String, String> jobcontext, ExecutionListener listener, String[] inputargs=null, Map extraParams=null) {
+    public com.dtolabs.rundeck.core.execution.ExecutionContext createContext(ExecutionContext execMap, Framework framework, String userName = null, Map<String, String> jobcontext, ExecutionListener listener, String[] inputargs=null, Map extraParams=null, Map extraParamsExposed=null) {
         def User user = User.findByLogin(userName ? userName : execMap.user)
         if (!user) {
             throw new Exception("User ${userName ? userName : execMap.user} is not authorized to run this Job.")
@@ -624,6 +624,9 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         //convert argString into Map<String,String>
         def String[] args = execMap.argString? CLIUtils.splitArgLine(execMap.argString):inputargs
         def Map<String, String> optsmap = execMap.argString ? frameworkService.parseOptsFromString(execMap.argString) : null!=args? frameworkService.parseOptsFromArray(args):null
+        if(extraParamsExposed){
+            optsmap.putAll(extraParamsExposed)
+        }
 
         def Map<String,Map<String,String>> datacontext = new HashMap<String,Map<String,String>>()
         datacontext.put("option",optsmap)
@@ -1050,9 +1053,9 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
 
     /**
      * evaluate the options and return a map of the values of any secure options, using defaults for required options if
-     * they are not present
+     * they are not present, and selecting between exposed/hidden secure values
      */
-    def Map selectSecureOptionInput(ScheduledExecution scheduledExecution, Map params) throws ExecutionServiceException {
+    def Map selectSecureOptionInput(ScheduledExecution scheduledExecution, Map params, Boolean exposed=false) throws ExecutionServiceException {
         def results=[:]
         def optparams
         if (params.argString) {
@@ -1063,9 +1066,9 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         final options = scheduledExecution.options
         if (options) {
             options.each {Option opt ->
-                if (opt.secureInput && optparams[opt.name]) {
+                if (opt.secureInput && optparams[opt.name] && (exposed && opt.secureExposed || !exposed && !opt.secureExposed)) {
                     results[opt.name]= optparams[opt.name]
-                }else if (opt.secureInput && opt.defaultValue && opt.required) {
+                }else if (opt.secureInput && opt.defaultValue && opt.required && (exposed && opt.secureExposed || !exposed && !opt.secureExposed)) {
                     results[opt.name] = opt.defaultValue
                 }
             }
@@ -1073,15 +1076,14 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         return results
     }
     /**
-     * evaluate the options in the input argString, and if any Options defined for the Job have required=true, have a
-     * defaultValue, and have null value in the input properties, then append the default option value to the argString
+     * Return a map containing all params that are not secure option parameters
      */
     def Map removeSecureOptionEntries(ScheduledExecution scheduledExecution, Map params) throws ExecutionServiceException {
         def results=new HashMap(params)
         final options = scheduledExecution.options
         if (options) {
             options.each {Option opt ->
-                if (opt.secureInput ) {
+                if (opt.secureInput) {
                     results.remove(opt.name)
                 }
             }

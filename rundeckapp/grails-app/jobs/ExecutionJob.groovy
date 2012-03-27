@@ -43,7 +43,7 @@ class ExecutionJob implements InterruptableJob {
         def result
         try {
             if(!_interrupted){
-                result=executeCommand(initMap.executionService,initMap.execution,initMap.framework,initMap.scheduledExecution, initMap.extraParams)
+                result=executeCommand(initMap.executionService,initMap.execution,initMap.framework,initMap.scheduledExecution, initMap.extraParams, initMap.extraParamsExposed)
                 success=result.success
             }
         }catch(Throwable t){
@@ -132,6 +132,7 @@ class ExecutionJob implements InterruptableJob {
             if(jobDataMap.get("executionId")){
                 initMap.executionId=jobDataMap.get("executionId")
                 initMap.extraParams=jobDataMap.get("extraParams")
+                initMap.extraParamsExposed=jobDataMap.get("extraParamsExposed")
                 initMap.execution = Execution.get(initMap.executionId)
                 if (!initMap.execution) {
                     throw new RuntimeException("failed to lookup Exception object from job data map: id: ${initMap.executionId}")
@@ -159,11 +160,11 @@ class ExecutionJob implements InterruptableJob {
         return initMap
     }
 
-    def executeCommand(ExecutionService executionService,Execution execution, Framework framework, ScheduledExecution scheduledExecution=null, Map extraParams=null) {
+    def executeCommand(ExecutionService executionService,Execution execution, Framework framework, ScheduledExecution scheduledExecution=null, Map extraParams=null, Map extraParamsExposed=null) {
         def success=false
         def execmap
         try{
-            execmap= executionService.executeAsyncBegin(framework,execution,scheduledExecution,extraParams)
+            execmap= executionService.executeAsyncBegin(framework,execution,scheduledExecution,extraParams, extraParamsExposed)
         }catch(Exception e){
             log.error("Execution failed: "+e.getMessage(), e)
             throw e
