@@ -9,11 +9,8 @@ import org.quartz.TriggerUtils
 import org.quartz.JobExecutionContext
 import org.quartz.InterruptableJob
 
-import com.dtolabs.rundeck.core.authorization.Decision;
 import com.dtolabs.rundeck.core.common.Framework
 
-import com.dtolabs.rundeck.core.authorization.Attribute
-import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 
 /**
@@ -444,52 +441,6 @@ class ScheduledExecutionService {
         }else{
             return [jobname:"TEMP:"+e.user +":"+se.id+":"+e.id, groupname:e.user+":run:"+se.id]
         }
-    }
-
-    /**
-     * Schedule a stored job to execute immediately.
-     */
-    def long scheduleTempJob(ScheduledExecution se, String user, List roleList, Execution e) {
-
-        def jobDetail = createJobDetail(se, "TEMP:"+user +":"+se.id+":"+e.id, user+":run:"+se.id)
-        jobDetail.getJobDataMap().put("userRoles",roleList.join(","))
-        jobDetail.getJobDataMap().put("executionId",e.id.toString())
-
-        def Trigger trigger = TriggerUtils.makeImmediateTrigger(0,0)
-        trigger.setName(jobDetail.getName()+"Trigger")
-        def nextTime
-        try {
-            log.info("scheduling immediate job run: " + jobDetail.getName())
-            nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
-        } catch (Exception exc) {
-            throw new RuntimeException("caught exception while adding job: " +exc.getMessage(), exc)
-        }
-        return e.id
-    }
-    /**
-     * Schedule a temp job to execute immediately.
-     */
-    def long scheduleTempJob(String user, List roleList, Map params, Execution e) {
-        def ident=getJobIdent(null,e);
-        def jobDetail = new JobDetail(ident.jobname, ident.groupname, ExecutionJob)
-        jobDetail.setDescription("Execute command: "+e)
-        jobDetail.getJobDataMap().put("isTempExecution","true")
-        jobDetail.getJobDataMap().put("executionId",e.id.toString())
-        jobDetail.getJobDataMap().put("rdeck.base",frameworkService.getRundeckBase())
-        jobDetail.getJobDataMap().put("userRoles",roleList.join(","))
-//        jobDetail.addJobListener("sessionBinderListener")
-        jobDetail.addJobListener("defaultGrailsServiceInjectorJobListener")
-
-        def Trigger trigger = TriggerUtils.makeImmediateTrigger(0,0)
-        trigger.setName(jobDetail.getName()+"Trigger")
-        def nextTime
-        try {
-            log.info("scheduling temp job: " + jobDetail.getName())
-            nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
-        } catch (Exception exc) {
-            throw new RuntimeException("caught exception while adding job: " +exc.getMessage(), exc)
-        }
-        return e.id
     }
 
     /**
