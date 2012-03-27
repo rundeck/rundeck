@@ -54,17 +54,48 @@ level of procedure formalization.
   value be somewhat open ended consider how you can create
   safeguards to control their choice.
 
+## Input Types
+
+Option Input Types define how the option is presented in the GUI, and how it is used when the Job executes.
+
+Input types:
+
+* "Plain" - a normal option which is shown in clear text
+* "Secure" - a secure option which is obscured at user input time, and the value of which is not stored in the database
+*  "Secure Remote Authentication" - a secure option which is used only for remote authentication and is not exposed in scripts or commands.
+
 ## Secure Options
 
-The built-in [SSH Provider](plugins.html#ssh-provider) for node execution allows using passwords for SSH and/or Sudo authentication mechanisms, and the passwords are supplied by Secure Options defined in a Job.
+Options can be marked as Secure, to show a password prompt in the GUI, instead of a normal text field or drop down menu.  Secure option values are not stored with the Execution as are the other option values.
 
-A Secure Option will always show a password prompt in the GUI, instead of a normal text field or drop down menu.
+There are two types of Secure options:
 
-Secure Options have some limitations compared to regular options:
+* Secure - these option values are exposed in scripts and commands.
+* Secure Remote Authentication - these option values *are not* exposed in scripts and commands, and are only used by Node Executors to authenticate to Nodes and execute commands.
 
-* The values entered by the user are not available for normal script and command option value expansion. This means that they can only be used for the purposes of the SSH Provider at the moment.
-* Secure Options do not support allow Multi-valued input
-* Secure option values are not stored with the Execution as are the other option values.
+Secure Options do not support allow Multi-valued input. 
+
+Secure Options cannot be used as authentication input to Node Executors, you must use a Secure Remote Authentication option described below.
+
+**Important Note**
+
+"Secure" option values are not stored in the Rundeck database when the Job is executed, but the value that is entered 
+is exposed to use in scripts and commands.  Make sure you acknowledge these security implications before using them. Secure options are available for use in scripts and command like any other option value: 
+
+* as plaintext arguments using `${option.name}`
+    * Using the option value as an argument to a command could expose the plaintext value in the system process table
+* as plaintext environment variables in remote and local script execution as `$RD_OPTION_NAME`
+    * Local and possibly remote scripts may be passed this value into their environment
+* as plaintext tokens expanded in remote scripts as `@option.name@`.
+    * Inline Script workflow steps that contain a token expansion will be expanded into a temporary file, and the temp file will contain the plaintext option value.
+
+### Secure Remote Authentication Options
+
+The built-in [SSH Provider](plugins.html#ssh-provider) for node execution allows using passwords for SSH and/or Sudo authentication mechanisms, and the passwords are supplied by Secure Remote Authentication Options defined in a Job.
+
+Secure Remote Authentication Options have some limitations compared to Plain and Secure options:
+
+* The values entered by the user are not available for normal script and command option value expansion. This means that they can only be used for the purposes of the Remote Authentication.
 
 ## Options editor
 
@@ -116,9 +147,9 @@ Identification
      
      The Default Value will be pre-selected in the GUI when the option is presented.
 
-Secure Input
+Input Type
 
-:   Set to true to define a Secure Option.  The multi-valued option will be disabled.
+:   Choose between "Plain", "Secure" and "Secure Remote Authentication". For input types other than "Plain", the multi-valued option will be disabled.
 
 Allowed values
 
