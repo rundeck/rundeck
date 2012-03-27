@@ -109,6 +109,63 @@ class EditOptsControllerTests extends ControllerUnitTestCase {
             assertEquals 'testregex',option.regex
             assertNull option.defaultValue
         }
+        testInputTypePlain:{
+            //use inputType='plain'
+            Option inputOption = new Option()
+            final Map testmap = [name:'testopt',description:'a description',valuesList:'a,b,c',inputType:'plain']
+            Option option = ctrl._setOptionFromParams(inputOption,testmap)
+
+            assertNotNull(option)
+            //test properties
+            assertEquals 'testopt', option.name
+            assertEquals 'a description', option.description
+            assertFalse option.required
+            assertFalse option.enforced
+            assertNotNull option.values
+            assertNull option.realValuesUrl
+            assertNull option.regex
+            assertNull option.defaultValue
+            assertFalse option.secureInput
+            assertFalse option.secureExposed
+        }
+        testInputTypeSecure:{
+            //use inputType='secure'
+            Option inputOption = new Option()
+            final Map testmap = [name:'testopt',description:'a description',valuesList:'a,b,c',inputType:'secure']
+            Option option = ctrl._setOptionFromParams(inputOption,testmap)
+
+            assertNotNull(option)
+            //test properties
+            assertEquals 'testopt', option.name
+            assertEquals 'a description', option.description
+            assertFalse option.required
+            assertFalse option.enforced
+            assertNotNull option.values
+            assertNull option.realValuesUrl
+            assertNull option.regex
+            assertNull option.defaultValue
+            assertTrue option.secureInput
+            assertFalse option.secureExposed
+        }
+        testInputTypeSecureExposed:{
+            //use inputType='secureExposed'
+            Option inputOption = new Option()
+            final Map testmap = [name:'testopt',description:'a description',valuesList:'a,b,c',inputType:'secureExposed']
+            Option option = ctrl._setOptionFromParams(inputOption,testmap)
+
+            assertNotNull(option)
+            //test properties
+            assertEquals 'testopt', option.name
+            assertEquals 'a description', option.description
+            assertFalse option.required
+            assertFalse option.enforced
+            assertNotNull option.values
+            assertNull option.realValuesUrl
+            assertNull option.regex
+            assertNull option.defaultValue
+            assertTrue option.secureInput
+            assertTrue option.secureExposed
+        }
 
         //test on existing Option content
 

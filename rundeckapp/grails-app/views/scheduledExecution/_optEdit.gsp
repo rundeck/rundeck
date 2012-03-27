@@ -53,7 +53,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <td>
+                    <td style="vertical-align: top">
 
                         <label>
                             <div class="${hasErrors(bean: option, field: 'defaultValue', 'fieldError')}">Default Value</div>
@@ -62,33 +62,7 @@
                                    size="40" placeholder="Default value"/>
                         </label>
                     </td>
-                    <td id="secinputfields">
-                        <div>Secure Input
-                            <span class=" action obs_tooltip" id="secInputHelp"><g:img file="icon-small-help.png"
-                                                                                       width="16px" height="16px"/></span>
-                        </div>
-
-                        <div class="popout tooltipcontent helpText" id="secInputHelp_tooltip"
-                             style="display:none; background:white; position:absolute; width:300px;">
-                            <g:message code="form.option.secureInput.description"/>
-                        </div>
-                        
-                        <label><g:radio name="secureInput" value="false" checked="${!option || !option?.secureInput}"
-                                        id="secfalse_${rkey}"/> No</label>
-                        <label><g:radio name="secureInput" value="true" checked="${option?.secureInput}" id="sectrue_${rkey}"/> Yes</label>
-
-                        <wdgt:eventHandler for="sectrue_${rkey}" state="unempty" inline="true" oneway="true">
-                            <wdgt:action target="mvfalse_${rkey}" check="true" />
-                            <wdgt:action targetSelector=".opt_sec_disabled" visible="false" />
-                            <wdgt:action targetSelector=".opt_sec_enabled" visible="true" />
-                        </wdgt:eventHandler>
-                        <wdgt:eventHandler for="secfalse_${rkey}" state="unempty" inline="true" oneway="true">
-                            <wdgt:action targetSelector=".opt_sec_disabled" visible="true"/>
-                            <wdgt:action targetSelector=".opt_sec_enabled" visible="false"/>
-                        </wdgt:eventHandler>
-                        <g:javascript>
-                            fireWhenReady('secInputHelp', initTooltipForElements.curry('.obs_tooltip'));
-                        </g:javascript>
+                    <td >
                     </td>
                 </tr>
             </table>
@@ -96,6 +70,88 @@
             <g:if test="${origName || option?.name && !newoption}">
                 <g:hiddenField name="origName" value="${origName?origName:option?.name}"/>
             </g:if>
+        </div>
+        <div id="secinputfields">
+
+            <span class="prompt"><g:message code="form.option.inputType.label"/></span>
+            <div class="presentation">
+
+                <table cellspacing="0" cellpadding="0">
+                <tr>
+                <td>
+
+                    <div>
+                        <label>
+                            <g:radio name="inputType" value="plain" checked="${!option?.secureInput}" id="inputplain_${rkey}"/>
+                            <g:message code="form.option.secureInput.false.label"/>
+                        </label>
+                    </div>
+
+                </td>
+                <td>
+                    <span class="info note"><g:message code="form.option.secureInput.false.description" /></span>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                    <div>
+                        <g:radio name="inputType" value="secureExposed" checked="${option?.secureInput && option?.secureExposed}" id="sectrue_${rkey}"/>
+                        <label for="sectrue_${rkey}">
+                            <g:message code="form.option.secureExposed.true.label"/><span class="aster">*</span>
+                        </label>
+
+
+                     </div>
+                </td>
+                    <td>
+                        <span class="info note">
+                        <g:message code="form.option.secureExposed.true.description"/>
+                    </span>
+                    </td>
+                </tr>
+                <tr>
+                <td>
+                    <div>
+                        <label>
+                            <g:radio name="inputType" value="secure"
+                                     checked="${option?.secureInput && !option?.secureExposed}"
+                                     id="secexpfalse_${rkey}"/>
+                            <g:message code="form.option.secureExposed.false.label"/><span class="aster">*</span>
+                        </label>
+
+                    </div>
+                </td>
+                    <td>
+
+                        <span class="info note"><g:message code="form.option.secureExposed.false.description"/></span>
+                    </td>
+                </tr>
+                </table>
+                <div>
+                    <span class="aster">*</span><span class="info note"><g:message code="form.option.secureInput.description"/></span>
+                </div>
+            </div>
+    
+            <wdgt:eventHandler for="sectrue_${rkey}" state="unempty" inline="true" oneway="true">
+                <wdgt:action target="mvfalse_${rkey}" check="true"/>
+                <wdgt:action targetSelector=".opt_sec_nexp_disabled" visible="true"/>
+                <wdgt:action targetSelector=".opt_sec_nexp_enabled" visible="false"/>
+                <wdgt:action targetSelector=".opt_sec_disabled" visible="false"/>
+                <wdgt:action targetSelector=".opt_sec_enabled" visible="true"/>
+            </wdgt:eventHandler>
+            <wdgt:eventHandler for="secexpfalse_${rkey}" state="unempty" inline="true" oneway="true">
+                <wdgt:action targetSelector=".opt_sec_nexp_disabled" visible="false"/>
+                <wdgt:action targetSelector=".opt_sec_nexp_enabled" visible="true"/>
+                <wdgt:action targetSelector=".opt_sec_disabled" visible="false"/>
+                <wdgt:action targetSelector=".opt_sec_enabled" visible="true"/>
+            </wdgt:eventHandler>
+            <wdgt:eventHandler for="inputplain_${rkey}" state="unempty" inline="true" oneway="true">
+                <wdgt:action targetSelector=".opt_sec_nexp_disabled" visible="true"/>
+                <wdgt:action targetSelector=".opt_sec_nexp_enabled" visible="false"/>
+                <wdgt:action targetSelector=".opt_sec_disabled" visible="true"/>
+                <wdgt:action targetSelector=".opt_sec_enabled" visible="false"/>
+            </wdgt:eventHandler>
+
         </div>
         <div>
             <span class="prompt">Allowed Values</span>
@@ -177,7 +233,7 @@
         </div>
         <div id="preview_${rkey}" style="${wdgt.styleVisible(if:option?.name)}">
             <span class="prompt">Usage</span>
-            <div class="presentation opt_sec_disabled" style="${wdgt.styleVisible(unless: option?.secureInput)}">
+            <div class="presentation opt_sec_nexp_disabled" style="${wdgt.styleVisible(unless: option?.secureInput && !option?.secureExposed)}">
                 <span class="info note">The option values will be available to scripts in these forms:</span>
                 <div>
                     Bash: <code>$<span id="bashpreview${rkey}">${option?.name?DataContextUtils.generateEnvVarName('option.'+option.name).encodeAsHTML():''}</span></code>
@@ -190,8 +246,8 @@
                 </div>
             </div>
 
-            <div class="presentation opt_sec_enabled" style="${wdgt.styleVisible(if: option?.secureInput)}">
-                <span class="warn note"><g:message code="form.option.usage.secure.message"/></span>
+            <div class="presentation opt_sec_nexp_enabled" style="${wdgt.styleVisible(if: option?.secureInput && !option?.secureExposed)}">
+                <span class="warn note"><g:message code="form.option.usage.secureAuth.message"/></span>
             </div>
         </div>
         <g:javascript>

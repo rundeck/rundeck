@@ -1261,6 +1261,13 @@ span.dragHandle{
     color: #55F;
 
 }
+.has_help{
+    border-bottom: 1px dotted blue;
+}
+.aster{
+    font-weight: bold;
+    color: #ff4444;
+}
 .confirmMessage{
     color:red;
 }

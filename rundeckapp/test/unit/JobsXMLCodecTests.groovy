@@ -1637,7 +1637,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertEquals "incorrect enforced", "false", opt1.enforced.toString()
         assertEquals "incorrect secure", "true", opt1.multivalued.toString()
         assertEquals "incorrect secure", ",", opt1.delimiter
-        assertNull "incorrect regex", opt1.secureInput
+        assertFalse "incorrect secureInput", opt1.secureInput
+        assertFalse "incorrect secureExposed", opt1.secureExposed
         assertNull "incorrect regex", opt1.regex
         assertNull "incorrect values size", opt1.values
         assertNull "missing valuesUrl", opt1.realValuesUrl
@@ -1760,9 +1761,139 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertEquals "incorrect defaultValue", "789", opt1.defaultValue
         assertEquals "incorrect enforced", "false", opt1.enforced.toString()
         assertEquals "incorrect secure", "true", opt1.secureInput.toString()
+        assertFalse "incorrect secureExposed", opt1.secureExposed
         assertNull "incorrect regex", opt1.regex
         assertNull "incorrect values size", opt1.values
         assertNull "missing valuesUrl", opt1.realValuesUrl
+
+        //secure option
+        def xml2 = """<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description></description>
+    <loglevel>INFO</loglevel>
+    <context>
+        <project>test1</project>
+        <options>
+          <option name="password" value="789" secure="true" valueExposed="true"/>
+        </options>
+    </context>
+    <sequence><command><exec>test</exec></command></sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+    <schedule>
+      <time hour='11' minute='21' />
+      <weekday day='*' />
+      <month month='*' />
+    </schedule>
+  </job>
+</joblist>
+"""
+
+        def jobs2 = JobsXMLCodec.decode(xml2)
+        assertNotNull jobs2
+        assertEquals "incorrect size", 1, jobs2.size()
+        assertNotNull "incorrect options", jobs2[0].options
+        assertEquals "incorrect options size", 1, jobs2[0].options.size()
+        assertNotNull "missing options data", jobs2[0].options.iterator().next()
+        def opt2 = jobs2[0].options.iterator().next()
+        assertEquals "incorrect name", "password", opt2.name
+        assertEquals "incorrect defaultValue", "789", opt2.defaultValue
+        assertEquals "incorrect enforced", "false", opt2.enforced.toString()
+        assertEquals "incorrect secure", "true", opt2.secureInput.toString()
+        assertEquals "incorrect secureExposed", 'true',opt2.secureExposed.toString()
+        assertNull "incorrect regex", opt2.regex
+        assertNull "incorrect values size", opt2.values
+        assertNull "missing valuesUrl", opt2.realValuesUrl
+
+        //secure option
+        def xml3 = """<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description></description>
+    <loglevel>INFO</loglevel>
+    <context>
+        <project>test1</project>
+        <options>
+          <option name="password" value="789" secure="true" valueExposed="false"/>
+        </options>
+    </context>
+    <sequence><command><exec>test</exec></command></sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+    <schedule>
+      <time hour='11' minute='21' />
+      <weekday day='*' />
+      <month month='*' />
+    </schedule>
+  </job>
+</joblist>
+"""
+
+        def jobs3 = JobsXMLCodec.decode(xml3)
+        assertNotNull jobs3
+        assertEquals "incorrect size", 1, jobs3.size()
+        assertNotNull "incorrect options", jobs3[0].options
+        assertEquals "incorrect options size", 1, jobs3[0].options.size()
+        assertNotNull "missing options data", jobs3[0].options.iterator().next()
+        def opt3 = jobs3[0].options.iterator().next()
+        assertEquals "incorrect name", "password", opt3.name
+        assertEquals "incorrect defaultValue", "789", opt3.defaultValue
+        assertEquals "incorrect enforced", "false", opt3.enforced.toString()
+        assertEquals "incorrect secure", "true", opt3.secureInput.toString()
+        assertEquals "incorrect secureExposed", 'false',opt3.secureExposed.toString()
+        assertNull "incorrect regex", opt3.regex
+        assertNull "incorrect values size", opt3.values
+        assertNull "missing valuesUrl", opt3.realValuesUrl
+
+        //secure option
+        def xml4 = """<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description></description>
+    <loglevel>INFO</loglevel>
+    <context>
+        <project>test1</project>
+        <options>
+          <option name="password" value="789" secure="false" valueExposed="false"/>
+        </options>
+    </context>
+    <sequence><command><exec>test</exec></command></sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+    <schedule>
+      <time hour='11' minute='21' />
+      <weekday day='*' />
+      <month month='*' />
+    </schedule>
+  </job>
+</joblist>
+"""
+
+        def jobs4 = JobsXMLCodec.decode(xml4)
+        assertNotNull jobs4
+        assertEquals "incorrect size", 1, jobs4.size()
+        assertNotNull "incorrect options", jobs4[0].options
+        assertEquals "incorrect options size", 1, jobs4[0].options.size()
+        assertNotNull "missing options data", jobs4[0].options.iterator().next()
+        def opt4 = jobs4[0].options.iterator().next()
+        assertEquals "incorrect name", "password", opt4.name
+        assertEquals "incorrect defaultValue", "789", opt4.defaultValue
+        assertEquals "incorrect enforced", "false", opt4.enforced.toString()
+        assertEquals "incorrect secure", "false", opt4.secureInput.toString()
+        assertEquals "incorrect secureExposed", 'false',opt4.secureExposed.toString()
+        assertNull "incorrect regex", opt4.regex
+        assertNull "incorrect values size", opt4.values
+        assertNull "missing valuesUrl", opt4.realValuesUrl
 
     }
 
@@ -3264,6 +3395,63 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertEquals "incorrect context options option 2 value", 'monkey', doc.job[0].context[0].options[0].option[1]['@value'].text()
         assertEquals "incorrect context options option 2 regex", 'true', doc.job[0].context[0].options[0].option[1]['@required'].text()
         assertEquals "incorrect context options option 2 regex", 'true', doc.job[0].context[0].options[0].option[1]['@secure'].text()
+
+        def jobs2 = [
+            new ScheduledExecution(
+                jobName: 'test job 1',
+                description: 'test descrip',
+                loglevel: 'INFO',
+                project: 'test1',
+
+                workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                    jobName: 'a Job',
+                    jobGroup: '/some/path',
+                )]
+                ),
+                nodeThreadcount: 1,
+                nodeKeepgoing: true,
+                options: [
+                    new Option(name: 'test1', defaultValue: 'monkey', secureInput: false, required: true),
+                    new Option(name: 'test2', defaultValue: 'monkey', secureInput: true, required: true),
+                    new Option(name: 'test3', defaultValue: 'monkey', secureInput: true, secureExposed: true, required: true),
+                    new Option(name: 'test4', defaultValue: 'monkey', secureInput: true, secureExposed: false, required: true),
+                    new Option(name: 'test5', defaultValue: 'monkey', secureInput: false, secureExposed: true, required: true),
+                ] as TreeSet,
+            )
+        ]
+
+        def xml2 = JobsXMLCodec.encode(jobs2)
+        assertNotNull xml2
+        assertTrue xml2 instanceof String
+
+        def doc2 = parser.parse(new StringReader(xml2))
+        assertNotNull doc2
+        assertEquals "incorrect context options size", 5, doc2.job[0].context[0].options[0].option.size()
+        def opts= doc2.job[0].context[0].options[0].option
+
+        assertEquals 0, opts[0]['@secure'].size()
+        assertEquals 0, opts[0]['@valueExposed'].size()
+        assertEquals "incorrect context options option 1 name", 'test1', opts[0]['@name'].text()
+
+        assertEquals 1, opts[1]['@secure'].size()
+        assertEquals 0, opts[1]['@valueExposed'].size()
+        assertEquals "incorrect context options option 1 name", 'test2', opts[1]['@name'].text()
+        assertEquals "incorrect context options option 2 regex", 'true', opts[1]['@secure'].text()\
+
+        assertEquals 1, opts[2]['@secure'].size()
+        assertEquals 1, opts[2]['@valueExposed'].size()
+        assertEquals "incorrect context options option 1 name", 'test3', opts[2]['@name'].text()
+        assertEquals "incorrect context options option 2 regex", 'true', opts[2]['@secure'].text()
+        assertEquals "incorrect context options option 2 regex", 'true', opts[2]['@valueExposed'].text()
+
+        assertEquals 1, opts[3]['@secure'].size()
+        assertEquals 0, opts[3]['@valueExposed'].size()
+        assertEquals "incorrect context options option 1 name", 'test4', opts[3]['@name'].text()
+        assertEquals "incorrect context options option 2 regex", 'true', opts[3]['@secure'].text()
+
+        assertEquals 0, opts[4]['@secure'].size()
+        assertEquals 0, opts[4]['@valueExposed'].size()
+        assertEquals "incorrect context options option 1 name", 'test5', opts[4]['@name'].text()
     }
     void testEncodeOptionMultivalued(){
         def XmlSlurper parser = new XmlSlurper()

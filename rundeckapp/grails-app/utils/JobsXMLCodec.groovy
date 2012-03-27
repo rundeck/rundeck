@@ -254,6 +254,12 @@ class JobsXMLCodec {
                 }else{
                     x.remove('secure')
                 }
+                if(x.valueExposed){
+                    //convert 'valueExposed' to @valueExposed
+                    BuilderUtil.addAttribute(x,'valueExposed',x.remove('valueExposed'))
+                }else{
+                    x.remove('valueExposed')
+                }
                 if(x.required){
                     //convert 'required' to attribute
                     BuilderUtil.makeAttribute(x,'required')
