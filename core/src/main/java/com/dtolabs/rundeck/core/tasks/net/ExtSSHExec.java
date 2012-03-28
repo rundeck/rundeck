@@ -269,9 +269,6 @@ public class ExtSSHExec extends SSHBase {
 
             /* called once */
             if (command != null) {
-                if (getVerbose()) {
-                    log("cmd : " + command);
-                }
                 executeCommand(session, command, output);
             } else { // read command resource and execute for each command
                 try {
@@ -279,10 +276,6 @@ public class ExtSSHExec extends SSHBase {
                             new InputStreamReader(commandResource.getInputStream()));
                     String cmd;
                     while ((cmd = br.readLine()) != null) {
-                        if (getVerbose()) {
-                            log("cmd : " + cmd);
-                        }
-                        output.append(cmd).append(" : ");
                         executeCommand(session, cmd, output);
                         output.append("\n");
                     }
