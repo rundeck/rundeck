@@ -521,9 +521,13 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
         private void init(final INodeEntry node, final FrameworkProject frameworkProject,
                           final Framework framework, final ExecutionContext context) {
-            sudoEnabled = determineSudoEnabled(node);
+            sudoEnabled = resolveBooleanProperty(NODE_ATTR_SUDO_COMMAND_ENABLED, false, node, frameworkProject,
+                framework);
             if (sudoEnabled) {
-                final String sudoPassword = determineSudoPassword(node, context);
+                final String sudoPassOptname=resolveProperty(NODE_ATTR_SUDO_PASSWORD_OPTION, null, node, frameworkProject,
+                    framework);
+                final String sudoPassword = NodeSSHConnectionInfo.evaluateSecureOption(
+                    null != sudoPassOptname ? sudoPassOptname : DEFAULT_SUDO_PASSWORD_OPTION, context);
                 inputString = (null != sudoPassword ? sudoPassword : "") + "\n";
 
                 sudoCommandPattern = resolveProperty(NODE_ATTR_SUDO_COMMAND_PATTERN, DEFAULT_SUDO_COMMAND_PATTERN, node,
@@ -570,29 +574,6 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
         public String getInputString() {
             return inputString;
-        }
-
-        /**
-         * Determine if sudo should be used: sudo-enabled property must be "true" and the sudo password must be set
-         */
-        private boolean determineSudoEnabled(final INodeEntry node) {
-            if (null != node.getAttributes().get(NODE_ATTR_SUDO_COMMAND_ENABLED)) {
-                return  Boolean.parseBoolean(node.getAttributes().get(NODE_ATTR_SUDO_COMMAND_ENABLED));
-            }
-            return false;
-        }
-
-        /**
-         * Determine the sudo password to use
-         */
-        private String determineSudoPassword(final INodeEntry node, final ExecutionContext context) {
-            if (null != node.getAttributes().get(NODE_ATTR_SUDO_PASSWORD_OPTION)) {
-                return NodeSSHConnectionInfo.evaluateSecureOption(node.getAttributes().get(
-                    NODE_ATTR_SUDO_PASSWORD_OPTION),
-                    context);
-            } else {
-                return NodeSSHConnectionInfo.evaluateSecureOption(DEFAULT_SUDO_PASSWORD_OPTION, context);
-            }
         }
 
 

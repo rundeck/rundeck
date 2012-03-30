@@ -529,12 +529,11 @@ Therefore Sudo Password Authentication has several requirements and some limitat
 
 Passwords for the nodes are input either via the GUI or arguments to the job if executed via CLI or API.
 
-To enable Sudo Password Authentication, set the `sudo-command-enabled` to `true` for each node.
+To enable Sudo Password Authentication, set the `sudo-command-enabled` property/attribute to `true`.
 
-* `sudo-command-enabled` - set to "true" to enable Sudo Password Authentication: *required*.
-
- You can also configure these attributes, which also have equivalent properties to set at the Project and Rundeck scopes. Simply set the `project.NAME` in project.properties, or `framework.NAME` in framework.properties:
+You can configure the way the Sudo Password Authentication works by setting these properties at the Node, Project or Rundeck scopes. Simply set the attribute name on a Node, the `project.NAME` in project.properties, or `framework.NAME` in framework.properties:
  
+* `sudo-command-enabled` - set to "true" to enable Sudo Password Authentication.
 * `sudo-command-pattern` - a regular expression to detect when a command execution should expect to require Sudo authentication. Default pattern is `^sudo$`.
 * `sudo-password-option` - an option reference ("option.NAME") to define which secure option value to use as password.  The default is `option.sudoPassword`.
 * `sudo-prompt-pattern` - a regular expression to detect the password prompt for the Sudo authentication. The default pattern is `^\[sudo\] password for .+: .*`
