@@ -88,7 +88,7 @@ public class AuthorizationFilters {
                         request.subject=null
                         session.user=null
                         if(authtoken){
-                            request.invalidAuthToken = "Token:" + authtoken.substring(0, 5) + "****"
+                            request.invalidAuthToken = "Token:" + (authtoken.size()>5?authtoken.substring(0, 5):'') + "****"
                         }
                         request.authenticatedToken = null
                         request.invalidApiAuthentication = true
