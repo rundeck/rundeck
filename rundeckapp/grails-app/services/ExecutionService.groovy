@@ -623,7 +623,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         }
         //convert argString into Map<String,String>
         def String[] args = execMap.argString? CLIUtils.splitArgLine(execMap.argString):inputargs
-        def Map<String, String> optsmap = execMap.argString ? frameworkService.parseOptsFromString(execMap.argString) : null!=args? frameworkService.parseOptsFromArray(args):null
+        def Map<String, String> optsmap = execMap.argString ? frameworkService.parseOptsFromString(execMap.argString) : null!=args? frameworkService.parseOptsFromArray(args):[:]
         if(extraParamsExposed){
             optsmap.putAll(extraParamsExposed)
         }
