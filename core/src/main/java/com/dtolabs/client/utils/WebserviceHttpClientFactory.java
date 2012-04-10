@@ -100,6 +100,20 @@ public abstract class WebserviceHttpClientFactory {
                                                           final String username,
                                                           final String password,
                                                           final Map query,
+                                                          final Map<String,String> formData) {
+
+            return new WebserviceHttpClientChannel(urlSpec,
+                                                  new WebserviceFormAuthenticator(basePath, username, password),
+                                                  query,
+                                                  formData);
+
+        }
+
+        public WebserviceHttpClient getWebserviceHttpClient(final String urlSpec,
+                                                          final String basePath,
+                                                          final String username,
+                                                          final String password,
+                                                          final Map query,
                                                           final OutputStream destination,
                                                           final String expectedContentType) {
 
@@ -222,5 +236,24 @@ public abstract class WebserviceHttpClientFactory {
                                                                OutputStream destination,
                                                                String expectedContentType);
 
-
+    /**
+     * Get a WebserviceHttpClient from the parameters.
+     *
+     * @param urlSpec             URL to request
+     * @param basePath            base context path on the server for the Webservice application
+     * @param username            username to user
+     * @param password            password to use
+     * @param query               query parameters to add to the request
+     * @param destination         an OutputStream to which to write the result data
+     * @param expectedContentType the content type expected.  if the type does not match, no data is written to the
+     *                            outputstream.  if null, any type is allowed.
+     *
+     * @return WebserviceHttpClient instance
+     */
+    public abstract WebserviceHttpClient getWebserviceHttpClient(final String urlSpec,
+                                                        final String basePath,
+                                                        final String username,
+                                                        final String password,
+                                                        final Map query,
+                                                        final Map<String, String> formData);
 }

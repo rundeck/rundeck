@@ -212,6 +212,12 @@ abstract class HttpClientChannel implements BaseHttpClient {
     protected abstract RequestEntity getRequestEntity(PostMethod method);
 
     /**
+     * subclasses should return a byte[] of data, or null.  This will only be called if the {@link #isPostMethod()} method
+     * returns true.
+     */
+    protected abstract NameValuePair[] getRequestBody(PostMethod method);
+
+    /**
      * Return true if the request method is POST.
      * @return
      */
@@ -295,19 +301,28 @@ abstract class HttpClientChannel implements BaseHttpClient {
 
         requestMade = true;
         RequestEntity reqEntity=null;
+        NameValuePair[] postBody=null;
         if (isPostMethod()) {
             setMethodType("POST");
         }
         HttpMethod method = initMethod();
         if(isPostMethod()){
             reqEntity = getRequestEntity((PostMethod)method);
-            logger.debug("preparing to post request entity data: " + reqEntity.getContentType());
-            ((PostMethod) method).setRequestEntity(reqEntity);
+            if(null!=reqEntity){
+                logger.debug("preparing to post request entity data: " + reqEntity.getContentType());
+
+                ((PostMethod) method).setRequestEntity(reqEntity);
+            }else{
+                logger.debug("preparing to post form data" );
+                postBody = getRequestBody((PostMethod)method);
+                ((PostMethod) method).setRequestBody(postBody);
+            }
         }
         logger.debug("calling preMakeRequest");
         if (!preMakeRequest(method)) {
             return;
         }
+        logger.debug("calling doAuthentication...");
         if(!doAuthentication(method)){
             return;
         }
@@ -316,12 +331,14 @@ abstract class HttpClientChannel implements BaseHttpClient {
             if(!isPostMethod()){
                 method.setFollowRedirects(true);
             }
+            logger.debug("make request...");
             resultCode = httpc.executeMethod(method);
             reasonCode = method.getStatusText();
             if(isPostMethod()){
                 //check redirect after post
-                method = checkFollowRedirect(method);
+                method = checkFollowRedirect(method,resultCode);
             }
+            logger.debug("check needs reauth...");
 
             if(needsReAuthentication(resultCode,method)){
                 logger.debug("re-authentication needed, performing...");
@@ -329,8 +346,10 @@ abstract class HttpClientChannel implements BaseHttpClient {
                 method.abort();
                 //need to re-authenticate.
                 method = initMethod();
-                if (isPostMethod()) {
+                if (isPostMethod() && null!=reqEntity) {
                     ((PostMethod) method).setRequestEntity(reqEntity);
+                }else if (isPostMethod() && null!=postBody) {
+                    ((PostMethod) method).setRequestBody(postBody);
                 }
                 if(!doAuthentication(method)){
                     //user login failed
@@ -349,11 +368,12 @@ abstract class HttpClientChannel implements BaseHttpClient {
                 }
             }
 
+            logger.debug("finish...");
             if (null != method.getResponseHeader("Content-Type")) {
                 resultType = method.getResponseHeader("Content-Type").getValue();
             }
             String type = resultType;
-            if (type.indexOf(";") > 0) {
+            if (type != null && type.indexOf(";") > 0) {
                 type = type.substring(0, type.indexOf(";")).trim();
             }
             if (null==expectedContentType || expectedContentType.equals(type)) {
@@ -387,9 +407,8 @@ abstract class HttpClientChannel implements BaseHttpClient {
         postMakeRequest();
     }
 
-    private HttpMethod checkFollowRedirect(final HttpMethod method) throws IOException, HttpClientException {
+    private HttpMethod checkFollowRedirect(final HttpMethod method, final int res) throws IOException, HttpClientException {
 
-        final int res = httpc.executeMethod(method);
         if ((res == HttpStatus.SC_MOVED_TEMPORARILY) ||
             (res == HttpStatus.SC_MOVED_PERMANENTLY) ||
             (res == HttpStatus.SC_SEE_OTHER) ||

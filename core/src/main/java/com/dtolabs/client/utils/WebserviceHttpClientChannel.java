@@ -25,6 +25,7 @@ package com.dtolabs.client.utils;
 
 
 import com.dtolabs.rundeck.core.CoreException;
+import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.commons.httpclient.methods.multipart.FilePart;
@@ -38,6 +39,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Map;
 
 
@@ -61,6 +63,7 @@ class WebserviceHttpClientChannel extends BaseHttpClientChannel implements Webse
     String responseMessage = null;
     private Document resultDoc = null;
     private File uploadFile = null;
+    private Map<String,String> formData=null;
     private String fileparam = null;
 
     /**
@@ -102,6 +105,26 @@ class WebserviceHttpClientChannel extends BaseHttpClientChannel implements Webse
         this(urlSpec, authenticator, query);
         setUploadFile(uploadFile);
         setFileparam(fileparam);
+    }
+    /**
+     * Creates a new instance of ColonyHttpChannel.
+     *
+     * @param urlSpec       The base URL for the request
+     * @param authenticator a ColonyHttpAuthenticator instance
+     * @param query         a Map of query parameters to be added to the URL
+     * @param uploadFile    a file to upload as part of a multipart request
+     * @param fileparam     parameter name for the uploaded file in the multipart request
+     *
+     * @throws com.dtolabs.rundeck.core.CoreException
+     *          if the Bean cannot be correctly marshalled via the {@link com.networkgps.itnav.colony.MarshallFacility}.
+     */
+    public WebserviceHttpClientChannel(final String urlSpec,
+                                      final HttpAuthenticator authenticator,
+                                      final Map query,
+                                      final Map<String,String> formData)
+        throws CoreException {
+        this(urlSpec, authenticator, query);
+        setFormData(formData);
     }
 
     /**
@@ -174,8 +197,21 @@ class WebserviceHttpClientChannel extends BaseHttpClientChannel implements Webse
         }
     }
 
+    @Override
+    protected NameValuePair[] getRequestBody(final PostMethod method) {
+        if(null!=formData && formData.size()>0) {
+            final ArrayList<NameValuePair> list = new ArrayList<NameValuePair>();
+            for (final Map.Entry<String, String> stringStringEntry : formData.entrySet()) {
+                list.add(new NameValuePair(stringStringEntry.getKey(), stringStringEntry.getValue()));
+            }
+            return list.toArray(new NameValuePair[formData.size()]);
+        }else{
+            return null;
+        }
+    }
+
     protected boolean isPostMethod() {
-        return null != uploadFile;
+        return null != uploadFile || null!=formData && formData.size()>0;
     }
 
     /**
@@ -228,7 +264,7 @@ class WebserviceHttpClientChannel extends BaseHttpClientChannel implements Webse
         validResponse = getResultCode() >= 200 && getResultCode() < 300;
         errorResponse = !validResponse;
         String type = getResultContentType();
-        if (type.indexOf(";") > 0) {
+        if (type!=null && type.indexOf(";") > 0) {
             type = type.substring(0, type.indexOf(";")).trim();
         }
         if (XML_CONTENT_TYPE.equals(type)) {
@@ -260,5 +296,13 @@ class WebserviceHttpClientChannel extends BaseHttpClientChannel implements Webse
 
     private void setResultDoc(final Document resultDoc) {
         this.resultDoc = resultDoc;
+    }
+
+    public Map<String, String> getFormData() {
+        return formData;
+    }
+
+    public void setFormData(Map<String, String> formData) {
+        this.formData = formData;
     }
 }

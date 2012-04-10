@@ -26,6 +26,7 @@ package com.dtolabs.client.utils;
 
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpState;
+import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.log4j.Category;
@@ -103,6 +104,11 @@ class BaseHttpClientChannel extends HttpClientChannel {
      */
     protected RequestEntity getRequestEntity(PostMethod method) {
         return null;
+    }
+
+    @Override
+    protected NameValuePair[] getRequestBody(PostMethod method) {
+        return new NameValuePair[0];
     }
 
     protected boolean isPostMethod() {
