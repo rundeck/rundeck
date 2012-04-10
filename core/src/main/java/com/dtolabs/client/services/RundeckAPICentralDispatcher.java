@@ -176,7 +176,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
 
         final WebserviceResponse response;
         try {
-            response = serverService.makeRundeckRequest(RUNDECK_API_EXECUTION_REPORT, params, null, null);
+            response = serverService.makeRundeckRequest(RUNDECK_API_EXECUTION_REPORT, null, params);
         } catch (MalformedURLException e) {
             throw new CentralDispatcherServerRequestException("Failed to make request", e);
         }
