@@ -102,7 +102,7 @@ docs: makedocs
 launcher: $(launcher)
 
 $(launcher): plugins $(war)
-	cd rundeck-launcher; ./gradlew $(PROXY_DEFS) -PbuildNum=$(RELEASE) clean assemble
+	cd rundeck-launcher; ./gradlew -g $$(pwd)/gradle-cache $(PROXY_DEFS) -PbuildNum=$(RELEASE) clean assemble
 
 .PHONY: test
 test: $(war)
@@ -113,6 +113,7 @@ clean:
 	-rm $(core) $(war) $(launcher) $(plugs)
 	$(MAKE) -C docs clean
 	cd rundeck-launcher; ./gradlew clean
+	rm -rf rundeck-launcher/gradle-cache
 
 	pushd rundeckapp; $(GRAILS) clean; popd
 

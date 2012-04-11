@@ -9,7 +9,6 @@ subprojects{
     sourceCompatibility = 1.5
     jettyVersion='6.1.21'
     repositories {
-        mavenCentral()
         add(new org.apache.ivy.plugins.resolver.FileSystemResolver()) {
             name = 'localdeps'
             addArtifactPattern "$projectDir/../../dependencies/[module]/[ext]s/[module]-[revision](-[classifier]).[ext]"
