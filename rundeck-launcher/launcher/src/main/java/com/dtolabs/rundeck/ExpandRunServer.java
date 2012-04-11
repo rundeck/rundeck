@@ -221,7 +221,7 @@ public class ExpandRunServer {
         
         final CommandLineParser parser = new GnuParser();
         
-        CommandLine cl = null; 
+        final CommandLine cl;
         try {
             cl = parser.parse(this.options, args);
             
@@ -244,7 +244,8 @@ public class ExpandRunServer {
         }
         debug = debug || cl.hasOption('d');
         DEBUG("Debugging is turned on.");
-        this.basedir = cl.getOptionValue('b', new File(thisJar.getAbsolutePath()).getParentFile().getAbsolutePath());  // TODO: is the first getAbsolutePath required?
+        //nb: absolutePath called twice because a relative file will return null for getParentFile
+        this.basedir = cl.getOptionValue('b', new File(thisJar.getAbsolutePath()).getParentFile().getAbsolutePath());
         this.serverdir = new File(cl.getOptionValue("serverdir", basedir+"/server"));
         this.configDir = new File(cl.getOptionValue("c", serverdir + "/config"));
         this.datadir = new File(cl.getOptionValue("datadir", serverdir + "/data"));
@@ -262,7 +263,7 @@ public class ExpandRunServer {
         }
 
         final Properties defaults = loadDefaults(CONFIG_DEFAULTS_PROPERTIES);
-        Properties configuration = createConfiguration(defaults);
+        final Properties configuration = createConfiguration(defaults);
         configuration.put("realm.properties.location", forwardSlashPath(configDir.getAbsolutePath())
                                                        + "/realm.properties");
         DEBUG("Runtime configuration properties: " + configuration);
@@ -270,15 +271,19 @@ public class ExpandRunServer {
         if(!cl.hasOption(FLAG_SKIPINSTALL)) {
             final File libdir = new File(serverdir, "lib");
             DEBUG("Extracting libs to: " + libdir.getAbsolutePath() + " ... ");
+            deleteExistingJarsInDir(libdir, "^rundeck.*");
             extractLibs(libdir);
             extractJettyLibs(libdir);
             final File expdir = new File(serverdir, "exp");
             DEBUG("Extracting webapp to: " + expdir.getAbsolutePath() + " ... ");
+
+            deleteExistingJarsInDir(new File(expdir, "webapp/WEB-INF/lib"), "^rundeck.*");
             extractWar(expdir);
             
             DEBUG("Extracting bin scripts to: " + bindir.getAbsolutePath() + " ... ");
 
             extractBin(bindir, new File(serverdir, "exp/webapp/WEB-INF/lib/" + coreJarName));
+            deleteExistingJarsInDir(toolslibdir, "^rundeck.*");
             copyToolLibs(toolslibdir, new File(serverdir, "exp/webapp/WEB-INF/lib/" + coreJarName));
         
             expandTemplates(configuration, serverdir, rewrite);
@@ -302,7 +307,7 @@ public class ExpandRunServer {
 
     private void printUsage() {
         // automatically generate the help statement
-        HelpFormatter formatter = new HelpFormatter();
+        final HelpFormatter formatter = new HelpFormatter();
         formatter.printHelp( "java [JAVA_OPTIONS] -jar rundeck-launcher.jar ", "\nRun the rundeck server, installing the " +
                 "necessary components if they do not exist.\n", options,
                 "\nhttp://rundeck.org\n", true );
@@ -386,11 +391,11 @@ public class ExpandRunServer {
 
         //set executable on shell scripts
         for (final String s : destDir.list(new FilenameFilter() {
-            public boolean accept(File file, String s) {
+            public boolean accept(final File file, final String s) {
                 return !s.endsWith(".bat");
             }
         })) {
-            File script = new File(destDir, s);
+            final File script = new File(destDir, s);
             if(!script.setExecutable(true)) {
                 ERR("Unable to set executable permissions for file: " + script.getAbsolutePath());
             }
@@ -541,7 +546,7 @@ public class ExpandRunServer {
 
         return properties;
     }
-    public static String forwardSlashPath(String input) {
+    public static String forwardSlashPath(final String input) {
         if (System.getProperties().get("file.separator").equals("\\")) {
             return input.replaceAll("\\\\", "/");
         }
@@ -567,7 +572,7 @@ public class ExpandRunServer {
      */
     private void extractLibs(final File libdir) throws IOException {
         //expand contents
-        ZipUtil.extractZip(thisJar.getAbsolutePath(), libdir, "lib", "lib/");
+        ZipUtil.extractZip(thisJar.getAbsolutePath(), libdir, "lib/", "lib/");
     }
 
     /**
@@ -590,6 +595,28 @@ public class ExpandRunServer {
     private void extractWar(final File expdir) throws IOException {
         //expand contents
         ZipUtil.extractZip(thisJar.getAbsolutePath(), expdir, "pkgs", "pkgs/");
+    }
+
+    /**
+     * Remove any jar files whose names match the pattern that exist in the directory, if the directory
+     * exists.
+     * @param dir directory
+     * @param fileMatch regex to match files to delete
+     */
+    private void deleteExistingJarsInDir(final File dir, final String fileMatch) {
+        if(dir.isDirectory()){
+            final File[] rundeckJars = dir.listFiles(new FilenameFilter() {
+                public boolean accept(final File file, final String s) {
+                    return s.matches(fileMatch) && s.endsWith(".jar");
+                }
+            });
+            for (final File rundeckJar : rundeckJars) {
+                DEBUG("Delete existing jar file: " + rundeckJar.getAbsolutePath());
+                if (!rundeckJar.delete()) {
+                    ERR("Unable to remove existing jar file: " + rundeckJar);
+                }
+            }
+        }
     }
 
     private void execute(final String[] args, final File configDir, final File baseDir, final File serverDir,
