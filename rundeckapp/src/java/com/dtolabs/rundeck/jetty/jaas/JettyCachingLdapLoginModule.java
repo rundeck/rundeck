@@ -515,20 +515,20 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     @SuppressWarnings("unchecked")
     protected boolean bindingLogin(String username, Object password) throws LoginException,
             NamingException {
-        
-        if(_cacheDuration > 0) { // only worry about caching if there is a cacheDuration set.
-            CachedUserInfo cached = USERINFOCACHE.get(username);
-            if (cached != null) {       
-                if(System.currentTimeMillis() < cached.expires) {
+        final String cacheToken = Credential.MD5.digest(username + ":" + password.toString());
+        if (_cacheDuration > 0) { // only worry about caching if there is a cacheDuration set.
+            CachedUserInfo cached = USERINFOCACHE.get(cacheToken);
+            if (cached != null) {
+                if (System.currentTimeMillis() < cached.expires) {
                     Log.debug("Cache Hit for " + username + ".");
                     userInfoCacheHits++;
                     
                     setCurrentUser(new JAASUserInfo(cached.userInfo));
                     setAuthenticated(true);
-                    return true;   
+                    return true;
                 } else {
                     Log.info("Cache Eviction for " + username + ".");
-                    USERINFOCACHE.remove(username);
+                    USERINFOCACHE.remove(cacheToken);
                 }
             } else {
                 Log.debug("Cache Miss for " + username + ".");
@@ -555,8 +555,10 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         List roles = getUserRolesByDn(dirContext, userDn, username);
 
         UserInfo userInfo = new UserInfo(username, null, roles);
-        if(_cacheDuration > 0) {
-            USERINFOCACHE.put(username, new CachedUserInfo(userInfo, System.currentTimeMillis() + _cacheDuration));
+        if (_cacheDuration > 0) {
+            USERINFOCACHE.put(cacheToken,
+                new CachedUserInfo(userInfo,
+                    System.currentTimeMillis() + _cacheDuration));
             Log.debug("Adding " + username + " set to expire: " + System.currentTimeMillis() + _cacheDuration);
         }
         setCurrentUser(new JAASUserInfo(userInfo));
