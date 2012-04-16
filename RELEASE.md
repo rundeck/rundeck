@@ -1,7 +1,13 @@
-Release 1.4.2
+Release 1.4.2.1
 ===========
 
-Date: 2/10/2012
+Date: 4/16/2012
+
+Security Bugfix release
+
+Changes since 1.4.2:
+
+* Fix security issue with JettyCachingLdapLoginModule, [#555 - vulnerability with ldap authentication](http://rundeck.lighthouseapp.com/projects/59277/tickets/555).
 
 Notable Changes:
 
