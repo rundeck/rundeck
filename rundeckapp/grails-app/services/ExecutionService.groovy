@@ -630,6 +630,9 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
 
         def Map<String,Map<String,String>> datacontext = new HashMap<String,Map<String,String>>()
         datacontext.put("option",optsmap)
+        if(extraParamsExposed){
+            datacontext.put("secureOption",extraParamsExposed.clone())
+        }
         datacontext.put("job",jobcontext?jobcontext:new HashMap<String,String>())
 
         NodesSelector nodeselector
@@ -1060,6 +1063,8 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         def optparams
         if (params.argString) {
             optparams = frameworkService.parseOptsFromString(params.argString)
+        }else if(params.optparams){
+            optparams=params.optparams
         }else{
             optparams = ExecutionService.filterOptParams(params)
         }
@@ -1654,27 +1659,72 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
     //                    se.refresh()
                     //replace data context within arg string
                     String[] newargs = jitem.args
-                    //create node context for node and substitute data references in command
-                    final Map<String, Map<String, String>> nodeDataContext =
-                    DataContextUtils.addContext("node", DataContextUtils.nodeData(iNodeEntry), executionContext.getDataContext());
-
-                    if (null != nodeDataContext && null != newargs) {
-                        newargs = DataContextUtils.replaceDataReferences(newargs, nodeDataContext)
+                    //create node context for node and substitute data references in args
+                    if (null != newargs) {
+                        newargs = DataContextUtils.replaceDataReferences(newargs, [node: DataContextUtils.nodeData(iNodeEntry)])
                     }
-                    //try to set defaults for any missing args
-                    def stringList = addArgListOptionDefaults(se, newargs)
-                    newargs = stringList.toArray(new String[stringList.size()]);
 
-                    //construct job data context
-                    def jobcontext = new HashMap<String, String>()
-                    jobcontext.id = se.extid
-                    jobcontext.name = se.jobName
-                    jobcontext.group = se.groupPath
-                    jobcontext.project = se.project
-                    jobcontext.username = executionContext.getUser()
-                    newExecItem = createExecutionItemForExecutionContext(se, executionContext.getFramework(), executionContext.getUser())
-                    //TODO: if allowed,pass private data context to new context
-                    newContext= createContext(se, executionContext.getFramework(), executionContext.getUser(), jobcontext, executionContext.getExecutionListener(),newargs)
+                    final jobOptsMap = frameworkService.parseOptsFromArray(newargs)
+                    jobOptsMap = addOptionDefaults(se, jobOptsMap)
+
+                    //select secureAuth and secure options from the args to pass
+                    def secAuthOpts = selectSecureOptionInput(se, [optparams: jobOptsMap], false)
+                    def secOpts = selectSecureOptionInput(se, [optparams: jobOptsMap], true)
+
+                    //for secAuthOpts, evaluate each in context of original private data context
+                    def evalSecAuthOpts = [:]
+                    secAuthOpts.each {k, v ->
+                        def newv=DataContextUtils.replaceDataReferences(v, executionContext.privateDataContext)
+                        if(newv!=v || !v.startsWith('${option.')){
+                            evalSecAuthOpts[k] = newv
+                        }
+                    }
+                    
+                    //for secOpts, evaluate each in context of original secure option data context
+                    def evalSecOpts = [:]
+                    secOpts.each {k, v ->
+                        def newv = DataContextUtils.replaceDataReferences(v, [option:executionContext.dataContext['secureOption']])
+                        if (newv != v || !v.startsWith('${option.')) {
+                            evalSecOpts[k] = newv
+                        }
+                    }
+
+                    //for plain opts, evaluate in context of non secure data context
+                    final plainOpts = removeSecureOptionEntries(se, jobOptsMap)
+
+                    //define nonsecure opts entries
+                    def plainOptsContext= executionContext.dataContext['option']?.findAll{!executionContext.dataContext['secureOption'] || null== executionContext.dataContext['secureOption'][it.key]}
+                    def evalPlainOpts = [:]
+                    plainOpts.each {k, v ->
+                        evalPlainOpts[k] = DataContextUtils.replaceDataReferences(v, [option:plainOptsContext] )
+                        //XXX: missing option references could be removed instead of passed on
+                    }
+
+                    //validate the option values
+                    try {
+                        validateOptionValues(se, evalPlainOpts + evalSecOpts + evalSecAuthOpts)
+                    } catch (Exception e) {
+                        def msg = "Failed to execute job ${jitem.jobIdentifier}: ${se.extid}: ${e.message}"
+                        executionContext.getExecutionListener().log(0, "Job ref [${jitem.jobIdentifier}] failed: " + msg);
+                        iresult = new InterpreterResultImpl(new UnauthorizedStatusResult(msg))
+                    }
+
+                    if (!iresult) {
+
+                        //arg list for new context
+                        def stringList= evalPlainOpts.collect {["-" + it.key, it.value]}.flatten()
+                        newargs = stringList.toArray(new String[stringList.size()]);
+
+                        //construct job data context
+                        def jobcontext = new HashMap<String, String>()
+                        jobcontext.id = se.extid
+                        jobcontext.name = se.jobName
+                        jobcontext.group = se.groupPath
+                        jobcontext.project = se.project
+                        jobcontext.username = executionContext.getUser()
+                        newExecItem = createExecutionItemForExecutionContext(se, executionContext.getFramework(), executionContext.getUser())
+                        newContext= createContext(se, executionContext.getFramework(), executionContext.getUser(), jobcontext, executionContext.getExecutionListener(),newargs, evalSecAuthOpts, evalSecOpts)
+                    }
                 }
 
             }
