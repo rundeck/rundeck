@@ -73,7 +73,7 @@ There are two types of Secure options:
 * Secure - these option values are exposed in scripts and commands.
 * Secure Remote Authentication - these option values *are not* exposed in scripts and commands, and are only used by Node Executors to authenticate to Nodes and execute commands.
 
-Secure Options do not support allow Multi-valued input. 
+Secure Options do not support Multi-valued input. 
 
 Secure Options cannot be used as authentication input to Node Executors, you must use a Secure Remote Authentication option described below.
 
@@ -89,6 +89,8 @@ is exposed to use in scripts and commands.  Make sure you acknowledge these secu
 * as plaintext tokens expanded in remote scripts as `@option.name@`.
     * Inline Script workflow steps that contain a token expansion will be expanded into a temporary file, and the temp file will contain the plaintext option value.
 
+Note: that when passed as arguments to Job References, they can only be passed as the value of another Secure option.  See [Using Secure Options with Job References](#using-secure-options-with-job-references).
+
 ### Secure Remote Authentication Options
 
 The built-in [SSH Provider](plugins.html#ssh-provider) for node execution allows using passwords for SSH and/or Sudo authentication mechanisms, and the passwords are supplied by Secure Remote Authentication Options defined in a Job.
@@ -96,6 +98,38 @@ The built-in [SSH Provider](plugins.html#ssh-provider) for node execution allows
 Secure Remote Authentication Options have some limitations compared to Plain and Secure options:
 
 * The values entered by the user are not available for normal script and command option value expansion. This means that they can only be used for the purposes of the Remote Authentication.
+
+### Using Secure Options with Job References
+
+When you [define a Job Reference step in a workflow](job-workflows.html#job-reference-step), you can specify the arguments that are passed to it. You can pass Secure Option values and Secure Remote Authentication Option values from a top-level job to a Job Reference, but option values *cannot be passed into another option of a different type*. So a parent job can only pass option values to the Job reference if the option type is the same between the jobs.
+
+This constraint is to maintain the security design of these options:
+
+1. Secure options should not to be stored in the Rundeck execution database, so must not be used as plain option values.
+2. Secure Remote Authentication options should not be used in scripts/commands, so must not be used as Secure or Plain option values.
+
+As an example, here is are two jobs, Job A and Job B, which define some options:
+
+* Job A
+    * Option "plain1" - Plain
+    * Option "secure1" - Secure
+    * Option "auth1" - Secure remote authentication
+* Job B
+    * Option "plain2" - Plain
+    * Option "secure2" - Secure
+    * Option "auth2" - Secure remote authentication
+
+If Job A defines a Job reference to call Job B, then the only valid mapping is shown below:
+
+* plain1 -> plain2
+* secure1 -> secure2
+* auth1 -> auth2
+
+So the arguments for the Job Reference might look like this:
+
+    -plain2 ${option.plain1} -secure2 ${option.secure1} -auth2 ${option.auth1}
+
+Note: If you define arguments in the wrong manner, then the Secure and Secure Remote Authentication options will not be set when the Job reference is called.  Plain options will behave the way they do in Command or Script arguments, and be left as-is as uninterpreted property references.
 
 ## Options editor
 
