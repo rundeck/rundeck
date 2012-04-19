@@ -143,9 +143,11 @@ class JobsXMLCodec {
             }
             if(opts && opts instanceof Collection){
                 opts.each{optm->
-                    map.options[optm.name]=optm
-                    if(optm.values){
-                        optm.values=optm.values.split(",") as List
+                    map.options[optm.name.toString()]=optm
+                    if (optm.values instanceof String) {
+                        optm.values = optm.values.split(",") as List
+                    } else if (optm.values) {
+                        optm.values = [optm.values.toString()]
                     }
                     if(null!=optm.enforcedvalues){
                         optm.enforced=optm.remove('enforcedvalues')
