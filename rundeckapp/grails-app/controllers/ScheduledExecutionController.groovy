@@ -2434,11 +2434,11 @@ class ScheduledExecutionController  {
         def jobset
 
         if(parseresult.error){
-            flash.error=parseresult.error
             if(params.xmlreq){
+                flash.error = parseresult.error
                 return xmlerror()
             }else{
-                render(view:'upload')
+                render(view:'upload',model:[errors:parseresult.error])
                 return
             }
         }

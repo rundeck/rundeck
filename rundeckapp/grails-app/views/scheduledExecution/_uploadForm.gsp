@@ -1,8 +1,8 @@
-<g:if test="${flash.message || messages || errjobs || skipjobs || jobs || execerrors || execsuccess}">
+<g:if test="${flash.message || errors || messages || errjobs || skipjobs || jobs || execerrors || execsuccess}">
 <div class="pageBody">
 
-    <g:if test="${flash.message}">
-        <div class="error note">${flash.message}</div>
+    <g:if test="${flash.message || errors}">
+        <div class="error note">${flash.message?flash.message.encodeAsHTML():errors.encodeAsHTML()}</div>
     </g:if>
 
     <g:if test="${messages}">
