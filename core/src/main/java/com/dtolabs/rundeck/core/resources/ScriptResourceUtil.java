@@ -25,6 +25,7 @@ import com.dtolabs.utils.Streams;
 import org.apache.log4j.Logger;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -62,7 +63,7 @@ class ScriptResourceUtil {
         final File destinationTempFile;
         try {
             destinationTempFile = File.createTempFile("script-plugin", ".resources");
-//            destinationTempFile.deleteOnExit();
+            destinationTempFile.deleteOnExit();
         } catch (IOException e) {
             throw new ResourceModelSourceException(e);
         }
@@ -79,15 +80,20 @@ class ScriptResourceUtil {
             throw new ResourceModelSourceException("Script execution could not start: " + e.getMessage(), e);
         }
         try {
-            errthread = Streams.copyStreamThread(exec.getErrorStream(), System.err);
-            outthread = Streams.copyStreamThread(exec.getInputStream(), new FileOutputStream(destinationTempFile));
-            errthread.start();
-            outthread.start();
-            exec.getOutputStream().close();
-            result = exec.waitFor();
-            errthread.join();
-            outthread.join();
-            success = 0 == result;
+            final FileOutputStream fileOutputStream = new FileOutputStream(destinationTempFile);
+            try {
+                errthread = Streams.copyStreamThread(exec.getErrorStream(), System.err);
+                outthread = Streams.copyStreamThread(exec.getInputStream(), fileOutputStream);
+                errthread.start();
+                outthread.start();
+                exec.getOutputStream().close();
+                result = exec.waitFor();
+                errthread.join();
+                outthread.join();
+                success = 0 == result;
+            } finally {
+                fileOutputStream.close();
+            }
         } catch (InterruptedException e) {
             logger.error("[" + pluginname + "]: " + e.getMessage());
             e.printStackTrace(System.err);
@@ -104,19 +110,26 @@ class ScriptResourceUtil {
             logger.error("[" + pluginname + "]: stream copy error: " + errthread.getException().getMessage(),
                 errthread.getException());
         }
-        if (!success) {
-            throw new ResourceModelSourceException("Script execution failed with result: " + result);
-        }
-
-        if (destinationTempFile.isFile() && destinationTempFile.length() > 0) {
-            try {
-                return FileResourceModelSource.parseFile(destinationTempFile, fileformat, framework,
-                    project);
-            } catch (ConfigurationException e) {
-                throw new ResourceModelSourceException(e);
+        try {
+            if (!success) {
+                throw new ResourceModelSourceException("Script execution failed with result: " + result);
             }
-        } else {
-            throw new ResourceModelSourceException("Script output was empty");
+
+            if (destinationTempFile.isFile() && destinationTempFile.length() > 0) {
+                try {
+                    return FileResourceModelSource.parseFile(destinationTempFile, fileformat, framework,
+                        project);
+                } catch (ConfigurationException e) {
+                    throw new ResourceModelSourceException(e);
+                }
+            } else {
+                throw new ResourceModelSourceException("Script output was empty");
+            }
+        } finally {
+            if (!destinationTempFile.delete()) {
+                logger.warn(
+                    "[" + pluginname + "]: could not delete temp file: " + destinationTempFile.getAbsolutePath());
+            }
         }
     }
 
