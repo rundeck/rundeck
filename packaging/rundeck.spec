@@ -79,7 +79,7 @@ fi
 /var/lib/rundeck/cli/ant-launcher-1.7.1.jar
 /var/lib/rundeck/cli/commons-beanutils-1.8.0.jar
 /var/lib/rundeck/cli/commons-cli-1.0.jar
-/var/lib/rundeck/cli/commons-codec-1.3.jar
+/var/lib/rundeck/cli/commons-codec-1.5.jar
 /var/lib/rundeck/cli/commons-collections-3.2.1.jar
 /var/lib/rundeck/cli/commons-httpclient-3.0.1.jar
 /var/lib/rundeck/cli/commons-lang-2.4.jar
