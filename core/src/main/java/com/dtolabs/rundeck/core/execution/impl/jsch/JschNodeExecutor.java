@@ -106,7 +106,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String NODE_ATTR_SUDO_FAIL_ON_PROMPT_MAX_LINES = "sudo-fail-on-prompt-max-lines";
     public static final boolean DEFAULT_SUDO_FAIL_ON_PROMPT_MAX_LINES = false;
     public static final String NODE_ATTR_SUDO_FAIL_ON_PROMPT_TIMEOUT = "sudo-fail-on-prompt-timeout";
-    public static final boolean DEFAULT_SUDO_FAIL_ON_PROMPT_TIMEOUT = true;
+    public static final boolean DEFAULT_SUDO_FAIL_ON_PROMPT_TIMEOUT = false;
     public static final String NODE_ATTR_SUDO_FAIL_ON_RESPONSE_TIMEOUT = "sudo-fail-on-response-timeout";
     public static final boolean DEFAULT_SUDO_FAIL_ON_RESPONSE_TIMEOUT = false;
     public static final String NODE_ATTR_SUDO_SUCCESS_ON_PROMPT_THRESHOLD = "sudo-success-on-prompt-threshold";
