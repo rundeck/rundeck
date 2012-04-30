@@ -22,9 +22,9 @@ Rundeck provides a single console for dispatching commands across many resources
 
 %pre
 getent group rundeck >/dev/null || groupadd rundeck
-getent passwd rundeck >/dev/null || useradd -m -g rundeck rundeck
-if [ ! -e ~rundeck/.ssh/rundeck.id_rsa ]; then
-	su -c "ssh-keygen -q -t rsa -C '' -N '' -f ~rundeck/.ssh/rundeck.id_rsa" rundeck
+getent passwd rundeck >/dev/null || useradd -d /var/lib/rundeck -m -g rundeck rundeck
+if [ ! -e ~rundeck/.ssh/id_rsa ]; then
+	su -c "ssh-keygen -q -t rsa -C '' -N '' -f ~rundeck/.ssh/id_rsa" rundeck
 fi
 
 %post
@@ -106,6 +106,10 @@ requires: rundeck
 
 %description config
 All configuration related artifacts are stored in this package.
+
+%pre config
+getent group rundeck >/dev/null || groupadd rundeck
+getent passwd rundeck >/dev/null || useradd -d /var/lib/rundeck -m -g rundeck rundeck
 
 %files config
 %defattr(0644, rundeck, rundeck, 0775)
