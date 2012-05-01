@@ -64,7 +64,7 @@
                 </g:if>
             </g:if>
             <g:if test="${jobAuthorized || jobAuths[AuthConstants.ACTION_RUN]?.contains(idKey) }">
-                <g:link controller="scheduledExecution" action="execute" id="${scheduledExecution.extid}" class="icon button floatl" onclick="loadExec(${scheduledExecution.id});return false;"><img src="${resource(dir:'images',file:'icon-small-run.png')}" title="Run ${g.message(code:'domain.ScheduledExecution.title')}&hellip;" alt="run" width="16px" height="16px"/></g:link>
+                <g:link controller="scheduledExecution" action="execute" id="${scheduledExecution.extid}" class="icon button floatl" onclick="if(typeof(loadExec)=='function'){loadExec(${scheduledExecution.id});return false;}"><img src="${resource(dir:'images',file:'icon-small-run.png')}" title="Run ${g.message(code:'domain.ScheduledExecution.title')}&hellip;" alt="run" width="16px" height="16px"/></g:link>
             </g:if>
             <g:elseif test="${ !jobAuthorized }">
                 <span class="info note floatl" style="width:16px;padding: 2px;" title="${message(code:'unauthorized.job.run')}"><img src="${resource(dir:'images',file:'icon-small-warn.png')}" alt="" width="16px" height="16px"/></span>
