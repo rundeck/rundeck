@@ -52,6 +52,8 @@ rpm:
 	@cp ../core/build/libs/rundeck-core-*.jar rpmdist/SOURCES/var/lib/rundeck/cli
 	@cp ../rundeck-launcher/rundeck-jetty-server/build/libs/rundeck-jetty-server-*.jar rpmdist/SOURCES/var/lib/rundeck/bootstrap
 	@cp ../plugins/*-plugin/build/libs/*-plugin*.jar rpmdist/SOURCES/var/lib/rundeck/libext
+	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/admin.aclpolicy.template rpmdist/SOURCES/etc/rundeck/admin.aclpolicy
+	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/apitoken.aclpolicy.template rpmdist/SOURCES/etc/rundeck/apitoken.aclpolicy
 	@find ../core/src/main/resources/com/dtolabs/rundeck/core/cli/templates ! -regex ".*.bat$$" -and -type f | sed -e /rd-check/d -e /rd-setup/d | xargs -I Z cp Z rpmdist/SOURCES/usr/bin
 	@unzip -oq ../rundeckapp/target/rundeck-$(VERSION).war -d rpmdist/SOURCES/var/lib/rundeck/exp/webapp/
 	@ln -s /etc/rundeck/log4j.properties; mv log4j.properties rpmdist/SOURCES/var/lib/rundeck/exp/webapp/WEB-INF/classes
@@ -80,6 +82,8 @@ deb:
 	@cp ../core/build/libs/rundeck-core-*.jar debdist/var/lib/rundeck/cli
 	@cp ../rundeck-launcher/rundeck-jetty-server/build/libs/rundeck-jetty-server-*.jar debdist/var/lib/rundeck/bootstrap
 	@cp ../plugins/*-plugin/build/libs/*-plugin*.jar debdist/var/lib/rundeck/libext
+	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/admin.aclpolicy.template debdist/etc/rundeck/admin.aclpolicy
+	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/apitoken.aclpolicy.template debdist/etc/rundeck/apitoken.aclpolicy
 	@find ../core/src/main/resources/com/dtolabs/rundeck/core/cli/templates ! -regex ".*.bat$$" -and -type f | sed -e /rd-check/d -e /rd-setup/d | xargs -I Z cp Z debdist/usr/bin
 	@unzip -oq ../rundeckapp/target/rundeck-$(VERSION).war -d debdist/var/lib/rundeck/exp/webapp/
 	@ln -s /etc/rundeck/log4j.properties; mv log4j.properties debdist/var/lib/rundeck/exp/webapp/WEB-INF/classes
