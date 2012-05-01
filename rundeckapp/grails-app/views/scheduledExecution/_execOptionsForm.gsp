@@ -198,6 +198,13 @@
                         });
                     });
                 });
+
+                /** reset focus on click, so that IE triggers onchange event*/
+                Event.observe($('doReplaceFilters'),'click',function (evt) {
+                    this.blur();
+                    this.focus();
+                });
+
             </g:javascript>
         </g:elseif>
         <div class="buttons" id="formbuttons">
