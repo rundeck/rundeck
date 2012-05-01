@@ -963,6 +963,30 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertEquals 'a command',exec.adhocRemoteString
             assertTrue exec.adhocExecution
         }
+        if (true) {//test invalid job name
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.existsFrameworkProject {project, framework ->
+                assertEquals 'testProject', project
+                return true
+            }
+            fwkControl.demand.getCommand {project, type, command, framework ->
+                assertEquals 'testProject', project
+                assertEquals 'aType', type
+                assertEquals 'aCommand', command
+                return null
+            }
+            sec.frameworkService = fwkControl.createMock()
+
+            def params = [jobName: 'test/monkey', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: 'a command']
+            def results = sec._dovalidate(params)
+            assertTrue(results.failed)
+            def sce = results.scheduledExecution
+
+            assertTrue sce.errors.hasErrors()
+            assertTrue sce.errors.hasFieldErrors('jobName')
+
+        }
     }
     public void testDoValidateWorkflow(){
         def sec = new ScheduledExecutionController()
@@ -2186,6 +2210,51 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             assertNull execution.notifications
             assertNull execution.options
         }
+        if (true) {//test update job name invalid
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',)
+            se.save()
+
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.existsFrameworkProject {project, framework ->
+                assertEquals 'testProject2', project
+                return true
+            }
+            fwkControl.demand.getCommand {project, type, command, framework ->
+                assertEquals 'testProject2', project
+                assertEquals 'aType2', type
+                assertEquals 'aCommand2', command
+                return null
+            }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            sec.frameworkService = fwkControl.createMock()
+            def sesControl = mockFor(ScheduledExecutionService, true)
+            sesControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = sesControl.createMock()
+
+            def params = [id: se.id.toString(), jobName: 'test/monkey2', project: 'testProject2', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',]
+            def results = sec._doupdate(params)
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.err.println(it) ;
+                }
+            }
+            assertFalse succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution sce = scheduledExecution
+            assertNotNull(sce)
+            assertNotNull(sce.errors)
+            assertTrue sce.errors.hasErrors()
+            assertTrue sce.errors.hasFieldErrors('jobName')
+        }
     }
     public void testDoUpdateJob(){
         def sec = new ScheduledExecutionController()
@@ -2246,6 +2315,47 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
 
             assertNull execution.notifications
             assertNull execution.options
+        }
+        if (true) {//test update basic job details
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',)
+            se.save()
+
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.existsFrameworkProject {project, framework ->
+                assertEquals 'testProject2', project
+                return true
+            }
+            fwkControl.demand.getCommand {project, type, command, framework ->
+                assertEquals 'testProject2', project
+                assertEquals 'aType2', type
+                assertEquals 'aCommand2', command
+                return null
+            }
+            sec.frameworkService = fwkControl.createMock()
+
+            def params = new ScheduledExecution(jobName: 'test/monkey2', project: 'testProject2', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)])
+            )
+            def results = sec._doupdateJob(se.id.toString(), params)
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.err.println(it) ;
+                }
+            }
+            assertFalse succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution sce = scheduledExecution
+            assertNotNull(sce)
+            assertNotNull(sce.errors)
+            assertTrue sce.errors.hasErrors()
+            assertTrue sce.errors.hasFieldErrors('jobName')
         }
     }
     public void testDoUpdateJobShouldReplaceFilters(){

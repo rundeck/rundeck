@@ -35,7 +35,7 @@ class ScheduledExecution extends ExecutionContext {
     static constraints = {
         workflow(nullable:true)
         options(nullable:true)
-        jobName(blank:false,nullable:false)
+        jobName(blank: false, nullable: false, matches: "[^/]+")
         groupPath(nullable:true)
         nextExecution(nullable:true)
         nodeKeepgoing(nullable:true)
