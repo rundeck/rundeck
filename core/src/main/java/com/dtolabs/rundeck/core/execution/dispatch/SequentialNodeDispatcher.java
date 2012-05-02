@@ -92,6 +92,8 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
         final TreeSet<INodeEntry> orderedNodes = new TreeSet<INodeEntry>(
             rankAscending ? comparator : Collections.reverseOrder(comparator));
         orderedNodes.addAll(nodes1);
+        Throwable caught=null;
+        INodeEntry failedNode=null;
         for (final Object node1 : orderedNodes) {
             if (thread.isInterrupted()
                 || thread instanceof ExecutionServiceThread && ((ExecutionServiceThread) thread).isAborted()) {
@@ -132,6 +134,7 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                             "Failed execution, result was null");
                     }
                     if (!keepgoing) {
+                        failedNode=node;
                         break;
                     }
                 } else {
@@ -149,14 +152,20 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                     "Failed dispatching to node " + node.getNodename() + ": " + stringWriter.toString());
 
                 if (!keepgoing) {
-                    if (failures.size() > 0 && null != failedListener) {
-                        //tell listener of failed node list
-                        failedListener.nodesFailed(failures);
-                    }
-                    throw new DispatcherException(
-                        "Failed dispatching to node " + node.getNodename() + ": " + e.getMessage(), e, node);
+                    failedNode=node;
+                    caught=e;
+                    break;
                 }
             }
+        }
+        if (!keepgoing && failures.size() > 0 && null != failedListener) {
+            //tell listener of failed node list
+            failedListener.nodesFailed(failures);
+        }
+        if (!keepgoing && null != caught) {
+            throw new DispatcherException(
+                "Failed dispatching to node " + failedNode.getNodename() + ": " + caught.getMessage(), caught,
+                failedNode);
         }
         if (keepgoing && nodeNames.size() > 0) {
             if (null != failedListener) {
