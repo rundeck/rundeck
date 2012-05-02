@@ -22,8 +22,8 @@ xmlproj=$($XMLSTARLET esc "$project")
 cat > $DIR/temp.out <<END
 <joblist>
    <job>
-      <name>test job/executions</name>
-      <group>test/api</group>
+      <name>test job</name>
+      <group>test/api/executions</group>
       <description>Test the /job/ID/executions API endpoint</description>
       <loglevel>INFO</loglevel>
       <context>
@@ -72,7 +72,8 @@ jobid=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/id" $DIR/curl.out)
 
 if [ "1" != "$succount" -o "" == "$jobid" ] ; then
     errorMsg  "Upload was not successful."
-    exit 
+    $XMLSTARLET sel -T -t -v "/result/failed" $DIR/curl.out
+    exit 2
 fi
 
 ###
@@ -312,8 +313,8 @@ xmlproj=$($XMLSTARLET esc "$project")
 cat > $DIR/temp.out <<END
 <joblist>
    <job>
-      <name>test job/executions 2</name>
-      <group>test/api</group>
+      <name>test job</name>
+      <group>test/api/executions 2</group>
       <description>Test the /job/ID/executions API endpoint</description>
       <loglevel>INFO</loglevel>
       <context>
@@ -362,7 +363,8 @@ jobid=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/id" $DIR/curl.out)
 
 if [ "1" != "$succount" -o "" == "$jobid" ] ; then
     errorMsg  "Upload was not successful."
-    exit 
+    $XMLSTARLET sel -T -t -v "/result/failed" $DIR/curl.out
+    exit 2
 fi
 
 
@@ -439,8 +441,8 @@ xmlproj=$($XMLSTARLET esc "$project")
 cat > $DIR/temp.out <<END
 <joblist>
    <job>
-      <name>test job/executions 3</name>
-      <group>test/api</group>
+      <name>test job</name>
+      <group>test/api/executions 3</group>
       <description>Test the /job/ID/executions API endpoint</description>
       <loglevel>INFO</loglevel>
       <context>
@@ -492,7 +494,8 @@ jobid=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/id" $DIR/curl.out)
 
 if [ "1" != "$succount" -o "" == "$jobid" ] ; then
     errorMsg  "Upload was not successful."
-    exit 
+    $XMLSTARLET sel -T -t -v "/result/failed" $DIR/curl.out
+    exit 2
 fi
 
 
