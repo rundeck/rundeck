@@ -785,9 +785,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
             if (null != output) {
                 //write output doc to the outputstream
                 try {
-                    final Writer writer = new OutputStreamWriter(output);
-                    writer.write(response.getResults());
-                    writer.flush();
+                    Streams.copyStream(response.getResultStream(),output);
                 } catch (IOException e) {
                     throw new CentralDispatcherServerRequestException(e);
                 }
@@ -880,7 +878,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         final Object resobj;
         try {
             final Yaml yaml = new Yaml(new SafeConstructor());
-            resobj = yaml.load(response.getResults());
+            resobj = yaml.load(response.getResultStream());
         } catch (YAMLException e) {
             throw new CentralDispatcherServerRequestException("Failed to parse YAML: " + e.getMessage(), e);
         }

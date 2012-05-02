@@ -271,7 +271,7 @@ class WebserviceHttpClientChannel extends BaseHttpClientChannel implements Webse
             final SAXReader reader = new SAXReader();
             final Document document;
             try {
-                document = reader.read(new StringReader(getResults()));
+                document = reader.read(getResultStream());
                 setResultDoc(document);
             } catch (DocumentException e) {
                 logger.error("Unable to parse result document: " + e.getMessage(), e);

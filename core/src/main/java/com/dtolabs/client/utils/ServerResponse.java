@@ -24,6 +24,7 @@
 package com.dtolabs.client.utils;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * ServerResponse supplies the result of a Webservice request.
@@ -33,10 +34,10 @@ import java.io.IOException;
  */
 public interface ServerResponse {
     /**
-     * returns raw results as a String
-     * @return results text
+     * returns raw results as a Stream
+     * @return result stream
      */
-    String getResults();
+    InputStream getResultStream();
 
     /**
      * return content type

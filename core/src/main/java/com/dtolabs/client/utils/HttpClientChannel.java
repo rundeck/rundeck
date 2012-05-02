@@ -18,13 +18,12 @@ package com.dtolabs.client.utils;
 
 
 import com.dtolabs.rundeck.core.CoreException;
+import com.dtolabs.utils.Streams;
 import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.methods.*;
 import org.apache.log4j.Logger;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.*;
 import java.net.URI;
 import java.util.*;
@@ -40,7 +39,7 @@ abstract class HttpClientChannel implements BaseHttpClient {
     static Logger logger = Logger.getLogger(HttpClientChannel.class.getName());
     private HttpClient httpc;
     private HttpMethod httpMethod;
-    private StringBuffer results = new StringBuffer();
+    private InputStream resultStream;
     private String resultType;
     private int resultCode;
     private String reasonCode;
@@ -379,21 +378,11 @@ abstract class HttpClientChannel implements BaseHttpClient {
             if (null==expectedContentType || expectedContentType.equals(type)) {
                 if (null != destinationStream && resultCode >= 200 && resultCode < 300) {
                     //read the input stream and write it to the destination
-                    InputStream input = method.getResponseBodyAsStream();
-                    byte[] buf = new byte[10240];
-                    int i = input.read(buf);
-                    while (i > 0) {
-                        destinationStream.write(buf, 0, i);
-                        bytesread += i;
-                        i = input.read(buf);
-                    }
-                    destinationStream.close();
-
-                    Arrays.fill(buf, (byte) 0);
-                    buf = null;
-                    contentLengthRetrieved = bytesread;
+                    contentLengthRetrieved=Streams.copyStreamCount(method.getResponseBodyAsStream(), destinationStream);
                 } else {
-                    results.append(method.getResponseBodyAsString());
+                    final ByteArrayOutputStream outputBytes = new ByteArrayOutputStream(1024*50);
+                    Streams.copyStream(method.getResponseBodyAsStream(),outputBytes);
+                    resultStream = new ByteArrayInputStream(outputBytes.toByteArray());
                 }
             }
             reqMadeMethod = method;
@@ -403,7 +392,7 @@ abstract class HttpClientChannel implements BaseHttpClient {
             method.releaseConnection();
         }
 
-        logger.debug("Read input:\n" + results.toString());
+        logger.debug("Response received");
         postMakeRequest();
     }
 
@@ -429,13 +418,6 @@ abstract class HttpClientChannel implements BaseHttpClient {
             return followMethod;
         }
         return method;
-    }
-
-    /**
-     * returns raw results as a String
-     */
-    public String getResults() {
-        return this.results.toString();
     }
 
     /**
@@ -475,5 +457,9 @@ abstract class HttpClientChannel implements BaseHttpClient {
 
     public String getReasonCode() {
         return reasonCode;
+    }
+
+    public InputStream getResultStream() {
+        return resultStream;
     }
 }
