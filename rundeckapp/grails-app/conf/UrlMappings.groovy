@@ -37,6 +37,7 @@ class UrlMappings {
         "/api/$api_version/resource/$name"(controller: 'framework', action: 'apiResource')
         "/api/$api_version/run/command"(controller: 'scheduledExecution', action: 'apiRunCommand')
         "/api/$api_version/run/script"(controller: 'scheduledExecution', action: 'apiRunScript')
+        "/api/$api_version/run/url"(controller: 'scheduledExecution', action: 'apiRunScriptUrl')
         "/api/$api_version/system/info"(controller: 'api', action: 'apiSystemInfo')
         "/api/$api_version/$action?"(controller: 'api', action: 'invalid')
 

@@ -1411,6 +1411,48 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect adhocRemoteString", "-test1 1 -test2 2",cmd1.argString
             assertEquals "incorrect jobName", 'bob', cmd1.jobName
             assertEquals "incorrect jobGroup", '/some/path', cmd1.jobGroup
+
+        //simple workflow with script content
+        jobs = JobsXMLCodec.decode("""<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description></description>
+    <loglevel>INFO</loglevel>
+    <context>
+        <project>test1</project>
+    </context>
+    <sequence>
+        <command>
+            <scripturl>http://example.com/a/path/to/a/script</scripturl>
+            <scriptargs>-some args -to the -script</scriptargs>
+        </command>
+    </sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+    <schedule>
+      <time hour='11' minute='21' />
+      <weekday day='*' />
+      <month month='*' />
+    </schedule>
+  </job>
+</joblist>
+""")
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+        assertNotNull "incorrect workflow", jobs[0].workflow
+        assertEquals "incorrect workflow strategy", "node-first", jobs[0].workflow.strategy
+        assertNotNull "incorrect workflow strategy", jobs[0].workflow.commands
+        assertEquals "incorrect workflow strategy", 1, jobs[0].workflow.commands.size()
+        cmd1 = jobs[0].workflow.commands[0]
+        assertNotNull "incorrect workflow", cmd1
+        assertTrue "incorrect adhocExecution: ${cmd1.adhocExecution}", cmd1.adhocExecution
+        assertNull "incorrect adhocLocalString", cmd1.adhocLocalString
+        assertNull "incorrect adhocRemoteString", cmd1.adhocRemoteString
+        assertEquals "incorrect adhocFilepath", 'http://example.com/a/path/to/a/script', cmd1.adhocFilepath
+        assertEquals "incorrect argString", '-some args -to the -script', cmd1.argString
     }
     
     void testDecodeWorkflowOptions(){
@@ -3244,6 +3286,52 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "wrong command/jobref/@group",'/some/path',doc.job[0].sequence[0].command[0].jobref[0]['@group']
             assertEquals "wrong arg count",1,doc.job[0].sequence[0].command.jobref.arg.size()
             assertEquals "wrong arg @line",'-test1 1 -test2 2',doc.job[0].sequence[0].command[0].jobref[0].arg[0]['@line']
+
+        //test simple exec/script/scripturl commands
+        def jobs11 = [
+            new ScheduledExecution(
+                jobName: 'test job 1',
+                description: 'test descrip',
+                loglevel: 'INFO',
+                project: 'test1',
+                argString: '',
+                adhocExecution: false,
+                nodeThreadcount: 1,
+                nodeKeepgoing: true,
+                doNodedispatch: true,
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec(
+                    adhocExecution: true,
+                    adhocFilepath: 'http://example.com/path/to/a/file',
+                    argString: 'test string'
+                )]
+                )
+            )
+        ]
+
+        xmlstr = JobsXMLCodec.encode(jobs11)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+
+        doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "missing job", 1, doc.job.size()
+        assertEquals "missing context", 1, doc.job[0].context.size()
+        assertEquals "missing context/project", 1, doc.job[0].context[0].project.size()
+        assertEquals "wrong project", 'test1', doc.job[0].context[0].project[0].text()
+        assertEquals "missing sequence", 1, doc.job.sequence.size()
+        assertEquals "wrong keepgoing", "node-first", doc.job[0].sequence[0]['@strategy']
+        assertEquals "wrong command count", 1, doc.job[0].sequence[0].command.size()
+        assertNull "wrong command @resource", doc.job[0].sequence[0].command[0]['@resource']
+        assertNull "wrong command @name", doc.job[0].sequence[0].command[0]['@name']
+        assertNull "wrong command @module", doc.job[0].sequence[0].command[0]['@module']
+        assertEquals "missing command/scriptfile", 0, doc.job[0].sequence[0].command[0].scriptfile.size()
+        assertEquals "missing command/scriptfile", 1, doc.job[0].sequence[0].command[0].scripturl.size()
+        assertEquals "wrong command/scripturl", 'http://example.com/path/to/a/file', doc.job[0].sequence[0].command[0].scripturl[0].text()
+        assertEquals "wrong command/exec", 0, doc.job[0].sequence[0].command[0].exec.size()
+        assertEquals "wrong command/script", 0, doc.job[0].sequence[0].command[0].script.size()
+        assertEquals "wrong command/exec", 1, doc.job[0].sequence[0].command[0].scriptargs.size()
+        assertEquals "wrong command/exec", "test string", doc.job[0].sequence[0].command[0].scriptargs[0].text()
 
     }
 

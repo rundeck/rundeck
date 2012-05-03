@@ -38,6 +38,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
                 new CommandExec([adhocLocalString: "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n"]),
                 new CommandExec([adhocFilepath: 'some file path']),
                 new JobExec([jobName: 'another job', jobGroup: 'agroup']),
+                new CommandExec([adhocFilepath: 'http://example.com/blah']),
             ]]),
             options: [new Option(name: 'opt1', description: "an opt", defaultValue: "xyz", enforced: true, required: true, values: new TreeSet(["a", "b"]))] as TreeSet,
             nodeThreadcount: 1,
@@ -73,13 +74,15 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             assertFalse "wrong wf keepgoing", doc[0].sequence.keepgoing
             assertEquals "wrong wf strategy", "node-first", doc[0].sequence.strategy
             assertNotNull "missing commands", doc[0].sequence.commands
-            assertEquals "missing commands", 4, doc[0].sequence.commands.size()
+            assertEquals "missing commands", 5, doc[0].sequence.commands.size()
             assertEquals "missing command exec", "test script", doc[0].sequence.commands[0].exec
             assertEquals "missing command script", "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", doc[0].sequence.commands[1].script
             assertEquals "missing command scriptfile", "some file path", doc[0].sequence.commands[2].scriptfile
             assertNotNull "missing command jobref", doc[0].sequence.commands[3].jobref
             assertEquals "missing command jobref.name", "another job", doc[0].sequence.commands[3].jobref.name
             assertEquals "missing command jobref.group", "agroup", doc[0].sequence.commands[3].jobref.group
+
+            assertEquals "missing command scriptfile", "http://example.com/blah", doc[0].sequence.commands[4].scripturl
             assertNotNull "missing options", doc[0].options
             assertNotNull "missing option opt1", doc[0].options.opt1
             assertEquals "missing option opt1", "an opt", doc[0].options.opt1.description
@@ -226,6 +229,8 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         name: some job
         group: another group
         args: yankee doodle
+    - scripturl: http://example.com/path/to/file
+      args: -blah bloo -blee
   description: test descrip
   name: test job 1
   group: group/1/2/3
@@ -306,7 +311,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertNotNull "missing workflow", se.workflow.commands
         assertTrue "wrong workflow.keepgoing", se.workflow.keepgoing
         assertEquals "wrong workflow.strategy", "step-first", se.workflow.strategy
-        assertEquals "wrong workflow size", 4, se.workflow.commands.size()
+        assertEquals "wrong workflow size", 5, se.workflow.commands.size()
         assertEquals "wrong workflow item", "test script", se.workflow.commands[0].adhocRemoteString
             //exec doesn't support arguments
         assertNull "wrong workflow item", se.workflow.commands[0].argString
@@ -322,6 +327,9 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertEquals "wrong workflow item", "another group", se.workflow.commands[3].jobGroup
         assertEquals "wrong workflow item", "yankee doodle", se.workflow.commands[3].argString
         assertFalse "wrong workflow item", se.workflow.commands[3].adhocExecution
+            assertEquals "wrong workflow item", "http://example.com/path/to/file", se.workflow.commands[4].adhocFilepath
+            assertEquals "wrong workflow item", "-blah bloo -blee", se.workflow.commands[4].argString
+            assertTrue "wrong workflow item", se.workflow.commands[4].adhocExecution
 
         //options
         assertNotNull "missing options", se.options

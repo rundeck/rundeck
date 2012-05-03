@@ -90,7 +90,11 @@ public class CommandExec extends ExecutionContext implements IWorkflowCmdItem {
         }else if(adhocLocalString){
             map.script=adhocLocalString
         }else {
-            map.scriptfile=adhocFilepath
+            if(adhocFilepath==~/^(?i:https?|file):.*$/){
+                map.scripturl = adhocFilepath
+            }else{
+                map.scriptfile=adhocFilepath
+            }
         }
         if(argString && !adhocRemoteString){
             map.args=argString
@@ -109,6 +113,9 @@ public class CommandExec extends ExecutionContext implements IWorkflowCmdItem {
         }else if(data.scriptfile){
             ce.adhocExecution = true
             ce.adhocFilepath=data.scriptfile
+        }else if(data.scripturl){
+            ce.adhocExecution = true
+            ce.adhocFilepath=data.scripturl
         }
         if(data.args && !ce.adhocRemoteString){
             ce.argString=data.args

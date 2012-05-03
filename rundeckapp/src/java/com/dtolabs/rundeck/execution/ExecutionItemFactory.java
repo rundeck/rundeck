@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.execution;
 import com.dtolabs.rundeck.core.execution.ExecutionItem;
 import com.dtolabs.rundeck.core.execution.commands.ExecCommandBase;
 import com.dtolabs.rundeck.core.execution.commands.ScriptFileCommandBase;
+import com.dtolabs.rundeck.core.execution.commands.ScriptURLCommandBase;
 
 import java.io.File;
 
@@ -57,6 +58,17 @@ public class ExecutionItemFactory {
             }
 
             @Override
+            public String[] getArgs() {
+                return strings;
+            }
+        };
+    }
+    public static ExecutionItem createScriptURLItem(final String urlString, final String[] strings){
+        return new ScriptURLCommandBase() {
+            public String getURLString() {
+                return urlString;
+            }
+
             public String[] getArgs() {
                 return strings;
             }

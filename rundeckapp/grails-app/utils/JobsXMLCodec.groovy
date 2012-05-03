@@ -186,7 +186,7 @@ class JobsXMLCodec {
             }
               //convert script args values to idiosyncratic label
             map.sequence.commands.each{ cmd ->
-                if(cmd.scriptfile || cmd.script){
+                if(cmd.scriptfile || cmd.script || cmd.scripturl){
                     cmd.args=cmd.remove('scriptargs')
                 }else if(cmd.jobref?.arg?.line){
                     cmd.jobref.args = cmd.jobref.arg.remove('line')
@@ -311,7 +311,7 @@ class JobsXMLCodec {
         map.sequence.command=map.sequence.remove('commands')
         //convert script args values to idiosyncratic label
         map.sequence.command.each{ cmd ->
-            if(cmd.scriptfile || cmd.script){
+            if(cmd.scriptfile || cmd.script || cmd.scripturl){
                 cmd.scriptargs=cmd.remove('args')
                 if(cmd.script){
                     cmd[BuilderUtil.asCDATAName('script')]=cmd.remove('script')

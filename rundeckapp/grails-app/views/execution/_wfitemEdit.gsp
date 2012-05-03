@@ -66,25 +66,25 @@
     <g:hiddenField name="adhocExecution" value="true"/>
     <g:if test="${isAdhocLocal}">
         <div id="localScriptDiv" class="${hasErrors(bean:item,field:'adhocExecution','fieldError')}">
-            <div class="info note">Enter the entire script to execute</div>
+            <div class="info note"><g:message code="Workflow.Step.adhocLocalString.description" />:</div>
             <textarea rows="10" cols="60" name="adhocLocalString" id="adhocLocalStringField" class="code" autofocus>${item?.adhocLocalString?.encodeAsHTML()}</textarea>
         </div>
     </g:if>
     <g:elseif test="${isAdhocFileExecution}">
     <div id="filepathDiv" >
-        <div class="info note">Enter the path to a script file on the server:</div>
+        <div class="info note"><g:message code="Workflow.Step.adhocFilepath.description" />:</div>
         <input type='text' name="adhocFilepath" value="${item?.adhocFilepath?.encodeAsHTML()}" size="80" id="adhocFilepathField" autofocus/>
     </div>
     </g:elseif>
     <g:elseif test="${isAdhocRemote}">
     <div id="remoteScriptDiv"  class="${hasErrors(bean:item,field:'adhocExecution','fieldError')}">
-        <div class="info note">Enter the shell command, e.g.: echo this is a test</div>
+        <div class="info note"><g:message code="Workflow.Step.adhocRemoteString.description" />:</div>
         <input type='text' name="adhocRemoteString" value="${item?.adhocRemoteString?.encodeAsHTML()}" size="80" id="adhocRemoteStringField" autofocus/>
     </div>
     </g:elseif>
     <g:if test="${!isAdhocRemote||isAdhocFileExecution}">
     <div id="adhocScriptArgs" >
-        <div class="info note">Enter the commandline arguments for the script:</div>
+        <div class="info note"><g:message code="Workflow.Step.argString.description" />:</div>
         <input type='text' name="argString" value="${item?.argString?.encodeAsHTML()}" size="80" id="argStringField"/>
     </div>
     </g:if>

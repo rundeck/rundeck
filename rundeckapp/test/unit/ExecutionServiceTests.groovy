@@ -2,6 +2,10 @@ import java.util.logging.LogRecord
 import java.text.SimpleDateFormat
 import grails.test.GrailsUnitTestCase
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
+import com.dtolabs.rundeck.core.execution.ExecutionItem
+import com.dtolabs.rundeck.core.execution.commands.ExecCommandExecutionItem
+import com.dtolabs.rundeck.core.execution.commands.ScriptFileCommandExecutionItem
+import com.dtolabs.rundeck.core.execution.commands.ScriptURLCommandExecutionItem
 
 class ExecutionServiceTests extends GrailsUnitTestCase {
 
@@ -937,6 +941,112 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             assertEquals("l,3 blah something/else bill testproj", val.nodeSelector.exclude.osfamily)
             assertEquals("m,3 blah something/else bill testproj", val.nodeSelector.exclude.osname)
             assertEquals("n,3 blah something/else bill testproj", val.nodeSelector.exclude.osversion)
+        }
+    }
+
+    void testItemForWFCmdItem(){
+        mockDomain(CommandExec)
+        def testService = new ExecutionService()
+
+        t:{
+            //exec
+            CommandExec ce = new CommandExec(adhocRemoteString: 'exec command')
+            def res = testService.itemForWFCmdItem(ce)
+            assertNotNull(res)
+            assertTrue(res instanceof ExecutionItem)
+            assertTrue(res instanceof ExecCommandExecutionItem)
+            ExecCommandExecutionItem item=(ExecCommandExecutionItem) res
+            assertEquals(['exec','command'],item.command as List)
+        }
+        t:{
+            //adhoc local string
+            CommandExec ce = new CommandExec(adhocLocalString: 'local script')
+            def res = testService.itemForWFCmdItem(ce)
+            assertNotNull(res)
+            assertTrue(res instanceof ExecutionItem)
+            assertTrue(res instanceof ScriptFileCommandExecutionItem)
+            ScriptFileCommandExecutionItem item=(ScriptFileCommandExecutionItem) res
+            assertEquals('local script',item.script)
+            assertNull(item.scriptAsStream)
+            assertNull(item.serverScriptFilePath)
+            assertNotNull(item.args)
+            assertEquals(0,item.args.length)
+        }
+        t:{
+            //adhoc local string, args
+            CommandExec ce = new CommandExec(adhocLocalString: 'local script',argString: 'some args')
+            def res = testService.itemForWFCmdItem(ce)
+            assertNotNull(res)
+            assertTrue(res instanceof ExecutionItem)
+            assertTrue(res instanceof ScriptFileCommandExecutionItem)
+            ScriptFileCommandExecutionItem item=(ScriptFileCommandExecutionItem) res
+            assertEquals('local script',item.script)
+            assertNull(item.scriptAsStream)
+            assertNull(item.serverScriptFilePath)
+            assertNotNull(item.args)
+            assertEquals(['some', 'args'], item.args as List)
+        }
+        t: {
+            //adhoc file path
+            CommandExec ce = new CommandExec(adhocFilepath: '/some/path', argString: 'some args')
+            def res = testService.itemForWFCmdItem(ce)
+            assertNotNull(res)
+            assertTrue(res instanceof ExecutionItem)
+            assertTrue(res instanceof ScriptFileCommandExecutionItem)
+            ScriptFileCommandExecutionItem item = (ScriptFileCommandExecutionItem) res
+            assertEquals('/some/path', item.serverScriptFilePath)
+            assertNull(item.scriptAsStream)
+            assertNull(item.script)
+            assertNotNull(item.args)
+            assertEquals(['some', 'args'], item.args as List)
+        }
+        t: {
+            //http url script path
+            CommandExec ce = new CommandExec(adhocFilepath: 'http://example.com/script', argString: 'some args')
+            def res = testService.itemForWFCmdItem(ce)
+            assertNotNull(res)
+            assertTrue(res instanceof ExecutionItem)
+            assertTrue(res instanceof ScriptURLCommandExecutionItem)
+            ScriptURLCommandExecutionItem item = (ScriptURLCommandExecutionItem) res
+            assertEquals('http://example.com/script', item.URLString)
+            assertNotNull(item.args)
+            assertEquals(['some', 'args'], item.args as List)
+        }
+        t: {
+            //https url script path
+            CommandExec ce = new CommandExec(adhocFilepath: 'https://example.com/script', argString: 'some args')
+            def res = testService.itemForWFCmdItem(ce)
+            assertNotNull(res)
+            assertTrue(res instanceof ExecutionItem)
+            assertTrue(res instanceof ScriptURLCommandExecutionItem)
+            ScriptURLCommandExecutionItem item = (ScriptURLCommandExecutionItem) res
+            assertEquals('https://example.com/script', item.URLString)
+            assertNotNull(item.args)
+            assertEquals(['some', 'args'], item.args as List)
+        }
+        t: {
+            //file url script path
+            CommandExec ce = new CommandExec(adhocFilepath: 'file:/some/script')
+            def res = testService.itemForWFCmdItem(ce)
+            assertNotNull(res)
+            assertTrue(res instanceof ExecutionItem)
+            assertTrue(res instanceof ScriptURLCommandExecutionItem)
+            ScriptURLCommandExecutionItem item = (ScriptURLCommandExecutionItem) res
+            assertEquals('file:/some/script', item.URLString)
+            assertNotNull(item.args)
+            assertEquals(0, item.args.length)
+        }
+        t: {
+            //file url script path
+            CommandExec ce = new CommandExec(adhocFilepath: 'file:/some/script', argString: 'some args')
+            def res = testService.itemForWFCmdItem(ce)
+            assertNotNull(res)
+            assertTrue(res instanceof ExecutionItem)
+            assertTrue(res instanceof ScriptURLCommandExecutionItem)
+            ScriptURLCommandExecutionItem item = (ScriptURLCommandExecutionItem) res
+            assertEquals('file:/some/script', item.URLString)
+            assertNotNull(item.args)
+            assertEquals(['some', 'args'], item.args as List)
         }
     }
 }

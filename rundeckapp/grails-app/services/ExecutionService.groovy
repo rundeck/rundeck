@@ -595,7 +595,11 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             } else {
                 args = new String[0];
             }
-            return ExecutionItemFactory.createScriptFileItem(new File(filepath), args);
+            if(filepath ==~ /^(?i:https?|file):.*$/) {
+                return ExecutionItemFactory.createScriptURLItem(filepath, args)
+            }else{
+                return ExecutionItemFactory.createScriptFileItem(new File(filepath), args);
+            }
         } else if (cmd instanceof IWorkflowJobItem) {
             final IWorkflowJobItem jobcmditem = (IWorkflowJobItem) cmd;
 

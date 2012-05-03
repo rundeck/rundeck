@@ -127,7 +127,7 @@
         <div style="margin:10px;">
         <span class="button action" onclick="_wfiaddnew('command');" title="Execute a remote command"><g:img file='icon-tiny-add.png'/> Command</span>
         <span class="button action" onclick="_wfiaddnew('script');" title="Execute  an inline script"><g:img file='icon-tiny-add.png'/> Script</span>
-        <span class="button action" onclick="_wfiaddnew('scriptfile');" title="Execute a script file"><g:img file='icon-tiny-add.png'/> Script file</span>
+        <span class="button action" onclick="_wfiaddnew('scriptfile');" title="Execute a script file or URL"><g:img file='icon-tiny-add.png'/> Script file or URL</span>
         <span class="button action" onclick="_wfiaddnew('job');" title="Execute another Job"><g:img file='icon-tiny-add.png'/> Job Reference</span>
         </div>
         <div style="margin:10px; text-align:right;">

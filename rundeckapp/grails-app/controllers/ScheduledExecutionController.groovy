@@ -3210,6 +3210,70 @@ class ScheduledExecutionController  {
             }
         }
     }
+
+    /**
+     * API: run script: /api/run/url, version 4
+     */
+    def apiRunScriptUrl = {
+        if (!new ApiController().requireVersion(ApiRequestFilters.V4)) {
+            return
+        }
+        if (!params.project) {
+            flash.error = g.message(code: 'api.error.parameter.required', args: ['project'])
+            return chain(controller: 'api', action: 'error')
+        }
+        if (!params.scriptURL) {
+            flash.error = g.message(code: 'api.error.parameter.required', args: ['scriptURL'])
+            return chain(controller: 'api', action: 'error')
+        }
+        //test valid project
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+
+        def exists = frameworkService.existsFrameworkProject(params.project, framework)
+        if (!exists) {
+            flash.error = g.message(code: 'api.error.item.doesnotexist', args: ['project', params.project])
+            return chain(controller: 'api', action: 'error')
+        }
+
+        //remote any input parameters that should not be used when creating the execution
+        ['options', 'scheduled'].each {params.remove(it)}
+        params.workflow = new Workflow(commands: [new CommandExec(adhocFilepath: params.scriptURL, adhocExecution: true, argString: params.argString)])
+        params.description = params.description ?: ""
+
+        //convert api parameters to node filter parameters
+        def filters = FrameworkController.extractApiNodeFilterParams(params)
+        if (filters) {
+            filters['doNodedispatch'] = true
+            filters.each {k, v ->
+                params[k] = v
+            }
+            if (null == params['nodeExcludePrecedence']) {
+                params['nodeExcludePrecedence'] = true
+            }
+        }
+
+        def results = runAdhoc()
+        if (results.failed) {
+            results.error = results.message
+        }
+        if (results.error) {
+            flash.error = results.error
+            if (results.scheduledExecution) {
+                flash.errors = []
+                results.scheduledExecution.errors.allErrors.each {
+                    flash.errors << g.message(error: it)
+                }
+            }
+            return chain(controller: 'api', action: 'error')
+        } else {
+            return new ApiController().success { delegate ->
+                delegate.'success' {
+                    message("Immediate execution scheduled (${results.id})")
+                }
+                delegate.'execution'(id: results.id)
+            }
+        }
+    }
     /**
      * API: /api/job/{id}/executions , version 1
      */
