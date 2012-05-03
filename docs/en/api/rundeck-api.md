@@ -31,6 +31,33 @@ If the version number is not included or if the requested version number is unsu
         </error>
     </result>
 
+### Changes
+
+Changes introduced by API Version number:
+
+**Version 4**:
+
+* New endpoint
+    * `/api/4/run/url` - [Running Adhoc Script URLs](#running-adhoc-script-urls)
+
+**Version 3**:
+
+* Updated endpoints 
+    * `/api/1/resources` - [Listing Resources](#listing-resources)
+        * `format` parameter can now use any supported Resource Format Parser format name.
+    * `/api/2/project/[NAME]/resources` - [Updating and Listing Resources for a Project](#updating-and-listing-resources-for-a-project)
+        * `POST` request Content-Type can be any MIME type supported by a Resource Format Parser plugin.
+
+**Version 2**:
+
+* New endpoints
+    * `/api/2/project/[NAME]/jobs` - [Listing Jobs for a Project](#listing-jobs-for-a-project)
+    * `/api/2/project/[NAME]/resources` - [Updating and Listing Resources for a Project](#updating-and-listing-resources-for-a-project)
+    * `/api/2/project/[NAME]/resources/refresh` - [Refreshing Resources for a Project](#refreshing-resources-for-a-project)
+* Updated endpoints
+    * `/api/1/jobs` - [Listing Jobs](#listing-jobs)
+        * Additional parameters added
+
 URLs
 ----
 
