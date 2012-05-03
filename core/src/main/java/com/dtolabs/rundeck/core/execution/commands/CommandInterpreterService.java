@@ -45,8 +45,10 @@ public class CommandInterpreterService extends BaseProviderRegistryService<Comma
     public void resetDefaultProviders(){
         registry.put(ExecCommandInterpreter.SERVICE_IMPLEMENTATION_NAME, ExecCommandInterpreter.class);
         registry.put(ScriptFileCommandInterpreter.SERVICE_IMPLEMENTATION_NAME, ScriptFileCommandInterpreter.class);
+        registry.put(ScriptURLCommandInterpreter.SERVICE_IMPLEMENTATION_NAME, ScriptURLCommandInterpreter.class);
         instanceregistry.remove(ExecCommandInterpreter.SERVICE_IMPLEMENTATION_NAME);
         instanceregistry.remove(ScriptFileCommandInterpreter.SERVICE_IMPLEMENTATION_NAME);
+        instanceregistry.remove(ScriptURLCommandInterpreter.SERVICE_IMPLEMENTATION_NAME);
     }
 
     public CommandInterpreter getInterpreterForExecutionItem(final ExecutionItem item) throws

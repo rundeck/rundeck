@@ -40,6 +40,7 @@ public class DispatchedScriptImpl implements IDispatchedScript{
     private String script;
     private InputStream scriptAsStream;
     private String serverScriptFilePath;
+    private String scriptURLString;
     private String[] args;
     private int loglevel;
     private Map<String, Map<String, String>> dataContext;
@@ -120,5 +121,13 @@ public class DispatchedScriptImpl implements IDispatchedScript{
 
     public void setDataContext(Map<String, Map<String, String>> dataContext) {
         this.dataContext = dataContext;
+    }
+
+    public String getScriptURLString() {
+        return scriptURLString;
+    }
+
+    public void setScriptURLString(String scriptURLString) {
+        this.scriptURLString = scriptURLString;
     }
 }

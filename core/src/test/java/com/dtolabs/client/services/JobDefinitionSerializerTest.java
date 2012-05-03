@@ -91,6 +91,10 @@ public class JobDefinitionSerializerTest extends TestCase {
             return null;
         }
 
+        public String getScriptURLString() {
+            return null;
+        }
+
         public String[] getArgs() {
             return null;
         }

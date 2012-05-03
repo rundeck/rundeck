@@ -26,7 +26,7 @@ package com.dtolabs.rundeck.core.dispatcher;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
-import com.dtolabs.rundeck.core.tasks.net.ExtSSHExec;
+import com.dtolabs.rundeck.core.utils.Converter;
 import org.apache.tools.ant.filters.ReplaceTokens;
 import org.apache.tools.ant.taskdefs.ExecTask;
 import org.apache.tools.ant.types.Environment;
@@ -86,6 +86,44 @@ public class DataContextUtils {
      * @return string with values substituted, or original string
      */
     public static String replaceDataReferences(final String input, final Map<String, Map<String, String>> data) {
+        return replaceDataReferences(input, data, null, false);
+    }
+
+    /**
+     * Indicates that the value of a property reference could not be resolved.
+     */
+    public static class UnresolvedDataReferenceException extends RuntimeException{
+        private String template;
+        private String referenceName;
+
+        public UnresolvedDataReferenceException(final String template, final String referenceName) {
+            super("Property " + referenceName + " could not be resolved in template: " + template);
+            this.template = template;
+            this.referenceName = referenceName;
+        }
+
+        public String getTemplate() {
+            return template;
+        }
+
+        public String getReferenceName() {
+            return referenceName;
+        }
+    }
+    /**
+     * Replace the embedded  properties of the form '${key.name}' in the input Strings with the value from the data
+     * context
+     *
+     *
+     * @param input input string
+     * @param data  data context map
+     *              @param converter converter to encode/convert the expanded values
+     *
+     * @param failOnUnexpanded
+     * @return string with values substituted, or original string
+     */
+    public static String replaceDataReferences(final String input, final Map<String, Map<String, String>> data,
+                                               final Converter<String, String> converter, boolean failOnUnexpanded) {
         if(null==data){
             return input;
         }
@@ -96,14 +134,26 @@ public class DataContextUtils {
             final String key = m.group(1);
             final String nm = m.group(2);
             if (null!=key && null!=nm && null!=data.get(key) && null!= data.get(key).get(nm)) {
-                m.appendReplacement(sb, Matcher.quoteReplacement(data.get(key).get(nm)));
-            }else {
-                m.appendReplacement(sb, Matcher.quoteReplacement(m.group(0)));
+                String value = data.get(key).get(nm);
+                if (null != converter) {
+                    value = converter.convert(value);
+                }
+                m.appendReplacement(sb, Matcher.quoteReplacement(value));
+            }else if (failOnUnexpanded && null != key && null != nm && (null == data.get(key) || null == data.get(key)
+                .get(nm))) {
+                throw new UnresolvedDataReferenceException(input, m.group());
+            } else {
+                String value = m.group(0);
+                if (null != converter) {
+                    value = converter.convert(value);
+                }
+                m.appendReplacement(sb, Matcher.quoteReplacement(value));
             }
         }
         m.appendTail(sb);
         return sb.toString();
     }
+
 
     /**
      * Escape characters meaningful to bash shell unless the string is already surrounded in single quotes

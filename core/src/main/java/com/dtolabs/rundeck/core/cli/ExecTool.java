@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.dispatcher.QueuedItemResult;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.commands.ExecCommand;
 import com.dtolabs.rundeck.core.execution.commands.ScriptFileCommand;
+import com.dtolabs.rundeck.core.execution.commands.ScriptURLCommandBase;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.resources.FileResourceModelSource;
@@ -113,6 +114,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
                 true,
                 "true/false. if true, exclusion filters have precedence over inclusion filters");
         options.addOption("s", "scriptfile", true, "scriptfile script file");
+        options.addOption("u", "url", true, "script URL");
         options.addOption("S", "stdin", false, "read script from stdin");
         options.addOption("N", "nodesfile", true, "Path to arbitrary nodes file (with -L/--noqueue only)");
         options.addOption(NO_QUEUE_FLAG, "noqueue", false,
@@ -141,6 +143,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
     private InputStream scriptAsStream;
     private boolean inlineScript;
     private String inlineScriptContent;
+    private String scriptURLString;
 
     // Set to the value of -N,--nodeslist
     private String argNodesFile;
@@ -242,6 +245,11 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
             scriptpath = new File(cli.getOptionValue("s")).getAbsolutePath();
         }
 
+
+        if (cli.hasOption("u")) {
+            scriptURLString = cli.getOptionValue("u");
+        }
+
         if (cli.hasOption("S")) {
             inlineScript = true;
         }
@@ -328,6 +336,10 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
         if (null != scriptpath) {
             list.add("-s");
             list.add(scriptpath);
+        }
+        if (null != scriptURLString) {
+            list.add("-u");
+            list.add(scriptURLString);
         }
         if (inlineScript) {
             list.add("-S");
@@ -634,6 +646,16 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
 
                 public String getServerScriptFilePath() {
                     return ExecTool.this.getServerScriptFilePath();
+                }
+
+                public String[] getArgs() {
+                    return ExecTool.this.getArgs();
+                }
+            };
+        }else if(null!=scriptURLString) {
+            return new ScriptURLCommandBase() {
+                public String getURLString() {
+                    return ExecTool.this.getScriptURLString();
                 }
 
                 public String[] getArgs() {
@@ -1201,6 +1223,14 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
 
     void setNodeFormatter(final NodeFormatter nodeFormatter) {
         this.nodeFormatter = nodeFormatter;
+    }
+
+    public String getScriptURLString() {
+        return scriptURLString;
+    }
+
+    public void setScriptURLString(String scriptURLString) {
+        this.scriptURLString = scriptURLString;
     }
 
 

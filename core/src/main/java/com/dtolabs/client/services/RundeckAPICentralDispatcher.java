@@ -72,10 +72,17 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      * RUNDECK API Version
      */
     public static final String RUNDECK_API_VERSION = "2";
+    public static final String RUNDECK_API_VERSION_4 = "4";
     /**
      * RUNDECK API base path
      */
     public static final String RUNDECK_API_BASE = "/api/" + RUNDECK_API_VERSION;
+
+    /**
+     * RUNDECK API Base for v4
+     */
+    public static final String RUNDECK_API_BASE_v4 = "/api/" + RUNDECK_API_VERSION_4;
+
     /**
      * API endpoint for execution report
      */
@@ -90,6 +97,10 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      * Webservice endpoint for running commands
      */
     public static final String RUNDECK_API_RUN_COMMAND = RUNDECK_API_BASE + "/run/command";
+    /**
+     * Webservice endpoint for running a script from a URL
+     */
+    public static final String RUNDECK_API_RUN_URL = RUNDECK_API_BASE_v4 + "/run/url";
     /**
      * Webservice endpoint for queue list requests
      */
@@ -190,7 +201,9 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         CentralDispatcherException {
         final String argString;
         final String scriptString;
+        String scriptURL=null;
         final boolean isExec;
+        final boolean isUrl;
 
         try {
 
@@ -213,6 +226,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
                 }
 
                 isExec = false;
+                isUrl = false;
             } else if (null != iDispatchedScript.getServerScriptFilePath()) {
                 //server-local script filepath
 
@@ -228,11 +242,25 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
                     argString = null;
                 }
                 isExec = false;
+                isUrl = false;
+            }else if(null!=iDispatchedScript.getScriptURLString()) {
+                //read stream to string
+                scriptURL = iDispatchedScript.getScriptURLString();
+                scriptString=null;
+
+                if (null != iDispatchedScript.getArgs() && iDispatchedScript.getArgs().length > 0) {
+                    argString = CLIUtils.generateArgline(null, iDispatchedScript.getArgs());
+                } else {
+                    argString = null;
+                }
+                isExec = false;
+                isUrl = true;
             } else if (null != iDispatchedScript.getArgs() && iDispatchedScript.getArgs().length > 0) {
                 //shell command
                 scriptString = null;
                 argString = CLIUtils.generateArgline(null, iDispatchedScript.getArgs());
                 isExec = true;
+                isUrl = false;
             } else {
                 throw new IllegalArgumentException("Dispatched script did not specify a command, script or filepath");
             }
@@ -247,14 +275,19 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         params.put("project", iDispatchedScript.getFrameworkProject());
         if (isExec) {
             params.put("exec", argString);
+        }else if (null != scriptURL) {
+            params.put("scriptURL", scriptURL);
         } else {
             params.put("scriptFile", scriptString);
+        }
+        if(null!=argString){
+            params.put("argString", argString);
         }
         addLoglevelParams(params, iDispatchedScript.getLoglevel());
         addAPINodeSetParams(params, iDispatchedScript.getNodeSet(), iDispatchedScript.getNodeSet().isKeepgoing());
 
         return submitRunRequest(null, params,
-            isExec ? RUNDECK_API_RUN_COMMAND : RUNDECK_API_RUN_SCRIPT);
+            isExec ? RUNDECK_API_RUN_COMMAND : isUrl ? RUNDECK_API_RUN_URL : RUNDECK_API_RUN_SCRIPT);
     }
 
     /**

@@ -59,4 +59,10 @@ public interface IDispatchedScript extends IDispatchedExecution {
      */
     public String getServerScriptFilePath();
 
+    /**
+     * Get the script URL
+     * @return URL
+     */
+    public String getScriptURLString();
+
 }
