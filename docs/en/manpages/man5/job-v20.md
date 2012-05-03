@@ -102,7 +102,7 @@ Jobs execute a sequence of commands. Commands come in several styles:
 
 * System command
 * A script
-* A script file
+* A script file or URL
 * Another defined job
 
 *Examples*
@@ -680,6 +680,13 @@ Script File:
 
     <command >
         <scriptfile>/path/to/a/script</scriptfile>
+        <scriptargs>-whatever something</scriptargs>
+    </command>      
+
+Script URL:
+
+    <command >
+        <scripturl>http://example.com/path/to/a/script</scripturl>
         <scriptargs>-whatever something</scriptargs>
     </command>      
 

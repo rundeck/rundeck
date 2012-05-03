@@ -59,6 +59,9 @@ on a set of nodes which are specified by the filter options.
 -s, \--script *SCRIPT*
 : Dispatch specified script file
 
+-u, \--url *URL*
+: Download a URL and dispatch it as a script
+
 -S, \--stdin
 : Execute input read from *STDIN*
 
@@ -113,6 +116,23 @@ Execute the "myscript.sh" shell script across the Nodes tagged "web":
 
 Note: The script file is copied to a temporary directory on the target
 machines (on unix it is /tmp and on Windows c:\windows\temp)
+
+## URL (-u) ##
+
+Downloads a URL and then dispatches it for execution as a script on the
+target nodes.
+
+*Examples*
+
+Execute a shell script available at a URL across the Nodes tagged "web":
+
+    dispatch -I tags=web -u http://ops.example.com/scripts/myscript.sh
+
+Note: The script file is copied to a temporary directory on the target
+machines (on unix it is /tmp and on Windows c:\windows\temp)
+
+The URL can contain property references expanded in the execution
+context.
 
 ## STDIN (-S) ##
 

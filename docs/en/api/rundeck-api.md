@@ -7,7 +7,7 @@ Rundeck provides a Web API for use with your application.
 API Version Number
 ----
 
-The current API version is `3`.
+The current API version is `4`.
 
 For API endpoints described in this document, the *minimum* API version required for their
 use is indicated by the URL used, e.g.:
@@ -657,6 +657,39 @@ Required Parameters:
 Required Content:
 
 * `scriptFile`: A `x-www-form-urlencoded` request parameter containing the script file content.
+
+Optional Parameters:
+
+* `argString`: Arguments to pass to the script when executed.
+* `nodeThreadcount`: threadcount to use
+* `nodeKeepgoing`: if "true", continue executing on other nodes even if some fail.
+
+Node filter parameters as described under [Using Node Filters](#using-node-filters)
+
+Result: A success message, and a single `<execution>` item identifying the
+new execution by ID:
+
+    <execution id="X"/>
+
+### Running Adhoc Script URLs
+
+Run a script downloaded from a URL.  (**API version 4** required.)
+
+URL:
+
+    /api/4/run/url
+
+Method: `POST`
+
+Expected Content-Type: `application/x-www-form-urlencoded`
+
+Required Parameters:
+
+* `project`: the project name
+
+Required Content:
+
+* `scriptURL`: A URL pointing to a script file
 
 Optional Parameters:
 

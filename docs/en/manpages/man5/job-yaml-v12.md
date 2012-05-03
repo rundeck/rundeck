@@ -120,6 +120,8 @@ Example:
         args: ...
       - scriptfile: ...
         args:
+      - scripturl: ...
+        args:
       - jobref:
           name: jobname
           group: group
@@ -193,6 +195,23 @@ This [Command](#command) executes a script file stored on the server.
 Example:
 
     - scriptfile: /path/to/script
+      args: arguments to script
+
+#### Script URL Execution Entry
+
+This [Command](#command) downloads a script file from a URL and executes it.
+
+`scripturl`
+
+:    URL to the script file
+
+`args`
+
+:     optional arguments to the script
+
+Example:
+
+    - scripturl: http://example.com/path/to/script
       args: arguments to script
 
 #### Job Reference Entry

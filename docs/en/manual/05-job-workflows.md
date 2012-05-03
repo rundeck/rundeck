@@ -148,6 +148,21 @@ This is similar to calling the script file with <code>dispatch</code>:
 
     dispatch [filter-options] -s scriptfile -- args
 
+### Script URL step
+
+Downloads a script from a URL, and executes it to the filtered Node
+set. Arguments can be passed to the script by specifying them in the
+lower text field.
+
+![Script URL step type](../figures/fig0406.png)
+
+
+This is similar to calling the script URL with <code>dispatch</code>:
+
+    dispatch [filter-options] -u URL -- args
+
+The URL can contain [Context Variables](#context-variables) that will be expanded at runtime.
+
 ### Job reference step
 
 To call another saved Job, create a Job Reference step. Enter the name
