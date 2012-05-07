@@ -47,6 +47,7 @@
             iconUrl: "${resource(dir: 'images', file: 'icon')}",
             extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>",
             lastlines: ${params.lastlines ? params.lastlines : 20},
+            collapseCtx: {value:${null == execution?.dateCompleted },changed:false},
 
             tailmode: ${followmode == 'tail'},
             browsemode: ${followmode == 'browse'},
@@ -316,6 +317,7 @@
                 <span class="action textbtn button"
                       title="Click to change"
                       id="ctxshowlastlineoption"
+                      style="${wdgt.styleVisible(if: null == execution?.dateCompleted)}"
                       onclick="followControl.setShowFinalLine($('ctxshowlastline').checked);">
                 <input
                     type="checkbox"
