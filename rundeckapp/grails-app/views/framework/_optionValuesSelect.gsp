@@ -82,7 +82,12 @@
                         <div id="${rkey}varinput">
 
                         </div>
-                        <g:set var="newvals" value="${selectedoptsmap?selectedoptsmap[optName].findAll {optionSelect.values && !optionSelect.values.contains(it)}:null}"/>
+                        <g:if test="${selectedoptsmap && selectedoptsmap[optName] && selectedoptsmap[optName] instanceof String}">
+                            %{
+                                selectedoptsmap[optName]= selectedoptsmap[optName].split(optionSelect.delimiter)
+                                }%
+                        </g:if>
+                        <g:set var="newvals" value="${selectedoptsmap ?selectedoptsmap[optName].findAll {optionSelect.values && !optionSelect.values.contains(it)}:null}"/>
                         <g:if test="${newvals}">
                             <g:javascript>
                                 fireWhenReady('${rkey}varinput', function(){

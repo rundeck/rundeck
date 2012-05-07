@@ -214,11 +214,35 @@
                         </g:else>
                     </span>
                     <span id="execRerun" style="${wdgt.styleVisible(if:null!=execution.dateCompleted)}" >
+                        <g:if test="${scheduledExecution}">
+                            <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
+                                &nbsp;
+                                <g:link controller="scheduledExecution"
+                                        action="execute"
+                                        id="${scheduledExecution.extid}"
+                                        params="${[retryExecId: execution.id]}"
+                                        class="action button"
+                                        title="Run this Job Again with the same options">
+                                    <g:img file="icon-small-run.png" alt="run" width="16px" height="16px"/>
+                                    Run Again &hellip;
+                                </g:link>
+                            </g:if>
+                        </g:if>
+                        <g:else>
                         <g:if test="${auth.resourceAllowedTest(kind: 'job', action: [AuthConstants.ACTION_CREATE]) || adhocRunAllowed }">
                         <g:if test="${!scheduledExecution || scheduledExecution && authChecks[AuthConstants.ACTION_READ]}">
-                            <g:link controller="scheduledExecution" action="createFromExecution" params="${[executionId:execution.id]}" class="action button" title="Rerun or Save this Execution&hellip;" ><img src="${resource(dir:'images',file:'icon-small-run.png')}"  alt="run" width="16px" height="16px"/> Rerun or Save &hellip;</g:link>
+                            <g:link
+                                controller="scheduledExecution"
+                                action="createFromExecution"
+                                params="${[executionId:execution.id]}"
+                                class="action button"
+                                title="Save these Execution parameters as a Job, or run again..." >
+                                <g:img file="icon-small-run.png" alt="run" width="16px" height="16px"/>
+                                Run Again or Save &hellip;
+                            </g:link>
                         </g:if>
                         </g:if>
+                        </g:else>
                     </span>
                 </td>
                 <td width="50%" >
