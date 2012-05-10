@@ -230,6 +230,7 @@ Job context variables:
 * `job.name`: Name of the Job
 * `job.group`: Group of the Job
 * `job.id`: ID of the Job
+* `job.execid`: ID of the current Execution
 * `job.username`: Username of the user executing the Job
 * `job.project`: Project name
 

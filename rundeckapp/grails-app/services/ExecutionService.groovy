@@ -487,6 +487,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                 jobcontext.group=scheduledExecution.groupPath
                 jobcontext.id=scheduledExecution.extid
             }
+            jobcontext.execid = execution.id.toString()
             jobcontext.username=execution.user
             jobcontext.project=execution.project
 
@@ -1722,6 +1723,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                         //construct job data context
                         def jobcontext = new HashMap<String, String>()
                         jobcontext.id = se.extid
+                        jobcontext.execid = executionContext.dataContext.job?.execid?:null;
                         jobcontext.name = se.jobName
                         jobcontext.group = se.groupPath
                         jobcontext.project = se.project
