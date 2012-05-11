@@ -13,6 +13,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         mockDomain(ScheduledExecution)
         mockDomain(Workflow)
         mockDomain(Execution)
+        mockDomain(CommandExec)
 
         ScheduledExecution se = new ScheduledExecution(
             jobName: 'blue',
@@ -30,8 +31,11 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         def myCriteria = new Expando();
         myCriteria.get = {Closure cls -> return [id:123]}
         Execution.metaClass.static.createCriteria = {myCriteria }
+        Execution.metaClass.static.executeQuery = {q,h->[[id: 123]]}
 
         ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService = fsvc
         try{
             svc.createExecution(se,null,"user1")
             fail("should fail")
@@ -59,6 +63,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         se.save()
 
         ScheduledExecution.metaClass.static.lock={id-> return se}
+        ScheduledExecution.metaClass.static.withNewSession={clos-> clos.call([clear:{}])}
         def myCriteria = new Expando();
         myCriteria.get = {Closure cls -> return [id:123]}
         Execution.metaClass.static.createCriteria = {myCriteria }
@@ -90,9 +95,12 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         se.save()
 
         ScheduledExecution.metaClass.static.lock={id-> return se}
+        ScheduledExecution.metaClass.static.withNewSession = {clos -> clos.call([clear: {}])}
         def myCriteria = new Expando();
         myCriteria.get = {Closure cls -> return null}
         Execution.metaClass.static.createCriteria = {myCriteria }
+        Execution.metaClass.static.executeQuery = {q, h -> []}
+
 
         mockLogging(ExecutionService)
         ExecutionService svc = new ExecutionService()
@@ -107,9 +115,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         assertNotNull(e.dateStarted)
         assertNull(e.dateCompleted)
         def execs=se.executions
-        assertEquals(1,execs.size())
-        def exec1=execs.iterator().next()
-        assertEquals(exec1,e)
+        assertNull(execs)
     }
     void testCreateExecutionOptionsValidation(){
         ConfigurationHolder.config=[:]
@@ -139,9 +145,11 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         se.save()
 
         ScheduledExecution.metaClass.static.lock={id-> return se}
+        ScheduledExecution.metaClass.static.withNewSession = {clos -> clos.call([clear: {}])}
         def myCriteria = new Expando();
         myCriteria.get = {Closure cls -> return null}
         Execution.metaClass.static.createCriteria = {myCriteria }
+        Execution.metaClass.static.executeQuery = {q, h -> []}
 
         mockLogging(ExecutionService)
         ExecutionService svc = new ExecutionService()
@@ -157,9 +165,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             assertNotNull(e.dateStarted)
             assertNull(e.dateCompleted)
             def execs=se.executions
-            assertEquals(1,execs.size())
-            def exec1=execs.iterator().next()
-            assertEquals(exec1,e)
+            assertNull(execs)
         }
         test:{
             Execution e=svc.createExecution(se,null,"user1",[argString:'-test2 val2b -test4 asdf4'])
@@ -170,7 +176,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             assertNotNull(e.dateStarted)
             assertNull(e.dateCompleted)
             def execs=se.executions
-            assertEquals(2,execs.size())
+            assertNull(execs)
         }
         test:{
             Execution e=svc.createExecution(se,null,"user1",[argString:'-test2 val2b -test3 monkey3'])
@@ -181,7 +187,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             assertNotNull(e.dateStarted)
             assertNull(e.dateCompleted)
             def execs=se.executions
-            assertEquals(3,execs.size())
+            assertNull(execs)
         }
         test: {
             //enforced value failure on test2

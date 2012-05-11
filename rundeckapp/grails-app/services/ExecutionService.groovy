@@ -41,6 +41,8 @@ import com.dtolabs.rundeck.core.execution.commands.*
 import com.dtolabs.rundeck.core.execution.workflow.*
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.execution.UnauthorizedStatusResult
+import org.hibernate.StaleObjectStateException
+import javax.security.auth.Subject
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -953,92 +955,104 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
     }
 
 
-
-    def Execution createExecution(ScheduledExecution se, Framework framework, String user, Map extra=[:]) throws ExecutionServiceException{
-        def ScheduledExecution scheduledExec = ScheduledExecution.lock(se.id)
-        se = scheduledExec
-        se.refresh()
-
-        if (!se.multipleExecutions){
-            //find any currently running executions for this job, and if so, throw exception
-            def c = Execution.createCriteria()
-            def found = c.get {
-                scheduledExecution {
-                    eq('id', se.id)
-                }
-                isNotNull('dateStarted')
-                isNull('dateCompleted')
-                lock true
-            }
-
-            if (found) {
-                throw new ExecutionServiceException('Job "' + se.jobName + '" [' + se.id + '] is currently being executed (execution [' + found.id + '])')
-            }
+    public Map executeScheduledExecution(ScheduledExecution scheduledExecution, Framework framework, Subject subject, params) {
+        def User user = User.findByLogin(params.user)
+        if (!user) {
+            def msg = g.message(code: 'unauthorized.job.run.user', args: [params.user])
+            log.error(msg)
+            return [error: 'unauthorized', message: msg]
+        }
+        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_RUN],
+            scheduledExecution.project)) {
+//            unauthorized("Execute Job ${scheduledExecution.extid}")
+            return [success: false, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
         }
 
-        log.debug("createExecution for ScheduledExecution: ${se.id}")
-        def props =[:]
+        def extra = params.extra
+
+        try {
+            def Execution e = createExecution(scheduledExecution, framework, user.login, extra)
+            def extraMap = selectSecureOptionInput(scheduledExecution, extra)
+            def extraParamsExposed = selectSecureOptionInput(scheduledExecution, extra, true)
+            def eid = scheduledExecutionService.scheduleTempJob(scheduledExecution, user.login, subject, e, extraMap, extraParamsExposed) ;
+
+            return [executionId: eid, name: scheduledExecution.jobName, execution: e]
+        } catch (ExecutionServiceValidationException exc) {
+            return [error: 'invalid', message: exc.getMessage(), options: exc.getOptions(), errors: exc.getErrors()]
+        } catch (ExecutionServiceException exc) {
+            def msg = exc.getMessage()
+            log.error("exception: " + exc)
+            return [error: 'failed', message: msg]
+        }
+    }
+    private Execution int_createExecution(ScheduledExecution se,framework,user,extra){
+        def props = [:]
         props.putAll(se.properties)
-        if(!props.user){
-            props.user=user
+        if (!props.user) {
+            props.user = user
         }
-        if(extra && 'true' == extra['_replaceNodeFilters']){
+        if (extra && 'true' == extra['_replaceNodeFilters']) {
             //remove all existing node filters to replace with input filters
-            props = props.findAll {!(it.key=~/^node(Include|Exclude).*$/)}
+            props = props.findAll {!(it.key =~ /^node(Include|Exclude).*$/)}
         }
-        if(extra){
+        if (extra) {
             props.putAll(extra)
         }
 
         //evaluate embedded Job options for validation
-        HashMap optparams = validateJobInputOptions(props, scheduledExec)
-        optparams = removeSecureOptionEntries(scheduledExec, optparams)
+        HashMap optparams = validateJobInputOptions(props, se)
+        optparams = removeSecureOptionEntries(se, optparams)
 
-        props.argString = generateJobArgline(scheduledExec, optparams)
+        props.argString = generateJobArgline(se, optparams)
 
+        Workflow workflow = new Workflow(se.workflow)
         //create duplicate workflow
-        if(se.workflow){
-            props.workflow=new Workflow(se.workflow)
-        }
+        props.workflow = workflow
 
-        def Execution execution = createExecution(props, framework)
-        se.addToExecutions(execution)
-        execution.scheduledExecution=se
+        Execution execution = createExecution(props, framework)
         execution.dateStarted = new Date()
 
-
-        if(execution.argString =~ /\$\{DATE:(.*)\}/){
+        if (execution.argString =~ /\$\{DATE:(.*)\}/) {
 
             def newstr = execution.argString
-            try{
-                newstr = execution.argString.replaceAll(/\$\{DATE:(.*)\}/,{ all,tstamp ->
+            try {
+                newstr = execution.argString.replaceAll(/\$\{DATE:(.*)\}/, { all, tstamp ->
                     new SimpleDateFormat(tstamp).format(execution.dateStarted)
                 })
-            }catch(IllegalArgumentException e){
+            } catch (IllegalArgumentException e) {
                 log.warn(e)
             }
 
 
-            execution.argString=newstr
+            execution.argString = newstr
         }
-
-
-        if(execution.workflow && !execution.workflow.save(flush:true)){
+        execution.scheduledExecution=se
+        if (workflow && !workflow.save()) {
             execution.workflow.errors.allErrors.each { log.warn(it.defaultMessage) }
             log.error("unable to save execution workflow")
             throw new ExecutionServiceException("unable to create execution workflow")
         }
-        if(!execution.save(flush:true)){
+        if (!execution.save()) {
             execution.errors.allErrors.each { log.warn(it.defaultMessage) }
             log.error("unable to save execution")
             throw new ExecutionServiceException("unable to create execution")
         }
-        if(!se.save(flush:true)){
-            se.errors.allErrors.each { log.warn(it.defaultMessage) }
-            log.error("unable to save scheduledExecution")
-            throw new ExecutionServiceException("unable to save scheduledExecution")
-        }
         return execution
+    }
+    def Execution createExecution(ScheduledExecution se, Framework framework, String user, Map extra = [:]) throws ExecutionServiceException {
+        if (!se.multipleExecutions) {
+            synchronized (this) {
+                //find any currently running executions for this job, and if so, throw exception
+                def found = Execution.executeQuery('from Execution where dateCompleted is null and scheduledExecution=:se and dateStarted is not null', [se: se])
+//                    System.err.println("multiexec check ${se.version}: ${found}")
+                if (found) {
+                    throw new ExecutionServiceException('Job "' + se.jobName + '" [' + se.extid + '] is currently being executed (execution [' + found.id + '])')
+                }
+                return int_createExecution(se,framework,user,extra)
+            }
+        }else{
+            return int_createExecution(se,framework,user,extra)
+        }
     }
 
     /**
@@ -1356,28 +1370,17 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             execution.errors.allErrors.each { log.warn(it.defaultMessage) }
             log.error("failed to save execution status")
         }
+        if (schedId) {
+            scheduledExecution = ScheduledExecution.get(schedId)
+        }
 
         def jobname="adhoc"
         def jobid=null
-        if (schedId) {
-            ScheduledExecution.withTransaction{
-            scheduledExecution = ScheduledExecution.get(schedId)
-            execution = execution.merge()
-            if (scheduledExecution) {
-                jobname = scheduledExecution.groupPath ? scheduledExecution.generateFullName() : scheduledExecution.jobName
-                jobid = scheduledExecution.id
-
-                log.debug("saveExecutionState, schedExec version: "+scheduledExecution.version)
-                try{
-                    updateScheduledExecState(scheduledExecution,execution)
-                }catch(org.springframework.dao.OptimisticLockingFailureException e){
-                    log.error("lock problem, refreshing to try again: "+e)
-                    scheduledExecution.refresh()
-                    updateScheduledExecState(scheduledExecution,execution)
-                }
-
-            }
-            }
+        def summary= summarizeJob(scheduledExecution, execution)
+        if (scheduledExecution) {
+            jobname = scheduledExecution.groupPath ? scheduledExecution.generateFullName() : scheduledExecution.jobName
+            jobid = scheduledExecution.id
+            updateScheduledExecState(scheduledExecution,execution)
         }
         if(execSaved) {
             //summarize node success
@@ -1397,12 +1400,13 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                 totalCount=matched.size()
             }
             logExecution(null, execution.project, execution.user, "true" == execution.status, exId,
-                execution.dateStarted, jobid, jobname, summarizeJob(scheduledExecution, execution), props.cancelled,
+                execution.dateStarted, jobid, jobname, summary, props.cancelled,
                 node, execution.abortedby)
+
             notificationService.triggerJobNotification(props.status == 'true' ? 'success' : 'failure', schedId, [execution: execution,nodestatus:[succeeded:sucCount,failed:failedCount,total:totalCount]])
         }
     }
-    public static String summarizeJob(ScheduledExecution job=null,Execution exec){
+    public String summarizeJob(ScheduledExecution job=null,Execution exec){
 //        if(job){
 //            return job.groupPath?job.generateFullName():job.jobName
 //        }else{
@@ -1422,32 +1426,52 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
 //        }
     }
     def updateScheduledExecState(ScheduledExecution scheduledExecution, Execution execution){
-        if (scheduledExecution.scheduled) {
-            scheduledExecution.nextExecution = scheduledExecutionService.nextExecutionTime(scheduledExecution)
-        }
-        scheduledExecution.addToExecutions(execution)
-        //if execution has valid timing data, update the scheduledExecution timing info
-        if (!execution.cancelled && "true".equals(execution.status)) {
-            if (execution.dateStarted && execution.dateCompleted) {
-                def long time = execution.dateCompleted.getTime() - execution.dateStarted.getTime()
-                if (null == scheduledExecution.execCount || 0 == scheduledExecution.execCount || null == scheduledExecution.totalTime || 0 == scheduledExecution.totalTime) {
-                    scheduledExecution.execCount = 1
-                    scheduledExecution.totalTime = time
-                } else if (scheduledExecution.execCount > 0 && scheduledExecution.execCount < 10) {
-                    scheduledExecution.execCount++
-                    scheduledExecution.totalTime += time
-                } else if (scheduledExecution.execCount >= 10) {
-                    def popTime = scheduledExecution.totalTime.intdiv(scheduledExecution.execCount)
-                    scheduledExecution.totalTime -= popTime
-                    scheduledExecution.totalTime += time
+        def schedId=scheduledExecution.id
+        def retry = true
+
+        while (retry) {
+            try {
+                ScheduledExecution.withNewSession {
+                    scheduledExecution = ScheduledExecution.lock(schedId)
+                    scheduledExecution.refresh()
+                    execution = execution.merge()
+                    if (scheduledExecution.scheduled) {
+                        scheduledExecution.nextExecution = scheduledExecutionService.nextExecutionTime(scheduledExecution)
+                    }
+//                    scheduledExecution.addToExecutions(execution)
+                    //if execution has valid timing data, update the scheduledExecution timing info
+                    if (!execution.cancelled && "true".equals(execution.status)) {
+                        if (execution.dateStarted && execution.dateCompleted) {
+                            def long time = execution.dateCompleted.getTime() - execution.dateStarted.getTime()
+                            if (null == scheduledExecution.execCount || 0 == scheduledExecution.execCount || null == scheduledExecution.totalTime || 0 == scheduledExecution.totalTime) {
+                                scheduledExecution.execCount = 1
+                                scheduledExecution.totalTime = time
+                            } else if (scheduledExecution.execCount > 0 && scheduledExecution.execCount < 10) {
+                                scheduledExecution.execCount++
+                                scheduledExecution.totalTime += time
+                            } else if (scheduledExecution.execCount >= 10) {
+                                def popTime = scheduledExecution.totalTime.intdiv(scheduledExecution.execCount)
+                                scheduledExecution.totalTime -= popTime
+                                scheduledExecution.totalTime += time
+                            }
+                        }
+                    }
+                    if (scheduledExecution.save(flush:true)) {
+                        log.info("updated scheduled Execution")
+                    } else {
+                        scheduledExecution.errors.allErrors.each {log.warn(it.defaultMessage)}
+                        log.warn("failed saving execution to history")
+                    }
+                    retry = false
                 }
+            } catch (org.springframework.dao.OptimisticLockingFailureException e) {
+//                log.error("optimistic locking error: "+e,e)
+                log.debug("RETRY opt.updateScheduledExecState")
+
+            } catch (StaleObjectStateException e) {
+//                log.error("stale object error: "+e,e)
+                log.debug("RETRY stale.updateScheduledExecState")
             }
-        }
-        if (scheduledExecution.save(flush:true)) {
-            log.info("updated scheduled Execution")
-        } else {
-            scheduledExecution.errors.allErrors.each {log.warn(it.defaultMessage)}
-            log.warn("failed saving execution to history")
         }
     }
     def saveExecutionState( scheduledExecutionId, Map execMap) {
@@ -1457,7 +1481,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         }
         def Execution execution = new Execution(execMap)
         scheduledExecution.nextExecution = scheduledExecutionService.nextExecutionTime(scheduledExecution)
-        scheduledExecution.addToExecutions(execution)
+//        scheduledExecution.addToExecutions(execution)
         if (execution.save(flush:true)) {
             log.info("saved execution status")
         } else {

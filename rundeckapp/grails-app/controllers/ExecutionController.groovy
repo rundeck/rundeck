@@ -563,6 +563,7 @@ class ExecutionController {
     public def renderApiExecutions= { execlist, delegate ->
         delegate.'executions'(count: execlist.size()) {
             execlist.each {Execution e ->
+                e = Execution.get(e.id)
                 execution(
                     /** attributes   **/
                     id: e.id,
@@ -587,7 +588,7 @@ class ExecutionController {
                             description(e.scheduledExecution.description)
                         }
                     }
-                    description(ExecutionService.summarizeJob(e.scheduledExecution, e))
+                    description(executionService.summarizeJob(e.scheduledExecution, e))
                     argstring(e.argString)
                 }
             }

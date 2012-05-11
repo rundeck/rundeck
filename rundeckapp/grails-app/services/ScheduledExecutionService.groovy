@@ -354,7 +354,8 @@ class ScheduledExecutionService {
                 return [success:false,error:errmsg]
             }
             //unlink any Execution records
-            scheduledExecution.executions.each {Execution exec ->
+            def result=Execution.findAllByScheduledExecution(scheduledExecution)
+            result.each {Execution exec ->
                 exec.scheduledExecution = null
             }
             try {

@@ -1545,7 +1545,7 @@ class ScheduledExecutionController  {
                 properties.putAll(scheduledExecution.properties)
                 properties.user=params.user
                 properties.request = request
-                def execresults = executeScheduledExecution(scheduledExecution,framework,request.subject,[user:request.remoteUser])
+                def execresults = executionService.executeScheduledExecution(scheduledExecution,framework,request.subject,[user:request.remoteUser])
     //            System.err.println("transient execute result: ${execresults}");
                 execresults.entrynum=entrynum
                 if(execresults.error || !execresults.success){
@@ -2656,7 +2656,7 @@ class ScheduledExecutionController  {
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
         params["user"] = (session?.user) ? session.user : "anonymous"
         def scheduledExecution = jobs[0]
-        def result = executeScheduledExecution(scheduledExecution,framework,request.subject,params)
+        def result = executionService.executeScheduledExecution(scheduledExecution,framework,request.subject,params)
         if(result.error){
             flash.error=result.message
             return error()
@@ -2748,46 +2748,16 @@ class ScheduledExecutionController  {
             scheduledExecution.project)) {
             return [success:false,failed:true,error:'unauthorized',message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
         }
-        def result = executeScheduledExecution(scheduledExecution,framework, request.subject,params)
+        def result = executionService.executeScheduledExecution(scheduledExecution,framework, request.subject,params)
 
         if (result.error){
             result.failed=true
+            flash.error = result.message
             return result
         }else{
             log.debug("ExecutionController: immediate execution scheduled")
 //            redirect(controller:"execution", action:"follow",id:result.executionId)
             return [success:true, message:"immediate execution scheduled", id:result.executionId]
-        }
-    }
-    public Map executeScheduledExecution (ScheduledExecution scheduledExecution, Framework framework, Subject subject,params){
-        def User user = User.findByLogin(params.user)
-        if(!user){
-            def msg = g.message(code:'unauthorized.job.run.user',args:[params.user])
-            log.error(msg)
-            flash.error=msg
-            return [error:'unauthorized',message:msg]
-        }
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_RUN],
-            scheduledExecution.project)) {
-//            unauthorized("Execute Job ${scheduledExecution.extid}")
-            return [success: false,error:'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
-        }
-
-        def extra = params.extra
-
-        try{
-            def Execution e= executionService.createExecution(scheduledExecution,framework, user.login,extra)
-            def extraMap = executionService.selectSecureOptionInput(scheduledExecution, extra)
-            def extraParamsExposed = executionService.selectSecureOptionInput(scheduledExecution, extra,true)
-            def eid=scheduledExecutionService.scheduleTempJob(scheduledExecution,user.login,subject,e,extraMap, extraParamsExposed);
-
-            return [executionId:eid,name:scheduledExecution.jobName, execution:e]
-        }catch(ExecutionServiceValidationException exc){
-            return [error:'invalid',message:exc.getMessage(),options:exc.getOptions(),errors:exc.getErrors()]
-        }catch(ExecutionServiceException exc){
-            def msg = exc.getMessage()
-            log.error("exception: "+exc)
-            return [error:'failed',message:msg]
         }
     }
 
@@ -3049,7 +3019,7 @@ class ScheduledExecutionController  {
             }
         }
 
-        def result = executeScheduledExecution(scheduledExecution, framework, request.subject, inparams)
+        def result = executionService.executeScheduledExecution(scheduledExecution, framework, request.subject, inparams)
         if (result.error) {
             flash.error = result.message
             return chain(controller: "api", action: "error")

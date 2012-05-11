@@ -40,9 +40,11 @@ public class NotificationService {
 
     def boolean triggerJobNotification(String trigger, schedId, Map content){
         if(trigger && schedId){
-            def ScheduledExecution sched = ScheduledExecution.get(schedId)
-            if(null!=sched){
-                return triggerJobNotification(trigger,sched,content)
+            ScheduledExecution.withNewSession {
+                def ScheduledExecution sched = ScheduledExecution.get(schedId)
+                if(null!=sched){
+                    return triggerJobNotification(trigger,sched,content)
+                }
             }
         }
         return false
