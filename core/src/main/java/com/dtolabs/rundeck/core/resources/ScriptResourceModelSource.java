@@ -46,6 +46,7 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
     public static final String CONFIG_INTERPRETER = "interpreter";
 
     public static final String CONFIG_ARGS = "args";
+    public static final String CONFIG_INTERPRETER_ARGS_QUOTED = "argsQuoted";
 
     public static final String CONFIG_FORMAT = "format";
 
@@ -66,6 +67,10 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
             "Arguments to pass to the script (optional)",
             false,
             null));
+        scriptResourceProperties.add(PropertyUtil.bool(CONFIG_INTERPRETER_ARGS_QUOTED, "Quote Interpreter Args",
+            "If true, pass script file and args as a single argument to interpreter, otherwise, pass as multiple arguments",
+            false,
+            "false"));
 
     }
 
@@ -102,6 +107,7 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
     private File scriptFile;
     private String interpreter;
     private String args;
+    private boolean interpreterArgsQuoted;
     private String project;
     HashMap<String, Map<String, String>> configDataContext;
 
@@ -130,7 +136,9 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
             throw new ConfigurationException(CONFIG_FORMAT + " is required");
         }
         format = configuration.getProperty(CONFIG_FORMAT);
-        
+
+        interpreterArgsQuoted = Boolean.parseBoolean(configuration.getProperty(CONFIG_INTERPRETER_ARGS_QUOTED));
+
         configDataContext = new HashMap<String, Map<String, String>>();
         final HashMap<String, String> configdata = new HashMap<String, String>();
         configdata.put("project", project);
@@ -142,10 +150,18 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
             return ScriptResourceUtil.executeScript(scriptFile, args,
                 interpreter,
                 ScriptResourceModelSourceFactory.SERVICE_PROVIDER_TYPE, configDataContext, format, framework, project,
-                logger);
+                logger, interpreterArgsQuoted);
         } catch (ResourceModelSourceException e) {
             throw new ResourceModelSourceException(
-                "Script Resource Model Source failed to execute: "+scriptFile+": " + e.getMessage(), e);
+                "failed to execute: "+scriptFile+": " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public String toString() {
+        return "ScriptResourceModelSource{" +
+               "scriptFile=" + scriptFile +
+               ", format='" + format + '\'' +
+               '}';
     }
 }

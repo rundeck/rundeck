@@ -36,6 +36,7 @@ public class ProviderDef {
     public static final String META_SCRIPT_FILE = "script-file";
     public static final String META_SCRIPT_ARGS = "script-args";
     public static final String META_SCRIPT_INTERPRETER = "script-interpreter";
+    public static final String META_INTERPRETER_ARGS_QUOTED = "interpreter-args-quoted";
     public static final String META_PLUGIN_TYPE = "plugin-type";
     private Map<String, Object> pluginData;
 
@@ -69,6 +70,13 @@ public class ProviderDef {
     }
     public String getScriptInterpreter() {
         return getString(META_SCRIPT_INTERPRETER);
+    }
+
+    public boolean getInterpreterArgsQuoted() {
+        if(pluginData.get(META_INTERPRETER_ARGS_QUOTED) instanceof Boolean) {
+            return (Boolean) pluginData.get(META_INTERPRETER_ARGS_QUOTED);
+        }
+        return Boolean.parseBoolean(getString(META_INTERPRETER_ARGS_QUOTED));
     }
 
     public String getPluginType() {

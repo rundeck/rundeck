@@ -54,7 +54,7 @@ public class TestScriptResourceUtil extends TestCase {
         {
             final ProcessBuilder processBuilder = ScriptResourceUtil.buildProcess(workingdir, scriptfile, null, null,
                 null,
-                null);
+                null, true);
             assertEquals(Arrays.asList(scriptfile.getAbsolutePath()), processBuilder.command());
             assertEquals(workingdir, processBuilder.directory());
             assertEquals(testEnv.size(), processBuilder.environment().size());
@@ -62,16 +62,26 @@ public class TestScriptResourceUtil extends TestCase {
         {
             final ProcessBuilder processBuilder = ScriptResourceUtil.buildProcess(workingdir, scriptfile, "a b", null,
                 null,
-                null);
+                null, true);
             assertEquals(Arrays.asList(scriptfile.getAbsolutePath() + " a b"), processBuilder.command());
             assertEquals(workingdir, processBuilder.directory());
             assertEquals(testEnv.size(), processBuilder.environment().size());
         }
         {
+            //interpreter args quoted
             final ProcessBuilder processBuilder = ScriptResourceUtil.buildProcess(workingdir, scriptfile, "a b", null,
                 null,
-                "test -c");
+                "test -c", true);
             assertEquals(Arrays.asList("test", "-c", scriptfile.getAbsolutePath() + " a b"), processBuilder.command());
+            assertEquals(workingdir, processBuilder.directory());
+            assertEquals(testEnv.size(), processBuilder.environment().size());
+        }
+        {
+            //interpreter args not quoted
+            final ProcessBuilder processBuilder = ScriptResourceUtil.buildProcess(workingdir, scriptfile, "a b", null,
+                null,
+                "test -c", false);
+            assertEquals(Arrays.asList("test", "-c", scriptfile.getAbsolutePath() , "a","b"), processBuilder.command());
             assertEquals(workingdir, processBuilder.directory());
             assertEquals(testEnv.size(), processBuilder.environment().size());
         }
@@ -89,7 +99,7 @@ public class TestScriptResourceUtil extends TestCase {
 
             final ProcessBuilder processBuilder = ScriptResourceUtil.buildProcess(workingdir, scriptfile, null,
                 envContext, null,
-                null);
+                null, true);
             assertEquals(Arrays.asList(scriptfile.getAbsolutePath()), processBuilder.command());
             assertEquals(workingdir, processBuilder.directory());
             final Map<String, String> environment = processBuilder.environment();
@@ -112,9 +122,23 @@ public class TestScriptResourceUtil extends TestCase {
             dataCtx.put("test", testctx);
 
             final ProcessBuilder processBuilder = ScriptResourceUtil.buildProcess(workingdir, scriptfile,
-                "noarg ${test.test1} ${test.test2} ${test.test3}", null, null, null);
+                "noarg ${test.test1} ${test.test2} ${test.test3}", null, null, null, true);
             assertEquals(Arrays.asList(
                 scriptfile.getAbsolutePath() + " noarg ${test.test1} ${test.test2} ${test.test3}"),
+                processBuilder.command());
+            assertEquals(workingdir, processBuilder.directory());
+
+        }{
+            //test null data context, not quoted args
+            final Map<String, Map<String, String>> dataCtx = new HashMap<String, Map<String, String>>();
+            final HashMap<String, String> testctx = new HashMap<String, String>();
+            testctx.put("test1", "value1");
+            dataCtx.put("test", testctx);
+
+            final ProcessBuilder processBuilder = ScriptResourceUtil.buildProcess(workingdir, scriptfile,
+                "noarg ${test.test1} ${test.test2} ${test.test3}", null, null, null, false);
+            assertEquals(Arrays.asList(
+                scriptfile.getAbsolutePath() , "noarg","${test.test1}","${test.test2}","${test.test3}"),
                 processBuilder.command());
             assertEquals(workingdir, processBuilder.directory());
 
@@ -129,8 +153,41 @@ public class TestScriptResourceUtil extends TestCase {
             final ProcessBuilder processBuilder = ScriptResourceUtil.buildProcess(workingdir, scriptfile,
                 "noarg ${test.test1} ${test.test2} ${test.test3}",
                 null, dataCtx,
-                null);
+                null, true);
             assertEquals(Arrays.asList(scriptfile.getAbsolutePath() + " noarg value1 ${test.test2} ${test.test3}"),
+                processBuilder.command());
+            assertEquals(workingdir, processBuilder.directory());
+
+        }
+        {
+            //test partial data context, not quoted args
+            final Map<String, Map<String, String>> dataCtx = new HashMap<String, Map<String, String>>();
+            final HashMap<String, String> testctx = new HashMap<String, String>();
+            testctx.put("test1", "value1");
+            dataCtx.put("test", testctx);
+
+            final ProcessBuilder processBuilder = ScriptResourceUtil.buildProcess(workingdir, scriptfile,
+                "noarg ${test.test1} ${test.test2} ${test.test3}",
+                null, dataCtx,
+                null, false);
+            assertEquals(Arrays.asList(scriptfile.getAbsolutePath() , "noarg","value1","${test.test2}","${test.test3}"),
+                processBuilder.command());
+            assertEquals(workingdir, processBuilder.directory());
+
+        }
+        {
+            //test partial data context, not quoted args, space in args
+            final Map<String, Map<String, String>> dataCtx = new HashMap<String, Map<String, String>>();
+            final HashMap<String, String> testctx = new HashMap<String, String>();
+            testctx.put("test1", "value1");
+            testctx.put("test2", "value is2");
+            dataCtx.put("test", testctx);
+
+            final ProcessBuilder processBuilder = ScriptResourceUtil.buildProcess(workingdir, scriptfile,
+                "noarg ${test.test1} ${test.test2} ${test.test3}",
+                null, dataCtx,
+                null, false);
+            assertEquals(Arrays.asList(scriptfile.getAbsolutePath() , "noarg","value1","value is2","${test.test3}"),
                 processBuilder.command());
             assertEquals(workingdir, processBuilder.directory());
 

@@ -25,7 +25,6 @@ import com.dtolabs.utils.Streams;
 import org.apache.log4j.Logger;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -40,7 +39,7 @@ class ScriptResourceUtil {
     public static INodeSet executeScript(final File scriptfile, final String scriptargs, final String scriptinterpreter,
                                          final String pluginname, final Map<String, Map<String, String>> dataContext,
                                          final String fileformat, final Framework framework,
-                                         final String project, final Logger logger) throws
+                                         final String project, final Logger logger, final boolean interpreterArgsQuoted) throws
         ResourceModelSourceException {
 
         /*
@@ -72,7 +71,7 @@ class ScriptResourceUtil {
         try {
             if (null != scriptinterpreter) {
                 exec = execShellScript(logger, workingdir, scriptfile, scriptargs, dataContext, dataContext,
-                    scriptinterpreter, pluginname);
+                    scriptinterpreter, pluginname, interpreterArgsQuoted);
             } else {
                 exec = execScript(logger, workingdir, scriptfile, scriptargs, dataContext, dataContext, pluginname);
             }
@@ -144,15 +143,16 @@ class ScriptResourceUtil {
      * @param newDataContext context data to replace in the scriptargs
      * @param interpreter    the remote shell script, which will be split on whitespace
      * @param logName        name of plugin to use in logging
+     * @param interpreterArgsQuoted if true, quote the file+args as a single argument to the interpreter
      */
     static Process execShellScript(final Logger logger, final File workingdir,
                                    final File scriptfile, final String scriptargs,
                                    final Map<String, Map<String, String>> envContext,
                                    final Map<String, Map<String, String>> newDataContext,
-                                   final String interpreter, final String logName) throws IOException {
+                                   final String interpreter, final String logName, final boolean interpreterArgsQuoted) throws IOException {
 
         final ProcessBuilder processBuilder = buildProcess(workingdir, scriptfile, scriptargs, envContext,
-            newDataContext, interpreter);
+            newDataContext, interpreter, interpreterArgsQuoted);
         logger.info("[" + logName + "] executing: " + processBuilder.command());
         return processBuilder.start();
     }
@@ -166,11 +166,12 @@ class ScriptResourceUtil {
      * @param envContext     Environment variable context
      * @param newDataContext context data to replace in the scriptargs
      * @param interpreter    the remote shell script, which will be split on whitespace
+     * @param interpreterArgsQuoted if true, quote the file+args as a single argument to the interpreter
      */
     static ProcessBuilder buildProcess(final File workingdir, final File scriptfile, final String scriptargs,
                                        final Map<String, Map<String, String>> envContext,
                                        final Map<String, Map<String, String>> newDataContext,
-                                       final String interpreter) {
+                                       final String interpreter, final boolean interpreterArgsQuoted) {
         final ArrayList<String> shells = new ArrayList<String>();
         if (null != interpreter) {
             shells.addAll(Arrays.asList(interpreter.split(" ")));
@@ -178,8 +179,14 @@ class ScriptResourceUtil {
 
         //use script-copy attribute and replace datareferences
         if (null != scriptargs) {
-            final String newargs = DataContextUtils.replaceDataReferences(scriptargs, newDataContext);
-            shells.add(scriptfile.getAbsolutePath() + " " + newargs);
+            if(interpreterArgsQuoted){
+                final String newargs = DataContextUtils.replaceDataReferences(scriptargs, newDataContext);
+                shells.add(scriptfile.getAbsolutePath() + " " + newargs);
+            }else{
+                shells.add(scriptfile.getAbsolutePath());
+                shells.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargs.split(" "),
+                    newDataContext)));
+            }
         } else {
             shells.add(scriptfile.getAbsolutePath());
         }

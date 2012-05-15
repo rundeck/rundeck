@@ -106,6 +106,7 @@ class ScriptPluginFileCopier extends AbstractDescribableScriptPlugin implements 
         //look for specific property
         scriptargs = plugin.getScriptArgs();
         final String scriptinterpreter = plugin.getScriptInterpreter();
+        final boolean interpreterargsquoted=plugin.getInterpreterArgsQuoted();
 
 
         if (null == scriptargs) {
@@ -149,10 +150,19 @@ class ScriptPluginFileCopier extends AbstractDescribableScriptPlugin implements 
         if (null != scriptinterpreter) {
             arglist.addAll(Arrays.asList(scriptinterpreter.split(" ")));
         }
-        arglist.add(scriptfile.getAbsolutePath());
-        if (null != scriptargs) {
-            arglist.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargs.split(" "),
-                newDataContext)));
+        if (null != scriptinterpreter && interpreterargsquoted) {
+            final StringBuilder sbuf = new StringBuilder(scriptfile.getAbsolutePath());
+            if (null != scriptargs) {
+                sbuf.append(" ");
+                sbuf.append(DataContextUtils.replaceDataReferences(scriptargs, newDataContext));
+            }
+            arglist.add(sbuf.toString());
+        }else{
+            arglist.add(scriptfile.getAbsolutePath());
+            if (null != scriptargs) {
+                arglist.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargs.split(" "),
+                    newDataContext)));
+            }
         }
         final String[] finalargs = arglist.toArray(new String[arglist.size()]);
 

@@ -61,6 +61,10 @@ public interface ScriptPluginProvider {
      */
     public String getScriptInterpreter();
     /**
+     * Return true if the script file and args should be passed as a single argument to the interpreter, default false.
+     */
+    public boolean getInterpreterArgsQuoted();
+    /**
      * Return any interpreter specification to run the script
      */
     public Map<String,Object> getMetadata();

@@ -57,9 +57,14 @@ class ScriptPluginResourceModelSource implements ResourceModelSource, Configurab
     }
 
     public INodeSet getNodes() throws ResourceModelSourceException {
-        return ScriptResourceUtil.executeScript(provider.getScriptFile(), provider.getScriptArgs(),
-            provider.getScriptInterpreter(),
-            provider.getName(), configDataContext, format, framework, project, logger);
+        try {
+            return ScriptResourceUtil.executeScript(provider.getScriptFile(), provider.getScriptArgs(),
+                provider.getScriptInterpreter(),
+                provider.getName(), configDataContext, format, framework, project, logger, provider.getInterpreterArgsQuoted());
+        } catch (ResourceModelSourceException e) {
+            throw new ResourceModelSourceException(
+                "failed to execute: " + provider.getScriptFile() + ": " + e.getMessage(), e);
+        }
     }
 
     public void configure(final Properties configuration) throws ConfigurationException {
@@ -81,4 +86,12 @@ class ScriptPluginResourceModelSource implements ResourceModelSource, Configurab
         configDataContext = DataContextUtils.addContext("config", configData, stringMapMap);
     }
 
+    @Override
+    public String toString() {
+        return "script-plugin{" +
+               "name=" + provider.getName() +
+               ", plugin file=" + provider.getArchiveFile() +
+               ", output format=" + format
+               +'}';
+    }
 }

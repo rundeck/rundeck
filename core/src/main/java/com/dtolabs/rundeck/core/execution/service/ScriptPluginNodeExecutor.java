@@ -68,6 +68,7 @@ class ScriptPluginNodeExecutor extends AbstractDescribableScriptPlugin implement
 
         final String scriptargs = plugin.getScriptArgs();
         final String scriptinterpreter = plugin.getScriptInterpreter();
+        final boolean interpreterargsquoted=plugin.getInterpreterArgsQuoted();
         executionContext.getExecutionListener().log(3,
             "[" + pluginname + "] scriptargs: " + scriptargs + ", interpreter: " + scriptinterpreter);
 
@@ -96,7 +97,9 @@ class ScriptPluginNodeExecutor extends AbstractDescribableScriptPlugin implement
         final ArrayList<String> arglist = new ArrayList<String>();
         if(null!= scriptinterpreter) {
             arglist.addAll(Arrays.asList(scriptinterpreter.split(" ")));
-            StringBuffer sbuf = new StringBuffer(scriptfile.getAbsolutePath());
+        }
+        if(null != scriptinterpreter && interpreterargsquoted){
+            final StringBuilder sbuf = new StringBuilder(scriptfile.getAbsolutePath());
             if (null != scriptargs) {
                 sbuf.append(" ");
                 sbuf.append(DataContextUtils.replaceDataReferences(scriptargs, newDataContext));

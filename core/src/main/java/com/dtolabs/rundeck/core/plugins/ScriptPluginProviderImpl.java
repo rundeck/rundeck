@@ -68,6 +68,10 @@ class ScriptPluginProviderImpl implements ScriptPluginProvider {
         return plugindef.getScriptInterpreter();
     }
 
+    public boolean getInterpreterArgsQuoted() {
+        return plugindef.getInterpreterArgsQuoted();
+    }
+
     public Map<String, Object> getMetadata() {
         return plugindef.getPluginData();
     }
