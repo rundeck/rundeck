@@ -323,4 +323,11 @@ public class URLResourceModelSource implements ResourceModelSource, Configurable
             return new NodeSetImpl();
         }
     }
+
+    @Override
+    public String toString() {
+        return "URLResourceModelSource{" +
+               "URL='" + configuration.nodesUrl + '\'' +
+               '}';
+    }
 }

@@ -201,4 +201,11 @@ public class DirectoryResourceModelSource implements ResourceModelSource, Config
             sourceCache.remove(oldFile);
         }
     }
+
+    @Override
+    public String toString() {
+        return "DirectoryResourceModelSource{" +
+               "directory=" + configuration.directory +
+               '}';
+    }
 }

@@ -392,4 +392,12 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
         );
         return prov.getNodes();
     }
+
+    @Override
+    public String toString() {
+        return "FileResourceModelSource{" +
+               "file=" + configuration.nodesFile+
+               ", format=" + configuration.format +
+               '}';
+    }
 }
