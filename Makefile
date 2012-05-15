@@ -1,6 +1,11 @@
 SHELL=/bin/bash
 
-VERSION=$(shell grep version.number= ${PWD}/version.properties | cut -d= -f 2)
+VNUMBER=$(shell grep version.number= ${PWD}/version.properties | cut -d= -f 2)
+VTAG=$(shell grep version.tag= ${PWD}/version.properties | cut -d= -f 2)
+VERSION=${VNUMBER}-${VTAG}
+ifeq ($(strip $(VTAG)),GA)
+VERSION=${VNUMBER}
+endif
 RELEASE=$(shell grep version.release.number= ${PWD}/version.properties | cut -d= -f 2)
 
 GRAILSVERS=1.3.7
