@@ -401,6 +401,16 @@ specific Service will provide some additional context properties that can be use
 that needs to be copied.
 * ResourceModelSource will define `${config.KEY}` for each configuration property KEY that is defined.
 
+All script-plugins will also be provided with these context entries:
+
+* `rundeck.base` - base directory of the Rundeck installation
+* `rundeck.project` - project name
+* `plugin.base` - base directory of the expanded 'contents' dir of the plugin
+* `plugin.file` - the plugin file itself
+* `plugin.scriptfile` - the path to the script file being executed for the plugin
+* `plugin.vardir` - var dir the plugin can use for caching data, local to the project
+* `plugin.tmpdir` - temp dir the plugin can use
+
 In addition, all of the data-context properties that are available in the
 `script-args` are provided as environment variables to the 
 script or interpreter when it is executed.
