@@ -37,10 +37,12 @@ class ScriptPluginProviderImpl implements ScriptPluginProvider {
     final private ProviderDef plugindef;
     final private File archiveFile;
     final private File scriptFile;
+    final private File contentsBasedir;
 
     ScriptPluginProviderImpl(final ProviderDef plugindef, final File archiveFile, final File basedir) {
         this.plugindef = plugindef;
         this.archiveFile = archiveFile;
+        this.contentsBasedir=basedir;
         scriptFile = new File(basedir, plugindef.getScriptFile());
     }
 
@@ -74,5 +76,9 @@ class ScriptPluginProviderImpl implements ScriptPluginProvider {
 
     public Map<String, Object> getMetadata() {
         return plugindef.getPluginData();
+    }
+
+    public File getContentsBasedir() {
+        return contentsBasedir;
     }
 }

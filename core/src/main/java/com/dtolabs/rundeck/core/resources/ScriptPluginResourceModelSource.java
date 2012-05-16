@@ -25,16 +25,18 @@ package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.plugins.ScriptDataContextUtil;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.Configurable;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import org.apache.log4j.Logger;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 /**
- * ScriptPluginResourceModelSource is ...
+ * ScriptPluginResourceModelSource provides a ResourceModelSource from a ScriptPluginProvider.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
@@ -45,22 +47,34 @@ class ScriptPluginResourceModelSource implements ResourceModelSource, Configurab
     Properties configuration;
     private String format;
     private String project;
-    Map<String, Map<String, String>> configDataContext;
+    private ScriptPluginResourceModelSourceFactory factory;
+    private Map<String, Map<String, String>> executionDataContext;
+    Map<String, String> configData;
 
-    public ScriptPluginResourceModelSource(final ScriptPluginProvider provider, final Framework framework) {
+    public ScriptPluginResourceModelSource(final ScriptPluginProvider provider, final Framework framework, final
+    ScriptPluginResourceModelSourceFactory factory) {
         this.provider = provider;
         this.framework = framework;
+        this.factory = factory;
         final Object o = provider.getMetadata().get(ScriptPluginResourceModelSourceFactory.RESOURCE_FORMAT_PROP);
-        if(o instanceof String) {
+        if (o instanceof String) {
             this.format = (String) o;
         }
     }
 
     public INodeSet getNodes() throws ResourceModelSourceException {
         try {
-            return ScriptResourceUtil.executeScript(provider.getScriptFile(), provider.getScriptArgs(),
+            return ScriptResourceUtil.executeScript(
+                provider.getScriptFile(),
+                provider.getScriptArgs(),
                 provider.getScriptInterpreter(),
-                provider.getName(), configDataContext, format, framework, project, logger, provider.getInterpreterArgsQuoted());
+                provider.getName(),
+                executionDataContext,
+                format,
+                framework,
+                project,
+                logger,
+                provider.getInterpreterArgsQuoted());
         } catch (ResourceModelSourceException e) {
             throw new ResourceModelSourceException(
                 "failed to execute: " + provider.getScriptFile() + ": " + e.getMessage(), e);
@@ -72,18 +86,20 @@ class ScriptPluginResourceModelSource implements ResourceModelSource, Configurab
         if (!configuration.containsKey("project")) {
             throw new ConfigurationException("project is required");
         }
-        if(null==format) {
+        if (null == format) {
             throw new ConfigurationException(
                 ScriptPluginResourceModelSourceFactory.RESOURCE_FORMAT_PROP + " is required");
         }
         this.project = configuration.getProperty("project");
-        final Map<String, String> configData = new HashMap<String, String>();
+
+        configData = new HashMap<String, String>();
         for (final Object o : configuration.keySet()) {
-            String k = (String) o;
+            final String k = (String) o;
             configData.put(k, configuration.getProperty(k));
         }
-        final Map<String, Map<String, String>> stringMapMap = new HashMap<String, Map<String, String>>();
-        configDataContext = DataContextUtils.addContext("config", configData, stringMapMap);
+        executionDataContext = ScriptDataContextUtil.createScriptDataContextForProject(framework, project);
+        executionDataContext.get("plugin").putAll(factory.createPluginDataContext());
+        executionDataContext.put("config", configData);
     }
 
     @Override
@@ -92,6 +108,6 @@ class ScriptPluginResourceModelSource implements ResourceModelSource, Configurab
                "name=" + provider.getName() +
                ", plugin file=" + provider.getArchiveFile() +
                ", output format=" + format
-               +'}';
+               + '}';
     }
 }

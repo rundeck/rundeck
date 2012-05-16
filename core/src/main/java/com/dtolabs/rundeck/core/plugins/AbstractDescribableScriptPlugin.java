@@ -69,6 +69,19 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
         this.framework = framework;
     }
 
+    /**
+     * Return data with exported plugin details
+     */
+    public Map<String,String> createPluginDataContext() {
+        final Map<String,String> pluginDataContext = new HashMap<String, String>();
+
+        pluginDataContext.put("file", provider.getArchiveFile().getAbsolutePath());
+        pluginDataContext.put("scriptfile", provider.getScriptFile().getAbsolutePath());
+        pluginDataContext.put("base", provider.getContentsBasedir().getAbsolutePath());
+
+        return pluginDataContext;
+    }
+
 
     static private List<Property> createProperties(final ScriptPluginProvider provider) throws ConfigurationException {
         final ArrayList<Property> properties = new ArrayList<Property>();

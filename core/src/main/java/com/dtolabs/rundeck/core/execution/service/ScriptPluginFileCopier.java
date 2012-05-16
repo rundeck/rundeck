@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.plugins.AbstractDescribableScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
+import com.dtolabs.rundeck.core.plugins.ScriptDataContextUtil;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
 import com.dtolabs.utils.Streams;
@@ -122,13 +123,15 @@ class ScriptPluginFileCopier extends AbstractDescribableScriptPlugin implements 
         if (null != dirstring) {
             workingdir = new File(dirstring);
         }*/
-
-        final Map<String, Map<String, String>> origDataContext = executionContext.getDataContext();
+        final Map<String, Map<String, String>> localDataContext = ScriptDataContextUtil
+            .createScriptDataContextForProject(
+                executionContext.getFramework(),
+                executionContext.getFrameworkProject());
+        localDataContext.get("plugin").putAll(createPluginDataContext());
+        localDataContext.putAll(executionContext.getDataContext());
 
         //add node context data
-        final Map<String, Map<String, String>> nodeContext =
-            DataContextUtils.addContext("node", DataContextUtils.nodeData(node), origDataContext);
-
+        localDataContext.put("node", DataContextUtils.nodeData(node));
 
         //write the temp file and replace tokens in the script with values from the dataContext
         final File tempfile = BaseFileCopier.writeScriptTempFile(executionContext, file, input, content, node);
@@ -142,9 +145,7 @@ class ScriptPluginFileCopier extends AbstractDescribableScriptPlugin implements 
             //set up the data context to include the working dir
 //            scptexec.put("dir", workingdir.getAbsolutePath());
 //        }
-        final Map<String, Map<String, String>> newDataContext = DataContextUtils.addContext("file-copy", scptexec,
-            nodeContext);
-
+        localDataContext.put("file-copy", scptexec);
 
         final ArrayList<String> arglist = new ArrayList<String>();
         if (null != scriptinterpreter) {
@@ -154,20 +155,20 @@ class ScriptPluginFileCopier extends AbstractDescribableScriptPlugin implements 
             final StringBuilder sbuf = new StringBuilder(scriptfile.getAbsolutePath());
             if (null != scriptargs) {
                 sbuf.append(" ");
-                sbuf.append(DataContextUtils.replaceDataReferences(scriptargs, newDataContext));
+                sbuf.append(DataContextUtils.replaceDataReferences(scriptargs, localDataContext));
             }
             arglist.add(sbuf.toString());
         }else{
             arglist.add(scriptfile.getAbsolutePath());
             if (null != scriptargs) {
                 arglist.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargs.split(" "),
-                    newDataContext)));
+                    localDataContext)));
             }
         }
         final String[] finalargs = arglist.toArray(new String[arglist.size()]);
 
         //create system environment variables from the data context
-        final Map<String, String> envMap = DataContextUtils.generateEnvVarsFromContext(newDataContext);
+        final Map<String, String> envMap = DataContextUtils.generateEnvVarsFromContext(localDataContext);
         final ArrayList<String> envlist = new ArrayList<String>();
         for (final Map.Entry<String, String> entry : envMap.entrySet()) {
             envlist.add(entry.getKey() + "=" + entry.getValue());

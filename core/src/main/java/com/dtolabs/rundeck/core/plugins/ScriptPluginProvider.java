@@ -48,6 +48,11 @@ public interface ScriptPluginProvider {
     public File getArchiveFile();
 
     /**
+     * Return directory containing the expanded contents
+     */
+    public File getContentsBasedir();
+
+    /**
      * Return script args to pass to the file
      */
     public String getScriptArgs();

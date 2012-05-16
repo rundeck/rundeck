@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.plugins.ScriptDataContextUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import org.apache.log4j.Logger;
 
@@ -110,6 +111,7 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
     private boolean interpreterArgsQuoted;
     private String project;
     HashMap<String, Map<String, String>> configDataContext;
+    Map<String, Map<String, String>> executionDataContext;
 
     public ScriptResourceModelSource(final Framework framework) {
         this.framework = framework;
@@ -143,13 +145,17 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
         final HashMap<String, String> configdata = new HashMap<String, String>();
         configdata.put("project", project);
         configDataContext.put("context", configdata);
+
+        executionDataContext = ScriptDataContextUtil.createScriptDataContextForProject(framework, project);
+
+        executionDataContext.putAll(configDataContext);
     }
 
     public INodeSet getNodes() throws ResourceModelSourceException {
         try {
             return ScriptResourceUtil.executeScript(scriptFile, args,
                 interpreter,
-                ScriptResourceModelSourceFactory.SERVICE_PROVIDER_TYPE, configDataContext, format, framework, project,
+                ScriptResourceModelSourceFactory.SERVICE_PROVIDER_TYPE, executionDataContext, format, framework, project,
                 logger, interpreterArgsQuoted);
         } catch (ResourceModelSourceException e) {
             throw new ResourceModelSourceException(

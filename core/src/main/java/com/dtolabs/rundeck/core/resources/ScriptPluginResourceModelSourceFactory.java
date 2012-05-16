@@ -32,7 +32,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.*;
 import java.util.*;
 
 /**
- * ScriptPluginResourceModelSource is ...
+ * ScriptPluginResourceModelSourceFactory creates ResourceModelSource from a ScriptPluginProvider and a set of
+ * configuration properties.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
@@ -45,9 +46,9 @@ class ScriptPluginResourceModelSourceFactory extends AbstractDescribableScriptPl
     public ScriptPluginResourceModelSourceFactory(final ScriptPluginProvider provider, final Framework framework) {
         super(provider, framework);
         final Object o = provider.getMetadata().get(RESOURCE_FORMAT_PROP);
-        if(o instanceof String){
-            format = (String)o;
-        }else {
+        if (o instanceof String) {
+            format = (String) o;
+        } else {
             throw new IllegalArgumentException(RESOURCE_FORMAT_PROP + " was not a string");
         }
     }
@@ -70,7 +71,7 @@ class ScriptPluginResourceModelSourceFactory extends AbstractDescribableScriptPl
     public ResourceModelSource createResourceModelSource(final Properties configuration) throws ConfigurationException {
 
         final ScriptPluginResourceModelSource urlResourceModelSource = new ScriptPluginResourceModelSource(
-            getProvider(), getFramework());
+            getProvider(), getFramework(), this);
         urlResourceModelSource.configure(configuration);
         return urlResourceModelSource;
     }

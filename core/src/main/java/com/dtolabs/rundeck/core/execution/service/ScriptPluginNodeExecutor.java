@@ -23,13 +23,16 @@
 */
 package com.dtolabs.rundeck.core.execution.service;
 
+import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.plugins.AbstractDescribableScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
+import com.dtolabs.rundeck.core.plugins.ScriptDataContextUtil;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
 import com.dtolabs.utils.Streams;
@@ -45,7 +48,7 @@ import java.util.*;
  */
 class ScriptPluginNodeExecutor extends AbstractDescribableScriptPlugin implements NodeExecutor {
 
-    ScriptPluginNodeExecutor(ScriptPluginProvider provider, Framework framework) {
+    ScriptPluginNodeExecutor(final ScriptPluginProvider provider, final Framework framework) {
         super(provider, framework);
     }
 
@@ -83,7 +86,12 @@ class ScriptPluginNodeExecutor extends AbstractDescribableScriptPlugin implement
             workingdir = new File(dirstring);
         }*/
 
-        final Map<String, Map<String, String>> origDataContext = executionContext.getDataContext();
+        //create mutable version of data context
+        final Map<String, Map<String, String>> localDataContext = ScriptDataContextUtil.createScriptDataContextForProject(
+            executionContext.getFramework(),
+            executionContext.getFrameworkProject());
+        localDataContext.get("plugin").putAll(createPluginDataContext());
+        localDataContext.putAll(executionContext.getDataContext());
 
         //add some more data context values to allow templatized args
         final HashMap<String, String> scptexec = new HashMap<String, String>();
@@ -91,8 +99,7 @@ class ScriptPluginNodeExecutor extends AbstractDescribableScriptPlugin implement
 //        if (null != workingdir) {
 //            scptexec.put("dir", workingdir.getAbsolutePath());
 //        }
-        final Map<String, Map<String, String>> newDataContext = DataContextUtils.addContext("exec", scptexec,
-            origDataContext);
+        localDataContext.put("exec", scptexec);
 
         final ArrayList<String> arglist = new ArrayList<String>();
         if(null!= scriptinterpreter) {
@@ -102,20 +109,20 @@ class ScriptPluginNodeExecutor extends AbstractDescribableScriptPlugin implement
             final StringBuilder sbuf = new StringBuilder(scriptfile.getAbsolutePath());
             if (null != scriptargs) {
                 sbuf.append(" ");
-                sbuf.append(DataContextUtils.replaceDataReferences(scriptargs, newDataContext));
+                sbuf.append(DataContextUtils.replaceDataReferences(scriptargs, localDataContext));
             }
             arglist.add(sbuf.toString());
         }else{
             arglist.add(scriptfile.getAbsolutePath());
             if(null!=scriptargs) {
                 arglist.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargs.split(" "),
-                    newDataContext)));
+                    localDataContext)));
             }
         }
         final String[] finalargs = arglist.toArray(new String[arglist.size()]);
 
         //create system environment variables from the data context
-        final Map<String, String> envMap = DataContextUtils.generateEnvVarsFromContext(newDataContext);
+        final Map<String, String> envMap = DataContextUtils.generateEnvVarsFromContext(localDataContext);
         final ArrayList<String> envlist = new ArrayList<String>();
         for (final Map.Entry<String, String> entry : envMap.entrySet()) {
             envlist.add(entry.getKey() + "=" + entry.getValue());
@@ -170,4 +177,5 @@ class ScriptPluginNodeExecutor extends AbstractDescribableScriptPlugin implement
             }
         };
     }
+
 }
