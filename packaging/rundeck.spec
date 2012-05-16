@@ -69,7 +69,7 @@ fi
 /var/lib/rundeck/bootstrap/jetty-naming-6.1.21.jar
 /var/lib/rundeck/bootstrap/jetty-plus-6.1.21.jar
 /var/lib/rundeck/bootstrap/jetty-util-6.1.21.jar
-/var/lib/rundeck/bootstrap/rundeck-jetty-server-%{version}.jar
+/var/lib/rundeck/bootstrap/rundeck-jetty-server-%{_vname}.jar
 /var/lib/rundeck/bootstrap/servlet-api-2.5-20081211.jar
 
 # CLI Lib Support
@@ -88,7 +88,7 @@ fi
 /var/lib/rundeck/cli/jaxen-1.1.jar
 /var/lib/rundeck/cli/jsch-0.1.45.jar
 /var/lib/rundeck/cli/log4j-1.2.16.jar
-/var/lib/rundeck/cli/rundeck-core-%{version}.jar
+/var/lib/rundeck/cli/rundeck-core-%{_vname}.jar
 /var/lib/rundeck/cli/xercesImpl-2.6.0.jar
 /var/lib/rundeck/cli/snakeyaml-1.9.jar
 

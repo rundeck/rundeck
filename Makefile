@@ -52,10 +52,10 @@ rundeck:  $(launcher)
 	@echo $(VERSION)-$(RELEASE)
 
 rpm: docs $(launcher) $(plugs)
-	cd packaging; $(MAKE) VERSION=$(VERSION) RELEASE=$(RELEASE) rpmclean rpm
+	cd packaging; $(MAKE) VERSION=$(VNUMBER) VNAME=$(VERSION) RELEASE=$(RELEASE) rpmclean rpm
 
 deb: docs $(launcher) $(plugs)
-	cd packaging; $(MAKE) VERSION=$(VERSION) RELEASE=$(RELEASE) debclean deb
+	cd packaging; $(MAKE) VERSION=$(VNUMBER) VNAME=$(VERSION) RELEASE=$(RELEASE) debclean deb
 
 makedocs:
 	$(MAKE) -C docs
