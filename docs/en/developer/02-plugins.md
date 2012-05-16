@@ -330,6 +330,11 @@ Optional entries:
     script.  This can be a single binary path, e.g. `/bin/bash`, or include
     any args to the command, such as `/bin/bash -c`.
 * `script-args` - the arguments to use when executing the script file.
+* `interpreter-args-quoted` - true/false - (default false). If true, the execution will 
+    be done by passing the file and args as a single argument to the interpreter:
+     `${interpreter} "${file} ${arg1} ${arg2}..."`. If false,
+    the execution will be done by passing the file and args as separate arguments:
+     `${interpreter} ${file} ${arg1} ${arg2}...`
 
 ### Configurable Resource Model Source Script Plugin
  
