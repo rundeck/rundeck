@@ -5,6 +5,9 @@ class WorkflowController {
     }
 
 
+    def error ={
+        render(template:"/common/errorFragment")
+    }
     /**
      * Render the edit form for a workflow item
      */
@@ -25,7 +28,21 @@ class WorkflowController {
                 return error.call()
             }
         }
-        return render(template: "/execution/wfitemEdit", model: [item: null != numi ? editwf.commands.get(numi) : null, num: numi, scheduledExecutionId: params.scheduledExecutionId, newitemtype: params['newitemtype'], edit: true])
+        def item = null != numi ? editwf.commands.get(numi) : null
+        final isErrorHandler = params.isErrorHandler == 'true'
+        if(isErrorHandler){
+            if(params['newitemtype']){
+                item=null
+            }else{
+                item = item.errorHandler
+                if(!item){
+                    log.error("num parameter is invalid: ${numi} no error handler")
+                    flash.error = "num parameter is invalid: ${numi} no error handler"
+                    return error.call()
+                }
+            }
+        }
+        return render(template: "/execution/wfitemEdit", model: [item: item, key:params.key, num: numi, scheduledExecutionId: params.scheduledExecutionId, newitemtype: params['newitemtype'], edit: true, isErrorHandler: isErrorHandler])
     }
 
     /**
@@ -45,7 +62,17 @@ class WorkflowController {
             flash.error = "num parameter is invalid: ${numi}"
             return error.call()
         }
-        return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: editwf.commands.get(numi), i: numi, scheduledExecutionId: params.scheduledExecutionId, edit: params.edit])
+        def item = editwf.commands.get(numi)
+        final isErrorHandler = params.isErrorHandler == 'true'
+        if (isErrorHandler) {
+            item = item.errorHandler
+            if (!item) {
+                log.error("num parameter is invalid: ${numi} no error handler")
+                flash.error = "num parameter is invalid: ${numi} no error handler"
+                return error.call()
+            }
+        }
+        return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: item, i: params.key, stepNum:numi, scheduledExecutionId: params.scheduledExecutionId, edit: params.edit, isErrorHandler: isErrorHandler])
     }
 
 
@@ -61,7 +88,8 @@ class WorkflowController {
         def Workflow editwf = _getSessionWorkflow()
         def item
         def numi
-        if (!params.newitem && null != params.num) {
+        def wfEditAction = 'true' == params.newitem ? 'insert' : 'modify'
+        if (null != params.num) {
             try {
                 numi = Integer.parseInt(params.num)
             } catch (NumberFormatException e) {
@@ -72,17 +100,26 @@ class WorkflowController {
         } else {
             numi = editwf.commands ? editwf.commands.size() : 0
         }
-        def result = _applyWFEditAction(editwf, [action: 'true' == params.newitem ? 'insert' : 'modify', num: numi, params: params])
+        final isErrorHandler = params.isErrorHandler == 'true'
+        if (isErrorHandler) {
+            wfEditAction = 'true' == params.newitem ? 'addHandler' : 'modifyHandler'
+        }
+        def result = _applyWFEditAction(editwf, [action: wfEditAction, num: numi, params: params])
         if (result.error) {
             log.error(result.error)
-            return render(template: "/execution/wfitemEdit", model: [item: result.item, num: params.num, scheduledExecutionId: params.scheduledExecutionId, newitemtype: params['newitemtype'], edit: true])
+            return render(template: "/execution/wfitemEdit", model: [item: result.item, key: params.key, num: params.num,
+                scheduledExecutionId: params.scheduledExecutionId, newitemtype: params['newitemtype'], edit: true, isErrorHandler: isErrorHandler])
         }
         _pushUndoAction(params.scheduledExecutionId, result.undo)
         if (result.undo) {
             _clearRedoStack(params.scheduledExecutionId)
         }
 
-        return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: editwf.commands.get(numi), i: numi, scheduledExecutionId: params.scheduledExecutionId, edit: true])
+        item = editwf.commands.get(numi)
+        if(isErrorHandler){
+            item=item.errorHandler
+        }
+        return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: item, i: params.key, stepNum: numi, scheduledExecutionId: params.scheduledExecutionId, edit: true,isErrorHandler: isErrorHandler])
     }
 
 
@@ -131,8 +168,13 @@ class WorkflowController {
         def Workflow editwf = _getSessionWorkflow()
 
         def fromi = Integer.parseInt(params.delnum)
+        def wfEditAction = 'remove'
+        final isErrorHandler = params.isErrorHandler == 'true'
+        if(isErrorHandler){
+            wfEditAction='removeHandler'
+        }
 
-        def result = _applyWFEditAction(editwf, [action: 'remove', num: fromi])
+        def result = _applyWFEditAction(editwf, [action: wfEditAction, num: fromi])
         if (result.error) {
             log.error(result.error)
             flash.error = result.error
@@ -165,6 +207,9 @@ class WorkflowController {
                 num = action.num
             } else if (null != action.to) {
                 num = action.to
+            }
+            if(action.action in ['addHandler','removeHandler','modifyHandler']){
+                num='eh_'+num
             }
             _pushRedoAction(params.scheduledExecutionId, result.undo)
         }
@@ -227,10 +272,10 @@ class WorkflowController {
      *
      * handles ALL modifications to the workflow via named actions, input in a map:
      * input map:
-     * action: name of action 'move','remove','insert','modify'
+     * action: name of action 'move','remove','insert','modify','removeHandler','addHandler','modifyHandler'
      * num: item index to affect
      * from/to: (move action) item index to move from and to
-     * params: properties of the item (insert,modify actions)
+     * params: properties of the item (insert,modify,addHandler,modifyHandler actions)
      *
      *  Returns result map:
      *
@@ -311,6 +356,68 @@ class WorkflowController {
                 //TODO: validate input options
             }
             result['undo'] = [action: 'modify', num: numi, params: clone.properties]
+        }else if (input.action=='removeHandler'){
+            //remove error handler from wfstep
+            def numi = input.num
+            def CommandExec wfitem = editwf.commands.get(numi)
+            def CommandExec item = wfitem.errorHandler
+            wfitem.errorHandler=null
+
+            result['undo'] = [action: 'addHandler', num: numi, params: item.properties]
+        }else if (input.action=='addHandler'){
+            //add error handler for wfstep
+            def numi = input.num
+            if (numi >= (editwf.commands ? editwf.commands.size() : 1)) {
+                result.error = "num parameter is invalid: ${numi}"
+                return result
+            }
+            def CommandExec item = editwf.commands.get(numi)
+            def ehitem
+
+            if (input.params.jobName || 'job' == input.params.newitemtype) {
+                ehitem = new JobExec(input.params)
+            } else {
+                ehitem = new CommandExec(input.params)
+
+                def optsmap = ExecutionService.filterOptParams(input.params)
+                if (optsmap) {
+                    ehitem.argString = ExecutionService.generateArgline(optsmap)
+                    //TODO: validate input options
+                }
+            }
+            _validateCommandExec(ehitem, params.newitemtype)
+            if (ehitem.errors.hasErrors()) {
+                return [error: ehitem.errors.allErrors.collect {g.message(error: it)}.join(","), item: ehitem]
+            }
+            item.errorHandler= ehitem
+            result['undo'] = [action: 'removeHandler', num: numi]
+        } else if (input.action == 'modifyHandler') {
+            def numi = input.num
+            if (numi >= (editwf.commands ? editwf.commands.size() : 1)) {
+                result.error = "num parameter is invalid: ${numi}"
+                return result
+            }
+            def CommandExec stepitem = editwf.commands.get(numi)
+            def CommandExec ehitem = stepitem.errorHandler
+
+            if (!ehitem) {
+                result.error = "num parameter is invalid: ${numi}: no error handler"
+                return result
+            }
+            def clone = ehitem.createClone()
+            def moditem = ehitem.createClone()
+            moditem.properties = input.params
+            _validateCommandExec(moditem)
+            if (moditem.errors.hasErrors()) {
+                return [error: moditem.errors.allErrors.collect {g.message(error: it)}.join(","), item: moditem]
+            }
+            ehitem.properties = input.params
+            def optsmap = ExecutionService.filterOptParams(input.params)
+            if (optsmap) {
+                ehitem.argString = ExecutionService.generateArgline(optsmap)
+                //TODO: validate input options
+            }
+            result['undo'] = [action: 'modifyHandler', num: numi, params: clone.properties]
         }
         return result
     }

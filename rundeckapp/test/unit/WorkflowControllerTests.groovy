@@ -108,6 +108,84 @@ class WorkflowControllerTests extends ControllerUnitTestCase {
             assertEquals 0,result.undo.to
         }
     }
+    public void testWFErrorHandlerEditActions(){
+        mockDomain(Workflow)
+        mockDomain(JobExec)
+        mockDomain(CommandExec)
+        WorkflowController ctrl = new WorkflowController()
+        //test addHandler
+        test:{
+            Workflow wf = new Workflow(threadcount:1,keepgoing:true,commands:[new CommandExec(adhocRemoteString: 'test')])
+
+            def result = ctrl._applyWFEditAction(wf,[action:'addHandler',num:0,params:[jobName:'blah',jobGroup:'blee']])
+            assertNull result.error
+            assertEquals 1,wf.commands.size()
+            final Object item = wf.commands.get(0)
+            assertTrue item instanceof CommandExec
+            final CommandExec stepitem=(CommandExec) item
+            assertNotNull item.errorHandler
+
+            assertTrue item.errorHandler instanceof JobExec
+
+            assertEquals 'blah', item.errorHandler.jobName
+            assertEquals 'blee', item.errorHandler.jobGroup
+
+            //test undo memo
+            assertNotNull result.undo
+            assertEquals 'removeHandler',result.undo.action
+            assertEquals 0,result.undo.num
+        }
+        //test removeHandler
+        test:{
+            Workflow wf = new Workflow(threadcount:1,keepgoing:true,commands:
+                [new CommandExec(adhocRemoteString: 'test',errorHandler: new JobExec(jobName: 'blah', jobGroup: 'blee'))])
+            assertNotNull(wf.commands[0].errorHandler)
+
+            def result = ctrl._applyWFEditAction(wf,[action:'removeHandler',num:0])
+            assertNull result.error
+            assertEquals 1,wf.commands.size()
+            final Object item = wf.commands.get(0)
+            assertTrue item instanceof CommandExec
+            final CommandExec stepitem=(CommandExec) item
+            assertNull item.errorHandler
+
+            //test undo memo
+            assertNotNull result.undo
+            assertEquals 'addHandler',result.undo.action
+            assertEquals 0,result.undo.num
+            assertNotNull result.undo.params
+            assertEquals 'blah', result.undo.params.jobName
+            assertEquals 'blee', result.undo.params.jobGroup
+        }
+        //test modifyHandler
+        test:{
+            Workflow wf = new Workflow(threadcount:1,keepgoing:true,commands:
+                [new CommandExec(adhocRemoteString: 'test',errorHandler: new JobExec(jobName: 'blah', jobGroup: 'blee'))])
+            assertNotNull(wf.commands[0].errorHandler)
+
+            def result = ctrl._applyWFEditAction(wf,[action:'modifyHandler',num:0,params: [jobName: 'blah2', jobGroup: 'blee2']])
+            assertNull result.error
+            assertEquals 1,wf.commands.size()
+            final Object item = wf.commands.get(0)
+            assertTrue item instanceof CommandExec
+            final CommandExec stepitem=(CommandExec) item
+            assertNotNull item.errorHandler
+
+            assertTrue item.errorHandler instanceof JobExec
+
+            assertEquals 'blah2', item.errorHandler.jobName
+            assertEquals 'blee2', item.errorHandler.jobGroup
+
+            //test undo memo
+            assertNotNull result.undo
+            assertEquals 'modifyHandler',result.undo.action
+            assertEquals 0,result.undo.num
+            assertNotNull result.undo.params
+            assertEquals 'blah', result.undo.params.jobName
+            assertEquals 'blee', result.undo.params.jobGroup
+        }
+
+    }
 
     public void testUndoWFEditActions(){
         mockDomain(Workflow)
@@ -245,6 +323,117 @@ class WorkflowControllerTests extends ControllerUnitTestCase {
             assertEquals ce,xitem1
             final Object xitem2 = wf.commands.get(2)
             assertEquals ce2,xitem2
+        }
+    }
+    public void testUndoWFErrorHandlerEditActions(){
+        mockDomain(Workflow)
+        mockDomain(JobExec)
+        mockDomain(CommandExec)
+        WorkflowController ctrl = new WorkflowController()
+        //test addHandler then undo
+        test: {
+            Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands: [new CommandExec(adhocRemoteString: 'test')])
+
+            def result = ctrl._applyWFEditAction(wf, [action: 'addHandler', num: 0, params: [jobName: 'blah', jobGroup: 'blee']])
+            assertNull result.error
+            assertEquals 1, wf.commands.size()
+            final Object item = wf.commands.get(0)
+            assertTrue item instanceof CommandExec
+            final CommandExec stepitem = (CommandExec) item
+            assertNotNull item.errorHandler
+
+            assertTrue item.errorHandler instanceof JobExec
+
+            assertEquals 'blah', item.errorHandler.jobName
+            assertEquals 'blee', item.errorHandler.jobGroup
+
+            //test undo memo
+            assertNotNull result.undo
+            assertEquals 'removeHandler', result.undo.action
+            assertEquals 0, result.undo.num
+
+            //apply undo
+            def result2 = ctrl._applyWFEditAction(wf, result.undo)
+            assertNull result2.error
+            assertEquals 1, wf.commands.size()
+            assertNull wf.commands.get(0).errorHandler
+        }
+        //test removeHandler
+        test: {
+            Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands:
+                [new CommandExec(adhocRemoteString: 'test', errorHandler: new JobExec(jobName: 'blah', jobGroup: 'blee'))])
+            assertNotNull(wf.commands[0].errorHandler)
+
+            def result = ctrl._applyWFEditAction(wf, [action: 'removeHandler', num: 0])
+            assertNull result.error
+            assertEquals 1, wf.commands.size()
+            final Object item = wf.commands.get(0)
+            assertTrue item instanceof CommandExec
+            final CommandExec stepitem = (CommandExec) item
+            assertNull item.errorHandler
+
+            //test undo memo
+            assertNotNull result.undo
+            assertEquals 'addHandler', result.undo.action
+            assertEquals 0, result.undo.num
+            assertNotNull result.undo.params
+            assertEquals 'blah', result.undo.params.jobName
+            assertEquals 'blee', result.undo.params.jobGroup
+
+            //apply undo
+            def result2 = ctrl._applyWFEditAction(wf, result.undo)
+            assertNull result2.error
+            assertEquals 1, wf.commands.size()
+            assertNotNull wf.commands.get(0).errorHandler
+
+            final Object item2 = wf.commands.get(0)
+            assertNotNull item2.errorHandler
+
+            assertTrue item2.errorHandler instanceof JobExec
+
+            assertEquals 'blah', item2.errorHandler.jobName
+            assertEquals 'blee', item2.errorHandler.jobGroup
+        }
+        //test modifyHandler
+        test: {
+            Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands:
+                [new CommandExec(adhocRemoteString: 'test', errorHandler: new JobExec(jobName: 'blah', jobGroup: 'blee'))])
+            assertNotNull(wf.commands[0].errorHandler)
+
+            def result = ctrl._applyWFEditAction(wf, [action: 'modifyHandler', num: 0, params: [jobName: 'blah2', jobGroup: 'blee2']])
+            assertNull result.error
+            assertEquals 1, wf.commands.size()
+            final Object item = wf.commands.get(0)
+            assertTrue item instanceof CommandExec
+            final CommandExec stepitem = (CommandExec) item
+            assertNotNull item.errorHandler
+
+            assertTrue item.errorHandler instanceof JobExec
+
+            assertEquals 'blah2', item.errorHandler.jobName
+            assertEquals 'blee2', item.errorHandler.jobGroup
+
+            //test undo memo
+            assertNotNull result.undo
+            assertEquals 'modifyHandler', result.undo.action
+            assertEquals 0, result.undo.num
+            assertNotNull result.undo.params
+            assertEquals 'blah', result.undo.params.jobName
+            assertEquals 'blee', result.undo.params.jobGroup
+
+            //apply undo
+            def result2 = ctrl._applyWFEditAction(wf, result.undo)
+            assertNull result2.error
+            assertEquals 1, wf.commands.size()
+            assertNotNull wf.commands.get(0).errorHandler
+
+            final Object item2 = wf.commands.get(0)
+            assertNotNull item2.errorHandler
+
+            assertTrue item2.errorHandler instanceof JobExec
+
+            assertEquals 'blah', item2.errorHandler.jobName
+            assertEquals 'blee', item2.errorHandler.jobGroup
         }
     }
     public void testUndoWFSession(){

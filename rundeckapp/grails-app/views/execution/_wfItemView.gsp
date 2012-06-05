@@ -58,5 +58,4 @@
                    <span class="argString"><g:truncate max="45"  showtitle="true">${item.argString.encodeAsHTML()}</g:truncate></span>
                 </g:if>
             </g:else>
-            (handler: ${item.errorHandler?'true':'none'})
             </span>
