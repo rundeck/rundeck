@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2012 DTO Solutions, Inc. (http://dtosolutions.com)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,28 +15,22 @@
  */
 
 /*
-* ExecCommandBase.java
+* HasFailureHandler.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/22/11 5:41 PM
+* Created: 6/5/12 5:30 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.commands;
-
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
-import com.dtolabs.rundeck.core.execution.HasFailureHandler;
+package com.dtolabs.rundeck.core.execution;
 
 /**
- * ExecCommandBase is a concrete implementation of ExecCommand that
+ * HasFailureHandler interface indicates that an ExecutionItem is set as a failure handler.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ExecCommandBase extends ExecCommand implements HasFailureHandler {
-    public String[] getCommand() {
-        return null;
-    }
-
-    public ExecutionItem getFailureHandler() {
-        return null;
-    }
+public interface HasFailureHandler {
+    /**
+     * Return the {@link ExecutionItem} to handle failure
+     */
+    public ExecutionItem getFailureHandler();
 }

@@ -141,4 +141,10 @@ public interface ExecutionListener {
      */
     public void finishInterpretCommand(InterpreterResult result, ExecutionContext context, ExecutionItem item,
                                        INodeEntry node);
+
+    /**
+     * Return an ExecutionListenerOverride that will delegate to this ExecutionListener, but allows overriding
+     * property values.
+     */
+    public ExecutionListenerOverride createOverride();
 }

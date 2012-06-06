@@ -23,6 +23,9 @@
 */
 package com.dtolabs.rundeck.core.common;
 
+import java.util.Collection;
+import java.util.HashSet;
+
 /**
  * SelectorUtils is ...
  *
@@ -65,27 +68,32 @@ public class SelectorUtils {
         return new OrNodesSelector(a, b);
     }
     public static NodesSelector singleNode(final String nodename){
-        return new SingleNodeSelector(nodename);
+        return new MultiNodeSelector(nodename);
     }
 
-    /**
-     * This node selector accepts only the given node
-     */
-    public static class SingleNodeSelector implements NodesSelector {
-        private final String nodename;
+    public static NodesSelector nodeList(final Collection<String> nodenames) {
+        return new MultiNodeSelector(nodenames);
+    }
 
-        public SingleNodeSelector(final String nodename) {
-            this.nodename = nodename;
+    public static class MultiNodeSelector implements NodesSelector{
+        private final HashSet<String> nodenames;
+
+        public MultiNodeSelector(final String nodename) {
+            this.nodenames = new HashSet<String>();
+            nodenames.add(nodename);
+        }
+        public MultiNodeSelector(final Collection<String> nodenames) {
+            this.nodenames = new HashSet<String>(nodenames);
         }
 
         public boolean acceptNode(final INodeEntry entry) {
-            return nodename.equals(entry.getNodename());
+            return nodenames.contains(entry.getNodename());
         }
 
         @Override
         public String toString() {
-            return "SingleNodeSelector{" +
-                   "nodename='" + nodename + '\'' +
+            return "MultiNodeSelector{" +
+                   "nodenames=" + nodenames +
                    '}';
         }
 
@@ -98,9 +106,9 @@ public class SelectorUtils {
                 return false;
             }
 
-            SingleNodeSelector that = (SingleNodeSelector) o;
+            MultiNodeSelector that = (MultiNodeSelector) o;
 
-            if (nodename != null ? !nodename.equals(that.nodename) : that.nodename != null) {
+            if (nodenames != null ? !nodenames.equals(that.nodenames) : that.nodenames != null) {
                 return false;
             }
 
@@ -109,7 +117,8 @@ public class SelectorUtils {
 
         @Override
         public int hashCode() {
-            return nodename != null ? nodename.hashCode() : 0;
+            return nodenames != null ? nodenames.hashCode() : 0;
         }
     }
+
 }
