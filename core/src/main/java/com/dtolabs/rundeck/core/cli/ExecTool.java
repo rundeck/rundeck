@@ -697,6 +697,10 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
                 public String[] getArgs() {
                     return ExecTool.this.getArgs();
                 }
+
+                public ExecutionItem getFailureHandler() {
+                    return null;
+                }
             };
         }else{
             return new ExecCommand() {

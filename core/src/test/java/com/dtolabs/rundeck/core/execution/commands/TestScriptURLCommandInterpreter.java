@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
+import com.dtolabs.rundeck.core.execution.ExecutionItem;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
@@ -285,6 +286,10 @@ public class TestScriptURLCommandInterpreter extends AbstractBaseTest {
 
             public String[] getArgs() {
                 return new String[0];
+            }
+
+            public ExecutionItem getFailureHandler() {
+                return null;
             }
         };
         {

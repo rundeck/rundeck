@@ -36,7 +36,7 @@ import java.io.File;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class ExecutionItemFactory {
-    public static ExecutionItem createScriptFileItem(final String script, final String[] strings) {
+    public static ExecutionItem createScriptFileItem(final String script, final String[] strings, final ExecutionItem handler) {
         return new ScriptFileCommandBase() {
             @Override
             public String getScript() {
@@ -47,9 +47,14 @@ public class ExecutionItemFactory {
             public String[] getArgs() {
                 return strings;
             }
+
+            @Override
+            public ExecutionItem getFailureHandler() {
+                return handler;
+            }
         };
     }
-    public static ExecutionItem createScriptFileItem(final File file, final String[] strings){
+    public static ExecutionItem createScriptFileItem(final File file, final String[] strings,final ExecutionItem handler){
         final String filepath = file.getAbsolutePath();
         return new ScriptFileCommandBase() {
             @Override
@@ -61,9 +66,15 @@ public class ExecutionItemFactory {
             public String[] getArgs() {
                 return strings;
             }
+
+            @Override
+            public ExecutionItem getFailureHandler() {
+                return handler;
+            }
         };
     }
-    public static ExecutionItem createScriptURLItem(final String urlString, final String[] strings){
+    public static ExecutionItem createScriptURLItem(final String urlString, final String[] strings,
+                                                    final ExecutionItem handler){
         return new ScriptURLCommandBase() {
             public String getURLString() {
                 return urlString;
@@ -72,17 +83,27 @@ public class ExecutionItemFactory {
             public String[] getArgs() {
                 return strings;
             }
+
+            @Override
+            public ExecutionItem getFailureHandler() {
+                return handler;
+            }
         };
     }
-    public static ExecutionItem createExecCommand(final String[] command){
+    public static ExecutionItem createExecCommand(final String[] command, final ExecutionItem handler){
 
         return new ExecCommandBase() {
             public String[] getCommand() {
                 return command;
             }
+
+            @Override
+            public ExecutionItem getFailureHandler() {
+                return handler;
+            }
         };
     }
-    public static ExecutionItem createJobRef(final String jobIdentifier, final String[] args){
+    public static ExecutionItem createJobRef(final String jobIdentifier, final String[] args, final ExecutionItem handler){
 
         return new JobRefCommandBase() {
             public String getJobIdentifier() {
@@ -94,6 +115,10 @@ public class ExecutionItemFactory {
                 return args;
             }
 
+            @Override
+            public ExecutionItem getFailureHandler() {
+                return handler;
+            }
         };
     }
 }
