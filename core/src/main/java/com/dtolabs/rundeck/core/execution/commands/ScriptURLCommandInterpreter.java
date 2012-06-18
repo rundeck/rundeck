@@ -107,6 +107,7 @@ public class ScriptURLCommandInterpreter implements CommandInterpreter {
             context.getExecutionListener().log(4, "Requesting URL: " + url.toExternalForm());
         }
 
+        String cleanUrl = url.toExternalForm().replaceAll("^(https?://)([^:@/]+):[^@/]*@", "$1$2:****@");
         String tempFileName = hashURL(url.toExternalForm()) + ".temp";
         File destinationTempFile = new File(cacheDir, tempFileName);
         File destinationCacheData = new File(cacheDir, tempFileName + ".cache.properties");
@@ -134,10 +135,10 @@ public class ScriptURLCommandInterpreter implements CommandInterpreter {
         } catch (UpdateUtils.UpdateException e) {
             if (!destinationTempFile.isFile() || destinationTempFile.length() < 1) {
                 throw new InterpreterException(
-                    "Error requesting URL Script: " + url + ": " + e.getMessage(), e);
+                    "Error requesting URL Script: " + cleanUrl + ": " + e.getMessage(), e);
             } else {
                 logger.error(
-                    "Error requesting URL script: " + url + ": " + e.getMessage(), e);
+                    "Error requesting URL script: " + cleanUrl + ": " + e.getMessage(), e);
             }
         }
 

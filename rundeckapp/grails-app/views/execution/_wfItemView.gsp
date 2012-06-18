@@ -45,7 +45,14 @@
                     <g:render template="/execution/scriptDetailDisplay" model="${[script:item.adhocLocalString,label:'Script: ']}"/>
                 </g:elseif>
                 <g:elseif test="${item.adhocFilepath}">
-                    <span class="argString"><g:truncate max="60"  showtitle="true">${item.adhocFilepath.encodeAsHTML()}</g:truncate></span>
+                    <g:if test="${item.adhocFilepath=~/^https?:/}">
+                        <g:set var="urlString" value="${item.adhocFilepath.replaceAll('^(https?://)([^:@/]+):[^@/]*@', '$1$2:****@')}"/>
+                        <span class="argString"><g:truncate max="60"
+                                                            showtitle="true">${urlString.encodeAsHTML()}</g:truncate></span>
+                    </g:if>
+                    <g:else>
+                        <span class="argString"><g:truncate max="60"  showtitle="true">${item.adhocFilepath.encodeAsHTML()}</g:truncate></span>
+                    </g:else>
                 </g:elseif>
                 <g:if test="${item.argString}">
                    <span class="argString"><g:truncate max="45"  showtitle="true">${item.argString.encodeAsHTML()}</g:truncate></span>
