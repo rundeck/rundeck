@@ -241,14 +241,14 @@ public class URLFileUpdater implements FileUpdater {
                     url.getPort() > 0 ? url.getPort() : url.getDefaultPort(),
                     AuthScope.ANY_REALM, "BASIC");
                 cred = new UsernamePasswordCredentials(url.getUserInfo());
-                urlToUse = new URL(url.getHost(), url.getHost(), url.getPort(), url.getFile()).toExternalForm();
+                urlToUse = new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile()).toExternalForm();
             } else if (null != username && null != password) {
                 doauth = true;
                 authscope = new AuthScope(url.getHost(),
                     url.getPort() > 0 ? url.getPort() : url.getDefaultPort(),
                     AuthScope.ANY_REALM, "BASIC");
                 cred = new UsernamePasswordCredentials(username + ":" + password);
-                urlToUse = new URL(url.getHost(), url.getHost(), url.getPort(), url.getFile()).toExternalForm();
+                urlToUse = new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile()).toExternalForm();
             }
         } catch (MalformedURLException e) {
             throw new FileUpdaterException("Failed to configure base URL for authentication: " + e.getMessage(),
