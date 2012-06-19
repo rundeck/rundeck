@@ -1,6 +1,22 @@
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
     <g:set var="followmode" value="${params.mode in ['browse','tail','node']?params.mode:null==execution?.dateCompleted?'tail':'browse'}"/>
-    <g:set var="executionResource" value="${ ['jobName': execution.scheduledExecution ? execution.scheduledExecution.jobName : 'adhoc', 'groupPath': execution.scheduledExecution ? execution.scheduledExecution.groupPath : 'adhoc'] }"/>
+<g:set var="authKeys"
+       value="${[AuthConstants.ACTION_KILL, AuthConstants.ACTION_READ, AuthConstants.ACTION_CREATE, AuthConstants.ACTION_RUN]}"/>
+<g:set var="authChecks" value="${[:]}"/>
+<g:each in="${authKeys}" var="actionName">
+    <g:if test="${execution.scheduledExecution}">
+    <%-- set auth values --%>
+        %{
+            authChecks[actionName] = auth.jobAllowedTest(job: execution.scheduledExecution, action: actionName)
+        }%
+    </g:if>
+    <g:else>
+        %{
+            authChecks[actionName] = auth.adhocAllowedTest(action: actionName)
+        }%
+    </g:else>
+</g:each>
+<g:set var="adhocRunAllowed" value="${auth.adhocAllowedTest(action: AuthConstants.ACTION_RUN)}"/>
 
 
     <div id="commandFlow" class="commandFlow">
@@ -32,19 +48,46 @@
                         Now Running&hellip;
                         </span>
                         </span>
-                    <auth:jobAllowed job="${executionResource}" name="${AuthConstants.ACTION_KILL}">
+                <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
                         <span id="cancelresult" style="margin-left:10px">
                             <span class="action button textbtn act_cancel" onclick="docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <img src="${resource(dir:'images',file:'icon-tiny-removex.png')}" alt="Kill" width="12px" height="12px"/></span>
                         </span>
-                    </auth:jobAllowed>
+                </g:if>
 
             </g:else>
 
                     <span id="execRerun" style="${wdgt.styleVisible(if:null!=execution.dateCompleted)}" >
-                        <g:set var="jobRunAuth" value="${ auth.jobAllowedTest(job:executionResource, action:[AuthConstants.ACTION_CREATE,AuthConstants.ACTION_READ])}"/>
-                        <g:if test="${jobRunAuth }">
-                            <g:link controller="scheduledExecution" action="createFromExecution" params="${[executionId:execution.id]}" class="action button" title="${g.message(code:'execution.action.saveAsJob', default:'Save as Job')}&hellip;" ><img src="${resource(dir:'images',file:'icon-small-add.png')}"  alt="run" width="14px" height="14px"/> <g:message code="execution.action.saveAsJob" default="Save as Job" />&hellip;</g:link>
+                        <g:if test="${scheduledExecution}">
+                            <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
+                                &nbsp;
+                                <g:link controller="scheduledExecution"
+                                        action="execute"
+                                        id="${scheduledExecution.extid}"
+                                        params="${[retryExecId: execution.id]}"
+                                        class="action button"
+                                        title="Run this Job Again with the same options">
+                                    <g:img file="icon-small-run.png" alt="run" width="16px" height="16px"/>
+                                    Run Again &hellip;
+                                </g:link>
+                            </g:if>
                         </g:if>
+                        <g:else>
+                            <g:if
+                                test="${auth.resourceAllowedTest(kind: 'job', action: [AuthConstants.ACTION_CREATE]) || adhocRunAllowed}">
+                                <g:if
+                                    test="${!scheduledExecution || scheduledExecution && authChecks[AuthConstants.ACTION_READ]}">
+                                    <g:link
+                                        controller="scheduledExecution"
+                                        action="createFromExecution"
+                                        params="${[executionId: execution.id]}"
+                                        class="action button"
+                                        title="${g.message(code: 'execution.action.saveAsJob', default: 'Save as Job')}&hellip;">
+                                        <g:img file="icon-small-run.png" alt="run" width="16px" height="16px"/>
+                                        <g:message code="execution.action.saveAsJob" default="Save as Job"/>&hellip;
+                                    </g:link>
+                                </g:if>
+                            </g:if>
+                        </g:else>
                     </span>
                 </td>
                 <td width="50%" >
