@@ -1633,6 +1633,67 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
         }
     }
 
+
+    public void testDoUpdateJobErrorHandlers() {
+        def sec = new ScheduledExecutionService()
+        if (true) {//test update basic job details
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',
+                                            workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]))
+            se.save()
+
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.existsFrameworkProject {project, framework ->
+                assertEquals 'testProject2', project
+                return true
+            }
+            fwkControl.demand.getCommand {project, type, command, framework ->
+                assertEquals 'testProject2', project
+                assertEquals 'aType2', type
+                assertEquals 'aCommand2', command
+                return null
+            }
+            sec.frameworkService = fwkControl.createMock()
+
+            def eh1 = new CommandExec(adhocRemoteString: 'err command')
+            def params = new ScheduledExecution(jobName: 'monkey2', project: 'testProject2', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',
+                                                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', errorHandler: eh1)])
+            )
+            def results = sec._doupdateJob(se.id.toString(), params, 'test', 'test', null)
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            assertTrue succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = scheduledExecution
+            assertNotNull(execution)
+            assertNotNull(execution.errors)
+            assertFalse(execution.errors.hasErrors())
+            assertEquals 'monkey2', execution.jobName
+            assertEquals 'testProject2', execution.project
+            assertEquals 'blah', execution.description
+
+            assertFalse execution.adhocExecution
+            assertNotNull execution.workflow
+            assertNotNull execution.workflow.commands
+            assertEquals 1, execution.workflow.commands.size()
+            def CommandExec cexec = execution.workflow.commands[0]
+            assertEquals 'test command', cexec.adhocRemoteString
+            assertNotNull cexec.errorHandler
+
+            def CommandExec ehexec = cexec.errorHandler
+            assertEquals 'err command', ehexec.adhocRemoteString
+        }
+    }
+
     public void testDoUpdateJobShouldReplaceFilters() {
         def sec = new ScheduledExecutionService()
         if (true) {//test update basic job details
@@ -5422,6 +5483,130 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
         assertNull "wrong value", test.nodeExcludeTags
         assertNull "wrong value", test.nodeExcludeOsFamily
         se.delete()
+    }
+
+
+    public void testUploadErrorHandlers() {
+        def sec = new ScheduledExecutionService()
+
+        //create mock of FrameworkService
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.existsFrameworkProject {project, framework -> return true }
+        fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        sec.frameworkService = fwkControl.createMock()
+
+        //test upload job with error-handlers
+
+        def xml = '''
+<joblist>
+    <job>
+        <name>testUploadErrorHandlers</name>
+        <group>testgroup</group>
+        <description>desc</description>
+        <context>
+            <project>project1</project>
+        </context>
+
+        <sequence keepgoing='false' strategy='node-first'>
+          <command>
+            <exec>echo hi</exec>
+
+            <errorhandler>
+              <exec>echo this is an errorhandler</exec>
+            </errorhandler>
+          </command>
+          <command>
+                <script>test2</script>
+                <scriptargs>blah blah</scriptargs>
+                <errorhandler>
+                    <script>test2err</script>
+                    <scriptargs>blah blah err</scriptargs>
+                </errorhandler>
+            </command>
+            <command>
+                <scriptfile>test3</scriptfile>
+                <scriptargs>blah3 blah3</scriptargs>
+                <errorhandler>
+                    <scriptfile>test3err</scriptfile>
+                    <scriptargs>blah3 blah3 err</scriptargs>
+                </errorhandler>
+            </command>
+            <command>
+                <jobref name="test" group="group"/>
+                <errorhandler>
+                    <jobref name="testerr" group="grouperr">
+                        <arg line="line err"/>
+                    </jobref>
+                </errorhandler>
+            </command>
+
+        </sequence>
+
+    </job>
+</joblist>
+'''
+        def upload = new ScheduledExecution(
+                jobName: 'testUploadErrorHandlers',
+                groupPath: "testgroup",
+                project: 'project1',
+                description: 'desc',
+                workflow: new Workflow(commands: [
+                        new CommandExec(adhocExecution: true, adhocRemoteString: "echo test",errorHandler: new CommandExec(adhocExecution: true, adhocRemoteString: "echo this is an errorhandler")),
+                        new CommandExec(argString: "blah blah", adhocLocalString: "test2",
+                                        errorHandler: new CommandExec(argString: "blah blah err",
+                                                                      adhocLocalString: "test2err")),
+                        new CommandExec(argString: "blah3 blah3", adhocFilepath: "test3",
+                                        errorHandler: new CommandExec(argString: "blah3 blah3 err",
+                                                                      adhocFilepath: "test3err")),
+                        new JobExec(jobGroup: "group",jobName: "test",
+                                    errorHandler: new JobExec(jobName: "testerr",jobGroup: "grouperr",argString: "line err")),
+
+                ])
+        )
+//        sec.request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
+        //set update
+
+        def result = sec.loadJobs([upload], 'update', 'test', 'test,userrole', [:], null)
+        //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
+        assertNotNull result
+        assertNotNull result.jobs
+        assertNotNull result.errjobs
+        assertNotNull result.skipjobs
+        assertEquals "shouldn't have skipped jobs: ${result.skipjobs}", 0, result.skipjobs.size()
+        assertEquals "shouldn't have error jobs: ${result.errjobs}", 0, result.errjobs.size()
+        assertEquals "should have success jobs: ${result.jobs}", 1, result.jobs.size()
+        assertNotNull result.jobs[0].id
+
+        //get original job and test values
+        ScheduledExecution test = ScheduledExecution.get(result.jobs[0].id)
+        assertNotNull test
+        assertNotNull test.workflow
+        assertNotNull test.workflow.commands
+        assertEquals 4, test.workflow.commands.size()
+        test.workflow.commands.each {
+            assertNotNull(it.errorHandler)
+            assertNotNull(it.id)
+        }
+        (0..2).each {ndx ->
+            assertTrue(test.workflow.commands[ndx] instanceof CommandExec)
+            assertFalse(test.workflow.commands[ndx] instanceof JobExec)
+            assertTrue(test.workflow.commands[ndx].errorHandler instanceof CommandExec)
+            assertFalse(test.workflow.commands[ndx].errorHandler instanceof JobExec)
+            assertNotNull(test.workflow.commands[ndx].errorHandler.id)
+        }
+        [3].each {ndx ->
+            assertTrue(test.workflow.commands[ndx] instanceof CommandExec)
+            assertTrue(test.workflow.commands[ndx] instanceof JobExec)
+            assertTrue(test.workflow.commands[ndx].errorHandler instanceof CommandExec)
+            assertTrue(test.workflow.commands[ndx].errorHandler instanceof JobExec)
+            assertNotNull(test.workflow.commands[ndx].errorHandler.id)
+        }
+        test.delete()
     }
 
 }

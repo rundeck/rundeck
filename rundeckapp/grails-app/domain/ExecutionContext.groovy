@@ -6,7 +6,6 @@ abstract class ExecutionContext extends BaseNodeFilters{
     String project
     String argString
     String user
-    Workflow workflow
     String loglevel="WARN"
 
     static mapping = {

@@ -12,6 +12,7 @@ class Execution extends ExecutionContext {
     String failedNodeList
     String abortedby
     boolean cancelled
+    Workflow workflow
 
     static constraints = {
         workflow(nullable:true)

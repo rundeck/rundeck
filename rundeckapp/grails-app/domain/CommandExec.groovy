@@ -30,8 +30,8 @@ public class CommandExec extends ExecutionContext implements IWorkflowCmdItem {
     String ifString
     String unlessString
     String equalsString
-    static belongsTo = [workflow: Workflow]
-
+    static belongsTo = [Workflow,CommandExec]
+    CommandExec errorHandler
     public String toString() {
         StringBuffer sb = new StringBuffer()
         sb << "command( "
@@ -43,6 +43,7 @@ public class CommandExec extends ExecutionContext implements IWorkflowCmdItem {
         sb << (adhocLocalString ? "script: ${adhocLocalString}" : '')
         sb << (adhocFilepath ? "scriptfile: ${adhocFilepath}" : '')
         sb << (argString ? "scriptargs: ${argString}" : '')
+        sb << (errorHandler ? " [handler: ${errorHandler}" : '')
         sb<<")"
 
         return sb.toString()
@@ -70,11 +71,13 @@ public class CommandExec extends ExecutionContext implements IWorkflowCmdItem {
         adhocFilepath(nullable:true)
         nodeRankAttribute(nullable:true)
         nodeRankOrderAscending(nullable:true)
-
+        errorHandler(nullable: true)
     }
 
     public CommandExec createClone(){
-        CommandExec ce = new CommandExec(this.properties)
+        Map properties = new HashMap(this.properties)
+        properties.remove('errorHandler')
+        CommandExec ce = new CommandExec(properties)
         return ce
     }
 
@@ -99,6 +102,9 @@ public class CommandExec extends ExecutionContext implements IWorkflowCmdItem {
         if(argString && !adhocRemoteString){
             map.args=argString
         }
+        if(errorHandler){
+            map.errorhandler=errorHandler.toMap()
+        }
         return map
     }
 
@@ -120,6 +126,7 @@ public class CommandExec extends ExecutionContext implements IWorkflowCmdItem {
         if(data.args && !ce.adhocRemoteString){
             ce.argString=data.args
         }
+        //nb: error handler is created inside Workflow.fromMap
         return ce
     }
 }

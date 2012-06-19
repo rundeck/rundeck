@@ -960,6 +960,13 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                         wfitemfailed = true
                         failedlist << i
                     }
+                    if (cexec.errorHandler) {
+                        WorkflowController._validateCommandExec(cexec.errorHandler)
+                        if (cexec.errorHandler.errors.hasErrors()) {
+                            wfitemfailed = true
+                            failedlist << (i + 1)
+                        }
+                    }
                     i++
                 }
                 if (!wfitemfailed) {
@@ -1000,6 +1007,13 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 if (cexec.errors.hasErrors()) {
                     wfitemfailed = true
                     failedlist << (i + 1)
+                }
+                if (cmdparams.errorHandler) {
+                    WorkflowController._validateCommandExec(cmdparams.errorHandler)
+                    if (cmdparams.errorHandler.errors.hasErrors()) {
+                        wfitemfailed = true
+                        failedlist << (i + 1)
+                    }
                 }
                 i++
             }
@@ -1432,6 +1446,13 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                     wfitemfailed = true
                     failedlist << (i + 1)
                 }
+                if (cmdparams.errorHandler) {
+                    WorkflowController._validateCommandExec(cmdparams.errorHandler)
+                    if (cmdparams.errorHandler.errors.hasErrors()) {
+                        wfitemfailed = true
+                        failedlist << (i + 1)
+                    }
+                }
                 i++
             }
             scheduledExecution.workflow = workflow
@@ -1699,6 +1720,14 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                         wfitemfailed = true
                         failedlist << i
                     }
+
+                    if (cexec.errorHandler) {
+                        WorkflowController._validateCommandExec(cexec.errorHandler)
+                        if (cexec.errorHandler.errors.hasErrors()) {
+                            wfitemfailed = true
+                            failedlist << (i + 1)
+                        }
+                    }
                     i++
                 }
                 if (!wfitemfailed) {
@@ -1723,6 +1752,13 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 if (cmdparams.errors.hasErrors()) {
                     wfitemfailed = true
                     failedlist << (i + 1)
+                }
+                if (cmdparams.errorHandler) {
+                    WorkflowController._validateCommandExec(cmdparams.errorHandler)
+                    if (cmdparams.errorHandler.errors.hasErrors()) {
+                        wfitemfailed = true
+                        failedlist << (i + 1)
+                    }
                 }
                 i++
             }
@@ -1761,6 +1797,13 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 if (cexec.errors.hasErrors()) {
                     wfitemfailed = true
                     failedlist << (i + 1)
+                }
+                if (cmdparams.errorHandler) {
+                    WorkflowController._validateCommandExec(cmdparams.errorHandler)
+                    if (cmdparams.errorHandler.errors.hasErrors()) {
+                        wfitemfailed = true
+                        failedlist << (i + 1)
+                    }
                 }
                 i++
             }
