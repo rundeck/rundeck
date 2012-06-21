@@ -56,6 +56,7 @@ public class TestDirPluginScanner extends TestCase {
     }
 
     static class test extends DirPluginScanner {
+        Map<File, String> versions;
         test(File extdir, FileCache<ProviderLoader> filecache, long rescanIntervalMs) {
             super(extdir, filecache, rescanIntervalMs);
         }
@@ -77,6 +78,14 @@ public class TestDirPluginScanner extends TestCase {
 
         public ProviderLoader createCacheItemForFile(File file) {
             return new loader(file);
+        }
+
+        @Override
+        protected String getVersionForFile(File file) {
+            if(null!=versions) {
+                return versions.get(file);
+            }
+            return null;
         }
     }
 
@@ -340,5 +349,137 @@ public class TestDirPluginScanner extends TestCase {
         assertNull(scanner.scanForFile(ident));
 
         assertFalse(scanner.shouldRescan());
+    }
+
+    public void testVersionCompare() throws Exception {
+        //set scan interval to 60 seconds, shouldRescan should now return false
+        File basedir = new File(testdir, "testVersionCompare");
+        basedir.mkdirs();
+        final FileCache<ProviderLoader> loaderFileCache = new FileCache<ProviderLoader>();
+
+        //scan interval set to 60 seconds
+        test scanner = new test(basedir, loaderFileCache, 60 * 1000);
+        {
+            final Map<File, String> versions = new HashMap<File, String>();
+            File testfile1 = new File(basedir, "test1");
+            File testfile2 = new File(basedir, "test2");
+
+            ArrayList<File> arr = new ArrayList<File>();
+            arr.add(testfile1);
+            arr.add(testfile2);
+            scanner.versions = versions;
+
+            final File file = scanner.resolveProviderConflict(arr);
+            assertNull(file);
+        }
+        {
+
+            File testfile1 = new File(basedir, "test1");
+            File testfile2 = new File(basedir, "test2");
+
+            ArrayList<File> arr = new ArrayList<File>();
+            arr.add(testfile1);
+            arr.add(testfile2);
+            final Map<File, String> versions = new HashMap<File, String>();
+            versions.put(testfile2, "1.0");
+            scanner.versions = versions;
+
+            final File file = scanner.resolveProviderConflict(arr);
+            assertEquals(testfile2, file);
+        }
+        {
+            File testfile1 = new File(basedir, "test1");
+            File testfile2 = new File(basedir, "test2");
+
+            ArrayList<File> arr = new ArrayList<File>();
+            arr.add(testfile1);
+            arr.add(testfile2);
+            final Map<File, String> versions = new HashMap<File, String>();
+            versions.put(testfile1, "1.1");
+            versions.put(testfile2, "1.0");
+            scanner.versions = versions;
+
+            final File file = scanner.resolveProviderConflict(arr);
+            assertEquals(testfile1, file);
+        }
+        {
+            File testfile1 = new File(basedir, "test1");
+            File testfile2 = new File(basedir, "test2");
+
+            ArrayList<File> arr = new ArrayList<File>();
+            arr.add(testfile1);
+            arr.add(testfile2);
+            final Map<File, String> versions = new HashMap<File, String>();
+            versions.put(testfile1, "1.1");
+            scanner.versions = versions;
+
+            final File file = scanner.resolveProviderConflict(arr);
+            assertEquals(testfile1, file);
+        }
+        {
+            File testfile1 = new File(basedir, "test1");
+            File testfile2 = new File(basedir, "test2");
+
+            ArrayList<File> arr = new ArrayList<File>();
+            arr.add(testfile1);
+            arr.add(testfile2);
+            final Map<File, String> versions = new HashMap<File, String>();
+            versions.put(testfile1, "1.1");
+            versions.put(testfile2, "1.1");
+            scanner.versions = versions;
+
+            final File file = scanner.resolveProviderConflict(arr);
+            assertNotNull(file);
+            assertEquals(testfile2, file);
+        }
+        {
+            File testfile1 = new File(basedir, "test3");
+            File testfile2 = new File(basedir, "test2");
+
+            ArrayList<File> arr = new ArrayList<File>();
+            arr.add(testfile1);
+            arr.add(testfile2);
+            final Map<File, String> versions = new HashMap<File, String>();
+            versions.put(testfile1, "1.1");
+            versions.put(testfile2, "1.1");
+            scanner.versions = versions;
+
+            final File file = scanner.resolveProviderConflict(arr);
+            assertNotNull(file);
+            assertEquals(testfile1, file);
+        }
+        {
+
+            File testfile1 = new File(basedir, "test1");
+            File testfile2 = new File(basedir, "test2");
+
+            ArrayList<File> arr = new ArrayList<File>();
+            arr.add(testfile1);
+            arr.add(testfile2);
+            final Map<File, String> versions = new HashMap<File, String>();
+            versions.put(testfile1, "1.1-abc");
+            versions.put(testfile2, "1.1-def");
+            scanner.versions = versions;
+
+            final File file = scanner.resolveProviderConflict(arr);
+            assertNotNull(file);
+            assertEquals(testfile2, file);
+        }
+        {
+            File testfile1 = new File(basedir, "test2");
+            File testfile2 = new File(basedir, "test1");
+
+            ArrayList<File> arr = new ArrayList<File>();
+            arr.add(testfile1);
+            arr.add(testfile2);
+            final Map<File, String> versions = new HashMap<File, String>();
+            versions.put(testfile1, "1.1-abc");
+            versions.put(testfile2, "1.1-def");
+            scanner.versions = versions;
+
+            final File file = scanner.resolveProviderConflict(arr);
+            assertNotNull(file);
+            assertEquals(testfile1, file);
+        }
     }
 }

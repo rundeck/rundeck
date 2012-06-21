@@ -85,5 +85,8 @@ class ScriptPluginScanner extends DirPluginScanner {
         return false;
     }
 
-
+    @Override
+    protected String getVersionForFile(final File file) {
+        return ScriptPluginProviderLoader.getVersionForFile(file);
+    }
 }

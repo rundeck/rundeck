@@ -53,6 +53,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
     public static final String RUNDECK_PLUGIN_LIBS = "Rundeck-Plugin-Libs";
     public static final String JAR_PLUGIN_VERSION = "1.0";
     public static final String RUNDECK_PLUGIN_VERSION = "Rundeck-Plugin-Version";
+    public static final String RUNDECK_PLUGIN_FILE_VERSION = "Rundeck-Plugin-File-Version";
     private final File file;
     private final File cachedir;
     private Map<ProviderIdent, Class> pluginProviderDefs =
@@ -491,5 +492,36 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         public InvalidManifestException(String s) {
             super(s);
         }
+    }
+
+    /**
+     * Return the version string metadata value for the plugin file, or null if it is not available or could not
+     * loaded
+     * @param file
+     * @return version string
+     */
+    static String getVersionForFile(final File file) {
+        return loadManifestAttribute(file, RUNDECK_PLUGIN_FILE_VERSION);
+    }
+
+
+    private static String loadManifestAttribute(final File file, final String attribute) {
+        String plugvers=null;
+        try {
+            final JarInputStream jarInputStream = new JarInputStream(new FileInputStream(file));
+            final Manifest manifest = jarInputStream.getManifest();
+            if (null == manifest) {
+                jarInputStream.close();
+                return null;
+            }
+            final Attributes mainAttributes = manifest.getMainAttributes();
+            plugvers = mainAttributes.getValue(attribute);
+
+            jarInputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace(System.err);
+            log.warn(e.getMessage() + ": " + file.getAbsolutePath());
+        }
+        return plugvers;
     }
 }

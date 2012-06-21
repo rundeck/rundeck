@@ -29,9 +29,7 @@ import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * DirPluginScanner will scan all files in a directory matching a filter for valid plugins.
@@ -64,6 +62,35 @@ abstract class DirPluginScanner implements PluginScanner {
     public abstract FileFilter getFileFilter();
 
     /**
+     * Return a single file that should be used among all te files matching a single provider identity, or null if
+     * the conflict cannot be resolved.
+     */
+    File resolveProviderConflict(final Collection<File> matched){
+        final HashMap<File, VersionCompare> versions = new HashMap<File, VersionCompare>();
+        final ArrayList<File> toCompare = new ArrayList<File>();
+        for (final File file : matched) {
+            final String vers = getVersionForFile(file);
+            if (null != vers) {
+                versions.put(file, VersionCompare.forString(vers));
+                toCompare.add(file);
+            }
+        }
+        //currently resolve via filename
+        final Comparator<File> c = new VersionCompare.fileComparator(versions);
+        final List<File> sorted = new ArrayList<File>(toCompare);
+        Collections.sort(sorted, c);
+        if (sorted.size() > 0) {
+            return sorted.get(sorted.size() - 1);
+        }
+        return null;
+    }
+
+    /**
+     * Return the version string for the plugin file, or null
+     */
+    protected abstract String getVersionForFile(File file);
+
+    /**
      * scan for matching file for the provider def
      */
     public final File scanForFile(final ProviderIdent ident) throws PluginScannerException {
@@ -81,17 +108,19 @@ abstract class DirPluginScanner implements PluginScanner {
 
     public List<ProviderIdent> listProviders() {
 
+        final HashSet<ProviderIdent> providerIdentsHash = new HashSet<ProviderIdent>();
         final List<ProviderIdent> providerIdents = new ArrayList<ProviderIdent>();
         if(null!=extdir && extdir.isDirectory() ){
             final File[] files = extdir.listFiles(getFileFilter());
             if(null!=files){
                 for (final File file : files) {
                     if (isValidPluginFile(file)) {
-                        providerIdents.addAll(listProviders(file));
+                        providerIdentsHash.addAll(listProviders(file));
                     }
                 }
             }
         }
+        providerIdents.addAll(providerIdentsHash);
         return providerIdents;
     }
 
@@ -196,9 +225,16 @@ abstract class DirPluginScanner implements PluginScanner {
         }
         if (candidates.size() > 1) {
             scanned.clear();
-            throw new PluginScannerException(
-                "More than one plugin file matched: " + StringArrayUtil.asString(candidates.toArray(), ","),
-                ident.getService(), ident.getProviderName());
+            final File resolved = resolveProviderConflict(candidates);
+            if(null==resolved){
+                throw new PluginScannerException(
+                    "More than one plugin file matched: " + StringArrayUtil.asString(candidates.toArray(), ","),
+                    ident.getService(), ident.getProviderName());
+            }
+            else {
+                candidates.clear();
+                candidates.add(resolved);
+            }
         }
         lastScanAllCheckTime = System.currentTimeMillis();
         if (candidates.size() > 0) {

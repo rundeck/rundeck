@@ -464,4 +464,21 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
         result = 31 * result + (cachedir != null ? cachedir.hashCode() : 0);
         return result;
     }
+
+
+    /**
+     * Return the version string metadata value for the plugin file, or null if it is not available or could not
+     * loaded
+     * @param file
+     * @return version string
+     */
+    static String getVersionForFile(final File file)  {
+        try {
+            final PluginMeta pluginMeta = loadMeta(file);
+            return pluginMeta.getVersion();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }

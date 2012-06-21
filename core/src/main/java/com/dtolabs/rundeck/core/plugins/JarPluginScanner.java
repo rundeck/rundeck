@@ -68,4 +68,8 @@ class JarPluginScanner extends DirPluginScanner {
         return new JarPluginProviderLoader(file,cachedir);
     }
 
+    @Override
+    protected String getVersionForFile(final File file) {
+        return JarPluginProviderLoader.getVersionForFile(file);
+    }
 }
