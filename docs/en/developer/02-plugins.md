@@ -27,6 +27,13 @@ for the jar file to be correctly loaded by the system:
 
 Each classname listed must be a valid "Provider Class" as defined below.
 
+Additionally, you should include a manifest entry to indicate the plugin file's version:
+
+* `Rundeck-Plugin-File-Version: 1.x`
+
+This version number will be used to load only the newest plugin file, if more than one provider of
+the same name and type is defined.
+
 ### Provider Classes
 
 A "Provider Class" is a java class that implements a particular interface and declares
