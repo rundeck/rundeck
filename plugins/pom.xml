@@ -26,6 +26,7 @@
             <manifestEntries>
               <Rundeck-Plugin-Version>1.0</Rundeck-Plugin-Version>
               <Rundeck-Plugin-Archive>true</Rundeck-Plugin-Archive>
+              <Rundeck-Plugin-File-Version>1.4.3-rc1</Rundeck-Plugin-File-Version>
             </manifestEntries>
           </archive>
         </configuration>

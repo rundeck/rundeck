@@ -27,7 +27,7 @@ subprojects{
     }
     jar {
         manifest {
-            attributes 'Rundeck-Plugin-Version': rundeckPluginVersion, 'Rundeck-Plugin-Archive': 'true'
+            attributes 'Rundeck-Plugin-Version': rundeckPluginVersion, 'Rundeck-Plugin-Archive': 'true', 'Rundeck-Plugin-File-Version': version
         }
     }
 
@@ -74,6 +74,7 @@ task createPom << {
                               manifestEntries{
                                 'Rundeck-Plugin-Version'(rundeckPluginVersion)
                                 'Rundeck-Plugin-Archive'('true')
+                                'Rundeck-Plugin-File-Version'(version)
                               }
                             }
                         }
