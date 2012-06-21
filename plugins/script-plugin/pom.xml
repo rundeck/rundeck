@@ -5,11 +5,11 @@
   <parent>
     <artifactId>rundeck-bundled-plugins</artifactId>
     <groupId>com.dtolabs.rundeck</groupId>
-    <version>1.4.3-rc1</version>
+    <version>1.4.3</version>
   </parent>
   <groupId>com.dtolabs.rundeck</groupId>
   <artifactId>rundeck-script-plugin</artifactId>
-  <version>1.4.3-rc1</version>
+  <version>1.4.3</version>
   <name>RunDeck Script Plugin</name>
   <url>http://rundeck.org</url>
   <inceptionYear>2011</inceptionYear>
