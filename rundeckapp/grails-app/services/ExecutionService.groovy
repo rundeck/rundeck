@@ -987,6 +987,8 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
     }
     private Execution int_createExecution(ScheduledExecution se,framework,user,extra){
         def props = [:]
+
+        se = ScheduledExecution.get(se.id)
         props.putAll(se.properties)
         if (!props.user) {
             props.user = user
