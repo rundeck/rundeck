@@ -146,6 +146,51 @@ fi
 
 rm $DIR/list.out
 
+echo "Listing jobs in XML"
+
+$RDECK_BASE/tools/bin/rd-jobs list -p test -f $DIR/list.out --format xml
+if [ 0 != $? ] ; then
+	echo Failed to list jobs: $!
+	exit 2
+fi
+
+if [ ! -s $DIR/list.out ] ; then
+	echo Failed to export XML: file DNE or is zero length
+	exit 2
+fi
+
+# modify to point to xmlstarlet
+XMLSTARLET=xml
+
+$XMLSTARLET val $DIR/list.out
+if [ 0 != $? ] ; then
+	echo Failed to validate XML output: $!
+	exit 2
+fi
+
+rm $DIR/list.out
+
+echo "Listing jobs in Yaml"
+
+$RDECK_BASE/tools/bin/rd-jobs list -p test -f $DIR/list.out --format yaml
+if [ 0 != $? ] ; then
+	echo Failed to list jobs: $!
+	exit 2
+fi
+
+if [ ! -s $DIR/list.out ] ; then
+	echo Failed to export Yaml: file DNE or is zero length
+	exit 2
+fi
+
+grep -q 'simple file test' $DIR/list.out
+if [ 0 != $? ] ; then
+	echo Failed to export Yaml: $!
+	exit 2
+fi
+
+rm $DIR/list.out
+
 echo "Test rd-queue"
 
 $RDECK_BASE/tools/bin/rd-queue list -p test  > $DIR/list.out

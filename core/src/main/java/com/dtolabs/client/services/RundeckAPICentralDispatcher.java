@@ -797,8 +797,31 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
             }
             return list;
         } else if (fformat == JobDefinitionFileFormat.yaml) {
-            //do rought yaml parse
-            final Collection<Map> mapCollection = validateJobsResponseYAML(response);
+            //do rough yaml parse
+
+            final Collection<Map> mapCollection;
+            //write to temp file
+
+            File temp;
+            InputStream tempIn;
+            try {
+                temp= File.createTempFile("listStoredJobs", ".yaml");
+                temp.deleteOnExit();
+                OutputStream os = new FileOutputStream(temp);
+                try{
+                    Streams.copyStream(response.getResultStream(), os);
+                }finally {
+                    os.close();
+                }
+                tempIn = new FileInputStream(temp);
+                try {
+                    mapCollection = validateJobsResponseYAML(response, tempIn);
+                } finally {
+                    tempIn.close();
+                }
+            } catch (IOException e) {
+                throw new CentralDispatcherServerRequestException(e);
+            }
             final ArrayList<IStoredJob> list = new ArrayList<IStoredJob>();
 
             if (null == mapCollection || mapCollection.size() < 1) {
@@ -818,7 +841,13 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
             if (null != output) {
                 //write output doc to the outputstream
                 try {
-                    Streams.copyStream(response.getResultStream(),output);
+                    tempIn = new FileInputStream(temp);
+                    try {
+                        Streams.copyStream(tempIn, output);
+                    }finally {
+                        tempIn.close();
+                    }
+                    temp.delete();
                 } catch (IOException e) {
                     throw new CentralDispatcherServerRequestException(e);
                 }
@@ -885,12 +914,13 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      *
      * @param response response
      *
+     * @param resultStream
      * @return Collection of job data maps if format is correct and there is no error
      *
      * @throws com.dtolabs.client.services.CentralDispatcherServerRequestException
      *          if the format is incorrect, or the response indicates an error response.
      */
-    private Collection<Map> validateJobsResponseYAML(final WebserviceResponse response) throws
+    private Collection<Map> validateJobsResponseYAML(final WebserviceResponse response, final InputStream resultStream) throws
         CentralDispatcherServerRequestException {
         if (null == response) {
             throw new CentralDispatcherServerRequestException("Response was null");
@@ -911,7 +941,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         final Object resobj;
         try {
             final Yaml yaml = new Yaml(new SafeConstructor());
-            resobj = yaml.load(response.getResultStream());
+            resobj = yaml.load(resultStream);
         } catch (YAMLException e) {
             throw new CentralDispatcherServerRequestException("Failed to parse YAML: " + e.getMessage(), e);
         }
