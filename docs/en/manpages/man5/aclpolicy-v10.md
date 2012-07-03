@@ -305,7 +305,7 @@ This document grants full permissions to an 'admin' role:
             kind: event
           allow: [read,create] # allow read/create events
       adhoc:
-        - allow: [run,kill] # allow running/killing adhoc jobs
+        - allow: [read,run,kill] # allow running/killing adhoc jobs
       job: 
         - allow: [create,read,update,delete,run,kill] # allow create/read/write/delete/run/kill of all jobs
       node:

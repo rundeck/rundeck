@@ -51,7 +51,7 @@ File listing: admin.aclpolicy example
             kind: event
           allow: [read,create] # allow read/create events
       adhoc:
-        - allow: [run,kill] # allow running/killing adhoc jobs
+        - allow: [read,run,kill] # allow running/killing adhoc jobs
       job: 
         - allow: [read,update,delete,run,kill] # allow read/write/delete/run/kill of all jobs
       node:
@@ -204,9 +204,10 @@ Table: Project scope generic type actions
 
 Type      Properties                         Actions  Description
 -----     -----------                        -------- ------------
-`adhoc`                                      `run`    Run and adhoc execution
+`adhoc`                                      `read`   Read adhoc execution output
+"                                            `run`    Run an adhoc execution
 "                                            `kill`   Kill an adhoc execution
-`job`     "name","group"                     `read`   View a Job
+`job`     "name","group"                     `read`   View a Job and its executions
 "                                            `update` Modify a job
 "                                            `delete` Delete a job
 "                                            `run`    Run a job

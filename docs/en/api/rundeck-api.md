@@ -7,7 +7,7 @@ Rundeck provides a Web API for use with your application.
 API Version Number
 ----
 
-The current API version is `4`.
+The current API version is `5`.
 
 For API endpoints described in this document, the *minimum* API version required for their
 use is indicated by the URL used, e.g.:
@@ -34,6 +34,11 @@ If the version number is not included or if the requested version number is unsu
 ### Changes
 
 Changes introduced by API Version number:
+
+**Version 5**:
+
+* New endpoint
+    * `/api/5/execution/[ID]/output` - [Execution Output](#execution-output)
 
 **Version 4**:
 
@@ -623,6 +628,156 @@ URL:
 
 Result: an Item List of `executions` with a single item. See [Listing Running Executions](#listing-running-executions).
 
+
+### Execution Output
+
+Get the output for an execution by ID.  The execution can be currently running or may have already completed.
+
+URL:
+
+    /api/5/execution/[ID]/output
+
+The log output for each execution is stored in a file on the Rundeck server, and this API endpoint allows you to retrieve some or all of the output, in several possible formats: json, XML, and plain text.  When retrieving the plain text output, some metadata about the log is included in HTTP Headers.  JSON and XML output formats include metadata about each output log line, as well as metadata about the state of the execution and log file, and your current index location in the file.
+
+Several parameters can be used to retrieve only part of the output log data.  You can use these parameters to more efficiently retrieve the log content over time while an execution is running.
+
+The log file used to store the execution output is a formatted text file which also contains metadata about each line of log output emitted during an execution.  Several data values in this API endpoint refer to "bytes", but these do not reflect the size of the final log data; they are only relative to the formatted log file itself.  You can treat these byte values as opaque locations in the log file, but you should not try to correlate them to the actual textual log lines.
+
+Optional Parameters:
+
+* `offset`: byte offset to read from in the file. 0 indicates the beginning.
+* `lastlines`: number of lines to retrieve from the end of the available output. If specified it will override the `offset` value and return only the specified number of lines at the end of the log.
+* `lastmod`: epoch datestamp in milliseconds, return results only if modification changed since the specified date OR if more data is available at the given `offset`
+* `maxlines`: maximum number of lines to retrieve forward from the specified offset.
+
+Result: The output content in the requested format.
+
+#### Tailing Output
+
+To "tail" the output from a running execution, you will need to make a series of requests to this API endpoint, and update the `offset` value that you send to reflect the returned `dataoffset` value that you receive.  This gives you a consistent pointer into the output log file.
+
+When starting these requests, there are two mechanisms you can use:
+
+1. Start at the beginning, specifying either a `lastmod` or a `offset` of 0
+2. Start at the end, by using `lastlines` to receive the last available set of log lines.
+
+After your first request you will have the `dataoffset` and `lastmod` response values you can use to continue making requests for subsequent log output. You can choose several ways to do this:
+
+1. Use the `offset` and `lastmod` parameters to indicate modification time and receive as much output as is available
+2. Use the `offset` and `maxlines` parameter to specify a maximum number of log entries
+3. Use only the `offset` parameter and receive as much output as is available.
+
+After each request, you will update your `offset` value to reflect the `dataoffset` in the response.
+
+All log output has been read when the `iscompleted` value is "true".
+
+Below is some example pseudo-code for using this API endpoint to follow the output of a running execution "live":
+
+* set offset to 0
+* set lastmod to 0
+* Repeat until `iscompleted` response value is "true":
+    * perform request sending `offset` and `lastmod` parameters
+    * print any log entries, update progress bar, etc.
+    * Record the resulting `dataoffset` and `lastmod` response values for the next request
+    * if `unmodified` is "true", sleep for 5 seconds
+    * otherwise sleep for 2 seconds
+
+**Authorization:**
+
+This endpoint requires that the user have 'read' access to the Job or to Adhoc executions to retrieve the output content.
+
+#### Output Format Using the URL
+
+Specifying an output format can occur in several ways.  The simplest ways are to include the format in the URL, either by including a `format` URL parameter, or an extension on the request URL.
+
+When using a URL format, use one of these values for the format:
+
+* `json`
+* `xml`
+* `text`
+
+To use a URL parameter, add a `?format=` parameter to your request. 
+
+E.g.:
+
+    GET /api/5/execution/3/output?format=json
+
+To use a URL extension, add a ".[format]" to the end of the URL, but prior to any URL parameters. 
+
+E.g.:
+
+    GET /api/5/execution/3/output.xml?offset=120
+
+#### Output Format using Accept Header
+
+You can also specify the format using Content Negotiation techniques by including an `Accept` header in your request, and specifying a valid MIME-type to represent one of the formats:
+
+* For XML, `text/xml` or `application/xml`
+* For JSON, `application/json` or `text/json`
+* For plain text, `text/plain`
+
+E.g.:
+
+    GET /api/5/execution/3/output
+    Accept: */xml
+
+#### Output Content
+
+The result will contain a set of data values reflecting the execution's status, as well as the status and read location in the output file.
+
+* In JSON, there will be an object containing these entries.
+* In XML, within the standard [Response Format](#response-format) `result` there will be an `output` element, containing these sub-elements, each with a text value.
+
+Entries:
+
+* `id`: ID of the execution
+* `message`: optional text message indicating why no entries were returned
+* `error`: optional text message indicating an error case
+* `unmodified`: true/false, (optional) "true" will be returned if the `lastmod` parameter was used and the file had not changed
+* `empty`: true/false, (optional) "true" will be returned if the log file does not exist or is empty, which may occur if the log data is requested before any output has been stored.
+* `offset`: Byte offset to read for the next set of data
+* `completed`: true/false, "true" if the current log entries or request parameters include all of the available data
+* `execCompleted`: true/false, "true" if the execution has completed.
+* `hasFailedNodes`: true/false, "true" if the execution has recorded a list of failed nodes
+* `execState`: execution state, one of "running","succeeded","failed","aborted"
+* `lastModified`: (long integer), millisecond timestamp of the last modification of the log file
+* `execDuration`: (long integer), millisecond duration of the execution
+* `percentLoaded`: (float), percentage of the output which has been loaded by the parameters to this request
+* `totalSize`: (integer), total bytes available in the output file
+
+Each log entry will be included in a section called `entries`.
+
+* In JSON, `entries` will contain an array of Objects, each containing the following format
+* In XML, the `entries` element will contain a sequence of `entry` elements
+
+Content of each Log Entry:
+
+* `time`: Timestamp in format: "HH:MM:SS"
+* `level`: Log level, one of: SEVERE,WARNING,INFO,CONFIG,FINEST
+* `mesg`: The log message (JSON only)
+* `user`: User name
+* `command`: Workflow command context string
+* `node`: Node name
+
+The XML `entry` will have the log message as the text value.
+
+#### Text Format Content
+
+For the plain text format, the content of the response will simply be the log output lines at the chosen offset location.
+
+Included in the response will be some HTTP headers that provide the metadata about the output location. Some headers may not be present, depending on the state of the response. See the [Output Content](#output-content) section for descriptions of the content and availability of the values:
+
+* `X-Rundeck-ExecOutput-Error`: The `error` field
+* `X-Rundeck-ExecOutput-Message`: The `message` field
+* `X-Rundeck-ExecOutput-Empty`: The `empty` field
+* `X-Rundeck-ExecOutput-Unmodified`: The `unmodified` field
+* `X-Rundeck-ExecOutput-Offset`: The `offset` field
+* `X-Rundeck-ExecOutput-Completed`: The `completed` field
+* `X-Rundeck-Exec-Completed`: The `execCompleted` field
+* `X-Rundeck-Exec-State`: The `execState` field
+* `X-Rundeck-Exec-Duration`: the `execDuration` field
+* `X-Rundeck-ExecOutput-LastModifed`: The `lastModified` field
+* `X-Rundeck-ExecOutput-TotalSize`: The `totalSize` field
 
 ### Aborting Executions
 
