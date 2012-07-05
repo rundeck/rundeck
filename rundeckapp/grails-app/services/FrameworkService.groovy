@@ -176,6 +176,21 @@ class FrameworkService implements ApplicationContextAware {
     }
 
     /**
+     * Return true if the user is authorized for all actions for the execution in the project context
+     * @param framework
+     * @param exec
+     * @param actions
+     * @param project
+     * @return true/false
+     */
+    def authorizeProjectExecutionAll( framework, Execution exec, Collection actions){
+        def ScheduledExecution se = exec.scheduledExecution
+        return se ?
+               authorizeProjectJobAll(framework, se, actions, se.project)  :
+               authorizeProjectResourceAll(framework, [type: 'adhoc'], actions, exec.project)
+
+    }
+    /**
      * Return true if the user is authorized for all actions for the job in the project context
      * @param framework
      * @param job

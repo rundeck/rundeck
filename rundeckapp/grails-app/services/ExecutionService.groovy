@@ -746,8 +746,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         def abortstate
         def jobstate
         def failedreason
-        if (se && !frameworkService.authorizeProjectJobAll(framework, se, [AuthConstants.ACTION_KILL], se.project)
-            || !se && !frameworkService.authorizeProjectResourceAll(framework, [type: 'adhoc'], [AuthConstants.ACTION_KILL], e.project)) {
+        if (!frameworkService.authorizeProjectExecutionAll(framework,e,[AuthConstants.ACTION_KILL])){
             jobstate = ExecutionController.getExecutionState(e)
             abortstate= ExecutionController.ABORT_FAILED
             failedreason="unauthorized"
