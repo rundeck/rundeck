@@ -1351,8 +1351,7 @@ class FrameworkController  {
         return apiRenderNodeResult(nodes,framework,params.project)
     }
     def apiRenderNodeResult={INodeSet nodes, Framework framework, String project->
-
-        if (params.format && !(params.format in ['xml', 'yaml']) || request.format && !(request.format in ['html', 'xml', 'yaml'])) {
+        if (params.format && !(params.format in ['xml', 'yaml']) || request.format && !(request.format in ['all','html', 'xml', 'yaml'])) {
             //expected another content type
             if (!new ApiController().requireVersion(ApiRequestFilters.V3)) {
                 return

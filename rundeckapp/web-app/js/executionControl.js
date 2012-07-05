@@ -496,12 +496,11 @@ var FollowControl = Class.create({
         }
 
         this.runningcmd.id = data.id;
-        this.runningcmd.offset = data.dataoffset;
-        this.runningcmd.completed = data.iscompleted;
-        this.runningcmd.jobcompleted = data.jobcompleted;
-        this.runningcmd.jobstatus = data.jobstatus;
-        this.runningcmd.jobcancelled = data.jobcancelled;
-        this.runningcmd.failednodes = data.failednodes;
+        this.runningcmd.offset = data.offset;
+        this.runningcmd.completed = data.completed;
+        this.runningcmd.jobcompleted = data.execCompleted;
+        this.runningcmd.jobstatus = data.execState;
+        this.runningcmd.failednodes = data.hasFailedNodes;
         this.runningcmd.percent = data.percentLoaded;
 
         var entries = $A(data.entries);
@@ -522,9 +521,9 @@ var FollowControl = Class.create({
         if (this.runningcmd.completed && this.runningcmd.jobcompleted) {
             //halt timer
 
-            if ($('viewoptionscomplete') && null != data.totalsize) {
+            if ($('viewoptionscomplete') && null != data.totalSize) {
                 if ($('outfilesize')) {
-                    $('outfilesize').innerHTML = data.totalsize + " bytes";
+                    $('outfilesize').innerHTML = data.totalSize + " bytes";
                 }
                 $('viewoptionscomplete').show();
             }
@@ -532,8 +531,7 @@ var FollowControl = Class.create({
                 $('taildelaycontrol').hide();
             }
             this.finishDataOutput();
-            this.finishedExecution(this.runningcmd.jobstatus == 'true' ? 'true' : this.runningcmd.jobcancelled ? 'cancelled'
-                : 'failed');
+            this.finishedExecution(this.runningcmd.jobstatus);
             return;
         } else {
             var obj=this;
@@ -542,7 +540,7 @@ var FollowControl = Class.create({
             }, (this.tailmode && this.taildelay > 0) ? this.taildelay * 1000 : 50);
         }
         if (this.runningcmd.jobcompleted && !this.runningcmd.completed) {
-            this.jobFinishStatus(this.runningcmd.jobstatus == 'true' ? 'true' : this.runningcmd.jobcancelled ? 'cancelled' : 'failed');
+            this.jobFinishStatus(this.runningcmd.jobstatus);
             if ($('progressContainer')) {
                 $('progressContainer').hide();
             }
@@ -557,9 +555,9 @@ var FollowControl = Class.create({
         }
         if (this.runningcmd.jobcompleted) {
 
-            if ($('viewoptionscomplete') && null != data.totalsize) {
+            if ($('viewoptionscomplete') && null != data.totalSize) {
                 if ($('outfilesize')) {
-                    $('outfilesize').innerHTML = data.totalsize + " bytes";
+                    $('outfilesize').innerHTML = data.totalSize + " bytes";
                 }
                 $('viewoptionscomplete').show();
             }
@@ -1062,11 +1060,11 @@ var FollowControl = Class.create({
         tddata.addClassName('data');
         tddata.setAttribute('style', 'vertical-align:top');
         tddata.setAttribute('colspan', '2');
-        if (null != data['mesghtml']) {
-            tddata.innerHTML = data.mesghtml;
+        if (null != data['loghtml']) {
+            tddata.innerHTML = data.loghtml;
             tddata.addClassName('datahtml');
         } else {
-            var txt = data.mesg;
+            var txt = data.log;
             txt = txt.replace(/[\\\n\\\r]+$/, '');
             txt = txt.replace(/</g, '&lt;');
             txt = txt.replace(/>/g, '&gt;');
@@ -1128,22 +1126,22 @@ var FollowControl = Class.create({
     },
     jobFinishStatus: function(result) {
         if (null != result && $('runstatus')) {
-            $('runstatus').innerHTML = result == 'true' ? '<span class="succeed">Successful</span>'
-                : (result == 'cancelled' ? '<span class="fail">Killed</span>' : '<span class="fail">Failed</span>');
+            $('runstatus').innerHTML = result == 'succeeded' ? '<span class="succeed">Successful</span>'
+                : (result == 'aborted' ? '<span class="fail">Killed</span>' : '<span class="fail">Failed</span>');
             $$('.execstatus').each(function(e){
-                e.innerHTML = result == 'true' ? '<span class="succeed">Successful</span>'
-                : (result == 'cancelled' ? '<span class="fail">Killed</span>' : '<span class="fail">Failed</span>');
+                e.innerHTML = result == 'succeeded' ? '<span class="succeed">Successful</span>'
+                : (result == 'aborted' ? '<span class="fail">Killed</span>' : '<span class="fail">Failed</span>');
             });
             if ($('jobInfo_' + this.executionId)) {
                 var img = $('jobInfo_' + this.executionId).down('img');
                 if (img) {
-                    var status = result == 'true' ? '-ok' : result == 'cancelled' ? '-warn' : '-error';
+                    var status = result == 'succeeded' ? '-ok' : result == 'aborted' ? '-warn' : '-error';
                     img.src = this.iconUrl + '-job' + status + ".png";
                 }
             }
             if (this.updatepagetitle && !/^\[/.test(document.title)) {
                 document.title =
-                (result == 'true' ? '[OK] ' : result == 'cancelled' ? '[KILLED] ' : '[FAILED] ') + document.title;
+                (result == 'succeeded' ? '[OK] ' : result == 'aborted' ? '[KILLED] ' : '[FAILED] ') + document.title;
             }
             $('cancelresult').hide();
         }

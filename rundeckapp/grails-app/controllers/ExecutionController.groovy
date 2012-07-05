@@ -2,9 +2,9 @@ import com.dtolabs.rundeck.core.common.Framework
 import java.text.SimpleDateFormat
 
 import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 
-
-
+import static com.dtolabs.rundeck.server.authorization.AuthConstants.*
 
 /**
 * ExecutionController
@@ -183,7 +183,7 @@ class ExecutionController {
         }
 
         def Map result = parseOutput(file,0,-1,null){ Map msgbuf ->
-            response.outputStream << (isFormatted?"${msgbuf.time} [${msgbuf.user}@${msgbuf.node} ${msgbuf.context} ${msgbuf.command}][${msgbuf.level}] ${msgbuf.mesg}" : msgbuf.mesg)
+            response.outputStream << (isFormatted?"${msgbuf.time} [${msgbuf.user}@${msgbuf.node} ${msgbuf.context} ${msgbuf.command}][${msgbuf.level}] ${msgbuf.log}" : msgbuf.log)
             true
         }
 
@@ -191,125 +191,186 @@ class ExecutionController {
         completed = result.completed
     }
     /**
+     * API: /api/execution/{id}/output, version 5
+     */
+    def apiExecutionOutput = {
+        if (!new ApiController().requireVersion(ApiRequestFilters.V5)) {
+            return
+        }
+        return tailExecutionOutput()
+    }
+    /**
      * tailExecutionOutput action, used by execution/show.gsp view to display output inline
+     * Also used by apiExecutionOutput for API response
      */
     def tailExecutionOutput = {
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         Execution e = Execution.get(Long.parseLong(params.id))
+        def api= new ApiController()
+        def reqError=false
         if(!e){
-             render(contentType:"text/json"){
-                error("Execution with id "+params.id+" not found")
-                id(params.id.toString())
-                dataoffset("0")
-                iscompleted(false)
-                entries(){
+            reqError=true
+            response.setStatus(404)
+            request.error=g.message(code: 'api.error.item.doesnotexist', args: ['execution', params.id])
+        }
+        if(e && !frameworkService.authorizeProjectExecutionAll(framework,e,[AuthConstants.ACTION_READ])){
+            reqError=true
+            response.setStatus(403)
+            request.error = g.message(code: 'api.error.item.unauthorized', args: [AuthConstants.ACTION_READ, "Execution",params.id])
+        }
+        if (reqError){
+            withFormat {
+                xml {
+                    api.error()
+                }
+                json {
+                    render(contentType: "text/json") {
+                        error(request.error)
+                        id(params.id.toString())
+                        offset("0")
+                        completed(false)
+                        entries() {
+                        }
+                    }
+                }
+                text {
+                    render(contentType: "text/plain", text: request.error)
                 }
             }
-            return;
+            return
         }
         def long start = System.currentTimeMillis()
 
         def jobcomplete = e.dateCompleted!=null
-        def failednodes = e.failedNodeList?true:false
-        def jobstat = e.status
-        def jobcanc = e.cancelled
-        def execDuration = 0
-        if(null==e.outputfilepath){
+        def hasFailedNodes = e.failedNodeList?true:false
+        def execState = getExecutionState(e)
+        def execDuration = 0L
+        def file = e.outputfilepath?new File(e.outputfilepath):null
+        execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
+        if(null==file || !file.exists() || file.size() < 1) {
+            def errmsg = "No output"
+            if (null!=file && !file.exists()) {
+                errmsg = "File not found: " + e.outputfilepath
+            }
+
             //execution has not be started yet
-            render(contentType:"text/json"){
-                delegate.message("Unmodified")
+            def renderclos= { delegate->
+                if (e.dateCompleted) {
+                    delegate.error(errmsg)
+                } else {
+                    delegate.message(errmsg)
+                }
+                delegate.empty(true)
                 delegate.id(params.id.toString())
-                delegate.dataoffset(params.offset.toString())
-                delegate.iscompleted(false)
-                delegate.jobcompleted(jobcomplete)
-                delegate.failednodes(failednodes)
-                delegate.jobstatus(jobstat)
-                delegate.jobcancelled(jobcanc)
-                delegate.duration(execDuration)
-                delegate.entries(){
+                delegate.offset("0")
+                delegate.completed(jobcomplete)
+                delegate.execCompleted(jobcomplete)
+                delegate.hasFailedNodes(hasFailedNodes)
+                delegate.execState(execState)
+                delegate.execDuration(execDuration)
+                delegate.entries() {
+                }
+            }
+            withFormat{
+                xml {
+                    api.success({del ->
+                        del.'output' {
+                            renderclos(del)
+                        }
+                    })
+                }
+                json{
+                    render(contentType: "text/json") {
+                        renderclos(delegate)
+                    }
+                }
+                text {
+                    response.addHeader('X-Rundeck-ExecOutput-Offset',"0")
+                    if (e.dateCompleted) {
+                        response.addHeader('X-Rundeck-ExecOutput-Error', errmsg)
+                    } else {
+                        response.addHeader('X-Rundeck-ExecOutput-Message', errmsg)
+                    }
+                    response.addHeader('X-Rundeck-ExecOutput-Empty', 'true')
+                    response.addHeader('X-Rundeck-ExecOutput-Completed', jobcomplete.toString())
+                    response.addHeader('X-Rundeck-Exec-Completed', jobcomplete.toString())
+                    response.addHeader('X-Rundeck-Exec-State', execState)
+                    response.addHeader('X-Rundeck-Exec-Duration', execDuration.toString())
+                    render(contentType: "text/plain") {
+                        ''
+                    }
                 }
             }
             return;
         }
-        def file = new File(e.outputfilepath)
-        execDuration=(e.dateCompleted?e.dateCompleted.getTime():System.currentTimeMillis()) - e.dateStarted.getTime()
+        def totsize = file.length()
 
-        if (! file.exists()) {
-            log.error("File not found: "+e.outputfilepath)
+        def Long offset = ((params.offset) ? Long.parseLong(params.offset) : 0)
 
-            render(contentType:"text/json"){
-                if(e.dateCompleted){
-                    delegate.error("File not found: "+e.outputfilepath)
-                }else{
-                    delegate.message("File not found: "+e.outputfilepath)
-                }
-                delegate.id(params.id.toString())
-                delegate.dataoffset("0")
-                delegate.iscompleted(false)
-                delegate.jobcompleted(jobcomplete)
-                delegate.failednodes(failednodes)
-                delegate.jobstatus(jobstat)
-                delegate.jobcancelled(jobcanc)
-                delegate.duration(execDuration)
-                delegate.entries(){
-                }
-            }
-            return
-        } else if (file.size() < 1) {
-            render(contentType:"text/json"){
-                if(e.dateCompleted){
-                    delegate.error("File is empty")
-                }else{
-                    delegate.message("File is empty")
-                }
-                delegate.id(params.id.toString())
-                delegate.dataoffset("0")
-                delegate.iscompleted(false)
-                delegate.jobcompleted(jobcomplete)
-                delegate.failednodes(failednodes)
-                delegate.jobstatus(jobstat)
-                delegate.jobcancelled(jobcanc)
-                delegate.duration(execDuration)
-                delegate.entries(){
-                }
-            }
-            return
-        }
         if(params.lastmod){
             def ll = Long.parseLong(params.lastmod);
-            if(file.lastModified() <= ll){
+            long lastmodl = file.lastModified()
+            if (lastmodl <= ll && (offset==0 || totsize <= offset)) {
 
-                render(contentType:"text/json"){
+                def renderclos = {delegate ->
                     delegate.message("Unmodified")
+                    delegate.unmodified(true)
                     delegate.id(params.id.toString())
-                    delegate.dataoffset(params.offset.toString())
-                    delegate.iscompleted(false)
-                    delegate.jobcompleted(jobcomplete)
-                    delegate.failednodes(failednodes)
-                    delegate.jobstatus(jobstat)
-                    delegate.jobcancelled(jobcanc)
-                    delegate.duration(execDuration)
-                    delegate.entries(){
+                    delegate.offset(params.offset ? params.offset.toString() : "0")
+                    delegate.completed(jobcomplete)
+                    delegate.execCompleted(jobcomplete)
+                    delegate.hasFailedNodes(hasFailedNodes)
+                    delegate.execState(execState)
+                    delegate.lastModified(lastmodl.toString())
+                    delegate.execDuration(execDuration)
+                    delegate.totalSize(totsize)
+                    delegate.entries() {
                     }
                 }
+                withFormat {
+                    xml {
+                        api.success({del ->
+                            del.'output' {
+                                renderclos(del)
+                            }
+                        })
+                    }
+                    json {
+                        render(contentType: "text/json") {
+                            renderclos(delegate)
+                        }
+                    }
+                    text {
+                        response.addHeader('X-Rundeck-ExecOutput-Message', 'Unmodified')
+                        response.addHeader('X-Rundeck-ExecOutput-Unmodified', 'true')
+                        response.addHeader('X-Rundeck-ExecOutput-Offset', params.offset ? params.offset.toString() : "0")
+                        response.addHeader('X-Rundeck-ExecOutput-Completed', jobcomplete.toString())
+                        response.addHeader('X-Rundeck-Exec-Completed', jobcomplete.toString())
+                        response.addHeader('X-Rundeck-Exec-State', execState)
+                        response.addHeader('X-Rundeck-Exec-Duration', execDuration.toString())
+                        response.addHeader('X-Rundeck-ExecOutput-LastModifed', lastmodl.toString())
+                        response.addHeader('X-Rundeck-ExecOutput-TotalSize', totsize.toString())
+                        render(contentType: "text/plain") {
+                            ''
+                        }
+                    }
+                }
+                return
             }
         }
-        def Long offset = ((params.offset) ? Long.parseLong(params.offset) : 0)
         def storeoffset=offset
         def entry=[]
         def completed=false
-        def totsize=file.length()
-        def isfollowoption=false
         def lastlines=0
-        def max=0
+        def max= 0
+        def String lSep = System.getProperty("line.separator") ;
         if(params.lastlines){
             //load only the last X lines of the file, by going to the end and searching backwards for the
             //line-end textual format X times, then reset the offset to that point.
             //we actually search for X+1 line-ends to find the one prior to the Xth line back
             //and we add 1 more to account for the final ^^^END^^^\n line.
             //TODO: modify seekBack to allow rewind beyond the ^^^END^^^\n at the end prior to doing reverse search
-            isfollowoption=true
             lastlines=Integer.parseInt(params.lastlines)
-            def String lSep = System.getProperty("line.separator");
             def seekoffset = com.dtolabs.rundeck.core.utils.Utility.seekBack(file,lastlines+2,"^^^${lSep}")
             if(seekoffset>=0){
                 //we found X+2 line ends.  now skip past the line-end at seekoffset, to get to the start
@@ -320,8 +381,8 @@ class ExecutionController {
                 offset=seekoffset
                 max=lastlines+1
             }
-            
-
+        }else if(null!= params.maxlines){
+            max=Integer.parseInt(params.maxlines)
         }
 
         def String bufsizestr= servletContext.getAttribute("execution.follow.buffersize");
@@ -340,7 +401,7 @@ class ExecutionController {
             entry.each{
                 if(it.mesg){
                     try{
-                        it.mesghtml = it.mesg.decodeMarkdown()
+                        it.loghtml = it.mesg.decodeMarkdown()
                     }catch (Exception exc){
                         log.error("Markdown error: "+exc.getMessage(),exc)
                     }
@@ -350,24 +411,70 @@ class ExecutionController {
         long marktime=System.currentTimeMillis()
         def lastmodl = file.lastModified()
         def percent=100.0 * (((float)storeoffset)/((float)totsize))
-        render(contentType:"text/json"){
-            delegate.id(e.id.toString())
-            delegate.dataoffset(storeoffset.toString())
-            delegate.iscompleted(completed)
-            delegate.jobcompleted(jobcomplete)
-            delegate.failednodes(failednodes)
-            delegate.jobstatus(jobstat)
-            delegate.jobcancelled(jobcanc)
-            delegate.lastmod(lastmodl.toString())
-            delegate.duration(execDuration)
+
+        def idstr=e.id.toString()
+        def outf = request.format
+        def renderclos ={ delegate->
+            delegate.id(idstr)
+            delegate.offset(storeoffset.toString())
+            delegate.completed(completed)
+            delegate.execCompleted(jobcomplete)
+            delegate.hasFailedNodes(hasFailedNodes)
+            delegate.execState(execState)
+            delegate.lastModified(lastmodl.toString())
+            delegate.execDuration(execDuration)
             delegate.percentLoaded(percent)
-            delegate.totalsize(totsize)
+            delegate.totalSize(totsize)
+
             delegate.entries(){
                 entry.each{
-                    if(it.mesghtml){
-                        delegate.entries(time: it.time.toString(), level:it.level, mesghtml:it.mesghtml, user:it.user, module:it.module, command:it.command, node:it.node, context:it.context)
+                    def datamap = [
+                        time: it.time.toString(),
+                        level: it.level,
+                        log: it.mesg.trim(),
+                        user: it.user,
+//                        module: it.module,
+                        command: it.command,
+                        node: it.node,
+//                        context: it.context
+                    ]
+                    if(it.loghtml){
+                        datamap.loghtml=it.loghtml
+                    }
+                    if(!outf||'xml'==outf){
+                        def text= datamap.remove('log')
+                        delegate.'entry'(datamap,text)
                     }else{
-                        delegate.entries(time: it.time.toString(), level:it.level, mesg:it.mesg, user:it.user, module:it.module, command:it.command, node:it.node, context:it.context)
+                        delegate.'entries'(datamap)
+                    }
+                }
+            }
+        }
+
+        withFormat {
+            xml {
+                api.success({del ->
+                    del.'output' {
+                        renderclos(del)
+                    }
+                })
+            }
+            json {
+                render(contentType: "text/json") {
+                    renderclos(delegate)
+                }
+            }
+            text{
+                response.addHeader('X-Rundeck-ExecOutput-Offset', storeoffset.toString())
+                response.addHeader('X-Rundeck-ExecOutput-Completed', completed.toString())
+                response.addHeader('X-Rundeck-Exec-Completed', jobcomplete.toString())
+                response.addHeader('X-Rundeck-Exec-State', execState)
+                response.addHeader('X-Rundeck-Exec-Duration', execDuration.toString())
+                response.addHeader('X-Rundeck-ExecOutput-LastModifed', lastmodl.toString())
+                response.addHeader('X-Rundeck-ExecOutput-TotalSize', totsize.toString())
+                render(contentType:"text/plain"){
+                    entry.each{
+                        out<<it.mesg?.trim() + lSep
                     }
                 }
             }
@@ -541,7 +648,7 @@ class ExecutionController {
             }
         }
         long parsetime=System.currentTimeMillis()
-        return [storeoffset:storeoffset, completed:completed]
+        return [storeoffset:storeoffset> totsize? totsize:storeoffset, completed:completed]
     }
 
 

@@ -12,6 +12,8 @@ class UrlMappings {
         "/api/$api_version/error"(controller: 'api', action: 'error')
         "/api/$api_version/execution/$id"(controller: 'execution', action: 'apiExecution')
         "/api/$api_version/execution/$id/abort"(controller: 'execution', action: 'apiExecutionAbort')
+        /** v5 */
+        "/api/$api_version/execution/$id/output"(controller: 'execution', action: 'apiExecutionOutput')
         "/api/$api_version/executions/running"(controller: 'menu', action: 'apiExecutionsRunning')
         "/api/$api_version/history"(controller: 'reports', action: 'apiHistory')
         "/api/$api_version/job/$id"(controller: 'scheduledExecution',action:'apiJobAction')

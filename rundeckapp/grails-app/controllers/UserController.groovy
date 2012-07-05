@@ -318,17 +318,7 @@ class UserController {
         if(!u){
             log.error("Couldn't find user: ${session.user}")
             flash.error="Couldn't find user: ${session.user}"
-            /*
 
-             render(contentType:"text/json"){
-                error("Execution with id "+params.id+" not found")
-                id(params.id.toString())
-                dataoffset("0")
-                iscompleted(false)
-                entries(){
-                }
-            }
-             */
             return render(template:"/common/error")
         }
         def list=params.dpref.split(",").collect{Integer.parseInt(it)}

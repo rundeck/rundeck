@@ -5,7 +5,7 @@ for:
   resource:
     - allow: '*' # allow read/create all kinds
   adhoc:
-    - allow: '*' # allow running/killing adhoc jobs
+    - allow: '*' # allow read/running/killing adhoc jobs
   job: 
     - allow: '*' # allow read/write/delete/run/kill of all jobs
   node:

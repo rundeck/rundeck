@@ -8,7 +8,7 @@
         iconTinyRemoveX: '${resource(dir:"images",file:"icon-tiny-removex.png")}',
         iconSpinner: '${resource(dir:"images",file:"icon-tiny-disclosure-waiting.gif")}',
         executionCancelExecution: '${createLink(controller:"execution",action:"cancelExecution")}.json',
-        tailExecutionOutput: '${createLink(controller: "execution", action: "tailExecutionOutput")}',
+        tailExecutionOutput: '${createLink(controller: "execution", action: "tailExecutionOutput")}.json',
         reportsEventsFragment:"${createLink(controller:'reports',action:'eventsFragment')}",
         frameworkViewResourceModelConfig: "${createLink(action: 'viewResourceModelConfig', controller: 'framework')}",
         frameworkCheckResourceModelConfig: "${createLink(action: 'checkResourceModelConfig', controller: 'framework')}",
