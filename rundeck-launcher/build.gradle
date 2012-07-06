@@ -1,5 +1,5 @@
 allprojects{
-    version = '1.4.3'
+    version = '1.4.4-dev'
     defaultTasks 'clean','assemble'
     apply plugin: 'idea'
     group  = 'com.dtolabs.rundeck'
