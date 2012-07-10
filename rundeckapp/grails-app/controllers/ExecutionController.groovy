@@ -218,7 +218,8 @@ class ExecutionController {
             response.setStatus(403)
             request.error = g.message(code: 'api.error.item.unauthorized', args: [AuthConstants.ACTION_READ, "Execution",params.id])
         }
-        if (reqError){
+        def apiError={
+
             withFormat {
                 xml {
                     api.error()
@@ -237,6 +238,9 @@ class ExecutionController {
                     render(contentType: "text/plain", text: request.error)
                 }
             }
+        }
+        if (reqError){
+            apiError();
             return
         }
         def long start = System.currentTimeMillis()
@@ -305,10 +309,44 @@ class ExecutionController {
         }
         def totsize = file.length()
 
-        def Long offset = ((params.offset) ? Long.parseLong(params.offset) : 0)
+        def Long offset = 0
+        if(params.offset){
+
+            try {
+                offset= Long.parseLong(params.offset)
+            } catch (NumberFormatException exc) {
+                reqError = true
+            }
+            if(offset<0){
+                reqError=true
+            }
+            if(reqError){
+                request.error = g.message(code: 'api.error.parameter.invalid', args: [params.offset, 'offset', 'Not an integer offset'])
+                apiError()
+                return
+            }
+        }
+
 
         if(params.lastmod){
-            def ll = Long.parseLong(params.lastmod);
+            def ll = 0
+            if (params.lastmod) {
+
+                try {
+                    ll = Long.parseLong(params.lastmod)
+                } catch (NumberFormatException exc) {
+                    reqError = true
+                }
+                if (ll < 0) {
+                    reqError = true
+                }
+                if (reqError) {
+                    request.error = g.message(code: 'api.error.parameter.invalid', args: [params.lastmod, 'lastmod', 'Not a millisecond modification time'])
+                    apiError()
+                    return
+                }
+            }
+
             long lastmodl = file.lastModified()
             if (lastmodl <= ll && (offset==0 || totsize <= offset)) {
 

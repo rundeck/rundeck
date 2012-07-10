@@ -460,11 +460,11 @@ class ReportsController {
         fields.reportId=params.title
         fields.ctxProject=params.project
         if(!(params.nodesuccesscount==~/^\d+$/)){
-            flash.error=g.message(code:'api.error.parameter.invalid',args:['nodesuccesscount','Not a valid integer: '+params.nodesuccesscount])
+            flash.error=g.message(code:'api.error.parameter.invalid',args:[params.nodesuccesscount,'nodesuccesscount','Not a valid integer: '+params.nodesuccesscount])
             return chain(controller:'api',action:'error')
         }
         if(!(params.nodefailcount==~/^\d+$/)){
-            flash.error=g.message(code:'api.error.parameter.invalid',args:['nodefailcount','Not a valid integer: '+params.nodefailcount])
+            flash.error=g.message(code:'api.error.parameter.invalid',args:[params.nodefailcount,'nodefailcount','Not a valid integer: '+params.nodefailcount])
             return chain(controller:'api',action:'error')
         }
         def int nsuccess=Integer.parseInt(params.nodesuccesscount)
@@ -481,12 +481,12 @@ class ReportsController {
         }
         fields.jcJobId=params.jobID
         if(params.jobId && params.jobID!=~/^\d+$/){
-            flash.error=g.message(code:'api.error.parameter.invalid',args:['jobID','Not a valid Job ID'])
+            flash.error=g.message(code:'api.error.parameter.invalid',args:[params.jobId,'jobID','Not a valid Job ID'])
             return chain(controller:'api',action:'error')
         }
         fields.jcExecId=params.execID
         if(params.execID && params.execID!=~/^\d+$/){
-            flash.error=g.message(code:'api.error.parameter.invalid',args:['execID','Not a valid Execution ID'])
+            flash.error=g.message(code:'api.error.parameter.invalid',args:[params.execID, 'execID','Not a valid Execution ID'])
             return chain(controller:'api',action:'error')
         }
 

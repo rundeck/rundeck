@@ -23,7 +23,7 @@
       </g:each>
       <g:set var="adhocRunAllowed" value="${auth.adhocAllowedTest(action: AuthConstants.ACTION_RUN)}"/>
 
-      <g:javascript library="executionControl"/>
+      <g:javascript src="executionControl.js?v=${grailsApplication.metadata['app.version']}"/>
       <g:javascript library="prototype/effects"/>
       <g:javascript>
         <g:if test="${scheduledExecution}">
