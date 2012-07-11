@@ -2,11 +2,10 @@
 allprojects{
     version = '1.4.4-dev'
     defaultTasks 'clean','build'
-    rundeckPluginVersion= '1.0'
+    ext.rundeckPluginVersion= '1.0'
 }
 task wrapper(type: Wrapper) {
-    gradleVersion = '0.9-rc-3'
-    jarPath = 'wrapper'
+    gradleVersion = '1.0'
 }
 
 subprojects{

@@ -1,4 +1,4 @@
-pluginClassNames='com.dtolabs.rundeck.plugin.script.ScriptFileCopier,com.dtolabs.rundeck.plugin.script.ScriptNodeExecutor'
+ext.pluginClassNames='com.dtolabs.rundeck.plugin.script.ScriptFileCopier,com.dtolabs.rundeck.plugin.script.ScriptNodeExecutor'
 jar {
     manifest {
         attributes 'Rundeck-Plugin-Classnames': pluginClassNames
@@ -6,8 +6,7 @@ jar {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '0.9-rc-3'
-    jarPath = 'wrapper'
+    gradleVersion = '1.0'
 }
 
 
