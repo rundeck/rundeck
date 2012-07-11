@@ -7,7 +7,7 @@ allprojects{
 subprojects{
     apply plugin: 'java'
     sourceCompatibility = 1.5
-    jettyVersion='6.1.21'
+    ext.jettyVersion='6.1.21'
     repositories {
         add(new org.apache.ivy.plugins.resolver.FileSystemResolver()) {
             name = 'localdeps'
@@ -21,8 +21,7 @@ subprojects{
     }
 }
 task wrapper(type: Wrapper) {
-    gradleVersion = '0.9-rc-3'
-    jarPath = 'wrapper'
+    gradleVersion = '1.0'
 }
 
 apply plugin: 'maven'

@@ -8,10 +8,6 @@ dependencies {
         [group: 'org.mortbay.jetty', name: 'jetty-util', version: jettyVersion,ext:'jar'],
         [group: 'org.mortbay.jetty', name: 'jetty-plus', version: jettyVersion,ext:'jar'],
     )
-    testCompile(
-        [group: 'junit', name: 'junit', version: '3.8.1',ext:'jar']
-    )
-    
 }
 
 jar {

@@ -1,11 +1,13 @@
 archivesBaseName = 'rundeck-launcher'
 defaultTasks 'clean','launcherJar'
-dependsOn(':rundeck-jetty-server')
-launcherMainClass = "com.dtolabs.rundeck.ExpandRunServer"
-launcherStartClass = "com.dtolabs.rundeck.RunServer"
-launcherJettyLibs = "servlet-api-2.5-20081211.jar jetty-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-naming-${jettyVersion}.jar jetty-plus-${jettyVersion}.jar"
-launcherJettyLibsUnexpanded = 'servlet-api-2.5-20081211.jar jetty-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-naming-${jettyVersion}.jar jetty-plus-${jettyVersion}.jar'
-launcherJettyLibPath = "pkgs/webapp/WEB-INF/lib"
+ext.launcherMainClass = "com.dtolabs.rundeck.ExpandRunServer"
+ext.launcherStartClass = "com.dtolabs.rundeck.RunServer"
+ext.launcherJettyLibs = "servlet-api-2.5-20081211.jar jetty-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-naming-${jettyVersion}.jar jetty-plus-${jettyVersion}.jar"
+ext.launcherJettyLibsUnexpanded = 'servlet-api-2.5-20081211.jar jetty-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-naming-${jettyVersion}.jar jetty-plus-${jettyVersion}.jar'
+ext.launcherJettyLibPath = "pkgs/webapp/WEB-INF/lib"
+
+ext.launcherContentsDir = new File("$projectDir/build/launcher-contents")
+
 
 configurations{
     warBundle
@@ -14,6 +16,7 @@ configurations{
 }
 
 dependencies {
+    compile project(":rundeck-jetty-server")
     compile(
         //[group: 'log4j', name: 'log4j', version: '1.2.16',ext:'jar'],
         [group: 'commons-cli', name: 'commons-cli', version: '1.0',ext:'jar'],
@@ -28,59 +31,66 @@ dependencies {
     jettyServerLib project(":rundeck-jetty-server")
 }
 
-task expandCli << {
+task setupLauncherContent << {
+    launcherContentsDir.mkdirs()
+}
+
+task expandCli(dependsOn: setupLauncherContent) << {
     //copy libs to a tools lib dir
-    ant.mkdir(dir:"$projectDir/build/launcher-contents")
-    dep = configurations.compile.allDependencies.find { dep -> dep.name == 'commons-cli' }
+    def dep = configurations.compile.allDependencies.find { dep -> dep.name == 'commons-cli' }
     FileTree cliJar = zipTree(configurations.compile.files(dep).find{it})
     copy{
         from cliJar
         exclude 'META-INF/**'
-        into "$projectDir/build/launcher-contents"
+        into launcherContentsDir
     }
 }
-task expandWar << {
+task expandWar(dependsOn: setupLauncherContent) << {
     //copy libs to a tools lib dir
-    ant.mkdir(dir:"$projectDir/build/launcher-contents/pkgs/webapp")
+    File webappDir=new File(launcherContentsDir,"pkgs/webapp")
+    webappDir.mkdirs()
     FileTree rundeckWar = zipTree(configurations.warBundle.files.find{ file -> file})
     copy{
         from rundeckWar
-        into "$projectDir/build/launcher-contents/pkgs/webapp"
+        into webappDir
     }
 }
 
-task copyJettyServerLib << {
-    ant.mkdir(dir:"$projectDir/build/launcher-contents/lib")
-    serverlibjar = configurations.jettyServerLib.files.find{ file -> file}
+task copyJettyServerLib(dependsOn: setupLauncherContent) << {
+    File libDir=new File(launcherContentsDir,"lib")
+    libDir.mkdirs()
+    def serverlibjar = configurations.jettyServerLib.files.find{ file -> file}
     copy{
         from serverlibjar
-        into "$projectDir/build/launcher-contents/lib"
+        into libDir
     }
 }
-task copyPluginLibs << {
-    ant.mkdir(dir:"$projectDir/build/launcher-contents/libext")
+task copyPluginLibs(dependsOn: setupLauncherContent) << {
+    File libextDir=new File(launcherContentsDir,"libext")
+    libextDir.mkdirs()
     configurations.pluginFiles.files.each{ pluginFile->
         copy{
             from pluginFile
-            into "$projectDir/build/launcher-contents/libext"
+            into libextDir
         }
     }
 }
 
 
-task launcherJar(type:Jar) {
-    from "$projectDir/build/launcher-contents"
-    from sourceSets.main.classes
+jar {
+    dependsOn expandCli, expandWar, copyJettyServerLib, copyPluginLibs
+    from launcherContentsDir
+    from sourceSets.main.output
     exclude 'com/dtolabs/rundeck/RunServer.class'
     manifest {
         attributes 'Rundeck-Version': version, 'Main-Class':"${launcherMainClass}", "Rundeck-Start-Class":"${launcherStartClass}", "Rundeck-Jetty-Libs":"${launcherJettyLibs}", "Rundeck-Jetty-Lib-Path":"${launcherJettyLibPath}"
     }
 }
-
-launcherJar.dependsOn << expandCli
-launcherJar.dependsOn << expandWar
-launcherJar.dependsOn << copyJettyServerLib
-launcherJar.dependsOn << copyPluginLibs
+/*
+artifacts{
+    archives launcherJar
+}
+*/
 
 
 apply plugin: 'maven'
