@@ -1,9 +1,11 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
 apply plugin: 'java'
+apply plugin: 'maven'
 sourceCompatibility = 1.5
 version = '1.4.4-dev'
 archivesBaseName = 'rundeck-core'
+group = "com.dtolabs.rundeck"
 defaultTasks 'clean','assemble'
 repositories {
     mavenCentral()
@@ -75,17 +77,32 @@ assemble {
 }
 
 uploadArchives {
-    repositories {
-       flatDir(dirs: file('repos'))
+		repositories.mavenDeployer {
+			configuration = configurations.archives
+            pom.project {
+                artifactId archivesBaseName
+                groupId "com.dtolabs.rundeck"
+                inceptionYear '2011'
+                packaging 'jar'
+                version version
+                name "RunDeck Core"
+                url 'http://rundeck.org'
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution 'repo'
+                    }
+                }
+            }
     }
+
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '0.9-rc-3'
-    jarPath = 'wrapper'
+    gradleVersion = '1.0'
 }
 
-apply plugin: 'maven'
 task createPom << {
     pom {
         project {
