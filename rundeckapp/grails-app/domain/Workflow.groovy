@@ -35,6 +35,9 @@ public class Workflow {
     static constraints = {
         strategy(nullable:false, inList:['node-first','step-first'])
     }
+    static mapping = {
+        commands lazy: false
+    }
     public String toString() {
         return "Workflow:(threadcount:${threadcount}){ ${commands} }"
     }
