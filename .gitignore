@@ -1,6 +1,8 @@
 *~
 *.swp
 *.iws
+*.ipr
+*.iml
 build
 rundeckapp/stacktrace.log
 rundeckapp/grails-app/i18n/messages.properties.orig
