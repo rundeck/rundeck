@@ -111,6 +111,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final boolean DEFAULT_SUDO_FAIL_ON_RESPONSE_TIMEOUT = false;
     public static final String NODE_ATTR_SUDO_SUCCESS_ON_PROMPT_THRESHOLD = "sudo-success-on-prompt-threshold";
     public static final boolean DEFAULT_SUDO_SUCCESS_ON_PROMPT_THRESHOLD = true;
+    public static final String PROJECT_SSH_USER = PROJ_PROP_PREFIX + "ssh.user";
 
     private Framework framework;
 
@@ -385,18 +386,20 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         }
 
         public String getUsername() {
-            final String user = node.extractUserName();
-            if (null!=user && !"".equals(user.trim())) {
-                if (user.contains("${")) {
-                    return DataContextUtils.replaceDataReferences(user, context.getDataContext());
-                }
-                return user;
-            } else if (frameworkProject.hasProperty("project.ssh.user")
-                       && !"".equals(frameworkProject.getProperty("project.ssh.user").trim())) {
-                return frameworkProject.getProperty("project.ssh.user").trim();
+            String user;
+            if (null != node.getUsername() || node.containsUserName()) {
+                user = node.extractUserName();
+            } else if (frameworkProject.hasProperty(PROJECT_SSH_USER)
+                       && !"".equals(frameworkProject.getProperty(PROJECT_SSH_USER).trim())) {
+                user = frameworkProject.getProperty(PROJECT_SSH_USER).trim();
             } else {
-                return framework.getProperty(Constants.SSH_USER_PROP);
+                user = framework.getProperty(Constants.SSH_USER_PROP);
+
             }
+            if (null != user && user.contains("${")) {
+                return DataContextUtils.replaceDataReferences(user, context.getDataContext());
+            }
+            return user;
         }
     }
 
