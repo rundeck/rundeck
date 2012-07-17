@@ -385,16 +385,26 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             return timeout;
         }
 
+        /**
+         * Return null if the input is null or empty or whitespace, otherwise return the input
+         * string trimmed.
+         */
+        public static String nonBlank(final String input){
+            if(null==input|| "".equals(input.trim())){
+                return null;
+            }else {
+                return input.trim();
+            }
+        }
         public String getUsername() {
             String user;
-            if (null != node.getUsername() || node.containsUserName()) {
-                user = node.extractUserName();
+            if (null != nonBlank(node.getUsername()) || node.containsUserName()) {
+                user = nonBlank(node.extractUserName());
             } else if (frameworkProject.hasProperty(PROJECT_SSH_USER)
-                       && !"".equals(frameworkProject.getProperty(PROJECT_SSH_USER).trim())) {
-                user = frameworkProject.getProperty(PROJECT_SSH_USER).trim();
+                       && null != nonBlank(frameworkProject.getProperty(PROJECT_SSH_USER))) {
+                user = nonBlank(frameworkProject.getProperty(PROJECT_SSH_USER));
             } else {
-                user = framework.getProperty(Constants.SSH_USER_PROP);
-
+                user = nonBlank(framework.getProperty(Constants.SSH_USER_PROP));
             }
             if (null != user && user.contains("${")) {
                 return DataContextUtils.replaceDataReferences(user, context.getDataContext());
