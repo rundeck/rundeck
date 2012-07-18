@@ -134,8 +134,22 @@ class ExecutionJob implements InterruptableJob {
                 initMap.extraParams=jobDataMap.get("extraParams")
                 initMap.extraParamsExposed=jobDataMap.get("extraParamsExposed")
                 initMap.execution = Execution.get(initMap.executionId)
+                //NOTE: Oracle/hibernate bug workaround: if session has not flushed we may have to wait until Execution.get
+                //can return the right entity
+                int retry=30
+                if(!initMap.execution){
+                    log.warn("ExecutionJob: Execution not found with ID [${initMap.executionId}], will retry for up to 60 seconds...")
+                }
+                while(!initMap.execution && retry>0){
+                    Thread.sleep(2000)
+                    initMap.execution = Execution.get(initMap.executionId)
+                    retry--;
+                }
                 if (!initMap.execution) {
-                    throw new RuntimeException("failed to lookup Exception object from job data map: id: ${initMap.executionId}")
+                    throw new RuntimeException("Failed to find Execution with id: ${initMap.executionId}")
+                }
+                if(retry<30){
+                    log.info("ExecutionJob: Execution found with ID [${initMap.executionId}] retried (${30-retry})")
                 }
                 if (! initMap.execution instanceof Execution) {
                     throw new RuntimeException("JobDataMap contained invalid Execution type: " + initMap.execution.getClass().getName())

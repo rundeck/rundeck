@@ -1028,12 +1028,12 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             execution.argString = newstr
         }
         execution.scheduledExecution=se
-        if (workflow && !workflow.save()) {
+        if (workflow && !workflow.save(flush:true)) {
             execution.workflow.errors.allErrors.each { log.warn(it.defaultMessage) }
             log.error("unable to save execution workflow")
             throw new ExecutionServiceException("unable to create execution workflow")
         }
-        if (!execution.save()) {
+        if (!execution.save(flush:true)) {
             execution.errors.allErrors.each { log.warn(it.defaultMessage) }
             log.error("unable to save execution")
             throw new ExecutionServiceException("unable to create execution")
