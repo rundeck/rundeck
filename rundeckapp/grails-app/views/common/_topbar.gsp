@@ -34,7 +34,7 @@ function doCreateProject(){
 //-->
 </script>
 <div  class="topbar solo" >
-<g:if test="${session?.user}">
+<g:if test="${session?.user && request.subject}">
 <!--<div class="secondbar">-->
 
    <span id="top_tabs">
@@ -97,7 +97,7 @@ function doCreateProject(){
             <g:link controller="framework" action="showFrameworkProject" params="[project:session.project]" title="Select a project">${session.project}</g:link>
         </span>
     </g:if>--}%
-    <g:if test="${session?.user}">
+    <g:if test="${session?.user && request.subject}">
         <span class="headright">
             <g:set var="adminauth" value="${false}"/>
             <g:if test="${session.project}">

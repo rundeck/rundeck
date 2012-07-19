@@ -14,9 +14,8 @@ class UserController {
         redirect(action:"login")
     }
     def error = {
-        session.invalidate()
         flash.error="Invalid username and password."
-        redirect(controller:'menu', action:'index')
+        return render(view:'login')
     }
     def logout = {
         session.invalidate()
