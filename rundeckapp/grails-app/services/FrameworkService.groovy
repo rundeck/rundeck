@@ -11,6 +11,7 @@ import javax.security.auth.Subject
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization
 
 /**
  * Interfaces with the core Framework object
@@ -23,6 +24,7 @@ class FrameworkService implements ApplicationContextAware {
     def File varDir
     String rundeckbase
     String depsdir
+    SAREAuthorization aclpolicies
 
     def ApplicationContext applicationContext
     def ExecutionService executionService
@@ -58,6 +60,8 @@ class FrameworkService implements ApplicationContextAware {
         
         depsdir= props.getProperty("framework.projects.dir")
         log.warn("rdeck.base is: "+rundeckbase)
+
+        aclpolicies= new SAREAuthorization(new File(Constants.getFrameworkConfigDir(rundeckbase)))
 
         initialized = true 
     }
@@ -285,6 +289,12 @@ class FrameworkService implements ApplicationContextAware {
         fw.setAuthorizationMgr(new DenyAuthorization(fw, new File(Constants.getFrameworkConfigDir(rdbase))))
         return fw.getFrameworkNodeName()
     }
+
+    def getFrameworkRoles() {
+        def rdbase = getRundeckBase()
+        return new HashSet(aclpolicies.hackMeSomeRoles())
+
+    }
     def getFrameworkFromUserSession( session, request){
         if (!initialized) {
             initialize()
@@ -292,7 +302,7 @@ class FrameworkService implements ApplicationContextAware {
         if(!session.Framework){
             String rundeckbase=getRundeckBase()
 
-            session.Framework = getFrameworkForUserAndSubject(session.user, request.subject, rundeckbase)
+            session.Framework = getFrameworkForUserAndSubject(session.user, session.subject?:request.subject, rundeckbase)
         }
         return session.Framework;
     }

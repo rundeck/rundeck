@@ -39,35 +39,47 @@ public class AuthorizationFilters {
          */
         loginCheck(controller: 'user', action: '(logout|login|error)', invert: true) {
             before = {
-                if (request.remoteUser) {
+                if (request.remoteUser && session.user!=request.remoteUser) {
                     session.user = request.remoteUser
                     
                     def principal = request.userPrincipal
                     def subject = new Subject();
                     subject.principals << new Username(principal.name)
-                    if(principal.roles instanceof Iterator){
-                        def Iterator iter= principal.roles
-                        while(iter.hasNext()){
-                            def role=iter.next()
-                            if(role.rolename){
-                                subject.principals << new Group(role.rolename)
-                            }else if(role instanceof String){
-                                subject.principals << new Group(role)
-                            }
+                    if(principal.hasProperty('roles')){
+                        if(principal.roles instanceof Iterator){
+                            def Iterator iter= principal.roles
+                            while(iter.hasNext()){
+                                def role=iter.next()
+                                if(role.rolename){
+                                    subject.principals << new Group(role.rolename)
+                                }else if(role instanceof String){
+                                    subject.principals << new Group(role)
+                                }
 
-                        }
-                    } else if (principal.roles instanceof Collection || principal.roles instanceof Object[]){
-                        principal.roles?.each { name ->
-                            subject.principals << new Group(name);
+                            }
+                        } else if (principal.roles instanceof Collection || principal.roles instanceof Object[]){
+                            principal.roles?.each { name ->
+                                subject.principals << new Group(name);
+                            }
+                        }else{
+                            principal.roles?.members.each { group ->
+                                subject.principals << new Group(group.name);
+                            }
                         }
                     }else{
-                        principal.roles?.members.each { group ->
-                            subject.principals << new Group(group.name);
+                        //try to determine roles based on aclpolicy group definitions
+                        frameworkService.getFrameworkRoles().each {rolename->
+                            if(request.isUserInRole(rolename)){
+                                subject.principals<<new Group(rolename)
+                            }
                         }
                     }
                     
                     request.subject = subject
-                }else if (request.api_version) {
+                    session.subject = subject
+                }else if(request.remoteUser && session.subject){
+                    request.subject = session.subject
+                } else if (request.api_version) {
                     //allow authentication token to be used 
                     def authtoken = params.authtoken? params.authtoken : request.getHeader('X-RunDeck-Auth-Token')
                     def tokenobj=authtoken?AuthToken.findByToken(authtoken):null
