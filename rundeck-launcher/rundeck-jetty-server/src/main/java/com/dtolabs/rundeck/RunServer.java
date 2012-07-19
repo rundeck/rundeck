@@ -38,9 +38,11 @@ public class RunServer {
     File serverdir;
     private static final String REALM_NAME = "rundeckrealm";
     private static final String SYS_PROP_LOGIN_MODULE = "loginmodule.name";
+    private static final String SYS_PROP_ROLE_CLASS_NAMES = "loginmodule.role.classnames";
     public static final String SYS_PROP_WEB_CONTEXT = "server.web.context";
     File configdir;
     String loginmodulename;
+    String roleclassnames;
     private boolean useJaas;
     private static final String RUNDECK_JAASLOGIN = "rundeck.jaaslogin";
     public static final String RUNDECK_SSL_CONFIG = "rundeck.ssl.config";
@@ -65,6 +67,7 @@ public class RunServer {
     public RunServer() {
         useJaas = null == System.getProperty(RUNDECK_JAASLOGIN) || Boolean.getBoolean(RUNDECK_JAASLOGIN);
         loginmodulename = System.getProperty(SYS_PROP_LOGIN_MODULE, "rundecklogin");
+        roleclassnames = System.getProperty(SYS_PROP_ROLE_CLASS_NAMES, null);
         appContext = System.getProperty(SYS_PROP_WEB_CONTEXT, "/");
     }
 
@@ -185,6 +188,12 @@ public class RunServer {
         realm.setCallbackHandlerClass("org.mortbay.jetty.plus.jaas.callback.DefaultCallbackHandler");
         realm.setName(REALM_NAME);
         realm.setLoginModuleName(loginmodulename);
+
+        if (null != roleclassnames && !"".equals(roleclassnames.trim())) {
+            final String[] strings = roleclassnames.split(",\\s*");
+            realm.setRoleClassNames(strings);
+        }
+
         server.addUserRealm(realm);
     }
 
