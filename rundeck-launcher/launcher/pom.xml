@@ -71,11 +71,6 @@
     </dependency>
     <dependency>
       <groupId>com.dtolabs.rundeck</groupId>
-      <artifactId>rundeck-jetty-server</artifactId>
-      <version>1.4.4-dev</version>
-    </dependency>
-    <dependency>
-      <groupId>com.dtolabs.rundeck</groupId>
       <artifactId>rundeck-script-plugin</artifactId>
       <version>1.4.4-dev</version>
     </dependency>
@@ -83,6 +78,12 @@
       <groupId>com.dtolabs.rundeck</groupId>
       <artifactId>rundeck-stub-plugin</artifactId>
       <version>1.4.4-dev</version>
+    </dependency>
+    <dependency>
+      <groupId>com.dtolabs.rundeck</groupId>
+      <artifactId>rundeck-jetty-server</artifactId>
+      <version>1.4.4-dev</version>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>commons-cli</groupId>

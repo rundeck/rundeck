@@ -176,7 +176,7 @@ task createPom << {
                         type 'war'
                     }
                 }
-                (configurations.jettyServerLib.dependencies + configurations.pluginFiles.dependencies).each{ dep ->
+                (configurations.pluginFiles.dependencies).each{ dep ->
                     dependency{
                         groupId dep.group
                         artifactId dep.name
