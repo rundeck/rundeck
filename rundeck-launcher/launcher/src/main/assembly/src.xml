@@ -23,9 +23,15 @@
             </includes>
         </dependencySet>
         <dependencySet>
+            <useTransitiveDependencies>true</useTransitiveDependencies>
             <outputDirectory>/lib</outputDirectory>
             <includes>
                 <include>com.dtolabs.rundeck:rundeck-jetty-server</include>
+                <include>org.mortbay.jetty:jetty</include>
+                <include>org.mortbay.jetty:jetty-util</include>
+                <include>org.mortbay.jetty:jetty-plus</include>
+                <include>org.mortbay.jetty:servlet-api</include>
+                <include>log4j:log4j</include>
             </includes>
         </dependencySet>
         <dependencySet>

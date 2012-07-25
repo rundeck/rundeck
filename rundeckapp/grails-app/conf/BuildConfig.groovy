@@ -14,6 +14,15 @@ grails.project.dependency.resolution = {
 
     grails.war.resources = {def stagingDir ->
         delete(file: "${stagingDir}/WEB-INF/lib/commons-collections-3.1.jar")
+        delete(file: "${stagingDir}/WEB-INF/lib/servlet-api-2.5-20081211.jar")
+        delete(file: "${stagingDir}/WEB-INF/lib/jetty-6.1.21.jar")
+        delete(file: "${stagingDir}/WEB-INF/lib/jetty-plus-6.1.21.jar")
+        delete(file: "${stagingDir}/WEB-INF/lib/jetty-util-6.1.21.jar")
+        delete(file: "${stagingDir}/WEB-INF/lib/jetty-naming-6.1.21.jar")
+        delete(file: "${stagingDir}/WEB-INF/lib/jsp-api-2.0-6.1.21.jar")
+        delete(file: "${stagingDir}/WEB-INF/lib/jasper-runtime-5.5.15.jar")
+        delete(file: "${stagingDir}/WEB-INF/lib/jasper-compiler-5.5.15.jar")
+        delete(file: "${stagingDir}/WEB-INF/lib/jasper-compiler-jdt-5.5.15.jar")
     }
 
     dependencies {

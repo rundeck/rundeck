@@ -28,7 +28,11 @@ dependencies {
         [group: 'com.dtolabs.rundeck', name: 'rundeck-script-plugin', version: version,ext:'jar'],            
         [group: 'com.dtolabs.rundeck', name: 'rundeck-stub-plugin', version: version,ext:'jar']
     )
-    jettyServerLib project(":rundeck-jetty-server")
+    jettyServerLib(project(path:":rundeck-jetty-server",configuration:'runtime')){
+        exclude module:'commons-cli'
+        transitive=true
+
+    }
 }
 
 task setupLauncherContent << {
@@ -59,7 +63,7 @@ task expandWar(dependsOn: setupLauncherContent) << {
 task copyJettyServerLib(dependsOn: setupLauncherContent) << {
     File libDir=new File(launcherContentsDir,"lib")
     libDir.mkdirs()
-    def serverlibjar = configurations.jettyServerLib.files.find{ file -> file}
+    def serverlibjar = configurations.jettyServerLib.files
     copy{
         from serverlibjar
         into libDir
@@ -177,6 +181,14 @@ task createPom << {
                     }
                 }
                 (configurations.pluginFiles.dependencies).each{ dep ->
+                    dependency{
+                        groupId dep.group
+                        artifactId dep.name
+                        version dep.version
+                        type 'jar'
+                    }
+                }
+                (configurations.jettyServerLib.dependencies).each{ dep ->
                     dependency{
                         groupId dep.group
                         artifactId dep.name
