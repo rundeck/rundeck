@@ -25,7 +25,12 @@ if [ -z "$RDAUTH" ] ; then
     RDUSER=${2:-"admin"}
     RDPASS=${3:-"admin"}
     echo "Login..."
-    $CURL -d j_username=$RDUSER -d j_password=$RDPASS $loginurl > $DIR/curl.out 
+    $CURL $url > $DIR/curl.out
+    if [ 0 != $? ] ; then
+        errorMsg "failed login request to ${loginurl}"
+        exit 2
+    fi
+    $CURL -X POST -d j_username=$RDUSER -d j_password=$RDPASS $loginurl > $DIR/curl.out
     if [ 0 != $? ] ; then
         errorMsg "failed login request to ${loginurl}"
         exit 2

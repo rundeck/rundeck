@@ -420,7 +420,8 @@ class ReportsController {
         //required parameters
         def missing= ['status','title','nodesuccesscount','nodefailcount','summary'].findAll{!params[it] }
         if(missing){
-            flash.errors=missing.collect{g.message(code:'api.error.parameter.required',args:[it])}
+            flash.errors=[]
+            flash.errors.addAll(missing.collect{g.message(code:'api.error.parameter.required',args:[it])})
             return chain(controller:'api',action:'error')
         }
 
