@@ -510,6 +510,11 @@ class ReportsController {
             flash.error=g.message(code:'api.error.parameter.required',args:['project'])
             return chain(controller:'api',action:'error')
         }
+        if(params.jobListFilter || params.excludeJobListFilter){
+            if (!new ApiController().requireVersion(ApiRequestFilters.V5)) {
+                return
+            }
+        }
         //test valid project
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
 

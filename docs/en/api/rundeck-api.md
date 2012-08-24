@@ -39,6 +39,9 @@ Changes introduced by API Version number:
 
 * New endpoint
     * `/api/5/execution/[ID]/output` - [Execution Output](#execution-output)
+* Updated endpoints 
+    * `/api/1/history` - [Listing History](#listing-history)
+        * new filter parameters added for including or excluding reports for exact job group/name values: `jobListFilter` and `excludeJobListFilter`
 
 **Version 4**:
 
@@ -1044,6 +1047,8 @@ Optional Parameters:
     * `reportIdFilter`: include events for an event Name.
     * `userFilter`: include events created by a user
     * `statFilter`: include events based on result status.  this can be 'succeed','fail', or 'cancel'.
+    * `jobListFilter`: include events for the job by name, format: 'group/name'.  To use multiple values, include this parameter multiple times.  (Since *API v5*)
+    * `excludeJobListFilter`: exclude events for the job by name, format: 'group/name'. To use multiple values, include this parameter multiple times. (Since *API v5*)
 * Date query parameters:
     * `recentFilter`: Use a simple text format to filter events that occurred within a period of time. The format is "XY" where X is an integer, and "Y" is one of:
         * `h`: hour
@@ -1059,6 +1064,8 @@ Optional Parameters:
     * `offset`: indicate the 0-indexed offset for the first event to return.
 
 The format for the `end`, and `begin` filters is either:  a unix millisecond timestamp, or a W3C dateTime string in the format "yyyy-MM-ddTHH:mm:ssZ".
+
+The format for the `jobListFilter` and `excludeJobListFilter` is the job's group and name separated by a '/' character, such as: "group1/job name", or "my job" if there is no group.
 
 Result:  an Item List of `events`.  Each `event` has this form:
 

@@ -36,6 +36,8 @@ class ReportQuery extends BaseQuery{
     boolean doendbeforeFilter
     String recentFilter
 
+    List<String> jobListFilter
+    List<String> excludeJobListFilter
     String jobFilter
     String jobIdFilter
     String nodeFilter

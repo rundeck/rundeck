@@ -171,42 +171,7 @@ class ReportService  {
                 firstResult(query.offset.toInteger())
             }
 
-            if(query ){
-                txtfilters.each{ key,val ->
-                    if(query["${key}Filter"]){
-                        ilike(val,'%'+query["${key}Filter"]+'%')
-                    }
-                }
-
-                eqfilters.each{ key,val ->
-                    if(query["${key}Filter"]=='null'){
-                        isNull(val)
-                    }else if (query["${key}Filter"]=='!null'){
-                        isNotNull(val)
-                    }else if(query["${key}Filter"]){
-                        eq(val,query["${key}Filter"])
-                    }
-                }
-
-                if(query.dostartafterFilter && query.dostartbeforeFilter && query.startbeforeFilter && query.startafterFilter){
-                    between('dateStarted',query.startafterFilter,query.startbeforeFilter)
-                }
-                else if(query.dostartbeforeFilter && query.startbeforeFilter ){
-                    le('dateStarted',query.startbeforeFilter)
-                }else if (query.dostartafterFilter && query.startafterFilter ){
-                    ge('dateStarted',query.startafterFilter)
-                }
-
-                if(query.doendafterFilter && query.doendbeforeFilter && query.endafterFilter && query.endbeforeFilter){
-                    between('dateCompleted',query.endafterFilter,query.endbeforeFilter)
-                }
-                else if(query.doendbeforeFilter && query.endbeforeFilter ){
-                    le('dateCompleted',query.endbeforeFilter)
-                }
-                if(query.doendafterFilter && query.endafterFilter ){
-                    ge('dateCompleted',query.endafterFilter)
-                }
-            }
+            applyReportsCriteria(query, delegate)
 
             if(query && query.sortBy && filters[query.sortBy]){
                 order(filters[query.sortBy],query.sortOrder=='ascending'?'asc':'desc')
@@ -272,11 +237,24 @@ class ReportService  {
         def eqfilters = getEqFilters()
         def txtfilters = getTxtFilters()
 
-        def filters = [ :]
-        filters.putAll(txtfilters)
-        filters.putAll(eqfilters)
         def total = BaseReport.createCriteria().count {
 
+            applyReportsCriteria(query,delegate)
+
+        }
+        return total
+    }
+
+    /**
+     * Add criteria query elements for the ReportQuery
+     * @param query the query
+     * @param delegate the criteria closure's delegate
+     * @return
+     */
+    private applyReportsCriteria(ReportQuery query, delegate){
+        def eqfilters = getEqFilters()
+        def txtfilters = getTxtFilters()
+        delegate.with{
 
             if (query) {
                 txtfilters.each {key, val ->
@@ -292,6 +270,28 @@ class ReportService  {
                         isNotNull(val)
                     } else if (query["${key}Filter"]) {
                         eq(val, query["${key}Filter"])
+                    }
+                }
+
+                if (query.jobListFilter || query.excludeJobListFilter) {
+                    and {
+                        if (query.jobListFilter) {
+                            or {
+                                query.jobListFilter.each {
+                                    eq('reportId', it)
+                                }
+                            }
+                        }
+                        if (query.excludeJobListFilter) {
+                            not {
+                                or {
+                                    query.excludeJobListFilter.each {
+                                        eq('reportId', it)
+                                    }
+
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -315,9 +315,7 @@ class ReportService  {
                 }
             }
 
-
         }
-        return total
     }
 
     def getExecutionReports(ExecQuery query, boolean isJobs) {
