@@ -144,6 +144,14 @@ public class PartialLineBuffer {
     }
 
     /**
+     * Clear the partial fragment string
+     */
+    public void clearPartial(){
+        partialLine=null;
+        newdata = false;
+    }
+
+    /**
      * Return the last partial line read, optionally marking it as already read. Subsequent calls with mark set to true
      * will return null if there as been no new data.
      */
