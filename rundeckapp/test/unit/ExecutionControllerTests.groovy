@@ -1,4 +1,6 @@
-class ExecutionControllerTests extends GroovyTestCase {
+import grails.test.ControllerUnitTestCase
+
+class ExecutionControllerTests extends ControllerUnitTestCase {
 
     /**
      * Test parsing the output files.
@@ -383,6 +385,57 @@ Another line
         assertEquals "incorrect mesg:'${items[0].mesg}'", "/bin/sh: httpd: ??????? ?? ???????\n", items[0].mesg
 
 
+    }
+
+    void testDownloadOutput(){
+        mockDomain(Execution)
+
+        def ec = new ExecutionController()
+        assert ec != null
+        def File tf1 = File.createTempFile("test.", "txt")
+        tf1.deleteOnExit()
+        def fos = new OutputStreamWriter(new FileOutputStream(tf1))
+        //File content contains UTF8, assert that the read result is correct
+        fos << """^^^03:21:50|INFO|admin|||centos5||blah blah test monkey^^^
+^^^03:21:51|SEVERE|Execution failed on the following 1 nodes: [centos5]^^^
+^^^END^^^"""
+        fos.close()
+
+        Execution e1 = new Execution(outputfilepath: tf1.absolutePath,project:'test1',user:'bob',dateStarted: new Date())
+        assert e1.validate(), e1.errors.allErrors.collect {it.toString()}.join(",")
+        assert e1.save()
+
+        ec.params.id = e1.id.toString()
+
+        def result=ec.downloadOutput()
+        assertNotNull(ec.response.getHeader('Content-Disposition'))
+        assert "blah blah test monkey\n"+"Execution failed on the following 1 nodes: [centos5]\n"==ec.response.contentAsString
+    }
+
+    void testDownloadOutputFormatted(){
+        mockDomain(Execution)
+
+        def ec = new ExecutionController()
+        assert ec != null
+        def File tf1 = File.createTempFile("test.", "txt")
+        tf1.deleteOnExit()
+        def fos = new OutputStreamWriter(new FileOutputStream(tf1))
+        //File content contains UTF8, assert that the read result is correct
+        fos << """^^^03:21:50|INFO|admin|||centos5||blah blah test monkey^^^
+^^^03:21:51|SEVERE|Execution failed on the following 1 nodes: [centos5]^^^
+^^^END^^^"""
+        fos.close()
+
+        Execution e1 = new Execution(outputfilepath: tf1.absolutePath,project:'test1',user:'bob',dateStarted: new Date())
+        assert e1.validate(), e1.errors.allErrors.collect {it.toString()}.join(",")
+        assert e1.save()
+
+        ec.params.id = e1.id.toString()
+        ec.params.formatted = 'true'
+
+        def result=ec.downloadOutput()
+        assertNotNull(ec.response.getHeader('Content-Disposition'))
+        assertEquals(["03:21:50 [admin@centos5  ][INFO] blah blah test monkey","03:21:51 [null@null null null][SEVERE] Execution failed on the following 1 nodes: [centos5]"],ec.response.contentAsString.split("[\r\n]+") as List)
     }
 
 }

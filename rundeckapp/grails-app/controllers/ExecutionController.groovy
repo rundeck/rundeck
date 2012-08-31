@@ -183,7 +183,7 @@ class ExecutionController {
         }
 
         def Map result = parseOutput(file,0,-1,null){ Map msgbuf ->
-            response.outputStream << (isFormatted?"${msgbuf.time} [${msgbuf.user}@${msgbuf.node} ${msgbuf.context} ${msgbuf.command}][${msgbuf.level}] ${msgbuf.log}" : msgbuf.log)
+            response.outputStream << (isFormatted?"${msgbuf.time} [${msgbuf.user}@${msgbuf.node} ${msgbuf.context} ${msgbuf.command}][${msgbuf.level}] ${msgbuf.mesg}" : msgbuf.mesg)
             true
         }
 
