@@ -18,6 +18,8 @@
 </g:each>
 <g:set var="adhocRunAllowed" value="${auth.adhocAllowedTest(action: AuthConstants.ACTION_RUN)}"/>
 
+<g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
+<g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
 
     <div id="commandFlow" class="commandFlow">
         <table width="100%">
@@ -215,7 +217,7 @@
                     step="5"
                     name="lastlines"
                     id="lastlinesvalue"
-                    value="${params.lastlines?params.lastlines:20}"
+                    value="${params.lastlines?params.lastlines: defaultLastLines}"
                     size="3"
                     onchange="updateLastlines(this.value)"
                     onkeypress="var x= noenter();if(!x){this.blur();};return x;"

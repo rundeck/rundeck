@@ -55,6 +55,7 @@ var FollowControl = Class.create({
     tailmode:false,
     refresh:false,
     lastlines:20,
+    maxLastLines: 100,
     iconUrl:'/images/icon',
     appLinks:{},
     
@@ -265,8 +266,8 @@ var FollowControl = Class.create({
         if (isNaN(val)) {
             val = 20;
         }
-        if (val > 100) {
-            val = 100;
+        if (val > this.maxLastLines) {
+            val = this.maxLastLines;
         } else if (val < 5) {
             val = 5;
         }

@@ -147,6 +147,22 @@ class BootStrap {
          }else{
              servletContext.setAttribute("logging.ant.metadata","true")
          }
+         def defaultLastLines = grailsApplication.config.rundeck.gui.execution.tail.lines.default
+         defaultLastLines = defaultLastLines instanceof String ? defaultLastLines.toInteger() : defaultLastLines
+         if(!defaultLastLines || !(defaultLastLines instanceof Integer) || defaultLastLines < 1){
+             if(defaultLastLines){
+                log.warn("Invalid value for rundeck.gui.execution.tail.lines.default: Not a positive Integer: ${defaultLastLines}")
+             }
+             grailsApplication.config.rundeck.gui.execution.tail.lines.default = 20
+         }
+         def maxLastLines = grailsApplication.config.rundeck.gui.execution.tail.lines.max
+         maxLastLines = maxLastLines instanceof String ? maxLastLines.toInteger() : maxLastLines
+         if(!maxLastLines || !(maxLastLines instanceof Integer) || maxLastLines < 1){
+             if(maxLastLines){
+                log.warn("Invalid value for rundeck.gui.execution.tail.lines.max: Not a positive Integer ${maxLastLines}")
+             }
+             grailsApplication.config.rundeck.gui.execution.tail.lines.max = 100
+         }
 
 
          //configure System.out and System.err so that remote command execution will write to a specific print stream

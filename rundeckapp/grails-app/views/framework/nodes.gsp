@@ -9,6 +9,8 @@
     <g:javascript library="executionControl"/>
     <g:javascript library="yellowfade"/>
     <g:javascript library="pagehistory"/>
+    <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
+    <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
     <script type="text/javascript">
         function showError(message) {
             $("error").innerHTML += message;
@@ -411,7 +413,8 @@
              var followControl = new FollowControl(data.id,'runcontent',{
                 extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>",
                 iconUrl: "${resource(dir: 'images', file: 'icon')}",
-                lastlines: ${params.lastlines ? params.lastlines : 20},
+                lastlines: ${params.lastlines ? params.lastlines : defaultLastLines},
+                maxLastLines: ${maxLastLines},
                 tailmode: true,
                  taildelay:1,
                 execData: {node:"test"},

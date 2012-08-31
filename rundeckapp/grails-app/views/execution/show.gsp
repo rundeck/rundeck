@@ -23,6 +23,8 @@
       </g:each>
       <g:set var="adhocRunAllowed" value="${auth.adhocAllowedTest(action: AuthConstants.ACTION_RUN)}"/>
 
+      <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
+      <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
       <g:javascript src="executionControl.js?v=${grailsApplication.metadata['app.version']}"/>
       <g:javascript library="prototype/effects"/>
       <g:javascript>
@@ -46,7 +48,8 @@
             appLinks:appLinks,
             iconUrl: "${resource(dir: 'images', file: 'icon')}",
             extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>",
-            lastlines: ${params.lastlines ? params.lastlines : 20},
+            lastlines: ${params.lastlines ? params.lastlines : defaultLastLines},
+            maxLastLines: ${maxLastLines},
             collapseCtx: {value:${null == execution?.dateCompleted },changed:false},
 
             tailmode: ${followmode == 'tail'},
@@ -365,7 +368,7 @@
                     type="text"
                     name="lastlines"
                     id="lastlinesvalue"
-                    value="${params.lastlines?params.lastlines:20}"
+                    value="${params.lastlines?params.lastlines:defaultLastLines}"
                     size="3"
                     onchange="updateLastlines(this.value)"
                     onkeypress="var x= noenter();if(!x){this.blur();};return x;"
