@@ -496,9 +496,14 @@
 
         var runupdate;
         function loadNowRunning(){
-            runupdate=new Ajax.PeriodicalUpdater('nowrunning','${createLink(controller:"menu",action:"nowrunningFragment")}',{
+            runupdate=new Ajax.PeriodicalUpdater({ success:'nowrunning'},'${createLink(controller:"menu",action:"nowrunningFragment")}',{
                 evalScripts:true,
-                parameters:{projFilter:'${session.project}'}
+                parameters:{projFilter:'${session.project}'},
+                onFailure:function (response) {
+                    showError("AJAX error: Now Running [" + runupdate.url + "]: " + response.status + " "
+                                      + response.statusText);
+                    runupdate.stop();
+                }
             });
         }
 
@@ -618,6 +623,8 @@
     <div id="nowrunning">
         <span class="note empty">No running Jobs</span>
     </div>
+
+    <div id="error" class="error message" style="display:none;"></div>
 </div>
 <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
     <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
