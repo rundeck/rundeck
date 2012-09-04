@@ -58,10 +58,11 @@ public abstract class BaseFormAuthenticator implements HttpAuthenticator {
      */
     public static final Logger logger = org.apache.log4j.Logger.getLogger(BaseFormAuthenticator.class);
 
+    public static final String J_SECURITY_CHECK = "j_security_check";
     /**
      * path for java auth form submit: {@value}
      */
-    public static final String JAVA_AUTH_PATH = "/j_security_check";
+    public static final String JAVA_AUTH_PATH = "/"+J_SECURITY_CHECK;
     /**
      * username param for java auth form submit: {@value }
      */
@@ -152,6 +153,8 @@ public abstract class BaseFormAuthenticator implements HttpAuthenticator {
         }
         final byte[] buffer = new byte[1024];
 
+        boolean doPostLogin=false;
+        boolean isLoginFormContent=false;
         logger.debug("No session found, must login...");
         try {
             final URL newUrl = new URL(baseURL.getProtocol(),
@@ -166,8 +169,18 @@ public abstract class BaseFormAuthenticator implements HttpAuthenticator {
             logger.debug("Requesting: " + newUrl);
             int res = client.executeMethod(get);
             logger.debug("Result is: " + res);
-            if (get.getResponseContentLength() > 0) {
-                get.getResponseBodyAsString();
+
+            /*
+              Tomcat container auth behaves differently than Jetty.  Tomcat will respond 200 OK and include the login form
+              when auth is required, as well as on auth failure, it will also require complete GET of original URL after
+              successful auth.
+              Jetty will redirect to login page when auth is required, and will redirect to error page on failure.
+             */
+
+            String body=get.getResponseBodyAsString();
+            if (null != body && body.contains(J_SECURITY_CHECK) && body.contains(JAVA_USER_PARAM) && body.contains(
+                JAVA_PASS_PARAM)) {
+                isLoginFormContent = true;
             }
             get.releaseConnection();
 
@@ -188,7 +201,9 @@ public abstract class BaseFormAuthenticator implements HttpAuthenticator {
             if (!hasSessionCookie(baseURL, state, basePath)) {
                 throw new HttpClientException("Unable to get a session from URL : " + newUrl);
             }
-            if ((res == HttpStatus.SC_MOVED_TEMPORARILY) ||
+            if (res == HttpStatus.SC_OK && isLoginFormContent) {
+                doPostLogin = true;
+            }else if ((res == HttpStatus.SC_MOVED_TEMPORARILY) ||
                 (res == HttpStatus.SC_MOVED_PERMANENTLY) ||
                 (res == HttpStatus.SC_SEE_OTHER) ||
                 (res == HttpStatus.SC_TEMPORARY_REDIRECT)) {
@@ -219,6 +234,12 @@ public abstract class BaseFormAuthenticator implements HttpAuthenticator {
                 }
                 logger.debug("Result: " + res);
 
+                doPostLogin=true;
+            }else if (res != HttpStatus.SC_OK) {
+                //if request to welcome page was OK, we figure that the session is already set
+                throw new HttpClientException("Request to welcome page returned error: " + res + ": " + get);
+            }
+            if(doPostLogin){
                 //now post login
                 final URL loginUrl = new URL(baseURL.getProtocol(),
                                              baseURL.getHost(),
@@ -236,15 +257,15 @@ public abstract class BaseFormAuthenticator implements HttpAuthenticator {
 
                 res = client.executeMethod(login);
 
-                ins = login.getResponseBodyAsStream();
+                final InputStream ins = login.getResponseBodyAsStream();
                 while (ins.available() > 0) {
                     //read and discard response body
                     ins.read(buffer);
                 }
                 login.releaseConnection();
 
-                locHeader = login.getResponseHeader("Location");
-                location = null != locHeader ? locHeader.getValue() : null;
+                Header locHeader = login.getResponseHeader("Location");
+                String location = null != locHeader ? locHeader.getValue() : null;
                 if (isLoginError(login)) {
                     logger.error("Form-based auth failed");
                     return false;
@@ -269,10 +290,6 @@ public abstract class BaseFormAuthenticator implements HttpAuthenticator {
                                                   + login.getResponseBodyAsString());
                 }
                 logger.debug("Result: " + res);
-            } else if (res != HttpStatus.SC_OK) {
-                //if request to welcome page was OK, we figure that the session is already set
-
-                throw new HttpClientException("Request to welcome page returned error: " + res + ": " + get);
             }
         } catch (MalformedURLException e) {
             throw new HttpClientException("Bad URL", e);
@@ -300,17 +317,17 @@ public abstract class BaseFormAuthenticator implements HttpAuthenticator {
         final CookieSpec cookiespec = CookiePolicy.getDefaultSpec();
         final Cookie[] initcookies = cookiespec.match(reqUrl.getHost(),
                                                       reqUrl.getPort() > 0 ? reqUrl.getPort() : 80,
-                                                      basePath,
+                                                      basePath.endsWith("/") ? basePath : basePath + "/",
                                                       HTTP_SECURE_PROTOCOL.equalsIgnoreCase(reqUrl.getProtocol()),
                                                       state.getCookies());
         boolean hasSession = false;
         if (initcookies.length == 0) {
             hasSession = false;
         } else {
-            for (int i = 0; i < initcookies.length; i++) {
-                if (JAVA_SESSION_COOKIE_NAME.equals(initcookies[i].getName())
-                    || JAVA_SESSION_COOKIE_PATTERN.matcher(initcookies[i].getName()).matches()) {
-                    logger.debug("Saw session cookie: " + initcookies[i].getName());
+            for (final Cookie cookie : initcookies) {
+                if (JAVA_SESSION_COOKIE_NAME.equals(cookie.getName())
+                    || JAVA_SESSION_COOKIE_PATTERN.matcher(cookie.getName()).matches()) {
+                    logger.debug("Saw session cookie: " + cookie.getName());
                     hasSession = true;
                     break;
                 }
