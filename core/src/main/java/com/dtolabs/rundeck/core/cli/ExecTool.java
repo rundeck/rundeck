@@ -27,8 +27,10 @@ import com.dtolabs.rundeck.core.dispatcher.QueuedItem;
 import com.dtolabs.rundeck.core.dispatcher.QueuedItemResult;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.commands.ExecCommand;
+import com.dtolabs.rundeck.core.execution.commands.ExecCommandBase;
 import com.dtolabs.rundeck.core.execution.commands.ScriptFileCommand;
 import com.dtolabs.rundeck.core.execution.commands.ScriptURLCommandBase;
+import com.dtolabs.rundeck.core.execution.commands.ScriptFileCommandBase;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.resources.FileResourceModelSource;
@@ -671,7 +673,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
 
     ExecutionItem createExecutionItem() {
         if(null!=getScript() || null!=getServerScriptFilePath() || null!=getScriptAsStream()){
-            return new ScriptFileCommand() {
+            return new ScriptFileCommandBase() {
                 public String getScript() {
                     return ExecTool.this.getScript();
                 }
@@ -703,7 +705,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
                 }
             };
         }else{
-            return new ExecCommand() {
+            return new ExecCommandBase() {
                 public String[] getCommand(){
                     return ExecTool.this.getArgs();
                 }

@@ -14,8 +14,7 @@ import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
-import com.dtolabs.rundeck.execution.IWorkflowCmdItem
-import com.dtolabs.rundeck.execution.IWorkflowJobItem
+
 import com.dtolabs.rundeck.execution.JobExecutionItem
 import grails.util.GrailsWebUtil
 import java.text.MessageFormat
@@ -576,7 +575,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             final List<String> strings = CLIUtils.splitArgLine(cmd.getAdhocRemoteString());
             final String[] args = strings.toArray(new String[strings.size()]);
 
-            return ExecutionItemFactory.createExecCommand(args,handler);
+            return ExecutionItemFactory.createExecCommand(args, handler, !!cmd.keepgoingOnSuccess);
             
         } else if (null != cmd.getAdhocLocalString()) {
             final String script = cmd.getAdhocLocalString();
@@ -587,7 +586,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             } else {
                 args = new String[0];
             }
-            return ExecutionItemFactory.createScriptFileItem(script, args, handler);
+            return ExecutionItemFactory.createScriptFileItem(script, args, handler, !!cmd.keepgoingOnSuccess);
 
         } else if (null != cmd.getAdhocFilepath()) {
             final String filepath = cmd.getAdhocFilepath();
@@ -599,9 +598,9 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                 args = new String[0];
             }
             if(filepath ==~ /^(?i:https?|file):.*$/) {
-                return ExecutionItemFactory.createScriptURLItem(filepath, args, handler)
+                return ExecutionItemFactory.createScriptURLItem(filepath, args, handler, !!cmd.keepgoingOnSuccess)
             }else{
-                return ExecutionItemFactory.createScriptFileItem(new File(filepath), args, handler);
+                return ExecutionItemFactory.createScriptFileItem(new File(filepath), args, handler, !!cmd.keepgoingOnSuccess);
             }
         } else if (cmd.instanceOf(JobExec)) {
             final JobExec jobcmditem = cmd as JobExec;
@@ -614,7 +613,7 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                 args = new String[0];
             }
 
-            return ExecutionItemFactory.createJobRef(jobcmditem.getJobIdentifier(),args, handler)
+            return ExecutionItemFactory.createJobRef(jobcmditem.getJobIdentifier(), args, handler, !!cmd.keepgoingOnSuccess)
         } else {
             throw new IllegalArgumentException("Workflow command item was not valid");
         }

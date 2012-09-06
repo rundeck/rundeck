@@ -32,6 +32,7 @@ public class CommandExec extends ExecutionContext implements IWorkflowCmdItem {
     String equalsString
     static belongsTo = [Workflow,CommandExec]
     CommandExec errorHandler
+    Boolean keepgoingOnSuccess
     public String toString() {
         StringBuffer sb = new StringBuffer()
         sb << "command( "
@@ -43,7 +44,8 @@ public class CommandExec extends ExecutionContext implements IWorkflowCmdItem {
         sb << (adhocLocalString ? "script: ${adhocLocalString}" : '')
         sb << (adhocFilepath ? "scriptfile: ${adhocFilepath}" : '')
         sb << (argString ? "scriptargs: ${argString}" : '')
-        sb << (errorHandler ? " [handler: ${errorHandler}" : '')
+        sb << (errorHandler ? " [handler: ${errorHandler}]" : '')
+        sb << (null!= keepgoingOnSuccess ? " keepgoingOnSuccess: ${keepgoingOnSuccess}" : '')
         sb<<")"
 
         return sb.toString()
@@ -72,6 +74,7 @@ public class CommandExec extends ExecutionContext implements IWorkflowCmdItem {
         nodeRankAttribute(nullable:true)
         nodeRankOrderAscending(nullable:true)
         errorHandler(nullable: true)
+        keepgoingOnSuccess(nullable: true)
     }
 
     public CommandExec createClone(){
@@ -104,6 +107,8 @@ public class CommandExec extends ExecutionContext implements IWorkflowCmdItem {
         }
         if(errorHandler){
             map.errorhandler=errorHandler.toMap()
+        }else if(null!= keepgoingOnSuccess){
+            map.keepgoingOnSuccess= keepgoingOnSuccess
         }
         return map
     }
@@ -125,6 +130,9 @@ public class CommandExec extends ExecutionContext implements IWorkflowCmdItem {
         }
         if(data.args && !ce.adhocRemoteString){
             ce.argString=data.args
+        }
+        if(data.keepgoingOnSuccess!=null){
+            ce.keepgoingOnSuccess=data.keepgoingOnSuccess
         }
         //nb: error handler is created inside Workflow.fromMap
         return ce

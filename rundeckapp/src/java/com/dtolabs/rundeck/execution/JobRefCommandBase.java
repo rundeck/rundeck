@@ -46,4 +46,8 @@ public class JobRefCommandBase extends JobRefCommand implements HasFailureHandle
     public ExecutionItem getFailureHandler() {
         return null;
     }
+
+    public boolean isKeepgoingOnSuccess() {
+        return false;
+    }
 }

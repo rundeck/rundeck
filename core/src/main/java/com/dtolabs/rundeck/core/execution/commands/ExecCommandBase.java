@@ -39,4 +39,8 @@ public class ExecCommandBase extends ExecCommand implements HasFailureHandler {
     public ExecutionItem getFailureHandler() {
         return null;
     }
+
+    public boolean isKeepgoingOnSuccess() {
+        return false;
+    }
 }

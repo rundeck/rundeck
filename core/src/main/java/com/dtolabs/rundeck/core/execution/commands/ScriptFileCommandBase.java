@@ -53,4 +53,8 @@ public class ScriptFileCommandBase extends ScriptFileCommand implements HasFailu
     public ExecutionItem getFailureHandler() {
         return null;
     }
+
+    public boolean isKeepgoingOnSuccess() {
+        return false;
+    }
 }

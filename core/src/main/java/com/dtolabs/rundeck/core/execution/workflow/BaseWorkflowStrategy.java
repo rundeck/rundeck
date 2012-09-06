@@ -218,6 +218,10 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
         return itemsuccess;
     }
 
+    /**
+     * Execute the sequence of ExecutionItems within the context, and with the given keepgoing value, return true if
+     * successful
+     */
     protected boolean executeWorkflowItemsForNodeSet(final ExecutionContext executionContext,
                                                      final Map<Integer, Object> failedMap,
                                                      final List<DispatcherResult> resultList,
@@ -260,7 +264,8 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
             try {
                 if(!stepSuccess && cmd instanceof HasFailureHandler) {
                     final HasFailureHandler handles = (HasFailureHandler) cmd;
-                    if (null != handles.getFailureHandler()) {
+                    final ExecutionItem handler = handles.getFailureHandler();
+                    if (null != handler) {
                         //if there is a failure, and a failureHandler item, execute the failure handler
                         //set keepgoing=false, and store the results
                         //will throw an exception on failure because keepgoing=false
@@ -284,22 +289,33 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                         WorkflowStepFailureException handlerFailure = null;
                         boolean handlerSuccess = false;
                         try {
-                            handlerSuccess = executeWFItem(executionContext, handlerFailedMap, handlerResult, c,
-                                handles.getFailureHandler(),
+                            handlerSuccess = executeWFItem(handlerExecContext, handlerFailedMap, handlerResult, c,
+                                                           handler,
                                 false);
                         } catch (WorkflowStepFailureException e) {
                             handlerFailure = e;
                         }
 
                         //handle success conditions:
-                        //1. keepgoing=false, then status is the same as the original step.
-                        //2. if keepgoing=true, then status from handler overrides original step
+                        //1. if keepgoing=true, then status from handler overrides original step
+                        //2. keepgoing=false, then status is the same as the original step, unless
+                        //   the keepgoingOnSuccess is set to true and the handler succeeded
                         if (keepgoing) {
                             stepSuccess = handlerSuccess;
                             stepFailure = handlerFailure;
                             stepResult.addAll(handlerResult);
                             stepFailedMap = handlerFailedMap;
                             nodeFailures = handlerCaptureFailedNodesListener.getFailedNodes();
+                        }else if(handlerSuccess && handler instanceof HandlerExecutionItem) {
+                            final boolean keepgoingOnSuccess
+                                = ((HandlerExecutionItem) handler).isKeepgoingOnSuccess();
+                            if(keepgoingOnSuccess){
+                                stepSuccess = handlerSuccess;
+                                stepFailure = handlerFailure;
+                                stepResult.addAll(handlerResult);
+                                stepFailedMap = handlerFailedMap;
+                                nodeFailures = handlerCaptureFailedNodesListener.getFailedNodes();
+                            }
                         }
                     }
                 }
@@ -328,6 +344,8 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
 
             if(null!=stepFailure && !keepgoing){
                 throw stepFailure;
+            }else if(!stepSuccess && !keepgoing){
+                break;
             }
             c++;
         }

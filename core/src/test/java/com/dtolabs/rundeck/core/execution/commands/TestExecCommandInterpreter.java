@@ -163,7 +163,7 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
         };
         final String[] strings = {"test", "command"};
 
-        ExecCommand command = new ExecCommand() {
+        ExecCommand command = new ExecCommandBase() {
             public String[] getCommand() {
 
                 return strings;
@@ -276,7 +276,7 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
         };
         final String[] strings = {"test", "command"};
 
-        ExecCommand command = new ExecCommand() {
+        ExecCommand command = new ExecCommandBase() {
             public String[] getCommand() {
 
                 return strings;
