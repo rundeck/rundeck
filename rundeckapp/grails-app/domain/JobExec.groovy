@@ -69,6 +69,8 @@ public class JobExec extends CommandExec implements IWorkflowJobItem{
         }
         if (errorHandler) {
             map.errorhandler = errorHandler.toMap()
+        } else if (keepgoingOnSuccess) {
+            map.keepgoingOnSuccess = keepgoingOnSuccess
         }
         return map
     }
@@ -80,6 +82,7 @@ public class JobExec extends CommandExec implements IWorkflowJobItem{
         if(map.jobref.args){
             exec.argString=map.jobref.args
         }
+        exec.keepgoingOnSuccess = !!map.keepgoingOnSuccess
         //nb: error handler is created inside Workflow.fromMap
         return exec
     }

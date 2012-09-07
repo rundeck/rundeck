@@ -291,6 +291,11 @@ public class TestScriptURLCommandInterpreter extends AbstractBaseTest {
             public ExecutionItem getFailureHandler() {
                 return null;
             }
+
+            @Override
+            public boolean isKeepgoingOnSuccess() {
+                return false;
+            }
         };
         {
             final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>();

@@ -339,7 +339,8 @@ class JobsXMLCodec {
         BuilderUtil.makeAttribute(map, 'strategy')
         map.command = map.remove('commands')
         //convert script args values to idiosyncratic label
-        def gencmd = { cmd ->
+
+        def gencmd= { cmd, iseh=false ->
             if (cmd.scriptfile || cmd.script || cmd.scripturl) {
                 cmd.scriptargs = cmd.remove('args')
                 if (cmd.script) {
@@ -357,11 +358,14 @@ class JobsXMLCodec {
                     cmd.jobref.arg = BuilderUtil.toAttrMap('line', remove)
                 }
             }
+            if(iseh){
+                BuilderUtil.makeAttribute(cmd, 'keepgoingOnSuccess')
+            }
         }
         map.command.each(gencmd)
         map.command.each {
             if (it.errorhandler) {
-                gencmd(it.errorhandler)
+                gencmd(it.errorhandler,true)
             }
         }
     }

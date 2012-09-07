@@ -703,6 +703,11 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
                 public ExecutionItem getFailureHandler() {
                     return null;
                 }
+
+                @Override
+                public boolean isKeepgoingOnSuccess() {
+                    return false;
+                }
             };
         }else{
             return new ExecCommandBase() {

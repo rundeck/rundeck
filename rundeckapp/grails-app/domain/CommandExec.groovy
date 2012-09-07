@@ -107,7 +107,7 @@ public class CommandExec extends ExecutionContext implements IWorkflowCmdItem {
         }
         if(errorHandler){
             map.errorhandler=errorHandler.toMap()
-        }else if(null!= keepgoingOnSuccess){
+        }else if(keepgoingOnSuccess){
             map.keepgoingOnSuccess= keepgoingOnSuccess
         }
         return map
@@ -131,9 +131,7 @@ public class CommandExec extends ExecutionContext implements IWorkflowCmdItem {
         if(data.args && !ce.adhocRemoteString){
             ce.argString=data.args
         }
-        if(data.keepgoingOnSuccess!=null){
-            ce.keepgoingOnSuccess=data.keepgoingOnSuccess
-        }
+        ce.keepgoingOnSuccess=!!data.keepgoingOnSuccess
         //nb: error handler is created inside Workflow.fromMap
         return ce
     }

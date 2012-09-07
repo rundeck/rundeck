@@ -116,9 +116,9 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         def Yaml yaml = new Yaml()
         def errhandlers=[
             new CommandExec([adhocRemoteString: 'err exec']),
-            new CommandExec([adhocLocalString: "err script",argString:'err script args']),
-            new CommandExec([adhocFilepath: 'err file path',argString: 'err file args']),
-            new JobExec([jobName: 'err job', jobGroup: 'err group',argString: 'err job args'])
+            new CommandExec([adhocLocalString: "err script",argString:'err script args',keepgoingOnSuccess:false]),
+            new CommandExec([adhocFilepath: 'err file path',argString: 'err file args', keepgoingOnSuccess: true]),
+            new JobExec([jobName: 'err job', jobGroup: 'err group',argString: 'err job args', keepgoingOnSuccess: true])
         ]
         ScheduledExecution se = new ScheduledExecution([
             jobName: 'test job 1',
@@ -180,11 +180,11 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
 
         ndx++
         assertNotNull doc[0].sequence.commands[ndx].errorhandler
-        assertEquals([scriptfile: 'err file path', args: 'err file args'], doc[0].sequence.commands[ndx].errorhandler)
+        assertEquals([scriptfile: 'err file path', args: 'err file args', keepgoingOnSuccess:true], doc[0].sequence.commands[ndx].errorhandler)
 
         ndx++
         assertNotNull doc[0].sequence.commands[ndx].errorhandler
-        assertEquals([jobref: [name: 'err job', group:'err group',args: 'err job args']], doc[0].sequence.commands[ndx].errorhandler)
+        assertEquals([jobref: [name: 'err job', group:'err group',args: 'err job args'], keepgoingOnSuccess: true], doc[0].sequence.commands[ndx].errorhandler)
 
     }
 
@@ -455,6 +455,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
     - scriptfile: file path
       args: file args
       errorhandler:
+        keepgoingOnSuccess: false
         scriptfile: err file
         args: err file args
     - jobref:
@@ -462,6 +463,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         group: job group
         args: job args
       errorhandler:
+        keepgoingOnSuccess: true
         jobref:
           name: err job name
           group: err job group
@@ -495,6 +497,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertNull se.workflow.commands[ndx].errorHandler.adhocLocalString
         assertNull se.workflow.commands[ndx].errorHandler.adhocFilepath
         assertNull se.workflow.commands[ndx].errorHandler.argString
+        assertFalse se.workflow.commands[ndx].errorHandler.keepgoingOnSuccess
 
         ndx++
         assertEquals CommandExec.class, se.workflow.commands[ndx].class
@@ -509,6 +512,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertEquals "err script args", se.workflow.commands[ndx].errorHandler.argString
         assertNull se.workflow.commands[ndx].errorHandler.adhocRemoteString
         assertNull se.workflow.commands[ndx].errorHandler.adhocFilepath
+        assertFalse se.workflow.commands[ndx].errorHandler.keepgoingOnSuccess
 
         ndx++
         assertEquals CommandExec.class, se.workflow.commands[ndx].class
@@ -523,6 +527,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertEquals "err file args", se.workflow.commands[ndx].errorHandler.argString
         assertNull se.workflow.commands[ndx].errorHandler.adhocLocalString
         assertNull se.workflow.commands[ndx].errorHandler.adhocRemoteString
+        assertFalse se.workflow.commands[ndx].errorHandler.keepgoingOnSuccess
 
         ndx++
         assertEquals JobExec.class, se.workflow.commands[ndx].class
@@ -535,6 +540,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertEquals "err job name", se.workflow.commands[ndx].errorHandler.jobName
         assertEquals "err job group", se.workflow.commands[ndx].errorHandler.jobGroup
         assertEquals "err job args", se.workflow.commands[ndx].errorHandler.argString
+        assertTrue "err job keepgoing", se.workflow.commands[ndx].errorHandler.keepgoingOnSuccess
 
 
     }

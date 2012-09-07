@@ -438,14 +438,14 @@ class JobsXMLCodecTests extends GroovyTestCase {
         <command>
             <scriptfile>test3</scriptfile>
             <scriptargs>blah3 blah3</scriptargs>
-            <errorhandler>
+            <errorhandler  keepgoingOnSuccess='false'>
                 <scriptfile>test3err</scriptfile>
                 <scriptargs>blah3 blah3 err</scriptargs>
             </errorhandler>
         </command>
         <command>
             <jobref name="test" group="group"/>
-            <errorhandler>
+            <errorhandler keepgoingOnSuccess='true'>
                 <jobref name="testerr" group="grouperr">
                     <arg line="line err"/>
                 </jobref>
@@ -469,16 +469,21 @@ class JobsXMLCodecTests extends GroovyTestCase {
         }
         assertEquals('testerr', jobs[0].workflow.commands[0].errorHandler.adhocRemoteString)
         assertNull(jobs[0].workflow.commands[0].errorHandler.argString)
+        assertFalse(jobs[0].workflow.commands[0].errorHandler.keepgoingOnSuccess)
 
         assertEquals('test2err', jobs[0].workflow.commands[1].errorHandler.adhocLocalString)
         assertEquals('blah blah err',jobs[0].workflow.commands[1].errorHandler.argString)
+        assertFalse(jobs[0].workflow.commands[1].errorHandler.keepgoingOnSuccess)
 
         assertEquals('test3err', jobs[0].workflow.commands[2].errorHandler.adhocFilepath)
         assertEquals('blah3 blah3 err',jobs[0].workflow.commands[2].errorHandler.argString)
+        assertFalse(jobs[0].workflow.commands[2].errorHandler.keepgoingOnSuccess)
 
         assertEquals('testerr', jobs[0].workflow.commands[3].errorHandler.jobName)
         assertEquals('grouperr', jobs[0].workflow.commands[3].errorHandler.jobGroup)
         assertEquals('line err',jobs[0].workflow.commands[3].errorHandler.argString)
+        assertNotNull(jobs[0].workflow.commands[3].errorHandler.keepgoingOnSuccess)
+        assertTrue(jobs[0].workflow.commands[3].errorHandler.keepgoingOnSuccess)
     }
 
     void testDecodeExample(){
@@ -2384,9 +2389,9 @@ class JobsXMLCodecTests extends GroovyTestCase {
     void testEncodeErrorhandler(){
         def XmlSlurper parser = new XmlSlurper()
         def eh1= new CommandExec([adhocLocalString: 'test err', argString: 'blah err'])
-        def eh2= new CommandExec([adhocRemoteString: 'exec err', argString: 'blah err2'])
-        def eh3= new CommandExec([adhocFilepath: 'file err', argString: 'blah err3'])
-        def eh4= new JobExec([jobName: 'job err', jobGroup: 'group err', argString: 'blah err4'])
+        def eh2= new CommandExec([adhocRemoteString: 'exec err', argString: 'blah err2', keepgoingOnSuccess: false])
+        def eh3= new CommandExec([adhocFilepath: 'file err', argString: 'blah err3',keepgoingOnSuccess:true])
+        def eh4= new JobExec([jobName: 'job err', jobGroup: 'group err', argString: 'blah err4', keepgoingOnSuccess: false])
         def jobs1 = [
             new ScheduledExecution(
                 jobName: 'test job 1',
@@ -2422,6 +2427,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].scriptfile.size()
         assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].exec.size()
         assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].jobref.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].'@keepgoingOnSuccess'.size()
 
         ndx++
         assertEquals "wrong handler count", 1, doc.job[0].sequence[0].command[ndx].errorhandler.size()
@@ -2430,6 +2436,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].scriptfile.size()
         assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].script.size()
         assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].jobref.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].'@keepgoingOnSuccess'.size()
         ndx++
         assertEquals "wrong handler count", 1, doc.job[0].sequence[0].command[ndx].errorhandler.size()
         assertEquals "wrong handler scriptfile", 'file err', doc.job[0].sequence[0].command[ndx].errorhandler[0].scriptfile[0].text()
@@ -2437,6 +2444,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].exec.size()
         assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].script.size()
         assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].jobref.size()
+        assertEquals 'true', doc.job[0].sequence[0].command[ndx].errorhandler[0].'@keepgoingOnSuccess'.text()
         ndx++
         assertEquals "wrong handler count", 1, doc.job[0].sequence[0].command[ndx].errorhandler.size()
         assertEquals 1, doc.job[0].sequence[0].command[ndx].errorhandler[0].jobref.size()
@@ -2447,6 +2455,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].exec.size()
         assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].script.size()
         assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].scriptfile.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].'@keepgoingOnSuccess'.size()
 
 
     }
