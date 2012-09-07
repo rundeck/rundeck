@@ -25,9 +25,14 @@
  --%><div id="wfivis_${i}" style="${wdgt.styleVisible(unless:i==highlight)}">
     <div class="pflowitem wfctrlholder"><span class="pflow item " id="wfitem_${i}" >
         <g:if test="${isErrorHandler}">
-            <span class="info note">on failure:</span>
+            <span class="info note"><g:message code="Workflow.stepErrorHandler.label.on.error" /></span>
         </g:if>
         <g:render template="/execution/wfItemView" model="${[item:item,edit:edit,noimgs:noimgs, workflow: workflow, project: project]}"/>
+        <g:if test="${isErrorHandler}">
+            <g:if test="${item.keepgoingOnSuccess}">
+                <span class=" succeed" title="${g.message(code:'Workflow.stepErrorHandler.keepgoingOnSuccess.description').encodeAsHTML()}"><g:message code="Workflow.stepErrorHandler.label.keep.going.on.success" /></span>
+            </g:if>
+        </g:if>
     </span>
         <g:unless test="${stepNum!=null}">
             <g:set var="stepNum" value="${i}"/>
@@ -46,7 +51,12 @@
             </g:unless>
         </span>
         <div id="itemdel_${i}" class="confirmMessage popout confirmbox"  style="display:none;">
-            <g:message code="Workflow.${isErrorHandler ? 'stepErrorHandler' : 'step'}.action.confirmDelete.label" args="${[stepNum+1]}"/>
+            <g:if test="${isErrorHandler}">
+                <g:message code="Workflow.stepErrorHandler.label.action.confirmDelete" args="${[stepNum + 1]}"/>
+            </g:if>
+            <g:else>
+                <g:message code="Workflow.step.action.confirmDelete.label" args="${[stepNum + 1]}"/>
+            </g:else>
             <span class="action button small textbtn" onclick="['itemdel_${i}'].each(Element.hide);">No</span>
             <span class="action button small textbtn" onclick="_doRemoveItem('${i}','${stepNum}',${isErrorHandler?true:false});">Yes</span>
         </div>

@@ -137,10 +137,10 @@
 
         <div id="wfnew_eh_types" style="display:none; margin-top:10px;background: white;" class="popout">
             %{--This element is moved around to show the add error-handle buttons for a step--}%
-            <span>Add a ${g.message(code: 'Workflow.stepErrorHandler.label')}.</span>
+            <span><g:message code="Workflow.stepErrorHandler.label.add"/></span>
             <span><g:message code="Workflow.stepErrorHandler.description" /></span>
 
-            <div class="info note">Choose the type of ${g.message(code: 'Workflow.stepErrorHandler.label')}:</div>
+            <div class="info note"><g:message code="Workflow.stepErrorHandler.label.choose.the.type" /></div>
 
             <div style="margin:10px;">
                 <span class="button action add_eh_type" data-eh-type="command"  title="Execute a remote command"><g:img

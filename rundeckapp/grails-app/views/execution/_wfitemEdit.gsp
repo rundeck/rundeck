@@ -92,6 +92,15 @@
     </div>
     </g:if>
 </g:elseif>
+<g:if test="${isErrorHandler}">
+    <div class="presentation">
+        <label>
+        <g:checkBox name="keepgoingOnSuccess" value="true" checked="${item?.keepgoingOnSuccess}"/>
+        <g:message code="Workflow.stepErrorHandler.keepgoingOnSuccess.label" />
+        </label>
+        <span class="info note"><g:message code="Workflow.stepErrorHandler.keepgoingOnSuccess.description" /></span>
+    </div>
+</g:if>
 
 <g:hiddenField name="key" value="${key}"/>
 <g:hiddenField name="isErrorHandler" value="${isErrorHandler ? true : false}"/>
