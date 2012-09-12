@@ -658,6 +658,12 @@ The contents of an `<errorhandler>` are exactly the same as for a
 
 The different types of errorhandler steps are defined in different ways.
 
+*Attributes*
+
+`keepgoingOnSuccess`
+
+:    true/false. (default false). If true, and the error handler succeeds, the workflow sequence will continue even if the workflow `keepgoing` is false.
+
 See:
 
 * [Script sequence step](#script-sequence-step)

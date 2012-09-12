@@ -168,6 +168,12 @@ cannot contain another Error Handler.  The contents are defined by one of these 
 * [Script file execution entry](#script-file-execution-entry)
 * [Job Reference entry](#job-reference-entry)
 
+The errorhandler has this additional optional entry:
+
+`keepgoingOnSuccess`
+
+:    "true/false" - If true, and the error handler succeeds, the workflow sequence will continue even if the workflow `keepgoing` is false.
+
 #### Simple Command Entry
 
 This [Command](#command) consists of a single entry:
