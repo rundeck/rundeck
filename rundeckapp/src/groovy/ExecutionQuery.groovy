@@ -31,6 +31,10 @@ class ExecutionQuery extends ScheduledExecutionQuery{
     List<String> jobIdListFilter
     List<String> excludeJobListFilter
     List<String> excludeJobIdListFilter
+    String excludeJobFilter
+    String excludeJobExactFilter
+    String excludeGroupPath
+    String excludeGroupPathExact
     Date startafterFilter
     Date startbeforeFilter
     Date endafterFilter

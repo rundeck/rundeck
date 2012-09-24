@@ -846,7 +846,10 @@ class ExecutionController {
         def eqfilters = ScheduledExecutionQuery.EQ_FILTERS
         def boolfilters = ScheduledExecutionQuery.BOOL_FILTERS
         def filters = ScheduledExecutionQuery.ALL_FILTERS
-        def jobqueryfilters=['jobListFilter','jobIdListFilter','excludeJobListFilter','excludeJobIdListFilter','jobFilter','jobExactFilter','groupPath','groupPathExact','descFilter']
+        def excludeTxtFilters=['excludeJob':'jobName']
+        def excludeEqFilters=['excludeJobExact':'jobName']
+
+        def jobqueryfilters=['jobListFilter','jobIdListFilter','excludeJobListFilter','excludeJobIdListFilter','jobFilter','jobExactFilter','groupPath','groupPathExact','descFilter','excludeGroupPath','excludeGroupPathExact','excludeJobFilter','excludeJobExactFilter']
 
         def convertids = {String s->
             try {
@@ -970,6 +973,20 @@ class ExecutionController {
                             eq(val, query["${key}Filter"])
                         }
                     }
+                    excludeTxtFilters.each { key, val ->
+                        if (query["${key}Filter"]) {
+                            not {
+                                ilike(val, '%' + query["${key}Filter"] + '%')
+                            }
+                        }
+                    }
+                    excludeEqFilters.each { key, val ->
+                        if (query["${key}Filter"]) {
+                            not {
+                                eq(val, query["${key}Filter"])
+                            }
+                        }
+                    }
 
 
                     if('-'==query['groupPath']){
@@ -983,6 +1000,21 @@ class ExecutionController {
                             eq("groupPath", query['groupPath'])
                         }
                     }
+                    if('-'==query['excludeGroupPath']){
+                        not{
+                            or {
+                                eq("groupPath", "")
+                                isNull("groupPath")
+                            }
+                        }
+                    } else if (query["excludeGroupPath"]) {
+                        not{
+                            or {
+                                like("groupPath", query["excludeGroupPath"] + "/%")
+                                eq("groupPath", query['excludeGroupPath'])
+                            }
+                        }
+                    }
                     if (query["groupPathExact"]) {
                         if ("-" == query["groupPathExact"]) {
                             or {
@@ -990,8 +1022,21 @@ class ExecutionController {
                                 isNull("groupPath")
                             }
                         } else {
+                            eq("groupPath", query['groupPathExact'])
+                        }
+                    }
+                    if (query["excludeGroupPathExact"]) {
+                        if ("-" == query["excludeGroupPathExact"]) {
+                            not{
+                                or {
+                                    eq("groupPath", "")
+                                    isNull("groupPath")
+                                }
+                            }
+                        } else {
                             or {
-                                eq("groupPath", query['groupPathExact'])
+                                ne("groupPath", query['excludeGroupPathExact'])
+                                isNull("groupPath")
                             }
                         }
                     }

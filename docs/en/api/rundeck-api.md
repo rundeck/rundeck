@@ -671,14 +671,18 @@ The format for the `end`, and `begin` filters is either:  a unix millisecond tim
 
 Parameters for querying for Executions for particular jobs:
 
-* `jobIdList`: specify a Job ID to include, can be specified multiple times
-* `excludeJobIdList`: specify a Job ID to exclude, can be specified multiple times
-* `jobList`: specify a full Job group/name to include, can be specified multiple times
-* `excludeJobList`: specify a full Job group/name to exclude, can be specified multiple times
+* `jobIdListFilter`: specify a Job ID to include, can be specified multiple times
+* `excludeJobIdListFilter`: specify a Job ID to exclude, can be specified multiple times
+* `jobListFilter`: specify a full Job group/name to include, can be specified multiple times
+* `excludeJobListFilter`: specify a full Job group/name to exclude, can be specified multiple times
 * `groupPath`: specify a group or partial group path to include all jobs within that group path. Set to the special value "-" to match the top level jobs only.
 * `groupPathExact`: specify an exact group path to match.  Set to the special value "-" to match the top level jobs only.
-* `jobFilter`: specify a filter for the job Name. Matches any job name that contains this value.
+* `excludeGroupPath`: specify a group or partial group path to exclude all jobs within that group path. Set to the special value "-" to match the top level jobs only.
+* `excludeGroupPathExact`: specify an exact group path to exclude.  Set to the special value "-" to match the top level jobs only.
+* `jobFilter`: specify a filter for the job Name. Include any job name that matches this value.
+* `excludeJobFilter`: specify a filter for the job Name. Exclude any job name that matches this value.
 * `jobExactFilter`: specify an exact job name to match.
+* `excludeJobExactFilter`: specify an exact job name to exclude.
 
 
 The format for the `jobListFilter` and `excludeJobListFilter` is the job's group and name separated by a '/' character, such as: "group1/job name", or "my job" if there is no group.
