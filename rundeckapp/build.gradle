@@ -1,0 +1,118 @@
+/**
+ * The Rundeck webapp build file
+ * 
+ * NOTE: the build is actually performed by Grails - Gradle just wraps around it
+ */
+
+description = 'The Rundeck Grails webapp project '
+
+apply plugin: 'groovy'
+apply plugin: 'eclipse'
+
+// set the convention to rundeck:<branch>:<path>:<projectName>
+eclipse.project.name =  "${project.getParent().eclipse.project.name}:webapp"
+
+/**
+ * Properties for downloading & installing Grails
+ */
+def grailsBaseName = 'grails-' + grailsVersion;
+def grailsZipFile = grailsBaseName + '.zip';
+def grailsZipFileLocation = rootProject.buildDir.toString() + '/tmp/' + grailsZipFile;
+def grailsInstallLocation = rootProject.buildDir.toString() + '/local';
+def grailsDownloadUrl = "http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/grails-${grailsVersion}.zip"
+def grailsHome = grailsInstallLocation + "/${grailsBaseName}"
+def warFileLocation = project(':rundeckapp').projectDir.toString() + "/target/rundeck-${version}.war"
+
+/**
+ * Downloads Grails from the SpringSource archives
+ */
+task downloadGrails {
+	outputs.file file(grailsZipFileLocation);
+	doLast {
+		logger.warn("Downloading ${grailsBaseName}...")
+		file(rootProject.buildDir.toString() + '/tmp/').mkdirs();
+		ant.get(src: grailsDownloadUrl, dest: grailsZipFileLocation, verbose: true);
+	}
+}
+
+/**
+ * Expand the downloaded archive if it hasn't already been expanded
+ */
+task extractGrails(dependsOn: downloadGrails) {
+	
+	logger.debug("grailsZipFileLocation: ${grailsZipFileLocation}")
+	inputs.file file(grailsZipFileLocation);
+	
+	logger.debug("grailsInstallLocation: ${grailsInstallLocation}")
+	outputs.dir file(grailsInstallLocation);
+	
+	doLast {
+		logger.info("Extracting ${grailsZipFile}...")
+		file(grailsInstallLocation).mkdirs();
+		copy {
+			from zipTree(grailsZipFileLocation);
+			into file(grailsInstallLocation);
+		}
+		// make sure that everything but the .bat files are set +x on linux / macs
+		if (System.getProperty('os.name').toLowerCase().indexOf('win') < 0) {
+			FileTree tree = fileTree(grailsInstallLocation + "/${grailsBaseName}/bin").exclude('**/*.bat');
+			tree.each { File file ->
+				logger.info('Setting +x permission on ' + file);
+				file.setExecutable(true);
+			}
+		}
+	}
+}
+
+/**
+ * Installs the jetty-plugin into the .grails folder
+ */
+task installJettyPlugin(type: Exec, dependsOn: extractGrails) {
+	def jettyPluginZip = rootDir.toString() + '/dependencies/grails-jetty/zips/grails-jetty-1.2-SNAPSHOT.zip'
+	def jettyPluginInstalled = "${System.properties['user.home']}/.grails/${grailsVersion}/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT"
+	inputs.source file(jettyPluginZip)
+	outputs.dir file(jettyPluginInstalled)
+	workingDir project(':rundeckapp').projectDir
+	commandLine grailsHome + '/bin/grails'
+	args 'install-plugin', jettyPluginZip
+}
+
+task cleanWar(type: Delete) {
+	delete file(warFileLocation)
+}
+
+task clean(overwrite: true, dependsOn: cleanWar) {
+	// noop clean - just chains cleanWar
+}
+
+/**
+ * Wrapper task for grails test-app
+ */
+task test(type: Exec, overwrite: true, 
+		dependsOn: [installJettyPlugin,
+			project(":core").install, 
+			project(":plugins:script-plugin").install, 
+			project(":plugins:stub-plugin").install]) {
+			
+	workingDir project(':rundeckapp').projectDir
+	commandLine grailsHome + '/bin/grails'
+	args 'test-app','-coverage','-xml'
+}
+
+/**
+ * Builds the rundeck war file
+ */
+task war(type: Exec, dependsOn: test) {
+	inputs.sourceDir file(projectDir.toString() + '/src')
+	outputs.file file(warFileLocation)
+	workingDir project(':rundeckapp').projectDir
+	environment 'GRAILS_HOME', grailsHome
+	commandLine grailsHome + '/bin/grails'
+	args 'prod','war'
+}
+
+task build(overwrite: true, dependsOn: [test, war]) {
+	// noop build because this isn't actually a java project 
+	// besides the war task is handling building by issuing a "grails war" 
+}
+
