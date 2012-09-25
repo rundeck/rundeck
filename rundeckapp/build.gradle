@@ -116,3 +116,13 @@ task build(overwrite: true, dependsOn: [test, war]) {
 	// besides the war task is handling building by issuing a "grails war" 
 }
 
+/**
+ * Installs the war file into the ~/.m2 maven repo 
+ */
+task install(type: Exec, overwrite: true, dependsOn: build) {
+   	workingDir project(':rundeckapp').projectDir
+	commandLine grailsHome + '/bin/grails'
+	args 'maven-install'
+}
+
+

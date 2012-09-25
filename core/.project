@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>core</name>
-	<comment></comment>
+	<name>rundeck:core</name>
+	<comment>The Rundeck Core API project</comment>
 	<projects>
 	</projects>
 	<buildSpec>
@@ -12,6 +12,8 @@
 		</buildCommand>
 	</buildSpec>
 	<natures>
+		<nature>com.springsource.sts.gradle.core.nature</nature>
 		<nature>org.eclipse.jdt.core.javanature</nature>
+		<nature>org.eclipse.jdt.groovy.core.groovyNature</nature>
 	</natures>
 </projectDescription>

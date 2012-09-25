@@ -1,5 +1,19 @@
+/**
+ * The Rundeck Jetty server build file
+ */
+
+description = 'This is the embedded Jetty server project'
 
 archivesBaseName = 'rundeck-jetty-server'
+
+eclipse {
+	project {
+		// set the convention to rundeck:<branch>:<path>:<projectName>
+		name =  rootProject.eclipse.project.name + ':launcher:server';
+	}
+}
+
+
 dependencies {
     compile( 
         [group: 'log4j', name: 'log4j', version: '1.2.16',ext:'jar'],

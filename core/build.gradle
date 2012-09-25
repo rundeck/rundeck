@@ -1,12 +1,23 @@
+/**
+ * The Rundeck Core API build file
+ **/
+
+description = 'The Rundeck Core API project'
+
 import org.apache.tools.ant.filters.ReplaceTokens
 
-apply plugin: 'java'
-apply plugin: 'maven'
+//apply plugin: 'java'
+//apply plugin: 'maven'
+
+apply from: rootDir.toString() + '/gradle/java.gradle'
+
 sourceCompatibility = 1.5
-version = '1.4.4-dev'
+//version = '1.4.4-dev'
 archivesBaseName = 'rundeck-core'
-group = "com.dtolabs.rundeck"
+//group = "com.dtolabs.rundeck"
+
 defaultTasks 'clean','assemble'
+
 repositories {
     mavenCentral()
     add(new org.apache.ivy.plugins.resolver.FileSystemResolver()) {
@@ -17,6 +28,7 @@ repositories {
         checkmodified = true
     }
 }
+
 dependencies {
     compile( 
         [group: 'org.apache.ant', name: 'ant', version: '1.7.1',ext:'jar'],
@@ -43,7 +55,7 @@ dependencies {
 
 jar {
     manifest {
-        attributes 'Rundeck-Version': version,'Rundeck-Tools-Dependencies':configurations.runtime.collect { "$it.name" }.join(" ") 
+        attributes 'Rundeck-Version': version, 'Rundeck-Tools-Dependencies': configurations.runtime.collect { "$it.name" }.join(" ") 
     }
 }
 
@@ -77,30 +89,25 @@ assemble {
 }
 
 uploadArchives {
-		repositories.mavenDeployer {
-			configuration = configurations.archives
-            pom.project {
-                artifactId archivesBaseName
-                groupId "com.dtolabs.rundeck"
-                inceptionYear '2011'
-                packaging 'jar'
-                version version
-                name "RunDeck Core"
-                url 'http://rundeck.org'
-                licenses {
-                    license {
-                        name 'The Apache Software License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                        distribution 'repo'
-                    }
+    repositories.mavenDeployer {
+        configuration = configurations.archives 
+        pom.project {
+            artifactId archivesBaseName
+            groupId "com.dtolabs.rundeck"
+            inceptionYear '2011'
+            packaging 'jar'
+            version version
+            name "RunDeck Core"
+            url 'http://rundeck.org'
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
                 }
             }
+        }
     }
-
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '1.0'
 }
 
 task createPom << {

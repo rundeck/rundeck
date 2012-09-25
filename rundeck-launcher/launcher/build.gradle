@@ -1,3 +1,9 @@
+/**
+ * The Rundeck launcher app build file
+ */
+
+description = 'This is the launcher application which wraps the Jetty server'
+
 archivesBaseName = 'rundeck-launcher'
 defaultTasks 'clean','launcherJar'
 ext.launcherMainClass = "com.dtolabs.rundeck.ExpandRunServer"
@@ -8,6 +14,12 @@ ext.launcherJettyLibPath = "pkgs/webapp/WEB-INF/lib"
 
 ext.launcherContentsDir = new File("$projectDir/build/launcher-contents")
 
+eclipse {
+	project {
+		// set the convention to rundeck:<branch>:<path>:<projectName>
+		name =  rootProject.eclipse.project.name + ':launcher:app';
+	}
+}
 
 configurations{
     warBundle
@@ -16,21 +28,24 @@ configurations{
 }
 
 dependencies {
-    compile project(":rundeck-jetty-server")
+    compile project(":rundeck-launcher:rundeck-jetty-server")
     compile(
         //[group: 'log4j', name: 'log4j', version: '1.2.16',ext:'jar'],
         [group: 'commons-cli', name: 'commons-cli', version: '1.0',ext:'jar'],
     )
+	
     warBundle(
         [group: 'com.dtolabs.rundeck', name: 'rundeck', version: version,ext:'war']
     )
+	
     pluginFiles(
         [group: 'com.dtolabs.rundeck', name: 'rundeck-script-plugin', version: version,ext:'jar'],            
         [group: 'com.dtolabs.rundeck', name: 'rundeck-stub-plugin', version: version,ext:'jar']
     )
-    jettyServerLib(project(path:":rundeck-jetty-server",configuration:'runtime')){
+	
+    jettyServerLib(project(path:":rundeck-launcher:rundeck-jetty-server", configuration:'runtime')) {
         exclude module:'commons-cli'
-        transitive=true
+        transitive = true
 
     }
 }

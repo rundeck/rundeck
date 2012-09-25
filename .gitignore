@@ -7,6 +7,7 @@
 *.iml
 bin
 build
+cobertura.ser
 gradle-cache
 rundeckapp/stacktrace.log
 rundeckapp/grails-app/i18n/messages.properties.orig
@@ -16,5 +17,7 @@ rundeckapp/env.bash
 rundeckapp/work
 rundeckapp/web-app/plugins
 rundeckapp/target
+rundeckapp/target-eclipse
 packaging/dist
 docs/en/manpages/**/*.gz
+tmp/**
