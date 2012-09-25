@@ -4,7 +4,7 @@ import java.text.SimpleDateFormat
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.*
+import java.text.ParseException
 
 /**
 * ExecutionController
@@ -798,6 +798,306 @@ class ExecutionController {
         }
     }
 
+    /**
+     * API: /api/executions query interface, version 5
+     */
+    def apiExecutionsQuery = {ExecutionQuery query->
+        if (!new ApiController().requireVersion(ApiRequestFilters.V5)) {
+            return
+        }
+        Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        if(query.hasErrors()){
+            flash.errorCode = "api.error.parameter.error"
+            flash.errorArgs = [query.errors.allErrors.collect{message(error: it)}.join("; ")]
+            return chain(controller: 'api', action: 'renderError')
+        }
+        if (!params.project) {
+            flash.error = g.message(code: 'api.error.parameter.required', args: ['project'])
+            return chain(controller: 'api', action: 'renderError')
+        }
+        query.projFilter=params.project
+        if (null != query) {
+            query.configureFilter()
+        }
+
+        //attempt to parse/bind "end" and "begin" parameters
+        if (params.begin) {
+            try {
+                query.endafterFilter = ReportsController.parseDate(params.begin)
+                query.doendafterFilter = true
+            } catch (ParseException e) {
+                flash.error = g.message(code: 'api.error.history.date-format', args: ['begin', params.begin])
+                return chain(controller: 'api', action: 'error')
+            }
+        }
+        if (params.end) {
+            try {
+                query.endbeforeFilter = ReportsController.parseDate(params.end)
+                query.doendbeforeFilter = true
+            } catch (ParseException e) {
+                flash.error = g.message(code: 'api.error.history.date-format', args: ['end', params.end])
+                return chain(controller: 'api', action: 'error')
+            }
+        }
+
+
+        def state = query.statusFilter
+        def txtfilters = ScheduledExecutionQuery.TEXT_FILTERS
+        def eqfilters = ScheduledExecutionQuery.EQ_FILTERS
+        def boolfilters = ScheduledExecutionQuery.BOOL_FILTERS
+        def filters = ScheduledExecutionQuery.ALL_FILTERS
+        def excludeTxtFilters=['excludeJob':'jobName']
+        def excludeEqFilters=['excludeJobExact':'jobName']
+
+        def jobqueryfilters=['jobListFilter','jobIdListFilter','excludeJobListFilter','excludeJobIdListFilter','jobFilter','jobExactFilter','groupPath','groupPathExact','descFilter','excludeGroupPath','excludeGroupPathExact','excludeJobFilter','excludeJobExactFilter']
+
+        def convertids = {String s->
+            try {
+                return Long.valueOf(s)
+            } catch (NumberFormatException e) {
+                return s
+            }
+        }
+        def idlist = query.jobIdListFilter?.collect(convertids)
+        def xidlist = query.excludeJobIdListFilter?.collect(convertids)
+
+        def hasJobFilters= jobqueryfilters.any {query[it]}
+        if(hasJobFilters && query.adhoc){
+            flash.errorCode = "api.error.parameter.error"
+            flash.errorArgs = [message(code:'api.executions.jobfilter.adhoc.conflict')]
+            return chain(controller: 'api', action: 'renderError')
+        }
+        def c = Execution.createCriteria()
+        def result = c.list {
+            if(query.adhoc){
+                isNull('scheduledExecution')
+            }else if(null!=query.adhoc || hasJobFilters){
+                isNotNull('scheduledExecution')
+            }
+            if(!query.adhoc && hasJobFilters){
+                delegate.'scheduledExecution' {
+                    //begin related ScheduledExecution query
+                    if (idlist) {
+                        def idq= {
+                            idlist.each { theid ->
+                                if (theid instanceof Long) {
+                                    eq("id", theid)
+                                } else {
+                                    eq("uuid", theid)
+                                }
+                            }
+                        }
+                        if(idlist.size()>1){
+
+                            or{
+                                idq.delegate=delegate
+                                idq()
+                            }
+                        }else{
+                            idq.delegate = delegate
+                            idq()
+                        }
+                    }
+                    if (xidlist) {
+                        not{
+                            xidlist.each { theid ->
+                                if (theid instanceof Long) {
+                                    eq("id", theid)
+                                } else {
+                                    eq("uuid", theid)
+                                }
+                            }
+                        }
+                    }
+                    if (query.jobListFilter || query.excludeJobListFilter) {
+                        if (query.jobListFilter) {
+                            or {
+                                query.jobListFilter.each {
+                                    def z=it.split("/") as List
+                                    if(z.size()>1){
+                                        and{
+                                            eq('jobName', z.pop())
+                                            eq('groupPath', z.join("/"))
+                                        }
+                                    }else{
+                                        and{
+                                            eq('jobName', z.pop())
+                                            or{
+                                                eq('groupPath', "")
+                                                isNull('groupPath')
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (query.excludeJobListFilter) {
+                            not {
+                                or {
+                                    query.excludeJobListFilter.each {
+                                        def z = it.split("/") as List
+                                        if (z.size() > 1) {
+                                            and{
+                                                eq('jobName', z.pop())
+                                                eq('groupPath', z.join("/"))
+                                            }
+                                        } else {
+                                            and{
+                                                eq('jobName', z.pop())
+                                                or {
+                                                    eq('groupPath', "")
+                                                    isNull('groupPath')
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                }
+                            }
+                        }
+                    }
+
+                    txtfilters.each { key, val ->
+                        if (query["${key}Filter"]) {
+                            ilike(val, '%' + query["${key}Filter"] + '%')
+                        }
+                    }
+
+                    eqfilters.each { key, val ->
+                        if (query["${key}Filter"]) {
+                            eq(val, query["${key}Filter"])
+                        }
+                    }
+                    boolfilters.each { key, val ->
+                        if (null != query["${key}Filter"]) {
+                            eq(val, query["${key}Filter"])
+                        }
+                    }
+                    excludeTxtFilters.each { key, val ->
+                        if (query["${key}Filter"]) {
+                            not {
+                                ilike(val, '%' + query["${key}Filter"] + '%')
+                            }
+                        }
+                    }
+                    excludeEqFilters.each { key, val ->
+                        if (query["${key}Filter"]) {
+                            not {
+                                eq(val, query["${key}Filter"])
+                            }
+                        }
+                    }
+
+
+                    if('-'==query['groupPath']){
+                        or {
+                            eq("groupPath", "")
+                            isNull("groupPath")
+                        }
+                    } else if (query["groupPath"] && '*' != query["groupPath"]) {
+                        or {
+                            like("groupPath", query["groupPath"] + "/%")
+                            eq("groupPath", query['groupPath'])
+                        }
+                    }
+                    if('-'==query['excludeGroupPath']){
+                        not{
+                            or {
+                                eq("groupPath", "")
+                                isNull("groupPath")
+                            }
+                        }
+                    } else if (query["excludeGroupPath"]) {
+                        not{
+                            or {
+                                like("groupPath", query["excludeGroupPath"] + "/%")
+                                eq("groupPath", query['excludeGroupPath'])
+                            }
+                        }
+                    }
+                    if (query["groupPathExact"]) {
+                        if ("-" == query["groupPathExact"]) {
+                            or {
+                                eq("groupPath", "")
+                                isNull("groupPath")
+                            }
+                        } else {
+                            eq("groupPath", query['groupPathExact'])
+                        }
+                    }
+                    if (query["excludeGroupPathExact"]) {
+                        if ("-" == query["excludeGroupPathExact"]) {
+                            not{
+                                or {
+                                    eq("groupPath", "")
+                                    isNull("groupPath")
+                                }
+                            }
+                        } else {
+                            or {
+                                ne("groupPath", query['excludeGroupPathExact'])
+                                isNull("groupPath")
+                            }
+                        }
+                    }
+
+                    //end related ScheduledExecution query
+                }
+            }
+            eq('project',query.projFilter)
+            if(query.userFilter){
+                eq('user',query.userFilter)
+            }
+            if (state == ExecutionController.EXECUTION_RUNNING) {
+                isNull('dateCompleted')
+            } else if (state == ExecutionController.EXECUTION_ABORTED) {
+                isNotNull('dateCompleted')
+                eq('cancelled', true)
+            } else if (state) {
+                isNotNull('dateCompleted')
+                eq('cancelled', false)
+                eq('status', state== ExecutionController.EXECUTION_FAILED?'false':'true')
+            }
+            if(query.abortedbyFilter){
+                eq('abortedby',query.abortedbyFilter)
+            }
+            if (query.dostartafterFilter && query.dostartbeforeFilter && query.startbeforeFilter && query.startafterFilter) {
+                between('dateStarted', query.startafterFilter, query.startbeforeFilter)
+            }
+            else if (query.dostartbeforeFilter && query.startbeforeFilter) {
+                le('dateStarted', query.startbeforeFilter)
+            } else if (query.dostartafterFilter && query.startafterFilter) {
+                ge('dateStarted', query.startafterFilter)
+            }
+
+            if (query.doendafterFilter && query.doendbeforeFilter && query.endafterFilter && query.endbeforeFilter) {
+                between('dateCompleted', query.endafterFilter, query.endbeforeFilter)
+            }
+            else if (query.doendbeforeFilter && query.endbeforeFilter) {
+                le('dateCompleted', query.endbeforeFilter)
+            }
+            if (query.doendafterFilter && query.endafterFilter) {
+                ge('dateCompleted', query.endafterFilter)
+            }
+
+            if (params.offset) {
+                firstResult(params.int('offset'))
+            }
+            if (params.max) {
+                maxResults(params.int('max'))
+            }
+            and {
+                order('dateCompleted', 'desc')
+                order('dateStarted', 'desc')
+            }
+        }
+
+        //filter query results to READ authorized executions
+        def filtered = frameworkService.filterAuthorizedProjectExecutionsAll(framework,result,[AuthConstants.ACTION_READ])
+
+
+        return renderApiExecutionListResultXML(filtered)
+    }
 }
 
     

@@ -15,6 +15,7 @@ class UrlMappings {
         /** v5 */
         "/api/$api_version/execution/$id/output"(controller: 'execution', action: 'apiExecutionOutput')
         "/api/$api_version/executions/running"(controller: 'menu', action: 'apiExecutionsRunning')
+        "/api/$api_version/executions"(controller: 'execution', action: 'apiExecutionsQuery')
         "/api/$api_version/history"(controller: 'reports', action: 'apiHistory')
         "/api/$api_version/job/$id"(controller: 'scheduledExecution',action:'apiJobAction')
         "/api/$api_version/job/$id/run"(controller: 'scheduledExecution', action: 'apiJobRun')
