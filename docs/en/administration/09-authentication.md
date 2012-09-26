@@ -391,3 +391,50 @@ Finally, in your `ldap-activedirectory.conf` be sure to change the *providerUrl*
      providerUrl=ldaps://ad1 ldaps://ad2  
 
 Use this to provide connection redundancy if a particular host is unavailable.
+
+### Multiple Authentication Modules
+
+JAAS configurations can contain multiple LoginModule definitions, which are processed in order and according to the logic of the configuration Flag.
+
+In your config file, separate the LoginModule definitions with a `;` and be sure to select the appropriate Flag for the module, one of `required`, `requisite`, `sufficient`, or `optional`.  
+
+The full syntax and the description of how these Flags work is described in more detail under the [JAAS Configuration Documentation](http://docs.oracle.com/javase/6/docs/api/javax/security/auth/login/Configuration.html).
+
+Here is an example combining an LDAP module flagged as `sufficient`, and a flat file realm.properties config flagged as `required`:
+
+    multiauth {
+
+      com.dtolabs.rundeck.jetty.jaas.JettyCachingLdapLoginModule sufficient
+        debug="true"
+        contextFactory="com.sun.jndi.ldap.LdapCtxFactory"
+        providerUrl="ldap://server:389"
+        bindDn="cn=Manager,dc=example,dc=com"
+        bindPassword="secrent"
+        authenticationMethod="simple"
+        forceBindingLogin="false"
+        userBaseDn="ou=People,dc=test1,dc=example,dc=com"
+        userRdnAttribute="uid"
+        userIdAttribute="uid"
+        userPasswordAttribute="userPassword"
+        userObjectClass="account"
+        roleBaseDn="ou=Groups,dc=test1,dc=example,dc=com"
+        roleNameAttribute="cn"
+        roleUsernameMemberAttribute="memberUid"
+        roleMemberAttribute="memberUid"
+        roleObjectClass="posixGroup"
+        cacheDurationMillis="300000"
+        reportStatistics="true";
+
+      org.mortbay.jetty.plus.jaas.spi.PropertyFileLoginModule required
+        debug="true"
+        file="/etc/rundeck/realm.properties";
+    };
+
+Based on the flags, JAAS would attempt the following for authentication:
+
+1. Check username/pass against LDAP
+  1. If auth succeeds, finish with successful authentication
+  2. If auth fails, continue to the next module
+2. Check username/pass against the properties file
+  1. If auth succeeds, finish with successful authentication
+  2. If auth fails, finish with failed authentication
