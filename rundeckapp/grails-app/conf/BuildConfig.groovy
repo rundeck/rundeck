@@ -42,7 +42,7 @@ grails.project.dependency.resolution = {
         runtime 'org.yaml:snakeyaml:1.9', 'org.apache.ant:ant:1.7.1', 'org.apache.ant:ant-launcher:1.7.1',
                 'org.apache.ant:ant-jsch:1.7.1','com.jcraft:jsch:0.1.45', 'org.springframework:spring-test:3.0.5.RELEASE',
                 'log4j:log4j:1.2.16' ,'commons-collections:commons-collections:3.2.1','commons-codec:commons-codec:1.5',
-                "com.dtolabs.rundeck:rundeck-core:${app.version}"
+                "com.dtolabs.rundeck:rundeck-core:1.4.4-SNAPSHOT"
     }
     
     grails.plugin.location.'webrealms' = "webrealms"
