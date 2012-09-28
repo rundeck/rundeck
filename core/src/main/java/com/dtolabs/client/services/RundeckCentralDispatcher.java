@@ -52,6 +52,7 @@ import java.util.regex.Pattern;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
+ * @deprecated use {@link RundeckAPICentralDispatcher}
  */
 public class RundeckCentralDispatcher implements CentralDispatcher {
     /********
@@ -955,5 +956,11 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
             }
             return sb;
         }
+    }
+
+    public Collection<DeleteJobResult> deleteStoredJobs(Collection<String> jobIds) throws CentralDispatcherException {
+        throw new CentralDispatcherException("Operation unsupported: No central dispatcher class is configured: "
+                                             + Framework.CENTRALDISPATCHER_CLS_PROP);
+
     }
 }

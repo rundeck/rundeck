@@ -100,7 +100,7 @@ public abstract class WebserviceHttpClientFactory {
                                                           final String username,
                                                           final String password,
                                                           final Map query,
-                                                          final Map<String,String> formData) {
+                                                          final Map<String,? extends Object> formData) {
 
             return new WebserviceHttpClientChannel(urlSpec,
                                                   new WebserviceFormAuthenticator(basePath, username, password),
@@ -255,5 +255,5 @@ public abstract class WebserviceHttpClientFactory {
                                                         final String username,
                                                         final String password,
                                                         final Map query,
-                                                        final Map<String, String> formData);
+                                                        final Map<String, ? extends Object> formData);
 }

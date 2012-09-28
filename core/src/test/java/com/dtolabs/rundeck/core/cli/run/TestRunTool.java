@@ -38,6 +38,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 
+
 public class TestRunTool extends AbstractBaseTest {
     RunTool runTool;
 
@@ -250,6 +251,12 @@ public class TestRunTool extends AbstractBaseTest {
                                                      JobDefinitionFileFormat format) throws
             CentralDispatcherException {
             fail("unexpected call to loadJobs");
+            return null;
+        }
+
+        public Collection<DeleteJobResult> deleteStoredJobs(Collection<String> jobIds) throws CentralDispatcherException {
+
+            fail("unexpected call to queueDispatcherJob");
             return null;
         }
     }

@@ -491,6 +491,10 @@ public class TestExecTool extends AbstractBaseTest {
                                           int successNodeCount, String tags, String script, String summary, Date start,
                                           Date end) throws CentralDispatcherException {
         }
+
+        public Collection<DeleteJobResult> deleteStoredJobs(Collection<String> jobIds) throws CentralDispatcherException {
+            return null;
+        }
     }
     static class testDispatcher extends noopDispatcher{
         boolean wascalled;
@@ -1078,6 +1082,10 @@ public class TestExecTool extends AbstractBaseTest {
         public void reportExecutionStatus(String project, String title, String status, int totalNodeCount,
                                           int successNodeCount, String tags, String script, String summary, Date start,
                                           Date end) throws CentralDispatcherException {
+        }
+
+        public Collection<DeleteJobResult> deleteStoredJobs(Collection<String> jobIds) throws CentralDispatcherException {
+            return null;
         }
 
         @Override

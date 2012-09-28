@@ -32,6 +32,7 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
 
+
 public class TestCentralDispatcherMgrFactory extends AbstractBaseTest {
     CentralDispatcherMgrFactory centralDispatcherMgrFactory;
     public static final String TEST_CLASSNAME = "com.dtolabs.rundeck.core.dispatcher.TestCentralDispatcherMgrFactory$test1";
@@ -150,6 +151,10 @@ public class TestCentralDispatcherMgrFactory extends AbstractBaseTest {
                                           int successNodeCount, String tags, String script, String summary, Date start,
                                           Date end) throws CentralDispatcherException {
         }
+
+        public Collection<DeleteJobResult> deleteStoredJobs(Collection<String> jobIds) throws CentralDispatcherException {
+            return null;
+        }
     }
 
     /**
@@ -194,6 +199,10 @@ public class TestCentralDispatcherMgrFactory extends AbstractBaseTest {
         public void reportExecutionStatus(String project, String title, String status, int totalNodeCount,
                                           int successNodeCount, String tags, String script, String summary, Date start,
                                           Date end) throws CentralDispatcherException {
+        }
+
+        public Collection<DeleteJobResult> deleteStoredJobs(Collection<String> jobIds) throws CentralDispatcherException {
+            return null;
         }
     }
 }
