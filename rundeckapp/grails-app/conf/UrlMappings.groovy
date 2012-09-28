@@ -23,6 +23,7 @@ class UrlMappings {
         "/api/$api_version/jobs"(controller: 'menu', action: 'apiJobsList')
         "/api/$api_version/jobs/export"(controller: 'menu', action: 'apiJobsExport')
         "/api/$api_version/jobs/import"(controller: 'scheduledExecution', action: 'apiJobsImport')
+        "/api/$api_version/jobs/delete"(controller: 'scheduledExecution', action: 'apiJobDeleteBulk')
         "/api/$api_version/project/$project?"(controller: 'framework', action: 'apiProject')
         /** v2 */
         "/api/$api_version/project/$project/resources/refresh"(controller: 'framework', action: 'apiProjectResourcesRefresh')
