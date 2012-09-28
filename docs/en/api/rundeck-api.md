@@ -643,6 +643,12 @@ URL:
 
 Result: an Item List of `executions`. See [Listing Running Executions](#listing-running-executions).
 
+The `exections` element will have paging attributes:
+
+* `max`: maximum number of results per page
+* `offset`: offset from first of all results
+* `total`: total number of results
+* `count`: number of results in the response
 
 Required Parameters:
 
@@ -686,6 +692,11 @@ Parameters for querying for Executions for particular jobs:
 
 
 The format for the `jobListFilter` and `excludeJobListFilter` is the job's group and name separated by a '/' character, such as: "group1/job name", or "my job" if there is no group.
+
+Paging parameters:
+
+* `max`: maximum number of results to include in response. (default: 20)
+* `offset`: offset for first result to include. (default: 0)
 
 ### Execution Output
 
