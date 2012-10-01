@@ -705,8 +705,12 @@ class ExecutionController {
     /**
      * Render execution list xml given a List of executions, and a builder delegate
      */
-    public def renderApiExecutions= { execlist, delegate ->
-        delegate.'executions'(count: execlist.size()) {
+    public def renderApiExecutions= { execlist, paging=[:],delegate ->
+        def execAttrs=[count: execlist.size()]
+        if(paging){
+            execAttrs.putAll(paging)
+        }
+        delegate.'executions'(execAttrs) {
             execlist.each {Execution e ->
                 e = Execution.get(e.id)
                 execution(
@@ -743,8 +747,8 @@ class ExecutionController {
     /**
      * Utility, render xml response for a list of executions
      */
-    public def renderApiExecutionListResultXML={execlist ->
-        return new ApiController().success(renderApiExecutions.curry(execlist))
+    public def renderApiExecutionListResultXML={execlist,paging=[:] ->
+        return new ApiController().success(renderApiExecutions.curry(execlist,paging))
     }
     /**
      * API: /api/execution/{id} , version 1
@@ -867,8 +871,9 @@ class ExecutionController {
             flash.errorArgs = [message(code:'api.executions.jobfilter.adhoc.conflict')]
             return chain(controller: 'api', action: 'renderError')
         }
-        def c = Execution.createCriteria()
-        def result = c.list {
+        def resOffset=params.offset?params.int('offset'):0
+        def resMax=params.max?params.int('max'):20
+        def criteriaClos={ isCount->
             if(query.adhoc){
                 isNull('scheduledExecution')
             }else if(null!=query.adhoc || hasJobFilters){
@@ -1080,23 +1085,27 @@ class ExecutionController {
                 ge('dateCompleted', query.endafterFilter)
             }
 
-            if (params.offset) {
-                firstResult(params.int('offset'))
-            }
-            if (params.max) {
-                maxResults(params.int('max'))
-            }
-            and {
-                order('dateCompleted', 'desc')
-                order('dateStarted', 'desc')
+            if (!isCount) {
+                if (resOffset) {
+                    firstResult(resOffset)
+                }
+                if (resMax) {
+                    maxResults(resMax)
+                }
+                and {
+                    order('dateCompleted', 'desc')
+                    order('dateStarted', 'desc')
+                }
             }
         }
+        def result = Execution.createCriteria().list(criteriaClos.curry(false))
+        def total = Execution.createCriteria().count(criteriaClos.curry(true))
 
         //filter query results to READ authorized executions
         def filtered = frameworkService.filterAuthorizedProjectExecutionsAll(framework,result,[AuthConstants.ACTION_READ])
 
 
-        return renderApiExecutionListResultXML(filtered)
+        return renderApiExecutionListResultXML(filtered,[total:total,offset:resOffset,max:resMax])
     }
 }
 
