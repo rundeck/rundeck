@@ -93,7 +93,7 @@ public class NotificationService {
 
                     try {
                         xml.'notification'(trigger:trigger,status:state,executionId:exec.id){
-                            new ExecutionController().renderApiExecutions([exec], delegate)
+                            new ExecutionController().renderApiExecutions([exec], [:], delegate)
                         }
 
                     } finally {
