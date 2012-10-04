@@ -52,7 +52,7 @@ var ExecutionOptions = {
             return false;
         }
     },
-    addMultivarValue: function(name, inputarea, value) {
+    addMultivarValue: function(name, inputarea, value,handler) {
         var div = new Element('div');
         div.addClassName('optionvaluemulti');
         div.setStyle({'opacity':'0'});
@@ -67,6 +67,9 @@ var ExecutionOptions = {
         inpu.setAttribute("value", null != value ? value : "");
         Event.observe(inpu, 'change', ExecutionOptions.multiVarCheckboxChangeWarningHandler.curry(name));
         Event.observe(inpu, 'change', ExecutionOptions.multiVarCheckboxChangeHandler.curry(name));
+        if(handler){
+            handler(name, inpu);
+        }
 
         var inpu2 = new Element('input');
         inpu2.setAttribute("type", "text");
@@ -77,6 +80,9 @@ var ExecutionOptions = {
         }
         Event.observe(inpu2, 'change', ExecutionOptions.multiVarInputChangeHandler.curry(inpu));
         Event.observe(inpu2, 'keydown', ExecutionOptions.multiVarInputKeydownHandler.curry(inpu));
+        if (handler) {
+            handler(name,inpu2);
+        }
 
         $(divwrap).appendChild(inpu);
         $(divwrap).appendChild(inpu2);
