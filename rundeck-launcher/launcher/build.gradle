@@ -35,7 +35,7 @@ dependencies {
     )
 	
     warBundle(
-        [group: 'com.dtolabs.rundeck', name: 'rundeck', version: version,ext:'war']
+        [group: 'com.dtolabs.rundeck', name: 'rundeck', version: version, ext:'war']
     )
 	
     pluginFiles(
@@ -64,7 +64,7 @@ task expandCli(dependsOn: setupLauncherContent) << {
         into launcherContentsDir
     }
 }
-task expandWar(dependsOn: setupLauncherContent) << {
+task expandWar(dependsOn: [setupLauncherContent, project(':rundeckapp').install]) << {
     //copy libs to a tools lib dir
     File webappDir=new File(launcherContentsDir,"pkgs/webapp")
     webappDir.mkdirs()
