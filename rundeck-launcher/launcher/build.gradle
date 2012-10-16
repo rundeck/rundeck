@@ -14,12 +14,7 @@ ext.launcherJettyLibPath = "pkgs/webapp/WEB-INF/lib"
 
 ext.launcherContentsDir = new File("$projectDir/build/launcher-contents")
 
-eclipse {
-	project {
-		// set the convention to rundeck:<branch>:<path>:<projectName>
-		name =  rootProject.eclipse.project.name + ':launcher:app';
-	}
-}
+eclipse.project.name = "${rootProject.eclipse.project.name}:launcher:app";
 
 configurations{
     warBundle

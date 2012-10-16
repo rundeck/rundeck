@@ -148,8 +148,6 @@ task install(type: Exec, overwrite: true, dependsOn: build) {
  */
 class PropertyReplacer extends DefaultTask {
 
-	String comments
-	
 	@OutputFile
 	File propertyFile
 	
@@ -165,9 +163,9 @@ class PropertyReplacer extends DefaultTask {
 			propertyFile.readLines().each { line ->
 				
 				logger.debug("${this} processing line: ${line}")
-				// match the key ($1) and the value ($2)
-				def matcher = line =~ /^(.*)\s*\=\s*(.*)$/
-				// if there's a match we have a property value, replace it otherwise keep it as-is
+				// match the key and the value 
+				def matcher = line =~ /^#{0}\s*([\w\.].*)\s*\=\s*(.*)$/
+				// if there's a match and we have a property value, replace it 
 				if (matcher.size() != 0 && matcher[0] != null && matcher[0].size() > 1) {
 					newLines.add((propertiesMap[matcher[0][1]] != null) ?
 						"${matcher[0][1]}=${propertiesMap[matcher[0][1]]}" : line)
