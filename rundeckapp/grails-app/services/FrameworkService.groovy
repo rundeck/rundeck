@@ -195,6 +195,31 @@ class FrameworkService implements ApplicationContextAware {
 
     }
     /**
+     * Filter a list of Executions and return only the ones that the user has authorization for all actions in the project context
+     * @param framework
+     * @param execs list of executions
+     * @param actions
+     * @return List of authorized executions
+     */
+    def List filterAuthorizedProjectExecutionsAll( framework, List<Execution> execs, Collection actions){
+        def semap=[:]
+        def adhocauth=null
+        def results=[]
+
+        execs.each{Execution exec->
+            def ScheduledExecution se = exec.scheduledExecution
+            if(se && null==semap[se.id]){
+                semap[se.id]=authorizeProjectJobAll(framework, se, actions, se.project)
+            }else if(!se && null==adhocauth){
+                adhocauth=authorizeProjectResourceAll(framework, [type: 'adhoc'], actions, exec.project)
+            }
+            if(se ? semap[se.id] : adhocauth){
+                results << exec
+            }
+        }
+        return results
+    }
+    /**
      * Return true if the user is authorized for all actions for the job in the project context
      * @param framework
      * @param job
