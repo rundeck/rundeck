@@ -23,6 +23,8 @@ package com.dtolabs.rundeck.core.cli.jobs;
 * $Id$
 */
 
+import com.dtolabs.client.services.DeleteJobResultImpl;
+import com.dtolabs.client.services.StoredJobImpl;
 import com.dtolabs.rundeck.core.cli.CLIToolException;
 import com.dtolabs.rundeck.core.cli.CLIToolOptionsException;
 import com.dtolabs.rundeck.core.cli.SingleProjectResolver;
@@ -36,8 +38,10 @@ import org.apache.commons.cli.CommandLine;
 import java.io.File;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+
 
 public class TestJobsTool extends AbstractBaseTest {
     JobsTool jobsTool;
@@ -64,14 +68,17 @@ public class TestJobsTool extends AbstractBaseTest {
     }
 
     static class testCentralDispatcher1 implements CentralDispatcher {
+        boolean purgeStoredJobsCalled = false;
         boolean listStoredJobsCalled = false;
         boolean loadJobsCalled = false;
         ILoadJobsRequest loadRequest;
         java.io.File loadInput;
         IStoredJobsQuery listStoredJobsQuery;
+        Collection<String> purgeJobsRequest;
         OutputStream listStoredJobsOutput;
         Collection<IStoredJob> listJobsResult;
         Collection<IStoredJobLoadResult> loadJobsResult;
+        Collection<DeleteJobResult> purgeJobsResult;
         JobDefinitionFileFormat loadFormat;
         JobDefinitionFileFormat listFormat;
 
@@ -126,6 +133,12 @@ public class TestJobsTool extends AbstractBaseTest {
             this.listStoredJobsOutput = output;
             this.listFormat=format;
             return listJobsResult;
+        }
+
+        public Collection<DeleteJobResult> deleteStoredJobs(Collection<String> jobIds) throws CentralDispatcherException {
+            this.purgeStoredJobsCalled=true;
+            this.purgeJobsRequest=jobIds;
+            return purgeJobsResult;
         }
     }
 
@@ -335,6 +348,131 @@ public class TestJobsTool extends AbstractBaseTest {
         }
     }
 
+    public void testPurge() throws Exception{
+        final Framework framework = getFrameworkInstance();
+        {
+            //test purge action with query params, --idlist
+
+            final JobsTool tool = new JobsTool(framework);
+            final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
+            framework.setCentralDispatcherMgr(centralDispatcher1);
+
+            final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
+            jobs.add(StoredJobImpl.create("3", "test3", "blah", "blah", "blah", "test"));
+            jobs.add(StoredJobImpl.create("4", "test3", "blah", "blah", "blah", "test"));
+            centralDispatcher1.listJobsResult = jobs;
+            final ArrayList<DeleteJobResult> results = new ArrayList<DeleteJobResult>();
+            centralDispatcher1.purgeJobsResult = results;
+
+            tool.run(
+                new String[]{"purge", "--" + JobsTool.IDLIST_OPTION_LONG, "3,4", "-p", "test"});
+
+            assertTrue("list action should be called", centralDispatcher1.listStoredJobsCalled);
+            assertNull(centralDispatcher1.listStoredJobsOutput);
+            assertNotNull(centralDispatcher1.listStoredJobsQuery);
+            assertEquals("3,4", centralDispatcher1.listStoredJobsQuery.getIdlist());
+
+            assertTrue("purge action should be called", centralDispatcher1.purgeStoredJobsCalled);
+            assertNotNull(centralDispatcher1.purgeJobsRequest);
+            assertEquals(Arrays.asList("3", "4"), centralDispatcher1.purgeJobsRequest);
+
+            assertFalse("load action should not be called", centralDispatcher1.loadJobsCalled);
+            assertNull(centralDispatcher1.loadRequest);
+        }
+        {
+            //test purge action with query params, --idlist, no results
+
+            final JobsTool tool = new JobsTool(framework);
+            final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
+            framework.setCentralDispatcherMgr(centralDispatcher1);
+
+            final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
+            centralDispatcher1.listJobsResult = jobs;
+            final ArrayList<DeleteJobResult> results = new ArrayList<DeleteJobResult>();
+            centralDispatcher1.purgeJobsResult = results;
+
+            tool.run(
+                new String[]{"purge", "--" + JobsTool.IDLIST_OPTION_LONG, "3,4", "-p", "test"});
+
+            assertTrue("list action should be called", centralDispatcher1.listStoredJobsCalled);
+            assertNull(centralDispatcher1.listStoredJobsOutput);
+            assertNotNull(centralDispatcher1.listStoredJobsQuery);
+            assertEquals("3,4", centralDispatcher1.listStoredJobsQuery.getIdlist());
+
+            assertFalse("purge action should be called", centralDispatcher1.purgeStoredJobsCalled);
+            assertNull(centralDispatcher1.purgeJobsRequest);
+
+            assertFalse("load action should not be called", centralDispatcher1.loadJobsCalled);
+            assertNull(centralDispatcher1.loadRequest);
+        }
+        {
+            //test purge: success
+
+            final JobsTool tool = new JobsTool(framework);
+            final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
+            framework.setCentralDispatcherMgr(centralDispatcher1);
+
+            final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
+            jobs.add(StoredJobImpl.create("3", "test3", "blah", "blah", "blah", "test"));
+            jobs.add(StoredJobImpl.create("4", "test3", "blah", "blah", "blah", "test"));
+            centralDispatcher1.listJobsResult = jobs;
+            final ArrayList<DeleteJobResult> results = new ArrayList<DeleteJobResult>();
+            results.add(DeleteJobResultImpl.createDeleteJobResultImpl(true, "success", "3", null));
+            results.add(DeleteJobResultImpl.createDeleteJobResultImpl(true, "success", "4", null));
+            centralDispatcher1.purgeJobsResult = results;
+
+            tool.run(
+                new String[]{"purge", "--" + JobsTool.IDLIST_OPTION_LONG, "3,4", "-p", "test"});
+
+            assertTrue("list action should be called", centralDispatcher1.listStoredJobsCalled);
+            assertNull(centralDispatcher1.listStoredJobsOutput);
+            assertNotNull(centralDispatcher1.listStoredJobsQuery);
+            assertEquals("3,4", centralDispatcher1.listStoredJobsQuery.getIdlist());
+
+            assertTrue("purge action should be called", centralDispatcher1.purgeStoredJobsCalled);
+            assertNotNull(centralDispatcher1.purgeJobsRequest);
+            assertEquals(Arrays.asList("3", "4"), centralDispatcher1.purgeJobsRequest);
+
+            assertFalse("load action should not be called", centralDispatcher1.loadJobsCalled);
+            assertNull(centralDispatcher1.loadRequest);
+        }
+        {
+            //test purge: failed purge causes exception
+
+            final JobsTool tool = new JobsTool(framework);
+            final testCentralDispatcher1 centralDispatcher1 = new testCentralDispatcher1();
+            framework.setCentralDispatcherMgr(centralDispatcher1);
+
+            final ArrayList<IStoredJob> jobs = new ArrayList<IStoredJob>();
+            jobs.add(StoredJobImpl.create("3", "test3", "blah", "blah", "blah", "test"));
+            jobs.add(StoredJobImpl.create("4", "test3", "blah", "blah", "blah", "test"));
+            centralDispatcher1.listJobsResult = jobs;
+            final ArrayList<DeleteJobResult> results = new ArrayList<DeleteJobResult>();
+            results.add(DeleteJobResultImpl.createDeleteJobResultImpl(true, "success", "3", null));
+            results.add(DeleteJobResultImpl.createDeleteJobResultImpl(false, "failed", "4", "error"));
+            centralDispatcher1.purgeJobsResult = results;
+
+            try {
+                tool.run(
+                    new String[]{"purge", "--" + JobsTool.IDLIST_OPTION_LONG, "3,4", "-p", "test"});
+                fail("Should not succeed");
+            } catch (JobsToolException e) {
+                assert e.getMessage().equals("Failed to delete 1 jobs");
+            }
+
+            assertTrue("list action should be called", centralDispatcher1.listStoredJobsCalled);
+            assertNull(centralDispatcher1.listStoredJobsOutput);
+            assertNotNull(centralDispatcher1.listStoredJobsQuery);
+            assertEquals("3,4", centralDispatcher1.listStoredJobsQuery.getIdlist());
+
+            assertTrue("purge action should be called", centralDispatcher1.purgeStoredJobsCalled);
+            assertNotNull(centralDispatcher1.purgeJobsRequest);
+            assertEquals(Arrays.asList("3", "4"), centralDispatcher1.purgeJobsRequest);
+
+            assertFalse("load action should not be called", centralDispatcher1.loadJobsCalled);
+            assertNull(centralDispatcher1.loadRequest);
+        }
+    }
     public void testParseArgs() throws Exception {
         {
             //test invalid action
@@ -505,6 +643,31 @@ public class TestJobsTool extends AbstractBaseTest {
             final JobsTool tool = new JobsTool(getFrameworkInstance());
             try {
                 final String[] args = {"list","-f","test.out","-F","yaml", "-p", "test"};
+                final CommandLine line = tool.parseArgs(args);
+                tool.validateOptions(line, args);
+            } catch (CLIToolOptionsException e) {
+                fail("unexpected exception: " + e.getMessage());
+            }
+
+        }
+        {
+            //test valid purge command, requires a filter param (-i,-g,-n)
+            final JobsTool tool = new JobsTool(getFrameworkInstance());
+            try {
+                final String[] args = {"purge","-f","test.out","-F","yaml", "-p", "test"};
+                final CommandLine line = tool.parseArgs(args);
+                tool.validateOptions(line, args);
+                fail("Should fail");
+            } catch (CLIToolOptionsException e) {
+                assert e.getMessage().equals("purge action: Some filter option is required");
+            }
+
+        }
+        {
+            //test valid purge command, with a filter param -i
+            final JobsTool tool = new JobsTool(getFrameworkInstance());
+            try {
+                final String[] args = {"purge","-f","test.out","-F","yaml", "-p", "test","-i","1"};
                 final CommandLine line = tool.parseArgs(args);
                 tool.validateOptions(line, args);
             } catch (CLIToolOptionsException e) {

@@ -29,6 +29,7 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
 
+
 /**
  * NoCentralDispatcher is an implementation of the {@link com.dtolabs.rundeck.core.dispatcher.CentralDispatcher} which throws
  * exceptions indicating the operations are not supported.
@@ -90,5 +91,11 @@ public final class NoCentralDispatcher implements CentralDispatcher {
     public Collection<QueuedItem> listDispatcherQueue(String project) throws CentralDispatcherException {
         throw new CentralDispatcherException("Operation unsupported: No central dispatcher class is configured: "
                                              + Framework.CENTRALDISPATCHER_CLS_PROP);
+    }
+
+    public Collection<DeleteJobResult> deleteStoredJobs(Collection<String> jobIds) throws CentralDispatcherException {
+        throw new CentralDispatcherException("Operation unsupported: No central dispatcher class is configured: "
+                                             + Framework.CENTRALDISPATCHER_CLS_PROP);
+
     }
 }

@@ -389,6 +389,55 @@ Name Value List:
       {name:"A Label", value:"a value"}
     ] 
 
+### Cascading Remote Options
+
+Cascading options allow an option's Remote values URL to embed the values
+entered by the user for other options when executing a Job.  When the user
+enters or selects a value for one of the other options, then the remote JSON is
+refreshed for the current option.
+
+This provides a mechanism for declaring hierarchical or dependent sets of option
+values.
+
+E.g. if you wanted one option to choose a "repository", and  another option to
+select a specific "branch" within that repository.  Define your option provider
+to respond correctly based on the  selected "repository" value, and define your
+Remote option URL to include a reference to the "repository" option value. The
+Rundeck GUI will then reload the JSON values from the remote URL and insert the
+correct value of the "repository" option when loading the "branch" option
+values. If the user changes the selected repository, then the branch values will
+be automatically refreshed.
+
+You can declare a
+dependency of one option to another by embedding property references within the
+remote values URL.  The property reference is of the form
+`${option.[name].value}`.  If you declare an option with a remote values URL
+like "http://server/options?option2=${option.option2.value}", then that option
+will depend on the value of the "option2" option.
+
+In the GUI, when the options are loaded, option2 will be shown first, and the
+remote values for option1 will only be loaded once a value has been selected for
+option2, and the value will be placed in the URL when it is loaded.
+
+If an option has dependencies on other options that do not have a value set,
+then the  embedded references will evaluate to "" (empty string) when loading
+the URL.
+
+If an option has dependencies on other options and the remote values [JSON 
+data](#json-data) is empty (empty list or empty object), then the option shown in
+the GUI will indicate that the user should select values for the necessary
+options.  This allows Option model providers to indicate that some or all of the
+dependent option values are necessary for the current option before showing the
+input for the option.
+
+It is possible to have dependencies on more than one option, and any change to
+one of the dependencies will cause the option values to be reloaded from the
+remote URL.
+
+Note: It is also possible to declare a cycle of dependencies between option
+values, which will cause the automatic reloading to be disabled.  In this case
+the user must manually click the reload button to reload the option values if a
+dependency has changed.
 
 ### Variable expansion in remote URLs
 
@@ -417,6 +466,12 @@ Properties available for Option context:
 
 * `name`: Name of the current option
 
+
+To include [Cascading remote option](#cascading-remote-options) values information in the URL, specify a variable of the
+form ${option._name_.value}:
+
+* `option.[name].value`: substitutes the selected value of another option by name. If the option is not set, then a blank string ("") will be substituted.
+
 *Examples*
 
     http://server.com/test?name=${option.name}
@@ -426,6 +481,12 @@ Passes the option name as the "name" query parameter to the URL.
     http://server.com/test?jobname=${job.name}&jobgroup=${job.group}
 
 Passes the job name and group as query parameters.
+    
+    http://server.com/branches?repository=${option.repository.value}
+
+Passes the value of the selected "repository" option, or "" (blank) if it is not set. This option becomes
+a dependent of the "repository" option, and if the "repository" value changes, the remote option values
+for this option will be reloaded.
 
 ### Remote request failures
 

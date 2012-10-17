@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution.impl.jsch;
 
 import com.dtolabs.rundeck.core.Constants;
+import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
@@ -36,7 +37,7 @@ import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.utils.LeadPipeOutputStream;
 import com.dtolabs.rundeck.core.execution.utils.Responder;
-import com.dtolabs.rundeck.core.execution.utils.ResponderThread;
+import com.dtolabs.rundeck.core.execution.utils.ResponderTask;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
@@ -52,6 +53,7 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.regex.Pattern;
 
 /**
@@ -79,8 +81,11 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String NODE_ATTR_SSH_AUTHENTICATION = "ssh-authentication";
     public static final String NODE_ATTR_SSH_PASSWORD_OPTION = "ssh-password-option";
     public static final String DEFAULT_SSH_PASSWORD_OPTION = "option.sshPassword";
-    public static final String NODE_ATTR_SUDO_PASSWORD_OPTION = "sudo-password-option";
+    public static final String SUDO_OPT_PREFIX = "sudo-";
+    public static final String SUDO2_OPT_PREFIX = "sudo2-";
+    public static final String NODE_ATTR_SUDO_PASSWORD_OPTION =  "password-option";
     public static final String DEFAULT_SUDO_PASSWORD_OPTION = "option.sudoPassword";
+    public static final String DEFAULT_SUDO2_PASSWORD_OPTION = "option.sudo2Password";
     public static final String NODE_ATTR_SSH_KEY_PASSPHRASE_OPTION = "ssh-key-passphrase-option";
     public static final String DEFAULT_SSH_KEY_PASSPHRASE_OPTION = "option.sshKeyPassphrase";
 
@@ -88,28 +93,28 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String FWK_PROP_SSH_AUTHENTICATION = FWK_PROP_PREFIX + NODE_ATTR_SSH_AUTHENTICATION;
     public static final String PROJ_PROP_SSH_AUTHENTICATION = PROJ_PROP_PREFIX + NODE_ATTR_SSH_AUTHENTICATION;
 
-    public static final String NODE_ATTR_SUDO_COMMAND_ENABLED = "sudo-command-enabled";
-    public static final String NODE_ATTR_SUDO_PROMPT_PATTERN = "sudo-prompt-pattern";
+    public static final String NODE_ATTR_SUDO_COMMAND_ENABLED = "command-enabled";
+    public static final String NODE_ATTR_SUDO_PROMPT_PATTERN = "prompt-pattern";
     public static final String DEFAULT_SUDO_PROMPT_PATTERN = "^\\[sudo\\] password for .+: .*";
-    public static final String NODE_ATTR_SUDO_FAILURE_PATTERN = "sudo-failure-pattern";
+    public static final String NODE_ATTR_SUDO_FAILURE_PATTERN = "failure-pattern";
     public static final String DEFAULT_SUDO_FAILURE_PATTERN = "^.*try again.*";
-    public static final String NODE_ATTR_SUDO_COMMAND_PATTERN = "sudo-command-pattern";
+    public static final String NODE_ATTR_SUDO_COMMAND_PATTERN = "command-pattern";
     public static final String DEFAULT_SUDO_COMMAND_PATTERN = "^sudo$";
-    public static final String NODE_ATTR_SUDO_PROMPT_MAX_LINES = "sudo-prompt-max-lines";
+    public static final String NODE_ATTR_SUDO_PROMPT_MAX_LINES = "prompt-max-lines";
     public static final int DEFAULT_SUDO_PROMPT_MAX_LINES = 12;
-    public static final String NODE_ATTR_SUDO_RESPONSE_MAX_LINES = "sudo-response-max-lines";
+    public static final String NODE_ATTR_SUDO_RESPONSE_MAX_LINES = "response-max-lines";
     public static final int DEFAULT_SUDO_RESPONSE_MAX_LINES = 2;
-    public static final String NODE_ATTR_SUDO_PROMPT_MAX_TIMEOUT = "sudo-prompt-max-timeout";
+    public static final String NODE_ATTR_SUDO_PROMPT_MAX_TIMEOUT = "prompt-max-timeout";
     public static final long DEFAULT_SUDO_PROMPT_MAX_TIMEOUT = 5000;
-    public static final String NODE_ATTR_SUDO_RESPONSE_MAX_TIMEOUT = "sudo-response-max-timeout";
+    public static final String NODE_ATTR_SUDO_RESPONSE_MAX_TIMEOUT = "response-max-timeout";
     public static final long DEFAULT_SUDO_RESPONSE_MAX_TIMEOUT = 5000;
-    public static final String NODE_ATTR_SUDO_FAIL_ON_PROMPT_MAX_LINES = "sudo-fail-on-prompt-max-lines";
+    public static final String NODE_ATTR_SUDO_FAIL_ON_PROMPT_MAX_LINES = "fail-on-prompt-max-lines";
     public static final boolean DEFAULT_SUDO_FAIL_ON_PROMPT_MAX_LINES = false;
-    public static final String NODE_ATTR_SUDO_FAIL_ON_PROMPT_TIMEOUT = "sudo-fail-on-prompt-timeout";
-    public static final boolean DEFAULT_SUDO_FAIL_ON_PROMPT_TIMEOUT = false;
-    public static final String NODE_ATTR_SUDO_FAIL_ON_RESPONSE_TIMEOUT = "sudo-fail-on-response-timeout";
+    public static final String NODE_ATTR_SUDO_FAIL_ON_PROMPT_TIMEOUT = "fail-on-prompt-timeout";
+    public static final boolean DEFAULT_SUDO_FAIL_ON_PROMPT_TIMEOUT = true;
+    public static final String NODE_ATTR_SUDO_FAIL_ON_RESPONSE_TIMEOUT = "fail-on-response-timeout";
     public static final boolean DEFAULT_SUDO_FAIL_ON_RESPONSE_TIMEOUT = false;
-    public static final String NODE_ATTR_SUDO_SUCCESS_ON_PROMPT_THRESHOLD = "sudo-success-on-prompt-threshold";
+    public static final String NODE_ATTR_SUDO_SUCCESS_ON_PROMPT_THRESHOLD = "success-on-prompt-threshold";
     public static final boolean DEFAULT_SUDO_SUCCESS_ON_PROMPT_THRESHOLD = true;
     public static final String PROJECT_SSH_USER = PROJ_PROP_PREFIX + "ssh.user";
 
@@ -190,9 +195,15 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         }
 
         //Sudo support
-        final ResponderThread thread;
+
+        final ExecutorService executor = Executors.newFixedThreadPool(1);
+
+        final Future<ResponderTask.ResponderResult> responderFuture;
         final SudoResponder sudoResponder = SudoResponder.create(node, framework, context);
         if (sudoResponder.isSudoEnabled() && sudoResponder.matchesCommandPattern(command[0])) {
+            final DisconnectResultHandler resultHandler = new DisconnectResultHandler();
+
+            //configure two piped i/o stream pairs, to connect to the input/output of the SSH connection
             final PipedInputStream responderInput = new PipedInputStream();
             final PipedOutputStream responderOutput = new PipedOutputStream();
             final PipedInputStream jschInput = new PipedInputStream();
@@ -203,20 +214,47 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             } catch (IOException e) {
                 throw new ExecutionException(e);
             }
-            thread = new ResponderThread(sudoResponder, responderInput, responderOutput, sudoResponder);
+
+            //first sudo prompt responder
+            ResponderTask responder = new ResponderTask(sudoResponder, responderInput, responderOutput, resultHandler);
+
+            /**
+             * Callable will be executed by the ExecutorService
+             */
+            final Callable<ResponderTask.ResponderResult> responderResultCallable;
+
+
+            //if 2nd responder
+            final SudoResponder sudoResponder2 = SudoResponder.create(node, framework, context, SUDO2_OPT_PREFIX,
+                                                                      DEFAULT_SUDO2_PASSWORD_OPTION);
+            if (sudoResponder2.isSudoEnabled()
+                && sudoResponder2.matchesCommandPattern(CLIUtils.generateArgline(null, command))) {
+                logger.debug("Enable second sudo responder");
+
+                sudoResponder2.setDescription("Second " + SudoResponder.DEFAULT_DESCRIPTION);
+                sudoResponder.setDescription("First " + SudoResponder.DEFAULT_DESCRIPTION);
+
+                //sequence of the first then the second sudo responder
+                responderResultCallable = responder.createSequence(sudoResponder2);
+            } else {
+                responderResultCallable = responder;
+            }
+
+
+            //set up SSH execution
             sshexec.setAllocatePty(true);
             sshexec.setInputStream(jschInput);
             sshexec.setSecondaryStream(jschOutput);
-            sshexec.setDisconnectHolder(sudoResponder);
-        } else {
-            thread = null;
+            sshexec.setDisconnectHolder(resultHandler);
+
+
+            responderFuture = executor.submit(responderResultCallable);
+        }else {
+            responderFuture = null;
         }
 
         String errormsg = null;
         try {
-            if (null != thread) {
-                thread.start();
-            }
             sshexec.execute();
             success = true;
         } catch (BuildException e) {
@@ -249,17 +287,23 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             }
             context.getExecutionListener().log(0, errormsg);
         }
-        if (null != thread) {
-            if (thread.isAlive()) {
-                thread.stopResponder();
-            }
+        shutdownAndAwaitTermination(executor);
+        if (null != responderFuture) {
             try {
-                thread.join(5000);
+                logger.debug("Waiting 5 seconds for responder future result");
+                final ResponderTask.ResponderResult result = responderFuture.get(5, TimeUnit.SECONDS);
+                logger.debug("Responder result: " + result);
+                if (!result.isSuccess() && !result.isInterrupted()) {
+                    context.getExecutionListener().log(0,
+                                                       result.getResponder().toString() + " failed: "
+                                                       + result.getFailureReason());
+                }
             } catch (InterruptedException e) {
-            }
-            if (thread.isFailed()) {
-                context.getExecutionListener().log(0,
-                    sudoResponder.toString() + " failed: " + thread.getFailureReason());
+                //ignore
+            } catch (java.util.concurrent.ExecutionException e) {
+                e.printStackTrace();
+            } catch (TimeoutException e) {
+                //ignore
             }
         }
         final int resultCode = sshexec.getExitStatus();
@@ -282,6 +326,25 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
             }
         };
+    }
+
+    /**
+     * Shutdown the ExecutorService
+     */
+    void shutdownAndAwaitTermination(ExecutorService pool) {
+        pool.shutdownNow(); // Disable new tasks from being submitted
+        try {
+            logger.debug("Waiting up to 30 seconds for ExecutorService to shut down");
+            // Wait a while for existing tasks to terminate
+            if (!pool.awaitTermination(30, TimeUnit.SECONDS)) {
+                logger.debug("Pool did not terminate");
+            }
+        } catch (InterruptedException ie) {
+            // (Re-)Cancel if current thread also interrupted
+            pool.shutdownNow();
+            // Preserve interrupt status
+            Thread.currentThread().interrupt();
+        }
     }
 
     final static class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
@@ -473,6 +536,25 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     }
 
     /**
+     * Disconnects the SSH connection if the result was not successful.
+     */
+    private static class DisconnectResultHandler implements ResponderTask.ResultHandler,
+                                                            ExtSSHExec.DisconnectHolder {
+        private ExtSSHExec.Disconnectable disconnectable;
+        public void setDisconnectable(final ExtSSHExec.Disconnectable disconnectable) {
+            this.disconnectable = disconnectable;
+        }
+
+        public void handleResult(final boolean success, final String reason) {
+            if (!success) {
+                if (null != disconnectable) {
+                    disconnectable.disconnect();
+                }
+            }
+        }
+    }
+
+    /**
      * Sudo responder that determines response patterns from node attributes and project properties. Also handles
      * responder thread result by closing the SSH connection on failure. The mechanism for sudo response: <ol> <li>look
      * for "[sudo] password for &lt;username&gt;: " (inputSuccessPattern)</li> <li>if not seen in 12 lines, then assume
@@ -482,9 +564,8 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
      * lines, or 5000 milliseconds, then assume success (isFailOnResponseThreshold)</li> <li>if seen, then fail</li>
      * </ol>
      */
-    private static class SudoResponder implements Responder, ResponderThread.ResultHandler,
-        ExtSSHExec.DisconnectHolder {
-        private ExtSSHExec.Disconnectable disconnectable;
+    private static class SudoResponder implements Responder{
+        public static final String DEFAULT_DESCRIPTION = "Sudo execution password response";
         private String sudoCommandPattern;
         private String inputSuccessPattern;
         private String inputFailurePattern;
@@ -499,24 +580,36 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         private long responseMaxTimeout = -1;
         private boolean failOnResponseThreshold = false;
         private String inputString;
+        private String configPrefix;
+        private String description;
+        private String defaultSudoPasswordOption;
 
-        public void setDisconnectable(final ExtSSHExec.Disconnectable disconnectable) {
-            this.disconnectable = disconnectable;
+
+        private SudoResponder() {
+            description = DEFAULT_DESCRIPTION;
+            defaultSudoPasswordOption = DEFAULT_SUDO_PASSWORD_OPTION;
+            configPrefix = SUDO_OPT_PREFIX;
         }
-
-        public void handleResult(final boolean success, final String reason) {
-            if (!success) {
-                if (null != disconnectable) {
-                    disconnectable.disconnect();
-                }
+        private SudoResponder(final String configPrefix, final String defaultSudoPasswordOption) {
+            this();
+            if(null!= configPrefix) {
+                this.configPrefix = configPrefix;
+            }
+            if(null!=defaultSudoPasswordOption){
+                this.defaultSudoPasswordOption=defaultSudoPasswordOption;
             }
         }
 
-        private SudoResponder() {
+        static SudoResponder create(final INodeEntry node, final Framework framework, final ExecutionContext context) {
+            return create(node, framework, context, null,null);
         }
 
-        static SudoResponder create(final INodeEntry node, final Framework framework, final ExecutionContext context) {
-            final SudoResponder sudoResponder = new SudoResponder();
+        static SudoResponder create(final INodeEntry node,
+                                    final Framework framework,
+                                    final ExecutionContext context,
+                                    final String configPrefix,
+                                    final String defaultSudoPasswordOption) {
+            final SudoResponder sudoResponder = new SudoResponder(configPrefix,defaultSudoPasswordOption);
             sudoResponder.init(node, framework.getFrameworkProjectMgr().getFrameworkProject(
                 context.getFrameworkProject()), framework, context);
             return sudoResponder;
@@ -534,44 +627,63 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
         private void init(final INodeEntry node, final FrameworkProject frameworkProject,
                           final Framework framework, final ExecutionContext context) {
-            sudoEnabled = resolveBooleanProperty(NODE_ATTR_SUDO_COMMAND_ENABLED, false, node, frameworkProject,
+            sudoEnabled = resolveBooleanProperty(configPrefix + NODE_ATTR_SUDO_COMMAND_ENABLED, false, node, frameworkProject,
                 framework);
             if (sudoEnabled) {
-                final String sudoPassOptname=resolveProperty(NODE_ATTR_SUDO_PASSWORD_OPTION, null, node, frameworkProject,
+                final String sudoPassOptname=resolveProperty(configPrefix + NODE_ATTR_SUDO_PASSWORD_OPTION, null, node, frameworkProject,
                     framework);
                 final String sudoPassword = NodeSSHConnectionInfo.evaluateSecureOption(
-                    null != sudoPassOptname ? sudoPassOptname : DEFAULT_SUDO_PASSWORD_OPTION, context);
+                    null != sudoPassOptname ? sudoPassOptname : defaultSudoPasswordOption, context);
                 inputString = (null != sudoPassword ? sudoPassword : "") + "\n";
 
-                sudoCommandPattern = resolveProperty(NODE_ATTR_SUDO_COMMAND_PATTERN, DEFAULT_SUDO_COMMAND_PATTERN, node,
-                    frameworkProject, framework);
-                inputSuccessPattern = resolveProperty(NODE_ATTR_SUDO_PROMPT_PATTERN, DEFAULT_SUDO_PROMPT_PATTERN, node,
-                    frameworkProject, framework);
+                sudoCommandPattern = resolveProperty(configPrefix + NODE_ATTR_SUDO_COMMAND_PATTERN,
+                                                     DEFAULT_SUDO_COMMAND_PATTERN,
+                                                     node,
+                                                     frameworkProject,
+                                                     framework);
+                inputSuccessPattern = resolveProperty(configPrefix + NODE_ATTR_SUDO_PROMPT_PATTERN,
+                                                      DEFAULT_SUDO_PROMPT_PATTERN,
+                                                      node,
+                                                      frameworkProject,
+                                                      framework);
                 inputFailurePattern = null;
-                responseFailurePattern = resolveProperty(NODE_ATTR_SUDO_FAILURE_PATTERN, DEFAULT_SUDO_FAILURE_PATTERN,
-                    node,
-                    frameworkProject, framework);
+                responseFailurePattern = resolveProperty(configPrefix + NODE_ATTR_SUDO_FAILURE_PATTERN,
+                                                         DEFAULT_SUDO_FAILURE_PATTERN,
+                                                         node,
+                                                         frameworkProject,
+                                                         framework);
                 responseSuccessPattern = null;
-                inputMaxLines = resolveIntProperty(NODE_ATTR_SUDO_PROMPT_MAX_LINES, DEFAULT_SUDO_PROMPT_MAX_LINES,
-                    node,
-                    frameworkProject, framework);
-                inputMaxTimeout = resolveLongProperty(NODE_ATTR_SUDO_PROMPT_MAX_TIMEOUT,
-                    DEFAULT_SUDO_PROMPT_MAX_TIMEOUT,
-                    node, frameworkProject, framework);
-                responseMaxLines = resolveIntProperty(NODE_ATTR_SUDO_RESPONSE_MAX_LINES,
-                    DEFAULT_SUDO_RESPONSE_MAX_LINES,
-                    node, frameworkProject, framework);
-                responseMaxTimeout = resolveLongProperty(NODE_ATTR_SUDO_RESPONSE_MAX_TIMEOUT,
-                    DEFAULT_SUDO_RESPONSE_MAX_TIMEOUT, node, frameworkProject, framework);
+                inputMaxLines = resolveIntProperty(configPrefix + NODE_ATTR_SUDO_PROMPT_MAX_LINES,
+                                                   DEFAULT_SUDO_PROMPT_MAX_LINES,
+                                                   node,
+                                                   frameworkProject,
+                                                   framework);
+                inputMaxTimeout = resolveLongProperty(configPrefix + NODE_ATTR_SUDO_PROMPT_MAX_TIMEOUT,
+                                                      DEFAULT_SUDO_PROMPT_MAX_TIMEOUT,
+                                                      node, frameworkProject, framework);
+                responseMaxLines = resolveIntProperty(configPrefix + NODE_ATTR_SUDO_RESPONSE_MAX_LINES,
+                                                      DEFAULT_SUDO_RESPONSE_MAX_LINES,
+                                                      node, frameworkProject, framework);
+                responseMaxTimeout = resolveLongProperty(configPrefix + NODE_ATTR_SUDO_RESPONSE_MAX_TIMEOUT,
+                                                         DEFAULT_SUDO_RESPONSE_MAX_TIMEOUT,
+                                                         node,
+                                                         frameworkProject,
+                                                         framework);
 
-                failOnInputLinesThreshold = resolveBooleanProperty(NODE_ATTR_SUDO_FAIL_ON_PROMPT_MAX_LINES,
+                failOnInputLinesThreshold = resolveBooleanProperty(
+                    configPrefix + NODE_ATTR_SUDO_FAIL_ON_PROMPT_MAX_LINES,
                     DEFAULT_SUDO_FAIL_ON_PROMPT_MAX_LINES, node, frameworkProject, framework);
 
-                failOnInputTimeoutThreshold = resolveBooleanProperty(NODE_ATTR_SUDO_FAIL_ON_PROMPT_TIMEOUT,
+                failOnInputTimeoutThreshold = resolveBooleanProperty(
+                    configPrefix + NODE_ATTR_SUDO_FAIL_ON_PROMPT_TIMEOUT,
                     DEFAULT_SUDO_FAIL_ON_PROMPT_TIMEOUT, node, frameworkProject, framework);
-                failOnResponseThreshold = resolveBooleanProperty(NODE_ATTR_SUDO_FAIL_ON_RESPONSE_TIMEOUT,
-                    DEFAULT_SUDO_FAIL_ON_RESPONSE_TIMEOUT, node, frameworkProject, framework);
-                successOnInputThreshold = resolveBooleanProperty(NODE_ATTR_SUDO_SUCCESS_ON_PROMPT_THRESHOLD,
+                failOnResponseThreshold = resolveBooleanProperty(configPrefix + NODE_ATTR_SUDO_FAIL_ON_RESPONSE_TIMEOUT,
+                                                                 DEFAULT_SUDO_FAIL_ON_RESPONSE_TIMEOUT,
+                                                                 node,
+                                                                 frameworkProject,
+                                                                 framework);
+                successOnInputThreshold = resolveBooleanProperty(
+                    configPrefix + NODE_ATTR_SUDO_SUCCESS_ON_PROMPT_THRESHOLD,
                     DEFAULT_SUDO_SUCCESS_ON_PROMPT_THRESHOLD, node, frameworkProject, framework);
             }
         }
@@ -649,8 +761,17 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
         @Override
         public String toString() {
-            return "Sudo execution password response";
+            return description;
         }
 
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
     }
+
+
 }

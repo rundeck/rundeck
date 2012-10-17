@@ -26,7 +26,6 @@ package com.dtolabs.rundeck.core.cli.jobs;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.cli.*;
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -36,7 +35,6 @@ import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
@@ -67,6 +65,10 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
      * load action identifier
      */
     public static final String ACTION_LOAD = "load";
+    /**
+     * purge action identifier
+     */
+    public static final String ACTION_PURGE = "purge";
     private StoredJobsRequestDuplicateOption duplicateOption = StoredJobsRequestDuplicateOption.update;
 
     /**
@@ -227,7 +229,11 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
         /**
          * load action
          */
-        load(ACTION_LOAD);
+        load(ACTION_PURGE),
+        /**
+         * load action
+         */
+        purge(ACTION_LOAD);
         private String name;
 
         Actions(final String name) {
@@ -415,9 +421,11 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
         final CommonOptions commonOptions = new CommonOptions();
         final LoadOptions loadOptions = new LoadOptions();
         final ListOptions listOptions = new ListOptions();
+        final PurgeOptions purgeOptions = new PurgeOptions();
         addToolOptions(commonOptions);
         addToolOptions(loadOptions);
         addToolOptions(listOptions);
+        addToolOptions(purgeOptions);
     }
 
     private class CommonOptions implements CLIToolOptions {
@@ -509,13 +517,13 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
     private class ListOptions implements CLIToolOptions {
         public void addOptions(final org.apache.commons.cli.Options options) {
             options.addOption(NAME_OPTION, NAME_OPTION_LONG, true,
-                "Job Name. List jobs matching this name. (list action)");
+                "Job Name. List jobs matching this name. (list/purge action)");
             options.addOption(GROUP_OPTION, GROUP_OPTION_LONG, true,
-                "Group name. List jobs within this group or sub-group (list action)");
+                "Group name. List jobs within this group or sub-group (list/purge action)");
             options.addOption(IDLIST_OPTION, IDLIST_OPTION_LONG, true,
-                "Job ID List. List Jobs with these IDs explicitly. Comma-separated, e.g.: 1,2,3. (list action)");
+                "Job ID List. List Jobs with these IDs explicitly. Comma-separated, e.g.: 1,2,3. (list/purge action)");
             options.addOption(PROJECT_OPTION, PROJECT_OPTION_LONG, true,
-                "Project name. List jobs within this project. (list action)");
+                "Project name. List jobs within this project. (list/purge action)");
 
         }
 
@@ -540,10 +548,42 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
                     if(internalResolver.hasSingleProject()) {
                         argProject = internalResolver.getSingleProjectName();
                         debug("# No project specified, defaulting to: " + argProject);
-                    }else{
+                    }else {
                         throw new CLIToolOptionsException(
-                            "list action: -" + PROJECT_OPTION + "/--" + PROJECT_OPTION_LONG + " option is required");
+                            ACTION_LIST + " action: -" + PROJECT_OPTION + "/--" + PROJECT_OPTION_LONG
+                            + " option is required");
                     }
+                }
+            }
+        }
+    }
+
+    /**
+     * CLIToolOptions class for the purge action
+     */
+    private class PurgeOptions implements CLIToolOptions {
+        public void addOptions(final org.apache.commons.cli.Options options) {
+        }
+
+        public void parseArgs(final CommandLine cli, final String[] original) throws CLIToolOptionsException {
+            //todo: purge history option
+        }
+
+        public void validate(final CommandLine cli, final String[] original) throws CLIToolOptionsException {
+            if (Actions.purge == action) {
+                if(null==argProject){
+                    if(internalResolver.hasSingleProject()) {
+                        argProject = internalResolver.getSingleProjectName();
+                        debug("# No project specified, defaulting to: " + argProject);
+                    }else {
+                        throw new CLIToolOptionsException(
+                            ACTION_PURGE + " action: -" + PROJECT_OPTION + "/--" + PROJECT_OPTION_LONG
+                            + " option is required");
+                    }
+                }
+                if (null == argGroup && null == argIdlist && null == argName) {
+                    throw new CLIToolOptionsException(
+                        ACTION_PURGE + " action: Some filter option is required");
                 }
             }
         }
@@ -585,18 +625,24 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
             case load:
                 loadAction();
                 break;
+            case purge:
+                purgeAction();
+                break;
             default:
                 throw new CLIToolOptionsException("Unrecognized action: " + action);
         }
     }
 
     public String getHelpString() {
-        return "rd-jobs [<action>] [options...]: list Jobs on the server, or upload Jobs to the server from a file\n"
+        return "rd-jobs [<action>] [options...]: list or delete Jobs on the server, or upload Jobs to the server from a file\n"
                + "\tList action (default):\n"
                + "rd-jobs [list] [query options] : list jobs matching the query, or all available\n"
                + "rd-jobs [list] --name <name> : Match jobs with the given name\n"
                + "rd-jobs [list] [query options] --file <output> : Save matched Jobs to output file as XML\n"
                + "rd-jobs [list] [query options] --file <output> --format <xml|yaml> : Save matched Jobs to output file as XML or YAML\n"
+               + "\tPurge action:\n"
+               + "rd-jobs purge -p <project> [query options] : Delete jobs from the project matching the options\n"
+               + "rd-jobs purge -p <project> --file <file> [query options] : Delete jobs from the project matching the options, after saving them to a file\n"
                + "\tLoad action:\n"
                + "rd-jobs load --file <file> : load jobs stored in XML file\n"
                + "rd-jobs load --file <file> -F yaml : load jobs stored in YAML file";
@@ -698,6 +744,95 @@ public class JobsTool extends BaseTool implements IStoredJobsQuery, ILoadJobsReq
         }
 
 
+    }
+
+    /**
+     * Perform the purge action and print the results.
+     *
+     * @throws JobsToolException if an error occurs
+     */
+    private void purgeAction() throws JobsToolException {
+        final Collection<IStoredJob> result;
+        final Collection<DeleteJobResult> deleteresult;
+        try {
+            final FileOutputStream output = null != argFile ? new FileOutputStream(
+                argFile) : null;
+            try {
+                result = framework.getCentralDispatcherMgr().listStoredJobs(this, output, format);
+            } finally {
+                if (null != output) {
+                    output.close();
+                }
+            }
+            if (null != argFile) {
+                log("Wrote " + format + " to file: " + argFile.getAbsolutePath());
+            }
+            ArrayList<String> jobIds = new ArrayList<String>();
+            for (final IStoredJob job : result) {
+                jobIds.add(job.getJobId());
+            }
+            if(jobIds.size()==0){
+                log("# Found 0 matching jobs");
+                return;
+            }
+            if (argVerbose) {
+                log("# Deleting " + result.size() + " jobs...");
+            }
+            deleteresult = framework.getCentralDispatcherMgr().deleteStoredJobs(jobIds);
+        } catch (CentralDispatcherException e) {
+            final String msg = "Failed request to list the queue: " + e.getMessage();
+            throw new JobsToolException(msg, e);
+        } catch (IOException e) {
+            final String msg = "Failed request to list the queue: " + e.getMessage();
+            throw new JobsToolException(msg, e);
+        }
+        List<DeleteJobResult> successful = new ArrayList<DeleteJobResult>();
+        List<DeleteJobResult> failed = new ArrayList<DeleteJobResult>();
+        for (final DeleteJobResult jobResult : deleteresult) {
+            if(!jobResult.isSuccessful()) {
+                failed.add(jobResult);
+            }else {
+                successful.add(jobResult);
+            }
+        }
+        //list skipped jobs
+        if (successful.size() > 0) {
+            log("# Deleted " + successful.size() + " Jobs:");
+            final List list = genJobDetailList(successful);
+            final Map map = new HashMap();
+            map.put("deleted", list);
+            logYaml(map);
+        }
+        //list failed jobs
+        if (failed.size() > 0) {
+            log("# Failed to delete " + failed.size() + " Jobs:");
+            final List list = genJobDetailList(failed);
+            final Map map = new HashMap();
+            map.put("failed", list);
+            logYaml(map);
+            throw new JobsToolException("Failed to delete "+failed.size()+" jobs");
+        }
+    }
+
+    private List<Map<String, String>> genJobDetailList(List<DeleteJobResult> result) {
+        ArrayList<Map<String, String>> list = new ArrayList<Map<String, String>>();
+        for (final DeleteJobResult item : result) {
+            list.add(genJobDetail(item));
+        }
+        return list;
+    }
+
+    private Map<String, String> genJobDetail(DeleteJobResult item) {
+        final HashMap<String, String> map = new HashMap<String, String>();
+        map.put("id", item.getId());
+        if (null != item.getMessage()) {
+            map.put("message", item.getMessage());
+        }
+        if (null != item.getErrorCode()) {
+
+            map.put("errorCode", item.getErrorCode());
+        }
+        return map;
     }
 
     private void logYaml(final Object list) {

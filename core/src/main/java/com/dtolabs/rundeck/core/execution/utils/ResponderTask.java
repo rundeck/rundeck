@@ -15,7 +15,7 @@
  */
 
 /*
-* ResponderThread.java
+* ResponderTask.java
 *
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 11/21/11 10:26 AM
@@ -27,21 +27,26 @@ import com.dtolabs.rundeck.core.utils.PartialLineBuffer;
 import org.apache.log4j.Logger;
 
 import java.io.*;
+import java.util.concurrent.Callable;
 import java.util.regex.Pattern;
 
+
 /**
- * ResponderThread interacts with an input and outputstream, using a {@link Responder} instance to define the
- * interaction.  It looks for lines on the input stream that match the "inputSuccess" regular expression (e.g. password
- * prompt). If it detects the "inputFailure" regular expression, it fails. If successful, it writes the "inputString" to
- * the output stream.
+ * ResponderTask interacts with an input and outputstream, using a {@link Responder} instance to define the interaction.
+ * It looks for lines on the input stream that match the "inputSuccess" regular expression (e.g. password prompt). If it
+ * detects the "inputFailure" regular expression, it fails. If successful, it writes the "inputString" to the output
+ * stream.
  * <p/>
  * After writing to the output stream, It then looks for a certain "responseSuccess" regular expression. If successful
  * it completes successfully. If it detects a "responseFailure" regular expression in the output, it fails.
  * <p/>
  * If a {@link ResultHandler} is set, it will call the handleResult method after the response logic.
  * <p/>
- * If it is stopped with the {@link #stopResponder()} method, then all further response interactions cease, and no
- * result handler is called.
+ * If it the thread running the ResponderTask is interrupted, then the process will stop as soon as it is detected.
+ * <p/>
+ * Implements {@link Callable} so it can be submitted to a {@link java.util.concurrent.ExecutorService}.
+ * <p/>
+ * <p/>
  * <p/>
  * Example: wait for "[sudo] password for user: ", write a password, and fail on "try again" response:
  * <p/>
@@ -50,8 +55,8 @@ import java.util.regex.Pattern;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ResponderThread extends Thread implements ResponderStopper {
-    static Logger logger = Logger.getLogger(ResponderThread.class.getName());
+public class ResponderTask implements Callable<ResponderTask.ResponderResult> {
+    static Logger logger = Logger.getLogger(ResponderTask.class.getName());
     private Responder responder;
     private OutputStream outputStream;
     private InputStreamReader reader;
@@ -59,14 +64,28 @@ public class ResponderThread extends Thread implements ResponderStopper {
     private boolean failed;
     private String failureReason;
     private ResultHandler resultHandler;
-    volatile boolean stopped = false;
+    private PartialLineBuffer partialLineBuffer;
 
-    public ResponderThread(final Responder responder, final InputStream inputStream, final OutputStream outputStream,
-                           final ResultHandler resultHandler) {
+    /**
+     * Create a ResponderTask with a responder, io streams, and result handler which can be null.
+     */
+    public ResponderTask(final Responder responder, final InputStream inputStream, final OutputStream outputStream,
+                         final ResultHandler resultHandler) {
+        this(responder, new InputStreamReader(inputStream), outputStream, resultHandler, new PartialLineBuffer());
+    }
+
+    /**
+     * Internal constructor
+     */
+    private ResponderTask(final Responder responder,
+                          final InputStreamReader reader,
+                          final OutputStream outputStream,
+                          final ResultHandler resultHandler, final PartialLineBuffer buffer) {
         this.responder = responder;
         this.outputStream = outputStream;
-        reader = new InputStreamReader(inputStream);
+        this.reader = reader;
         this.resultHandler = resultHandler;
+        this.partialLineBuffer = buffer;
     }
 
     static String[] STEP_DESCS = {
@@ -75,39 +94,31 @@ public class ResponderThread extends Thread implements ResponderStopper {
         "waiting for response"
     };
 
-    public void run() {
+    public ResponderResult call() throws Exception {
         logger.debug("started responder thread");
         runResponder();
-        if (null != resultHandler && !stopped) {
+        if (null != resultHandler && !Thread.currentThread().isInterrupted()) {
             resultHandler.handleResult(success, failureReason);
         }
-    }
-
-    public void stopResponder() {
-        stopped = true;
-        this.interrupt();
-    }
-
-    public boolean isResponderStopped() {
-        return stopped;
+        return new ResponderResult(responder, failureReason, success, Thread.interrupted());
     }
 
     private void runResponder() {
         int step = 0;
         try {
             //look for input pattern
-            final PartialLineBuffer buffer = new PartialLineBuffer();
             if (null != responder.getInputSuccessPattern() || null != responder.getInputFailurePattern()) {
                 logger.debug("Awaiting input: " + responder.getInputSuccessPattern() + ";" + responder
                     .getInputFailurePattern());
                 boolean detected;
                 try {
                     detected = detect(responder.getInputSuccessPattern(),
-                        responder.getInputFailurePattern(),
-                        responder.getInputMaxTimeout(),
-                        responder.getInputMaxLines(), reader, this, buffer);
+                                      responder.getInputFailurePattern(),
+                                      responder.getInputMaxTimeout(),
+                                      responder.getInputMaxLines(), reader, partialLineBuffer);
                     logger.debug("Success detected? " + detected);
-                    if (stopped) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        logger.debug("interrupted");
                         return;
                     }
                     if (!detected) {
@@ -119,7 +130,7 @@ public class ResponderThread extends Thread implements ResponderStopper {
                         logger.debug("Threshold met " + reason(e));
                         fail(step, reason(e));
                         return;
-                    }else if (responder.isFailOnInputTimeoutThreshold() && e.getType() == ThresholdType.milliseconds) {
+                    } else if (responder.isFailOnInputTimeoutThreshold() && e.getType() == ThresholdType.milliseconds) {
                         logger.debug("Threshold met " + reason(e));
                         fail(step, reason(e));
                         return;
@@ -131,7 +142,7 @@ public class ResponderThread extends Thread implements ResponderStopper {
             }
             step++;
 
-            if(null!=responder.getInputString()){
+            if (null != responder.getInputString()) {
                 logger.debug("Writing to output");
                 //write responseString
                 outputStream.write(responder.getInputString().getBytes());
@@ -146,10 +157,11 @@ public class ResponderThread extends Thread implements ResponderStopper {
                     logger.debug("Awaiting response: " + responder.getResponseSuccessPattern() + ", " + responder
                         .getResponseFailurePattern());
                     succeeded = detect(responder.getResponseSuccessPattern(),
-                        responder.getResponseFailurePattern(),
-                        responder.getResponseMaxTimeout(),
-                        responder.getResponseMaxLines(), reader, this, buffer);
-                    if (stopped) {
+                                       responder.getResponseFailurePattern(),
+                                       responder.getResponseMaxTimeout(),
+                                       responder.getResponseMaxLines(), reader, partialLineBuffer);
+                    if (Thread.currentThread().isInterrupted()) {
+                        logger.debug("interrupted");
                         return;
                     }
                     success = succeeded;
@@ -191,6 +203,33 @@ public class ResponderThread extends Thread implements ResponderStopper {
     }
 
     /**
+     * Set up a chained ResponderTask, where the new instance will use the same input/output streams and buffers.
+     * However they must both be invoked individually, use {@link #createSequence(Responder,
+     * ResponderTask.ResultHandler)} to set up a sequential invocation of
+     * another responder.
+     */
+    private ResponderTask chainResponder(final Responder responder, final ResultHandler resultHandler) {
+        return new ResponderTask(responder, reader, outputStream, resultHandler, partialLineBuffer);
+    }
+
+    /**
+     * Create a Callable that will execute another responder if this one is successful, with the same resultHandler for the
+     * second one.
+     *
+     */
+    public Callable<ResponderResult> createSequence(final Responder responder) {
+        return createSequence(responder, resultHandler);
+    }
+    /**
+     * Create a Callable that will execute another responder if this one is successful, with a specified resultHandler for the
+     * second one.
+     *
+     */
+    public Callable<ResponderResult> createSequence(final Responder responder, final ResultHandler resultHandler) {
+        return new Sequence<ResponderResult>(this, this.chainResponder(responder, resultHandler));
+    }
+
+    /**
      * Handles result of responder thread run
      */
     public static interface ResultHandler {
@@ -208,7 +247,7 @@ public class ResponderThread extends Thread implements ResponderStopper {
      * If a max timeout or max number of lines to read is exceeded, throw threshhold error.
      */
     static boolean detect(final String detectPattern, final String failurePattern, final long timeout,
-                          final int maxLines, final InputStreamReader reader, final ResponderStopper thread,
+                          final int maxLines, final InputStreamReader reader,
                           final PartialLineBuffer buffer) throws IOException, ThreshholdException {
         if (null == detectPattern && null == failurePattern) {
             throw new IllegalArgumentException("detectPattern or failurePattern required");
@@ -228,7 +267,8 @@ public class ResponderThread extends Thread implements ResponderStopper {
             failure = null;
         }
         outer:
-        while (System.currentTimeMillis() < start + timeout && linecount < maxLines && !thread.isResponderStopped()) {
+        while (System.currentTimeMillis() < start + timeout && linecount < maxLines && !Thread.currentThread()
+            .isInterrupted()) {
             //check buffer first, it may already contain data
             String line = buffer.readLine();
             while (null != line) {
@@ -252,18 +292,21 @@ public class ResponderThread extends Thread implements ResponderStopper {
                 logger.debug("read partial: " + line);
                 if (null != success && success.matcher(line).matches()) {
                     logger.debug("success matched partial");
+                    buffer.clearPartial();
                     return true;
                 } else if (null != failure && failure.matcher(line).matches()) {
                     logger.debug("failure matched partial");
+                    buffer.clearPartial();
                     return false;
                 }
             }
 
             if (!reader.ready()) {
                 try {
-                    sleep(500);
+                    Thread.sleep(500);
                 } catch (InterruptedException e) {
-                    //ignore
+                    Thread.currentThread().interrupt();
+                    return false;
                 }
                 continue;
             }
@@ -276,8 +319,8 @@ public class ResponderThread extends Thread implements ResponderStopper {
             }
 
         }
-        if(thread.isResponderStopped()){
-            logger.debug("detect stopped");
+        if (Thread.currentThread().isInterrupted()) {
+            logger.debug("detect interrupted");
         }
         if (linecount >= maxLines) {
             logger.debug("max input lines");
@@ -290,13 +333,18 @@ public class ResponderThread extends Thread implements ResponderStopper {
             return false;
         }
     }
+
     /**
      * Threshold type
      */
-    static enum ThresholdType{
+    static enum ThresholdType {
         milliseconds,
         lines,
     }
+
+    /**
+     * Indicates than a threshold was reached
+     */
     static final class ThreshholdException extends Exception {
         private Object value;
         private ThresholdType type;
@@ -318,6 +366,83 @@ public class ResponderThread extends Thread implements ResponderStopper {
 
         public ThresholdType getType() {
             return type;
+        }
+    }
+
+    /**
+     * Success/failure result interface
+     */
+    public static interface SuccessResult {
+        public boolean isSuccess();
+    }
+
+    /**
+     * Creates a callable by executing the first step, and only if successful executing the next step.
+     */
+    public static class Sequence<T extends SuccessResult> implements Callable<T> {
+        private Callable<T> step1;
+        private Callable<T> step2;
+
+        public Sequence(final Callable<T> step1,
+                        final Callable<T> step2) {
+            this.step1 = step1;
+            this.step2 = step2;
+        }
+
+        public T call() throws Exception {
+            final T result1 = step1.call();
+            if (result1.isSuccess() && !Thread.currentThread().isInterrupted()) {
+                return step2.call();
+            } else {
+                return result1;
+            }
+        }
+    }
+
+    /**
+     * Result from a responder execution, which contains success, the original Responder, a failure reason if
+     * unsuccessful and a boolean indicating if the process was interrupted.
+     */
+    public static final class ResponderResult implements SuccessResult {
+        private String failureReason;
+        private boolean success;
+        private boolean interrupted;
+        private Responder responder;
+
+        ResponderResult(final Responder responder,
+                        final String failureReason,
+                        final boolean success,
+                        final boolean interrupted) {
+            this.responder = responder;
+            this.failureReason = failureReason;
+            this.success = success;
+            this.interrupted = interrupted;
+        }
+
+        public String getFailureReason() {
+            return failureReason;
+        }
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public boolean isInterrupted() {
+            return interrupted;
+        }
+
+        public Responder getResponder() {
+            return responder;
+        }
+
+        @Override
+        public String toString() {
+            return "ResponderResult{" +
+                   "failureReason='" + failureReason + '\'' +
+                   ", success=" + success +
+                   ", interrupted=" + interrupted +
+                   ", responder=" + responder +
+                   '}';
         }
     }
 

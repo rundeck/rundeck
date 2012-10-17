@@ -29,6 +29,8 @@ import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.common.INodeEntry
 import org.apache.commons.collections.list.TreeList
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
+import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
+import org.apache.commons.httpclient.SimpleHttpConnectionManager
 
 class ScheduledExecutionController  {
     def Scheduler quartzScheduler
@@ -48,7 +50,7 @@ class ScheduledExecutionController  {
         apiJobDelete:'DELETE',
         apiJobAction:['GET','DELETE'],
         apiRunScript:'POST',
-        deleteBulk:'DELETE'
+        apiJobDeleteBulk:['DELETE','POST']
     ]
 
     def cancel = {
@@ -261,7 +263,7 @@ class ScheduledExecutionController  {
             def values=[]
             if (opt.realValuesUrl) {
                 //load expand variables in URL source
-                String srcUrl = expandUrl(opt, opt.realValuesUrl.toExternalForm(), scheduledExecution)
+                String srcUrl = expandUrl(opt, opt.realValuesUrl.toExternalForm(), scheduledExecution,params.extra?.option)
                 String cleanUrl=srcUrl.replaceAll("^(https?://)([^:@/]+):[^@/]*@",'$1$2:****@');
                 def remoteResult=[:]
                 def result=null
@@ -325,9 +327,13 @@ class ScheduledExecutionController  {
                     }
                 }else if(!err){
                     err.message = "Empty result"
+                    err.code='empty'
                 }
-
-                return render(template: "/framework/optionValuesSelect", model: [optionSelect: opt, values: result, srcUrl: cleanUrl, err: err,fieldPrefix:params.fieldPrefix,selectedvalue:params.selectedvalue]);
+                def model= [optionSelect: opt, values: result, srcUrl: cleanUrl, err: err, fieldPrefix: params.fieldPrefix, selectedvalue: params.selectedvalue]
+                if(params.extra?.option?.get(opt.name)){
+                    model.selectedoptsmap=[(opt.name):params.extra.option.get(opt.name)]
+                }
+                return render(template: "/framework/optionValuesSelect", model: model);
             } else {
                 return error.call()
             }
@@ -393,14 +399,23 @@ class ScheduledExecutionController  {
      * ${job.PROPERTY} and ${option.PROPERTY}.  available properties are
      * limited
      */
-    String expandUrl(Option opt, String url, ScheduledExecution scheduledExecution) {
+    String expandUrl(Option opt, String url, ScheduledExecution scheduledExecution,selectedoptsmap=[:]) {
         def invalid = []
-        String srcUrl = url.replaceAll(/(\$\{(job|option)\.(.+?)\})/,
+        String srcUrl = url.replaceAll(/(\$\{(job|option)\.([^\.}]+?(\.value)?)\})/,
             {Object[] group ->
                 if(group[2]=='job' && jobprops[group[3]] && scheduledExecution.properties.containsKey(jobprops[group[3]])) {
                     scheduledExecution.properties.get(jobprops[group[3]]).toString().encodeAsURL()
                 }else if(group[2]=='option' && optprops[group[3]] && opt.properties.containsKey(optprops[group[3]])) {
                     opt.properties.get(optprops[group[3]]).toString().encodeAsURL()
+                }else if(group[2]=='option' && group[4]=='.value' ) {
+                    def optname= group[3].substring(0, group[3].length() - '.value'.length())
+                    def value=selectedoptsmap&& selectedoptsmap instanceof Map?selectedoptsmap[optname]:null
+                    //find option with name
+                    def Option expopt = scheduledExecution.options.find {it.name == optname}
+                    if(value && expopt.multivalued && (value instanceof Collection || value instanceof String[])){
+                        value = value.join(expopt.delimiter)
+                    }
+                    value?:''
                 } else {
                     invalid << group[0]
                     group[0]
@@ -598,50 +613,79 @@ class ScheduledExecutionController  {
     /**
      * Delete a set of jobs as specified in the idlist parameter.
      * Only allowed via DELETE http method
+     * API: DELETE job definitions: /api/5/jobs/delete, version 5
     */
-    def deleteBulk = {
-        log.debug("ScheduledExecutionController: deleteBulk : params: " + params)
-        def list=[]
-        if(!params.idlist){
-            flash.error = "idlist parameter is required"
-            return error.call()
+    def apiJobDeleteBulk = {ApiBulkJobDeleteRequest deleteRequest->
+        log.debug("ScheduledExecutionController: apiJobDeleteBulk : params: " + params)
+        if(!deleteRequest.ids && !deleteRequest.idlist){
+            request.error = g.message(code: "api.error.parameter.required", args: ['ids or idlist'])
+            return new ApiController().error()
         }
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        def ids=params.idlist.split(",")
-        def errs=[]
-        ids.each{
-            def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( it )
-            if(scheduledExecution){
-                list<<scheduledExecution
-            }else{
-                errs<<"No Job found with id ${it}."
+
+        def ids = new HashSet<String>()
+        if(deleteRequest.ids){
+            ids.addAll(deleteRequest.ids)
+        }
+        if(deleteRequest.idlist){
+            ids.addAll(deleteRequest.idlist.split(','))
+        }
+
+        def successful = []
+        def deleteerrs=[]
+        ids.sort().each{jobid->
+
+            def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
+            if (!scheduledExecution) {
+                deleteerrs << [
+                        message: g.message(code: "api.error.item.doesnotexist", args: ['Job ID', jobid]),
+                        errorCode: 'notfound',
+                        id: jobid
+                ]
+                return
+            }
+            if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_DELETE], scheduledExecution.project)) {
+                deleteerrs << [
+                        message:g.message(code: 'api.error.item.unauthorized', args: ['Delete', 'Job ID', scheduledExecution.extid]),
+                        errorCode: 'unauthorized',
+                        id: scheduledExecution.extid,
+                        job:scheduledExecution
+                ]
+                return
+            }
+            def changeinfo = [user: session.user, method: 'apiJobDeleteBulk', change: 'delete']
+            def jobdata = scheduledExecution.properties
+            def jobtitle = "[" + scheduledExecution.extid + "] " + scheduledExecution.generateFullName()
+            def result = scheduledExecutionService.deleteScheduledExecution(scheduledExecution)
+            if (!result.success) {
+                deleteerrs<< [message:result.error,job:scheduledExecution,errorCode:'failed',id:scheduledExecution.extid]
+            } else {
+                logJobChange(changeinfo, jobdata)
+                successful<< [message:g.message(code: 'api.success.job.delete.message', args: [jobtitle]),job:scheduledExecution]
             }
         }
-        if(errs.size()){
-            flash.error=errs.join("\n")
-            return error.call()
-        }
-        def msgs=[]
-        list.each{scheduledExecution->
-            def jobname = scheduledExecution.generateJobScheduledName()
-            def groupname = scheduledExecution.generateJobGroupName()
-            def jobtitle=scheduledExecution.jobName
-            if(params.deleteAffirm){
-                if(frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_DELETE], scheduledExecution.project)){
-                    scheduledExecution.delete()
-                    scheduledExecutionService.deleteJob(jobname, groupname)
-                    msgs << "Job '${jobtitle}' was successfully deleted."
-                }else{
-
-                    msgs << "Unauthorized to delete Job: ${scheduledExecution.id}"
+        return new ApiController().success { delegate ->
+            delegate.'deleteJobs'(requestCount: ids.size(), allsuccessful:(successful.size()==ids.size())){
+                if(successful){
+                    delegate.'succeeded'(count:successful.size()) {
+                        successful.each{del->
+                            delegate.'deleteJobResult'(id:del.job.extid,){
+                                delegate.'message'(del.message)
+                            }
+                        }
+                    }
                 }
-
+                if(deleteerrs){
+                    delegate.'failed'(count: deleteerrs.size()) {
+                        deleteerrs.each{del->
+                            delegate.'deleteJobResult'(id:del.id,errorCode:del.errorCode){
+                                delegate.'error'(del.message)
+                            }
+                        }
+                    }
+                }
             }
         }
-        flash.message="Deleted ${list.size()} Jobs: [${params.idlist}]"
-        flash.messages=msgs
-        return xmlsuccess.call()
-
     }
 
     def edit = {
@@ -2609,7 +2653,93 @@ class ScheduledExecutionController  {
             model.selectedoptsmap = frameworkService.parseOptsFromString(params.argString)
         }
         model.localNodeName=framework.getFrameworkNodeName()
+
+        //determine option dependencies based on valuesURl embedded references
+        //map of option name to list of option names which depend on it
+        def depopts=[:]
+        //map of option name to list of option names it depends on
+        def optdeps=[:]
+        scheduledExecution.options.each { Option opt->
+            if(opt.realValuesUrl){
+                (opt.realValuesUrl=~/\$\{option\.([^.}\s]+?)\.value\}/ ).each{match,oname->
+                    if(oname==opt.name){
+                        return
+                    }
+                    //add opt to list of dependents of oname
+                    if(!depopts[oname]){
+                        depopts[oname]=[opt.name]
+                    }else{
+                        depopts[oname] << opt.name
+                    }
+                    //add oname to list of dependencies of opt
+                    if(!optdeps[opt.name]){
+                        optdeps[opt.name]=[oname]
+                    }else{
+                        optdeps[opt.name] << oname
+                    }
+                }
+            }
+        }
+        model.dependentoptions=depopts
+        model.optiondependencies=optdeps
+        //topo sort the dependencies
+        def toporesult = toposort(scheduledExecution.options*.name, depopts, optdeps)
+        model.optionordering= toporesult.result
+        if(scheduledExecution.options && !toporesult.result){
+            log.warn("Cyclic dependency for options for job ${scheduledExecution.extid}: (${toporesult.cycle})")
+            model.optionsDependenciesCyclic=true
+        }
+
         return model
+    }
+    private deepClone(Map map) {
+        def copy = [:]
+        map.each { k, v ->
+            if (v instanceof List){
+                copy[k] = v.clone()
+            }
+            else {
+                copy[k] = v
+            }
+        }
+        return copy
+    }
+
+    /**
+     * Return topo sorted list of nodes, if acyclic
+     * @param nodes
+     * @param oedgesin
+     * @param iedgesin
+     * @return
+     */
+    private toposort(List nodes,Map oedgesin,Map iedgesin){
+        def Map oedges = deepClone(oedgesin)
+        def Map iedges = deepClone(iedgesin)
+        def l = new ArrayList()
+        def s = new TreeSet(nodes.findAll {!iedges[it]})
+        while(s){
+            def n = s.first()
+            s.remove(n)
+            l.add(n)
+            //for each node dependent on n
+            def edges = new ArrayList()
+            if(oedges[n]){
+                edges.addAll(oedges[n])
+            }
+            edges.each{p->
+                oedges[n].remove(p)
+                iedges[p].remove(n)
+                if(!iedges[p]){
+                    s<<p
+                }
+            }
+        }
+        if (iedges.any {it.value} || oedges.any{it.value}){
+            //cyclic graph
+            return [cycle: iedges]
+        }else{
+            return [result:l]
+        }
     }
     def executeFragment = {
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)

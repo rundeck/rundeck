@@ -583,6 +583,26 @@ Job:
         </job>
     </joblist>
 
+##### Configuring Multiple Sudo Password Authentication
+
+You can enable a further level of sudo password support for a node.  If you have
+the requirement of executing a chain of "sudo" commands, such as "sudo -u user1
+sudo -u user2 command", and need to enable password input for both levels of
+sudo.  This is possible by configuring a secondary set of properties for your
+node/project/framework.
+
+The configuration properties are the same as those for the first-level of sudo
+password authentication described in [Configuring Secondary Sudo Password
+Authentication](#configuring-secondary-sudo-password-authentication), but with a
+prefix of "sudo2-" instead of "sudo-", such as:
+
+    sudo2-command-enabled="true"
+
+This would turn on a mechanism to expect and respond to another sudo password
+prompt.
+
+If a value for "sudo2-password-option" is not set, then a default value of
+`option.sudo2Password` will be used.
 
 ### Resource Model Sources
 

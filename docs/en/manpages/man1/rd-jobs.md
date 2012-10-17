@@ -4,7 +4,7 @@
 
 # NAME
 
-rd-jobs - List or load jobs to the Rundeck server
+rd-jobs - List, load or delete jobs from the Rundeck server
 
 # SYNOPSIS
 
@@ -21,6 +21,9 @@ The tool works in one of two *ACTION* modes:
 
 * load
 : upload job definitions up to the server
+
+* purge
+: delete job definitions on the server
 
 # OPTIONS
 
@@ -51,7 +54,7 @@ The tool works in one of two *ACTION* modes:
 -F, \--format *FORMAT*
 : File Format. For list action, format for the output document. Values: "xml" or "yaml". Default: "xml".
 
-# LOAD ACTION OPTIONS
+## LOAD ACTION OPTIONS
 
 -d, \--duplicate *update|skip|create*
 : Duplicate job behavior option. When loading jobs, treat definitions that already exist on the server in the given manner: 'update' existing jobs,'skip' the uploaded definitions, or 'create' them anyway. (load action. default: update)
@@ -61,6 +64,10 @@ The tool works in one of two *ACTION* modes:
 
 -F, \--format *FORMAT*
 : File Format. For load action, format for the input document. Values: "xml" or "yaml". Default: "xml".
+
+## PURGE ACTION OPTIONS
+
+The purge action uses the same set of options as the *list* action.
 
 # LIST ACTION 
 
@@ -154,6 +161,16 @@ Output:
     Skipped 2 Jobs:
        1: Build and Update Server2 [45] <http://localhost:8080/rundeck/scheduledExecution/show/45>
        2: Deploy Server4 [46] <http://localhost:8080/rundeck/scheduledExecution/show/46>
+
+# PURGE ACTION
+
+The Purge action queries the server for a list of matching jobs, and then requests that the server delete those jobs. Optionally the definitions of the matching jobs can be stored in a file if `-f` is specified.
+
+The jobs can be specified explicitly by ID using the `-i/--idlist` option. Otherwise they are searched using the options as filter criteria, and all matching Jobs are deleted.
+
+If no `-p/--project` option is specified, and only one project exists, the single project is used.  Otherwise the option is required.
+
+
 
    
 # SEE ALSO

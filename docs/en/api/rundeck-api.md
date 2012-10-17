@@ -38,6 +38,8 @@ Changes introduced by API Version number:
 **Version 5**:
 
 * New endpoint
+    * `/api/5/jobs/delete` - [Bulk Job Delete](#bulk-job-delete)
+* New endpoint
     * `/api/5/execution/[ID]/output` - [Execution Output](#execution-output)
 * New endpoint
     * `/api/5/executions` - [Execution Query](#execution-query)
@@ -551,6 +553,65 @@ If successful, then the `result` will contain a `success/message` element with t
     <success>
     <message>Job was successfully deleted: ... </message>
     </success>
+
+### Bulk Job Delete ###
+
+Delete multiple job definitions at once.
+
+URL:
+
+    /api/5/jobs/delete
+
+Method: `DELETE`, or `POST`
+
+Query parameters:
+
+* `ids`: The Job IDs to delete, can be specified multiple times
+* `idlist`: The Job IDs to delete as a single comma-separated string.
+
+Note: you can combine `ids` with `idlist`
+
+Result:
+
+The common `result` element described in the [Response Format](#response-format) section, indicating success or failure and any messages.
+
+If successful, then the `result` will contain a `deleteJobs` element with two sections of results, `succeeded` and `failed`:
+
+    <deleteJobs requestCount="#" allsuccessful="true/false">
+        <succeeded count="1">
+            <deleteJobRequest id="[job ID]">
+                <message>[message]</message>
+            </deleteJobRequest>
+        </succeeded>
+        <failed count="1">
+            <deleteJobRequest id="[job ID]" errorCode="[code]">
+                <error>[message]</error>
+            </deleteJobRequest>
+        </failed>
+    </deleteJobs>
+
+`deleteJobs` will have two attributes:
+
+* `requestCount`: the number of job IDs that were in the delete request
+* `allsuccessful`: true/false: true if all job deletes were successful, false otherwise.
+
+The response may contain only one of `succeeded` or `failed`, depending on the result.
+
+The `succeeded` and `failed` sections contain multiple `deleteJobRequest` elements.  
+
+Each `deleteJobRequest` under the `succeeded` section will contain:
+
+* `id` attribute - the Job ID
+* `message` sub-element - result message for the delete request
+
+
+Each `deleteJobRequest` under the `failed` section will contain:
+
+* `id` attribute - the Job ID
+* `error` sub-element - result error message for the delete request
+* `errorCode` attribute - a code indicating the type of failure, currently one of `failed`, `unauthorized` or `notfound`.
+
+
 
 ### Getting Executions for a Job
 

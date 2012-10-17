@@ -15,7 +15,17 @@
              $('error').innerHTML+=message;
              $("error").show();
         }
+        var _jobExecUnloadHandlers=new Array();
+        function _registerJobExecUnloadHandler(handler){
+            _jobExecUnloadHandlers.push(handler);
+        }
         function unloadExec(){
+            if(_jobExecUnloadHandlers.length>0){
+                for(var i =0;i<_jobExecUnloadHandlers.length;i++){
+                    _jobExecUnloadHandlers[i].call();
+                }
+                _jobExecUnloadHandlers.clear();
+            }
             $('execDiv').hide();
             $('indexMain').show();
             $('execDivContent').innerHTML='';

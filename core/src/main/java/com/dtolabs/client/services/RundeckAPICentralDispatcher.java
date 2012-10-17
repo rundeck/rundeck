@@ -73,6 +73,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      */
     public static final String RUNDECK_API_VERSION = "2";
     public static final String RUNDECK_API_VERSION_4 = "4";
+    public static final String RUNDECK_API_VERSION_5 = "5";
     /**
      * RUNDECK API base path
      */
@@ -82,6 +83,10 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      * RUNDECK API Base for v4
      */
     public static final String RUNDECK_API_BASE_v4 = "/api/" + RUNDECK_API_VERSION_4;
+    /**
+     * RUNDECK API Base for v4
+     */
+    public static final String RUNDECK_API_BASE_v5 = "/api/" + RUNDECK_API_VERSION_5;
 
     /**
      * API endpoint for execution report
@@ -113,6 +118,10 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      * Webservice endpoint for exporting stored jobs.
      */
     public static final String RUNDECK_API_JOBS_EXPORT_PATH = RUNDECK_API_BASE + "/jobs/export";
+    /**
+     * Webservice endpoint for exporting stored jobs.
+     */
+    public static final String RUNDECK_API_JOBS_BULK_DELETE_PATH = RUNDECK_API_BASE_v5 + "/jobs/delete";
 
     /**
      * Webservice endpoint for listing stored jobs.
@@ -857,6 +866,67 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         return null;
     }
 
+    public Collection<DeleteJobResult> deleteStoredJobs(Collection<String> jobIds) throws CentralDispatcherException {
+        final Map<String, Object> params = new HashMap<String, Object>();
+
+        params.put("ids", jobIds);
+        final WebserviceResponse response;
+        try {
+            response = serverService.makeRundeckRequest(RUNDECK_API_JOBS_BULK_DELETE_PATH, null, params );
+        } catch (MalformedURLException e) {
+            throw new CentralDispatcherServerRequestException("Failed to make request", e);
+        }
+        checkErrorResponse(response);
+
+        ////////////////////
+        //parse result list of delete result items, return the collection of DeleteJobResult
+        ///////////////////
+
+        final Document result = response.getResultDoc();
+
+        final int succeeded;
+        final int failed;
+        Node node = result.selectSingleNode("/result/deleteJobs/succeeded/@count");
+        if (null != node) {
+            succeeded = Integer.parseInt(node.getStringValue());
+        } else {
+            succeeded = -1;
+        }
+        node = result.selectSingleNode("/result/deleteJobs/failed/@count");
+        if (null != node) {
+            failed = Integer.parseInt(node.getStringValue());
+        } else {
+            failed = -1;
+        }
+        final ArrayList<DeleteJobResult> resultList = new ArrayList<DeleteJobResult>();
+        if (succeeded > 0) {
+            logger.debug("Succeeded deleting " + succeeded + " Jobs:");
+            final List nodes = result.selectNodes("/result/deleteJobs/succeeded/deleteJobResult");
+            for (final Object node2 : nodes) {
+                final Node node1 = (Node) node2;
+                final String message = null != node1.selectSingleNode("message") ? node1.selectSingleNode("message")
+                    .getStringValue() : "Succeeded";
+                final DeleteJobResult storedJobLoadResult = parseAPIJobDeleteResult(node1, true, message);
+                resultList.add(storedJobLoadResult);
+
+            }
+        }
+        if (failed > 0) {
+            logger.debug("Failed to delete " + failed + " Jobs:");
+            final List nodes = result.selectNodes("/result/deleteJobs/failed/deleteJobResult");
+            for (final Object node2 : nodes) {
+                final Node node1 = (Node) node2;
+                final String error = null != node1.selectSingleNode("error") ? node1.selectSingleNode("error")
+                    .getStringValue() : "Failed";
+                final DeleteJobResult storedJobLoadResult = parseAPIJobDeleteResult(node1, false, error);
+
+                resultList.add(storedJobLoadResult);
+            }
+        }
+
+        return resultList;
+    }
+
     public Collection<IStoredJob> reallistStoredJobs(final IStoredJobsQuery iStoredJobsQuery) throws
         CentralDispatcherException {
         final HashMap<String, String> params = new HashMap<String, String>();
@@ -1194,6 +1264,14 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         return resultList;
     }
 
+    private DeleteJobResult parseAPIJobDeleteResult(final Node node1, final boolean successful, final String message) {
+        final Node idNode = node1.selectSingleNode("@id");
+        final String id = null != idNode ? idNode.getStringValue() : null;
+        final Node codeNode = node1.selectSingleNode("errorCode");
+        final String errorCode = null != codeNode ? codeNode.getStringValue() : null;
+        logger.debug("\t[" + id + "] " + message);
+        return DeleteJobResultImpl.createDeleteJobResultImpl(successful,message,id,errorCode);
+    }
     private IStoredJobLoadResult parseAPIJobResult(final Node node1, final boolean successful, final boolean skippedJob,
                                                    final String message) {
         final Node uuidNode = node1.selectSingleNode("uuid");

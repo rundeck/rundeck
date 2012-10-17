@@ -23,10 +23,12 @@
  --%>
 
 <g:set var="rkey" value="${g.rkey()}"/>
+<g:set var="fkey" value="${rkey}"/>
 <g:set var="realFieldName" value="${(fieldPrefix?fieldPrefix:'')+(fieldName?fieldName:'option.'+optionSelect.name)}"/>
 <g:if test="${optionSelect}">
     <g:set var="optName" value="${optionSelect.name}"/>
-    
+    <g:set var="fieldwatchid" value="${(fieldhiddenid?:rkey+'_'+optName+'_h')}"/>
+
     <%-- Print out the input box for random input --%>
     <g:if test="${!optionSelect.enforced && !optionSelect.multivalued || err || optionSelect.secureInput}">
         <g:if test="${optionSelect.secureInput}">
@@ -34,17 +36,17 @@
                 class="optionvaluesfield"
                 value="${optionSelect.defaultValue?optionSelect.defaultValue:''}"
                 maxlength="256" size="40"
-                id="${rkey}"/>
+                id="${fieldwatchid}"/>
         </g:if>
         <g:else>
             <g:textField name="${realFieldName}"
                 class="optionvaluesfield"
                 value="${selectedvalue?selectedvalue:selectedoptsmap && selectedoptsmap[optName]?selectedoptsmap[optName]:optionSelect.defaultValue?optionSelect.defaultValue:''}"
                 maxlength="256" size="40"
-                id="${rkey}"/>
+                id="${fieldwatchid}"/>
         </g:else>
             <%-- event handler: when text field is empty, show required option value warning icon if it exists--%>
-            <wdgt:eventHandler for="${rkey}" state="empty" visible="true" targetSelector="${'#'+optName.encodeAsHTML()+'_state span.reqwarning'}" frequency="1"  inline='true'/>
+            <wdgt:eventHandler for="${fieldwatchid}" state="empty" visible="true" targetSelector="${'#'+optName.encodeAsHTML()+'_state span.reqwarning'}" frequency="1"  inline='true'/>
     </g:if>
 
     <%-- The Dropdown list --%>
@@ -71,15 +73,15 @@
 
             <g:if test="${optionSelect.multivalued}">
                 <!-- use checkboxes -->
-                <div class="optionmultiarea" id="${rkey}multiarea">
+                <div class="optionmultiarea" id="${fieldwatchid.encodeAsHTML()}">
                     <g:if test="${!optionSelect.enforced}">
                         <%-- variable input text fields --%>
                         <div class="optionvaluemulti ">
-                            <span class="action button obs_addvar" onclick="ExecutionOptions.addMultivarValue('${optName.encodeAsJavaScript()}','${rkey}varinput');">
+                            <span class="action button obs_addvar" >
                                 New Value&hellip;
                             </span>
                         </div>
-                        <div id="${rkey}varinput">
+                        <div id="${rkey.encodeAsHTML()}varinput">
 
                         </div>
                         <g:if test="${selectedoptsmap && selectedoptsmap[optName] && selectedoptsmap[optName] instanceof String}">
@@ -90,9 +92,9 @@
                         <g:set var="newvals" value="${selectedoptsmap ?selectedoptsmap[optName].findAll {optionSelect.values && !optionSelect.values.contains(it)}:null}"/>
                         <g:if test="${newvals}">
                             <g:javascript>
-                                fireWhenReady('${rkey}varinput', function(){
+                                fireWhenReady('${rkey.encodeAsJavaScript()}varinput', function(){
                                 <g:each in="${newvals}" var="nvalue">
-                                    ExecutionOptions.addMultivarValue('${optName.encodeAsJavaScript()}','${rkey}varinput','${nvalue.encodeAsJavaScript()}');
+                                    ExecutionOptions.addMultivarValue('${optName.encodeAsJavaScript()}','${rkey.encodeAsJavaScript()}varinput','${nvalue.encodeAsJavaScript()}');
                                 </g:each>
                                 }
                                 );
@@ -115,15 +117,24 @@
                     </g:each>
                 </div>
                 <g:javascript>
-                    fireWhenReady('${rkey}multiarea',
-                        function(){$$('#${rkey}multiarea input[type="checkbox"]').each(function(e){
-                            Event.observe(e,'change',ExecutionOptions.multiVarCheckboxChangeWarningHandler.curry('${optName.encodeAsHTML()}'));
-                        });}
+                    fireWhenReady('${fieldwatchid.encodeAsJavaScript()}', function(){
+                            $$('#${fieldwatchid.encodeAsJavaScript()} input[type="checkbox"]').each(function(e){
+                                Event.observe(e,'change',ExecutionOptions.multiVarCheckboxChangeWarningHandler.curry('${optName.encodeAsJavaScript()}'));
+                            });
+                            $$('.obs_addvar').each(function(e){
+                                Event.observe(e,'click', function(evt){
+                                    var roc=_remoteOptionControl('_commandOptions');
+                                    ExecutionOptions.addMultivarValue('${optName.encodeAsJavaScript()}','${rkey.encodeAsJavaScript()}varinput',null,roc.observeMultiCheckbox.bind(roc));
+                                });
+                            });
+                        }
                     );
                 </g:javascript>
             </g:if>
             <g:else>
-                <select class="optionvalues" id="${rkey}_sel" ${optionSelect.enforced ? 'name="' + realFieldName.encodeAsHTML() + '"' : ''}>
+                <g:set var="usesTextField" value="${!optionSelect.enforced || err}"/>
+                <select class="optionvalues" id="${!usesTextField? fieldwatchid.encodeAsHTML(): (rkey + '_sel').encodeAsHTML()}"
+                    ${!usesTextField ? 'name="' + realFieldName.encodeAsHTML() + '"' : ''}>
                     <g:if test="${!optionSelect.enforced && !optionSelect.multivalued}">
                         <option value="">-choose-</option>
                     </g:if>
@@ -133,10 +144,11 @@
                         <option value="${entry.value.encodeAsHTML()}" ${selectedvalue && entry.value == selectedvalue || entry.value == optionSelect.defaultValue || selectedoptsmap && entry.value == selectedoptsmap[optName] ? 'selected' : ''}>${entry.name.encodeAsHTML()}</option>
                     </g:each>
                 </select>
-                <g:if test="${!optionSelect.enforced || err}">
+                <g:if test="${usesTextField}">
                 <%-- event handler: when select popup value is changed, copy the value to the textfield --%>
-                    <wdgt:eventHandler for="${rkey}_sel" notequals="" copy="value" target="${rkey}" inline='true' multivaluedelimiter="${optionSelect.multivalued?optionSelect.delimiter:null}"/>
+                    <wdgt:eventHandler for="${rkey}_sel" notequals="" copy="value" target="${fieldwatchid}" inline='true' multivaluedelimiter="${optionSelect.multivalued?optionSelect.delimiter:null}"/>
                 </g:if>
+
             </g:else>
 
         </g:else>
@@ -149,8 +161,28 @@
             </g:javascript>
         </g:if>
     </g:if>
+
+    <g:javascript>
+        fireWhenReady('_commandOptions', function(){
+            <g:if test="${optionSelect.multivalued}">
+            _remoteOptionControl('_commandOptions').setFieldMultiId('${optName.encodeAsJavaScript()}','${fieldwatchid.encodeAsJavaScript()}');
+            </g:if>
+            <g:else>
+            _remoteOptionControl('_commandOptions').setFieldId('${optName.encodeAsJavaScript()}','${fieldwatchid.encodeAsJavaScript()}');
+            </g:else>
+        });
+    </g:javascript>
+
+    <span class="loading"></span>
 </g:if>
 <g:if test="${err}">
+    <g:if test="${err.code=='empty'}">
+       <g:javascript>
+        fireWhenReady('_commandOptions', function(){
+            _remoteOptionControl('_commandOptions').setFieldRemoteEmpty('${optName.encodeAsJavaScript()}');
+        });
+        </g:javascript>
+    </g:if>
     <g:expander key="${rkey}_error_detail" classnames="error label">${err.message.encodeAsHTML()}</g:expander>
     
     <span class="error note" style="display:none" id="${rkey}_error_detail">

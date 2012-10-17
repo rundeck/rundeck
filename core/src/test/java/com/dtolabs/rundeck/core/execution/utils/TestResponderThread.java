@@ -29,6 +29,8 @@ import junit.framework.TestCase;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
+import java.util.concurrent.Callable;
+
 
 /**
  * TestResponderThread is ...
@@ -39,155 +41,78 @@ public class TestResponderThread extends TestCase {
 
     public void testDetectSuccess() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream("Test1\nTest2: blah\n".getBytes());
-        boolean result = ResponderThread.detect("^Test2: .*", null, 1000, 20, new InputStreamReader(bais),
-            new ResponderStopper() {
-                public boolean isResponderStopped() {
-                    return false;
-                }
-
-                public void stopResponder() {
-                }
-            }, new PartialLineBuffer());
+        boolean result = ResponderTask.detect("^Test2: .*", null, 1000, 20, new InputStreamReader(bais),
+                                              new PartialLineBuffer());
         assertTrue(result);
     }
 
     public void testDetectFail() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream("Test1\nTest2: blah\n".getBytes());
-        boolean result = ResponderThread.detect(null, "^Test2: .*", 1000, 20, new InputStreamReader(bais),
-            new ResponderStopper() {
-                public boolean isResponderStopped() {
-                    return false;
-                }
-
-                public void stopResponder() {
-                }
-            }, new PartialLineBuffer());
+        boolean result = ResponderTask.detect(null, "^Test2: .*", 1000, 20, new InputStreamReader(bais),
+                                              new PartialLineBuffer());
         assertFalse(result);
     }
 
     public void testDetectSuccessPartial() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream("Test1\nTest2: blah".getBytes());
-        boolean result = ResponderThread.detect("^Test2: .*", null, 1000, 20, new InputStreamReader(bais),
-            new ResponderStopper() {
-                public boolean isResponderStopped() {
-                    return false;
-                }
-
-                public void stopResponder() {
-                }
-            }, new PartialLineBuffer());
+        boolean result = ResponderTask.detect("^Test2: .*", null, 1000, 20, new InputStreamReader(bais),
+                                              new PartialLineBuffer());
         assertTrue(result);
     }
 
     public void testDetectFailPartial() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream("Test1\nTest2: blah".getBytes());
-        boolean result = ResponderThread.detect(null, "^Test2: .*", 1000, 20, new InputStreamReader(bais),
-            new ResponderStopper() {
-                public boolean isResponderStopped() {
-                    return false;
-                }
-
-                public void stopResponder() {
-                }
-            }, new PartialLineBuffer());
+        boolean result = ResponderTask.detect(null, "^Test2: .*", 1000, 20, new InputStreamReader(bais),
+                                              new PartialLineBuffer());
         assertFalse(result);
     }
 
     public void testDetectSuccessPartial2() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream("Test1\r\nTest2: blah\r".getBytes());
-        boolean result = ResponderThread.detect("^Test2: .*", null, 1000, 20, new InputStreamReader(bais),
-            new ResponderStopper() {
-                public boolean isResponderStopped() {
-                    return false;
-                }
-
-                public void stopResponder() {
-                }
-            }, new PartialLineBuffer());
+        boolean result = ResponderTask.detect("^Test2: .*", null, 1000, 20, new InputStreamReader(bais),
+                                              new PartialLineBuffer());
         assertTrue(result);
     }
 
     public void testDetectFailPartial2() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream("Test1\r\nTest2: blah\r".getBytes());
-        boolean result = ResponderThread.detect(null, "^Test2: .*", 1000, 20, new InputStreamReader(bais),
-            new ResponderStopper() {
-                public boolean isResponderStopped() {
-                    return false;
-                }
-
-                public void stopResponder() {
-                }
-            }, new PartialLineBuffer());
+        boolean result = ResponderTask.detect(null, "^Test2: .*", 1000, 20, new InputStreamReader(bais),
+                                              new PartialLineBuffer());
         assertFalse(result);
     }
 
     public void testDetectSuccessPartial3() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream("Test1\rTest2: blah".getBytes());
-        boolean result = ResponderThread.detect("^Test2: .*", null, 1000, 20, new InputStreamReader(bais),
-            new ResponderStopper() {
-                public boolean isResponderStopped() {
-                    return false;
-                }
-
-                public void stopResponder() {
-                }
-            }, new PartialLineBuffer());
+        boolean result = ResponderTask.detect("^Test2: .*", null, 1000, 20, new InputStreamReader(bais),
+                                              new PartialLineBuffer());
         assertTrue(result);
     }
 
     public void testDetectFailPartial3() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream("Test1\rTest2: blah".getBytes());
-        boolean result = ResponderThread.detect(null, "^Test2: .*", 1000, 20, new InputStreamReader(bais),
-            new ResponderStopper() {
-                public boolean isResponderStopped() {
-                    return false;
-                }
-
-                public void stopResponder() {
-                }
-            }, new PartialLineBuffer());
+        boolean result = ResponderTask.detect(null, "^Test2: .*", 1000, 20, new InputStreamReader(bais),
+                                              new PartialLineBuffer());
         assertFalse(result);
     }
 
     public void testDetectBoth() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream("Test1\nTest2: blah\n".getBytes());
-        boolean result = ResponderThread.detect("^Test2: .*", "^Test2: .*", 1000, 20, new InputStreamReader(bais),
-            new ResponderStopper() {
-                public boolean isResponderStopped() {
-                    return false;
-                }
-
-                public void stopResponder() {
-                }
-            }, new PartialLineBuffer());
+        boolean result = ResponderTask.detect("^Test2: .*", "^Test2: .*", 1000, 20, new InputStreamReader(bais),
+                                              new PartialLineBuffer());
         assertTrue(result);
     }
 
     public void testDetectBothOrderSuccessFirst() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream("Test1\nTest2: blah\nTest3: bloo".getBytes());
-        boolean result = ResponderThread.detect("^Test2: .*", "^Test3: .*", 1000, 20, new InputStreamReader(bais),
-            new ResponderStopper() {
-                public boolean isResponderStopped() {
-                    return false;
-                }
-
-                public void stopResponder() {
-                }
-            }, new PartialLineBuffer());
+        boolean result = ResponderTask.detect("^Test2: .*", "^Test3: .*", 1000, 20, new InputStreamReader(bais),
+                                              new PartialLineBuffer());
         assertTrue(result);
     }
 
     public void testDetectBothOrderFailureFirst() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream("Test1\nTest2: blah\nTest3: bloo".getBytes());
-        boolean result = ResponderThread.detect("^Test3: .*", "^Test2: .*", 1000, 20, new InputStreamReader(bais),
-            new ResponderStopper() {
-                public boolean isResponderStopped() {
-                    return false;
-                }
-
-                public void stopResponder() {
-                }
-            }, new PartialLineBuffer());
+        boolean result = ResponderTask.detect("^Test3: .*", "^Test2: .*", 1000, 20, new InputStreamReader(bais),
+                                              new PartialLineBuffer());
         assertFalse(result);
     }
 
@@ -195,35 +120,21 @@ public class TestResponderThread extends TestCase {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest1\nTest1\nTest2: blah\nTest3: bloo".getBytes());
         try {
-            boolean result = ResponderThread.detect("^Test2: .*", null, 1000, 5, new InputStreamReader(bais),
-                new ResponderStopper() {
-                    public boolean isResponderStopped() {
-                        return false;
-                    }
-
-                    public void stopResponder() {
-                    }
-                }, new PartialLineBuffer());
+            boolean result = ResponderTask.detect("^Test2: .*", null, 1000, 5, new InputStreamReader(bais),
+                                                  new PartialLineBuffer());
             fail("Should have thrown exception");
-        } catch (ResponderThread.ThreshholdException e) {
+        } catch (ResponderTask.ThreshholdException e) {
             assertNotNull(e);
             assertEquals(Integer.valueOf(5), e.getValue());
-            assertEquals(ResponderThread.ThresholdType.lines, e.getType());
+            assertEquals(ResponderTask.ThresholdType.lines, e.getType());
         }
     }
 
     public void testDetectMaxLinesOK() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest1\nTest1\nTest2: blah\nTest3: bloo".getBytes());
-        boolean result = ResponderThread.detect("^Test2: .*", null, 1000, 6, new InputStreamReader(bais),
-            new ResponderStopper() {
-                public boolean isResponderStopped() {
-                    return false;
-                }
-
-                public void stopResponder() {
-                }
-            }, new PartialLineBuffer());
+        boolean result = ResponderTask.detect("^Test2: .*", null, 1000, 6, new InputStreamReader(bais),
+                                              new PartialLineBuffer());
         assertTrue(result);
     }
 
@@ -231,36 +142,14 @@ public class TestResponderThread extends TestCase {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest1\nTest1\nTest2: blah\nTest3: bloo".getBytes());
         try {
-            boolean result = ResponderThread.detect("^TestZ: .*", null, 100, 50, new InputStreamReader(bais),
-                new ResponderStopper() {
-                    public boolean isResponderStopped() {
-                        return false;
-                    }
-
-                    public void stopResponder() {
-                    }
-                }, new PartialLineBuffer());
+            boolean result = ResponderTask.detect("^TestZ: .*", null, 100, 50, new InputStreamReader(bais),
+                                                  new PartialLineBuffer());
             fail("Should have thrown exception");
-        } catch (ResponderThread.ThreshholdException e) {
+        } catch (ResponderTask.ThreshholdException e) {
             assertNotNull(e);
             assertEquals(Long.valueOf(100), e.getValue());
-            assertEquals(ResponderThread.ThresholdType.milliseconds, e.getType());
+            assertEquals(ResponderTask.ThresholdType.milliseconds, e.getType());
         }
-    }
-
-    public void testDetectStopped() throws Exception {
-        ByteArrayInputStream bais = new ByteArrayInputStream(
-            "Test1\nTest1\nTest1\nTest1\nTest1\nTest2: blah\nTest3: bloo".getBytes());
-        boolean result = ResponderThread.detect("^TestZ: .*", null, 1000, 50, new InputStreamReader(bais),
-            new ResponderStopper() {
-                public boolean isResponderStopped() {
-                    return true;
-                }
-
-                public void stopResponder() {
-                }
-            }, new PartialLineBuffer());
-        assertFalse(result);
     }
 
     static class testResponder implements Responder{
@@ -330,20 +219,19 @@ public class TestResponderThread extends TestCase {
             return failOnInputTimeoutThreshold;
         }
     }
-    public void testRunResponderDefault(){
+    public void testRunResponderDefault() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final testResponder testResponder = new testResponder();
         testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
-        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
-        responderThread.run();
-        assertTrue(responderThread.isSuccess());
-        assertFalse(responderThread.isFailed());
-        assertFalse(responderThread.isResponderStopped());
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+        final ResponderTask.ResponderResult call = responderThread.call();
+        assertTrue(call.isSuccess());
+        assertNull(call.getFailureReason());
     }
-    public void testRunResponderInputSuccess(){
+    public void testRunResponderInputSuccess() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -353,14 +241,13 @@ public class TestResponderThread extends TestCase {
         testResponder.inputMaxTimeout = 1000;
         testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
-        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
-        responderThread.run();
-        assertTrue(responderThread.isSuccess());
-        assertFalse(responderThread.isFailed());
-        assertFalse(responderThread.isResponderStopped());
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+        final ResponderTask.ResponderResult call = responderThread.call();
+        assertTrue(call.isSuccess());
+        assertNull(call.getFailureReason());
     }
 
-    public void testRunResponderInputSuccessMiss(){
+    public void testRunResponderInputSuccessMiss() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -371,14 +258,13 @@ public class TestResponderThread extends TestCase {
         testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnInputTimeoutThreshold = true;
         testResponder.failOnResponseThreshold = true;
-        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
-        responderThread.run();
-        assertFalse(responderThread.isSuccess());
-        assertTrue(responderThread.isFailed());
-        assertEquals("Failed waiting for input prompt: Expected input was not seen in 5 lines", responderThread.getFailureReason());
-        assertFalse(responderThread.isResponderStopped());
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+        final ResponderTask.ResponderResult call = responderThread.call();
+        assertFalse(call.isSuccess());
+        assertNotNull(call.getFailureReason());
+        assertEquals("Failed waiting for input prompt: Expected input was not seen in 5 lines", call.getFailureReason());
     }
-    public void testRunResponderInputSuccessMissTimeout(){
+    public void testRunResponderInputSuccessMissTimeout() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -389,15 +275,15 @@ public class TestResponderThread extends TestCase {
         testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnInputTimeoutThreshold = true;
         testResponder.failOnResponseThreshold = true;
-        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
-        responderThread.run();
-        assertFalse(responderThread.isSuccess());
-        assertTrue(responderThread.isFailed());
-        assertEquals("Failed waiting for input prompt: Expected input was not seen in 1000 milliseconds", responderThread.getFailureReason());
-        assertFalse(responderThread.isResponderStopped());
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+        final ResponderTask.ResponderResult call = responderThread.call();
+        assertFalse(call.isSuccess());
+        assertNotNull(call.getFailureReason());
+        assertEquals("Failed waiting for input prompt: Expected input was not seen in 1000 milliseconds",
+                     call.getFailureReason());
     }
 
-    public void testRunResponderInputSuccessMissNofail(){
+    public void testRunResponderInputSuccessMissNofail() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -409,16 +295,14 @@ public class TestResponderThread extends TestCase {
         testResponder.failOnInputTimeoutThreshold = false;
         testResponder.failOnResponseThreshold = true;
         testResponder.inputString = "Test";
-        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
-        responderThread.run();
-        assertTrue(responderThread.isSuccess());
-        assertFalse(responderThread.isFailed());
-        assertNull(responderThread.getFailureReason());
-        assertFalse(responderThread.isResponderStopped());
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+        final ResponderTask.ResponderResult call = responderThread.call();
+        assertTrue(call.isSuccess());
+        assertNull(call.getFailureReason());
         assertEquals("Test", baos.toString());
     }
 
-    public void testRunResponderInputSuccessOnInputThreshold() {
+    public void testRunResponderInputSuccessOnInputThreshold() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -431,18 +315,16 @@ public class TestResponderThread extends TestCase {
         testResponder.failOnInputTimeoutThreshold = false;
         testResponder.failOnResponseThreshold = true;
         testResponder.inputString = "Test";
-        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
-        responderThread.run();
-        assertTrue(responderThread.isSuccess());
-        assertFalse(responderThread.isFailed());
-        assertNull(responderThread.getFailureReason());
-        assertFalse(responderThread.isResponderStopped());
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+        final ResponderTask.ResponderResult call = responderThread.call();
+        assertTrue(call.isSuccess());
+        assertNull(call.getFailureReason());
 
         //result is no output 
         assertEquals("", baos.toString());
     }
 
-    public void testRunResponderInputFailure() {
+    public void testRunResponderInputFailure() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -452,15 +334,14 @@ public class TestResponderThread extends TestCase {
         testResponder.inputMaxTimeout = 1000;
         testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
-        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
-        responderThread.run();
-        assertFalse(responderThread.isSuccess());
-        assertTrue(responderThread.isFailed());
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+        final ResponderTask.ResponderResult call = responderThread.call();
+        assertFalse(call.isSuccess());
+        assertNotNull(call.getFailureReason());
         assertEquals("Failed waiting for input prompt: Expected input was not seen",
-            responderThread.getFailureReason());
-        assertFalse(responderThread.isResponderStopped());
+                     call.getFailureReason());
     }
-    public void testRunResponderInputFailureMiss() {
+    public void testRunResponderInputFailureMiss() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -470,15 +351,14 @@ public class TestResponderThread extends TestCase {
         testResponder.inputMaxTimeout = 1000;
         testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
-        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
-        responderThread.run();
-        assertFalse(responderThread.isSuccess());
-        assertTrue(responderThread.isFailed());
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+        final ResponderTask.ResponderResult call = responderThread.call();
+        assertFalse(call.isSuccess());
+        assertNotNull(call.getFailureReason());
         assertEquals("Failed waiting for input prompt: Expected input was not seen in 5 lines",
-            responderThread.getFailureReason());
-        assertFalse(responderThread.isResponderStopped());
+                     call.getFailureReason());
     }
-    public void testRunResponderInputFailureMissNoFail() {
+    public void testRunResponderInputFailureMissNoFail() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -488,15 +368,13 @@ public class TestResponderThread extends TestCase {
         testResponder.inputMaxTimeout = 1000;
         testResponder.failOnInputLinesThreshold = false;
         testResponder.failOnResponseThreshold = true;
-        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
-        responderThread.run();
-        assertTrue(responderThread.isSuccess());
-        assertFalse(responderThread.isFailed());
-        assertNull(responderThread.getFailureReason());
-        assertFalse(responderThread.isResponderStopped());
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+        final ResponderTask.ResponderResult call = responderThread.call();
+        assertTrue(call.isSuccess());
+        assertNull(call.getFailureReason());
     }
 
-    public void testRunResponderResponseSuccess() {
+    public void testRunResponderResponseSuccess() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -511,14 +389,12 @@ public class TestResponderThread extends TestCase {
         testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
 
-        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
-        responderThread.run();
-        assertNull(responderThread.getFailureReason(), responderThread.getFailureReason());
-        assertTrue(responderThread.isSuccess());
-        assertFalse(responderThread.isFailed());
-        assertFalse(responderThread.isResponderStopped());
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+        final ResponderTask.ResponderResult call = responderThread.call();
+        assertTrue(call.isSuccess());
+        assertNull(call.getFailureReason());
     }
-    public void testRunResponderResponseSuccessMiss() {
+    public void testRunResponderResponseSuccessMiss() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo\nblah\nasdfa\nasdf\nasdf\n".getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -533,15 +409,14 @@ public class TestResponderThread extends TestCase {
         testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
 
-        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
-        responderThread.run();
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+        final ResponderTask.ResponderResult call = responderThread.call();
+        assertFalse(call.isSuccess());
+        assertNotNull(call.getFailureReason());
         assertEquals("Failed waiting for response: Expected input was not seen in 5 lines",
-            responderThread.getFailureReason());
-        assertFalse(responderThread.isSuccess());
-        assertTrue(responderThread.isFailed());
-        assertFalse(responderThread.isResponderStopped());
+                     call.getFailureReason());
     }
-    public void testRunResponderResponseSuccessMissNoFail() {
+    public void testRunResponderResponseSuccessMissNoFail() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -556,14 +431,12 @@ public class TestResponderThread extends TestCase {
         testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = false;
 
-        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
-        responderThread.run();
-        assertNull(responderThread.getFailureReason(), responderThread.getFailureReason());
-        assertTrue(responderThread.isSuccess());
-        assertFalse(responderThread.isFailed());
-        assertFalse(responderThread.isResponderStopped());
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+        final ResponderTask.ResponderResult call = responderThread.call();
+        assertTrue(call.isSuccess());
+        assertNull(call.getFailureReason());
     }
-    public void testRunResponderResponseFailure() {
+    public void testRunResponderResponseFailure() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -578,15 +451,14 @@ public class TestResponderThread extends TestCase {
         testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
 
-        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
-        responderThread.run();
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+        final ResponderTask.ResponderResult call = responderThread.call();
+        assertFalse(call.isSuccess());
+        assertNotNull(call.getFailureReason());
         assertEquals("Failed waiting for response: Did not see the correct response",
-            responderThread.getFailureReason());
-        assertFalse(responderThread.isSuccess());
-        assertTrue(responderThread.isFailed());
-        assertFalse(responderThread.isResponderStopped());
+                     call.getFailureReason());
     }
-    public void testRunResponderResponseFailureMiss() {
+    public void testRunResponderResponseFailureMiss() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloon\nsdf\nsdf\nsdf\nsdf\nsdf\n".getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -601,15 +473,14 @@ public class TestResponderThread extends TestCase {
         testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = true;
 
-        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
-        responderThread.run();
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+        final ResponderTask.ResponderResult call = responderThread.call();
+        assertFalse(call.isSuccess());
+        assertNotNull(call.getFailureReason());
         assertEquals("Failed waiting for response: Expected input was not seen in 5 lines",
-            responderThread.getFailureReason());
-        assertFalse(responderThread.isSuccess());
-        assertTrue(responderThread.isFailed());
-        assertFalse(responderThread.isResponderStopped());
+                     call.getFailureReason());
     }
-    public void testRunResponderResponseFailureMissNoFail() {
+    public void testRunResponderResponseFailureMissNoFail() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -624,14 +495,12 @@ public class TestResponderThread extends TestCase {
         testResponder.failOnInputLinesThreshold = true;
         testResponder.failOnResponseThreshold = false;
 
-        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
-        responderThread.run();
-        assertNull(responderThread.getFailureReason(), responderThread.getFailureReason());
-        assertTrue(responderThread.isSuccess());
-        assertFalse(responderThread.isFailed());
-        assertFalse(responderThread.isResponderStopped());
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+        final ResponderTask.ResponderResult call = responderThread.call();
+        assertTrue(call.isSuccess());
+        assertNull(call.getFailureReason());
     }
-    public void testRunResponderWrite() {
+    public void testRunResponderWrite() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -647,15 +516,277 @@ public class TestResponderThread extends TestCase {
         testResponder.failOnResponseThreshold = true;
         testResponder.inputString = "Test";
 
-        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
-        responderThread.run();
-        assertNull(responderThread.getFailureReason(), responderThread.getFailureReason());
-        assertTrue(responderThread.isSuccess());
-        assertFalse(responderThread.isFailed());
-        assertFalse(responderThread.isResponderStopped());
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+        final ResponderTask.ResponderResult call = responderThread.call();
+        assertTrue(call.isSuccess());
+        assertNull(call.getFailureReason());
         assertEquals("Test", baos.toString());
     }
-    public void testRunResponderWriteOnSuccess() {
+    public void testChainedResponderOutput() throws Exception {
+        ByteArrayInputStream bais = new ByteArrayInputStream(
+            "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        final testResponder testResponder = new testResponder();
+        testResponder.inputSuccessPattern = null;
+        testResponder.responseSuccessPattern = null;
+        testResponder.inputMaxLines = 5;
+        testResponder.inputMaxTimeout = 1000;
+        testResponder.responseMaxLines = 5;
+        testResponder.responseMaxTimeout = 1000;
+        testResponder.failOnInputLinesThreshold = true;
+        testResponder.failOnResponseThreshold = true;
+        testResponder.inputString = "Test1\n";
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+
+
+        final testResponder testResponder2 = new testResponder();
+        testResponder2.inputSuccessPattern = null;
+        testResponder2.responseSuccessPattern = null;
+        testResponder2.inputMaxLines = 5;
+        testResponder2.inputMaxTimeout = 1000;
+        testResponder2.responseMaxLines = 5;
+        testResponder2.responseMaxTimeout = 1000;
+        testResponder2.failOnInputLinesThreshold = true;
+        testResponder2.failOnResponseThreshold = true;
+        testResponder2.inputString = "Test2\n";
+        final Callable<ResponderTask.ResponderResult> task = responderThread.createSequence(testResponder2, null);
+        final ResponderTask.ResponderResult call = task.call();
+
+        assertEquals(testResponder2, call.getResponder());
+        assertTrue(call.isSuccess());
+        assertNull(call.getFailureReason());
+        assertEquals("Test1\nTest2\n", baos.toString());
+    }
+    public void testChainedResponderInput1Detect() throws Exception {
+        ByteArrayInputStream bais = new ByteArrayInputStream(
+            "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTestZ: bloo\nFlip1\nFlip2\nFlip3".getBytes());
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        final testResponder testResponder = new testResponder();
+        testResponder.inputSuccessPattern = "^Test2: .*";
+        testResponder.responseSuccessPattern = "^TestZ: .*";
+        testResponder.inputMaxLines = 5;
+        testResponder.inputMaxTimeout = 1000;
+        testResponder.responseMaxLines = 5;
+        testResponder.responseMaxTimeout = 1000;
+        testResponder.failOnInputLinesThreshold = true;
+        testResponder.failOnResponseThreshold = true;
+        testResponder.inputString = "Test1\n";
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+
+
+        final testResponder testResponder2 = new testResponder();
+        testResponder2.inputSuccessPattern = null;
+        testResponder2.responseSuccessPattern = null;
+        testResponder2.inputMaxLines = 5;
+        testResponder2.inputMaxTimeout = 1000;
+        testResponder2.responseMaxLines = 5;
+        testResponder2.responseMaxTimeout = 1000;
+        testResponder2.failOnInputLinesThreshold = true;
+        testResponder2.failOnResponseThreshold = true;
+        testResponder2.inputString = "Test2\n";
+        final Callable<ResponderTask.ResponderResult> task = responderThread.createSequence(testResponder2, null);
+        final ResponderTask.ResponderResult call = task.call();
+
+        assertEquals(testResponder2, call.getResponder());
+        assertTrue(call.isSuccess());
+        assertNull(call.getFailureReason());
+        assertEquals("Test1\nTest2\n", baos.toString());
+    }
+    public void testChainedResponderInput2Detect() throws Exception {
+        ByteArrayInputStream bais = new ByteArrayInputStream(
+            "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTestZ: bloo\nFlip1: input\nFlip2\nFlip3\nFlipZ: OK".getBytes());
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        final testResponder testResponder = new testResponder();
+        testResponder.inputSuccessPattern = "^Test2: .*";
+        testResponder.responseSuccessPattern = "^TestZ: .*";
+        testResponder.inputMaxLines = 5;
+        testResponder.inputMaxTimeout = 1000;
+        testResponder.responseMaxLines = 5;
+        testResponder.responseMaxTimeout = 1000;
+        testResponder.failOnInputLinesThreshold = true;
+        testResponder.failOnResponseThreshold = true;
+        testResponder.inputString = "Test1\n";
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+
+
+        final testResponder testResponder2 = new testResponder();
+        testResponder2.inputSuccessPattern = "^Flip1: .*";
+        testResponder2.responseSuccessPattern = "^FlipZ: .*";
+        testResponder2.inputMaxLines = 5;
+        testResponder2.inputMaxTimeout = 1000;
+        testResponder2.responseMaxLines = 5;
+        testResponder2.responseMaxTimeout = 1000;
+        testResponder2.failOnInputLinesThreshold = true;
+        testResponder2.failOnResponseThreshold = true;
+        testResponder2.inputString = "Test2\n";
+
+        final Callable<ResponderTask.ResponderResult> task = responderThread.createSequence(testResponder2, null);
+        final ResponderTask.ResponderResult call = task.call();
+
+        assertEquals(testResponder2, call.getResponder());
+        assertNull(call.getFailureReason(), call.getFailureReason());
+        assertTrue(call.isSuccess());
+        assertEquals("Test1\nTest2\n", baos.toString());
+    }
+    public void testChainedResponderInput1NotDetected() throws Exception {
+        ByteArrayInputStream bais = new ByteArrayInputStream(
+            "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTestZ: bloo\nFlip1: input\nFlip2\nFlip3\nFlipZ: OK".getBytes());
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        final testResponder testResponder = new testResponder();
+        testResponder.inputSuccessPattern = "^TestX: .*";
+        testResponder.responseSuccessPattern = "^TestZ: .*";
+        testResponder.inputMaxLines = 5;
+        testResponder.inputMaxTimeout = 1000;
+        testResponder.responseMaxLines = 5;
+        testResponder.responseMaxTimeout = 1000;
+        testResponder.failOnInputLinesThreshold = true;
+        testResponder.failOnResponseThreshold = true;
+        testResponder.inputString = "Test1\n";
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+
+
+        final testResponder testResponder2 = new testResponder();
+        testResponder2.inputSuccessPattern = "^Flip1: .*";
+        testResponder2.responseSuccessPattern = "^FlipZ: .*";
+        testResponder2.inputMaxLines = 5;
+        testResponder2.inputMaxTimeout = 1000;
+        testResponder2.responseMaxLines = 5;
+        testResponder2.responseMaxTimeout = 1000;
+        testResponder2.failOnInputLinesThreshold = true;
+        testResponder2.failOnResponseThreshold = true;
+        testResponder2.inputString = "Test2\n";
+
+        final Callable<ResponderTask.ResponderResult> task = responderThread.createSequence(testResponder2, null);
+        final ResponderTask.ResponderResult call = task.call();
+
+        assertEquals(testResponder, call.getResponder());
+        assertEquals("Failed waiting for input prompt: Expected input was not seen in 5 lines",
+                     call.getFailureReason());
+        assertFalse(call.isSuccess());
+        assertEquals(0, baos.size());
+    }
+    public void testChainedResponderInput1Failure() throws Exception {
+        ByteArrayInputStream bais = new ByteArrayInputStream(
+            "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTestZ: bloo\nFlip1: input\nFlip2\nFlip3\nFlipZ: OK".getBytes());
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        final testResponder testResponder = new testResponder();
+        testResponder.inputSuccessPattern = "^TestX: .*";
+        testResponder.responseSuccessPattern = "^TestZ: .*";
+        testResponder.inputMaxLines = 5;
+        testResponder.inputMaxTimeout = 1000;
+        testResponder.responseMaxLines = 5;
+        testResponder.responseMaxTimeout = 1000;
+        testResponder.failOnInputLinesThreshold = true;
+        testResponder.failOnResponseThreshold = true;
+        testResponder.inputString = "Test1\n";
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+
+
+        final testResponder testResponder2 = new testResponder();
+        testResponder2.inputSuccessPattern = "^Flip1: .*";
+        testResponder2.responseSuccessPattern = "^FlipZ: .*";
+        testResponder2.inputMaxLines = 5;
+        testResponder2.inputMaxTimeout = 1000;
+        testResponder2.responseMaxLines = 5;
+        testResponder2.responseMaxTimeout = 1000;
+        testResponder2.failOnInputLinesThreshold = true;
+        testResponder2.failOnResponseThreshold = true;
+        testResponder2.inputString = "Test2\n";
+
+        final Callable<ResponderTask.ResponderResult> task = responderThread.createSequence(testResponder2, null);
+        final ResponderTask.ResponderResult call = task.call();
+
+        assertEquals(testResponder, call.getResponder());
+        assertEquals("Failed waiting for input prompt: Expected input was not seen in 5 lines",
+                     call.getFailureReason());
+        assertFalse(call.isSuccess());
+        assertEquals(0, baos.size());
+    }
+
+    public void testChainedResponderInput2NotDetected() throws Exception {
+        ByteArrayInputStream bais = new ByteArrayInputStream(
+            "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTestZ: bloo\nFlip1: input\nFlip2\nFlip3\nFlipZ: OK".getBytes());
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        final testResponder testResponder = new testResponder();
+        testResponder.inputSuccessPattern = "^Test2: .*";
+        testResponder.responseSuccessPattern = "^TestZ: .*";
+        testResponder.inputMaxLines = 5;
+        testResponder.inputMaxTimeout = 1000;
+        testResponder.responseMaxLines = 5;
+        testResponder.responseMaxTimeout = 1000;
+        testResponder.failOnInputLinesThreshold = true;
+        testResponder.failOnResponseThreshold = true;
+        testResponder.inputString = "Test1\n";
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+
+
+        final testResponder testResponder2 = new testResponder();
+        testResponder2.inputSuccessPattern = "^FlipX: .*";
+        testResponder2.responseSuccessPattern = "^FlipZ: .*";
+        testResponder2.inputMaxLines = 50;//will not be reached
+        testResponder2.inputMaxTimeout = 1000;//will be met
+        testResponder2.responseMaxLines = 5;
+        testResponder2.responseMaxTimeout = 1000;
+        testResponder2.failOnInputLinesThreshold = true;
+        testResponder2.failOnInputTimeoutThreshold = true; //fail on timeout waiting for input
+        testResponder2.failOnResponseThreshold = true;
+        testResponder2.inputString = "Test2\n";
+
+        final Callable<ResponderTask.ResponderResult> task = responderThread.createSequence(testResponder2, null);
+        final ResponderTask.ResponderResult call = task.call();
+
+        assertEquals(testResponder2, call.getResponder());
+        assertEquals("Failed waiting for input prompt: Expected input was not seen in 1000 milliseconds", call.getFailureReason());
+        assertFalse(call.isSuccess());
+        assertEquals("Test1\n", baos.toString());
+    }
+
+    public void testChainedResponderInput2Failure() throws Exception {
+        ByteArrayInputStream bais = new ByteArrayInputStream(
+            "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTestZ: bloo\nFlip1: input\nFlip2\nFlip3\nFlipZ: NOPE".getBytes());
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        final testResponder testResponder = new testResponder();
+        testResponder.inputSuccessPattern = "^Test2: .*";
+        testResponder.responseSuccessPattern = "^TestZ: .*";
+        testResponder.inputMaxLines = 5;
+        testResponder.inputMaxTimeout = 1000;
+        testResponder.responseMaxLines = 5;
+        testResponder.responseMaxTimeout = 1000;
+        testResponder.failOnInputLinesThreshold = true;
+        testResponder.failOnResponseThreshold = true;
+        testResponder.inputString = "Test1\n";
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+
+
+        final testResponder testResponder2 = new testResponder();
+        testResponder2.inputSuccessPattern = "^Flip1: .*";
+        testResponder2.responseSuccessPattern = "^FlipXX: .*";
+        testResponder2.responseFailurePattern = "^FlipZ: .*";
+        testResponder2.inputMaxLines = 4;
+        testResponder2.inputMaxTimeout = 1000;
+        testResponder2.responseMaxLines = 50;
+        testResponder2.responseMaxTimeout = 1000;
+        testResponder2.failOnInputLinesThreshold = true;
+        testResponder2.failOnInputTimeoutThreshold = true;
+        testResponder2.failOnResponseThreshold = true;
+        testResponder2.inputString = "Test2\n";
+
+        final Callable<ResponderTask.ResponderResult> task = responderThread.createSequence(testResponder2, null);
+        final ResponderTask.ResponderResult call = task.call();
+
+        assertEquals(testResponder2,call.getResponder());
+        assertEquals("Failed waiting for response: Did not see the correct response", call.getFailureReason());
+        assertFalse(call.isSuccess());
+        assertEquals("Test1\nTest2\n", baos.toString());
+    }
+    public void testRunResponderWriteOnSuccess() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -671,15 +802,13 @@ public class TestResponderThread extends TestCase {
         testResponder.failOnResponseThreshold = true;
         testResponder.inputString = "Test";
 
-        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
-        responderThread.run();
-        assertNull(responderThread.getFailureReason(), responderThread.getFailureReason());
-        assertTrue(responderThread.isSuccess());
-        assertFalse(responderThread.isFailed());
-        assertFalse(responderThread.isResponderStopped());
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+        final ResponderTask.ResponderResult call = responderThread.call();
+        assertTrue(call.isSuccess());
+        assertNull(call.getFailureReason());
         assertEquals("Test", baos.toString());
     }
-    public void testRunResponderNoWriteOnFailure() {
+    public void testRunResponderNoWriteOnFailure() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -695,16 +824,15 @@ public class TestResponderThread extends TestCase {
         testResponder.failOnResponseThreshold = true;
         testResponder.inputString = "Test";
 
-        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
-        responderThread.run();
-        assertNotNull(responderThread.getFailureReason(), responderThread.getFailureReason());
-        assertFalse(responderThread.isSuccess());
-        assertTrue(responderThread.isFailed());
-        assertFalse(responderThread.isResponderStopped());
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+        final ResponderTask.ResponderResult call = responderThread.call();
         assertEquals("", baos.toString());
+        assertFalse(call.isSuccess());
+        assertNotNull(call.getFailureReason(), call.getFailureReason());
+        assertEquals("Failed waiting for input prompt: Expected input was not seen", call.getFailureReason());
     }
 
-    public void testRunResponderWriteAndResponseSuccess() {
+    public void testRunResponderWriteAndResponseSuccess() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -720,16 +848,14 @@ public class TestResponderThread extends TestCase {
         testResponder.failOnResponseThreshold = true;
         testResponder.inputString = "Test";
 
-        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
-        responderThread.run();
-        assertNull(responderThread.getFailureReason(), responderThread.getFailureReason());
-        assertTrue(responderThread.isSuccess());
-        assertFalse(responderThread.isFailed());
-        assertFalse(responderThread.isResponderStopped());
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+        final ResponderTask.ResponderResult call = responderThread.call();
+        assertTrue(call.isSuccess());
+        assertNull(call.getFailureReason());
         assertEquals("Test", baos.toString());
     }
 
-    public void testRunResponderWriteAndResponseFailure() {
+    public void testRunResponderWriteAndResponseFailure() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -745,15 +871,13 @@ public class TestResponderThread extends TestCase {
         testResponder.failOnResponseThreshold = true;
         testResponder.inputString = "Test";
 
-        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, null);
-        responderThread.run();
-        assertNotNull(responderThread.getFailureReason(), responderThread.getFailureReason());
-        assertFalse(responderThread.isSuccess());
-        assertTrue(responderThread.isFailed());
-        assertFalse(responderThread.isResponderStopped());
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, null);
+        final ResponderTask.ResponderResult call = responderThread.call();
         assertEquals("Test", baos.toString());
+        assertFalse(call.isSuccess());
+        assertNotNull(call.getFailureReason());
     }
-    public void testResultHandlerSuccess(){
+    public void testResultHandlerSuccess() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -771,23 +895,21 @@ public class TestResponderThread extends TestCase {
 
         final boolean[] result = {false};
         final String[] resultReason = {null};
-        final ResponderThread.ResultHandler resultHandler = new ResponderThread.ResultHandler() {
+        final ResponderTask.ResultHandler resultHandler = new ResponderTask.ResultHandler() {
             public void handleResult(boolean success, String reason) {
                 result[0]=success;
                 resultReason[0]=reason;
             }
         };
-        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, resultHandler);
-        responderThread.run();
-        assertNull("reason; " + responderThread.getFailureReason(), responderThread.getFailureReason());
-        assertTrue(responderThread.isSuccess());
-        assertFalse(responderThread.isFailed());
-        assertFalse(responderThread.isResponderStopped());
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, resultHandler);
+        final ResponderTask.ResponderResult call = responderThread.call();
+        assertTrue(call.isSuccess());
+        assertNull(call.getFailureReason());
         assertEquals("Test", baos.toString());
         assertTrue(result[0]);
         assertNull(resultReason[0]);
     }
-    public void testResultHandlerInputFailure(){
+    public void testResultHandlerInputFailure() throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(
             "Test1\nTest1\nTest1\nTest2: blah\nTest1\nTest3: blah\nTest4: bloo".getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -805,19 +927,18 @@ public class TestResponderThread extends TestCase {
 
         final boolean[] result = {true};
         final String[] resultReason = {null};
-        final ResponderThread.ResultHandler resultHandler = new ResponderThread.ResultHandler() {
+        final ResponderTask.ResultHandler resultHandler = new ResponderTask.ResultHandler() {
             public void handleResult(boolean success, String reason) {
                 result[0]=success;
                 resultReason[0]=reason;
             }
         };
-        final ResponderThread responderThread = new ResponderThread(testResponder, bais, baos, resultHandler);
-        responderThread.run();
+        final ResponderTask responderThread = new ResponderTask(testResponder, bais, baos, resultHandler);
+        final ResponderTask.ResponderResult call = responderThread.call();
+        assertFalse(call.isSuccess());
+        assertNotNull(call.getFailureReason());
         assertEquals("Failed waiting for input prompt: Expected input was not seen in 5 lines",
-            responderThread.getFailureReason());
-        assertFalse(responderThread.isSuccess());
-        assertTrue(responderThread.isFailed());
-        assertFalse(responderThread.isResponderStopped());
+                     call.getFailureReason());
         assertEquals("", baos.toString());
         assertFalse(result[0]);
         assertEquals("Failed waiting for input prompt: Expected input was not seen in 5 lines", resultReason[0]);

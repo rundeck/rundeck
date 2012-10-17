@@ -110,7 +110,7 @@ public class ServerService {
      *                                        if an error occurs
      * @throws java.net.MalformedURLException if connection URL or urlPath params are malformed.
      */
-    public WebserviceResponse makeRundeckRequest(final String urlPath, final Map queryParams, final Map<String,String> formData)
+    public WebserviceResponse makeRundeckRequest(final String urlPath, final Map queryParams, final Map<String,? extends Object> formData)
         throws CoreException, MalformedURLException {
         return makeRundeckRequest(urlPath, queryParams, null, null, null, formData);
     }
@@ -148,7 +148,7 @@ public class ServerService {
      * @throws java.net.MalformedURLException if connection URL or urlPath params are malformed.
      */
     public WebserviceResponse makeRundeckRequest(final String urlPath, final Map queryParams, final File uploadFile,
-                                                   final String method, final String expectedContentType, final Map<String,String> formData)
+                                                   final String method, final String expectedContentType, final Map<String,? extends Object> formData)
         throws CoreException, MalformedURLException {
         if (null == connParams) {
             throw new IllegalArgumentException("WebConnectionParameters must be specified");

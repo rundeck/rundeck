@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.io.OutputStream;
 
+
 /**
  * Test the QueueTool class
  */
@@ -249,6 +250,11 @@ public class TestQueueTool extends AbstractBaseTest {
                                               Date start,
                                               Date end) throws CentralDispatcherException {
                 fail("unexpected call to reportExecutionStatus");
+            }
+
+            public Collection<DeleteJobResult> deleteStoredJobs(Collection<String> jobIds) throws CentralDispatcherException {
+                fail("unexpected call to deleteStoredJobs");
+                return null;
             }
         }
         final Framework framework = getFrameworkInstance();

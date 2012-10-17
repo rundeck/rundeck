@@ -27,6 +27,8 @@ package com.dtolabs.rundeck.core.dispatcher;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
+
 
 /**
  * CentralDispatcher interface provides methods for accessing central dispatcher of the app server.
@@ -103,6 +105,16 @@ public interface CentralDispatcher {
      * @throws CentralDispatcherException if an error occurs
      */
     public Collection<IStoredJob> listStoredJobs(IStoredJobsQuery query, OutputStream output, JobDefinitionFileFormat format) throws
+        CentralDispatcherException;
+    /**
+     * Delete the jobs specified by the IDs, and return a list of results
+     *
+     * @param jobIds the job IDs
+     * @return collection of DeleteJobResults
+     *
+     * @throws CentralDispatcherException if an error occurs
+     */
+    public Collection<DeleteJobResult> deleteStoredJobs(Collection<String> jobIds) throws
         CentralDispatcherException;
 
     /**

@@ -40,6 +40,7 @@ import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 
 
@@ -63,7 +64,7 @@ class WebserviceHttpClientChannel extends BaseHttpClientChannel implements Webse
     String responseMessage = null;
     private Document resultDoc = null;
     private File uploadFile = null;
-    private Map<String,String> formData=null;
+    private Map<String,? extends Object> formData=null;
     private String fileparam = null;
 
     /**
@@ -121,7 +122,7 @@ class WebserviceHttpClientChannel extends BaseHttpClientChannel implements Webse
     public WebserviceHttpClientChannel(final String urlSpec,
                                       final HttpAuthenticator authenticator,
                                       final Map query,
-                                      final Map<String,String> formData)
+                                      final Map<String,? extends Object> formData)
         throws CoreException {
         this(urlSpec, authenticator, query);
         setFormData(formData);
@@ -201,8 +202,16 @@ class WebserviceHttpClientChannel extends BaseHttpClientChannel implements Webse
     protected NameValuePair[] getRequestBody(final PostMethod method) {
         if(null!=formData && formData.size()>0) {
             final ArrayList<NameValuePair> list = new ArrayList<NameValuePair>();
-            for (final Map.Entry<String, String> stringStringEntry : formData.entrySet()) {
-                list.add(new NameValuePair(stringStringEntry.getKey(), stringStringEntry.getValue()));
+            for (final Map.Entry<String, ? extends Object> stringStringEntry : formData.entrySet()) {
+                final Object value = stringStringEntry.getValue();
+                if(value instanceof String){
+                    list.add(new NameValuePair(stringStringEntry.getKey(), (String) value));
+                }else if(value instanceof Collection) {
+                    Collection values = (Collection) value;
+                    for (final Object o : values) {
+                        list.add(new NameValuePair(stringStringEntry.getKey(), o.toString()));
+                    }
+                }
             }
             return list.toArray(new NameValuePair[formData.size()]);
         }else{
@@ -298,11 +307,11 @@ class WebserviceHttpClientChannel extends BaseHttpClientChannel implements Webse
         this.resultDoc = resultDoc;
     }
 
-    public Map<String, String> getFormData() {
+    public Map<String, ? extends Object> getFormData() {
         return formData;
     }
 
-    public void setFormData(Map<String, String> formData) {
+    public void setFormData(Map<String, ? extends Object> formData) {
         this.formData = formData;
     }
 }
