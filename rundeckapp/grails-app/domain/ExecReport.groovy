@@ -12,7 +12,7 @@ class ExecReport extends BaseReport{
 
     static mapping = {
         def config = ConfigurationHolder.config
-        if (config.rundeck.v14.rdbsupport == 'true') {
+        if (config?.rundeck?.v14?.rdbsupport == 'true') {
             adhocScript type: 'text'
         }
     }
@@ -20,10 +20,33 @@ class ExecReport extends BaseReport{
     static constraints = {
         adhocExecution(nullable:true)
         ctxCommand(nullable:true,blank:true)
-        ctxController(nullable:true,blank:false)
-        jcExecId(nullable:true,blank:false)
-        jcJobId(nullable:true,blank:false)
+        ctxController(nullable:true,blank:true)
+        jcExecId(nullable:true,blank:true)
+        jcJobId(nullable:true,blank:true)
         adhocScript(nullable:true,blank:true)
         abortedByUser(nullable:true,blank:true)
+    }
+
+    public static final ArrayList<String> exportProps = BaseReport.exportProps +[
+            'ctxCommand',
+            'ctxController',
+            'jcExecId',
+            'jcJobId',
+            'adhocExecution',
+            'adhocScript',
+            'abortedByUser'
+    ]
+    def Map toMap(){
+        this.properties.subMap(exportProps)
+    }
+
+    static buildFromMap(ExecReport obj, Map map) {
+        BaseReport.buildFromMap(obj, map)
+    }
+
+    static ExecReport fromMap(Map map) {
+        def report = new ExecReport()
+        buildFromMap(report, map.subMap( exportProps))
+        report
     }
 }

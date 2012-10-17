@@ -96,5 +96,101 @@ class Execution extends ExecutionContext {
     def String generateLoggingNamespace() {
         return "com.dtolabs.rundeck.core."+this.command
     }
+
+    def Map toMap(){
+        def map=[:]
+        if(scheduledExecution){
+            map.jobId=scheduledExecution.extid
+        }
+        map.dateStarted=dateStarted
+        map.dateCompleted=dateCompleted
+        map.status=status
+        map.outputfilepath=outputfilepath
+        map.failedNodeList = failedNodeList
+        map.abortedby=abortedby
+        map.cancelled=cancelled
+        map.argString= argString
+        map.loglevel= loglevel
+        map.id= this.id
+        map.doNodedispatch= this.doNodedispatch
+        if(doNodedispatch){
+            def yfilters = ["": "hostname"]
+            map.nodefilters = [dispatch: [threadcount: nodeThreadcount, keepgoing: nodeKeepgoing, excludePrecedence: nodeExcludePrecedence]]
+            if (nodeRankAttribute) {
+                map.nodefilters.dispatch.rankAttribute = nodeRankAttribute
+            }
+            map.nodefilters.dispatch.rankOrder = (null == nodeRankOrderAscending || nodeRankOrderAscending) ? 'ascending' : 'descending'
+            final Collection inclFilters = BaseNodeFilters.filterKeys.keySet().findAll {this["nodeInclude" + filterKeys[it]]}
+            if (inclFilters) {
+                map.nodefilters.include = [:]
+                inclFilters.each { ek ->
+                    map.nodefilters.include[yfilters[ek] ?: ek] = this["nodeInclude${filterKeys[ek]}"]
+                }
+            }
+            final Collection exclFilters = BaseNodeFilters.filterKeys.keySet().findAll {this["nodeExclude" + filterKeys[it]]}
+            if (exclFilters) {
+                map.nodefilters.exclude = [:]
+                exclFilters.each { ek ->
+                    map.nodefilters.exclude[yfilters[ek] ?: ek] = this["nodeExclude${filterKeys[ek]}"]
+                }
+            }
+        }
+        map.project= this.project
+        map.user= this.user
+        map.workflow=this.workflow.toMap()
+        map
+    }
+    static Execution fromMap(Map data, ScheduledExecution job=null){
+        Execution exec= new Execution()
+        if(job){
+            exec.scheduledExecution=job
+        }
+        exec.dateStarted=data.dateStarted
+        exec.dateCompleted=data.dateCompleted
+        exec.status=data.status
+        exec.outputfilepath = data.outputfilepath
+        exec.failedNodeList = data.failedNodeList
+        exec.abortedby = data.abortedby
+        exec.cancelled = data.cancelled
+        exec.argString = data.argString
+        exec.loglevel = data.loglevel
+        exec.doNodedispatch = data.doNodedispatch
+        if (data.nodefilters) {
+            exec.nodeThreadcount = data.nodefilters.dispatch.threadcount
+            if (data.nodefilters.dispatch.containsKey('keepgoing')) {
+                exec.nodeKeepgoing = data.nodefilters.dispatch.keepgoing
+            }
+            if (data.nodefilters.dispatch.containsKey('excludePrecedence')) {
+                exec.nodeExcludePrecedence = data.nodefilters.dispatch.excludePrecedence
+            }
+            if (data.nodefilters.dispatch.containsKey('rankAttribute')) {
+                exec.nodeRankAttribute = data.nodefilters.dispatch.rankAttribute
+            }
+            if (data.nodefilters.dispatch.containsKey('rankOrder')) {
+                exec.nodeRankOrderAscending = data.nodefilters.dispatch.rankOrder == 'ascending'
+            }
+            if (data.nodefilters.include) {
+                exec.doNodedispatch = true
+                data.nodefilters.include.keySet().each { inf ->
+                    if (null != filterKeys[inf]) {
+                        exec["nodeInclude${filterKeys[inf]}"] = data.nodefilters.include[inf]
+                    }
+                }
+
+            }
+            if (data.nodefilters.exclude) {
+                exec.doNodedispatch = true
+                data.nodefilters.exclude.keySet().each { inf ->
+                    if (null != filterKeys[inf]) {
+                        exec["nodeExclude${filterKeys[inf]}"] = data.nodefilters.exclude[inf]
+                    }
+                }
+            }
+        }
+        exec.project = data.project
+        exec.user = data.user
+        exec.workflow = Workflow.fromMap(data.workflow)
+        exec
+    }
 }
 
