@@ -72,9 +72,18 @@ task extractGrails(dependsOn: downloadGrails) {
 }
 
 /**
+ * The Grails webapp has both compile and runtime dependencies on other projects, 
+ * so this task is just a container for dependencies so they are built and installed
+ * into the local ~/.m2 repo before we attempt to do anything further with Grails. 
+ */
+task installDependencies(dependsOn: [project(":core").install, project(":rundeck-launcher:rundeck-jetty-server").install]) << {
+	description = "Builds and installs dependencies on other subprojects"
+}
+
+/**
  * Installs the jetty-plugin into the .grails folder
  */
-task installJettyPlugin(type: Exec, dependsOn: extractGrails) {
+task installJettyPlugin(type: Exec, dependsOn: [extractGrails, installDependencies]) {
 	def jettyPluginZip = rootDir.toString() + '/dependencies/grails-jetty/zips/grails-jetty-1.2-SNAPSHOT.zip'
 	def jettyPluginInstalled = "${System.properties['user.home']}/.grails/${grailsVersion}/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT"
 	inputs.source file(jettyPluginZip)
