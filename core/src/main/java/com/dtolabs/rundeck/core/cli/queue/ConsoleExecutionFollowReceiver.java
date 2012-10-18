@@ -35,32 +35,38 @@ import java.io.PrintStream;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class ConsoleExecutionFollowReceiver implements ExecutionFollowReceiver {
+public class ConsoleExecutionFollowReceiver implements ExecutionFollowReceiver {
+    public static final long DEFAULT_INDETERMINATE_DELAY = 10 * 1000;
     int percent;
     long time;
     int count;
     private final long averageDuration;
-    boolean quiet;
-    boolean hashmark;
+    Mode mode;
     PrintStream out;
     BaseLogger logger;
     String tickMark = "#";
     String tickMarkExtra = ".";
 
-    public ConsoleExecutionFollowReceiver(long averageDuration, boolean quiet, boolean hashmark, PrintStream out,
-                                          BaseLogger logger) {
+    public ConsoleExecutionFollowReceiver(long averageDuration, Mode mode, PrintStream out, BaseLogger logger) {
         this.averageDuration = averageDuration;
         percent = 0;
         time = 0;
         count = 0;
-        this.hashmark = hashmark;
-        this.quiet = quiet;
         this.out = out;
         this.logger = logger;
+        this.mode=mode;
+    }
+    /**
+     * Execution follow mode
+     */
+    public static enum Mode{
+        output,
+        progress,
+        quiet
     }
 
     public boolean receiveFollowStatus(long offset, long totalSize, long duration) {
-        if (quiet && hashmark && averageDuration >= 0 && percent > -1) {
+        if (mode == Mode.progress && averageDuration >= 0 && percent > -1) {
             /*
             prints a # every 5% of avg duration,
             after exceeding avg duration, prints a . every 10%
@@ -93,17 +99,20 @@ class ConsoleExecutionFollowReceiver implements ExecutionFollowReceiver {
                     out.print(tickMarkExtra);
                 }
                 percent = mark;
+                out.flush();
             }
-        } else if (quiet && hashmark && averageDuration < 0) {
+        } else if (mode==Mode.progress && averageDuration < 0) {
             //indeterminate estimate, mark every 15 seconds
-            if (time <= 0 || time > 0 && System.currentTimeMillis() - time > 15 * 1000) {
-                time = System.currentTimeMillis();
+            long mark = System.currentTimeMillis();
+            if (time <= 0 || time > 0 && (mark - time) > DEFAULT_INDETERMINATE_DELAY) {
+                time = mark;
                 count++;
                 out.print(".");
                 if (count > 19) {
                     out.println();
                     count = 0;
                 }
+                out.flush();
             }
         }
         return true;
@@ -111,7 +120,7 @@ class ConsoleExecutionFollowReceiver implements ExecutionFollowReceiver {
 
     public boolean receiveLogEntry(String timeStr, String loglevel, String user, String command,
                                    String nodeName, String message) {
-        if (!quiet) {
+        if (mode==Mode.output || null==mode) {
             logger.log(message);
         }
         return true;

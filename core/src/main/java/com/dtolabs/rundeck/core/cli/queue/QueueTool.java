@@ -27,10 +27,12 @@ import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.cli.*;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.*;
+import com.dtolabs.rundeck.core.execution.BaseLogger;
 import org.apache.commons.cli.CommandLine;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
+import java.io.PrintStream;
 import java.util.Collection;
 
 /**
@@ -144,7 +146,7 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
     private String execid;
     private boolean argVerbose;
     private boolean argQuiet;
-    private boolean argHashmark;
+    private boolean argProgress;
     private boolean argRestart;
     private CLIToolLogger clilogger;
     String argProject;
@@ -243,12 +245,12 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
     private Options toolOptions;
 
     private class Options implements CLIToolOptions{
-        public static final String RESTART_OPTION = "r";
+        public static final String RESTART_OPTION = "t";
         public static final String RESTART_OPTION_LONG = "restart";
         public static final String QUIET_OPTION = "q";
         public static final String QUIET_OPTION_LONG = "quiet";
-        public static final String HASH_OPTION = "a";
-        public static final String HASH_OPTION_LONG = "hash";
+        public static final String PROGRESS_OPTION = "r";
+        public static final String PROGRESS_OPTION_LONG = "progress";
         public static final String EXECID_OPTION = "e";
         public static final String EXECID_OPTION_LONG = "eid";
         /**
@@ -268,8 +270,8 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
 
             options.addOption(EXECID_OPTION, EXECID_OPTION_LONG, true, "Execution ID");
             options.addOption(VERBOSE_OPTION, VERBOSE_OPTION_LONG, false, "Enable verbose output");
-            options.addOption(QUIET_OPTION, QUIET_OPTION_LONG, false, "Quiet follow output (follow only)");
-            options.addOption(HASH_OPTION, HASH_OPTION_LONG, false, "Hash mark output (follow only)");
+            options.addOption(QUIET_OPTION, QUIET_OPTION_LONG, false, "Just wait until execution ends (follow only)");
+            options.addOption(PROGRESS_OPTION, PROGRESS_OPTION_LONG, false, "Progress mark output (follow only)");
             options.addOption(PROJECT_OPTION, null, true, "Project name (list action only)");
             options.addOption(RESTART_OPTION, RESTART_OPTION_LONG, false, "Restart log output from beginning (follow action only)");
         }
@@ -290,8 +292,8 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
             if (cli.hasOption(QUIET_OPTION)) {
                 argQuiet = true;
             }
-            if (cli.hasOption(HASH_OPTION)) {
-                argHashmark = true;
+            if (cli.hasOption(PROGRESS_OPTION)) {
+                argProgress = true;
             }
         }
 
@@ -376,7 +378,7 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
                 killAction(execid);
                 break;
             case follow:
-                followAction(execid,argRestart);
+                followAction(execid);
                 break;
             default:
                 throw new CLIToolOptionsException("Unrecognized action: " + action);
@@ -431,51 +433,76 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
 
     }
 
-
-    /**
-     * Perform the kill action on an execution, and print the result.
-     *
-     * @param execid the execution id
-     *
-     * @throws QueueToolException if an error occurs
-     */
-    private void followAction(final String execid,final boolean restart) throws QueueToolException {
-        final ExecutionFollowResult result;
+    private void followAction(final String execid) throws QueueToolException {
+        ConsoleExecutionFollowReceiver.Mode mode = ConsoleExecutionFollowReceiver.Mode.output;
+        if(argQuiet ) {
+            mode = ConsoleExecutionFollowReceiver.Mode.quiet;
+        }else if(argProgress){
+            mode= ConsoleExecutionFollowReceiver.Mode.progress;
+        }
         try {
-            ExecutionDetail execution = framework.getCentralDispatcherMgr().getExecution(execid);
-            final long averageDuration;
-            if(null!=execution.getExecutionJob()){
-                averageDuration=execution.getExecutionJob().getAverageDuration();
-            }else{
-                averageDuration=-1;
-            }
-            final ExecutionFollowRequest request = new ExecutionFollowRequest() {
-                public boolean isResume() { return !restart; }
-            };
-            final ConsoleExecutionFollowReceiver receiver = new ConsoleExecutionFollowReceiver(averageDuration,
-                                                                                               argQuiet,
-                                                                                               argHashmark,
-                                                                                               System.out,
-                                                                                               this);
-            result = framework.getCentralDispatcherMgr().followDispatcherExecution(execid,
-                                                                                    request,
-                                                                                    receiver);
+            followAction(execid, argRestart, mode, framework, System.out, this);
         } catch (CentralDispatcherException e) {
-            final String msg = "Failed request to kill the execution: " + e.getMessage();
+            final String msg = "Failed request to follow the execution: " + e.getMessage();
             throw new QueueToolException(msg, e);
         }
-        if(argQuiet && argHashmark){
-            System.out.println();
+    }
+
+    /**
+     * Perform the Follow action for an Execution
+     *
+     * @param mode follow mode
+     * @param framework framework
+     * @param out output for progress marks
+     * @param logger logger for output of log lines
+     * @param execid the execution id
+     *
+     * @throws CentralDispatcherException if any error occurs
+     */
+    public static boolean followAction(final String execid,
+                              final boolean restart,
+                              final ConsoleExecutionFollowReceiver.Mode mode,
+                              final Framework framework,
+                              final PrintStream out, final BaseLogger logger)
+        throws CentralDispatcherException {
+
+        final ExecutionFollowResult result;
+        ExecutionDetail execution = framework.getCentralDispatcherMgr().getExecution(execid);
+        final long averageDuration;
+        if(null!=execution.getExecutionJob()){
+            averageDuration=execution.getExecutionJob().getAverageDuration();
+        }else{
+            averageDuration=-1;
+        }
+        final ExecutionFollowRequest request = new ExecutionFollowRequest() {
+            public boolean isResume() { return !restart; }
+        };
+        final ConsoleExecutionFollowReceiver receiver = new ConsoleExecutionFollowReceiver(averageDuration,
+                                                                                           mode,
+                                                                                           out,
+                                                                                           logger);
+        result = framework.getCentralDispatcherMgr().followDispatcherExecution(execid,
+                                                                                request,
+                                                                                receiver);
+        if (mode != ConsoleExecutionFollowReceiver.Mode.output) {
+            out.println();
         }
         if(null!=result.getState()){
-            verbose("rd-queue follow: execution status: "+result.getState());
+            String message = "[" + execid + "] execution status: " + result.getState();
             switch (result.getState()){
                 case failed:
                 case aborted:
-                    exit(3);
-                    break;
+                    if (mode != ConsoleExecutionFollowReceiver.Mode.quiet) {
+                        logger.warn(message);
+                    }
+                    return false;
+                default:
+                    if (mode != ConsoleExecutionFollowReceiver.Mode.quiet) {
+                        logger.verbose(message);
+                    }
             }
         }
+        return true;
     }
 
 

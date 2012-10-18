@@ -25,6 +25,8 @@ package com.dtolabs.rundeck.core.cli.run;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.cli.*;
+import com.dtolabs.rundeck.core.cli.queue.ConsoleExecutionFollowReceiver;
+import com.dtolabs.rundeck.core.cli.queue.QueueTool;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.utils.NodeSet;
@@ -175,19 +177,69 @@ public class RunTool extends BaseTool {
         nodefilterOptions = new NodeFilterOptions(false);
         loglevelOptions = new LoglevelOptions();
         extendedOptions = new ExtendedOptions();
+        followOptions = new FollowOptions();
         runOptions = new Options();
         addToolOptions(extendedOptions);
         addToolOptions(loglevelOptions);
         addToolOptions(nodefilterOptions);
+        addToolOptions(followOptions);
         addToolOptions(runOptions);
     }
 
     private NodeFilterOptions nodefilterOptions;
     private LoglevelOptions loglevelOptions;
     private ExtendedOptions extendedOptions;
+    private FollowOptions followOptions;
     Options runOptions;
 
+    class FollowOptions implements CLIToolOptions{
+        /**
+         * short option string for run option :follow
+         */
+        public static final String FOLLOW_OPTION = "f";
 
+        /**
+         * long option string for run option: follow
+         */
+        public static final String FOLLOW_OPTION_LONG = "follow";
+        /**
+         * short option string for run option :quiet
+         */
+        public static final String QUIET_OPTION = "q";
+        /**
+         * long option string for run option: quiet
+         */
+        public static final String QUIET_OPTION_LONG = "quiet";
+        /**
+         * short option string for run option :quiet
+         */
+        public static final String PROGRESS_OPTION = "r";
+        /**
+         * long option string for run option: quiet
+         */
+        public static final String PROGRESS_OPTION_LONG = "progress";
+        boolean argFollow;
+        boolean argQuiet;
+        boolean argProgress;
+
+        public void addOptions(final org.apache.commons.cli.Options options) {
+            options.addOption(FOLLOW_OPTION, FOLLOW_OPTION_LONG, false, "Follow Job output on commandline");
+            options.addOption(QUIET_OPTION, QUIET_OPTION_LONG, false, "Quiet mode for following output.");
+            options.addOption(PROGRESS_OPTION, PROGRESS_OPTION_LONG, false, "Following Job progress");
+        }
+
+        public void parseArgs(final CommandLine cli, final String[] original) throws CLIToolOptionsException {
+            argFollow = cli.hasOption(FOLLOW_OPTION);
+            argQuiet = cli.hasOption(QUIET_OPTION);
+            argProgress = cli.hasOption(PROGRESS_OPTION);
+        }
+
+        public void validate(CommandLine cli, String[] original) throws CLIToolOptionsException {
+            if((argQuiet || argProgress) && !argFollow){
+
+            }
+        }
+    }
     /**
      * CLIToolOptions class for the run tool
      */
@@ -369,6 +421,9 @@ public class RunTool extends BaseTool {
             jobgroup = null;
         }
         project=runOptions.argProject;
+        final boolean argFollow=followOptions.argFollow;
+        final boolean argProgress=followOptions.argProgress;
+        final boolean argQuiet=followOptions.argQuiet;
 
         final NodeSet nodeset = nodefilterOptions.getNodeSet();
         final Boolean argKeepgoing = nodefilterOptions.isKeepgoingSet() ? nodeset.isKeepgoing() : null;
@@ -421,13 +476,37 @@ public class RunTool extends BaseTool {
             final String msg = "Failed request to run a job: " + e.getMessage();
             throw new RunToolException(msg, e);
         }
-        if (null != result && result.isSuccessful()) {
-            final QueuedItem queuedItem = result.getItem();
-            log("Job execution started:");
-            log("[" + queuedItem.getId() + "] " + queuedItem.getName() + " <" + queuedItem.getUrl() + ">");
-        } else {
+        if (null == result || !result.isSuccessful()) {
             throw new RunToolException(
                 "Queued job request failed: " + (null != result ? result.getMessage() : "Result was null"));
+        }
+        final QueuedItem queuedItem = result.getItem();
+        log("Job execution started:");
+        log("[" + queuedItem.getId() + "] " + queuedItem.getName() + " <" + queuedItem.getUrl() + ">");
+        if(!argFollow){
+            return;
+        }
+        followOutput(queuedItem, argQuiet, argProgress);
+    }
+
+    /**
+     * Perform follow action for the execution, using QueueTool implementation.
+     */
+    private void followOutput(QueuedItem item, final boolean quiet, final boolean progress) throws RunToolException {
+        boolean successful = false;
+        try {
+            ConsoleExecutionFollowReceiver.Mode mode = ConsoleExecutionFollowReceiver.Mode.output;
+            if(quiet){
+                mode= ConsoleExecutionFollowReceiver.Mode.quiet;
+            }else if(progress){
+                mode= ConsoleExecutionFollowReceiver.Mode.progress;
+            }
+            successful = QueueTool.followAction(item.getId(), true, mode, framework, System.out, this);
+        } catch (CentralDispatcherException e) {
+            throw new RunToolException("Failed following output for execution: " + item.getId(), e);
+        }
+        if(!successful){
+           exit(3);
         }
     }
 
@@ -437,11 +516,15 @@ public class RunTool extends BaseTool {
     }
 
     public String getHelpString() {
-        return "run : start running a Job on the server\n"
+        return "run : start running a Job on the server, and optionally follow the output\n"
                + "run -i <id>: Run a job by ID immediately\n"
                + "run -j <group/name>: Run a job by Name immediately. Group must be specified if name is not unique.\n"
                + "run -I <include> -X <exclude> [-i/-j ...]: Specify node filters and run a Job\n"
-               + "run -i <id> -- <arguments...>: Specify commandline arguments to the Job";
+               + "run -i <id> -- <arguments...>: Specify commandline arguments to the Job\n"
+               + "run -i <id> --follow -- <arguments...>: Print output of the job as it is received\n"
+               + "run -i <id> --follow --progress -- <arguments...>: Follow progress of the job\n"
+               + "run -i <id> --follow --quiet -- <arguments...>: Wait until job is done and exit with job status\n"
+            ;
     }
 
     public void log(final String output) {
