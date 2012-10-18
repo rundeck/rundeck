@@ -110,11 +110,24 @@ public class TestJobsTool extends AbstractBaseTest {
             return null;
         }
 
+        public ExecutionFollowResult followDispatcherExecution(String id, ExecutionFollowRequest request,
+                                                               ExecutionFollowReceiver receiver) throws
+            CentralDispatcherException {
+            fail("unexpected call to followDispatcherExecution");
+            return null;
+        }
+
         public void reportExecutionStatus(String project, String title, String status, int totalNodeCount,
                                           int successNodeCount, String tags, String script, String summary, Date start,
                                           Date end) throws CentralDispatcherException {
             fail("unexpected call to reportExecutionStatus");
         }
+
+        public ExecutionDetail getExecution(String execId) throws CentralDispatcherException {
+            fail("unexpected call to getExecution");
+            return null;
+        }
+
         public Collection<IStoredJobLoadResult> loadJobs(ILoadJobsRequest request, java.io.File input,
                                                          JobDefinitionFileFormat format) throws
             CentralDispatcherException {

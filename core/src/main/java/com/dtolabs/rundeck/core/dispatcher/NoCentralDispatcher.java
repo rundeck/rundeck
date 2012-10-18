@@ -67,6 +67,13 @@ public final class NoCentralDispatcher implements CentralDispatcher {
                                              + Framework.CENTRALDISPATCHER_CLS_PROP);
     }
 
+    public ExecutionFollowResult followDispatcherExecution(String id, ExecutionFollowRequest request,
+                                                           ExecutionFollowReceiver receiver) throws
+        CentralDispatcherException {
+        throw new CentralDispatcherException("Operation unsupported: No central dispatcher class is configured: "
+                                             + Framework.CENTRALDISPATCHER_CLS_PROP);
+    }
+
     public Collection<IStoredJob> listStoredJobs(final IStoredJobsQuery query, final OutputStream output,
                                                  JobDefinitionFileFormat format) throws
         CentralDispatcherException {
@@ -97,5 +104,10 @@ public final class NoCentralDispatcher implements CentralDispatcher {
         throw new CentralDispatcherException("Operation unsupported: No central dispatcher class is configured: "
                                              + Framework.CENTRALDISPATCHER_CLS_PROP);
 
+    }
+
+    public ExecutionDetail getExecution(String execId) throws CentralDispatcherException {
+        throw new CentralDispatcherException("Operation unsupported: No central dispatcher class is configured: "
+                                             + Framework.CENTRALDISPATCHER_CLS_PROP);
     }
 }
