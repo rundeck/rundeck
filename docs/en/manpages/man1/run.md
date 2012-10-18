@@ -16,6 +16,14 @@ The run command is used to start the execution of a Job defined in Rundeck. The 
 
 The Job can either be specified by ID (-i), or by name and optional group (-j). The Node filters used for the execution of the job can also be specified on the commandline, and will be used instead of any already defined for the Job. Arguments to the Execution can be specified after (\--).
 
+If the `-f`/`--follow` option is used, then the output will
+be retrieved from the server as it is produced and echoed locally.
+
+This can be combined with either `-q`/`--quiet` to show no output and
+only wait until the execution finishes. Exit status will indicate
+if the execution succeeded or failed.  If `-r`/`--progress` is used
+instead, then progress of the execution is indicated periodically
+by echoed '.' characters.
 
 # OPTIONS
 
@@ -54,6 +62,15 @@ group. eg: 'Group/Job'.
 \-- *ARGUMENTS*
 : Pass the specified ARGUMENTS as options to the job
 
+-f, \--follow
+: Follow queued execution output
+
+-r, \--progress
+: In follow mode, print progress indicator chars
+
+-q, \--quiet
+: In follow mode, do not show output from the execution, but wait until it completes.
+
 # EXECUTION 
 
 This tool requires a unique Job to be identified for execution. This is done either by using `-i id`, or `-j group/name`. The group is optional if only one Job with the name exists.
@@ -82,6 +99,9 @@ Running a Job and specifying Node filters:
     
     run -I tags=dev -X os-family=windows -C 2 -K -j 'test/Job 1'
  
+Run a job by name, and follow the output until it finishes.
+
+    run -j QA/Test/Full --follow
 
 # SEE ALSO
 
