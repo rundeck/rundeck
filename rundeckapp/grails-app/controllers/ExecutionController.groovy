@@ -730,6 +730,10 @@ class ExecutionController {
                     }
                     if (e.scheduledExecution) {
                         def jobparams= [id: e.scheduledExecution.extid]
+                        if(e.scheduledExecution.totalTime>=0 && e.scheduledExecution.execCount>0){
+                            def long avg= Math.floor(e.scheduledExecution.totalTime / e.scheduledExecution.execCount)
+                            jobparams.averageDuration=avg
+                        }
                         job(jobparams) {
                             name(e.scheduledExecution.jobName)
                             group(e.scheduledExecution.groupPath ?: '')
