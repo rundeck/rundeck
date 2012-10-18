@@ -100,19 +100,13 @@ jar {
         attributes 'Rundeck-Version': version, 'Main-Class':"${launcherMainClass}", "Rundeck-Start-Class":"${launcherStartClass}", "Rundeck-Jetty-Libs":"${launcherJettyLibs}", "Rundeck-Jetty-Lib-Path":"${launcherJettyLibPath}"
     }
 }
-/*
-artifacts{
-    archives launcherJar
-}
-*/
-
 
 apply plugin: 'maven'
 task createPom << {
     pom {
         project {
             artifactId archivesBaseName
-            groupId "com.dtolabs.rundeck"
+            groupId group
             inceptionYear '2011'
             packaging 'jar'
             version version

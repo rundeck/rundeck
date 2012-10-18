@@ -2,7 +2,7 @@
  * The Rundeck plugins parent project
  */
 
-description = 'The plug-ins project defines defaults for it\'s children'
+description = "The plug-ins project defines defaults for it's children"
 
 apply plugin: 'eclipse'
 
@@ -10,84 +10,83 @@ eclipse.project.name =  "${project.getParent().eclipse.project.name}:plugins";
 
 subprojects{
 
-	apply from: rootDir.toString() + '/gradle/java.gradle'
-	
-	defaultTasks 'clean','build'
-	ext.rundeckPluginVersion= '1.0'
+    apply from: "${rootDir.toString()}/gradle/java.gradle"
+    
+    defaultTasks 'clean','build'
+    ext.rundeckPluginVersion= '1.0'
+    archivesBaseName = "rundeck-$project.name"
 
-	archivesBaseName = "rundeck-$project.name"
-
-	dependencies {
-		compile project(":core") //files("${rootProject.projectDir}/../core/build/libs/rundeck-core-${version}.jar")
-		testCompile(
-			//[group: 'junit', name: 'junit', version: '3.8.1',ext:'jar']
-		)
-	}
-	jar {
-		manifest {
-			attributes 'Rundeck-Plugin-Version': rundeckPluginVersion, 'Rundeck-Plugin-Archive': 'true', 'Rundeck-Plugin-File-Version': version
-		}
-	}
+    dependencies {
+        compile project(":core")
+    }
+    
+    jar {
+        manifest {
+            attributes 'Rundeck-Plugin-Version': rundeckPluginVersion, 
+                       'Rundeck-Plugin-Archive': 'true', 
+                       'Rundeck-Plugin-File-Version': version
+        }
+    }
 }
 
 
 task createPom << {
-	pom {
-		project {
-			artifactId 'rundeck-bundled-plugins'
-			groupId group
-			inceptionYear '2011'
-			packaging 'pom'
-			version version
-			name "RunDeck Bundled Plugins"
-			url 'http://rundeck.org'
-			licenses {
-				license {
-					name 'The Apache Software License, Version 2.0'
-					url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-					distribution 'repo'
-				}
-			}
-			modules{
-				module 'stub-plugin'
-				module 'script-plugin'
-			}
-			dependencies{
-				dependency{
-					artifactId 'rundeck-core'
-					groupId 'com.dtolabs.rundeck'
-					version version
-				}
-			}
-			build{
-				plugins{
-					plugin{
-						groupId 'org.apache.maven.plugins'
-						artifactId 'maven-jar-plugin'
-						version '2.3.2'
-						configuration{
-							archive{
-							  manifestEntries{
-								'Rundeck-Plugin-Version'(rundeckPluginVersion)
-								'Rundeck-Plugin-Archive'('true')
-								'Rundeck-Plugin-File-Version'(version)
-							  }
-							}
-						}
-					}
+    pom {
+        project {
+            artifactId 'rundeck-bundled-plugins'
+            groupId group
+            inceptionYear '2011'
+            packaging 'pom'
+            version version
+            name "RunDeck Bundled Plugins"
+            url 'http://rundeck.org'
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+            modules{
+                module 'stub-plugin'
+                module 'script-plugin'
+            }
+            dependencies{
+                dependency{
+                    artifactId 'rundeck-core'
+                    groupId 'com.dtolabs.rundeck'
+                    version version
+                }
+            }
+            build{
+                plugins{
+                    plugin{
+                        groupId 'org.apache.maven.plugins'
+                        artifactId 'maven-jar-plugin'
+                        version '2.3.2'
+                        configuration{
+                            archive{
+                              manifestEntries{
+                                'Rundeck-Plugin-Version'(rundeckPluginVersion)
+                                'Rundeck-Plugin-Archive'('true')
+                                'Rundeck-Plugin-File-Version'(version)
+                              }
+                            }
+                        }
+                    }
 
-					plugin{
-						groupId 'org.apache.maven.plugins'
-						artifactId 'maven-compiler-plugin'
-						version '2.3.2'
-						configuration{
-							'source'('1.6')
-							'target'('1.6')
-						}
-					}
-				}
-			}
-		}
-	}.writeTo("pom.xml")
+                    plugin{
+                        groupId 'org.apache.maven.plugins'
+                        artifactId 'maven-compiler-plugin'
+                        version '2.3.2'
+                        configuration{
+                            'source'('1.6')
+                            'target'('1.6')
+                        }
+                    }
+                }
+            }
+        }
+    }.writeTo("pom.xml")
 }
 

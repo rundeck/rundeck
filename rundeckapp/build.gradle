@@ -8,7 +8,10 @@ import org.gradle.api.tasks.TaskAction
 /**
  * The Rundeck webapp build file
  * 
- * NOTE: the build is actually performed by Grails - Gradle just wraps around it
+ * It's important to note that grails has it's own build system based on Gant. Rather
+ * than trying to integrate Gradle directly with Gant or use one of the Gradle-Grails plugins
+ * available, we're following in the steps of the Make based build and just wrapping 
+ * around the Grails builds.
  */
 
 description = 'The Rundeck Grails webapp project '
@@ -19,16 +22,15 @@ apply plugin: 'eclipse'
 // set the convention to rundeck:<branch>:<path>:<projectName>
 eclipse.project.name =  "${project.getParent().eclipse.project.name}:webapp"
 
-/**
- * Properties for downloading & installing Grails
- */
+// Properties for downloading & installing Grails
 def grailsBaseName = "grails-${grailsVersion}"
 def grailsZipFile = "${grailsBaseName}.zip"
 def grailsZipFileLocation = "${rootProject.buildDir.toString()}/tmp/${grailsZipFile}"
 def grailsInstallLocation = "${rootProject.buildDir.toString()}/local"
 def grailsDownloadUrl = "http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/grails-${grailsVersion}.zip"
 def grailsHome = "${grailsInstallLocation}/${grailsBaseName}"
-def warFileLocation = project(':rundeckapp').projectDir.toString() + "/target/rundeck-${version}.war"
+def graislCommandLine = "${grailsHome}/bin/grails"
+def warFileLocation = "${project(':rundeckapp').projectDir.toString()}/target/rundeck-${version}.war"
 
 /**
  * Downloads Grails from the SpringSource archives
@@ -72,9 +74,12 @@ task extractGrails(dependsOn: downloadGrails) {
 }
 
 /**
- * The Grails webapp has both compile and runtime dependencies on other projects, 
- * so this task is just a container for dependencies so they are built and installed
- * into the local ~/.m2 repo before we attempt to do anything further with Grails. 
+ * The Grails webapp has both compile and runtime dependencies on "core" and 
+ * "rundeck-jetty-server" respectively - this task acts as a container for those 
+ * dependencies so they are built and installed into the local ~/.m2 repo before 
+ * we attempt to do anything further with Grails. 
+ * 
+ * TODO: this feels a bit circular? jetty-server --> webapp --> jetty-server?
  */
 task installDependencies(dependsOn: [project(":core").install, project(":rundeck-launcher:rundeck-jetty-server").install]) << {
 	description = "Builds and installs dependencies on other subprojects"
@@ -84,12 +89,12 @@ task installDependencies(dependsOn: [project(":core").install, project(":rundeck
  * Installs the jetty-plugin into the .grails folder
  */
 task installJettyPlugin(type: Exec, dependsOn: [extractGrails, installDependencies]) {
-	def jettyPluginZip = rootDir.toString() + '/dependencies/grails-jetty/zips/grails-jetty-1.2-SNAPSHOT.zip'
+	def jettyPluginZip = "${rootDir.toString()}/dependencies/grails-jetty/zips/grails-jetty-1.2-SNAPSHOT.zip"
 	def jettyPluginInstalled = "${System.properties['user.home']}/.grails/${grailsVersion}/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT"
 	inputs.source file(jettyPluginZip)
 	outputs.dir file(jettyPluginInstalled)
 	workingDir project(':rundeckapp').projectDir
-	commandLine grailsHome + '/bin/grails'
+	commandLine graislCommandLine
 	args 'install-plugin', jettyPluginZip
 }
 
@@ -111,7 +116,7 @@ task test(type: Exec, overwrite: true,
 			project(":plugins:stub-plugin").install]) {
 			
 	workingDir project(':rundeckapp').projectDir
-	commandLine grailsHome + '/bin/grails'
+	commandLine graislCommandLine
 	args 'test-app','-coverage','-xml'
 }
 
@@ -127,11 +132,11 @@ task replaceVersion(type: PropertyReplacer) {
  * Builds the rundeck war file
  */
 task war(type: Exec, dependsOn: [replaceVersion, test]) {
-	inputs.sourceDir file(projectDir.toString() + '/src')
+	inputs.sourceDir file("${projectDir.toString()}/src")
 	outputs.file file(warFileLocation)
 	workingDir project(':rundeckapp').projectDir
 	environment 'GRAILS_HOME', grailsHome
-	commandLine grailsHome + '/bin/grails'
+	commandLine graislCommandLine
 	args 'prod','war'
 }
 
@@ -146,7 +151,7 @@ task build(overwrite: true, dependsOn: [test, war]) {
 task install(type: Exec, overwrite: true, dependsOn: build) {
 	inputs.file file(warFileLocation)
 	workingDir project(':rundeckapp').projectDir
-	commandLine grailsHome + '/bin/grails'
+	commandLine graislCommandLine
 	args 'maven-install'
 }
 

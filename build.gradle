@@ -1,8 +1,9 @@
 /**
  * Rundeck Master-Build Project
  * 
- * NOTE that this project does not contain any code and does not generate any artifacts. Its purpose is to set
- * defaults for the subjects and to provide Groovy editting capabilities to the build files (like this one)
+ * This project does not contain any buildable code and does not generate any 
+ * artifacts, however it allows us to set defaults for the subjects and provides 
+ * Groovy syntax highlighting for gradle build files (like this one)
  **/
 
 description = 'The master-build project for Rundeck';

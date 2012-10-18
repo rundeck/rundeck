@@ -18,6 +18,8 @@ rundeckapp/work
 rundeckapp/web-app/plugins
 rundeckapp/target
 rundeckapp/target-eclipse
+rundeckapp/var/logs/*
+rundeckapp/var/tmp/*
 packaging/dist
 docs/en/manpages/**/*.gz
 tmp/**

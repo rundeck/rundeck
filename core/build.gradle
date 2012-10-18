@@ -6,16 +6,9 @@ description = 'The Rundeck Core API project'
 
 import org.apache.tools.ant.filters.ReplaceTokens
 
-//apply plugin: 'java'
-//apply plugin: 'maven'
+apply from: "${rootDir.toString()}/gradle/java.gradle"
 
-apply from: rootDir.toString() + '/gradle/java.gradle'
-
-sourceCompatibility = 1.5
-//version = '1.4.4-dev'
 archivesBaseName = 'rundeck-core'
-//group = "com.dtolabs.rundeck"
-
 defaultTasks 'clean','assemble'
 
 repositories {
@@ -55,7 +48,8 @@ dependencies {
 
 jar {
     manifest {
-        attributes 'Rundeck-Version': version, 'Rundeck-Tools-Dependencies': configurations.runtime.collect { "$it.name" }.join(" ") 
+        attributes 'Rundeck-Version': version, 
+                   'Rundeck-Tools-Dependencies': configurations.runtime.collect { "$it.name" }.join(" ") 
     }
 }
 
@@ -93,7 +87,7 @@ uploadArchives {
         configuration = configurations.archives 
         pom.project {
             artifactId archivesBaseName
-            groupId "com.dtolabs.rundeck"
+            groupId group
             inceptionYear '2011'
             packaging 'jar'
             version version
@@ -114,7 +108,7 @@ task createPom << {
     pom {
         project {
             artifactId archivesBaseName
-            groupId "com.dtolabs.rundeck"
+            groupId group
             inceptionYear '2011'
             packaging 'jar'
             version version

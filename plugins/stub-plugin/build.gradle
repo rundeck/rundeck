@@ -11,17 +11,11 @@ jar {
     }
 }
 
-//task wrapper(type: Wrapper) {
-//    gradleVersion = '1.0'
-//}
-//
-
-//apply plugin: 'maven'
 task createPom << {
     pom {
         project {
             artifactId 'rundeck-stub-plugin'
-            groupId "com.dtolabs.rundeck"
+            groupId group
             inceptionYear '2011'
             packaging 'jar'
             version version
@@ -35,7 +29,7 @@ task createPom << {
                 }
             }
             parent{
-                groupId 'com.dtolabs.rundeck'
+                groupId group
                 artifactId "rundeck-bundled-plugins"
                 version(version)
             }
