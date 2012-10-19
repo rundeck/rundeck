@@ -346,7 +346,7 @@ Option model providers are configured on a per-Option basis (where a Job may hav
 ### Requirements ###
 
 1. Options model data must be [JSON formatted](http://www.json.org).
-2. It must be accessible via HTTP or on the local disk for the Rundeck server.
+2. It must be accessible via HTTP(S) or on the local disk for the Rundeck server.
 3. It must be in one of two JSON structures, *either*:
     * An array of string values
     * OR, an array of Maps, each with two entries, `name` and `value`.
