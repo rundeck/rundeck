@@ -75,11 +75,26 @@ group. eg: 'Group/Job'.
 
 This tool requires a unique Job to be identified for execution. This is done either by using `-i id`, or `-j group/name`. The group is optional if only one Job with the name exists.
 
+# ARGUMENTS
+
+Arguments can be passed to the Job that is being executed after the `--` separator.  You must use this separator after all
+of the tool options that you specify on the commandline.
+
+Each argument that you pass should correspond to a defined Option for the Job.  The syntax for passing these options is:
+
+    -optionname <value> -otheroption <value>
+
+All Job Options in Rundeck require an argument value if specified.
+
 ## EXAMPLES
 
 Run the Job that has ID `12`:
 
     run -i 12
+
+Run the same job and pass arguments "name" and "color" corresponding to the Job's Options:
+
+    run -i 12 -- -name Bob -color blue
 
 Run the job named "Full" in the group "QA/Test"
 
