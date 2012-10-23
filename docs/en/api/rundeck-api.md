@@ -706,7 +706,7 @@ URL:
 
 Result: an Item List of `executions`. See [Listing Running Executions](#listing-running-executions).
 
-The `exections` element will have paging attributes:
+The `executions` element will have paging attributes:
 
 * `max`: maximum number of results per page
 * `offset`: offset from first of all results
