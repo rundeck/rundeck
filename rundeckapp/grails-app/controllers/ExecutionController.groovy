@@ -815,13 +815,13 @@ class ExecutionController {
         }
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         if(query.hasErrors()){
-            flash.errorCode = "api.error.parameter.error"
-            flash.errorArgs = [query.errors.allErrors.collect{message(error: it)}.join("; ")]
-            return chain(controller: 'api', action: 'renderError')
+            request.errorCode = "api.error.parameter.error"
+            request.errorArgs = [query.errors.allErrors.collect{message(error: it)}.join("; ")]
+            return new ApiController().renderError()
         }
         if (!params.project) {
-            flash.error = g.message(code: 'api.error.parameter.required', args: ['project'])
-            return chain(controller: 'api', action: 'renderError')
+            request.error = g.message(code: 'api.error.parameter.required', args: ['project'])
+            return new ApiController().error()
         }
         query.projFilter=params.project
         if (null != query) {
