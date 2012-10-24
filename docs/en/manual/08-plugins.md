@@ -597,12 +597,30 @@ Authentication](#configuring-secondary-sudo-password-authentication), but with a
 prefix of "sudo2-" instead of "sudo-", such as:
 
     sudo2-command-enabled="true"
+    sudo2-command-pattern="^sudo .+? sudo .*$"
 
 This would turn on a mechanism to expect and respond to another sudo password
-prompt.
+prompt when the command matches the given pattern.
 
 If a value for "sudo2-password-option" is not set, then a default value of
 `option.sudo2Password` will be used.
+
+**A note about the "sudo2-command-pattern":**
+
+The sudo authentication mechanism uses two regular expressions to test whether it should be 
+invoked.
+
+For the first sudo authentication, the "sudo-command-pattern" value is matched against
+the **first component of the command being executed**. The default value for this pattern is `^sudo$`.
+So a command like "sudo -u user1 some command" will match correctly.  You can modify the 
+regular expression (e.g. to support "su"), but it will always only match against the first 
+part of the command.
+
+If "sudo2-command-enabled" is "true", then the "sudo2-command-pattern" is also checked 
+and if it matches then another sudo authentication is enabled.
+However this regular expression is tested against the **entire command string**
+to make it possible to determine whether it should be enabled. The default value is 
+`^sudo .+? sudo .*$`. If necessary you should customize the value.
 
 ### Resource Model Sources
 
