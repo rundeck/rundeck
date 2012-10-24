@@ -40,6 +40,27 @@ if [ 0 == $? ] ; then
 	exit 2
 fi
 
+#purge the jobs
+$RDECK_BASE/tools/bin/rd-jobs purge -p test -g test > $DIR/load.out
+if [ 0 != $? ] ; then
+	echo Failed to purge jobs: $!
+	exit 2
+fi
+cat $DIR/load.out
+
+
+
+$RDECK_BASE/tools/bin/rd-jobs load -f $DIR/test.jobs.expanded.xml > $DIR/load.out
+if [ 0 != $? ] ; then
+	echo Failed to load jobs: $!
+	exit 2
+fi
+grep -q Failed $DIR/load.out 
+if [ 0 == $? ] ; then
+	echo Failed to load some job : $!
+	exit 2
+fi
+
 rm $DIR/load.out
 rm $DIR/test.jobs.expanded.xml
 

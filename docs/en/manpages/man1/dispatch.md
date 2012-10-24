@@ -66,16 +66,35 @@ on a set of nodes which are specified by the filter options.
 : Execute input read from *STDIN*
 
 -Q, \--queue
-: Queue this command to the dispatcher service and run it (deprecated)
+: Queue this command to the dispatcher service and run it (default behavior)
 
 -L, \--noqueue
-: Execute the command locally not through the central dispatcher (experimental)
+: Execute the command locally not through the central dispatcher
+
+-f, \--follow
+: Follow queued execution output
+
+-r, \--progress
+: In follow mode, print progress indicator chars
 
 # COMMAND MODE #
 
 Command mode occurs when the -p option is present (or there is only
 one Project), and one (and only one) of the following options are
 specified: \--, -s, or -S
+
+The default behavior is to invoke the "queue" mode (`-Q`/`--queue`), 
+which will send the desired command to the Rundeck server for execution, 
+and return the ID of the queued Execution.
+
+If "follow" option is used (`-f`/`--follow`), then the output will
+be retrieved from the server as it is produced and echoed locally.
+
+This can be combined with either `-q`/`--quiet` to show no output and
+only wait until the execution finishes. Exit status will indicate
+if the execution succeeded or failed.  If `-r`/`--progress` is used
+instead, then progress of the execution is indicated periodically
+by echoed '.' characters.
 
 ## COMMAND STRING (\--) ##
 
@@ -157,6 +176,9 @@ Multi-line scripts are easier to write using a here document:
 Note: The input read from stdin is saved to a temporary file and then
 content is called with the -s script mode described above to transfer and invoke the script.
 
+# QUEUED EXECUTION #
+
+If `-Q`/`--queue`
 
 # LISTING MODE #
 

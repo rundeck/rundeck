@@ -25,6 +25,7 @@ import grails.test.GrailsUnitTestCase
  */
 class ReportServiceTests extends GroovyTestCase {
     def ReportService reportService
+    def sessionFactory
 
     private BaseReport proto(props=[:]){
         def repprops=[author: 'bob', ctxProject: 'proj1', status: 'succeed', actionType: 'succeed', dateCompleted: new Date(), dateStarted:new Date(),
@@ -32,13 +33,27 @@ class ReportServiceTests extends GroovyTestCase {
         return new ExecReport(repprops+props)
     }
     void testgetCombinedReportsReportIdFilter(){
-        def r1=proto(reportId:'blah')
-        assert null!=r1.save(flush: true)
-        def r2 = proto(reportId: 'blah2')
-        assert null != r2.save(flush: true)
-        def r3 = proto(reportId: 'blah3')
-        assert null != r3.save(flush: true)
+        def r1,r2,r3
 
+        ExecReport.withNewSession {
+            r1=proto(reportId:'blah')
+            assert r1.validate()
+            assert null!=r1.save(flush: true)
+            assert 'blah'==r1.reportId
+            assertNotNull(r1.id)
+            r2 = proto(reportId: 'blah2')
+            assert r2.validate()
+            assert null != r2.save(flush: true)
+            r3 = proto(reportId: 'blah3')
+            assert r3.validate()
+            println r3.save(flush: true)
+
+            sessionFactory.currentSession.flush()
+        }
+        r1=r1.refresh()
+        r2=r2.refresh()
+        r3=r3.refresh()
+        assertEquals(3,ExecReport.count())
         def query = new ReportQuery(reportIdFilter: 'blah')
 
         def result=reportService.getCombinedReports(query)

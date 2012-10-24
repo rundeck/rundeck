@@ -756,6 +756,12 @@
                         <g:if test="${filterset}">
                             <g:render template="/common/selectFilter" model="[filterset:filterset,filterName:filterName,prefName:'nodes',noSelection:filterName?'-Server Node-':null]"/>
                         </g:if>
+                        <g:if test="${!params.Clear && !params.formInput}">
+                            <g:form action="nodes" style="display: inline">
+                                <g:hiddenField name="formInput" value="true"/>
+                                <button name="Clear" value="Clear">Show all nodes</button>
+                            </g:form>
+                        </g:if>
                         </div>
 
                     %{--</g:if>--}%

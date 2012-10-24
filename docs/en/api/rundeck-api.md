@@ -649,7 +649,7 @@ Result: An Item List of `executions`.  Each `execution` of the form:
         <date-started unixtime="[unixtime]">[datetime]</date-started>
         
         <!-- optional job context if the execution is associated with a job -->
-        <job id="jobID">
+        <job id="jobID" averageDuration="[milliseconds]">
             <name>..</name>
             <group>..</group>
             <description>..</description>
@@ -684,6 +684,8 @@ The `[url]` value is a URL to the Rundeck server page to view the execution outp
 
 `[unixtime]` is the millisecond unix timestamp, and `[datetime]` is a W3C dateTime string in the format "yyyy-MM-ddTHH:mm:ssZ".
 
+If known, the average duration of the associated Job will be indicated (in milliseconds) as `averageDuration`. (Since API v5)
+
 ### Getting Execution Info
 
 Get the status for an execution by ID.
@@ -704,7 +706,7 @@ URL:
 
 Result: an Item List of `executions`. See [Listing Running Executions](#listing-running-executions).
 
-The `exections` element will have paging attributes:
+The `executions` element will have paging attributes:
 
 * `max`: maximum number of results per page
 * `offset`: offset from first of all results

@@ -232,6 +232,13 @@ public class TestQueueTool extends AbstractBaseTest {
                 return null;
             }
 
+            public ExecutionFollowResult followDispatcherExecution(String id, ExecutionFollowRequest request,
+                                                                   ExecutionFollowReceiver receiver) throws
+                CentralDispatcherException {
+                fail("unexpected call to followDispatcherExecution");
+                return null;
+            }
+
             public Collection<IStoredJobLoadResult> loadJobs(ILoadJobsRequest request, java.io.File input, JobDefinitionFileFormat format) throws
                 CentralDispatcherException {
                 fail("unexpected call to loadJobs");
@@ -254,6 +261,11 @@ public class TestQueueTool extends AbstractBaseTest {
 
             public Collection<DeleteJobResult> deleteStoredJobs(Collection<String> jobIds) throws CentralDispatcherException {
                 fail("unexpected call to deleteStoredJobs");
+                return null;
+            }
+
+            public ExecutionDetail getExecution(String execId) throws CentralDispatcherException {
+                fail("unexpected call to getExecution");
                 return null;
             }
         }

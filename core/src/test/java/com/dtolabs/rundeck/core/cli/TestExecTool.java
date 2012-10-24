@@ -476,6 +476,12 @@ public class TestExecTool extends AbstractBaseTest {
             return null;
         }
 
+        public ExecutionFollowResult followDispatcherExecution(String id, ExecutionFollowRequest request,
+                                                               ExecutionFollowReceiver receiver) throws
+            CentralDispatcherException {
+            return null;
+        }
+
         public Collection<IStoredJob> listStoredJobs(IStoredJobsQuery query, OutputStream output,
                                                      JobDefinitionFileFormat format) throws CentralDispatcherException {
             return null;
@@ -493,6 +499,10 @@ public class TestExecTool extends AbstractBaseTest {
         }
 
         public Collection<DeleteJobResult> deleteStoredJobs(Collection<String> jobIds) throws CentralDispatcherException {
+            return null;
+        }
+
+        public ExecutionDetail getExecution(String execId) throws CentralDispatcherException {
             return null;
         }
     }
@@ -1063,6 +1073,12 @@ public class TestExecTool extends AbstractBaseTest {
             return null;
         }
 
+        public ExecutionFollowResult followDispatcherExecution(String id, ExecutionFollowRequest request,
+                                                               ExecutionFollowReceiver receiver) throws
+            CentralDispatcherException {
+            return null;
+        }
+
         public void assertQueueScriptOnlyCalled() {
             assertFalse("queueDispatcherExecution should not have been called: "+this, queueCommandCalled);
             assertTrue("queueDispatcherScript should have been called: " + this, queueScriptCalled);
@@ -1085,6 +1101,10 @@ public class TestExecTool extends AbstractBaseTest {
         }
 
         public Collection<DeleteJobResult> deleteStoredJobs(Collection<String> jobIds) throws CentralDispatcherException {
+            return null;
+        }
+
+        public ExecutionDetail getExecution(String execId) throws CentralDispatcherException {
             return null;
         }
 

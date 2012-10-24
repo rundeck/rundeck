@@ -252,7 +252,12 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         }else {
             responderFuture = null;
         }
-
+        if (null != context.getExecutionListener()) {
+            context.getExecutionListener().log(3,
+                                               "Starting SSH Connection: " + nodeAuthentication.getUsername() + "@"
+                                               + node.getHostname() + " ("
+                                               + node.getNodename() + ")");
+        }
         String errormsg = null;
         try {
             sshexec.execute();

@@ -115,6 +115,9 @@ public class TestCentralDispatcherMgrFactory extends AbstractBaseTest {
      * Fail due to incorrect constructor
      */
     public static class test_fail1 implements CentralDispatcher {
+        public ExecutionDetail getExecution(String execId) throws CentralDispatcherException {
+            return null;
+        }
 
         public QueuedItemResult queueDispatcherScript(IDispatchedScript dispatch) throws CentralDispatcherException {
             return null;
@@ -132,6 +135,12 @@ public class TestCentralDispatcherMgrFactory extends AbstractBaseTest {
         }
 
         public DispatcherResult killDispatcherExecution(String id) throws CentralDispatcherException {
+            return null;
+        }
+
+        public ExecutionFollowResult followDispatcherExecution(String id, ExecutionFollowRequest request,
+                                                               ExecutionFollowReceiver receiver) throws
+            CentralDispatcherException {
             return null;
         }
 
@@ -184,6 +193,12 @@ public class TestCentralDispatcherMgrFactory extends AbstractBaseTest {
             return null;
         }
 
+        public ExecutionFollowResult followDispatcherExecution(String id, ExecutionFollowRequest request,
+                                                               ExecutionFollowReceiver receiver) throws
+            CentralDispatcherException {
+            return null;
+        }
+
         public Collection<IStoredJobLoadResult> loadJobs(ILoadJobsRequest request, java.io.File input,
                                                          JobDefinitionFileFormat format) throws
             CentralDispatcherException {
@@ -202,6 +217,10 @@ public class TestCentralDispatcherMgrFactory extends AbstractBaseTest {
         }
 
         public Collection<DeleteJobResult> deleteStoredJobs(Collection<String> jobIds) throws CentralDispatcherException {
+            return null;
+        }
+
+        public ExecutionDetail getExecution(String execId) throws CentralDispatcherException {
             return null;
         }
     }

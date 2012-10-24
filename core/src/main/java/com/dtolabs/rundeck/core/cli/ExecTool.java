@@ -18,9 +18,12 @@ package com.dtolabs.rundeck.core.cli;
 
 import com.dtolabs.rundeck.core.*;
 import com.dtolabs.rundeck.core.cli.project.ProjectToolException;
+import com.dtolabs.rundeck.core.cli.queue.ConsoleExecutionFollowReceiver;
+import com.dtolabs.rundeck.core.cli.queue.QueueTool;
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException;
 import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
+import com.dtolabs.rundeck.core.dispatcher.QueuedItem;
 import com.dtolabs.rundeck.core.dispatcher.QueuedItemResult;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.commands.ExecCommand;
@@ -76,6 +79,8 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
 
     private boolean argNoQueue;
     private boolean argTerse;
+    private boolean argFollow;
+    private boolean argProgress;
 
     private boolean shouldExit = false;
 
@@ -122,6 +127,8 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
         options.addOption("Q", "queue", false,
             "Send the execution to the command dispatcher queue (default behavior)");
         options.addOption("z", "terse", false, "leave log messages unadorned");
+        options.addOption("f", "follow", false, "Follow queued execution output");
+        options.addOption("r", "progress", false, "In follow mode, print progress indicator chars");
     }
 
     /**
@@ -252,6 +259,12 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
 
         if (cli.hasOption("S")) {
             inlineScript = true;
+        }
+        if (cli.hasOption("f")) {
+            argFollow = true;
+            if(cli.hasOption("r")){
+                argProgress=true;
+            }
         }
 
         if (cli.hasOption("F")) {
@@ -486,16 +499,39 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
         } catch (CentralDispatcherException e) {
             throw new CoreException("Unable to queue the execution: " + e.getMessage(), e);
         }
-        if (null != result && result.isSuccessful()) {
-            if (null != result.getMessage()) {
-                out.println(result.getMessage());
-            }
-            out.println("Queued Execution ID: " + result.getItem().getId() + " <" + result.getItem().getUrl() + ">");
-        } else {
+        if (null == result || !result.isSuccessful()) {
             throw new CoreException(
                 "Queued job request failed: " + (null != result ? result.getMessage() : "Result was null"));
         }
+        if (null != result.getMessage()) {
+            out.println(result.getMessage());
+        }
+        out.println("Queued Execution ID: " + result.getItem().getId() + " <" + result.getItem().getUrl() + ">");
 
+        if(argFollow) {
+            followOutput(result.getItem(), argQuiet, argProgress);
+        }
+    }
+
+    /**
+     * Perform follow action for the execution, using QueueTool implementation.
+     */
+    private void followOutput(QueuedItem item, final boolean quiet, final boolean progress) throws CoreException {
+        boolean successful = false;
+        try {
+            ConsoleExecutionFollowReceiver.Mode mode = ConsoleExecutionFollowReceiver.Mode.output;
+            if (quiet) {
+                mode = ConsoleExecutionFollowReceiver.Mode.quiet;
+            } else if (progress) {
+                mode = ConsoleExecutionFollowReceiver.Mode.progress;
+            }
+            successful = QueueTool.followAction(item.getId(), true, mode, framework, System.out, this);
+        } catch (CentralDispatcherException e) {
+            throw new CoreException("Failed following output for execution: " + item.getId(), e);
+        }
+        if (!successful) {
+            exit(3);
+        }
     }
 
     public static final String DEFAULT_LOG_FORMAT = "[%user@%node %command][%level] %message";

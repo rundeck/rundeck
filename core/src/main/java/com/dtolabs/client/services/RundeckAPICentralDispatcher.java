@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.*;
+import com.dtolabs.rundeck.core.execution.ExecutionResult;
 import com.dtolabs.rundeck.core.utils.NodeSet;
 import com.dtolabs.utils.Streams;
 import org.apache.commons.httpclient.URIException;
@@ -44,6 +45,8 @@ import org.yaml.snakeyaml.error.YAMLException;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -84,7 +87,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      */
     public static final String RUNDECK_API_BASE_v4 = "/api/" + RUNDECK_API_VERSION_4;
     /**
-     * RUNDECK API Base for v4
+     * RUNDECK API Base for v5
      */
     public static final String RUNDECK_API_BASE_v5 = "/api/" + RUNDECK_API_VERSION_5;
 
@@ -111,9 +114,17 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      */
     public static final String RUNDECK_API_LIST_EXECUTIONS_PATH = RUNDECK_API_BASE + "/executions/running";
     /**
+     * Webservice endpoint for getting execution information
+     */
+    public static final String RUNDECK_API_EXECUTION_PATH = RUNDECK_API_BASE + "/execution/$id";
+    /**
      * Webservice endpoint for killing job executions
      */
     public static final String RUNDECK_API_KILL_JOB_PATH = RUNDECK_API_BASE + "/execution/$id/abort";
+    /**
+     * Webservice endpoint for execution output
+     */
+    public static final String RUNDECK_API_EXEC_OUTPUT_PATH = RUNDECK_API_BASE_v5 + "/execution/$id/output";
     /**
      * Webservice endpoint for exporting stored jobs.
      */
@@ -434,6 +445,45 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
 
     }
 
+    private List<ExecutionDetail> parseExecutionsResult(final WebserviceResponse response) {
+        final Document resultDoc = response.getResultDoc();
+
+        final Node node = resultDoc.selectSingleNode("/result/executions");
+        final List items = node.selectNodes("execution");
+        final ArrayList<ExecutionDetail> list = new ArrayList<ExecutionDetail>();
+        if (null != items && items.size() > 0) {
+            for (final Object o : items) {
+                final Node node1 = (Node) o;
+                ExecutionDetailImpl detail = new ExecutionDetailImpl();
+                String url = node1.selectSingleNode("@href").getStringValue();
+                url = makeAbsoluteURL(url);
+                detail.setId(stringNodeValue(node1, "@id", null));
+                detail.setUrl(url);
+                detail.setUser(stringNodeValue(node1, "user", null));
+                detail.setAbortedBy(stringNodeValue(node1, "abortedBy", null));
+                detail.setDescription(stringNodeValue(node1, "description", null));
+                detail.setArgString(stringNodeValue(node1, "argString", null));
+                detail.setDateStarted(w3cDateNodeValue(node1, "date-started", null));
+                detail.setDateCompleted(w3cDateNodeValue(node1, "date-started", null));
+                final Node jobNode = node1.selectSingleNode("job");
+                if(null!=jobNode){
+                    final String jobId = stringNodeValue(jobNode, "@id", null);
+                    StoredJobExecutionImpl job = new StoredJobExecutionImpl(
+                        jobId,
+                        stringNodeValue(jobNode,"name",null),
+                        createJobURL(jobId),
+                        stringNodeValue(jobNode,"group",null),
+                        stringNodeValue(jobNode,"description",null),
+                        stringNodeValue(jobNode,"project",null),
+                        longNodeValue(jobNode, "@averageDuration", -1 )
+                    );
+                    detail.setExecutionJob(job);
+                }
+                list.add(detail);
+            }
+        }
+        return list;
+    }
     private ArrayList<QueuedItem> parseExecutionListResult(final WebserviceResponse response) {
         final Document resultDoc = response.getResultDoc();
 
@@ -556,7 +606,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         }
 
         if (null != response.getResponseMessage()) {
-            logger.info("Response: " + response.getResponseMessage());
+            logger.debug("Response: " + response.getResponseMessage());
         }
         final Document resultDoc = response.getResultDoc();
         if (null == resultDoc) {
@@ -677,6 +727,244 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
                 return sb.toString();
             }
         };
+    }
+
+    /**
+     * Return execution detail for a particular execution.
+     *
+     * @param execId ID of the execution
+     *
+     * @return Execution detail
+     */
+    public ExecutionDetail getExecution(final String execId) throws CentralDispatcherException {
+        final HashMap<String, String> params = new HashMap<String, String>();
+
+        final String rundeckApiKillJobPath = substitutePathVariable(RUNDECK_API_EXECUTION_PATH, "id", execId);
+        //2. send request via ServerService
+        final WebserviceResponse response;
+        try {
+            response = serverService.makeRundeckRequest(rundeckApiKillJobPath, params, null, null);
+        } catch (MalformedURLException e) {
+            throw new CentralDispatcherServerRequestException("Failed to make request", e);
+        }
+
+        final Envelope envelope = validateResponse(response);
+
+//        try {
+//            System.err.println(serialize(response.getResultDoc()));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+        ////////////////////
+        //parse result list of queued items, return the collection of QueuedItems
+        ///////////////////
+
+        final List<ExecutionDetail> details = parseExecutionsResult(response);
+        if (details.size() != 1) {
+            throw new CentralDispatcherException("The results were unexpected: did not contain 1 execution definition");
+        }
+        final ExecutionDetail detail = details.get(0);
+        return detail;
+    }
+
+    /**
+     * Follow execution output for an Execution by synchronously emitting output to a receiver
+     * @param execId
+     */
+    public ExecutionFollowResult followDispatcherExecution(final String execId, final ExecutionFollowRequest request,
+                                                           final ExecutionFollowReceiver receiver) throws
+        CentralDispatcherException {
+
+
+        final String rundeckApiExecOutputJobPath = substitutePathVariable(RUNDECK_API_EXEC_OUTPUT_PATH, "id", execId)
+                                                   + ".xml";
+        //output complete
+        boolean complete = false;
+        boolean interrupt = false;
+        boolean receiverfinished = false;
+        boolean jobsuccess = false;
+        boolean jobcomplete = false;
+        boolean jobcancel = false;
+        //byte offset
+        Long offset = 0L;
+        Long rlastmod = 0L;
+        boolean resume = null != request && request.isResume();
+
+        //percent complete
+        double percentage = 0.0;
+        //delay between requests
+        final int BASE_DELAY = 1000;
+        final int MAX_DELAY = 5000;
+        long delay = BASE_DELAY;
+        float backoff = 1f;
+        String jobstatus=null;
+
+        while (!complete && !interrupt && !receiverfinished) {
+            //follow output until complete
+
+            final HashMap<String, String> params = new HashMap<String, String>();
+
+            if(resume){
+                params.put("lastlines", "0");
+                resume=false;
+            }else{
+                params.put("offset", offset.toString());
+                params.put("lastmod", rlastmod.toString());
+            }
+
+            logger.debug("request" + rundeckApiExecOutputJobPath + " params: " + params);
+            //2. send request via ServerService
+            final WebserviceResponse response;
+            try {
+                response = serverService.makeRundeckRequest(rundeckApiExecOutputJobPath, params, null, null);
+            } catch (MalformedURLException e) {
+                throw new CentralDispatcherServerRequestException("Failed to make request", e);
+            }
+
+            final Envelope envelope = validateResponse(response);
+
+            final Node result1 = envelope.doc.selectSingleNode("result/output");
+            if(null==result1){
+                throw new CentralDispatcherServerRequestException("Response output was unexpected");
+            }
+            final String errorStr = stringNodeValue(result1, "error", null);
+            final String messageStr = stringNodeValue(result1, "message", null);
+            final Boolean unmodified = boolNodeValue(result1, "unmodified", null);
+            final Boolean empty = boolNodeValue(result1, "empty", null);
+
+            final Boolean iscompleted = boolNodeValue(result1, "completed", null);
+            final Boolean jobcompleted = boolNodeValue(result1, "execCompleted", null);
+            jobstatus = stringNodeValue(result1, "execState", null);
+
+            final Long lastmod = longNodeValue(result1, "lastModified", 0);
+            final Long duration = longNodeValue(result1, "execDuration", 0);
+            final Long totalsize = longNodeValue(result1, "totalSize", 0);
+
+            final Double percentLoaded = floatNodeValue(result1, "percentLoaded", 0.0);
+            final Long dataoffset = longNodeValue(result1, "offset", -1L);
+
+            if (dataoffset > 0 && dataoffset > offset) {
+                offset = dataoffset;
+            }
+            if (lastmod > 0 && lastmod > rlastmod) {
+                rlastmod = lastmod;
+            }
+            if (percentLoaded > 0.0 && percentLoaded > percentage) {
+                percentage = percentLoaded;
+            }
+
+            //update delay
+            if (null != unmodified && unmodified && delay < MAX_DELAY) {
+                delay = delay + (Math.round(backoff * BASE_DELAY));
+            } else if (null != unmodified && !unmodified) {
+                delay = BASE_DELAY;
+            }
+
+            if(null!=iscompleted){
+                complete=iscompleted;
+            }
+
+            if (null != receiver && !receiver.receiveFollowStatus(offset, totalsize, duration)) {
+                //end
+                receiverfinished = true;
+                break;
+            }
+
+            final List list = result1.selectNodes("entries/entry");
+            for (final Object obj : list) {
+                Node node = (Node) obj;
+                final String timeStr = stringNodeValue(node, "@time", null);
+                final String levelStr = stringNodeValue(node, "@level", null);
+                final String user = stringNodeValue(node, "@user", null);
+                final String command = stringNodeValue(node, "@command", null);
+                final String nodeName = stringNodeValue(node, "@node", null);
+                final String logMessage = node.getStringValue();
+                if (null != receiver && !receiver.receiveLogEntry(timeStr, levelStr, user, command, nodeName,
+                    logMessage)) {
+                    receiverfinished = true;
+                    break;
+                }
+            }
+            //sleep delay
+            try {
+                Thread.sleep(delay);
+            } catch (InterruptedException e) {
+                interrupt = true;
+            }
+        }
+        final boolean finalComplete = complete;
+        final boolean finalReceiverfinished = receiverfinished;
+        ExecutionState state=null;
+        if(null!=jobstatus){
+            try {
+                state = ExecutionState.valueOf(jobstatus);
+            } catch (IllegalArgumentException e){
+            }
+        }
+        final ExecutionState finalState = state;
+        return new ExecutionFollowResult() {
+            public boolean isLogComplete() {
+                return finalComplete;
+            }
+
+            public ExecutionState getState() {
+                return finalState;
+            }
+
+            public boolean isReceiverFinished() {
+                return finalReceiverfinished;
+            }
+        };
+    }
+
+    private String stringNodeValue(Node result1, final String path, final String defValue) {
+        return null != result1.selectSingleNode(path) ? result1.selectSingleNode(path)
+            .getStringValue() : defValue;
+    }
+
+    private Boolean boolNodeValue(final Node result1, final String path, final Boolean defValue) {
+        if(null != result1.selectSingleNode(path)) {
+            return Boolean.parseBoolean(result1.selectSingleNode(path).getStringValue());
+        }
+        return defValue;
+    }
+
+    private double floatNodeValue(final Node result1, final String path, final double defValue) {
+        if (null != result1.selectSingleNode(path)) {
+            try {
+                Float.parseFloat(result1.selectSingleNode(path).getStringValue());
+            } catch (NumberFormatException e) {
+
+            }
+        }
+        return defValue;
+    }
+
+    private long longNodeValue(final Node result1, final String path, final long defValue) {
+        if (null != result1.selectSingleNode(path)) {
+            try {
+                return Long.parseLong(
+                    result1.selectSingleNode(path).getStringValue());
+            } catch (NumberFormatException e) {
+
+            }
+        }
+        return defValue;
+    }
+
+    private static final SimpleDateFormat w3cDateFormat = new SimpleDateFormat(""){{
+        setTimeZone(TimeZone.getTimeZone("GMT"));
+    }};
+    private Date w3cDateNodeValue(final Node result1, final String path, final Date defValue) {
+        if (null != result1.selectSingleNode(path)) {
+            final String stringValue = result1.selectSingleNode(path).getStringValue();
+            try {
+                return w3cDateFormat.parse(stringValue);
+            } catch (ParseException e) {
+
+            }
+        }
+        return defValue;
     }
 
     /**
@@ -1270,7 +1558,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         final Node codeNode = node1.selectSingleNode("errorCode");
         final String errorCode = null != codeNode ? codeNode.getStringValue() : null;
         logger.debug("\t[" + id + "] " + message);
-        return DeleteJobResultImpl.createDeleteJobResultImpl(successful,message,id,errorCode);
+        return DeleteJobResultImpl.createDeleteJobResultImpl(successful, message, id, errorCode);
     }
     private IStoredJobLoadResult parseAPIJobResult(final Node node1, final boolean successful, final boolean skippedJob,
                                                    final String message) {
