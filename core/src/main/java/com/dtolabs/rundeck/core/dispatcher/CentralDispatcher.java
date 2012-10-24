@@ -95,6 +95,20 @@ public interface CentralDispatcher {
     public DispatcherResult killDispatcherExecution(String id) throws CentralDispatcherException;
 
     /**
+     * Attempt to kill the execution of an item currently on the dispatcher queue
+     *
+     *
+     * @param id the ID string of the item
+     *
+     * @return result, success if the item was running and was successfully killed, false if the item could not be
+     *         killed or the item was not running
+     *
+     * @throws CentralDispatcherException if an error occurs
+     */
+    public ExecutionFollowResult followDispatcherExecution(String id, ExecutionFollowRequest request,
+                                                           ExecutionFollowReceiver receiver) throws CentralDispatcherException;
+
+    /**
      * Return a list of stored jobs matching the query criteria
      *
      * @param query  jobs query
@@ -148,4 +162,13 @@ public interface CentralDispatcher {
     void reportExecutionStatus(String project, String title, String status, int failedNodeCount, int successNodeCount,
                                    String tags, String script, String summary, Date start, Date end) throws
         CentralDispatcherException;
+
+    /**
+     * Return execution detail for a particular execution.
+     *
+     * @param execId ID of the execution
+     *
+     * @return Execution detail
+     */
+    ExecutionDetail getExecution(String execId) throws CentralDispatcherException;
 }

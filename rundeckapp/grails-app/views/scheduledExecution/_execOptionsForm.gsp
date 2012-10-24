@@ -180,24 +180,24 @@
                             }
                         });
                     });
-                    $$('#doReplaceFilters').each(function(e){
-                        Event.observe(e,'change',function(evt){
-
-                            $$('div.jobmatchednodes input').each(function(cb) {
-                                if (cb.type == 'checkbox') {
-                                    [cb].each(e.checked?Field.enable:Field.disable);
-                                    if(!e.checked){
-                                        $$('.group_select_control').each(Element.hide);
-                                        cb.checked=true;
-                                    }else{
-                                        $$('.group_select_control').each(Element.show);
-                                    }
-                                }
-                            });
-
-                        });
-                    });
                 });
+
+                Event.observe($('doReplaceFilters'), 'change', function (evt) {
+                    var e = evt.element();
+                    $$('div.jobmatchednodes input').each(function (cb) {
+                        if (cb.type == 'checkbox') {
+                            [cb].each(e.checked ? Field.enable : Field.disable);
+                            if (!e.checked) {
+                                $$('.group_select_control').each(Element.hide);
+                                cb.checked = true;
+                            } else {
+                                $$('.group_select_control').each(Element.show);
+                            }
+                        }
+                    });
+
+                });
+
 
                 /** reset focus on click, so that IE triggers onchange event*/
                 Event.observe($('doReplaceFilters'),'click',function (evt) {

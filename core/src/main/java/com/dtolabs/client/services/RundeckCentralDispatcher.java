@@ -480,6 +480,12 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
         };
     }
 
+    public ExecutionFollowResult followDispatcherExecution(String id, ExecutionFollowRequest request,
+                                                           ExecutionFollowReceiver receiver) throws
+        CentralDispatcherException {
+        throw new UnsupportedOperationException("Not supported: followDispatcherExecution");
+    }
+
     /**
      * Return the URL for a job based on its ID
      *
@@ -962,5 +968,10 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
         throw new CentralDispatcherException("Operation unsupported: No central dispatcher class is configured: "
                                              + Framework.CENTRALDISPATCHER_CLS_PROP);
 
+    }
+
+    public ExecutionDetail getExecution(String execId) throws CentralDispatcherException {
+        throw new CentralDispatcherException("Operation unsupported: No central dispatcher class is configured: "
+                                             + Framework.CENTRALDISPATCHER_CLS_PROP);
     }
 }

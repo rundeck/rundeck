@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import java.util.regex.Matcher
 import groovy.xml.MarkupBuilder
 
 
@@ -179,21 +178,8 @@ class JobsXMLCodec {
         if(!map.sequence){
             throw new JobXMLException("'sequence' element not found")
         }
-        if(map.sequence?.command){
-            map.sequence.commands=map.sequence.remove('command')
-            if(!(map.sequence.commands instanceof Collection)){
-                map.sequence.commands=[map.sequence.remove('commands')]
-            }
-              //convert script args values to idiosyncratic label
-            map.sequence.commands.each{ cmd ->
-                if(cmd.scriptfile || cmd.script || cmd.scripturl){
-                    cmd.args=cmd.remove('scriptargs')
-                }else if(cmd.jobref?.arg?.line){
-                    cmd.jobref.args = cmd.jobref.arg.remove('line')
-                    cmd.jobref.remove('arg')
-                }
-            }
-        }
+        convertXmlWorkflowToMap(map.sequence)
+
         if(null!=map.notification){
             if(!map.notification || null==map.notification.onsuccess && null==map.notification.onfailure){
                 throw new JobXMLException("notification section had no onsuccess or onfailure element")
@@ -222,6 +208,23 @@ class JobsXMLCodec {
             }
         }
         return map
+    }
+    static convertXmlWorkflowToMap(Map data){
+        if (data?.command) {
+            data.commands = data.remove('command')
+            if (!(data.commands instanceof Collection)) {
+                data.commands = [data.remove('commands')]
+            }
+            //convert script args values to idiosyncratic label
+            data.commands.each { cmd ->
+                if (cmd.scriptfile || cmd.script || cmd.scripturl) {
+                    cmd.args = cmd.remove('scriptargs')
+                } else if (cmd.jobref?.arg?.line) {
+                    cmd.jobref.args = cmd.jobref.arg.remove('line')
+                    cmd.jobref.remove('arg')
+                }
+            }
+        }
     }
     /**
      * Convert structure returned by job.toMap into correct structure for jobs xml
@@ -305,30 +308,8 @@ class JobsXMLCodec {
                 map.schedule.year=BuilderUtil.toAttrMap('year',map.schedule.remove('year'))
             }
         }
-        //sequence(threadcount:jobi.workflow.threadcount,keepgoing:jobi.workflow.keepgoing?Boolean.toString(true):Boolean.toString(false),strategy:jobi.workflow.strategy?jobi.workflow.strategy:'node-first'){
-        BuilderUtil.makeAttribute(map.sequence,'keepgoing')
-        BuilderUtil.makeAttribute(map.sequence,'strategy')
-        map.sequence.command=map.sequence.remove('commands')
-        //convert script args values to idiosyncratic label
-        map.sequence.command.each{ cmd ->
-            if(cmd.scriptfile || cmd.script || cmd.scripturl){
-                cmd.scriptargs=cmd.remove('args')
-                if(cmd.script){
-                    cmd[BuilderUtil.asCDATAName('script')]=cmd.remove('script')
-                }
-            }else if(cmd.jobref){
-                BuilderUtil.makeAttribute(cmd.jobref,'name')
-                if(cmd.jobref.group){
-                    BuilderUtil.makeAttribute(cmd.jobref,'group')
-                }else{
-                    cmd.jobref.remove('group')
-                }
-                final def remove = cmd.jobref.remove('args')
-                if(null!=remove){
-                    cmd.jobref.arg=BuilderUtil.toAttrMap('line',remove)
-                }
-            }
-        }
+
+        convertWorkflowMapForBuilder(map.sequence)
         if(map.notification){
             ['onsuccess','onfailure'].each{trigger->
                 if(map.notification[trigger]){
@@ -342,6 +323,36 @@ class JobsXMLCodec {
             }
         }
         return map
+    }
+
+    /**
+     * Convert result of Workflow.toMap() to format used by BuilderUtil
+     * @param map
+     */
+    static void convertWorkflowMapForBuilder(Map map) {
+        BuilderUtil.makeAttribute(map, 'keepgoing')
+        BuilderUtil.makeAttribute(map, 'strategy')
+        map.command = map.remove('commands')
+        //convert script args values to idiosyncratic label
+        map.command.each { cmd ->
+            if (cmd.scriptfile || cmd.script || cmd.scripturl) {
+                cmd.scriptargs = cmd.remove('args')
+                if (cmd.script) {
+                    cmd[BuilderUtil.asCDATAName('script')] = cmd.remove('script')
+                }
+            } else if (cmd.jobref) {
+                BuilderUtil.makeAttribute(cmd.jobref, 'name')
+                if (cmd.jobref.group) {
+                    BuilderUtil.makeAttribute(cmd.jobref, 'group')
+                } else {
+                    cmd.jobref.remove('group')
+                }
+                final def remove = cmd.jobref.remove('args')
+                if (null != remove) {
+                    cmd.jobref.arg = BuilderUtil.toAttrMap('line', remove)
+                }
+            }
+        }
     }
 
 }

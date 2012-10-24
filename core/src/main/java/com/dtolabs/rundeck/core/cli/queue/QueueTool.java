@@ -26,15 +26,13 @@ package com.dtolabs.rundeck.core.cli.queue;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.cli.*;
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkProject;
-import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException;
-import com.dtolabs.rundeck.core.dispatcher.DispatcherResult;
-import com.dtolabs.rundeck.core.dispatcher.QueuedItem;
+import com.dtolabs.rundeck.core.dispatcher.*;
+import com.dtolabs.rundeck.core.execution.BaseLogger;
 import org.apache.commons.cli.CommandLine;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
-import java.io.File;
+import java.io.PrintStream;
 import java.util.Collection;
 
 /**
@@ -57,6 +55,10 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
      * kill action identifier
      */
     public static final String ACTION_KILL = "kill";
+    /**
+     * kill action identifier
+     */
+    public static final String ACTION_FOLLOW = "follow";
 
     /**
      * Get action
@@ -117,7 +119,11 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
         /**
          * kill action
          */
-        kill(ACTION_KILL);
+        kill(ACTION_KILL),
+        /**
+         * kill action
+         */
+        follow(ACTION_FOLLOW);
         private String name;
 
         Actions(final String name) {
@@ -139,6 +145,9 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
     private Actions action = Actions.list;
     private String execid;
     private boolean argVerbose;
+    private boolean argQuiet;
+    private boolean argProgress;
+    private boolean argRestart;
     private CLIToolLogger clilogger;
     String argProject;
 
@@ -193,6 +202,7 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
     public String getHelpString() {
         return "rd-queue <action> : list the executions running in the queue or kill a running execution\n"
                + "rd-queue [list] : list the executions running in the queue [default]\n"
+               + "rd-queue follow --eid <id> [--restart] : follow the output of an execution\n"
                + "rd-queue kill --eid <id> : kill an execution running in the queue\n";
     }
 
@@ -235,6 +245,12 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
     private Options toolOptions;
 
     private class Options implements CLIToolOptions{
+        public static final String RESTART_OPTION = "t";
+        public static final String RESTART_OPTION_LONG = "restart";
+        public static final String QUIET_OPTION = "q";
+        public static final String QUIET_OPTION_LONG = "quiet";
+        public static final String PROGRESS_OPTION = "r";
+        public static final String PROGRESS_OPTION_LONG = "progress";
         public static final String EXECID_OPTION = "e";
         public static final String EXECID_OPTION_LONG = "eid";
         /**
@@ -253,8 +269,11 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
         public void addOptions(final org.apache.commons.cli.Options options) {
 
             options.addOption(EXECID_OPTION, EXECID_OPTION_LONG, true, "Execution ID");
-            options.addOption(VERBOSE_OPTION, VERBOSE_OPTION_LONG, true, "Enable verbose output");
+            options.addOption(VERBOSE_OPTION, VERBOSE_OPTION_LONG, false, "Enable verbose output");
+            options.addOption(QUIET_OPTION, QUIET_OPTION_LONG, false, "Just wait until execution ends (follow only)");
+            options.addOption(PROGRESS_OPTION, PROGRESS_OPTION_LONG, false, "Progress mark output (follow only)");
             options.addOption(PROJECT_OPTION, null, true, "Project name (list action only)");
+            options.addOption(RESTART_OPTION, RESTART_OPTION_LONG, false, "Restart log output from beginning (follow action only)");
         }
 
         public void parseArgs(final CommandLine cli, final String[] original) throws CLIToolOptionsException {
@@ -267,6 +286,15 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
             if (cli.hasOption(PROJECT_OPTION)) {
                 argProject = cli.getOptionValue(PROJECT_OPTION);
             }
+            if (cli.hasOption(RESTART_OPTION)) {
+                argRestart = true;
+            }
+            if (cli.hasOption(QUIET_OPTION)) {
+                argQuiet = true;
+            }
+            if (cli.hasOption(PROGRESS_OPTION)) {
+                argProgress = true;
+            }
         }
 
         public void validate(final CommandLine cli, final String[] original) throws CLIToolOptionsException {
@@ -274,12 +302,14 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
                 validateListAction();
             }else if(Actions.kill==action){
                 validateKillAction();
+            }else if(Actions.follow==action){
+                validateFollowAction();
             }
         }
 
         private void validateListAction() throws CLIToolOptionsException {
             if (null != execid) {
-                warn("-"+ EXECID_OPTION +"/--"+ EXECID_OPTION_LONG +" argument only valid with kill action");
+                warn("-"+ EXECID_OPTION +"/--"+ EXECID_OPTION_LONG +" argument only valid with kill/follow actions");
             }
             if(null==argProject){
                 if (internalResolver.hasSingleProject()) {
@@ -292,6 +322,15 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
         }
 
         private void validateKillAction() throws CLIToolOptionsException {
+            if (null == execid) {
+                throw new CLIToolOptionsException("-" + EXECID_OPTION + "/--" + EXECID_OPTION_LONG +" argument required");
+            }
+            if (null != argProject) {
+                warn("-" + PROJECT_OPTION + " argument only valid with list action");
+            }
+        }
+
+        private void validateFollowAction() throws CLIToolOptionsException {
             if (null == execid) {
                 throw new CLIToolOptionsException("-" + EXECID_OPTION + "/--" + EXECID_OPTION_LONG +" argument required");
             }
@@ -337,6 +376,9 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
                 break;
             case kill:
                 killAction(execid);
+                break;
+            case follow:
+                followAction(execid);
                 break;
             default:
                 throw new CLIToolOptionsException("Unrecognized action: " + action);
@@ -391,6 +433,77 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
 
     }
 
+    private void followAction(final String execid) throws QueueToolException {
+        ConsoleExecutionFollowReceiver.Mode mode = ConsoleExecutionFollowReceiver.Mode.output;
+        if(argQuiet ) {
+            mode = ConsoleExecutionFollowReceiver.Mode.quiet;
+        }else if(argProgress){
+            mode= ConsoleExecutionFollowReceiver.Mode.progress;
+        }
+        try {
+            followAction(execid, argRestart, mode, framework, System.out, this);
+        } catch (CentralDispatcherException e) {
+            final String msg = "Failed request to follow the execution: " + e.getMessage();
+            throw new QueueToolException(msg, e);
+        }
+    }
+
+    /**
+     * Perform the Follow action for an Execution
+     *
+     * @param mode follow mode
+     * @param framework framework
+     * @param out output for progress marks
+     * @param logger logger for output of log lines
+     * @param execid the execution id
+     *
+     * @throws CentralDispatcherException if any error occurs
+     */
+    public static boolean followAction(final String execid,
+                              final boolean restart,
+                              final ConsoleExecutionFollowReceiver.Mode mode,
+                              final Framework framework,
+                              final PrintStream out, final BaseLogger logger)
+        throws CentralDispatcherException {
+
+        final ExecutionFollowResult result;
+        ExecutionDetail execution = framework.getCentralDispatcherMgr().getExecution(execid);
+        final long averageDuration;
+        if(null!=execution.getExecutionJob()){
+            averageDuration=execution.getExecutionJob().getAverageDuration();
+        }else{
+            averageDuration=-1;
+        }
+        final ExecutionFollowRequest request = new ExecutionFollowRequest() {
+            public boolean isResume() { return !restart; }
+        };
+        final ConsoleExecutionFollowReceiver receiver = new ConsoleExecutionFollowReceiver(averageDuration,
+                                                                                           mode,
+                                                                                           out,
+                                                                                           logger);
+        result = framework.getCentralDispatcherMgr().followDispatcherExecution(execid,
+                                                                                request,
+                                                                                receiver);
+        if (mode != ConsoleExecutionFollowReceiver.Mode.output) {
+            out.println();
+        }
+        if(null!=result.getState()){
+            String message = "[" + execid + "] execution status: " + result.getState();
+            switch (result.getState()){
+                case failed:
+                case aborted:
+                    if (mode != ConsoleExecutionFollowReceiver.Mode.quiet) {
+                        logger.warn(message);
+                    }
+                    return false;
+                default:
+                    if (mode != ConsoleExecutionFollowReceiver.Mode.quiet) {
+                        logger.verbose(message);
+                    }
+            }
+        }
+        return true;
+    }
 
 
     public void log(final String output) {
@@ -418,7 +531,7 @@ public class QueueTool extends BaseTool implements CLIToolLogger {
      * @param message message to log
      */
     public void verbose(final String message) {
-        if (null != clilogger) {
+        if (null != clilogger && argVerbose) {
             clilogger.verbose(message);
         }
     }

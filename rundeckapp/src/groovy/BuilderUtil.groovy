@@ -44,6 +44,7 @@ class BuilderUtil{
     public static PLURAL_SUFFIX="[s]"
     public static PLURAL_REPL="s"
     public static CDATA_SUFFIX="<cdata>"
+    Map<Class,Closure> converters=[:]
     ArrayList context
     public BuilderUtil(){
         context=new ArrayList()
@@ -95,7 +96,12 @@ class BuilderUtil{
                 this.mapToDom(map,delegate)
             }
         }else {
-            String os=obj.toString()
+            String os
+            if(converters[obj.class]){
+                os=converters[obj.class].call(obj)
+            }else{
+                os=obj.toString()
+            }
             if(key.endsWith(CDATA_SUFFIX)){
                 builder."${key-CDATA_SUFFIX}"(){
                     mkp.yieldUnescaped("<![CDATA["+os.replaceAll(']]>',']]]]><![CDATA[>')+"]]>")

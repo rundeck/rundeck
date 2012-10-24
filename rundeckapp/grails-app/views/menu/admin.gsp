@@ -87,6 +87,57 @@
                 </tr>
             </table>
         </div>
+
+        <span class="prompt section">Export Archive</span>
+
+        <div class="presentation">
+            <g:link controller="project" action="export" params="[name: session.project]">
+                <img src="${resource(dir: 'images', file: 'icon-small-file.png')}" alt="download" width="13px"
+                     height="16px"/>
+                ${session.project.encodeAsHTML()}.rdproject.jar
+            </g:link>
+            -
+            <span class="info note">
+                Download an archive of project <em>${session.project.encodeAsHTML()}</em>
+            </span>
+        </div>
+
+        <g:expander key="projectImport" classnames="prompt section">Import Archive</g:expander>
+        <div style="display:none" id="projectImport" class="presentation ">
+            <g:form controller="project" action="importArchive" enctype="multipart/form-data">
+                <label>
+                    Choose a Rundeck archive
+                    <input type="file" name="zipFile"/>
+                </label>
+
+                <div class="info note">
+                    Importing an archive:
+                    <ul>
+                        <li>Creates any Jobs in the archive not found in this project with a new unique UUID</li>
+                        <li>Updates any Jobs in the archive that match Jobs found in the project (group and name match)</li>
+                        <li>Creates new Executions for the imported Jobs</li>
+                        <li>Creates new History reports for imported Executions and Jobs</li>
+                    </ul>
+                </div>
+
+                <g:hiddenField name="name" value="${session.project}"/>
+
+                <div class="buttons">
+                    <div id="uploadFormButtons">
+                        <g:actionSubmit id="createFormCancelButton" value="Cancel"/>
+                        <g:actionSubmit action="importArchive" value="Import" id="uploadFormUpload"
+                                        onclick="['uploadFormButtons','importUploadSpinner'].each(Element.toggle)"/>
+                    </div>
+
+                    <div id="importUploadSpinner" class="spinner block" style="display:none;">
+                        <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}"
+                             alt="Spinner"/>
+                        Uploading File...
+                    </div>
+                </div>
+            </g:form>
+        </div>
+
         <span class="prompt section">
             <g:message code="framework.service.ResourceModelSource.label"/>
         </span>
