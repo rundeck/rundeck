@@ -1,9 +1,13 @@
+.*
+!.gitignore
 *~
 *.swp
 *.iws
 *.ipr
 *.iml
+bin
 build
+gradle-cache
 rundeckapp/stacktrace.log
 rundeckapp/grails-app/i18n/messages.properties.orig
 rundeckapp/lib/rundeck-core-*.jar
@@ -12,12 +16,5 @@ rundeckapp/env.bash
 rundeckapp/work
 rundeckapp/web-app/plugins
 rundeckapp/target
-rundeckapp/.project
-rundeckapp/.settings/
 packaging/dist
-core/.gradle
-plugins/.gradle
-plugins/script-plugin/.gradle
-plugins/stub-plugin/.gradle
 docs/en/manpages/**/*.gz
-*.DS_Store
