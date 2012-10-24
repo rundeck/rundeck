@@ -30,7 +30,7 @@
     <g:set var="fieldwatchid" value="${(fieldhiddenid?:rkey+'_'+optName+'_h')}"/>
 
     <%-- Print out the input box for random input --%>
-    <g:if test="${!optionSelect.enforced && !optionSelect.multivalued || err || optionSelect.secureInput}">
+    <g:if test="${!optionSelect.enforced && !optionSelect.multivalued || optionSelect.secureInput || !optionSelect.enforced && err }">
         <g:if test="${optionSelect.secureInput}">
             <g:passwordField name="${realFieldName}"
                 class="optionvaluesfield"
@@ -48,6 +48,9 @@
             <%-- event handler: when text field is empty, show required option value warning icon if it exists--%>
             <wdgt:eventHandler for="${fieldwatchid}" state="empty" visible="true" targetSelector="${'#'+optName.encodeAsHTML()+'_state span.reqwarning'}" frequency="1"  inline='true'/>
     </g:if>
+    <g:elseif test="${optionSelect.enforced && err}">
+        <span class="info note"><g:message code="Execution.option.enforced.values.could.not.be.loaded" /></span>
+    </g:elseif>
 
     <%-- The Dropdown list --%>
     <g:if test="${!optionSelect.secureInput && (values || optionSelect.values || optionSelect.multivalued) && !err}">
