@@ -50,6 +50,7 @@
     </g:if>
     <g:elseif test="${optionSelect.enforced && err}">
         <span class="info note"><g:message code="Execution.option.enforced.values.could.not.be.loaded" /></span>
+        <input type="hidden" name="${realFieldName.encodeAsHTML()}" id="${fieldwatchid.encodeAsHTML()}" value=""/>
     </g:elseif>
 
     <%-- The Dropdown list --%>
