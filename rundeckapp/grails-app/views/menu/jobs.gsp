@@ -307,7 +307,9 @@
         }
         function init(){
             loadNowRunning();
+            <g:if test="${!(grailsApplication.config.rundeck?.gui?.enableJobHoverInfo in ['false',false])}">
             initJobIdLinks();
+            </g:if>
             Event.observe(document.body,'click',function(evt){
                 //click outside of popup bubble hides it
                 doMouseout();
