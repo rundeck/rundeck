@@ -1,48 +1,52 @@
-Release 1.4.3
+Release 1.4.4
 ===========
 
-Date: 6/21/2012
+Date: 10/26/2012
+
+This release marks the end of the 1.4 development cycle, and includes bug fixes and a few new features.
+
+We are planning to make some changes in the DB schema for the next release (1.5.x) that may not be backwards 
+compatible so have included a feature to export a Rundeck project into an archive file.  This will allow us
+to change the schema yet still allow users to migrate their projects.
 
 Notable Changes:
 
-* Security fix for issue [#555 - vulnerability with ldap authentication](http://rundeck.lighthouseapp.com/projects/59277/tickets/555)
-* Scripts can be executed from URLs
-* Secure options now have two types (authentication or normal)
-* Easily run a job with the same arguments as a previous execution
-* Bugfixes
+* bug fixes (scheduled jobs, mail notifications, rd-jobs yaml output, jenkins plugin + parallel jobs)
+* Project archive/import - download an archive of Jobs, Executions and History that can be imported into a different project
+* Added a second level of sudo password support
+* Add a 'purge' action to rd-jobs tool to delete jobs
+* Better support for Tomcat war deployment
+* View all nodes button in Run page
+* Cascading option values from remote URLs
+* CLI tools can follow execution output from the server (rd-queue, run, dispatch)
+* API enhancements:
+    * query for executions and history reports
+    * retrieve execution output
 
-See the [Upgrading Guide](http://rundeck.org/1.4.3/upgrading/) if you are upgrading from Rundeck 1.3.
+Issues: 
 
-Tickets: 
-* [#538 - Can't change nodes when trying to run a saved job](http://rundeck.lighthouseapp.com/projects/59277/tickets/538)
-* [#555 - vulnerability with ldap authentication](http://rundeck.lighthouseapp.com/projects/59277/tickets/555)
-* [#554 - in-place upgrade using the launcher leaves old jars in place](http://rundeck.lighthouseapp.com/projects/59277/tickets/554)
-* [#563 - multipleExecutions Error](http://rundeck.lighthouseapp.com/projects/59277/tickets/563)
-* [#287 - Force the home directory to be /home/rundeck (or perhaps /var/lib/rundeck/)](http://rundeck.lighthouseapp.com/projects/59277/tickets/287)
-* [#517 - default ssh key for projects doesn't match rpm install's rundeck user ssh key](http://rundeck.lighthouseapp.com/projects/59277/tickets/517)
-* [#552 - allow sudo auth configuration at project/framework level](http://rundeck.lighthouseapp.com/projects/59277/tickets/552)
-* [#526 - adhoc execution page shows kill button when it is not authorized](http://rundeck.lighthouseapp.com/projects/59277/tickets/526)
-* [#572 - export more vars for script plugins (contents basedir, var dir, etc)](http://rundeck.lighthouseapp.com/projects/59277/tickets/572)
-* [#571 - ScriptResourceModel plugin can't use script-args and script-interpreter](http://rundeck.lighthouseapp.com/projects/59277/tickets/571)
-* [#551 - Secure option values cannot be used in scripts/commands](http://rundeck.lighthouseapp.com/projects/59277/tickets/551)
-* [#537 - Temp files not being removed from /tmp when using a script as a resource model source](http://rundeck.lighthouseapp.com/projects/59277/tickets/537)
-* [#523 - passwordless sudo shouldn't fail after the timeout value](http://rundeck.lighthouseapp.com/projects/59277/tickets/523)
-* [#518 - undocumented gui default startpage configuration](http://rundeck.lighthouseapp.com/projects/59277/tickets/518)
-* [#524 - Secure option values for sudo/ssh do not get passed to sub-jobs](http://rundeck.lighthouseapp.com/projects/59277/tickets/524)
-* [#230 - Allow URL values for scriptfiles](http://rundeck.lighthouseapp.com/projects/59277/tickets/230)
-* [#528 - authorization for api call to system/info is not checked](http://rundeck.lighthouseapp.com/projects/59277/tickets/528)
-* [#550 - warning message after upgrade to 1.4.2](http://rundeck.lighthouseapp.com/projects/59277/tickets/550)
-* [#558 - Prevent job names containing slashes (/)](http://rundeck.lighthouseapp.com/projects/59277/tickets/558)
-* [#553 - dispatch yields NullPointerException and fails](http://rundeck.lighthouseapp.com/projects/59277/tickets/553)
-* [#560 - Re-run a job with the same arguments](http://rundeck.lighthouseapp.com/projects/59277/tickets/560)
-* [#567 - Execution page: Collapse view checkbox is set incorrectly](http://rundeck.lighthouseapp.com/projects/59277/tickets/567)
-* [#570 - Add "execution id" to job-context data in running jobs](http://rundeck.lighthouseapp.com/projects/59277/tickets/570)
-* [#527 - NPE on node view if a node has no description defined](http://rundeck.lighthouseapp.com/projects/59277/tickets/527)
-* [#529 - default apitoken aclpolicy differs for rpm/deb and launcher install](http://rundeck.lighthouseapp.com/projects/59277/tickets/529)
-* [#545 - rundeck option cannot take integer value](http://rundeck.lighthouseapp.com/projects/59277/tickets/545)
-* [#519 - Dispatch to one node only shows "1 node ok" even if job fails](http://rundeck.lighthouseapp.com/projects/59277/tickets/519)
-* [#564 - upgrade commons-codec dependency](http://rundeck.lighthouseapp.com/projects/59277/tickets/564)
-* [#530 - add faq/documentation about mysql autoreconnect flag](http://rundeck.lighthouseapp.com/projects/59277/tickets/530)
-* [#544 - The CronExpression link in docs and Web GUI to http://www.quartz-scheduler.org returns 404](http://rundeck.lighthouseapp.com/projects/59277/tickets/544)
-* [#522 - documentation typo/truncation on plugin dev guide](http://rundeck.lighthouseapp.com/projects/59277/tickets/522)
-
+* [remote options URL failure allows text field input even if option is restricted](https://github.com/dtolabs/rundeck/issues/215) (bug)
+* [project archive/import](https://github.com/dtolabs/rundeck/issues/212) (enhancement)
+* [multiple sudo authentication support](https://github.com/dtolabs/rundeck/issues/211) (enhancement)
+* [Document syntax of arguments passed to the run command](https://github.com/dtolabs/rundeck/issues/208) (enhancement, documentation)
+* [add purge option to rd-jobs tool](https://github.com/dtolabs/rundeck/issues/207) (enhancement, cli)
+* [Add query API for executions](https://github.com/dtolabs/rundeck/issues/205) (enhancement, api)
+* [CLI tools can't authenticate to a tomcat war deployment of rundeck](https://github.com/dtolabs/rundeck/issues/204) (bug)
+* [Allow history API to query for list of job names](https://github.com/dtolabs/rundeck/issues/203) (enhancement, api)
+* [javascript problem: Can't change nodes when trying to run a saved job](https://github.com/dtolabs/rundeck/issues/194) (bug, ux)
+* [Rundeck jobs fail to execute sometimes ](https://github.com/dtolabs/rundeck/issues/193) (bug)
+* [Rundeck war should not contain servlet api libraries](https://github.com/dtolabs/rundeck/issues/192) (enhancement)
+* [deb dependency requires GUI libraries](https://github.com/dtolabs/rundeck/issues/191) (enhancement, packaging)
+* [Enable property expansion in framework level default ssh user ](https://github.com/dtolabs/rundeck/issues/189) (enhancement, configuration, ssh)
+* [Mail notifications are broken in 1.4.3](https://github.com/dtolabs/rundeck/issues/186) (bug)
+* [resource model source URL basic auth support is broken](https://github.com/dtolabs/rundeck/issues/184) (bug)
+* [Update wiki/documentation for remote option provider](https://github.com/dtolabs/rundeck/issues/182) (documentation)
+* [Parallel/Concurrent jobs fail](https://github.com/dtolabs/rundeck/issues/180) (bug)
+* [cli tool rd-jobs format yaml does not generate any content in file for 1.4.3](https://github.com/dtolabs/rundeck/issues/179) (bug, cli)
+* [Scheduled RunDeck jobs no longer work with RunDeck 1.4.3](https://github.com/dtolabs/rundeck/issues/178) (bug, scheduler, jobs)
+* [Allow disabling of hover popups](https://github.com/dtolabs/rundeck/issues/174) (enhancement)
+* [Add a button to view all nodes in nodes filter view](https://github.com/dtolabs/rundeck/issues/172) (enhancement, ux, filters)
+* [need REST interface to retrieve execution ouput](https://github.com/dtolabs/rundeck/issues/145) (enhancement, api)
+* [dispatcher needs option to queue job but also observe log](https://github.com/dtolabs/rundeck/issues/142) (enhancement)
+* [Ability to change the default number of lines to display for the TAIL output in the rundeck job execution history](https://github.com/dtolabs/rundeck/issues/109) (enhancement)
+* [feature for cascading select list from options provider](https://github.com/dtolabs/rundeck/issues/80) (enhancement)
