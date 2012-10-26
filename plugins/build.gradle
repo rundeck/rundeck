@@ -1,6 +1,6 @@
 
 allprojects{
-    version = '1.4.4-dev'
+    version = '1.4.4'
     defaultTasks 'clean','build'
     ext.rundeckPluginVersion= '1.0'
 }
