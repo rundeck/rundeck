@@ -1,143 +1,89 @@
-% Introduction
+% イントロダクション
 % Alex Honor; Greg Schueler
 % November 20, 2010
 
-## What is this manual about?
+## このマニュアルについて
 
-Welcome to the Rundeck user manual. This manual was written to help
-administrators quickly become productive with the Rundeck server and tools. 
+Rundeck のユーザーマニュアルへようこそ。このマニュアルは Rundeck サーバー/ツールによりシステムの管理者を今すぐ生産的にするために書かれています。
 
-## What is Rundeck?
+## Rundeck とは？
 
-Rundeck is open source software that helps you automate ad-hoc and routine
-procedures in data center or cloud environments. Rundeck provides a number 
-of features that will alleviate time-consuming grunt work and make it easy for
-you to scale up your scripting efforts.
+Rundeck はデータセンターやクラウド環境におけるその場限りの作業やルーチンワークを自動化してくれる OSS です。これまで時間を浪費してきた単純作業を軽減したり、スクリプト化したものを簡単にスケールするための沢山の機能があります。
 
-Rundeck allows you to run tasks on any number of nodes from a web-based 
-or command-line interface. Rundeck also includes other features that make 
-it easy to scale up your scripting efforts including: access control, workflow 
-building, scheduling, logging, and integration with external sources for node and 
-option data.
+Rundeck は WebUI, CUI から多くのノードにタスクを実行させることができます。他に ACL やワークフロー設計, スケジューリング, ロギング, 外部データの統合といった機能もあります。
 
-Already itching to install it? Jump ahead to
-[Installing Rundeck](getting-started.html#installing-rundeck).
+もう使いたくてたまりませんか？ [Rundeck のインストール](getting-started.html#installing-rundeck)に進んでしまいましょう。
 
+### 誰が Rundeck を作っているの？
+Rundeck は GitHub の [dtlabs/rundeck](https://github.com/dtolabs/rundeck) というプロジェクト名で開発されています。
+多くのアイデアがこの分野のコンサル企業 [DTO Solutions](http://dtosolutions.com/) から提供されていますが、誰でもこのプロジェクトに参加して貢献することができます。
 
-### Who makes the Rundeck software?
-
-Rundeck is developed on GitHub as a project called
-[dtolabs/rundeck](https://github.com/dtolabs/rundeck).
-Many ideas for Rundeck come from [DTO Solutions](http://www.dtosolutions.com)
-consultants working in the field, however all are welcome to join the project
-and contribute.
-
-Rundeck is free software and is public under the [Apache Software License].
+Rundeck はフリーソフトとして [Apache Software License] で配布されています。
 
 [Apache Software License]: http://www.apache.org/licenses/LICENSE-2.0.html
 
-## Getting help
+## ヘルプを求める
 
-* Mailing list:
-  [http://groups.google.com/group/rundeck-discuss](http://groups.google.com/group/rundeck-discuss)  
-* IRC: irc://irc.freenode.net/rundeck
-* Unix manual pages: Rundeck installation includes a set of Unix
-  manual pages describing the shell tools. <code>man -k rundeck</code> 
+*   Mailing list: [http://groups.google.com/group/rundeck-discuss](http://groups.google.com/group/rundeck-discuss)
+*   IRC: irc://irc.freenode.net/rundeck
+*   Unix manual pages: Rundeck をインストールすると shell ツールについての UNIX マニュアルページも付いてきます。`man -k rundeck` を実行してみましょう。  
 
-## Rundeck from 30,000 feet
+## 9000m 上空から見た Rundeck
 
-### Rundeck features
+### Rundeck の機能
 
-* distributed command execution
-* pluggable execution system uses SSH by default
-* multi-step workflows 
-* job definition and on demand or scheduled runs
-* graphical console for command and job execution
-* role-based access control policy with support for LDAP/ActiveDirectory
-* history and auditing logs
-* open integration to external host inventory tools
-* command line interface 
-* Web API
+*   コマンドの分散実行
+*   拡張可能な実行システム（デフォルトでは SSH）
+*   マルチステップワークフロー
+*   ジョブの定義と実行（即時 or スケジュール)
+*   コマンドとジョブを実行するための GUI
+*   ロールベースの ACL（LDAP/ActiveDirectory 連携可能）
+*   履歴とログ監査
+*   外部のホスト管理ツールとの統合(open integration)
+*   CUI インタフェース
+*   Web API
 
-### Rundeck in context
+### 様々な状況下での Rundeck 
 
-Rundeck is meant to compliment the tools you already use 
-(including frameworks like Puppet, Chef, and Rightscale) and is geared
-towards helping you automate actions across them. If you currently
-manage your servers by running commands from the terminal or through
-scripts that SSH commands in a loop, Rundeck is a more user friendly
-alternative. Instead of managing node lists in a spreadsheet or wiki
-page and then having to transcribe the list to where you execute commands,
-Rundeck acts as a command and control portal that lets you execute
-commands using features like node filtering and parallel execution.
+Rundeck は皆さんが既に使っているツール（Puppet, Chef, Rightscale など）を補完するためのもので、それらの連携操作の自動化を補助してくれます。もしあなたがターミナルからコマンドを走らせたりスクリプトを使ってサーバを管理しているなら、Rundeck はもっとユーザフレンドリーな代替手段になります。Excel や Wiki ページでノード一覧を管理してコマンド実行時にそれをコピペする代わりに、Rundeck はノードのフィルタリングをしてコマンドを並列実行するような、コントロールポータルになります。
 
-Rundeck also works well for managing virtual servers, be they from a
-cloud provider or from locally hosted virtualization software. The
-node abstraction enabled by the Rundeck command dispatcher 
-helps you cope with managing dynamic environments.
+Rundeck はローカルやクラウドプロパイダの仮想マシンでも問題なく動きます。コマンドディスパッチャが可能にするノードの抽象化が、そのような動的に管理される環境への対応をアシストしてくれます。
 
-Many automation tasks cross the boundaries of tool sets. For example,
-deploying software or maintaining an application often involves
-using tools up and down the management tool chain. Rundeck has a simple
-to use interface to create multi-step workflows that might call a
-package manager, configuration management tool, system utilities, or your
-own scripts. Rundeck is really meant to help glue tools together and
-in return enable a push button interface you can hand off to others.
+タスク自動化にあたって個々のツールの「境界」を意識する必要はありません。たとえば、ソフトウェアのデプロイやアプリケーションのメンテナンスをするとき、たいていは色んなツールの up/down を切り替えるなど一連の手順を実行しているでしょう。Rundeck はそういったマルチステップのワークフロー（パッケージマネージャだったり構成管理ツールだったり、システムユーティリティ、あるいはあなたのスクリプトなどを呼び出す部分）をシンプルにつくれるインタフェースをもっています。Rundeck は色んなツールの「接着」を助けるためのものなのです。そして最終的にそれを1ボタンで済む作業にして、誰でも実行できるようにしてくれるのです。
 
-### Rundeck architecture
+### Rundeck のアーキテクチャ
 
-Rundeck is a server application you host on a system you designate 
-a central administrative control point. Internally, Rundeck stores job
-definitions and execution history in a relational database. Output
-from command and job executions is saved on disk. 
+Rundeck は管理用のサーバにインストールするアプリケーションです。内部ではジョブ定義や実行ログを RDB に保存しています。コマンドやジョブの実行結果はローカルディスクに保存します。
 
-Rundeck distributed command execution is performed using SSH. 
-SSH connections are made using key-based authentication.
-Rundeck server configuration includes settings to define the outbound
-user allowed by the remote hosts. Remote machines
-are not required to make SSH connections back to the server.
+Rundeck でのコマンド実行には鍵ベース認証の SSH 接続が利用されます。
+そのため Rundeck のサーバ設定にはリモートホストでコマンドを実行可能なユーザ定義が含まれます。
+なお、リモートマシンから Rundeck のサーバに SSH 接続できるようにする必要はありません。
 
 ![Rundeck architecture](../figures/fig0001.png)
 
-The Rundeck application itself is a Java-based webapp that runs in its
-own embedded servlet container. The application provides both
-graphical interface and network interfaces used by the Rundeck shell
-tools. 
+Rundeck 自体は Java ベースの Web アプリケーションで、付属のサーブレットコンテナで動作します。
+アプリケーションは GUI とネットワークインタフェースを提供します。
+後者は Rundeck の Shell ツールからも利用されます。
 
-Access to the Rundeck application requires a login and
-password. The default Rundeck installation uses a flat file user
-directory containing a set of default logins. Logins are defined in
-terms of a username and password as well as one or more user
-groups. An alternative configuration to the flat file user directory,
-is LDAP (e.g., ActiveDirectory). 
-Users must also be authorized to perform actions like command and job
-execution. This is controlled by an access control facility that reads
-policy files defined by the Rundeck administrator. Privilege is
-granted if a user's group membership meets the requirements of the policy.
+Rundeck にアクセスするにはログイン ID とパスワードが必要です。
+インストール直後の状態では単層ユーザディレクトリの中にデフォルトのログイン情報が入っています。
+ログイン情報にはユーザ名とパスワード等と共に1つ以上のユーザグループが定義されています。
+単層ユーザディレクトリの代替として LDAP を使うことも出来ます。
+Rundeck 上でジョブ実行などの操作をする場合には必ず認証されたユーザでなければなりません。
+これは管理者が定義するポリシーファイルベースのアクセスコントロール機能で制御されています。
+特権はユーザの属するグループ単位でポリシーファイルによって付与されます。
 
-Two installation methods are supported:
+2種類のインストール方法があります:
 
-* RPM: The RPM is intended for managed installation and provides
-  robust tools that integrate with your environment, man pages, shell
-  tool set in your path, init.d startup and shutdown  
-  
-* Launcher: The launcher is intended for quick setup, to get you
-  running right away.  Perfect for bootstrapping a project or trying
-  a new feature.  
+*   RPM: RPM はインストール管理のためのツールです。環境を統合するツール群、Man ページ、PATH 内へのシェルツール配備、起動管理スクリプトを提供します。
+*   Launcher: Launcher はとにかく実行してみたい人向けにクイックセットアップするツールです。プロジェクトのブートストラップと新機能のおためしに最適です。
 
-## Feedback
+## フィードバック
 
-If you find problems with Rundeck, or if you have questions, remarks, or 
-ideas about it, please send an email to the Rundeck mailing list,
-[rundeck-discuss@groups.google.com](mailto:rundeck-discuss@groups.google.com). 
+もしなにか Rundeck のバグをみつけたり、質問やアイデアがあれば Rundeck のメーリングリスト [rundeck-discuss@groups.google.com](mailto:rundeck-discuss@groups.google.com) にメールを送ってください。
 
-## What's next?
+## 次は ?
 
-The remainder of the manual will give you a quick conceptual overview,
-and take you through installation and setup. After you are set up, you
-will learn about the distributed command dispatcher and how to use it
-to run ad-hoc commands. From there, you will learn about Jobs,
-defining multi-step procedures with Job workflows and how to
-parameterize them with options.
-
+ざっと概念的な概要を説明したので、次はインストールとセットアップに移ります。セットアップが終わったら分散コマンドディスパッチャの概要やどうやってアドホックコマンドを実行するのかを学びます。
+最後に、ジョブのことやジョブワークフローを利用したマルチステッププロシージャ、オプションを用いてパラメータをどう制御するかについて学びます。
 
