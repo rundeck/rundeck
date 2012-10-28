@@ -1,10 +1,11 @@
-% Rundeck Documentation (${VERSION})
+% Rundeck ドキュメント (${VERSION})
 % Greg Schueler
 % 1/18/2011
 
 Published: **${HRDATE}**
 
-If you are new to Rundeck, start with the [User Manual](manual/index.html).
+Rundeck が初めての方は、[ユーザー向けマニュアル](manual/index.html)から始めましょう
 
-More information about Rundeck at: [rundeck.org](http://rundeck.org).
+Rundeck の詳細についてはこちら：[rundeck.org](http://rundeck.org).
+
 
