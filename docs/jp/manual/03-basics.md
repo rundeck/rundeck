@@ -1,131 +1,87 @@
-% Rundeck Basics 
+% Rundeck の基本
 % Alex Honor; Greg Schueler
 % November 20, 2010
 
-This chapter covers the basics for using Rundeck. The chapter begins
-by describing the Rundeck user interfaces, both its graphical and
-command line. From there it will show you how to set up a project and
-learn about command execution. You will learn more about using the
-command dispatcher to control execution and finally, how to find and
-use history.
+この章では Rundeck を使う上での基本をカバーします。まず Rundeck の GUI と CUI 両方のインターフェイスについて説明します。次にプロジェクトの準備からコマンド実行までの操作方法を説明します。そして実行制御に用いているコマンドディスパッチャについて理解を深め、最後に実行履歴の見方と利用方法を学びます。
 
-## Rundeck Interfaces 
+## Rundeck のインターフェイス
 
-Rundeck provides two primary user interfaces:
+Rundeck には 2 つの主要なインターフェイスがあります。
 
-* An HTML-based graphical console 
-* A suite of shell tools
+*   GUI: HTML ベースのグラフィカルなコンソール
+*   CUI: Shell ツール
 
-Both interfaces allow you to view resources, dispatch commands, as
-well as, store and run jobs.
+どちらのインターフェイスからも、リソースの閲覧・ディスパッチ(コマンドの発信)・ジョブの保存と実行が可能です。
 
-In addition Rundeck provides a Web API which can be used to interact with
-the server programattically. See [Rundeck API](../api/index.html).
+さらに Rundeck にはサーバーのプログラムとやり取りできる WebAPI も用意されています。[Rundeck API](../api/index.html) を見てみてください。
 
-### Graphical Console 
+### グラフィカルコンソール
 
-To get started, go to the URL for your Rundeck server. 
-Login to the web app with the credentials defined by the Rundeck user
-directory configuration. 
+Rundeck の使用を開始するにはまず、Rundeck サーバーの URL にアクセスします。そして Rundeck のユーザーディレクトリの設定によって定義されたアカウントでログインします。
 
-The default port for the web interface is `4440`, so try this URL:
+Web インターフェイスのデフォルトのポートは 4440 です、以下の URL で試してみてください:
 
 <http://localhost:4440>
 
-You will be shown the Login page.  The default username and password are `admin`/`admin`, so enter those in the fields.
+アクセスするとログインページが表示されます。デフォルトのユーザー名とパスワードは `admin/admin` ですので、それらを入力してください。
 
-#### Navigation
+#### ナビゲーション
 
-The Rundeck page header contains global navigation control to move
-between tabbed pages: Run,  Jobs and History. It also has links to
-logout, view your user profile and a link to this online help.
+Rundeck ページのヘッダーは、「Run」（実行）・「Jobs」（ジョブ）・「History」（履歴） タブページを行き来するためのグローバルナビゲーションになっています。また、ログアウト・ユーザーのプロフィール画面・オンラインヘルプへのリンクも載っています。
 
 ![Top navigation bar](../figures/fig0201.png)
 
 Run
-
-:    The Run page is used to execute ad hoc commands. It
-     displays filtered Node resources configured in your
-     Project resource model. A filter  control can be used to 
-     limit the listing to just the Node resources
-     matching the filter criteria.
+:   Run ページは、その場限りのコマンドを実行する際に使います。Run ページではあなたのプロジェクトのリソースモデルとして設定されたノードをフィルタリングしたものを表示しています。フィルタは条件にマッチしたノードだけリストアップするというように使う事ができます。
 
 Jobs
-
-:    From the Jobs page, one can list, create and run Jobs. A
-     configurable filter allows a user to limit the Job listing to those
-     Jobs matching the filtering criteria. These filter settings can be
-     saved to a Users profile. Only authorized jobs will be visible.
+:   Jobs ページでは、保存されたジョブの一覧・ジョブの作成・ジョブの実行を、権限のある人が行えます。Jobs ページでも条件にマッチしたジョブだけをリストアップすることができます。このジョブのフィルタリングはユーザープロフィールに保存することができます。そのユーザーに閲覧権限があるジョブのみが表示されます。
 
 History
-
-:    From the History page, one can view currently executing commands
-     in the "Now Running" area or browse execution history. The execution
-     history can be filtered based on user selected parameters. Once the
-     filter has been set, the matching history is displayed. The current
-     filter settings also configure an RSS link, found in the top right of
-     the page.
+:   History ページでは、現在実行中のコマンド・過去のコマンド実行履歴を、権限のある人が閲覧できます。履歴についても、選択したパラメーターにマッチする履歴のみリストアップできます。それらのフィルタリングも保存可能です。現在のフィルタリング設定はページ右上にある RSS リンクにも設定できます。
 
 Project menu
-
-:    The top navigation bar contains a menu to select the
-     desired project. If only one project exists, the menu will
-     automatically be defaulted.
+:   トップのナビゲーションバーの中に、プロジェクトを選択できるプルダウンメニューがあります。もし一つしかプロジェクトが存在しない場合は、デフォルトでそれが選択されています。
      
 Admin
-
-:    If your login belongs to the "admin" group and therefore granted
-     "admin" privileges, a wrench icon will be displayed next to your login
-     name. This page allows the admin to view group memberships for all
-     users, as well as, edit their profile data.
+:   「admin」グループに属するアカウントまたは「admin」権限が付与されたアカウントでログインした場合は、右上のログイン名がある部分に、レンチのアイコンも表示されています。このページでは全てのグループ・ユーザーの閲覧やプロフィール情報の編集ができます。
 
 User profile
-
-:    Shows a page showing group memberships.
+:   ユーザー名・メールアドレス・どのグループに属しているかといった情報が表示されます。編集も可能です。
 
 Logout
-
-:    Pressing this link ends the login session and will require a subsequent login.
+:   ログアウトのリンクを押すとログインセッションを終えてログアウトします。
 
 Help
-
-:    Opens a page to the online help system.
-
+:   オンラインヘルプページを開きます
 
 #### Now running
 
-The "Now running" section appears at the top of the Run and Jobs pages
-and provides a view into the execution queue.
-Any currently executing ad hoc command or Job will be listed
-and include information like the name of the job, when it started,
-who ran it, and a link to the execution output.
+「Now runnig」(実行中) という項目が Run ページと Jobs ページの上部の実行キュー内にあります。現在実行されているアドホックコマンドやジョブが、その名前や関連情報と共にリストアップされます。また誰が実行しているか表示され、出力結果へのリンクも表示されます。
 
 ![Now running](../figures/fig0215.png)
 
-Jobs that have been run before also have a progress bar approximating 
-duration.
+過去に実行したことがあるジョブに関しては、進捗度合いがわかるバーが表示されます。
 
-### Shell Tools 
+### Shell ツール
 
-Rundeck includes a number of shell tools to dispatch commands, load
-and run Job definitions and interact with the dispatcher queue. These
-command tools are an alternative to functions accessible in the
-graphical console.
+Rundeck にはディスパッチ用の Shell ツールが数多く含まれています。ジョブの定義を読み込んで実行し、発信キューとやり取りできます。これらのコマンドツール群は、グラフィカルコンソールから利用できる機能の代わりとなります。
 
 [dispatch]
-  ~ Execute ad hoc commands and scripts
+ ~ アドホックコマンドやスクリプトを実行します
 [rd-queue]
-  ~ Query the dispatcher for currently running Jobs and possibly kill them  
+ ~ 実行中のジョブに対して ディスパッチャに問い合わせることができます。ジョブを中断することもできます。
 [rd-jobs]
-  ~ List defined jobs as well as load them from text file definitions
+ ~ テキストファイルに定義されたジョブを読み込んでリストアップします。
 [run]
   ~ Invoke the execution of a stored Job
+  ~ 保存されているジョブを実行できます
 [rd-project]
-  ~ Setup a new Rundeck project
+ ~ 新しい Rundeck プロジェクトをセットアップします
 [rd-setup]
-  ~ (Re-)configure an instance of Rundeck   
+ ~ Rundeck の設定を読み込み直します。
   
-Consult the online manual pages for options and usage information.
+コマンドの細かい使い方やオプションに付いては、オンラインマニュアルページを参照してください。
 
 [dispatch]: dispatch.html
 [rd-queue]: rd-queue.html
@@ -134,71 +90,51 @@ Consult the online manual pages for options and usage information.
 [rd-project]: rd-project.html
 [rd-setup]: rd-setup.html
 
+## Rundeck のセットアップ
 
-## Project Setup 
+Rundeck のプロジェクト機能は、管理業務を遂行するためのスペースを提供します。
 
-A Rundeck *Project* provides a space to manage related management
-activities. 
+プロジェクトはグラフィカルコンソールまたはシェルツール「rd-project」のどちらからでもセットアップできます。
 
-A Project can be set up either from the graphical console or using the
-`rd-project` shell tool.
-
-After logging into the graphical console, you will notice a Project
-menu in the top navigation bar. If no projects exist, you will be prompted to 
-create a new project.
+グラフィカルツールにログインした後、上部のナビゲーションバー内にプロジェクトメニューがあることに気付くでしょう。もしプロジェクトが存在しなければ、新しいプロジェクトを作るよう勧められます。
 
 ![Create project prompt](../figures/fig0203-a.png)
 
-To start with, the only field you need to enter is the Project Name. You can
-change the other values later from the [GUI Admin Page](../administration/configuration.html#gui-admin-page).
+プロジェクト名を入力するだけでセットアップが開始できます。その他の項目に付いては後から [GUI 管理者ページ](../administration/configuration.html#gui-admin-page)にて変更できます。
 
-After entering your project name, Rundeck initializes it and returns
-you to the "Run" page.
+プロジェクト名の入力が完了すると、Rundeck はその名前で初期化した後、「Run」ページに戻ります。
 
-Projects can be created at any time by going back to the Project menu 
-and selecting the "Create a new project..." item.
+プロジェクトの作成はナビゲーションバーのプロジェクトメニューから「Create a new project...」を選択する事でいつでも行うことができます。
 
 ![Create project menu](../figures/fig0203.png)
 
-The `rd-project` shell tool can also be used to create a
-project.
+シェルツール「rd-project」でもプロジェクトの作成ができます。
 
-On the Rundeck server, execute the `rd-project` command and
-specify a project name, here we use "examples":
+Rundeck のサーバー上で「rd-project」コマンドを実行し、プロジェクト名の指定をします。ここでは例として、「examples」という名前を付けます:
 
     rd-project -a create -p examples
 
-After running this command, you can login into the graphical console
-and see the new project in the project menu.
+コマンドの実行後、グラフィカルコンソールにてプロジェクトメニューに今作成したプロジェクトが追加されている事が分かります。
 
-You can also add configuration properties when you create the project, for example:
+プロジェクトを作る際に同時に他の項目も追加することができます:
 
     rd-project -a create -p examples --project.ssh-keypath=/private/ssh.key
 
-The project setup process generates Project configuration in the server, and
-a bootstrap resource model.
+プロジェクトのセットアッププロセスが、サーバー内でプロジェクトの設定を生成し、リソースモデルを準備します。  
 
 ![Run page after new project](../figures/fig0204.png)
 
-One node will be listed, the Rundeck server host. The server host is 
-distinguished with the word "server" in red text.
+Rundeck サーバー自身を指す 1 つのノードがリストアップされます。このノードについては赤文字の「server」という識別子が付きます。
 
-### Resource model
+### リソースモデル
 
-The Resource Model is the set of available Nodes that Rundeck can dispatch commands to, and their associated metadata. Each Rundeck Project has its own Resource Model.
+リソースモデルとは Rundeck がコマンドをディスパッチでき、サーバーのメタデータが紐づけられているノードのことです。どの Rundeck プロジェクトもそれぞれリソースモデルを持つ事になります。
 
-The initial resource model will contain
-information just about the Rundeck server host and is useful just for
-running local commands on the Rundeck server. 
-You can browse the project resource model by going to the "Run" page.
+初期状態のリソースモデルは Rundeck サーバー自身の情報だけを持っており、Rundeck サーバー自身にだけローカルコマンドが実行できます。プロジェクトごとのリソースモデルは「Run」ページで見ることができます。
 
-In the shell, you can list the Node resources in a resource
-model using the shell tool, `dispatch`. 
-Specify project name using the `-p project` option.
+シェルツールからもノードリソースのリストアップができます。特定のプロジェクトを指定したい場合は `-p <project>` オプションを付けます。
 
-Here the `dispatch` command lists the registered server for
-the "examples" project after the project setup. The `-v` gives
-a verbose listing that includes more detail:
+下記コマンドが「examples」というプロジェクトに登録されているサーバーのリストを列挙するディスパッチコマンドになります。`-v` オプションを付けるとリストの情報をより詳細に表示します:
 
     $ dispatch -p examples -v	
      strongbad:
@@ -209,41 +145,24 @@ a verbose listing that includes more detail:
         osVersion: 10.6.2
         tags: ''
 
-Node resources have standard properties, such as "hostname" but these
-can be extended via attributes. One of the more useful properties
-is the "tags" property. A *tag* is a text label that you give to the
-Node, perhaps denoting a classification, a role the node plays in the
-environment, or group membership. Multiple tags can be defined for
-a given node. 
+ノードリソースは「hostname」のような標準のプロパティを持ち、プロパティは属性を通して拡張することもできます。便利なプロパティのひとつとして、「tags」プロパティがあります。ノードに付ける「tag」はテキストのラベルのことで、ある環境におけるひとつの役割として使ったり、あるグループのメンバであることを示すことに使ったり等、ノードの分類に用います。一つのノードに複数の「tag」を付けることもできます。
 
-The output above shows the "strongbad" node currently has an empty
-tags property: `tags: ''`. 
+上記の出力では「strongbad」というノードに現在は空のタグ（''） が付いていることを示しています。
 
-It is important to start thinking about node tagging for the nodes you manage
-because you will use them later when specifying filtering
-options to drive distributed command dispatch.
+後々コマンドディスパッチを行う際にノード群をフィルタリングするのにタグを用いるため、管理するノードにどんなタグを付けるか考える始めるのは重要なことです。
 
-Each Project has a configuration file called [project.properties](../administration/configuration.html#project.properties),
-located at this path:
-`$RDECK_BASE/projects/`_project_`/etc/project.properties`.
+どのプロジェクトにも [project.properties](../administration/configuration.html#project.properties) という名前の設定ファイルが存在し、`$RDECK_BASE/projects/project/etc/project.properties` というパスに置かれています。
 
-This configuration file contains two basic properties for accessing and
-storing resource model data:
+この設定ファイルはリソースモデルデータへのアクセス、取り込みのための 2 つの基本的なプロパティを持っています。
 
-* `project.resources.file`: A local file path to read a resource model document
-* `project.resources.url`: URL to an external resource model source (optional)
+*   `project.resources.file`: リソースモデルドキュメントを読み込む際のローカルファイルパス
+*   `project.resources.url`: 外部のリソースモデルへの URL (オプション)
 
-In addition, multiple pluggable "Resource Model Sources" can be configured for a project
-to retrieve additional Resource Model content from other sources. See [Resource Model Sources](plugins.html#resource-model-sources).
+さらに、あるリソースモデルを他のソースから取り出してくることで、ひとつのプロジェクトで複数のリソースモデルを追加することができます。[リソースモデルソース](plugins.html#リソースモデルソース) を参照してください。
 
-You can configure Rundeck to retrieve and store resource model data
-from any source, so long as it can produce one of the Rundeck resource model
-document formats. (See 
-[Resource Model Document formats](rundeck-basics.html#resource-model-document-formats).) Set the 
-`project.resource.url` to the URL resource model source of your choice.
+Rundeck のリソースモデルフォーマットが生成できる限り、あやゆるソースからリソースモデルデータを取ってきて Rundeck に取り込むよう設定することが可能です。([リソースモデルドキュメントフォーマット](rundeck-basics.html#リソースモデルドキュメントフォーマット)を参照して下さい) `project.resource.url` にお好みの URL リソースモデルソースをセットしてください。
 
-Here's the XML document stored for the "examples" project that corresponds
-to the output printed by the `dispatch -v` shown earlier:
+ここに、先ほどの `dispatch -v` コマンドの出力結果に該当する 「examples」プロジェクトのための XML ドキュメントがあります:
 
     <project>
         <node name="strongbad" type="Node" 
@@ -254,56 +173,35 @@ to the output printed by the `dispatch -v` shown earlier:
           editUrl="" remoteUrl=""/>
     </project>
 
-You'll notice the root node is called `project` and there is a single
-node descriptor for "strongbad". The `node` tag has a number of
-required and optional attributes. Additional node descriptors can be
-added by defining new `node` elements inside the `project` tag. 
+XML のルートノードは project で、そこに「strongbad」に対する記述がひとつのノードとして書かれています。ノードの XML タグは数ある必須属性、オプション属性のうちのひとつになります。ノードを追加する際には project XML タグの内側に node XML タグを追加してください。
 
-The strongbad host does not have any tags defined for it. One or
-more tags can be defined. Use comma for the delimiter (e.g, `tags="tag1,tag2"`).
+ホスト strongbad はタグの定義が何もされていません。ひとつまたは複数のタグが定義できます。区切りにはカンマ（,）を使います。（例. `tags="tag1,tag2"`）
 
-Here's an example of a node called "homestar" with just the required
-attributes: 
+以下の例では「homestar」というノードが必須属性とともに記述されています:
 
         <node name="homestar" type="Node" 
           hostname="192.168.1.02" 
           username="alexh" />
 
-The `hostname` and `username` values are used for the SSH connection
-while the `name` and `type` are used to define Node identity in the
-resource model. It is possible to overload the hostname value to include
-port information (eg, hostname="somehost:2022"). 
-This is useful if your run SSH on a different port. 
-	  
-Chances are you maintain information about your hosts within
-another tool, perhaps Chef, Puppet, Nagios, Amazon EC2, RightScale or
-even an in-house database. One of these tools might be
-considered the authority of knowledge about the nodes
-deployed in your network. Therefore, it is best to create an interface
-to the authoritative tool and expose it as Rundeck URL resource model source. This
-can be done as a simple CGI script that does a transformation from
-the tool's format to the one Rundeck understands.
+`name` と `type` の値がリソースモデルの中でノードを識別するために利用する一方、`hostname` と `username` の値は SSH コネクションに用います。ポート情報を加えて上書きする事も出来ます。(例. `hostname="somehost:2022"` ) これはデフォルトと違うポートを使って SSH を使う際に便利です。
 
-Of course, a rudimentary alternative is to maintain this information
-as an XML document, storing it in a source repository that is
-periodically exported to Rundeck. This method could be practical if
-your host infrastructure infrequently changes.
+Chef, Puppet, Nagios, Amazon EC2, RightScale または社内データベースなど、別のツール内でホストに関する情報をメンテナンスする機会があります。これらのツールのいずれかは、あなたのネットワークの置かれたノードに関する情報を握っているツールかもしれません。そこで、信頼されたツールへのインターフェイスを作ることと、そしてそれを Rundeck URL リソースモデルソースとして見せることが一番です。これは（ノード情報を管理している）tool のフォーマットから Rundeck のフォーマットへ変換するシンプルな CGI スクリプトとして実現できます。
 
-Check the Rundeck web site for URL resource model sources. If you are
-interested in creating your own, see the
-[Resource model source](../administration/node-resource-sources.html#resource-model-source) section in the
-[Integration with External Data Providers](#integration-with-external-data-providers) chapter.
+もちろん、基本的な選択肢として XML ドキュメントとして情報をメンテナンスするというのもあります、それらは Rundeck に定期的にエクポーとされるソースリポジトリに取り込まれます。もしあなたの組織のホストインフラストラクチャが頻繁に変化するなら実用的な手段になります。
 
-### Resource Model Document formats
+Rundeck のウェブサイトで URL リソースモデルソースをチェックしてください。 自分たちのリソースモデルを作ることに興味がある場合は[リソースモデルソース](../administration/node-resource-sources.html#リソースモデルソース)の外部のデータプロバイダーとの統合項目を参照してください。
 
-Rundeck currently has two resource model document formats built in: 
+### リソースモデルドキュメントフォーマット
 
-* XML: [resource-v13(5) XML](../manpages/man5/resource-v13.html).  Format name: `resourcexml`.
-* Yaml: [resource-v13(5) YAML](../manpages/man5/resource-yaml-v13.html). Format name: `resourceyaml`.
+Rundeck は今のところ 2 種類のリソースモデルドキュメントフォーマットが組み込まれています。
 
-You can enable more formats using [Resource Format Plugins](plugins.html#resource-format-plugins).
+*   XML: [resource-v13(5) XML](../manpages/man5/resource-v13.html).  Format name: `resourcexml`.
+*   Yaml: [resource-v13(5) YAML](../manpages/man5/resource-yaml-v13.html). Format name: `resourceyaml`.
 
-## Pluggable Resource Model Sources
+[リソースフォーマットプラグイン](plugins.html#リソースモデルフォーマットプラグイン)により他のフォーマットを使うことも可能です。
+
+## プラガブルリソースモデルソース
+どのプロジェクトもリソースモデル情報のソースを複数持つことができます。そしてリソースモデルへ新しいソースとして、プラグインを使用または作ることができます。
 
 Each project can have multiple sources for Resource model information, and
 you can use or write plugins to enable new sources for entries in the Resource model.
