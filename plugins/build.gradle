@@ -10,7 +10,7 @@ eclipse.project.name =  "${project.getParent().eclipse.project.name}:plugins";
 
 subprojects{
 
-    apply from: "${rootDir.toString()}/gradle/java.gradle"
+    apply from: "${rootDir}/gradle/java.gradle"
     
     defaultTasks 'clean','build'
     ext.rundeckPluginVersion= '1.0'

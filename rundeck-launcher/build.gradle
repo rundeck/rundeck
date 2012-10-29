@@ -4,12 +4,12 @@
 
 description = 'The parent launcher project provides defaults for it\'s children'
 
-apply from: "${rootDir.toString()}/gradle/java.gradle"
+apply from: "${rootDir}/gradle/java.gradle"
 
 eclipse.project.name = "${project.getParent().eclipse.project.name}:launcher"
 
 subprojects{
-    apply from: "${rootDir.toString()}/gradle/java.gradle"
+    apply from: "${rootDir}/gradle/java.gradle"
     defaultTasks 'clean','assemble'
     ext.jettyVersion='6.1.21'
     repositories {
