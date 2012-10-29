@@ -38,4 +38,8 @@ these properties in the [rundeck-config.properties](configuration.html#rundeck-c
 `rundeck.gui.execution.tail.lines.max`      Change the maximum number of lines   200
                                             shown in the execution page in tail 
                                             mode view. (Default: 100)
+
+`rundeck.gui.enableJobHoverInfo`            Shows job information when the user  false
+                                            hovers over a job name in various  
+                                            pages. (Default: true)
 -------------------------------------------------------------------------------

@@ -100,6 +100,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String DEFAULT_SUDO_FAILURE_PATTERN = "^.*try again.*";
     public static final String NODE_ATTR_SUDO_COMMAND_PATTERN = "command-pattern";
     public static final String DEFAULT_SUDO_COMMAND_PATTERN = "^sudo$";
+    public static final String DEFAULT_SUDO2_COMMAND_PATTERN = "^sudo .+? sudo .*$";
     public static final String NODE_ATTR_SUDO_PROMPT_MAX_LINES = "prompt-max-lines";
     public static final int DEFAULT_SUDO_PROMPT_MAX_LINES = 12;
     public static final String NODE_ATTR_SUDO_RESPONSE_MAX_LINES = "response-max-lines";
@@ -226,7 +227,8 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
             //if 2nd responder
             final SudoResponder sudoResponder2 = SudoResponder.create(node, framework, context, SUDO2_OPT_PREFIX,
-                                                                      DEFAULT_SUDO2_PASSWORD_OPTION);
+                                                                      DEFAULT_SUDO2_PASSWORD_OPTION,
+                                                                      DEFAULT_SUDO2_COMMAND_PATTERN);
             if (sudoResponder2.isSudoEnabled()
                 && sudoResponder2.matchesCommandPattern(CLIUtils.generateArgline(null, command))) {
                 logger.debug("Enable second sudo responder");
@@ -588,14 +590,16 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         private String configPrefix;
         private String description;
         private String defaultSudoPasswordOption;
+        private String defaultSudoCommandPattern;
 
 
         private SudoResponder() {
             description = DEFAULT_DESCRIPTION;
             defaultSudoPasswordOption = DEFAULT_SUDO_PASSWORD_OPTION;
+            defaultSudoCommandPattern = DEFAULT_SUDO_COMMAND_PATTERN;
             configPrefix = SUDO_OPT_PREFIX;
         }
-        private SudoResponder(final String configPrefix, final String defaultSudoPasswordOption) {
+        private SudoResponder(final String configPrefix, final String defaultSudoPasswordOption, final String defaultSudoCommandPattern) {
             this();
             if(null!= configPrefix) {
                 this.configPrefix = configPrefix;
@@ -603,18 +607,22 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             if(null!=defaultSudoPasswordOption){
                 this.defaultSudoPasswordOption=defaultSudoPasswordOption;
             }
+            if(null!=defaultSudoCommandPattern){
+                this.defaultSudoCommandPattern=defaultSudoCommandPattern;
+            }
         }
 
         static SudoResponder create(final INodeEntry node, final Framework framework, final ExecutionContext context) {
-            return create(node, framework, context, null,null);
+            return create(node, framework, context, null,null, null);
         }
 
         static SudoResponder create(final INodeEntry node,
                                     final Framework framework,
                                     final ExecutionContext context,
                                     final String configPrefix,
-                                    final String defaultSudoPasswordOption) {
-            final SudoResponder sudoResponder = new SudoResponder(configPrefix,defaultSudoPasswordOption);
+                                    final String defaultSudoPasswordOption, final String defaultSudoCommandPattern) {
+            final SudoResponder sudoResponder = new SudoResponder(configPrefix,defaultSudoPasswordOption,
+                                                                  defaultSudoCommandPattern);
             sudoResponder.init(node, framework.getFrameworkProjectMgr().getFrameworkProject(
                 context.getFrameworkProject()), framework, context);
             return sudoResponder;
@@ -642,7 +650,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                 inputString = (null != sudoPassword ? sudoPassword : "") + "\n";
 
                 sudoCommandPattern = resolveProperty(configPrefix + NODE_ATTR_SUDO_COMMAND_PATTERN,
-                                                     DEFAULT_SUDO_COMMAND_PATTERN,
+                                                     defaultSudoCommandPattern,
                                                      node,
                                                      frameworkProject,
                                                      framework);
