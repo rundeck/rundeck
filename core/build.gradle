@@ -6,8 +6,6 @@ description = 'The Rundeck Core API project'
 
 import org.apache.tools.ant.filters.ReplaceTokens
 
-apply from: "${rootDir.toString()}/gradle/java.gradle"
-
 archivesBaseName = 'rundeck-core'
 defaultTasks 'clean','assemble'
 

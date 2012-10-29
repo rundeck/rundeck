@@ -1466,12 +1466,11 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                     retry = false
                 }
             } catch (org.springframework.dao.OptimisticLockingFailureException e) {
-//                log.error("optimistic locking error: "+e,e)
-                log.debug("RETRY opt.updateScheduledExecState")
-
+                log.error("Caught OptimisticLockingFailure, will retry updateScheduledExecState")
+                Thread.sleep(200)
             } catch (StaleObjectStateException e) {
-//                log.error("stale object error: "+e,e)
-                log.debug("RETRY stale.updateScheduledExecState")
+                log.error("Caught StaleObjectState, will retry updateScheduledExecState")
+                Thread.sleep(200)
             }
         }
     }

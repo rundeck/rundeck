@@ -33,6 +33,18 @@ class ProjectService {
         }
         BuilderUtil builder = new BuilderUtil(converters:[(Date): dateConvert, (java.sql.Timestamp): dateConvert])
         def map = report.toMap()
+        if(map.jcJobId){
+            //convert internal job ID to extid
+            def se
+            try{
+                se = ScheduledExecution.get(Long.parseLong(map.jcJobId))
+                if(se){
+                    map.jcJobId=se.extid
+                }
+            }catch(NumberFormatException e){
+
+            }
+        }
         //convert map to xml
         zip.file("$name"){ Writer writer ->
             def xml = new MarkupBuilder(writer)
@@ -40,8 +52,7 @@ class ProjectService {
         }
     }
 
-    def exportExecution(ZipBuilder zip, Execution exec, String name)
-    throws ProjectServiceException {
+    def exportExecution(ZipBuilder zip, Execution exec, String name) throws ProjectServiceException {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
         def dateConvert = {
@@ -72,11 +83,11 @@ class ProjectService {
      * Parse XML and return a ExecReport/BaseReport object
      * @param xmlinput xml source
      * @param execIdMap map of old execution IDs to new Ids
-     * @param jobIdMap map of old Job IDs to new Ids
+     * @param jobsByOldIdMap map of old Job IDs to new Job entries
      * @return Report object with remapped exec/job ID values
      * @throws ProjectServiceException
      */
-    def loadHistoryReport(xmlinput, Map execIdMap=null, Map jobIdMap=null, identity=null) throws ProjectServiceException {
+    def loadHistoryReport(xmlinput, Map execIdMap=null, Map jobsByOldIdMap =null, identity=null) throws ProjectServiceException {
         Node doc = parseXml(xmlinput)
         if (!doc) {
             throw new ProjectServiceException("XML Document could not be parsed.")
@@ -89,8 +100,8 @@ class ProjectService {
         def object = XmlParserUtil.toObject(doc)
         if (object instanceof Map) {
             //remap job id if necessary
-            if (object.jcJobId && jobIdMap && jobIdMap[object.jcJobId]) {
-                object.jcJobId= jobIdMap[object.jcJobId]
+            if (object.jcJobId && jobsByOldIdMap && jobsByOldIdMap[object.jcJobId]) {
+                object.jcJobId= jobsByOldIdMap[object.jcJobId].id
             }
             //remap exec id if necessary
             if (object.jcExecId && execIdMap && execIdMap[object.jcExecId]) {
@@ -229,7 +240,7 @@ class ProjectService {
             def jobs = ScheduledExecution.findAllByProject(projectName)
             dir('jobs/') {
                 jobs.each{ScheduledExecution job->
-                    zip.file("job-${job.extid}.xml") { Writer writer ->
+                    zip.file("job-${job.extid.encodeAsURL()}.xml") { Writer writer ->
                         exportJob job, writer
                     }
                 }
@@ -292,7 +303,8 @@ class ProjectService {
 
         def loadjobresults=[]
         def loadjoberrors=[]
-        def loadedjobidmap=[:]
+        def jobIdMap=[:]
+        def jobsByOldId=[:]
         def projectName= project.name
         //load jobs
         jobxml.each { File jxml->
@@ -319,7 +331,8 @@ class ProjectService {
                 loadjobresults.addAll(results.jobs)
                 results.jobsi.each{jobi->
                     if(jobi.entrynum!=null && oldids[jobi.entrynum-1]){
-                        loadedjobidmap[oldids[jobi.entrynum-1]]=jobi.scheduledExecution.extid
+                        jobIdMap[oldids[jobi.entrynum-1]]=jobi.scheduledExecution.extid
+                        jobsByOldId[oldids[jobi.entrynum - 1]]= jobi.scheduledExecution
                     }
                 }
             }
@@ -332,7 +345,7 @@ class ProjectService {
         def loadexecresults=[]
         //load executions, and move/rewrite outputfile names
         execxml.each { File exml->
-            def results=loadExecutions(exml,loadedjobidmap)
+            def results=loadExecutions(exml,jobIdMap)
             def execlist=results.executions
             def oldids=results.execidmap
             //check outputfile exists in mapping
@@ -369,7 +382,7 @@ class ProjectService {
         //load reports
         def loadedreports=[]
         reportxml.each{rxml->
-            def report=loadHistoryReport(rxml,execidmap, loadedjobidmap,reportxmlnames[rxml])
+            def report=loadHistoryReport(rxml,execidmap, jobsByOldId,reportxmlnames[rxml])
             report.ctxProject = projectName
             if (!report.save()) {
                 log.error("Unable to save report: ${report.errors} (file ${rxml})")

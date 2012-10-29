@@ -21,7 +21,7 @@ class UtilityTagLib{
         }
         def b = new byte[len]
         rand.nextBytes(b)
-        return sprintf(attrs.format?attrs.format:'%x',b)
+        return sprintf(attrs.format?:'%02x'*len,b)
     }
 
 

@@ -203,12 +203,6 @@
         padding-left: 20px;
     }
 
-    div.bubbletop {
-        background: transparent url("${resource(dir:'images',file:'bubble-bg.png')}")  10px top no-repeat;
-        height: 16px;
-        z-index: 1;
-    }
-
     .expandComponentHolder.expanded  > div > span.expandComponentControl.jobgroupexpand span.foldertoggle {
         width: 16px;
         /*padding-bottom:14px;*/

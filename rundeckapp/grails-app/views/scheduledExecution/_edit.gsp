@@ -850,7 +850,7 @@ var applinks={
                                 </g:javascript>
                             </span>
                                 <g:if test="${g.message(code:'node.metadata.'+key+'.defaults',default:'')}">
-                                    <g:select from="${g.message(code:'node.metadata.'+key+'.defaults').split(',').sort()}" onchange="setFilter('${key}',true,this.value);_matchNodesKeyPress();"/>
+                                    <g:select from="${g.message(code:'node.metadata.'+key+'.defaults').split(',').sort()}" onchange="setFilter('${key}',true,this.value);_matchNodesKeyPress();" name="_${key}defaults"/>
                                 </g:if>
                             </div>
                     </g:each>
@@ -932,7 +932,7 @@ var applinks={
                                 </g:javascript>
                             </span>
                                 <g:if test="${g.message(code:'node.metadata.'+key+'.defaults',default:'')}">
-                                    <g:select from="${g.message(code:'node.metadata.'+key+'.defaults').split(',').sort()}" onchange="setFilter('${key}',false,this.value);_matchNodesKeyPress();"/>
+                                    <g:select from="${g.message(code:'node.metadata.'+key+'.defaults').split(',').sort()}" onchange="setFilter('${key}',false,this.value);_matchNodesKeyPress();" name="_${key}defaults"/>
                                 </g:if>
                             </div>
                     </g:each>

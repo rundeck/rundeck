@@ -1183,13 +1183,33 @@ a.glow, span.glow {
     border: 1px solid #aaa;
     background: white;
     padding: 10px;
-    margin-top: -1px;
+    margin-top: 14px;
     z-index: -1;
     border-radius: 10px;
     -moz-border-radius: 10px;
     -webkit-border-radius: 10px;
     -moz-box-shadow: #aaa 2px 2px 7px;
     -webkit-box-shadow: #aaa 2px 2px 7px;
+}
+.bubblecontent:before, .bubblecontent:after{
+    position: absolute;
+    border-style: solid;
+    border-color: transparent;
+    border-width: 0 10px 16px 10px;
+    height: 0;
+    width: 0;
+    content:'';
+    top: -16px;
+    left: 10px;
+}
+.bubblecontent:before{
+    border-bottom-color: #aaa;
+    left: 10px;
+}
+.bubblecontent:after{
+    border-bottom-color: #fff;
+    left: 10px;
+    top: -14px;
 }
 
 /* job edit form page */

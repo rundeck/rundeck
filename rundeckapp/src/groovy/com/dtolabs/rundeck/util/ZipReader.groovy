@@ -29,24 +29,29 @@ import java.util.zip.ZipEntry
  */
 /**
  * Simple class for processing ZipInputStream in a builder style. Use closures to define structure of dirs to read,
- * and patterns of files to find.  You can define catchalls for files or dirs at any level.  You can also define
- * that particular dirs or files are required, and if not found then the ZipReader will throw an exception.
+ * and patterns of files to find.  You can define catchalls for files or dirs at any level.
+ * A 'catchall' closure can be defined which can be used to process any files found which were not
+ * matched in a dir section.
  * Example:
  * <pre>
  *     new ZipReader(zinput).read{
- *         dir('toplevel'){
- *             dir('sub1'){
- *                 copyRecursiveTo("localpath/on/disk")
+ *
+ *         'top/'{ // use 'name/' to match a dir
+ *
+ *             'file.txt'{ //use 'name.ext' to match a file
+ *                 copyTo("/local/file.txt")
  *             }
- *             dir('sub2'){
+ *             file('some.txt'){ //same as above, but doesn't have to have a file extension
+ *                 copyToDir("/local/dir")
+ *             }
+ *             dir('sub2'){ //also matches a dir, doesn't need a / at the end
  *                 required=true
- *                 each('*.xml'){ name,input->
- *                     copyTo('localdir/'+name)
+ *                 file('*.xml'){ path, name,input->
+ *                     copyTo('/localdir/'+name)
  *                 }
  *             }
- *             dir('sub3'){
- *                 file("monkey.txt"){name,input->
- *                     required=true
+ *             'sub3/'{
+ *                 file("monkey.txt"){
  *                     copyTo('localfile.txt')
  *                 }
  *                 file("monkey2.txt"){name,input->
@@ -55,13 +60,40 @@ import java.util.zip.ZipEntry
  *             }
  *         }
  *         anydir{
- *             //executed with any dirs not matched
+ *             //used for any dirs not matched in the current dir
  *         }
- *         anyfile{ name,input->
- *             //executed with any files not matched
+ *         anyfile{ path,name,input->
+ *             //used for any files not matched in the current dir
+ *         }
+ *         catchall{ path,name,input ->
+ *             //used for any files not matched in any dir
  *         }
  *     }
  *     </pre>
+ *  <p>
+ *      Dir closures may be passed zero or 1 argument. If an argument is declared, it is set to the name
+ *      of the current dir.
+ *  </p>
+ *  <p>
+ *      File closures may be passed up to 3 arguments, using the following values:
+ *  </p>
+ *  <ul>
+ * <li>0 arguments: the delegate has entries for "zip" (the ZipReader instance), "file" (the file path), and "input" (input stream for the file). To
+ * use any of the copy*() methods below, you will have to explicitly use the ZipReader object, e.g. "zip.copyToTemp()".
+ * </li>
+ * <li>1 argument: The file path. The ZipReader is the delegate.</li>
+ * <li>2 arguments: The file path, and the inputstream for the file. The ZipReader is the delegate.</li>
+ * <li>3 arguments: The directory name, the file name, and the inputstream for the file. The ZipReader is the delegate.</li>
+ * </ul>
+ *
+ * Using the ZipReader (either implicitly as a delegate in a closure, or otherwise), you can perform the following
+ * operations on the current file matched in a file section:
+ *
+ * <ul>
+ * <li>copyToTemp() - copies the current file output to a local temp file and returns the File</li>
+ * <li>copyTo(filename) - copies the current file output to a specified file (string or a File)
+ * <li>copyToDir(dirname) - copies the current file with it's current name to the specified dir (string or a File)
+ * </ul>
  */
 class ZipReader {
     private ZipInputStream input
@@ -141,7 +173,7 @@ class ZipReader {
         }else if(clos.maximumNumberOfParameters==1){
             clos.call(entry.name)
         }else{
-            clos.delegate=[zip:this,name:entry.name,input:input]
+            clos.delegate=[zip:this,file:entry.name,input:input]
             clos.call()
         }
         filectx = null
@@ -159,10 +191,7 @@ class ZipReader {
         debug("begin process next entry")
         def ZipEntry entry = input.getNextEntry()
         while(entry!=null){
-//            debug("entry: ${entry.name}, isdir: ${entry.isDirectory()}")
-            if (entry.isDirectory()) {
-//                debug("dir: ${entry.name} (${curdir.dirs.keySet()})")
-            }else{
+            if (!entry.isDirectory()) {
                 //file
                 def fname=entry.name
                 def parts = fname.split('/') as List
@@ -242,6 +271,9 @@ class ZipReader {
         curdir.files[name]=clos
     }
     def catchall(Closure clos){
+        if(catchallfile){
+            throw new IllegalStateException("Only one catchall can be declared")
+        }
         catchallfile=clos
     }
 

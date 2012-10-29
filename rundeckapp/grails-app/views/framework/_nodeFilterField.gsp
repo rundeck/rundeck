@@ -32,6 +32,6 @@
         ><img src="${resource( dir:'images',file:'icon-tiny-removex.png' )}" alt="remove" width="12px" height="12px"/></span>
 </span>
     <g:if test="${g.message(code:'node.metadata.'+key+'.defaults',default:'')}">
-        <g:select from="${g.message(code:'node.metadata.'+key+'.defaults').split(',').sort()}" onchange="_setNodeFilterDefault('${key}',${include?true:false},this.value);"/>
+        <g:select name="_${key}defaults" from="${g.message(code:'node.metadata.'+key+'.defaults').split(',').sort()}" onchange="_setNodeFilterDefault('${key}',${include?true:false},this.value);"/>
     </g:if>
 </div>

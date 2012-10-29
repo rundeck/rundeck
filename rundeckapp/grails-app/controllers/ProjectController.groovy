@@ -14,6 +14,9 @@ import java.util.jar.JarOutputStream
 class ProjectController {
     def frameworkService
     def projectService
+    def static allowedMethods = [
+            importArchive: ['POST'],
+    ]
 
     def index (){
     }
@@ -30,9 +33,9 @@ class ProjectController {
             return render(template: "/common/error")
         }
 
-        if(!frameworkService.authorizeApplicationResourceAll(framework, [type: 'project', name: project], [AuthConstants.ACTION_READ])){
+        if(!frameworkService.authorizeApplicationResourceAll(framework, [type: 'project', name: project], [AuthConstants.ACTION_ADMIN])){
             response.setStatus(403)
-            request.error = g.message(code: 'api.error.item.unauthorized', args: [AuthConstants.ACTION_READ, "Project", params.id])
+            request.error = g.message(code: 'api.error.item.unauthorized', args: [AuthConstants.ACTION_ADMIN, "Project", params.name])
             return render(template: "/common/error")
         }
         def project1 = frameworkService.getFrameworkProject(project, framework)
@@ -63,9 +66,9 @@ class ProjectController {
             return render(template: "/common/error")
         }
 
-        if (!frameworkService.authorizeApplicationResourceAll(framework, [type: 'project', name: project], [AuthConstants.ACTION_READ])) {
+        if (!frameworkService.authorizeApplicationResourceAll(framework, [type: 'project', name: project], [AuthConstants.ACTION_ADMIN])) {
             response.setStatus(403)
-            request.error = g.message(code: 'api.error.item.unauthorized', args: [AuthConstants.ACTION_READ, "Project", params.id])
+            request.error = g.message(code: 'api.error.item.unauthorized', args: [AuthConstants.ACTION_ADMIN, "Project", params.name])
             return render(template: "/common/error")
         }
         def project1 = frameworkService.getFrameworkProject(project, framework)
