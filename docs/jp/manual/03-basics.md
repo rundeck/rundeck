@@ -257,7 +257,7 @@ Rundeck は*アドホック*と*ジョブ*の2つの実行モードをサポー�
   
 #### シェルでのノードフィルタリング
 
-`dispatch` コマンドは `-I (include)` と `-X (exclude)` オプションを使ってどのノードをインクルード・エクスクルードするか指定できます。これらのオプションで、ひとつの値/値のリスト/正規表現を利用できます。
+`dispatch` コマンドは -I (include) と -X (exclude) オプションを使ってどのノードをインクルード・エクスクルードするか指定できます。これらのオプションで、ひとつの値/値のリスト/正規表現を利用できます。
 
 *例*
 
@@ -294,9 +294,9 @@ OS name が Linux であるものをリストアップ(`-p` はプロジェク�
     Queued job ID: 7 <http://strongbad:4440/execution/follow/7>
 
 
-この `uptime` コマンドはキューに追加され後に実行されました。`uptime` コマンドの出力は `dispatch` コマンドの出力に出ている URL に載っています。(例, http://strongbed:4440/execution/follow/7)
+この ``uptime`` コマンドはキューに追加された後に実行されました。`uptime` コマンドの出力は `dispatch` コマンドの出力に出ている URL に載っています。(例, http://strongbed:4440/execution/follow/7)
 
-キューに追加せず、すぐにコマンドを実行したい場合があります。`--noqueue` オプションを使って実行するとコンソールから `uptime` の出力が得られます。
+キューに追加せず、すぐにコマンドを実行したい場合があります。`--noqueue` オプションを使って実行し、コンソールの出力を追って下さい。
 
     $ dispatch -I os-family=unix  --noqueue -- uptime
     [ctier@centos54 dispatch][INFO]  10:34:54 up 46 min,  2 users,  load average: 0.00, 0.00, 0.00
