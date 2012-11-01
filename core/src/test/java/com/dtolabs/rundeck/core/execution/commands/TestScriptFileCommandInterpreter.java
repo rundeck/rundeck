@@ -216,21 +216,9 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
         };
         final String testScript = "a script";
 
-        ScriptFileCommand command = new ScriptFileCommand() {
+        ScriptFileCommand command = new ScriptFileCommandBase()  {
             public String getScript() {
                 return testScript;
-            }
-
-            public InputStream getScriptAsStream() {
-                return null;
-            }
-
-            public String getServerScriptFilePath() {
-                return null;
-            }
-
-            public String[] getArgs() {
-                return new String[0];
             }
         };
         {
@@ -364,17 +352,9 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
         };
         final String testScript = "a script";
 
-        ScriptFileCommand command = new ScriptFileCommand() {
+        ScriptFileCommand command = new ScriptFileCommandBase() {
             public String getScript() {
                 return testScript;
-            }
-
-            public InputStream getScriptAsStream() {
-                return null;
-            }
-
-            public String getServerScriptFilePath() {
-                return null;
             }
 
             public String[] getArgs() {
@@ -519,22 +499,11 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
         };
         final String testScript = "a script";
 
-        ScriptFileCommand command = new ScriptFileCommand() {
+        ScriptFileCommand command = new ScriptFileCommandBase() {
             public String getScript() {
                 return testScript;
             }
 
-            public InputStream getScriptAsStream() {
-                return null;
-            }
-
-            public String getServerScriptFilePath() {
-                return null;
-            }
-
-            public String[] getArgs() {
-                return new String[0];
-            }
         };
         {
             final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>();
@@ -654,22 +623,11 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
         };
         final String testScript = "a script";
 
-        ScriptFileCommand command = new ScriptFileCommand() {
+        ScriptFileCommand command = new ScriptFileCommandBase() {
             public String getScript() {
                 return testScript;
             }
 
-            public InputStream getScriptAsStream() {
-                return null;
-            }
-
-            public String getServerScriptFilePath() {
-                return null;
-            }
-
-            public String[] getArgs() {
-                return new String[0];
-            }
         };
         {
             final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>();
@@ -788,22 +746,12 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
         final File testScriptFile = new File("Testfile");
 
 
-        ScriptFileCommand command = new ScriptFileCommand() {
-            public String getScript() {
-                return null;
-            }
-
-            public InputStream getScriptAsStream() {
-                return null;
-            }
+        ScriptFileCommand command = new ScriptFileCommandBase() {
 
             public String getServerScriptFilePath() {
                 return testScriptFile.getAbsolutePath();
             }
 
-            public String[] getArgs() {
-                return new String[0];
-            }
         };
         {
             final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>();
@@ -941,22 +889,12 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
         final InputStream inputStream = new ByteArrayInputStream(new byte[]{0});
 
 
-        ScriptFileCommand command = new ScriptFileCommand() {
-            public String getScript() {
-                return null;
-            }
+        ScriptFileCommand command = new ScriptFileCommandBase() {
 
             public InputStream getScriptAsStream() {
                 return inputStream;
             }
 
-            public String getServerScriptFilePath() {
-                return null;
-            }
-
-            public String[] getArgs() {
-                return new String[0];
-            }
         };
         {
             final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>();
@@ -1092,22 +1030,12 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
         final InputStream inputStream = new ByteArrayInputStream(new byte[]{0});
 
 
-        ScriptFileCommand command = new ScriptFileCommand() {
-            public String getScript() {
-                return null;
-            }
+        ScriptFileCommand command = new ScriptFileCommandBase() {
 
             public InputStream getScriptAsStream() {
                 return inputStream;
             }
 
-            public String getServerScriptFilePath() {
-                return null;
-            }
-
-            public String[] getArgs() {
-                return new String[0];
-            }
         };
         {
             final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>();

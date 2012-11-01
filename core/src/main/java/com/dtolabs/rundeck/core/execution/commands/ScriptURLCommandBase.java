@@ -23,6 +23,8 @@
 */
 package com.dtolabs.rundeck.core.execution.commands;
 
+import com.dtolabs.rundeck.core.execution.HasFailureHandler;
+
 import java.util.*;
 
 /**
@@ -31,7 +33,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public abstract class ScriptURLCommandBase implements ScriptURLCommandExecutionItem {
+public abstract class ScriptURLCommandBase implements ScriptURLCommandExecutionItem,HasFailureHandler {
     public String getType() {
         return ScriptURLCommandInterpreter.SERVICE_IMPLEMENTATION_NAME;
     }

@@ -646,6 +646,62 @@ See:
 * [Script sequence step](#script-sequence-step)
 * [Job sequence step](#job-sequence-step)
 
+A command can embed a [errorhandler](#errorhandler) to define
+an action to run if the step fails.
+
+### errorhandler
+
+Defines an action to handle an error in a [command](#command).
+
+The contents of an `<errorhandler>` are exactly the same as for a 
+[command](#command) except it cannot contain any errorhandler itself.
+
+The different types of errorhandler steps are defined in different ways.
+
+*Attributes*
+
+`keepgoingOnSuccess`
+
+:    true/false. (default false). If true, and the error handler succeeds, the workflow sequence will continue even if the workflow `keepgoing` is false.
+
+See:
+
+* [Script sequence step](#script-sequence-step)
+* [Job sequence step](#job-sequence-step)
+
+Example:
+
+    <errorhandler>
+       <exec>echo this is a shell command</exec>
+    </errorhandler>
+
+Inline script.  Note that using CDATA section will preserve linebreaks
+in the script.  Simply put the script within a <code>script</code>
+element:
+
+
+    <errorhandler>
+        <script><![CDATA[#!/bin/bash
+    echo this is a test
+    echo whatever
+    exit 2 ]></script>
+    </errorhandler>
+
+
+Script File:
+
+    <errorhandler>
+        <scriptfile>/path/to/a/script</scriptfile>
+        <scriptargs>-whatever something</scriptargs>
+    </errorhandler>      
+
+Example job reference:
+
+    <errorhandler >
+        <jobref group="My group" name="My Job">
+           <arg line="-option value -option2 value2"/>
+        </jobref>
+    </errorhandler>      
 
  
 #### Script sequence step 

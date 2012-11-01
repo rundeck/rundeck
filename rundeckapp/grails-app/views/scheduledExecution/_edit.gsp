@@ -204,7 +204,7 @@ var applinks={
         position:absolute;
         right:0;
         top:0;
-        width:100px;
+        width:200px;
         text-align:right;
     }
     .controls.autohide{

@@ -23,15 +23,17 @@
 */
 package com.dtolabs.rundeck.core.execution.commands;
 
+import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.HasFailureHandler;
+
 import java.io.InputStream;
-import java.util.*;
 
 /**
  * ScriptFileCommandBase is a base implementation that returns null for all accessors.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ScriptFileCommandBase extends ScriptFileCommand {
+public class ScriptFileCommandBase extends ScriptFileCommand implements HasFailureHandler {
     public String getScript() {
         return null;
     }
@@ -46,5 +48,13 @@ public class ScriptFileCommandBase extends ScriptFileCommand {
 
     public String[] getArgs() {
         return new String[0];
+    }
+
+    public ExecutionItem getFailureHandler() {
+        return null;
+    }
+
+    public boolean isKeepgoingOnSuccess() {
+        return false;
     }
 }

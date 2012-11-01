@@ -26,10 +26,16 @@ package com.dtolabs.rundeck.core.execution.workflow;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.SelectorUtils;
 import com.dtolabs.rundeck.core.execution.*;
+import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
+import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 
+import java.io.File;
+import java.io.InputStream;
 import java.util.*;
 
 /**
@@ -140,19 +146,19 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                                     final int c,
                                     final ExecutionItem cmd, final boolean keepgoing) throws
         WorkflowStepFailureException {
-        final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
-        if (null != wlistener) {
-            wlistener.beginWorkflowItem(c, cmd);
-        }
+
         //TODO evaluate conditionals set for cmd within the data context, and skip cmd if necessary
-        executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, c + ": " + cmd.toString());
+        if(null!=executionContext.getExecutionListener()){
+            executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, c + ": " + cmd.toString());
+        }
         ExecutionResult result = null;
         boolean itemsuccess;
         Throwable wfstepthrowable = null;
         try {
-
-            executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
+            if(null!=executionContext.getExecutionListener()){
+                executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
                 "ExecutionItem created, executing: " + cmd);
+            }
             result = framework.getExecutionService().executeItem(executionContext, cmd);
             itemsuccess = null != result && result.isSuccess();
         } catch (Throwable exc) {
@@ -160,17 +166,18 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                 //don't fail
 //                executionContext.getExecutionListener().log(Constants.ERR_LEVEL,
 //                    "Step " + c + "of the workflow failed: " + exc.getMessage());
+                if (null != executionContext.getExecutionListener()) {
                 executionContext.getExecutionListener().log(Constants.VERBOSE_LEVEL,
                     "Step " + c + "of the workflow failed: " + org.apache.tools.ant.util
                         .StringUtils.getStackTrace(exc));
+                }
                 wfstepthrowable = exc;
                 itemsuccess = false;
             } else {
 //                executionContext.getExecutionListener().log(Constants.ERR_LEVEL,
 //                    "Step " + c + "of the workflow failed: " + exc.getMessage());
-                if (null != wlistener) {
-                    wlistener.finishWorkflowItem(c, cmd);
-                }
+
+                failedMap.put(c, exc.getMessage());
                 throw new WorkflowStepFailureException(
                     "Step " + c + " of the workflow threw exception: " + exc.getMessage(), exc, c);
             }
@@ -179,12 +186,11 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
         if (null != result && null != result.getResultObject()) {
             resultList.add(result.getResultObject());
         }
-        if (null != wlistener) {
-            wlistener.finishWorkflowItem(c, cmd);
-        }
         if (itemsuccess) {
+            if (null != executionContext.getExecutionListener()) {
             executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
                 c + ": ExecutionItem finished, result: " + result);
+            }
         } else if (keepgoing) {
             //don't fail yet
             failedMap.put(c, (null != wfstepthrowable ? wfstepthrowable.getMessage()
@@ -212,6 +218,10 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
         return itemsuccess;
     }
 
+    /**
+     * Execute the sequence of ExecutionItems within the context, and with the given keepgoing value, return true if
+     * successful
+     */
     protected boolean executeWorkflowItemsForNodeSet(final ExecutionContext executionContext,
                                                      final Map<Integer, Object> failedMap,
                                                      final List<DispatcherResult> resultList,
@@ -220,14 +230,150 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
         WorkflowStepFailureException {
 
         boolean workflowsuccess = true;
+        final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
         int c = 1;
         for (final ExecutionItem cmd : iWorkflowCmdItems) {
-            if (!executeWFItem(executionContext, failedMap, resultList, c, cmd, keepgoing)) {
+            boolean stepSuccess=false;
+            WorkflowStepFailureException stepFailure=null;
+            if (null != wlistener) {
+                wlistener.beginWorkflowItem(c, cmd);
+            }
+
+            //wrap node failed listener (if any) and capture status results
+            NodeRecorder stepCaptureFailedNodesListener = new NodeRecorder();
+            ExecutionContext stepContext = replaceFailedNodesListenerInContext(executionContext,
+                stepCaptureFailedNodesListener);
+            Map<String,Object> nodeFailures;
+
+            //execute the step item, and store the results
+            ArrayList<DispatcherResult> stepResult = new ArrayList<DispatcherResult>();
+            Map<Integer, Object> stepFailedMap = new HashMap<Integer, Object>();
+            try {
+                stepSuccess = executeWFItem(stepContext, stepFailedMap, stepResult, c, cmd, keepgoing);
+            } catch (WorkflowStepFailureException e) {
+                stepFailure = e;
+            }
+            nodeFailures = stepCaptureFailedNodesListener.getFailedNodes();
+
+            if(null!=executionContext.getExecutionListener() && null!=executionContext.getExecutionListener().getFailedNodesListener()) {
+                executionContext.getExecutionListener().getFailedNodesListener().matchedNodes(
+                    stepCaptureFailedNodesListener.getMatchedNodes());
+
+            }
+
+            try {
+                if(!stepSuccess && cmd instanceof HasFailureHandler) {
+                    final HasFailureHandler handles = (HasFailureHandler) cmd;
+                    final ExecutionItem handler = handles.getFailureHandler();
+                    if (null != handler) {
+                        //if there is a failure, and a failureHandler item, execute the failure handler
+                        //set keepgoing=false, and store the results
+                        //will throw an exception on failure because keepgoing=false
+
+                        NodeRecorder handlerCaptureFailedNodesListener = new NodeRecorder();
+                        ExecutionContext handlerExecContext = replaceFailedNodesListenerInContext(executionContext,
+                            handlerCaptureFailedNodesListener);
+
+                        //if multi-node, determine set of nodes to run handler on: (failed node list only)
+                        if(stepCaptureFailedNodesListener.getMatchedNodes().size()>1) {
+                            HashSet<String> failedNodeList = new HashSet<String>(
+                                stepCaptureFailedNodesListener.getFailedNodes().keySet());
+
+                            handlerExecContext = new ExecutionContextImpl.Builder(handlerExecContext).nodeSelector(
+                                SelectorUtils.nodeList(failedNodeList)).build();
+
+                        }
+
+                        ArrayList<DispatcherResult> handlerResult = new ArrayList<DispatcherResult>();
+                        Map<Integer, Object> handlerFailedMap = new HashMap<Integer, Object>();
+                        WorkflowStepFailureException handlerFailure = null;
+                        boolean handlerSuccess = false;
+                        try {
+                            handlerSuccess = executeWFItem(handlerExecContext, handlerFailedMap, handlerResult, c,
+                                                           handler,
+                                false);
+                        } catch (WorkflowStepFailureException e) {
+                            handlerFailure = e;
+                        }
+
+                        //handle success conditions:
+                        //1. if keepgoing=true, then status from handler overrides original step
+                        //2. keepgoing=false, then status is the same as the original step, unless
+                        //   the keepgoingOnSuccess is set to true and the handler succeeded
+                        if (keepgoing) {
+                            stepSuccess = handlerSuccess;
+                            stepFailure = handlerFailure;
+                            stepResult.addAll(handlerResult);
+                            stepFailedMap = handlerFailedMap;
+                            nodeFailures = handlerCaptureFailedNodesListener.getFailedNodes();
+                        }else if(handlerSuccess && handler instanceof HandlerExecutionItem) {
+                            final boolean keepgoingOnSuccess
+                                = ((HandlerExecutionItem) handler).isKeepgoingOnSuccess();
+                            if(keepgoingOnSuccess){
+                                stepSuccess = handlerSuccess;
+                                stepFailure = handlerFailure;
+                                stepResult.addAll(handlerResult);
+                                stepFailedMap = handlerFailedMap;
+                                nodeFailures = handlerCaptureFailedNodesListener.getFailedNodes();
+                            }
+                        }
+                    }
+                }
+            } finally {
+                if (null != wlistener) {
+                    wlistener.finishWorkflowItem(c, cmd);
+                }
+            }
+            resultList.addAll(stepResult);
+            failedMap.putAll(stepFailedMap);
+            if(!stepSuccess){
                 workflowsuccess = false;
+            }
+
+            //report node failures based on results of step and handler run.
+            if (null != executionContext.getExecutionListener() && null != executionContext.getExecutionListener()
+                .getFailedNodesListener()) {
+                if(nodeFailures.size()>0){
+                    executionContext.getExecutionListener().getFailedNodesListener().nodesFailed(
+                    nodeFailures);
+                }else if(workflowsuccess){
+                    executionContext.getExecutionListener().getFailedNodesListener().nodesSucceeded();
+                }
+
+            }
+
+            if(null!=stepFailure && !keepgoing){
+                throw stepFailure;
+            }else if(!stepSuccess && !keepgoing){
+                break;
             }
             c++;
         }
         return workflowsuccess;
+    }
+    private class noopExecutionListener extends ExecutionListenerOverrideBase{
+        public noopExecutionListener(noopExecutionListener delegate){
+            super(delegate);
+        }
+        public void log(int level, String message) {
+        }
+
+        public ExecutionListenerOverride createOverride() {
+            return new noopExecutionListener(this);
+        }
+    }
+
+    private ExecutionContext replaceFailedNodesListenerInContext(ExecutionContext executionContext,
+                                                                 FailedNodesListener captureFailedNodesListener) {
+        ExecutionListenerOverride listen=null;
+        if(null!= executionContext.getExecutionListener()) {
+            listen = executionContext.getExecutionListener().createOverride();
+        }
+        if(null!=listen){
+            listen.setFailedNodesListener(captureFailedNodesListener);
+        }
+
+        return new ExecutionContextImpl.Builder(executionContext).executionListener(listen).build();
     }
 
     /**

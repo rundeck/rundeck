@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution.commands;
 
 import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.HandlerExecutionItem;
 
 import java.net.URL;
 
@@ -33,7 +34,7 @@ import java.net.URL;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface ScriptURLCommandExecutionItem extends ExecutionItem {
+public interface ScriptURLCommandExecutionItem extends HandlerExecutionItem {
     /**
      * Return the URL to get the script from, which may include data context references
      */

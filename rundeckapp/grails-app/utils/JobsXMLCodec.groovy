@@ -214,14 +214,19 @@ class JobsXMLCodec {
             data.commands = data.remove('command')
             if (!(data.commands instanceof Collection)) {
                 data.commands = [data.remove('commands')]
-            }
-            //convert script args values to idiosyncratic label
-            data.commands.each { cmd ->
+            }  //convert script args values to idiosyncratic label
+            def fixup = { cmd ->
                 if (cmd.scriptfile || cmd.script || cmd.scripturl) {
                     cmd.args = cmd.remove('scriptargs')
                 } else if (cmd.jobref?.arg?.line) {
                     cmd.jobref.args = cmd.jobref.arg.remove('line')
                     cmd.jobref.remove('arg')
+                }
+            }
+            data.commands.each(fixup)
+            data.commands.each {
+                if (it.errorhandler) {
+                    fixup(it.errorhandler)
                 }
             }
         }
@@ -334,7 +339,8 @@ class JobsXMLCodec {
         BuilderUtil.makeAttribute(map, 'strategy')
         map.command = map.remove('commands')
         //convert script args values to idiosyncratic label
-        map.command.each { cmd ->
+
+        def gencmd= { cmd, iseh=false ->
             if (cmd.scriptfile || cmd.script || cmd.scripturl) {
                 cmd.scriptargs = cmd.remove('args')
                 if (cmd.script) {
@@ -351,6 +357,15 @@ class JobsXMLCodec {
                 if (null != remove) {
                     cmd.jobref.arg = BuilderUtil.toAttrMap('line', remove)
                 }
+            }
+            if(iseh){
+                BuilderUtil.makeAttribute(cmd, 'keepgoingOnSuccess')
+            }
+        }
+        map.command.each(gencmd)
+        map.command.each {
+            if (it.errorhandler) {
+                gencmd(it.errorhandler,true)
             }
         }
     }

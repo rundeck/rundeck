@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2012 DTO Solutions, Inc. (http://dtosolutions.com)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,32 +15,39 @@
  */
 
 /*
-* ExecCommandBase.java
+* ExecutionListenerOverride.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/22/11 5:41 PM
+* Created: 6/12/12 12:03 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.commands;
-
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
-import com.dtolabs.rundeck.core.execution.HasFailureHandler;
+package com.dtolabs.rundeck.core.execution;
 
 /**
- * ExecCommandBase is a concrete implementation of ExecCommand that
+ * ExecutionListenerOverride interface to change ExecutionListener values.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ExecCommandBase extends ExecCommand implements HasFailureHandler {
-    public String[] getCommand() {
-        return null;
-    }
+public interface ExecutionListenerOverride extends ExecutionListener{
+    /**
+     * Return true if output should be terse and not prefixed
+     *
+     * @return
+     */
+    public void setTerse(boolean terse);
 
-    public ExecutionItem getFailureHandler() {
-        return null;
-    }
+    /**
+     * Return log message format
+     *
+     * @return
+     */
+    public void setLogFormat(String format);
 
-    public boolean isKeepgoingOnSuccess() {
-        return false;
-    }
+    /**
+     * Return a listener for failed node list
+     *
+     * @return listener
+     */
+    public void setFailedNodesListener(FailedNodesListener listener);
+
 }

@@ -407,6 +407,85 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNull "incorrect groupPath",jobs[0].groupPath
     }
 
+    void testDecodeErrorhandler(){
+        def basic7 = """<joblist>
+  <job>
+    <id>8</id>
+    <name>punch2</name>
+    <description>dig it potato</description>
+    <loglevel>WARN</loglevel>
+    <context>
+      <project>zig</project>
+      <options>
+        <option name='clip' value='true' />
+      </options>
+    </context>
+    <sequence>
+        <command>
+            <exec>test</exec>
+            <errorhandler>
+                <exec>testerr</exec>
+            </errorhandler>
+        </command>
+        <command>
+            <script>test2</script>
+            <scriptargs>blah blah</scriptargs>
+            <errorhandler>
+                <script>test2err</script>
+                <scriptargs>blah blah err</scriptargs>
+            </errorhandler>
+        </command>
+        <command>
+            <scriptfile>test3</scriptfile>
+            <scriptargs>blah3 blah3</scriptargs>
+            <errorhandler  keepgoingOnSuccess='false'>
+                <scriptfile>test3err</scriptfile>
+                <scriptargs>blah3 blah3 err</scriptargs>
+            </errorhandler>
+        </command>
+        <command>
+            <jobref name="test" group="group"/>
+            <errorhandler keepgoingOnSuccess='true'>
+                <jobref name="testerr" group="grouperr">
+                    <arg line="line err"/>
+                </jobref>
+            </errorhandler>
+        </command>
+    </sequence>
+    <dispatch>
+      <threadcount>2</threadcount>
+      <keepgoing>true</keepgoing>
+    </dispatch>
+  </job>
+</joblist>
+"""
+        def jobs = JobsXMLCodec.decode(basic7)
+        assertNotNull jobs
+        assertEquals 1, jobs.size()
+        ScheduledExecution se=jobs[0]
+        assertEquals(4,jobs[0].workflow.commands.size())
+        jobs[0].workflow.commands.each{
+            assertNotNull(it.errorHandler)
+        }
+        assertEquals('testerr', jobs[0].workflow.commands[0].errorHandler.adhocRemoteString)
+        assertNull(jobs[0].workflow.commands[0].errorHandler.argString)
+        assertFalse(jobs[0].workflow.commands[0].errorHandler.keepgoingOnSuccess)
+
+        assertEquals('test2err', jobs[0].workflow.commands[1].errorHandler.adhocLocalString)
+        assertEquals('blah blah err',jobs[0].workflow.commands[1].errorHandler.argString)
+        assertFalse(jobs[0].workflow.commands[1].errorHandler.keepgoingOnSuccess)
+
+        assertEquals('test3err', jobs[0].workflow.commands[2].errorHandler.adhocFilepath)
+        assertEquals('blah3 blah3 err',jobs[0].workflow.commands[2].errorHandler.argString)
+        assertFalse(jobs[0].workflow.commands[2].errorHandler.keepgoingOnSuccess)
+
+        assertEquals('testerr', jobs[0].workflow.commands[3].errorHandler.jobName)
+        assertEquals('grouperr', jobs[0].workflow.commands[3].errorHandler.jobGroup)
+        assertEquals('line err',jobs[0].workflow.commands[3].errorHandler.argString)
+        assertNotNull(jobs[0].workflow.commands[3].errorHandler.keepgoingOnSuccess)
+        assertTrue(jobs[0].workflow.commands[3].errorHandler.keepgoingOnSuccess)
+    }
+
     void testDecodeExample(){
         def example1 = """<joblist>
   <job>
@@ -2304,6 +2383,79 @@ class JobsXMLCodecTests extends GroovyTestCase {
 
             assertEquals "incorrect dispatch threadcount",'1',doc.job[0].dispatch[0].threadcount[0].text()
             assertEquals "incorrect dispatch keepgoing",'true',doc.job[0].dispatch[0].keepgoing[0].text()
+
+
+    }
+    void testEncodeErrorhandler(){
+        def XmlSlurper parser = new XmlSlurper()
+        def eh1= new CommandExec([adhocLocalString: 'test err', argString: 'blah err'])
+        def eh2= new CommandExec([adhocRemoteString: 'exec err', argString: 'blah err2', keepgoingOnSuccess: false])
+        def eh3= new CommandExec([adhocFilepath: 'file err', argString: 'blah err3',keepgoingOnSuccess:true])
+        def eh4= new JobExec([jobName: 'job err', jobGroup: 'group err', argString: 'blah err4', keepgoingOnSuccess: false])
+        def jobs1 = [
+            new ScheduledExecution(
+                jobName: 'test job 1',
+                description: 'test descrip',
+                loglevel: 'INFO',
+                project: 'test1',
+                workflow: new Workflow(keepgoing: true, commands: [
+                    new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle',errorHandler: eh1]),
+                    new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle',errorHandler: eh2]),
+                    new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle',errorHandler: eh3]),
+                    new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle',errorHandler: eh4]),
+                ]),
+                options: [new Option([name: 'delay', defaultValue: '12']), new Option([name: 'monkey', defaultValue: 'cheese']), new Option([name: 'particle', defaultValue: 'true'])] as TreeSet,
+                nodeThreadcount: 1,
+                nodeKeepgoing: true,
+                doNodedispatch: true
+            )
+        ]
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "wrong root node name", 'joblist', doc.name()
+        assertEquals "wrong number of jobs", 1, doc.job.size()
+        assertEquals "wrong name", "test job 1", doc.job[0].name[0].text()
+        assertEquals "wrong command count", 4, doc.job[0].sequence[0].command.size()
+        def ndx=0
+        assertEquals "wrong handler count", 1, doc.job[0].sequence[0].command[ndx].errorhandler.size()
+        assertEquals "wrong handler script", 'test err', doc.job[0].sequence[0].command[ndx].errorhandler[0].script[0].text()
+        assertEquals "wrong handler script", 'blah err', doc.job[0].sequence[0].command[ndx].errorhandler[0].scriptargs[0].text()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].scriptfile.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].exec.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].jobref.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].'@keepgoingOnSuccess'.size()
+
+        ndx++
+        assertEquals "wrong handler count", 1, doc.job[0].sequence[0].command[ndx].errorhandler.size()
+        assertEquals "wrong handler exec", 'exec err', doc.job[0].sequence[0].command[ndx].errorhandler[0].exec[0].text()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].scriptargs.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].scriptfile.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].script.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].jobref.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].'@keepgoingOnSuccess'.size()
+        ndx++
+        assertEquals "wrong handler count", 1, doc.job[0].sequence[0].command[ndx].errorhandler.size()
+        assertEquals "wrong handler scriptfile", 'file err', doc.job[0].sequence[0].command[ndx].errorhandler[0].scriptfile[0].text()
+        assertEquals "wrong handler script", 'blah err3', doc.job[0].sequence[0].command[ndx].errorhandler[0].scriptargs[0].text()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].exec.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].script.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].jobref.size()
+        assertEquals 'true', doc.job[0].sequence[0].command[ndx].errorhandler[0].'@keepgoingOnSuccess'.text()
+        ndx++
+        assertEquals "wrong handler count", 1, doc.job[0].sequence[0].command[ndx].errorhandler.size()
+        assertEquals 1, doc.job[0].sequence[0].command[ndx].errorhandler[0].jobref.size()
+        assertEquals 1, doc.job[0].sequence[0].command[ndx].errorhandler[0].jobref[0].arg.size()
+        assertEquals 'job err', doc.job[0].sequence[0].command[ndx].errorhandler[0].jobref[0].'@name'.text()
+        assertEquals 'group err', doc.job[0].sequence[0].command[ndx].errorhandler[0].jobref[0].'@group'.text()
+        assertEquals 'blah err4', doc.job[0].sequence[0].command[ndx].errorhandler[0].jobref[0].arg[0].'@line'.text()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].exec.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].script.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].scriptfile.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].'@keepgoingOnSuccess'.size()
 
 
     }

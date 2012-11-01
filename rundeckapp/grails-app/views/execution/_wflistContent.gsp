@@ -23,14 +23,30 @@
  --%>
 <g:if test="${workflow && workflow?.commands}">
 <g:each in="${workflow.commands}" var="item" status="i">
-    <li class="${i%2==1?'alternate':''}" id="wfli_${i}" wfitemNum="${i}">
-        <g:render template="/execution/wflistitemContent" model="${[i:i,item:item,workflow:workflow,edit:edit,highlight:highlight,noimgs:noimgs,project:project]}"/>
+    <li class="${i%2==1?'alternate':''}"  wfitemNum="${i}">
+        <span id="wfli_${i}">
+        <g:render template="/execution/wflistitemContent" model="${[i:i,stepNum: i,item:item,workflow:workflow,edit:edit,highlight:highlight,noimgs:noimgs, project: project]}"/>
+        </span>
+        <g:if test="${item.errorHandler}">
+            <ul class="wfhandleritem">
+
+                <li id="wfli_eh_${i}" ><g:render template="/execution/wflistitemContent"
+                          model="${[i: 'eh_' + i, stepNum:i, item: item.errorHandler, workflow: workflow, edit: edit, highlight: highlight, noimgs: noimgs, isErrorHandler:true]}"/></li>
+
+            </ul>
+        </g:if>
+        <g:else>
+            <ul class="wfhandleritem" style="display: none" wfitemNum="${i}">
+
+                <li id="wfli_eh_${i}"></li>
+
+            </ul>
+        </g:else>
     </li>
 </g:each>
 </g:if>
 <g:if test="${null!=highlight}">
     <g:javascript>
-        var mynum=${highlight};
         fireWhenReady('wfivis_${highlight}',function(){Effect.Appear('wfivis_${highlight}', { duration: 0.5 });});
     </g:javascript>
 </g:if>

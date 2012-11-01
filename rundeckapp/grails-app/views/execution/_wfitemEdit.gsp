@@ -30,6 +30,9 @@
 </g:hasErrors>
 <g:render template="/common/messages"/>
 <div id="wfiedit_${rkey}">
+    <g:if test="${isErrorHandler}">
+        <span class="message note"><g:message code="Workflow.stepErrorHandler.description" /></span>
+    </g:if>
 <g:if test="${'job'==newitemtype || item instanceof JobExec || (item instanceof java.util.Map && item?.jobName)}">
     <div >
        <div class="info note">Job Name</div>
@@ -89,23 +92,47 @@
     </div>
     </g:if>
 </g:elseif>
+<g:if test="${isErrorHandler}">
+    <div class="presentation">
+        <label>
+        <g:checkBox name="keepgoingOnSuccess" value="true" checked="${item?.keepgoingOnSuccess}"/>
+        <g:message code="Workflow.stepErrorHandler.keepgoingOnSuccess.label" />
+        </label>
+        <span class="info note"><g:message code="Workflow.stepErrorHandler.keepgoingOnSuccess.description" /></span>
+    </div>
+</g:if>
 
-<g:hiddenField name="num" value="${num}"/>
+<g:hiddenField name="key" value="${key}"/>
+<g:hiddenField name="isErrorHandler" value="${isErrorHandler ? true : false}"/>
 <g:hiddenField name="scheduledExecutionId" value="${scheduledExecutionId}"/>
     <div class="floatr" style="margin:10px 0;">
+        <g:set var="msgItem" value="${isErrorHandler ? 'stepErrorHandler' : 'step'}"/>
         <span class="warn note cancelsavemsg" style="display:none;">
-            <g:message code="scheduledExecution.workflow.step.unsaved.warning"
+            <g:message code="scheduledExecution.workflow.${msgItem}.Item.unsaved.warning"
                        default="Discard or save changes to this Workflow Step before completing changes to the job"/>
         </span>
         <g:if test="${newitemtype||newitem}">
             <g:hiddenField name="newitem" value="true"/>
             <g:hiddenField name="newitemtype" value="${newitemtype}"/>
-            <span class="action button small textbtn" onclick="_wficancelnew(${num});" title="Cancel adding new ${g.message(code:'Workflow.step.label')}">Cancel</span>
-            <span class="action button small textbtn" onclick="_wfisavenew('wfiedit_${rkey}');" title="Save the new ${g.message(code:'Workflow.step.label')}">Save</span>
+
+            <g:if test="${isErrorHandler}">
+                <g:hiddenField name="num" value="${num}"/>
+                <span class="action button small textbtn" onclick="_wficancelnewEH(this);"
+                      title="Cancel adding new ${g.message(code: 'Workflow.'+ msgItem+'.label')}">Cancel</span>
+                <span class="action button small textbtn" onclick="_wfisave('${key}', ${num}, 'wfiedit_${rkey}');" title="Save the new ${g.message(code:'Workflow.'+ msgItem+'.label')}">Save</span>
+            </g:if>
+            <g:else>
+
+                <span class="action button small textbtn" onclick="_wficancelnew(${num});"
+                      title="Cancel adding new ${g.message(code: 'Workflow.step.label')}">Cancel</span>
+                <span class="action button small textbtn" onclick="_wfisavenew('wfiedit_${rkey}');" title="Save the new ${g.message(code:'Workflow.step.label')}">Save</span>
+            </g:else>
         </g:if>
         <g:else>
-            <span class="action button small textbtn" onclick="_wfiview(${num});" title="Discard changes to the ${g.message(code:'Workflow.step.label')}">Discard</span>
-            <span class="action button small textbtn" onclick="_wfisave(${num}, 'wfiedit_${rkey}');" title="Save changes to the ${g.message(code:'Workflow.step.label')}">Save</span>
+            <g:hiddenField name="num" value="${num}"/>
+            <span class="action button small textbtn" onclick="_wfiview('${key}',${num},${isErrorHandler?true:false});" title="Discard changes to the ${g.message(code:'Workflow.'+ msgItem+'.label')}">Discard</span>
+            <span class="action button small textbtn" onclick="_wfisave('${key}',${num}, 'wfiedit_${rkey}');"
+                  title="Save changes to the ${g.message(code:'Workflow.'+ msgItem+'.label')}">Save</span>
         </g:else>
     </div>
     <div class="clear"></div>

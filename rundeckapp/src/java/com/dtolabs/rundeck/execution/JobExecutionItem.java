@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.execution;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.HandlerExecutionItem;
 import com.dtolabs.rundeck.core.utils.NodeSet;
 
 import java.util.Map;
@@ -38,7 +39,7 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public interface JobExecutionItem extends ExecutionItem {
+public interface JobExecutionItem extends HandlerExecutionItem {
     public final static String COMMAND_TYPE = "rundeck-jobref";
     public String getJobIdentifier();
     public String[] getArgs();

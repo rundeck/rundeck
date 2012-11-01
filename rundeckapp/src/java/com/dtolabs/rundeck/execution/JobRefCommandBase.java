@@ -24,6 +24,8 @@
 package com.dtolabs.rundeck.execution;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.HasFailureHandler;
 
 import java.util.*;
 
@@ -32,7 +34,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class JobRefCommandBase extends JobRefCommand {
+public class JobRefCommandBase extends JobRefCommand implements HasFailureHandler {
     public String getJobIdentifier() {
         return null;
     }
@@ -41,4 +43,11 @@ public class JobRefCommandBase extends JobRefCommand {
         return new String[0];
     }
 
+    public ExecutionItem getFailureHandler() {
+        return null;
+    }
+
+    public boolean isKeepgoingOnSuccess() {
+        return false;
+    }
 }

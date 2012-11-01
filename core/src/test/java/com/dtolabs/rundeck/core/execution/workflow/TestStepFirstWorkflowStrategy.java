@@ -106,7 +106,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
         }
     }*/
 
-    static class testListener implements ExecutionListener {
+    static class testListener implements ExecutionListenerOverride {
         public boolean isTerse() {
             return false;
         }
@@ -170,6 +170,19 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
         public BuildListener getBuildListener() {
             return null;
         }
+
+        public ExecutionListenerOverride createOverride() {
+            return this;
+        }
+
+        public void setTerse(boolean terse) {
+        }
+
+        public void setLogFormat(String format) {
+        }
+
+        public void setFailedNodesListener(FailedNodesListener listener) {
+        }
     }
 
     static class testInterpreter implements CommandInterpreter {
@@ -189,6 +202,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             if (shouldThrowException) {
                 throw new InterpreterException("testInterpreter test exception");
             }
+            System.out.println("return index: (" + index + ") in size: " + resultList.size());
             return resultList.get(index++);
         }
     }
@@ -203,6 +217,14 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
 
         public boolean isSuccess() {
             return success;
+        }
+
+        @Override
+        public String toString() {
+            return "testResult{" +
+                   "success=" + success +
+                   ", flag=" + flag +
+                   '}';
         }
     }
 
@@ -724,6 +746,746 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 assertNull(executionContext.getArgs());
             }
         }
+        {
+            //test a workflow with a failing item (1), with keepgoing=true
+            final NodesSelector nodeset = SelectorUtils.singleNode(testFramework.getFrameworkNodeName());
+            final ArrayList<ExecutionItem> commands = new ArrayList<ExecutionItem>();
+
+            final ExecutionItem testWorkflowCmdItem = new ExecCommandBase() {
+                @Override
+                public String[] getCommand() {
+                    return new String[]{"a", "2", "command"};
+                }
+            };
+
+            commands.add(testWorkflowCmdItem);
+
+            final ExecutionItem testWorkflowCmdItemScript = new ScriptFileCommandBase() {
+                @Override
+                public String getScript() {
+                    return "a command";
+                }
+
+                @Override
+                public String[] getArgs() {
+                    return new String[]{"-testargs", "1"};
+                }
+            };
+            commands.add(testWorkflowCmdItemScript);
+
+
+            final ExecutionItem testWorkflowCmdItemScript2 = new ScriptFileCommandBase() {
+                @Override
+                public String getServerScriptFilePath() {
+                    return "/some/file/path";
+                }
+
+                @Override
+                public String[] getArgs() {
+                    return new String[]{"-testargs", "2"};
+                }
+            };
+            commands.add(testWorkflowCmdItemScript2);
+            final WorkflowImpl workflow = new WorkflowImpl(commands, 1, false,
+                WorkflowStrategy.STEP_FIRST);
+            workflow.setKeepgoing(true);
+            final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
+            final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+                new ExecutionContextImpl.Builder()
+                    .frameworkProject(TEST_PROJECT)
+                    .user("user1")
+                    .nodeSelector(nodeset)
+                    .executionListener(new testListener())
+                    .framework(testFramework)
+                    .build();
+
+            //setup testInterpreter for all command types
+            final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
+                testFramework);
+            testInterpreter interpreterMock = new testInterpreter();
+            testInterpreter failMock = new testInterpreter();
+            failMock.shouldThrowException = true;
+//            interpreterService.registerInstance(JobExecutionItem.COMMAND_TYPE, interpreterMock);
+            interpreterService.registerInstance("exec", interpreterMock);
+            interpreterService.registerInstance("script", interpreterMock);
+            interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_NODE_FIRST, failMock);
+            interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
+
+            //set resturn results, fail on second item
+            interpreterMock.resultList.add(new testResult(true, 0));
+            interpreterMock.resultList.add(new testResult(false, 1));
+            interpreterMock.resultList.add(new testResult(true, 2));
+
+            final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
+
+            assertNotNull(result);
+            if (!result.isSuccess() && null != result.getException()) {
+                result.getException().printStackTrace(System.err);
+            }
+            assertFalse(result.isSuccess());
+            assertNotNull("threw exception: " + result.getException(), result.getException());
+            assertTrue("threw exception: " + result.getException(), result.getException() instanceof WorkflowFailureException);
+            WorkflowFailureException wfsfe = (WorkflowFailureException) result.getException();
+
+            assertEquals(1, result.getResultSet().size());
+            assertNotNull(result.getResultSet());
+            assertNotNull("missing key"+testnode+": " + result.getResultSet().keySet(), result.getResultSet().get(testnode));
+            final List<StatusResult> test1 = result.getResultSet().get(testnode);
+            assertEquals(3, test1.size());
+            for (final int i : new int[]{0, 1, 2}) {
+                final StatusResult interpreterResult = test1.get(i);
+                assertTrue(interpreterResult instanceof testResult);
+                testResult val = (testResult) interpreterResult;
+                assertEquals(i, val.flag);
+                if (1 == i) {
+                    assertFalse(val.isSuccess());
+                } else {
+                    assertTrue(val.isSuccess());
+                }
+            }
+
+            assertEquals(3, interpreterMock.executionItemList.size());
+
+            final ExecutionItem executionItem1 = interpreterMock.executionItemList.get(0);
+            assertTrue("wrong class: " + executionItem1.getClass().getName(),
+                executionItem1 instanceof ExecCommandExecutionItem);
+            ExecCommandExecutionItem execItem = (ExecCommandExecutionItem) executionItem1;
+            assertNotNull(execItem.getCommand());
+            assertEquals(3, execItem.getCommand().length);
+            assertEquals("a", execItem.getCommand()[0]);
+            assertEquals("2", execItem.getCommand()[1]);
+            assertEquals("command", execItem.getCommand()[2]);
+
+            final ExecutionItem item2 = interpreterMock.executionItemList.get(1);
+            assertTrue("wrong class: " + item2.getClass().getName(),
+                item2 instanceof ScriptFileCommandExecutionItem);
+            ScriptFileCommandExecutionItem scriptItem = (ScriptFileCommandExecutionItem) item2;
+            assertEquals("a command", scriptItem.getScript());
+            assertNull(scriptItem.getScriptAsStream());
+            assertNull(scriptItem.getServerScriptFilePath());
+            assertNotNull(scriptItem.getArgs());
+            assertEquals(2, scriptItem.getArgs().length);
+            assertEquals("-testargs", scriptItem.getArgs()[0]);
+            assertEquals("1",scriptItem.getArgs()[1]);
+
+            final ExecutionItem item3 = interpreterMock.executionItemList.get(2);
+            assertTrue("wrong class: " + item2.getClass().getName(),
+                item2 instanceof ScriptFileCommandExecutionItem);
+            ScriptFileCommandExecutionItem scriptItem3 = (ScriptFileCommandExecutionItem) item3;
+            assertEquals("/some/file/path", scriptItem3.getServerScriptFilePath());
+            assertNull(scriptItem3.getScript());
+            assertNull(scriptItem3.getScriptAsStream());
+            assertNotNull(scriptItem3.getArgs());
+            assertEquals(2, scriptItem3.getArgs().length);
+            assertEquals("-testargs", scriptItem3.getArgs()[0]);
+            assertEquals("2", scriptItem3.getArgs()[1]);
+
+
+            assertEquals(3, interpreterMock.executionContextList.size());
+
+            for (final int i : new int[]{0, 1}) {
+                final ExecutionContext executionContext = interpreterMock.executionContextList.get(i);
+                assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
+                assertNull(executionContext.getDataContext());
+                assertEquals(0, executionContext.getLoglevel());
+                assertEquals("user1", executionContext.getUser());
+                assertEquals(nodeset, executionContext.getNodeSelector());
+                assertNull(executionContext.getArgs());
+            }
+        }
+    }
+    public void testFailureHandlerItem(){
+        {
+            //test a workflow with a failing item (1), with keepgoing=false, and a failureHandler
+            final boolean KEEPGOING_TEST = false;
+            final boolean STEP_0_RESULT = false;
+            final boolean STEP_1_RESULT = true;
+            final boolean HANDLER_RESULT = true;
+            final NodesSelector nodeset = SelectorUtils.singleNode(testFramework.getFrameworkNodeName());
+            final ArrayList<ExecutionItem> commands = new ArrayList<ExecutionItem>();
+
+            final ExecutionItem testHandlerItem = new ScriptFileCommandBase() {
+                @Override
+                public String getScript() {
+                    return "failure handler script";
+                }
+
+                @Override
+                public String[] getArgs() {
+                    return new String[]{"failure","script","args"};
+                }
+            };
+            final ExecutionItem testWorkflowCmdItem = new ExecCommandBase() {
+                @Override
+                public String[] getCommand() {
+                    return new String[]{"a", "2", "command"};
+                }
+
+                @Override
+                public ExecutionItem getFailureHandler() {
+                    return testHandlerItem;
+                }
+            };
+
+            commands.add(testWorkflowCmdItem);
+
+            final ExecutionItem testWorkflowCmdItemScript = new ScriptFileCommandBase() {
+                @Override
+                public String getScript() {
+                    return "a command";
+                }
+
+                @Override
+                public String[] getArgs() {
+                    return new String[]{"-testargs", "1"};
+                }
+            };
+            commands.add(testWorkflowCmdItemScript);
+
+            final WorkflowImpl workflow = new WorkflowImpl(commands, 1, false,
+                WorkflowStrategy.STEP_FIRST);
+            workflow.setKeepgoing(KEEPGOING_TEST);
+            final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
+            final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+                new ExecutionContextImpl.Builder()
+                    .frameworkProject(TEST_PROJECT)
+                    .user("user1")
+                    .nodeSelector(nodeset)
+                    .executionListener(new testListener())
+                    .framework(testFramework)
+                    .build();
+
+            //setup testInterpreter for all command types
+            final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
+                testFramework);
+            testInterpreter interpreterMock = new testInterpreter();
+            testInterpreter handlerInterpreterMock = new testInterpreter();
+            testInterpreter failMock = new testInterpreter();
+            failMock.shouldThrowException = true;
+//            interpreterService.registerInstance(JobExecutionItem.COMMAND_TYPE, interpreterMock);
+            interpreterService.registerInstance("exec", interpreterMock);
+            interpreterService.registerInstance("script", handlerInterpreterMock);
+            interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_NODE_FIRST, failMock);
+            interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
+
+            //set resturn results, fail on second item
+            interpreterMock.resultList.add(new testResult(STEP_0_RESULT, 0));
+            interpreterMock.resultList.add(new testResult(STEP_1_RESULT, 1));
+            handlerInterpreterMock.resultList.add(new testResult(HANDLER_RESULT, 0));
+
+            final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
+
+            assertNotNull(result);
+            if (!result.isSuccess() && null != result.getException()) {
+                result.getException().printStackTrace(System.err);
+            }
+            assertFalse(result.isSuccess());
+            assertNotNull("threw exception: " + result.getException(), result.getException());
+            assertTrue("threw exception: " + result.getException(),
+                result.getException() instanceof WorkflowStepFailureException);
+            WorkflowStepFailureException wfsfe = (WorkflowStepFailureException) result.getException();
+            assertEquals(1, wfsfe.getWorkflowStep());
+            assertNotNull(wfsfe.getExecutionResult());
+            final ExecutionResult executionResult = wfsfe.getExecutionResult();
+            assertNotNull(executionResult.getResultObject());
+            assertNotNull(executionResult.getResultObject().getResults());
+            assertEquals(1, executionResult.getResultObject().getResults().size());
+            assertNotNull(executionResult.getResultObject().getResults().get(testnode));
+            final StatusResult testnode1 = executionResult.getResultObject().getResults().get(testnode);
+            assertNotNull(testnode1);
+            assertTrue(testnode1 instanceof testResult);
+            testResult failResult = (testResult) testnode1;
+            assertEquals(0, failResult.flag);
+
+            assertEquals(1, result.getResultSet().size());
+            assertNotNull(result.getResultSet());
+            assertNotNull("missing key" + testnode + ": " + result.getResultSet().keySet(), result.getResultSet().get(
+                testnode));
+            final List<StatusResult> test1 = result.getResultSet().get(testnode);
+            System.err.println("results: "+result.getResultSet().get(testnode));
+            assertEquals(1, test1.size());
+            final int i =0;
+            final StatusResult interpreterResult = test1.get(i);
+            assertTrue(interpreterResult instanceof testResult);
+            testResult val = (testResult) interpreterResult;
+            assertEquals(i, val.flag);
+            assertFalse(val.isSuccess());
+
+            assertEquals(1, interpreterMock.executionItemList.size());
+
+            final ExecutionItem executionItem1 = interpreterMock.executionItemList.get(0);
+            assertTrue("wrong class: " + executionItem1.getClass().getName(),
+                executionItem1 instanceof ExecCommandExecutionItem);
+            ExecCommandExecutionItem execItem = (ExecCommandExecutionItem) executionItem1;
+            assertNotNull(execItem.getCommand());
+            assertEquals(3, execItem.getCommand().length);
+            assertEquals("a", execItem.getCommand()[0]);
+            assertEquals("2", execItem.getCommand()[1]);
+            assertEquals("command", execItem.getCommand()[2]);
+
+            assertEquals(1, interpreterMock.executionContextList.size());
+
+            final ExecutionContext executionContext = interpreterMock.executionContextList.get(i);
+            assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
+            assertNull(executionContext.getDataContext());
+            assertEquals(0, executionContext.getLoglevel());
+            assertEquals("user1", executionContext.getUser());
+            assertEquals(nodeset, executionContext.getNodeSelector());
+            assertNull(executionContext.getArgs());
+
+            //check handler item was executed
+            assertEquals(1, handlerInterpreterMock.executionItemList.size());
+
+            final ExecutionItem executionItemX = handlerInterpreterMock.executionItemList.get(0);
+            assertTrue("wrong class: " + executionItemX.getClass().getName(),
+                executionItemX instanceof ScriptFileCommandExecutionItem);
+            ScriptFileCommandExecutionItem execItemX = (ScriptFileCommandExecutionItem) executionItemX;
+            assertNotNull(execItemX.getScript());
+            assertNotNull(execItemX.getArgs());
+            assertEquals("failure handler script", execItemX.getScript());
+            assertEquals(3, execItemX.getArgs().length);
+            assertEquals("failure", execItemX.getArgs()[0]);
+            assertEquals("script", execItemX.getArgs()[1]);
+            assertEquals("args", execItemX.getArgs()[2]);
+
+            assertEquals(1, handlerInterpreterMock.executionContextList.size());
+
+            final ExecutionContext executionContextX = handlerInterpreterMock.executionContextList.get(i);
+            assertEquals(TEST_PROJECT, executionContextX.getFrameworkProject());
+            assertNull(executionContextX.getDataContext());
+            assertEquals(0, executionContextX.getLoglevel());
+            assertEquals("user1", executionContextX.getUser());
+            assertEquals(nodeset, executionContextX.getNodeSelector());
+            assertNull(executionContextX.getArgs());
+        }
+        {
+            //test a workflow with a failing item (1), with keepgoing=true, and a failureHandler that fails
+            final boolean KEEPGOING_TEST = true;
+            final boolean STEP_0_RESULT = false;
+            final boolean STEP_1_RESULT = true;
+            final boolean HANDLER_RESULT = false;
+            final NodesSelector nodeset = SelectorUtils.singleNode(testFramework.getFrameworkNodeName());
+            final ArrayList<ExecutionItem> commands = new ArrayList<ExecutionItem>();
+
+            final ExecutionItem testHandlerItem = new ScriptFileCommandBase() {
+                @Override
+                public String getScript() {
+                    return "failure handler script";
+                }
+
+                @Override
+                public String[] getArgs() {
+                    return new String[]{"failure","script","args"};
+                }
+
+                @Override
+                public String toString() {
+                    return "testHandlerItem";
+                }
+            };
+            final ExecutionItem testWorkflowCmdItem = new ExecCommandBase() {
+                @Override
+                public String[] getCommand() {
+                    return new String[]{"a", "2", "command"};
+                }
+
+                @Override
+                public ExecutionItem getFailureHandler() {
+                    return testHandlerItem;
+                }
+
+                @Override
+                public String toString() {
+                    return "testWorkflowCmdItem";
+                }
+            };
+
+            commands.add(testWorkflowCmdItem);
+
+            final ExecutionItem testWorkflowCmdItem2 = new ExecCommandBase() {
+                @Override
+                public String[] getCommand() {
+                    return new String[]{"a", "3", "command"};
+                }
+
+                @Override
+                public ExecutionItem getFailureHandler() {
+                    return testHandlerItem;
+                }
+
+                @Override
+                public String toString() {
+                    return "testWorkflowCmdItem2";
+                }
+            };
+            commands.add(testWorkflowCmdItem2);
+
+            final WorkflowImpl workflow = new WorkflowImpl(commands, 1, false,
+                WorkflowStrategy.STEP_FIRST);
+            workflow.setKeepgoing(KEEPGOING_TEST);
+            final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
+            final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+                new ExecutionContextImpl.Builder()
+                    .frameworkProject(TEST_PROJECT)
+                    .user("user1")
+                    .nodeSelector(nodeset)
+                    .executionListener(new testListener())
+                    .framework(testFramework)
+                    .build();
+
+            //setup testInterpreter for all command types
+            final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
+                testFramework);
+            testInterpreter interpreterMock = new testInterpreter();
+            testInterpreter handlerInterpreterMock = new testInterpreter();
+            testInterpreter failMock = new testInterpreter();
+            failMock.shouldThrowException = true;
+//            interpreterService.registerInstance(JobExecutionItem.COMMAND_TYPE, interpreterMock);
+            interpreterService.registerInstance("exec", interpreterMock);
+            interpreterService.registerInstance("script", handlerInterpreterMock);
+            interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_NODE_FIRST, failMock);
+            interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
+
+            //set resturn results
+            interpreterMock.resultList.add(new testResult(STEP_0_RESULT, 0));
+            interpreterMock.resultList.add(new testResult(STEP_1_RESULT, 1));
+            handlerInterpreterMock.resultList.add(new testResult(HANDLER_RESULT, 0));
+
+            final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
+
+            assertNotNull(result);
+            if (!result.isSuccess() && null != result.getException()) {
+                result.getException().printStackTrace(System.err);
+            }
+            assertFalse(result.isSuccess());
+            assertNotNull("threw exception: " + result.getException(), result.getException());
+            assertTrue("threw exception: " + result.getException(),
+                result.getException() instanceof WorkflowFailureException);
+            WorkflowFailureException wfsfe = (WorkflowFailureException) result.getException();
+
+            assertEquals(1, result.getResultSet().size());
+            assertNotNull(result.getResultSet());
+            assertNotNull("missing key" + testnode + ": " + result.getResultSet().keySet(), result.getResultSet().get(
+                testnode));
+            final List<StatusResult> test1 = result.getResultSet().get(testnode);
+            System.err.println("results: "+result.getResultSet().get(testnode));
+
+            assertEquals(3, test1.size());
+
+            assertEquals(2, interpreterMock.executionItemList.size());
+            assertEquals(2, interpreterMock.executionContextList.size());
+            //check handler item was executed
+            assertEquals(1, handlerInterpreterMock.executionItemList.size());
+            assertEquals(1, handlerInterpreterMock.executionContextList.size());
+
+
+            int resultIndex =0;
+            int stepNum=0;
+            {
+                //first step result
+                final StatusResult interpreterResult = test1.get(resultIndex);
+                assertTrue(interpreterResult instanceof testResult);
+                testResult val = (testResult) interpreterResult;
+                assertEquals(0, val.flag);
+                assertFalse(val.isSuccess());
+
+
+                final ExecutionItem executionItem1 = interpreterMock.executionItemList.get(stepNum);
+                assertTrue("wrong class: " + executionItem1.getClass().getName(),
+                    executionItem1 instanceof ExecCommandExecutionItem);
+                ExecCommandExecutionItem execItem = (ExecCommandExecutionItem) executionItem1;
+                assertNotNull(execItem.getCommand());
+                assertEquals(3, execItem.getCommand().length);
+                assertEquals("a", execItem.getCommand()[0]);
+                assertEquals("2", execItem.getCommand()[1]);
+                assertEquals("command", execItem.getCommand()[2]);
+
+
+                final ExecutionContext executionContext = interpreterMock.executionContextList.get(stepNum);
+                assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
+                assertNull(executionContext.getDataContext());
+                assertEquals(0, executionContext.getLoglevel());
+                assertEquals("user1", executionContext.getUser());
+                assertEquals(nodeset, executionContext.getNodeSelector());
+                assertNull(executionContext.getArgs());
+            }
+
+            resultIndex=1;
+
+            {
+                //failure handler result
+                final StatusResult interpreterResult = test1.get(resultIndex);
+                assertTrue(interpreterResult instanceof testResult);
+                testResult val = (testResult) interpreterResult;
+                assertEquals(0, val.flag);
+                assertFalse(val.isSuccess());
+
+                final ExecutionItem executionItemX = handlerInterpreterMock.executionItemList.get(stepNum);
+                assertTrue("wrong class: " + executionItemX.getClass().getName(),
+                    executionItemX instanceof ScriptFileCommandExecutionItem);
+                ScriptFileCommandExecutionItem execItemX = (ScriptFileCommandExecutionItem) executionItemX;
+                assertNotNull(execItemX.getScript());
+                assertNotNull(execItemX.getArgs());
+                assertEquals("failure handler script", execItemX.getScript());
+                assertEquals(3, execItemX.getArgs().length);
+                assertEquals("failure", execItemX.getArgs()[0]);
+                assertEquals("script", execItemX.getArgs()[1]);
+                assertEquals("args", execItemX.getArgs()[2]);
+
+
+                final ExecutionContext executionContextX = handlerInterpreterMock.executionContextList.get(stepNum);
+                assertEquals(TEST_PROJECT, executionContextX.getFrameworkProject());
+                assertNull(executionContextX.getDataContext());
+                assertEquals(0, executionContextX.getLoglevel());
+                assertEquals("user1", executionContextX.getUser());
+                assertEquals(nodeset, executionContextX.getNodeSelector());
+                assertNull(executionContextX.getArgs());
+            }
+
+            resultIndex=2;
+            stepNum = 1;
+            {
+                //second step result
+                final StatusResult interpreterResult = test1.get(resultIndex);
+                assertTrue(interpreterResult instanceof testResult);
+                testResult val = (testResult) interpreterResult;
+                assertEquals(1, val.flag);
+                assertTrue(val.isSuccess());
+
+                final ExecutionItem executionItem1 = interpreterMock.executionItemList.get(stepNum);
+                assertTrue("wrong class: " + executionItem1.getClass().getName(),
+                    executionItem1 instanceof ExecCommandExecutionItem);
+                ExecCommandExecutionItem execItem = (ExecCommandExecutionItem) executionItem1;
+                assertNotNull(execItem.getCommand());
+                assertEquals(3, execItem.getCommand().length);
+                assertEquals("a", execItem.getCommand()[0]);
+                assertEquals("3", execItem.getCommand()[1]);
+                assertEquals("command", execItem.getCommand()[2]);
+
+                final ExecutionContext executionContext = interpreterMock.executionContextList.get(stepNum);
+                assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
+                assertNull(executionContext.getDataContext());
+                assertEquals(0, executionContext.getLoglevel());
+                assertEquals("user1", executionContext.getUser());
+                assertEquals(nodeset, executionContext.getNodeSelector());
+                assertNull(executionContext.getArgs());
+            }
+        }
+        {
+            //test a workflow with a failing item (1), with keepgoing=true, and a failureHandler that succeeds
+            final boolean KEEPGOING_TEST = true;
+            final boolean STEP_0_RESULT = false;
+            final boolean STEP_1_RESULT = true;
+            final boolean HANDLER_RESULT = true;
+            final NodesSelector nodeset = SelectorUtils.singleNode(testFramework.getFrameworkNodeName());
+            final ArrayList<ExecutionItem> commands = new ArrayList<ExecutionItem>();
+
+            final ExecutionItem testHandlerItem = new ScriptFileCommandBase() {
+                @Override
+                public String getScript() {
+                    return "failure handler script";
+                }
+
+                @Override
+                public String[] getArgs() {
+                    return new String[]{"failure","script","args"};
+                }
+
+                @Override
+                public String toString() {
+                    return "testHandlerItem";
+                }
+            };
+            final ExecutionItem testWorkflowCmdItem = new ExecCommandBase() {
+                @Override
+                public String[] getCommand() {
+                    return new String[]{"a", "2", "command"};
+                }
+
+                @Override
+                public ExecutionItem getFailureHandler() {
+                    return testHandlerItem;
+                }
+
+                @Override
+                public String toString() {
+                    return "testWorkflowCmdItem";
+                }
+            };
+
+            commands.add(testWorkflowCmdItem);
+
+            final ExecutionItem testWorkflowCmdItem2 = new ExecCommandBase() {
+                @Override
+                public String[] getCommand() {
+                    return new String[]{"a", "3", "command"};
+                }
+
+                @Override
+                public ExecutionItem getFailureHandler() {
+                    return testHandlerItem;
+                }
+
+                @Override
+                public String toString() {
+                    return "testWorkflowCmdItem2";
+                }
+            };
+            commands.add(testWorkflowCmdItem2);
+
+            final WorkflowImpl workflow = new WorkflowImpl(commands, 1, false,
+                WorkflowStrategy.STEP_FIRST);
+            workflow.setKeepgoing(KEEPGOING_TEST);
+            final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
+            final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
+            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+                new ExecutionContextImpl.Builder()
+                    .frameworkProject(TEST_PROJECT)
+                    .user("user1")
+                    .nodeSelector(nodeset)
+                    .executionListener(new testListener())
+                    .framework(testFramework)
+                    .build();
+
+            //setup testInterpreter for all command types
+            final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
+                testFramework);
+            testInterpreter interpreterMock = new testInterpreter();
+            testInterpreter handlerInterpreterMock = new testInterpreter();
+            testInterpreter failMock = new testInterpreter();
+            failMock.shouldThrowException = true;
+//            interpreterService.registerInstance(JobExecutionItem.COMMAND_TYPE, interpreterMock);
+            interpreterService.registerInstance("exec", interpreterMock);
+            interpreterService.registerInstance("script", handlerInterpreterMock);
+            interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_NODE_FIRST, failMock);
+            interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
+
+            //set resturn results
+            interpreterMock.resultList.add(new testResult(STEP_0_RESULT, 0));
+            interpreterMock.resultList.add(new testResult(STEP_1_RESULT, 1));
+            handlerInterpreterMock.resultList.add(new testResult(HANDLER_RESULT, 0));
+
+            final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
+
+            assertNotNull(result);
+            if (!result.isSuccess() && null != result.getException()) {
+                result.getException().printStackTrace(System.err);
+            }
+            assertTrue(result.isSuccess());
+            assertNull("threw exception: " + result.getException(), result.getException());
+
+            assertEquals(1, result.getResultSet().size());
+            assertNotNull(result.getResultSet());
+            assertNotNull("missing key" + testnode + ": " + result.getResultSet().keySet(), result.getResultSet().get(
+                testnode));
+            final List<StatusResult> test1 = result.getResultSet().get(testnode);
+            System.err.println("results: "+result.getResultSet().get(testnode));
+
+            assertEquals(3, test1.size());
+
+            assertEquals(2, interpreterMock.executionItemList.size());
+            assertEquals(2, interpreterMock.executionContextList.size());
+            //check handler item was executed
+            assertEquals(1, handlerInterpreterMock.executionItemList.size());
+            assertEquals(1, handlerInterpreterMock.executionContextList.size());
+
+
+            int resultIndex =0;
+            int stepNum=0;
+            {
+                //first step result
+                final StatusResult interpreterResult = test1.get(resultIndex);
+                assertTrue(interpreterResult instanceof testResult);
+                testResult val = (testResult) interpreterResult;
+                assertEquals(0, val.flag);
+                assertFalse(val.isSuccess());
+
+
+                final ExecutionItem executionItem1 = interpreterMock.executionItemList.get(stepNum);
+                assertTrue("wrong class: " + executionItem1.getClass().getName(),
+                    executionItem1 instanceof ExecCommandExecutionItem);
+                ExecCommandExecutionItem execItem = (ExecCommandExecutionItem) executionItem1;
+                assertNotNull(execItem.getCommand());
+                assertEquals(3, execItem.getCommand().length);
+                assertEquals("a", execItem.getCommand()[0]);
+                assertEquals("2", execItem.getCommand()[1]);
+                assertEquals("command", execItem.getCommand()[2]);
+
+
+                final ExecutionContext executionContext = interpreterMock.executionContextList.get(stepNum);
+                assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
+                assertNull(executionContext.getDataContext());
+                assertEquals(0, executionContext.getLoglevel());
+                assertEquals("user1", executionContext.getUser());
+                assertEquals(nodeset, executionContext.getNodeSelector());
+                assertNull(executionContext.getArgs());
+            }
+
+            resultIndex=1;
+
+            {
+                //failure handler result
+                final StatusResult interpreterResult = test1.get(resultIndex);
+                assertTrue(interpreterResult instanceof testResult);
+                testResult val = (testResult) interpreterResult;
+                assertEquals(0, val.flag);
+                assertTrue(val.isSuccess());
+
+                final ExecutionItem executionItemX = handlerInterpreterMock.executionItemList.get(stepNum);
+                assertTrue("wrong class: " + executionItemX.getClass().getName(),
+                    executionItemX instanceof ScriptFileCommandExecutionItem);
+                ScriptFileCommandExecutionItem execItemX = (ScriptFileCommandExecutionItem) executionItemX;
+                assertNotNull(execItemX.getScript());
+                assertNotNull(execItemX.getArgs());
+                assertEquals("failure handler script", execItemX.getScript());
+                assertEquals(3, execItemX.getArgs().length);
+                assertEquals("failure", execItemX.getArgs()[0]);
+                assertEquals("script", execItemX.getArgs()[1]);
+                assertEquals("args", execItemX.getArgs()[2]);
+
+
+                final ExecutionContext executionContextX = handlerInterpreterMock.executionContextList.get(stepNum);
+                assertEquals(TEST_PROJECT, executionContextX.getFrameworkProject());
+                assertNull(executionContextX.getDataContext());
+                assertEquals(0, executionContextX.getLoglevel());
+                assertEquals("user1", executionContextX.getUser());
+                assertEquals(nodeset, executionContextX.getNodeSelector());
+                assertNull(executionContextX.getArgs());
+            }
+
+            resultIndex=2;
+            stepNum = 1;
+            {
+                //second step result
+                final StatusResult interpreterResult = test1.get(resultIndex);
+                assertTrue(interpreterResult instanceof testResult);
+                testResult val = (testResult) interpreterResult;
+                assertEquals(1, val.flag);
+                assertTrue(val.isSuccess());
+
+                final ExecutionItem executionItem1 = interpreterMock.executionItemList.get(stepNum);
+                assertTrue("wrong class: " + executionItem1.getClass().getName(),
+                    executionItem1 instanceof ExecCommandExecutionItem);
+                ExecCommandExecutionItem execItem = (ExecCommandExecutionItem) executionItem1;
+                assertNotNull(execItem.getCommand());
+                assertEquals(3, execItem.getCommand().length);
+                assertEquals("a", execItem.getCommand()[0]);
+                assertEquals("3", execItem.getCommand()[1]);
+                assertEquals("command", execItem.getCommand()[2]);
+
+                final ExecutionContext executionContext = interpreterMock.executionContextList.get(stepNum);
+                assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
+                assertNull(executionContext.getDataContext());
+                assertEquals(0, executionContext.getLoglevel());
+                assertEquals("user1", executionContext.getUser());
+                assertEquals(nodeset, executionContext.getNodeSelector());
+                assertNull(executionContext.getArgs());
+            }
+        }
+
     }
     public void testGenericItem(){
 

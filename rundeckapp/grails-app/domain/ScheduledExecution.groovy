@@ -18,6 +18,8 @@ class ScheduledExecution extends ExecutionContext {
     String crontabString
     String uuid;
 
+    Workflow workflow
+
     Date nextExecution
     boolean scheduled = false
     Long totalTime=0

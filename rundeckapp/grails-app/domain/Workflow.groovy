@@ -51,9 +51,31 @@ public class Workflow {
         this.keepgoing=source.keepgoing
         this.strategy=source.strategy
         commands = new ArrayList()
-        source.commands.each {
-            commands.add(createItem(it))
+        source.commands.each { CommandExec cmd->
+            final item = createItem(cmd)
+            if(cmd.errorHandler){
+                final handler=createItem(cmd.errorHandler)
+                item.errorHandler=handler
+            }
+            addToCommands(item)
         }
+    }
+    public Workflow createClone(){
+        Workflow newwf=new Workflow()
+        newwf.threadcount = this.threadcount
+        newwf.keepgoing = this.keepgoing
+        newwf.strategy = this.strategy
+        newwf.commands = new ArrayList()
+
+        this.commands?.each { CommandExec cmd ->
+            final item = createItem(cmd)
+            if (cmd.errorHandler) {
+                final handler = createItem(cmd.errorHandler)
+                item.errorHandler = handler
+            }
+            newwf.addToCommands(item)
+        }
+        return newwf
     }
     public static CommandExec createItem(CommandExec item){
         return item.createClone()
@@ -72,13 +94,24 @@ public class Workflow {
         wf.strategy=data.strategy?data.strategy:'node-first'
         if(data.commands){
             ArrayList commands = new ArrayList()
+            Set handlers = new HashSet()
             data.commands.each{map->
+                CommandExec exec
                 if(map.jobref){
-                    JobExec exec = JobExec.jobExecFromMap(map)
+                    exec = JobExec.jobExecFromMap(map)
                     commands <<exec
                 }else{
-                    CommandExec exec=CommandExec.fromMap(map)
+                    exec=CommandExec.fromMap(map)
                     commands<<exec
+                }
+                if(map.errorhandler){
+                    CommandExec handler
+                    if (map.errorhandler.jobref) {
+                        handler = JobExec.jobExecFromMap(map.errorhandler)
+                    } else {
+                        handler = CommandExec.fromMap(map.errorhandler)
+                    }
+                    exec.errorHandler=handler
                 }
             }
             wf.commands=commands

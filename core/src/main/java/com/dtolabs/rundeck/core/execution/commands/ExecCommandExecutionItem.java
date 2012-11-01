@@ -24,12 +24,14 @@
 package com.dtolabs.rundeck.core.execution.commands;
 
 import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.HandlerExecutionItem;
+
 
 /**
  * ExecCommandExecutionItem is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface ExecCommandExecutionItem extends ExecutionItem {
+public interface ExecCommandExecutionItem extends HandlerExecutionItem {
     public abstract String[] getCommand();
 }

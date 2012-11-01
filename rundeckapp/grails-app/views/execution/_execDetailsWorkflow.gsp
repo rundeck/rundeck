@@ -134,7 +134,40 @@
             <span class="action button small" onclick="$('wfnewtypes').hide();$('wfnewbutton').show();" title="Cancel adding new item"> Cancel</span>
         </div>
     </div>
+
+        <div id="wfnew_eh_types" style="display:none; margin-top:10px;background: white;" class="popout">
+            %{--This element is moved around to show the add error-handle buttons for a step--}%
+            <span><g:message code="Workflow.stepErrorHandler.label.add"/></span>
+            <span><g:message code="Workflow.stepErrorHandler.description" /></span>
+
+            <div class="info note"><g:message code="Workflow.stepErrorHandler.label.choose.the.type" /></div>
+
+            <div style="margin:10px;">
+                <span class="button action add_eh_type" data-eh-type="command"  title="Execute a remote command"><g:img
+                    file='icon-tiny-add.png'/> Command</span>
+                <span class="button action add_eh_type" data-eh-type="script"  title="Execute  an inline script"><g:img
+                    file='icon-tiny-add.png'/> Script</span>
+                <span class="button action add_eh_type" data-eh-type="scriptfile"  title="Execute a script file"><g:img
+                    file='icon-tiny-add.png'/> Script file</span>
+                <span class="button action add_eh_type" data-eh-type="job"  title="Execute another Job"><g:img
+                    file='icon-tiny-add.png'/> Job Reference</span>
+            </div>
+
+            <div style="margin:10px; text-align:right;">
+                <span class="action button small cancel_add_eh_type"  title="Cancel adding new item">Cancel</span>
+            </div>
+        </div>
     </div>
+        <script type="text/javascript">
+            fireWhenReady('wfnew_eh_types',function(){
+                $('wfnew_eh_types').select('span.add_eh_type').each(function (e) {
+                    Event.observe(e, 'click', _evtNewEHChooseType);
+                });
+                $('wfnew_eh_types').select('span.cancel_add_eh_type').each(function (e) {
+                    Event.observe(e, 'click', _evtNewEHCancel);
+                });
+            })
+        </script>
 </g:if>
 </div>
 <div class="clear"></div>

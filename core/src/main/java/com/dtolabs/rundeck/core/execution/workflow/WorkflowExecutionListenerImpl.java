@@ -44,6 +44,12 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
     private InheritableThreadLocal<INodeEntry> localNode = new InheritableThreadLocal<INodeEntry>();
     private InheritableThreadLocal<String> contextPrefix = new InheritableThreadLocal<String>();
 
+    private WorkflowExecutionListenerImpl delegate;
+
+    protected WorkflowExecutionListenerImpl(WorkflowExecutionListenerImpl delegate) {
+        super(delegate);
+        this.delegate=delegate;
+    }
 
     public WorkflowExecutionListenerImpl(final FailedNodesListener failedNodesListener,
                                          final ContextLogger logger, final boolean terse, final String logFormat) {
@@ -52,6 +58,10 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
 
     @Override
     public void beginInterpretCommand(final ExecutionContext context, final ExecutionItem item, final INodeEntry node) {
+        if(null!=delegate) {
+            delegate.beginInterpretCommand(context, item, node);
+            return;
+        }
         super.beginInterpretCommand(context, item, node);
         localNode.set(node);
         context.getExecutionListener().log(Constants.DEBUG_LEVEL,
@@ -61,6 +71,10 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
     @Override
     public void finishInterpretCommand(final InterpreterResult result, final ExecutionContext context,
                                        final ExecutionItem item, final INodeEntry node) {
+        if (null != delegate) {
+            delegate.finishInterpretCommand(result, context, item, node);
+            return;
+        }
         super.finishInterpretCommand(result, context, item, node);
         localNode.set(null);
         log(Constants.DEBUG_LEVEL,
@@ -70,6 +84,9 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
 
     @Override
     public Map<String, String> getLoggingContext() {
+        if (null != delegate) {
+            return delegate.getLoggingContext();
+        }
 
         if (null != localStep.get() || null != localNode.get()) {
             final HashMap<String, String> loggingContext = new HashMap<String, String>();
@@ -99,11 +116,18 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
     }
 
     private String makePrefix(WFStepContext wfStepInfo) {
+        if (null != delegate) {
+            return delegate.makePrefix(wfStepInfo);
+        }
         return wfStepInfo.step + "-" + wfStepInfo.stepItem.getType();
     }
 
 
     public void beginWorkflowExecution(final ExecutionContext executionContext, final WorkflowExecutionItem item) {
+        if (null != delegate) {
+            delegate.beginWorkflowExecution(executionContext, item);
+            return;
+        }
         if(null!=localStep.get()) {
             String prefix = makePrefix(localStep.get());
             if(null!= contextPrefix.get()) {
@@ -122,6 +146,10 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
 
     public void finishWorkflowExecution(final WorkflowExecutionResult result, final ExecutionContext executionContext,
                                         final WorkflowExecutionItem item) {
+        if (null != delegate) {
+            delegate.finishWorkflowExecution(result, executionContext, item);
+            return;
+        }
         final String s = contextPrefix.get();
         if (null != s) {
             if(s.lastIndexOf(":")>0){
@@ -138,6 +166,10 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
     }
 
     public void beginWorkflowItem(final int step, final ExecutionItem item) {
+        if (null != delegate) {
+            delegate.beginWorkflowItem(step, item);
+            return;
+        }
         localStep.set(new WFStepContext(item, step));
         log(Constants.DEBUG_LEVEL,
             "[workflow] Begin step: " + step + "," + item.getType()
@@ -145,9 +177,18 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
     }
 
     public void finishWorkflowItem(final int step, final ExecutionItem item) {
+        if (null != delegate) {
+            delegate.finishWorkflowItem(step, item);
+            return;
+        }
         localStep.set(null);
         log(Constants.DEBUG_LEVEL,
             "[workflow] Finish step: " + step + "," + item.getType()
         );
+    }
+
+    @Override
+    public ExecutionListenerOverride createOverride() {
+        return new WorkflowExecutionListenerImpl(this);
     }
 }
