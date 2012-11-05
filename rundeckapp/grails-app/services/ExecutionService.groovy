@@ -42,11 +42,18 @@ import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.execution.UnauthorizedStatusResult
 import org.hibernate.StaleObjectStateException
 import javax.security.auth.Subject
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService
+import com.dtolabs.rundeck.core.execution.ExecutionResult
+import com.dtolabs.rundeck.core.execution.BaseExecutionResult
+import com.dtolabs.rundeck.core.execution.StatusResult
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionItem
 
 /**
  * Coordinates Command executions via Ant Project objects
  */
-class ExecutionService implements ApplicationContextAware, CommandInterpreter{
+class ExecutionService implements ApplicationContextAware, StepExecutor{
 
     static transactional = true
     def FrameworkService frameworkService
@@ -499,8 +506,8 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
             //create listener to handle log messages and Ant build events
             ExecutionListener executionListener = new WorkflowExecutionListenerImpl(recorder, loghandler,false,null);
             com.dtolabs.rundeck.core.execution.ExecutionContext executioncontext = createContext(execution, framework, execution.user, jobcontext, executionListener, null,extraParams, extraParamsExposed)
-            final cis = CommandInterpreterService.getInstanceForFramework(framework);
-            cis.registerInstance(JobExecutionItem.COMMAND_TYPE, this)
+            final cis = StepExecutionService.getInstanceForFramework(framework);
+            cis.registerInstance(JobExecutionItem.STEP_EXECUTION_TYPE, this)
 
             //create service object for the framework and listener
             Thread thread = new WorkflowExecutionServiceThread(framework.getWorkflowExecutionService(),item, executioncontext)
@@ -1637,9 +1644,13 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
     }
     def public static EXEC_FORMAT_SEQUENCE=['time','level','user','module','command','node','context']
 
+    @Override
+    public boolean isNodeDispatchStep(ExecutionItem item) {
+        return false
+    }
 
-    InterpreterResult interpretCommand(com.dtolabs.rundeck.core.execution.ExecutionContext executionContext,
-                                       ExecutionItem executionItem, INodeEntry iNodeEntry) throws InterpreterException {
+    StatusResult executeWorkflowStep(com.dtolabs.rundeck.core.execution.ExecutionContext executionContext,
+                                       ExecutionItem executionItem)  {
         if (!(executionItem instanceof JobExecutionItem)) {
             throw new InterpreterException("Unsupported item type: " + executionItem.getClass().getName());
         }
@@ -1655,6 +1666,9 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         def id
         //lookup job, create item, submit to ExecutionService
         JobExecutionItem jitem = (JobExecutionItem) executionItem
+        System.err.println("Execute workflow step for jobref: "+jitem.jobIdentifier)
+        System.err.println("Execute workflow step for nodes: "+executionContext.nodeSelector)
+        def StatusResult result = null
         try{
 
             def group = null
@@ -1667,111 +1681,111 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                 name = jitem.jobIdentifier
             }
             def schedlist = ScheduledExecution.findAllScheduledExecutions(group,name,executionContext.getFrameworkProject())
-            if (schedlist && 1 == schedlist.size()) {
-                id = schedlist[0].id
-            }else{
+            if (!schedlist || 1 != schedlist.size()) {
                 executionContext.getExecutionListener().log(0,"Job ref [${jitem.jobIdentifier}] invalid: No Unique Job found for name: ${name}, group: ${group}, project: ${executionContext.getFrameworkProject()}")
                 throw new InterpreterException("Job ref [${jitem.jobIdentifier}] invalid: No Unique Job found for name: ${name}, group: ${group}, project: ${executionContext.getFrameworkProject()}")
             }
+            id = schedlist[0].id
             def com.dtolabs.rundeck.core.execution.ExecutionContext newContext
             def WorkflowExecutionItem newExecItem
-            def InterpreterResult iresult
-            ScheduledExecution.withTransaction{status->
 
-                ScheduledExecution se = ScheduledExecution.get(id)//.findByJobNameAndGroupPath(name, group)
+            ScheduledExecution.withTransaction{status->
+                ScheduledExecution se = ScheduledExecution.get(id)
+
                 if (!frameworkService.authorizeProjectJobAll(executionContext.getFramework(), se, [AuthConstants.ACTION_RUN], se.project)) {
                     def msg= "Unauthorized to execute job ${jitem.jobIdentifier}: ${se.extid}"
                     executionContext.getExecutionListener().log(0,"Job ref [${jitem.jobIdentifier}] failed: " + msg);
-                    iresult = new InterpreterResultImpl(new UnauthorizedStatusResult(msg))
-                }else{
-    //                    se.refresh()
-                    //replace data context within arg string
-                    String[] newargs = jitem.args
-                    //create node context for node and substitute data references in args
-                    if (null != newargs) {
-                        newargs = DataContextUtils.replaceDataReferences(newargs, [node: DataContextUtils.nodeData(iNodeEntry)])
-                    }
+                    result = new StepExecutionResultImpl(false,msg)
+                    return
+                }
+//                    se.refresh()
+                //replace data context within arg string
+                String[] newargs = jitem.args
+                //create node context for node and substitute data references in args
+//                    if (null != newargs) {
+//                        newargs = DataContextUtils.replaceDataReferences(newargs, [node: DataContextUtils.nodeData(iNodeEntry)])
+//                    }
 
-                    final jobOptsMap = frameworkService.parseOptsFromArray(newargs)
-                    jobOptsMap = addOptionDefaults(se, jobOptsMap)
+                final jobOptsMap = frameworkService.parseOptsFromArray(newargs)
+                jobOptsMap = addOptionDefaults(se, jobOptsMap)
 
-                    //select secureAuth and secure options from the args to pass
-                    def secAuthOpts = selectSecureOptionInput(se, [optparams: jobOptsMap], false)
-                    def secOpts = selectSecureOptionInput(se, [optparams: jobOptsMap], true)
+                //select secureAuth and secure options from the args to pass
+                def secAuthOpts = selectSecureOptionInput(se, [optparams: jobOptsMap], false)
+                def secOpts = selectSecureOptionInput(se, [optparams: jobOptsMap], true)
 
-                    //for secAuthOpts, evaluate each in context of original private data context
-                    def evalSecAuthOpts = [:]
-                    secAuthOpts.each {k, v ->
-                        def newv=DataContextUtils.replaceDataReferences(v, executionContext.privateDataContext)
-                        if(newv!=v || !v.startsWith('${option.')){
-                            evalSecAuthOpts[k] = newv
-                        }
-                    }
-                    
-                    //for secOpts, evaluate each in context of original secure option data context
-                    def evalSecOpts = [:]
-                    secOpts.each {k, v ->
-                        def newv = DataContextUtils.replaceDataReferences(v, [option:executionContext.dataContext['secureOption']])
-                        if (newv != v || !v.startsWith('${option.')) {
-                            evalSecOpts[k] = newv
-                        }
-                    }
-
-                    //for plain opts, evaluate in context of non secure data context
-                    final plainOpts = removeSecureOptionEntries(se, jobOptsMap)
-
-                    //define nonsecure opts entries
-                    def plainOptsContext= executionContext.dataContext['option']?.findAll{!executionContext.dataContext['secureOption'] || null== executionContext.dataContext['secureOption'][it.key]}
-                    def evalPlainOpts = [:]
-                    plainOpts.each {k, v ->
-                        evalPlainOpts[k] = DataContextUtils.replaceDataReferences(v, [option:plainOptsContext] )
-                        //XXX: missing option references could be removed instead of passed on
-                    }
-
-                    //validate the option values
-                    try {
-                        validateOptionValues(se, evalPlainOpts + evalSecOpts + evalSecAuthOpts)
-                    } catch (Exception e) {
-                        def msg = "Failed to execute job ${jitem.jobIdentifier}: ${se.extid}: ${e.message}"
-                        executionContext.getExecutionListener().log(0, "Job ref [${jitem.jobIdentifier}] failed: " + msg);
-                        iresult = new InterpreterResultImpl(new UnauthorizedStatusResult(msg))
-                    }
-
-                    if (!iresult) {
-
-                        //arg list for new context
-                        def stringList= evalPlainOpts.collect {["-" + it.key, it.value]}.flatten()
-                        newargs = stringList.toArray(new String[stringList.size()]);
-
-                        //construct job data context
-                        def jobcontext = new HashMap<String, String>()
-                        jobcontext.id = se.extid
-                        jobcontext.execid = executionContext.dataContext.job?.execid?:null;
-                        jobcontext.name = se.jobName
-                        jobcontext.group = se.groupPath
-                        jobcontext.project = se.project
-                        jobcontext.username = executionContext.getUser()
-                        newExecItem = createExecutionItemForExecutionContext(se, executionContext.getFramework(), executionContext.getUser())
-                        newContext= createContext(se, executionContext.getFramework(), executionContext.getUser(), jobcontext, executionContext.getExecutionListener(),newargs, evalSecAuthOpts, evalSecOpts)
+                //for secAuthOpts, evaluate each in context of original private data context
+                def evalSecAuthOpts = [:]
+                secAuthOpts.each {k, v ->
+                    def newv=DataContextUtils.replaceDataReferences(v, executionContext.privateDataContext)
+                    if(newv!=v || !v.startsWith('${option.')){
+                        evalSecAuthOpts[k] = newv
                     }
                 }
 
+                //for secOpts, evaluate each in context of original secure option data context
+                def evalSecOpts = [:]
+                secOpts.each {k, v ->
+                    def newv = DataContextUtils.replaceDataReferences(v, [option:executionContext.dataContext['secureOption']])
+                    if (newv != v || !v.startsWith('${option.')) {
+                        evalSecOpts[k] = newv
+                    }
+                }
+
+                //for plain opts, evaluate in context of non secure data context
+                final plainOpts = removeSecureOptionEntries(se, jobOptsMap)
+
+                //define nonsecure opts entries
+                def plainOptsContext= executionContext.dataContext['option']?.findAll{!executionContext.dataContext['secureOption'] || null== executionContext.dataContext['secureOption'][it.key]}
+                def evalPlainOpts = [:]
+                plainOpts.each {k, v ->
+                    evalPlainOpts[k] = DataContextUtils.replaceDataReferences(v, [option:plainOptsContext] )
+                    //XXX: missing option references could be removed instead of passed on
+                }
+
+                //validate the option values
+                try {
+                    validateOptionValues(se, evalPlainOpts + evalSecOpts + evalSecAuthOpts)
+                } catch (Exception e) {
+                    def msg = "Failed to execute job ${jitem.jobIdentifier}: ${se.extid}: ${e.message}"
+                    executionContext.getExecutionListener().log(0, "Job ref [${jitem.jobIdentifier}] failed: " + msg);
+                    result = new StepExecutionResultImpl(false, msg)
+                    return
+                }
+
+
+                //arg list for new context
+                def stringList= evalPlainOpts.collect {["-" + it.key, it.value]}.flatten()
+                newargs = stringList.toArray(new String[stringList.size()]);
+
+                //construct job data context
+                def jobcontext = new HashMap<String, String>()
+                jobcontext.id = se.extid
+                jobcontext.execid = executionContext.dataContext.job?.execid?:null;
+                jobcontext.name = se.jobName
+                jobcontext.group = se.groupPath
+                jobcontext.project = se.project
+                jobcontext.username = executionContext.getUser()
+                newExecItem = createExecutionItemForExecutionContext(se, executionContext.getFramework(), executionContext.getUser())
+                newContext= createContext(se, executionContext.getFramework(), executionContext.getUser(), jobcontext, executionContext.getExecutionListener(),newargs, evalSecAuthOpts, evalSecOpts)
+                return
             }
-            if(null!=iresult){
-                return iresult
+
+            if(null!=result){
+                return result
             }
             def WorkflowExecutionService service = executionContext.getFramework().getWorkflowExecutionService()
 
-            final WorkflowExecutionResult result = service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
-            if(!result.isSuccess()){
-                System.err.println("Job ref [${jitem.jobIdentifier}] failed: "+result);
+            final WorkflowExecutionResult wresult = service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
+            if(!wresult || !wresult.isSuccess()){
+                System.err.println("Job ref [${jitem.jobIdentifier}] failed: "+ wresult);
             }
-            return new InterpreterResultImpl(result)
+            result=wresult
         } finally {
             if (unbindrequest) {
                 RequestContextHolder.setRequestAttributes (null)
             }
         }
+        return result
     }
 
     ///////////////

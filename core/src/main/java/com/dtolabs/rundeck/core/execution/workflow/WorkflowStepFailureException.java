@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.execution.ExecutionResult;
+import com.dtolabs.rundeck.core.execution.StatusResult;
 
 import java.util.*;
 
@@ -33,10 +34,10 @@ import java.util.*;
 * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 */
 public class WorkflowStepFailureException extends Exception {
-    final private ExecutionResult executionResult;
+    final private StatusResult executionResult;
     final private int workflowStep;
 
-    public WorkflowStepFailureException(final String s, final ExecutionResult executionResult, final int workflowStep) {
+    public WorkflowStepFailureException(final String s, final StatusResult executionResult, final int workflowStep) {
         super(s);
         this.executionResult = executionResult;
         this.workflowStep = workflowStep;
@@ -48,7 +49,7 @@ public class WorkflowStepFailureException extends Exception {
         this.workflowStep = workflowStep;
     }
 
-    public ExecutionResult getExecutionResult() {
+    public StatusResult getStatusResult() {
         return executionResult;
     }
 

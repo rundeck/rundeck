@@ -126,7 +126,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
         public void beginExecution(ExecutionContext context, ExecutionItem item) {
         }
 
-        public void finishExecution(ExecutionResult result, ExecutionContext context, ExecutionItem item) {
+        public void finishExecution(StatusResult result, ExecutionContext context, ExecutionItem item) {
         }
 
         public void beginNodeExecution(ExecutionContext context, String[] command, INodeEntry node) {
@@ -308,14 +308,20 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
 
             assertNotNull(result);
             if (!result.isSuccess() && null != result.getException()) {
-                result.getException().printStackTrace(System.err);
+                result.getException().printStackTrace(System.out);
             }
             assertFalse(result.isSuccess());
             assertEquals(0, interpreterMock.executionItemList.size());
             assertNotNull("threw exception: " + result.getException(), result.getException());
             assertTrue("threw exception: " + result.getException(),
-                result.getException() instanceof WorkflowStepFailureException);
-            assertEquals("threw exception: " + result.getException(), "Step 1 of the workflow threw an exception: Failed dispatching to node test1: provider name was null for Service: CommandInterpreter",                result.getException().getMessage());
+                       result.getException() instanceof WorkflowStepFailureException);
+            StatusResult result1 = ((WorkflowStepFailureException) result.getException()).getStatusResult();
+//            assertNotNull("should not be null: " + result.getException(), result1);
+//            assertTrue("not right type:" + result1, result1 instanceof ExceptionStatusResult);
+//            ExceptionStatusResult eresult = (ExceptionStatusResult) result1;
+            assertEquals("threw exception: " + result.getException(),
+                         "Step 1 of the workflow threw an exception: Failed dispatching to node test1: provider name was null for Service: CommandInterpreter",
+                         result.getException().getMessage());
         }
 
         {
@@ -680,13 +686,12 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             assertTrue("threw exception: " + result.getException(), result.getException() instanceof WorkflowStepFailureException);
             WorkflowStepFailureException wfsfe = (WorkflowStepFailureException) result.getException();
             assertEquals(2, wfsfe.getWorkflowStep());
-            assertNotNull(wfsfe.getExecutionResult());
-            final ExecutionResult executionResult = wfsfe.getExecutionResult();
-            assertNotNull(executionResult.getResultObject());
-            assertNotNull(executionResult.getResultObject().getResults());
-            assertEquals(1, executionResult.getResultObject().getResults().size());
-            assertNotNull(executionResult.getResultObject().getResults().get(testnode));
-            final StatusResult testnode1 = executionResult.getResultObject().getResults().get(testnode);
+            assertNotNull(wfsfe.getStatusResult());
+            final DispatcherResult executionResult = (DispatcherResult)wfsfe.getStatusResult();
+            assertNotNull(executionResult.getResults());
+            assertEquals(1, executionResult.getResults().size());
+            assertNotNull(executionResult.getResults().get(testnode));
+            final StatusResult testnode1 = executionResult.getResults().get(testnode);
             assertNotNull(testnode1);
             assertTrue(testnode1 instanceof testResult);
             testResult failResult = (testResult) testnode1;
@@ -987,13 +992,12 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 result.getException() instanceof WorkflowStepFailureException);
             WorkflowStepFailureException wfsfe = (WorkflowStepFailureException) result.getException();
             assertEquals(1, wfsfe.getWorkflowStep());
-            assertNotNull(wfsfe.getExecutionResult());
-            final ExecutionResult executionResult = wfsfe.getExecutionResult();
-            assertNotNull(executionResult.getResultObject());
-            assertNotNull(executionResult.getResultObject().getResults());
-            assertEquals(1, executionResult.getResultObject().getResults().size());
-            assertNotNull(executionResult.getResultObject().getResults().get(testnode));
-            final StatusResult testnode1 = executionResult.getResultObject().getResults().get(testnode);
+            assertNotNull(wfsfe.getStatusResult());
+            final DispatcherResult executionResult = (DispatcherResult)wfsfe.getStatusResult();
+            assertNotNull(executionResult.getResults());
+            assertEquals(1, executionResult.getResults().size());
+            assertNotNull(executionResult.getResults().get(testnode));
+            final StatusResult testnode1 = executionResult.getResults().get(testnode);
             assertNotNull(testnode1);
             assertTrue(testnode1 instanceof testResult);
             testResult failResult = (testResult) testnode1;

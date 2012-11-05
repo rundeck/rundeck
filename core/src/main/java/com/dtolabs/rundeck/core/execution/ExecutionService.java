@@ -55,6 +55,15 @@ public interface ExecutionService extends FrameworkSupportService {
     public ExecutionResult executeItem(ExecutionContext context, ExecutionItem item) throws ExecutionException;
 
     /**
+     * Execute a workflow step item for the given context and return the result.
+     *
+     * @param item item
+     *
+     * @return result
+     */
+    public StatusResult executeStep(ExecutionContext context, ExecutionItem item) throws ExecutionException;
+
+    /**
      * Interpret the execution item within the context for the given node.
      */
     public InterpreterResult interpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node) throws

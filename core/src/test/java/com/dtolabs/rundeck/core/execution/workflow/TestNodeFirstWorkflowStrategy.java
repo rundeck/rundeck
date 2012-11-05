@@ -134,7 +134,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
         public void beginExecution(ExecutionContext context, ExecutionItem item) {
         }
 
-        public void finishExecution(ExecutionResult result, ExecutionContext context, ExecutionItem item) {
+        public void finishExecution(StatusResult result, ExecutionContext context, ExecutionItem item) {
         }
 
         public void beginNodeExecution(ExecutionContext context, String[] command, INodeEntry node) {

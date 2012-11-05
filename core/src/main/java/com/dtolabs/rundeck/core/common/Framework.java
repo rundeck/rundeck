@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcherService;
 import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService;
 import com.dtolabs.rundeck.core.plugins.PluginManagerService;
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
@@ -158,6 +159,7 @@ public class Framework extends FrameworkResourceParent {
         NodeDispatcherService.getInstanceForFramework(this);
         ExecutionServiceFactory.getInstanceForFramework(this);
         WorkflowExecutionService.getInstanceForFramework(this);
+        StepExecutionService.getInstanceForFramework(this);
         ResourceModelSourceService.getInstanceForFramework(this);
         ResourceFormatParserService.getInstanceForFramework(this);
         ResourceFormatGeneratorService.getInstanceForFramework(this);
@@ -306,6 +308,9 @@ public class Framework extends FrameworkResourceParent {
     }
     public WorkflowExecutionService getWorkflowExecutionService() {
         return WorkflowExecutionService.getInstanceForFramework(this);
+    }
+    public StepExecutionService getStepExecutionService() {
+        return StepExecutionService.getInstanceForFramework(this);
     }
 
     public FileCopier getFileCopierForNodeAndProject(INodeEntry node, final String project) throws ExecutionServiceException {

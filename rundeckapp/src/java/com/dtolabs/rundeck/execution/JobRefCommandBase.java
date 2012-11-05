@@ -50,4 +50,9 @@ public class JobRefCommandBase extends JobRefCommand implements HasFailureHandle
     public boolean isKeepgoingOnSuccess() {
         return false;
     }
+
+    @Override
+    public String getStepExecutionType() {
+        return STEP_EXECUTION_TYPE;
+    }
 }

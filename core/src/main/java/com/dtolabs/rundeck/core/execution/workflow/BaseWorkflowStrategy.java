@@ -28,14 +28,10 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.SelectorUtils;
 import com.dtolabs.rundeck.core.execution.*;
-import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
-import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.execution.dispatch.HasDispatcherResult;
 
-import java.io.File;
-import java.io.InputStream;
 import java.util.*;
 
 /**
@@ -151,7 +147,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
         if(null!=executionContext.getExecutionListener()){
             executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, c + ": " + cmd.toString());
         }
-        ExecutionResult result = null;
+        StatusResult result = null;
         boolean itemsuccess;
         Throwable wfstepthrowable = null;
         try {
@@ -159,7 +155,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                 executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
                 "ExecutionItem created, executing: " + cmd);
             }
-            result = framework.getExecutionService().executeItem(executionContext, cmd);
+            result = framework.getExecutionService().executeStep(executionContext, cmd);
             itemsuccess = null != result && result.isSuccess();
         } catch (Throwable exc) {
             if (keepgoing) {
@@ -183,36 +179,45 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
             }
         }
         //TODO: evaluate result object and set result data into the data context
-        if (null != result && null != result.getResultObject()) {
-            resultList.add(result.getResultObject());
+        DispatcherResult dispatcherResult=null;
+        if (null != result && (result instanceof HasDispatcherResult)) {
+            dispatcherResult = ((HasDispatcherResult) result).getDispatcherResult();
+            resultList.add(dispatcherResult);
+        }
+        Exception exception=null;
+        if(null!=result && (result instanceof ExceptionStatusResult)) {
+            exception = ((ExceptionStatusResult) result).getException();
         }
         if (itemsuccess) {
             if (null != executionContext.getExecutionListener()) {
-            executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
-                c + ": ExecutionItem finished, result: " + result);
+                executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
+                                                            c + ": ExecutionItem finished, result: " + result);
             }
         } else if (keepgoing) {
             //don't fail yet
             failedMap.put(c, (null != wfstepthrowable ? wfstepthrowable.getMessage()
-                                                      : (null != result && null != result.getException() ? result
-                                                          .getException() : (null != result && null != result
-                                                          .getResultObject() ? result.getResultObject()
-                                                                             : "no result"))));
+                                                      : (null != result && null != exception ? exception
+                                                                                             : (null != result && null
+                                                                                                                  != dispatcherResult
+                                                                                                ? dispatcherResult
+                                                                                                : "no result"))));
             executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, "Workflow continues");
         } else {
             failedMap.put(c, (null != wfstepthrowable ? wfstepthrowable.getMessage()
-                                                      : (null != result && null != result.getException() ? result
-                                                          .getException() : (null != result && null != result
-                                                          .getResultObject() ? result.getResultObject()
-                                                                             : "no result"))));
-            if (null != result && null != result.getException()) {
+                                                      : (null != result && null != exception ? exception
+                                                                                             : (null != result && null
+                                                                                                                  != dispatcherResult
+                                                                                                ? dispatcherResult
+                                                                                                : "no result"))));
+            if (null != result && null != exception) {
                 throw new WorkflowStepFailureException(
-                    "Step " + c + " of the workflow threw an exception: " + result.getException().getMessage(),
-                    result.getException(), c);
+                    "Step " + c + " of the workflow threw an exception: " + exception.getMessage(),
+                    exception, c);
             } else {
                 throw new WorkflowStepFailureException(
-                    "Step " + c + " of the workflow failed with result: " + (result != null ? result
-                        .getResultObject() : null), result, c);
+                    "Step " + c + " of the workflow failed with result: " + (result != null ? result : null),
+                    result,
+                    c);
             }
         }
         return itemsuccess;
@@ -228,10 +233,23 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                                                      final List<ExecutionItem> iWorkflowCmdItems,
                                                      final boolean keepgoing) throws
         WorkflowStepFailureException {
+        return executeWorkflowItemsForNodeSet(executionContext, failedMap, resultList, iWorkflowCmdItems, keepgoing, 1);
+    }
+    /**
+     * Execute the sequence of ExecutionItems within the context, and with the given keepgoing value, return true if
+     * successful
+     */
+    protected boolean executeWorkflowItemsForNodeSet(final ExecutionContext executionContext,
+                                                     final Map<Integer, Object> failedMap,
+                                                     final List<DispatcherResult> resultList,
+                                                     final List<ExecutionItem> iWorkflowCmdItems,
+                                                     final boolean keepgoing,
+                                                     final int beginStepIndex) throws
+        WorkflowStepFailureException {
 
         boolean workflowsuccess = true;
         final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
-        int c = 1;
+        int c = beginStepIndex;
         for (final ExecutionItem cmd : iWorkflowCmdItems) {
             boolean stepSuccess=false;
             WorkflowStepFailureException stepFailure=null;

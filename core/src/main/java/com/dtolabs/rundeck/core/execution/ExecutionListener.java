@@ -79,7 +79,7 @@ public interface ExecutionListener {
     /**
      * Called when execution finishes
      */
-    public void finishExecution(ExecutionResult result, ExecutionContext context, ExecutionItem item);
+    public void finishExecution(StatusResult result, ExecutionContext context, ExecutionItem item);
 
     /**
      * Called before execution of command on node

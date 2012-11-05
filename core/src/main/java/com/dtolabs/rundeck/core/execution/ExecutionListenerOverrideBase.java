@@ -78,7 +78,7 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
         }
     }
 
-    public void finishExecution(ExecutionResult result, ExecutionContext context, ExecutionItem item) {
+    public void finishExecution(StatusResult result, ExecutionContext context, ExecutionItem item) {
         if (null != delegate) {
             delegate.finishExecution(result, context, item);
         }

@@ -183,25 +183,6 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
         }
 
         final boolean status = success;
-        return new DispatcherResult() {
-            public Map<String, ? extends StatusResult> getResults() {
-                return resultMap;
-            }
-
-            public boolean isSuccess() {
-                return status;
-            }
-
-            @Override
-            public String toString() {
-                return "DispatcherResult{"
-                       + "status="
-                       + isSuccess()
-                       + ", "
-                       + "results="
-                       + getResults()
-                       + "}";
-            }
-        };
+        return new DispatcherResultImpl(resultMap, status);
     }
 }

@@ -35,6 +35,7 @@ import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
 import com.dtolabs.rundeck.core.execution.service.*;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
 import com.dtolabs.rundeck.core.utils.FormattedOutputStream;
 import com.dtolabs.rundeck.core.utils.LogReformatter;
 import com.dtolabs.rundeck.core.utils.MapGenerator;
@@ -79,6 +80,27 @@ class ExecutionServiceImpl implements ExecutionService {
         }
 
         return baseExecutionResult;
+    }
+    public StatusResult executeStep(ExecutionContext context, ExecutionItem item) throws ExecutionException {
+        if (null != context.getExecutionListener()) {
+            context.getExecutionListener().beginExecution(context, item);
+        }
+
+        final StepExecutor executor;
+        try {
+            executor = framework.getStepExecutionService().getExecutorForItem(item);
+        } catch (ExecutionServiceException e) {
+            throw new ExecutionException(e);
+        }
+        StatusResult result=null;
+        try {
+            result = executor.executeWorkflowStep(context, item);
+        } finally {
+            if (null != context.getExecutionListener()) {
+                context.getExecutionListener().finishExecution(result, context, item);
+            }
+        }
+        return result;
     }
 
     public InterpreterResult interpretCommand(ExecutionContext context,

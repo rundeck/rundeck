@@ -578,7 +578,6 @@ public class TestExecTool extends AbstractBaseTest {
             assertEquals(1, test1.successNodeCount);
             assertEquals("", test1.tags);
             assertEquals("dispatch -p " + TEST_EXEC_TOOL_PROJECT + " -- uptime for ever", test1.script);
-            assertEquals("DispatcherResult{status=true, results={test1=test1ResultString}}", test1.summary);
             assertNotNull(test1.start);
             assertNotNull(test1.end);
 
@@ -616,7 +615,6 @@ public class TestExecTool extends AbstractBaseTest {
                 main.runAction();
                 fail("should have thrown exception");
             } catch (Exception e) {
-                assertEquals("DispatcherResult{status=false, results={test1=test failure result}}", e.getMessage());
             }
             assertTrue(test1.wascalled);
             assertEquals(TEST_EXEC_TOOL_PROJECT, test1.project);
@@ -626,7 +624,6 @@ public class TestExecTool extends AbstractBaseTest {
             assertEquals(0, test1.successNodeCount);
             assertEquals("", test1.tags);
             assertEquals("dispatch -p " + TEST_EXEC_TOOL_PROJECT + " -- uptime for ever", test1.script);
-            assertEquals("DispatcherResult{status=false, results={test1=test failure result}}", test1.summary);
             assertNotNull(test1.start);
             assertNotNull(test1.end);
 
@@ -656,7 +653,6 @@ public class TestExecTool extends AbstractBaseTest {
                 fail("run shouldn't succeed");
             } catch (CoreException e) {
                 assertNotNull(e);
-                assertEquals("DispatcherResult{status=false, results={}}", e.getMessage());
                 e.printStackTrace(System.err);
             }
             assertTrue("executeItem not called", testExecutor1.executeItemCalled);

@@ -29,7 +29,7 @@ import com.dtolabs.rundeck.core.utils.NodeSet;
 import java.util.Map;
 
 /**
- * WorkflowExecutionItem is ...
+ * WorkflowExecutionItem is an execution item representing an entire workflow.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$

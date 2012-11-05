@@ -24,6 +24,8 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionItem;
 
 import java.util.List;
 

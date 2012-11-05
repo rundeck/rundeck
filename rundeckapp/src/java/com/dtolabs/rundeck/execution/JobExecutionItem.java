@@ -23,12 +23,9 @@
 */
 package com.dtolabs.rundeck.execution;
 
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
 import com.dtolabs.rundeck.core.execution.HandlerExecutionItem;
-import com.dtolabs.rundeck.core.utils.NodeSet;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionItem;
 
-import java.util.Map;
 
 /**
  * This interface represents an execution of a particular stored Job definition, identified by a string, and including
@@ -39,8 +36,9 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public interface JobExecutionItem extends HandlerExecutionItem {
+public interface JobExecutionItem extends HandlerExecutionItem,StepExecutionItem {
     public final static String COMMAND_TYPE = "rundeck-jobref";
+    public final static String STEP_EXECUTION_TYPE = "rundeck-jobref";
     public String getJobIdentifier();
     public String[] getArgs();
 }
