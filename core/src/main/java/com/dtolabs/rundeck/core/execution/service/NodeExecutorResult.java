@@ -23,7 +23,7 @@
 */
 package com.dtolabs.rundeck.core.execution.service;
 
-import com.dtolabs.rundeck.core.execution.commands.NodeStepResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 
 
 /**

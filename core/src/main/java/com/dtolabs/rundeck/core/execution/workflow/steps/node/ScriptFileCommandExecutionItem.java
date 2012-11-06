@@ -21,9 +21,8 @@
 * Created: 3/22/11 5:43 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.commands;
+package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
 import com.dtolabs.rundeck.core.execution.HandlerExecutionItem;
 
 import java.io.InputStream;

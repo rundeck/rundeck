@@ -15,40 +15,23 @@
  */
 
 /*
-* NodeStepResultImpl.java
+* ScriptFileExecutionItem.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/29/11 3:00 PM
+* Created: 3/21/11 4:37 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.commands;
-
-import com.dtolabs.rundeck.core.execution.StatusResult;
-
+package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 /**
- * NodeStepResultImpl is ...
+ * ScriptFileExecutionItem is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class NodeStepResultImpl implements NodeStepResult {
-    private StatusResult internalResult;
+public abstract class ScriptFileCommand implements ScriptFileCommandExecutionItem {
 
-    public NodeStepResultImpl(final StatusResult internalResult) {
-        this.internalResult = internalResult;
+    public String getType() {
+        return ScriptFileNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME;
     }
 
-    public boolean isSuccess() {
-        return internalResult.isSuccess();
-    }
-
-    public StatusResult getInternalResult() {
-        return internalResult;
-    }
-
-    @Override
-    public String toString() {
-        return internalResult.toString();
-    }
-    
 }

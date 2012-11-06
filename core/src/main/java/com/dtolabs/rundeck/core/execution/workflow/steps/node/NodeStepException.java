@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,25 +15,33 @@
  */
 
 /*
-* ScriptURLCommandBase.java
+* NodeStepException.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 5/2/12 2:58 PM
+* Created: 3/21/11 6:20 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.commands;
-
-import com.dtolabs.rundeck.core.execution.HasFailureHandler;
-
+package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 /**
- * ScriptURLCommandBase base implementation of ScriptURLCommandExecutionItem that defines the getType() method
- * to return the correct service type.
+ * NodeStepException is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public abstract class ScriptURLCommandBase implements ScriptURLCommandExecutionItem,HasFailureHandler {
-    public String getType() {
-        return ScriptURLNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME;
+public class NodeStepException extends Exception {
+    public NodeStepException() {
+        super();
+    }
+
+    public NodeStepException(String msg) {
+        super(msg);
+    }
+
+    public NodeStepException(Exception cause) {
+        super(cause);
+    }
+
+    public NodeStepException(String msg, Exception cause) {
+        super(msg, cause);
     }
 }

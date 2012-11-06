@@ -15,13 +15,13 @@
  */
 
 /*
-* TestScriptURLCommandInterpreter.java
+* TestScriptURLNodeStepExecutor.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 5/2/12 6:12 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.commands;
+package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
@@ -48,14 +48,14 @@ import java.io.InputStream;
 import java.util.*;
 
 /**
- * TestScriptURLCommandInterpreter is ...
+ * TestScriptURLNodeStepExecutor is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class TestScriptURLCommandInterpreter extends AbstractBaseTest {
-    private static final String PROJ_NAME = "TestScriptFileCommandInterpreter";
+public class TestScriptURLNodeStepExecutor extends AbstractBaseTest {
+    private static final String PROJ_NAME = "TestScriptFileNodeStepExecutor";
 
-    public TestScriptURLCommandInterpreter(String name) {
+    public TestScriptURLNodeStepExecutor(String name) {
         super(name);
     }
 
@@ -319,7 +319,7 @@ public class TestScriptURLCommandInterpreter extends AbstractBaseTest {
             });
             testexec.testResult = nodeExecutorResults;
             testcopier.testResult = "/test/file/path";
-            final test1 interaction = new TestScriptURLCommandInterpreter.test1();
+            final test1 interaction = new TestScriptURLNodeStepExecutor.test1();
 
             interaction.httpResultCode = 200;
             interaction.httpStatusText = "OK";

@@ -15,13 +15,13 @@
  */
 
 /*
-* TestScriptFileCommandInterpreter.java
+* TestScriptFileNodeStepExecutor.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 3/24/11 3:37 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.commands;
+package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
@@ -42,14 +42,14 @@ import java.io.InputStream;
 import java.util.*;
 
 /**
- * TestScriptFileCommandInterpreter is ...
+ * TestScriptFileNodeStepExecutor is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
-    private static final String PROJ_NAME = "TestScriptFileCommandInterpreter";
+public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
+    private static final String PROJ_NAME = "TestScriptFileNodeStepExecutor";
 
-    public TestScriptFileCommandInterpreter(String name) {
+    public TestScriptFileNodeStepExecutor(String name) {
         super(name);
     }
 

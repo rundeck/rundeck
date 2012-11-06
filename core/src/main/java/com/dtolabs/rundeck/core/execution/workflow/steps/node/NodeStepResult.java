@@ -15,23 +15,20 @@
  */
 
 /*
-* ExecCommandExecutionItem.java
+* NodeStepResult.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/22/11 5:42 PM
+* Created: 3/22/11 6:35 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.commands;
+package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
-import com.dtolabs.rundeck.core.execution.HandlerExecutionItem;
-
+import com.dtolabs.rundeck.core.execution.StatusResult;
 
 /**
- * ExecCommandExecutionItem is ...
+ * NodeStepResult is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface ExecCommandExecutionItem extends HandlerExecutionItem {
-    public abstract String[] getCommand();
+public interface NodeStepResult extends StatusResult {
 }

@@ -30,7 +30,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionItem;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 import com.dtolabs.rundeck.core.execution.StatusResult;
-import com.dtolabs.rundeck.core.execution.commands.NodeStepResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.tasks.dispatch.NodeExecutionStatusTask;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;

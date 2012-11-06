@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2012 DTO Solutions, Inc. (http://dtosolutions.com)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,23 +15,25 @@
  */
 
 /*
-* ScriptFileExecutionItem.java
+* ScriptURLCommandBase.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/21/11 4:37 PM
+* Created: 5/2/12 2:58 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.commands;
+package com.dtolabs.rundeck.core.execution.workflow.steps.node;
+
+import com.dtolabs.rundeck.core.execution.HasFailureHandler;
+
 
 /**
- * ScriptFileExecutionItem is ...
+ * ScriptURLCommandBase base implementation of ScriptURLCommandExecutionItem that defines the getType() method
+ * to return the correct service type.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public abstract class ScriptFileCommand implements ScriptFileCommandExecutionItem {
-
+public abstract class ScriptURLCommandBase implements ScriptURLCommandExecutionItem,HasFailureHandler {
     public String getType() {
-        return ScriptFileNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME;
+        return ScriptURLNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME;
     }
-
 }

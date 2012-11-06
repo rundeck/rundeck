@@ -15,33 +15,40 @@
  */
 
 /*
-* NodeStepException.java
+* NodeStepResultImpl.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/21/11 6:20 PM
+* Created: 3/29/11 3:00 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.commands;
+package com.dtolabs.rundeck.core.execution.workflow.steps.node;
+
+import com.dtolabs.rundeck.core.execution.StatusResult;
+
 
 /**
- * NodeStepException is ...
+ * NodeStepResultImpl is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class NodeStepException extends Exception {
-    public NodeStepException() {
-        super();
+public class NodeStepResultImpl implements NodeStepResult {
+    private StatusResult internalResult;
+
+    public NodeStepResultImpl(final StatusResult internalResult) {
+        this.internalResult = internalResult;
     }
 
-    public NodeStepException(String msg) {
-        super(msg);
+    public boolean isSuccess() {
+        return internalResult.isSuccess();
     }
 
-    public NodeStepException(Exception cause) {
-        super(cause);
+    public StatusResult getInternalResult() {
+        return internalResult;
     }
 
-    public NodeStepException(String msg, Exception cause) {
-        super(msg, cause);
+    @Override
+    public String toString() {
+        return internalResult.toString();
     }
+    
 }

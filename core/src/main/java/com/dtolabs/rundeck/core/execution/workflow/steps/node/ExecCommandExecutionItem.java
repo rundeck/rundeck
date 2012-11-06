@@ -15,32 +15,22 @@
  */
 
 /*
-* ExecCommandBase.java
+* ExecCommandExecutionItem.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/22/11 5:41 PM
+* Created: 3/22/11 5:42 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.commands;
+package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
-import com.dtolabs.rundeck.core.execution.HasFailureHandler;
+import com.dtolabs.rundeck.core.execution.HandlerExecutionItem;
+
 
 /**
- * ExecCommandBase is a concrete implementation of ExecCommand that
+ * ExecCommandExecutionItem is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ExecCommandBase extends ExecCommand implements HasFailureHandler {
-    public String[] getCommand() {
-        return null;
-    }
-
-    public ExecutionItem getFailureHandler() {
-        return null;
-    }
-
-    public boolean isKeepgoingOnSuccess() {
-        return false;
-    }
+public interface ExecCommandExecutionItem extends HandlerExecutionItem {
+    public abstract String[] getCommand();
 }

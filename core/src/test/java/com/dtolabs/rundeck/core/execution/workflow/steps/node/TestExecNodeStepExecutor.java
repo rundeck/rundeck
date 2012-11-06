@@ -15,13 +15,13 @@
  */
 
 /*
-* TestExecCommandInterpreter.java
+* TestExecNodeStepExecutor.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 3/24/11 3:19 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.commands;
+package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
@@ -43,14 +43,14 @@ import java.util.Arrays;
 import java.util.Map;
 
 /**
- * TestExecCommandInterpreter is ...
+ * TestExecNodeStepExecutor is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class TestExecCommandInterpreter extends AbstractBaseTest {
-    private static final String PROJ_NAME = "TestExecCommandInterpreter";
+public class TestExecNodeStepExecutor extends AbstractBaseTest {
+    private static final String PROJ_NAME = "TestExecNodeStepExecutor";
 
-    public TestExecCommandInterpreter(String name) {
+    public TestExecNodeStepExecutor(String name) {
         super(name);
     }
 

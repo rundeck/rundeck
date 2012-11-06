@@ -15,13 +15,13 @@
  */
 
 /*
-* TestCommandInterpreterService.java
+* TestNodeStepExecutorService.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 3/24/11 2:16 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.commands;
+package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkSupportService;
@@ -36,17 +36,17 @@ import junit.framework.TestSuite;
 
 
 /**
- * TestCommandInterpreterService is ...
+ * TestNodeStepExecutorService is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class TestCommandInterpreterService extends AbstractBaseTest {
-    public TestCommandInterpreterService(String name) {
+public class TestNodeStepExecutorService extends AbstractBaseTest {
+    public TestNodeStepExecutorService(String name) {
         super(name);
     }
 
     public static Test suite() {
-        return new TestSuite(TestCommandInterpreterService.class);
+        return new TestSuite(TestNodeStepExecutorService.class);
     }
 
     public void setUp() {

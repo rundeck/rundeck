@@ -15,25 +15,46 @@
  */
 
 /*
-* NodeStepExecutor.java
+* ExecNodeStepExecutor.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/21/11 4:09 PM
+* Created: 3/21/11 4:10 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.commands;
+package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
+import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 
 
 /**
- * NodeStepExecutor is ...
+ * ExecNodeStepExecutor is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface NodeStepExecutor {
+public class ExecNodeStepExecutor implements NodeStepExecutor {
+
+    public static final String SERVICE_IMPLEMENTATION_NAME = "exec";
+
+    public ExecNodeStepExecutor(Framework framework) {
+        this.framework = framework;
+    }
+
+    private Framework framework;
+
     public NodeStepResult executeNodeStep(ExecutionContext context, ExecutionItem item, INodeEntry node) throws
-                                                                                                         NodeStepException;
+                                                                                                         NodeStepException {
+        final ExecCommand cmd = (ExecCommand) item;
+        NodeExecutorResult result;
+        try {
+            result = framework.getExecutionService().executeCommand(context, cmd.getCommand(), node);
+        } catch (Exception e) {
+            throw new NodeStepException(e);
+        }
+        return result;
+    }
+
 }
