@@ -33,23 +33,23 @@ import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.service.*;
 
 import java.io.File;
-import java.util.Arrays;
+
 
 /**
  * ExecFileCommandInterpreter is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ScriptFileCommandInterpreter implements CommandInterpreter {
+public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
     public static final String SERVICE_IMPLEMENTATION_NAME = "script";
     private Framework framework;
 
-    public ScriptFileCommandInterpreter(Framework framework) {
+    public ScriptFileNodeStepExecutor(Framework framework) {
         this.framework = framework;
     }
 
-    public InterpreterResult interpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node) throws
-        InterpreterException {
+    public NodeStepResult executeNodeStep(ExecutionContext context, ExecutionItem item, INodeEntry node) throws
+                                                                                                         NodeStepException {
         final ScriptFileCommand script = (ScriptFileCommand) item;
         final ExecutionService executionService = framework.getExecutionService();
         final String filepath; //result file path
@@ -63,7 +63,7 @@ public class ScriptFileCommandInterpreter implements CommandInterpreter {
                 filepath = executionService.fileCopyFileStream(context, script.getScriptAsStream(), node);
             }
         } catch (FileCopierException e) {
-            throw new InterpreterException(e);
+            throw new NodeStepException(e);
         }
 
         try {
@@ -96,7 +96,7 @@ public class ScriptFileCommandInterpreter implements CommandInterpreter {
             return framework.getExecutionService().executeCommand(context, newargs, node);
             //TODO: remove remote temp file after exec?
         } catch (ExecutionException e) {
-            throw new InterpreterException(e);
+            throw new NodeStepException(e);
         }
     }
 }

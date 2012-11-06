@@ -103,7 +103,7 @@ public class TestExecTool extends AbstractBaseTest {
 
         getFrameworkInstance().getFrameworkProjectMgr().remove(TEST_EXEC_TOOL_PROJ2);
 //        ExecutionServiceFactory.resetDefaultExecutorClasses();
-        getFrameworkInstance().setService(CommandInterpreterService.SERVICE_NAME, null);
+        getFrameworkInstance().setService(NodeStepExecutorService.SERVICE_NAME, null);
     }
 
     public static Test suite() {
@@ -424,21 +424,21 @@ public class TestExecTool extends AbstractBaseTest {
         }
 
     }*/
-    public static class testExecutor1 implements CommandInterpreter{
+    public static class testExecutor1 implements NodeStepExecutor {
         static ExecutionItem testItem;
         static ExecutionContext testContext;
         static ExecutionListener testListener;
         static boolean executeItemCalled = false;
         static Framework testFramework;
-        static InterpreterResult returnResult = null;
+        static NodeStepResult returnResult = null;
         Framework framework;
 
         public testExecutor1(Framework framework) {
             this.framework = framework;
         }
 
-        public InterpreterResult interpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node) throws
-            InterpreterException {
+        public NodeStepResult executeNodeStep(ExecutionContext context, ExecutionItem item, INodeEntry node) throws
+                                                                                                             NodeStepException {
             testContext=context;
             testItem = item;
             testListener = context.getExecutionListener();
@@ -540,13 +540,13 @@ public class TestExecTool extends AbstractBaseTest {
     public void testRunActionShouldLogResult() throws Exception {
         //set up test Executors
 //        ExecutionServiceFactory.setDefaultExecutorClass(DispatchedScriptExecutionItem.class, testExecutor1.class);
-        final CommandInterpreterService cis = CommandInterpreterService.getInstanceForFramework(
+        final NodeStepExecutorService cis = NodeStepExecutorService.getInstanceForFramework(
             getFrameworkInstance());
         cis.registerClass("exec", testExecutor1.class);
 
 
         //set return result
-        testExecutor1.returnResult = new InterpreterResult() {
+        testExecutor1.returnResult = new NodeStepResult() {
             public boolean isSuccess() {
                 return true;
             }
@@ -589,11 +589,11 @@ public class TestExecTool extends AbstractBaseTest {
     public void testRunActionShouldLogResultFailure() throws Exception {
         //set up test Executors
 //        ExecutionServiceFactory.setDefaultExecutorClass(DispatchedScriptExecutionItem.class, testExecutor1.class);
-        final CommandInterpreterService cis = CommandInterpreterService.getInstanceForFramework(
+        final NodeStepExecutorService cis = NodeStepExecutorService.getInstanceForFramework(
             getFrameworkInstance());
         cis.registerClass("exec", testExecutor1.class);
         //set return result
-        testExecutor1.returnResult = new InterpreterResult() {
+        testExecutor1.returnResult = new NodeStepResult() {
             public boolean isSuccess() {
                 return false;
             }
@@ -634,7 +634,7 @@ public class TestExecTool extends AbstractBaseTest {
     public void testRunAction() throws Exception{
         //set up test Executors
 //        ExecutionServiceFactory.setDefaultExecutorClass(DispatchedScriptExecutionItem.class, testExecutor1.class);
-        final CommandInterpreterService cis = CommandInterpreterService.getInstanceForFramework(
+        final NodeStepExecutorService cis = NodeStepExecutorService.getInstanceForFramework(
             getFrameworkInstance());
         cis.registerClass("exec", testExecutor1.class);
         cis.registerClass("script", testExecutor1.class);
@@ -663,7 +663,7 @@ public class TestExecTool extends AbstractBaseTest {
         }
 
         //set return result
-        testExecutor1.returnResult=new InterpreterResult(){
+        testExecutor1.returnResult=new NodeStepResult(){
             public boolean isSuccess() {
                 return true;
             }

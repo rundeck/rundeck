@@ -23,15 +23,15 @@
 */
 package com.dtolabs.rundeck.core.execution.service;
 
-import com.dtolabs.rundeck.core.execution.StatusResult;
-import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
+import com.dtolabs.rundeck.core.execution.commands.NodeStepResult;
+
 
 /**
  * NodeExecutorResult contains the result from a {@link NodeExecutor} execution.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface NodeExecutorResult extends InterpreterResult {
+public interface NodeExecutorResult extends NodeStepResult {
     /**
      * Return the exit/result code of the execution
      */

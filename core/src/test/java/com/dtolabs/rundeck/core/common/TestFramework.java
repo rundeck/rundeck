@@ -87,7 +87,7 @@ public class TestFramework extends AbstractBaseTest {
         final Framework fw = Framework.getInstance(getBaseDir(), getFrameworkProjectsBase());
         //test default service implementations
         assertNotNull(fw.services);
-        assertNotNull(fw.getService("CommandInterpreter"));
+        assertNotNull(fw.getService("NodeStepExecutor"));
         assertNotNull(fw.getService("NodeExecutor"));
         assertNotNull(fw.getService("FileCopier"));
         assertNotNull(fw.getService("NodeDispatcher"));
@@ -96,13 +96,13 @@ public class TestFramework extends AbstractBaseTest {
         final Framework fw = Framework.getInstance(getBaseDir(), getFrameworkProjectsBase());
         //test removing services
         assertNotNull(fw.services);
-        final FrameworkSupportService commandInterpreter = fw.getService("CommandInterpreter");
+        final FrameworkSupportService commandInterpreter = fw.getService("NodeStepExecutor");
         assertNotNull(commandInterpreter);
-        fw.setService("CommandInterpreter", null);
-        assertNull(fw.getService("CommandInterpreter"));
-        fw.setService("CommandInterpreter", commandInterpreter);
-        assertNotNull(fw.getService("CommandInterpreter"));
-        final FrameworkSupportService commandInterpreter2 = fw.getService("CommandInterpreter");
+        fw.setService("NodeStepExecutor", null);
+        assertNull(fw.getService("NodeStepExecutor"));
+        fw.setService("NodeStepExecutor", commandInterpreter);
+        assertNotNull(fw.getService("NodeStepExecutor"));
+        final FrameworkSupportService commandInterpreter2 = fw.getService("NodeStepExecutor");
         assertEquals(commandInterpreter, commandInterpreter2);
 
     }

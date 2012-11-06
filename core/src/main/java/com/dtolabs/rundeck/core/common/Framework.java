@@ -30,8 +30,8 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionItem;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.ExecutionServiceFactory;
-import com.dtolabs.rundeck.core.execution.commands.CommandInterpreter;
-import com.dtolabs.rundeck.core.execution.commands.CommandInterpreterService;
+import com.dtolabs.rundeck.core.execution.commands.NodeStepExecutor;
+import com.dtolabs.rundeck.core.execution.commands.NodeStepExecutorService;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcherService;
 import com.dtolabs.rundeck.core.execution.service.*;
@@ -43,9 +43,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.resources.FileResourceModelSource;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
-import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
-import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
@@ -153,7 +151,7 @@ public class Framework extends FrameworkResourceParent {
             //enable plugin service only if framework property does not disable them
             PluginManagerService.getInstanceForFramework(this);
         }
-        CommandInterpreterService.getInstanceForFramework(this);
+        NodeStepExecutorService.getInstanceForFramework(this);
         NodeExecutorService.getInstanceForFramework(this);
         FileCopierService.getInstanceForFramework(this);
         NodeDispatcherService.getInstanceForFramework(this);
@@ -327,8 +325,8 @@ public class Framework extends FrameworkResourceParent {
     public NodeExecutorService getNodeExecutorService() throws ExecutionServiceException {
         return NodeExecutorService.getInstanceForFramework(this);
     }
-    public CommandInterpreter getCommandInterpreterForItem(ExecutionItem item) throws ExecutionServiceException {
-        return CommandInterpreterService.getInstanceForFramework(this).getInterpreterForExecutionItem(item);
+    public NodeStepExecutor getCommandInterpreterForItem(ExecutionItem item) throws ExecutionServiceException {
+        return NodeStepExecutorService.getInstanceForFramework(this).getInterpreterForExecutionItem(item);
     }
     public NodeDispatcher getNodeDispatcherForContext(ExecutionContext context) throws ExecutionServiceException {
         return NodeDispatcherService.getInstanceForFramework(this).getNodeDispatcher(context);

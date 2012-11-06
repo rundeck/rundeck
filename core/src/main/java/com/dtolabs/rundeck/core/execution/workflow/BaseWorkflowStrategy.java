@@ -395,12 +395,12 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
     }
 
     /**
-     * Convert list of DispatcherResult items to map of Node name to Map of InterpreterResult items keyed by index in
+     * Convert list of DispatcherResult items to map of Node name to Map of NodeStepResult items keyed by index in
      * the list (0-first)
      *
      * @param resultList dispatcher result list
      *
-     * @return map of node name to Map of InterpreterResult items keyed by index in the list (0-first)
+     * @return map of node name to Map of NodeStepResult items keyed by index in the list (0-first)
      */
     protected HashMap<String, List<StatusResult>> convertResults(final List<DispatcherResult> resultList) {
         final HashMap<String, List<StatusResult>> results = new HashMap<String, List<StatusResult>>();

@@ -15,7 +15,7 @@
  */
 
 /*
-* CommandInterpreter.java
+* NodeStepExecutor.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 3/21/11 4:09 PM
@@ -26,14 +26,14 @@ package com.dtolabs.rundeck.core.execution.commands;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionItem;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionResult;
+
 
 /**
- * CommandInterpreter is ...
+ * NodeStepExecutor is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface CommandInterpreter {
-    public InterpreterResult interpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node) throws
-        InterpreterException;
+public interface NodeStepExecutor {
+    public NodeStepResult executeNodeStep(ExecutionContext context, ExecutionItem item, INodeEntry node) throws
+                                                                                                         NodeStepException;
 }

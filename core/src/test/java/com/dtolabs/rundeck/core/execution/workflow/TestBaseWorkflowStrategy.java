@@ -635,22 +635,22 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         }
     }
 
-    static class testInterpreter implements CommandInterpreter {
+    static class testInterpreter implements NodeStepExecutor {
         List<ExecutionItem> executionItemList = new ArrayList<ExecutionItem>();
         List<ExecutionContext> executionContextList = new ArrayList<ExecutionContext>();
         List<INodeEntry> nodeEntryList = new ArrayList<INodeEntry>();
         int index = 0;
-        List<InterpreterResult> resultList = new ArrayList<InterpreterResult>();
+        List<NodeStepResult> resultList = new ArrayList<NodeStepResult>();
         boolean shouldThrowException = false;
 
-        public InterpreterResult interpretCommand(ExecutionContext executionContext,
-                                                  ExecutionItem executionItem, INodeEntry iNodeEntry) throws
-                                                                                                      InterpreterException {
+        public NodeStepResult executeNodeStep(ExecutionContext executionContext,
+                                                 ExecutionItem executionItem, INodeEntry iNodeEntry) throws
+                                                                                                     NodeStepException {
             executionItemList.add(executionItem);
             executionContextList.add(executionContext);
             nodeEntryList.add(iNodeEntry);
             if (shouldThrowException) {
-                throw new InterpreterException("testInterpreter test exception");
+                throw new NodeStepException("testInterpreter test exception");
             }
             System.out.println("return index: (" + index + ") in size: " + resultList.size());
             return resultList.get(index++);
@@ -715,7 +715,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         public void beginInterpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node) {
         }
 
-        public void finishInterpretCommand(InterpreterResult result, ExecutionContext context, ExecutionItem item,
+        public void finishInterpretCommand(NodeStepResult result, ExecutionContext context, ExecutionItem item,
                                            INodeEntry node) {
         }
 

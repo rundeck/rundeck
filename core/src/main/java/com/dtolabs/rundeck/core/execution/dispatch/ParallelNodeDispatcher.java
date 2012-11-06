@@ -30,7 +30,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionItem;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 import com.dtolabs.rundeck.core.execution.StatusResult;
-import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
+import com.dtolabs.rundeck.core.execution.commands.NodeStepResult;
 import com.dtolabs.rundeck.core.tasks.dispatch.NodeExecutionStatusTask;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
@@ -182,7 +182,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         return new Callable() {
             public Object call() throws Exception {
                 try {
-                    final InterpreterResult interpreterResult = framework.getExecutionService().interpretCommand(
+                    final NodeStepResult interpreterResult = framework.getExecutionService().interpretCommand(
                         context, item, node);
                     if (!interpreterResult.isSuccess()) {
                         failureMap.put(node.getNodename(), interpreterResult);

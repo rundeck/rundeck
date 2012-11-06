@@ -32,10 +32,8 @@ import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import junit.framework.Test;
-import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
-import java.util.*;
 
 /**
  * TestCommandInterpreterService is ...
@@ -62,7 +60,7 @@ public class TestCommandInterpreterService extends AbstractBaseTest {
     }
 
     public void testResetDefaultProviders() throws Exception {
-        final CommandInterpreterService service = CommandInterpreterService.getInstanceForFramework(
+        final NodeStepExecutorService service = NodeStepExecutorService.getInstanceForFramework(
             getFrameworkInstance());
 
         final ExecutionItem item = new ExecutionItem() {
@@ -76,37 +74,37 @@ public class TestCommandInterpreterService extends AbstractBaseTest {
             }
         };
         {
-            final CommandInterpreter interpreterForExecutionItem = service.getInterpreterForExecutionItem(
+            final NodeStepExecutor interpreterForExecutionItem = service.getInterpreterForExecutionItem(
                 item);
             assertNotNull(interpreterForExecutionItem);
-            assertTrue(interpreterForExecutionItem instanceof ExecCommandInterpreter);
-            final CommandInterpreter interpreter2 = service.getInterpreterForExecutionItem(item2);
+            assertTrue(interpreterForExecutionItem instanceof ExecNodeStepExecutor);
+            final NodeStepExecutor interpreter2 = service.getInterpreterForExecutionItem(item2);
             assertNotNull(interpreter2);
-            assertTrue(interpreter2 instanceof ScriptFileCommandInterpreter);
+            assertTrue(interpreter2 instanceof ScriptFileNodeStepExecutor);
         }
 
         {
-            final CommandInterpreter testprovider = new CommandInterpreter() {
-                public InterpreterResult interpretCommand(ExecutionContext context, ExecutionItem item,
-                                                          INodeEntry node) throws
-                    InterpreterException {
+            final NodeStepExecutor testprovider = new NodeStepExecutor() {
+                public NodeStepResult executeNodeStep(ExecutionContext context, ExecutionItem item,
+                                                         INodeEntry node) throws
+                                                                          NodeStepException {
                     return null;
                 }
             };
-            final CommandInterpreter testprovider2 = new CommandInterpreter() {
-                public InterpreterResult interpretCommand(ExecutionContext context, ExecutionItem item,
-                                                          INodeEntry node) throws
-                    InterpreterException {
+            final NodeStepExecutor testprovider2 = new NodeStepExecutor() {
+                public NodeStepResult executeNodeStep(ExecutionContext context, ExecutionItem item,
+                                                         INodeEntry node) throws
+                                                                          NodeStepException {
                     return null;
                 }
             };
             service.registerInstance("exec", testprovider);
             service.registerInstance("script", testprovider2);
-            final CommandInterpreter interpreter = service.getInterpreterForExecutionItem(item);
+            final NodeStepExecutor interpreter = service.getInterpreterForExecutionItem(item);
             assertNotNull(interpreter);
             assertTrue(interpreter == testprovider);
 
-            final CommandInterpreter interpreter2 = service.getInterpreterForExecutionItem(item2);
+            final NodeStepExecutor interpreter2 = service.getInterpreterForExecutionItem(item2);
             assertNotNull(interpreter2);
             assertTrue(interpreter2 == testprovider2);
         }
@@ -115,44 +113,44 @@ public class TestCommandInterpreterService extends AbstractBaseTest {
         service.resetDefaultProviders();
 
         {
-            final CommandInterpreter interpreter = service.getInterpreterForExecutionItem(item);
+            final NodeStepExecutor interpreter = service.getInterpreterForExecutionItem(item);
             assertNotNull(interpreter);
-            assertTrue(interpreter instanceof ExecCommandInterpreter);
-            final CommandInterpreter interpreter2 = service.getInterpreterForExecutionItem(item2);
+            assertTrue(interpreter instanceof ExecNodeStepExecutor);
+            final NodeStepExecutor interpreter2 = service.getInterpreterForExecutionItem(item2);
             assertNotNull(interpreter2);
-            assertTrue(interpreter2 instanceof ScriptFileCommandInterpreter);
+            assertTrue(interpreter2 instanceof ScriptFileNodeStepExecutor);
         }
 
 
     }
 
     public void testGetInterpreterForExecutionItem() throws Exception {
-        final CommandInterpreterService service = CommandInterpreterService.getInstanceForFramework(
+        final NodeStepExecutorService service = NodeStepExecutorService.getInstanceForFramework(
             getFrameworkInstance());
 
         {
-            //exec item should return default ExecCommandInterpreter
+            //exec item should return default ExecNodeStepExecutor
             final ExecutionItem item = new ExecutionItem() {
                 public String getType() {
                     return "exec";
                 }
             };
-            final CommandInterpreter interpreterForExecutionItem = service.getInterpreterForExecutionItem(
+            final NodeStepExecutor interpreterForExecutionItem = service.getInterpreterForExecutionItem(
                 item);
             assertNotNull(interpreterForExecutionItem);
-            assertTrue(interpreterForExecutionItem instanceof ExecCommandInterpreter);
+            assertTrue(interpreterForExecutionItem instanceof ExecNodeStepExecutor);
         }
         {
-            //script item should return default ScriptFileCommandInterpreter
+            //script item should return default ScriptFileNodeStepExecutor
             final ExecutionItem item = new ExecutionItem() {
                 public String getType() {
                     return "script";
                 }
             };
 
-            final CommandInterpreter interpreter2 = service.getInterpreterForExecutionItem(item);
+            final NodeStepExecutor interpreter2 = service.getInterpreterForExecutionItem(item);
             assertNotNull(interpreter2);
-            assertTrue(interpreter2 instanceof ScriptFileCommandInterpreter);
+            assertTrue(interpreter2 instanceof ScriptFileNodeStepExecutor);
         }
 
         //test invalid provider name
@@ -166,7 +164,7 @@ public class TestCommandInterpreterService extends AbstractBaseTest {
         } catch (ExecutionServiceException e) {
             assertTrue(e instanceof MissingProviderException);
             MissingProviderException mis = (MissingProviderException) e;
-            assertEquals("CommandInterpreter", mis.getServiceName());
+            assertEquals("NodeStepExecutor", mis.getServiceName());
             assertEquals("blah", mis.getProviderName());
         }
         //test null provider name
@@ -184,18 +182,18 @@ public class TestCommandInterpreterService extends AbstractBaseTest {
 
     public void testGetInstanceForFramework() throws Exception {
         final Framework framework = getFrameworkInstance();
-        final CommandInterpreterService service = CommandInterpreterService.getInstanceForFramework(
+        final NodeStepExecutorService service = NodeStepExecutorService.getInstanceForFramework(
             framework);
         assertNotNull(service);
-        final FrameworkSupportService foundservice = framework.getService("CommandInterpreter");
+        final FrameworkSupportService foundservice = framework.getService("NodeStepExecutor");
         assertNotNull(foundservice);
-        assertTrue(foundservice instanceof CommandInterpreterService);
+        assertTrue(foundservice instanceof NodeStepExecutorService);
         assertEquals(foundservice, service);
     }
 
     public void testGetName() throws Exception {
-        final CommandInterpreterService service = CommandInterpreterService.getInstanceForFramework(
+        final NodeStepExecutorService service = NodeStepExecutorService.getInstanceForFramework(
             getFrameworkInstance());
-        assertEquals("CommandInterpreter", service.getName());
+        assertEquals("NodeStepExecutor", service.getName());
     }
 }

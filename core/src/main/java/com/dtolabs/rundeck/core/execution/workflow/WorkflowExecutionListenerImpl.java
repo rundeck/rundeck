@@ -26,7 +26,7 @@ package com.dtolabs.rundeck.core.execution.workflow;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.*;
-import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
+import com.dtolabs.rundeck.core.execution.commands.NodeStepResult;
 
 import java.util.*;
 
@@ -69,7 +69,7 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
     }
 
     @Override
-    public void finishInterpretCommand(final InterpreterResult result, final ExecutionContext context,
+    public void finishInterpretCommand(final NodeStepResult result, final ExecutionContext context,
                                        final ExecutionItem item, final INodeEntry node) {
         if (null != delegate) {
             delegate.finishInterpretCommand(result, context, item, node);

@@ -143,7 +143,7 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
      */
     public void testInterpretCommandScriptContentLocalUnix() throws Exception {
         final Framework frameworkInstance = getFrameworkInstance();
-        ScriptFileCommandInterpreter interpret = new ScriptFileCommandInterpreter(getFrameworkInstance());
+        ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(getFrameworkInstance());
 
         //setup nodeexecutor for local node
         multiTestNodeExecutor testexec = new multiTestNodeExecutor();
@@ -243,7 +243,7 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
             });
             testexec.testResult=nodeExecutorResults;
             testcopier.testResult="/test/file/path";
-            final InterpreterResult interpreterResult = interpret.interpretCommand(context, command, test1);
+            final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
 
             assertNotNull(interpreterResult);
             assertTrue(interpreterResult.isSuccess());
@@ -279,7 +279,7 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
      */
     public void testInterpretCommandScriptContentWithArgs() throws Exception {
         final Framework frameworkInstance = getFrameworkInstance();
-        ScriptFileCommandInterpreter interpret = new ScriptFileCommandInterpreter(getFrameworkInstance());
+        ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(getFrameworkInstance());
 
         //setup nodeexecutor for local node
         multiTestNodeExecutor testexec = new multiTestNodeExecutor();
@@ -383,7 +383,7 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
             });
             testexec.testResult = nodeExecutorResults;
             testcopier.testResult = "/test/file/path";
-            final InterpreterResult interpreterResult = interpret.interpretCommand(context, command, test1);
+            final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
 
             assertNotNull(interpreterResult);
             assertTrue(interpreterResult.isSuccess());
@@ -424,7 +424,7 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
      */
     public void testInterpretCommandScriptContentLocalUnixChmodFailure() throws Exception {
         final Framework frameworkInstance = getFrameworkInstance();
-        ScriptFileCommandInterpreter interpret = new ScriptFileCommandInterpreter(frameworkInstance);
+        ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
 
         //setup nodeexecutor for local node
         multiTestNodeExecutor testexec = new multiTestNodeExecutor();
@@ -518,7 +518,7 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
             });
             testexec.testResult=nodeExecutorResults;
             testcopier.testResult = "/test/file/path";
-            final InterpreterResult interpreterResult = interpret.interpretCommand(context, command, test1);
+            final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
 
             assertNotNull(interpreterResult);
             assertFalse(interpreterResult.isSuccess());
@@ -549,7 +549,7 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
      */
     public void testInterpretCommandScriptContentLocalWindows() throws Exception {
         final Framework frameworkInstance = getFrameworkInstance();
-        ScriptFileCommandInterpreter interpret = new ScriptFileCommandInterpreter(frameworkInstance);
+        ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
 
         //setup nodeexecutor for local node
         multiTestNodeExecutor testexec = new multiTestNodeExecutor();
@@ -642,7 +642,7 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
             });
             testexec.testResult=nodeExecutorResults;
             testcopier.testResult = "/test/file/path";
-            final InterpreterResult interpreterResult = interpret.interpretCommand(context, command, test1);
+            final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
 
             assertNotNull(interpreterResult);
             assertTrue(interpreterResult.isSuccess());
@@ -670,7 +670,7 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
      */
     public void testInterpretCommandScriptFileLocal() throws Exception {
         final Framework frameworkInstance = getFrameworkInstance();
-        ScriptFileCommandInterpreter interpret = new ScriptFileCommandInterpreter(frameworkInstance);
+        ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
 
         //setup nodeexecutor for local node
         multiTestNodeExecutor testexec = new multiTestNodeExecutor();
@@ -775,7 +775,7 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
             });
             testexec.testResult = nodeExecutorResults;
             testcopier.testResult = "/test/file/path";
-            final InterpreterResult interpreterResult = interpret.interpretCommand(context, command, test1);
+            final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
 
             assertNotNull(interpreterResult);
             assertTrue(interpreterResult.isSuccess());
@@ -813,7 +813,7 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
      */
     public void testInterpretCommandScriptInputLocal() throws Exception {
         final Framework frameworkInstance = getFrameworkInstance();
-        ScriptFileCommandInterpreter interpret = new ScriptFileCommandInterpreter(frameworkInstance);
+        ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
 
         //setup nodeexecutor for local node
         multiTestNodeExecutor testexec = new multiTestNodeExecutor();
@@ -918,7 +918,7 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
             });
             testexec.testResult = nodeExecutorResults;
             testcopier.testResult = "/test/file/path";
-            final InterpreterResult interpreterResult = interpret.interpretCommand(context, command, test1);
+            final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
 
             assertNotNull(interpreterResult);
             assertTrue(interpreterResult.isSuccess());
@@ -954,7 +954,7 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
 
     public void testInterpretCommandCopyFailure() throws Exception {
         final Framework frameworkInstance = getFrameworkInstance();
-        ScriptFileCommandInterpreter interpret = new ScriptFileCommandInterpreter(frameworkInstance);
+        ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
 
         //setup nodeexecutor for local node
         multiTestNodeExecutor testexec = new multiTestNodeExecutor();
@@ -1062,11 +1062,11 @@ public class TestScriptFileCommandInterpreter extends AbstractBaseTest {
             //set filecopier to throw exception
             testcopier.throwException=true;
             testcopier.testResult = "/test/file/path";
-            final InterpreterResult interpreterResult;
+            final NodeStepResult interpreterResult;
             try {
-                interpreterResult = interpret.interpretCommand(context, command, test1);
+                interpreterResult = interpret.executeNodeStep(context, command, test1);
                 fail("interpreter should have thrown exception");
-            } catch (InterpreterException e) {
+            } catch (NodeStepException e) {
                 assertTrue(e.getCause() instanceof FileCopierException);
                 assertEquals("copyFileStream test", e.getCause().getMessage());
             }

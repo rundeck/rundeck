@@ -25,7 +25,6 @@ package com.dtolabs.rundeck.core.execution.commands;
 
 import com.dtolabs.rundeck.core.execution.HasFailureHandler;
 
-import java.util.*;
 
 /**
  * ScriptURLCommandBase base implementation of ScriptURLCommandExecutionItem that defines the getType() method
@@ -35,6 +34,6 @@ import java.util.*;
  */
 public abstract class ScriptURLCommandBase implements ScriptURLCommandExecutionItem,HasFailureHandler {
     public String getType() {
-        return ScriptURLCommandInterpreter.SERVICE_IMPLEMENTATION_NAME;
+        return ScriptURLNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME;
     }
 }

@@ -15,7 +15,7 @@
  */
 
 /*
-* ScriptURLCommandInterpreter.java
+* ScriptURLNodeStepExecutor.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 5/2/12 2:37 PM
@@ -51,12 +51,12 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
 /**
- * ScriptURLCommandInterpreter is a CommandInterpreter for executing a script retrieved from a URL.
+ * ScriptURLNodeStepExecutor is a NodeStepExecutor for executing a script retrieved from a URL.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ScriptURLCommandInterpreter implements CommandInterpreter {
-    public static final Logger logger = Logger.getLogger(ScriptURLCommandInterpreter.class.getName());
+public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
+    public static final Logger logger = Logger.getLogger(ScriptURLNodeStepExecutor.class.getName());
     public static final String SERVICE_IMPLEMENTATION_NAME = "script-url";
 
     public static final int DEFAULT_TIMEOUT = 30;
@@ -67,10 +67,10 @@ public class ScriptURLCommandInterpreter implements CommandInterpreter {
     private Framework framework;
     URLFileUpdater.httpClientInteraction interaction;
 
-    public ScriptURLCommandInterpreter(Framework framework) {
+    public ScriptURLNodeStepExecutor(Framework framework) {
         this.framework = framework;
         cacheDir = new File(Constants.getBaseVar(framework.getBaseDir().getAbsolutePath())
-                            + "/cache/ScriptURLCommandInterpreter");
+                            + "/cache/ScriptURLNodeStepExecutor");
     }
 
     private static String hashURL(final String url) {
@@ -85,8 +85,8 @@ public class ScriptURLCommandInterpreter implements CommandInterpreter {
         return Integer.toString(url.hashCode());
     }
 
-    public InterpreterResult interpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node) throws
-        InterpreterException {
+    public NodeStepResult executeNodeStep(ExecutionContext context, ExecutionItem item, INodeEntry node) throws
+                                                                                                         NodeStepException {
         if (!cacheDir.isDirectory() && !cacheDir.mkdirs()) {
             throw new RuntimeException("Unable to create cachedir: " + cacheDir.getAbsolutePath());
         }
@@ -101,7 +101,7 @@ public class ScriptURLCommandInterpreter implements CommandInterpreter {
         try {
             url = new URL(finalUrl);
         } catch (MalformedURLException e) {
-            throw new InterpreterException(e);
+            throw new NodeStepException(e);
         }
         if(null!=context.getExecutionListener()){
             context.getExecutionListener().log(4, "Requesting URL: " + url.toExternalForm());
@@ -134,7 +134,7 @@ public class ScriptURLCommandInterpreter implements CommandInterpreter {
             logger.debug("Updated nodes resources file: " + destinationTempFile);
         } catch (UpdateUtils.UpdateException e) {
             if (!destinationTempFile.isFile() || destinationTempFile.length() < 1) {
-                throw new InterpreterException(
+                throw new NodeStepException(
                     "Error requesting URL Script: " + cleanUrl + ": " + e.getMessage(), e);
             } else {
                 logger.error(
@@ -146,7 +146,7 @@ public class ScriptURLCommandInterpreter implements CommandInterpreter {
         try {
             filepath = executionService.fileCopyFile(context, destinationTempFile, node);
         } catch (FileCopierException e) {
-            throw new InterpreterException(e);
+            throw new NodeStepException(e);
         }
 
         try {
@@ -177,7 +177,7 @@ public class ScriptURLCommandInterpreter implements CommandInterpreter {
 
             return framework.getExecutionService().executeCommand(context, newargs, node);
         } catch (ExecutionException e) {
-            throw new InterpreterException(e);
+            throw new NodeStepException(e);
         }
     }
 

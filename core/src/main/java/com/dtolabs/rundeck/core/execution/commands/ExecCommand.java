@@ -23,10 +23,6 @@
 */
 package com.dtolabs.rundeck.core.execution.commands;
 
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
-
-import java.util.*;
-
 /**
  * CommandExecItem is ...
  *
@@ -34,7 +30,7 @@ import java.util.*;
  */
 public abstract class ExecCommand implements ExecCommandExecutionItem {
     public String getType() {
-        return ExecCommandInterpreter.SERVICE_IMPLEMENTATION_NAME;
+        return ExecNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME;
     }
 
 }

@@ -24,7 +24,6 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.execution.StatusResult;
-import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
 
 import java.util.Collection;
 import java.util.List;

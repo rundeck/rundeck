@@ -25,8 +25,8 @@ package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.common.FrameworkSupportService;
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.execution.commands.InterpreterException;
-import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
+import com.dtolabs.rundeck.core.execution.commands.NodeStepException;
+import com.dtolabs.rundeck.core.execution.commands.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
@@ -66,8 +66,8 @@ public interface ExecutionService extends FrameworkSupportService {
     /**
      * Interpret the execution item within the context for the given node.
      */
-    public InterpreterResult interpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node) throws
-        InterpreterException;
+    public NodeStepResult interpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node) throws
+                                                                                                          NodeStepException;
 
 
     /**

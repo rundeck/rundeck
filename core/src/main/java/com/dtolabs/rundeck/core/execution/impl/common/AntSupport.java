@@ -23,10 +23,8 @@
 */
 package com.dtolabs.rundeck.core.execution.impl.common;
 
-import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.ExecutionListenerBuildLogger;
-import com.dtolabs.rundeck.core.execution.commands.ExecCommandInterpreter;
 import org.apache.tools.ant.Project;
 
 /**

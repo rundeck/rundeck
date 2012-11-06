@@ -23,13 +23,11 @@
 */
 package com.dtolabs.rundeck.core.execution.commands;
 
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
 import com.dtolabs.rundeck.core.execution.HandlerExecutionItem;
 
-import java.net.URL;
 
 /**
- * ScriptURLCommandExecutionItem is used by the {@link ScriptURLCommandInterpreter} and represents
+ * ScriptURLCommandExecutionItem is used by the {@link ScriptURLNodeStepExecutor} and represents
  * an execution item to run a script downloaded from a provided URL.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>

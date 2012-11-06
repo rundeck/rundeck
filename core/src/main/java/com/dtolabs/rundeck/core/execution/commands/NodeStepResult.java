@@ -15,33 +15,20 @@
  */
 
 /*
-* InterpreterException.java
+* NodeStepResult.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/21/11 6:20 PM
+* Created: 3/22/11 6:35 PM
 * 
 */
 package com.dtolabs.rundeck.core.execution.commands;
 
+import com.dtolabs.rundeck.core.execution.StatusResult;
+
 /**
- * InterpreterException is ...
+ * NodeStepResult is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class InterpreterException extends Exception {
-    public InterpreterException() {
-        super();
-    }
-
-    public InterpreterException(String msg) {
-        super(msg);
-    }
-
-    public InterpreterException(Exception cause) {
-        super(cause);
-    }
-
-    public InterpreterException(String msg, Exception cause) {
-        super(msg, cause);
-    }
+public interface NodeStepResult extends StatusResult {
 }

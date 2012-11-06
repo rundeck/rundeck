@@ -93,7 +93,7 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
 
     public void testInterpretCommand() throws Exception {
         final Framework frameworkInstance = getFrameworkInstance();
-        ExecCommandInterpreter interpret = new ExecCommandInterpreter(frameworkInstance);
+        ExecNodeStepExecutor interpret = new ExecNodeStepExecutor(frameworkInstance);
 
         //setup nodeexecutor for local node
         testNodeExecutor testexec = new testNodeExecutor();
@@ -170,7 +170,7 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
             }
         };
         {
-            final InterpreterResult interpreterResult = interpret.interpretCommand(context, command, test1);
+            final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
             //returning null from command
             assertNull(interpreterResult);
 //            assertEquals(context, testexec.testContext);
@@ -188,7 +188,7 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
         };
 
         {
-            final InterpreterResult interpreterResult = interpret.interpretCommand(context, command, test1);
+            final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
             //returning null from command
             assertTrue(interpreterResult.isSuccess());
             assertTrue(interpreterResult instanceof NodeExecutorResult);
@@ -207,7 +207,7 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
      */
     public void testInterpretCommandRemote() throws Exception {
         final Framework frameworkInstance = getFrameworkInstance();
-        ExecCommandInterpreter interpret = new ExecCommandInterpreter(frameworkInstance);
+        ExecNodeStepExecutor interpret = new ExecNodeStepExecutor(frameworkInstance);
 
         //setup nodeexecutor for local node
         testNodeExecutor testexec = new testNodeExecutor();
@@ -283,7 +283,7 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
             }
         };
         {
-            final InterpreterResult interpreterResult = interpret.interpretCommand(context, command, test1);
+            final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
             //returning null from command
             assertNull(interpreterResult);
 //            assertEquals(context, testexec.testContext);
@@ -301,7 +301,7 @@ public class TestExecCommandInterpreter extends AbstractBaseTest {
         };
 
         {
-            final InterpreterResult interpreterResult = interpret.interpretCommand(context, command, test1);
+            final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
             //returning null from command
             assertTrue(interpreterResult.isSuccess());
             assertTrue(interpreterResult instanceof NodeExecutorResult);

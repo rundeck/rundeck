@@ -204,7 +204,7 @@ public class TestScriptURLCommandInterpreter extends AbstractBaseTest {
      */
     public void testInterpretCommandScriptFileLocal() throws Exception {
         final Framework frameworkInstance = getFrameworkInstance();
-        ScriptURLCommandInterpreter interpret = new ScriptURLCommandInterpreter(frameworkInstance);
+        ScriptURLNodeStepExecutor interpret = new ScriptURLNodeStepExecutor(frameworkInstance);
 
         //setup nodeexecutor for local node
         multiTestNodeExecutor testexec = new multiTestNodeExecutor();
@@ -330,7 +330,7 @@ public class TestScriptURLCommandInterpreter extends AbstractBaseTest {
 
             interpret.setInteraction(interaction);
 
-            final InterpreterResult interpreterResult = interpret.interpretCommand(context, command, test1);
+            final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
 
             assertNotNull(interpreterResult);
             assertTrue(interpreterResult.isSuccess());
@@ -374,7 +374,7 @@ public class TestScriptURLCommandInterpreter extends AbstractBaseTest {
         t:{//no expansion
             String value = null;
             try {
-                value = ScriptURLCommandInterpreter.expandUrlString(
+                value = ScriptURLNodeStepExecutor.expandUrlString(
                     "http://example.com/path/${node.name}?query=${data.value}",
                     stringMapMap);
                 fail("should not succeed");
@@ -387,7 +387,7 @@ public class TestScriptURLCommandInterpreter extends AbstractBaseTest {
             stringMapMap.put("node", nodeData);
             String value = null;
             try {
-                value = ScriptURLCommandInterpreter.expandUrlString(
+                value = ScriptURLNodeStepExecutor.expandUrlString(
                     "http://example.com/path/${node.name}?query=${data.value}",
                     stringMapMap);
                 fail("should not succeed");
@@ -399,7 +399,7 @@ public class TestScriptURLCommandInterpreter extends AbstractBaseTest {
         {//dataexpansion
             stringMapMap.put("node", nodeData);
             stringMapMap.put("data", data);
-            String value = ScriptURLCommandInterpreter.expandUrlString(
+            String value = ScriptURLNodeStepExecutor.expandUrlString(
                 "http://example.com/path/${node.name}?query=${data.value}",
                 stringMapMap);
             assertEquals("http://example.com/path/node%2Fname?query=some%20value%20%3F%20for%20things%20%26%20stuff", value);

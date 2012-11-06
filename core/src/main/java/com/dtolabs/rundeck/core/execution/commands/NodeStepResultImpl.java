@@ -15,7 +15,7 @@
  */
 
 /*
-* InterpreterResultImpl.java
+* NodeStepResultImpl.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 3/29/11 3:00 PM
@@ -25,17 +25,16 @@ package com.dtolabs.rundeck.core.execution.commands;
 
 import com.dtolabs.rundeck.core.execution.StatusResult;
 
-import java.util.*;
 
 /**
- * InterpreterResultImpl is ...
+ * NodeStepResultImpl is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class InterpreterResultImpl implements InterpreterResult {
+public class NodeStepResultImpl implements NodeStepResult {
     private StatusResult internalResult;
 
-    public InterpreterResultImpl(final StatusResult internalResult) {
+    public NodeStepResultImpl(final StatusResult internalResult) {
         this.internalResult = internalResult;
     }
 

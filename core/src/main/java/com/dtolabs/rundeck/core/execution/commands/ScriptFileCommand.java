@@ -23,11 +23,6 @@
 */
 package com.dtolabs.rundeck.core.execution.commands;
 
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
-
-import java.io.InputStream;
-import java.util.*;
-
 /**
  * ScriptFileExecutionItem is ...
  *
@@ -36,7 +31,7 @@ import java.util.*;
 public abstract class ScriptFileCommand implements ScriptFileCommandExecutionItem {
 
     public String getType() {
-        return ScriptFileCommandInterpreter.SERVICE_IMPLEMENTATION_NAME;
+        return ScriptFileNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME;
     }
 
 }

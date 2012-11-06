@@ -163,7 +163,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
         public void beginInterpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node) {
         }
 
-        public void finishInterpretCommand(InterpreterResult result, ExecutionContext context, ExecutionItem item,
+        public void finishInterpretCommand(NodeStepResult result, ExecutionContext context, ExecutionItem item,
                                            INodeEntry node) {
         }
 
@@ -185,28 +185,28 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
         }
     }
 
-    static class testInterpreter implements CommandInterpreter {
+    static class testInterpreter implements NodeStepExecutor {
         List<ExecutionItem> executionItemList = new ArrayList<ExecutionItem>();
         List<ExecutionContext> executionContextList = new ArrayList<ExecutionContext>();
         List<INodeEntry> nodeEntryList = new ArrayList<INodeEntry>();
         int index = 0;
-        List<InterpreterResult> resultList = new ArrayList<InterpreterResult>();
+        List<NodeStepResult> resultList = new ArrayList<NodeStepResult>();
         boolean shouldThrowException = false;
 
-        public InterpreterResult interpretCommand(ExecutionContext executionContext,
-                                                  ExecutionItem executionItem, INodeEntry iNodeEntry) throws
-            InterpreterException {
+        public NodeStepResult executeNodeStep(ExecutionContext executionContext,
+                                                 ExecutionItem executionItem, INodeEntry iNodeEntry) throws
+                                                                                                     NodeStepException {
             executionItemList.add(executionItem);
             executionContextList.add(executionContext);
             nodeEntryList.add(iNodeEntry);
             if (shouldThrowException) {
-                throw new InterpreterException("testInterpreter test exception");
+                throw new NodeStepException("testInterpreter test exception");
             }
             System.out.println("return index: (" + index + ") in size: " + resultList.size());
             return resultList.get(index++);
         }
     }
-    static class testResult implements InterpreterResult{
+    static class testResult implements NodeStepResult {
         boolean success;
         int flag;
 
@@ -255,7 +255,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .build();
 
             //setup testInterpreter for all command types
-            final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
+            final NodeStepExecutorService interpreterService = NodeStepExecutorService.getInstanceForFramework(
                 testFramework);
             testInterpreter interpreterMock = new testInterpreter();
             interpreterService.registerInstance("exec", interpreterMock);
@@ -294,7 +294,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .build();
 
             //setup testInterpreter for all command types
-            final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
+            final NodeStepExecutorService interpreterService = NodeStepExecutorService.getInstanceForFramework(
                 testFramework);
             testInterpreter interpreterMock = new testInterpreter();
             interpreterService.registerInstance("exec", interpreterMock);
@@ -320,7 +320,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
 //            assertTrue("not right type:" + result1, result1 instanceof ExceptionStatusResult);
 //            ExceptionStatusResult eresult = (ExceptionStatusResult) result1;
             assertEquals("threw exception: " + result.getException(),
-                         "Step 1 of the workflow threw an exception: Failed dispatching to node test1: provider name was null for Service: CommandInterpreter",
+                         "Step 1 of the workflow threw an exception: Failed dispatching to node test1: provider name was null for Service: NodeStepExecutor",
                          result.getException().getMessage());
         }
 
@@ -349,7 +349,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .build();
 
             //setup testInterpreter for all command types
-            final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
+            final NodeStepExecutorService interpreterService = NodeStepExecutorService.getInstanceForFramework(
                 testFramework);
             testInterpreter interpreterMock = new testInterpreter();
             testInterpreter failMock = new testInterpreter();
@@ -361,7 +361,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
 //            interpreterService.registerInstance(JobExecutionItem.COMMAND_TYPE, failMock);
 
             //set resturn result
-            interpreterMock.resultList.add(new InterpreterResult() {
+            interpreterMock.resultList.add(new NodeStepResult() {
                 public boolean isSuccess() {
                     return true;
                 }
@@ -419,7 +419,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .build();
 
             //setup testInterpreter for all command types
-            final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
+            final NodeStepExecutorService interpreterService = NodeStepExecutorService.getInstanceForFramework(
                 testFramework);
             testInterpreter interpreterMock = new testInterpreter();
             testInterpreter failMock = new testInterpreter();
@@ -431,7 +431,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
 //            interpreterService.registerInstance(JobExecutionItem.COMMAND_TYPE, failMock);
 
             //set resturn result
-            interpreterMock.resultList.add(new InterpreterResult() {
+            interpreterMock.resultList.add(new NodeStepResult() {
                 public boolean isSuccess() {
                     return true;
                 }
@@ -518,7 +518,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .build();
 
             //setup testInterpreter for all command types
-            final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
+            final NodeStepExecutorService interpreterService = NodeStepExecutorService.getInstanceForFramework(
                 testFramework);
             testInterpreter interpreterMock = new testInterpreter();
             testInterpreter failMock = new testInterpreter();
@@ -659,7 +659,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .build();
 
             //setup testInterpreter for all command types
-            final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
+            final NodeStepExecutorService interpreterService = NodeStepExecutorService.getInstanceForFramework(
                 testFramework);
             testInterpreter interpreterMock = new testInterpreter();
             testInterpreter failMock = new testInterpreter();
@@ -806,7 +806,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .build();
 
             //setup testInterpreter for all command types
-            final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
+            final NodeStepExecutorService interpreterService = NodeStepExecutorService.getInstanceForFramework(
                 testFramework);
             testInterpreter interpreterMock = new testInterpreter();
             testInterpreter failMock = new testInterpreter();
@@ -963,7 +963,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .build();
 
             //setup testInterpreter for all command types
-            final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
+            final NodeStepExecutorService interpreterService = NodeStepExecutorService.getInstanceForFramework(
                 testFramework);
             testInterpreter interpreterMock = new testInterpreter();
             testInterpreter handlerInterpreterMock = new testInterpreter();
@@ -1141,7 +1141,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .build();
 
             //setup testInterpreter for all command types
-            final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
+            final NodeStepExecutorService interpreterService = NodeStepExecutorService.getInstanceForFramework(
                 testFramework);
             testInterpreter interpreterMock = new testInterpreter();
             testInterpreter handlerInterpreterMock = new testInterpreter();
@@ -1355,7 +1355,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .build();
 
             //setup testInterpreter for all command types
-            final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
+            final NodeStepExecutorService interpreterService = NodeStepExecutorService.getInstanceForFramework(
                 testFramework);
             testInterpreter interpreterMock = new testInterpreter();
             testInterpreter handlerInterpreterMock = new testInterpreter();
@@ -1514,7 +1514,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .build();
 
             //setup testInterpreter for all command types
-            final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
+            final NodeStepExecutorService interpreterService = NodeStepExecutorService.getInstanceForFramework(
                 testFramework);
             testInterpreter interpreterMock = new testInterpreter();
             testInterpreter failMock = new testInterpreter();
@@ -1526,7 +1526,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
 
             //set resturn result
-            interpreterMock.resultList.add(new InterpreterResult() {
+            interpreterMock.resultList.add(new NodeStepResult() {
                 public boolean isSuccess() {
                     return true;
                 }
@@ -1582,7 +1582,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .build();
 
             //setup testInterpreter for all command types
-            final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
+            final NodeStepExecutorService interpreterService = NodeStepExecutorService.getInstanceForFramework(
                 testFramework);
             testInterpreter interpreterMock = new testInterpreter();
             testInterpreter failMock = new testInterpreter();
@@ -1594,13 +1594,13 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
 
             //set resturn result node 1
-            interpreterMock.resultList.add(new InterpreterResult() {
+            interpreterMock.resultList.add(new NodeStepResult() {
                 public boolean isSuccess() {
                     return true;
                 }
             });
             //set resturn result node 2
-            interpreterMock.resultList.add(new InterpreterResult() {
+            interpreterMock.resultList.add(new NodeStepResult() {
                 public boolean isSuccess() {
                     return true;
                 }
@@ -1680,7 +1680,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .build();
 
             //setup testInterpreter for all command types
-            final CommandInterpreterService interpreterService = CommandInterpreterService.getInstanceForFramework(
+            final NodeStepExecutorService interpreterService = NodeStepExecutorService.getInstanceForFramework(
                 testFramework);
             testInterpreter interpreterMock = new testInterpreter();
             testInterpreter failMock = new testInterpreter();
@@ -1692,25 +1692,25 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
 
             //set resturn result node 1 step 1
-            interpreterMock.resultList.add(new InterpreterResult() {
+            interpreterMock.resultList.add(new NodeStepResult() {
                 public boolean isSuccess() {
                     return true;
                 }
             });
             //set resturn result node 2 step 1
-            interpreterMock.resultList.add(new InterpreterResult() {
+            interpreterMock.resultList.add(new NodeStepResult() {
                 public boolean isSuccess() {
                     return true;
                 }
             });
             //set resturn result node 1 step 2
-            interpreterMock.resultList.add(new InterpreterResult() {
+            interpreterMock.resultList.add(new NodeStepResult() {
                 public boolean isSuccess() {
                     return true;
                 }
             });
             //set resturn result node 2 step 2
-            interpreterMock.resultList.add(new InterpreterResult() {
+            interpreterMock.resultList.add(new NodeStepResult() {
                 public boolean isSuccess() {
                     return true;
                 }

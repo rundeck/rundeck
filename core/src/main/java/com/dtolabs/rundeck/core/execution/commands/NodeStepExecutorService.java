@@ -15,7 +15,7 @@
  */
 
 /*
-* CommandInterpreterService.java
+* NodeStepExecutorService.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 3/21/11 4:06 PM
@@ -29,40 +29,39 @@ import com.dtolabs.rundeck.core.plugins.BaseProviderRegistryService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 
 /**
- * CommandInterpreterService is ...
+ * NodeStepExecutorService is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class CommandInterpreterService extends BaseProviderRegistryService<CommandInterpreter> {
-    public static final String SERVICE_NAME = "CommandInterpreter";
+public class NodeStepExecutorService extends BaseProviderRegistryService<NodeStepExecutor> {
+    public static final String SERVICE_NAME = "NodeStepExecutor";
 
-    public CommandInterpreterService(final Framework framework) {
+    public NodeStepExecutorService(final Framework framework) {
         super(framework);
 
-        //TODO: use plugin framework to configure available FileCopier implementations.
         resetDefaultProviders();
     }
     public void resetDefaultProviders(){
-        registry.put(ExecCommandInterpreter.SERVICE_IMPLEMENTATION_NAME, ExecCommandInterpreter.class);
-        registry.put(ScriptFileCommandInterpreter.SERVICE_IMPLEMENTATION_NAME, ScriptFileCommandInterpreter.class);
-        registry.put(ScriptURLCommandInterpreter.SERVICE_IMPLEMENTATION_NAME, ScriptURLCommandInterpreter.class);
-        instanceregistry.remove(ExecCommandInterpreter.SERVICE_IMPLEMENTATION_NAME);
-        instanceregistry.remove(ScriptFileCommandInterpreter.SERVICE_IMPLEMENTATION_NAME);
-        instanceregistry.remove(ScriptURLCommandInterpreter.SERVICE_IMPLEMENTATION_NAME);
+        registry.put(ExecNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ExecNodeStepExecutor.class);
+        registry.put(ScriptFileNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ScriptFileNodeStepExecutor.class);
+        registry.put(ScriptURLNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ScriptURLNodeStepExecutor.class);
+        instanceregistry.remove(ExecNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME);
+        instanceregistry.remove(ScriptFileNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME);
+        instanceregistry.remove(ScriptURLNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME);
     }
 
-    public CommandInterpreter getInterpreterForExecutionItem(final ExecutionItem item) throws
+    public NodeStepExecutor getInterpreterForExecutionItem(final ExecutionItem item) throws
         ExecutionServiceException {
         return providerOfType(item.getType());
     }
 
-    public static CommandInterpreterService getInstanceForFramework(Framework framework) {
+    public static NodeStepExecutorService getInstanceForFramework(Framework framework) {
         if (null == framework.getService(SERVICE_NAME)) {
-            final CommandInterpreterService service = new CommandInterpreterService(framework);
+            final NodeStepExecutorService service = new NodeStepExecutorService(framework);
             framework.setService(SERVICE_NAME, service);
             return service;
         }
-        return (CommandInterpreterService) framework.getService(SERVICE_NAME);
+        return (NodeStepExecutorService) framework.getService(SERVICE_NAME);
     }
 
 
