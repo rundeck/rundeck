@@ -92,6 +92,11 @@
     </div>
     </g:if>
 </g:elseif>
+<g:elseif test="${newitemtype && newitemDescription}">
+    <div>
+        <div class="info note">${newitemDescription.description.encodeAsHTML()}</div>
+    </div>
+</g:elseif>
 <g:if test="${isErrorHandler}">
     <div class="presentation">
         <label>

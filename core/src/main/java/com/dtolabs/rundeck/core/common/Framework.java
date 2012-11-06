@@ -325,6 +325,9 @@ public class Framework extends FrameworkResourceParent {
     public NodeExecutorService getNodeExecutorService() throws ExecutionServiceException {
         return NodeExecutorService.getInstanceForFramework(this);
     }
+    public NodeStepExecutorService getNodeStepExecutorService() throws ExecutionServiceException {
+        return NodeStepExecutorService.getInstanceForFramework(this);
+    }
     public NodeStepExecutor getNodeStepExecutorForItem(ExecutionItem item) throws ExecutionServiceException {
         return NodeStepExecutorService.getInstanceForFramework(this).getExecutorForExecutionItem(item);
     }

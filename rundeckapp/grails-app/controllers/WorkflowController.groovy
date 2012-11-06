@@ -1,5 +1,8 @@
-class WorkflowController {
+import com.dtolabs.rundeck.core.common.Framework
+import rundeck.WorkflowStep
 
+class WorkflowController {
+    def frameworkService
     def index = {
         return redirect(controller: 'menu', action: 'index')
     }
@@ -30,6 +33,7 @@ class WorkflowController {
         }
         def item = null != numi ? editwf.commands.get(numi) : null
         final isErrorHandler = params.isErrorHandler == 'true'
+
         if(isErrorHandler){
             if(params['newitemtype']){
                 item=null
@@ -42,7 +46,16 @@ class WorkflowController {
                 }
             }
         }
-        return render(template: "/execution/wfitemEdit", model: [item: item, key:params.key, num: numi, scheduledExecutionId: params.scheduledExecutionId, newitemtype: params['newitemtype'], edit: true, isErrorHandler: isErrorHandler])
+        def newitemDescription
+        if (params['newitemtype']){
+            if (!(params['newitemtype'] in ['command', 'script', 'scriptfile', 'job'])) {
+                //plugin
+                Framework framework = frameworkService.getFrameworkFromUserSession(session, request.subject)
+                def provider = framework.getNodeStepExecutorService().providerOfType(params['newitemtype'])
+                newitemDescription = provider.description
+            }
+        }
+        return render(template: "/execution/wfitemEdit", model: [item: item, key:params.key, num: numi, scheduledExecutionId: params.scheduledExecutionId, newitemtype: params['newitemtype'], newitemDescription: newitemDescription, edit: true, isErrorHandler: isErrorHandler])
     }
 
     /**
@@ -316,6 +329,7 @@ class WorkflowController {
             if (input.params.jobName || 'job' == input.params.newitemtype) {
                 item = new JobExec(input.params)
             } else {
+                //TODO: other types
                 item = new CommandExec(input.params)
 
                 def optsmap = ExecutionService.filterOptParams(input.params)
@@ -341,7 +355,7 @@ class WorkflowController {
                 result.error = "num parameter is invalid: ${numi}"
                 return result
             }
-            def CommandExec item = editwf.commands.get(numi)
+            def WorkflowStep item = editwf.commands.get(numi)
             def clone = item.createClone()
             def moditem = item.createClone()
             moditem.properties = input.params
@@ -359,8 +373,8 @@ class WorkflowController {
         }else if (input.action=='removeHandler'){
             //remove error handler from wfstep
             def numi = input.num
-            def CommandExec wfitem = editwf.commands.get(numi)
-            def CommandExec item = wfitem.errorHandler
+            def WorkflowStep wfitem = editwf.commands.get(numi)
+            def WorkflowStep item = wfitem.errorHandler
             wfitem.errorHandler=null
 
             result['undo'] = [action: 'addHandler', num: numi, params: item.properties]
@@ -371,12 +385,13 @@ class WorkflowController {
                 result.error = "num parameter is invalid: ${numi}"
                 return result
             }
-            def CommandExec item = editwf.commands.get(numi)
+            def WorkflowStep item = editwf.commands.get(numi)
             def ehitem
 
             if (input.params.jobName || 'job' == input.params.newitemtype) {
                 ehitem = new JobExec(input.params)
             } else {
+                //TODO other types
                 ehitem = new CommandExec(input.params)
 
                 def optsmap = ExecutionService.filterOptParams(input.params)
@@ -397,8 +412,8 @@ class WorkflowController {
                 result.error = "num parameter is invalid: ${numi}"
                 return result
             }
-            def CommandExec stepitem = editwf.commands.get(numi)
-            def CommandExec ehitem = stepitem.errorHandler
+            def WorkflowStep stepitem = editwf.commands.get(numi)
+            def WorkflowStep ehitem = stepitem.errorHandler
 
             if (!ehitem) {
                 result.error = "num parameter is invalid: ${numi}: no error handler"
@@ -545,17 +560,17 @@ class WorkflowController {
 
 
     /**
-     * Validate a CommandExec or JobExec object.  will call Errors.rejectValue for
+     * Validate a WorkflowStep object.  will call Errors.rejectValue for
      * any invalid fields for the object.
-     * @param exec the CommandExec
+     * @param exec the WorkflowStep
      * @param type type if specified in params
      */
-    public static boolean _validateCommandExec(CommandExec exec, String type = null) {
+    public static boolean _validateCommandExec(WorkflowStep exec, String type = null) {
         if (exec instanceof JobExec) {
             if (!exec.jobName) {
                 exec.errors.rejectValue('jobName', 'commandExec.jobName.blank.message')
             }
-        }else{
+        }else if(exec instanceof CommandExec){
             if (!exec.adhocRemoteString && 'command' == type) {
                 exec.errors.rejectValue('adhocRemoteString', 'commandExec.adhocExecution.adhocRemoteString.blank.message')
             } else if (!exec.adhocLocalString && 'script' == type) {
@@ -572,7 +587,9 @@ class WorkflowController {
                     exec.errors.rejectValue('adhocRemoteString', 'scheduledExecution.adhocString.duplicate.message')
                 }
             }
-        } 
+        }else{
+            //TODO: support
+        }
     }
     
 }

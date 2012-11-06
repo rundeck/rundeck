@@ -85,7 +85,6 @@ public class ScheduledExecutionServiceTests extends GrailsUnitTestCase {
             def item1 = se.workflow.commands.get(0)
             assertNotNull item1
             assertTrue item1 instanceof CommandExec
-            assertEquals 'AProject', item1.project
             assertEquals '-a b -c d', item1.argString
         }
         adhocTest1: {
@@ -116,7 +115,6 @@ public class ScheduledExecutionServiceTests extends GrailsUnitTestCase {
             def item1 = se.workflow.commands.get(0)
             assertNotNull item1
             assertTrue item1 instanceof CommandExec
-            assertEquals 'AProject', item1.project
             assertEquals '-a b -c d', item1.argString
             assertTrue item1.adhocExecution
             assertEquals "this is a test", item1.adhocRemoteString
@@ -151,7 +149,6 @@ public class ScheduledExecutionServiceTests extends GrailsUnitTestCase {
             def item1 = se.workflow.commands.get(0)
             assertNotNull item1
             assertTrue item1 instanceof CommandExec
-            assertEquals 'AProject', item1.project
             assertEquals '-a b -c d', item1.argString
             assertTrue item1.adhocExecution
             assertNull item1.adhocRemoteString
@@ -186,7 +183,6 @@ public class ScheduledExecutionServiceTests extends GrailsUnitTestCase {
             def item1 = se.workflow.commands.get(0)
             assertNotNull item1
             assertTrue item1 instanceof CommandExec
-            assertEquals 'AProject', item1.project
             assertEquals '-a b -c d', item1.argString
             assertTrue item1.adhocExecution
             assertNull item1.adhocRemoteString

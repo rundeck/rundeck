@@ -49,6 +49,7 @@ import com.dtolabs.rundeck.core.execution.StatusResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
+import rundeck.WorkflowStep
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -576,7 +577,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         return item
     }
 
-    public ExecutionItem itemForWFCmdItem(final CommandExec cmd,final ExecutionItem handler=null) throws FileNotFoundException {
+    public ExecutionItem itemForWFCmdItem(final WorkflowStep cmd,final ExecutionItem handler=null) throws FileNotFoundException {
+        if(cmd.instanceOf(CommandExec)){
         if (null != cmd.getAdhocRemoteString()) {
 
             final List<String> strings = CLIUtils.splitArgLine(cmd.getAdhocRemoteString());
@@ -609,7 +611,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             }else{
                 return ExecutionItemFactory.createScriptFileItem(new File(filepath), args, handler, !!cmd.keepgoingOnSuccess);
             }
-        } else if (cmd.instanceOf(JobExec)) {
+        }
+        }else if (cmd.instanceOf(JobExec)) {
             final JobExec jobcmditem = cmd as JobExec;
 
             final String[] args;
@@ -622,7 +625,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
 
             return ExecutionItemFactory.createJobRef(jobcmditem.getJobIdentifier(), args, handler, !!cmd.keepgoingOnSuccess)
         } else {
-            throw new IllegalArgumentException("Workflow command item was not valid");
+            throw new IllegalArgumentException("TODO: Workflow command item was not valid");
         }
     }
 

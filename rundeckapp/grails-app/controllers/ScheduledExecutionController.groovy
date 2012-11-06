@@ -713,10 +713,11 @@ class ScheduledExecutionController  {
             session.removeAttribute('undoOPTS');
             session.removeAttribute('redoOPTS');
         }
+        def stepTypes=framework.getNodeStepExecutorService().listDescriptions()
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         return [ scheduledExecution:scheduledExecution, crontab:crontab,params:params,
             nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
-            authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework), projects: frameworkService.projects(framework)]
+            authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework), projects: frameworkService.projects(framework),nodeStepDescriptions:stepTypes]
     }
 
 
@@ -869,7 +870,6 @@ class ScheduledExecutionController  {
 
         def projects = frameworkService.projects(framework)
         def user = (session?.user) ? session.user : "anonymous"
-        def rolelist = (session?.roles) ? session.roles : []
         log.debug("ScheduledExecutionController: create : params: " + params)
         def scheduledExecution = new ScheduledExecution()
         scheduledExecution.loglevel = servletContext.getAttribute("LOGLEVEL_DEFAULT")?servletContext.getAttribute("LOGLEVEL_DEFAULT"):"WARN"
@@ -906,8 +906,9 @@ class ScheduledExecutionController  {
             session.removeAttribute('redoOPTS');
         }
 
+        def stepTypes = framework.getNodeStepExecutorService().listDescriptions()
         log.debug("ScheduledExecutionController: create : now returning model data to view...")
-        return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],projects:projects]
+        return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],projects:projects,nodeStepDescriptions: stepTypes]
     }
 
     private clearEditSession(id='_new'){

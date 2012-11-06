@@ -129,6 +129,14 @@
         <span class="button action" onclick="_wfiaddnew('script');" title="Execute  an inline script"><g:img file='icon-tiny-add.png'/> Script</span>
         <span class="button action" onclick="_wfiaddnew('scriptfile');" title="Execute a script file or URL"><g:img file='icon-tiny-add.png'/> Script file or URL</span>
         <span class="button action" onclick="_wfiaddnew('job');" title="Execute another Job"><g:img file='icon-tiny-add.png'/> Job Reference</span>
+            <g:if test="${nodeStepDescriptions}">
+                <g:each in="${nodeStepDescriptions}" var="typedesc">
+                    <span class="button action" onclick="_wfiaddnew('${typedesc.name.encodeAsHTML()}');"
+                    title="${typedesc.title.encodeAsHTML()}: ${typedesc.description.encodeAsHTML()}">
+                        ${typedesc.title.encodeAsHTML()}
+                    </span>
+                </g:each>
+            </g:if>
         </div>
         <div style="margin:10px; text-align:right;">
             <span class="action button small" onclick="$('wfnewtypes').hide();$('wfnewbutton').show();" title="Cancel adding new item"> Cancel</span>

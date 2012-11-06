@@ -1,4 +1,6 @@
 import com.dtolabs.rundeck.execution.IWorkflowJobItem
+import rundeck.WorkflowStep
+import org.codehaus.groovy.grails.commons.ConfigurationHolder
 
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
@@ -23,18 +25,22 @@ import com.dtolabs.rundeck.execution.IWorkflowJobItem
 * $Id$
 */
 
-public class JobExec extends CommandExec implements IWorkflowJobItem{
+public class JobExec extends WorkflowStep implements IWorkflowJobItem{
 
     String jobName
     String jobGroup
     String jobIdentifier
+    String argString
     static transients=['jobIdentifier']
 
     static constraints = {
         jobName(nullable: false, blank: false)
         jobGroup(nullable: true, blank: true)
-        nodeRankAttribute(nullable:true)
-        nodeRankOrderAscending(nullable:true)
+        argString(nullable: true, blank: true)
+    }
+
+    static mapping = {
+        argString type: 'text'
     }
 
     public String toString() {
@@ -53,7 +59,7 @@ public class JobExec extends CommandExec implements IWorkflowJobItem{
         //noop
     }
 
-    public CommandExec createClone(){
+    public JobExec createClone(){
         Map properties = new HashMap(this.properties)
         properties.remove('errorHandler')
         JobExec ce = new JobExec(properties)

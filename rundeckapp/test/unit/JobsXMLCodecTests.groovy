@@ -1354,11 +1354,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect workflow strategy", 1, jobs[0].workflow.commands.size()
             cmd1 = jobs[0].workflow.commands[0]
             assertNotNull "incorrect workflow", cmd1
-            assertFalse "incorrect adhocExecution: ${cmd1.adhocExecution}", cmd1.adhocExecution
-            assertNull "incorrect adhocLocalString", cmd1.adhocLocalString
-            assertNull "incorrect adhocRemoteString", cmd1.adhocRemoteString
-            assertNull "incorrect adhocRemoteString", cmd1.adhocFilepath
-            assertNull "incorrect adhocRemoteString", cmd1.argString
+            assertTrue "incorrect type: ${cmd1}", (cmd1 instanceof JobExec)
+            assertNull "incorrect argString", cmd1.argString
             assertEquals "incorrect jobName", 'bob', cmd1.jobName
             assertNull "incorrect jobGroup", cmd1.jobGroup
         //simple workflow with jobref
@@ -1396,10 +1393,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect workflow strategy", 1, jobs[0].workflow.commands.size()
             cmd1 = jobs[0].workflow.commands[0]
             assertNotNull "incorrect workflow", cmd1
-            assertFalse "incorrect adhocExecution: ${cmd1.adhocExecution}", cmd1.adhocExecution
-            assertNull "incorrect adhocLocalString", cmd1.adhocLocalString
-            assertNull "incorrect adhocRemoteString", cmd1.adhocRemoteString
-            assertNull "incorrect adhocRemoteString", cmd1.adhocFilepath
+            assertTrue "incorrect type: ${cmd1}", (cmd1 instanceof JobExec)
             assertNull "incorrect adhocRemoteString", cmd1.argString
             assertEquals "incorrect jobName", 'bob', cmd1.jobName
             assertEquals "incorrect jobGroup", '/some/path', cmd1.jobGroup
@@ -1438,10 +1432,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect workflow strategy", 1, jobs[0].workflow.commands.size()
             cmd1 = jobs[0].workflow.commands[0]
             assertNotNull "incorrect workflow", cmd1
-            assertFalse "incorrect adhocExecution: ${cmd1.adhocExecution}", cmd1.adhocExecution
-            assertNull "incorrect adhocLocalString", cmd1.adhocLocalString
-            assertNull "incorrect adhocRemoteString", cmd1.adhocRemoteString
-            assertNull "incorrect adhocRemoteString", cmd1.adhocFilepath
+            assertTrue "incorrect type: ${cmd1}", (cmd1 instanceof JobExec)
             assertNull "incorrect adhocRemoteString", cmd1.argString
             assertEquals "incorrect jobName", 'bob', cmd1.jobName
             assertEquals "incorrect jobGroup", '/some/path', cmd1.jobGroup
@@ -1482,10 +1473,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect workflow strategy", 1, jobs[0].workflow.commands.size()
             cmd1 = jobs[0].workflow.commands[0]
             assertNotNull "incorrect workflow", cmd1
-            assertFalse "incorrect adhocExecution: ${cmd1.adhocExecution}", cmd1.adhocExecution
-            assertNull "incorrect adhocLocalString", cmd1.adhocLocalString
-            assertNull "incorrect adhocRemoteString", cmd1.adhocRemoteString
-            assertNull "incorrect adhocRemoteString", cmd1.adhocFilepath
+            assertTrue "incorrect type: ${cmd1}", (cmd1 instanceof JobExec)
             assertNotNull "incorrect adhocRemoteString", cmd1.argString
             assertEquals "incorrect adhocRemoteString", "-test1 1 -test2 2",cmd1.argString
             assertEquals "incorrect jobName", 'bob', cmd1.jobName
@@ -1572,10 +1560,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertEquals "incorrect workflow size", 1, jobs[0].workflow.commands.size()
             def cmd1 = jobs[0].workflow.commands[0]
             assertNotNull "incorrect workflow", cmd1
-            assertFalse "incorrect adhocExecution: ${cmd1.adhocExecution}", cmd1.adhocExecution
-            assertNull "incorrect adhocLocalString", cmd1.adhocLocalString
-            assertNull "incorrect adhocRemoteString", cmd1.adhocRemoteString
-            assertNull "incorrect adhocRemoteString", cmd1.adhocFilepath
+            assertTrue "incorrect type: ${cmd1}", (cmd1 instanceof JobExec)
             assertNull "incorrect adhocRemoteString", cmd1.argString
             assertEquals "incorrect jobName", 'bob', cmd1.jobName
             assertEquals "incorrect jobGroup", '/some/path', cmd1.jobGroup
@@ -3041,10 +3026,6 @@ class JobsXMLCodecTests extends GroovyTestCase {
                         workflow: new Workflow(keepgoing: true, commands: [new CommandExec(
                                     adhocExecution:true,
                                     adhocRemoteString:'aname',
-                                    returnProperty:'returnproptest',
-                                    ifString:'ifstringtest',
-                                    unlessString:'unlessstringtest',
-                                    equalsString:'equalsstringtest',
                             )]
                             )
                 )

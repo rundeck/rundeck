@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import com.dtolabs.rundeck.execution.IWorkflowCmdItem
+import rundeck.WorkflowStep
 
 /*
 * CommandExec.java
@@ -25,21 +25,22 @@ import com.dtolabs.rundeck.execution.IWorkflowCmdItem
 * $Id$
 */
 
-public class CommandExec extends ExecutionContext implements IWorkflowCmdItem {
-    String returnProperty
-    String ifString
-    String unlessString
-    String equalsString
-    static belongsTo = [Workflow,CommandExec]
-    CommandExec errorHandler
-    Boolean keepgoingOnSuccess
+public class CommandExec extends WorkflowStep  {
+    String argString
+    String adhocRemoteString
+    String adhocLocalString
+    String adhocFilepath
+    Boolean adhocExecution = false
+
+    static mapping = {
+        adhocLocalString type: 'text'
+        adhocRemoteString type: 'text'
+        adhocFilepath type: 'text'
+        argString type: 'text'
+    }
     public String toString() {
         StringBuffer sb = new StringBuffer()
         sb << "command( "
-        sb << (returnProperty ? "return=\"${returnProperty}\"" : '')
-        sb << (ifString ? " if=\"${ifString}\"" : '')
-        sb << (unlessString ? "unless=\"${unlessString}\"" : '')
-        sb << (equalsString ? "equals=\"${equalsString}\"" : '')
         sb << (adhocRemoteString ? "exec: ${adhocRemoteString}" : '')
         sb << (adhocLocalString ? "script: ${adhocLocalString}" : '')
         sb << (adhocFilepath ? "scriptfile: ${adhocFilepath}" : '')
@@ -61,18 +62,10 @@ public class CommandExec extends ExecutionContext implements IWorkflowCmdItem {
     }
 
     static constraints = {
-        returnProperty(nullable: true)
-        ifString(nullable: true)
-        unlessString(nullable: true)
-        equalsString(nullable: true)
-        project(nullable: true)
         argString(nullable: true)
-        user(nullable: true)
         adhocRemoteString(nullable:true)
         adhocLocalString(nullable:true)
         adhocFilepath(nullable:true)
-        nodeRankAttribute(nullable:true)
-        nodeRankOrderAscending(nullable:true)
         errorHandler(nullable: true)
         keepgoingOnSuccess(nullable: true)
     }

@@ -26,6 +26,7 @@ import org.springframework.beans.BeansException
 import org.springframework.context.ApplicationContextAware
 import javax.servlet.http.HttpSession
 import org.springframework.web.context.request.RequestContextHolder
+import rundeck.WorkflowStep
 
 /**
  *  ScheduledExecutionService manages scheduling jobs with the Quartz scheduler
@@ -292,10 +293,8 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             if(props.jobName){
                 cexec = new JobExec(props)
             }else{
+                //TODO
                 cexec = new CommandExec(props)
-            }
-            if(!cexec.project){
-                cexec.project=se.project
             }
             workflow.commands = new ArrayList()
             workflow.commands.add(cexec)
@@ -954,7 +953,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 def wfitemfailed = false
                 def failedlist = []
                 def i = 1;
-                wf.commands.each {cexec ->
+                wf.commands.each {WorkflowStep cexec ->
                     WorkflowController._validateCommandExec(cexec)
                     if (cexec.errors.hasErrors()) {
                         wfitemfailed = true
@@ -996,10 +995,8 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 if (cmdparams.jobName) {
                     cexec = new JobExec()
                 } else {
+                    //TODO
                     cexec = new CommandExec()
-                }
-                if (!cmdparams.project) {
-                    cmdparams.project = scheduledExecution.project
                 }
                 cexec.properties = cmdparams
                 workflow.addToCommands(cexec)
@@ -1437,10 +1434,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             def i = 0;
             def wfitemfailed = false
             def failedlist = []
-            workflow.commands.each {CommandExec cmdparams ->
-                if (!cmdparams.project) {
-                    cmdparams.project = scheduledExecution.project
-                }
+            workflow.commands.each {WorkflowStep cmdparams ->
                 WorkflowController._validateCommandExec(cmdparams)
                 if (cmdparams.errors.hasErrors()) {
                     wfitemfailed = true
@@ -1714,7 +1708,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 def wfitemfailed = false
                 def i = 1
                 def failedlist = []
-                wf.commands.each {cexec ->
+                wf.commands.each {WorkflowStep cexec ->
                     WorkflowController._validateCommandExec(cexec)
                     if (cexec.errors.hasErrors()) {
                         wfitemfailed = true
@@ -1744,10 +1738,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             def i = 0;
             def wfitemfailed = false
             def failedlist = []
-            workflow.commands.each {CommandExec cmdparams ->
-                if (!cmdparams.project) {
-                    cmdparams.project = scheduledExecution.project
-                }
+            workflow.commands.each {WorkflowStep cmdparams ->
                 WorkflowController._validateCommandExec(cmdparams)
                 if (cmdparams.errors.hasErrors()) {
                     wfitemfailed = true
@@ -1785,6 +1776,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 if (cmdparams.jobName) {
                     cexec = new JobExec()
                 } else {
+                    //TODO
                     cexec = new CommandExec()
                 }
 

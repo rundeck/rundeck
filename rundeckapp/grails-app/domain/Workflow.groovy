@@ -1,18 +1,20 @@
+import rundeck.WorkflowStep
+
 /*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*        http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 
 
@@ -31,7 +33,7 @@ public class Workflow {
     Boolean keepgoing=false
     List commands
     String strategy="node-first"
-    static hasMany=[commands:CommandExec]
+    static hasMany=[commands:WorkflowStep]
     static constraints = {
         strategy(nullable:false, inList:['node-first','step-first'])
     }
@@ -51,7 +53,7 @@ public class Workflow {
         this.keepgoing=source.keepgoing
         this.strategy=source.strategy
         commands = new ArrayList()
-        source.commands.each { CommandExec cmd->
+        source.commands.each { WorkflowStep cmd->
             final item = createItem(cmd)
             if(cmd.errorHandler){
                 final handler=createItem(cmd.errorHandler)
@@ -67,7 +69,7 @@ public class Workflow {
         newwf.strategy = this.strategy
         newwf.commands = new ArrayList()
 
-        this.commands?.each { CommandExec cmd ->
+        this.commands?.each { WorkflowStep cmd ->
             final item = createItem(cmd)
             if (cmd.errorHandler) {
                 final handler = createItem(cmd.errorHandler)
@@ -77,7 +79,7 @@ public class Workflow {
         }
         return newwf
     }
-    public static CommandExec createItem(CommandExec item){
+    public static WorkflowStep createItem(WorkflowStep item){
         return item.createClone()
     }
 
@@ -96,19 +98,21 @@ public class Workflow {
             ArrayList commands = new ArrayList()
             Set handlers = new HashSet()
             data.commands.each{map->
-                CommandExec exec
+                WorkflowStep exec
                 if(map.jobref){
                     exec = JobExec.jobExecFromMap(map)
                     commands <<exec
                 }else{
+                    //TODO: create appropriate type
                     exec=CommandExec.fromMap(map)
                     commands<<exec
                 }
                 if(map.errorhandler){
-                    CommandExec handler
+                    WorkflowStep handler
                     if (map.errorhandler.jobref) {
                         handler = JobExec.jobExecFromMap(map.errorhandler)
                     } else {
+                        //TODO: create appropriate type
                         handler = CommandExec.fromMap(map.errorhandler)
                     }
                     exec.errorHandler=handler

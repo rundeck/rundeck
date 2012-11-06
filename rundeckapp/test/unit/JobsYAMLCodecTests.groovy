@@ -402,7 +402,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertEquals "wrong workflow item", "some job", se.workflow.commands[3].jobName
         assertEquals "wrong workflow item", "another group", se.workflow.commands[3].jobGroup
         assertEquals "wrong workflow item", "yankee doodle", se.workflow.commands[3].argString
-        assertFalse "wrong workflow item", se.workflow.commands[3].adhocExecution
+            assertTrue "wrong exec type", se.workflow.commands[4] instanceof CommandExec
             assertEquals "wrong workflow item", "http://example.com/path/to/file", se.workflow.commands[4].adhocFilepath
             assertEquals "wrong workflow item", "-blah bloo -blee", se.workflow.commands[4].argString
             assertTrue "wrong workflow item", se.workflow.commands[4].adhocExecution

@@ -31,17 +31,17 @@ package com.dtolabs.rundeck.execution;
  */
 public interface IWorkflowCmdItem {
 
-    public String getReturnProperty();
-    public String getIfString();
-    public String getUnlessString();
-    public String getEqualsString();
+//    public String getReturnProperty();
+//    public String getIfString();
+//    public String getUnlessString();
+//    public String getEqualsString();
 
-    public String getProject();
-    public String getArgString();
-    public String getUser();
-    public Boolean getNodeKeepgoing();
+//    public String getProject();
+//    public String getArgString();
+//    public String getUser();
+//    public Boolean getNodeKeepgoing();
 //    public Boolean getDoNodedispatch();
-    public Integer getNodeThreadcount();
+//    public Integer getNodeThreadcount();
     public String getAdhocRemoteString();
     public String getAdhocLocalString();
     public String getAdhocFilepath();

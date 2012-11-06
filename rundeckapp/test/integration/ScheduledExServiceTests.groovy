@@ -5499,7 +5499,10 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         sec.frameworkService = fwkControl.createMock()
-
+        def ms = mockFor(MessageSource)
+        ms.demand.getMessage {key, data, locale -> key}
+        ms.demand.getMessage {error, locale -> error.toString()}
+        sec.messageSource = ms.createMock()
         //test upload job with error-handlers
 
         def xml = '''
@@ -5594,15 +5597,11 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
         }
         (0..2).each {ndx ->
             assertTrue(test.workflow.commands[ndx] instanceof CommandExec)
-            assertFalse(test.workflow.commands[ndx] instanceof JobExec)
             assertTrue(test.workflow.commands[ndx].errorHandler instanceof CommandExec)
-            assertFalse(test.workflow.commands[ndx].errorHandler instanceof JobExec)
             assertNotNull(test.workflow.commands[ndx].errorHandler.id)
         }
         [3].each {ndx ->
-            assertTrue(test.workflow.commands[ndx] instanceof CommandExec)
             assertTrue(test.workflow.commands[ndx] instanceof JobExec)
-            assertTrue(test.workflow.commands[ndx].errorHandler instanceof CommandExec)
             assertTrue(test.workflow.commands[ndx].errorHandler instanceof JobExec)
             assertNotNull(test.workflow.commands[ndx].errorHandler.id)
         }
