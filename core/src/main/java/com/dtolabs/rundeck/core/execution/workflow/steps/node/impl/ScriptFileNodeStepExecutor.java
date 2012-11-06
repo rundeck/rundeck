@@ -39,7 +39,7 @@ import java.io.File;
 
 
 /**
- * ExecFileCommandInterpreter is ...
+ * ExecFileCommandInterpreter uses ExecutionService to execute a script on a node.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */

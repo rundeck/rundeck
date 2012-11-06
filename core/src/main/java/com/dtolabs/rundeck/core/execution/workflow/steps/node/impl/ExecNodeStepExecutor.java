@@ -34,7 +34,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 
 
 /**
- * ExecNodeStepExecutor is ...
+ * ExecNodeStepExecutor uses ExecutionService to execute a command on a node.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
