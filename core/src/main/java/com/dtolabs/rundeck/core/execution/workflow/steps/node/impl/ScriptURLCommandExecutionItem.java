@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2012 DTO Solutions, Inc. (http://dtosolutions.com)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,23 +15,30 @@
  */
 
 /*
-* ScriptFileExecutionItem.java
+* ScriptURLCommandExecutionItem.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/21/11 4:37 PM
+* Created: 5/2/12 2:40 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.workflow.steps.node;
+package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
+
+import com.dtolabs.rundeck.core.execution.HandlerExecutionItem;
+
 
 /**
- * ScriptFileExecutionItem is ...
+ * ScriptURLCommandExecutionItem is used by the {@link ScriptURLNodeStepExecutor} and represents
+ * an execution item to run a script downloaded from a provided URL.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public abstract class ScriptFileCommand implements ScriptFileCommandExecutionItem {
-
-    public String getType() {
-        return ScriptFileNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME;
-    }
-
+public interface ScriptURLCommandExecutionItem extends HandlerExecutionItem {
+    /**
+     * Return the URL to get the script from, which may include data context references
+     */
+    public String getURLString();
+    /**
+     * Return arguments to the script
+     */
+    public String[] getArgs();
 }

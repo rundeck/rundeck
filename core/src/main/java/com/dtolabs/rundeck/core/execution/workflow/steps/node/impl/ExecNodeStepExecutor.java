@@ -21,13 +21,16 @@
 * Created: 3/21/11 4:10 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.workflow.steps.node;
+package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 
 
 /**

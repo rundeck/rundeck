@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2012 DTO Solutions, Inc. (http://dtosolutions.com)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,32 +15,25 @@
  */
 
 /*
-* ExecCommandBase.java
+* ScriptURLCommandBase.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/22/11 5:41 PM
+* Created: 5/2/12 2:58 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.workflow.steps.node;
+package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
 import com.dtolabs.rundeck.core.execution.HasFailureHandler;
 
+
 /**
- * ExecCommandBase is a concrete implementation of ExecCommand that
+ * ScriptURLCommandBase base implementation of ScriptURLCommandExecutionItem that defines the getType() method
+ * to return the correct service type.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ExecCommandBase extends ExecCommand implements HasFailureHandler {
-    public String[] getCommand() {
-        return null;
-    }
-
-    public ExecutionItem getFailureHandler() {
-        return null;
-    }
-
-    public boolean isKeepgoingOnSuccess() {
-        return false;
+public abstract class ScriptURLCommandBase implements ScriptURLCommandExecutionItem,HasFailureHandler {
+    public String getType() {
+        return ScriptURLNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME;
     }
 }

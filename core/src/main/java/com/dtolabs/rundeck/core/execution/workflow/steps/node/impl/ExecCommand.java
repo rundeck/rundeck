@@ -21,7 +21,7 @@
 * Created: 3/21/11 4:35 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.workflow.steps.node;
+package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
 /**
  * CommandExecItem is ...
