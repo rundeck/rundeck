@@ -24,9 +24,9 @@
 package com.dtolabs.rundeck.execution;
 
 import com.dtolabs.rundeck.core.execution.ExecutionItem;
-import com.dtolabs.rundeck.core.execution.commands.ExecCommandBase;
-import com.dtolabs.rundeck.core.execution.commands.ScriptFileCommandBase;
-import com.dtolabs.rundeck.core.execution.commands.ScriptURLCommandBase;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandBase;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandBase;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandBase;
 
 import java.io.File;
 

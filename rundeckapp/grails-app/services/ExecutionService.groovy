@@ -4,7 +4,7 @@ import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.cli.CLIToolLogger
 import com.dtolabs.rundeck.core.cli.CLIUtils
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.INodeEntry
+
 import com.dtolabs.rundeck.core.common.NodesSelector
 import com.dtolabs.rundeck.core.common.SelectorUtils
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
@@ -36,19 +36,19 @@ import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.support.WebApplicationContextUtils
-import com.dtolabs.rundeck.core.execution.commands.*
+
 import com.dtolabs.rundeck.core.execution.workflow.*
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import com.dtolabs.rundeck.execution.UnauthorizedStatusResult
+
 import org.hibernate.StaleObjectStateException
 import javax.security.auth.Subject
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService
-import com.dtolabs.rundeck.core.execution.ExecutionResult
-import com.dtolabs.rundeck.core.execution.BaseExecutionResult
+
 import com.dtolabs.rundeck.core.execution.StatusResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -1652,7 +1652,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
     StatusResult executeWorkflowStep(com.dtolabs.rundeck.core.execution.ExecutionContext executionContext,
                                        ExecutionItem executionItem)  {
         if (!(executionItem instanceof JobExecutionItem)) {
-            throw new InterpreterException("Unsupported item type: " + executionItem.getClass().getName());
+            throw new StepException("Unsupported item type: " + executionItem.getClass().getName());
         }
         def requestAttributes = RequestContextHolder.getRequestAttributes()
         boolean unbindrequest = false
@@ -1683,7 +1683,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             def schedlist = ScheduledExecution.findAllScheduledExecutions(group,name,executionContext.getFrameworkProject())
             if (!schedlist || 1 != schedlist.size()) {
                 executionContext.getExecutionListener().log(0,"Job ref [${jitem.jobIdentifier}] invalid: No Unique Job found for name: ${name}, group: ${group}, project: ${executionContext.getFrameworkProject()}")
-                throw new InterpreterException("Job ref [${jitem.jobIdentifier}] invalid: No Unique Job found for name: ${name}, group: ${group}, project: ${executionContext.getFrameworkProject()}")
+                throw new StepException("Job ref [${jitem.jobIdentifier}] invalid: No Unique Job found for name: ${name}, group: ${group}, project: ${executionContext.getFrameworkProject()}")
             }
             id = schedlist[0].id
             def com.dtolabs.rundeck.core.execution.ExecutionContext newContext

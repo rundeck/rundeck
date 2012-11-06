@@ -3,9 +3,9 @@ import java.text.SimpleDateFormat
 import grails.test.GrailsUnitTestCase
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import com.dtolabs.rundeck.core.execution.ExecutionItem
-import com.dtolabs.rundeck.core.execution.commands.ExecCommandExecutionItem
-import com.dtolabs.rundeck.core.execution.commands.ScriptFileCommandExecutionItem
-import com.dtolabs.rundeck.core.execution.commands.ScriptURLCommandExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandExecutionItem
 
 class ExecutionServiceTests extends GrailsUnitTestCase {
 
