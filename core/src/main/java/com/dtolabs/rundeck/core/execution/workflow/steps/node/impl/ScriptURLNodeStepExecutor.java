@@ -104,7 +104,7 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         try {
             url = new URL(finalUrl);
         } catch (MalformedURLException e) {
-            throw new NodeStepException(e);
+            throw new NodeStepException(e, node.getNodename());
         }
         if(null!=context.getExecutionListener()){
             context.getExecutionListener().log(4, "Requesting URL: " + url.toExternalForm());
@@ -138,7 +138,7 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         } catch (UpdateUtils.UpdateException e) {
             if (!destinationTempFile.isFile() || destinationTempFile.length() < 1) {
                 throw new NodeStepException(
-                    "Error requesting URL Script: " + cleanUrl + ": " + e.getMessage(), e);
+                    "Error requesting URL Script: " + cleanUrl + ": " + e.getMessage(), e,node.getNodename());
             } else {
                 logger.error(
                     "Error requesting URL script: " + cleanUrl + ": " + e.getMessage(), e);
@@ -149,7 +149,7 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         try {
             filepath = executionService.fileCopyFile(context, destinationTempFile, node);
         } catch (FileCopierException e) {
-            throw new NodeStepException(e);
+            throw new NodeStepException(e, node.getNodename());
         }
 
         try {
@@ -180,7 +180,7 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
 
             return framework.getExecutionService().executeCommand(context, newargs, node);
         } catch (ExecutionException e) {
-            throw new NodeStepException(e);
+            throw new NodeStepException(e, node.getNodename());
         }
     }
 

@@ -182,7 +182,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         return new Callable() {
             public Object call() throws Exception {
                 try {
-                    final NodeStepResult interpreterResult = framework.getExecutionService().interpretCommand(
+                    final NodeStepResult interpreterResult = framework.getExecutionService().executeNodeStep(
                         context, item, node);
                     if (!interpreterResult.isSuccess()) {
                         failureMap.put(node.getNodename(), interpreterResult);

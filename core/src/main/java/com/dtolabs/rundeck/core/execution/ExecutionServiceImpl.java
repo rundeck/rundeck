@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.cli.ExecTool;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
@@ -95,6 +96,8 @@ class ExecutionServiceImpl implements ExecutionService {
         StatusResult result=null;
         try {
             result = executor.executeWorkflowStep(context, item);
+        } catch (StepException e) {
+            throw new ExecutionException(e);
         } finally {
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishExecution(result, context, item);
@@ -103,25 +106,25 @@ class ExecutionServiceImpl implements ExecutionService {
         return result;
     }
 
-    public NodeStepResult interpretCommand(ExecutionContext context,
-                                              ExecutionItem item, INodeEntry node) throws NodeStepException {
+    public NodeStepResult executeNodeStep(ExecutionContext context,
+                                          ExecutionItem item, INodeEntry node) throws NodeStepException {
 
         final NodeStepExecutor interpreter;
         try {
-            interpreter = framework.getCommandInterpreterForItem(item);
+            interpreter = framework.getNodeStepExecutorForItem(item);
         } catch (ExecutionServiceException e) {
-            throw new NodeStepException(e);
+            throw new NodeStepException(e, node.getNodename());
         }
 
         if (null != context.getExecutionListener()) {
-            context.getExecutionListener().beginInterpretCommand(context, item, node);
+            context.getExecutionListener().beginExecuteNodeStep(context, item, node);
         }
         NodeStepResult result = null;
         try {
             result = interpreter.executeNodeStep(context, item, node);
         } finally {
             if (null != context.getExecutionListener()) {
-                context.getExecutionListener().finishInterpretCommand(result, context, item, node);
+                context.getExecutionListener().finishExecuteNodeStep(result, context, item, node);
             }
         }
         return result;

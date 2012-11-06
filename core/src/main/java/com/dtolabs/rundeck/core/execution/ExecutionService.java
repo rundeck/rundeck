@@ -66,7 +66,7 @@ public interface ExecutionService extends FrameworkSupportService {
     /**
      * Interpret the execution item within the context for the given node.
      */
-    public NodeStepResult interpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node) throws
+    public NodeStepResult executeNodeStep(ExecutionContext context, ExecutionItem item, INodeEntry node) throws
                                                                                                           NodeStepException;
 
 

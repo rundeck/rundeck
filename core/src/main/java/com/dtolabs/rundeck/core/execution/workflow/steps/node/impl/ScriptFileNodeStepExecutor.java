@@ -66,7 +66,7 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
                 filepath = executionService.fileCopyFileStream(context, script.getScriptAsStream(), node);
             }
         } catch (FileCopierException e) {
-            throw new NodeStepException(e);
+            throw new NodeStepException(e, node.getNodename());
         }
 
         try {
@@ -99,7 +99,7 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
             return framework.getExecutionService().executeCommand(context, newargs, node);
             //TODO: remove remote temp file after exec?
         } catch (ExecutionException e) {
-            throw new NodeStepException(e);
+            throw new NodeStepException(e, node.getNodename());
         }
     }
 }

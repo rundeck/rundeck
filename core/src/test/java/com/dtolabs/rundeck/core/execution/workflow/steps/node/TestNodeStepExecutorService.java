@@ -76,11 +76,11 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
             }
         };
         {
-            final NodeStepExecutor interpreterForExecutionItem = service.getInterpreterForExecutionItem(
+            final NodeStepExecutor interpreterForExecutionItem = service.getExecutorForExecutionItem(
                 item);
             assertNotNull(interpreterForExecutionItem);
             assertTrue(interpreterForExecutionItem instanceof ExecNodeStepExecutor);
-            final NodeStepExecutor interpreter2 = service.getInterpreterForExecutionItem(item2);
+            final NodeStepExecutor interpreter2 = service.getExecutorForExecutionItem(item2);
             assertNotNull(interpreter2);
             assertTrue(interpreter2 instanceof ScriptFileNodeStepExecutor);
         }
@@ -102,11 +102,11 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
             };
             service.registerInstance("exec", testprovider);
             service.registerInstance("script", testprovider2);
-            final NodeStepExecutor interpreter = service.getInterpreterForExecutionItem(item);
+            final NodeStepExecutor interpreter = service.getExecutorForExecutionItem(item);
             assertNotNull(interpreter);
             assertTrue(interpreter == testprovider);
 
-            final NodeStepExecutor interpreter2 = service.getInterpreterForExecutionItem(item2);
+            final NodeStepExecutor interpreter2 = service.getExecutorForExecutionItem(item2);
             assertNotNull(interpreter2);
             assertTrue(interpreter2 == testprovider2);
         }
@@ -115,10 +115,10 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
         service.resetDefaultProviders();
 
         {
-            final NodeStepExecutor interpreter = service.getInterpreterForExecutionItem(item);
+            final NodeStepExecutor interpreter = service.getExecutorForExecutionItem(item);
             assertNotNull(interpreter);
             assertTrue(interpreter instanceof ExecNodeStepExecutor);
-            final NodeStepExecutor interpreter2 = service.getInterpreterForExecutionItem(item2);
+            final NodeStepExecutor interpreter2 = service.getExecutorForExecutionItem(item2);
             assertNotNull(interpreter2);
             assertTrue(interpreter2 instanceof ScriptFileNodeStepExecutor);
         }
@@ -137,7 +137,7 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
                     return "exec";
                 }
             };
-            final NodeStepExecutor interpreterForExecutionItem = service.getInterpreterForExecutionItem(
+            final NodeStepExecutor interpreterForExecutionItem = service.getExecutorForExecutionItem(
                 item);
             assertNotNull(interpreterForExecutionItem);
             assertTrue(interpreterForExecutionItem instanceof ExecNodeStepExecutor);
@@ -150,14 +150,14 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
                 }
             };
 
-            final NodeStepExecutor interpreter2 = service.getInterpreterForExecutionItem(item);
+            final NodeStepExecutor interpreter2 = service.getExecutorForExecutionItem(item);
             assertNotNull(interpreter2);
             assertTrue(interpreter2 instanceof ScriptFileNodeStepExecutor);
         }
 
         //test invalid provider name
         try {
-            service.getInterpreterForExecutionItem(new ExecutionItem() {
+            service.getExecutorForExecutionItem(new ExecutionItem() {
                 public String getType() {
                     return "blah";
                 }
@@ -171,7 +171,7 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
         }
         //test null provider name
         try {
-            service.getInterpreterForExecutionItem(new ExecutionItem() {
+            service.getExecutorForExecutionItem(new ExecutionItem() {
                 public String getType() {
                     return null;
                 }

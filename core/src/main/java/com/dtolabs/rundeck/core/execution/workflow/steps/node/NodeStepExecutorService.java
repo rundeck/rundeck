@@ -53,7 +53,7 @@ public class NodeStepExecutorService extends BaseProviderRegistryService<NodeSte
         instanceregistry.remove(ScriptURLNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME);
     }
 
-    public NodeStepExecutor getInterpreterForExecutionItem(final ExecutionItem item) throws
+    public NodeStepExecutor getExecutorForExecutionItem(final ExecutionItem item) throws
         ExecutionServiceException {
         return providerOfType(item.getType());
     }

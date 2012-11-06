@@ -325,8 +325,8 @@ public class Framework extends FrameworkResourceParent {
     public NodeExecutorService getNodeExecutorService() throws ExecutionServiceException {
         return NodeExecutorService.getInstanceForFramework(this);
     }
-    public NodeStepExecutor getCommandInterpreterForItem(ExecutionItem item) throws ExecutionServiceException {
-        return NodeStepExecutorService.getInstanceForFramework(this).getInterpreterForExecutionItem(item);
+    public NodeStepExecutor getNodeStepExecutorForItem(ExecutionItem item) throws ExecutionServiceException {
+        return NodeStepExecutorService.getInstanceForFramework(this).getExecutorForExecutionItem(item);
     }
     public NodeDispatcher getNodeDispatcherForContext(ExecutionContext context) throws ExecutionServiceException {
         return NodeDispatcherService.getInstanceForFramework(this).getNodeDispatcher(context);

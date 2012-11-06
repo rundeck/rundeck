@@ -57,25 +57,25 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
     }
 
     @Override
-    public void beginInterpretCommand(final ExecutionContext context, final ExecutionItem item, final INodeEntry node) {
+    public void beginExecuteNodeStep(final ExecutionContext context, final ExecutionItem item, final INodeEntry node) {
         if(null!=delegate) {
-            delegate.beginInterpretCommand(context, item, node);
+            delegate.beginExecuteNodeStep(context, item, node);
             return;
         }
-        super.beginInterpretCommand(context, item, node);
+        super.beginExecuteNodeStep(context, item, node);
         localNode.set(node);
         context.getExecutionListener().log(Constants.DEBUG_LEVEL,
             "beginInterpretCommand(" + node.getNodename() + "): " + item.getType() + ": " + item);
     }
 
     @Override
-    public void finishInterpretCommand(final NodeStepResult result, final ExecutionContext context,
-                                       final ExecutionItem item, final INodeEntry node) {
+    public void finishExecuteNodeStep(final NodeStepResult result, final ExecutionContext context,
+                                      final ExecutionItem item, final INodeEntry node) {
         if (null != delegate) {
-            delegate.finishInterpretCommand(result, context, item, node);
+            delegate.finishExecuteNodeStep(result, context, item, node);
             return;
         }
-        super.finishInterpretCommand(result, context, item, node);
+        super.finishExecuteNodeStep(result, context, item, node);
         localNode.set(null);
         log(Constants.DEBUG_LEVEL,
             "finishInterpretCommand(" + node.getNodename() + "): " + item.getType() + ": " + result);

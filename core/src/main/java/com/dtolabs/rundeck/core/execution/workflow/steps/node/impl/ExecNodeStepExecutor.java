@@ -55,7 +55,7 @@ public class ExecNodeStepExecutor implements NodeStepExecutor {
         try {
             result = framework.getExecutionService().executeCommand(context, cmd.getCommand(), node);
         } catch (Exception e) {
-            throw new NodeStepException(e);
+            throw new NodeStepException(e, node.getNodename());
         }
         return result;
     }

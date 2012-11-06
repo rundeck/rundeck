@@ -23,25 +23,34 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
+
+
 /**
  * NodeStepException is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class NodeStepException extends Exception {
-    public NodeStepException() {
-        super();
+public class NodeStepException extends StepException {
+    private final String nodeName;
+
+
+    public NodeStepException(String s, String nodeName) {
+        super(s);
+        this.nodeName = nodeName;
     }
 
-    public NodeStepException(String msg) {
-        super(msg);
+    public NodeStepException(String s, Throwable throwable, String nodeName) {
+        super(s, throwable);
+        this.nodeName = nodeName;
     }
 
-    public NodeStepException(Exception cause) {
-        super(cause);
+    public NodeStepException(Throwable throwable, String nodeName) {
+        super(throwable);
+        this.nodeName = nodeName;
     }
 
-    public NodeStepException(String msg, Exception cause) {
-        super(msg, cause);
+    public String getNodeName() {
+        return nodeName;
     }
 }

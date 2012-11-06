@@ -143,16 +143,16 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
         }
     }
 
-    public void beginInterpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node) {
+    public void beginExecuteNodeStep(ExecutionContext context, ExecutionItem item, INodeEntry node) {
         if (null != delegate) {
-            delegate.beginInterpretCommand(context, item, node);
+            delegate.beginExecuteNodeStep(context, item, node);
         }
     }
 
-    public void finishInterpretCommand(NodeStepResult result, ExecutionContext context, ExecutionItem item,
-                                       INodeEntry node) {
+    public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, ExecutionItem item,
+                                      INodeEntry node) {
         if (null != delegate) {
-            delegate.finishInterpretCommand(result, context, item, node);
+            delegate.finishExecuteNodeStep(result, context, item, node);
         }
     }
 

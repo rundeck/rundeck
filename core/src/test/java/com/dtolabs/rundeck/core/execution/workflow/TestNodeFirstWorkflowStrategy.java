@@ -168,11 +168,11 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
         public void finishFileCopy(String result, ExecutionContext context, INodeEntry node) {
         }
 
-        public void beginInterpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node) {
+        public void beginExecuteNodeStep(ExecutionContext context, ExecutionItem item, INodeEntry node) {
         }
 
-        public void finishInterpretCommand(NodeStepResult result, ExecutionContext context, ExecutionItem item,
-                                           INodeEntry node) {
+        public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, ExecutionItem item,
+                                          INodeEntry node) {
         }
 
         public BuildListener getBuildListener() {
@@ -209,7 +209,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             executionContextList.add(executionContext);
             nodeEntryList.add(iNodeEntry);
             if (shouldThrowException) {
-                throw new NodeStepException("testInterpreter test exception");
+                throw new NodeStepException("testInterpreter test exception", iNodeEntry.getNodename());
             }
             return resultList.get(index++);
         }
