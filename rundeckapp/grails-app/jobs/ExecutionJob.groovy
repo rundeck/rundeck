@@ -1,15 +1,14 @@
 import org.quartz.JobExecutionContext
-import org.quartz.JobDetail
-import org.quartz.Job
+
 import org.quartz.JobDataMap
 
-import org.apache.log4j.Logger
 import com.dtolabs.rundeck.core.common.Framework
 import org.quartz.InterruptableJob
 import com.dtolabs.rundeck.core.execution.ExecutionServiceThread
-import com.dtolabs.rundeck.core.NodesetFailureException
-import org.apache.tools.ant.BuildException
+
 import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
+import rundeck.Execution
+import rundeck.ScheduledExecution
 
 class ExecutionJob implements InterruptableJob {
 

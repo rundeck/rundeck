@@ -8,9 +8,14 @@ import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschNodeExecutor
-import com.dtolabs.rundeck.core.authorization.Attribute
+
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
+import com.dtolabs.rundeck.app.support.QueueQuery
+import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
+import rundeck.Execution
+import rundeck.User
+import rundeck.ScheduledExecutionFilter
+import rundeck.ScheduledExecution
 
 class MenuController {
     FrameworkService frameworkService

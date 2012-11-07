@@ -1,3 +1,7 @@
+import com.dtolabs.rundeck.app.support.ExecQuery
+import com.dtolabs.rundeck.app.support.ReportQuery
+import rundeck.ExecReport
+import rundeck.BaseReport
 
 class ReportService  {
 

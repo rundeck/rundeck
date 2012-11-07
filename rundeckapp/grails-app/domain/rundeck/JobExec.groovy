@@ -1,6 +1,6 @@
+package rundeck
+
 import com.dtolabs.rundeck.execution.IWorkflowJobItem
-import rundeck.WorkflowStep
-import org.codehaus.groovy.grails.commons.ConfigurationHolder
 
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)

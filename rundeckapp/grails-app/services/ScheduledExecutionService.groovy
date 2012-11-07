@@ -14,19 +14,25 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
-import com.dtolabs.rundeck.core.authentication.Group
+
 import org.quartz.CronExpression
 import org.quartz.SchedulerException
 import java.text.SimpleDateFormat
 import org.springframework.context.MessageSource
 import java.text.MessageFormat
 import org.springframework.web.servlet.support.RequestContextUtils
-import org.springframework.context.ApplicationContext
-import org.springframework.beans.BeansException
-import org.springframework.context.ApplicationContextAware
+
 import javax.servlet.http.HttpSession
 import org.springframework.web.context.request.RequestContextHolder
 import rundeck.WorkflowStep
+import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
+import rundeck.CommandExec
+import rundeck.ScheduledExecution
+import rundeck.Workflow
+import rundeck.JobExec
+import rundeck.Execution
+import rundeck.Option
+import rundeck.Notification
 
 /**
  *  ScheduledExecutionService manages scheduling jobs with the Quartz scheduler

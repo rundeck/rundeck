@@ -1,5 +1,9 @@
 import com.dtolabs.rundeck.core.common.Framework
 import rundeck.WorkflowStep
+import rundeck.Workflow
+import rundeck.JobExec
+import rundeck.CommandExec
+import rundeck.ScheduledExecution
 
 class WorkflowController {
     def frameworkService

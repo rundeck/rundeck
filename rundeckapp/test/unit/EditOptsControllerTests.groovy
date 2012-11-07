@@ -1,4 +1,5 @@
 import grails.test.*
+import rundeck.Option
 
 class EditOptsControllerTests extends ControllerUnitTestCase {
     protected void setUp() {

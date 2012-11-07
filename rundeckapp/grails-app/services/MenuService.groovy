@@ -1,4 +1,4 @@
-import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.app.support.ReportQuery
 
 /**
  * Service for menu views

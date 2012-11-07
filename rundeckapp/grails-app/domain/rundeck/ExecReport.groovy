@@ -1,3 +1,5 @@
+package rundeck
+
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
 
 class ExecReport extends BaseReport{

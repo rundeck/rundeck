@@ -1,3 +1,4 @@
+package com.dtolabs.rundeck.app.support
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
  *
@@ -15,29 +16,32 @@
  */
 
 /*
- * BaseQuery base for query CommandObject
+ * ExecQuery.java
  * 
  * User: greg
- * Created: Feb 13, 2008 4:18:48 PM
+ * Created: Feb 29, 2008 3:17:13 PM
  * $Id$
  */
-class BaseQuery {
-    int max
-    int offset
-    String sortBy
-    String sortOrder
+class ExecQuery extends ReportQuery{
+    String controllerFilter
+    String cmdFilter
 
-    static constraints={
-        sortOrder(inList:["ascending","descending"])
-    }
+    static constraints = {
+        statFilter(nullable:true,inList:["succeed","fail"])
+        sortBy(nullable:true,inList:[
+            "jobFilter",
+            "jobIdFilter",
+            "projFilter",
+            "objFilter",
+            "controllerFilter",
+            "typeFilter",
+            "cmdFilter",
+            "userFilter",
+            "maprefUriFilter",
+            "messageFilter",
+            "reportIdFilter",
+            "abortedByFilter",
+        ])
 
-    /**
-     * Set the pagination properties based on another BaseQuery instance
-     */
-    public void setPagination(BaseQuery query){
-        this.max=query.max
-        this.offset=query.offset
-        this.sortBy=query.sortBy
-        this.sortOrder=query.sortOrder
     }
 }

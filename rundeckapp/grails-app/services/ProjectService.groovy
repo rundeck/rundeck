@@ -11,6 +11,12 @@ import java.text.ParseException
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
 import java.util.jar.Attributes
+import com.dtolabs.rundeck.app.support.BuilderUtil
+import com.dtolabs.rundeck.util.XmlParserUtil
+import rundeck.ScheduledExecution
+import rundeck.BaseReport
+import rundeck.Execution
+import rundeck.ExecReport
 
 class ProjectService {
     def grailsApplication

@@ -47,9 +47,19 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService
 
 import com.dtolabs.rundeck.core.execution.StatusResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
+
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
 import rundeck.WorkflowStep
+import com.dtolabs.rundeck.app.support.BaseNodeFilters
+import com.dtolabs.rundeck.app.support.QueueQuery
+import rundeck.ScheduledExecution
+import rundeck.Execution
+import rundeck.ExecutionContext
+import rundeck.User
+import rundeck.CommandExec
+import rundeck.JobExec
+import rundeck.Workflow
+import rundeck.Option
 
 /**
  * Coordinates Command executions via Ant Project objects

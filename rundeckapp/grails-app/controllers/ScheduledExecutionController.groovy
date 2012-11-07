@@ -1,7 +1,6 @@
 import org.quartz.*
 
 import com.dtolabs.rundeck.core.common.Framework
-import java.text.SimpleDateFormat
 
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import java.util.regex.Pattern
@@ -30,7 +29,13 @@ import com.dtolabs.rundeck.core.common.INodeEntry
 import org.apache.commons.collections.list.TreeList
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
-import org.apache.commons.httpclient.SimpleHttpConnectionManager
+import rundeck.ScheduledExecution
+import rundeck.User
+import rundeck.Execution
+import rundeck.Option
+import rundeck.Workflow
+import rundeck.Notification
+import rundeck.CommandExec
 
 class ScheduledExecutionController  {
     def Scheduler quartzScheduler

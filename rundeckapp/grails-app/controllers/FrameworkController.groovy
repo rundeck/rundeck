@@ -28,6 +28,10 @@ import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.FrameworkResource
+import com.dtolabs.rundeck.app.support.BaseNodeFilters
+import com.dtolabs.rundeck.app.support.ExtNodeFilters
+import rundeck.User
+import rundeck.NodeFilter
 
 class FrameworkController  {
     FrameworkService frameworkService

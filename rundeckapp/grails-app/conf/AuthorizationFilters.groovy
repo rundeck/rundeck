@@ -3,7 +3,10 @@ import javax.security.auth.Subject;
 import com.dtolabs.rundeck.core.authentication.Group;
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.client.utils.Constants
-import com.dtolabs.rundeck.core.common.Framework;
+import rundeck.User
+import rundeck.AuthToken
+
+import static rundeck.AuthToken.*
 
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)

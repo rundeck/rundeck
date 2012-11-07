@@ -1,4 +1,7 @@
+package rundeck
+
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
+import com.dtolabs.rundeck.app.support.BaseNodeFilters
 
 class ScheduledExecution extends ExecutionContext {
     SortedSet options

@@ -1,5 +1,11 @@
 import grails.test.GrailsUnitTestCase
 import com.dtolabs.rundeck.util.ZipBuilder
+import rundeck.Execution
+import rundeck.Workflow
+import rundeck.CommandExec
+import rundeck.ScheduledExecution
+import rundeck.ExecReport
+import rundeck.BaseReport
 /*
  * Copyright 2012 DTO Labs, Inc. (http://dtolabs.com)
  * 

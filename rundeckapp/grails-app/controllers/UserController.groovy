@@ -1,9 +1,10 @@
 import com.dtolabs.rundeck.core.common.Framework
-import javax.servlet.http.HttpSession
-import java.security.SecureRandom
+
 import grails.converters.JSON
 import org.apache.commons.lang.RandomStringUtils
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import rundeck.User
+import rundeck.AuthToken
 
 class UserController {
     UserService userService

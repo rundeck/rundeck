@@ -1,3 +1,6 @@
+package rundeck
+
+import com.dtolabs.rundeck.app.support.ReportQuery
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
  *

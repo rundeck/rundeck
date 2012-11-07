@@ -1,4 +1,9 @@
 import org.yaml.snakeyaml.Yaml
+import rundeck.ScheduledExecution
+import rundeck.Workflow
+import rundeck.CommandExec
+import rundeck.JobExec
+import rundeck.Option
 
 /*
 * Copyright 2011 DTO Labs, Inc. (http://dtolabs.com)

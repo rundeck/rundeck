@@ -1,8 +1,5 @@
 import grails.test.GrailsUnitTestCase
-import javax.security.auth.Subject
-import com.dtolabs.rundeck.core.authentication.Username
-import com.dtolabs.rundeck.core.authentication.Group
-import org.quartz.core.QuartzScheduler
+
 import org.quartz.Scheduler
 import org.quartz.SchedulerContext
 import org.quartz.SchedulerMetaData
@@ -14,8 +11,14 @@ import org.quartz.Calendar
 import org.quartz.JobListener
 import org.quartz.TriggerListener
 import org.quartz.SchedulerListener
-import org.springframework.mock.web.MockMultipartFile
+
 import org.springframework.context.MessageSource
+import rundeck.ScheduledExecution
+import rundeck.CommandExec
+import rundeck.Workflow
+import rundeck.JobExec
+import rundeck.Option
+import rundeck.Notification
 /*
  * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
  *

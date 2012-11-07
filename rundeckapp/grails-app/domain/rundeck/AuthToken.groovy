@@ -1,5 +1,6 @@
+package rundeck
 /*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+ * Copyright 2011 DTO Labs, Inc. (http://dtolabs.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
-/*
- * QueueQuery.java
- * 
- * User: greg
- * Created: Jan 19, 2010 9:23:46 AM
- * $Id$
- */
 
-public class QueueQuery extends ExecQuery{
-    String runningFilter
+class AuthToken {
+    String token
+    String authRoles
+    static belongsTo = [user:User]
 
     static constraints = {
-        runningFilter(nullable:true,inList:["running","completed","killed","cancelled" /*,"pattern"*/])
+        token(nullable:false,unique:true)
+        authRoles(nullable:false)
+        user(nullable:false)
     }
 }

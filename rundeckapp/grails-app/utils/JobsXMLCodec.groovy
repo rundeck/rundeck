@@ -15,7 +15,9 @@
  */
 
 import groovy.xml.MarkupBuilder
-
+import com.dtolabs.rundeck.app.support.BuilderUtil
+import com.dtolabs.rundeck.util.XmlParserUtil
+import rundeck.ScheduledExecution
 
 /*
 * JobsXMLCodec encapsulates encoding and decoding of the Jobs XML format.

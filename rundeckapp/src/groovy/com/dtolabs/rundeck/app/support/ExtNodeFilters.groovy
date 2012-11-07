@@ -1,5 +1,6 @@
+package com.dtolabs.rundeck.app.support
 /*
- * Copyright 2011 DTO Labs, Inc. (http://dtolabs.com)
+ * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +15,27 @@
  * limitations under the License.
  */
 
-class AuthToken {
-    String token
-    String authRoles
-    static belongsTo = [user:User]
+/*
+ * ExtNodeFilters.java
+ * 
+ * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
+ * Created: Jul 2, 2010 10:48:53 AM
+ * $Id$
+ */
 
-    static constraints = {
-        token(nullable:false,unique:true)
-        authRoles(nullable:false)
-        user(nullable:false)
+/**
+ * Extends BaseNodeFilters to add filter params used in GUI filtering
+ */
+public class ExtNodeFilters extends BaseNodeFilters{
+
+    String project
+
+    static constraints={
+        project(nullable:true)
     }
+
+    public boolean nodeFilterIsEmpty(){
+        return super.nodeFilterIsEmpty() 
+    }
+
 }

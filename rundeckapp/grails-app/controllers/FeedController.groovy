@@ -1,3 +1,6 @@
+import com.dtolabs.rundeck.app.support.ExecQuery
+import com.dtolabs.rundeck.app.support.ReportQuery
+
 class FeedController {
     ReportService reportService
 

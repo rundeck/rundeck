@@ -3,6 +3,10 @@ import com.dtolabs.rundeck.core.common.Framework
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.regex.Matcher
+import com.dtolabs.rundeck.app.support.ExecQuery
+import com.dtolabs.rundeck.app.support.ReportQuery
+import rundeck.User
+import rundeck.ReportFilter
 
 class ReportsController {
     def reportService

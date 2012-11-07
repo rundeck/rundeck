@@ -5,6 +5,10 @@ import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 
 import java.text.ParseException
+import com.dtolabs.rundeck.app.support.ExecutionQuery
+import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
+import rundeck.Execution
+import rundeck.ScheduledExecution
 
 /**
 * ExecutionController

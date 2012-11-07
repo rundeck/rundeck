@@ -1,5 +1,7 @@
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
+import rundeck.Option
+import rundeck.ScheduledExecution
 
 /**
  * Controller for manipulating the session-stored set of Options during job edit

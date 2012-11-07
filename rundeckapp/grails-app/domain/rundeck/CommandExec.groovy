@@ -1,3 +1,4 @@
+package rundeck
 
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
@@ -14,8 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import rundeck.WorkflowStep
 
 /*
 * CommandExec.java

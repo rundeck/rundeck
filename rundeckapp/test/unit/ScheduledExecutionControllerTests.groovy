@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import grails.test.GrailsUnitTestCase
+
 import grails.test.ControllerUnitTestCase
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import javax.security.auth.Subject
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authentication.Group
-import org.springframework.context.MessageSource
+import rundeck.ScheduledExecution
+import rundeck.Option
+import rundeck.Workflow
+import rundeck.CommandExec
+import rundeck.Execution
 
 /*
 * ScheduledExecutionControllerTests.java

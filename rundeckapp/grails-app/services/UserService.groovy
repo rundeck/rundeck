@@ -1,3 +1,5 @@
+import rundeck.User
+
 class UserService {
 
     boolean transactional = true

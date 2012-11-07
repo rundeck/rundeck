@@ -1,5 +1,5 @@
-import java.util.*
 import java.text.SimpleDateFormat
+import rundeck.ScheduledExecution
 
 class UtilityTagLib{
     def static  daysofweekkey = [Calendar.SUNDAY,Calendar.MONDAY,Calendar.TUESDAY,Calendar.WEDNESDAY,Calendar.THURSDAY,Calendar.FRIDAY,Calendar.SATURDAY];

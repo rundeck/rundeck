@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 import grails.test.GrailsUnitTestCase
-import com.dtolabs.rundeck.core.common.Framework
+
 import org.springframework.mock.web.MockMultipartHttpServletRequest
 import org.springframework.mock.web.MockMultipartFile
 import javax.security.auth.Subject
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authentication.Group
+import rundeck.CommandExec
+import rundeck.Workflow
+import rundeck.Option
+import rundeck.ScheduledExecution
 
 /*
  * ScheduledExecValidationTests.java

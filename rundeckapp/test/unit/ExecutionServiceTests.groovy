@@ -6,6 +6,12 @@ import com.dtolabs.rundeck.core.execution.ExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandExecutionItem
+import rundeck.CommandExec
+import rundeck.ScheduledExecution
+import rundeck.Execution
+import rundeck.Workflow
+import rundeck.Option
+import rundeck.User
 
 class ExecutionServiceTests extends GrailsUnitTestCase {
 

@@ -1,3 +1,4 @@
+package com.dtolabs.rundeck.app.support
 /**
  * BuilderUtil assists in generating XML or any groovy builder structure
  * from a standard data structure consisting of Maps, Collections and Strings/other objects.

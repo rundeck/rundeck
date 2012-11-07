@@ -1,3 +1,4 @@
+package com.dtolabs.rundeck.app.support
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
  *
@@ -15,26 +16,29 @@
  */
 
 /*
- * ExtNodeFilters.java
+ * BaseQuery base for query CommandObject
  * 
- * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * Created: Jul 2, 2010 10:48:53 AM
+ * User: greg
+ * Created: Feb 13, 2008 4:18:48 PM
  * $Id$
  */
-
-/**
- * Extends BaseNodeFilters to add filter params used in GUI filtering
- */
-public class ExtNodeFilters extends BaseNodeFilters{
-
-    String project
+class BaseQuery {
+    int max
+    int offset
+    String sortBy
+    String sortOrder
 
     static constraints={
-        project(nullable:true)
+        sortOrder(inList:["ascending","descending"])
     }
 
-    public boolean nodeFilterIsEmpty(){
-        return super.nodeFilterIsEmpty() 
+    /**
+     * Set the pagination properties based on another BaseQuery instance
+     */
+    public void setPagination(BaseQuery query){
+        this.max=query.max
+        this.offset=query.offset
+        this.sortBy=query.sortBy
+        this.sortOrder=query.sortOrder
     }
-
 }

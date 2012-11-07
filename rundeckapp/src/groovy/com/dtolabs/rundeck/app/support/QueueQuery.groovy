@@ -1,3 +1,4 @@
+package com.dtolabs.rundeck.app.support
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
  *
@@ -13,34 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+ 
 /*
- * ExecQuery.java
+ * QueueQuery.java
  * 
  * User: greg
- * Created: Feb 29, 2008 3:17:13 PM
+ * Created: Jan 19, 2010 9:23:46 AM
  * $Id$
  */
-class ExecQuery extends ReportQuery{
-    String controllerFilter
-    String cmdFilter
+
+public class QueueQuery extends ExecQuery{
+    String runningFilter
 
     static constraints = {
-        statFilter(nullable:true,inList:["succeed","fail"])
-        sortBy(nullable:true,inList:[
-            "jobFilter",
-            "jobIdFilter",
-            "projFilter",
-            "objFilter",
-            "controllerFilter",
-            "typeFilter",
-            "cmdFilter",
-            "userFilter",
-            "maprefUriFilter",
-            "messageFilter",
-            "reportIdFilter",
-            "abortedByFilter",
-        ])
-
+        runningFilter(nullable:true,inList:["running","completed","killed","cancelled" /*,"pattern"*/])
     }
 }

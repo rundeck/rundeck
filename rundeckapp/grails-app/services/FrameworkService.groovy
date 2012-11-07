@@ -12,6 +12,8 @@ import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization
+import rundeck.ScheduledExecution
+import rundeck.Execution
 
 /**
  * Interfaces with the core Framework object

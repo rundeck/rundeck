@@ -15,6 +15,8 @@
  */
 
 import grails.test.GrailsUnitTestCase
+import rundeck.ScheduledExecution
+import rundeck.CommandExec
 
 /*
 * ScheduledExecutionServiceTests.java

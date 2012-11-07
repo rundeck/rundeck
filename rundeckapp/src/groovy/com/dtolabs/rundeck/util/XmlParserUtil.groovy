@@ -1,4 +1,4 @@
-import groovy.util.slurpersupport.GPathResult
+package com.dtolabs.rundeck.util
 
 /*
 * Copyright 2011 DTO Labs, Inc. (http://dtolabs.com)
