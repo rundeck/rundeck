@@ -1,154 +1,126 @@
-% Getting Started
+% はじめに
 % Alex Honor; Greg Schueler
 % November 20, 2010
 
-This chapter helps new users getting started with Rundeck. We will begin
-by explaining the basics, covering essential Rundeck concepts and
-terminology and then move on to installation and finally, setup.
-At the end of this chapter you should understand what Rundeck is, how
-you should use it and you should be all setup to do so.
 
-## Rundeck Basics
+この章は、Rundeck を新しく始めるユーザに向けたものです。基本的な項目の説明から始め、Rundeck の本質的な概念と用語を抑え、インストール方法、セットアップと進んでいきます。本章を読み終える頃には、Rundeck とは何か、どのように使うのか、どのようにセットアップするのかについて理解しているはずです。
 
-Several fundamental concepts underly and drive the development of the
-Rundeck system. If you are a new user, knowing about them will
-help you use and integrate Rundeck into your environment.
 
-### Command dispatching
+## Rundeck の基本
 
-Rundeck supports a notion called *command dispatching* wherein a
-user specifies dispatch criteria along with an action (called a
-command) and this specification is used to perform a distributed execution.
+Rundeck を開発する動機やコアとなったコンセプトがあります。あなたがこれから Rundeck を使い始めるところならば、それらのコンセプトについて知っておくと Rundeck を使う際やあなたの環境へ Rundeck を導入する際に役立つでしょう。
 
-The *command dispatcher* is an internal mechanism that looks up
-node resources meeting specified filtering criteria and then
-performs the distributed command execution. The command executes in a data
-context that contains information about the Node resource. Besides
-node filtering, dispatcher options include parameters to control
-parallel execution, ordering and error handling.
 
-The command dispatcher supports two methods of command execution:
+### コマンドディスパッチャ
 
-* *Ad-hoc commands*: Execute any shell command or shell script across a
-  set of hosts.  
-* *Jobs*: Encapsulate commands as a named Job and tie them
-  together into multi-step workflows.   
+Rundeck は *コマンドディスパッチング* という概念をサポートしています。これはあるひとまとまりのアクション（コマンドと呼ばれる）を指定して、それを分散実行する際に用いられます。
 
-Rundeck provides both graphical and command line interfaces to
-interact with the command dispatcher.
 
-You can also use the Web API to interface with all aspects of the command
-dispatcher. (See the [Rundeck API](../api/index.html).)
+*コマンドディスパッチャ* は、指定したフィルタリング基準を満たすノードリソースを探してコマンドを分散実行する、Rundeck 内部のメカニズムです。コマンドはノードリソースの情報を含む、あるデータコンテキスト内で実行されます。コマンドディスパッチャはノードのフィルタリングに加え、並列実行・実行順序のコントロール・エラーハンドリングのためパラメータをオプションとして利用できます。
 
-### Resource model
+コマンドディスパッチャは2種類のコマンド実行方法をサポートしています。
 
-The command dispatcher works in conjunction with a resource model. A
-*resource model* is a representation of hosts deployed in your
-network. A _Node_  is a resource that is either a physical or virtual instance
-of a network accessible host.
 
-Nodes have a number of basic properties but these properties can be
-extended to include arbitrary named key value pairs.
+* *アドホックコマンド*：あるホスト群に対して任意のシェルコマンドまたはシェルスクリプトを実行します。
+* *ジョブ*：コマンド群を名前を付けたジョブの中に入れてカプセル化し、複数ステップからなるワークフローとしてまとめます。
 
-You can configure Rundeck to retrieve and store resource model data
-from multiple sources, and Rundeck defines several resource model
-document formats to facilitate the transfer of this information. 
+コマンドディスパッチャは GUI と CUI の両方から扱えます。
 
-Resource Model data sources can be local files on disk, or remotely
-accessible services. A *URL resource model source* is an external service
-accessible via the HTTP GET method that returns data in one of the supported
-resource document formats.
+また、コマンドディスパッチャの全機能へアクセスできる Web API を使う事も出来ます。（ [Rundeck API](../api/index.html) を参照）
 
-Rundeck currently supports XML and YAML document formats. See [Resource Model Document formats](rundeck-basics.html#resource-model-document-formats)).
 
-Each project can be configured to have multiple sources of Resource Model data. 
-See [Resource Model Sources](plugins.html#resource-model-sources).
+### リソースモデル
 
-### Authorization
+コマンドディスパッチャはリソースモデルと合わせて使うことで動作します。Rundeck ではあなたのネットワークに置かれたホストを *リソースモデル* として表現します。_ノード_ は、あるリソース（ネットワークアクセスが可能なホストの物理マシンまたは仮想インスタンス）を指します。
 
-Rundeck enforces an *access control policy* that grants certain
-privileges to groups of users.
-Every action executed through the Rundeck command dispatcher must meet
-the requirements of an access control policy definition. 
 
-Since Rundeck respects the policy definition, you can define role-based
-authorization to restrict some users to only a subset of actions. This
-enables a self-service type interface, where some users have
-access to only a limited set of executable actions.
+ノードは多くの基本的なプロパティを持っています。さらに、任意の名前を付けたキーバリューペアを追加することでプロパティを拡張することも可能です。
 
-See: [Authorization](../administration/authorization.html).
 
-### Project
+複数のソースからリソースモデルのデータを取得して格納するよう Rundeck を設定することができます。また、複数のソースから簡単に取り込めるよう、それぞれにリソースモデルドキュメントフォーマットを定義できます。
 
-A *project* is a place to separate management activity.
-All Rundeck activities occur within the context of a project.
-Each project has its own resource model and Job store.
 
-Multiple projects can be maintained on the same Rundeck server.
-Projects are independent from one another, so you can use them to
-organize unrelated systems within a single Rundeck
-installation. This can be useful for managing different infrastructures.
+リソースモデルのデータソースは、ローカルファイルでも、リモートでアクセス可能なサービスから取ってくるものでも大丈夫です。 *URL リソースモデルソース* とは、HTTP の GET メソッドでアクセスすると Rundeck がサポートするリソースモデルのドキュメントフォーマットでデータを返してくれる外部サービスを意味しています。
 
-## Installing Rundeck
 
-For more detailed install instructions, see the [Administration - Installation](../administration/installation.html) chapter.
+Rundeck では現在ドキュメントフォーマットとして XML と YAML が使えます。[リソースモデルドキュメントフォーマット](rundeck-basics.html#リソースモデルドキュメントフォーマット)を参照してください。
 
-The simplest way to install is using the Launcher jar.  Simply download it, and place it into a directory that will be the `RD_BASE` base directory.
 
-Start the Rundeck server by running the jar using java:
+どのプロジェクトも複数のリソースモデルソースを持つように設定することが可能です。[リソースモデルソース](http://rundeck.org/docs/manual/plugins.html#リソースモデルソース)を参照してください。
+
+
+### 権限の付与
+
+Rundeck は「users」グループに対してある決まった権限を付与する *アクセスコントロールポリシー* を適用します。コマンドディスパッチャによって実行される全てのアクションは、アクセスコントロールポリシーの条件を満たしている必要があります。
+
+
+Rundeck は、ポリシー定義を配慮してくれるため、あるユーザー達には一部のアクションのみ使用させるよう制限する等、ロールに基づく権限を定義できます。これによりセルフサービス型のインターフェイス（何人かのユーザーは、実行が許されたアクションのセットのみにアクセスできる）を可能にします。
+
+
+参照：[権限の付与](../administration/authorization.html)
+
+
+### プロジェクト
+
+ *プロジェクト* はプロジェクト管理業務を遂行するためのスペースを提供します。（プロジェクトごとに権限やジョブを管理できるということです）Rundeck で起きる全てのアクティビティは何れかのプロジェクトに関連しています。各プロジェクトは、それぞれリソースモデルと保存されたジョブを持っています。
+
+
+同じサーバーで複数のプロジェクトを扱うことができます。プロジェクトはそれぞれ独立しているので、一つの Rundeck で互いに無関係なシステムを管理することができます。これは異なるインフラを管理するのに役立ちます。
+
+
+## Rundeck のインストール
+
+より詳細なインストール方法については、[管理者向けマニュアルのインストール方法の章](../administration/installation.html)を参照してください。
+
+
+最も簡単なインストール方法は、jar ファイルを起動することです。jar ファイルをダウンロードしてきて、`RD_BASE` ベースディレクトリにする予定のところに置いてください。
+
+
+java を使用して jar ファイルを実行することにより Rundeck サーバーを起動します：
 
     java -jar rundeck-launcher-1.4.1.jar
 
-## Upgrading Rundeck
+## Rundeck のアップグレード
 
-If you are upgrading Rundeck from a previous version, please read the [Rundeck Upgrade Guide](../upgrading/index.html).
+旧バージョンからのアップグレードを行う場合は、[Rundeck アップグレードガイド](../upgrading/index.html)を参照してください。
 
-## First-Time Setup
 
-### Logins 
+## はじめてのセットアップ
 
-Rundeck supports a number of user directory configurations. By
-default, the installation uses a file based directory, but connectivity to
-LDAP is also available. See [Administration - Authentication](../administration/authentication.html).
+### ログイン
 
-The Rundeck installation process will have defined a set of temporary
-logins useful during the getting started phase.
+Rundeck は様々なユーザー管理形式をサポートしています。デフォルトではファイルベースのユーザーリストを使用しますが、LDAP と連携させることも可能です。[管理者向けマニュアル - 認証](../administration/authentication.html) を参照してください。
 
-* `user`: Has access to run commands and jobs but unable to modify job
-  definitions. Password: "user"
-* `admin`: Belongs to the "admin" group and is automatically granted
-  the "admin" and "user" role privileges. Password: "admin"
+Rundeck をインストールすると、使い始めるのに役立つテンポラリのログインユーザーが定義されます。
+
+
+* `user` ： コマンドやジョブの実行はできますが、ジョブ定義は編集できません。パスワードは "user" です。
+* `admin` : "admin" グループに属しており、自動的に "admin" および "user" というロール権限が付与されています。パスワードは "admin" です。
   
-### Group membership
+### グループメンバー
 
-If you installed Rundeck using the RPM installation method, it will
-have created a unix group called "rundeck".
+RPM パッケージを使って Rundeck をインストールした場合は、"rundeck" という UNIX グループが作られているでしょう。
 
     $ groups rundeck
     rundeck : rundeck
 
-It also made several log files writable to members of the "rundeck" group.
+また、いくつかのログファイルが "rundeck" のグループメンバーに対して書き込み可能にされています。
 
     $ ls -l /var/log/rundeck/command.log
     -rw-rw-r-- 1 rundeck rundeck 588 Dec  2 11:24 /var/log/rundeck/command.log
 
-If you want to use the Rundeck shell tools, be sure to add that group
-to the necessary user accounts.
+Rundeck シェルツールを使用したい場合は、それが必要なユーザーアカウントに "rundeck" グループを必ず追加してください。
 
-Rundeck shell tool users that do not belong to group, rundeck, will
-get error messages like so:
+"rundeck" グループに属さないユーザが Rundeck シェルツールを使用すると、このようなエラーメッセージが出ます：
 
     $ rd-jobs
     log4j:ERROR setFile(null,true) call failed. java.io.FileNotFoundException: /var/log/rundeck/command.log (Permission denied)
 
-Consult the [usermod] command to modify a user account.
+[usermod](http://linux.die.net/man/8/usermod) コマンドを参考にして、ユーザーアカウントを編集してください。
 
-[usermod]: http://linux.die.net/man/8/usermod
 
-## Summary 
+## まとめ
 
-You should now have a basic understanding of Rundeck. You
-should also have a working version of Rundeck on your system
-and login access. It is now time to learn some Rundeck basics.
+あなたはもう Rundeck の必要最低限な事柄については理解しているはずです。きちんと動作するバージョンの Rundeck があり、ログインが出来るようになっているでしょう。次は Rundeck の基本を学んでいきます。
 
-  
+
