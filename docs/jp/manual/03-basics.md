@@ -1,131 +1,87 @@
-% Rundeck Basics 
+% Rundeck の基本
 % Alex Honor; Greg Schueler
 % November 20, 2010
 
-This chapter covers the basics for using Rundeck. The chapter begins
-by describing the Rundeck user interfaces, both its graphical and
-command line. From there it will show you how to set up a project and
-learn about command execution. You will learn more about using the
-command dispatcher to control execution and finally, how to find and
-use history.
+この章では Rundeck を使う上での基本をカバーします。まず Rundeck の GUI と CUI 両方のインターフェイスについて説明します。次にプロジェクトの準備からコマンド実行までの操作方法を説明します。そして実行制御に用いているコマンドディスパッチャについて理解を深め、最後に実行履歴の見方と利用方法を学びます。
 
-## Rundeck Interfaces 
+## Rundeck のインターフェイス
 
-Rundeck provides two primary user interfaces:
+Rundeck には 2 つの主要なインターフェイスがあります。
 
-* An HTML-based graphical console 
-* A suite of shell tools
+*   GUI: HTML ベースのグラフィカルなコンソール
+*   CUI: Shell ツール
 
-Both interfaces allow you to view resources, dispatch commands, as
-well as, store and run jobs.
+どちらのインターフェイスからも、リソースの閲覧・ディスパッチ(コマンドの発信)・ジョブの保存と実行が可能です。
 
-In addition Rundeck provides a Web API which can be used to interact with
-the server programattically. See [Rundeck API](../api/index.html).
+さらに Rundeck にはサーバーのプログラムとやり取りできる WebAPI も用意されています。[Rundeck API](../api/index.html) を参照して下さい。
 
-### Graphical Console 
+### グラフィカルコンソール
 
-To get started, go to the URL for your Rundeck server. 
-Login to the web app with the credentials defined by the Rundeck user
-directory configuration. 
+Rundeck の使用を開始するにはまず、Rundeck サーバーの URL にアクセスします。そして Rundeck のユーザーディレクトリの設定によって定義されたアカウントでログインします。
 
-The default port for the web interface is `4440`, so try this URL:
+Web インターフェイスのデフォルトのポートは 4440 です。以下の URL にアクセスして下さい。
 
 <http://localhost:4440>
 
-You will be shown the Login page.  The default username and password are `admin`/`admin`, so enter those in the fields.
+アクセスするとログインページが表示されます。デフォルトのユーザー名とパスワードは `admin/admin` ですので、それらを入力してください。
 
-#### Navigation
+#### ナビゲーション
 
-The Rundeck page header contains global navigation control to move
-between tabbed pages: Run,  Jobs and History. It also has links to
-logout, view your user profile and a link to this online help.
+Rundeck ページのヘッダーは、"Run"（実行）・"Jobs"（ジョブ）・"History"（履歴） タブページを行き来するためのグローバルナビゲーションになっています。また、ログアウト・ユーザーのプロフィール画面・オンラインヘルプへのリンクも載っています。
 
 ![Top navigation bar](../figures/fig0201.png)
 
 Run
-
-:    The Run page is used to execute ad hoc commands. It
-     displays filtered Node resources configured in your
-     Project resource model. A filter  control can be used to 
-     limit the listing to just the Node resources
-     matching the filter criteria.
+:   Run ページは、アドホックコマンドを実行する際に使います。Run ページではあなたのプロジェクトのリソースモデルとして設定されたノードをフィルタリングした結果を表示しています。条件にマッチしたノードだけリストアップするというようにフィルタを使う事ができます。
 
 Jobs
-
-:    From the Jobs page, one can list, create and run Jobs. A
-     configurable filter allows a user to limit the Job listing to those
-     Jobs matching the filtering criteria. These filter settings can be
-     saved to a Users profile. Only authorized jobs will be visible.
+:   Jobs ページでは、保存されたジョブの一覧・ジョブの作成・ジョブの実行を、権限のある人が行えます。Jobs ページでも条件にマッチしたジョブだけをリストアップすることができます。このジョブのフィルタリングはユーザープロフィールに保存することができます。そのユーザーに閲覧権限があるジョブのみが表示されます。
 
 History
-
-:    From the History page, one can view currently executing commands
-     in the "Now Running" area or browse execution history. The execution
-     history can be filtered based on user selected parameters. Once the
-     filter has been set, the matching history is displayed. The current
-     filter settings also configure an RSS link, found in the top right of
-     the page.
+:   History ページでは、現在実行中のコマンド・過去のコマンド実行履歴を、権限のある人が閲覧できます。履歴についても、選択したパラメーターにマッチする履歴のみリストアップできます。それらのフィルタリングも保存可能です。現在のフィルタリング設定はページ右上にある RSS リンクにも設定できます。
 
 Project menu
-
-:    The top navigation bar contains a menu to select the
-     desired project. If only one project exists, the menu will
-     automatically be defaulted.
+:   トップのナビゲーションバーの中に、プロジェクトを選択できるプルダウンメニューがあります。もし一つしかプロジェクトが存在しない場合は、デフォルトでそれが選択されています。
      
 Admin
-
-:    If your login belongs to the "admin" group and therefore granted
-     "admin" privileges, a wrench icon will be displayed next to your login
-     name. This page allows the admin to view group memberships for all
-     users, as well as, edit their profile data.
+:   "admin" グループに属するアカウントまたは "admin" 権限が付与されたアカウントでログインした場合は、右上のログイン名がある部分に、レンチのアイコンも表示されています。このページでは全てのグループ・ユーザーの閲覧やプロフィール情報の編集ができます。
 
 User profile
-
-:    Shows a page showing group memberships.
+:   ユーザー名・メールアドレス・どのグループに属しているかといった情報が表示されます。編集も可能です。
 
 Logout
-
-:    Pressing this link ends the login session and will require a subsequent login.
+:   ログアウトのリンクを押すとログインセッションを終えてログアウトします。
 
 Help
-
-:    Opens a page to the online help system.
-
+:   オンラインヘルプページを開きます
 
 #### Now running
 
-The "Now running" section appears at the top of the Run and Jobs pages
-and provides a view into the execution queue.
-Any currently executing ad hoc command or Job will be listed
-and include information like the name of the job, when it started,
-who ran it, and a link to the execution output.
+"Now runnig" (実行中) という項目が Run ページと Jobs ページの上部の実行キュー内にあります。現在実行されているアドホックコマンドやジョブが、その名前や関連情報と共にリストアップされます。また誰が実行しているか表示され、出力結果へのリンクも表示されます。
 
 ![Now running](../figures/fig0215.png)
 
-Jobs that have been run before also have a progress bar approximating 
-duration.
+過去に実行したことがあるジョブに関しては、進捗度合いがわかるバーが表示されます。
 
-### Shell Tools 
+### Shell ツール
 
-Rundeck includes a number of shell tools to dispatch commands, load
-and run Job definitions and interact with the dispatcher queue. These
-command tools are an alternative to functions accessible in the
-graphical console.
+Rundeck にはディスパッチ用の Shell ツールが数多く含まれています。ジョブの定義を読み込んで実行し、発信キューとやり取りできます。これらのコマンドツール群は、グラフィカルコンソールから利用できる機能の代わりとなります。
 
 [dispatch]
-  ~ Execute ad hoc commands and scripts
+ ~ アドホックコマンドやスクリプトを実行します
 [rd-queue]
-  ~ Query the dispatcher for currently running Jobs and possibly kill them  
+ ~ 実行中のジョブに対して ディスパッチャに問い合わせることができます。ジョブを中断することもできます。
 [rd-jobs]
-  ~ List defined jobs as well as load them from text file definitions
+ ~ テキストファイルに定義されたジョブを読み込んでリストアップします。
 [run]
   ~ Invoke the execution of a stored Job
+  ~ 保存されているジョブを実行できます
 [rd-project]
-  ~ Setup a new Rundeck project
+ ~ 新しい Rundeck プロジェクトをセットアップします
 [rd-setup]
-  ~ (Re-)configure an instance of Rundeck   
+ ~ Rundeck の設定を読み込み直します。
   
-Consult the online manual pages for options and usage information.
+コマンドの細かい使い方やオプションに付いては、オンラインマニュアルページを参照してください。
 
 [dispatch]: dispatch.html
 [rd-queue]: rd-queue.html
@@ -134,71 +90,51 @@ Consult the online manual pages for options and usage information.
 [rd-project]: rd-project.html
 [rd-setup]: rd-setup.html
 
+## Rundeck のセットアップ
 
-## Project Setup 
+Rundeck のプロジェクト機能は、管理業務を遂行するためのスペースを提供します。
 
-A Rundeck *Project* provides a space to manage related management
-activities. 
+プロジェクトはグラフィカルコンソールまたはシェルツール "rd-project" のどちらからでもセットアップできます。
 
-A Project can be set up either from the graphical console or using the
-`rd-project` shell tool.
-
-After logging into the graphical console, you will notice a Project
-menu in the top navigation bar. If no projects exist, you will be prompted to 
-create a new project.
+グラフィカルツールにログインした後、上部のナビゲーションバー内にプロジェクトメニューがあることに気付くでしょう。もしプロジェクトが存在しなければ、新しいプロジェクトを作るよう勧められます。
 
 ![Create project prompt](../figures/fig0203-a.png)
 
-To start with, the only field you need to enter is the Project Name. You can
-change the other values later from the [GUI Admin Page](../administration/configuration.html#gui-admin-page).
+プロジェクト名を入力するだけでセットアップが開始できます。その他の項目に付いては後から [GUI 管理者ページ](../administration/configuration.html#GUI 管理者ページ)にて変更できます。
 
-After entering your project name, Rundeck initializes it and returns
-you to the "Run" page.
+プロジェクト名の入力が完了すると、Rundeck はその名前で初期化した後、"Run" ページに戻ります。
 
-Projects can be created at any time by going back to the Project menu 
-and selecting the "Create a new project..." item.
+プロジェクトの作成はナビゲーションバーのプロジェクトメニューから "Create a new project..." を選択する事でいつでも行うことができます。
 
 ![Create project menu](../figures/fig0203.png)
 
-The `rd-project` shell tool can also be used to create a
-project.
+シェルツール "rd-project" でもプロジェクトの作成ができます。
 
-On the Rundeck server, execute the `rd-project` command and
-specify a project name, here we use "examples":
+Rundeck のサーバー上で "rd-project" コマンドを実行し、プロジェクト名の指定をします。ここでは例として、"examples" という名前を付けます:
 
     rd-project -a create -p examples
 
-After running this command, you can login into the graphical console
-and see the new project in the project menu.
+コマンドの実行後、グラフィカルコンソールにてプロジェクトメニューに今作成したプロジェクトが追加されている事が分かります。
 
-You can also add configuration properties when you create the project, for example:
+プロジェクトを作る際に同時に他の項目も追加することができます:
 
     rd-project -a create -p examples --project.ssh-keypath=/private/ssh.key
 
-The project setup process generates Project configuration in the server, and
-a bootstrap resource model.
+プロジェクトのセットアッププロセスが、サーバー内でプロジェクトの設定を生成し、リソースモデルを準備します。  
 
 ![Run page after new project](../figures/fig0204.png)
 
-One node will be listed, the Rundeck server host. The server host is 
-distinguished with the word "server" in red text.
+Rundeck サーバー自身を指す 1 つのノードがリストアップされます。このノードについては赤文字の "server" という識別子が付きます。
 
-### Resource model
+### リソースモデル
 
-The Resource Model is the set of available Nodes that Rundeck can dispatch commands to, and their associated metadata. Each Rundeck Project has its own Resource Model.
+リソースモデルとは Rundeck がコマンドをディスパッチでき、サーバーのメタデータが紐づけられているノードのことです。どの Rundeck プロジェクトもそれぞれリソースモデルを持つ事になります。
 
-The initial resource model will contain
-information just about the Rundeck server host and is useful just for
-running local commands on the Rundeck server. 
-You can browse the project resource model by going to the "Run" page.
+初期状態のリソースモデルは Rundeck サーバー自身の情報だけを持っており、Rundeck サーバー自身にだけローカルコマンドが実行できます。プロジェクトごとのリソースモデルは "Run" ページで見ることができます。
 
-In the shell, you can list the Node resources in a resource
-model using the shell tool, `dispatch`. 
-Specify project name using the `-p project` option.
+シェルツールからもノードリソースのリストアップができます。特定のプロジェクトを指定したい場合は `-p <project>` オプションを付けます。
 
-Here the `dispatch` command lists the registered server for
-the "examples" project after the project setup. The `-v` gives
-a verbose listing that includes more detail:
+下記コマンドが "examples" というプロジェクトに登録されているサーバーのリストを列挙するディスパッチコマンドになります。`-v` オプションを付けるとリストの情報をより詳細に表示します:
 
     $ dispatch -p examples -v	
      strongbad:
@@ -209,41 +145,24 @@ a verbose listing that includes more detail:
         osVersion: 10.6.2
         tags: ''
 
-Node resources have standard properties, such as "hostname" but these
-can be extended via attributes. One of the more useful properties
-is the "tags" property. A *tag* is a text label that you give to the
-Node, perhaps denoting a classification, a role the node plays in the
-environment, or group membership. Multiple tags can be defined for
-a given node. 
+ノードリソースは "hostname" のような標準のプロパティを持ち、プロパティは属性を通して拡張することもできます。便利なプロパティのひとつとして、"tags" プロパティがあります。ノードに付ける *タグ* はテキストのラベルのことで、ある環境におけるひとつの役割として使ったり、あるグループのメンバであることを示すことに使ったり等、ノードの分類に用います。一つのノードに複数の tags を付けることもできます。
 
-The output above shows the "strongbad" node currently has an empty
-tags property: `tags: ''`. 
+上記の出力では "strongbad" というノードに現在は空の tags プロパティ `tags: ''` が付いていることを示しています。
 
-It is important to start thinking about node tagging for the nodes you manage
-because you will use them later when specifying filtering
-options to drive distributed command dispatch.
+後々コマンドディスパッチを行う際にノード群をフィルタリングするためにタグを用いるため、管理するノードにどんなタグを付けるか考えるのは重要なことです。
 
-Each Project has a configuration file called [project.properties](../administration/configuration.html#project.properties),
-located at this path:
-`$RDECK_BASE/projects/`_project_`/etc/project.properties`.
+どのプロジェクトにも [project.properties](../administration/configuration.html#project.properties) という名前の設定ファイルが存在し、`$RDECK_BASE/projects/project/etc/project.properties` というパスに置かれています。
 
-This configuration file contains two basic properties for accessing and
-storing resource model data:
+この設定ファイルはリソースモデルデータへのアクセス、取り込みのための 2 つの基本的なプロパティを持っています。
 
-* `project.resources.file`: A local file path to read a resource model document
-* `project.resources.url`: URL to an external resource model source (optional)
+*   `project.resources.file`: リソースモデルドキュメントを読み込む際のローカルファイルパス
+*   `project.resources.url`: 外部のリソースモデルへの URL (オプション)
 
-In addition, multiple pluggable "Resource Model Sources" can be configured for a project
-to retrieve additional Resource Model content from other sources. See [Resource Model Sources](plugins.html#resource-model-sources).
+さらに、あるリソースモデルを他のソースから取り出してくることで、ひとつのプロジェクトで複数のリソースモデルを追加することができます。[リソースモデルソース](plugins.html#リソースモデルソース) を参照してください。
 
-You can configure Rundeck to retrieve and store resource model data
-from any source, so long as it can produce one of the Rundeck resource model
-document formats. (See 
-[Resource Model Document formats](rundeck-basics.html#resource-model-document-formats).) Set the 
-`project.resource.url` to the URL resource model source of your choice.
+Rundeck のリソースモデルドキュメントフォーマットに変換すれば、様々なソースから Rundeck にリソースモデルデータを取り込むことができます。([リソースモデルドキュメントフォーマット](rundeck-basics.html#リソースモデルドキュメントフォーマット)を参照して下さい) `project.resource.url` にお好みの URL リソースモデルソースをセットしてください。
 
-Here's the XML document stored for the "examples" project that corresponds
-to the output printed by the `dispatch -v` shown earlier:
+ここに、先ほどの `dispatch -v` コマンドの出力結果に該当する "examples" プロジェクトのための XML ドキュメントがあります:
 
     <project>
         <node name="strongbad" type="Node" 
@@ -254,224 +173,150 @@ to the output printed by the `dispatch -v` shown earlier:
           editUrl="" remoteUrl=""/>
     </project>
 
-You'll notice the root node is called `project` and there is a single
-node descriptor for "strongbad". The `node` tag has a number of
-required and optional attributes. Additional node descriptors can be
-added by defining new `node` elements inside the `project` tag. 
+XML のルートノードは project で、そこに "strongbad" に対する記述がひとつのノードとして書かれています。ノードの XML タグは数ある必須属性、オプション属性のうちのひとつになります。ノードを追加する際には project XML タグの内側に node XML タグを追加してください。
 
-The strongbad host does not have any tags defined for it. One or
-more tags can be defined. Use comma for the delimiter (e.g, `tags="tag1,tag2"`).
+ホスト strongbad はタグの定義が何もされていません。ひとつまたは複数のタグが定義できます。区切りにはカンマ（,）を使います。（例. `tags="tag1,tag2"`）
 
-Here's an example of a node called "homestar" with just the required
-attributes: 
+以下の例では "homestar" というノードが必須属性とともに記述されています:
 
         <node name="homestar" type="Node" 
           hostname="192.168.1.02" 
           username="alexh" />
 
-The `hostname` and `username` values are used for the SSH connection
-while the `name` and `type` are used to define Node identity in the
-resource model. It is possible to overload the hostname value to include
-port information (eg, hostname="somehost:2022"). 
-This is useful if your run SSH on a different port. 
-	  
-Chances are you maintain information about your hosts within
-another tool, perhaps Chef, Puppet, Nagios, Amazon EC2, RightScale or
-even an in-house database. One of these tools might be
-considered the authority of knowledge about the nodes
-deployed in your network. Therefore, it is best to create an interface
-to the authoritative tool and expose it as Rundeck URL resource model source. This
-can be done as a simple CGI script that does a transformation from
-the tool's format to the one Rundeck understands.
+`name` と `type` の値がリソースモデルの中でノードを識別するために利用される一方、`hostname` と `username` の値は SSH コネクションに用いられます。ポート情報を加えて上書きする事も出来ます。(例. `hostname="somehost:2022"` ) これはデフォルトと違うポートを使って SSH を使う際に便利です。
 
-Of course, a rudimentary alternative is to maintain this information
-as an XML document, storing it in a source repository that is
-periodically exported to Rundeck. This method could be practical if
-your host infrastructure infrequently changes.
+Chef, Puppet, Nagios, Amazon EC2, RightScale または社内データベースなど、別のツール内でホストに関する情報をメンテナンスする機会があります。これらのツールは、ネットワーク内に配置されたノードの情報に関して認証を考慮しているでしょう。従って、認証ツールへのインタフェースをつくって Rundeck の URL リソースモデルソースとするのがベストです。ツールのフォーマットから Rundeck が理解可能なフォーマットへと変更するシンプルな CGI スクリプトで実現できます。
 
-Check the Rundeck web site for URL resource model sources. If you are
-interested in creating your own, see the
-[Resource model source](../administration/node-resource-sources.html#resource-model-source) section in the
-[Integration with External Data Providers](#integration-with-external-data-providers) chapter.
+もちろん、基本的な選択肢として XML ドキュメントとして情報をメンテナンスするというのもあります、それらは Rundeck に定期的にエクスポートされるソースリポジトリに取り込まれます。もしあなたの組織のホストインフラストラクチャが頻繁に変化するなら実用的な手段になります。
 
-### Resource Model Document formats
+Rundeck のウェブサイトで URL リソースモデルソースをチェックしてください。 自分たちのリソースモデルを作ることに興味がある場合は[リソースモデルソース](../administration/node-resource-sources.html#リソースモデルソース)の外部のデータプロバイダーとの統合項目を参照してください。
 
-Rundeck currently has two resource model document formats built in: 
+### リソースモデルドキュメントフォーマット
 
-* XML: [resource-v13(5) XML](../manpages/man5/resource-v13.html).  Format name: `resourcexml`.
-* Yaml: [resource-v13(5) YAML](../manpages/man5/resource-yaml-v13.html). Format name: `resourceyaml`.
+Rundeck には今のところ 2 種類のリソースモデルドキュメントフォーマットが組み込まれています。
 
-You can enable more formats using [Resource Format Plugins](plugins.html#resource-format-plugins).
+*   XML: [resource-v13(5) XML](../manpages/man5/resource-v13.html).  Format name: `resourcexml`.
+*   Yaml: [resource-v13(5) YAML](../manpages/man5/resource-yaml-v13.html). Format name: `resourceyaml`.
 
-## Pluggable Resource Model Sources
+[リソースフォーマットプラグイン](plugins.html#リソースモデルフォーマットプラグイン)により他のフォーマットを使うことも可能です。
 
-Each project can have multiple sources for Resource model information, and
-you can use or write plugins to enable new sources for entries in the Resource model.
+## プラガブルリソースモデルソース
+どのプロジェクトもリソースモデル情報のソースを複数持つことができます。そしてリソースモデルに、新しいソースとしてプラグインを使用または作ることができます。
 
-You can configure the sources via the GUI from the Admin page, see
-[GUI Admin Page](../administration/configuration.html#gui-admin-page), or by modifying the project configuration file,
-see [Resource Model Sources](plugins.html#resource-model-sources).
+そのソースは GUI の管理者ページから設定できます（[GUI 管理者ページ](../administration/configuration.html#gui-管理者ページ)を参照してください）。またはプロジェクトの設定ファイルから編集することもできます（[リソースモデルソース](plugins.html#リソースモデルソース)を参照してください）
 
-## Command Execution
+## コマンド実行
 
-Rundeck supports two modes of execution: *ad-hoc commands* and *Job*.
+Rundeck は*アドホック*と*ジョブ*の2つの実行モードをサポートしています。
 
-An *ad-hoc command* is any system command or shell script executed
-via the command dispatcher. Ad hoc commands can be executed via a
-command line utility named `dispatch` or run from
-the graphical console.
+*アドホックコマンド*はコマンドディスパッチャを通してあらゆるコマンドまたはシェルスクリプトを実行できます。`dispatch` という名前のコマンドツールとグラフィカルコンソール両方から実行可能です。
 
-A *Job* specifies a sequence of one or more command invocations that
-can be run once (i.e, is temporary) or named and stored for later use.
-Stored jobs can be started via the shell tool, `run`, and
-their progress checked with `rd-queue`.
+*ジョブ*には 1 つのコマンドまたは連続した複数のコマンドを実行させる指令を指定することができます。それは一回実行するだけも良いですし、後から使う時のために名前を付けて保存もできます。保存されたジョブは `rd-queue` というシェルツールから実行を開始します、プロセス進捗の確認も可能です。
 
-### Dispatcher options
+## ディスパッチャ オプション
 
-Dispatcher execution can be controlled by various types of options.
+ディスパッチャの処理は様々なタイプのオプションによりコントロールされます。
 
-Execution control
+実行コントロール
 
-:    Concurrency
-     is controlled by setting the "threadcount". Execution can continue even if
-     some node fails if the "keepgoing" option is set to true.
+:   "threadcount" を設定すると同時実行数をコントロールできます。また、"keepgoing" オプションが true になっていればいくつかのノードで処理に失敗しても実行を続けさせることができます。
 
-Node Filters
+ノードフィルタ
 
-:    Filtering options specify include and exclude filters to
-     determine which nodes from the project resource model to distribute
-     commands to.
+:   インクルードフィルタとエクスクルードフィルタリングをフィルタリングオプションで指定することで、プロジェクトリソースモデルの中でどのノードにコマンドを実行するのか決めることができます。
 
-Filter Keywords
+フィルタキーワード
 
-:    Keywords are used within they include and exclude patterns. The
-     "tags" keyword additionally can use a boolean operator to combine
-     logical ORs and ANDs.
+:   フィルタリングのインクルードとエクスクルードパターンに用いられるキーワード。"Tags" キーワードはさらに、OR と AND といったブール演算子を条件の連結に使うことができます。
 
-Filter combinations
+フィルタコンビネーション
 
-:    All keywords can be combined by specifying the include and
-     exclude options multiple times on the command line.
+:   すべてのキーワードはコマンドラインにて include と exclude オプションを指定することにより何個でも連結できます。
   
-One can experiment querying the resource model in the graphical
-console or with the `dispatch` tool.
+グラフィカルコンソールからでも `dispatch` ツールからでもリソースモデルを問い合わせる事ができます。
 
-#### Filtering nodes graphically  
+#### GUI でのノードフィルタリング
 
-A project's Node resources are displayed in the Run page. Use the
-project menu in the navigation bar to change to the desired project.
-After choosing a project, the server node will be filtered by default.
+プロジェクトのノードリソースは Run ページに表示されます。ナビゲーションバーの中にあるプロジェクトメニューを使ってプロジェクトを選択します。そうするとデフォルトの状態でノードがフィルタリングされています。
 
-Nodes can be filtered using include and exclude patterns by using
-the Filter form. The form can be opened by pressing the "Filter" button.
-Press the triangular disclosure icon to display the form.
+フィルタフォームからインクルード・エクスクルードパターンを使ってノードをフィルタリングできます。フォームは "Filter" ボタンを押すと出てきます。三角形のトグルアイコンを押してフォームを表示させてください。
 
 ![Resource filter link](../figures/fig0205.png)
 
-When the form opens, you will see it divided into an Include section
-where simple include expressions can be set, as well as, an "Extended
-Filters..." link where exclude expressions can be made. 
+フォームが表示されると、シンプルなインクルード表現を設定できる Include と、エクスクルード表現を作れる "Extented Filters..." リンクに分かれていることがわかります。
 
 ![Resource filter form](../figures/fig0206.png)
 
-After filling out the filter form, press "Filter" to generate a new
-listing. Pressing "Clear" resets the form.
+フィルタフォームを埋めた後、"Filter" ボタンを押して新たにフィルタリングされたノードリストを生成します。"Clear" ボタンを押すとフォームがリセットされます。
 
-The Include and Exclude filters allow for filtering nodes based on the
-following keywords: Name, Tags, Hostname, OS Name, OS Family, OS
-Architecture, OS Version and Type.
+インクルード・エクスクルードフィルタは次に示すキーワードごとにノードをフィルタリングすることができます：Name, Tags, Hostname, OS Name, OS Family, OS Architecture, OS Version and Type
 
-Regular expressions can be used for any of the keywords. The ``.*`` pattern
-will match any text.
+どのキーワードでも正規表現を使うことができます。``.\*`` というパターンは何もマッチしません。
 
-If more than 20 nodes match the filter, the UI will page the results.
+フィルタリングの結果 20 以上のノードがマッチする場合は、結果がページングされます。
   
-#### Filtering nodes in the shell
+#### シェルでのノードフィルタリング
 
-`dispatch` uses the commandline options -I (include) and
--X (exclude) to specify which nodes to include and
-exclude from the base set of nodes. You can specify a single value, a
-list of values, or a regular expression as the argument to these
-options.
+`dispatch` コマンドは -I (include) と -X (exclude) オプションを使ってどのノードをインクルード・エクスクルードするか指定できます。これらのオプションで、ひとつの値/値のリスト/正規表現を利用できます。
 
-*Examples*
+*例*
 
-List nodes  with OS name, Linux:
+OS name が Linux であるものをリストアップ(`-p` はプロジェクトの指定):
 
     dispatch -p examples -I os-name=Linux
 
-List Linux nodes but exclude ones with names prefixed "web.":
+"web" という接頭辞が着いたものを除き、Linux のノードをリストアップ:
 
     dispatch -p examples -I os-name=Linux -X "web.*"
 
-List nodes that are tagged both "web" and "prod" :
+"web" と "prod" というタグが着いたノードをリストアップ:
 
     dispatch -p examples -I tags=web+prod
 
-Here's an example that will execute the `apachectl restart`
-command in 10 threads across all nodes tagged "web" and keepgoing in
-case an error occurs :
+"web" というタグが着いたノード全てに対し、10 スレッド同時に apachectl をリスタートするコマンドを発行。エラーが起こっても続けるオプション付き:
 
     dispatch -p examples -I tags=web -K -C 10 -- sudo apachectl restart 
 
-Consult the [rd-options(1)](../manpages/man1/rd-options.html) manual page for the complete reference on
-available dispatcher options.
+ディスパッチャーコマンドで利用できるオプションについて完全なリファレンスが必要な場合は、[rd-options(1) マニュアルページ](../manpages/man1/rd-options.html) を参照してください。
   
-### Ad-hoc commands 
+### アドホックコマンド
 
-Typically, an ad-hoc command is a shell script or system executable
-that you run at an interactive terminal. Ad-hoc commands can be
-executed via the `dispatch` shell command or a graphical
-shell.
+一般的に、アドホックコマンドはシェルスクリプトやインタラクティブなターミナルにて実行されます。Rundeck ではアドホックコマンドは `dispatch` コマンドとグラフィカルコンソール両方にて実行可能です。
 
-#### Shell tool command execution
+#### シェルツールでのコマンド実行
 
-Use `dispatch` to execute individual commands or shell script files.
+個々のコマンドやシェルスクリプトファイルを実行するには `dispatch` を使います。
 
-Here `dispatch` is used to run the Unix `uptime` command to
-print system status:
+`dispatch` を使って UNIX `uptime` コマンドを実行しシステムステータスを出力する例です:
 
     $ dispatch -I os-family=unix -- uptime
     Succeeded queueing Workflow execution: Workflow:(threadcount:1){ [command( exec: uptime)] }
     Queued job ID: 7 <http://strongbad:4440/execution/follow/7>
 
-The ``uptime`` command is queued and executed. The output can be followed by
-going to the URL returned in the output (eg, http://strongbad:4440/execution/follow/7). 
 
-Sometimes it is desirable to execute the command
-directly, and not queue it. Use the ``--noqueue`` option to execute
-and follow the output from the console.
+この ``uptime`` コマンドはキューに追加された後に実行されました。`uptime` コマンドの出力は `dispatch` コマンドの出力に出ている URL に載っています。(例, http://strongbed:4440/execution/follow/7)
+
+キューに追加せず、すぐにコマンドを実行したい場合があります。``--noqueue`` オプションを使って実行し、コンソールの出力を追って下さい。
 
     $ dispatch -I os-family=unix  --noqueue -- uptime
     [ctier@centos54 dispatch][INFO]  10:34:54 up 46 min,  2 users,  load average: 0.00, 0.00, 0.00
     [alexh@strongbad dispatch][INFO] 10:34  up 2 days, 18:51, 2 users, load averages: 0.55 0.80 0.75
     [examples@ubuntu dispatch][INFO]  10:35:01 up 2 days, 18:40,  2 users,  load average: 0.00, 0.01, 0.00
 
-**Note**: The "--noqueue" flag is useful for testing and debugging execution
-but undermines visibility since execution is not managed through the central execution
-queue.
+**ノート** "--noqueue" フラッグは、テスト実行やデバッグ実行には便利ですが、中央管理の実行キューで管理されないやり方なため、コマンド実行状況が視覚化されません。
 
-Notice, the `dispatch` command prepends the message output
-with a header that helps understand from where the output originates. The header
-format includes the login and node where the `dispatch` execution
-occurred.
+`dispatch` コマンドは、そのノードでコマンドを実行したかのようにヘッダーを付けて出力メッセージを出してくれます。ヘッダーのフォーマットにはログインユーザーとコマンドが実行されているノード情報が含まれます。
 
-Execute the Unix `whomi` command to see what user ID is
-used by that Node to run dispatched commands:
+Unix `whoami` コマンドを実行して、各ノードごとにディスパッチされたコマンドを実行しているユーザー ID を見てみます。
 
     $ dispatch -I os-family=unix --noqueue -- whoami
     [ctier@centos54 dispatch][INFO] ctier
     [alexh@strongbad dispatch][INFO] alexh
     [examples@ubuntu dispatch][INFO] examples
 
-You can see that the resource model defines each Node to use a
-different login to execute `dispatch` commands.  That
-feature can be handy when Nodes serve different roles and therefore,
-use different logins to manage processes. See the
-`username` attribute in [resource-v13(5) XML](../manpages/man5/resource-v13.html) or [resource-v13(5) YAML](../manpages/man5/resource-yaml-v13.html) manual page.
+リソースモデルは、ディスパッチコマンドを実行するログインユーザーをノード毎に定義していることがわかります。この機能により、ノードへそれぞれ違ったロールを割り当てることが簡単にできます、つまりプロセスの管理のためにログインユーザーを使い分けることができるということです。[resource-v13(5) XML](../manpages/man5/resource-v13.html) または [resource-v13(5) YAML](../manpages/man5/resource-yaml-v13.html) のユーザネーム属性について見てみてください。
 
-The `dispatch` command can also execute shell
-scripts. Here's a trivial script that generates a bit of system info:
+`dispatch` コマンドはシェルスクリプトも実行できます。ここにちょっとだけシステム情報を生成する簡単なシェルスクリプトがあります:
 
     #!/bin/sh
     echo "info script"
@@ -479,127 +324,76 @@ scripts. Here's a trivial script that generates a bit of system info:
     echo whoami=`whoami`
     echo uname=`uname -a`
 
-Use the -s option to specify the "info.sh" script file:
+-s オプションを使って "info.sh" というスクリプトファイルを指定します。
 
     $ dispatch -I os-family=unix -s info.sh
     
-The `dispatch` command copies the "info.sh" script located
-on the server to each "unix" Node and then executes it.
+`dispatch` コマンドは "info.sh" スクリプトをコピーしてサーバーと "unix" 系ノードに置き、実行します。
 
-#### Graphical command shell execution
+#### グラフィカルコマンドシェルでの実行
 
-The Rundeck graphical console also provides the ability to execute
-ad-hoc commands to a set of filtered Node resources.
-The command prompt can accept any ad-hoc command string you might run
-via an SSH command or via the `dispatch` shell tool.
+Rundeck のグラフィカルコンソールでもフィルタリングしたノードリソースに対してアドホックコマンドを実行できます。コマンドプロンプトは SSH コマンドまたはディスパッチシェルツールで実行可能な様々なコマンド文字列を受け付けます。
 
-But before running any commands, you need to select the project
-containing the Nodes you wish to dispatch. Use the project
-menu to select the desired project name. After the project has been
-selected you will see a long horizontal textfield labeled
-"Command". This is the Rundeck ad hoc command prompt.
-
+しかしながら、どんなコマンドを打つときでも、まずディスパッチしたいノードを含んだプロジェクトの選択をする必要があります。プロジェクトメニューから希望のプロジェクトを選んでください。プロジェクトを選択すると、"Command" というラベルが付いた水平なテキストフィールドがあるのがわかると思います。これが Rundeck のアドホックコマンドプロンプトになります。
 ![Ad hoc command prompt](../figures/fig0207.png)
 
-To use the command prompt, type the desired ad-hoc command string into
-the textfield and press the "Run" button. The command will be
-dispatched to all the Node resources currently listed below the
-command prompt tool bar. The command prompt also becomes disabled until
-the execution completes. Output from the command execution will be shown
-below (see [output](rundeck-basics.html#following-execution-output)).
+コマンドプロンプトを利用するには、テキストフィールドに実行したいアドホックコマンドを入力し、"Run" ボタンを押してください。コマンドは現在コマンドプロンプトツールバーの下にリストアップされたノード全てに対してディスパッチされます。また、コマンドプロンプトはそのコマンド実行が完了するまで利用できなくなります。コマンド実行の出力は下記のように出力されます。([出力結果](rundeck-basics.html#コマンド実行結果を確認する)を見てみてください)
 
 ![Ad hoc execution output](../figures/fig0208.png)
 
-You will also notice the ad hoc execution listed in the "Now running" 
-part of the page, located above the command prompt.
-All running executions are listed there. Each running execution
-is listed, showing the start time, the user running it, and a link
-to follow execution output on a separate page.
+また、"Now running" と書かれた実行中のアドホックコマンドのリストがコマンドプロンプトの上部に表示されることにも気付くでしょう。全てのコマンド実行はそこにリストアップされます。リストアップされている実行中のコマンドにはどれも開始時間・経過時間・出力結果の別ページでの表示リンクが付いています。
 
 ![Now running ad hoc command](../figures/fig0207-b.png)
 
-At the bottom of the page, you will see a "History" section containing
-all executions in the selected project for the last 24 hours. After the execution
-completes, a new event will be added to the history. A yellow highlight
-indicates when the command leaves the Now running section and enters
-the history table.
+ページの一番下には、選択されたプロジェクトにおける過去 24 時間の全てのコマンドの実行履歴がある "History" という項目があります。コマンドの実行完了後、"History" 項目に新しい履歴が追加されます。黄色でハイライトされた行は、"History" 項目に追加されかつまだ実行中のものであることを表しています。
 
 ![Run history](../figures/fig0207-c.png)
 
-History is organized in summary form using a table layout. The "Summary" column
-shows the command or script executed. The "Node Failure Count" contains
-the number of nodes where an error in execution occurred. If no errors occurred,
-"ok" will be displayed. The "User" and "Time" columns show the user that executed
-the command and when.
+"History" 項目のコマンド実行履歴は並び替える事も可能です。"Summary" カラムは実行されたコマンド/スクリプトを表しています。"Node Failure Count" カラムはエラーが起きたノードの数を表しています。エラーが 1 つもないときは、"ok" と表示されています。"User" と "Time" カラムは、"いつ" "誰が" コマンドを実行したかを表しています。
 
-##### Following execution output
+#### コマンド実行結果を確認する
 
-Ad hoc command execution output is displayed below the command prompt.
+アドホックコマンドの実行結果はコマンドプロンプトの下に表示されます。
 
-This page section provides several views to read the output using different formats.
+ここではコマンドの実行結果を様々なフォーマットで見る事ができます。
 
-Tail Output
+Tail 出力モード
 
-:   Displays output messages from the command execution as if you were
-    running the Unix `tail -f` command on the output log file. 
-    By default, only the last 20 lines of output is displayed but this
-    can be expanded or reduced by pressing the "-" or "+" buttons. You
-    can also type in an exact number into the textfield.
+:   ログファイルに対して Unix の `tail -f` コマンドを実行しているかのような形でコマンドの実行結果を表示します。デフォルトでは 20 行表示されますが、"-" または "+" ボタンを押す事で変更できます。現在の表示行数が設定されているテキストフィールドを修正することでも変更可能です。
     ![Ad hoc execution output](../figures/fig0208.png)
 
-Annotated
+注釈モード
 
-:   The annotated mode displays the output messages in the order they
-    are received but labels the each line with the Node from which the
-    message originated. Through its additional controls each Node
-    context can be expanded to show the output it produced, or
-    completely collapsed to hide the textual detail.    
+:   注釈モードでは、選択されたラベル（"Annotated" を選択するとその右側に出てくるラベル）に沿った表示をします。昇順・降順にする "Top" "Bottom" や コマンドのまとまり毎に表示を区切る "Group commands" や出力結果の詳細を折りたたみ表示にする "Collapse" などです。折りたたんだものも右端の三角形または "3-exec" のように書かれたリンクを押す事で開くことができます。
     ![Annotated output](../figures/fig0209.png)
 
-Compact
+コンパクトモード
 
-:   Output messages are sorted into Node specific sections and are not
-    interlaced. By default, the messages are collapsed but can be
-    revealed by pressing the disclosure icon to the right. 
+:   コンパクトモードでは、ノード毎に表示が区切られます。デフォルトでは出力結果の詳細は折りたたまれており、右端の三角形ボタンを押す事で開きます。
     ![Node output](../figures/fig0210.png)
 
-###### Separate execution follow page
+##### コマンド実行フォローページ
 
-Sometimes it is useful to have a page where just the execution output
-is displayed separately. One purpose is to share a link to others 
-interested in following the output messages. Click the "output >>"
-link in the "Now running" section to go to the execution follow page.
+コマンドの出力結果が別ページとして切り出されていると便利なときがあります。目的のひとつとして例えば、出力結果がどうなっているか知りたい人にリンクをシェアするためといったことがあります。"Now running" 項目の "output >>" リンクをクリックするとそのコマンド実行結果に関することのみが載っているページへ飛びます。
 
-Also, notice the URL in the location bar of your browser. This URL can
-be shared to others interested in the progress of execution. The URL
-contains the execution ID (EID) and has a form like:
+ブラウザのロケーションバーの URL にも気付くでしょう。URL を他の人にシェアすることも可能です。URL には実行 ID（EID）が入っています。
 
      http://rundeckserver/execution/follow/{EID}
 
-After execution completes, the command will have a status: 
+実行が完了後、コマンドはあるステータスを取ります:
 
-* Successful: No errors occurred during execution of the command
-  across the filtered Node set
-* Failed: One or more errors occurred. A list of Nodes that incurred
-  an error is displayed. The page will also contain a link "Retry
-  Failed Nodes..." in case you would like to retry the command.
+*   成功:   フィルタリングしたノードに対してのコマンド実行で一切エラーがない状態。
+*   失敗:   ひとつ以上エラーが発生した状態。エラーが起きたノードが表示されます。同じコマンドを実行したいときのために、"Retry Failed Nodes..." というリンクも表示されます。
 
-You can download the entire output as a text file from this
-page. Press the "Download" link to retrieve the file to your desk top.
+このページをテキストファイルとしてダウンロードすることも可能です。"Download" というリンクを押してデスクトップに保存してください。
 
-### Controlling command execution
+### コマンド実行をコントロールする
 
-Parallel execution is managed using thread count via "-C" option. The
-"-C" option specifies the number of execution threads. Here's an
-example that runs the uptime command across the Linux hosts with two
-threads:
+並列でコマンドを実行したい場合は、"-C" オプションを使い並列させたいスレッド数を指定します。Linux ホストに対して、2 スレッド平行で uptime コマンドを実行する例はこうなります:
 
     dispatch -I os-name=Linux -C 2 -- uptime
 
-The keepgoing and retry flags control when to exit incase an error
-occurs. Use "-K/-R" flags. Here's an example script that checks if the
-host has port 4440 in the listening state. If it does not, it will
-exit with code 1.
+エラーが起こったときに、構わず続けたい・リトライさせたい場合には "-K/-R" フラッグを使います。ここにホストが 4440 ポートをリッスンしていた状態であるか確認するスクリプトの例があります。4440 ポートがリッスンされていない場合にはコード 1 を取ります。
 
     #!/bin/sh
     netstat -an | grep 4440 | grep -q LISTEN
@@ -609,8 +403,7 @@ exit with code 1.
     fi
     echo  listening port=4440, host=`hostname`;
 
-Commands or scripts that exit with a non-zero exit code will cause the
-dispatch to fail unless the keepgoing flag is set.
+強制続行フラッグが設定されていない場合、コマンドまたはスクリプトにて 0 以外の終了コードが返ってくるとディスパッチは失敗と判断され終了します。
 
     $ dispatch -I os-family=unix -s /tmp/listening.sh --noqueue
     [alexh@strongbad dispatch][INFO] Connecting to centos54:22
@@ -618,11 +411,9 @@ dispatch to fail unless the keepgoing flag is set.
     [ctier@centos54 dispatch][INFO] not listening on 4440
     error: Remote command failed with exit status 1
 
-The script failed on centos54 and caused dispatch to error out immediately.
+centos54 でのスクリプト実行が失敗すると直ちにディスパッチもエラー終了となっています。
 
-Running the command again, but this time with the "-K" keepgoing flag
-will cause dispatch to continue and print on which nodes the script
-failed:
+もう一度コマンドを実行する際、今度は "-K" の強制続行フラッグを付けて、どのノードにおいてスクリプト実行が失敗したかを出力しつつ処理を続行させます。
 
     $ dispatch  --noqueue -K -I tags=web -s /tmp/listening.sh
     [alexh@strongbad dispatch][INFO] Connecting to centos54:22
@@ -639,15 +430,11 @@ failed:
 	    dispatch -K -s /tmp/listening.sh -p examples -I
 	    name=centos54,ubuntu
 	
-### Queuing commands to Rundeck
+### コマンド実行をキューに入れる
 
-By default, commands or scripts executed on the command line by `dispatch` are
-queued as temporary jobs in Rundeck. The `dispatch` command
-is equivalent to a "Run and Forget" action in the graphical console.
+デフォルトでは、`dispatch` によるコマンドライン上でのコマンドまたはスクリプトの実行は Rundeck のテンポラリジョブにキューされます。`dispatch` コマンドは、グラフィカルコンソールでの "その場限りの実行" と同等です。
 
-The script below is a long running check that will conduct a check periodically
-waiting a set time between each pass. The script can be run with or without
-arguments as the parameters are defaulted inside the script:
+下記のスクリプトは、それぞれの経路でポートがリッスンされているかを定期的に確認する長めの処理です。そして引数を渡しても渡さなくても実行できます。
 
     $ cat ~/bin/checkagain.sh 
     #!/bin/bash
@@ -663,165 +450,136 @@ arguments as the parameters are defaulted inside the script:
     done
     echo "Not listening on $port after $i checks" ; exit 1
 
-Running `dispatch` causes the execution to queue in
-Rundeck and controlled as  temporary Job. The `-I centos54` limits
-execution to just the "centos54" node:
+`dispatch` コマンドにより、コマンド実行処理が Rundeck のキューに入り、テンポラリジョブとして管理されます。`-I centsos54` の部分は "centos54" というノードのみに実行ということを意味しています。
 
     $ dispatch -I centos54 -s ~/bin/checkagain.sh 
     Succeeded queueing workflow: Workflow:(threadcount:1){ [command( scriptfile: /Users/alexh/bin/checkagain.sh)] }
     Queued job ID: 5 <http://strongbad:4440/execution/follow/4>
 
-To pass arguments to the script pass them after the "\--" (double
-dash):
+引数を渡すには "\--"（ダッシュ 2 つ）の後に指定します。
 
     $ iters=5 secs=60 port=4440
     $ dispatch -I centos54 -s ~/bin/checkagain.sh -- $iters $secs $ports
 
+### コマンド実行状況をトラッキングする
 
-### Tracking execution
+"Run" ページの上部にある["Now Running"](rundeck-basics.html#実行中)の部分から、キューに入っているアドホックコマンドや一時的なジョブまたは保存されたジョブの実行の経過を追うことができます。
 
-Queued ad-hoc command and temporary or saved Job executions can be
-tracked from the "Run" page in the "[Now Running](rundeck-basics.html#now-running)" area at the top of
-the page.
-
-Execution can also be tracked using the [rd-queue](../manpages/man1/rd-queue.html) shell tool.
+シェルツール [rd-queue](http://rundeck.org/docs/manpages/man1/rd-queue.html) を使う事でもコマンド実行の経過を追う事ができます。
 
     $ rd-queue -p project
     Queue: 1 items
     [5] workflow: Workflow:(threadcount:1){[command( scriptfile: /Users/alexh/bin/checkagain.sh)]} <http://strongbad:4440/execution/follow/5>
 
-Each job in the execution queue has an execution ID. The example above
-shows one item with the ID, 5.
+実行キューに入っているジョブはどれも実行 ID というのを持っています。上記の例で言うと、キューに 1 つジョブが入っていて 5 というのが ID に当たります。
 
-Running jobs can also be killed via `rd-queue kill`. 
-Specify execution ID using the "-e" option:
+実行中のジョブは `rd-queue kill` コマンドによって kill することもできます。"-e" オプションにて kill する実行 ID を指定してください。
 
     $ rd-queue kill -e 5
     rd-queue kill: success. [5] Job status: killed
 
-### Plugins
+### プラグイン
 
-Rundeck supports a plugin model for the execution service, which allows you to
-fully customize the way that a particular Node, Project or your entire Rundeck installation executes commands and scripts remotely (or locally).
+Rundeck はプラグインモデルを採用しており、それによって特定のノード・プロジェクト・Rundeck 本体がリモートで（またはローカルで）コマンドやスクリプトを実行する方法をフルカスタマイズできます。
 
-By default Rundeck uses an internal plugin to perform execution via SSH for remote nodes, 
-and local execution on the Rundeck server itself.
+Rundeck はリモートノードとローカルの Rundeck サーバー自身へ SSH を通したコマンド実行を扱う内部プラグインをデフォルトで使っています。
 
-Plugins can be installed by copying them to the `libext` directory of your Rundeck
-installation.
+プラグインのインストールは、あなたがインストールした Rundeck の `libext` ディレクトリにプラグインをコピーすることで完了します。
 
+一般的なプラグインは、特定の"サービス"のために"プロバイダ"を追加します。"サービス"はノードでのコマンド実行を担うもので "node-executor" と "file-copier" サービスがあります。
 Plugins are used to add new "providers" for particular "services".  The services used for  command execution on nodes are the "node-executor" and "file-copier" services.
 
-To use a particular plugin, it must be set as the provider for a service by configuring the `framework.properties` file, the `project.properties` file, or by adding attributes to Nodes in your project's resources definitions.  For more about configuring the providers, see [Using Providers](plugins.html#using-providers).
+特定のプラグインを使うには、`framework.properties` ファイル と `project.properties` ファイルを設定するか、またはプロジェクトリソースに定義されたノードへ属性を追加します。より詳細な設定については [プロバイダを使う](plugins.html#プロバイダを使う) を参照して下さい。
 
-The internal SSH command execution plugin is described below, and more information about plugins can be found in the [Rundeck Plugins](#rundeck-plugins) chapter.
+内部の SSH コマンド実行プラグインについては下記で説明します、プラグインについての詳細は [Rundeck プラグイン](#rundeck-プラグイン)の章 に載っています。
 
-#### SSH Plugin
+#### SSH プラグイン
 
-Rundeck by default uses SSH to execute commands on remote nodes, SCP to copy scripts to remote nodes, and locally executes commands and scripts for the local (server) node.
+デフォルトでは Rundeck はリモートのノードでコマンドを実行するために SSH を使い、リモートノードへスクリプトをコピーするのに SCP を使い、ローカルのノード（Rundeck サーバー）に対してはローカルでコマンドやスクリプト実行を行います。
 
-The SSH plugin expects each node definition to have the following properties in order to create the SSH connection:
+SSH プラグインでは、SSH 接続を確立するために、以下のプロパティが定義されている必要があります：
 
-* `hostname`: the hostname of the remote node.  It can be in the format "hostname:port" to indicate that a non-default port should be used. The default port is 22.
-* `username`: the username to connect to the remote node.
+*   `hostname`：リモートノードのホスト名。デフォルトのポート以外を使う場合は "hostname:port" というフォーマットになります。デフォルトポートは 22 です。
+*   `username`：接続するリモートノードのユーザー名。
 
-When a Script is executed on a remote node, it is copied over via SCP first, and then executed.  In addition to the SSH connection properties above, these node attributes
-can be configured for SCP:
+リモートノードでスクリプトが実行される時、まず SCP にてスクリプトがコピーされた後、そのスクリプトが実行されます。SSH 接続プロパティに加えて、SCP についてもノードで定義しておくプロパティが存在します：
 
-* `file-copy-destination-dir`: The directory on the remote node to copy the script file to before executing it. The default value is `C:/WINDOWS/TEMP/` on Windows nodes, and `/tmp` for other nodes.
-* `osFamily`: specify "windows" for windows nodes.
+*   `file-copy-destination-dir`：実行前にスクリプトファイルが置かれるリモートノード上のディレクトリ。デフォルトでは、Windowns のノードだと `C:/WINDOWS/TEMP/` その他のノードだと `/tmp` になります。
+*   `osFamily`：Windows のノードには "windows" と指定します。
 
-In addition, for both SSH and SCP, you must either configure a public/private keypair for the remote node or configure the node for SSH Password authentication.
+さらに、SSH と SCP 両方とも、SSH パスワード認証のために、リモートノードに公開鍵/秘密鍵の設定をしておく必要があります。
 
-* See [Administration - SSH](../administration/ssh.html) for more information on setting up your SSH server
-* See [SSH Provider](plugins.html#ssh-provider) for more information on the configuration of Nodes for SSH
+*   SSH サーバーの設定についてのより詳しい情報は [管理者向けガイド - SSH](../administration/ssh.html) ページを参照してください。
+*   SSH のためのノードの設定についてのより詳しい情報は[SSH プロバイダ](plugins.html#ssh-プロバイダ) ページを参照してください。
 
-#### Included Plugins
+#### 組み込みプラグイン
 
-Two plugin files are included with the default Rundeck installation for your use in testing or development. (See [Pre-Installed Plugins](plugins.html#pre-installed-plugins))
+Rundeck にはテストや開発に利用するためのプラグインが 2 つデフォルトで入っています。([プリインストールプラグイン](plugins.html#プリインストールプラグイン) を参照)
 
-* [Stub plugin](plugins.html#stub-plugin): simply prints the command or script instead of running it.
-* [Script plugin](plugins.html#script-plugin): executes an external script file to perform the command, useful for developing your own plugin with the [Script Plugin Development](../developer/plugin-development.html#script-plugin-development) model.
+*   [スタブプラグイン](plugins.html#スタブプラグン) : 実行はせずに、ただコマンドやスクリプトを表示します。
+*   [スクリプトプラグン](plugins.html#スクリプトプラグン) :外部スクリプトをコマンドのように扱います。自分の [スクリプトプラグン開発](../developer/plugin-development.html#スクリプトプラグン開発) モデルを開発するのに便利です。
 
-## History
+## 履歴
 
-History for queued ad-hoc commands, as well as, temporary and
-saved Job executions  is stored by the Rundeck server. History data
-can be filtered and viewed inside the "History" page.
+キューに入ったアドホックコマンドの履歴だけでなく、テンポラリ・保存したジョブの実行履歴が Rundeck サーバーに保存されています。履歴データは "History" ページ内にてフィルタリングして見る事ができます。
 
 ![History page](../figures/fig0211.png)
 
-### Filtering event history
+### イベント履歴のフィルタリング
 
-By default, the History page will list history for the last day's
-executions. The page contains a filter control that can be used to
-expand or limit the executions.
+History ページはデフォルトで直近一日分のコマンド実行履歴をリストアップしています。ページには履歴一覧を増やすまたは制限するフィルタリング機能が付いています。
 
-The filter form contains a number of fields to limit search:
+フィルタリング機能は、条件を指定できる項目がいくつもあります：
 
-* Within: Time range. Choices include 1 day, 1 week, 1 month or other
-  (given a start after/before to ended after/before).
-* Name: Job title name.
-* Project: Project name. This may be set if the project menu was used.
-* User: User initiating action.
-* Summary: Message text.
-* Result: Success or failure status.
+*   Within: 期間の指定。1 日間、1 週間、1 ヶ月、その他（いつからいつまでを指定）の中から選びます
+*   Name: ジョブの名前の指定
+*   Project: プロジェクト名の指定。プロジェクトメニューでプロジェクトが選択されていれば予めセットされているはずです
+*   User: ジョブを起動したユーザーの指定
+*   Summary: メッセージテキスト
+*   Result: 成功ステータスまたは失敗ステータス
 
 ![History filter form](../figures/fig0212.png)
 
-After filling the form pressing the "Filter" button, the page will
-display events matching the search.
+フィルタ項目を埋めて "Filter" ボタンを押すと、ページはフィルタリング条件にあったイベント（履歴）を表示します。
 
-Filters can be saved to a menu that makes repeating searches more
-convenient. Click the "save this filter..." link to save the filter
-configuration.
+より手軽に履歴のフィルタリングを行えるよう、フィルタリング結果はメニューに保存できます。"save this filter..."リンクをクリックしてフィルタリング設定を保存します。
 
-### Event view
+### イベントビュー
 
-History for each execution contains the command(s) executed,
-dispatcher options, success status and a link to a file containing all
-the output messages.
+どの履歴にも、実行したコマンド・ディスパッチオプション・成功失敗ステータス・出力メッセージを含んだファイルへのリンクが付いています。
 
 ![Event view](../figures/fig0213.png)
 
-If any errors occurred, the "Node Failure Count" column will show
-the number of nodes in red text. A bar chart indicates the percent
-failed.
+ひとつでもエラーが起こったものの場合、"Node Failure Count" カラムが表示され、何台のノードが失敗したか赤味で表示されています。バーチャートは何 % が失敗だったのかを示しています。
 
 ![Event view](../figures/fig0216.png)
 
-### RSS link
+### RSS リンク
+
+RSS アイコンは現在のフィルタリング設定にマッチしたイベント（履歴）の一覧表示へのリンクになります。
 
 An RSS icon provides a link to an RSS view of the events that match
 the current filtering criteria.
 
 ![RSS link](../figures/fig0214.png)
 
-## Tips and Tricks 
+### Tips とトリック
+#### フィルタリングの保存
 
-### Saving filters
+どのページのフィルタも、現在の設定を保存する機能がついています。"save this filter..." リンクを押して名前を付けて保存します。保存されたフィルタはどれも、次回フィルタ設定を行う際にはメニューに追加されています。
 
-Each of the filter controls provides the means to save the current
-filter configuration. Press the "save this filter..." link to give it
-a name. Each saved filter is added to a menu you can access the next
-time you want that filter configuration.
+### 自動補完
 
-### Auto-Completion
-
-If you use the Bash shell, Rundeck comes with a nice auto-completion
-script you can enable. Add this to your `.bashrc` file:
+あなたが Bash シェルを使っている場合、Rundeck はよい自動補完スクリプトの一つになりえます。以下の行をあなたの `.bashrc` ファイルに追加してみてください：
 
     source $RDECK_BASE/etc/bash_completion.bash
   
-Press the Tab key when you're writing a dispatch command, and it should
-return a set of suggestions for you to pick from:
+`dispatch` コマンドを入力している際にタブキーを押すと、入力の続きの候補が出てきます:
 
     $ dispatch <tab><tab>
 
-## Summary
+## まとめ
 
-At this point, you can do basic Rundeck operations - setup a project,
-define and query the project resource model, execute ad-hoc
-commands, run and save Jobs and view history.
+ここまでであなたは基本的な Rundeck の操作、つまり "プロジェクトのセットアップ・プロジェクトリソースモデルへのクエリの定義・アドホックコマンドの実行・ジョブの実行と保存と履歴の閲覧" ができるようになっています。
 
-Next, we'll cover one of Rundeck's core features: Jobs.
+次は Rundeck の中心となる機能であるジョブについて学んでいきます。
