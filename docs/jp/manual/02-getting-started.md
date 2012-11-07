@@ -1,4 +1,4 @@
-% Getting Started
+% はじめに
 % Alex Honor; Greg Schueler
 % November 20, 2010
 
