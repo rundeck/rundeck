@@ -1,20 +1,34 @@
-% Jobs 
+% ジョブ
 % Alex Honor; Greg Schueler
 % November 20, 2010
+
+前の章で、フィルタリングされたノードセットに横断的にアドホックコマンドを実行する方法を学びました。
+この章では Rundeck の基本機能である *ジョブ* 機能を紹介します。
+しかしその前に、アドホックコマンド実行機構の上に別のレイヤを導入する理由が気になると思います。
 
 In previous sections of this manual, you learned how to execute
 ad-hoc commands across a filtered set of Node resources. This chapter
 introduces a fundamental Rundeck feature, *Jobs*. But first, one might
 ask why introduce another layer over ad-hoc command execution. 
 
+時間の経過と共に発生する可能性のある問題がいくつかあります：
+
 Here are some issues that might arise over time:
 
-* One might find certain ad-hoc command executions are repeated, and
+* ひとつは、アドホックコマンドは繰り返し実行されること。そしてたぶんそれがルーチンワークになること。
+* あなたのチームの人は、ノードセットに向けて1人でプロシージャを実行できるシンプルなインターフェースが必要なこと。
+* ルーチンプロシージャを他のルーチンプロシージャの要素とするために、カプセル化する必要があること。
+
+* One might find certain ad-hoc command executions are repeated, and 
   perhaps, represent what has become a routine procedure. 
 * Another user in your group needs a simple self-service interface to
   run a procedure across a set of nodes.
-* Routine procedures need to be encapsulated and become the basis for
-  other routine procedures.  
+* Routine procedures need to be encapsulated and become the basis for 
+  other routine procedures.
+
+ジョブ機能はプロシージャを論理的にカプセル化して *ジョブ* と名付けます。
+ジョブはプロシージャ内のステップ、ノードフィルタ、実行時の制御パラメータの設定です。
+ジョブへのアクセスは、どのユーザがどのジョブをどう使うかを許可するか、という形式で記述されている ACL ポリシーで制御されます。
 
 Jobs provide a means to encapsulate a procedure in a logically
 named Job. A *Job* is a configuration representing the steps in a
@@ -22,40 +36,69 @@ procedure, a Node filter specification, and dispatcher execution
 control parameters. Jobs access is governed by an access control
 policy that describes how users are granted authorization to use Jobs.
 
+Rundeck はジョブの構築と実行、動作状況の確認をおこなえます。
+現在実行中のジョブリストでは実行状況を動的に確認できます。
+必要な時に停止することも可能です。
+
 Rundeck lets you organize and execute Jobs,  and observe the output as
 the Job is running. You can view a list of the currently running Jobs
-that is dynamically updated as the Jobs progress. Jobs can also be
+that is dynamically updated as the Jobs progress. Jobs can also be 
 killed if they need to be stopped.
 
+ジョブには、いつ実行されたかのログがひも付いており、その時のアウトプットを閲覧可能です。
+
 Each Job has a record of every time it has been executed, and the
-output from those executions can be viewed.
+output from those executions can be viewed. 
+
+次の章では既存ジョブの導入と実行について説明します。
+最終的にはジョブ作成全般をカバーします。
 
 The next sections describes how to navigate and run existing Jobs. In
-later sections, the topic of Job creation will be covered.
+later sections, the topic of Job creation will be covered. 
+
+もし先に進みたければ、[ジョブ作成](jobs.html#ジョブ作成)の部分へ進んで下さい。
 
 If you want to skip ahead, you can go straight to
 [Creating Jobs](jobs.html#creating-jobs).
 
-## Job groups
+## ジョブグループ
+
+ジョブがたまってきたときは、ジョブをグループ化するのが有効です。
+グループはジョブの論理的なまとまりで、さらに他のジョブグループの中に入れ子にすることもできます。
+Rundeck はジョブに定義されたグループ構造をフォルダにしてジョブリストを表示します。
 
 As many jobs will accumulate over time, it is useful to organize Jobs
 into groups. A group is a logical set of jobs, and one job group can
 exist inside another. Rundeck displays job lists as a set of folders
 corresponding to the group structure your jobs define.
 
+ジョブを構造化してグループにすると、アクセスコントロールポリシーを定義しやすくなります。
+これについては認証の章で説明します。
+
 Beyond organizing jobs, groups assist in defining access control
 policy, as we'll cover later in the Authorization chapter.
 
-## Job UUIDs
+## ジョブ UUID
+
+作成されたジョブにはユニークな UUID が付与されます。
+対応するフォーマットをつかってジョブ定義をかけば、自分自身で UUID を付与することも可能です。
 
 When created, each new job will be assigned a unique UUID.  If you are writing
 the Job definition using one of the supported formats you can assign the UUID
 yourself.
 
+UUID は、ジョブのリネームやジョブグループの変更を確かめるために使えます。
+適切にジョブを編集できるでしょう。
+
 You can use the UUID to make sure that when you rename or change the group for
 your job in your job definition, it will modify the correct job in the server.
 
+UUID は Rundeck 間でジョブ定義を移植するときにも便利です。
+
 The UUID is also useful when porting Job definitions between Rundeck instances.
+
+注記：Rundeck は各ジョブに内部的な "ID" を付与していますが、これは Rundeck 間で移植できません。
+Rundeck 1.3 以上では UUID を ID の代わりに利用するようになっています。
 
 (Note: Rundeck also assigns each Job an internal "ID" value, although this value is
 not portable between Rundeck instances. As of Rundeck 1.3+ the UUID should be used
