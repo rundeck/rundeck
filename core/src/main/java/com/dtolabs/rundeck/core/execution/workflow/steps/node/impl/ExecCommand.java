@@ -23,14 +23,20 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
+import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
+
+
 /**
  * CommandExecItem is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public abstract class ExecCommand implements ExecCommandExecutionItem {
-    public String getType() {
+    public String getNodeStepType() {
         return ExecNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME;
     }
 
+    public String getType() {
+        return NodeDispatchStepExecutor.STEP_EXECUTION_TYPE;
+    }
 }

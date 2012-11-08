@@ -16,25 +16,25 @@
  */
 
 /*
-* StepExecutionItem.java
+* NodeStepExecutionItem.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 11/2/12 11:01 AM
 * 
 */
-package com.dtolabs.rundeck.core.execution.workflow.steps;
+package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 
 
 /**
- * StepExecutionItem is ...
+ * NodeStepExecutionItem represents an item to execute as a node step and provides a type.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface StepExecutionItem extends ExecutionItem {
+public interface NodeStepExecutionItem extends StepExecutionItem {
     /**
      * Return the type name of the StepExecution provider to use.
      */
-    public String getStepExecutionType();
+    public String getNodeStepType();
 }

@@ -70,13 +70,13 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
     }
 
 
-    public void beginExecution(ExecutionContext context, ExecutionItem item) {
+    public void beginExecution(ExecutionContext context, StepExecutionItem item) {
         if (null != delegate) {
             delegate.beginExecution(context, item);
         }
     }
 
-    public void finishExecution(StatusResult result, ExecutionContext context, ExecutionItem item) {
+    public void finishExecution(StatusResult result, ExecutionContext context, StepExecutionItem item) {
         if (null != delegate) {
             delegate.finishExecution(result, context, item);
         }
@@ -95,13 +95,13 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
         }
     }
 
-    public void beginNodeDispatch(ExecutionContext context, ExecutionItem item) {
+    public void beginNodeDispatch(ExecutionContext context, StepExecutionItem item) {
         if (null != delegate) {
             delegate.beginNodeDispatch(context, item);
         }
     }
 
-    public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, ExecutionItem item) {
+    public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, StepExecutionItem item) {
         if (null != delegate) {
             delegate.finishNodeDispatch(result, context, item);
         }
@@ -143,13 +143,13 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
         }
     }
 
-    public void beginExecuteNodeStep(ExecutionContext context, ExecutionItem item, INodeEntry node) {
+    public void beginExecuteNodeStep(ExecutionContext context, StepExecutionItem item, INodeEntry node) {
         if (null != delegate) {
             delegate.beginExecuteNodeStep(context, item, node);
         }
     }
 
-    public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, ExecutionItem item,
+    public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item,
                                       INodeEntry node) {
         if (null != delegate) {
             delegate.finishExecuteNodeStep(result, context, item, node);

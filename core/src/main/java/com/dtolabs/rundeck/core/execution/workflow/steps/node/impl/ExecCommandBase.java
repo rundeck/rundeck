@@ -23,8 +23,9 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.HasFailureHandler;
+
 
 /**
  * ExecCommandBase is a concrete implementation of ExecCommand that
@@ -36,7 +37,7 @@ public class ExecCommandBase extends ExecCommand implements HasFailureHandler {
         return null;
     }
 
-    public ExecutionItem getFailureHandler() {
+    public StepExecutionItem getFailureHandler() {
         return null;
     }
 

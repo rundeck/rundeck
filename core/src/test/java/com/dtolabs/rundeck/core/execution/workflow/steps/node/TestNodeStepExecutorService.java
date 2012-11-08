@@ -27,7 +27,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkSupportService;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecNodeStepExecutor;
@@ -65,13 +65,23 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
         final NodeStepExecutorService service = NodeStepExecutorService.getInstanceForFramework(
             getFrameworkInstance());
 
-        final ExecutionItem item = new ExecutionItem() {
+        final NodeStepExecutionItem item = new NodeStepExecutionItem() {
             public String getType() {
+                return "NodeDispatch";
+            }
+
+            @Override
+            public String getNodeStepType() {
                 return "exec";
             }
         };
-        final ExecutionItem item2 = new ExecutionItem() {
+        final NodeStepExecutionItem item2 = new NodeStepExecutionItem() {
             public String getType() {
+                return "NodeDispatch";
+            }
+
+            @Override
+            public String getNodeStepType() {
                 return "script";
             }
         };
@@ -87,14 +97,14 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
 
         {
             final NodeStepExecutor testprovider = new NodeStepExecutor() {
-                public NodeStepResult executeNodeStep(ExecutionContext context, ExecutionItem item,
+                public NodeStepResult executeNodeStep(ExecutionContext context, StepExecutionItem item,
                                                          INodeEntry node) throws
                                                                           NodeStepException {
                     return null;
                 }
             };
             final NodeStepExecutor testprovider2 = new NodeStepExecutor() {
-                public NodeStepResult executeNodeStep(ExecutionContext context, ExecutionItem item,
+                public NodeStepResult executeNodeStep(ExecutionContext context, StepExecutionItem item,
                                                          INodeEntry node) throws
                                                                           NodeStepException {
                     return null;
@@ -132,8 +142,13 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
 
         {
             //exec item should return default ExecNodeStepExecutor
-            final ExecutionItem item = new ExecutionItem() {
+            final NodeStepExecutionItem item = new NodeStepExecutionItem() {
                 public String getType() {
+                    return "NodeDispatch";
+                }
+
+                @Override
+                public String getNodeStepType() {
                     return "exec";
                 }
             };
@@ -144,8 +159,13 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
         }
         {
             //script item should return default ScriptFileNodeStepExecutor
-            final ExecutionItem item = new ExecutionItem() {
+            final NodeStepExecutionItem item = new NodeStepExecutionItem() {
                 public String getType() {
+                    return "NodeDispatch";
+                }
+
+                @Override
+                public String getNodeStepType() {
                     return "script";
                 }
             };
@@ -157,8 +177,13 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
 
         //test invalid provider name
         try {
-            service.getExecutorForExecutionItem(new ExecutionItem() {
+            service.getExecutorForExecutionItem(new NodeStepExecutionItem() {
                 public String getType() {
+                    return "NodeDispatch";
+                }
+
+                @Override
+                public String getNodeStepType() {
                     return "blah";
                 }
             });
@@ -171,8 +196,13 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
         }
         //test null provider name
         try {
-            service.getExecutorForExecutionItem(new ExecutionItem() {
+            service.getExecutorForExecutionItem(new NodeStepExecutionItem() {
                 public String getType() {
+                    return "NodeDispatch";
+                }
+
+                @Override
+                public String getNodeStepType() {
                     return null;
                 }
             });

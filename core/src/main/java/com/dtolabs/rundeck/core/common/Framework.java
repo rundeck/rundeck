@@ -27,9 +27,10 @@ import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherMgrFactory;
 import com.dtolabs.rundeck.core.dispatcher.NoCentralDispatcher;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.ExecutionServiceFactory;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutorService;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
@@ -328,7 +329,7 @@ public class Framework extends FrameworkResourceParent {
     public NodeStepExecutorService getNodeStepExecutorService() throws ExecutionServiceException {
         return NodeStepExecutorService.getInstanceForFramework(this);
     }
-    public NodeStepExecutor getNodeStepExecutorForItem(ExecutionItem item) throws ExecutionServiceException {
+    public NodeStepExecutor getNodeStepExecutorForItem(NodeStepExecutionItem item) throws ExecutionServiceException {
         return NodeStepExecutorService.getInstanceForFramework(this).getExecutorForExecutionItem(item);
     }
     public NodeDispatcher getNodeDispatcherForContext(ExecutionContext context) throws ExecutionServiceException {

@@ -106,7 +106,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
                                         final Map<Integer, Object> failedMap,
                                         final List<DispatcherResult> resultList,
                                         final int c,
-                                        final ExecutionItem cmd, final boolean keepgoing) throws
+                                        final StepExecutionItem cmd, final boolean keepgoing) throws
                                                                                           WorkflowStepFailureException {
             HashMap<String,Object> input=new HashMap<String, Object>();
             input.put("context", executionContext);
@@ -164,7 +164,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         }
     }
 
-    void assertExecWFItems(final List<ExecutionItem> items,
+    void assertExecWFItems(final List<StepExecutionItem> items,
                            final boolean wfKeepgoing,
                            final List<Map<String, Object>> expected,
                            final boolean expectedSuccess,
@@ -220,7 +220,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         }
 
     }
-    private List<ExecutionItem> mkTestItems(ExecutionItem... item) {
+    private List<StepExecutionItem> mkTestItems(StepExecutionItem... item) {
         return Arrays.asList(item);
     }
 
@@ -614,9 +614,9 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         }
     }
 
-    static class testHandlerWorkflowCmdItem implements ExecutionItem,HasFailureHandler {
+    static class testHandlerWorkflowCmdItem implements StepExecutionItem,HasFailureHandler {
         private String type;
-        private ExecutionItem failureHandler;
+        private StepExecutionItem failureHandler;
         int flag = -1;
 
         @Override
@@ -632,13 +632,13 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             return type;
         }
 
-        public ExecutionItem getFailureHandler() {
+        public StepExecutionItem getFailureHandler() {
             return failureHandler;
         }
     }
 
     static class testInterpreter implements NodeStepExecutor {
-        List<ExecutionItem> executionItemList = new ArrayList<ExecutionItem>();
+        List<StepExecutionItem> executionItemList = new ArrayList<StepExecutionItem>();
         List<ExecutionContext> executionContextList = new ArrayList<ExecutionContext>();
         List<INodeEntry> nodeEntryList = new ArrayList<INodeEntry>();
         int index = 0;
@@ -646,7 +646,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         boolean shouldThrowException = false;
 
         public NodeStepResult executeNodeStep(ExecutionContext executionContext,
-                                                 ExecutionItem executionItem, INodeEntry iNodeEntry) throws
+                                                 StepExecutionItem executionItem, INodeEntry iNodeEntry) throws
                                                                                                      NodeStepException {
             executionItemList.add(executionItem);
             executionContextList.add(executionContext);
@@ -677,10 +677,10 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             return null;
         }
 
-        public void beginExecution(ExecutionContext context, ExecutionItem item) {
+        public void beginExecution(ExecutionContext context, StepExecutionItem item) {
         }
 
-        public void finishExecution(StatusResult result, ExecutionContext context, ExecutionItem item) {
+        public void finishExecution(StatusResult result, ExecutionContext context, StepExecutionItem item) {
         }
 
         public void beginNodeExecution(ExecutionContext context, String[] command, INodeEntry node) {
@@ -690,13 +690,13 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
                                         INodeEntry node) {
         }
 
-        public void beginNodeDispatch(ExecutionContext context, ExecutionItem item) {
+        public void beginNodeDispatch(ExecutionContext context, StepExecutionItem item) {
         }
 
         public void beginNodeDispatch(ExecutionContext context, Dispatchable item) {
         }
 
-        public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, ExecutionItem item) {
+        public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, StepExecutionItem item) {
         }
 
         public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, Dispatchable item) {
@@ -714,10 +714,10 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         public void finishFileCopy(String result, ExecutionContext context, INodeEntry node) {
         }
 
-        public void beginExecuteNodeStep(ExecutionContext context, ExecutionItem item, INodeEntry node) {
+        public void beginExecuteNodeStep(ExecutionContext context, StepExecutionItem item, INodeEntry node) {
         }
 
-        public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, ExecutionItem item,
+        public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item,
                                           INodeEntry node) {
         }
 

@@ -36,11 +36,11 @@ package com.dtolabs.rundeck.core.execution;
  */
 public class ExecutionServiceThread extends ServiceThreadBase {
     ExecutionService eservice;
-    ExecutionItem eitem;
+    StepExecutionItem eitem;
     ExecutionContext econtext;
     volatile ExecutionResult result;
 
-    public ExecutionServiceThread(ExecutionService eservice, ExecutionItem eitem, ExecutionContext econtext) {
+    public ExecutionServiceThread(ExecutionService eservice, StepExecutionItem eitem, ExecutionContext econtext) {
         this.eservice = eservice;
         this.eitem = eitem;
         this.econtext = econtext;

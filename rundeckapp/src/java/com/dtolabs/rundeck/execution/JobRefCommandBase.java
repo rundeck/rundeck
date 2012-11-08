@@ -23,11 +23,9 @@
 */
 package com.dtolabs.rundeck.execution;
 
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.HasFailureHandler;
 
-import java.util.*;
 
 /**
  * JobRefCommandBase implementation returns a null value for jobIdentifier, can be subclassed.
@@ -43,16 +41,11 @@ public class JobRefCommandBase extends JobRefCommand implements HasFailureHandle
         return new String[0];
     }
 
-    public ExecutionItem getFailureHandler() {
+    public StepExecutionItem getFailureHandler() {
         return null;
     }
 
     public boolean isKeepgoingOnSuccess() {
         return false;
-    }
-
-    @Override
-    public String getStepExecutionType() {
-        return STEP_EXECUTION_TYPE;
     }
 }

@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
@@ -60,10 +61,14 @@ class ExecutionServiceImpl implements ExecutionService {
         this.framework = framework;
     }
 
-    public ExecutionResult executeItem(ExecutionContext context, ExecutionItem item) throws ExecutionException {
+    public ExecutionResult executeItem(ExecutionContext context, StepExecutionItem executionItem) throws ExecutionException {
         if (null != context.getExecutionListener()) {
-            context.getExecutionListener().beginExecution(context, item);
+            context.getExecutionListener().beginExecution(context, executionItem);
         }
+        if(!(executionItem instanceof NodeStepExecutionItem)) {
+            throw new IllegalArgumentException("Cannot dispatch item which is not a NodeStepExecutionItem: " + executionItem);
+        }
+        NodeStepExecutionItem item=(NodeStepExecutionItem) executionItem;
 
         boolean success = false;
         DispatcherResult result = null;
@@ -82,7 +87,7 @@ class ExecutionServiceImpl implements ExecutionService {
 
         return baseExecutionResult;
     }
-    public StatusResult executeStep(ExecutionContext context, ExecutionItem item) throws ExecutionException {
+    public StatusResult executeStep(ExecutionContext context, StepExecutionItem item) throws ExecutionException {
         if (null != context.getExecutionListener()) {
             context.getExecutionListener().beginExecution(context, item);
         }
@@ -107,7 +112,7 @@ class ExecutionServiceImpl implements ExecutionService {
     }
 
     public NodeStepResult executeNodeStep(ExecutionContext context,
-                                          ExecutionItem item, INodeEntry node) throws NodeStepException {
+                                          NodeStepExecutionItem item, INodeEntry node) throws NodeStepException {
 
         final NodeStepExecutor interpreter;
         try {
@@ -130,7 +135,7 @@ class ExecutionServiceImpl implements ExecutionService {
         return result;
     }
 
-    public DispatcherResult dispatchToNodes(ExecutionContext context, ExecutionItem item) throws
+    public DispatcherResult dispatchToNodes(ExecutionContext context, NodeStepExecutionItem item) throws
         DispatcherException {
 
         if (null != context.getExecutionListener()) {

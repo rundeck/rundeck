@@ -8,7 +8,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodesSelector
 import com.dtolabs.rundeck.core.common.SelectorUtils
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
-import com.dtolabs.rundeck.core.execution.ExecutionItem
+import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.utils.NodeSet
@@ -556,7 +556,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
     }
 
     /**
-     * Return an appropriate ExecutionItem object for the stored Execution
+     * Return an appropriate StepExecutionItem object for the stored Execution
      */
     public WorkflowExecutionItem createExecutionItemForExecutionContext(ExecutionContext execution, Framework framework, String user=null) {
         WorkflowExecutionItem item
@@ -570,7 +570,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
 
 
     /**
-     * Return an ExecutionItem instance for the given workflow Execution, suitable for the ExecutionService layer
+     * Return an StepExecutionItem instance for the given workflow Execution, suitable for the ExecutionService layer
      */
     public WorkflowExecutionItem createExecutionItemForWorkflowContext(ExecutionContext execMap, Framework framework, String userName=null) {
         if (!execMap.workflow.commands || execMap.workflow.commands.size() < 1) {
@@ -587,43 +587,44 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         return item
     }
 
-    public ExecutionItem itemForWFCmdItem(final WorkflowStep cmd,final ExecutionItem handler=null) throws FileNotFoundException {
-        if(cmd.instanceOf(CommandExec)){
-        if (null != cmd.getAdhocRemoteString()) {
+    public StepExecutionItem itemForWFCmdItem(final WorkflowStep step,final StepExecutionItem handler=null) throws FileNotFoundException {
+        if(step.instanceOf(CommandExec)){
+            CommandExec cmd=step.asType(CommandExec)
+            if (null != cmd.getAdhocRemoteString()) {
 
-            final List<String> strings = CLIUtils.splitArgLine(cmd.getAdhocRemoteString());
-            final String[] args = strings.toArray(new String[strings.size()]);
+                final List<String> strings = CLIUtils.splitArgLine(cmd.getAdhocRemoteString());
+                final String[] args = strings.toArray(new String[strings.size()]);
 
-            return ExecutionItemFactory.createExecCommand(args, handler, !!cmd.keepgoingOnSuccess);
-            
-        } else if (null != cmd.getAdhocLocalString()) {
-            final String script = cmd.getAdhocLocalString();
-            final String[] args;
-            if (null != cmd.getArgString()) {
-                final List<String> strings = CLIUtils.splitArgLine(cmd.getArgString());
-                args = strings.toArray(new String[strings.size()]);
-            } else {
-                args = new String[0];
-            }
-            return ExecutionItemFactory.createScriptFileItem(script, args, handler, !!cmd.keepgoingOnSuccess);
+                return ExecutionItemFactory.createExecCommand(args, handler, !!cmd.keepgoingOnSuccess);
 
-        } else if (null != cmd.getAdhocFilepath()) {
-            final String filepath = cmd.getAdhocFilepath();
-            final String[] args;
-            if (null != cmd.getArgString()) {
-                final List<String> strings = CLIUtils.splitArgLine(cmd.getArgString());
-                args = strings.toArray(new String[strings.size()]);
-            } else {
-                args = new String[0];
+            } else if (null != cmd.getAdhocLocalString()) {
+                final String script = cmd.getAdhocLocalString();
+                final String[] args;
+                if (null != cmd.getArgString()) {
+                    final List<String> strings = CLIUtils.splitArgLine(cmd.getArgString());
+                    args = strings.toArray(new String[strings.size()]);
+                } else {
+                    args = new String[0];
+                }
+                return ExecutionItemFactory.createScriptFileItem(script, args, handler, !!cmd.keepgoingOnSuccess);
+
+            } else if (null != cmd.getAdhocFilepath()) {
+                final String filepath = cmd.getAdhocFilepath();
+                final String[] args;
+                if (null != cmd.getArgString()) {
+                    final List<String> strings = CLIUtils.splitArgLine(cmd.getArgString());
+                    args = strings.toArray(new String[strings.size()]);
+                } else {
+                    args = new String[0];
+                }
+                if(filepath ==~ /^(?i:https?|file):.*$/) {
+                    return ExecutionItemFactory.createScriptURLItem(filepath, args, handler, !!cmd.keepgoingOnSuccess)
+                }else{
+                    return ExecutionItemFactory.createScriptFileItem(new File(filepath), args, handler, !!cmd.keepgoingOnSuccess);
+                }
             }
-            if(filepath ==~ /^(?i:https?|file):.*$/) {
-                return ExecutionItemFactory.createScriptURLItem(filepath, args, handler, !!cmd.keepgoingOnSuccess)
-            }else{
-                return ExecutionItemFactory.createScriptFileItem(new File(filepath), args, handler, !!cmd.keepgoingOnSuccess);
-            }
-        }
-        }else if (cmd.instanceOf(JobExec)) {
-            final JobExec jobcmditem = cmd as JobExec;
+        }else if (step.instanceOf(JobExec)) {
+            final JobExec jobcmditem = step as JobExec;
 
             final String[] args;
             if (null != jobcmditem.getArgString()) {
@@ -640,7 +641,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
     }
 
     /**
-     * Return an ExecutionItem instance for the given workflow Execution, suitable for the ExecutionService layer
+     * Return an StepExecutionItem instance for the given workflow Execution, suitable for the ExecutionService layer
      */
     public com.dtolabs.rundeck.core.execution.ExecutionContext createContext(ExecutionContext execMap, Framework framework, String userName = null, Map<String, String> jobcontext, ExecutionListener listener, String[] inputargs=null, Map extraParams=null, Map extraParamsExposed=null) {
         def User user = User.findByLogin(userName ? userName : execMap.user)
@@ -1658,12 +1659,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
     def public static EXEC_FORMAT_SEQUENCE=['time','level','user','module','command','node','context']
 
     @Override
-    public boolean isNodeDispatchStep(ExecutionItem item) {
+    public boolean isNodeDispatchStep(StepExecutionItem item) {
         return false
     }
 
     StatusResult executeWorkflowStep(com.dtolabs.rundeck.core.execution.ExecutionContext executionContext,
-                                       ExecutionItem executionItem)  {
+                                       StepExecutionItem executionItem)  {
         if (!(executionItem instanceof JobExecutionItem)) {
             throw new StepException("Unsupported item type: " + executionItem.getClass().getName());
         }

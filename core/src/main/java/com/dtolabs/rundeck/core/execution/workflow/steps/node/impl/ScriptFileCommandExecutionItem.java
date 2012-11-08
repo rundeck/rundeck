@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
 import com.dtolabs.rundeck.core.execution.HandlerExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 
 import java.io.InputStream;
 
@@ -32,7 +33,7 @@ import java.io.InputStream;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface ScriptFileCommandExecutionItem extends HandlerExecutionItem {
+public interface ScriptFileCommandExecutionItem extends HandlerExecutionItem,NodeStepExecutionItem {
 
     /**
      * Get the full script

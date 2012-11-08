@@ -399,10 +399,10 @@ public class TestExecTool extends AbstractBaseTest {
     }*/
 
     /**
-     * Stub to set as Executor class for ExecutionItem types, used for testing.
+     * Stub to set as Executor class for StepExecutionItem types, used for testing.
      */
     /*public static class testExecutor1 implements Executor {
-        static ExecutionItem testItem;
+        static StepExecutionItem testItem;
         static ExecutionListener testListener;
         static boolean executeItemCalled=false;
         static Framework testFramework;
@@ -410,7 +410,7 @@ public class TestExecTool extends AbstractBaseTest {
         static ExecutionService testExecutionService;
         public testExecutor1() {
         }
-        public ExecutionResult executeItem(ExecutionItem item, ExecutionListener listener,
+        public ExecutionResult executeItem(StepExecutionItem item, ExecutionListener listener,
                                            final ExecutionService executionService,
                                            final Framework framework) throws ExecutionException {
             testItem=item;
@@ -430,7 +430,7 @@ public class TestExecTool extends AbstractBaseTest {
 
     }*/
     public static class testExecutor1 implements NodeStepExecutor {
-        static ExecutionItem testItem;
+        static StepExecutionItem testItem;
         static ExecutionContext testContext;
         static ExecutionListener testListener;
         static boolean executeItemCalled = false;
@@ -442,7 +442,7 @@ public class TestExecTool extends AbstractBaseTest {
             this.framework = framework;
         }
 
-        public NodeStepResult executeNodeStep(ExecutionContext context, ExecutionItem item, INodeEntry node) throws
+        public NodeStepResult executeNodeStep(ExecutionContext context, StepExecutionItem item, INodeEntry node) throws
                                                                                                              NodeStepException {
             testContext=context;
             testItem = item;

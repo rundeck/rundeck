@@ -26,8 +26,9 @@ package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkSupportService;
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.plugins.BaseProviderRegistryService;
 
 
@@ -59,13 +60,10 @@ public class StepExecutionService extends BaseProviderRegistryService<StepExecut
         return (StepExecutionService) framework.getService(SERVICE_NAME);
     }
 
-    public StepExecutor getExecutorForItem(final ExecutionItem item) throws ExecutionServiceException {
+    public StepExecutor getExecutorForItem(final StepExecutionItem item) throws ExecutionServiceException {
         String type = DEFAULT_EXECUTION_TYPE;
-        if (item instanceof StepExecutionItem) {
-            StepExecutionItem step = (StepExecutionItem) item;
-            if (null != step.getStepExecutionType()) {
-                type = step.getStepExecutionType();
-            }
+        if (null != item.getType()) {
+            type = item.getType();
         }
         return providerOfType(type);
     }

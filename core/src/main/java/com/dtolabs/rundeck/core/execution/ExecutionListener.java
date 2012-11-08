@@ -73,12 +73,12 @@ public interface ExecutionListener {
     /**
      * Called when executionb begins
      */
-    public void beginExecution(ExecutionContext context, ExecutionItem item);
+    public void beginExecution(ExecutionContext context, StepExecutionItem item);
 
     /**
      * Called when execution finishes
      */
-    public void finishExecution(StatusResult result, ExecutionContext context, ExecutionItem item);
+    public void finishExecution(StatusResult result, ExecutionContext context, StepExecutionItem item);
 
     /**
      * Called before execution of command on node
@@ -94,7 +94,7 @@ public interface ExecutionListener {
     /**
      * Begin dispatch of command to set of nodes
      */
-    public void beginNodeDispatch(ExecutionContext context, ExecutionItem item);
+    public void beginNodeDispatch(ExecutionContext context, StepExecutionItem item);
     /**
      * Begin dispatch of command to set of nodes
      */
@@ -103,7 +103,7 @@ public interface ExecutionListener {
     /**
      * Finish node dispatch
      */
-    public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, ExecutionItem item);
+    public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, StepExecutionItem item);
 
     /**
      * Finish node dispatch
@@ -133,12 +133,12 @@ public interface ExecutionListener {
     /**
      * Begin command interpretation
      */
-    public void beginExecuteNodeStep(ExecutionContext context, ExecutionItem item, INodeEntry node);
+    public void beginExecuteNodeStep(ExecutionContext context, StepExecutionItem item, INodeEntry node);
 
     /**
      * Finish command interpretation
      */
-    public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, ExecutionItem item,
+    public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item,
                                       INodeEntry node);
 
     /**

@@ -23,6 +23,9 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
+import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
+
+
 /**
  * ScriptFileExecutionItem is ...
  *
@@ -31,7 +34,11 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 public abstract class ScriptFileCommand implements ScriptFileCommandExecutionItem {
 
     public String getType() {
-        return ScriptFileNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME;
+        return NodeDispatchStepExecutor.STEP_EXECUTION_TYPE;
     }
 
+    @Override
+    public String getNodeStepType() {
+        return ScriptFileNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME;
+    }
 }

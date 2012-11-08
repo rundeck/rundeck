@@ -669,7 +669,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
 
     }
 
-    ExecutionItem createExecutionItem() {
+    StepExecutionItem createExecutionItem() {
         if(null!=getScript() || null!=getServerScriptFilePath() || null!=getScriptAsStream()){
             return new ScriptFileCommandBase() {
                 public String getScript() {
@@ -698,7 +698,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
                     return ExecTool.this.getArgs();
                 }
 
-                public ExecutionItem getFailureHandler() {
+                public StepExecutionItem getFailureHandler() {
                     return null;
                 }
 

@@ -27,9 +27,10 @@ import com.dtolabs.rundeck.core.NodesetFailureException;
 import com.dtolabs.rundeck.core.cli.CallableWrapperTask;
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 import com.dtolabs.rundeck.core.execution.StatusResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.tasks.dispatch.NodeExecutionStatusTask;
 import org.apache.tools.ant.BuildException;
@@ -58,7 +59,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
     }
 
     public DispatcherResult dispatch(final ExecutionContext context,
-                                     final ExecutionItem item) throws
+                                     final NodeStepExecutionItem item) throws
         DispatcherException {
         return dispatch(context, item, null);
     }
@@ -70,7 +71,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
     }
 
     public DispatcherResult dispatch(final ExecutionContext context,
-                                     final ExecutionItem item, final Dispatchable toDispatch) throws
+                                     final NodeStepExecutionItem item, final Dispatchable toDispatch) throws
         DispatcherException {
         final NodesSelector nodeSelector = context.getNodeSelector();
         INodeSet nodes = null;
@@ -176,7 +177,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         };
     }
 
-    private Callable execItemCallable(final ExecutionContext context, final ExecutionItem item,
+    private Callable execItemCallable(final ExecutionContext context, final NodeStepExecutionItem item,
                                       final HashMap<String, StatusResult> resultMap, final INodeEntry node,
                                       final Map<String, Object> failureMap) {
         return new Callable() {

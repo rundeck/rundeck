@@ -24,12 +24,11 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecNodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLNodeStepExecutor;
-import com.dtolabs.rundeck.core.plugins.BaseProviderRegistryService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService;
 import com.dtolabs.rundeck.core.plugins.PluginException;
@@ -38,7 +37,6 @@ import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.sun.tools.example.debug.gui.CommandInterpreter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,9 +66,9 @@ public class NodeStepExecutorService extends PluggableProviderRegistryService<No
         instanceregistry.remove(ScriptURLNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME);
     }
 
-    public NodeStepExecutor getExecutorForExecutionItem(final ExecutionItem item) throws
+    public NodeStepExecutor getExecutorForExecutionItem(final NodeStepExecutionItem item) throws
                                                                                   ExecutionServiceException {
-        return providerOfType(item.getType());
+        return providerOfType(item.getNodeStepType());
     }
 
     public static NodeStepExecutorService getInstanceForFramework(Framework framework) {

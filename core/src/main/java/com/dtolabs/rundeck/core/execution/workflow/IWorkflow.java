@@ -23,7 +23,7 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow;
 
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 
 import java.util.List;
 
@@ -34,7 +34,7 @@ import java.util.List;
  * @version $Revision$
  */
 public interface IWorkflow {
-    public List<ExecutionItem> getCommands();
+    public List<StepExecutionItem> getCommands();
     public int getThreadcount();
     public boolean isKeepgoing();
     public String getStrategy();

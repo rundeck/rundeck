@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.SelectorUtils;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutorService;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
@@ -97,7 +98,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
         junit.textui.TestRunner.run(suite());
     }
 
-    static class testWorkflowCmdItem implements ExecutionItem {
+    static class testWorkflowCmdItem implements NodeStepExecutionItem {
         private String type;
         int flag = -1;
 
@@ -110,6 +111,11 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
         }
 
         public String getType() {
+            return "NodeDispatch";
+        }
+
+        @Override
+        public String getNodeStepType() {
             return type;
         }
     }
@@ -131,10 +137,10 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             return null;
         }
 
-        public void beginExecution(ExecutionContext context, ExecutionItem item) {
+        public void beginExecution(ExecutionContext context, StepExecutionItem item) {
         }
 
-        public void finishExecution(StatusResult result, ExecutionContext context, ExecutionItem item) {
+        public void finishExecution(StatusResult result, ExecutionContext context, StepExecutionItem item) {
         }
 
         public void beginNodeExecution(ExecutionContext context, String[] command, INodeEntry node) {
@@ -144,13 +150,13 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                                         INodeEntry node) {
         }
 
-        public void beginNodeDispatch(ExecutionContext context, ExecutionItem item) {
+        public void beginNodeDispatch(ExecutionContext context, StepExecutionItem item) {
         }
 
         public void beginNodeDispatch(ExecutionContext context, Dispatchable item) {
         }
 
-        public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, ExecutionItem item) {
+        public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, StepExecutionItem item) {
         }
 
         public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, Dispatchable item) {
@@ -168,10 +174,10 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
         public void finishFileCopy(String result, ExecutionContext context, INodeEntry node) {
         }
 
-        public void beginExecuteNodeStep(ExecutionContext context, ExecutionItem item, INodeEntry node) {
+        public void beginExecuteNodeStep(ExecutionContext context, StepExecutionItem item, INodeEntry node) {
         }
 
-        public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, ExecutionItem item,
+        public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item,
                                           INodeEntry node) {
         }
 
@@ -195,7 +201,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
     }
 
     static class testInterpreter implements NodeStepExecutor {
-        List<ExecutionItem> executionItemList = new ArrayList<ExecutionItem>();
+        List<StepExecutionItem> executionItemList = new ArrayList<StepExecutionItem>();
         List<ExecutionContext> executionContextList = new ArrayList<ExecutionContext>();
         List<INodeEntry> nodeEntryList = new ArrayList<INodeEntry>();
         int index = 0;
@@ -203,7 +209,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
         boolean shouldThrowException = false;
 
         public NodeStepResult executeNodeStep(ExecutionContext executionContext,
-                                                 ExecutionItem executionItem, INodeEntry iNodeEntry) throws
+                                                 StepExecutionItem executionItem, INodeEntry iNodeEntry) throws
                                                                                                      NodeStepException {
             executionItemList.add(executionItem);
             executionContextList.add(executionContext);
@@ -235,7 +241,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             //test jobref item
             final NodeSet nodeset = new NodeSet();
             nodeset.createInclude().setName(".*");
-            final ArrayList<ExecutionItem> commands = new ArrayList<ExecutionItem>();
+            final ArrayList<StepExecutionItem> commands = new ArrayList<StepExecutionItem>();
             final testWorkflowCmdItem item = new testWorkflowCmdItem();
             item.type = "my-type";
             commands.add(item);
@@ -287,12 +293,12 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             assertEquals(2, interpreterMock.executionItemList.size());
             assertEquals(2, interpreterMock.executionContextList.size());
             {
-                final ExecutionItem executionItem1 = interpreterMock.executionItemList.get(0);
+                final StepExecutionItem executionItem1 = interpreterMock.executionItemList.get(0);
                 assertTrue("wrong class: " + executionItem1.getClass().getName(),
                     executionItem1 instanceof testWorkflowCmdItem);
                 testWorkflowCmdItem execItem = (testWorkflowCmdItem) executionItem1;
-                assertNotNull(execItem.getType());
-                assertEquals("my-type", execItem.getType());
+                assertNotNull(execItem.getNodeStepType());
+                assertEquals("my-type", execItem.getNodeStepType());
 
                 final ExecutionContext executionContext = interpreterMock.executionContextList.get(0);
                 assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
@@ -304,12 +310,12 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             }
             {
 
-                final ExecutionItem executionItem1 = interpreterMock.executionItemList.get(1);
+                final StepExecutionItem executionItem1 = interpreterMock.executionItemList.get(1);
                 assertTrue("wrong class: " + executionItem1.getClass().getName(),
                     executionItem1 instanceof testWorkflowCmdItem);
                 testWorkflowCmdItem execItem = (testWorkflowCmdItem) executionItem1;
-                assertNotNull(execItem.getType());
-                assertEquals("my-type", execItem.getType());
+                assertNotNull(execItem.getNodeStepType());
+                assertEquals("my-type", execItem.getNodeStepType());
 
                 final ExecutionContext executionContext = interpreterMock.executionContextList.get(1);
                 assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
@@ -328,7 +334,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             //test jobref item
             final NodeSet nodeset = new NodeSet();
             nodeset.createInclude().setName(".*");
-            final ArrayList<ExecutionItem> commands = new ArrayList<ExecutionItem>();
+            final ArrayList<StepExecutionItem> commands = new ArrayList<StepExecutionItem>();
             final testWorkflowCmdItem item = new testWorkflowCmdItem();
             item.type = "my-type";
             commands.add(item);
@@ -389,12 +395,12 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             assertEquals(3, interpreterMock.executionItemList.size());
             assertEquals(3, interpreterMock.executionContextList.size());
             {
-                final ExecutionItem executionItem1 = interpreterMock.executionItemList.get(0);
+                final StepExecutionItem executionItem1 = interpreterMock.executionItemList.get(0);
                 assertTrue("wrong class: " + executionItem1.getClass().getName(),
                     executionItem1 instanceof testWorkflowCmdItem);
                 testWorkflowCmdItem execItem = (testWorkflowCmdItem) executionItem1;
-                assertNotNull(execItem.getType());
-                assertEquals("my-type", execItem.getType());
+                assertNotNull(execItem.getNodeStepType());
+                assertEquals("my-type", execItem.getNodeStepType());
 
                 final ExecutionContext executionContext = interpreterMock.executionContextList.get(0);
                 assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
@@ -406,12 +412,12 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             }
             {
 
-                final ExecutionItem executionItem1 = interpreterMock.executionItemList.get(1);
+                final StepExecutionItem executionItem1 = interpreterMock.executionItemList.get(1);
                 assertTrue("wrong class: " + executionItem1.getClass().getName(),
                     executionItem1 instanceof testWorkflowCmdItem);
                 testWorkflowCmdItem execItem = (testWorkflowCmdItem) executionItem1;
-                assertNotNull(execItem.getType());
-                assertEquals("my-type", execItem.getType());
+                assertNotNull(execItem.getNodeStepType());
+                assertEquals("my-type", execItem.getNodeStepType());
 
                 final ExecutionContext executionContext = interpreterMock.executionContextList.get(1);
                 assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
@@ -423,12 +429,12 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             }
             {
 
-                final ExecutionItem executionItem1 = interpreterMock.executionItemList.get(2);
+                final StepExecutionItem executionItem1 = interpreterMock.executionItemList.get(2);
                 assertTrue("wrong class: " + executionItem1.getClass().getName(),
                     executionItem1 instanceof testWorkflowCmdItem);
                 testWorkflowCmdItem execItem = (testWorkflowCmdItem) executionItem1;
-                assertNotNull(execItem.getType());
-                assertEquals("my-type", execItem.getType());
+                assertNotNull(execItem.getNodeStepType());
+                assertEquals("my-type", execItem.getNodeStepType());
 
                 final ExecutionContext executionContext = interpreterMock.executionContextList.get(2);
                 assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
@@ -533,7 +539,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                                         final String rankAttribute) {
 
         //default ranking should be node name ascending
-        final ArrayList<ExecutionItem> commands = new ArrayList<ExecutionItem>();
+        final ArrayList<StepExecutionItem> commands = new ArrayList<StepExecutionItem>();
         final testWorkflowCmdItem item = new testWorkflowCmdItem();
         item.type = "my-type";
         commands.add(item);
@@ -603,7 +609,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             //test jobref item
             final NodeSet nodeset = new NodeSet();
             nodeset.createInclude().setName(".*");
-            final ArrayList<ExecutionItem> commands = new ArrayList<ExecutionItem>();
+            final ArrayList<StepExecutionItem> commands = new ArrayList<StepExecutionItem>();
             final testWorkflowCmdItem item = new testWorkflowCmdItem();
             item.flag = 0;
             item.type = "my-type";
@@ -673,12 +679,12 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             assertEquals(4, interpreterMock.executionItemList.size());
             assertEquals(4, interpreterMock.executionContextList.size());
             {//node 1 step 1
-                final ExecutionItem executionItem1 = interpreterMock.executionItemList.get(0);
+                final StepExecutionItem executionItem1 = interpreterMock.executionItemList.get(0);
                 assertTrue("wrong class: " + executionItem1.getClass().getName(),
                     executionItem1 instanceof testWorkflowCmdItem);
                 testWorkflowCmdItem execItem = (testWorkflowCmdItem) executionItem1;
-                assertNotNull(execItem.getType());
-                assertEquals("my-type", execItem.getType());
+                assertNotNull(execItem.getNodeStepType());
+                assertEquals("my-type", execItem.getNodeStepType());
                 assertEquals(0, execItem.flag);
 
                 final ExecutionContext executionContext = interpreterMock.executionContextList.get(0);
@@ -691,12 +697,12 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             }
             {//node 2 step 1
 
-                final ExecutionItem executionItem1 = interpreterMock.executionItemList.get(1);
+                final StepExecutionItem executionItem1 = interpreterMock.executionItemList.get(1);
                 assertTrue("wrong class: " + executionItem1.getClass().getName(),
                     executionItem1 instanceof testWorkflowCmdItem);
                 testWorkflowCmdItem execItem = (testWorkflowCmdItem) executionItem1;
-                assertNotNull(execItem.getType());
-                assertEquals("my-type", execItem.getType());
+                assertNotNull(execItem.getNodeStepType());
+                assertEquals("my-type", execItem.getNodeStepType());
                 assertEquals(1, execItem.flag);
 
                 final ExecutionContext executionContext = interpreterMock.executionContextList.get(1);
@@ -709,12 +715,12 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             }
             {//node 1 step 2
 
-                final ExecutionItem executionItem1 = interpreterMock.executionItemList.get(2);
+                final StepExecutionItem executionItem1 = interpreterMock.executionItemList.get(2);
                 assertTrue("wrong class: " + executionItem1.getClass().getName(),
                     executionItem1 instanceof testWorkflowCmdItem);
                 testWorkflowCmdItem execItem = (testWorkflowCmdItem) executionItem1;
-                assertNotNull(execItem.getType());
-                assertEquals("my-type", execItem.getType());
+                assertNotNull(execItem.getNodeStepType());
+                assertEquals("my-type", execItem.getNodeStepType());
                 assertEquals(0, execItem.flag);
 
                 final ExecutionContext executionContext = interpreterMock.executionContextList.get(2);
@@ -727,12 +733,12 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             }
             {//node 2 step 2
 
-                final ExecutionItem executionItem1 = interpreterMock.executionItemList.get(3);
+                final StepExecutionItem executionItem1 = interpreterMock.executionItemList.get(3);
                 assertTrue("wrong class: " + executionItem1.getClass().getName(),
                     executionItem1 instanceof testWorkflowCmdItem);
                 testWorkflowCmdItem execItem = (testWorkflowCmdItem) executionItem1;
-                assertNotNull(execItem.getType());
-                assertEquals("my-type", execItem.getType());
+                assertNotNull(execItem.getNodeStepType());
+                assertEquals("my-type", execItem.getNodeStepType());
                 assertEquals(1, execItem.flag);
 
                 final ExecutionContext executionContext = interpreterMock.executionContextList.get(3);

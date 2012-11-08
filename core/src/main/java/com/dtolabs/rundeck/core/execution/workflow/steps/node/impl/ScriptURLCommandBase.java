@@ -24,6 +24,8 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
 import com.dtolabs.rundeck.core.execution.HasFailureHandler;
+import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 
 
 /**
@@ -32,8 +34,12 @@ import com.dtolabs.rundeck.core.execution.HasFailureHandler;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public abstract class ScriptURLCommandBase implements ScriptURLCommandExecutionItem,HasFailureHandler {
-    public String getType() {
+public abstract class ScriptURLCommandBase implements ScriptURLCommandExecutionItem,HasFailureHandler,NodeStepExecutionItem {
+    public String getNodeStepType() {
         return ScriptURLNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME;
+    }
+
+    public String getType() {
+        return NodeDispatchStepExecutor.STEP_EXECUTION_TYPE;
     }
 }

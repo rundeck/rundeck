@@ -48,7 +48,7 @@ public class ExecNodeStepExecutor implements NodeStepExecutor {
 
     private Framework framework;
 
-    public NodeStepResult executeNodeStep(ExecutionContext context, ExecutionItem item, INodeEntry node) throws
+    public NodeStepResult executeNodeStep(ExecutionContext context, StepExecutionItem item, INodeEntry node) throws
                                                                                                          NodeStepException {
         final ExecCommand cmd = (ExecCommand) item;
         NodeExecutorResult result;

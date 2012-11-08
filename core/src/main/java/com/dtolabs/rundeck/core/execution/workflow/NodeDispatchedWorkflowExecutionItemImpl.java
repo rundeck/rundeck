@@ -25,9 +25,7 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionItem;
-
-import java.util.*;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 
 
 /**
@@ -35,7 +33,8 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class NodeDispatchedWorkflowExecutionItemImpl extends WorkflowExecutionItemImpl implements StepExecutionItem {
+public class NodeDispatchedWorkflowExecutionItemImpl extends WorkflowExecutionItemImpl implements
+                                                                                       NodeStepExecutionItem {
     public NodeDispatchedWorkflowExecutionItemImpl(final IWorkflow workflow) {
         super(workflow);
     }
@@ -45,7 +44,7 @@ public class NodeDispatchedWorkflowExecutionItemImpl extends WorkflowExecutionIt
     }
 
     @Override
-    public String getStepExecutionType() {
+    public String getNodeStepType() {
         return NodeDispatchStepExecutor.STEP_EXECUTION_TYPE;
     }
 }

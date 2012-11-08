@@ -60,7 +60,7 @@ public class StepFirstWorkflowStrategy extends BaseWorkflowStrategy {
             executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, "data context: " + executionContext
                 .getDataContext());
 
-            final List<ExecutionItem> iWorkflowCmdItems = workflow.getCommands();
+            final List<StepExecutionItem> iWorkflowCmdItems = workflow.getCommands();
             if (iWorkflowCmdItems.size() < 1) {
                 executionContext.getExecutionListener().log(Constants.WARN_LEVEL, "Workflow has 0 items");
             }
@@ -97,7 +97,7 @@ public class StepFirstWorkflowStrategy extends BaseWorkflowStrategy {
             this.workflow = workflow;
         }
 
-        public List<ExecutionItem> getCommands() {
+        public List<StepExecutionItem> getCommands() {
             return workflow.getCommands();
         }
 

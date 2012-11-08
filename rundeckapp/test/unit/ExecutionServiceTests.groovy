@@ -2,7 +2,7 @@ import java.util.logging.LogRecord
 import java.text.SimpleDateFormat
 import grails.test.GrailsUnitTestCase
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
-import com.dtolabs.rundeck.core.execution.ExecutionItem
+import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandExecutionItem
@@ -965,7 +965,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             CommandExec ce = new CommandExec(adhocRemoteString: 'exec command')
             def res = testService.itemForWFCmdItem(ce)
             assertNotNull(res)
-            assertTrue(res instanceof ExecutionItem)
+            assertTrue(res instanceof StepExecutionItem)
             assertTrue(res instanceof ExecCommandExecutionItem)
             ExecCommandExecutionItem item=(ExecCommandExecutionItem) res
             assertEquals(['exec','command'],item.command as List)
@@ -975,7 +975,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             CommandExec ce = new CommandExec(adhocLocalString: 'local script')
             def res = testService.itemForWFCmdItem(ce)
             assertNotNull(res)
-            assertTrue(res instanceof ExecutionItem)
+            assertTrue(res instanceof StepExecutionItem)
             assertTrue(res instanceof ScriptFileCommandExecutionItem)
             ScriptFileCommandExecutionItem item=(ScriptFileCommandExecutionItem) res
             assertEquals('local script',item.script)
@@ -989,7 +989,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             CommandExec ce = new CommandExec(adhocLocalString: 'local script',argString: 'some args')
             def res = testService.itemForWFCmdItem(ce)
             assertNotNull(res)
-            assertTrue(res instanceof ExecutionItem)
+            assertTrue(res instanceof StepExecutionItem)
             assertTrue(res instanceof ScriptFileCommandExecutionItem)
             ScriptFileCommandExecutionItem item=(ScriptFileCommandExecutionItem) res
             assertEquals('local script',item.script)
@@ -1003,7 +1003,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             CommandExec ce = new CommandExec(adhocFilepath: '/some/path', argString: 'some args')
             def res = testService.itemForWFCmdItem(ce)
             assertNotNull(res)
-            assertTrue(res instanceof ExecutionItem)
+            assertTrue(res instanceof StepExecutionItem)
             assertTrue(res instanceof ScriptFileCommandExecutionItem)
             ScriptFileCommandExecutionItem item = (ScriptFileCommandExecutionItem) res
             assertEquals('/some/path', item.serverScriptFilePath)
@@ -1017,7 +1017,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             CommandExec ce = new CommandExec(adhocFilepath: 'http://example.com/script', argString: 'some args')
             def res = testService.itemForWFCmdItem(ce)
             assertNotNull(res)
-            assertTrue(res instanceof ExecutionItem)
+            assertTrue(res instanceof StepExecutionItem)
             assertTrue(res instanceof ScriptURLCommandExecutionItem)
             ScriptURLCommandExecutionItem item = (ScriptURLCommandExecutionItem) res
             assertEquals('http://example.com/script', item.URLString)
@@ -1029,7 +1029,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             CommandExec ce = new CommandExec(adhocFilepath: 'https://example.com/script', argString: 'some args')
             def res = testService.itemForWFCmdItem(ce)
             assertNotNull(res)
-            assertTrue(res instanceof ExecutionItem)
+            assertTrue(res instanceof StepExecutionItem)
             assertTrue(res instanceof ScriptURLCommandExecutionItem)
             ScriptURLCommandExecutionItem item = (ScriptURLCommandExecutionItem) res
             assertEquals('https://example.com/script', item.URLString)
@@ -1041,7 +1041,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             CommandExec ce = new CommandExec(adhocFilepath: 'file:/some/script')
             def res = testService.itemForWFCmdItem(ce)
             assertNotNull(res)
-            assertTrue(res instanceof ExecutionItem)
+            assertTrue(res instanceof StepExecutionItem)
             assertTrue(res instanceof ScriptURLCommandExecutionItem)
             ScriptURLCommandExecutionItem item = (ScriptURLCommandExecutionItem) res
             assertEquals('file:/some/script', item.URLString)
@@ -1053,7 +1053,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             CommandExec ce = new CommandExec(adhocFilepath: 'file:/some/script', argString: 'some args')
             def res = testService.itemForWFCmdItem(ce)
             assertNotNull(res)
-            assertTrue(res instanceof ExecutionItem)
+            assertTrue(res instanceof StepExecutionItem)
             assertTrue(res instanceof ScriptURLCommandExecutionItem)
             ScriptURLCommandExecutionItem item = (ScriptURLCommandExecutionItem) res
             assertEquals('file:/some/script', item.URLString)

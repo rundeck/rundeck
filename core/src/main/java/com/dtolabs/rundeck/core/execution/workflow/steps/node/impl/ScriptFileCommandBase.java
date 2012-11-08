@@ -23,7 +23,7 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.HasFailureHandler;
 
 import java.io.InputStream;
@@ -50,7 +50,7 @@ public class ScriptFileCommandBase extends ScriptFileCommand implements HasFailu
         return new String[0];
     }
 
-    public ExecutionItem getFailureHandler() {
+    public StepExecutionItem getFailureHandler() {
         return null;
     }
 

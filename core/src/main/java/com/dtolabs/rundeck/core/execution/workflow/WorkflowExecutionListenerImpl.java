@@ -57,7 +57,7 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
     }
 
     @Override
-    public void beginExecuteNodeStep(final ExecutionContext context, final ExecutionItem item, final INodeEntry node) {
+    public void beginExecuteNodeStep(final ExecutionContext context, final StepExecutionItem item, final INodeEntry node) {
         if(null!=delegate) {
             delegate.beginExecuteNodeStep(context, item, node);
             return;
@@ -70,7 +70,7 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
 
     @Override
     public void finishExecuteNodeStep(final NodeStepResult result, final ExecutionContext context,
-                                      final ExecutionItem item, final INodeEntry node) {
+                                      final StepExecutionItem item, final INodeEntry node) {
         if (null != delegate) {
             delegate.finishExecuteNodeStep(result, context, item, node);
             return;
@@ -165,7 +165,7 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
         );
     }
 
-    public void beginWorkflowItem(final int step, final ExecutionItem item) {
+    public void beginWorkflowItem(final int step, final StepExecutionItem item) {
         if (null != delegate) {
             delegate.beginWorkflowItem(step, item);
             return;
@@ -176,7 +176,7 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
         );
     }
 
-    public void finishWorkflowItem(final int step, final ExecutionItem item) {
+    public void finishWorkflowItem(final int step, final StepExecutionItem item) {
         if (null != delegate) {
             delegate.finishWorkflowItem(step, item);
             return;

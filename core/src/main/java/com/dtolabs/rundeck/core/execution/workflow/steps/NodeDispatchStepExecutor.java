@@ -25,12 +25,11 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.execution.BaseExecutionResult;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.StatusResult;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
-import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 
 
 /**
@@ -42,12 +41,18 @@ public class NodeDispatchStepExecutor implements StepExecutor {
     public static final String STEP_EXECUTION_TYPE = "NodeDispatch";
 
     @Override
-    public boolean isNodeDispatchStep(ExecutionItem item) {
+    public boolean isNodeDispatchStep(StepExecutionItem item) {
         return true;
     }
 
     @Override
-    public StatusResult executeWorkflowStep(final ExecutionContext context, final ExecutionItem item) {
+    public StatusResult executeWorkflowStep(final ExecutionContext context, final StepExecutionItem executionItem) {
+        if (!(executionItem instanceof NodeStepExecutionItem)) {
+            throw new IllegalArgumentException(
+                "Cannot executeWorkflowStep: step is not a NodeStepExecutionItem: " + executionItem);
+        }
+        NodeStepExecutionItem item = (NodeStepExecutionItem) executionItem;
+
         final Framework framework = context.getFramework();
         try {
             return framework.getExecutionService().dispatchToNodes(context, item);

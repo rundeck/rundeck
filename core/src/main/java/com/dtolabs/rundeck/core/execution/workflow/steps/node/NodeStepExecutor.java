@@ -24,7 +24,7 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 
 
@@ -34,6 +34,6 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface NodeStepExecutor {
-    public NodeStepResult executeNodeStep(ExecutionContext context, ExecutionItem item, INodeEntry node) throws
+    public NodeStepResult executeNodeStep(ExecutionContext context, StepExecutionItem item, INodeEntry node) throws
                                                                                                          NodeStepException;
 }

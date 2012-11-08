@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.NodesetFailureException;
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.*;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -45,7 +46,7 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
     }
 
     public DispatcherResult dispatch(final ExecutionContext context,
-                                     final ExecutionItem item) throws
+                                     final NodeStepExecutionItem item) throws
         DispatcherException {
         return dispatch(context, item, null);
     }
@@ -57,7 +58,7 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
     }
 
     public DispatcherResult dispatch(final ExecutionContext context,
-                                     final ExecutionItem item, final Dispatchable toDispatch) throws
+                                     final NodeStepExecutionItem item, final Dispatchable toDispatch) throws
         DispatcherException {
         final NodesSelector nodesSelector = context.getNodeSelector();
         INodeSet nodes = null;

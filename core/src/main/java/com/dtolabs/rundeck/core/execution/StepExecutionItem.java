@@ -15,7 +15,7 @@
  */
 
 /*
-* ExecutionItem.java
+* StepExecutionItem.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: Mar 3, 2010 11:07:47 AM
@@ -24,12 +24,12 @@
 package com.dtolabs.rundeck.core.execution;
 
 /**
- * ExecutionItem is the base interface for any execution to be submitted to the ExecutionService
+ * StepExecutionItem is the base interface for any step execution item to be submitted to the ExecutionService
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public abstract interface ExecutionItem {
+public interface StepExecutionItem {
     /**
      * Return type of the execution item
      */

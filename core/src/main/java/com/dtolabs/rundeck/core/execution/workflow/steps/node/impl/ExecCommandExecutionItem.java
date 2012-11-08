@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
 import com.dtolabs.rundeck.core.execution.HandlerExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 
 
 /**
@@ -31,6 +32,6 @@ import com.dtolabs.rundeck.core.execution.HandlerExecutionItem;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface ExecCommandExecutionItem extends HandlerExecutionItem {
+public interface ExecCommandExecutionItem extends HandlerExecutionItem,NodeStepExecutionItem {
     public abstract String[] getCommand();
 }
