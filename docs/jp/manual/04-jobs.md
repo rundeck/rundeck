@@ -104,54 +104,88 @@ Rundeck 1.3 以上では UUID を ID の代わりに利用するようになっ�
 not portable between Rundeck instances. As of Rundeck 1.3+ the UUID should be used
 in lieu of ID.)
 
-## Listing and filtering Jobs
+## ジョブリストとフィルタリング
+
+ジョブ操作は全て Rundeck の "Jobs" ページから開始します。
+ログインしたら、ナビゲーションバーのトップにある "Jobs" ボタンをおせば、あなたの権限で見れるジョブの一覧が表示されます。
 
 All Job activity begins on the main "Jobs" page inside Rundeck. After
 logging in, press the "Jobs" button in the top navigation bar and any
 Jobs you are authorized to see will be displayed. 
+
+もしジョブがグループ内に定義されていれば、フォルダライクな構造でグループ化されて表示されます。
+フォルダは先述したジョブグループを表しています。
+フォルダアイコンを押すことでその内部をたどっていくことができます。
 
 If the Jobs were defined inside groups, you will see the listing
 grouped into a folder like structure. These folders represent the Job
 groups described earlier. You can navigate these folders by pressing
 the folder icon to reveal its contents. 
 
+ジョブにたどりつくと、その名前、詳細、何回起動されたかのサマリが表示されるでしょう。
+
 Once you have navigated to a Job, you will see its name, possibly its
 description and a summary total of how many times it has been executed.
+
+ジョブ名をクリックすると、ウィンドウが開かれて、より詳細な情報が表示されます。
+あなたが操作可能なアイコンがならんだバーも表示されるでしょう。
+他に、実行時に走るコマンドやフィルター定義、ディスパッチオプションもあるはずです。
 
 Clicking on the job name will will expand the window to show the Job
 detail. You will see a button bar containing icons representing the
 actions you are able to perform. Other Job detail will include what
 command(s) it will run, filter expressions and other dispatcher options.
 
-### Filtering Jobs
+## ジョブのフィルタリング
+
+ジョブページではフィルタをかけてジョブを検索できます。
 
 The Job page lets you search for Jobs using the Filter option.
+
+"Filter" リンクを押下すればフィルタオプションが表示されます:
 
 Click the "Filter" link to show the filter options:
 
 ![Job filter form](../figures/fig0317.png)
 
+フィルタフィールドが出てくるので必要な箇所を入力して下さい:
+
 This will show the Filter fields. Enter a value in any of the filter fields:
+
+* Job Name: ジョブ名
+* Group: ジョブグループ名
+* Description: 説明文
 
 * Job Name: the name of the job
 * Group: the name of the job group
 * Description: Job description text
 
+部分文字列か正規表現を利用できます。
+
 You can type a substring or a regular expression in any of these
 fields.
+
+"Filter" ボタンを押すと、ジョブリストはフィルタ条件にマッチしたリストになるでしょう。
 
 After pressing the "Filter" button, the Job list will be filtered to
 include only the matching jobs.
 
 ![Job filtered list](../figures/fig0318.png)
 
+フィルタを変更するには、青く囲われたフィルタ定義をクリックして再入力して下さい。
+
 To refine the filter, click on the blue-outlined Filter description,
 and change the filter fields.
+
+フィルタをリセットするには全ジョブのページに、もどってフィルタフィールドにある "Clear" ボタンを押して下さい。
 
 To reset the filter and go back to the full job page, click the
 "Clear" button in the Filter fields.
 
-## Viewing Job detail
+## ジョブ詳細の確認
+
+ジョブ一覧をフィルタリングしてから、ジョブ名にマウスポインタを合わせるとジョブ詳細をポップアップで確認することができます。
+ポップアップの外をクリックすれば消えます。
 
 From a filtered job listing, a Job's detail  can be previewed by hovering 
 the mouse pointer over the Job's name. A popup view contains the Job's detail.
@@ -159,26 +193,44 @@ Click outside the popup to close it.
 
 ![Job detail popup](../figures/fig0320.png)
 
+ジョブ名のリンクをクリックすると、ジョブ詳細とコントロールバーがあるページに遷移します。
+バーにはジョブの削除・コピー・編集・エクスポート・実行に対応するボタンが表示されます。
+
 Pressing the link for the Job name will navigate to  a separate
 page where job detail and a button control bar is displayed. These
 buttons enable users to delete, copy, edit export or run the Job.
 
 ![Job detail page](../figures/fig0321.png)
 
+表示されるボタンは [権限の付与](getting-started.html#権限の付与) でユーザに設定した内容に対応します。
+
 The buttons displayed on the control bar reflect the
 [authorization policy](getting-started.html#authorization) enforced for the user.
 
+ジョブ詳細ページには、以下の情報が含まれます:
+
 The information in the Job detail view includes:
+
+* 名前・説明・グループ
+* ジョブを最後に実行したときの統計（平均成功率や遅延など）
+* プロジェクト名とワークフローステップ、ログレベルを含む詳細
 
 * Name, description and group
 * Execution statistics like when the job was last run, it's average success rate, and duration 
 * Details including project name and workflow steps, and log level
 
+"Show Matches" リンクからジョブ実行予定のノード一覧を見ることが出来ます。
+
 Pressing the "Show Matches" link will display the list of Nodes where the Job will run.
 
-## Running a Job
+## ジョブの実行
+
+ジョブはシェルか GUI から実行できます。
 
 Jobs can be run from the shell or from the graphical console.
+
+コマンドラインからの場合、[run](../manpages/man1/run.html) というシェルツールを利用します。
+たとえば "myproject" プロジェクトの "apps/web" ジョブグループに属する "restart" というジョブがあると仮定すればこのようなかんじです。
 
 From the command line, use the [run](../manpages/man1/run.html) shell tool.
 Here's an example that starts a hypothetical job named "restart"
@@ -187,6 +239,11 @@ belonging in the "apps/web" Job group in project "myproject":
     $ run -j apps/web/restart -p myproject
     Job execution started:
     [51] restart <http://strongbad:4440/execution/follow/51>
+
+GUI からの場合、ジョブページからさまざまなジョブを実行できます。
+フィルタリングで目的のジョブを探し出し、緑色の "Run" アイコンを押せば、
+ただちにキューにジョブが入って実行されます。
+Run アイコンがない場合はログインしていないか、あなたに "run" 権限がないということです。
 
 From the graphical console, any stored job can be started 
 from the Jobs page. Navigate to the desired Job
@@ -197,51 +254,81 @@ means your login does not have "run" privileges.
 
 ![Job run button](../figures/fig0319.png)
 
+ジョブ詳細ページにたどり着いたら、ここから "Run" ボタンをおせます。
+
 If you navigated to the Job's detail page, you press
 the "Run" button from there.
 
 ![Job run button](../figures/fig0319-b.png)
 
+Run ボタンが押されると、ダイアログが開いて実行オプションを選択できます。
+
 After the Run button has been pressed, a dialog will
 open where you can choose execution options.
 
-### Choose execution options
+### 実行オプションの選択
+
+ジョブにはオプション入力用のプロンプトを定義することができます。
+このページではジョブの様々なオプションを紹介します。
 
 Jobs can be defined to prompt the user for options. This page contains
 a form presenting any of these Job options.
+
+いくつかのオプションはデフォルト値をもち、他はあなたに選択させるでしょう。
+また、いくつかのオプションはオプショナルになり他は必須になります。
+最終的に、受け入れ可能な値を管理するパターンになるでしょう。
 
 Some options will have default values while others may present you
 with a menu of choices. Some options are optional while others are
 required. Lastly, their might be a pattern governing what values are
 acceptable. 
 
+いろいろなジョブオプションがあっても、ジョブが実行される前に変更可能です。
+
 If there are any such Job options, you can change them here before
 proceeding with the execution.
+
+準備ができたら "Run Job Now" を押しましょう。
+ジョブが実行キューに入って [Now running](rundeck-basics.html#now-running) セクションで実行状況を追うことが出来るようになります。
 
 When you are ready, press "Run Job Now". The job will enter
 the execution queue and you can track its execution in the 
 [Now running](rundeck-basics.html#now-running) section.
 
-### Following Running Jobs
+### 実行ジョブのフォロー
+
+ジョブ実行を開始したら実行詳細ページでアウトプットをフォローできます。
 
 Once you have started running a Job, you can follow the Job's output
 in the Execution Follow page. 
    
+ジョブページに "Now running" と表示されているとき、ジョブ名の行にある "output >>" リンクをクリックしてください。
+
 On the Jobs page, look in the "Now running" section
 and click the "output >>" link in the row with the desired Job name.
   
+もしジョブ詳細ページから "run" ボタンを押していれば、ブラウザは実行詳細ページを表示するでしょう。
+
 If you pressed the "run" button from the Job's detail page, your
 browser will already have been directed to the Execution Follow page.
  
-## Creating Jobs
+## ジョブの作成
+
+Rundeck では2種類のジョブをつくることができます。
 
 Rundeck allows you to define two kinds of Jobs.
+
+ - Temporary : *Temporary ジョブ* は実行コマンドセットとノードフィルタ設定を定義します。
+ - Saved: *Saved ジョブ* は実行コマンドセットとディスパッチオプションを定義しますが、名前を与えることができ、グループに格納できます。さらに、Saved ジョブは実行スケジュールを持つことが出来ます。
+
 
 * Temporary: A *temporary Job* defines a set of commands to execute and
    a node filter configuration. 
 * Saved: A *saved job* also defines a set of commands to execute and
    dispatcher options but can be given a name and stored in a
    group. Additionally, saved Jobs can be given an execution schedule.
+
+ジョブを作成するには Jobs ページから「New Job」ボタンを押します。
 
 From the Jobs, page press the "New Job" button to begin creating a Job.
 
