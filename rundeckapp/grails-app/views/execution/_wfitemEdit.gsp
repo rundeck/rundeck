@@ -1,3 +1,4 @@
+<%@ page import="rundeck.JobExec" %>
 <%--
  Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
 

@@ -1,3 +1,4 @@
+<%@ page import="rundeck.ScheduledExecution" %>
 
 <div class="floatl clear crontab">
     <g:set var="crontab" value="${scheduledExecution?.timeAndDateAsBooleanMap()}"/>

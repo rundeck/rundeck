@@ -1,3 +1,4 @@
+<%@ page import="rundeck.User" %>
 <g:set var="rkey" value="${g.rkey()}" />
 
 <g:if test="${session.user && User.findByLogin(session.user)?.reportfilters}">
