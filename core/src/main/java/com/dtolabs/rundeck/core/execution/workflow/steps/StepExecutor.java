@@ -36,5 +36,5 @@ import com.dtolabs.rundeck.core.execution.StatusResult;
  */
 public interface StepExecutor {
     public boolean isNodeDispatchStep(StepExecutionItem item);
-    StatusResult executeWorkflowStep(ExecutionContext executionContext, StepExecutionItem item) throws StepException;
+    StepExecutionResult executeWorkflowStep(ExecutionContext executionContext, StepExecutionItem item) throws StepException;
 }

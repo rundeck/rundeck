@@ -23,12 +23,16 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
+import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.StatusResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
+
 
 /**
  * NodeStepResult is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface NodeStepResult extends StatusResult {
+public interface NodeStepResult extends StepExecutionResult {
+    public INodeEntry getNode();
 }

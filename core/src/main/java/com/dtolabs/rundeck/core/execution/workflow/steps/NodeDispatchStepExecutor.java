@@ -27,8 +27,8 @@ package com.dtolabs.rundeck.core.execution.workflow.steps;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
-import com.dtolabs.rundeck.core.execution.StatusResult;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
+import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 
 
@@ -46,7 +46,8 @@ public class NodeDispatchStepExecutor implements StepExecutor {
     }
 
     @Override
-    public StatusResult executeWorkflowStep(final ExecutionContext context, final StepExecutionItem executionItem) {
+    public StepExecutionResult executeWorkflowStep(final ExecutionContext context,
+                                                   final StepExecutionItem executionItem) {
         if (!(executionItem instanceof NodeStepExecutionItem)) {
             throw new IllegalArgumentException(
                 "Cannot executeWorkflowStep: step is not a NodeStepExecutionItem: " + executionItem);
@@ -55,9 +56,43 @@ public class NodeDispatchStepExecutor implements StepExecutor {
 
         final Framework framework = context.getFramework();
         try {
-            return framework.getExecutionService().dispatchToNodes(context, item);
+            return wrapDispatcherResult(framework.getExecutionService().dispatchToNodes(context, item));
         } catch (DispatcherException e) {
             return new StepExecutionResultImpl(false, e);
         }
+    }
+
+    /**
+     * Return a StepExecutionResult based on the DispatcherResult, that can later be extracted.
+     */
+    public static StepExecutionResult wrapDispatcherResult(final DispatcherResult dispatcherResult) {
+        final StepExecutionResultImpl result = new NodeDispatchStepExecutorResult(dispatcherResult.isSuccess(),
+                                                                            dispatcherResult);
+        result.setSourceResult(dispatcherResult);
+        return result;
+    }
+
+    static class NodeDispatchStepExecutorResult extends StepExecutionResultImpl{
+        DispatcherResult dispatcherResult;
+
+        NodeDispatchStepExecutorResult(final boolean success, DispatcherResult dispatcherResult) {
+            super(success);
+            this.dispatcherResult = dispatcherResult;
+            setSourceResult(dispatcherResult);
+        }
+        public DispatcherResult getDispatcherResult(){
+            return dispatcherResult;
+        }
+    }
+    /**
+     * Return the DispatcherResult from a StepExecutionResult created by this class.
+     */
+    public static DispatcherResult extractDispatcherResult(final StepExecutionResult result) {
+        assert result instanceof NodeDispatchStepExecutorResult;
+        if(!(result instanceof NodeDispatchStepExecutorResult)) {
+            throw new IllegalArgumentException("Cannot extract result: unexpected type: " + result);
+        }
+        NodeDispatchStepExecutorResult nr = (NodeDispatchStepExecutorResult) result;
+        return nr.getDispatcherResult();
     }
 }

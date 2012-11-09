@@ -23,27 +23,28 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow;
 
+import com.dtolabs.rundeck.core.execution.ExceptionStatusResult;
 import com.dtolabs.rundeck.core.execution.StatusResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 /**
- * WorkflowExecutionResult contains a map of Node names to workflow item results, and
+ * WorkflowExecutionResult contains a list of workflow item results, indexed by workflow step number, and
  * node names to failure messages.
  *
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface WorkflowExecutionResult extends StatusResult {
+public interface WorkflowExecutionResult extends ExceptionStatusResult {
     /**
-     * Return map of workflow item results, keyed by node name with a list of results ordered by workflow step
+     * Return list of step results
      */
-    public Map<String,List<StatusResult>> getResultSet();
+    public List<StepExecutionResult> getResultSet();
     /**
      * Return map of workflow item failures, keyed by node name
      */
     public Map<String, Collection<String>> getFailureMessages();
-    public Exception getException();
 }

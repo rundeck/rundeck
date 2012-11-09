@@ -35,6 +35,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.impl.common.AntSupport;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.execution.utils.LeadPipeOutputStream;
 import com.dtolabs.rundeck.core.execution.utils.Responder;
 import com.dtolabs.rundeck.core.execution.utils.ResponderTask;
@@ -314,18 +315,9 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             }
         }
         final int resultCode = sshexec.getExitStatus();
-        final boolean status = success;
         final String resultmsg = null != errormsg ? errormsg : null;
 
-        return new NodeExecutorResult() {
-            public int getResultCode() {
-                return resultCode;
-            }
-
-            public boolean isSuccess() {
-                return status;
-            }
-
+        return new NodeExecutorResultImpl(success, node,resultCode) {
             @Override
             public String toString() {
                 return "[jsch-ssh] result was " + (isSuccess() ? "success" : "failure") + ", resultcode: "

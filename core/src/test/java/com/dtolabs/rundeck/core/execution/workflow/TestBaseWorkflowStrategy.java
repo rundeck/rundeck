@@ -31,7 +31,12 @@ import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
@@ -102,29 +107,28 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             return result;
         }
 
-        protected boolean executeWFItem(final ExecutionContext executionContext,
-                                        final Map<Integer, Object> failedMap,
-                                        final List<DispatcherResult> resultList,
-                                        final int c,
-                                        final StepExecutionItem cmd, final boolean keepgoing) throws
-                                                                                          WorkflowStepFailureException {
-            HashMap<String,Object> input=new HashMap<String, Object>();
+        protected StepExecutionResult executeWFItem(final ExecutionContext executionContext,
+                                                    final Map<Integer, Object> failedMap,
+                                                    final int c,
+                                                    final StepExecutionItem cmd, final boolean keepgoing)
+            throws WorkflowStepFailureException {
+
+            HashMap<String, Object> input = new HashMap<String, Object>();
             input.put("context", executionContext);
             input.put("failedMap", failedMap);
-            input.put("resultList", resultList);
             input.put("c", c);
             input.put("cmd", cmd);
             input.put("keepgoing", keepgoing);
             inputs.add(input);
 
-            int ndx=execIndex++;
+            int ndx = execIndex++;
             final Object o = results.get(ndx);
-            if(o instanceof Boolean){
-                return (Boolean)o;
-            }else if(o instanceof WorkflowStepFailureException) {
+            if (o instanceof Boolean) {
+                return new StepExecutionResultImpl((Boolean) o);
+            } else if (o instanceof WorkflowStepFailureException) {
                 throw (WorkflowStepFailureException) o;
-            }else if(o instanceof String) {
-                throw new WorkflowStepFailureException((String) o, new ExecutionResult() {
+            } else if (o instanceof String) {
+                throw new WorkflowStepFailureException((String) o, new StepExecutionResult() {
                     public Exception getException() {
                         return null;
                     }
@@ -137,10 +141,11 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
                         return false;
                     }
                 }, c);
-            }else {
+            } else {
                 fail("Unexpected result at index " + ndx + ": " + o);
-                return false;
+                return new StepExecutionResultImpl(false);
             }
+
         }
 
         public WorkflowExecutionResult getResult() {
@@ -188,7 +193,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
 
 
         final Map<Integer, Object> map = new HashMap<Integer, Object>();
-        final List<DispatcherResult> resultList = new ArrayList<DispatcherResult>();
+        final List<StepExecutionResult> resultList = new ArrayList<StepExecutionResult>();
         final boolean keepgoing = wfKeepgoing;
 
         boolean itemsSuccess=false;
@@ -229,7 +234,19 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             //test success 1 item
 
             final testWorkflowCmdItem testCmd1 = new testWorkflowCmdItem();
+            getFrameworkInstance().getStepExecutionService().registerInstance("test1",new StepExecutor() {
+                @Override
+                public boolean isNodeDispatchStep(StepExecutionItem item) {
+                    return true;
+                }
 
+                @Override
+                public StepExecutionResult executeWorkflowStep(ExecutionContext executionContext,
+                                                               StepExecutionItem item)
+                    throws StepException {
+                    return null;
+                }
+            });
             final Map<String, Object> expectResult1 = new HashMap<String, Object>();
             expectResult1.put("c", 1);
             expectResult1.put("cmd", testCmd1);
@@ -590,8 +607,9 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
     }
 
 
-    static class testWorkflowCmdItem implements HandlerExecutionItem {
+    static class testWorkflowCmdItem implements NodeStepExecutionItem,HandlerExecutionItem {
         private String type;
+        private String nodeStepType;
         int flag = -1;
         boolean keepgoingOnSuccess;
 
@@ -610,6 +628,11 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         }
 
         public String getType() {
+            return type;
+        }
+
+        @Override
+        public String getNodeStepType() {
             return type;
         }
     }

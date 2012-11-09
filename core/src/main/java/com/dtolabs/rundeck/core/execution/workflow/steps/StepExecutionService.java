@@ -62,9 +62,9 @@ public class StepExecutionService extends BaseProviderRegistryService<StepExecut
 
     public StepExecutor getExecutorForItem(final StepExecutionItem item) throws ExecutionServiceException {
         String type = DEFAULT_EXECUTION_TYPE;
-        if (null != item.getType()) {
+//        if (null != item.getType()) {
             type = item.getType();
-        }
+//        }
         return providerOfType(type);
     }
 }

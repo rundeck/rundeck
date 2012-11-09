@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.*;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
@@ -551,11 +552,7 @@ public class TestExecTool extends AbstractBaseTest {
 
 
         //set return result
-        testExecutor1.returnResult = new NodeStepResult() {
-            public boolean isSuccess() {
-                return true;
-            }
-
+        testExecutor1.returnResult = new NodeStepResultImpl(true,null) {
             @Override
             public String toString() {
                 return "test1ResultString";
@@ -598,10 +595,7 @@ public class TestExecTool extends AbstractBaseTest {
             getFrameworkInstance());
         cis.registerClass("exec", testExecutor1.class);
         //set return result
-        testExecutor1.returnResult = new NodeStepResult() {
-            public boolean isSuccess() {
-                return false;
-            }
+        testExecutor1.returnResult = new NodeStepResultImpl(false,null) {
             public String toString() {
                 return "test failure result";
             }
@@ -668,11 +662,7 @@ public class TestExecTool extends AbstractBaseTest {
         }
 
         //set return result
-        testExecutor1.returnResult=new NodeStepResult(){
-            public boolean isSuccess() {
-                return true;
-            }
-
+        testExecutor1.returnResult=new NodeStepResultImpl(true,null){
             public String toString() {
                 return "testResult1";
             }

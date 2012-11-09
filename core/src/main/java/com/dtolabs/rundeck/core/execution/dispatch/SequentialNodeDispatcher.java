@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.NodesetFailureException;
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -84,7 +85,7 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
         boolean interrupted = false;
         final Thread thread = Thread.currentThread();
         boolean success = true;
-        final HashMap<String, StatusResult> resultMap = new HashMap<String, StatusResult>();
+        final HashMap<String, NodeStepResult> resultMap = new HashMap<String, NodeStepResult>();
         final Collection<INodeEntry> nodes1 = nodes.getNodes();
         //reorder based on configured rank property and order
         final String rankProperty = null != context.getNodeRankAttribute() ? context.getNodeRankAttribute() : "nodename";
@@ -111,12 +112,13 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                     interrupted = true;
                     break;
                 }
-                final StatusResult result;
+                final NodeStepResult result;
                 final ExecutionContext interimcontext = new ExecutionContextImpl.Builder(context).nodeSelector(
                     SelectorUtils.singleNode(node.getNodename())).build();
+
+                //execute the step or dispatchable
                 if (null != item) {
-                    result = framework.getExecutionService().executeNodeStep(
-                        interimcontext, item, node);
+                    result = framework.getExecutionService().executeNodeStep(interimcontext, item, node);
                 } else {
                     result = toDispatch.dispatch(interimcontext, node);
 

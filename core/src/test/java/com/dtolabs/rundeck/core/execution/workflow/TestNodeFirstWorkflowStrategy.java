@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.core.utils.NodeSet;
@@ -224,6 +225,8 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
     static class testResult implements NodeStepResult {
         boolean success;
         int flag;
+        INodeEntry node;
+        Exception exception;
 
         testResult(boolean success, int flag) {
             this.success = success;
@@ -232,6 +235,14 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
 
         public boolean isSuccess() {
             return success;
+        }
+
+        public INodeEntry getNode() {
+            return node;
+        }
+
+        public Exception getException() {
+            return exception;
         }
     }
 
@@ -270,23 +281,15 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
 
             //set resturn result node 1
-            interpreterMock.resultList.add(new NodeStepResult() {
-                public boolean isSuccess() {
-                    return true;
-                }
-            });
+            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
             //set resturn result node 2
-            interpreterMock.resultList.add(new NodeStepResult() {
-                public boolean isSuccess() {
-                    return true;
-                }
-            });
+            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
 
             final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
 
             assertNotNull(result);
-            if (!result.isSuccess() && null != result.getException()) {
-                result.getException().printStackTrace(System.err);
+            if (null != result.getException()) {
+                result.getException().printStackTrace(System.out);
             }
             assertNull("threw exception: " + result.getException(), result.getException());
             assertTrue(result.isSuccess());
@@ -366,23 +369,11 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
 
             //set resturn result node 1
-            interpreterMock.resultList.add(new NodeStepResult() {
-                public boolean isSuccess() {
-                    return true;
-                }
-            });
+            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
             //set resturn result node 2
-            interpreterMock.resultList.add(new NodeStepResult() {
-                public boolean isSuccess() {
-                    return true;
-                }
-            });
+            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
             //set resturn result node 3
-            interpreterMock.resultList.add(new NodeStepResult() {
-                public boolean isSuccess() {
-                    return true;
-                }
-            });
+            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
 
             final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
 
@@ -578,11 +569,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
 
         for (final String s : expected) {
             //set resturn result
-            interpreterMock.resultList.add(new NodeStepResult() {
-                public boolean isSuccess() {
-                    return true;
-                }
-            });
+            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
         }
 
         final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
@@ -644,35 +631,19 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
 
             //set resturn result node 1 step 1
-            interpreterMock.resultList.add(new NodeStepResult() {
-                public boolean isSuccess() {
-                    return true;
-                }
-            });
+            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
             //set resturn result node 2 step 1
-            interpreterMock.resultList.add(new NodeStepResult() {
-                public boolean isSuccess() {
-                    return true;
-                }
-            });
+            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
             //set resturn result node 1 step 2
-            interpreterMock.resultList.add(new NodeStepResult() {
-                public boolean isSuccess() {
-                    return true;
-                }
-            });
+            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
             //set resturn result node 2 step 2
-            interpreterMock.resultList.add(new NodeStepResult() {
-                public boolean isSuccess() {
-                    return true;
-                }
-            });
+            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
 
             final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
 
             assertNotNull(result);
-            if (!result.isSuccess() && null != result.getException()) {
-                result.getException().printStackTrace(System.err);
+            if (null != result.getException()) {
+                result.getException().printStackTrace(System.out);
             }
             assertNull("threw exception: " + result.getException(), result.getException());
             assertTrue(result.isSuccess());

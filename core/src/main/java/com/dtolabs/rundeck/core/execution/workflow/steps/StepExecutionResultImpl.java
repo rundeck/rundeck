@@ -24,7 +24,9 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
-import java.util.*;
+
+import com.dtolabs.rundeck.core.execution.HasSourceResult;
+import com.dtolabs.rundeck.core.execution.StatusResult;
 
 
 /**
@@ -32,14 +34,13 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class StepExecutionResultImpl implements StepExecutionResult {
+public class StepExecutionResultImpl implements StepExecutionResult, HasSourceResult {
     private boolean success;
     private Exception exception;
-    private String message;
+    private StatusResult sourceResult;
 
-    public StepExecutionResultImpl(boolean success, String message) {
+    public StepExecutionResultImpl(boolean success) {
         this.success = success;
-        this.message = message;
     }
 
     public StepExecutionResultImpl(boolean success, Exception exception) {
@@ -63,12 +64,24 @@ public class StepExecutionResultImpl implements StepExecutionResult {
         this.exception = exception;
     }
 
-    public String getMessage() {
-        return message;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) { return true; }
+        if (!(o instanceof StepExecutionResultImpl)) { return false; }
+
+        StepExecutionResultImpl result = (StepExecutionResultImpl) o;
+
+        if (success != result.success) { return false; }
+        if (exception != null ? !exception.equals(result.exception) : result.exception != null) { return false; }
+
+        return true;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    @Override
+    public int hashCode() {
+        int result = (success ? 1 : 0);
+        result = 31 * result + (exception != null ? exception.hashCode() : 0);
+        return result;
     }
 
     @Override
@@ -76,7 +89,14 @@ public class StepExecutionResultImpl implements StepExecutionResult {
         return "StepExecutionResultImpl{" +
                "success=" + success +
                ", exception=" + exception +
-               ", message='" + message + '\'' +
                '}';
+    }
+
+    public StatusResult getSourceResult() {
+        return sourceResult;
+    }
+
+    public void setSourceResult(StatusResult sourceResult) {
+        this.sourceResult = sourceResult;
     }
 }

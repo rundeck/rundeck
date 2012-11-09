@@ -160,17 +160,7 @@ class ScriptPluginNodeExecutor extends AbstractDescribableScriptPlugin implement
         }
         executionContext.getExecutionListener().log(3,
             "[" + pluginname + "]: result code: " + result + ", success: " + success);
-        final int returnresult = result;
-        final boolean returnsuccess = success;
-        return new NodeExecutorResult() {
-            public int getResultCode() {
-                return returnresult;
-            }
-
-            public boolean isSuccess() {
-                return returnsuccess;
-            }
-
+        return new NodeExecutorResultImpl(success, node, result) {
             @Override
             public String toString() {
                 return "[" + pluginname + "] success: " + isSuccess() + ", result code: " + getResultCode();

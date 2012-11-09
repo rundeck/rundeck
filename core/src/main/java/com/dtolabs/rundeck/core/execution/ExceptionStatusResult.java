@@ -30,5 +30,8 @@ package com.dtolabs.rundeck.core.execution;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface ExceptionStatusResult extends StatusResult {
+    /**
+     * Return any exception that was caught
+     */
     public Exception getException();
 }

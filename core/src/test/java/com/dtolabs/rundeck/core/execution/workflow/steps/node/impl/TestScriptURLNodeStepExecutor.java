@@ -300,24 +300,8 @@ public class TestScriptURLNodeStepExecutor extends AbstractBaseTest {
         };
         {
             final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>();
-            nodeExecutorResults.add(new NodeExecutorResult() {
-                public int getResultCode() {
-                    return 1;
-                }
-
-                public boolean isSuccess() {
-                    return true;
-                }
-            });
-            nodeExecutorResults.add(new NodeExecutorResult() {
-                public int getResultCode() {
-                    return 2;
-                }
-
-                public boolean isSuccess() {
-                    return true;
-                }
-            });
+            nodeExecutorResults.add(new NodeExecutorResultImpl(true, null, 1));
+            nodeExecutorResults.add(new NodeExecutorResultImpl(true, null, 2));
             testexec.testResult = nodeExecutorResults;
             testcopier.testResult = "/test/file/path";
             final test1 interaction = new TestScriptURLNodeStepExecutor.test1();

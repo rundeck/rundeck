@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.common.FrameworkSupportService;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
@@ -59,11 +60,12 @@ public interface ExecutionService extends FrameworkSupportService {
     /**
      * Execute a workflow step item for the given context and return the result.
      *
+     *
      * @param item item
      *
      * @return result
      */
-    public StatusResult executeStep(ExecutionContext context, StepExecutionItem item) throws ExecutionException;
+    public StepExecutionResult executeStep(ExecutionContext context, StepExecutionItem item) throws ExecutionException;
 
     /**
      * Interpret the execution item within the context for the given node.

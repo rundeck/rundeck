@@ -16,22 +16,19 @@
  */
 
 /*
-* StepExecutionResult.java
+* HasSourceResult.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 11/2/12 11:46 AM
+* Created: 11/8/12 4:18 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.workflow.steps;
-
-import com.dtolabs.rundeck.core.execution.ExceptionStatusResult;
-import com.dtolabs.rundeck.core.execution.StatusResult;
-
+package com.dtolabs.rundeck.core.execution;
 
 /**
- * StepExecutionResult is ...
+ * HasSourceResult allows chaining of StatusResults
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface StepExecutionResult extends ExceptionStatusResult {
+public interface HasSourceResult extends StatusResult{
+    public StatusResult getSourceResult();
 }

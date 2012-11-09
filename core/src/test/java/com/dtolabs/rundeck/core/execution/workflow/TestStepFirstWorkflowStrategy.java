@@ -28,6 +28,8 @@ import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandBase;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem;
@@ -218,10 +220,17 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
     static class testResult implements NodeStepResult {
         boolean success;
         int flag;
+        INodeEntry node;
 
         testResult(boolean success, int flag) {
             this.success = success;
             this.flag = flag;
+        }
+
+
+        @Override
+        public Exception getException() {
+            return null;
         }
 
         public boolean isSuccess() {
@@ -234,6 +243,10 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                    "success=" + success +
                    ", flag=" + flag +
                    '}';
+        }
+
+        public INodeEntry getNode() {
+            return node;
         }
     }
 
@@ -370,11 +383,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
 //            interpreterService.registerInstance(JobExecutionItem.COMMAND_TYPE, failMock);
 
             //set resturn result
-            interpreterMock.resultList.add(new NodeStepResult() {
-                public boolean isSuccess() {
-                    return true;
-                }
-            });
+            interpreterMock.resultList.add(new NodeStepResultImpl(true,null));
 
             final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
 
@@ -440,11 +449,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
 //            interpreterService.registerInstance(JobExecutionItem.COMMAND_TYPE, failMock);
 
             //set resturn result
-            interpreterMock.resultList.add(new NodeStepResult() {
-                public boolean isSuccess() {
-                    return true;
-                }
-            });
+            interpreterMock.resultList.add(new NodeStepResultImpl(true,null));
 
             final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
 
@@ -472,6 +477,8 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             assertEquals("user1", executionContext.getUser());
             assertEquals(nodeset, executionContext.getNodeSelector());
         }
+    }
+    public void testExecuteWorkflowThreeItems() throws Exception{
         {
             //test workflow of three successful items
             final NodesSelector nodeset = SelectorUtils.singleNode(testFramework.getFrameworkNodeName());
@@ -551,15 +558,17 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             }
             assertNull("threw exception: " + result.getException(), result.getException());
             assertTrue(result.isSuccess());
-            assertEquals(1, result.getResultSet().size());
             assertNotNull(result.getResultSet());
-            assertNotNull("missing key "+testnode+": " + result.getResultSet().keySet(), result.getResultSet().get(testnode));
-            final List<StatusResult> test1 = result.getResultSet().get(testnode);
+            final List<StepExecutionResult> test1 = result.getResultSet();
             assertEquals(3, test1.size());
             for (final int i : new int[]{0, 1, 2}) {
-                final StatusResult interpreterResult = test1.get(i);
-                assertTrue(interpreterResult instanceof testResult);
-                testResult val = (testResult) interpreterResult;
+                final StepExecutionResult interpreterResult = test1.get(i);
+                final DispatcherResult dr = NodeDispatchStepExecutor.extractDispatcherResult(interpreterResult);
+                assertEquals(1, dr.getResults().size());
+                final NodeStepResult nrs = dr.getResults().values().iterator().next();
+                assertTrue("unexpected class: " + nrs.getClass(),
+                           nrs instanceof testResult);
+                testResult val = (testResult) nrs;
                 assertTrue(val.isSuccess());
                 assertEquals(i, val.flag);
             }
@@ -613,6 +622,8 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
 
             }
         }
+    }
+    public void testWorkflowFailNoKeepgoing() throws Exception{
         {
             //test a workflow with a failing item (1), with keepgoing=false
             final NodesSelector nodeset = SelectorUtils.singleNode(testFramework.getFrameworkNodeName());
@@ -687,8 +698,8 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
 
             assertNotNull(result);
-            if (!result.isSuccess() && null != result.getException()) {
-                result.getException().printStackTrace(System.err);
+            if (null != result.getException()) {
+                result.getException().printStackTrace(System.out);
             }
             assertFalse(result.isSuccess());
             assertNotNull("threw exception: " + result.getException(), result.getException());
@@ -696,7 +707,11 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             WorkflowStepFailureException wfsfe = (WorkflowStepFailureException) result.getException();
             assertEquals(2, wfsfe.getWorkflowStep());
             assertNotNull(wfsfe.getStatusResult());
-            final DispatcherResult executionResult = (DispatcherResult)wfsfe.getStatusResult();
+            //thrown after NodeDispatchStepExecutor returns false, extract DispatcherResult from StepExecutionResult
+            StatusResult result1 = wfsfe.getStatusResult();
+            assertTrue("wrong type: " + result1.getClass(), result1 instanceof StepExecutionResult);
+            final DispatcherResult executionResult
+                = NodeDispatchStepExecutor.extractDispatcherResult((StepExecutionResult) result1);
             assertNotNull(executionResult.getResults());
             assertEquals(1, executionResult.getResults().size());
             assertNotNull(executionResult.getResults().get(testnode));
@@ -706,15 +721,17 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             testResult failResult = (testResult) testnode1;
             assertEquals(1, failResult.flag);
 
-            assertEquals(1, result.getResultSet().size());
             assertNotNull(result.getResultSet());
-            assertNotNull("missing key"+testnode+": " + result.getResultSet().keySet(), result.getResultSet().get(testnode));
-            final List<StatusResult> test1 = result.getResultSet().get(testnode);
+            final List<StepExecutionResult> test1 = result.getResultSet();
             assertEquals(2, test1.size());
             for (final int i : new int[]{0, 1}) {
-                final StatusResult interpreterResult = test1.get(i);
-                assertTrue(interpreterResult instanceof testResult);
-                testResult val = (testResult) interpreterResult;
+                final StepExecutionResult interpreterResult = test1.get(i);
+                final DispatcherResult dr = NodeDispatchStepExecutor.extractDispatcherResult(interpreterResult);
+                assertEquals(1, dr.getResults().size());
+                final NodeStepResult nrs = dr.getResults().values().iterator().next();
+                assertTrue("unexpected class: " + nrs.getClass(),
+                           nrs instanceof testResult);
+                testResult val = (testResult) nrs;
                 assertEquals(i, val.flag);
                 if(0==i){
                     assertTrue(val.isSuccess());
@@ -760,6 +777,8 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 assertNull(executionContext.getArgs());
             }
         }
+    }
+    public void testWorkflowFailYesKeepgoing() throws Exception{
         {
             //test a workflow with a failing item (1), with keepgoing=true
             final NodesSelector nodeset = SelectorUtils.singleNode(testFramework.getFrameworkNodeName());
@@ -842,15 +861,17 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             assertTrue("threw exception: " + result.getException(), result.getException() instanceof WorkflowFailureException);
             WorkflowFailureException wfsfe = (WorkflowFailureException) result.getException();
 
-            assertEquals(1, result.getResultSet().size());
             assertNotNull(result.getResultSet());
-            assertNotNull("missing key"+testnode+": " + result.getResultSet().keySet(), result.getResultSet().get(testnode));
-            final List<StatusResult> test1 = result.getResultSet().get(testnode);
+            final List<StepExecutionResult> test1 = result.getResultSet();
             assertEquals(3, test1.size());
             for (final int i : new int[]{0, 1, 2}) {
-                final StatusResult interpreterResult = test1.get(i);
-                assertTrue(interpreterResult instanceof testResult);
-                testResult val = (testResult) interpreterResult;
+                final StepExecutionResult interpreterResult = test1.get(i);
+                final DispatcherResult dr = NodeDispatchStepExecutor.extractDispatcherResult(interpreterResult);
+                assertEquals(1, dr.getResults().size());
+                final NodeStepResult nrs = dr.getResults().values().iterator().next();
+                assertTrue("unexpected class: " + nrs.getClass(),
+                           nrs instanceof testResult);
+                testResult val = (testResult) nrs;
                 assertEquals(i, val.flag);
                 if (1 == i) {
                     assertFalse(val.isSuccess());
@@ -909,7 +930,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             }
         }
     }
-    public void testFailureHandlerItem(){
+    public void testFailureHandlerItemNoKeepgoing(){
         {
             //test a workflow with a failing item (1), with keepgoing=false, and a failureHandler
             final boolean KEEPGOING_TEST = false;
@@ -1002,7 +1023,8 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             WorkflowStepFailureException wfsfe = (WorkflowStepFailureException) result.getException();
             assertEquals(1, wfsfe.getWorkflowStep());
             assertNotNull(wfsfe.getStatusResult());
-            final DispatcherResult executionResult = (DispatcherResult)wfsfe.getStatusResult();
+            final DispatcherResult executionResult
+                = NodeDispatchStepExecutor.extractDispatcherResult(wfsfe.getStatusResult());
             assertNotNull(executionResult.getResults());
             assertEquals(1, executionResult.getResults().size());
             assertNotNull(executionResult.getResults().get(testnode));
@@ -1014,15 +1036,17 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
 
             assertEquals(1, result.getResultSet().size());
             assertNotNull(result.getResultSet());
-            assertNotNull("missing key" + testnode + ": " + result.getResultSet().keySet(), result.getResultSet().get(
-                testnode));
-            final List<StatusResult> test1 = result.getResultSet().get(testnode);
-            System.err.println("results: "+result.getResultSet().get(testnode));
+            final List<StepExecutionResult> test1 = result.getResultSet();
+            System.err.println("results: "+test1);
             assertEquals(1, test1.size());
             final int i =0;
-            final StatusResult interpreterResult = test1.get(i);
-            assertTrue(interpreterResult instanceof testResult);
-            testResult val = (testResult) interpreterResult;
+            final StepExecutionResult interpreterResult = test1.get(i);
+            final DispatcherResult dr = NodeDispatchStepExecutor.extractDispatcherResult(interpreterResult);
+            assertEquals(1, dr.getResults().size());
+            final NodeStepResult nrs = dr.getResults().values().iterator().next();
+            assertTrue("unexpected class: " + nrs.getClass(),
+                       nrs instanceof testResult);
+            testResult val = (testResult) nrs;
             assertEquals(i, val.flag);
             assertFalse(val.isSuccess());
 
@@ -1073,6 +1097,9 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             assertEquals(nodeset, executionContextX.getNodeSelector());
             assertNull(executionContextX.getArgs());
         }
+    }
+
+    public void testFailureHandlerItemYesKeepgoing() {
         {
             //test a workflow with a failing item (1), with keepgoing=true, and a failureHandler that fails
             final boolean KEEPGOING_TEST = true;
@@ -1179,14 +1206,10 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 result.getException() instanceof WorkflowFailureException);
             WorkflowFailureException wfsfe = (WorkflowFailureException) result.getException();
 
-            assertEquals(1, result.getResultSet().size());
             assertNotNull(result.getResultSet());
-            assertNotNull("missing key" + testnode + ": " + result.getResultSet().keySet(), result.getResultSet().get(
-                testnode));
-            final List<StatusResult> test1 = result.getResultSet().get(testnode);
-            System.err.println("results: "+result.getResultSet().get(testnode));
+            final List<StepExecutionResult> test1 = result.getResultSet();
+            System.out.println("results: "+test1);
 
-            assertEquals(3, test1.size());
 
             assertEquals(2, interpreterMock.executionItemList.size());
             assertEquals(2, interpreterMock.executionContextList.size());
@@ -1195,13 +1218,19 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             assertEquals(1, handlerInterpreterMock.executionContextList.size());
 
 
+            assertEquals(2, test1.size());
+
             int resultIndex =0;
             int stepNum=0;
             {
                 //first step result
-                final StatusResult interpreterResult = test1.get(resultIndex);
-                assertTrue(interpreterResult instanceof testResult);
-                testResult val = (testResult) interpreterResult;
+                final StepExecutionResult interpreterResult = test1.get(resultIndex);
+                final DispatcherResult dr = NodeDispatchStepExecutor.extractDispatcherResult(interpreterResult);
+                assertEquals(1, dr.getResults().size());
+                final NodeStepResult nrs = dr.getResults().values().iterator().next();
+                assertTrue("unexpected class: " + nrs.getClass(),
+                           nrs instanceof testResult);
+                testResult val = (testResult) nrs;
                 assertEquals(0, val.flag);
                 assertFalse(val.isSuccess());
 
@@ -1227,44 +1256,52 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             }
 
             resultIndex=1;
+//
+//            {
+//                //failure handler result
+//                final StepExecutionResult interpreterResult = test1.get(resultIndex);
+//                final DispatcherResult dr = NodeDispatchStepExecutor.extractDispatcherResult(interpreterResult);
+//                assertEquals(1, dr.getResults().size());
+//                final NodeStepResult nrs = dr.getResults().values().iterator().next();
+//                assertTrue("unexpected class: " + nrs.getClass(),
+//                           nrs instanceof testResult);
+//                testResult val = (testResult) nrs;
+//                assertEquals(0, val.flag);
+//                assertFalse(val.isSuccess());
+//
+//                final StepExecutionItem executionItemX = handlerInterpreterMock.executionItemList.get(stepNum);
+//                assertTrue("wrong class: " + executionItemX.getClass().getName(),
+//                    executionItemX instanceof ScriptFileCommandExecutionItem);
+//                ScriptFileCommandExecutionItem execItemX = (ScriptFileCommandExecutionItem) executionItemX;
+//                assertNotNull(execItemX.getScript());
+//                assertNotNull(execItemX.getArgs());
+//                assertEquals("failure handler script", execItemX.getScript());
+//                assertEquals(3, execItemX.getArgs().length);
+//                assertEquals("failure", execItemX.getArgs()[0]);
+//                assertEquals("script", execItemX.getArgs()[1]);
+//                assertEquals("args", execItemX.getArgs()[2]);
+//
+//
+//                final ExecutionContext executionContextX = handlerInterpreterMock.executionContextList.get(stepNum);
+//                assertEquals(TEST_PROJECT, executionContextX.getFrameworkProject());
+//                assertNull(executionContextX.getDataContext());
+//                assertEquals(0, executionContextX.getLoglevel());
+//                assertEquals("user1", executionContextX.getUser());
+//                assertEquals(nodeset, executionContextX.getNodeSelector());
+//                assertNull(executionContextX.getArgs());
+//            }
 
-            {
-                //failure handler result
-                final StatusResult interpreterResult = test1.get(resultIndex);
-                assertTrue(interpreterResult instanceof testResult);
-                testResult val = (testResult) interpreterResult;
-                assertEquals(0, val.flag);
-                assertFalse(val.isSuccess());
-
-                final StepExecutionItem executionItemX = handlerInterpreterMock.executionItemList.get(stepNum);
-                assertTrue("wrong class: " + executionItemX.getClass().getName(),
-                    executionItemX instanceof ScriptFileCommandExecutionItem);
-                ScriptFileCommandExecutionItem execItemX = (ScriptFileCommandExecutionItem) executionItemX;
-                assertNotNull(execItemX.getScript());
-                assertNotNull(execItemX.getArgs());
-                assertEquals("failure handler script", execItemX.getScript());
-                assertEquals(3, execItemX.getArgs().length);
-                assertEquals("failure", execItemX.getArgs()[0]);
-                assertEquals("script", execItemX.getArgs()[1]);
-                assertEquals("args", execItemX.getArgs()[2]);
-
-
-                final ExecutionContext executionContextX = handlerInterpreterMock.executionContextList.get(stepNum);
-                assertEquals(TEST_PROJECT, executionContextX.getFrameworkProject());
-                assertNull(executionContextX.getDataContext());
-                assertEquals(0, executionContextX.getLoglevel());
-                assertEquals("user1", executionContextX.getUser());
-                assertEquals(nodeset, executionContextX.getNodeSelector());
-                assertNull(executionContextX.getArgs());
-            }
-
-            resultIndex=2;
+//            resultIndex=2;
             stepNum = 1;
             {
                 //second step result
-                final StatusResult interpreterResult = test1.get(resultIndex);
-                assertTrue(interpreterResult instanceof testResult);
-                testResult val = (testResult) interpreterResult;
+                final StepExecutionResult interpreterResult = test1.get(resultIndex);
+                final DispatcherResult dr = NodeDispatchStepExecutor.extractDispatcherResult(interpreterResult);
+                assertEquals(1, dr.getResults().size());
+                final NodeStepResult nrs = dr.getResults().values().iterator().next();
+                assertTrue("unexpected class: " + nrs.getClass(),
+                           nrs instanceof testResult);
+                testResult val = (testResult) nrs;
                 assertEquals(1, val.flag);
                 assertTrue(val.isSuccess());
 
@@ -1287,6 +1324,9 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 assertNull(executionContext.getArgs());
             }
         }
+    }
+
+    public void testFailureHandlerItemYesKeepgoingHandlerSuccess() {
         {
             //test a workflow with a failing item (1), with keepgoing=true, and a failureHandler that succeeds
             final boolean KEEPGOING_TEST = true;
@@ -1390,14 +1430,11 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             assertTrue(result.isSuccess());
             assertNull("threw exception: " + result.getException(), result.getException());
 
-            assertEquals(1, result.getResultSet().size());
             assertNotNull(result.getResultSet());
-            assertNotNull("missing key" + testnode + ": " + result.getResultSet().keySet(), result.getResultSet().get(
-                testnode));
-            final List<StatusResult> test1 = result.getResultSet().get(testnode);
-            System.err.println("results: "+result.getResultSet().get(testnode));
+            final List<StepExecutionResult> test1 = result.getResultSet();
+            System.err.println("results: "+test1);
 
-            assertEquals(3, test1.size());
+            assertEquals(2, test1.size());
 
             assertEquals(2, interpreterMock.executionItemList.size());
             assertEquals(2, interpreterMock.executionContextList.size());
@@ -1409,41 +1446,14 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             int resultIndex =0;
             int stepNum=0;
             {
-                //first step result
-                final StatusResult interpreterResult = test1.get(resultIndex);
-                assertTrue(interpreterResult instanceof testResult);
-                testResult val = (testResult) interpreterResult;
-                assertEquals(0, val.flag);
-                assertFalse(val.isSuccess());
-
-
-                final StepExecutionItem executionItem1 = interpreterMock.executionItemList.get(stepNum);
-                assertTrue("wrong class: " + executionItem1.getClass().getName(),
-                    executionItem1 instanceof ExecCommandExecutionItem);
-                ExecCommandExecutionItem execItem = (ExecCommandExecutionItem) executionItem1;
-                assertNotNull(execItem.getCommand());
-                assertEquals(3, execItem.getCommand().length);
-                assertEquals("a", execItem.getCommand()[0]);
-                assertEquals("2", execItem.getCommand()[1]);
-                assertEquals("command", execItem.getCommand()[2]);
-
-
-                final ExecutionContext executionContext = interpreterMock.executionContextList.get(stepNum);
-                assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
-                assertNull(executionContext.getDataContext());
-                assertEquals(0, executionContext.getLoglevel());
-                assertEquals("user1", executionContext.getUser());
-                assertEquals(nodeset, executionContext.getNodeSelector());
-                assertNull(executionContext.getArgs());
-            }
-
-            resultIndex=1;
-
-            {
                 //failure handler result
-                final StatusResult interpreterResult = test1.get(resultIndex);
-                assertTrue(interpreterResult instanceof testResult);
-                testResult val = (testResult) interpreterResult;
+                final StepExecutionResult interpreterResult = test1.get(resultIndex);
+                final DispatcherResult dr = NodeDispatchStepExecutor.extractDispatcherResult(interpreterResult);
+                assertEquals(1, dr.getResults().size());
+                final NodeStepResult nrs = dr.getResults().values().iterator().next();
+                assertTrue("unexpected class: " + nrs.getClass(),
+                           nrs instanceof testResult);
+                testResult val = (testResult) nrs;
                 assertEquals(0, val.flag);
                 assertTrue(val.isSuccess());
 
@@ -1469,13 +1479,17 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 assertNull(executionContextX.getArgs());
             }
 
-            resultIndex=2;
+            resultIndex=1;
             stepNum = 1;
             {
                 //second step result
-                final StatusResult interpreterResult = test1.get(resultIndex);
-                assertTrue(interpreterResult instanceof testResult);
-                testResult val = (testResult) interpreterResult;
+                final StepExecutionResult interpreterResult = test1.get(resultIndex);
+                final DispatcherResult dr = NodeDispatchStepExecutor.extractDispatcherResult(interpreterResult);
+                assertEquals(1, dr.getResults().size());
+                final NodeStepResult nrs = dr.getResults().values().iterator().next();
+                assertTrue("unexpected class: " + nrs.getClass(),
+                           nrs instanceof testResult);
+                testResult val = (testResult) nrs;
                 assertEquals(1, val.flag);
                 assertTrue(val.isSuccess());
 
@@ -1535,11 +1549,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
 
             //set resturn result
-            interpreterMock.resultList.add(new NodeStepResult() {
-                public boolean isSuccess() {
-                    return true;
-                }
-            });
+            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
 
             final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
 
@@ -1603,17 +1613,9 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
 
             //set resturn result node 1
-            interpreterMock.resultList.add(new NodeStepResult() {
-                public boolean isSuccess() {
-                    return true;
-                }
-            });
+            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
             //set resturn result node 2
-            interpreterMock.resultList.add(new NodeStepResult() {
-                public boolean isSuccess() {
-                    return true;
-                }
-            });
+            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
 
             final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
 
@@ -1701,29 +1703,13 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
 
             //set resturn result node 1 step 1
-            interpreterMock.resultList.add(new NodeStepResult() {
-                public boolean isSuccess() {
-                    return true;
-                }
-            });
+            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
             //set resturn result node 2 step 1
-            interpreterMock.resultList.add(new NodeStepResult() {
-                public boolean isSuccess() {
-                    return true;
-                }
-            });
+            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
             //set resturn result node 1 step 2
-            interpreterMock.resultList.add(new NodeStepResult() {
-                public boolean isSuccess() {
-                    return true;
-                }
-            });
+            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
             //set resturn result node 2 step 2
-            interpreterMock.resultList.add(new NodeStepResult() {
-                public boolean isSuccess() {
-                    return true;
-                }
-            });
+            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
 
             final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
 

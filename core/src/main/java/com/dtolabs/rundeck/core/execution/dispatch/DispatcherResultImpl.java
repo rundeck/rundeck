@@ -25,6 +25,7 @@
 package com.dtolabs.rundeck.core.execution.dispatch;
 
 import com.dtolabs.rundeck.core.execution.StatusResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 
 import java.util.*;
 
@@ -35,26 +36,26 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class DispatcherResultImpl implements DispatcherResult, HasDispatcherResult {
-    private Map<String, ? extends StatusResult> results;
+    private Map<String, ? extends NodeStepResult> results;
     private boolean success;
     private String description;
 
-    public DispatcherResultImpl(Map<String, ? extends StatusResult> results, boolean success) {
+    public DispatcherResultImpl(Map<String, ? extends NodeStepResult> results, boolean success) {
         this.results = results;
         this.success = success;
     }
 
-    public DispatcherResultImpl(Map<String, ? extends StatusResult> results, boolean success, String description) {
+    public DispatcherResultImpl(Map<String, ? extends NodeStepResult> results, boolean success, String description) {
         this.results = results;
         this.success = success;
         this.description = description;
     }
 
-    public Map<String, ? extends StatusResult> getResults() {
+    public Map<String, ? extends NodeStepResult> getResults() {
         return results;
     }
 
-    public void setResults(Map<String, ? extends StatusResult> results) {
+    public void setResults(Map<String, ? extends NodeStepResult> results) {
         this.results = results;
     }
 

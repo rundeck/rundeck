@@ -16,22 +16,39 @@
  */
 
 /*
-* StepExecutionResult.java
+* NodeStepResultImpl.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 11/2/12 11:46 AM
+* Created: 11/8/12 4:13 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.workflow.steps;
+package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
-import com.dtolabs.rundeck.core.execution.ExceptionStatusResult;
-import com.dtolabs.rundeck.core.execution.StatusResult;
+import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
+
+import java.util.*;
 
 
 /**
- * StepExecutionResult is ...
+ * NodeStepResultImpl is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface StepExecutionResult extends ExceptionStatusResult {
+public class NodeStepResultImpl extends StepExecutionResultImpl implements NodeStepResult {
+    private INodeEntry node;
+
+    public NodeStepResultImpl(boolean success, INodeEntry node) {
+        super(success);
+        this.node = node;
+    }
+
+    public NodeStepResultImpl(boolean success, Exception exception, INodeEntry node) {
+        super(success, exception);
+        this.node = node;
+    }
+
+    public INodeEntry getNode() {
+        return node;
+    }
 }

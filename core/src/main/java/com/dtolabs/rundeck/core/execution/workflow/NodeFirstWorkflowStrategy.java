@@ -29,13 +29,20 @@ import com.dtolabs.rundeck.core.NodesetEmptyException;
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
+import com.dtolabs.rundeck.core.execution.HasSourceResult;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.StatusResult;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
+import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResultImpl;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
 import org.apache.log4j.Logger;
 
 import java.util.*;
@@ -61,7 +68,7 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
         final IWorkflow workflow = item.getWorkflow();
         boolean wfsuccess = true;
 
-        final HashMap<String, List<StatusResult>> results = new HashMap<String, List<StatusResult>>();
+        final ArrayList<StepExecutionResult> results = new ArrayList<StepExecutionResult>();
         final Map<String, Collection<String>> failures = new HashMap<String, Collection<String>>();
         try {
             final NodesSelector nodeSelector = executionContext.getNodeSelector();
@@ -127,7 +134,7 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
         final boolean success = wfsuccess;
         final Exception fexception = exception;
 
-        return new WorkflowExecutionResult(results, failures, success, fexception);
+        return new BaseWorkflowExecutionResult(results, failures, success, fexception);
     }
 
     /**
@@ -135,22 +142,90 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
      * @return true if the section was succesful
      */
     private boolean executeWFSectionNodeDispatch(ExecutionContext executionContext,
-                                                 HashMap<String, List<StatusResult>> results,
+                                                 List<StepExecutionResult> results,
                                                  Map<String, Collection<String>> failures,
                                                  IWorkflow flowsection)
         throws ExecutionServiceException, DispatcherException {
         logger.debug("Node dispatch for " + flowsection.getCommands().size() + " steps");
         final DispatcherResult dispatch;
         final WorkflowExecutionItem innerLoopItem = createInnerLoopItem(flowsection);
-        final WorkflowExecutor executor = framework.getWorkflowExecutionService()
-            .getExecutorForItem(innerLoopItem);
+        final WorkflowExecutor executor = framework.getWorkflowExecutionService().getExecutorForItem(innerLoopItem);
         final Dispatchable dispatchedWorkflow = new DispatchedWorkflow(executor, innerLoopItem);
         //dispatch the sequence of dispatched items to each node
         dispatch = framework.getExecutionService().dispatchToNodes(executionContext, dispatchedWorkflow);
 
         logger.debug("Node dispatch result: " + dispatch);
-        extractResults(results, failures, dispatch);
+        extractWFDispatcherResult(dispatch, results, failures, flowsection.getCommands().size());
         return dispatch.isSuccess();
+    }
+
+    /**
+     * invert the result of a DispatcherResult which contains a WorkflowResult
+     */
+    private void extractWFDispatcherResult(DispatcherResult dispatcherResult,
+                                           List<StepExecutionResult> results,
+                                           Map<String, Collection<String>> failures,
+                                           int max) {
+        ArrayList<HashMap<String, NodeStepResult>> full = new ArrayList<HashMap<String, NodeStepResult>>(max);
+        ArrayList<Boolean> successes = new ArrayList<Boolean>(max);
+        HashMap<String, ArrayList<NodeStepResult>> im = new HashMap<String, ArrayList<NodeStepResult>>();
+        //Convert a dispatcher result to a list of StepExecutionResults.
+        //each result for node in the dispatcheresult contains a workflow result
+            //unroll each workflow result, append the result of each step into map of node results
+
+        //DispatcherResult contains map {nodename: NodeStepResult}
+        for (final String nodeName : dispatcherResult.getResults().keySet()) {
+            final NodeStepResult stepResult = dispatcherResult.getResults().get(nodeName);
+
+            //This NodeStepResult is produced by the DispatchedWorkflow wrapper
+            WorkflowExecutionResult result = DispatchedWorkflow.extractStepResult(stepResult);
+
+            if (null == failures.get(nodeName)) {
+                failures.put(nodeName, new ArrayList<String>());
+            }
+
+            final Collection<String> strings = result.getFailureMessages().get(nodeName);
+            if(null!=strings && strings.size()>0){
+                failures.get(nodeName).addAll(strings);
+            }
+            if (null != result.getException()) {
+                failures.get(nodeName).add(result.getException().getMessage());
+            }
+            //The WorkflowExecutionResult has a list of StepExecutionResults produced by NodeDispatchStepExecutor
+            int i=0;
+            for (final StepExecutionResult partStepResult : result.getResultSet()) {
+                DispatcherResult subresult = NodeDispatchStepExecutor.extractDispatcherResult(partStepResult);
+
+                while(full.size()<=i) {
+                    full.add(new HashMap<String, NodeStepResult>());
+                }
+                while(successes.size()<=i){
+                    successes.add(Boolean.TRUE);
+                }
+                HashMap<String, NodeStepResult> map=full.get(i);
+
+                NodeStepResult result1 = subresult.getResults().get(nodeName);
+                map.put(nodeName, result1);
+                if(!result1.isSuccess()) {
+                    successes.set(i, false);
+                    failures.get(nodeName).add(result1.toString());
+                }
+
+                i++;
+            }
+
+
+        }
+
+        //add a new wrapped DispatcherResults for each original step
+        int x=0;
+        for (final HashMap<String, NodeStepResult> map : full) {
+            Boolean success = successes.get(x);
+            DispatcherResult r = new DispatcherResultImpl(map, null != success ? success : false);
+            results.add(NodeDispatchStepExecutor.wrapDispatcherResult(r));
+            x++;
+        }
+
     }
 
     /**
@@ -158,25 +233,23 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
      * @return success if all steps were successful
      */
     private boolean executeWFSection(ExecutionContext executionContext,
-                                     HashMap<String, List<StatusResult>> results,
+                                     List<StepExecutionResult> results,
                                      Map<String, Collection<String>> failures,
                                      int stepCount,
                                      boolean sectionSuccess,
                                      final List<StepExecutionItem> commands, final boolean keepgoing)
         throws WorkflowStepFailureException {
         Map<Integer, Object> failedMap = new HashMap<Integer, Object>();
-        List<DispatcherResult> results1 = new ArrayList<DispatcherResult>();
 
         boolean workflowsuccess=executeWorkflowItemsForNodeSet(executionContext,
                                        failedMap,
-                                       results1,
+                                       results,
                                        commands,
                                        keepgoing, stepCount);
 
-        logger.debug("Aggregate results: " + workflowsuccess + " " + results1 + ", " + failedMap);
-        HashMap<String, List<StatusResult>> localResult = convertResults(results1);
+        logger.debug("Aggregate results: " + workflowsuccess + " " + results + ", " + failedMap);
         Map<String, Collection<String>> localFailure = convertFailures(failedMap);
-        mergeResult(results, localResult);
+
         mergeFailure(failures, localFailure);
         return workflowsuccess;
     }
@@ -227,13 +300,31 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
             this.workflowItem = workflowItem;
         }
 
-        public StatusResult dispatch(final ExecutionContext context,
+        public NodeStepResult dispatch(final ExecutionContext context,
                                      final INodeEntry node) throws DispatcherException {
             //use single node context
             final ExecutionContextImpl newcontext = new ExecutionContextImpl.Builder(context)
                 .nodeSelector(SelectorUtils.singleNode(node.getNodename()))
                 .build();
-            return executor.executeWorkflow(newcontext, workflowItem);
+            WorkflowExecutionResult result = executor.executeWorkflow(newcontext, workflowItem);
+            NodeStepResultImpl result1 = new NodeStepResultImpl(result.isSuccess(), node);
+            result1.setSourceResult(result);
+            return result1;
+        }
+
+        static WorkflowExecutionResult extractStepResult(NodeStepResult dispatcherResult) {
+            assert dispatcherResult instanceof HasSourceResult;
+            if (!(dispatcherResult instanceof HasSourceResult)) {
+                throw new IllegalArgumentException("Cannot extract source result from dispatcher result");
+            }
+            HasSourceResult sourced = (HasSourceResult) dispatcherResult;
+            StatusResult sourceResult = sourced.getSourceResult();
+            assert sourceResult instanceof WorkflowExecutionResult;
+            if (!(sourceResult instanceof WorkflowExecutionResult)) {
+                throw new IllegalArgumentException("Cannot extract workflow result from dispatcher result");
+            }
+            WorkflowExecutionResult wfresult = (WorkflowExecutionResult) sourceResult;
+            return wfresult;
         }
     }
     /**
@@ -272,54 +363,6 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
         return sections;
     }
 
-    private void extractResults(HashMap<String, List<StatusResult>> results,
-                                Map<String, Collection<String>> failures,
-                                DispatcherResult dispatch) {
-        for (final String nodename : dispatch.getResults().keySet()) {
-
-            //each dispatch result for a node will be complete workflow result for step-first workflow strategy
-            final StatusResult interpreterResult = dispatch.getResults().get(nodename);
-            final WorkflowExecutionResult workflowExecutionResult =
-                (WorkflowExecutionResult) interpreterResult;
-            /**
-             * Specific result for workflow on single node
-             */
-            for (final String s : workflowExecutionResult.getResultSet().keySet()) {
-                //should be single key in this result set, corresponding to single node used for step first workflow exec
-                /**
-                 * Collection of results for each workflow item
-                 */
-                final List<StatusResult> collection = workflowExecutionResult.getResultSet().get(s);
-                //include any failures in the failures group
-
-                final ArrayList<StatusResult> statusResults = new ArrayList<StatusResult>();
-                for (final StatusResult statusResult : collection) {
-                    if (!statusResult.isSuccess()) {
-                        if (null == failures.get(s)) {
-                            failures.put(s, new ArrayList<String>());
-                        }
-                        failures.get(s).add(statusResult.toString());
-                    } else {
-                        statusResults.add(statusResult);
-                    }
-                }
-                results.put(s, statusResults);
-            }
-            for (final String s : workflowExecutionResult.getFailureMessages().keySet()) {
-                final Collection<String> strings = workflowExecutionResult.getFailureMessages().get(s);
-                if (null == failures.get(s)) {
-                    failures.put(s, new ArrayList<String>());
-                }
-                failures.get(s).addAll(strings);
-            }
-            if (null != workflowExecutionResult.getException()) {
-                if (null == failures.get(nodename)) {
-                    failures.put(nodename, new ArrayList<String>());
-                }
-                failures.get(nodename).add(workflowExecutionResult.getException().getMessage());
-            }
-        }
-    }
 
 
     /**

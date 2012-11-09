@@ -99,7 +99,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         parallelTask.setThreadCount(context.getThreadCount());
         parallelTask.setFailOnAny(!keepgoing);
         boolean success = false;
-        final HashMap<String, StatusResult> resultMap = new HashMap<String, StatusResult>();
+        final HashMap<String, NodeStepResult> resultMap = new HashMap<String, NodeStepResult>();
         final HashMap<String, Object> failureMap = new HashMap<String, Object>();
         final Collection<INodeEntry> nodes1 = nodes.getNodes();
         //reorder based on configured rank property and order
@@ -158,12 +158,12 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
     }
 
     private Callable dispatchableCallable(final ExecutionContext context, final Dispatchable toDispatch,
-                                          final HashMap<String, StatusResult> resultMap, final INodeEntry node,
+                                          final HashMap<String, NodeStepResult> resultMap, final INodeEntry node,
                                           final Map<String, Object> failureMap) {
         return new Callable() {
             public Object call() throws Exception {
                 try {
-                    final StatusResult dispatch = toDispatch.dispatch(context, node);
+                    final NodeStepResult dispatch = toDispatch.dispatch(context, node);
                     if (!dispatch.isSuccess()) {
                         failureMap.put(node.getNodename(), dispatch);
                     }
@@ -178,7 +178,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
     }
 
     private Callable execItemCallable(final ExecutionContext context, final NodeStepExecutionItem item,
-                                      final HashMap<String, StatusResult> resultMap, final INodeEntry node,
+                                      final HashMap<String, NodeStepResult> resultMap, final INodeEntry node,
                                       final Map<String, Object> failureMap) {
         return new Callable() {
             public Object call() throws Exception {

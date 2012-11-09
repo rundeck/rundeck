@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 
 import java.util.*;
 
@@ -52,7 +53,7 @@ public class StepFirstWorkflowStrategy extends BaseWorkflowStrategy {
         Exception exception = null;
         final IWorkflow workflow = item.getWorkflow();
         final Map<Integer, Object> failedList = new HashMap<Integer, Object>();
-        final List<DispatcherResult> resultList = new ArrayList<DispatcherResult>();
+        final List<StepExecutionResult> resultList = new ArrayList<StepExecutionResult>();
         try {
             executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
                 "NodeSet: " + executionContext.getNodeSelector());
@@ -78,9 +79,8 @@ public class StepFirstWorkflowStrategy extends BaseWorkflowStrategy {
         }
         final boolean success = workflowsuccess;
         final Exception orig = exception;
-        final HashMap<String, List<StatusResult>> results = convertResults(resultList);
         final Map<String, Collection<String>> failures = convertFailures(failedList);
-        return new WorkflowExecutionResult(results, failures, success, orig);
+        return new BaseWorkflowExecutionResult(resultList, failures, success, orig);
 
     }
 

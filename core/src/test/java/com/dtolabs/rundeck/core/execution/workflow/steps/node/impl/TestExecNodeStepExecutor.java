@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommand;
@@ -181,15 +182,7 @@ public class TestExecNodeStepExecutor extends AbstractBaseTest {
             assertTrue(Arrays.deepEquals(strings, testexec.testCommand));
             assertEquals(test1, testexec.testNode);
         }
-        testexec.testResult=new NodeExecutorResult() {
-            public int getResultCode() {
-                return -2;
-            }
-
-            public boolean isSuccess() {
-                return true;
-            }
-        };
+        testexec.testResult= new NodeExecutorResultImpl(true, null, -2);
 
         {
             final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
@@ -294,15 +287,7 @@ public class TestExecNodeStepExecutor extends AbstractBaseTest {
             assertTrue(Arrays.deepEquals(strings, testexec.testCommand));
             assertEquals(test1, testexec.testNode);
         }
-        testexec.testResult = new NodeExecutorResult() {
-            public int getResultCode() {
-                return -2;
-            }
-
-            public boolean isSuccess() {
-                return true;
-            }
-        };
+        testexec.testResult = new NodeExecutorResultImpl(true, null, -2);
 
         {
             final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
