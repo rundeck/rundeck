@@ -60,6 +60,7 @@ import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.Workflow
 import rundeck.Option
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -1663,7 +1664,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         return false
     }
 
-    StatusResult executeWorkflowStep(com.dtolabs.rundeck.core.execution.ExecutionContext executionContext,
+    StepExecutionResult executeWorkflowStep(com.dtolabs.rundeck.core.execution.ExecutionContext executionContext,
                                        StepExecutionItem executionItem)  {
         if (!(executionItem instanceof JobExecutionItem)) {
             throw new StepException("Unsupported item type: " + executionItem.getClass().getName());
@@ -1682,7 +1683,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         JobExecutionItem jitem = (JobExecutionItem) executionItem
         System.err.println("Execute workflow step for jobref: "+jitem.jobIdentifier)
         System.err.println("Execute workflow step for nodes: "+executionContext.nodeSelector)
-        def StatusResult result = null
+        def StepExecutionResult result = null
         try{
 
             def group = null
@@ -1793,7 +1794,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             if(!wresult || !wresult.isSuccess()){
                 System.err.println("Job ref [${jitem.jobIdentifier}] failed: "+ wresult);
             }
-            result=wresult
+            result=new StepExecutionResultImpl(wresult.isSuccess())
+            result.sourceResult=wresult
         } finally {
             if (unbindrequest) {
                 RequestContextHolder.setRequestAttributes (null)
