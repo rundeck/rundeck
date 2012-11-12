@@ -131,6 +131,182 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
             assertEquals("scheduledExecution",sec.redirectArgs.controller)
         }
     }
+    public void testtransferSessionEditStateOpts() {
+        def se = new ScheduledExecutionController()
+        def params = [:]
+        se.transferSessionEditState([:], params,'1')
+        assertEquals(0, params.size())
+
+        params=[_sessionopts:true]
+        se.transferSessionEditState([:], params, '1')
+        assertEquals(1, params.size())
+        se.transferSessionEditState([editOPTS: [:]], params, '1')
+        assertEquals(1, params.size())
+        se.transferSessionEditState([editOPTS: ['1':['test':true]]], params, '1')
+        assertEquals(2, params.size())
+        assertEquals(['test':true], params['_sessionEditOPTSObject'])
+
+        params = [_sessionopts: true]
+        se.transferSessionEditState([editOPTS: ['1': []]], params, '1')
+        assertEquals(2, params.size())
+        assertEquals([], params['_sessionEditOPTSObject'])
+    }
+    public void testtransferSessionEditStateWF() {
+        def se = new ScheduledExecutionController()
+        def params = [:]
+        se.transferSessionEditState([:], params,'1')
+        assertEquals(0, params.size())
+
+        params=[_sessionwf:true]
+        se.transferSessionEditState([:], params, '1')
+        assertEquals(1, params.size())
+        se.transferSessionEditState([editWF: [:]], params, '1')
+        assertEquals(1, params.size())
+        se.transferSessionEditState([editWF: ['1':['test':true]]], params, '1')
+        assertEquals(2, params.size())
+        assertEquals(['test':true], params['_sessionEditWFObject'])
+
+        params = [_sessionwf: true]
+        se.transferSessionEditState([editWF: ['1': []]], params, '1')
+        assertEquals(2, params.size())
+        assertEquals([], params['_sessionEditWFObject'])
+    }
+    public void testUpdateSessionOptsEmptyList() {
+        mockDomain(ScheduledExecution)
+        mockDomain(Workflow)
+        mockDomain(CommandExec)
+        mockDomain(Option)
+        def sec = new ScheduledExecutionController()
+        if (true) {//test basic copy action
+
+            def se = new ScheduledExecution(
+                    jobName: 'monkey1', project: 'testProject', description: 'blah',
+                    options: [new Option(name: 'blah')],
+                    workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+            )
+            se.save()
+//
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.projects {return []}
+            fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            sec.frameworkService = fwkControl.createMock()
+            def seServiceControl = mockFor(ScheduledExecutionService, true)
+
+            seServiceControl.demand.getByIDorUUID {id -> return se }
+            seServiceControl.demand._doupdate {params, user, roleList, framework, changeinfo = [:] ->
+                assertNotNull(params['_sessionEditOPTSObject'])
+                assertEquals([],params['_sessionEditOPTSObject'])
+                [success: true, scheduledExecution: se]
+            }
+            seServiceControl.demand.logJobChange {changeinfo, properties ->}
+            sec.scheduledExecutionService = seServiceControl.createMock()
+
+
+            sec.metaClass.message={params -> params?.code?:'messageCodeMissing'}
+
+            def params = [
+                    id:se.id.toString(),
+                    jobName: 'monkey1',
+                    project: 'testProject',
+                    description: 'blah',
+                    workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
+                    _sessionopts:true,
+            ]
+            sec.session['editOPTS']= [
+                    (se.id.toString()): [
+                            //empty list
+                    ]
+            ]
+            sec.params.putAll(params)
+            final subject = new Subject()
+            subject.principals << new Username('test')
+            subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
+            sec.request.setAttribute("subject", subject)
+
+            sec.update()
+
+            assertNotNull sec.flash.savedJob
+            assertNotNull sec.flash.savedJobMessage
+            assertNull sec.modelAndView.viewName, sec.modelAndView.viewName
+            assertEquals("show",sec.redirectArgs.action)
+            assertEquals("scheduledExecution",sec.redirectArgs.controller)
+        }
+    }
+    public void testUpdateSessionWFEditEmptyList() {
+        mockDomain(ScheduledExecution)
+        mockDomain(Workflow)
+        mockDomain(CommandExec)
+        mockDomain(Option)
+        def sec = new ScheduledExecutionController()
+        if (true) {//test basic copy action
+
+            def se = new ScheduledExecution(
+                    jobName: 'monkey1', project: 'testProject', description: 'blah',
+                    options: [new Option(name: 'blah')],
+                    workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+            )
+            se.save()
+//
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.projects {return []}
+            fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            sec.frameworkService = fwkControl.createMock()
+            def seServiceControl = mockFor(ScheduledExecutionService, true)
+
+            seServiceControl.demand.getByIDorUUID {id -> return se }
+            seServiceControl.demand._doupdate {params, user, roleList, framework, changeinfo = [:] ->
+                assertNotNull(params['_sessionEditWFObject'])
+                assertEquals([],params['_sessionEditWFObject'])
+                [success: true, scheduledExecution: se]
+            }
+            seServiceControl.demand.logJobChange {changeinfo, properties ->}
+            sec.scheduledExecutionService = seServiceControl.createMock()
+
+
+            sec.metaClass.message={params -> params?.code?:'messageCodeMissing'}
+
+            def params = [
+                    id:se.id.toString(),
+                    jobName: 'monkey1',
+                    project: 'testProject',
+                    description: 'blah',
+                    workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
+                    _sessionwf: true,
+            ]
+            sec.session['editWF']= [
+                    (se.id.toString()): [
+                            //empty list
+                    ]
+            ]
+            sec.params.putAll(params)
+            final subject = new Subject()
+            subject.principals << new Username('test')
+            subject.principals.addAll(['userrole', 'test'].collect {new Group(it)})
+            sec.request.setAttribute("subject", subject)
+
+            sec.update()
+
+            assertNotNull sec.flash.savedJob
+            assertNotNull sec.flash.savedJobMessage
+            assertNull sec.modelAndView.viewName, sec.modelAndView.viewName
+            assertEquals("show",sec.redirectArgs.action)
+            assertEquals("scheduledExecution",sec.redirectArgs.controller)
+        }
+    }
 
     public void testSaveFail() {
         mockDomain(ScheduledExecution)
