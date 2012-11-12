@@ -157,7 +157,7 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
 
         final WebserviceResponse response;
         try {
-            response = serverService.makeRundeckRequest(RUNDECK_API_EXECUTION_REPORT, params, null, null);
+            response = serverService.makeRundeckRequest(RUNDECK_API_EXECUTION_REPORT, params, null, null, "xmlBatch");
         } catch (MalformedURLException e) {
             throw new CentralDispatcherServerRequestException("Failed to make request", e);
         }
@@ -207,7 +207,7 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
 
         final WebserviceResponse response;
         try {
-            response = serverService.makeRundeckRequest(requestPath, params, tempxml, null);
+            response = serverService.makeRundeckRequest(requestPath, params, tempxml, null, "xmlBatch");
         } catch (MalformedURLException e) {
             throw new CentralDispatcherServerRequestException("Failed to make request", e);
         }
@@ -288,7 +288,7 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
 
         final WebserviceResponse response;
         try {
-            response = serverService.makeRundeckRequest(RUNDECK_LIST_EXECUTIONS_PATH, params, null, null);
+            response = serverService.makeRundeckRequest(RUNDECK_LIST_EXECUTIONS_PATH, params, null, null, "xmlBatch");
         } catch (MalformedURLException e) {
             throw new CentralDispatcherServerRequestException("Failed to make request", e);
         }
@@ -460,7 +460,7 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
         //2. send request via ServerService
         final WebserviceResponse response;
         try {
-            response = serverService.makeRundeckRequest(RUNDECK_KILL_JOB_PATH, params, null, null);
+            response = serverService.makeRundeckRequest(RUNDECK_KILL_JOB_PATH, params, null, null, "xmlBatch");
         } catch (MalformedURLException e) {
             throw new CentralDispatcherServerRequestException("Failed to make request", e);
         }
@@ -533,7 +533,7 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
         //2. send request via ServerService
         final WebserviceResponse response;
         try {
-            response = serverService.makeRundeckRequest(RUNDECK_LIST_STORED_JOBS_PATH, params, null, null);
+            response = serverService.makeRundeckRequest(RUNDECK_LIST_STORED_JOBS_PATH, params, null, null, "xmlBatch");
         } catch (MalformedURLException e) {
             throw new CentralDispatcherServerRequestException("Failed to make request", e);
         }
@@ -805,7 +805,7 @@ public class RundeckCentralDispatcher implements CentralDispatcher {
         //2. send request via ServerService
         final WebserviceResponse response;
         try {
-            response = serverService.makeRundeckRequest(RUNDECK_JOBS_UPLOAD, params, input, null);
+            response = serverService.makeRundeckRequest(RUNDECK_JOBS_UPLOAD, params, input, null, "xmlBatch");
         } catch (MalformedURLException e) {
             throw new CentralDispatcherServerRequestException("Failed to make request", e);
         }
