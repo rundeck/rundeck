@@ -106,7 +106,7 @@ fi
 
 
 # try dispatch
-echo "using --noqueue option"
+echo "dispatch --noqueue option"
 $RDECK_BASE/tools/bin/dispatch -p test --noqueue -- uptime
 if [ 0 != $? ] ; then
 	echo Failed to dispatch uptime via cli : $!
@@ -124,6 +124,50 @@ if [ 0 != $? ] ; then
 	exit 2
 fi
 
+rm $DIR/exec.out
+
+echo "dispatch --follow -- command"
+$RDECK_BASE/tools/bin/dispatch -p test --follow -- echo dispatch test \; uptime > $DIR/exec.out
+if [ 0 != $? ] ; then
+	echo Failed to dispatch uptime and follow : $!
+	exit 2
+fi
+grep 'dispatch test' -q $DIR/exec.out 
+if [ 0 != $? ] ; then
+	echo Failed to see follow output for dispatch: $!
+	exit 2
+fi
+
+echo "dispatch -s scriptfile"
+cat > $DIR/dispatch-test.sh <<END
+#!/bin/bash
+echo this is a test of dispatch -s 
+END
+$RDECK_BASE/tools/bin/dispatch -p test -s $DIR/dispatch-test.sh > $DIR/exec.out
+if [ 0 != $? ] ; then
+	echo Failed to dispatch scriptfile via cli : $!
+	exit 2
+fi
+grep 'Succeeded queueing' -q $DIR/exec.out 
+if [ 0 != $? ] ; then
+	echo Failed to queue scriptfile: $!
+	exit 2
+fi
+
+echo "dispatch --follow -s scriptfile"
+$RDECK_BASE/tools/bin/dispatch -p test --follow -s $DIR/dispatch-test.sh  > $DIR/exec.out
+if [ 0 != $? ] ; then
+	echo Failed to follow scriptfile via cli : $!
+	exit 2
+fi
+grep 'this is a test of dispatch -s' -q $DIR/exec.out 
+if [ 0 != $? ] ; then
+	echo Failed to see follow output for dispatch scriptfile: $!
+	exit 2
+fi
+
+
+rm $DIR/dispatch-test.sh
 rm $DIR/exec.out
 
 #try loading yaml jobs
