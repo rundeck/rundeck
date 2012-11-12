@@ -166,6 +166,33 @@ if [ 0 != $? ] ; then
 	exit 2
 fi
 
+echo "dispatch -u url"
+cat > $DIR/dispatch-test.sh <<END
+#!/bin/bash
+echo this is a test of dispatch -u url
+END
+$RDECK_BASE/tools/bin/dispatch -p test -u file:$DIR/dispatch-test.sh  > $DIR/exec.out
+if [ 0 != $? ] ; then
+	echo Failed to dispatch url via cli : $!
+	exit 2
+fi
+grep 'Succeeded queueing' -q $DIR/exec.out 
+if [ 0 != $? ] ; then
+	echo Failed to queue dispatch url: $!
+	exit 2
+fi
+
+echo "dispatch --follow -u url"
+$RDECK_BASE/tools/bin/dispatch -p test --follow -u file:$DIR/dispatch-test.sh  > $DIR/exec.out
+if [ 0 != $? ] ; then
+	echo Failed to follow dispatch url via cli : $!
+	exit 2
+fi
+grep 'this is a test of dispatch -u url' -q $DIR/exec.out 
+if [ 0 != $? ] ; then
+	echo Failed to see follow output for dispatch scriptfile: $!
+	exit 2
+fi
 
 rm $DIR/dispatch-test.sh
 rm $DIR/exec.out
