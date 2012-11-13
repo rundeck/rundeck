@@ -79,7 +79,7 @@ public abstract class BaseProviderRegistryService<T> implements ProviderService<
     }
     public List<ProviderIdent> listProviders() {
 
-        HashSet<ProviderIdent> providers = new HashSet<ProviderIdent>();
+        final HashSet<ProviderIdent> providers = new HashSet<ProviderIdent>();
 
         for (final String s : registry.keySet()) {
             providers.add(new ProviderIdent(getName(), s));

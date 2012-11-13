@@ -24,19 +24,15 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.execution.StepExecutionItem;
-import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecNodeStepExecutor;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNodeStepExecutor;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLNodeStepExecutor;
+import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
-import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService;
-import com.dtolabs.rundeck.core.plugins.PluginException;
+import com.dtolabs.rundeck.core.plugins.ChainedProviderService;
+import com.dtolabs.rundeck.core.plugins.ConverterService;
 import com.dtolabs.rundeck.core.plugins.ProviderIdent;
-import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,31 +43,48 @@ import java.util.List;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class NodeStepExecutorService extends PluggableProviderRegistryService<NodeStepExecutor> implements
-                                                                                                DescribableService {
+public class NodeStepExecutorService extends ChainedProviderService<NodeStepExecutor> implements DescribableService {
     public static final String SERVICE_NAME = "NodeStepExecutor";
 
+    private BuiltinNodeStepExecutorService primaryService;
+    private ConverterService<NodeStepPlugin, NodeStepExecutor> secondaryService;
+    private NodeStepPluginService pluginService;
     public NodeStepExecutorService(final Framework framework) {
-        super(framework);
-
-        resetDefaultProviders();
+        this.primaryService=new BuiltinNodeStepExecutorService(framework);
+        this.pluginService = new NodeStepPluginService(framework);
+        this.secondaryService
+            = new ConverterService<NodeStepPlugin, NodeStepExecutor>(pluginService,
+                                                                     new NodeStepPluginConverter());
     }
 
+    @Override
+    protected ProviderService<NodeStepExecutor> getPrimaryService() {
+        return primaryService;
+    }
+
+    @Override
+    protected ProviderService<NodeStepExecutor> getSecondaryService() {
+        return secondaryService;
+    }
+
+
+    public void registerInstance(String name, NodeStepExecutor object) {
+        primaryService.registerInstance(name, object);
+    }
+
+    public void registerClass(String name, Class<? extends NodeStepExecutor> clazz) {
+        primaryService.registerClass(name, clazz);
+    }
     public void resetDefaultProviders() {
-        registry.put(ExecNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ExecNodeStepExecutor.class);
-        registry.put(ScriptFileNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ScriptFileNodeStepExecutor.class);
-        registry.put(ScriptURLNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ScriptURLNodeStepExecutor.class);
-        instanceregistry.remove(ExecNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME);
-        instanceregistry.remove(ScriptFileNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME);
-        instanceregistry.remove(ScriptURLNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME);
+        primaryService.resetDefaultProviders();
     }
 
     public NodeStepExecutor getExecutorForExecutionItem(final NodeStepExecutionItem item) throws
-                                                                                  ExecutionServiceException {
+                                                                                          ExecutionServiceException {
         return providerOfType(item.getNodeStepType());
     }
 
-    public static NodeStepExecutorService getInstanceForFramework(Framework framework) {
+    public static NodeStepExecutorService getInstanceForFramework(final Framework framework) {
         if (null == framework.getService(SERVICE_NAME)) {
             final NodeStepExecutorService service = new NodeStepExecutorService(framework);
             framework.setService(SERVICE_NAME, service);
@@ -80,25 +93,6 @@ public class NodeStepExecutorService extends PluggableProviderRegistryService<No
         return (NodeStepExecutorService) framework.getService(SERVICE_NAME);
     }
 
-    public boolean isValidProviderClass(Class clazz) {
-
-        return NodeStepExecutor.class.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
-    }
-
-    public NodeStepExecutor createProviderInstance(Class<NodeStepExecutor> clazz, String name) throws
-                                                                                               PluginException,
-                                                                                               ProviderCreationException {
-        return createProviderInstanceFromType(clazz, name);
-    }
-
-    public boolean isScriptPluggable() {
-        //TODO: add script plugins
-        return false;
-    }
-
-    public NodeStepExecutor createScriptProviderInstance(ScriptPluginProvider provider) throws PluginException {
-        return null;
-    }
 
     public List<Description> listDescriptions() {
         final ArrayList<Description> list = new ArrayList<Description>();
@@ -126,7 +120,11 @@ public class NodeStepExecutorService extends PluggableProviderRegistryService<No
             try {
                 final NodeStepExecutor providerForType = providerOfType(providerIdent.getProviderName());
                 if (providerForType instanceof Describable) {
-                    list.add(providerIdent);
+                    final Describable desc = (Describable) providerForType;
+                    final Description description = desc.getDescription();
+                    if (null != description) {
+                        list.add(providerIdent);
+                    }
                 }
             } catch (ExecutionServiceException e) {
                 e.printStackTrace();

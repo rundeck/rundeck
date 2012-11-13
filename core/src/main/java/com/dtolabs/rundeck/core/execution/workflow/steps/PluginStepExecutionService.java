@@ -16,10 +16,10 @@
  */
 
 /*
-* StepExecutionService.java
+* PluginStepExecutionService.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 11/2/12 10:42 AM
+* Created: 11/12/12 4:28 PM
 * 
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps;
@@ -28,52 +28,26 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkSupportService;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
-import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.plugins.BaseProviderRegistryService;
-import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
+
+import java.util.*;
 
 
 /**
- * StepExecutionService can provide executors for workflow steps.
+ * PluginStepExecutionService is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class StepExecutionService extends BaseProviderRegistryService<StepExecutor> implements FrameworkSupportService {
-    private static final String SERVICE_NAME = "Internal_StepExecution";
+public class PluginStepExecutionService extends BaseProviderRegistryService<StepExecutor>
+    implements FrameworkSupportService {
+    private static final String SERVICE_NAME = "StepExecution";
 
-    private PluginStepExecutionService pluginStepExecutionService;
     public String getName() {
         return SERVICE_NAME;
     }
 
-    StepExecutionService(final Framework framework) {
+    PluginStepExecutionService(final Framework framework) {
         super(framework);
-        pluginStepExecutionService = new PluginStepExecutionService(framework);
-        registry.put(NodeDispatchStepExecutor.STEP_EXECUTION_TYPE, NodeDispatchStepExecutor.class);
-    }
-
-    @Override
-    public StepExecutor providerOfType(String providerName)
-        throws ExecutionServiceException {
-        StepExecutor t = null;
-        MissingProviderException caught = null;
-        try {
-            t = super.providerOfType(providerName);
-        } catch (MissingProviderException e) {
-            //ignore and attempt to load from the plugin manager
-            caught = e;
-        }
-        if (null != t) {
-            return t;
-        }
-        if (null != pluginStepExecutionService) {
-            return pluginStepExecutionService.providerOfType(providerName);
-        } else if (null != caught) {
-            throw caught;
-        } else {
-            throw new MissingProviderException("Provider not found", getName(), providerName);
-        }
     }
 
     public static StepExecutionService getInstanceForFramework(final Framework framework) {
