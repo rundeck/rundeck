@@ -1031,7 +1031,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             failed = true
             scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message')
         }
-        if ((params.options || params['_nooptions']) && scheduledExecution.options) {
+        if (( params.options || params['_nooptions']) && scheduledExecution.options) {
             def todelete = []
             scheduledExecution.options.each {
                 todelete << it
@@ -1042,7 +1042,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             }
             scheduledExecution.options = null
         }
-        if (params['_sessionopts'] && params['_sessionEditOPTSObject']) {
+        if (params['_sessionopts'] && null!=params['_sessionEditOPTSObject']) {
             def optsmap = params['_sessionEditOPTSObject']
 
             def optfailed = false
@@ -1054,7 +1054,9 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             }
             if (!optfailed) {
                 def todelete = []
-                todelete.addAll(scheduledExecution.options)
+                if(scheduledExecution.options){
+                    todelete.addAll(scheduledExecution.options)
+                }
                 scheduledExecution.options = null
                 todelete.each {oldopt ->
                     oldopt.delete()
@@ -1834,7 +1836,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             }
         }
 
-        if (params['_sessionopts'] && params['_sessionEditOPTSObject']) {
+        if (params['_sessionopts'] && null!=params['_sessionEditOPTSObject']) {
             def optsmap = params['_sessionEditOPTSObject']
 
             def optfailed = false

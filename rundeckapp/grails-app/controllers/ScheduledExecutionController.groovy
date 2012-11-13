@@ -741,11 +741,10 @@ class ScheduledExecutionController  {
             if(scheduledExecution.errors){
                 log.debug scheduledExecution.errors.allErrors.collect {g.message(error: it)}.join(", ")
             }
-            flash.message="Error updating scheduled command "
-            if(result.message >2){
-                flash.message= flash.message+": "+result.message
+            request.message="Error updating Job "
+            if(result.message){
+                request.message+=": "+result.message
             }
-            log.debug("update operation failed. redirecting to edit ...")
 
             if(!scheduledExecution.isAttached()) {
                 scheduledExecution.attach()
@@ -926,12 +925,12 @@ class ScheduledExecutionController  {
         session.redoWF?.remove(id)
     }
 
-    private transferSessionEditState(session,params,id){
+    void transferSessionEditState(session,params,id){
         //pass session-stored edit state in params map
-        if (params['_sessionwf'] && session.editWF && session.editWF[id]) {
+        if (params['_sessionwf'] && session.editWF && null != session.editWF[id]) {
             params['_sessionEditWFObject'] = session.editWF[id]
         }
-        if (params['_sessionopts'] && session.editOPTS && session.editOPTS[id]) {
+        if (params['_sessionopts'] && session.editOPTS && null != session.editOPTS[id]) {
             params['_sessionEditOPTSObject'] = session.editOPTS[id]
         }
     }
