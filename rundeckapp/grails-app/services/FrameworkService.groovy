@@ -322,7 +322,7 @@ class FrameworkService implements ApplicationContextAware {
         return new HashSet(aclpolicies.hackMeSomeRoles())
 
     }
-    def getFrameworkFromUserSession( session, request){
+    def Framework getFrameworkFromUserSession( session, request){
         if (!initialized) {
             initialize()
         }

@@ -218,6 +218,7 @@ function _wfiaddnew(type) {
     var olist = $('workflowContent').down('ol');
     var litems = $$('#workflowContent ol > li');
     var num = litems.length;
+    params['key']=num;
     newitemli = new Element('li');
     if (num % 2 == 1) {
         newitemli.addClassName('alternate');

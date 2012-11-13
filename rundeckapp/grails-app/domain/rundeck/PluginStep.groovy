@@ -12,18 +12,18 @@ class PluginStep extends WorkflowStep{
     //ignore fake property 'configuration' and do not store it
     static transients = ['configuration']
 
-    public Object getConfiguration() {
+    public Map getConfiguration() {
         //de-serialize the json
         if (null != jsonData) {
             final ObjectMapper mapper = new ObjectMapper()
-            return mapper.readValue(jsonData, Object.class)
+            return mapper.readValue(jsonData, Map.class)
         } else {
             return null
         }
 
     }
 
-    public void setConfiguration(Object obj) {
+    public void setConfiguration(Map obj) {
         //serialize json and store into field
         if (null != obj) {
             final ObjectMapper mapper = new ObjectMapper()

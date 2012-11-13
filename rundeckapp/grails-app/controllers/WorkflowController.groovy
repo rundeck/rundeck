@@ -4,6 +4,8 @@ import rundeck.Workflow
 import rundeck.JobExec
 import rundeck.CommandExec
 import rundeck.ScheduledExecution
+import rundeck.PluginStep
+import com.dtolabs.rundeck.core.plugins.configuration.Description
 
 class WorkflowController {
     def frameworkService
@@ -50,16 +52,21 @@ class WorkflowController {
                 }
             }
         }
-        def newitemDescription
-        if (params['newitemtype']){
-            if (!(params['newitemtype'] in ['command', 'script', 'scriptfile', 'job'])) {
-                //plugin
-                Framework framework = frameworkService.getFrameworkFromUserSession(session, request.subject)
-                def provider = framework.getNodeStepExecutorService().providerOfType(params['newitemtype'])
-                newitemDescription = provider.description
-            }
-        }
+        def newitemDescription = getPluginStepDescription(params['newitemtype']?: item?.instanceOf(PluginStep) ? item.type : null, frameworkService.getFrameworkFromUserSession(session, request.subject))
         return render(template: "/execution/wfitemEdit", model: [item: item, key:params.key, num: numi, scheduledExecutionId: params.scheduledExecutionId, newitemtype: params['newitemtype'], newitemDescription: newitemDescription, edit: true, isErrorHandler: isErrorHandler])
+    }
+
+    /**
+     * Return a Description for a plugin type, if available
+     * @param type
+     * @param framework
+     * @return
+     */
+    private Description getPluginStepDescription(String type, Framework framework) {
+        if (type && !(type in ['command', 'script', 'scriptfile', 'job'])) {
+            return framework.getNodeStepExecutorService().providerOfType(type).description
+        }
+        return null
     }
 
     /**
@@ -89,7 +96,8 @@ class WorkflowController {
                 return error.call()
             }
         }
-        return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: item, i: params.key, stepNum:numi, scheduledExecutionId: params.scheduledExecutionId, edit: params.edit, isErrorHandler: isErrorHandler])
+        def itemDescription = getPluginStepDescription(item.instanceOf(PluginStep) ? item.type : null, frameworkService.getFrameworkFromUserSession(session, request.subject))
+        return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: item, i: params.key, stepNum:numi, scheduledExecutionId: params.scheduledExecutionId, edit: params.edit, isErrorHandler: isErrorHandler, itemDescription: itemDescription])
     }
 
 
@@ -136,7 +144,9 @@ class WorkflowController {
         if(isErrorHandler){
             item=item.errorHandler
         }
-        return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: item, i: params.key, stepNum: numi, scheduledExecutionId: params.scheduledExecutionId, edit: true,isErrorHandler: isErrorHandler])
+        def itemDescription = getPluginStepDescription(item.instanceOf(PluginStep)?item.type:null, frameworkService.getFrameworkFromUserSession(session, request.subject))
+        log.error("Saved item with description: ${itemDescription}")
+        return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: item, i: params.key, stepNum: numi, scheduledExecutionId: params.scheduledExecutionId, edit: true,isErrorHandler: isErrorHandler,itemDescription: itemDescription])
     }
 
 
@@ -330,10 +340,12 @@ class WorkflowController {
             def num = input.num
             def item
 
-            if (input.params.jobName || 'job' == input.params.newitemtype) {
+            if(input.params.pluginItem){
+                item = new PluginStep([type:input.params.newitemtype])
+                item.configuration= input.params.pluginConfig
+            }else if (input.params.jobName || 'job' == input.params.newitemtype) {
                 item = new JobExec(input.params)
             } else {
-                //TODO: other types
                 item = new CommandExec(input.params)
 
                 def optsmap = ExecutionService.filterOptParams(input.params)
@@ -362,12 +374,20 @@ class WorkflowController {
             def WorkflowStep item = editwf.commands.get(numi)
             def clone = item.createClone()
             def moditem = item.createClone()
-            moditem.properties = input.params
+            if (input.params.pluginItem) {
+                moditem.configuration = input.params.pluginConfig
+            } else{
+                moditem.properties = input.params
+            }
             _validateCommandExec(moditem)
             if (moditem.errors.hasErrors()) {
                 return [error: moditem.errors.allErrors.collect {g.message(error: it)}.join(","), item: moditem]
             }
-            item.properties = input.params
+            if (input.params.pluginItem) {
+                item.configuration = input.params.pluginConfig
+            }else{
+                item.properties = input.params
+            }
             def optsmap = ExecutionService.filterOptParams(input.params)
             if (optsmap) {
                 item.argString = ExecutionService.generateArgline(optsmap)
@@ -591,8 +611,8 @@ class WorkflowController {
                     exec.errors.rejectValue('adhocRemoteString', 'scheduledExecution.adhocString.duplicate.message')
                 }
             }
-        }else{
-            //TODO: support
+        }else if(exec instanceof PluginStep){
+            //TODO: validate
         }
     }
     

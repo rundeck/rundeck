@@ -1,4 +1,4 @@
-<%@ page import="rundeck.JobExec" %>
+<%@ page import="rundeck.PluginStep; rundeck.CommandExec; rundeck.JobExec" %>
 <%--
  Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
 
@@ -63,7 +63,7 @@
         </div>
     </div>
 </g:if>
-<g:elseif test="${'script'==newitemtype || 'scriptfile'==newitemtype || 'command'==newitemtype || item?.adhocExecution}">
+<g:elseif test="${'script'==newitemtype || 'scriptfile'==newitemtype || 'command'==newitemtype || item instanceof CommandExec }">
     <g:set var="isAdhocRemote" value="${'command'==newitemtype || item?.adhocRemoteString}"/>
     <g:set var="isAdhocLocal" value="${'script'==newitemtype || item?.adhocLocalString}"/>
     <g:set var="isAdhocFileExecution" value="${'scriptfile'==newitemtype || item?.adhocFilepath}"/>
@@ -93,9 +93,23 @@
     </div>
     </g:if>
 </g:elseif>
-<g:elseif test="${newitemtype && newitemDescription}">
+<g:elseif test="${( newitemtype || item && item.instanceOf(PluginStep) ) && newitemDescription}">
     <div>
         <div class="info note">${newitemDescription.description.encodeAsHTML()}</div>
+        <g:hiddenField name="pluginItem" value="true"/>
+        <div>
+            <table class="simpleForm nexecDetails">
+                <g:set var="nodeexecprefix" value="pluginConfig."/>
+                <g:each in="${newitemDescription.properties}" var="prop">
+                    <tr>
+                        <g:render
+                                template="/framework/pluginConfigPropertyField"
+                                model="${[prop: prop, prefix: nodeexecprefix, error: null, values: item?.configuration,
+                                        fieldname: nodeexecprefix + prop.name, origfieldname: 'orig.' + nodeexecprefix + prop.name]}"/>
+                    </tr>
+                </g:each>
+            </table>
+        </div>
     </div>
 </g:elseif>
 <g:if test="${isErrorHandler}">
