@@ -14,6 +14,7 @@ import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization
 import rundeck.ScheduledExecution
 import rundeck.Execution
+import rundeck.PluginStep
 
 /**
  * Interfaces with the core Framework object
@@ -407,6 +408,33 @@ class FrameworkService implements ApplicationContextAware {
         return optsmap
     }
 
+    /**
+     * Return plugin description for the step
+     * @param framework
+     * @param step
+     * @return
+     */
+    def getPluginDescriptionForItem(Framework framework, PluginStep step) {
+        return step.nodeStep ? getNodeStepPluginDescription(framework, step.type) : getStepPluginDescription(framework, step.type)
+    }
+    /**
+     * Return node step plugin description of a certain type
+     * @param framework
+     * @param type
+     * @return
+     */
+    def getNodeStepPluginDescription(Framework framework, String type){
+        framework.getNodeStepExecutorService().providerOfType(type).description
+    }
+    /**
+     * Return step plugin description of a certain type
+     * @param framework
+     * @param type
+     * @return
+     */
+    def getStepPluginDescription(Framework framework, String type){
+        framework.getStepExecutionService().providerOfType(type).description
+    }
     /**
      * Return the list of NodeStepPlugin descriptions
      * @param framework
