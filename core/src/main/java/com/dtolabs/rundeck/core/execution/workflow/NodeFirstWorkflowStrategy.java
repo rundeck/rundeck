@@ -87,6 +87,10 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
             if(sections.size()>1){
                 logger.debug("Split workflow into " + sections.size() + " sections");
             }
+            assert sections.size()>=1;
+            if(sections.size()<1) {
+                throw new IllegalStateException();
+            }
             for (final IWorkflow flowsection: sections) {
                 boolean sectionSuccess=true;
 
@@ -120,10 +124,13 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
             }
         } catch (RuntimeException e) {
             exception = e;
+            wfsuccess = false;
         } catch (DispatcherException e) {
             exception = e;
+            wfsuccess = false;
         } catch (ExecutionServiceException e) {
             exception = e;
+            wfsuccess = false;
         } catch (WorkflowStepFailureException e) {
             exception=e;
             wfsuccess=false;
