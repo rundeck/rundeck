@@ -36,6 +36,10 @@ import rundeck.Option
 import rundeck.Workflow
 import rundeck.Notification
 import rundeck.CommandExec
+import rundeck.services.ExecutionService
+import rundeck.services.ExecutionServiceException
+import rundeck.services.FrameworkService
+import rundeck.services.ScheduledExecutionService
 
 class ScheduledExecutionController  {
     def Scheduler quartzScheduler

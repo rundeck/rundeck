@@ -1,3 +1,5 @@
+package rundeck.services
+
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 
 import com.dtolabs.rundeck.core.Constants
@@ -45,7 +47,6 @@ import javax.security.auth.Subject
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService
 
-import com.dtolabs.rundeck.core.execution.StatusResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
 
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException

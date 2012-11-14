@@ -32,6 +32,9 @@ import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import rundeck.User
 import rundeck.NodeFilter
+import rundeck.services.ExecutionService
+import rundeck.services.FrameworkService
+import rundeck.services.UserService
 
 class FrameworkController  {
     FrameworkService frameworkService

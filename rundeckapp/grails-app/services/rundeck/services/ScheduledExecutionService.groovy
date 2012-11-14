@@ -1,3 +1,5 @@
+package rundeck.services
+
 import javax.security.auth.Subject;
 
 import org.quartz.Scheduler

@@ -7,6 +7,7 @@ import com.dtolabs.rundeck.app.support.ExecQuery
 import com.dtolabs.rundeck.app.support.ReportQuery
 import rundeck.User
 import rundeck.ReportFilter
+import rundeck.services.FrameworkService
 
 class ReportsController {
     def reportService

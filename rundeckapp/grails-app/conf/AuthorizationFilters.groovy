@@ -6,7 +6,7 @@ import com.dtolabs.client.utils.Constants
 import rundeck.User
 import rundeck.AuthToken
 
-import static rundeck.AuthToken.*
+import rundeck.services.FrameworkService
 
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)

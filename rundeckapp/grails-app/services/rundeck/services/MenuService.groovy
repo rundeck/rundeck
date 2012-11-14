@@ -1,3 +1,5 @@
+package rundeck.services
+
 import com.dtolabs.rundeck.app.support.ReportQuery
 
 /**

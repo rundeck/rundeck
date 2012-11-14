@@ -19,6 +19,8 @@ import rundeck.Workflow
 import rundeck.JobExec
 import rundeck.Option
 import rundeck.Notification
+import rundeck.services.FrameworkService
+import rundeck.services.ScheduledExecutionService
 /*
  * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
  *

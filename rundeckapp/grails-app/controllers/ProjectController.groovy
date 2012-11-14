@@ -2,14 +2,12 @@
 
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import java.util.zip.ZipOutputStream
-import ProjectServiceException
+
 import java.text.SimpleDateFormat
 import org.apache.commons.fileupload.util.Streams
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import java.util.zip.ZipInputStream
 import com.dtolabs.rundeck.core.authentication.Group
-import java.util.jar.JarOutputStream
 
 class ProjectController {
     def frameworkService

@@ -9,6 +9,9 @@ import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import rundeck.Execution
 import rundeck.ScheduledExecution
+import rundeck.services.ExecutionService
+import rundeck.services.FrameworkService
+import rundeck.services.ScheduledExecutionService
 
 /**
 * ExecutionController

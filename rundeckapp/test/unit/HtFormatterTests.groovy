@@ -1,6 +1,7 @@
 import java.util.logging.LogRecord
 import java.util.logging.Level
 import java.text.SimpleDateFormat
+import rundeck.services.HtFormatter
 
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)

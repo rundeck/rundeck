@@ -6,6 +6,7 @@ import rundeck.CommandExec
 import rundeck.ScheduledExecution
 import rundeck.PluginStep
 import com.dtolabs.rundeck.core.plugins.configuration.Description
+import rundeck.services.ExecutionService
 
 class WorkflowController {
     def frameworkService

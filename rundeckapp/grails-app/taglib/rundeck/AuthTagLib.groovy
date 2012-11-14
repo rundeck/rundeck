@@ -1,13 +1,10 @@
-import java.util.Collections;
+package rundeck
 
-import javax.security.auth.Subject
-
-import com.dtolabs.rundeck.core.authentication.Username;
-import com.dtolabs.rundeck.core.authentication.Group;
 import com.dtolabs.rundeck.core.authorization.Attribute;
 import com.dtolabs.rundeck.core.authorization.Authorization
 import com.dtolabs.rundeck.core.authorization.Decision
-import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
+import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
+import rundeck.services.FrameworkService;
 
 class AuthTagLib {
     def static namespace="auth"

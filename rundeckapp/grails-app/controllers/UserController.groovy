@@ -5,6 +5,8 @@ import org.apache.commons.lang.RandomStringUtils
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import rundeck.User
 import rundeck.AuthToken
+import rundeck.services.FrameworkService
+import rundeck.services.UserService
 
 class UserController {
     UserService userService

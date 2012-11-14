@@ -1,3 +1,5 @@
+package rundeck.services
+
 import rundeck.User
 
 class UserService {

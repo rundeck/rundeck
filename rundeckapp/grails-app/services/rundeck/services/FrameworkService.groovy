@@ -1,3 +1,5 @@
+package rundeck.services
+
 import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.authorization.*
 import com.dtolabs.rundeck.core.utils.*

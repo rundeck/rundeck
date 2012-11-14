@@ -1,6 +1,7 @@
 import com.dtolabs.rundeck.app.support.ReportQuery
 import rundeck.ExecReport
 import rundeck.BaseReport
+import rundeck.services.ReportService
 
 /*
 * Copyright 2012 DTO Labs, Inc. (http://dtolabs.com)

@@ -1,3 +1,5 @@
+package rundeck.services
+
 import java.util.zip.ZipOutputStream
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject

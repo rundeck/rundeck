@@ -1,3 +1,5 @@
+package rundeck
+
 import java.text.SimpleDateFormat
 import rundeck.ScheduledExecution
 

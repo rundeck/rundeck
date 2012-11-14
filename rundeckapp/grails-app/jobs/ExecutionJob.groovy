@@ -9,6 +9,8 @@ import com.dtolabs.rundeck.core.execution.ExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
 import rundeck.Execution
 import rundeck.ScheduledExecution
+import rundeck.services.ExecutionService
+import rundeck.services.FrameworkService
 
 class ExecutionJob implements InterruptableJob {
 

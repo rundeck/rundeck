@@ -1,3 +1,4 @@
+<%@ page import="rundeck.UtilityTagLib" %>
 <script type="text/javascript">
     function changeCronExpression(elem){
         $('crontooltip').innerHTML='';

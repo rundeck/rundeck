@@ -1,3 +1,5 @@
+package rundeck.services
+
 import groovy.xml.MarkupBuilder
 
 import org.apache.commons.httpclient.HttpClient

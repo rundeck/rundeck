@@ -12,6 +12,11 @@ import rundeck.Execution
 import rundeck.Workflow
 import rundeck.Option
 import rundeck.User
+import rundeck.services.ExecutionService
+import rundeck.services.ExecutionServiceException
+import rundeck.services.HtTableLogger
+import rundeck.services.HtFormatter
+import rundeck.services.FrameworkService
 
 class ExecutionServiceTests extends GrailsUnitTestCase {
 

@@ -3,6 +3,7 @@ import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.CommandExec
 import rundeck.Execution
+import rundeck.services.FrameworkService
 
 /*
  * Copyright 2012 DTO Labs, Inc. (http://dtolabs.com)
