@@ -27,7 +27,6 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkSupportService;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecNodeStepExecutor;
@@ -97,14 +96,14 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
 
         {
             final NodeStepExecutor testprovider = new NodeStepExecutor() {
-                public NodeStepResult executeNodeStep(ExecutionContext context, StepExecutionItem item,
+                public NodeStepResult executeNodeStep(ExecutionContext context, NodeStepExecutionItem item,
                                                          INodeEntry node) throws
                                                                           NodeStepException {
                     return null;
                 }
             };
             final NodeStepExecutor testprovider2 = new NodeStepExecutor() {
-                public NodeStepResult executeNodeStep(ExecutionContext context, StepExecutionItem item,
+                public NodeStepResult executeNodeStep(ExecutionContext context, NodeStepExecutionItem item,
                                                          INodeEntry node) throws
                                                                           NodeStepException {
                     return null;

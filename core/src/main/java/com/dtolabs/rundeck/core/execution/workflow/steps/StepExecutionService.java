@@ -34,12 +34,14 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionI
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.plugins.BaseProviderRegistryService;
 import com.dtolabs.rundeck.core.plugins.ChainedProviderService;
+import com.dtolabs.rundeck.core.plugins.ConverterService;
 import com.dtolabs.rundeck.core.plugins.ProviderIdent;
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.plugins.step.StepPlugin;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +57,7 @@ public class StepExecutionService extends ChainedProviderService<StepExecutor> i
 
     private PluginStepExecutionService pluginStepExecutionService;
     private BuiltinStepExecutionService builtinStepExecutionService;
+    private ProviderService<StepExecutor> secondaryService;
 
     public String getName() {
         return SERVICE_NAME;
@@ -63,9 +66,8 @@ public class StepExecutionService extends ChainedProviderService<StepExecutor> i
     StepExecutionService(final Framework framework) {
         builtinStepExecutionService = new BuiltinStepExecutionService(framework);
         pluginStepExecutionService = new PluginStepExecutionService(framework);
-//        this.secondaryService
-//            = new ConverterService<NodeStepPlugin, NodeStepExecutor>(pluginService,
-//                                                                     new NodeStepPluginConverter());
+        this.secondaryService
+            = new ConverterService<StepPlugin, StepExecutor>(pluginStepExecutionService, new StepPluginConverter());
     }
 
     @Override
@@ -75,7 +77,7 @@ public class StepExecutionService extends ChainedProviderService<StepExecutor> i
 
     @Override
     protected ProviderService<StepExecutor> getSecondaryService() {
-        return pluginStepExecutionService;
+        return secondaryService;
     }
 
     public static StepExecutionService getInstanceForFramework(final Framework framework) {

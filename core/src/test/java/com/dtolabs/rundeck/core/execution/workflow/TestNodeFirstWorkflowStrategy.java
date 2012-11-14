@@ -210,7 +210,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
         boolean shouldThrowException = false;
 
         public NodeStepResult executeNodeStep(ExecutionContext executionContext,
-                                                 StepExecutionItem executionItem, INodeEntry iNodeEntry) throws
+                                                 NodeStepExecutionItem executionItem, INodeEntry iNodeEntry) throws
                                                                                                      NodeStepException {
             executionItemList.add(executionItem);
             executionContextList.add(executionContext);

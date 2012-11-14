@@ -28,13 +28,18 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkSupportService;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
+import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
+import com.dtolabs.rundeck.core.plugins.BasePluggableProviderService;
 import com.dtolabs.rundeck.core.plugins.BaseProviderRegistryService;
+import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ProviderIdent;
+import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
+import com.dtolabs.rundeck.plugins.step.StepPlugin;
 
 import java.util.*;
 
@@ -44,7 +49,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class PluginStepExecutionService extends BaseProviderRegistryService<StepExecutor>
+class PluginStepExecutionService extends BasePluggableProviderService<StepPlugin>
     implements FrameworkSupportService, DescribableService {
 
 
@@ -62,5 +67,26 @@ class PluginStepExecutionService extends BaseProviderRegistryService<StepExecuto
 
     public List<ProviderIdent> listDescribableProviders() {
         return DescribableServiceUtil.listDescribableProviders(this);
+    }
+
+    public boolean isValidProviderClass(Class clazz) {
+
+        return StepPlugin.class.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
+    }
+
+    public StepPlugin createProviderInstance(Class<StepPlugin> clazz, String name) throws
+                                                                                   PluginException,
+                                                                                   ProviderCreationException {
+        return createProviderInstanceFromType(clazz, name);
+    }
+
+    @Override
+    public boolean isScriptPluggable() {
+        return false;
+    }
+
+    @Override
+    public StepPlugin createScriptProviderInstance(ScriptPluginProvider provider) throws PluginException {
+        return null;
     }
 }

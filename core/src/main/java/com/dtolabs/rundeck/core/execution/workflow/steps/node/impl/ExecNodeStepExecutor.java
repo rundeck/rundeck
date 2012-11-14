@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 
@@ -48,7 +49,7 @@ public class ExecNodeStepExecutor implements NodeStepExecutor {
 
     private Framework framework;
 
-    public NodeStepResult executeNodeStep(ExecutionContext context, StepExecutionItem item, INodeEntry node) throws
+    public NodeStepResult executeNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node) throws
                                                                                                          NodeStepException {
         final ExecCommand cmd = (ExecCommand) item;
         NodeExecutorResult result;

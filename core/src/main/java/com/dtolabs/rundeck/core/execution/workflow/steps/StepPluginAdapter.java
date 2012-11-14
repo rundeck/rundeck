@@ -16,31 +16,38 @@
  */
 
 /*
-* NodeStepPluginAdapter.java
+* StepPluginAdapter.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 11/12/12 5:39 PM
+* Created: 11/13/12 6:30 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.workflow.steps.node;
+package com.dtolabs.rundeck.core.execution.workflow.steps;
 
-import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepItem;
+import com.dtolabs.rundeck.plugins.step.StepPlugin;
 
 import java.util.*;
 
 
 /**
- * NodeStepPluginAdapter is ...
+ * StepPluginAdapter is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
+class StepPluginAdapter implements StepExecutor, Describable {
+    private StepPlugin plugin;
+
+    public StepPluginAdapter(final StepPlugin plugin) {
+        this.plugin = plugin;
+    }
+
     @Override
     public Description getDescription() {
         if (plugin instanceof Describable) {
@@ -50,15 +57,20 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
         return null;
     }
 
-    private NodeStepPlugin plugin;
-
-    public NodeStepPluginAdapter(final NodeStepPlugin plugin) {
-        this.plugin = plugin;
+    @Override
+    public boolean isNodeDispatchStep(StepExecutionItem item) {
+        return false;
     }
 
     @Override
-    public NodeStepResult executeNodeStep(ExecutionContext context, final NodeStepExecutionItem item, INodeEntry node)
-        throws NodeStepException {
+    public StepExecutionResult executeWorkflowStep(final ExecutionContext executionContext, final StepExecutionItem item)
+        throws StepException {
+        final PluginStepItem step = toPluginStepItem(item);
+        final boolean success = plugin.executeStep(executionContext, step);
+        return new StepExecutionResultImpl(success);
+    }
+
+    private PluginStepItem toPluginStepItem(final StepExecutionItem item) {
         PluginStepItem step;
         if (item instanceof PluginStepItem) {
             step = (PluginStepItem) item;
@@ -71,11 +83,10 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
 
                 @Override
                 public String getType() {
-                    return item.getNodeStepType();
+                    return item.getType();
                 }
             };
         }
-        boolean success = plugin.executeNodeStep(context, step, node);
-        return new NodeStepResultImpl(success, node);
+        return step;
     }
 }

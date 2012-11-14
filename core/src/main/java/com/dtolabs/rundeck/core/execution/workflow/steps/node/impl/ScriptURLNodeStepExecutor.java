@@ -37,6 +37,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.utils.Converter;
@@ -88,7 +89,7 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         return Integer.toString(url.hashCode());
     }
 
-    public NodeStepResult executeNodeStep(ExecutionContext context, StepExecutionItem item, INodeEntry node) throws
+    public NodeStepResult executeNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node) throws
                                                                                                          NodeStepException {
         if (!cacheDir.isDirectory() && !cacheDir.mkdirs()) {
             throw new RuntimeException("Unable to create cachedir: " + cacheDir.getAbsolutePath());
