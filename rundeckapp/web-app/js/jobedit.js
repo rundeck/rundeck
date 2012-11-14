@@ -207,8 +207,8 @@ function _wfisave(key,num, formelem) {
     });
 }
 var newitemli;
-function _wfiaddnew(type) {
-    var params = {newitemtype:type};
+function _wfiaddnew(type,nodestep) {
+    var params = {newitemtype:type,newitemnodestep:nodestep?true:false};
     if (getCurSEID()) {
         params.scheduledExecutionId = getCurSEID();
     }

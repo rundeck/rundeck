@@ -29,6 +29,8 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCom
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandBase;
 
 import java.io.File;
+import java.util.Map;
+
 
 /**
  * ExecutionItemFactory is ...
@@ -152,5 +154,26 @@ public class ExecutionItemFactory {
                 return keepgoingOnSuccess;
             }
         };
+    }
+
+    /**
+     * Create a workflow execution item for a plugin node step.
+     */
+    public static StepExecutionItem createPluginNodeStepItem(final String type,
+                                                             final Map configuration,
+                                                         final boolean keepgoingOnSuccess,
+                                                         final StepExecutionItem handler) {
+
+        return new PluginNodeStepExecutionItemImpl(type, configuration, keepgoingOnSuccess,handler);
+    }
+    /**
+     * Create a workflow execution item for a plugin step.
+     */
+    public static StepExecutionItem createPluginStepItem(final String type,
+                                                         final Map configuration,
+                                                         final boolean keepgoingOnSuccess,
+                                                         final StepExecutionItem handler) {
+
+        return new PluginStepExecutionItemImpl(type, configuration, keepgoingOnSuccess,handler);
     }
 }

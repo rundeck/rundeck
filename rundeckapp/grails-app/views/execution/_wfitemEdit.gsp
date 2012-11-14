@@ -97,6 +97,7 @@
     <div>
         <div class="info note">${newitemDescription.description.encodeAsHTML()}</div>
         <g:hiddenField name="pluginItem" value="true"/>
+        <g:hiddenField name="newitemnodestep" value="${item?item.nodeStep:newitemnodestep?true:false}"/>
         <div>
             <table class="simpleForm nexecDetails">
                 <g:set var="nodeexecprefix" value="pluginConfig."/>

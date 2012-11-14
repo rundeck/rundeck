@@ -8,4 +8,8 @@ class WorkflowStep {
         errorHandler(nullable: true)
         keepgoingOnSuccess(nullable: true)
     }
+
+    public String summarize() {
+        return this.toString()
+    }
 }

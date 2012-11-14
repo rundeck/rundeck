@@ -61,6 +61,7 @@ import rundeck.JobExec
 import rundeck.Workflow
 import rundeck.Option
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult
+import rundeck.PluginStep
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -635,9 +636,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                 args = new String[0];
             }
 
-            return ExecutionItemFactory.createJobRef(jobcmditem.getJobIdentifier(), args, handler, !!cmd.keepgoingOnSuccess)
+            return ExecutionItemFactory.createJobRef(jobcmditem.getJobIdentifier(), args, handler, !!jobcmditem.keepgoingOnSuccess)
+        }else if(step.instanceOf(PluginStep)){
+            final PluginStep stepitem = step as PluginStep
+            if(stepitem.nodeStep){
+                return ExecutionItemFactory.createPluginNodeStepItem(stepitem.type, stepitem.configuration, !!stepitem.keepgoingOnSuccess, handler)
+            }else{
+                return ExecutionItemFactory.createPluginStepItem(stepitem.type,stepitem.configuration, !!stepitem.keepgoingOnSuccess,handler)
+            }
         } else {
-            throw new IllegalArgumentException("TODO: Workflow command item was not valid");
+            throw new IllegalArgumentException("Workflow step type was not expected: "+step);
         }
     }
 
@@ -1050,12 +1058,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         }
         execution.scheduledExecution=se
         if (workflow && !workflow.save(flush:true)) {
-            execution.workflow.errors.allErrors.each { log.warn(it.defaultMessage) }
+            execution.workflow.errors.allErrors.each { log.error(it.toString()) }
             log.error("unable to save execution workflow")
             throw new ExecutionServiceException("unable to create execution workflow")
         }
         if (!execution.save(flush:true)) {
-            execution.errors.allErrors.each { log.warn(it.defaultMessage) }
+            execution.errors.allErrors.each { log.warn(it.toString()) }
             log.error("unable to save execution")
             throw new ExecutionServiceException("unable to create execution")
         }

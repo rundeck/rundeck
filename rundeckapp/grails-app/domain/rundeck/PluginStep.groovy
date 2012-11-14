@@ -3,9 +3,11 @@ package rundeck
 import com.fasterxml.jackson.databind.ObjectMapper
 
 class PluginStep extends WorkflowStep{
+    Boolean nodeStep
     String type
     String jsonData
     static constraints = {
+        nodeStep nullable: false, blank: false
         type nullable: false, blank: false
         jsonData(nullable: true, blank: true)
     }
@@ -38,11 +40,24 @@ class PluginStep extends WorkflowStep{
     }
 
     public Map toMap() {
-        [type: type, configuration: this.configuration]
+        [type: type, nodeStep:nodeStep,configuration: this.configuration]
     }
 
     public PluginStep createClone() {
-        return new PluginStep(type: type, jsonData: jsonData)
+        return new PluginStep(type: type, nodeStep: nodeStep, jsonData: jsonData)
     }
 
+    @Override
+    public String toString() {
+        return "PluginStep{" +
+               "nodeStep=" + nodeStep +
+               ", type='" + type + '\'' +
+               ", jsonData='" + jsonData + '\'' +
+               '}';
+    }
+
+    @Override
+    public String summarize() {
+        return "Plugin["+ type + ', nodeStep: '+nodeStep+']';
+    }
 }

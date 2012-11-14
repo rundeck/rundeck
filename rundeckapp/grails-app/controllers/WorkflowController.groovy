@@ -52,8 +52,13 @@ class WorkflowController {
                 }
             }
         }
-        def newitemDescription = getPluginStepDescription(params['newitemtype']?: item?.instanceOf(PluginStep) ? item.type : null, frameworkService.getFrameworkFromUserSession(session, request.subject))
-        return render(template: "/execution/wfitemEdit", model: [item: item, key:params.key, num: numi, scheduledExecutionId: params.scheduledExecutionId, newitemtype: params['newitemtype'], newitemDescription: newitemDescription, edit: true, isErrorHandler: isErrorHandler])
+        def newitemDescription
+        if(item && item.instanceOf(PluginStep)){
+            newitemDescription = getPluginStepDescription(item.nodeStep, item.type, frameworkService.getFrameworkFromUserSession(session, request.subject))
+        } else{
+            newitemDescription = getPluginStepDescription(params.newitemnodestep == 'true', params['newitemtype'], frameworkService.getFrameworkFromUserSession(session, request.subject))
+        }
+        return render(template: "/execution/wfitemEdit", model: [item: item, key:params.key, num: numi, scheduledExecutionId: params.scheduledExecutionId, newitemtype: params['newitemtype'], newitemDescription: newitemDescription, edit: true, isErrorHandler: isErrorHandler,newitemnodestep: params.newitemnodestep])
     }
 
     /**
@@ -62,9 +67,10 @@ class WorkflowController {
      * @param framework
      * @return
      */
-    private Description getPluginStepDescription(String type, Framework framework) {
+    private Description getPluginStepDescription(boolean isNodeStep, String type, Framework framework) {
         if (type && !(type in ['command', 'script', 'scriptfile', 'job'])) {
-            return framework.getNodeStepExecutorService().providerOfType(type).description
+            def service= isNodeStep ? framework.getNodeStepExecutorService() : framework.getStepExecutionService()
+            return service.providerOfType(type).description
         }
         return null
     }
@@ -96,7 +102,7 @@ class WorkflowController {
                 return error.call()
             }
         }
-        def itemDescription = getPluginStepDescription(item.instanceOf(PluginStep) ? item.type : null, frameworkService.getFrameworkFromUserSession(session, request.subject))
+        def itemDescription = item.instanceOf(PluginStep)?getPluginStepDescription(item.nodeStep,item.type, frameworkService.getFrameworkFromUserSession(session, request.subject)):null
         return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: item, i: params.key, stepNum:numi, scheduledExecutionId: params.scheduledExecutionId, edit: params.edit, isErrorHandler: isErrorHandler, itemDescription: itemDescription])
     }
 
@@ -144,7 +150,7 @@ class WorkflowController {
         if(isErrorHandler){
             item=item.errorHandler
         }
-        def itemDescription = getPluginStepDescription(item.instanceOf(PluginStep)?item.type:null, frameworkService.getFrameworkFromUserSession(session, request.subject))
+        def itemDescription = item.instanceOf(PluginStep) ? getPluginStepDescription(item.nodeStep, item.type, frameworkService.getFrameworkFromUserSession(session, request.subject)) : null
         log.error("Saved item with description: ${itemDescription}")
         return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: item, i: params.key, stepNum: numi, scheduledExecutionId: params.scheduledExecutionId, edit: true,isErrorHandler: isErrorHandler,itemDescription: itemDescription])
     }
@@ -341,7 +347,9 @@ class WorkflowController {
             def item
 
             if(input.params.pluginItem){
-                item = new PluginStep([type:input.params.newitemtype])
+                item = new PluginStep()
+                item.type= input.params.newitemtype
+                item.nodeStep=input.params.newitemnodestep=='true'
                 item.configuration= input.params.pluginConfig
             }else if (input.params.jobName || 'job' == input.params.newitemtype) {
                 item = new JobExec(input.params)
