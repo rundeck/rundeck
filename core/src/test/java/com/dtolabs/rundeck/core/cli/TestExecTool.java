@@ -30,11 +30,11 @@ import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.*;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutorService;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandExecutionItem;
 import com.dtolabs.rundeck.core.utils.NodeSet;
@@ -109,7 +109,7 @@ public class TestExecTool extends AbstractBaseTest {
 
         getFrameworkInstance().getFrameworkProjectMgr().remove(TEST_EXEC_TOOL_PROJ2);
 //        ExecutionServiceFactory.resetDefaultExecutorClasses();
-        getFrameworkInstance().setService(NodeStepExecutorService.SERVICE_NAME, null);
+        getFrameworkInstance().setService(NodeStepExecutionService.SERVICE_NAME, null);
     }
 
     public static Test suite() {
@@ -546,7 +546,7 @@ public class TestExecTool extends AbstractBaseTest {
     public void testRunActionShouldLogResult() throws Exception {
         //set up test Executors
 //        ExecutionServiceFactory.setDefaultExecutorClass(DispatchedScriptExecutionItem.class, testExecutor1.class);
-        final NodeStepExecutorService cis = NodeStepExecutorService.getInstanceForFramework(
+        final NodeStepExecutionService cis = NodeStepExecutionService.getInstanceForFramework(
             getFrameworkInstance());
         cis.registerClass("exec", testExecutor1.class);
 
@@ -591,7 +591,7 @@ public class TestExecTool extends AbstractBaseTest {
     public void testRunActionShouldLogResultFailure() throws Exception {
         //set up test Executors
 //        ExecutionServiceFactory.setDefaultExecutorClass(DispatchedScriptExecutionItem.class, testExecutor1.class);
-        final NodeStepExecutorService cis = NodeStepExecutorService.getInstanceForFramework(
+        final NodeStepExecutionService cis = NodeStepExecutionService.getInstanceForFramework(
             getFrameworkInstance());
         cis.registerClass("exec", testExecutor1.class);
         //set return result
@@ -633,7 +633,7 @@ public class TestExecTool extends AbstractBaseTest {
     public void testRunAction() throws Exception{
         //set up test Executors
 //        ExecutionServiceFactory.setDefaultExecutorClass(DispatchedScriptExecutionItem.class, testExecutor1.class);
-        final NodeStepExecutorService cis = NodeStepExecutorService.getInstanceForFramework(
+        final NodeStepExecutionService cis = NodeStepExecutionService.getInstanceForFramework(
             getFrameworkInstance());
         cis.registerClass("exec", testExecutor1.class);
         cis.registerClass("script", testExecutor1.class);

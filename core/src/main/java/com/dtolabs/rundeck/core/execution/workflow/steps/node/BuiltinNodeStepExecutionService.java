@@ -16,7 +16,7 @@
  */
 
 /*
-* BuiltinNodeStepExecutorService.java
+* BuiltinNodeStepExecutionService.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 11/12/12 5:07 PM
@@ -30,16 +30,14 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNod
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLNodeStepExecutor;
 import com.dtolabs.rundeck.core.plugins.BaseProviderRegistryService;
 
-import java.util.*;
-
 
 /**
- * BuiltinNodeStepExecutorService is ...
+ * BuiltinNodeStepExecutionService provides built in NodeStepExecutor implementations
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class BuiltinNodeStepExecutorService extends BaseProviderRegistryService<NodeStepExecutor>{
-    BuiltinNodeStepExecutorService(final Framework framework) {
+class BuiltinNodeStepExecutionService extends BaseProviderRegistryService<NodeStepExecutor>{
+    BuiltinNodeStepExecutionService(final Framework framework) {
         super(framework);
         resetDefaultProviders();
     }
@@ -54,6 +52,6 @@ class BuiltinNodeStepExecutorService extends BaseProviderRegistryService<NodeSte
     }
     @Override
     public String getName() {
-        return NodeStepExecutorService.SERVICE_NAME;
+        return NodeStepExecutionService.SERVICE_NAME;
     }
 }

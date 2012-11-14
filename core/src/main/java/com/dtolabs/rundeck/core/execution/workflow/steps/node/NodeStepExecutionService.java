@@ -15,7 +15,7 @@
  */
 
 /*
-* NodeStepExecutorService.java
+* NodeStepExecutionService.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 3/21/11 4:06 PM
@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.plugins.ConverterService;
 import com.dtolabs.rundeck.core.plugins.ProviderIdent;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
+import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 
@@ -39,19 +40,20 @@ import java.util.List;
 
 
 /**
- * NodeStepExecutorService is ...
+ * NodeStepExecutionService provides NodeStepExecutors
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class NodeStepExecutorService extends ChainedProviderService<NodeStepExecutor> implements DescribableService {
+public class NodeStepExecutionService extends ChainedProviderService<NodeStepExecutor> implements DescribableService {
     public static final String SERVICE_NAME = "NodeStepExecutor";
 
-    private BuiltinNodeStepExecutorService primaryService;
+    private BuiltinNodeStepExecutionService primaryService;
     private ConverterService<NodeStepPlugin, NodeStepExecutor> secondaryService;
-    private NodeStepPluginService pluginService;
-    public NodeStepExecutorService(final Framework framework) {
-        this.primaryService=new BuiltinNodeStepExecutorService(framework);
-        this.pluginService = new NodeStepPluginService(framework);
+    private PluginNodeStepExecutionService pluginService;
+
+    public NodeStepExecutionService(final Framework framework) {
+        this.primaryService = new BuiltinNodeStepExecutionService(framework);
+        this.pluginService = new PluginNodeStepExecutionService(framework);
         this.secondaryService
             = new ConverterService<NodeStepPlugin, NodeStepExecutor>(pluginService,
                                                                      new NodeStepPluginConverter());
@@ -75,6 +77,7 @@ public class NodeStepExecutorService extends ChainedProviderService<NodeStepExec
     public void registerClass(String name, Class<? extends NodeStepExecutor> clazz) {
         primaryService.registerClass(name, clazz);
     }
+
     public void resetDefaultProviders() {
         primaryService.resetDefaultProviders();
     }
@@ -84,54 +87,22 @@ public class NodeStepExecutorService extends ChainedProviderService<NodeStepExec
         return providerOfType(item.getNodeStepType());
     }
 
-    public static NodeStepExecutorService getInstanceForFramework(final Framework framework) {
+    public static NodeStepExecutionService getInstanceForFramework(final Framework framework) {
         if (null == framework.getService(SERVICE_NAME)) {
-            final NodeStepExecutorService service = new NodeStepExecutorService(framework);
+            final NodeStepExecutionService service = new NodeStepExecutionService(framework);
             framework.setService(SERVICE_NAME, service);
             return service;
         }
-        return (NodeStepExecutorService) framework.getService(SERVICE_NAME);
+        return (NodeStepExecutionService) framework.getService(SERVICE_NAME);
     }
 
 
     public List<Description> listDescriptions() {
-        final ArrayList<Description> list = new ArrayList<Description>();
-        for (final ProviderIdent providerIdent : listProviders()) {
-            try {
-                final NodeStepExecutor providerForType = providerOfType(providerIdent.getProviderName());
-                if (providerForType instanceof Describable) {
-                    final Describable desc = (Describable) providerForType;
-                    final Description description = desc.getDescription();
-                    if (null != description) {
-                        list.add(description);
-                    }
-                }
-            } catch (ExecutionServiceException e) {
-                e.printStackTrace();
-            }
-
-        }
-        return list;
+        return DescribableServiceUtil.listDescriptions(this);
     }
 
     public List<ProviderIdent> listDescribableProviders() {
-        final ArrayList<ProviderIdent> list = new ArrayList<ProviderIdent>();
-        for (final ProviderIdent providerIdent : listProviders()) {
-            try {
-                final NodeStepExecutor providerForType = providerOfType(providerIdent.getProviderName());
-                if (providerForType instanceof Describable) {
-                    final Describable desc = (Describable) providerForType;
-                    final Description description = desc.getDescription();
-                    if (null != description) {
-                        list.add(providerIdent);
-                    }
-                }
-            } catch (ExecutionServiceException e) {
-                e.printStackTrace();
-            }
-
-        }
-        return list;
+        return DescribableServiceUtil.listDescribableProviders(this);
     }
 
 

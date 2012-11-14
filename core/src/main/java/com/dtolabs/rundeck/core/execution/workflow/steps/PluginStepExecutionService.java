@@ -29,38 +29,38 @@ import com.dtolabs.rundeck.core.common.FrameworkSupportService;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.plugins.BaseProviderRegistryService;
+import com.dtolabs.rundeck.core.plugins.ProviderIdent;
+import com.dtolabs.rundeck.core.plugins.configuration.Describable;
+import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
+import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 
 import java.util.*;
 
 
 /**
- * PluginStepExecutionService is ...
+ * PluginStepExecutionService loads plugin providers for StepExecutionService
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class PluginStepExecutionService extends BaseProviderRegistryService<StepExecutor>
-    implements FrameworkSupportService {
-    private static final String SERVICE_NAME = "StepExecution";
+class PluginStepExecutionService extends BaseProviderRegistryService<StepExecutor>
+    implements FrameworkSupportService, DescribableService {
+
 
     public String getName() {
-        return SERVICE_NAME;
+        return StepExecutionService.SERVICE_NAME;
     }
 
     PluginStepExecutionService(final Framework framework) {
         super(framework);
     }
 
-    public static StepExecutionService getInstanceForFramework(final Framework framework) {
-        if (null == framework.getService(SERVICE_NAME)) {
-            final StepExecutionService service = new StepExecutionService(framework);
-            framework.setService(SERVICE_NAME, service);
-            return service;
-        }
-        return (StepExecutionService) framework.getService(SERVICE_NAME);
+    public List<Description> listDescriptions() {
+        return DescribableServiceUtil.listDescriptions(this);
     }
 
-    public StepExecutor getExecutorForItem(final StepExecutionItem item) throws ExecutionServiceException {
-        String type = item.getType();
-        return providerOfType(type);
+    public List<ProviderIdent> listDescribableProviders() {
+        return DescribableServiceUtil.listDescribableProviders(this);
     }
 }

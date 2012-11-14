@@ -16,7 +16,7 @@
  */
 
 /*
-* NodeStepPluginService.java
+* PluginNodeStepExecutionService.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 11/12/12 4:59 PM
@@ -28,12 +28,12 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
 import com.dtolabs.rundeck.core.plugins.BasePluggableProviderService;
-import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ProviderIdent;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
+import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 
@@ -41,13 +41,14 @@ import java.util.*;
 
 
 /**
- * NodeStepPluginService can load NodeStepPlugin providers
+ * PluginNodeStepExecutionService can load NodeStepPlugin providers
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class NodeStepPluginService extends BasePluggableProviderService<NodeStepPlugin> implements DescribableService {
+class PluginNodeStepExecutionService extends BasePluggableProviderService<NodeStepPlugin>
+    implements DescribableService {
 
-    public NodeStepPluginService(final Framework framework){
+    public PluginNodeStepExecutionService(final Framework framework) {
         super(framework);
     }
 
@@ -57,8 +58,8 @@ class NodeStepPluginService extends BasePluggableProviderService<NodeStepPlugin>
     }
 
     public NodeStepPlugin createProviderInstance(Class<NodeStepPlugin> clazz, String name) throws
-                                                                                               PluginException,
-                                                                                               ProviderCreationException {
+                                                                                           PluginException,
+                                                                                           ProviderCreationException {
         return createProviderInstanceFromType(clazz, name);
     }
 
@@ -72,43 +73,15 @@ class NodeStepPluginService extends BasePluggableProviderService<NodeStepPlugin>
     }
 
     public List<Description> listDescriptions() {
-        final ArrayList<Description> list = new ArrayList<Description>();
-        for (final ProviderIdent providerIdent : listProviders()) {
-            try {
-                final NodeStepPlugin providerForType = providerOfType(providerIdent.getProviderName());
-                if (providerForType instanceof Describable) {
-                    final Describable desc = (Describable) providerForType;
-                    final Description description = desc.getDescription();
-                    if (null != description) {
-                        list.add(description);
-                    }
-                }
-            } catch (ExecutionServiceException e) {
-                e.printStackTrace();
-            }
-
-        }
-        return list;
+        return DescribableServiceUtil.listDescriptions(this);
     }
 
     public List<ProviderIdent> listDescribableProviders() {
-        final ArrayList<ProviderIdent> list = new ArrayList<ProviderIdent>();
-        for (final ProviderIdent providerIdent : listProviders()) {
-            try {
-                final NodeStepPlugin providerForType = providerOfType(providerIdent.getProviderName());
-                if (providerForType instanceof Describable) {
-                    list.add(providerIdent);
-                }
-            } catch (ExecutionServiceException e) {
-                e.printStackTrace();
-            }
-
-        }
-        return list;
+        return DescribableServiceUtil.listDescribableProviders(this);
     }
 
 
     public String getName() {
-        return NodeStepExecutorService.SERVICE_NAME;
+        return NodeStepExecutionService.SERVICE_NAME;
     }
 }

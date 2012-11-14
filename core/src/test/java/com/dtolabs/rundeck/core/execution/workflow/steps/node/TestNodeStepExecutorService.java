@@ -62,7 +62,7 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
     }
 
     public void testResetDefaultProviders() throws Exception {
-        final NodeStepExecutorService service = NodeStepExecutorService.getInstanceForFramework(
+        final NodeStepExecutionService service = NodeStepExecutionService.getInstanceForFramework(
             getFrameworkInstance());
 
         final NodeStepExecutionItem item = new NodeStepExecutionItem() {
@@ -137,7 +137,7 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
     }
 
     public void testGetInterpreterForExecutionItem() throws Exception {
-        final NodeStepExecutorService service = NodeStepExecutorService.getInstanceForFramework(
+        final NodeStepExecutionService service = NodeStepExecutionService.getInstanceForFramework(
             getFrameworkInstance());
 
         {
@@ -214,17 +214,17 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
 
     public void testGetInstanceForFramework() throws Exception {
         final Framework framework = getFrameworkInstance();
-        final NodeStepExecutorService service = NodeStepExecutorService.getInstanceForFramework(
+        final NodeStepExecutionService service = NodeStepExecutionService.getInstanceForFramework(
             framework);
         assertNotNull(service);
         final FrameworkSupportService foundservice = framework.getService("NodeStepExecutor");
         assertNotNull(foundservice);
-        assertTrue(foundservice instanceof NodeStepExecutorService);
+        assertTrue(foundservice instanceof NodeStepExecutionService);
         assertEquals(foundservice, service);
     }
 
     public void testGetName() throws Exception {
-        final NodeStepExecutorService service = NodeStepExecutorService.getInstanceForFramework(
+        final NodeStepExecutionService service = NodeStepExecutionService.getInstanceForFramework(
             getFrameworkInstance());
         assertEquals("NodeStepExecutor", service.getName());
     }

@@ -16,28 +16,37 @@
  */
 
 /*
-* NodeStepPluginConverter.java
+* BuiltinStepExecutionService.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 11/12/12 5:39 PM
+* Created: 11/13/12 5:50 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.workflow.steps.node;
+package com.dtolabs.rundeck.core.execution.workflow.steps;
 
-import com.dtolabs.rundeck.core.utils.Converter;
-import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
+import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.plugins.BaseProviderRegistryService;
 
 import java.util.*;
 
 
 /**
- * NodeStepPluginConverter is ...
+ * BuiltinStepExecutionService provides the builtin StepExecutors
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class NodeStepPluginConverter implements Converter<NodeStepPlugin, NodeStepExecutor> {
+class BuiltinStepExecutionService extends BaseProviderRegistryService<StepExecutor> {
+    BuiltinStepExecutionService(final Framework framework) {
+        super(framework);
+        resetDefaultProviders();
+    }
+
+    public void resetDefaultProviders() {
+        registry.put(NodeDispatchStepExecutor.STEP_EXECUTION_TYPE, NodeDispatchStepExecutor.class);
+    }
+
     @Override
-    public NodeStepExecutor convert(final NodeStepPlugin plugin) {
-        return new NodeStepPluginAdapter(plugin);
+    public String getName() {
+        return StepExecutionService.SERVICE_NAME;
     }
 }

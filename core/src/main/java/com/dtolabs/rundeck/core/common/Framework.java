@@ -27,12 +27,11 @@ import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherMgrFactory;
 import com.dtolabs.rundeck.core.dispatcher.NoCentralDispatcher;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.ExecutionServiceFactory;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutorService;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcherService;
 import com.dtolabs.rundeck.core.execution.service.*;
@@ -152,7 +151,7 @@ public class Framework extends FrameworkResourceParent {
             //enable plugin service only if framework property does not disable them
             PluginManagerService.getInstanceForFramework(this);
         }
-        NodeStepExecutorService.getInstanceForFramework(this);
+        NodeStepExecutionService.getInstanceForFramework(this);
         NodeExecutorService.getInstanceForFramework(this);
         FileCopierService.getInstanceForFramework(this);
         NodeDispatcherService.getInstanceForFramework(this);
@@ -326,11 +325,11 @@ public class Framework extends FrameworkResourceParent {
     public NodeExecutorService getNodeExecutorService() throws ExecutionServiceException {
         return NodeExecutorService.getInstanceForFramework(this);
     }
-    public NodeStepExecutorService getNodeStepExecutorService() throws ExecutionServiceException {
-        return NodeStepExecutorService.getInstanceForFramework(this);
+    public NodeStepExecutionService getNodeStepExecutorService() throws ExecutionServiceException {
+        return NodeStepExecutionService.getInstanceForFramework(this);
     }
     public NodeStepExecutor getNodeStepExecutorForItem(NodeStepExecutionItem item) throws ExecutionServiceException {
-        return NodeStepExecutorService.getInstanceForFramework(this).getExecutorForExecutionItem(item);
+        return NodeStepExecutionService.getInstanceForFramework(this).getExecutorForExecutionItem(item);
     }
     public NodeDispatcher getNodeDispatcherForContext(ExecutionContext context) throws ExecutionServiceException {
         return NodeDispatcherService.getInstanceForFramework(this).getNodeDispatcher(context);

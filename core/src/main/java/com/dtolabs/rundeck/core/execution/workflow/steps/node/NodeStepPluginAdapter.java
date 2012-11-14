@@ -40,7 +40,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
+class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
     @Override
     public Description getDescription() {
         if(plugin instanceof Describable) {
