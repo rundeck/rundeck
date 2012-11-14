@@ -406,5 +406,38 @@ class FrameworkService implements ApplicationContextAware {
         }
         return optsmap
     }
-    
+
+    /**
+     * Return the list of NodeStepPlugin descriptions
+     * @param framework
+     * @return
+     */
+    def List getNodeStepPluginDescriptions(Framework framework){
+        framework.getNodeStepExecutorService().listDescriptions()
+    }
+    /**
+     * Return the Map of NodeStepPlugin descriptions keyed by name
+     * @param framework
+     * @return
+     */
+    def getNodeStepPluginDescriptionsMap(Framework framework){
+        getNodeStepPluginDescriptions(framework).collectEntries{ [it.name, it] }
+    }
+
+    /**
+     * Return the list of StepPlugin descriptions
+     * @param framework
+     * @return
+     */
+    def List getStepPluginDescriptions(Framework framework){
+        framework.getStepExecutionService().listDescriptions()
+    }
+    /**
+     * Return the Map of StepPlugin descriptions keyed by name
+     * @param framework
+     * @return
+     */
+    def getStepPluginDescriptionsMap(Framework framework){
+        getStepPluginDescriptions(framework).collectEntries{ [it.name, it] }
+    }
 }

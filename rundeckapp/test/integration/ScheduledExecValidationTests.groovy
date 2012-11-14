@@ -446,6 +446,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getNodeStepPluginDescriptions { [] }
+            fwkControl.demand.getStepPluginDescriptions { [] }
             sec.frameworkService = fwkControl.createMock()
             def seServiceControl = mockFor(ScheduledExecutionService,true)
 

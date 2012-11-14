@@ -317,6 +317,42 @@ class WorkflowController {
      */
     Map _applyWFEditAction (Workflow editwf, Map input){
         def result = [:]
+
+        def createItemFromParams={params->
+            def item
+            if (params.pluginItem) {
+                item = new PluginStep()
+                item.type = params.newitemtype
+                item.nodeStep = params.newitemnodestep == 'true'
+                item.configuration = params.pluginConfig
+            } else if (params.jobName || 'job' == params.newitemtype) {
+                item = new JobExec(params)
+            } else {
+                item = new CommandExec(params)
+
+                def optsmap = ExecutionService.filterOptParams(params)
+                if (optsmap) {
+                    item.argString = ExecutionService.generateArgline(optsmap)
+                    //TODO: validate input options
+                }
+            }
+            item
+        }
+        def modifyItemFromParams={moditem,params->
+            if (params.pluginItem) {
+                moditem.configuration = params.pluginConfig
+            } else {
+                moditem.properties = params
+                def optsmap = ExecutionService.filterOptParams(input.params)
+                if (optsmap) {
+                    item.argString = ExecutionService.generateArgline(optsmap)
+                    //TODO: validate input options
+                }
+            }
+
+
+        }
+
         if (input.action == 'move') {
             def fromi = input.from
             def toi = input.to
@@ -344,24 +380,7 @@ class WorkflowController {
             result['undo'] = [action: 'insert', num: numi, params: item.properties]
         } else if (input.action == 'insert') {
             def num = input.num
-            def item
-
-            if(input.params.pluginItem){
-                item = new PluginStep()
-                item.type= input.params.newitemtype
-                item.nodeStep=input.params.newitemnodestep=='true'
-                item.configuration= input.params.pluginConfig
-            }else if (input.params.jobName || 'job' == input.params.newitemtype) {
-                item = new JobExec(input.params)
-            } else {
-                item = new CommandExec(input.params)
-
-                def optsmap = ExecutionService.filterOptParams(input.params)
-                if (optsmap) {
-                    item.argString = ExecutionService.generateArgline(optsmap)
-                    //TODO: validate input options
-                }
-            }
+            def item= createItemFromParams(input.params)
             _validateCommandExec(item, params.newitemtype)
             if (item.errors.hasErrors()) {
                 return [error: item.errors.allErrors.collect {g.message(error: it)}.join(","), item: item]
@@ -382,25 +401,14 @@ class WorkflowController {
             def WorkflowStep item = editwf.commands.get(numi)
             def clone = item.createClone()
             def moditem = item.createClone()
-            if (input.params.pluginItem) {
-                moditem.configuration = input.params.pluginConfig
-            } else{
-                moditem.properties = input.params
-            }
+            modifyItemFromParams(moditem,input.params)
+
             _validateCommandExec(moditem)
             if (moditem.errors.hasErrors()) {
                 return [error: moditem.errors.allErrors.collect {g.message(error: it)}.join(","), item: moditem]
             }
-            if (input.params.pluginItem) {
-                item.configuration = input.params.pluginConfig
-            }else{
-                item.properties = input.params
-            }
-            def optsmap = ExecutionService.filterOptParams(input.params)
-            if (optsmap) {
-                item.argString = ExecutionService.generateArgline(optsmap)
-                //TODO: validate input options
-            }
+
+            modifyItemFromParams(item, input.params)
             result['undo'] = [action: 'modify', num: numi, params: clone.properties]
         }else if (input.action=='removeHandler'){
             //remove error handler from wfstep
@@ -418,20 +426,7 @@ class WorkflowController {
                 return result
             }
             def WorkflowStep item = editwf.commands.get(numi)
-            def ehitem
-
-            if (input.params.jobName || 'job' == input.params.newitemtype) {
-                ehitem = new JobExec(input.params)
-            } else {
-                //TODO other types
-                ehitem = new CommandExec(input.params)
-
-                def optsmap = ExecutionService.filterOptParams(input.params)
-                if (optsmap) {
-                    ehitem.argString = ExecutionService.generateArgline(optsmap)
-                    //TODO: validate input options
-                }
-            }
+            def ehitem= createItemFromParams(input.params)
             _validateCommandExec(ehitem, params.newitemtype)
             if (ehitem.errors.hasErrors()) {
                 return [error: ehitem.errors.allErrors.collect {g.message(error: it)}.join(","), item: ehitem]
@@ -453,17 +448,16 @@ class WorkflowController {
             }
             def clone = ehitem.createClone()
             def moditem = ehitem.createClone()
-            moditem.properties = input.params
+
+            modifyItemFromParams(moditem, input.params)
+
             _validateCommandExec(moditem)
             if (moditem.errors.hasErrors()) {
                 return [error: moditem.errors.allErrors.collect {g.message(error: it)}.join(","), item: moditem]
             }
-            ehitem.properties = input.params
-            def optsmap = ExecutionService.filterOptParams(input.params)
-            if (optsmap) {
-                ehitem.argString = ExecutionService.generateArgline(optsmap)
-                //TODO: validate input options
-            }
+
+            modifyItemFromParams(ehitem, input.params)
+
             result['undo'] = [action: 'modifyHandler', num: numi, params: clone.properties]
         }
         return result
