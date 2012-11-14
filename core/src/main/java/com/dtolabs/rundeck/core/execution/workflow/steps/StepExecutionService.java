@@ -30,8 +30,16 @@ import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.plugins.BaseProviderRegistryService;
+import com.dtolabs.rundeck.core.plugins.ProviderIdent;
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
+import com.dtolabs.rundeck.core.plugins.configuration.Describable;
+import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -39,7 +47,7 @@ import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class StepExecutionService extends BaseProviderRegistryService<StepExecutor> implements FrameworkSupportService {
+public class StepExecutionService extends BaseProviderRegistryService<StepExecutor> implements FrameworkSupportService,DescribableService {
     private static final String SERVICE_NAME = "Internal_StepExecution";
 
     private PluginStepExecutionService pluginStepExecutionService;
@@ -88,5 +96,45 @@ public class StepExecutionService extends BaseProviderRegistryService<StepExecut
     public StepExecutor getExecutorForItem(final StepExecutionItem item) throws ExecutionServiceException {
         String type = item.getType();
         return providerOfType(type);
+    }
+
+    public List<Description> listDescriptions() {
+        final ArrayList<Description> list = new ArrayList<Description>();
+        for (final ProviderIdent providerIdent : listProviders()) {
+            try {
+                final StepExecutor providerForType = providerOfType(providerIdent.getProviderName());
+                if (providerForType instanceof Describable) {
+                    final Describable desc = (Describable) providerForType;
+                    final Description description = desc.getDescription();
+                    if (null != description) {
+                        list.add(description);
+                    }
+                }
+            } catch (ExecutionServiceException e) {
+                e.printStackTrace();
+            }
+
+        }
+        return list;
+    }
+
+    public List<ProviderIdent> listDescribableProviders() {
+        final ArrayList<ProviderIdent> list = new ArrayList<ProviderIdent>();
+        for (final ProviderIdent providerIdent : listProviders()) {
+            try {
+                final StepExecutor providerForType = providerOfType(providerIdent.getProviderName());
+                if (providerForType instanceof Describable) {
+                    final Describable desc = (Describable) providerForType;
+                    final Description description = desc.getDescription();
+                    if (null != description) {
+                        list.add(providerIdent);
+                    }
+                }
+            } catch (ExecutionServiceException e) {
+                e.printStackTrace();
+            }
+
+        }
+        return list;
     }
 }
