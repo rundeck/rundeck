@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
@@ -143,7 +144,7 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
         }
     }
 
-    public void beginExecuteNodeStep(ExecutionContext context, StepExecutionItem item, INodeEntry node) {
+    public void beginExecuteNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node) {
         if (null != delegate) {
             delegate.beginExecuteNodeStep(context, item, node);
         }

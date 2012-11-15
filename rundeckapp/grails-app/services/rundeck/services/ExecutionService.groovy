@@ -2107,7 +2107,7 @@ class HtTableLogger extends Handler implements LogHandler, BuildLogger, CLIToolL
     * Matches simple context:
      * user@node .*
      */
-    def static userre = /(?x) ^  ([^@\]]+) @ ([^\s\]]+) (.*) $/
+    def static userre = /(?x) ^  ([^@\]]*) @ ([^\s\]]*) (.*) $/
     def static cmdctxre = /(?x)  ^  \s*  (  [^.\]\s]+  \.  [^.\]\s]+  (\.[^\]\s]+)? )  \s+  ([^\]]+)  $/
     def static ctexecctxre = /(?x)  ^  \s* ([^\]]+)  $/
     public static Map parseLogDetail(final String output){

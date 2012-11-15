@@ -737,7 +737,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         public void finishFileCopy(String result, ExecutionContext context, INodeEntry node) {
         }
 
-        public void beginExecuteNodeStep(ExecutionContext context, StepExecutionItem item, INodeEntry node) {
+        public void beginExecuteNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node) {
         }
 
         public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item,

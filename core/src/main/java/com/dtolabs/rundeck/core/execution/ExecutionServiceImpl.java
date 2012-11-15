@@ -99,12 +99,16 @@ class ExecutionServiceImpl implements ExecutionService {
         } catch (ExecutionServiceException e) {
             throw new ExecutionException(e);
         }
+
         StepExecutionResult result=null;
+        final LogReformatter formatter = createLogReformatter(null, context.getExecutionListener());
+        final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
         try {
             result = executor.executeWorkflowStep(context, item);
         } catch (StepException e) {
             throw new ExecutionException(e);
         } finally {
+            loggingReformatter.resetOutputStreams();
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishExecution(result, context, item);
             }
@@ -125,10 +129,21 @@ class ExecutionServiceImpl implements ExecutionService {
         if (null != context.getExecutionListener()) {
             context.getExecutionListener().beginExecuteNodeStep(context, item, node);
         }
+        //create node context for node and substitute data references in command
+        final Map<String, Map<String, String>> nodeDataContext =
+            DataContextUtils.addContext("node", DataContextUtils.nodeData(node), context.getDataContext());
+//        final String[] nodeCommand = DataContextUtils.replaceDataReferences(command, nodeDataContext);
+        //TODO: set replace data references in data step configuration?
+
+        final LogReformatter formatter = createLogReformatter(node, context.getExecutionListener());
+        final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
         NodeStepResult result = null;
         try {
-            result = interpreter.executeNodeStep(context, item, node);
+            final ExecutionContextImpl nodeContext = new ExecutionContextImpl.Builder(context).dataContext(
+                nodeDataContext).build();
+            result = interpreter.executeNodeStep(nodeContext, item, node);
         } finally {
+            loggingReformatter.resetOutputStreams();
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishExecuteNodeStep(result, context, item, node);
             }
@@ -308,6 +323,10 @@ class ExecutionServiceImpl implements ExecutionService {
             return ctxListener.getLoggingContext();
         }
     }
+    /**
+     * Create a LogReformatter for the specified node and listener. If the listener is a {@link ContextLoggerExecutionListener},
+     * then the context map data is used by the reformatter.
+     */
     public static LogReformatter createLogReformatter(final INodeEntry node, final ExecutionListener listener) {
         LogReformatter gen;
         if (null != listener && listener.isTerse()) {
@@ -323,8 +342,8 @@ class ExecutionServiceImpl implements ExecutionService {
             } else {
                 final HashMap<String, String> baseContext = new HashMap<String, String>();
                 //discover node name and username
-                baseContext.put("node", node.getNodename());
-                baseContext.put("user", node.extractUserName());
+                baseContext.put("node", null != node?node.getNodename():"");
+                baseContext.put("user", null != node?node.extractUserName():"");
                 gen = new LogReformatter(logformat, baseContext);
             }
 

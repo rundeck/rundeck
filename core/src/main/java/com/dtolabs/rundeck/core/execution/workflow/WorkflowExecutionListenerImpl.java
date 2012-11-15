@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.execution.workflow;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.*;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 
 import java.util.*;
@@ -57,15 +58,16 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
     }
 
     @Override
-    public void beginExecuteNodeStep(final ExecutionContext context, final StepExecutionItem item, final INodeEntry node) {
+    public void beginExecuteNodeStep(final ExecutionContext context, final NodeStepExecutionItem item, final INodeEntry node) {
         if(null!=delegate) {
             delegate.beginExecuteNodeStep(context, item, node);
             return;
         }
         super.beginExecuteNodeStep(context, item, node);
         localNode.set(node);
-        context.getExecutionListener().log(Constants.DEBUG_LEVEL,
-            "beginInterpretCommand(" + node.getNodename() + "): " + item.getType() + ": " + item);
+        log(Constants.DEBUG_LEVEL,
+            "[workflow] beginExecuteNodeStep(" + node.getNodename() + "): " + item.getType() + ": " + item
+        );
     }
 
     @Override
@@ -78,7 +80,7 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
         super.finishExecuteNodeStep(result, context, item, node);
         localNode.set(null);
         log(Constants.DEBUG_LEVEL,
-            "finishInterpretCommand(" + node.getNodename() + "): " + item.getType() + ": " + result);
+            "[workflow] finishExecuteNodeStep(" + node.getNodename() + "): " + item.getType() + ": " + result);
     }
 
 
@@ -119,7 +121,12 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
         if (null != delegate) {
             return delegate.makePrefix(wfStepInfo);
         }
-        return wfStepInfo.step + "-" + wfStepInfo.stepItem.getType();
+        String type = wfStepInfo.stepItem.getType();
+        if(wfStepInfo.stepItem instanceof NodeStepExecutionItem) {
+            NodeStepExecutionItem ns = (NodeStepExecutionItem) wfStepInfo.stepItem;
+            type+="-"+ns.getNodeStepType();
+        }
+        return wfStepInfo.step + "-" + type;
     }
 
 
