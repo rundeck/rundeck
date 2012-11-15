@@ -25,7 +25,7 @@
 <g:each in="${workflow.commands}" var="item" status="i">
     <li class="${i%2==1?'alternate':''}"  wfitemNum="${i}">
         <span id="wfli_${i}">
-        <g:render template="/execution/wflistitemContent" model="${[i:i,stepNum: i,item:item,workflow:workflow,edit:edit,highlight:highlight,noimgs:noimgs, project: project, itemDescription: pluginStepDescriptions?pluginStepDescriptions[item.type]:null]}"/>
+        <g:render template="/execution/wflistitemContent" model="${[i:i,stepNum: i,item:item,workflow:workflow,edit:edit,highlight:highlight,noimgs:noimgs, project: project]}"/>
         </span>
         <g:if test="${item.errorHandler}">
             <ul class="wfhandleritem">

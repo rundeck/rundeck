@@ -428,6 +428,9 @@ class WorkflowController {
             def WorkflowStep item = editwf.commands.get(numi)
             def ehitem= createItemFromParams(input.params)
             _validateCommandExec(ehitem, params.newitemtype)
+            if(item.nodeStep && !ehitem.nodeStep){
+                ehitem.errors.rejectValue('nodeStep', 'Workflow.stepErrorHandler.nodeStep.invalid')
+            }
             if (ehitem.errors.hasErrors()) {
                 return [error: ehitem.errors.allErrors.collect {g.message(error: it)}.join(","), item: ehitem]
             }

@@ -340,12 +340,16 @@ function _hideAddNewEH(){
     newehdiv.parentNode.removeChild(newehdiv);
     $(wfstepnew).insert({after:newehdiv});
 }
-function _wfishownewErrorHandler(key,num){
+function _wfishownewErrorHandler(key,num,nodeStep){
     var newehdiv=$('wfnew_eh_types');
     var wfiehli=$('wfli_eh_'+key);
     wfiehli.innerHTML='';
     newehdiv.parentNode.removeChild(newehdiv);
     wfiehli.appendChild(newehdiv);
+
+//    $(newehdiv).select('.node_step_section').each(nodeStep?Element.show:Element.hide);
+    $(newehdiv).select('.step_section').each(!nodeStep ? Element.show : Element.hide);
+
     newehdiv.show();
     $(wfiehli.parentNode).show();
     _hideWFItemControls();

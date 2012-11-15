@@ -30,6 +30,7 @@ public class CommandExec extends WorkflowStep  {
     String adhocLocalString
     String adhocFilepath
     Boolean adhocExecution = false
+    static transients = ['nodeStep']
 
     static mapping = {
         adhocLocalString type: 'text'
@@ -126,5 +127,9 @@ public class CommandExec extends WorkflowStep  {
         ce.keepgoingOnSuccess=!!data.keepgoingOnSuccess
         //nb: error handler is created inside Workflow.fromMap
         return ce
+    }
+
+    public boolean isNodeStep(){
+        return true;
     }
 }

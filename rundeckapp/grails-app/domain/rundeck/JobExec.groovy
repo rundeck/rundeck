@@ -31,7 +31,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     String jobGroup
     String jobIdentifier
     String argString
-    static transients=['jobIdentifier']
+    static transients=['jobIdentifier','nodeStep']
 
     static constraints = {
         jobName(nullable: false, blank: false)
@@ -58,6 +58,10 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     public void setJobIdentifier(){
         //noop
     }
+    public boolean isNodeStep(){
+        return false;
+    }
+
 
     public JobExec createClone(){
         Map properties = new HashMap(this.properties)
