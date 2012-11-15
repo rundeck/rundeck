@@ -152,7 +152,6 @@ class WorkflowController {
             item=item.errorHandler
         }
         def itemDescription = item.instanceOf(PluginStep) ? getPluginStepDescription(item.nodeStep, item.type, frameworkService.getFrameworkFromUserSession(session, request.subject)) : null
-        log.error("Saved item with description: ${itemDescription}")
         return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: item, i: params.key, stepNum: numi, scheduledExecutionId: params.scheduledExecutionId, edit: true,isErrorHandler: isErrorHandler,itemDescription: itemDescription])
     }
 

@@ -27,7 +27,7 @@
         <g:if test="${isErrorHandler}">
             <span class="info note"><g:message code="Workflow.stepErrorHandler.label.on.error" /></span>
         </g:if>
-        <g:render template="/execution/wfItemView" model="${[item:item,edit:edit,noimgs:noimgs, workflow: workflow, project: project, itemDescription: itemDescription]}"/>
+        <g:render template="/execution/wfItemView" model="${[item:item,edit:edit,noimgs:noimgs, workflow: workflow, project: project]}"/>
         <g:if test="${isErrorHandler}">
             <g:if test="${item.keepgoingOnSuccess}">
                 <span class=" succeed" title="${g.message(code:'Workflow.stepErrorHandler.keepgoingOnSuccess.description').encodeAsHTML()}"><g:message code="Workflow.stepErrorHandler.label.keep.going.on.success" /></span>

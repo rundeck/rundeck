@@ -268,6 +268,20 @@ function _wficancelnew() {
     $('wfnewbutton').show();
     _showWFItemControls();
 }
+//events handlers for add/cancel new step
+function _evtNewStepChooseType(evt) {
+    var e = evt.element();
+    _wfiaddnew(e.getAttribute('data-step-type'),false);
+}
+function _evtNewNodeStepChooseType(evt) {
+    var e = evt.element();
+    _wfiaddnew(e.getAttribute('data-node-step-type'),true);
+}
+function _evtNewStepCancel(evt){
+    $('wfnewtypes').hide();
+    $('wfnewbutton').show();
+}
+
 function _hideWFItemControls() {
     $$('#workflowContent span.wfitemcontrols').each(Element.hide);
     $('wfundoredo').hide();
@@ -292,8 +306,11 @@ function _showWFItemControls() {
 
 function _evtNewEHChooseType(evt){
     var e = evt.element();
-    console.log("add: " + e.getAttribute('data-eh-type'));
-    _wfiaddNewErrorHandler(e, e.getAttribute('data-eh-type'));
+    _wfiaddNewErrorHandler(e, e.getAttribute('data-step-type'), null, false);
+}
+function _evtNewEHNodeStepType(evt){
+    var e = evt.element();
+    _wfiaddNewErrorHandler(e, e.getAttribute('data-node-step-type'),null, true);
 }
 function _hideAddNewEHLinks() {
     $$('span.wfitem_add_errorhandler').each(Element.hide);
@@ -334,7 +351,7 @@ function _wfishownewErrorHandler(key,num){
     _hideWFItemControls();
 }
 
-function _wfiaddNewErrorHandler(elem,type,num){
+function _wfiaddNewErrorHandler(elem,type,num,nodestep){
     if(null==num){
         //find num by looking for enclosing ul and getting wfitemNum attribute
         var d=$(elem).up('ul.wfhandleritem',0);
@@ -345,8 +362,7 @@ function _wfiaddNewErrorHandler(elem,type,num){
     var key='eh_'+num;
 
     //add new error handler for the item num
-    console.log("add type "+type+" for num: "+num);
-    var params = {newitemtype:type,key:key,num:num,isErrorHandler:true};
+    var params = {newitemtype:type,key:key,num:num,isErrorHandler:true, newitemnodestep:nodestep?true:false};
     if (getCurSEID()) {
         params.scheduledExecutionId = getCurSEID();
     }

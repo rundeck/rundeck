@@ -122,67 +122,39 @@
         </span>
     </div>
     <div id="wfnewtypes" style="display:none; margin-top:10px" class="popout">
-        <span > Add a Workflow ${g.message(code:'Workflow.step.label')}</span>
-        <div class="info note">Choose the type of Workflow ${g.message(code:'Workflow.step.label')}:</div>
-        <div style="margin:10px;">
-        <span class="button action" onclick="_wfiaddnew('command');" title="Execute a remote command"><g:img file='icon-tiny-add.png'/> Command</span>
-        <span class="button action" onclick="_wfiaddnew('script');" title="Execute  an inline script"><g:img file='icon-tiny-add.png'/> Script</span>
-        <span class="button action" onclick="_wfiaddnew('scriptfile');" title="Execute a script file or URL"><g:img file='icon-tiny-add.png'/> Script file or URL</span>
-        <span class="button action" onclick="_wfiaddnew('job');" title="Execute another Job"><g:img file='icon-tiny-add.png'/> Job Reference</span>
-            <g:if test="${nodeStepDescriptions}">
-                Node Steps:
-                <g:each in="${nodeStepDescriptions}" var="typedesc">
-                    <span class="button action" onclick="_wfiaddnew('${typedesc.name.encodeAsHTML()}',true);"
-                    title="${typedesc.title.encodeAsHTML()}: ${typedesc.description.encodeAsHTML()}">
-                        ${typedesc.title.encodeAsHTML()}
-                    </span>
-                </g:each>
-            </g:if>
-            <g:if test="${stepDescriptions}">
-                Steps:
-                <g:each in="${stepDescriptions}" var="typedesc">
-                    <span class="button action" onclick="_wfiaddnew('${typedesc.name.encodeAsHTML()}');"
-                    title="${typedesc.title.encodeAsHTML()}: ${typedesc.description.encodeAsHTML()}">
-                        ${typedesc.title.encodeAsHTML()}
-                    </span>
-                </g:each>
-            </g:if>
-        </div>
-        <div style="margin:10px; text-align:right;">
-            <span class="action button small" onclick="$('wfnewtypes').hide();$('wfnewbutton').show();" title="Cancel adding new item"> Cancel</span>
-        </div>
+        <g:render template="/execution/wfAddStep"
+            model="[addMessage:'Workflow.step.label.add',chooseMessage:'Workflow.step.label.choose.the.type']"
+        />
     </div>
 
-        <div id="wfnew_eh_types" style="display:none; margin-top:10px;background: white;" class="popout">
-            %{--This element is moved around to show the add error-handle buttons for a step--}%
-            <span><g:message code="Workflow.stepErrorHandler.label.add"/></span>
-            <span><g:message code="Workflow.stepErrorHandler.description" /></span>
-
-            <div class="info note"><g:message code="Workflow.stepErrorHandler.label.choose.the.type" /></div>
-
-            <div style="margin:10px;">
-                <span class="button action add_eh_type" data-eh-type="command"  title="Execute a remote command"><g:img
-                    file='icon-tiny-add.png'/> Command</span>
-                <span class="button action add_eh_type" data-eh-type="script"  title="Execute  an inline script"><g:img
-                    file='icon-tiny-add.png'/> Script</span>
-                <span class="button action add_eh_type" data-eh-type="scriptfile"  title="Execute a script file"><g:img
-                    file='icon-tiny-add.png'/> Script file</span>
-                <span class="button action add_eh_type" data-eh-type="job"  title="Execute another Job"><g:img
-                    file='icon-tiny-add.png'/> Job Reference</span>
-            </div>
-
-            <div style="margin:10px; text-align:right;">
-                <span class="action button small cancel_add_eh_type"  title="Cancel adding new item">Cancel</span>
-            </div>
-        </div>
+    <div id="wfnew_eh_types" style="display:none; margin-top:10px;background: white;" class="popout">
+        %{--This element is moved around to show the add error-handle buttons for a step--}%
+        <g:render template="/execution/wfAddStep"
+                model="[addMessage:'Workflow.stepErrorHandler.label.add',descriptionMessage:'Workflow.stepErrorHandler.description',chooseMessage:'Workflow.stepErrorHandler.label.choose.the.type']"
+        />
+    </div>
     </div>
         <script type="text/javascript">
             fireWhenReady('wfnew_eh_types',function(){
-                $('wfnew_eh_types').select('span.add_eh_type').each(function (e) {
+                $('wfnew_eh_types').select('span.add_step_type').each(function (e) {
                     Event.observe(e, 'click', _evtNewEHChooseType);
                 });
-                $('wfnew_eh_types').select('span.cancel_add_eh_type').each(function (e) {
+                $('wfnew_eh_types').select('span.add_node_step_type').each(function (e) {
+                    Event.observe(e, 'click', _evtNewEHNodeStepType);
+                });
+                $('wfnew_eh_types').select('span.cancel_add_step_type').each(function (e) {
                     Event.observe(e, 'click', _evtNewEHCancel);
+                });
+            })
+            fireWhenReady('wfnewtypes', function () {
+                $('wfnewtypes').select('span.add_step_type').each(function (e) {
+                    Event.observe(e, 'click', _evtNewStepChooseType);
+                });
+                $('wfnewtypes').select('span.add_node_step_type').each(function (e) {
+                    Event.observe(e, 'click', _evtNewNodeStepChooseType);
+                });
+                $('wfnewtypes').select('span.cancel_add_step_type').each(function (e) {
+                    Event.observe(e, 'click', _evtNewStepCancel);
                 });
             })
         </script>

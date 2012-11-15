@@ -95,7 +95,10 @@
 </g:elseif>
 <g:elseif test="${( newitemtype || item && item.instanceOf(PluginStep) ) && newitemDescription}">
     <div>
-        <div class="info note">${newitemDescription.description.encodeAsHTML()}</div>
+        <div>
+            <span class="prompt">${newitemDescription.title?.encodeAsHTML()}</span>
+            <span class="info note">${newitemDescription.description?.encodeAsHTML()}</span>
+        </div>
         <g:hiddenField name="pluginItem" value="true"/>
         <g:hiddenField name="newitemnodestep" value="${item?item.nodeStep:newitemnodestep=='true'}"/>
         <div>
