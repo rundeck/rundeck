@@ -17,6 +17,11 @@ import com.dtolabs.rundeck.core.authorization.providers.SAREAuthorization
 import rundeck.ScheduledExecution
 import rundeck.Execution
 import rundeck.PluginStep
+import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
+import com.dtolabs.rundeck.core.plugins.configuration.Describable
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.Description
 
 /**
  * Interfaces with the core Framework object
@@ -425,7 +430,7 @@ class FrameworkService implements ApplicationContextAware {
      * @param type
      * @return
      */
-    def getNodeStepPluginDescription(Framework framework, String type){
+    def Description getNodeStepPluginDescription(Framework framework, String type){
         framework.getNodeStepExecutorService().providerOfType(type).description
     }
     /**
@@ -434,7 +439,7 @@ class FrameworkService implements ApplicationContextAware {
      * @param type
      * @return
      */
-    def getStepPluginDescription(Framework framework, String type){
+    def Description getStepPluginDescription(Framework framework, String type){
         framework.getStepExecutionService().providerOfType(type).description
     }
     /**
@@ -469,5 +474,88 @@ class FrameworkService implements ApplicationContextAware {
      */
     def getStepPluginDescriptionsMap(Framework framework){
         getStepPluginDescriptions(framework).collectEntries{ [it.name, it] }
+    }
+
+    /**
+     * Validate a Service provider descriptor input
+     * @param framework framework
+     * @param type provider type
+     * @param prefix input map prefix string
+     * @param params input parameters
+     * @param service service
+     * @return validation results, keys: "valid" (true/false), "error" (error message), "desc" ({@link Description} object),
+     *   "props" (parsed property values map), "report" (Validation report {@link Validator.Report))
+     */
+    public Map validateServiceConfig(Framework framework, String type, String prefix, Map params, final ProviderService<?> service) {
+        Map result = [:]
+        result.valid=false
+        final provider
+        try {
+            provider = service.providerOfType(type)
+        } catch (ExecutionServiceException e) {
+            result.error = e.message
+        }
+        if (provider && !(provider instanceof Describable)) {
+            result.error = "Invalid provider type: ${type}, not available for configuration"
+        } else {
+            def validated=validateDescription(provider.description, prefix, params)
+            result.putAll(validated)
+        }
+        return result
+    }
+
+    /**
+     * Perform validation of a configuration description for input parameters
+     * @param description
+     * @param prefix
+     * @param params
+     * @return result map "desc" ({@link Description} object),
+     *   "props" (parsed property values map), "report" (Validation report {@link Validator.Report))
+     */
+    public Map validateDescription(Description description, String prefix, Map params) {
+        def result=[:]
+        result.valid=false
+        result.desc = description
+        result.props = parseResourceModelConfigInput(result.desc, prefix, params)
+
+        if (result.desc) {
+            def report = Validator.validate(result.props as Properties, result.desc)
+            if (report.valid) {
+                result.valid = true
+            }
+            result.report = report
+        }
+        return result
+    }
+
+    /**
+     * Return a map of property names to values, for the given description and input parameters with a specified prefix
+     * @param desc the properties descriptor
+     * @param prefix key prefix of input map
+     * @param params input parameter map
+     * @return map of property name to value based on correct property types.
+     */
+    public Map parseResourceModelConfigInput(Description desc, String prefix, final Map params) {
+        Map props = [:]
+        if (desc) {
+            desc.properties.each {prop ->
+                def v = params[prefix  + prop.name]
+                if (prop.type == Property.Type.Boolean) {
+                    props.put(prop.name, (v == 'true' || v == 'on') ? 'true' : 'false')
+                } else if (v) {
+                    props.put(prop.name, v)
+                }
+            }
+        } else {
+            final cfgprefix = prefix
+            //just parse all properties with the given prefix
+            params.keySet().each {String k ->
+                if (k.startsWith(cfgprefix)) {
+                    def key = k.substring(cfgprefix.length())
+                    props.put(key, params[k])
+                }
+            }
+        }
+        return props
     }
 }

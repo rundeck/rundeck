@@ -70,8 +70,7 @@ class WorkflowController {
      */
     private Description getPluginStepDescription(boolean isNodeStep, String type, Framework framework) {
         if (type && !(type in ['command', 'script', 'scriptfile', 'job'])) {
-            def service= isNodeStep ? framework.getNodeStepExecutorService() : framework.getStepExecutionService()
-            return service.providerOfType(type).description
+            return isNodeStep ? frameworkService.getNodeStepPluginDescription(framework, type) : frameworkService.getStepPluginDescription(framework, type)
         }
         return null
     }
@@ -139,8 +138,10 @@ class WorkflowController {
         def result = _applyWFEditAction(editwf, [action: wfEditAction, num: numi, params: params])
         if (result.error) {
             log.error(result.error)
+            item=result.item
+            def itemDescription = item.instanceOf(PluginStep) ? getPluginStepDescription(item.nodeStep, item.type, frameworkService.getFrameworkFromUserSession(session, request.subject)) : null
             return render(template: "/execution/wfitemEdit", model: [item: result.item, key: params.key, num: params.num,
-                scheduledExecutionId: params.scheduledExecutionId, newitemtype: params['newitemtype'], edit: true, isErrorHandler: isErrorHandler])
+                scheduledExecutionId: params.scheduledExecutionId, newitemtype: params['newitemtype'], edit: true, isErrorHandler: isErrorHandler, newitemDescription: itemDescription,report:result.report])
         }
         _pushUndoAction(params.scheduledExecutionId, result.undo)
         if (result.undo) {
@@ -345,7 +346,7 @@ class WorkflowController {
                 moditem.properties = params
                 def optsmap = ExecutionService.filterOptParams(input.params)
                 if (optsmap) {
-                    item.argString = ExecutionService.generateArgline(optsmap)
+                    moditem.argString = ExecutionService.generateArgline(optsmap)
                     //TODO: validate input options
                 }
             }
@@ -385,6 +386,11 @@ class WorkflowController {
             if (item.errors.hasErrors()) {
                 return [error: item.errors.allErrors.collect {g.message(error: it)}.join(","), item: item]
             }
+            def validation=_validatePluginStep(item, params.newitemtype)
+            if(!validation.valid){
+                return [error: "Plugin configuration was not valid", item: item,report: validation.report]
+            }
+            _sanitizePluginStep(item,validation)
             if (null != editwf.commands) {
                 editwf.commands.add(num, item)
             } else {
@@ -407,8 +413,13 @@ class WorkflowController {
             if (moditem.errors.hasErrors()) {
                 return [error: moditem.errors.allErrors.collect {g.message(error: it)}.join(","), item: moditem]
             }
+            def validation = _validatePluginStep(moditem, params.newitemtype)
+            if (!validation.valid) {
+                return [error: "Plugin configuration was not valid", item: moditem, report: validation.report]
+            }
 
             modifyItemFromParams(item, input.params)
+            _sanitizePluginStep(item, validation)
             result['undo'] = [action: 'modify', num: numi, params: clone.properties]
         }else if (input.action=='removeHandler'){
             //remove error handler from wfstep
@@ -434,6 +445,11 @@ class WorkflowController {
             if (ehitem.errors.hasErrors()) {
                 return [error: ehitem.errors.allErrors.collect {g.message(error: it)}.join(","), item: ehitem]
             }
+            def validation = _validatePluginStep(ehitem, params.newitemtype)
+            if (!validation.valid) {
+                return [error: "Plugin configuration was not valid", item: ehitem, report: validation.report]
+            }
+            _sanitizePluginStep(ehitem, validation)
             item.errorHandler= ehitem
             result['undo'] = [action: 'removeHandler', num: numi]
         } else if (input.action == 'modifyHandler') {
@@ -458,8 +474,13 @@ class WorkflowController {
             if (moditem.errors.hasErrors()) {
                 return [error: moditem.errors.allErrors.collect {g.message(error: it)}.join(","), item: moditem]
             }
+            def validation = _validatePluginStep(moditem, params.newitemtype)
+            if (!validation.valid) {
+                return [error: "Plugin configuration was not valid", item: moditem, report: validation.report]
+            }
 
             modifyItemFromParams(ehitem, input.params)
+            _sanitizePluginStep(ehitem, validation)
 
             result['undo'] = [action: 'modifyHandler', num: numi, params: clone.properties]
         }
@@ -618,6 +639,29 @@ class WorkflowController {
             }
         }else if(exec instanceof PluginStep){
             //TODO: validate
+        }
+    }
+    /**
+     * Validate a WorkflowStep object.  will call Errors.rejectValue for
+     * any invalid fields for the object.
+     * @param exec the WorkflowStep
+     * @param type type if specified in params
+     */
+     Map _validatePluginStep(WorkflowStep exec, String type = null) {
+        if(exec instanceof PluginStep){
+            PluginStep item = exec as PluginStep
+            def framework = frameworkService.getFrameworkFromUserSession(session, request.subject)
+            def description=getPluginStepDescription(item.nodeStep, item.type, framework)
+            return frameworkService.validateDescription(description,'',item.configuration)
+        }else{
+            return [valid:true]
+        }
+    }
+    private void _sanitizePluginStep(WorkflowStep item, Map validation){
+        if (item instanceof PluginStep) {
+            PluginStep step = item as PluginStep
+            //set configuration based on parsed props
+            step.configuration=validation.props
         }
     }
     

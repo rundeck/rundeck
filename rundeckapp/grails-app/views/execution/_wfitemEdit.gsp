@@ -109,7 +109,7 @@
                         <g:render
                                 template="/framework/pluginConfigPropertyField"
                                 model="${[prop: prop, prefix: nodeexecprefix, error: null, values: item?.configuration,
-                                        fieldname: nodeexecprefix + prop.name, origfieldname: 'orig.' + nodeexecprefix + prop.name]}"/>
+                                        fieldname: nodeexecprefix + prop.name, origfieldname: 'orig.' + nodeexecprefix + prop.name, error: report?.errors ? report?.errors[prop.name] : null]}"/>
                     </tr>
                 </g:each>
             </table>

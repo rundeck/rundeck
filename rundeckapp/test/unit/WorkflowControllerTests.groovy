@@ -3,6 +3,7 @@ import rundeck.Workflow
 import rundeck.JobExec
 import rundeck.CommandExec
 import rundeck.PluginStep
+import rundeck.services.FrameworkService
 
 class WorkflowControllerTests extends ControllerUnitTestCase {
     protected void setUp() {
@@ -123,6 +124,11 @@ class WorkflowControllerTests extends ControllerUnitTestCase {
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
         wf.commands = new ArrayList()
 
+        def fwmock = mockFor(FrameworkService)
+        fwmock.demand.getFrameworkFromUserSession{s,r->null}
+        fwmock.demand.getStepPluginDescription{fwk, type->null}
+        fwmock.demand.validateDescription{desc, p, params->[valid:true,props:['blah':'value']]}
+        ctrl.frameworkService=fwmock.createMock()
 
         def result = ctrl._applyWFEditAction(wf, [action: 'insert', num: 0, params: [pluginItem:true,newitemtype:'test',newitemnodestep:'false',pluginConfig:['blah':'value']]])
         assertNull result.error
@@ -131,6 +137,7 @@ class WorkflowControllerTests extends ControllerUnitTestCase {
         assertTrue item instanceof PluginStep
         assertEquals 'test', item.type
         assertEquals false, item.nodeStep
+        assertNotNull(item.configuration)
         assertEquals(['blah':'value'], item.configuration)
         //test undo
         assertNotNull result.undo
@@ -168,6 +175,13 @@ class WorkflowControllerTests extends ControllerUnitTestCase {
         mockDomain(CommandExec)
         mockDomain(PluginStep)
         WorkflowController ctrl = new WorkflowController()
+
+        def fwmock = mockFor(FrameworkService)
+        fwmock.demand.getFrameworkFromUserSession {s, r -> null}
+        fwmock.demand.getNodeStepPluginDescription {fwk, type -> null}
+        fwmock.demand.validateDescription {desc, p, params -> [valid: true, props: ['blah': 'value']]}
+        ctrl.frameworkService = fwmock.createMock()
+
         //test modify
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
         PluginStep je = new PluginStep(type: 'test1', nodeStep: true, configuration: ['elf': 'monkey'])
@@ -202,14 +216,12 @@ class WorkflowControllerTests extends ControllerUnitTestCase {
         WorkflowController ctrl = new WorkflowController()
         //test addHandler
         test:{
-            Workflow wf = new Workflow(threadcount:1,keepgoing:true,commands:[new CommandExec(adhocRemoteString: 'test')])
+            Workflow wf = new Workflow(threadcount:1,keepgoing:true,commands:[new JobExec(jobName: 'asdf', jobGroup: 'blee')])
 
             def result = ctrl._applyWFEditAction(wf,[action:'addHandler',num:0,params:[jobName:'blah',jobGroup:'blee']])
             assertNull result.error
             assertEquals 1,wf.commands.size()
             final Object item = wf.commands.get(0)
-            assertTrue item instanceof CommandExec
-            final CommandExec stepitem=(CommandExec) item
             assertNotNull item.errorHandler
 
             assertTrue item.errorHandler instanceof JobExec
@@ -280,11 +292,17 @@ class WorkflowControllerTests extends ControllerUnitTestCase {
         mockDomain(CommandExec)
         mockDomain(PluginStep)
         WorkflowController ctrl = new WorkflowController()
+
+        def fwmock = mockFor(FrameworkService)
+        fwmock.demand.getFrameworkFromUserSession {s, r -> null}
+        fwmock.demand.getNodeStepPluginDescription {fwk, type -> null}
+        fwmock.demand.validateDescription {desc, p, params -> [valid: true, props: ['blah': 'value']]}
+        ctrl.frameworkService = fwmock.createMock()
         //test insert
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands: [new CommandExec(adhocRemoteString: 'test')])
 
 
-        def result = ctrl._applyWFEditAction(wf, [action: 'addHandler', num: 0, params: [pluginItem: true, newitemtype: 'test', newitemnodestep: 'false', pluginConfig: ['blah': 'value']]])
+        def result = ctrl._applyWFEditAction(wf, [action: 'addHandler', num: 0, params: [pluginItem: true, newitemtype: 'test', newitemnodestep: 'true', pluginConfig: ['blah': 'value']]])
         assertNull result.error
         assertEquals 1, wf.commands.size()
         final Object item = wf.commands.get(0)
@@ -295,7 +313,7 @@ class WorkflowControllerTests extends ControllerUnitTestCase {
 
         assertTrue item.errorHandler instanceof PluginStep
         assertEquals 'test', item.errorHandler.type
-        assertEquals false, item.errorHandler.nodeStep
+        assertEquals true, item.errorHandler.nodeStep
         assertEquals(['blah': 'value'], item.errorHandler.configuration)
 
         //test undo memo
@@ -340,6 +358,13 @@ class WorkflowControllerTests extends ControllerUnitTestCase {
         mockDomain(CommandExec)
         mockDomain(PluginStep)
         WorkflowController ctrl = new WorkflowController()
+
+        def fwmock = mockFor(FrameworkService)
+        fwmock.demand.getFrameworkFromUserSession {s, r -> null}
+        fwmock.demand.getNodeStepPluginDescription {fwk, type -> null}
+        fwmock.demand.validateDescription {desc, p, params -> [valid: true, props: ['blah': 'value']]}
+        ctrl.frameworkService = fwmock.createMock()
+
         //test modify
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands:
                 [new CommandExec(adhocRemoteString: 'test', errorHandler: new PluginStep(type: 'test1', nodeStep: true, configuration: ['elf': 'monkey']))])
@@ -505,21 +530,19 @@ class WorkflowControllerTests extends ControllerUnitTestCase {
             assertEquals ce2,xitem2
         }
     }
-    public void testUndoWFErrorHandlerEditActions(){
+    public void testUndoWFErrorHandlerEditActionsAddHandler(){
         mockDomain(Workflow)
         mockDomain(JobExec)
         mockDomain(CommandExec)
         WorkflowController ctrl = new WorkflowController()
         //test addHandler then undo
         test: {
-            Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands: [new CommandExec(adhocRemoteString: 'test')])
+            Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands: [new JobExec(jobName: 'bladf',jobGroup: 'elf')])
 
             def result = ctrl._applyWFEditAction(wf, [action: 'addHandler', num: 0, params: [jobName: 'blah', jobGroup: 'blee']])
             assertNull result.error
             assertEquals 1, wf.commands.size()
             final Object item = wf.commands.get(0)
-            assertTrue item instanceof CommandExec
-            final CommandExec stepitem = (CommandExec) item
             assertNotNull item.errorHandler
 
             assertTrue item.errorHandler instanceof JobExec
@@ -538,18 +561,23 @@ class WorkflowControllerTests extends ControllerUnitTestCase {
             assertEquals 1, wf.commands.size()
             assertNull wf.commands.get(0).errorHandler
         }
+    }
+    public void testUndoWFErrorHandlerEditActionsRemoveHandler(){
+
+        mockDomain(Workflow)
+        mockDomain(JobExec)
+        mockDomain(CommandExec)
+        WorkflowController ctrl = new WorkflowController()
         //test removeHandler
         test: {
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands:
-                [new CommandExec(adhocRemoteString: 'test', errorHandler: new JobExec(jobName: 'blah', jobGroup: 'blee'))])
+                [new JobExec(jobName: 'monkey',jobGroup: 'elf', errorHandler: new JobExec(jobName: 'blah', jobGroup: 'blee'))])
             assertNotNull(wf.commands[0].errorHandler)
 
             def result = ctrl._applyWFEditAction(wf, [action: 'removeHandler', num: 0])
             assertNull result.error
             assertEquals 1, wf.commands.size()
             final Object item = wf.commands.get(0)
-            assertTrue item instanceof CommandExec
-            final CommandExec stepitem = (CommandExec) item
             assertNull item.errorHandler
 
             //test undo memo
@@ -574,6 +602,15 @@ class WorkflowControllerTests extends ControllerUnitTestCase {
             assertEquals 'blah', item2.errorHandler.jobName
             assertEquals 'blee', item2.errorHandler.jobGroup
         }
+
+    }
+
+    public void testUndoWFErrorHandlerEditActionsModifyHandler() {
+
+        mockDomain(Workflow)
+        mockDomain(JobExec)
+        mockDomain(CommandExec)
+        WorkflowController ctrl = new WorkflowController()
         //test modifyHandler
         test: {
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands:

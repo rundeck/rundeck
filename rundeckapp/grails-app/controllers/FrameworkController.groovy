@@ -519,7 +519,7 @@ class FrameworkController  {
             if (params.defaultNodeExec) {
                 def ndx = params.defaultNodeExec
                 (defaultNodeExec, nodeexec) = parseServiceConfigInput(params, "nodeexec", ndx)
-                final validation = validateServiceConfig(framework, defaultNodeExec, "nodeexec.${ndx}.", params, framework.getNodeExecutorService())
+                final validation = frameworkService.validateServiceConfig(framework, defaultNodeExec, "nodeexec.${ndx}.config.", params, framework.getNodeExecutorService())
                 if (!validation.valid) {
                     nodeexecreport = validation.report
                     errors<< (validation.error ?: "Default Node Executor configuration was invalid")
@@ -535,7 +535,7 @@ class FrameworkController  {
             if (params.defaultFileCopy) {
                 def ndx = params.defaultFileCopy
                 (defaultFileCopy, fcopy) = parseServiceConfigInput(params, "fcopy", ndx)
-                final validation = validateServiceConfig(framework, defaultFileCopy, "fcopy.${ndx}.", params, framework.getFileCopierService())
+                final validation = frameworkService.validateServiceConfig(framework, defaultFileCopy, "fcopy.${ndx}.config.", params, framework.getFileCopierService())
                 if (!validation.valid) {
                     fcopyreport = validation.report
                     errors << (validation.error ?: "Default File copier configuration was invalid")
@@ -572,7 +572,9 @@ class FrameworkController  {
                     errors << "Invalid provider type: ${params.type}, not available for configuration"
                 } else {
                     projProps[sourceConfigPrefix + '.' + count + '.type'] = type
-                    def props = parseResourceModelConfigInput(provider.description, prefixKey + '.' + ndx + '.', params)
+                    def mapprops = frameworkService.parseResourceModelConfigInput(provider.description, prefixKey + '.' + ndx + '.'+ 'config.', params)
+                    def props = new Properties()
+                    props.putAll(mapprops)
                     props.keySet().each {k ->
                         if (props[k]) {
                             projProps[sourceConfigPrefix + '.' + count + '.config.' + k] = props[k]
@@ -707,7 +709,7 @@ class FrameworkController  {
             if (params.defaultNodeExec) {
                 def ndx=params.defaultNodeExec
                 (defaultNodeExec, nodeexec)=parseServiceConfigInput(params,"nodeexec",ndx)
-                final validation = validateServiceConfig(framework, defaultNodeExec, "nodeexec.${ndx}.", params, framework.getNodeExecutorService())
+                final validation = frameworkService.validateServiceConfig(framework, defaultNodeExec, "nodeexec.${ndx}.config.", params, framework.getNodeExecutorService())
                 if(!validation.valid){
                     nodeexecreport=validation.report
                     error = validation.error ?: "Node Executor configuration was invalid"
@@ -723,7 +725,7 @@ class FrameworkController  {
             if (params.defaultFileCopy) {
                 def ndx=params.defaultFileCopy
                 (defaultFileCopy, fcopy) = parseServiceConfigInput(params, "fcopy", ndx)
-                final validation = validateServiceConfig(framework, defaultFileCopy, "fcopy.${ndx}.", params, framework.getFileCopierService())
+                final validation = frameworkService.validateServiceConfig(framework, defaultFileCopy, "fcopy.${ndx}.config.", params, framework.getFileCopierService())
                 if(!validation.valid){
                     fcopyreport = validation.report
                     error=validation.error?:"File copier configuration was invalid"
@@ -765,7 +767,9 @@ class FrameworkController  {
                     description=provider.description
                 }
                 projProps[sourceConfigPrefix + '.' + count + '.type'] = type
-                def props = parseResourceModelConfigInput(description, prefixKey + '.' + ndx + '.', params)
+                def mapprops = frameworkService.parseResourceModelConfigInput(description, prefixKey + '.' + ndx + '.' + 'config.', params)
+                def props = new Properties()
+                props.putAll(mapprops)
                 props.keySet().each {k ->
                     if(props[k]){
                         projProps[sourceConfigPrefix + '.' + count + '.config.' + k] = props[k]
@@ -902,7 +906,7 @@ class FrameworkController  {
         if (!type) {
             error = "Plugin provider type must be specified"
         }else{
-            def validate = validateServiceConfig(framework, type, prefix, params,framework.getResourceModelSourceService())
+            def validate = frameworkService.validateServiceConfig(framework, type, prefix+'config.', params,framework.getResourceModelSourceService())
             error = validate.error
             desc = validate.desc
             props = validate.props
@@ -929,38 +933,13 @@ class FrameworkController  {
         if (!type) {
             result.error = "Plugin provider type must be specified"
         }else{
-            def validate = validateServiceConfig(framework, type, prefix, params,framework.getResourceModelSourceService())
+            def validate = frameworkService.validateServiceConfig(framework, type, prefix + 'config.', params,framework.getResourceModelSourceService())
             result.valid=validate.valid
             result.error=validate.error
         }
         render result as JSON
     }
 
-    private Map validateServiceConfig(Framework framework, String type, String prefix, Map params, final ProviderService<?> service) {
-        Map result=[valid:false]
-        final provider
-        try {
-            provider = service.providerOfType(type)
-        } catch (ExecutionServiceException e) {
-            result.error = e.message
-        }
-        if (provider && !(provider instanceof Describable)) {
-            result.error = "Invalid provider type: ${type}, not available for configuration"
-        } else {
-
-            result.desc = provider?.description
-            result.props = parseResourceModelConfigInput(result.desc, prefix, params)
-
-            if (result.desc) {
-                def report = Validator.validate(result.props, result.desc)
-                if (report.valid) {
-                    result.valid = true
-                }
-                result.report=report
-            }
-        }
-        return result
-    }
 
     def editResourceModelConfig = {
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
@@ -973,7 +952,7 @@ class FrameworkController  {
         if (!type) {
             error = "Plugin provider type must be specified"
         } else {
-            def validate = validateServiceConfig(framework, type, prefix, params,framework.getResourceModelSourceService())
+            def validate = frameworkService.validateServiceConfig(framework, type, prefix + 'config.', params,framework.getResourceModelSourceService())
             error = validate.error
             desc=validate.desc
             props=validate.props
@@ -997,7 +976,7 @@ class FrameworkController  {
         if (!type) {
             error = "Plugin provider type must be specified"
         } else {
-            def validate = validateServiceConfig(framework, type, prefix, params,framework.getResourceModelSourceService())
+            def validate = frameworkService.validateServiceConfig(framework, type, prefix + 'config.', params,framework.getResourceModelSourceService())
             error = validate.error
             desc = validate.desc
             props = validate.props
@@ -1007,29 +986,6 @@ class FrameworkController  {
         return render(template: 'viewResourceModelConfig',model:[ prefix: prefix, values: props, includeFormFields: true, description: desc, report: report, error: error, saved:true, type: type])
     }
 
-    private def Properties parseResourceModelConfigInput(desc, prefix, final Map params) {
-        Properties props=new Properties()
-        if(desc){
-            desc.properties.each {prop ->
-                def v = params[prefix + "config." + prop.name]
-                if (prop.type == Type.Boolean) {
-                    props.setProperty(prop.name, (v == 'true' || v == 'on') ? 'true' : 'false')
-                } else if (v) {
-                    props.setProperty(prop.name, v)
-                }
-            }
-        }else{
-            final cfgprefix = prefix + "config."
-            //just parse all properties with the given prefix
-            params.keySet().each{String k->
-                if(k.startsWith(cfgprefix)){
-                    def key=k.substring(cfgprefix.length())
-                    props.put(key,params[k])
-                }
-            }
-        }
-        return props
-    }
 
     def projectSelect={
         Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
