@@ -1,9 +1,12 @@
+package rundeck.controllers
+
 import grails.test.*
 import rundeck.Workflow
 import rundeck.JobExec
 import rundeck.CommandExec
 import rundeck.PluginStep
 import rundeck.services.FrameworkService
+import rundeck.controllers.WorkflowController
 
 class WorkflowControllerTests extends ControllerUnitTestCase {
     protected void setUp() {

@@ -1,3 +1,4 @@
+package rundeck.controllers
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
  *
@@ -27,6 +28,7 @@ import rundeck.Execution
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.ScheduledExecutionService
+import rundeck.controllers.ScheduledExecutionController
 
 /*
 * ScheduledExecutionControllerTests.java

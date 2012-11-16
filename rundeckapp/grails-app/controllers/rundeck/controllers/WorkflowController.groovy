@@ -1,3 +1,5 @@
+package rundeck.controllers
+
 import com.dtolabs.rundeck.core.common.Framework
 import rundeck.WorkflowStep
 import rundeck.Workflow

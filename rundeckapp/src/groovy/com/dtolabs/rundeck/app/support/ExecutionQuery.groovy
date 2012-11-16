@@ -1,5 +1,7 @@
 package com.dtolabs.rundeck.app.support
 
+import rundeck.controllers.ExecutionController
+
 /*
  * Copyright 2012 DTO Labs, Inc. (http://dtolabs.com)
  * 

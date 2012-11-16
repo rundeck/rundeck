@@ -1,5 +1,8 @@
+package rundeck.controllers
+
 import grails.test.*
 import rundeck.Option
+import rundeck.controllers.EditOptsController
 
 class EditOptsControllerTests extends ControllerUnitTestCase {
     protected void setUp() {

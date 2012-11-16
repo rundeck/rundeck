@@ -15,6 +15,7 @@ import org.springframework.web.context.request.RequestContextHolder
 import rundeck.ScheduledExecution
 import rundeck.Notification
 import rundeck.Execution
+import rundeck.controllers.ExecutionController
 
 /*
 * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)

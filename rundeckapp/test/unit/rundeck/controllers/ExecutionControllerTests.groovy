@@ -1,5 +1,8 @@
+package rundeck.controllers
+
 import grails.test.ControllerUnitTestCase
 import rundeck.Execution
+import rundeck.controllers.ExecutionController
 
 class ExecutionControllerTests extends ControllerUnitTestCase {
 

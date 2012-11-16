@@ -26,6 +26,7 @@ import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.services.FrameworkService
 import rundeck.services.ScheduledExecutionService
+import rundeck.controllers.ScheduledExecutionController
 
 /*
  * ScheduledExecValidationTests.java

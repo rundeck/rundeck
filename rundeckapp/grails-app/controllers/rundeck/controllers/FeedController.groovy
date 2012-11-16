@@ -1,3 +1,5 @@
+package rundeck.controllers
+
 import com.dtolabs.rundeck.app.support.ExecQuery
 import com.dtolabs.rundeck.app.support.ReportQuery
 import rundeck.services.ReportService

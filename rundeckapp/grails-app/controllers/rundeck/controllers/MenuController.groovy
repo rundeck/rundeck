@@ -1,3 +1,5 @@
+package rundeck.controllers
+
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject

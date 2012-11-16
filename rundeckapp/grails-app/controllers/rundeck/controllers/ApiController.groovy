@@ -1,3 +1,5 @@
+package rundeck.controllers
+
 import java.lang.management.ManagementFactory
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants

@@ -1,3 +1,5 @@
+package rundeck.controllers
+
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 import rundeck.Option

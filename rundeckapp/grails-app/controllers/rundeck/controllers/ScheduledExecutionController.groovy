@@ -1,3 +1,5 @@
+package rundeck.controllers
+
 import org.quartz.*
 
 import com.dtolabs.rundeck.core.common.Framework

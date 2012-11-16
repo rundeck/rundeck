@@ -63,6 +63,7 @@ import rundeck.Workflow
 import rundeck.Option
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult
 import rundeck.PluginStep
+import rundeck.controllers.ExecutionController
 
 /**
  * Coordinates Command executions via Ant Project objects

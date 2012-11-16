@@ -35,6 +35,8 @@ import rundeck.JobExec
 import rundeck.Execution
 import rundeck.Option
 import rundeck.Notification
+import rundeck.controllers.WorkflowController
+import rundeck.controllers.EditOptsController
 
 /**
  *  ScheduledExecutionService manages scheduling jobs with the Quartz scheduler
