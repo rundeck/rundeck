@@ -18,6 +18,7 @@ import groovy.xml.MarkupBuilder
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.util.XmlParserUtil
 import rundeck.ScheduledExecution
+import rundeck.controllers.JobXMLException
 
 /*
 * JobsXMLCodec encapsulates encoding and decoding of the Jobs XML format.
@@ -223,6 +224,14 @@ class JobsXMLCodec {
                 } else if (cmd.jobref?.arg?.line) {
                     cmd.jobref.args = cmd.jobref.arg.remove('line')
                     cmd.jobref.remove('arg')
+                }else if(cmd['node-step-type'] || cmd['step-type']){
+                    if(cmd['node-step-type']){
+                        cmd.type = cmd.remove('node-step-type')
+                        cmd.nodeStep=true
+                    }else{
+                        cmd.type = cmd.remove('step-type')
+                        cmd.nodeStep = false
+                    }
                 }
             }
             data.commands.each(fixup)
@@ -358,6 +367,15 @@ class JobsXMLCodec {
                 final def remove = cmd.jobref.remove('args')
                 if (null != remove) {
                     cmd.jobref.arg = BuilderUtil.toAttrMap('line', remove)
+                }
+            }else{
+                def nodestep= cmd.remove('nodeStep')
+                if(nodestep){
+                    cmd['node-step-type']=cmd.remove('type')
+                    BuilderUtil.makeAttribute(cmd, 'node-step-type')
+                }else{
+                    cmd['step-type'] = cmd.remove('type')
+                    BuilderUtil.makeAttribute(cmd, 'step-type')
                 }
             }
             if(iseh){

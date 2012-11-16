@@ -40,7 +40,23 @@ class PluginStep extends WorkflowStep{
     }
 
     public Map toMap() {
-        [type: type, nodeStep:nodeStep,configuration: this.configuration]
+        def map=[type: type, nodeStep:nodeStep,configuration: this.configuration]
+        if (errorHandler) {
+            map.errorhandler = errorHandler.toMap()
+        } else if (keepgoingOnSuccess) {
+            map.keepgoingOnSuccess = keepgoingOnSuccess
+        }
+        map
+    }
+
+    static PluginStep fromMap(Map data) {
+        PluginStep ce = new PluginStep()
+        ce.nodeStep=data.nodeStep
+        ce.type=data.type
+        ce.configuration=data.configuration
+
+        ce.keepgoingOnSuccess = !!data.keepgoingOnSuccess
+        return ce
     }
 
     public PluginStep createClone() {

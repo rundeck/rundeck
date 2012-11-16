@@ -3,6 +3,7 @@ import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.constructor.SafeConstructor
 import com.dtolabs.rundeck.core.utils.snakeyaml.ForceMultilineLiteralOptions
 import rundeck.ScheduledExecution
+import rundeck.controllers.JobXMLException
 
 class JobsYAMLCodec {
 

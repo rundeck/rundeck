@@ -4,6 +4,8 @@ import rundeck.Workflow
 import rundeck.CommandExec
 import rundeck.Option
 import rundeck.Notification
+import rundeck.controllers.JobXMLException
+import rundeck.PluginStep
 
 /*
 * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
@@ -1588,6 +1590,55 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertTrue "incorrect values content", values.contains("456")
             assertTrue "incorrect values content", values.contains("789")
     }
+
+    void testDecodePluginStep() {
+        //simple workflow with options
+        def jobs = JobsXMLCodec.decode("""<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description></description>
+    <loglevel>INFO</loglevel>
+    <context>
+        <project>test1</project>
+        <options>
+          <option name="buildstamp" value="789" values="123,456,789" enforcedvalues="false" regex="abc"/>
+        </options>
+    </context>
+    <sequence>
+        <command node-step-type="blah">
+            <configuration>
+                <elf>monkey</elf>
+                <ok>howdy</ok>
+            </configuration>
+        </command>
+    </sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+    <schedule>
+      <time hour='11' minute='21' />
+      <weekday day='*' />
+      <month month='*' />
+    </schedule>
+  </job>
+</joblist>
+""")
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+        assertNotNull "incorrect workflow", jobs[0].workflow
+        assertNotNull "incorrect workflow", jobs[0].workflow.commands
+        assertEquals "incorrect workflow size", 1, jobs[0].workflow.commands.size()
+        def cmd1 = jobs[0].workflow.commands[0]
+        assertNotNull "incorrect workflow", cmd1
+        assertTrue "incorrect type: ${cmd1}", (cmd1 instanceof PluginStep)
+        assertTrue("incorrect nodeStep", cmd1.nodeStep)
+        assertEquals "incorrect type", 'blah', cmd1.type
+        assertEquals "incorrect configuration", [elf:'monkey',ok:'howdy'], cmd1.configuration
+
+    }
+
 
     void testDecodeOptions(){
 

@@ -97,26 +97,24 @@ public class Workflow {
         if(data.commands){
             ArrayList commands = new ArrayList()
             Set handlers = new HashSet()
-            data.commands.each{map->
+            def createStep={Map map->
                 WorkflowStep exec
-                if(map.jobref){
+                if (map.jobref) {
                     exec = JobExec.jobExecFromMap(map)
-                    commands <<exec
-                }else{
-                    //TODO: create appropriate type
-                    exec=CommandExec.fromMap(map)
-                    commands<<exec
+                } else if (map.exec || map.script || map.scriptfile || map.scripturl) {
+                    exec = CommandExec.fromMap(map)
+                } else {
+                    exec = PluginStep.fromMap(map)
                 }
+                exec
+            }
+            data.commands.each{map->
+                WorkflowStep exec=createStep(map)
                 if(map.errorhandler){
-                    WorkflowStep handler
-                    if (map.errorhandler.jobref) {
-                        handler = JobExec.jobExecFromMap(map.errorhandler)
-                    } else {
-                        //TODO: create appropriate type
-                        handler = CommandExec.fromMap(map.errorhandler)
-                    }
+                    WorkflowStep handler=createStep(map.errorhandler)
                     exec.errorHandler=handler
                 }
+                commands<<exec
             }
             wf.commands=commands
         }
