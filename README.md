@@ -77,7 +77,7 @@ Available online at <http://rundeck.org/docs>
 Development
 ======
 
-* [Issue tracker](http://rundeck.lighthouseapp.com/projects/59277-development) at Lighthouseapp.com
+* [Issue tracker](https://github.com/dtolabs/rundeck/issues) at github.com
 * [Fresh builds](http://build.rundeck.org) served by Jenkins
 
 Do you have changes to contribute? Please see the [Development](https://github.com/dtolabs/rundeck/wiki/Development) wiki page.
