@@ -7,7 +7,7 @@ class PluginStep extends WorkflowStep{
     String type
     String jsonData
     static constraints = {
-        nodeStep nullable: false, blank: false
+        nodeStep nullable: false
         type nullable: false, blank: false
         jsonData(nullable: true, blank: true)
     }
