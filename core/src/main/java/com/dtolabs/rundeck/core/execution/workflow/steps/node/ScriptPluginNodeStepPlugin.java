@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.plugins.AbstractDescribableScriptPlugin;
+import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptDataContextUtil;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
@@ -55,7 +56,7 @@ import java.util.Map;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class ScriptPluginNodeStepPlugin extends AbstractDescribableScriptPlugin implements NodeStepPlugin {
+class ScriptPluginNodeStepPlugin extends BaseScriptPlugin implements NodeStepPlugin {
 
     ScriptPluginNodeStepPlugin(final ScriptPluginProvider provider, final Framework framework) {
         super(provider, framework);
@@ -79,106 +80,23 @@ class ScriptPluginNodeStepPlugin extends AbstractDescribableScriptPlugin impleme
                                    final PluginStepItem item,
                                    final INodeEntry node)
         throws NodeStepException {
-        final File workingdir = null;
         final ScriptPluginProvider plugin = getProvider();
-        final File scriptfile = plugin.getScriptFile();
         final String pluginname = plugin.getName();
         executionContext.getExecutionListener().log(3,
-                                                    "[" + pluginname + "] nodeStep started, config: "
+                                                    "[" + pluginname + "] step started, config: "
                                                     + item.getStepConfiguration());
 
-        final String scriptargs = plugin.getScriptArgs();
-        final String scriptinterpreter = plugin.getScriptInterpreter();
-        final boolean interpreterargsquoted = plugin.getInterpreterArgsQuoted();
-        executionContext.getExecutionListener().log(3,
-                                                    "[" + pluginname + "] scriptargs: " + scriptargs + ", interpreter: "
-                                                    + scriptinterpreter);
-
-
-        /*
-        String dirstring = null;
-        dirstring = plugin.get
-        if (null != node.getAttributes().get(DIR_ATTRIBUTE)) {
-            dirstring = node.getAttributes().get(DIR_ATTRIBUTE);
-        }
-        if (null != dirstring) {
-            workingdir = new File(dirstring);
-        }*/
-
-        //create mutable version of data context
-        final Map<String, Map<String, String>> localDataContext
-            = ScriptDataContextUtil.createScriptDataContextForProject(
-            executionContext.getFramework(),
-            executionContext.getFrameworkProject());
-        localDataContext.get("plugin").putAll(createPluginDataContext());
-        localDataContext.putAll(executionContext.getDataContext());
-
-        HashMap<String, String> configMap = new HashMap<String, String>();
-        localDataContext.put("config", configMap);
-
-        //convert values to string
-        for (final Map.Entry<String, Object> entry : item.getStepConfiguration().entrySet()) {
-            configMap.put(entry.getKey(), entry.getValue().toString());
-        }
-
-
-        final ArrayList<String> arglist = new ArrayList<String>();
-        if (null != scriptinterpreter) {
-            arglist.addAll(Arrays.asList(scriptinterpreter.split(" ")));
-        }
-        if (null != scriptinterpreter && interpreterargsquoted) {
-            final StringBuilder sbuf = new StringBuilder(scriptfile.getAbsolutePath());
-            if (null != scriptargs) {
-                sbuf.append(" ");
-                sbuf.append(DataContextUtils.replaceDataReferences(scriptargs, localDataContext));
-            }
-            arglist.add(sbuf.toString());
-        } else {
-            arglist.add(scriptfile.getAbsolutePath());
-            if (null != scriptargs) {
-                arglist.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargs.split(" "),
-                                                                                    localDataContext)));
-            }
-        }
-        final String[] finalargs = arglist.toArray(new String[arglist.size()]);
-
-        //create system environment variables from the data context
-        final Map<String, String> envMap = DataContextUtils.generateEnvVarsFromContext(localDataContext);
-        final ArrayList<String> envlist = new ArrayList<String>();
-        for (final Map.Entry<String, String> entry : envMap.entrySet()) {
-            envlist.add(entry.getKey() + "=" + entry.getValue());
-        }
-        final String[] envarr = envlist.toArray(new String[envlist.size()]);
 
         int result = -1;
-        boolean success = false;
-        final Thread errthread;
-        final Thread outthread;
-        executionContext.getExecutionListener().log(3, "[" + pluginname + "] executing: " + StringArrayUtil.asString(
-            finalargs,
-            " "));
-        final Runtime runtime = Runtime.getRuntime();
-        final Process exec;
         try {
-            exec = runtime.exec(finalargs, envarr, workingdir);
+            result = runPluginScript(executionContext, item, System.out, System.err);
         } catch (IOException e) {
-            throw new NodeStepException(e, node.getNodename());
-        }
-        try {
-            errthread = Streams.copyStreamThread(exec.getErrorStream(), System.err);
-            outthread = Streams.copyStreamThread(exec.getInputStream(), System.out);
-            errthread.start();
-            outthread.start();
-            exec.getOutputStream().close();
-            result = exec.waitFor();
-            errthread.join();
-            outthread.join();
-            success = 0 == result;
+            e.printStackTrace();
         } catch (InterruptedException e) {
-            e.printStackTrace(System.err);
-        } catch (IOException e) {
-            e.printStackTrace(System.err);
+            e.printStackTrace();
         }
+        boolean success = result == 0;
+
         executionContext.getExecutionListener().log(3,
                                                     "[" + pluginname + "]: result code: " + result + ", success: "
                                                     + success);
