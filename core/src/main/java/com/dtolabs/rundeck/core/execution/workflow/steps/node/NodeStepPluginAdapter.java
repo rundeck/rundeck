@@ -62,6 +62,7 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
         PluginStepItem step;
         if (item instanceof PluginStepItem) {
             step = (PluginStepItem) item;
+            //TODO: replace data references in configuration
         } else {
             step = new PluginStepItem() {
                 @Override

@@ -116,12 +116,24 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                     if (null == name) {
                         throw new ConfigurationException("Name required");
                     }
+                    final List<String> valueList;
+
                     final String valuesstr = metaStringProp(itemmeta,CONFIG_VALUES);
-                    final String[] split = null != valuesstr ? valuesstr.split(",") : null;
+                    if(null!=valuesstr){
+                        final String[] split = null != valuesstr ? valuesstr.split(",") : null;
+                        valueList = Arrays.asList(split);
+                    }else {
+                        Object vlist = itemmeta.get(CONFIG_VALUES);
+                        if(vlist instanceof List){
+                            valueList =(List<String>) vlist;
+                        }else{
+                            valueList=null;
+                        }
+                    }
                     final List<String> values;
-                    if(null!=split){
+                    if(null!=valueList){
                         final ArrayList<String> valuesA = new ArrayList<String>();
-                        for (final String s : split) {
+                        for (final String s : valueList) {
                             valuesA.add(s.trim());
                         }
                         values = valuesA;

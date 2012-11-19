@@ -117,4 +117,8 @@ public abstract class BasePluggableProviderService<T> implements ProviderService
         }
         return false;
     }
+
+    protected Framework getFramework() {
+        return framework;
+    }
 }

@@ -133,7 +133,6 @@ class ExecutionServiceImpl implements ExecutionService {
         final Map<String, Map<String, String>> nodeDataContext =
             DataContextUtils.addContext("node", DataContextUtils.nodeData(node), context.getDataContext());
 //        final String[] nodeCommand = DataContextUtils.replaceDataReferences(command, nodeDataContext);
-        //TODO: set replace data references in data step configuration?
 
         final LogReformatter formatter = createLogReformatter(node, context.getExecutionListener());
         final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();

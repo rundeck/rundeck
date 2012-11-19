@@ -25,13 +25,11 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
 import com.dtolabs.rundeck.core.plugins.BasePluggableProviderService;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ProviderIdent;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
-import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
@@ -64,12 +62,12 @@ class PluginNodeStepExecutionService extends BasePluggableProviderService<NodeSt
     }
 
     public boolean isScriptPluggable() {
-        //TODO: add script plugins
-        return false;
+        return true;
     }
 
     public NodeStepPlugin createScriptProviderInstance(ScriptPluginProvider provider) throws PluginException {
-        return null;
+        ScriptPluginNodeStepPlugin.validateScriptPlugin(provider);
+        return new ScriptPluginNodeStepPlugin(provider, getFramework());
     }
 
     public List<Description> listDescriptions() {
