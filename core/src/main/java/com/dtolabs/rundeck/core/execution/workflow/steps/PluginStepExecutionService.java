@@ -82,11 +82,12 @@ class PluginStepExecutionService extends BasePluggableProviderService<StepPlugin
 
     @Override
     public boolean isScriptPluggable() {
-        return false;
+        return true;
     }
 
     @Override
     public StepPlugin createScriptProviderInstance(ScriptPluginProvider provider) throws PluginException {
-        return null;
+        ScriptPluginStepPlugin.validateScriptPlugin(provider);
+        return new ScriptPluginStepPlugin(provider, getFramework());
     }
 }

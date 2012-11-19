@@ -53,7 +53,7 @@ import java.util.List;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class StepExecutionService extends ChainedProviderService<StepExecutor> implements DescribableService {
-    public static final String SERVICE_NAME = "StepExecution";
+    public static final String SERVICE_NAME = "StepExecutor";
 
     private PluginStepExecutionService pluginStepExecutionService;
     private BuiltinStepExecutionService builtinStepExecutionService;
