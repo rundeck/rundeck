@@ -46,7 +46,7 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
-    protected BaseScriptPlugin(ScriptPluginProvider provider, Framework framework) {
+    protected BaseScriptPlugin(final ScriptPluginProvider provider, final Framework framework) {
         super(provider, framework);
     }
 
@@ -59,17 +59,14 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
         throws IOException, InterruptedException {
         final String[] envarr = createEnvironmentArray(envMap);
 
-        int result = -1;
-        Thread errthread = null;
-        Thread outthread = null;
         final Runtime runtime = Runtime.getRuntime();
         final Process exec = runtime.exec(command, envarr, workingdir);
-        errthread = Streams.copyStreamThread(exec.getErrorStream(), errorStream);
-        outthread = Streams.copyStreamThread(exec.getInputStream(), outputStream);
+        final Thread errthread = Streams.copyStreamThread(exec.getErrorStream(), errorStream);
+        final Thread outthread = Streams.copyStreamThread(exec.getInputStream(), outputStream);
         errthread.start();
         outthread.start();
         exec.getOutputStream().close();
-        result = exec.waitFor();
+        final int result = exec.waitFor();
         errthread.join();
         outthread.join();
         return result;
@@ -94,7 +91,7 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
                                   final PluginStepItem item,
                                   final PrintStream outputStream, final PrintStream errorStream)
         throws IOException, InterruptedException {
-        final Map<String, Map<String, String>> localDataContext = createScriptDataContext(executionContext, item);
+        final Map<String, Map<String, String>> localDataContext = createStepItemDataContext(executionContext, item);
         final String[] finalargs = createScriptArgs(localDataContext);
 
         executionContext.getExecutionListener().log(3, "[" + getProvider().getName() + "] executing: " + Arrays.asList(
@@ -112,14 +109,9 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
      * Create a data context containing the plugin values "file","scriptfile" and "base", as well as all config
      * values.
      */
-    protected Map<String, Map<String, String>> createScriptDataContext(final ExecutionContext executionContext,
-                                                                       final PluginStepItem item) {
-        final Map<String, Map<String, String>> localDataContext
-            = ScriptDataContextUtil.createScriptDataContextForProject(
-            executionContext.getFramework(),
-            executionContext.getFrameworkProject());
-        localDataContext.get("plugin").putAll(createPluginDataContext());
-        localDataContext.putAll(executionContext.getDataContext());
+    protected Map<String, Map<String, String>> createStepItemDataContext(final ExecutionContext executionContext,
+                                                                         final PluginStepItem item) {
+        final Map<String, Map<String, String>> localDataContext = createScriptDataContext(executionContext);
 
         final HashMap<String, String> configMap = new HashMap<String, String>();
         //convert values to string
@@ -131,13 +123,25 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
     }
 
     /**
+     *
+     */
+    protected Map<String, Map<String, String>> createScriptDataContext(final ExecutionContext executionContext) {
+        final Map<String, Map<String, String>> localDataContext
+            = ScriptDataContextUtil.createScriptDataContextForProject(
+            executionContext.getFramework(),
+            executionContext.getFrameworkProject());
+        localDataContext.get("plugin").putAll(createPluginDataContext());
+        localDataContext.putAll(executionContext.getDataContext());
+        return localDataContext;
+    }
+
+    /**
      * Create the command array for the data context.
      */
     protected String[] createScriptArgs(final Map<String, Map<String, String>> localDataContext) {
 
         final ScriptPluginProvider plugin = getProvider();
         final File scriptfile = plugin.getScriptFile();
-        final String pluginname = plugin.getName();
         final String scriptargs = plugin.getScriptArgs();
         final String scriptinterpreter = plugin.getScriptInterpreter();
         final boolean interpreterargsquoted = plugin.getInterpreterArgsQuoted();
