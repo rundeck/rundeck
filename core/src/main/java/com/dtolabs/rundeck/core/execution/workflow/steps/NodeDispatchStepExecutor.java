@@ -58,10 +58,17 @@ public class NodeDispatchStepExecutor implements StepExecutor {
         try {
             return wrapDispatcherResult(framework.getExecutionService().dispatchToNodes(context, item));
         } catch (DispatcherException e) {
-            return new StepExecutionResultImpl(false, e);
+            return wrapDispatcherException(e);
         }
     }
 
+    /**
+     * Return a StepExecutionResult based on the DispatcherResult, that can later be extracted.
+     */
+    public static StepExecutionResult wrapDispatcherException(final DispatcherException dispatcherResult) {
+        final StepExecutionResultImpl result = new NodeDispatchStepExecutorExceptionResult(dispatcherResult);
+        return result;
+    }
     /**
      * Return a StepExecutionResult based on the DispatcherResult, that can later be extracted.
      */
@@ -84,15 +91,43 @@ public class NodeDispatchStepExecutor implements StepExecutor {
             return dispatcherResult;
         }
     }
+    static class NodeDispatchStepExecutorExceptionResult extends StepExecutionResultImpl{
+        DispatcherException dispatcherResult;
+
+        NodeDispatchStepExecutorExceptionResult(DispatcherException dispatcherResult) {
+            super(false);
+            this.dispatcherResult = dispatcherResult;
+            setException(dispatcherResult);
+        }
+        public DispatcherException getDispatcherException(){
+            return dispatcherResult;
+        }
+    }
+
+    public static boolean isWrappedDispatcherException(final StepExecutionResult result) {
+        return (result instanceof NodeDispatchStepExecutorExceptionResult);
+    }
+    public static boolean isWrappedDispatcherResult(final StepExecutionResult result) {
+        return (result instanceof NodeDispatchStepExecutorResult);
+    }
     /**
      * Return the DispatcherResult from a StepExecutionResult created by this class.
      */
     public static DispatcherResult extractDispatcherResult(final StepExecutionResult result) {
-        assert result instanceof NodeDispatchStepExecutorResult;
-        if(!(result instanceof NodeDispatchStepExecutorResult)) {
+        if(!isWrappedDispatcherResult(result)) {
             throw new IllegalArgumentException("Cannot extract result: unexpected type: " + result);
         }
         NodeDispatchStepExecutorResult nr = (NodeDispatchStepExecutorResult) result;
         return nr.getDispatcherResult();
+    }
+    /**
+     * Return the DispatcherResult from a StepExecutionResult created by this class.
+     */
+    public static DispatcherException extractDispatcherException(final StepExecutionResult result) {
+        if(!isWrappedDispatcherException(result)) {
+            throw new IllegalArgumentException("Cannot extract result: unexpected type: " + result);
+        }
+        NodeDispatchStepExecutorExceptionResult nr = (NodeDispatchStepExecutorExceptionResult) result;
+        return nr.getDispatcherException();
     }
 }

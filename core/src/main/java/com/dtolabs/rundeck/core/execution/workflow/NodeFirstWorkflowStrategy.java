@@ -201,21 +201,32 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
             //The WorkflowExecutionResult has a list of StepExecutionResults produced by NodeDispatchStepExecutor
             int i=0;
             for (final StepExecutionResult partStepResult : result.getResultSet()) {
-                DispatcherResult subresult = NodeDispatchStepExecutor.extractDispatcherResult(partStepResult);
 
-                while(full.size()<=i) {
+                while (full.size() <= i) {
                     full.add(new HashMap<String, NodeStepResult>());
                 }
-                while(successes.size()<=i){
+                while (successes.size() <= i) {
                     successes.add(Boolean.TRUE);
                 }
-                HashMap<String, NodeStepResult> map=full.get(i);
+                HashMap<String, NodeStepResult> map = full.get(i);
 
-                NodeStepResult result1 = subresult.getResults().get(nodeName);
-                map.put(nodeName, result1);
-                if(!result1.isSuccess()) {
+                if(NodeDispatchStepExecutor.isWrappedDispatcherResult(partStepResult)){
+                    DispatcherResult subresult = NodeDispatchStepExecutor.extractDispatcherResult(partStepResult);
+
+                    NodeStepResult result1 = subresult.getResults().get(nodeName);
+                    map.put(nodeName, result1);
+
+                    if (!result1.isSuccess()) {
+                        successes.set(i, false);
+                        failures.get(nodeName).add(result1.toString());
+                    }
+                }else if (null!=partStepResult && !partStepResult.isSuccess()) {
                     successes.set(i, false);
-                    failures.get(nodeName).add(result1.toString());
+                    if (null!=partStepResult.getException()) {
+                        failures.get(nodeName).add(partStepResult.getException().toString());
+                    } else {
+                        failures.get(nodeName).add(partStepResult.toString());
+                    }
                 }
 
                 i++;
