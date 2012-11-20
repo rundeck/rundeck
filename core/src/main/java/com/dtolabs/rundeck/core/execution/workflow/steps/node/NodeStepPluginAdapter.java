@@ -25,8 +25,9 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.StepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepItemImpl;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
@@ -44,7 +45,7 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
     @Override
     public Description getDescription() {
         if (plugin instanceof Describable) {
-            Describable desc = (Describable) plugin;
+            final Describable desc = (Describable) plugin;
             return desc.getDescription();
         }
         return null;
@@ -57,26 +58,26 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
     }
 
     @Override
-    public NodeStepResult executeNodeStep(ExecutionContext context, final NodeStepExecutionItem item, INodeEntry node)
+    public NodeStepResult executeNodeStep(final ExecutionContext context,
+                                          final NodeStepExecutionItem item,
+                                          final INodeEntry node)
         throws NodeStepException {
-        PluginStepItem step;
-        if (item instanceof PluginStepItem) {
-            step = (PluginStepItem) item;
-            //TODO: replace data references in configuration
-        } else {
-            step = new PluginStepItem() {
-                @Override
-                public Map<String, Object> getStepConfiguration() {
-                    return null;
-                }
-
-                @Override
-                public String getType() {
-                    return item.getNodeStepType();
-                }
-            };
-        }
-        boolean success = plugin.executeNodeStep(context, step, node);
+        final PluginStepItem step = toPluginStepItem(item, context);
+        final boolean success = plugin.executeNodeStep(context, step, node);
         return new NodeStepResultImpl(success, node);
+    }
+
+    private PluginStepItem toPluginStepItem(final NodeStepExecutionItem item, final ExecutionContext executionContext) {
+        if (!(item instanceof PluginStepItem)) {
+            return new PluginStepItemImpl(item.getNodeStepType(), null);
+        }
+
+        final PluginStepItem step = (PluginStepItem) item;
+        if (step.getStepConfiguration() == null) {
+            return step;
+        }
+        final Map<String, Object> map = DataContextUtils.replaceDataReferences(step.getStepConfiguration(),
+                                                                               executionContext.getDataContext());
+        return new PluginStepItemImpl(item.getNodeStepType(), map);
     }
 }
