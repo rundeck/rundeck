@@ -25,23 +25,14 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkSupportService;
 import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
-import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
-import com.dtolabs.rundeck.core.plugins.BaseProviderRegistryService;
 import com.dtolabs.rundeck.core.plugins.ChainedProviderService;
-import com.dtolabs.rundeck.core.plugins.ConverterService;
 import com.dtolabs.rundeck.core.plugins.ProviderIdent;
-import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
-import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.dtolabs.rundeck.plugins.step.StepPlugin;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,29 +46,26 @@ import java.util.List;
 public class StepExecutionService extends ChainedProviderService<StepExecutor> implements DescribableService {
     public static final String SERVICE_NAME = "StepExecutor";
 
-    private PluginStepExecutionService pluginStepExecutionService;
+    private List<ProviderService<StepExecutor>> serviceList;
     private BuiltinStepExecutionService builtinStepExecutionService;
-    private ProviderService<StepExecutor> secondaryService;
 
     public String getName() {
         return SERVICE_NAME;
     }
 
     StepExecutionService(final Framework framework) {
+        this.serviceList = new ArrayList<ProviderService<StepExecutor>>();
         builtinStepExecutionService = new BuiltinStepExecutionService(framework);
-        pluginStepExecutionService = new PluginStepExecutionService(framework);
-        this.secondaryService
-            = new ConverterService<StepPlugin, StepExecutor>(pluginStepExecutionService, new StepPluginConverter());
+        final ProviderService<StepExecutor> pluginStepExecutionService
+            = new PluginStepExecutionService(framework).adapter(StepPluginAdapter.CONVERTER);
+
+        serviceList.add(builtinStepExecutionService);
+        serviceList.add(pluginStepExecutionService);
     }
 
     @Override
-    protected ProviderService<StepExecutor> getPrimaryService() {
-        return builtinStepExecutionService;
-    }
-
-    @Override
-    protected ProviderService<StepExecutor> getSecondaryService() {
-        return secondaryService;
+    protected List<ProviderService<StepExecutor>> getServiceList() {
+        return serviceList;
     }
 
     public static StepExecutionService getInstanceForFramework(final Framework framework) {

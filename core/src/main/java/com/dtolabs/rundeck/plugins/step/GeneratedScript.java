@@ -16,30 +16,32 @@
  */
 
 /*
-* StepPluginConverter.java
+* GeneratedScript.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 11/13/12 6:30 PM
+* Created: 11/20/12 11:46 AM
 * 
 */
-package com.dtolabs.rundeck.core.execution.workflow.steps;
-
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
-import com.dtolabs.rundeck.core.utils.Converter;
-import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
-import com.dtolabs.rundeck.plugins.step.StepPlugin;
-
-import java.util.*;
-
+package com.dtolabs.rundeck.plugins.step;
 
 /**
- * StepPluginConverter is ...
+ * GeneratedScript represents a script and arguments, or a single command to execute on a remote system
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class StepPluginConverter implements Converter<StepPlugin, StepExecutor> {
-    @Override
-    public StepExecutor convert(final StepPlugin plugin) {
-        return new StepPluginAdapter(plugin);
-    }
+public interface GeneratedScript {
+    /**
+     * Return the script to execute
+     */
+    public String getScript();
+
+    /**
+     * Return arguments to the script
+     */
+    public String[] getArgs();
+
+    /**
+     * Return the command to execute
+     */
+    public String[] getCommand();
 }

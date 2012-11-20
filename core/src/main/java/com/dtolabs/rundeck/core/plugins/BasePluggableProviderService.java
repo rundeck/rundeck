@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
 import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.core.utils.IdentityConverter;
+import com.dtolabs.rundeck.plugins.step.ScriptGeneratorNodeStepPlugin;
 
 import java.lang.reflect.Constructor;
 import java.util.*;
@@ -120,5 +121,12 @@ public abstract class BasePluggableProviderService<T> implements ProviderService
 
     protected Framework getFramework() {
         return framework;
+    }
+
+    /**
+     * Create an adapted form of this service given a converter.
+     */
+    public <X> ProviderService<X> adapter(final Converter<T, X> converter) {
+        return AdapterService.adaptFor(this, converter);
     }
 }

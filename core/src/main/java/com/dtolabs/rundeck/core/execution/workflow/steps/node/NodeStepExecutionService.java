@@ -27,13 +27,10 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.plugins.ChainedProviderService;
-import com.dtolabs.rundeck.core.plugins.ConverterService;
 import com.dtolabs.rundeck.core.plugins.ProviderIdent;
-import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,34 +44,41 @@ import java.util.List;
 public class NodeStepExecutionService extends ChainedProviderService<NodeStepExecutor> implements DescribableService {
     public static final String SERVICE_NAME = "NodeStepExecutor";
 
+    private List<ProviderService<NodeStepExecutor>> serviceList;
+
     private BuiltinNodeStepExecutionService primaryService;
-    private ConverterService<NodeStepPlugin, NodeStepExecutor> secondaryService;
-    private PluginNodeStepExecutionService pluginService;
 
     public NodeStepExecutionService(final Framework framework) {
+        this.serviceList = new ArrayList<ProviderService<NodeStepExecutor>>();
+        /*
+         * NodeStepExecutionService chains several other services:
+         * 1. builtin providers
+         * 2. NodeStepPlugin providers
+         * 3. ScriptGeneratorNodeStepPlugin providers
+         */
         this.primaryService = new BuiltinNodeStepExecutionService(framework);
-        this.pluginService = new PluginNodeStepExecutionService(framework);
-        this.secondaryService
-            = new ConverterService<NodeStepPlugin, NodeStepExecutor>(pluginService,
-                                                                     new NodeStepPluginConverter());
+
+        final ProviderService<NodeStepExecutor> pluginService = new NodeStepPluginService(framework).adapter(
+            NodeStepPluginAdapter.CONVERTER);
+
+        final ProviderService<NodeStepExecutor> generatorPluginService = new ScriptGeneratorNodeStepPluginService(
+            framework).adapter(ScriptGeneratorNodeStepPluginAdapter.CONVERTER);
+
+        serviceList.add(primaryService);
+        serviceList.add(pluginService);
+        serviceList.add(generatorPluginService);
     }
 
     @Override
-    protected ProviderService<NodeStepExecutor> getPrimaryService() {
-        return primaryService;
+    protected List<ProviderService<NodeStepExecutor>> getServiceList() {
+        return serviceList;
     }
 
-    @Override
-    protected ProviderService<NodeStepExecutor> getSecondaryService() {
-        return secondaryService;
-    }
-
-
-    public void registerInstance(String name, NodeStepExecutor object) {
+    public void registerInstance(final String name, final NodeStepExecutor object) {
         primaryService.registerInstance(name, object);
     }
 
-    public void registerClass(String name, Class<? extends NodeStepExecutor> clazz) {
+    public void registerClass(final String name, final Class<? extends NodeStepExecutor> clazz) {
         primaryService.registerClass(name, clazz);
     }
 

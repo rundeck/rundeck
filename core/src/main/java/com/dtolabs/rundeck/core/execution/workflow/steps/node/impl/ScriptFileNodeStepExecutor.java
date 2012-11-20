@@ -53,7 +53,7 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
     }
 
     public NodeStepResult executeNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node) throws
-                                                                                                         NodeStepException {
+                                                                                                                 NodeStepException {
         final ScriptFileCommand script = (ScriptFileCommand) item;
         final ExecutionService executionService = framework.getExecutionService();
         final String filepath; //result file path
@@ -70,6 +70,23 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
             throw new NodeStepException(e, node.getNodename());
         }
 
+        return executeRemoteScript(context, context.getFramework(), node, script.getArgs(), filepath);
+    }
+
+    /**
+     * Execute a scriptfile already copied to a remote node with the given args
+     *
+     * @param context   context
+     * @param framework framework
+     * @param node      the node
+     * @param args      arguments to script
+     * @param filepath  the remote path for the script
+     */
+    public static NodeStepResult executeRemoteScript(ExecutionContext context,
+                                                     Framework framework,
+                                                     INodeEntry node,
+                                                     String[] args,
+                                                     String filepath) throws NodeStepException {
         try {
             /**
              * TODO: Avoid this horrific hack. Discover how to get SCP task to preserve the execute bit.
@@ -84,16 +101,15 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
                 }
             }
 
-            final String[] args = script.getArgs();
             //replace data references
-            String[] newargs=null;
-            if(null!=args && args.length>0) {
+            String[] newargs = null;
+            if (null != args && args.length > 0) {
                 newargs = new String[args.length + 1];
-                final String[] replargs= DataContextUtils.replaceDataReferences(args, context.getDataContext());
-                newargs[0]=filepath;
+                final String[] replargs = DataContextUtils.replaceDataReferences(args, context.getDataContext());
+                newargs[0] = filepath;
                 System.arraycopy(replargs, 0, newargs, 1, replargs.length);
-            }else{
-                newargs= new String[]{filepath};
+            } else {
+                newargs = new String[]{filepath};
             }
             //XXX: windows specific call?
 

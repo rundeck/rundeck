@@ -16,7 +16,7 @@
  */
 
 /*
-* PluginNodeStepExecutionService.java
+* NodeStepPluginService.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 11/12/12 4:59 PM
@@ -25,7 +25,9 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
+import com.dtolabs.rundeck.core.plugins.AdapterService;
 import com.dtolabs.rundeck.core.plugins.BasePluggableProviderService;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ProviderIdent;
@@ -33,20 +35,21 @@ import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 
 import java.util.*;
 
 
 /**
- * PluginNodeStepExecutionService can load NodeStepPlugin providers
+ * NodeStepPluginService can load NodeStepPlugin providers
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class PluginNodeStepExecutionService extends BasePluggableProviderService<NodeStepPlugin>
+class NodeStepPluginService extends BasePluggableProviderService<NodeStepPlugin>
     implements DescribableService {
 
-    public PluginNodeStepExecutionService(final Framework framework) {
+    public NodeStepPluginService(final Framework framework) {
         super(framework);
     }
 

@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.plugins.step.PluginStepItem;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
 
@@ -41,10 +42,18 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 class StepPluginAdapter implements StepExecutor, Describable {
+    public static final Convert CONVERTER = new Convert();
     private StepPlugin plugin;
 
     public StepPluginAdapter(final StepPlugin plugin) {
         this.plugin = plugin;
+    }
+
+    static class Convert implements Converter<StepPlugin, StepExecutor> {
+        @Override
+        public StepExecutor convert(final StepPlugin plugin) {
+            return new StepPluginAdapter(plugin);
+        }
     }
 
     @Override

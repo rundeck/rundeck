@@ -45,18 +45,19 @@ public abstract class ChainedProviderService<T> implements ProviderService<T> {
     public T providerOfType(final String providerName) throws ExecutionServiceException {
         T t = null;
         MissingProviderException caught = null;
-        try {
-            t = getPrimaryService().providerOfType(providerName);
-        } catch (MissingProviderException e) {
-            //ignore and attempt to load from the secondary service
-            caught = e;
+        for (final ProviderService<T> service : getServiceList()) {
+            try {
+                t = service.providerOfType(providerName);
+            } catch (MissingProviderException e) {
+                //ignore and attempt to load from the secondary service
+                caught = e;
+            }
+            if (null != t) {
+                return t;
+            }
+
         }
-        if (null != t) {
-            return t;
-        }
-        if (null != getSecondaryService()) {
-            return getSecondaryService().providerOfType(providerName);
-        } else if (null != caught) {
+        if (null != caught) {
             throw caught;
         } else {
             throw new MissingProviderException("Provider not found", getName(), providerName);
@@ -65,20 +66,12 @@ public abstract class ChainedProviderService<T> implements ProviderService<T> {
 
     @Override
     public List<ProviderIdent> listProviders() {
-        final HashSet<ProviderIdent> providers = new HashSet<ProviderIdent>(getPrimaryService().listProviders());
-        if (null != getSecondaryService()) {
-            providers.addAll(getSecondaryService().listProviders());
+        final HashSet<ProviderIdent> providers = new HashSet<ProviderIdent>();
+        for (final ProviderService<T> service : getServiceList()) {
+            providers.addAll(service.listProviders());
         }
         return new ArrayList<ProviderIdent>(providers);
     }
 
-    /**
-     * Return the primary service
-     */
-    protected abstract ProviderService<T> getPrimaryService() ;
-
-    /**
-     * Return the secondary service
-     */
-    protected abstract ProviderService<T> getSecondaryService() ;
+    protected abstract List<ProviderService<T>> getServiceList();
 }

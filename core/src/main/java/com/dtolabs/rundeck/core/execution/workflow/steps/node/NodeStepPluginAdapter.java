@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepItemImpl;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepItem;
 
@@ -57,6 +58,15 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
         this.plugin = plugin;
     }
 
+    static class Convert implements Converter<NodeStepPlugin, NodeStepExecutor> {
+        public NodeStepExecutor convert(final NodeStepPlugin plugin) {
+            return new NodeStepPluginAdapter(plugin);
+        }
+    }
+
+    public static final Convert CONVERTER = new Convert();
+
+
     @Override
     public NodeStepResult executeNodeStep(final ExecutionContext context,
                                           final NodeStepExecutionItem item,
@@ -67,7 +77,7 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
         return new NodeStepResultImpl(success, node);
     }
 
-    private PluginStepItem toPluginStepItem(final NodeStepExecutionItem item, final ExecutionContext executionContext) {
+    static PluginStepItem toPluginStepItem(final NodeStepExecutionItem item, final ExecutionContext executionContext) {
         if (!(item instanceof PluginStepItem)) {
             return new PluginStepItemImpl(item.getNodeStepType(), null);
         }

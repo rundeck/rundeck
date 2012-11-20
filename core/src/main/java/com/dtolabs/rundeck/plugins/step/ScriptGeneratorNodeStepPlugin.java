@@ -16,28 +16,28 @@
  */
 
 /*
-* NodeStepPluginConverter.java
+* ScriptGeneratorNodeStepPlugin.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 11/12/12 5:39 PM
+* Created: 11/19/12 6:04 PM
 * 
 */
-package com.dtolabs.rundeck.core.execution.workflow.steps.node;
+package com.dtolabs.rundeck.plugins.step;
 
-import com.dtolabs.rundeck.core.utils.Converter;
-import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
-
-import java.util.*;
+import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 
 
 /**
- * NodeStepPluginConverter is ...
+ * ScriptGeneratorNodeStepPlugin generates a script or command string to execute remotely on a node.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class NodeStepPluginConverter implements Converter<NodeStepPlugin, NodeStepExecutor> {
-    @Override
-    public NodeStepExecutor convert(final NodeStepPlugin plugin) {
-        return new NodeStepPluginAdapter(plugin);
-    }
+public interface ScriptGeneratorNodeStepPlugin {
+    /**
+     * Generate a full script or command string to execute on the remote node
+     */
+    public GeneratedScript generateScript(final ExecutionContext context, final PluginStepItem item, final INodeEntry entry)
+        throws NodeStepException;
 }

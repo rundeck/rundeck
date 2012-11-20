@@ -16,7 +16,7 @@
  */
 
 /*
-* ConverterService.java
+* AdapterService.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 11/12/12 5:33 PM
@@ -32,15 +32,15 @@ import java.util.*;
 
 
 /**
- * ConverterService adapts one service provider type to another.
+ * AdapterService adapts one service provider type to another.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ConverterService<S,T> implements ProviderService<T> {
+public class AdapterService<S,T> implements ProviderService<T> {
     private ProviderService<S> sourceService;
     private Converter<S,T> converter;
 
-    public ConverterService(final ProviderService<S> sourceService, final Converter<S, T> converter) {
+    public AdapterService(final ProviderService<S> sourceService, final Converter<S, T> converter) {
         this.sourceService = sourceService;
         this.converter = converter;
     }
@@ -67,5 +67,13 @@ public class ConverterService<S,T> implements ProviderService<T> {
 
     public Converter<S, T> getConverter() {
         return converter;
+    }
+
+    /**
+     * Create an AdapterService given a source service and a Converter.
+     */
+    public static <X,Y> AdapterService<X,Y> adaptFor(final ProviderService<X> sourceService,
+                                                     final Converter<X, Y> converter) {
+        return new AdapterService<X, Y>(sourceService, converter);
     }
 }
