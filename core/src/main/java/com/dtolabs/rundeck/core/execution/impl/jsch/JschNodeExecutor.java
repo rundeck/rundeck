@@ -44,6 +44,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import com.dtolabs.rundeck.core.tasks.net.ExtSSHExec;
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.jcraft.jsch.JSchException;
 import org.apache.log4j.Logger;
 import org.apache.tools.ant.BuildException;
@@ -126,45 +127,18 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         this.framework = framework;
     }
 
-    static final List<Property> CONFIG_PROPERTIES = new ArrayList<Property>();
-    static final Map<String, String> CONFIG_MAPPING;
-
     public static final String CONFIG_KEYPATH = "keypath";
     public static final String CONFIG_AUTHENTICATION = "authentication";
 
-    static {
-//        CONFIG_PROPERTIES.add(PropertyUtil.string(CONFIG_KEYPATH, "SSH Keypath",
-//            "Path to a private SSH Key file, for use with SSH and SCP. Can be overridden by node attribute \""
-//            + NODE_ATTR_SSH_KEYPATH + "\".", true, null));
-
-        final Map<String, String> mapping = new HashMap<String, String>();
-        mapping.put(CONFIG_KEYPATH, PROJ_PROP_SSH_KEYPATH);
-        mapping.put(CONFIG_AUTHENTICATION, PROJ_PROP_SSH_AUTHENTICATION);
-        CONFIG_MAPPING = Collections.unmodifiableMap(mapping);
-    }
+    static final Description DESC = DescriptionBuilder.builder()
+        .name(SERVICE_PROVIDER_TYPE)
+        .title("SSH")
+        .description("Executes a command on a remote node via SSH.")
+        .mapping(CONFIG_KEYPATH, PROJ_PROP_SSH_KEYPATH)
+        .mapping(CONFIG_AUTHENTICATION, PROJ_PROP_SSH_AUTHENTICATION)
+        .build();
 
 
-    static final Description DESC = new Description() {
-        public String getName() {
-            return SERVICE_PROVIDER_TYPE;
-        }
-
-        public String getTitle() {
-            return "SSH";
-        }
-
-        public String getDescription() {
-            return "Executes a command on a remote node via SSH.";
-        }
-
-        public List<Property> getProperties() {
-            return CONFIG_PROPERTIES;
-        }
-
-        public Map<String, String> getPropertiesMapping() {
-            return CONFIG_MAPPING;
-        }
-    };
 
     public Description getDescription() {
         return DESC;

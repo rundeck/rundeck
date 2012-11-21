@@ -62,6 +62,11 @@ public interface Property {
 //        MultiSelect,
 //        MultiFreeSelect
     }
+    static enum Scope{
+        Framework,
+        Project,
+        Instance
+    }
 
     /**
      * Validator can validate a value

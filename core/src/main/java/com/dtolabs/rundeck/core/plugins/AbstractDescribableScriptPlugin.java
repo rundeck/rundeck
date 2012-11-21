@@ -25,6 +25,8 @@ package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
+import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 
 import java.util.*;
 
@@ -83,26 +85,29 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
     }
 
 
-    static private List<Property> createProperties(final ScriptPluginProvider provider) throws ConfigurationException {
-        final ArrayList<Property> properties = new ArrayList<Property>();
-        int i = 1;
+    static private void createProperties(final ScriptPluginProvider provider,
+                                                   final DescriptionBuilder dbuilder) throws ConfigurationException {
         final Map<String, Object> metadata = provider.getMetadata();
         final Object config = metadata.get("config");
-        if(config instanceof List){
-            final List configs=(List) config;
+        if (config instanceof List) {
+            final List configs = (List) config;
             for (final Object citem : configs) {
-                if(citem instanceof Map){
-                    Map<String,Object> itemmeta=(Map<String,Object>) citem;
+                if (citem instanceof Map) {
+                    final PropertyBuilder pbuild = PropertyBuilder.builder();
+                    final Map<String, Object> itemmeta = (Map<String, Object>) citem;
                     final String typestr = metaStringProp(itemmeta, CONFIG_TYPE);
                     final Property.Type type;
                     try {
-                        type = Property.Type.valueOf(typestr);
+                        pbuild.type(Property.Type.valueOf(typestr));
                     } catch (IllegalArgumentException e) {
                         throw new ConfigurationException("Invalid property type: " + typestr);
                     }
-                    final String name = metaStringProp(itemmeta, CONFIG_NAME);
-                    final String title = metaStringProp(itemmeta,CONFIG_TITLE);
-                    final String description = metaStringProp(itemmeta,CONFIG_DESCRIPTION);
+
+                    pbuild
+                        .name(metaStringProp(itemmeta, CONFIG_NAME))
+                        .title(metaStringProp(itemmeta, CONFIG_TITLE))
+                        .description(metaStringProp(itemmeta, CONFIG_DESCRIPTION));
+
                     final Object reqValue = itemmeta.get(CONFIG_REQUIRED);
                     final boolean required;
                     if (reqValue instanceof Boolean) {
@@ -111,42 +116,48 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                         required = reqValue instanceof String && Boolean.parseBoolean((String) reqValue);
                     }
 
+                    pbuild.required(required);
+
+
                     final Object defObj = itemmeta.get(CONFIG_DEFAULT);
-                    final String defaultValue = null != defObj ? defObj.toString() : null;
-                    if (null == name) {
-                        throw new ConfigurationException("Name required");
-                    }
+
+                    pbuild.defaultValue(null != defObj ? defObj.toString() : null);
+
                     final List<String> valueList;
 
-                    final String valuesstr = metaStringProp(itemmeta,CONFIG_VALUES);
-                    if(null!=valuesstr){
+                    final String valuesstr = metaStringProp(itemmeta, CONFIG_VALUES);
+                    if (null != valuesstr) {
                         final String[] split = null != valuesstr ? valuesstr.split(",") : null;
                         valueList = Arrays.asList(split);
-                    }else {
+                    } else {
                         Object vlist = itemmeta.get(CONFIG_VALUES);
-                        if(vlist instanceof List){
-                            valueList =(List<String>) vlist;
-                        }else{
-                            valueList=null;
+                        if (vlist instanceof List) {
+                            valueList = (List<String>) vlist;
+                        } else {
+                            valueList = null;
                         }
                     }
                     final List<String> values;
-                    if(null!=valueList){
+                    if (null != valueList) {
                         final ArrayList<String> valuesA = new ArrayList<String>();
                         for (final String s : valueList) {
                             valuesA.add(s.trim());
                         }
                         values = valuesA;
-                    }else{
-                        values=null;
+                    } else {
+                        values = null;
+                    }
+                    pbuild.values(values);
+
+                    try {
+                        dbuilder.property(pbuild.build());
+                    } catch (IllegalStateException e) {
+                        throw new ConfigurationException(e.getMessage());
                     }
 
-                    properties.add(PropertyUtil.forType(type, name, title, description, required, defaultValue,
-                        values));
                 }
             }
         }
-        return properties;
     }
 
     private static String metaStringProp(final Map<String, Object> metadata, final String prop) {
@@ -158,27 +169,15 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
     }
     protected static Description createDescription(final ScriptPluginProvider provider,
                                                  final boolean allowCustomProperties) throws ConfigurationException {
-        final String title = metaStringProp(provider.getMetadata(), TITLE_PROP, provider.getName() + " Script Plugin");
-        final String description = metaStringProp(provider.getMetadata(), DESCRIPTION_PROP, "");
-        final List<Property> properties = allowCustomProperties ? createProperties(provider) : null;
+        final DescriptionBuilder builder = DescriptionBuilder.builder();
+        builder
+            .title(metaStringProp(provider.getMetadata(), TITLE_PROP, provider.getName() + " Script Plugin"))
+            .description(metaStringProp(provider.getMetadata(), DESCRIPTION_PROP, ""));
 
-        return new AbstractBaseDescription() {
-            public String getName() {
-                return provider.getName();
-            }
-
-            public String getTitle() {
-                return title;
-            }
-
-            public String getDescription() {
-                return description;
-            }
-
-            public List<Property> getProperties() {
-                return properties;
-            }
-        };
+        if(allowCustomProperties) {
+            createProperties(provider, builder);
+        }
+        return builder.build();
     }
 
 
