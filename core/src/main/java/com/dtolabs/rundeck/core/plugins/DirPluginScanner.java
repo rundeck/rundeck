@@ -43,6 +43,7 @@ abstract class DirPluginScanner implements PluginScanner {
     final FileCache<ProviderLoader> filecache;
     long lastScanAllCheckTime = -1;
     HashSet<String> scanned = new HashSet<String>();
+    HashMap<String,Boolean> validity = new HashMap<String, Boolean>();
     long scanintervalMs;
 
     protected DirPluginScanner(final File extdir, final FileCache<ProviderLoader> filecache, final long rescanIntervalMs) {
@@ -55,6 +56,14 @@ abstract class DirPluginScanner implements PluginScanner {
      * Return true if the file is a valid plugin file for the scanner
      */
     public abstract boolean isValidPluginFile(final File file);
+
+    boolean cachedFileValidity(final File file) {
+        final String memo = memoFile(file);
+        if (!validity.containsKey(memo)) {
+            validity.put(memo, isValidPluginFile(file));
+        }
+        return validity.get(memo);
+    }
 
     /**
      * Return the file filter
@@ -114,7 +123,7 @@ abstract class DirPluginScanner implements PluginScanner {
             final File[] files = extdir.listFiles(getFileFilter());
             if(null!=files){
                 for (final File file : files) {
-                    if (isValidPluginFile(file)) {
+                    if (cachedFileValidity(file)) {
                         providerIdentsHash.addAll(listProviders(file));
                     }
                 }
@@ -151,27 +160,32 @@ abstract class DirPluginScanner implements PluginScanner {
         }
         if (scanned.size() != files.length) {
             log.debug("shouldScanAll: yes, count: " + scanned.size() + " vs " + files.length);
-            scanned.clear();
+            clearCache();
             return true;
         }else{
             log.debug("(shouldScanAll: ...: " + scanned.size() + " vs " + files.length);
         }
         for (final File file : files) {
             final String s = memoFile(file);
-            final boolean validPluginFile = isValidPluginFile(file);
+            final boolean validPluginFile = cachedFileValidity(file);
             if (validPluginFile && !scanned.contains(s)) {
                 log.debug("shouldScanAll: yes, file: " + s);
-                scanned.clear();
+                clearCache();
                 return true;
             }else if(!validPluginFile && scanned.contains(s)){
                 log.debug("shouldScanAll: yes, file: " + s);
-                scanned.clear();
+                clearCache();
                 return true;
             }
         }
         log.debug("shouldScanAll: false, no change");
         lastScanAllCheckTime = System.currentTimeMillis();
         return false;
+    }
+
+    private void clearCache() {
+        scanned.clear();
+//        validity.clear();
     }
 
     private String memoFile(final File file) {
@@ -183,7 +197,7 @@ abstract class DirPluginScanner implements PluginScanner {
      */
     private File scanFor(final ProviderIdent ident, final File[] files) throws PluginScannerException {
         for (final File file : files) {
-            if (isValidPluginFile(file)) {
+            if (cachedFileValidity(file)) {
                 if (test(ident, file)) {
                     return file;
                 }
@@ -214,9 +228,9 @@ abstract class DirPluginScanner implements PluginScanner {
      */
     private File scanAll(final ProviderIdent ident, final File[] files) throws PluginScannerException {
         final List<File> candidates = new ArrayList<File>();
-        scanned.clear();
+        clearCache();
         for (final File file : files) {
-            if (isValidPluginFile(file)) {
+            if (cachedFileValidity(file)) {
                 scanned.add(memoFile(file));
                 if (null!=ident && test(ident, file)) {
                     candidates.add(file);
@@ -224,7 +238,7 @@ abstract class DirPluginScanner implements PluginScanner {
             }
         }
         if (candidates.size() > 1) {
-            scanned.clear();
+            clearCache();
             final File resolved = resolveProviderConflict(candidates);
             if(null==resolved){
                 throw new PluginScannerException(
