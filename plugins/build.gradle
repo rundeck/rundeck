@@ -2,7 +2,7 @@
 allprojects{
     version = '1.5-dev'
     defaultTasks 'clean','build'
-    ext.rundeckPluginVersion= '1.0'
+    ext.rundeckPluginVersion= '1.1'
 }
 task wrapper(type: Wrapper) {
     gradleVersion = '1.0'

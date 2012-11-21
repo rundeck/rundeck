@@ -43,11 +43,15 @@ class VersionCompare {
     /**
      * Compares two version strings and their parsed integer values if available. Returns -1,0 or 1, if
      * value 1 is less than, equal to, or greater than value 2, respectively.  Compares integers if both are available,
-     * otherwise compares strings, and treats null strings as less than non-null strings.
+     * otherwise compares non-integer as less than integer. if no integers are available, comparse strings, and treats null strings as less than non-null strings.
      */
     public static int comp(Integer v1, String s1, Integer v2, String s2) {
         if (v1 != null && v2 != null) {
             return v1.compareTo(v2);
+        }else if(v1!=null){
+            return 1;
+        }else if(v2!=null){
+            return -1;
         } else if (null == s1 && null == s2) {
             return 0;
         } else if (null == s1) {
@@ -78,6 +82,19 @@ class VersionCompare {
         }
         //ignore tag
         return 0;
+    }
+    /**
+     * Return true if this verison is at least as big as the given version
+     */
+    public boolean atLeast(VersionCompare b) {
+        return compareTo(b) >= 0;
+    }
+
+    /**
+     * Return true if this verison is at most as big as the given version
+     */
+    public boolean atMost(VersionCompare b) {
+        return compareTo(b) <= 0;
     }
 
     /**
