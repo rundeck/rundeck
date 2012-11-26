@@ -40,8 +40,8 @@ import java.util.HashSet;
 import java.util.HashMap;
 
 /**
- * NodesXmlParser invokes the ResourceXmlParser to collate the Node entries, and configures the {@link
- * com.dtolabs.rundeck.core.common.Nodes} object with the parsed node entities.
+ * NodesXmlParser invokes the ResourceXmlParser to collate the Node entries, and sends the parsed nodes to the {@link
+ * NodeReceiver} object with the parsed node entities.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$

@@ -257,12 +257,12 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
     }
 
     /**
-     * Returns a {@link Nodes} object conatining the nodes config data.
+     * Returns a {@link INodeSet} object conatining the nodes config data.
      *
      * @param nodesFile the source file
      * @param format
      *
-     * @return an instance of {@link Nodes}
+     * @return an instance of {@link INodeSet}
      */
     public synchronized INodeSet getNodes(final File nodesFile, final String format) throws
         ResourceModelSourceException {

@@ -529,19 +529,6 @@ public class FrameworkProject extends FrameworkResourceParent {
      * @param source the source nodes
      * @throws UpdateUtils.UpdateException if an error occurs while trying to update the resources file or generate
      * nodes
-     * @deprecated in favor of INodeSet interface
-     */
-    public void updateNodesResourceFile(final Nodes source) throws UpdateUtils.UpdateException {
-        final NodeSetImpl nodeset = new NodeSetImpl();
-        nodeset.putNodes(source.listNodes());
-        updateNodesResourceFile(nodeset);
-    }
-    /**
-     * Update the resources file given an input Nodes set
-     *
-     * @param source the source nodes
-     * @throws UpdateUtils.UpdateException if an error occurs while trying to update the resources file or generate
-     * nodes
      *
      */
     public void updateNodesResourceFile(final INodeSet nodeset) throws UpdateUtils.UpdateException {
