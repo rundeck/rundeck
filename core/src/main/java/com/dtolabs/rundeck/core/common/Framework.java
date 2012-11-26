@@ -48,9 +48,6 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import org.apache.log4j.Logger;
-import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.Project;
-import org.apache.tools.ant.input.InputHandler;
 
 import java.io.File;
 import java.net.URI;
@@ -367,60 +364,6 @@ public class Framework extends FrameworkResourceParent {
     }
 
     /**
-     * Get the Framework instance from an Ant project.
-     * @param project
-     * @return
-     */
-    public static Framework getInstance(Project project) {
-        return getInstance(project, true);
-    }
-
-    /**
-     * Get the Framework instance from an Ant project.
-     * @param project
-     * @return
-     */
-    public static Framework getInstance(Project project, boolean fail) {
-        Object o = project.getReference(Framework.class.getName() + ".instance");
-        if (null != o && o instanceof Framework) {
-            return (Framework) o;
-        }else {
-            if(fail){
-                throw new IllegalArgumentException("Project does not contain a reference to the Framework instance.");
-            }else{
-                return null;
-            }
-        }
-    }
-
-    /**
-     * Retrieve a Framework from the project in several ways: look for embedded reference, otherwise construct with
-     * 'rdeck.base' property value from the project, otherwise create new Framework from system property
-     * 'rdeck.base' value.
-     *
-     * @param project ant project
-     *
-     * @return existing or new Framework instance
-     */
-    public static Framework getInstanceOrCreate(final Project project) {
-        Framework fw = null;
-        if (null != project) {
-            fw = getInstance(project, false);
-        }
-        if (null != project && null == fw && null != project.getProperty("rdeck.base")) {
-            fw = Framework.getInstance(project.getProperty("rdeck.base"),
-                                       project.getProperty("projects.dir"));
-            fw.configureFromProject(project);
-            fw.configureProject(project);
-        }
-        if (null == fw) {
-            fw = Framework.getInstance(Constants.getSystemBaseDir());
-            fw.configureFromProject(project);
-            fw.configureProject(project);
-        }
-        return fw;
-    }
-    /**
      * Returns an instance of Framework object.
      * Specify the rdeck_base path and let the projects and modules dir be constructed from it.
      *
@@ -471,40 +414,6 @@ public class Framework extends FrameworkResourceParent {
     }
 
     /**
-     * Set properties of this Framework instance based on project properties
-     *
-     * @param project the ant project
-     */
-    private void configureFromProject(final Project project) {
-        if ("true".equals(project.getProperty(FRAMEWORK_USERINPUT_DISABLED))) {
-            setAllowUserInput(false);
-        } else {
-            setAllowUserInput(true);
-        }
-    }
-
-    /**
-     * Configure a project to embed this framework instance as a reference.
-     *
-     * @param project the ant project
-     */
-    public void configureProject(final Project project) {
-        project.addReference(Framework.class.getName() + ".instance", this);
-        if (!isAllowUserInput()) {
-            final InputHandler h = project.getInputHandler();
-            project.setInputHandler(new FailInputHandler(h));
-            project.setProperty(FRAMEWORK_USERINPUT_DISABLED, "true");
-        } else {
-            final InputHandler h = project.getInputHandler();
-            if (h instanceof FailInputHandler) {
-                final InputHandler orig = ((FailInputHandler) h).getOriginal();
-                project.setInputHandler(orig);
-            }
-            project.setProperty(FRAMEWORK_USERINPUT_DISABLED, "false");
-        }
-    }
-
-    /**
      * Set the CentralDispatcherMgr instance
      * @param centralDispatcherMgr the instance
      */
@@ -513,25 +422,6 @@ public class Framework extends FrameworkResourceParent {
     }
 
 
-    /**
-     * An InputHandler implementation which simply throws an exception.  It also stores an original implementation that
-     * it may have replaced.
-     */
-    static class FailInputHandler implements InputHandler {
-        private InputHandler orig;
-
-        public FailInputHandler(final InputHandler h) {
-            this.orig = h;
-        }
-
-        public void handleInput(final org.apache.tools.ant.input.InputRequest request) throws BuildException {
-            throw new BuildException("User input is not available.");
-        }
-
-        public InputHandler getOriginal() {
-            return orig;
-        }
-    }
     /**
      * Return the property value by name
      *
@@ -764,14 +654,6 @@ public class Framework extends FrameworkResourceParent {
         return homeDir;
     }
 
-    public boolean isAllowUserInput() {
-        return allowUserInput;
-    }
-
-    public void setAllowUserInput(boolean allowUserInput) {
-        this.allowUserInput = allowUserInput;
-    }
-
     /**
      * References the {@link INodeDesc} instance representing the framework node.
      */
@@ -797,22 +679,5 @@ public class Framework extends FrameworkResourceParent {
     public boolean isLocalNode(INodeDesc node) {
         final String fwkNodeName = getFrameworkNodeName();
         return fwkNodeName.equals(node.getNodename());
-    }
-
-     /**
-     * Check's if this node is the server node. Based on comparing framework.server.name and framework.node.name
-     * Assumes framework.server.name property exists.
-     * @return Returns true if framework.server.name and framework.node.name match
-     */
-    public boolean isServerNode() {
-        String serverNode = null;
-        if (hasProperty("framework.server.name")) {
-            serverNode = getProperty("framework.server.name");
-        }
-        if (null!=serverNode && serverNode.equals(getPropertyLookup().getProperty("framework.node.name"))) {
-            return true;
-        } else {
-            return false;
-        }
     }
 }

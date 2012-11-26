@@ -361,7 +361,6 @@ class FrameworkService implements ApplicationContextAware {
             System.err.println("getFrameworkForUserAndRoles: No user/subject authorization")
             throw new RuntimeException("Cannot get framework without user, roles: ${user}, ${rolelist}")
         }
-        fw.setAllowUserInput(false)
         return fw
     }
     public static Framework getFrameworkForUserAndSubject(String user, Subject subject, String rundeckbase){
@@ -375,7 +374,6 @@ class FrameworkService implements ApplicationContextAware {
             System.err.println("getFrameworkForUserAndSubject: No user/subject authorization")
             throw new RuntimeException("Cannot get framework without user, subject: ${user}, ${subject}")
         }
-        fw.setAllowUserInput(false)
         return fw
     }
 

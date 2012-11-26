@@ -60,7 +60,7 @@ public class RemoveAction extends BaseAction {
 
     private void initArgs() {
         unsetupArgs.append("-name ");
-        unsetupArgs.append(project.getFrameworkProject());
+        unsetupArgs.append(project);
     }
 
     /**
