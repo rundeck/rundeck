@@ -728,8 +728,8 @@ public class TestExecTool extends AbstractBaseTest {
             ScriptFileCommandExecutionItem item1 = (ScriptFileCommandExecutionItem) testExecutor1.testItem;
             assertEquals(TEST_EXEC_TOOL_PROJECT, testExecutor1.testContext.getFrameworkProject());
             assertEquals(testScriptFile.getAbsolutePath(), item1.getServerScriptFilePath());
-            assertNotNull(testExecutor1.testContext.getArgs());
-            String[] args = testExecutor1.testContext.getArgs();
+            assertNotNull(item1.getArgs());
+            String[] args = item1.getArgs();
             assertEquals("incorrect args count", 2, args.length);
             assertEquals("incorrect args count", "test", args[0]);
             assertEquals("incorrect args count", "args", args[1]);
@@ -756,8 +756,8 @@ public class TestExecTool extends AbstractBaseTest {
             ScriptFileCommandExecutionItem item1 = (ScriptFileCommandExecutionItem) testExecutor1.testItem;
             assertEquals(TEST_EXEC_TOOL_PROJECT, testExecutor1.testContext.getFrameworkProject());
             assertEquals(testScriptFile.getAbsolutePath(), item1.getServerScriptFilePath());
-            assertNotNull(testExecutor1.testContext.getArgs());
-            String[] args = testExecutor1.testContext.getArgs();
+            assertNotNull(item1.getArgs());
+            String[] args = item1.getArgs();
             assertEquals("incorrect args count", 3, args.length);
             assertEquals("test", args[0]);
             assertEquals("args", args[1]);
@@ -784,8 +784,8 @@ public class TestExecTool extends AbstractBaseTest {
             ScriptFileCommandExecutionItem item1 = (ScriptFileCommandExecutionItem) testExecutor1.testItem;
             assertEquals(TEST_EXEC_TOOL_PROJECT, testExecutor1.testContext.getFrameworkProject());
             assertNotNull(item1.getServerScriptFilePath());
-            assertNotNull(testExecutor1.testContext.getArgs());
-            String[] args = testExecutor1.testContext.getArgs();
+            assertNotNull(item1.getArgs());
+            String[] args = item1.getArgs();
             assertEquals("incorrect args count", 2, args.length);
             assertEquals("test", args[0]);
             assertEquals("args", args[1]);

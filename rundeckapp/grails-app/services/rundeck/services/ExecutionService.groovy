@@ -712,7 +712,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             .frameworkProject(execMap.project)
             .user(user.login)
             .nodeSelector(nodeselector)
-            .args(args)
             .loglevel(loglevels[null != execMap.loglevel ? execMap.loglevel : 'WARN'])
             .dataContext(datacontext)
             .privateDataContext(privatecontext)

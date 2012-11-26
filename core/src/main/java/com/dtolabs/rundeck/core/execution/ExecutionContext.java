@@ -80,13 +80,6 @@ public interface ExecutionContext {
     boolean isKeepgoing();
 
     /**
-     * Get the argument line definition
-     *
-     * @return the arg
-     */
-    String[] getArgs();
-
-    /**
      * Return the loglevel value, using the Ant equivalents: DEBUG=1,
      *
      * @return log level from 0-4: ERR,WARN,INFO,VERBOSE,DEBUG

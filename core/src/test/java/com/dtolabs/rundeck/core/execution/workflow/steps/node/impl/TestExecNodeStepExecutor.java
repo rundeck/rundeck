@@ -35,9 +35,6 @@ import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommand;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandBase;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecNodeStepExecutor;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.core.utils.NodeSet;
@@ -142,10 +139,6 @@ public class TestExecNodeStepExecutor extends AbstractBaseTest {
                 return false;
             }
 
-            public String[] getArgs() {
-                return new String[0];
-            }
-
             public int getLoglevel() {
                 return 0;
             }
@@ -246,9 +239,6 @@ public class TestExecNodeStepExecutor extends AbstractBaseTest {
 
             public boolean isKeepgoing() {
                 return false;
-            }
-            public String[] getArgs() {
-                return new String[0];
             }
 
             public int getLoglevel() {

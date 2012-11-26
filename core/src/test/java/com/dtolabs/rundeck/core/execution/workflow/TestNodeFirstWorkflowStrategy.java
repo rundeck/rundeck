@@ -305,7 +305,6 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
 
                 final ExecutionContext executionContext = interpreterMock.executionContextList.get(0);
                 assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
-                assertNull(executionContext.getArgs());
                 assertNotNull(executionContext.getDataContext());
                 assertNotNull(executionContext.getDataContext().get("node"));
                 assertEquals(0, executionContext.getLoglevel());
@@ -323,7 +322,6 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
 
                 final ExecutionContext executionContext = interpreterMock.executionContextList.get(1);
                 assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
-                assertNull(executionContext.getArgs());
                 assertNotNull(executionContext.getDataContext());
                 assertNotNull(executionContext.getDataContext().get("node"));
                 assertEquals(0, executionContext.getLoglevel());
@@ -397,7 +395,6 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
 
                 final ExecutionContext executionContext = interpreterMock.executionContextList.get(0);
                 assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
-                assertNull(executionContext.getArgs());
                 assertNotNull(executionContext.getDataContext());
                 assertNotNull(executionContext.getDataContext().get("node"));
                 assertEquals(0, executionContext.getLoglevel());
@@ -415,7 +412,6 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
 
                 final ExecutionContext executionContext = interpreterMock.executionContextList.get(1);
                 assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
-                assertNull(executionContext.getArgs());
 
                 assertNotNull(executionContext.getDataContext());
                 assertNotNull(executionContext.getDataContext().get("node"));
@@ -434,7 +430,6 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
 
                 final ExecutionContext executionContext = interpreterMock.executionContextList.get(2);
                 assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
-                assertNull(executionContext.getArgs());
 
                 assertNotNull(executionContext.getDataContext());
                 assertNotNull(executionContext.getDataContext().get("node"));
@@ -667,7 +662,6 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
 
                 final ExecutionContext executionContext = interpreterMock.executionContextList.get(0);
                 assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
-                assertNull(executionContext.getArgs());
 
                 assertNotNull(executionContext.getDataContext());
                 assertNotNull(executionContext.getDataContext().get("node"));
@@ -687,7 +681,6 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
 
                 final ExecutionContext executionContext = interpreterMock.executionContextList.get(1);
                 assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
-                assertNull(executionContext.getArgs());
 
                 assertNotNull(executionContext.getDataContext());
                 assertNotNull(executionContext.getDataContext().get("node"));
@@ -707,7 +700,6 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
 
                 final ExecutionContext executionContext = interpreterMock.executionContextList.get(2);
                 assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
-                assertNull(executionContext.getArgs());
 
                 assertNotNull(executionContext.getDataContext());
                 assertNotNull(executionContext.getDataContext().get("node"));
@@ -727,7 +719,6 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
 
                 final ExecutionContext executionContext = interpreterMock.executionContextList.get(3);
                 assertEquals(TEST_PROJECT, executionContext.getFrameworkProject());
-                assertNull(executionContext.getArgs());
 
                 assertNotNull(executionContext.getDataContext());
                 assertNotNull(executionContext.getDataContext().get("node"));

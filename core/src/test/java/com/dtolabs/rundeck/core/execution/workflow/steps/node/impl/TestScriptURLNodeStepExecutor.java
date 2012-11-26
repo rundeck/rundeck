@@ -254,10 +254,6 @@ public class TestScriptURLNodeStepExecutor extends AbstractBaseTest {
                 return false;
             }
 
-            public String[] getArgs() {
-                return new String[0];
-            }
-
             public int getLoglevel() {
                 return 0;
             }

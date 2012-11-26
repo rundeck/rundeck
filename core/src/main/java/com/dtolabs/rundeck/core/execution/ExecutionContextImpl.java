@@ -24,9 +24,7 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.NodesSelector;
-import com.dtolabs.rundeck.core.common.SelectorUtils;
 
 import java.io.File;
 import java.util.*;
@@ -42,7 +40,6 @@ public class ExecutionContextImpl implements ExecutionContext {
     private NodesSelector nodeSet;
     private int threadCount;
     private boolean keepgoing;
-    private String[] args;
     private int loglevel;
     private Map<String, Map<String, String>> dataContext;
     private Map<String, Map<String, String>> privateDataContext;
@@ -56,7 +53,6 @@ public class ExecutionContextImpl implements ExecutionContext {
         this.frameworkProject = builder.frameworkProject;
         this.user = builder.user;
         this.nodeSet = builder.nodeSet;
-        this.args = builder.args;
         this.loglevel = builder.loglevel;
         this.dataContext = builder.dataContext;
         this.privateDataContext = builder.privateDataContext;
@@ -73,7 +69,6 @@ public class ExecutionContextImpl implements ExecutionContext {
         private String frameworkProject;
         private String user;
         private NodesSelector nodeSet;
-        private String[] args;
         private int loglevel;
         private Map<String, Map<String, String>> dataContext;
         private Map<String, Map<String, String>> privateDataContext;
@@ -92,7 +87,6 @@ public class ExecutionContextImpl implements ExecutionContext {
             this.frameworkProject = original.getFrameworkProject();
             this.user = original.getUser();
             this.nodeSet = original.getNodeSelector();
-            this.args = original.getArgs();
             this.loglevel = original.getLoglevel();
             this.dataContext = original.getDataContext();
             this.privateDataContext = original.getPrivateDataContext();
@@ -118,11 +112,6 @@ public class ExecutionContextImpl implements ExecutionContext {
 
         public Builder nodeSelector(NodesSelector nodeSet) {
             this.nodeSet = nodeSet;
-            return this;
-        }
-
-        public Builder args(String[] args) {
-            this.args = args;
             return this;
         }
 
@@ -191,10 +180,6 @@ public class ExecutionContextImpl implements ExecutionContext {
 
     public NodesSelector getNodeSelector() {
         return nodeSet;
-    }
-
-    public String[] getArgs() {
-        return null != args ? args.clone() : null;
     }
 
     public int getLoglevel() {

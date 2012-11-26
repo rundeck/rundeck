@@ -33,9 +33,6 @@ import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommand;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandBase;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNodeStepExecutor;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.core.utils.NodeSet;
@@ -195,9 +192,6 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             public boolean isKeepgoing() {
                 return false;
             }
-            public String[] getArgs() {
-                return new String[0];
-            }
 
             public int getLoglevel() {
                 return 0;
@@ -314,9 +308,6 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
 
             public boolean isKeepgoing() {
                 return false;
-            }
-            public String[] getArgs() {
-                return new String[0];
             }
 
             public int getLoglevel() {
@@ -446,10 +437,6 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
                 return false;
             }
 
-            public String[] getArgs() {
-                return new String[0];
-            }
-
             public int getLoglevel() {
                 return 0;
             }
@@ -561,9 +548,6 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             public boolean isKeepgoing() {
                 return false;
             }
-            public String[] getArgs() {
-                return new String[0];
-            }
 
             public int getLoglevel() {
                 return 0;
@@ -674,10 +658,6 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
 
             public boolean isKeepgoing() {
                 return false;
-            }
-
-            public String[] getArgs() {
-                return new String[0];
             }
 
             public int getLoglevel() {
@@ -803,10 +783,6 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
                 return false;
             }
 
-            public String[] getArgs() {
-                return new String[0];
-            }
-
             public int getLoglevel() {
                 return 0;
             }
@@ -926,10 +902,6 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
 
             public boolean isKeepgoing() {
                 return false;
-            }
-
-            public String[] getArgs() {
-                return new String[0];
             }
 
             public int getLoglevel() {

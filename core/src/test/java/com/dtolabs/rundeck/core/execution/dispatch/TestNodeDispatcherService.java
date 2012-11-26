@@ -115,10 +115,6 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                     return nodeSet.isKeepgoing();
                 }
 
-                public String[] getArgs() {
-                    return new String[0];
-                }
-
                 public int getLoglevel() {
                     return 0;
                 }
@@ -182,10 +178,6 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
 
                 public boolean isKeepgoing() {
                     return nodeSet.isKeepgoing();
-                }
-
-                public String[] getArgs() {
-                    return new String[0];
                 }
 
                 public int getLoglevel() {
@@ -253,10 +245,6 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                     return nodeSet.isKeepgoing();
                 }
 
-                public String[] getArgs() {
-                    return new String[0];
-                }
-
                 public int getLoglevel() {
                     return 0;
                 }
@@ -320,10 +308,6 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
 
                 public boolean isKeepgoing() {
                     return nodeSet.isKeepgoing();
-                }
-
-                public String[] getArgs() {
-                    return new String[0];
                 }
 
                 public int getLoglevel() {
@@ -399,10 +383,6 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                     return nodeSet.isKeepgoing();
                 }
 
-                public String[] getArgs() {
-                    return new String[0];
-                }
-
                 public int getLoglevel() {
                     return 0;
                 }
@@ -464,10 +444,6 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
 
                 public boolean isKeepgoing() {
                     return nodeSet.isKeepgoing();
-                }
-
-                public String[] getArgs() {
-                    return new String[0];
                 }
 
                 public int getLoglevel() {

@@ -814,7 +814,6 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             assertNull(val.nodeSelector)
             assertEquals("testproj",val.frameworkProject)
             assertEquals("testuser",val.user)
-            assertEquals(['-test','args'] as String[],val.args)
             assertEquals(1,val.loglevel)
             assertNull(val.framework)
             assertNull(val.executionListener)
