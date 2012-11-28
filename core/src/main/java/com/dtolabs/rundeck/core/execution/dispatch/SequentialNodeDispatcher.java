@@ -98,7 +98,7 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
         INodeEntry failedNode=null;
         for (final Object node1 : orderedNodes) {
             if (thread.isInterrupted()
-                || thread instanceof ExecutionServiceThread && ((ExecutionServiceThread) thread).isAborted()) {
+                || thread instanceof ServiceThreadBase && ((ServiceThreadBase) thread).isAborted()) {
                 interrupted = true;
                 break;
             }
@@ -108,7 +108,7 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
             try {
 
                 if (thread.isInterrupted()
-                    || thread instanceof ExecutionServiceThread && ((ExecutionServiceThread) thread).isAborted()) {
+                    || thread instanceof ServiceThreadBase && ((ServiceThreadBase) thread).isAborted()) {
                     interrupted = true;
                     break;
                 }

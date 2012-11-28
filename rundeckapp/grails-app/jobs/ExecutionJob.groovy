@@ -4,7 +4,6 @@ import org.quartz.JobDataMap
 
 import com.dtolabs.rundeck.core.common.Framework
 import org.quartz.InterruptableJob
-import com.dtolabs.rundeck.core.execution.ExecutionServiceThread
 
 import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
 import rundeck.Execution
@@ -60,7 +59,6 @@ class ExecutionJob implements InterruptableJob {
 
     /**
      * Attempt to get the list of failed nodes from a caught NodesetFailureException if the thread is
-     * an {@link ExecutionServiceThread}.
      * @return the list of failed node names, or null
      */
     private static Map<String,Object> extractFailedNodes(Map execmap=null) {
@@ -70,16 +68,6 @@ class ExecutionJob implements InterruptableJob {
         if(null!=execmap.noderecorder && execmap.noderecorder instanceof NodeRecorder){
             final recorder = (NodeRecorder) execmap.noderecorder
             return recorder.getFailedNodes()
-//        } else if (null != execmap.thread && execmap.thread instanceof ExecutionServiceThread) {
-//            Exception e = ((ExecutionServiceThread) execmap.thread).getException()
-//            if (null != e && e instanceof NodesetFailureException) {
-//                return ((NodesetFailureException) e).getNodeset();
-//            } else if (null != e && e instanceof BuildException) {
-//                final Throwable cause = ((BuildException) e).getCause()
-//                if (null != cause && cause instanceof NodesetFailureException) {
-//                    return ((NodesetFailureException) cause).getNodeset()
-//                }
-//            }
         }
         return null;
     }
