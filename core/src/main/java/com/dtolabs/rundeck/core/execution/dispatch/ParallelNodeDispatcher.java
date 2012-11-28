@@ -27,9 +27,8 @@ import com.dtolabs.rundeck.core.NodesetFailureException;
 import com.dtolabs.rundeck.core.cli.CallableWrapperTask;
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
-import com.dtolabs.rundeck.core.execution.StatusResult;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.tasks.dispatch.NodeExecutionStatusTask;
@@ -58,19 +57,19 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         this.framework = framework;
     }
 
-    public DispatcherResult dispatch(final ExecutionContext context,
+    public DispatcherResult dispatch(final StepExecutionContext context,
                                      final NodeStepExecutionItem item) throws
         DispatcherException {
         return dispatch(context, item, null);
     }
 
-    public DispatcherResult dispatch(final ExecutionContext context,
+    public DispatcherResult dispatch(final StepExecutionContext context,
                                      final Dispatchable item) throws
         DispatcherException {
         return dispatch(context, null, item);
     }
 
-    public DispatcherResult dispatch(final ExecutionContext context,
+    public DispatcherResult dispatch(final StepExecutionContext context,
                                      final NodeStepExecutionItem item, final Dispatchable toDispatch) throws
         DispatcherException {
         final NodesSelector nodeSelector = context.getNodeSelector();
@@ -177,7 +176,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         };
     }
 
-    private Callable execItemCallable(final ExecutionContext context, final NodeStepExecutionItem item,
+    private Callable execItemCallable(final StepExecutionContext context, final NodeStepExecutionItem item,
                                       final HashMap<String, NodeStepResult> resultMap, final INodeEntry node,
                                       final Map<String, Object> failureMap) {
         return new Callable() {

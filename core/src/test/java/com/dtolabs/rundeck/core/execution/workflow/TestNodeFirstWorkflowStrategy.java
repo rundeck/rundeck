@@ -209,7 +209,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
         List<NodeStepResult> resultList = new ArrayList<NodeStepResult>();
         boolean shouldThrowException = false;
 
-        public NodeStepResult executeNodeStep(ExecutionContext executionContext,
+        public NodeStepResult executeNodeStep(StepExecutionContext executionContext,
                                                  NodeStepExecutionItem executionItem, INodeEntry iNodeEntry) throws
                                                                                                      NodeStepException {
             executionItemList.add(executionItem);
@@ -260,7 +260,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                 WorkflowStrategy.STEP_FIRST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
             final NodeFirstWorkflowStrategy strategy = new NodeFirstWorkflowStrategy(testFramework);
-            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+            final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
                     .user("user1")
@@ -345,7 +345,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                 WorkflowStrategy.STEP_FIRST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
             final NodeFirstWorkflowStrategy strategy = new NodeFirstWorkflowStrategy(testFramework);
-            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+            final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
                     .user("user1")
@@ -547,7 +547,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             builder.nodeRankOrderAscending(nodeRankOrderAscending); //rank order
         }
         builder.nodeRankAttribute(rankAttribute); //rank attribute
-        final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+        final StepExecutionContext context =
             builder
                 .frameworkProject(TEST_PROJECT)
                 .user("user1")
@@ -611,7 +611,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                 WorkflowStrategy.STEP_FIRST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
             final NodeFirstWorkflowStrategy strategy = new NodeFirstWorkflowStrategy(testFramework);
-            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+            final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
                     .user("user1")

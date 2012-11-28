@@ -90,7 +90,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
 
     }
 
-    public final WorkflowExecutionResult executeWorkflow(final ExecutionContext executionContext,
+    public final WorkflowExecutionResult executeWorkflow(final StepExecutionContext executionContext,
                                                          final WorkflowExecutionItem item) {
 
         final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
@@ -108,7 +108,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
         return result;
     }
 
-    private WorkflowExecutionListener getWorkflowListener(final ExecutionContext executionContext) {
+    protected WorkflowExecutionListener getWorkflowListener(final ExecutionContext executionContext) {
         WorkflowExecutionListener wlistener = null;
         final ExecutionListener elistener = executionContext.getExecutionListener();
         if (null != elistener && elistener instanceof WorkflowExecutionListener) {
@@ -117,7 +117,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
         return wlistener;
     }
 
-    public abstract WorkflowExecutionResult executeWorkflowImpl(ExecutionContext executionContext,
+    public abstract WorkflowExecutionResult executeWorkflowImpl(StepExecutionContext executionContext,
                                                                 WorkflowExecutionItem item);
 
     /**
@@ -134,7 +134,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
      * @throws WorkflowStepFailureException if underlying WF item throws exception and the workflow is not "keepgoing",
      *                                      or the result from the execution includes an exception
      */
-    protected StepExecutionResult executeWFItem(final ExecutionContext executionContext,
+    protected StepExecutionResult executeWFItem(final StepExecutionContext executionContext,
                                                 final Map<Integer, Object> failedMap,
                                                 final int c,
                                                 final StepExecutionItem cmd, final boolean keepgoing) throws
@@ -151,7 +151,11 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                 executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
                 "StepExecutionItem created, executing: " + cmd);
             }
-            result = framework.getExecutionService().executeStep(executionContext, cmd);
+            result = framework.getExecutionService()
+                .executeStep(ExecutionContextImpl.builder(executionContext)
+                                 .stepNumber(c)
+                                 .build(),
+                             cmd);
             itemsuccess = null != result && result.isSuccess();
         } catch (Throwable exc) {
             if (keepgoing) {
@@ -210,19 +214,20 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
      * Execute the sequence of ExecutionItems within the context, and with the given keepgoing value, return true if
      * successful
      */
-    protected boolean executeWorkflowItemsForNodeSet(final ExecutionContext executionContext,
+    protected boolean executeWorkflowItemsForNodeSet(final StepExecutionContext executionContext,
                                                      final Map<Integer, Object> failedMap,
                                                      final List<StepExecutionResult> resultList,
                                                      final List<StepExecutionItem> iWorkflowCmdItems,
                                                      final boolean keepgoing) throws
         WorkflowStepFailureException {
-        return executeWorkflowItemsForNodeSet(executionContext, failedMap, resultList, iWorkflowCmdItems, keepgoing, 1);
+        return executeWorkflowItemsForNodeSet(executionContext, failedMap, resultList, iWorkflowCmdItems, keepgoing,
+                                              executionContext.getStepNumber());
     }
     /**
      * Execute the sequence of ExecutionItems within the context, and with the given keepgoing value, return true if
      * successful
      */
-    protected boolean executeWorkflowItemsForNodeSet(final ExecutionContext executionContext,
+    protected boolean executeWorkflowItemsForNodeSet(final StepExecutionContext executionContext,
                                                      final Map<Integer, Object> failedMap,
                                                      final List<StepExecutionResult> resultList,
                                                      final List<StepExecutionItem> iWorkflowCmdItems,
@@ -242,7 +247,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
 
             //wrap node failed listener (if any) and capture status results
             NodeRecorder stepCaptureFailedNodesListener = new NodeRecorder();
-            ExecutionContext stepContext = replaceFailedNodesListenerInContext(executionContext,
+            StepExecutionContext stepContext = replaceFailedNodesListenerInContext(executionContext,
                 stepCaptureFailedNodesListener);
             Map<String,Object> nodeFailures;
 
@@ -274,7 +279,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                         //will throw an exception on failure because keepgoing=false
 
                         NodeRecorder handlerCaptureFailedNodesListener = new NodeRecorder();
-                        ExecutionContext handlerExecContext = replaceFailedNodesListenerInContext(executionContext,
+                        StepExecutionContext handlerExecContext = replaceFailedNodesListenerInContext(executionContext,
                             handlerCaptureFailedNodesListener);
 
                         //if multi-node, determine set of nodes to run handler on: (failed node list only)
@@ -292,10 +297,8 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                         WorkflowStepFailureException handlerFailure = null;
                         boolean handlerSuccess = false;
                         try {
-                            handlerResult = executeWFItem(handlerExecContext, handlerFailedMap, c,
-                                                           handler,
-                                false);
-                            handlerSuccess=handlerResult.isSuccess();
+                            handlerResult = executeWFItem(handlerExecContext, handlerFailedMap, c, handler, false);
+                            handlerSuccess = handlerResult.isSuccess();
                         } catch (WorkflowStepFailureException e) {
                             handlerFailure = e;
                             handlerResult=e.getStatusResult();
@@ -362,7 +365,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
         }
     }
 
-    private ExecutionContext replaceFailedNodesListenerInContext(ExecutionContext executionContext,
+    private StepExecutionContext replaceFailedNodesListenerInContext(StepExecutionContext executionContext,
                                                                  FailedNodesListener captureFailedNodesListener) {
         ExecutionListenerOverride listen=null;
         if(null!= executionContext.getExecutionListener()) {

@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.cli.ExecTool;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
@@ -62,7 +63,7 @@ class ExecutionServiceImpl implements ExecutionService {
         this.framework = framework;
     }
 
-    public ExecutionResult executeItem(ExecutionContext context, StepExecutionItem executionItem) throws ExecutionException {
+    public ExecutionResult executeItem(StepExecutionContext context, StepExecutionItem executionItem) throws ExecutionException {
         if (null != context.getExecutionListener()) {
             context.getExecutionListener().beginStepExecution(context, executionItem);
         }
@@ -88,7 +89,7 @@ class ExecutionServiceImpl implements ExecutionService {
 
         return baseExecutionResult;
     }
-    public StepExecutionResult executeStep(ExecutionContext context, StepExecutionItem item) throws ExecutionException {
+    public StepExecutionResult executeStep(StepExecutionContext context, StepExecutionItem item) throws ExecutionException {
         if (null != context.getExecutionListener()) {
             context.getExecutionListener().beginStepExecution(context, item);
         }
@@ -116,7 +117,7 @@ class ExecutionServiceImpl implements ExecutionService {
         return result;
     }
 
-    public NodeStepResult executeNodeStep(ExecutionContext context,
+    public NodeStepResult executeNodeStep(StepExecutionContext context,
                                           NodeStepExecutionItem item, INodeEntry node) throws NodeStepException {
 
         final NodeStepExecutor interpreter;
@@ -150,7 +151,7 @@ class ExecutionServiceImpl implements ExecutionService {
         return result;
     }
 
-    public DispatcherResult dispatchToNodes(ExecutionContext context, NodeStepExecutionItem item) throws
+    public DispatcherResult dispatchToNodes(StepExecutionContext context, NodeStepExecutionItem item) throws
         DispatcherException {
 
         if (null != context.getExecutionListener()) {
@@ -173,7 +174,7 @@ class ExecutionServiceImpl implements ExecutionService {
         return result;
     }
 
-    public DispatcherResult dispatchToNodes(ExecutionContext context, Dispatchable item) throws
+    public DispatcherResult dispatchToNodes(StepExecutionContext context, Dispatchable item) throws
         DispatcherException {
 
         if (null != context.getExecutionListener()) {

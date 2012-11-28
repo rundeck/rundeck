@@ -27,6 +27,7 @@ package com.dtolabs.rundeck.core.execution.workflow.steps;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.StatusResult;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 
 
 /**
@@ -36,5 +37,5 @@ import com.dtolabs.rundeck.core.execution.StatusResult;
  */
 public interface StepExecutor {
     public boolean isNodeDispatchStep(StepExecutionItem item);
-    StepExecutionResult executeWorkflowStep(ExecutionContext executionContext, StepExecutionItem item) throws StepException;
+    StepExecutionResult executeWorkflowStep(StepExecutionContext executionContext, StepExecutionItem item) throws StepException;
 }

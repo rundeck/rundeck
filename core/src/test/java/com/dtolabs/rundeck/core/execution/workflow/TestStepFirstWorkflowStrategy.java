@@ -204,7 +204,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
         List<NodeStepResult> resultList = new ArrayList<NodeStepResult>();
         boolean shouldThrowException = false;
 
-        public NodeStepResult executeNodeStep(ExecutionContext executionContext,
+        public NodeStepResult executeNodeStep(StepExecutionContext executionContext,
                                                  NodeStepExecutionItem executionItem, INodeEntry iNodeEntry) throws
                                                                                                      NodeStepException {
             executionItemList.add(executionItem);
@@ -267,7 +267,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 WorkflowStrategy.STEP_FIRST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
             final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
-            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+            final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
                     .user("user1")
@@ -306,13 +306,14 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             final WorkflowImpl workflow = new WorkflowImpl(commands, 1, false, WorkflowStrategy.STEP_FIRST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
             final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
-            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+            final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
                     .user("user1")
                     .nodeSelector(nodeset.nodeSelectorWithDefaultAll())
                     .executionListener(new testListener())
                     .framework(testFramework)
+                    .stepNumber(1)
                     .build();
 
             //setup testInterpreter for all command types
@@ -361,7 +362,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 WorkflowStrategy.STEP_FIRST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
             final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
-            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+            final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
                     .user("user1")
@@ -428,7 +429,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 WorkflowStrategy.STEP_FIRST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
             final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
-            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+            final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
                     .user("user1")
@@ -525,7 +526,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 WorkflowStrategy.STEP_FIRST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
             final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
-            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+            final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
                     .user("user1")
@@ -667,13 +668,14 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             workflow.setKeepgoing(false);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
             final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
-            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+            final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
                     .user("user1")
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
+                    .stepNumber(1)
                     .build();
 
             //setup testInterpreter for all command types
@@ -823,7 +825,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             workflow.setKeepgoing(true);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
             final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
-            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+            final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
                     .user("user1")
@@ -865,6 +867,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             assertEquals(3, test1.size());
             for (final int i : new int[]{0, 1, 2}) {
                 final StepExecutionResult interpreterResult = test1.get(i);
+                assertTrue(NodeDispatchStepExecutor.isWrappedDispatcherResult(interpreterResult));
                 final DispatcherResult dr = NodeDispatchStepExecutor.extractDispatcherResult(interpreterResult);
                 assertEquals(1, dr.getResults().size());
                 final NodeStepResult nrs = dr.getResults().values().iterator().next();
@@ -983,7 +986,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             workflow.setKeepgoing(KEEPGOING_TEST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
             final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
-            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+            final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
                     .user("user1")
@@ -1169,7 +1172,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             workflow.setKeepgoing(KEEPGOING_TEST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
             final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
-            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+            final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
                     .user("user1")
@@ -1398,7 +1401,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             workflow.setKeepgoing(KEEPGOING_TEST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
             final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
-            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+            final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
                     .user("user1")
@@ -1533,7 +1536,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 WorkflowStrategy.STEP_FIRST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
             final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
-            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+            final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
                     .user("user1")
@@ -1598,7 +1601,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 WorkflowStrategy.STEP_FIRST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
             final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
-            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+            final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
                     .user("user1")
@@ -1690,7 +1693,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 WorkflowStrategy.STEP_FIRST);
             final WorkflowExecutionItemImpl executionItem = new WorkflowExecutionItemImpl(workflow);
             final StepFirstWorkflowStrategy strategy = new StepFirstWorkflowStrategy(testFramework);
-            final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+            final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
                     .frameworkProject(TEST_PROJECT)
                     .user("user1")

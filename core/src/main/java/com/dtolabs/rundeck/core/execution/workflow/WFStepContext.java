@@ -32,11 +32,26 @@ import com.dtolabs.rundeck.core.execution.StepExecutionItem;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 class WFStepContext {
-    StepExecutionItem stepItem;
-    int step = -1;
+    private StepExecutionItem stepItem;
+    private int step = -1;
 
     WFStepContext(final StepExecutionItem stepItem, final int step) {
         this.stepItem = stepItem;
         this.step = step;
     }
+
+    /**
+     * Return the step item
+     */
+    public StepExecutionItem getStepItem() {
+        return stepItem;
+    }
+
+    /**
+     * Return the step number in the current workflow
+     */
+    public int getStep() {
+        return step;
+    }
+
 }

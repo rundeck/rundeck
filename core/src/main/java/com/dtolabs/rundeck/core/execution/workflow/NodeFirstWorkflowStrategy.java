@@ -39,7 +39,6 @@ import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResultImpl;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
@@ -62,7 +61,7 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
         super(framework);
     }
 
-    public WorkflowExecutionResult executeWorkflowImpl(final ExecutionContext executionContext,
+    public WorkflowExecutionResult executeWorkflowImpl(final StepExecutionContext executionContext,
                                                        final WorkflowExecutionItem item) {
         Exception exception = null;
         final IWorkflow workflow = item.getWorkflow();
@@ -99,6 +98,7 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
 
                 if(stepExecutor.isNodeDispatchStep(flowsection.getCommands().get(0))) {
                     sectionSuccess = executeWFSectionNodeDispatch(executionContext,
+                                                                  stepCount,
                                                                   results,
                                                                   failures,
                                                                   flowsection
@@ -109,7 +109,6 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
                                                       results,
                                                       failures,
                                                       stepCount,
-                                                      sectionSuccess,
                                                       flowsection.getCommands(),
                                                       flowsection.isKeepgoing());
 
@@ -148,7 +147,8 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
      * Execute a workflow section that should be dispatched across nodes
      * @return true if the section was succesful
      */
-    private boolean executeWFSectionNodeDispatch(ExecutionContext executionContext,
+    private boolean executeWFSectionNodeDispatch(StepExecutionContext executionContext,
+                                                 int stepCount,
                                                  List<StepExecutionResult> results,
                                                  Map<String, Collection<String>> failures,
                                                  IWorkflow flowsection)
@@ -157,9 +157,13 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
         final DispatcherResult dispatch;
         final WorkflowExecutionItem innerLoopItem = createInnerLoopItem(flowsection);
         final WorkflowExecutor executor = framework.getWorkflowExecutionService().getExecutorForItem(innerLoopItem);
-        final Dispatchable dispatchedWorkflow = new DispatchedWorkflow(executor, innerLoopItem);
+        final Dispatchable dispatchedWorkflow = new DispatchedWorkflow(executor, innerLoopItem, stepCount, executionContext.getStepContext());
         //dispatch the sequence of dispatched items to each node
-        dispatch = framework.getExecutionService().dispatchToNodes(executionContext, dispatchedWorkflow);
+        dispatch = framework.getExecutionService().dispatchToNodes(
+            ExecutionContextImpl.builder(executionContext)
+                .stepNumber(stepCount)
+                .build(),
+            dispatchedWorkflow);
 
         logger.debug("Node dispatch result: " + dispatch);
         extractWFDispatcherResult(dispatch, results, failures, flowsection.getCommands().size());
@@ -250,11 +254,10 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
      * Execute non-dispatch steps of a workflow
      * @return success if all steps were successful
      */
-    private boolean executeWFSection(ExecutionContext executionContext,
+    private boolean executeWFSection(StepExecutionContext executionContext,
                                      List<StepExecutionResult> results,
                                      Map<String, Collection<String>> failures,
                                      int stepCount,
-                                     boolean sectionSuccess,
                                      final List<StepExecutionItem> commands, final boolean keepgoing)
         throws WorkflowStepFailureException {
         Map<Integer, Object> failedMap = new HashMap<Integer, Object>();
@@ -312,17 +315,26 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
     static class DispatchedWorkflow implements Dispatchable{
         WorkflowExecutor executor;
         WorkflowExecutionItem workflowItem;
+        int beginStep;
+        List<Integer> stack;
 
-        DispatchedWorkflow(final WorkflowExecutor executor, final WorkflowExecutionItem workflowItem) {
+        DispatchedWorkflow(WorkflowExecutor executor,
+                           WorkflowExecutionItem workflowItem,
+                           int beginStep,
+                           List<Integer> stack) {
             this.executor = executor;
             this.workflowItem = workflowItem;
+            this.beginStep = beginStep;
+            this.stack = stack;
         }
 
         public NodeStepResult dispatch(final ExecutionContext context,
                                      final INodeEntry node) throws DispatcherException {
-            //use single node context
+            //XXX: not necessary, use passed in context, will be in single node context already
             final ExecutionContextImpl newcontext = new ExecutionContextImpl.Builder(context)
                 .nodeSelector(SelectorUtils.singleNode(node.getNodename()))
+                .stepNumber(beginStep)
+                .stepContext(stack)
                 .build();
             WorkflowExecutionResult result = executor.executeWorkflow(newcontext, workflowItem);
             NodeStepResultImpl result1 = new NodeStepResultImpl(result.isSuccess(), node);

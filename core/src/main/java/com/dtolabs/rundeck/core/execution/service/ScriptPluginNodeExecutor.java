@@ -30,12 +30,9 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
-import com.dtolabs.rundeck.core.plugins.ScriptDataContextUtil;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
-import com.dtolabs.utils.Streams;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -67,7 +64,10 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
                                                     "[" + pluginname + "] execCommand started, command: "
                                                     + StringArrayUtil.asString(command, " "));
 
-        final Map<String, Map<String, String>> localDataContext = createScriptDataContext(executionContext);
+        final Map<String, Map<String, String>> localDataContext = createScriptDataContext(
+            executionContext.getFramework(),
+                                                                                          executionContext.getFrameworkProject(),
+                                                                                          executionContext.getDataContext());
         final HashMap<String, String> scptexec = new HashMap<String, String>();
         scptexec.put("command", StringArrayUtil.asString(command, " "));
         localDataContext.put("exec", scptexec);

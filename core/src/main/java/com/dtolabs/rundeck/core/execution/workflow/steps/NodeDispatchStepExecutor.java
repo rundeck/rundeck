@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 
 
@@ -46,7 +47,7 @@ public class NodeDispatchStepExecutor implements StepExecutor {
     }
 
     @Override
-    public StepExecutionResult executeWorkflowStep(final ExecutionContext context,
+    public StepExecutionResult executeWorkflowStep(final StepExecutionContext context,
                                                    final StepExecutionItem executionItem) {
         if (!(executionItem instanceof NodeStepExecutionItem)) {
             throw new IllegalArgumentException(

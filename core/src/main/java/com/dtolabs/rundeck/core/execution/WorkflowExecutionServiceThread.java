@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
@@ -39,10 +40,10 @@ import java.util.*;
 public class WorkflowExecutionServiceThread extends ServiceThreadBase {
     WorkflowExecutionService weservice;
     WorkflowExecutionItem weitem;
-    ExecutionContext econtext;
+    StepExecutionContext econtext;
     WorkflowExecutionResult result;
 
-    public WorkflowExecutionServiceThread(WorkflowExecutionService eservice, WorkflowExecutionItem eitem, ExecutionContext econtext) {
+    public WorkflowExecutionServiceThread(WorkflowExecutionService eservice, WorkflowExecutionItem eitem, StepExecutionContext econtext) {
         this.weservice = eservice;
         this.weitem = eitem;
         this.econtext = econtext;

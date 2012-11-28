@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
 import com.dtolabs.rundeck.core.dispatcher.QueuedItem;
 import com.dtolabs.rundeck.core.dispatcher.QueuedItemResult;
 import com.dtolabs.rundeck.core.execution.*;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandBase;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandBase;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandBase;
@@ -47,7 +48,7 @@ import java.util.*;
  * Main class for <code>dispatch</code> command line tool. This command will dispatch the command either locally or
  * remotely.
  */
-public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, ExecutionContext {
+public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, StepExecutionContext {
 
     /**
      * Short option value for filter exclude precedence option
@@ -1276,6 +1277,16 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
 
     public void setScriptURLString(String scriptURLString) {
         this.scriptURLString = scriptURLString;
+    }
+
+    @Override
+    public int getStepNumber() {
+        return 1;
+    }
+
+    @Override
+    public List<Integer> getStepContext() {
+        return null;
     }
 
 

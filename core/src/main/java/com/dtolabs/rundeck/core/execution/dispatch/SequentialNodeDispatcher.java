@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.NodesetFailureException;
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.*;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 
@@ -46,19 +47,19 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
         this.framework = framework;
     }
 
-    public DispatcherResult dispatch(final ExecutionContext context,
+    public DispatcherResult dispatch(final StepExecutionContext context,
                                      final NodeStepExecutionItem item) throws
         DispatcherException {
         return dispatch(context, item, null);
     }
 
-    public DispatcherResult dispatch(final ExecutionContext context,
+    public DispatcherResult dispatch(final StepExecutionContext context,
                                      final Dispatchable item) throws
         DispatcherException {
         return dispatch(context, null, item);
     }
 
-    public DispatcherResult dispatch(final ExecutionContext context,
+    public DispatcherResult dispatch(final StepExecutionContext context,
                                      final NodeStepExecutionItem item, final Dispatchable toDispatch) throws
         DispatcherException {
         final NodesSelector nodesSelector = context.getNodeSelector();
@@ -113,7 +114,7 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                     break;
                 }
                 final NodeStepResult result;
-                final ExecutionContext interimcontext = new ExecutionContextImpl.Builder(context).nodeSelector(
+                final StepExecutionContext interimcontext = new ExecutionContextImpl.Builder(context).nodeSelector(
                     SelectorUtils.singleNode(node.getNodename())).build();
 
                 //execute the step or dispatchable

@@ -520,7 +520,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
 
             //create listener to handle log messages and Ant build events
             ExecutionListener executionListener = new WorkflowExecutionListenerImpl(recorder, loghandler,false,null);
-            com.dtolabs.rundeck.core.execution.ExecutionContext executioncontext = createContext(execution, framework, execution.user, jobcontext, executionListener, null,extraParams, extraParamsExposed)
+            StepExecutionContext executioncontext = createContext(execution, null,framework, execution.user, jobcontext, executionListener, null,extraParams, extraParamsExposed)
             final cis = StepExecutionService.getInstanceForFramework(framework);
             cis.registerInstance(JobExecutionItem.STEP_EXECUTION_TYPE, this)
 
@@ -654,7 +654,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
     /**
      * Return an StepExecutionItem instance for the given workflow Execution, suitable for the ExecutionService layer
      */
-    public com.dtolabs.rundeck.core.execution.ExecutionContext createContext(ExecutionContext execMap, Framework framework, String userName = null, Map<String, String> jobcontext, ExecutionListener listener, String[] inputargs=null, Map extraParams=null, Map extraParamsExposed=null) {
+    public StepExecutionContext createContext(ExecutionContext execMap, StepExecutionContext origContext, Map<String, String> jobcontext, String[] inputargs = null, Map extraParams = null, Map extraParamsExposed = null) {
+        createContext(execMap,origContext,origContext.framework,origContext.user,jobcontext,origContext.executionListener,inputargs,extraParams,extraParamsExposed)
+    }
+    /**
+     * Return an StepExecutionItem instance for the given workflow Execution, suitable for the ExecutionService layer
+     */
+    public StepExecutionContext createContext(ExecutionContext execMap, StepExecutionContext origContext, Framework framework, String userName = null, Map<String, String> jobcontext, ExecutionListener listener, String[] inputargs=null, Map extraParams=null, Map extraParamsExposed=null) {
         def User user = User.findByLogin(userName ? userName : execMap.user)
         if (!user) {
             throw new Exception("User ${userName ? userName : execMap.user} is not authorized to run this Job.")
@@ -707,8 +713,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             privatecontext.put("option", extraParams)
         }
 
-        //create thread object with an execution item, and start it
-        final com.dtolabs.rundeck.core.execution.ExecutionContext item =  new com.dtolabs.rundeck.core.execution.ExecutionContextImpl.Builder()
+        //create execution context
+        def builder = com.dtolabs.rundeck.core.execution.ExecutionContextImpl.builder(origContext)
             .frameworkProject(execMap.project)
             .user(user.login)
             .nodeSelector(nodeselector)
@@ -721,8 +727,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             .keepgoing(keepgoing)
             .nodeRankAttribute(execMap.nodeRankAttribute)
             .nodeRankOrderAscending(null == execMap.nodeRankOrderAscending || execMap.nodeRankOrderAscending)
-            .build()
-        return item
+        if(origContext){
+            //start a sub context
+            builder.pushContextStep(1)
+        }
+        return builder.build()
     }
 
     /**
@@ -1673,8 +1682,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         return false
     }
 
-    StepExecutionResult executeWorkflowStep(com.dtolabs.rundeck.core.execution.ExecutionContext executionContext,
-                                       StepExecutionItem executionItem)  {
+    StepExecutionResult executeWorkflowStep(StepExecutionContext executionContext, StepExecutionItem executionItem) {
         if (!(executionItem instanceof JobExecutionItem)) {
             throw new StepException("Unsupported item type: " + executionItem.getClass().getName());
         }
@@ -1690,8 +1698,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         def id
         //lookup job, create item, submit to ExecutionService
         JobExecutionItem jitem = (JobExecutionItem) executionItem
-        System.err.println("Execute workflow step for jobref: "+jitem.jobIdentifier)
-        System.err.println("Execute workflow step for nodes: "+executionContext.nodeSelector)
         def StepExecutionResult result = null
         try{
 
@@ -1790,7 +1796,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                 jobcontext.project = se.project
                 jobcontext.username = executionContext.getUser()
                 newExecItem = createExecutionItemForExecutionContext(se, executionContext.getFramework(), executionContext.getUser())
-                newContext= createContext(se, executionContext.getFramework(), executionContext.getUser(), jobcontext, executionContext.getExecutionListener(),newargs, evalSecAuthOpts, evalSecOpts)
+                newContext= createContext(se, executionContext, jobcontext, newargs, evalSecAuthOpts, evalSecOpts)
                 return
             }
 

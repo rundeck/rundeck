@@ -26,7 +26,6 @@ package com.dtolabs.rundeck.core.execution.workflow;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.execution.*;
-import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 
 import java.util.*;
@@ -47,8 +46,8 @@ public class StepFirstWorkflowStrategy extends BaseWorkflowStrategy {
         super(framework);
     }
 
-    public WorkflowExecutionResult executeWorkflowImpl(final ExecutionContext executionContext,
-                                                   final WorkflowExecutionItem item) {
+    public WorkflowExecutionResult executeWorkflowImpl(final StepExecutionContext executionContext,
+                                                       final WorkflowExecutionItem item) {
         boolean workflowsuccess = false;
         Exception exception = null;
         final IWorkflow workflow = item.getWorkflow();
@@ -56,7 +55,7 @@ public class StepFirstWorkflowStrategy extends BaseWorkflowStrategy {
         final List<StepExecutionResult> resultList = new ArrayList<StepExecutionResult>();
         try {
             executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
-                "NodeSet: " + executionContext.getNodeSelector());
+                                                        "NodeSet: " + executionContext.getNodeSelector());
             executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, "Workflow: " + workflow);
             executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, "data context: " + executionContext
                 .getDataContext());
@@ -66,7 +65,7 @@ public class StepFirstWorkflowStrategy extends BaseWorkflowStrategy {
                 executionContext.getExecutionListener().log(Constants.WARN_LEVEL, "Workflow has 0 items");
             }
             workflowsuccess = executeWorkflowItemsForNodeSet(executionContext, failedList, resultList,
-                iWorkflowCmdItems, workflow.isKeepgoing());
+                                                             iWorkflowCmdItems, workflow.isKeepgoing());
             if (!workflowsuccess) {
                 throw new WorkflowFailureException("Some steps in the workflow failed: " + failedList);
             }

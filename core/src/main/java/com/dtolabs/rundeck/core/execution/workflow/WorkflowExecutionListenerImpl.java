@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.*;
 
@@ -43,7 +44,7 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
      */
     private InheritableThreadLocal<WFStepContext> localStep = new InheritableThreadLocal<WFStepContext>();
     private InheritableThreadLocal<INodeEntry> localNode = new InheritableThreadLocal<INodeEntry>();
-    private InheritableThreadLocal<String> contextPrefix = new InheritableThreadLocal<String>();
+    private InheritableThreadLocal<ContextStack<WFStepContext>> contextStack = new InheritableThreadLocal<ContextStack<WFStepContext>>();
 
     private WorkflowExecutionListenerImpl delegate;
 
@@ -99,12 +100,11 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
             }
             if (null != localStep.get()) {
                 final WFStepContext wfStepInfo = localStep.get();
-                final int step = wfStepInfo.step;
-                final String s = makePrefix(wfStepInfo);
-                if(null!= contextPrefix.get()) {
-                    loggingContext.put("command", contextPrefix.get() + ":" + s);
-                }else{
-                    loggingContext.put("command", s);
+                final int step = wfStepInfo.getStep();
+                if(null!= contextStack.get()) {
+                    loggingContext.put("command", generateContextString(contextStack.get().copyPush(wfStepInfo)));
+                }else {
+                    loggingContext.put("command", generateContextString(ContextStack.create(wfStepInfo)));
                 }
 
                 if (step > -1) {
@@ -117,52 +117,67 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
         }
     }
 
+    private String generateContextString(final ContextStack<WFStepContext> stack) {
+        if (null != delegate) {
+            return delegate.generateContextString(stack);
+        }
+        final String[] strings = new String[stack.size()];
+        int i=0;
+        for (final WFStepContext context : stack.stack()) {
+            strings[i++] = makePrefix(context);
+        }
+        return StringUtils.join(strings, ":");
+    }
+
     private String makePrefix(WFStepContext wfStepInfo) {
         if (null != delegate) {
             return delegate.makePrefix(wfStepInfo);
         }
-        String type = wfStepInfo.stepItem.getType();
-        if(wfStepInfo.stepItem instanceof NodeStepExecutionItem) {
-            NodeStepExecutionItem ns = (NodeStepExecutionItem) wfStepInfo.stepItem;
-            type+="-"+ns.getNodeStepType();
+
+        String type = wfStepInfo.getStepItem().getType();
+        if (wfStepInfo.getStepItem() instanceof NodeStepExecutionItem) {
+            NodeStepExecutionItem ns = (NodeStepExecutionItem) wfStepInfo.getStepItem();
+            type += "-" + ns.getNodeStepType();
         }
-        return wfStepInfo.step + "-" + type;
+        return wfStepInfo.getStep() + "-" + type;
     }
 
 
-    public void beginWorkflowExecution(final ExecutionContext executionContext, final WorkflowExecutionItem item) {
+    public void beginWorkflowExecution(final StepExecutionContext executionContext, final WorkflowExecutionItem item) {
         if (null != delegate) {
             delegate.beginWorkflowExecution(executionContext, item);
             return;
         }
         if(null!=localStep.get()) {
-            String prefix = makePrefix(localStep.get());
-            if(null!= contextPrefix.get()) {
-                contextPrefix.set(contextPrefix.get() + ":" + prefix);
+            //within another workflow already, so push context onto stack
+            WFStepContext info = localStep.get();
+            if(null!= contextStack.get()) {
+                contextStack.set(contextStack.get().copyPush(info));
             }else {
-                contextPrefix.set(prefix);
+                contextStack.set(ContextStack.create(info));
             }
         }
         localStep.set(null);
         localNode.set(null);
         log(Constants.DEBUG_LEVEL,
-            "[workflow] Begin execution: " + item.getType()
+            "[workflow] Begin execution: " + item.getType()+" context: "+contextStack.get()
         );
     }
 
 
-    public void finishWorkflowExecution(final WorkflowExecutionResult result, final ExecutionContext executionContext,
+    public void finishWorkflowExecution(final WorkflowExecutionResult result, final StepExecutionContext executionContext,
                                         final WorkflowExecutionItem item) {
         if (null != delegate) {
             delegate.finishWorkflowExecution(result, executionContext, item);
             return;
         }
-        final String s = contextPrefix.get();
-        if (null != s) {
-            if(s.lastIndexOf(":")>0){
-                contextPrefix.set(s.substring(0, s.lastIndexOf(":")));
-            }else {
-                contextPrefix.set(null);
+        ContextStack<WFStepContext> stack = contextStack.get();
+        if (null != stack ) {
+            //pop any workflow context already on stack
+            if (stack.size() > 0) {
+                contextStack.set(stack.copyPop());
+            } else {
+                contextStack.set(null);
             }
         }
         localStep.set(null);

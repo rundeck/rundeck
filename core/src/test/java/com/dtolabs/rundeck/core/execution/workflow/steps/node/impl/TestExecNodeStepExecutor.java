@@ -28,12 +28,14 @@ import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.NodeEntryImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
@@ -104,61 +106,13 @@ public class TestExecNodeStepExecutor extends AbstractBaseTest {
 
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost", "test1");
-        final ExecutionContext context = new ExecutionContext() {
-            public String getFrameworkProject() {
-                return PROJ_NAME;
-            }
+        final StepExecutionContext context = ExecutionContextImpl.builder()
+            .frameworkProject(PROJ_NAME)
+            .framework(frameworkInstance)
+            .user("blah")
+            .threadCount(1)
+            .build();
 
-            public Framework getFramework() {
-                return frameworkInstance;
-            }
-
-
-            public String getUser() {
-                return "blah";
-            }
-
-            public NodeSet getNodeSelector() {
-
-                return null;
-            }
-
-            public int getThreadCount() {
-                return 1;
-            }
-
-            public String getNodeRankAttribute() {
-                return null;
-            }
-
-            public boolean isNodeRankOrderAscending() {
-                return false;
-            }
-
-            public boolean isKeepgoing() {
-                return false;
-            }
-
-            public int getLoglevel() {
-                return 0;
-            }
-
-            public Map<String, Map<String, String>> getDataContext() {
-                return null;
-            }
-
-            public Map<String, Map<String, String>> getPrivateDataContext() {
-                return null;
-            }
-
-            public ExecutionListener getExecutionListener() {
-                return null;
-            }
-
-            public File getNodesFile() {
-                return null;
-            }
-        };
         final String[] strings = {"test", "command"};
 
         ExecCommand command = new ExecCommandBase() {
@@ -206,61 +160,12 @@ public class TestExecNodeStepExecutor extends AbstractBaseTest {
 
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost2","testnode2");
-        final ExecutionContext context = new ExecutionContext() {
-            public String getFrameworkProject() {
-                return PROJ_NAME;
-            }
-
-            public Framework getFramework() {
-                return frameworkInstance;
-            }
-
-
-            public String getUser() {
-                return "blah";
-            }
-
-            public NodeSet getNodeSelector() {
-
-                return null;
-            }
-
-            public int getThreadCount() {
-                return 1;
-            }
-
-            public String getNodeRankAttribute() {
-                return null;
-            }
-
-            public boolean isNodeRankOrderAscending() {
-                return false;
-            }
-
-            public boolean isKeepgoing() {
-                return false;
-            }
-
-            public int getLoglevel() {
-                return 0;
-            }
-
-            public Map<String, Map<String, String>> getDataContext() {
-                return null;
-            }
-
-            public Map<String, Map<String, String>> getPrivateDataContext() {
-                return null;
-            }
-
-            public ExecutionListener getExecutionListener() {
-                return null;
-            }
-
-            public File getNodesFile() {
-                return null;
-            }
-        };
+        final StepExecutionContext context = ExecutionContextImpl.builder()
+            .frameworkProject(PROJ_NAME)
+            .framework(frameworkInstance)
+            .user("blah")
+            .threadCount(1)
+            .build();
         final String[] strings = {"test", "command"};
 
         ExecCommand command = new ExecCommandBase() {

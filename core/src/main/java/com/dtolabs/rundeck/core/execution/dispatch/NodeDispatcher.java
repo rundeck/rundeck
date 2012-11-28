@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.execution.dispatch;
 
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 
 
@@ -37,6 +38,6 @@ public interface NodeDispatcher {
     /**
      * XXX: perhaps remove this in lieu of other interface
      */
-    public DispatcherResult dispatch(ExecutionContext context, NodeStepExecutionItem item) throws DispatcherException;
-    public DispatcherResult dispatch(ExecutionContext context, Dispatchable item) throws DispatcherException;
+    public DispatcherResult dispatch(StepExecutionContext context, NodeStepExecutionItem item) throws DispatcherException;
+    public DispatcherResult dispatch(StepExecutionContext context, Dispatchable item) throws DispatcherException;
 }

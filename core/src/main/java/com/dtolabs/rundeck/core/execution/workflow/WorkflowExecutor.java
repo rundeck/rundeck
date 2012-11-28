@@ -33,5 +33,5 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface WorkflowExecutor {
-    WorkflowExecutionResult executeWorkflow(ExecutionContext executionContext, WorkflowExecutionItem item);
+    WorkflowExecutionResult executeWorkflow(StepExecutionContext executionContext, WorkflowExecutionItem item);
 }

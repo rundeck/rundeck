@@ -30,10 +30,12 @@ import com.dtolabs.rundeck.core.common.NodeEntryImpl;
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.service.*;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
@@ -219,61 +221,12 @@ public class TestScriptURLNodeStepExecutor extends AbstractBaseTest {
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
         test1.setOsFamily("unix");
-        final ExecutionContext context = new ExecutionContext() {
-            public String getFrameworkProject() {
-                return PROJ_NAME;
-            }
 
-            public Framework getFramework() {
-                return frameworkInstance;
-            }
-
-
-            public String getUser() {
-                return "blah";
-            }
-
-            public NodeSet getNodeSelector() {
-
-                return null;
-            }
-
-            public int getThreadCount() {
-                return 1;
-            }
-
-            public String getNodeRankAttribute() {
-                return null;
-            }
-
-            public boolean isNodeRankOrderAscending() {
-                return false;
-            }
-
-            public boolean isKeepgoing() {
-                return false;
-            }
-
-            public int getLoglevel() {
-                return 0;
-            }
-
-            public Map<String, Map<String, String>> getDataContext() {
-                return null;
-            }
-
-            public Map<String, Map<String, String>> getPrivateDataContext() {
-                return null;
-            }
-
-            public ExecutionListener getExecutionListener() {
-                return null;
-            }
-
-            public File getNodesFile() {
-                return null;
-            }
-        };
+        final StepExecutionContext context = ExecutionContextImpl.builder()
+            .frameworkProject(PROJ_NAME)
+            .framework(frameworkInstance)
+            .user("blah")
+            .build();
         final String urlString = "http://test.com";
 
         ScriptURLCommandBase command = new ScriptURLCommandBase() {

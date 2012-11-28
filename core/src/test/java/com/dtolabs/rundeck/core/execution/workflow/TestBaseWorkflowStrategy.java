@@ -101,7 +101,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         }
 
         @Override
-        public WorkflowExecutionResult executeWorkflowImpl(ExecutionContext executionContext,
+        public WorkflowExecutionResult executeWorkflowImpl(StepExecutionContext executionContext,
                                                            WorkflowExecutionItem item) {
 
             return result;
@@ -110,6 +110,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         protected StepExecutionResult executeWFItem(final ExecutionContext executionContext,
                                                     final Map<Integer, Object> failedMap,
                                                     final int c,
+                                                    final List<Integer> stack,
                                                     final StepExecutionItem cmd, final boolean keepgoing)
             throws WorkflowStepFailureException {
 
@@ -117,6 +118,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             input.put("context", executionContext);
             input.put("failedMap", failedMap);
             input.put("c", c);
+            input.put("stack", stack);
             input.put("cmd", cmd);
             input.put("keepgoing", keepgoing);
             inputs.add(input);
@@ -178,13 +180,14 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
 
         //test success 1 item
         final NodeSet nodeset = new NodeSet();
-             final com.dtolabs.rundeck.core.execution.ExecutionContext context =
+         final StepExecutionContext context =
                  new ExecutionContextImpl.Builder()
                      .frameworkProject(TEST_PROJECT)
                      .user("user1")
                      .nodeSelector(nodeset)
                      .executionListener(new testListener())
                      .framework(testFramework)
+                     .stepNumber(1)
                      .build();
 
         testWorkflowStrategy strategy = new testWorkflowStrategy(testFramework);
@@ -234,19 +237,22 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             //test success 1 item
 
             final testWorkflowCmdItem testCmd1 = new testWorkflowCmdItem();
-            getFrameworkInstance().getStepExecutionService().registerInstance("test1",new StepExecutor() {
+            testCmd1.type = "test1";
+            StepExecutor object = new StepExecutor() {
                 @Override
                 public boolean isNodeDispatchStep(StepExecutionItem item) {
                     return true;
                 }
 
                 @Override
-                public StepExecutionResult executeWorkflowStep(ExecutionContext executionContext,
+                public StepExecutionResult executeWorkflowStep(StepExecutionContext executionContext,
                                                                StepExecutionItem item)
                     throws StepException {
+                    assertEquals(1, executionContext.getStepNumber());
                     return null;
                 }
-            });
+            };
+            getFrameworkInstance().getStepExecutionService().registerInstance("test1", object);
             final Map<String, Object> expectResult1 = new HashMap<String, Object>();
             expectResult1.put("c", 1);
             expectResult1.put("cmd", testCmd1);
@@ -668,7 +674,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         List<NodeStepResult> resultList = new ArrayList<NodeStepResult>();
         boolean shouldThrowException = false;
 
-        public NodeStepResult executeNodeStep(ExecutionContext executionContext,
+        public NodeStepResult executeNodeStep(StepExecutionContext executionContext,
                                                  NodeStepExecutionItem executionItem, INodeEntry iNodeEntry) throws
                                                                                                      NodeStepException {
             executionItemList.add(executionItem);

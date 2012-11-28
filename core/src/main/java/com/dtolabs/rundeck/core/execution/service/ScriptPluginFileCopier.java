@@ -28,13 +28,9 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
-import com.dtolabs.rundeck.core.plugins.AbstractDescribableScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
-import com.dtolabs.rundeck.core.plugins.ScriptDataContextUtil;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
-import com.dtolabs.rundeck.core.utils.StringArrayUtil;
-import com.dtolabs.utils.Streams;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -99,7 +95,10 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements FileCopier {
                     final String content, final INodeEntry node) throws
                                                                  FileCopierException {
         final String pluginname = getProvider().getName();
-        final Map<String, Map<String, String>> localDataContext = createScriptDataContext(executionContext);
+        final Map<String, Map<String, String>> localDataContext = createScriptDataContext(
+            executionContext.getFramework(),
+                                                                                          executionContext.getFrameworkProject(),
+                                                                                          executionContext.getDataContext());
 
         //add node context data
         localDataContext.put("node", DataContextUtils.nodeData(node));

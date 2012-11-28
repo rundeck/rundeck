@@ -28,9 +28,11 @@ import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.NodeEntryImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.service.*;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
@@ -159,60 +161,12 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
         test1.setOsFamily("unix");
-        final ExecutionContext context = new ExecutionContext() {
-            public String getFrameworkProject() {
-                return PROJ_NAME;
-            }
-
-            public Framework getFramework() {
-                return frameworkInstance;
-            }
-
-            public String getUser() {
-                return "blah";
-            }
-
-            public NodeSet getNodeSelector() {
-
-                return null;
-            }
-
-            public int getThreadCount() {
-                return 1;
-            }
-
-            public String getNodeRankAttribute() {
-                return null;
-            }
-
-            public boolean isNodeRankOrderAscending() {
-                return false;
-            }
-
-            public boolean isKeepgoing() {
-                return false;
-            }
-
-            public int getLoglevel() {
-                return 0;
-            }
-
-            public Map<String, Map<String, String>> getDataContext() {
-                return null;
-            }
-
-            public Map<String, Map<String, String>> getPrivateDataContext() {
-                return null;
-            }
-
-            public ExecutionListener getExecutionListener() {
-                return null;
-            }
-
-            public File getNodesFile() {
-                return null;
-            }
-        };
+        final StepExecutionContext context = ExecutionContextImpl.builder()
+            .frameworkProject(PROJ_NAME)
+            .framework(frameworkInstance)
+            .user("blah")
+            .threadCount(1)
+            .build();
         final String testScript = "a script";
 
         ScriptFileCommand command = new ScriptFileCommandBase()  {
@@ -276,60 +230,11 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
         test1.setOsFamily("unix");
-        final ExecutionContext context = new ExecutionContext() {
-            public String getFrameworkProject() {
-                return PROJ_NAME;
-            }
-
-            public Framework getFramework() {
-                return frameworkInstance;
-            }
-
-            public String getUser() {
-                return "blah";
-            }
-
-            public NodeSet getNodeSelector() {
-
-                return null;
-            }
-
-            public int getThreadCount() {
-                return 1;
-            }
-
-            public String getNodeRankAttribute() {
-                return null;
-            }
-
-            public boolean isNodeRankOrderAscending() {
-                return false;
-            }
-
-            public boolean isKeepgoing() {
-                return false;
-            }
-
-            public int getLoglevel() {
-                return 0;
-            }
-
-            public Map<String, Map<String, String>> getDataContext() {
-                return null;
-            }
-
-            public Map<String, Map<String, String>> getPrivateDataContext() {
-                return null;
-            }
-
-            public ExecutionListener getExecutionListener() {
-                return null;
-            }
-
-            public File getNodesFile() {
-                return null;
-            }
-        };
+        final StepExecutionContext context = ExecutionContextImpl.builder()
+            .frameworkProject(PROJ_NAME)
+            .framework(frameworkInstance)
+            .user("blah")
+            .build();
         final String testScript = "a script";
 
         ScriptFileCommand command = new ScriptFileCommandBase() {
@@ -402,61 +307,12 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
         test1.setOsFamily("unix");
-        final ExecutionContext context = new ExecutionContext() {
-            public String getFrameworkProject() {
-                return PROJ_NAME;
-            }
 
-            public Framework getFramework() {
-                return frameworkInstance;
-            }
-
-
-            public String getUser() {
-                return "blah";
-            }
-
-            public NodeSet getNodeSelector() {
-
-                return null;
-            }
-
-            public int getThreadCount() {
-                return 1;
-            }
-
-            public String getNodeRankAttribute() {
-                return null;
-            }
-
-            public boolean isNodeRankOrderAscending() {
-                return false;
-            }
-
-            public boolean isKeepgoing() {
-                return false;
-            }
-
-            public int getLoglevel() {
-                return 0;
-            }
-
-            public Map<String, Map<String, String>> getDataContext() {
-                return null;
-            }
-
-            public Map<String, Map<String, String>> getPrivateDataContext() {
-                return null;
-            }
-
-            public ExecutionListener getExecutionListener() {
-                return null;
-            }
-
-            public File getNodesFile() {
-                return null;
-            }
-        };
+        final StepExecutionContext context = ExecutionContextImpl.builder()
+            .frameworkProject(PROJ_NAME)
+            .framework(frameworkInstance)
+            .user("blah")
+            .build();
         final String testScript = "a script";
 
         ScriptFileCommand command = new ScriptFileCommandBase() {
@@ -515,61 +371,12 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
         test1.setOsFamily("windows");
-        final ExecutionContext context = new ExecutionContext() {
-            public String getFrameworkProject() {
-                return PROJ_NAME;
-            }
 
-            public Framework getFramework() {
-                return frameworkInstance;
-            }
-
-            public String getUser() {
-                return "blah";
-            }
-
-            public NodeSet getNodeSelector() {
-
-                return null;
-            }
-
-            public int getThreadCount() {
-                return 1;
-            }
-
-            public String getNodeRankAttribute() {
-                return null;
-            }
-
-            public boolean isNodeRankOrderAscending() {
-                return false;
-            }
-
-            public boolean isKeepgoing() {
-                return false;
-            }
-
-            public int getLoglevel() {
-                return 0;
-            }
-
-            public Map<String, Map<String, String>> getDataContext() {
-                return null;
-            }
-
-            public Map<String, Map<String, String>> getPrivateDataContext() {
-                return null;
-            }
-
-            public ExecutionListener getExecutionListener() {
-                return null;
-            }
-
-
-            public File getNodesFile() {
-                return null;
-            }
-        };
+        final StepExecutionContext context = ExecutionContextImpl.builder()
+            .frameworkProject(PROJ_NAME)
+            .framework(frameworkInstance)
+            .user("blah")
+            .build();
         final String testScript = "a script";
 
         ScriptFileCommand command = new ScriptFileCommandBase() {
@@ -625,61 +432,12 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
         test1.setOsFamily("unix");
-        final ExecutionContext context = new ExecutionContext() {
-            public String getFrameworkProject() {
-                return PROJ_NAME;
-            }
 
-            public Framework getFramework() {
-                return frameworkInstance;
-            }
-
-
-            public String getUser() {
-                return "blah";
-            }
-
-            public NodeSet getNodeSelector() {
-
-                return null;
-            }
-
-            public int getThreadCount() {
-                return 1;
-            }
-
-            public String getNodeRankAttribute() {
-                return null;
-            }
-
-            public boolean isNodeRankOrderAscending() {
-                return false;
-            }
-
-            public boolean isKeepgoing() {
-                return false;
-            }
-
-            public int getLoglevel() {
-                return 0;
-            }
-
-            public Map<String, Map<String, String>> getDataContext() {
-                return null;
-            }
-
-            public Map<String, Map<String, String>> getPrivateDataContext() {
-                return null;
-            }
-
-            public ExecutionListener getExecutionListener() {
-                return null;
-            }
-
-            public File getNodesFile() {
-                return null;
-            }
-        };
+        final StepExecutionContext context = ExecutionContextImpl.builder()
+            .frameworkProject(PROJ_NAME)
+            .framework(frameworkInstance)
+            .user("blah")
+            .build();
         final File testScriptFile = new File("Testfile");
 
 
@@ -748,61 +506,12 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
         test1.setOsFamily("unix");
-        final ExecutionContext context = new ExecutionContext() {
-            public String getFrameworkProject() {
-                return PROJ_NAME;
-            }
 
-            public Framework getFramework() {
-                return frameworkInstance;
-            }
-
-
-            public String getUser() {
-                return "blah";
-            }
-
-            public NodeSet getNodeSelector() {
-
-                return null;
-            }
-
-            public int getThreadCount() {
-                return 1;
-            }
-
-            public String getNodeRankAttribute() {
-                return null;
-            }
-
-            public boolean isNodeRankOrderAscending() {
-                return false;
-            }
-
-            public boolean isKeepgoing() {
-                return false;
-            }
-
-            public int getLoglevel() {
-                return 0;
-            }
-
-            public Map<String, Map<String, String>> getDataContext() {
-                return null;
-            }
-
-            public Map<String, Map<String, String>> getPrivateDataContext() {
-                return null;
-            }
-
-            public ExecutionListener getExecutionListener() {
-                return null;
-            }
-
-            public File getNodesFile() {
-                return null;
-            }
-        };
+        final StepExecutionContext context = ExecutionContextImpl.builder()
+            .frameworkProject(PROJ_NAME)
+            .framework(frameworkInstance)
+            .user("blah")
+            .build();
         final InputStream inputStream = new ByteArrayInputStream(new byte[]{0});
 
 
@@ -869,61 +578,12 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         //execute command interpreter on local node
         final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
         test1.setOsFamily("unix");
-        final ExecutionContext context = new ExecutionContext() {
-            public String getFrameworkProject() {
-                return PROJ_NAME;
-            }
 
-            public Framework getFramework() {
-                return frameworkInstance;
-            }
-
-
-            public String getUser() {
-                return "blah";
-            }
-
-            public NodeSet getNodeSelector() {
-
-                return null;
-            }
-
-            public int getThreadCount() {
-                return 1;
-            }
-
-            public String getNodeRankAttribute() {
-                return null;
-            }
-
-            public boolean isNodeRankOrderAscending() {
-                return false;
-            }
-
-            public boolean isKeepgoing() {
-                return false;
-            }
-
-            public int getLoglevel() {
-                return 0;
-            }
-
-            public Map<String, Map<String, String>> getDataContext() {
-                return null;
-            }
-
-            public Map<String, Map<String, String>> getPrivateDataContext() {
-                return null;
-            }
-
-            public ExecutionListener getExecutionListener() {
-                return null;
-            }
-
-            public File getNodesFile() {
-                return null;
-            }
-        };
+        final StepExecutionContext context = ExecutionContextImpl.builder()
+            .frameworkProject(PROJ_NAME)
+            .framework(frameworkInstance)
+            .user("blah")
+            .build();
         final InputStream inputStream = new ByteArrayInputStream(new byte[]{0});
 
 
