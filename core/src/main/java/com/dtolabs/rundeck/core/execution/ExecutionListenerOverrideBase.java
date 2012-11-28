@@ -71,15 +71,15 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
     }
 
 
-    public void beginExecution(ExecutionContext context, StepExecutionItem item) {
+    public void beginStepExecution(ExecutionContext context, StepExecutionItem item) {
         if (null != delegate) {
-            delegate.beginExecution(context, item);
+            delegate.beginStepExecution(context, item);
         }
     }
 
-    public void finishExecution(StatusResult result, ExecutionContext context, StepExecutionItem item) {
+    public void finishStepExecution(StatusResult result, ExecutionContext context, StepExecutionItem item) {
         if (null != delegate) {
-            delegate.finishExecution(result, context, item);
+            delegate.finishStepExecution(result, context, item);
         }
     }
 

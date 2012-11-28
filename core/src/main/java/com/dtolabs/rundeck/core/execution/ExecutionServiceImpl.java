@@ -64,7 +64,7 @@ class ExecutionServiceImpl implements ExecutionService {
 
     public ExecutionResult executeItem(ExecutionContext context, StepExecutionItem executionItem) throws ExecutionException {
         if (null != context.getExecutionListener()) {
-            context.getExecutionListener().beginExecution(context, executionItem);
+            context.getExecutionListener().beginStepExecution(context, executionItem);
         }
         if(!(executionItem instanceof NodeStepExecutionItem)) {
             throw new IllegalArgumentException("Cannot dispatch item which is not a NodeStepExecutionItem: " + executionItem);
@@ -82,7 +82,7 @@ class ExecutionServiceImpl implements ExecutionService {
             baseExecutionResult = new BaseExecutionResult(result, success, e);
         } finally {
             if (null != context.getExecutionListener()) {
-                context.getExecutionListener().finishExecution(baseExecutionResult, context, item);
+                context.getExecutionListener().finishStepExecution(baseExecutionResult, context, item);
             }
         }
 
@@ -90,7 +90,7 @@ class ExecutionServiceImpl implements ExecutionService {
     }
     public StepExecutionResult executeStep(ExecutionContext context, StepExecutionItem item) throws ExecutionException {
         if (null != context.getExecutionListener()) {
-            context.getExecutionListener().beginExecution(context, item);
+            context.getExecutionListener().beginStepExecution(context, item);
         }
 
         final StepExecutor executor;
@@ -110,7 +110,7 @@ class ExecutionServiceImpl implements ExecutionService {
         } finally {
             loggingReformatter.resetOutputStreams();
             if (null != context.getExecutionListener()) {
-                context.getExecutionListener().finishExecution(result, context, item);
+                context.getExecutionListener().finishStepExecution(result, context, item);
             }
         }
         return result;

@@ -72,14 +72,14 @@ public interface ExecutionListener {
 
 
     /**
-     * Called when executionb begins
+     * Called when execution begins for a step
      */
-    public void beginExecution(ExecutionContext context, StepExecutionItem item);
+    public void beginStepExecution(ExecutionContext context, StepExecutionItem item);
 
     /**
-     * Called when execution finishes
+     * Called when execution finishes for a step
      */
-    public void finishExecution(StatusResult result, ExecutionContext context, StepExecutionItem item);
+    public void finishStepExecution(StatusResult result, ExecutionContext context, StepExecutionItem item);
 
     /**
      * Called before execution of command on node
@@ -132,12 +132,12 @@ public interface ExecutionListener {
     public void finishFileCopy(String result, ExecutionContext context, INodeEntry node);
 
     /**
-     * Begin command interpretation
+     * Begin execution of a node step
      */
     public void beginExecuteNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node);
 
     /**
-     * Finish command interpretation
+     * Finish execution of a node step
      */
     public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item,
                                       INodeEntry node);
