@@ -25,16 +25,18 @@ package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.NodesSelector;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 
 import java.io.File;
 import java.util.*;
+
 
 /**
  * ExecutionContextImpl is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ExecutionContextImpl implements ExecutionContext {
+public class ExecutionContextImpl implements ExecutionContext, StepExecutionContext {
     private String frameworkProject;
     private String user;
     private NodesSelector nodeSet;
@@ -47,126 +49,140 @@ public class ExecutionContextImpl implements ExecutionContext {
     private Framework framework;
     private File nodesFile;
     private String nodeRankAttribute;
-    private boolean nodeRankOrderAscending=true;
+    private boolean nodeRankOrderAscending = true;
+    private int stepNumber = 1;
+    private List<Integer> stepContext;
 
-    private ExecutionContextImpl(final Builder builder) {
-        this.frameworkProject = builder.frameworkProject;
-        this.user = builder.user;
-        this.nodeSet = builder.nodeSet;
-        this.loglevel = builder.loglevel;
-        this.dataContext = builder.dataContext;
-        this.privateDataContext = builder.privateDataContext;
-        this.executionListener = builder.executionListener;
-        this.framework = builder.framework;
-        this.nodesFile = builder.nodesFile;
-        this.threadCount = builder.threadCount;
-        this.keepgoing = builder.keepgoing;
-        this.nodeRankAttribute = builder.nodeRankAttribute;
-        this.nodeRankOrderAscending = builder.nodeRankOrderAscending;
+    private ExecutionContextImpl() {
+        stepContext = new ArrayList<Integer>();
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+    public static Builder builder(ExecutionContext context) {
+        return new Builder(context);
+    }
+    public static Builder builder(StepExecutionContext context) {
+        return new Builder(context);
+    }
     public static class Builder {
-        private String frameworkProject;
-        private String user;
-        private NodesSelector nodeSet;
-        private int loglevel;
-        private Map<String, Map<String, String>> dataContext;
-        private Map<String, Map<String, String>> privateDataContext;
-        private ExecutionListener executionListener;
-        private Framework framework;
-        private File nodesFile;
-        private int threadCount;
-        private boolean keepgoing;
-        private String nodeRankAttribute;
-        private boolean nodeRankOrderAscending=true;
+        private ExecutionContextImpl ctx;
+
 
         public Builder() {
+            ctx = new ExecutionContextImpl();
         }
 
         public Builder(final ExecutionContext original) {
-            this.frameworkProject = original.getFrameworkProject();
-            this.user = original.getUser();
-            this.nodeSet = original.getNodeSelector();
-            this.loglevel = original.getLoglevel();
-            this.dataContext = original.getDataContext();
-            this.privateDataContext = original.getPrivateDataContext();
-            this.executionListener = original.getExecutionListener();
-            this.framework = original.getFramework();
-            this.nodesFile = original.getNodesFile();
-            this.threadCount = original.getThreadCount();
-            this.keepgoing = original.isKeepgoing();
-            this.nodeRankAttribute = original.getNodeRankAttribute();
-            this.nodeRankOrderAscending = original.isNodeRankOrderAscending();
+            this();
+            if(null!=original){
+                ctx.frameworkProject = original.getFrameworkProject();
+                ctx.user = original.getUser();
+                ctx.nodeSet = original.getNodeSelector();
+                ctx.loglevel = original.getLoglevel();
+                ctx.dataContext = original.getDataContext();
+                ctx.privateDataContext = original.getPrivateDataContext();
+                ctx.executionListener = original.getExecutionListener();
+                ctx.framework = original.getFramework();
+                ctx.nodesFile = original.getNodesFile();
+                ctx.threadCount = original.getThreadCount();
+                ctx.keepgoing = original.isKeepgoing();
+                ctx.nodeRankAttribute = original.getNodeRankAttribute();
+                ctx.nodeRankOrderAscending = original.isNodeRankOrderAscending();
+            }
+        }
 
+        public Builder(final StepExecutionContext original) {
+            this((ExecutionContext) original);
+            if (null != original) {
+                ctx.stepNumber = original.getStepNumber();
+                ctx.stepContext = original.getStepContext();
+            }
         }
 
         public Builder frameworkProject(String frameworkProject) {
-            this.frameworkProject = frameworkProject;
+            ctx.frameworkProject = frameworkProject;
             return this;
         }
 
         public Builder user(String user) {
-            this.user = user;
+            ctx.user = user;
             return this;
         }
 
         public Builder nodeSelector(NodesSelector nodeSet) {
-            this.nodeSet = nodeSet;
+            ctx.nodeSet = nodeSet;
             return this;
         }
 
         public Builder loglevel(int loglevel) {
-            this.loglevel = loglevel;
+            ctx.loglevel = loglevel;
             return this;
         }
 
         public Builder dataContext(Map<String, Map<String, String>> dataContext) {
-            this.dataContext = dataContext;
+            ctx.dataContext = dataContext;
             return this;
         }
 
         public Builder privateDataContext(Map<String, Map<String, String>> privateDataContext) {
-            this.privateDataContext = privateDataContext;
+            ctx.privateDataContext = privateDataContext;
             return this;
         }
 
         public Builder executionListener(ExecutionListener executionListener) {
-            this.executionListener = executionListener;
+            ctx.executionListener = executionListener;
             return this;
         }
 
         public Builder framework(Framework framework) {
-            this.framework = framework;
+            ctx.framework = framework;
             return this;
         }
 
         public Builder nodesFile(File nodesFile) {
-            this.nodesFile = nodesFile;
+            ctx.nodesFile = nodesFile;
             return this;
         }
 
         public Builder threadCount(int threadCount) {
-            this.threadCount = threadCount;
+            ctx.threadCount = threadCount;
             return this;
         }
 
         public Builder keepgoing(boolean keepgoing) {
-            this.keepgoing = keepgoing;
+            ctx.keepgoing = keepgoing;
             return this;
         }
 
         public Builder nodeRankAttribute(final String nodeRankAttribute) {
-            this.nodeRankAttribute = nodeRankAttribute;
+            ctx.nodeRankAttribute = nodeRankAttribute;
             return this;
         }
 
         public Builder nodeRankOrderAscending(boolean nodeRankOrderAscending) {
-            this.nodeRankOrderAscending = nodeRankOrderAscending;
+            ctx.nodeRankOrderAscending = nodeRankOrderAscending;
+            return this;
+        }
+
+        public Builder stepNumber(int number) {
+            ctx.stepNumber = number;
+            return this;
+        }
+
+        public Builder stepContext(List<Integer> stepContext) {
+            ctx.stepContext = stepContext;
+            return this;
+        }
+        public Builder pushContextStep(final int step) {
+            ctx.stepContext.add(ctx.stepNumber);
+            ctx.stepNumber = step;
             return this;
         }
 
         public ExecutionContextImpl build() {
-            return new ExecutionContextImpl(this);
+            return ctx;
         }
     }
 
@@ -220,5 +236,15 @@ public class ExecutionContextImpl implements ExecutionContext {
 
     public boolean isNodeRankOrderAscending() {
         return nodeRankOrderAscending;
+    }
+
+    @Override
+    public int getStepNumber() {
+        return stepNumber;
+    }
+
+    @Override
+    public List<Integer> getStepContext() {
+        return stepContext;
     }
 }
