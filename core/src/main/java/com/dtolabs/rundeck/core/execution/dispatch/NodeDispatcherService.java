@@ -30,6 +30,8 @@ import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.resources.FileResourceModelSource;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
+
 
 /**
  * NodeProcessorService is ...
@@ -38,7 +40,7 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceException;
  */
 public class NodeDispatcherService extends BaseProviderRegistryService<NodeDispatcher>{
 
-    private static final String SERVICE_NAME = "NodeDispatcher";
+    private static final String SERVICE_NAME = ServiceNameConstants.NodeDispatcher;
 
     public NodeDispatcherService(Framework framework) {
         super(framework);

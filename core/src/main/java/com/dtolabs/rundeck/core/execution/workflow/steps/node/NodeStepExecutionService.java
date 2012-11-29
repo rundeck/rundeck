@@ -31,18 +31,22 @@ import com.dtolabs.rundeck.core.plugins.ProviderIdent;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
 import java.util.ArrayList;
 import java.util.List;
 
 
 /**
- * NodeStepExecutionService provides NodeStepExecutors
+ * NodeStepExecutionService is a provider of NodeStepExecutors, which aggregates a few services together
+ * that provide builtin NodeStepExecutors, and several forms of plugins.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class NodeStepExecutionService extends ChainedProviderService<NodeStepExecutor> implements DescribableService {
-    public static final String SERVICE_NAME = "NodeStepExecutor";
+    public static final String SERVICE_NAME = ServiceNameConstants.WorkflowNodeStep;
+    public static final String PLUGIN_SERVICE_NAME = ServiceNameConstants.WorkflowNodeStep;
+    public static final String REMOTE_SCRIPT_PLUGIN_SERVICE_NAME = ServiceNameConstants.RemoteScriptNodeStep;
 
     private List<ProviderService<NodeStepExecutor>> serviceList;
 

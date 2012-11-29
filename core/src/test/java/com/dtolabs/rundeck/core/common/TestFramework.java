@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import org.apache.tools.ant.Project;
@@ -87,22 +88,26 @@ public class TestFramework extends AbstractBaseTest {
         final Framework fw = Framework.getInstance(getBaseDir(), getFrameworkProjectsBase());
         //test default service implementations
         assertNotNull(fw.services);
-        assertNotNull(fw.getService("NodeStepExecutor"));
-        assertNotNull(fw.getService("NodeExecutor"));
-        assertNotNull(fw.getService("FileCopier"));
-        assertNotNull(fw.getService("NodeDispatcher"));
+        assertNotNull(fw.getService(ServiceNameConstants.WorkflowStep));
+        assertNotNull(fw.getService(ServiceNameConstants.WorkflowNodeStep));
+        assertNotNull(fw.getService(ServiceNameConstants.NodeExecutor));
+        assertNotNull(fw.getService(ServiceNameConstants.FileCopier));
+        assertNotNull(fw.getService(ServiceNameConstants.NodeDispatcher));
+        assertNotNull(fw.getService(ServiceNameConstants.ResourceModelSource));
+        assertNotNull(fw.getService(ServiceNameConstants.ResourceFormatParser));
+        assertNotNull(fw.getService(ServiceNameConstants.ResourceFormatGenerator));
     }
     public void testSetService() {
         final Framework fw = Framework.getInstance(getBaseDir(), getFrameworkProjectsBase());
         //test removing services
         assertNotNull(fw.services);
-        final FrameworkSupportService commandInterpreter = fw.getService("NodeStepExecutor");
+        final FrameworkSupportService commandInterpreter = fw.getService(ServiceNameConstants.WorkflowNodeStep);
         assertNotNull(commandInterpreter);
-        fw.setService("NodeStepExecutor", null);
-        assertNull(fw.getService("NodeStepExecutor"));
-        fw.setService("NodeStepExecutor", commandInterpreter);
-        assertNotNull(fw.getService("NodeStepExecutor"));
-        final FrameworkSupportService commandInterpreter2 = fw.getService("NodeStepExecutor");
+        fw.setService(ServiceNameConstants.WorkflowNodeStep, null);
+        assertNull(fw.getService(ServiceNameConstants.WorkflowNodeStep));
+        fw.setService(ServiceNameConstants.WorkflowNodeStep, commandInterpreter);
+        assertNotNull(fw.getService(ServiceNameConstants.WorkflowNodeStep));
+        final FrameworkSupportService commandInterpreter2 = fw.getService(ServiceNameConstants.WorkflowNodeStep);
         assertEquals(commandInterpreter, commandInterpreter2);
 
     }

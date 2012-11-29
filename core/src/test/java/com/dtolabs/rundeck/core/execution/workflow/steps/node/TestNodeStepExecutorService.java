@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecNodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNodeStepExecutor;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -190,7 +191,7 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
         } catch (ExecutionServiceException e) {
             assertTrue(e instanceof MissingProviderException);
             MissingProviderException mis = (MissingProviderException) e;
-//            assertEquals("NodeStepExecutor", mis.getServiceName());
+//            assertEquals(ServiceNameConstants.WorkflowNodeStep, mis.getServiceName());
             assertEquals("blah", mis.getProviderName());
         }
         //test null provider name
@@ -216,7 +217,7 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
         final NodeStepExecutionService service = NodeStepExecutionService.getInstanceForFramework(
             framework);
         assertNotNull(service);
-        final FrameworkSupportService foundservice = framework.getService("NodeStepExecutor");
+        final FrameworkSupportService foundservice = framework.getService(ServiceNameConstants.WorkflowNodeStep);
         assertNotNull(foundservice);
         assertTrue(foundservice instanceof NodeStepExecutionService);
         assertEquals(foundservice, service);
@@ -225,6 +226,6 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
     public void testGetName() throws Exception {
         final NodeStepExecutionService service = NodeStepExecutionService.getInstanceForFramework(
             getFrameworkInstance());
-        assertEquals("NodeStepExecutor", service.getName());
+        assertEquals(ServiceNameConstants.WorkflowNodeStep, service.getName());
     }
 }

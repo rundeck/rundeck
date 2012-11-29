@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.core.plugins.ProviderIdent;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +45,7 @@ import java.util.List;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class StepExecutionService extends ChainedProviderService<StepExecutor> implements DescribableService {
-    public static final String SERVICE_NAME = "StepExecutor";
+    public static final String SERVICE_NAME = ServiceNameConstants.WorkflowStep;
 
     private List<ProviderService<StepExecutor>> serviceList;
     private BuiltinStepExecutionService builtinStepExecutionService;
