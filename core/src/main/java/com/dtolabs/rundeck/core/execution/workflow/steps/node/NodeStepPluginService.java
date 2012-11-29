@@ -42,26 +42,17 @@ import java.util.*;
 
 
 /**
- * NodeStepPluginService can load NodeStepPlugin providers
+ * NodeStepPluginService can load NodeStepPlugin providers, and also supports script-based plugin providers.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class NodeStepPluginService extends BasePluggableProviderService<NodeStepPlugin>
-    implements DescribableService {
+class NodeStepPluginService extends BasePluggableProviderService<NodeStepPlugin> implements DescribableService {
 
-    public NodeStepPluginService(final Framework framework) {
-        super(framework);
-    }
-
-    public boolean isValidProviderClass(Class clazz) {
-
-        return NodeStepPlugin.class.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
-    }
-
-    public NodeStepPlugin createProviderInstance(Class<NodeStepPlugin> clazz, String name) throws
-                                                                                           PluginException,
-                                                                                           ProviderCreationException {
-        return createProviderInstanceFromType(clazz, name);
+    /**
+     * Create the service with a given name
+     */
+    public NodeStepPluginService(final String name, final Framework framework) {
+        super(name, framework, NodeStepPlugin.class);
     }
 
     public boolean isScriptPluggable() {
@@ -73,16 +64,4 @@ class NodeStepPluginService extends BasePluggableProviderService<NodeStepPlugin>
         return new ScriptPluginNodeStepPlugin(provider, getFramework());
     }
 
-    public List<Description> listDescriptions() {
-        return DescribableServiceUtil.listDescriptions(this);
-    }
-
-    public List<ProviderIdent> listDescribableProviders() {
-        return DescribableServiceUtil.listDescribableProviders(this);
-    }
-
-
-    public String getName() {
-        return NodeStepExecutionService.SERVICE_NAME;
-    }
 }

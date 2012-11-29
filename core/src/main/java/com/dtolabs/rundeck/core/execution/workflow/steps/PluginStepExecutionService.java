@@ -52,32 +52,8 @@ import java.util.*;
 class PluginStepExecutionService extends BasePluggableProviderService<StepPlugin>
     implements FrameworkSupportService, DescribableService {
 
-
-    public String getName() {
-        return StepExecutionService.SERVICE_NAME;
-    }
-
-    PluginStepExecutionService(final Framework framework) {
-        super(framework);
-    }
-
-    public List<Description> listDescriptions() {
-        return DescribableServiceUtil.listDescriptions(this);
-    }
-
-    public List<ProviderIdent> listDescribableProviders() {
-        return DescribableServiceUtil.listDescribableProviders(this);
-    }
-
-    public boolean isValidProviderClass(Class clazz) {
-
-        return StepPlugin.class.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
-    }
-
-    public StepPlugin createProviderInstance(Class<StepPlugin> clazz, String name) throws
-                                                                                   PluginException,
-                                                                                   ProviderCreationException {
-        return createProviderInstanceFromType(clazz, name);
+    PluginStepExecutionService(final String name, final Framework framework) {
+        super(name, framework, StepPlugin.class);
     }
 
     @Override

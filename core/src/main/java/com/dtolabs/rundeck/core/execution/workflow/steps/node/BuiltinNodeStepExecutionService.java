@@ -37,8 +37,12 @@ import com.dtolabs.rundeck.core.plugins.BaseProviderRegistryService;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 class BuiltinNodeStepExecutionService extends BaseProviderRegistryService<NodeStepExecutor>{
-    BuiltinNodeStepExecutionService(final Framework framework) {
+
+    String name;
+
+    BuiltinNodeStepExecutionService(final Framework framework, final String name) {
         super(framework);
+        this.name = name;
         resetDefaultProviders();
     }
 
@@ -52,6 +56,6 @@ class BuiltinNodeStepExecutionService extends BaseProviderRegistryService<NodeSt
     }
     @Override
     public String getName() {
-        return NodeStepExecutionService.SERVICE_NAME;
+        return name;
     }
 }

@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Overrides the {@link #providerOfType(String)} method to attempt to load a provider from the PluginManagerService.
+ * Extends BaseProviderRegistryService to support loading providers via plugins if not found in the registry.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */

@@ -36,8 +36,12 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 class BuiltinStepExecutionService extends BaseProviderRegistryService<StepExecutor> {
-    BuiltinStepExecutionService(final Framework framework) {
+
+    String name;
+
+    BuiltinStepExecutionService(final String name, final Framework framework) {
         super(framework);
+        this.name=name;
         resetDefaultProviders();
     }
 
@@ -47,6 +51,6 @@ class BuiltinStepExecutionService extends BaseProviderRegistryService<StepExecut
 
     @Override
     public String getName() {
-        return StepExecutionService.SERVICE_NAME;
+        return name;
     }
 }

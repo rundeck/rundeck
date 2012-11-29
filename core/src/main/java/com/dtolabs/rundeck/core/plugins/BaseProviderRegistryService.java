@@ -38,7 +38,7 @@ import java.util.List;
 
 /**
  * BaseProviderRegistryService is an abstract base that provides a registry of available service providers based on
- * simple names.  The service providers classes must have a simple single-argument constructor with a {@link Framework}
+ * simple names.  The service providers classes must have a no-arg constructor or a single-argument constructor with a {@link Framework}
  * argument
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>

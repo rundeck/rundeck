@@ -56,9 +56,10 @@ public class StepExecutionService extends ChainedProviderService<StepExecutor> i
 
     StepExecutionService(final Framework framework) {
         this.serviceList = new ArrayList<ProviderService<StepExecutor>>();
-        builtinStepExecutionService = new BuiltinStepExecutionService(framework);
+        builtinStepExecutionService = new BuiltinStepExecutionService(SERVICE_NAME, framework);
         final ProviderService<StepExecutor> pluginStepExecutionService
-            = new PluginStepExecutionService(framework).adapter(StepPluginAdapter.CONVERTER);
+            = new PluginStepExecutionService(SERVICE_NAME, framework)
+            .adapter(StepPluginAdapter.CONVERTER);
 
         serviceList.add(builtinStepExecutionService);
         serviceList.add(pluginStepExecutionService);

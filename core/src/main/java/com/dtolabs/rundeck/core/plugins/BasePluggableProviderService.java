@@ -29,26 +29,47 @@ import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
+import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.utils.Converter;
-import com.dtolabs.rundeck.core.utils.IdentityConverter;
-import com.dtolabs.rundeck.plugins.step.ScriptGeneratorNodeStepPlugin;
 
 import java.lang.reflect.Constructor;
 import java.util.*;
 
 
 /**
- * BasePluggableProviderService is ...
+ * BasePluggableProviderService is an abstract base for a provider service which can load providers from plugins.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public abstract class BasePluggableProviderService<T> implements ProviderService<T>, PluggableService<T> {
     private Framework framework;
+    private Class<? extends T> implementationClass;
+    private String name;
 
-    protected BasePluggableProviderService(Framework framework) {
+    protected BasePluggableProviderService(final String name,
+                                           final Framework framework,
+                                           final Class<? extends T> implementationClass) {
+        this.name=name;
         this.framework = framework;
+        this.implementationClass = implementationClass;
     }
 
+    /*
+     * Default implementation of isValidProviderClas, which checks the class is assignable from the specified
+     * implementation class, and has a valid signature.
+     */
+    public boolean isValidProviderClass(final Class clazz) {
+        return implementationClass.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
+    }
+
+    /*
+     * default implementation of createProviderInstance
+     */
+    public T createProviderInstance(final Class<T> clazz, final String name)
+        throws PluginException, ProviderCreationException {
+        return createProviderInstanceFromType(clazz, name);
+    }
 
     @Override
     public T providerOfType(final String providerName) throws ExecutionServiceException {
@@ -75,13 +96,26 @@ public abstract class BasePluggableProviderService<T> implements ProviderService
         return providerIdents;
     }
 
+    /**
+     * default implementation returns false, subclasses should override to
+     */
+    @Override
+    public boolean isScriptPluggable() {
+        return false;
+    }
+
+    @Override
+    public T createScriptProviderInstance(ScriptPluginProvider provider)
+        throws PluginException {
+        throw new UnsupportedOperationException("This service does not support script plugins");
+    }
+
     protected T createProviderInstanceFromType(final Class<? extends T> execClass, final String providerName) throws
                                                                                                               ProviderCreationException {
         boolean ctrfound = true;
         try {
             final Constructor<? extends T> method = execClass.getDeclaredConstructor(new Class[]{Framework.class});
-            final T executor = method.newInstance(framework);
-            return executor;
+            return method.newInstance(framework);
         } catch (NoSuchMethodException e) {
             ctrfound = false;
         } catch (Exception e) {
@@ -90,8 +124,7 @@ public abstract class BasePluggableProviderService<T> implements ProviderService
         }
         try {
             final Constructor<? extends T> method = execClass.getDeclaredConstructor(new Class[0]);
-            final T executor = method.newInstance();
-            return executor;
+            return method.newInstance();
         } catch (NoSuchMethodException e) {
             throw new ProviderCreationException(
                 "No constructor found with signature (Framework) or (): " + e.getMessage(), e,
@@ -119,6 +152,22 @@ public abstract class BasePluggableProviderService<T> implements ProviderService
         return false;
     }
 
+    /**
+     * default implementation of listDescriptions that can be used if subclasses implement {@link
+     * com.dtolabs.rundeck.core.plugins.configuration.DescribableService}
+     */
+    public List<Description> listDescriptions() {
+        return DescribableServiceUtil.listDescriptions(this);
+    }
+
+    /**
+     * default implementation of listDescribableProviders that can be used if subclasses implement {@link
+     * com.dtolabs.rundeck.core.plugins.configuration.DescribableService}
+     */
+    public List<ProviderIdent> listDescribableProviders() {
+        return DescribableServiceUtil.listDescribableProviders(this);
+    }
+
     protected Framework getFramework() {
         return framework;
     }
@@ -128,5 +177,9 @@ public abstract class BasePluggableProviderService<T> implements ProviderService
      */
     public <X> ProviderService<X> adapter(final Converter<T, X> converter) {
         return AdapterService.adaptFor(this, converter);
+    }
+
+    public String getName() {
+        return name;
     }
 }

@@ -58,15 +58,16 @@ public class NodeStepExecutionService extends ChainedProviderService<NodeStepExe
          * NodeStepExecutionService chains several other services:
          * 1. builtin providers
          * 2. NodeStepPlugin providers
-         * 3. ScriptGeneratorNodeStepPlugin providers
+         * 3. RemoteScriptNodeStepPlugin providers
          */
-        this.primaryService = new BuiltinNodeStepExecutionService(framework);
+        this.primaryService = new BuiltinNodeStepExecutionService(framework, SERVICE_NAME);
 
-        final ProviderService<NodeStepExecutor> pluginService = new NodeStepPluginService(framework).adapter(
-            NodeStepPluginAdapter.CONVERTER);
+        final ProviderService<NodeStepExecutor> pluginService =
+            new NodeStepPluginService(PLUGIN_SERVICE_NAME, framework).adapter(NodeStepPluginAdapter.CONVERTER);
 
-        final ProviderService<NodeStepExecutor> generatorPluginService = new ScriptGeneratorNodeStepPluginService(
-            framework).adapter(ScriptGeneratorNodeStepPluginAdapter.CONVERTER);
+        final ProviderService<NodeStepExecutor> generatorPluginService =
+            new RemoteScriptNodeStepPluginService(REMOTE_SCRIPT_PLUGIN_SERVICE_NAME, framework)
+                .adapter(RemoteScriptNodeStepPluginAdapter.CONVERTER);
 
         serviceList.add(primaryService);
         serviceList.add(pluginService);
