@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.plugins.PluginLogger;
 
 import java.io.File;
 import java.io.InputStream;
@@ -39,7 +40,7 @@ import java.io.InputStream;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public interface ExecutionListener {
+public interface ExecutionListener extends PluginLogger {
     /**
      * Return true if output should be terse and not prefixed
      *

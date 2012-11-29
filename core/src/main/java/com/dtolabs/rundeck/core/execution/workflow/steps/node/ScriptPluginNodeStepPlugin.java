@@ -26,33 +26,20 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
-import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionException;
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
-import com.dtolabs.rundeck.core.plugins.AbstractDescribableScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
-import com.dtolabs.rundeck.core.plugins.ScriptDataContextUtil;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
-import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.dtolabs.rundeck.core.plugins.configuration.Validator;
-import com.dtolabs.rundeck.core.utils.StringArrayUtil;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
+import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.step.PluginStepItem;
-import com.dtolabs.utils.Streams;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 
 /**
- * ScriptPluginNodeStepPlugin is ...
+ * ScriptPluginNodeStepPlugin is a {@link NodeStepPlugin} that uses a {@link ScriptPluginProvider}
+ *
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
@@ -76,20 +63,20 @@ class ScriptPluginNodeStepPlugin extends BaseScriptPlugin implements NodeStepPlu
     }
 
     @Override
-    public boolean executeNodeStep(final ExecutionContext executionContext,
+    public boolean executeNodeStep(final PluginStepContext executionContext,
                                    final PluginStepItem item,
                                    final INodeEntry node)
         throws NodeStepException {
         final ScriptPluginProvider plugin = getProvider();
         final String pluginname = plugin.getName();
-        executionContext.getExecutionListener().log(3,
+        executionContext.getLogger().log(3,
                                                     "[" + pluginname + "] step started, config: "
                                                     + item.getStepConfiguration());
 
 
         int result = -1;
         try {
-            result = runPluginScript(executionContext, item, System.out, System.err);
+            result = runPluginScript(executionContext, item, System.out, System.err, getFramework());
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -97,9 +84,9 @@ class ScriptPluginNodeStepPlugin extends BaseScriptPlugin implements NodeStepPlu
         }
         boolean success = result == 0;
 
-        executionContext.getExecutionListener().log(3,
-                                                    "[" + pluginname + "]: result code: " + result + ", success: "
-                                                    + success);
+        executionContext.getLogger().log(3,
+                                         "[" + pluginname + "]: result code: " + result + ", success: "
+                                         + success);
         return success;
     }
 }

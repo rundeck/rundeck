@@ -16,26 +16,50 @@
  */
 
 /*
-* StepPlugin.java
+* PluginStepContext.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 11/12/12 4:26 PM
+* Created: 11/26/12 3:04 PM
 * 
 */
 package com.dtolabs.rundeck.plugins.step;
 
-import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
+import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.plugins.PluginLogger;
+
+import java.util.List;
+import java.util.Map;
 
 
 /**
- * StepPlugin is ...
+ * PluginStepContext is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface StepPlugin {
+public interface PluginStepContext {
     /**
-     * Execute the step, return true if the step succeeded
+     * Return the logger
      */
-    public boolean executeStep(final PluginStepContext context, final PluginStepItem item) throws StepException;
+    public PluginLogger getLogger();
+    /**
+     * Return the project name
+     */
+    public String getFrameworkProject();
+    /**
+     * Return the data context
+     */
+    public Map<String, Map<String, String>> getDataContext();
+
+    /**
+     * Return the nodes used for this execution
+     */
+    public INodeSet getNodes();
+    /**
+     * Return the step number within the current workflow
+     */
+    public int getStepNumber();
+    /**
+     * Return the context path of step numbers within the larger workflow context.
+     */
+    public List<Integer> getStepContext();
 }

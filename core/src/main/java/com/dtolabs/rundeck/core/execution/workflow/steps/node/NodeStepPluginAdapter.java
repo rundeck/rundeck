@@ -27,18 +27,22 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepContextImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepItemImpl;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
+import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.step.PluginStepItem;
 
 import java.util.*;
 
 
 /**
- * NodeStepPluginAdapter is ...
+ * NodeStepPluginAdapter implements NodeStepExecutor, and makes use of a {@link NodeStepPlugin}
+ * instance to perform the execution.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
@@ -68,12 +72,13 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
 
 
     @Override
-    public NodeStepResult executeNodeStep(final ExecutionContext context,
+    public NodeStepResult executeNodeStep(final StepExecutionContext context,
                                           final NodeStepExecutionItem item,
                                           final INodeEntry node)
         throws NodeStepException {
         final PluginStepItem step = toPluginStepItem(item, context);
-        final boolean success = plugin.executeNodeStep(context, step, node);
+        final PluginStepContext pluginContext = PluginStepContextImpl.from(context);
+        final boolean success = plugin.executeNodeStep(pluginContext, step, node);
         return new NodeStepResultImpl(success, node);
     }
 

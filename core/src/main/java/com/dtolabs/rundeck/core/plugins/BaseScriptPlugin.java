@@ -26,7 +26,7 @@ package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
-import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.step.PluginStepItem;
 import com.dtolabs.utils.Streams;
 
@@ -87,14 +87,19 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
      * Runs the script configured for the script plugin and channels the output to two streams.
      * the
      */
-    protected int runPluginScript(final ExecutionContext executionContext,
+    protected int runPluginScript(final PluginStepContext executionContext,
                                   final PluginStepItem item,
-                                  final PrintStream outputStream, final PrintStream errorStream)
+                                  final PrintStream outputStream,
+                                  final PrintStream errorStream,
+                                  final Framework framework)
         throws IOException, InterruptedException {
-        final Map<String, Map<String, String>> localDataContext = createStepItemDataContext(executionContext, item);
+        final Map<String, Map<String, String>> localDataContext = createStepItemDataContext(item,
+                                                                                            framework,
+                                                                                            executionContext.getFrameworkProject(),
+                                                                                            executionContext.getDataContext());
         final String[] finalargs = createScriptArgs(localDataContext);
 
-        executionContext.getExecutionListener().log(3, "[" + getProvider().getName() + "] executing: " + Arrays.asList(
+        executionContext.getLogger().log(3, "[" + getProvider().getName() + "] executing: " + Arrays.asList(
             finalargs));
 
         return runScript(finalargs,
@@ -106,12 +111,14 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
     }
 
     /**
-     * Create a data context containing the plugin values "file","scriptfile" and "base", as well as all config
-     * values.
+     * Create a data context containing the plugin values "file","scriptfile" and "base", as well as all config values.
      */
-    protected Map<String, Map<String, String>> createStepItemDataContext(final ExecutionContext executionContext,
-                                                                         final PluginStepItem item) {
-        final Map<String, Map<String, String>> localDataContext = createScriptDataContext(executionContext);
+    protected Map<String, Map<String, String>> createStepItemDataContext(final PluginStepItem item,
+                                                                         final Framework framework,
+                                                                         final String project,
+                                                                         final Map<String, Map<String, String>> context) {
+
+        final Map<String, Map<String, String>> localDataContext = createScriptDataContext(framework, project, context);
 
         final HashMap<String, String> configMap = new HashMap<String, String>();
         //convert values to string
@@ -125,13 +132,13 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
     /**
      *
      */
-    protected Map<String, Map<String, String>> createScriptDataContext(final ExecutionContext executionContext) {
+    protected Map<String, Map<String, String>> createScriptDataContext(final Framework framework,
+                                                                       final String project,
+                                                                       final Map<String, Map<String, String>> context) {
         final Map<String, Map<String, String>> localDataContext
-            = ScriptDataContextUtil.createScriptDataContextForProject(
-            executionContext.getFramework(),
-            executionContext.getFrameworkProject());
+            = ScriptDataContextUtil.createScriptDataContextForProject(framework, project);
         localDataContext.get("plugin").putAll(createPluginDataContext());
-        localDataContext.putAll(executionContext.getDataContext());
+        localDataContext.putAll(context);
         return localDataContext;
     }
 

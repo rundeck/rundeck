@@ -25,20 +25,15 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
-import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
-import com.dtolabs.rundeck.core.plugins.ScriptDataContextUtil;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
+import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.step.PluginStepItem;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
-import java.util.*;
 
 
 /**
@@ -65,18 +60,16 @@ class ScriptPluginStepPlugin extends BaseScriptPlugin implements StepPlugin {
     }
 
     @Override
-    public boolean executeStep(final ExecutionContext executionContext, final PluginStepItem item) throws StepException {
+    public boolean executeStep(final PluginStepContext executionContext, final PluginStepItem item) throws StepException {
         final ScriptPluginProvider plugin = getProvider();
         final String pluginname = plugin.getName();
-        executionContext.getExecutionListener().log(3,
-                                                    "[" + pluginname + "] step started, config: "
-                                                    + item.getStepConfiguration());
-
+        executionContext.getLogger()
+            .log(3, "[" + pluginname + "] step started, config: " + item.getStepConfiguration());
 
 
         int result = -1;
         try {
-            result = runPluginScript(executionContext, item, System.out, System.err);
+            result = runPluginScript(executionContext, item, System.out, System.err, getFramework());
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -84,9 +77,7 @@ class ScriptPluginStepPlugin extends BaseScriptPlugin implements StepPlugin {
         }
         boolean success=result==0;
 
-        executionContext.getExecutionListener().log(3,
-                                                    "[" + pluginname + "]: result code: " + result + ", success: "
-                                                    + success);
+        executionContext.getLogger().log(3, "[" + pluginname + "]: result code: " + result + ", success: " + success);
         return success;
     }
 

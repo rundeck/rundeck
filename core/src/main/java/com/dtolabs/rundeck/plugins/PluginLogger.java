@@ -16,26 +16,26 @@
  */
 
 /*
-* NodeStepPlugin.java
+* PluginLogger.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 11/12/12 4:25 PM
+* Created: 11/26/12 3:10 PM
 * 
 */
-package com.dtolabs.rundeck.plugins.step;
-
-import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
-
+package com.dtolabs.rundeck.plugins;
 
 /**
- * NodeStepPlugin is ...
+ * PluginLogger is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface NodeStepPlugin {
-    public boolean executeNodeStep(final PluginStepContext context,
-                                   final PluginStepItem item,
-                                   final INodeEntry entry)
-        throws NodeStepException;
+public interface PluginLogger {
+    /**
+     * Log a message at a given level
+     *
+     * @param level   the log level, from 0 to 5, where 0 is "error" and 5 is "debug"
+     * @param message Message being logged. <code>null</code> messages are not logged, however, zero-length strings
+     *                are.
+     */
+    public void log(final int level, final String message);
 }
