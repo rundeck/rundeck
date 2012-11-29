@@ -24,6 +24,8 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.common.NodeSetImpl;
 import com.dtolabs.rundeck.core.common.NodesSelector;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 
@@ -40,6 +42,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private String frameworkProject;
     private String user;
     private NodesSelector nodeSet;
+    private INodeSet nodes;
     private int threadCount;
     private boolean keepgoing;
     private int loglevel;
@@ -55,6 +58,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
     private ExecutionContextImpl() {
         stepContext = new ArrayList<Integer>();
+        nodes = new NodeSetImpl();
     }
 
     public static Builder builder() {
@@ -80,6 +84,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.frameworkProject = original.getFrameworkProject();
                 ctx.user = original.getUser();
                 ctx.nodeSet = original.getNodeSelector();
+                ctx.nodes = original.getNodes();
                 ctx.loglevel = original.getLoglevel();
                 ctx.dataContext = original.getDataContext();
                 ctx.privateDataContext = original.getPrivateDataContext();
@@ -113,6 +118,11 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
         public Builder nodeSelector(NodesSelector nodeSet) {
             ctx.nodeSet = nodeSet;
+            return this;
+        }
+
+        public Builder nodes(INodeSet nodeSet) {
+            ctx.nodes = nodeSet;
             return this;
         }
 
@@ -196,6 +206,10 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
     public NodesSelector getNodeSelector() {
         return nodeSet;
+    }
+
+    public INodeSet getNodes() {
+        return nodes;
     }
 
     public int getLoglevel() {

@@ -246,7 +246,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
         }
     }
 
-    public void testMultipleNodes() {
+    public void testMultipleNodes() throws Exception{
 
         {
             //test jobref item
@@ -266,6 +266,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                     .user("user1")
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
+                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
                     .framework(testFramework).build();
 
             //setup testInterpreter for all command types
@@ -331,7 +332,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
         }
     }
 
-    public void testMultipleNodesExtFile() {
+    public void testMultipleNodesExtFile() throws Exception{
 
         {
             //test jobref item
@@ -353,6 +354,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                     .executionListener(new testListener())
                     .framework(testFramework)
                     .nodesFile(extResourcesfile)
+                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, extResourcesfile))
                     .build();
                     //specify ext resources file
 
@@ -440,7 +442,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
         }
     }
 
-    public void testMultipleNodesRanked() {
+    public void testMultipleNodesRanked() throws Exception{
 
         {
             //default (name), default order
@@ -529,7 +531,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
     }
 
     private void assertRankedNodeResult(final ArrayList<String> expected, final Boolean nodeRankOrderAscending,
-                                        final String rankAttribute) {
+                                        final String rankAttribute) throws Exception{
 
         //default ranking should be node name ascending
         final ArrayList<StepExecutionItem> commands = new ArrayList<StepExecutionItem>();
@@ -555,6 +557,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                 .executionListener(new testListener())
                 .framework(testFramework)
                 .nodesFile(extResourcesfile2)
+                .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, extResourcesfile2))
                 .build();
 
         //setup testInterpreter for all command types
@@ -592,7 +595,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
         assertEquals(expected, tested);
     }
 
-    public void testMultipleItemsAndNodes() {
+    public void testMultipleItemsAndNodes() throws Exception{
 
         {
             //test jobref item
@@ -618,6 +621,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
+                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
                     .build();
 
             //setup testInterpreter for all command types

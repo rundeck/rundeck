@@ -295,15 +295,10 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
 
     private void validateNodeSet(ExecutionContext executionContext, NodesSelector nodeSelector) {
         //retrieve the node set
-        final INodeSet nodes;
         final String project = executionContext.getFrameworkProject();
-        try {
-            nodes = framework.filterAuthorizedNodes(project,
-                new HashSet<String>(Arrays.asList("read", "run")),
-                framework.filterNodeSet(nodeSelector, project, executionContext.getNodesFile()));
-        } catch (NodeFileParserException e) {
-            throw new CoreException("Error parsing node resource file: " + e.getMessage(), e);
-        }
+        final INodeSet nodes = framework.filterAuthorizedNodes(project,
+                                                               new HashSet<String>(Arrays.asList("read", "run")),
+                                                               executionContext.getNodes());
         if (0 == nodes.getNodes().size()) {
             throw new NodesetEmptyException(nodeSelector);
         }
@@ -333,6 +328,7 @@ public class NodeFirstWorkflowStrategy extends BaseWorkflowStrategy {
             //XXX: not necessary, use passed in context, will be in single node context already
             final ExecutionContextImpl newcontext = new ExecutionContextImpl.Builder(context)
                 .nodeSelector(SelectorUtils.singleNode(node.getNodename()))
+                .nodes(NodeSetImpl.singleNodeSet(node))
                 .stepNumber(beginStep)
                 .stepContext(stack)
                 .build();

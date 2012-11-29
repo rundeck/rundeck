@@ -1071,6 +1071,11 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Step
         return createFilterNodeSelector().nodeSelectorWithDefault(framework.getFrameworkNodeName());
     }
 
+    @Override
+    public INodeSet getNodes() {
+        return filterNodes(true);
+    }
+
     public int getThreadCount() {
         return argThreadCount;
     }

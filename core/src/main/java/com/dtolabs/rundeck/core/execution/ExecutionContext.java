@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.common.NodesSelector;
 
 import java.io.File;
@@ -59,6 +60,12 @@ public interface ExecutionContext {
      * @return nodeset
      */
     NodesSelector getNodeSelector();
+    /**
+     * Return the node selector
+     *
+     * @return nodeset
+     */
+    INodeSet getNodes();
     /**
      * Return node dispatch threadcount
      */

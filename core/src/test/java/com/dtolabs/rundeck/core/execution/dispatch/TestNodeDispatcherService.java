@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.execution.dispatch;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
@@ -81,60 +82,17 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
             nodeSet.createInclude().setName(".*");
             nodeSet.setThreadCount(2);
             //get node dispatcher for a context.  nodeset>1 and threadcount>1 returns parallel provider
-            final ExecutionContext context = new ExecutionContext() {
-                public String getFrameworkProject() {
-                    return PROJ_NAME;
-                }
+            final ExecutionContext context = ExecutionContextImpl.builder()
+                .frameworkProject(PROJ_NAME)
+                .framework(frameworkInstance)
+                .user("blah")
+                .nodeSelector(nodeSet)
+                .nodes(frameworkInstance.filterNodeSet(nodeSet,PROJ_NAME,null))
+                .threadCount(nodeSet.getThreadCount())
+                .keepgoing(nodeSet.isKeepgoing())
+                .build();
 
-                public Framework getFramework() {
-                    return frameworkInstance;
-                }
 
-                public String getUser() {
-                    return "blah";
-                }
-
-                public NodeSet getNodeSelector() {
-
-                    return nodeSet;
-                }
-
-                public int getThreadCount() {
-                    return nodeSet.getThreadCount();
-                }
-
-                public String getNodeRankAttribute() {
-                    return null;
-                }
-
-                public boolean isNodeRankOrderAscending() {
-                    return false;
-                }
-
-                public boolean isKeepgoing() {
-                    return nodeSet.isKeepgoing();
-                }
-
-                public int getLoglevel() {
-                    return 0;
-                }
-
-                public Map<String, Map<String, String>> getDataContext() {
-                    return null;
-                }
-
-                public Map<String, Map<String, String>> getPrivateDataContext() {
-                    return null;
-                }
-
-                public ExecutionListener getExecutionListener() {
-                    return null;
-                }
-
-                public File getNodesFile() {
-                    return null;
-                }
-            };
             final NodeDispatcher nodeDispatcher = service.getNodeDispatcher(context);
             assertNotNull(nodeDispatcher);
             assertTrue(nodeDispatcher instanceof ParallelNodeDispatcher);
@@ -146,60 +104,16 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
             final NodeSet nodeSet = new NodeSet();
             nodeSet.createInclude().setName(".*");
             nodeSet.setThreadCount(1);
-            final ExecutionContext context = new ExecutionContext() {
-                public String getFrameworkProject() {
-                    return PROJ_NAME;
-                }
+            final ExecutionContext context = ExecutionContextImpl.builder()
+                .frameworkProject(PROJ_NAME)
+                .framework(frameworkInstance)
+                .user("blah")
+                .nodeSelector(nodeSet)
+                .threadCount(nodeSet.getThreadCount())
+                .keepgoing(nodeSet.isKeepgoing())
+                .build();
 
-                public Framework getFramework() {
-                    return frameworkInstance;
-                }
 
-                public String getUser() {
-                    return "blah";
-                }
-
-                public NodeSet getNodeSelector() {
-
-                    return nodeSet;
-                }
-
-                public int getThreadCount() {
-                    return nodeSet.getThreadCount();
-                }
-
-                public String getNodeRankAttribute() {
-                    return null;
-                }
-
-                public boolean isNodeRankOrderAscending() {
-                    return false;
-                }
-
-                public boolean isKeepgoing() {
-                    return nodeSet.isKeepgoing();
-                }
-
-                public int getLoglevel() {
-                    return 0;
-                }
-
-                public Map<String, Map<String, String>> getDataContext() {
-                    return null;
-                }
-
-                public Map<String, Map<String, String>> getPrivateDataContext() {
-                    return null;
-                }
-
-                public ExecutionListener getExecutionListener() {
-                    return null;
-                }
-
-                public File getNodesFile() {
-                    return null;
-                }
-            };
             final NodeDispatcher nodeDispatcher = service.getNodeDispatcher(context);
             assertNotNull(nodeDispatcher);
             assertTrue(nodeDispatcher instanceof SequentialNodeDispatcher);
@@ -211,60 +125,16 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
             final NodeSet nodeSet = new NodeSet();
             nodeSet.setSingleNodeName("test1");
             nodeSet.setThreadCount(1);
-            final ExecutionContext context = new ExecutionContext() {
-                public String getFrameworkProject() {
-                    return PROJ_NAME;
-                }
+            final ExecutionContext context = ExecutionContextImpl.builder()
+                .frameworkProject(PROJ_NAME)
+                .framework(frameworkInstance)
+                .user("blah")
+                .nodeSelector(nodeSet)
+                .threadCount(nodeSet.getThreadCount())
+                .keepgoing(nodeSet.isKeepgoing())
+                .build();
 
-                public Framework getFramework() {
-                    return frameworkInstance;
-                }
 
-                public String getUser() {
-                    return "blah";
-                }
-
-                public NodeSet getNodeSelector() {
-
-                    return nodeSet;
-                }
-
-                public int getThreadCount() {
-                    return nodeSet.getThreadCount();
-                }
-
-                public String getNodeRankAttribute() {
-                    return null;
-                }
-
-                public boolean isNodeRankOrderAscending() {
-                    return false;
-                }
-
-                public boolean isKeepgoing() {
-                    return nodeSet.isKeepgoing();
-                }
-
-                public int getLoglevel() {
-                    return 0;
-                }
-
-                public Map<String, Map<String, String>> getDataContext() {
-                    return null;
-                }
-
-                public Map<String, Map<String, String>> getPrivateDataContext() {
-                    return null;
-                }
-
-                public ExecutionListener getExecutionListener() {
-                    return null;
-                }
-
-                public File getNodesFile() {
-                    return null;
-                }
-            };
             final NodeDispatcher nodeDispatcher = service.getNodeDispatcher(context);
             assertNotNull(nodeDispatcher);
             assertTrue(nodeDispatcher instanceof SequentialNodeDispatcher);
@@ -276,60 +146,17 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
             final NodeSet nodeSet = new NodeSet();
             nodeSet.setSingleNodeName("test1");
             nodeSet.setThreadCount(2);
-            final ExecutionContext context = new ExecutionContext() {
-                public String getFrameworkProject() {
-                    return PROJ_NAME;
-                }
+            final ExecutionContext context = ExecutionContextImpl.builder()
+                .frameworkProject(PROJ_NAME)
+                .framework(frameworkInstance)
+                .user("blah")
+                .nodeSelector(nodeSet)
+                .nodes(frameworkInstance.filterNodeSet(nodeSet,PROJ_NAME,null))
+                .threadCount(nodeSet.getThreadCount())
+                .keepgoing(nodeSet.isKeepgoing())
+                .build();
 
-                public Framework getFramework() {
-                    return frameworkInstance;
-                }
 
-                public String getUser() {
-                    return "blah";
-                }
-
-                public NodeSet getNodeSelector() {
-
-                    return nodeSet;
-                }
-
-                public int getThreadCount() {
-                    return nodeSet.getThreadCount();
-                }
-
-                public String getNodeRankAttribute() {
-                    return null;
-                }
-
-                public boolean isNodeRankOrderAscending() {
-                    return false;
-                }
-
-                public boolean isKeepgoing() {
-                    return nodeSet.isKeepgoing();
-                }
-
-                public int getLoglevel() {
-                    return 0;
-                }
-
-                public Map<String, Map<String, String>> getDataContext() {
-                    return null;
-                }
-
-                public Map<String, Map<String, String>> getPrivateDataContext() {
-                    return null;
-                }
-
-                public ExecutionListener getExecutionListener() {
-                    return null;
-                }
-
-                public File getNodesFile() {
-                    return null;
-                }
-            };
             final NodeDispatcher nodeDispatcher = service.getNodeDispatcher(context);
             assertNotNull(nodeDispatcher);
             assertTrue(nodeDispatcher instanceof SequentialNodeDispatcher);
@@ -349,60 +176,18 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
             nodeSet.createInclude().setTags("priority1"); //matches single nodes in test1 file
             nodeSet.setThreadCount(2);
             //get node dispatcher for a context.  nodeset<2 and threadcount>1 returns sequential provider
-            final ExecutionContext context = new ExecutionContext() {
-                public String getFrameworkProject() {
-                    return PROJ_NAME;
-                }
+            final ExecutionContext context = ExecutionContextImpl.builder()
+                .frameworkProject(PROJ_NAME)
+                .framework(frameworkInstance)
+                .user("blah")
+                .nodeSelector(nodeSet)
+                .threadCount(nodeSet.getThreadCount())
+                .keepgoing(nodeSet.isKeepgoing())
+                .nodesFile(resourcesfile)
+                .nodes(frameworkInstance.filterNodeSet(nodeSet, PROJ_NAME, resourcesfile))
+                .build();
 
-                public Framework getFramework() {
-                    return frameworkInstance;
-                }
 
-                public String getUser() {
-                    return "blah";
-                }
-
-                public NodeSet getNodeSelector() {
-
-                    return nodeSet;
-                }
-
-                public int getThreadCount() {
-                    return nodeSet.getThreadCount();
-                }
-
-                public String getNodeRankAttribute() {
-                    return null;
-                }
-
-                public boolean isNodeRankOrderAscending() {
-                    return false;
-                }
-
-                public boolean isKeepgoing() {
-                    return nodeSet.isKeepgoing();
-                }
-
-                public int getLoglevel() {
-                    return 0;
-                }
-
-                public Map<String, Map<String, String>> getDataContext() {
-                    return null;
-                }
-
-                public Map<String, Map<String, String>> getPrivateDataContext() {
-                    return null;
-                }
-
-                public ExecutionListener getExecutionListener() {
-                    return null;
-                }
-
-                public File getNodesFile() {
-                    return resourcesfile;
-                }
-            };
             final NodeDispatcher nodeDispatcher = service.getNodeDispatcher(context);
             assertNotNull(nodeDispatcher);
             assertTrue(nodeDispatcher instanceof SequentialNodeDispatcher);
@@ -412,60 +197,18 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
             nodeSet.createInclude().setTags("priority1"); //matches two nodes in external file
             nodeSet.setThreadCount(2);
             //get node dispatcher for a context.  nodeset>1 and threadcount>1 returns parallel provider
-            final ExecutionContext context = new ExecutionContext() {
-                public String getFrameworkProject() {
-                    return PROJ_NAME;
-                }
+            final ExecutionContext context = ExecutionContextImpl.builder()
+                .frameworkProject(PROJ_NAME)
+                .framework(frameworkInstance)
+                .user("blah")
+                .nodeSelector(nodeSet)
+                .threadCount(nodeSet.getThreadCount())
+                .keepgoing(nodeSet.isKeepgoing())
+                .nodesFile(extResourcesfile)
+                .nodes(frameworkInstance.filterNodeSet(nodeSet, PROJ_NAME, extResourcesfile))
+                .build();
+            assertEquals(2,context.getNodes().getNodeNames().size());
 
-                public Framework getFramework() {
-                    return frameworkInstance;
-                }
-
-                public String getUser() {
-                    return "blah";
-                }
-
-                public NodeSet getNodeSelector() {
-
-                    return nodeSet;
-                }
-
-                public int getThreadCount() {
-                    return nodeSet.getThreadCount();
-                }
-
-                public String getNodeRankAttribute() {
-                    return null;
-                }
-
-                public boolean isNodeRankOrderAscending() {
-                    return false;
-                }
-
-                public boolean isKeepgoing() {
-                    return nodeSet.isKeepgoing();
-                }
-
-                public int getLoglevel() {
-                    return 0;
-                }
-
-                public Map<String, Map<String, String>> getDataContext() {
-                    return null;
-                }
-
-                public Map<String, Map<String, String>> getPrivateDataContext() {
-                    return null;
-                }
-
-                public ExecutionListener getExecutionListener() {
-                    return null;
-                }
-
-                public File getNodesFile() {
-                    return extResourcesfile;
-                }
-            };
             final NodeDispatcher nodeDispatcher = service.getNodeDispatcher(context);
             assertNotNull(nodeDispatcher);
             assertTrue(nodeDispatcher instanceof ParallelNodeDispatcher);

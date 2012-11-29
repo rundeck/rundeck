@@ -64,6 +64,7 @@ import rundeck.Option
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult
 import rundeck.PluginStep
 import rundeck.controllers.ExecutionController
+import com.dtolabs.rundeck.core.common.INodeSet
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -708,6 +709,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         }else{
             nodeselector = null
         }
+
+        def INodeSet nodeSet=framework.filterNodeSet(nodeselector,execMap.project,null)
+
         def Map<String, Map<String, String>> privatecontext = new HashMap<String, Map<String, String>>()
         if (null != extraParams) {
             privatecontext.put("option", extraParams)
@@ -718,6 +722,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             .frameworkProject(execMap.project)
             .user(user.login)
             .nodeSelector(nodeselector)
+            .nodes(nodeSet)
             .loglevel(loglevels[null != execMap.loglevel ? execMap.loglevel : 'WARN'])
             .dataContext(datacontext)
             .privateDataContext(privatecontext)

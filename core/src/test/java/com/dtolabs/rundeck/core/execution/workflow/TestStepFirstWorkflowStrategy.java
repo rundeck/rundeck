@@ -274,6 +274,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
+                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
                     .build();
 
             //setup testInterpreter for all command types
@@ -313,7 +314,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset.nodeSelectorWithDefaultAll())
                     .executionListener(new testListener())
                     .framework(testFramework)
-                    .stepNumber(1)
+                    .nodes(testFramework.filterNodeSet(nodeset.nodeSelectorWithDefaultAll(), TEST_PROJECT, null))
                     .build();
 
             //setup testInterpreter for all command types
@@ -343,7 +344,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
 //            assertTrue("not right type:" + result1, result1 instanceof ExceptionStatusResult);
 //            ExceptionStatusResult eresult = (ExceptionStatusResult) result1;
             assertEquals("threw exception: " + result.getException(),
-                         "Step 1 of the workflow threw an exception: Failed dispatching to node test1: provider name was null for Service: NodeStepExecutor",
+                         "Step 1 of the workflow threw an exception: Failed dispatching to node test1: provider name was null for Service: WorkflowNodeStep",
                          result.getException().getMessage());
         }
 
@@ -369,6 +370,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
+                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
                     .build();
 
             //setup testInterpreter for all command types
@@ -436,6 +438,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
+                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
                     .build();
 
             //setup testInterpreter for all command types
@@ -533,6 +536,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
+                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
                     .build();
 
             //setup testInterpreter for all command types
@@ -675,7 +679,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
-                    .stepNumber(1)
+                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
                     .build();
 
             //setup testInterpreter for all command types
@@ -832,6 +836,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
+                    .nodes(testFramework.filterNodeSet(nodeset,TEST_PROJECT,null))
                     .build();
 
             //setup testInterpreter for all command types
@@ -933,7 +938,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             }
         }
     }
-    public void testFailureHandlerItemNoKeepgoing(){
+    public void testFailureHandlerItemNoKeepgoing() throws Exception{
         {
             //test a workflow with a failing item (1), with keepgoing=false, and a failureHandler
             final boolean KEEPGOING_TEST = false;
@@ -993,6 +998,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
+                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
                     .build();
 
             //setup testInterpreter for all command types
@@ -1104,7 +1110,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
         }
     }
 
-    public void testFailureHandlerItemYesKeepgoing() {
+    public void testFailureHandlerItemYesKeepgoing() throws Exception{
         {
             //test a workflow with a failing item (1), with keepgoing=true, and a failureHandler that fails
             final boolean KEEPGOING_TEST = true;
@@ -1179,6 +1185,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
+                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
                     .build();
 
             //setup testInterpreter for all command types
@@ -1333,7 +1340,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
         }
     }
 
-    public void testFailureHandlerItemYesKeepgoingHandlerSuccess() {
+    public void testFailureHandlerItemYesKeepgoingHandlerSuccess() throws Exception {
         {
             //test a workflow with a failing item (1), with keepgoing=true, and a failureHandler that succeeds
             final boolean KEEPGOING_TEST = true;
@@ -1408,6 +1415,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
+                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
                     .build();
 
             //setup testInterpreter for all command types
@@ -1523,7 +1531,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
         }
 
     }
-    public void testGenericItem(){
+    public void testGenericItem() throws Exception{
 
         {
             //test jobref item
@@ -1543,6 +1551,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
+                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
                     .build();
 
             //setup testInterpreter for all command types
@@ -1587,7 +1596,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
         }
     }
 
-    public void testMultipleNodes() {
+    public void testMultipleNodes() throws Exception{
 
         {
             //test jobref item
@@ -1608,6 +1617,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
+                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
                     .build();
 
             //setup testInterpreter for all command types
@@ -1674,7 +1684,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             }
         }
     }
-    public void testMultipleItemsAndNodes() {
+    public void testMultipleItemsAndNodes() throws Exception{
 
         {
             //test jobref item
@@ -1700,6 +1710,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
+                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
                     .build();
 
             //setup testInterpreter for all command types

@@ -27,6 +27,7 @@ package com.dtolabs.rundeck.core.execution.workflow;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.NodeFileParserException;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
@@ -93,6 +94,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         private int execIndex=0;
         private List<Object> results;
         private List<Map<String,Object>> inputs;
+        private int executeWfItemCalled=0;
 
         public testWorkflowStrategy(Framework framework) {
             super(framework);
@@ -107,18 +109,17 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             return result;
         }
 
-        protected StepExecutionResult executeWFItem(final ExecutionContext executionContext,
+        protected StepExecutionResult executeWFItem(final StepExecutionContext executionContext,
                                                     final Map<Integer, Object> failedMap,
                                                     final int c,
-                                                    final List<Integer> stack,
                                                     final StepExecutionItem cmd, final boolean keepgoing)
             throws WorkflowStepFailureException {
-
+            executeWfItemCalled++;
             HashMap<String, Object> input = new HashMap<String, Object>();
             input.put("context", executionContext);
             input.put("failedMap", failedMap);
             input.put("c", c);
-            input.put("stack", stack);
+            input.put("stack", executionContext.getStepContext());
             input.put("cmd", cmd);
             input.put("keepgoing", keepgoing);
             inputs.add(input);
@@ -175,20 +176,10 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
                            final boolean wfKeepgoing,
                            final List<Map<String, Object>> expected,
                            final boolean expectedSuccess,
-                           final List<Object> returnResults, final boolean expectStepException)
-         {
+                           final List<Object> returnResults, final boolean expectStepException) {
 
         //test success 1 item
         final NodeSet nodeset = new NodeSet();
-         final StepExecutionContext context =
-                 new ExecutionContextImpl.Builder()
-                     .frameworkProject(TEST_PROJECT)
-                     .user("user1")
-                     .nodeSelector(nodeset)
-                     .executionListener(new testListener())
-                     .framework(testFramework)
-                     .stepNumber(1)
-                     .build();
 
         testWorkflowStrategy strategy = new testWorkflowStrategy(testFramework);
 
@@ -202,18 +193,27 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         boolean itemsSuccess=false;
         boolean sawException=false;
         try {
-            itemsSuccess = strategy.executeWorkflowItemsForNodeSet(context,
-                                                                                 map,
-                                                                                 resultList,
-                                                                                 items,
-                                                                                 keepgoing);
+            final StepExecutionContext context =
+                new ExecutionContextImpl.Builder()
+                    .frameworkProject(TEST_PROJECT)
+                    .user("user1")
+                    .nodeSelector(nodeset)
+                    .executionListener(new testListener())
+                    .framework(testFramework)
+                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
+                    .stepNumber(1)
+                    .build();
+            itemsSuccess = strategy.executeWorkflowItemsForNodeSet(context, map, resultList, items, keepgoing);
             assertFalse(expectStepException);
         } catch (WorkflowStepFailureException e) {
-            assertTrue("Unexpected step exception: " + e.getMessage(), expectStepException);
             e.printStackTrace();
+            assertTrue("Unexpected step exception: " + e.getMessage(), expectStepException);
             sawException = true;
+        } catch (NodeFileParserException e) {
+            e.printStackTrace();
+            fail();
         }
-
+        assertEquals(expected.size(), strategy.executeWfItemCalled);
         assertEquals(expectStepException, sawException);
         assertEquals(expectedSuccess, itemsSuccess);
 
