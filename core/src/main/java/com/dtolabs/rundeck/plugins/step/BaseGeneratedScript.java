@@ -16,35 +16,33 @@
  */
 
 /*
-* GeneratedScriptImpl.java
+* BaseGeneratedScript.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 11/20/12 11:47 AM
 * 
 */
-package com.dtolabs.rundeck.plugins.step.util;
-
-import com.dtolabs.rundeck.plugins.step.GeneratedScript;
-
-import java.util.*;
+package com.dtolabs.rundeck.plugins.step;
 
 
 /**
- * GeneratedScriptImpl is ...
+ * A simple implementation of {@link GeneratedScript}, which can be created
+ * via static factory methods {@link #script(String, String[])} or {@link #command(String...)}
+ *
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class GeneratedScriptImpl implements GeneratedScript {
+public class BaseGeneratedScript implements GeneratedScript {
     private String script;
     private String[] args;
     private String[] command;
 
-    GeneratedScriptImpl(final String script, final String[] args) {
+    BaseGeneratedScript(final String script, final String[] args) {
         this.script = script;
         this.args = args;
     }
 
-    GeneratedScriptImpl(final String[] command) {
+    BaseGeneratedScript(final String[] command) {
         this.command = command;
     }
 
@@ -61,10 +59,10 @@ public class GeneratedScriptImpl implements GeneratedScript {
     }
 
     public static GeneratedScript script(final String script, final String[] args) {
-        return new GeneratedScriptImpl(script, args);
+        return new BaseGeneratedScript(script, args);
     }
 
     public static GeneratedScript command(final String... command) {
-        return new GeneratedScriptImpl(command);
+        return new BaseGeneratedScript(command);
     }
 }

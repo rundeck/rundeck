@@ -16,7 +16,7 @@
  */
 
 /*
-* ScriptGeneratorNodeStepPlugin.java
+* RemoteScriptNodeStepPlugin.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 11/19/12 6:04 PM
@@ -30,14 +30,16 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 
 
 /**
- * ScriptGeneratorNodeStepPlugin generates a script or command string to execute remotely on a node.
+ * RemoteScriptNodeStepPlugin generates a script or command string to execute remotely on a node.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface ScriptGeneratorNodeStepPlugin {
+public interface RemoteScriptNodeStepPlugin {
     /**
      * Generate a full script or command string to execute on the remote node
      */
-    public GeneratedScript generateScript(final ExecutionContext context, final PluginStepItem item, final INodeEntry entry)
+    public GeneratedScript generateScript(final PluginStepContext context,
+                                          final PluginStepItem item,
+                                          final INodeEntry entry)
         throws NodeStepException;
 }

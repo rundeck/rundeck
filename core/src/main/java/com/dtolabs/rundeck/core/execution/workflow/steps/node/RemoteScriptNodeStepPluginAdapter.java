@@ -16,7 +16,7 @@
  */
 
 /*
-* ScriptGeneratorNodeStepPluginAdapter.java
+* RemoteScriptNodeStepPluginAdapter.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 11/19/12 6:09 PM
@@ -25,29 +25,27 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepContextImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNodeStepExecutor;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.plugins.step.GeneratedScript;
-import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepItem;
-import com.dtolabs.rundeck.plugins.step.ScriptGeneratorNodeStepPlugin;
-
-import java.io.File;
-import java.util.*;
+import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin;
 
 
 /**
- * ScriptGeneratorNodeStepPluginAdapter is ...
+ * RemoteScriptNodeStepPluginAdapter is a NodeStepExecutor that makes use of a RemoteScriptNodeStepPlugin to
+ * provide the remote script to execute.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class ScriptGeneratorNodeStepPluginAdapter implements NodeStepExecutor, Describable {
+class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable {
     @Override
     public Description getDescription() {
         if (plugin instanceof Describable) {
@@ -57,27 +55,31 @@ class ScriptGeneratorNodeStepPluginAdapter implements NodeStepExecutor, Describa
         return null;
     }
 
-    private ScriptGeneratorNodeStepPlugin plugin;
+    private RemoteScriptNodeStepPlugin plugin;
 
-    public ScriptGeneratorNodeStepPluginAdapter(final ScriptGeneratorNodeStepPlugin plugin) {
+    public RemoteScriptNodeStepPluginAdapter(final RemoteScriptNodeStepPlugin plugin) {
         this.plugin = plugin;
     }
 
-    static class Convert implements Converter<ScriptGeneratorNodeStepPlugin, NodeStepExecutor> {
+    static class Convert implements Converter<RemoteScriptNodeStepPlugin, NodeStepExecutor> {
         @Override
-        public NodeStepExecutor convert(final ScriptGeneratorNodeStepPlugin plugin) {
-            return new ScriptGeneratorNodeStepPluginAdapter(plugin);
+        public NodeStepExecutor convert(final RemoteScriptNodeStepPlugin plugin) {
+            return new RemoteScriptNodeStepPluginAdapter(plugin);
         }
     }
 
     public static final Convert CONVERTER = new Convert();
 
     @Override
-    public NodeStepResult executeNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node)
+    public NodeStepResult executeNodeStep(final StepExecutionContext context,
+                                          final NodeStepExecutionItem item,
+                                          final INodeEntry node)
         throws NodeStepException {
-        PluginStepItem item1 = NodeStepPluginAdapter.toPluginStepItem(item, context);
-        GeneratedScript script = plugin.generateScript(context, item1, node);
-        ExecutionService executionService = context.getFramework().getExecutionService();
+
+        final PluginStepItem item1 = NodeStepPluginAdapter.toPluginStepItem(item, context);
+        final PluginStepContextImpl pluginContext = PluginStepContextImpl.from(context);
+        final GeneratedScript script = plugin.generateScript(pluginContext, item1, node);
+        final ExecutionService executionService = context.getFramework().getExecutionService();
         if (null != script.getCommand()) {
             //execute the command
             try {
@@ -85,7 +87,7 @@ class ScriptGeneratorNodeStepPluginAdapter implements NodeStepExecutor, Describa
             } catch (ExecutionException e) {
                 throw new NodeStepException(e, node.getNodename());
             }
-        }else if (null != script.getScript()) {
+        } else if (null != script.getScript()) {
             final String filepath; //result file path
             try {
                 filepath = executionService.fileCopyScriptContent(context, script.getScript(), node);
@@ -93,13 +95,14 @@ class ScriptGeneratorNodeStepPluginAdapter implements NodeStepExecutor, Describa
                 throw new NodeStepException(e, node.getNodename());
             }
             return ScriptFileNodeStepExecutor.executeRemoteScript(context,
-                                                           context.getFramework(),
-                                                           node,
-                                                           script.getArgs(),
-                                                           filepath);
+                                                                  context.getFramework(),
+                                                                  node,
+                                                                  script.getArgs(),
+                                                                  filepath);
 
-        }else{
+        } else {
             return new NodeStepResultImpl(false, node);
         }
     }
+
 }
