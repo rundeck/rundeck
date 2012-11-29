@@ -171,6 +171,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                                                  final boolean allowCustomProperties) throws ConfigurationException {
         final DescriptionBuilder builder = DescriptionBuilder.builder();
         builder
+            .name(provider.getName())
             .title(metaStringProp(provider.getMetadata(), TITLE_PROP, provider.getName() + " Script Plugin"))
             .description(metaStringProp(provider.getMetadata(), DESCRIPTION_PROP, ""));
 
