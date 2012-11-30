@@ -158,8 +158,12 @@ public class DescriptionBuilder {
         properties.add(PropertyUtil.freeSelect(name, propTitle, propDescription, required, defaultValue, selectValues));
         return this;
     }
+
+    /**
+     * Add a new property, or replace an existing property with the same name.
+     */
     public DescriptionBuilder property(final Property property) {
-        properties.add(property);
+        replaceOrAddProperty(property);
         return this;
     }
 
@@ -167,17 +171,45 @@ public class DescriptionBuilder {
      * Remove a previously defined property by name
      */
     public DescriptionBuilder removeProperty(final String name) {
-        Property found = null;
-        for (final Property property : properties) {
-            if (property.getName().equals(name)) {
-                found = property;
-                break;
-            }
-        }
+        final Property found = findProperty(name);
         if (null != found) {
             properties.remove(found);
         }
         return this;
+    }
+
+    private Property findProperty(String name) {
+        for (final Property property : properties) {
+            if (property.getName().equals(name)) {
+                return property;
+            }
+        }
+        return null;
+    }
+
+    private void replaceOrAddProperty(Property p) {
+
+        for (final Property property : properties) {
+            if (property.getName().equals(p.getName())) {
+                properties.set(properties.indexOf(property), p);
+                return;
+            }
+        }
+        properties.add(p);
+    }
+
+    /**
+     * Returns a new {@link PropertyBuilder} preconfigured with an existing property or a new one to add a new property.
+     * Be sure to call {@link #property(com.dtolabs.rundeck.core.plugins.configuration.Property)} to add the result of
+     * the final call to {@link com.dtolabs.rundeck.plugins.util.PropertyBuilder#build()}.
+     */
+    public PropertyBuilder property(final String name) {
+        final Property found = findProperty(name);
+        if (null != found) {
+            return PropertyBuilder.builder(found);
+        } else {
+            return PropertyBuilder.builder().name(name);
+        }
     }
 
     /**
