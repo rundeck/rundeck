@@ -69,13 +69,6 @@ public interface Property {
     }
 
     /**
-     * Validator can validate a value
-     */
-    static interface Validator {
-        public boolean isValid(String value) throws ValidationException;
-    }
-
-    /**
      * Return descriptive name of the property
      */
     public String getTitle();
@@ -98,7 +91,7 @@ public interface Property {
     /**
      * Return the validator for this property
      */
-    public Validator getValidator();
+    public PropertyValidator getValidator();
 
     /**
      * Return true if an empty value is not allowed

@@ -52,7 +52,7 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
     public static final String CONFIG_INTERPRETER_ARGS_QUOTED = "argsQuoted";
 
     public static final String CONFIG_FORMAT = "format";
-    public static final Property.Validator FILE_VALIDATOR = new Property.Validator() {
+    public static final PropertyValidator FILE_VALIDATOR = new PropertyValidator() {
         public boolean isValid(String value) throws ValidationException {
             return new File(value).isFile();
         }

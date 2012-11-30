@@ -75,7 +75,7 @@ public class Validator {
                     }
                 } else {
                     //try to validate
-                    final Property.Validator validator = property.getValidator();
+                    final PropertyValidator validator = property.getValidator();
                     if (null != validator) {
                         try {
                             if (!validator.isValid(value)) {

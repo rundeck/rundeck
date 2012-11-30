@@ -36,10 +36,10 @@ abstract class PropertyBase implements Property {
     private final String description;
     private final boolean required;
     private final String defaultValue;
-    private final Validator validator;
+    private final PropertyValidator validator;
 
     public PropertyBase(final String name, final String title, final String description, final boolean required,
-                        final String defaultValue, final Validator validator) {
+                        final String defaultValue, final PropertyValidator validator) {
 
         this.title = title;
         this.name = name;
@@ -69,7 +69,7 @@ abstract class PropertyBase implements Property {
         return null;
     }
 
-    public Validator getValidator() {
+    public PropertyValidator getValidator() {
         return validator;
     }
 

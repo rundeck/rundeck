@@ -64,7 +64,7 @@ public class URLResourceModelSource implements ResourceModelSource, Configurable
     }
 
     final static HashSet<String> allowedProtocols = new HashSet<String>(Arrays.asList("http", "https", "file"));
-    public static final class URLValidator implements Property.Validator{
+    public static final class URLValidator implements PropertyValidator {
         public boolean isValid (String value)throws ValidationException {
             final URL url;
 

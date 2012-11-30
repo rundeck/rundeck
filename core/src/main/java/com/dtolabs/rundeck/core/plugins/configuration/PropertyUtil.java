@@ -60,7 +60,7 @@ public class PropertyUtil {
      */
     public static Property string(final String name, final String title, final String description,
                                   final boolean required,
-                                  final String defaultValue, final Property.Validator validator) {
+                                  final String defaultValue, final PropertyValidator validator) {
         return new StringProperty(name, title, description, required, defaultValue, validator);
     }
 
@@ -122,7 +122,7 @@ public class PropertyUtil {
     static final class StringProperty extends PropertyBase {
 
         public StringProperty(final String name, final String title, final String description, final boolean required,
-                              final String defaultValue, final Validator validator) {
+                              final String defaultValue, final PropertyValidator validator) {
             super(name, title, description, required, defaultValue, validator);
         }
 
@@ -170,7 +170,7 @@ public class PropertyUtil {
         }
     }
 
-    static final class SelectValidator implements Property.Validator {
+    static final class SelectValidator implements PropertyValidator {
 
         final List<String> selectValues;
 
@@ -194,7 +194,7 @@ public class PropertyUtil {
         }
     }
 
-    static final Property.Validator booleanValidator = new Property.Validator() {
+    static final PropertyValidator booleanValidator = new PropertyValidator() {
         public boolean isValid(final String value) throws ValidationException {
             return "true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value);
         }
@@ -212,7 +212,7 @@ public class PropertyUtil {
 
     }
 
-    static final Property.Validator integerValidator = new Property.Validator() {
+    static final PropertyValidator integerValidator = new PropertyValidator() {
         public boolean isValid(final String value) throws ValidationException {
             try {
                 java.lang.Integer.parseInt(value);
@@ -235,7 +235,7 @@ public class PropertyUtil {
 
     }
 
-    static final Property.Validator longValidator = new Property.Validator() {
+    static final PropertyValidator longValidator = new PropertyValidator() {
         public boolean isValid(final String value) throws ValidationException {
             try {
                 java.lang.Long.parseLong(value);
@@ -251,7 +251,7 @@ public class PropertyUtil {
 
         public Generic(final String name, final String title, final String description, final boolean required,
                        final String defaultValue,
-                       final Validator validator, final Type type) {
+                       final PropertyValidator validator, final Type type) {
             super(name, title, description, required, defaultValue, validator);
             this.type = type;
         }

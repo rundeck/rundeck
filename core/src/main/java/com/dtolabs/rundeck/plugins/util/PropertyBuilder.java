@@ -2,6 +2,7 @@ package com.dtolabs.rundeck.plugins.util;
 
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator;
 
 import java.util.Arrays;
 import java.util.List;
@@ -18,7 +19,7 @@ public class PropertyBuilder {
     private boolean required;
     private String value;
     private List<String> values;
-    private Property.Validator validator;
+    private PropertyValidator validator;
 
     private PropertyBuilder() {
 
@@ -102,7 +103,7 @@ public class PropertyBuilder {
         this.values = Arrays.asList(values);
         return this;
     }
-    public PropertyBuilder validator(final Property.Validator validator) {
+    public PropertyBuilder validator(final PropertyValidator validator) {
         this.validator = validator;
         return this;
     }
