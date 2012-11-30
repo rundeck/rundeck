@@ -16,7 +16,7 @@
  */
 
 /*
-* BaseGeneratedScript.java
+* GeneratedScriptBuilder.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 11/20/12 11:47 AM
@@ -26,23 +26,22 @@ package com.dtolabs.rundeck.plugins.step;
 
 
 /**
- * A simple implementation of {@link GeneratedScript}, which can be created
- * via static factory methods {@link #script(String, String[])} or {@link #command(String...)}
- *
+ * A simple implementation of {@link GeneratedScript}, which can be created via static factory methods {@link
+ * #script(String, String[])} or {@link #command(String...)}
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class BaseGeneratedScript implements GeneratedScript {
+public class GeneratedScriptBuilder implements GeneratedScript {
     private String script;
     private String[] args;
     private String[] command;
 
-    BaseGeneratedScript(final String script, final String[] args) {
+    private GeneratedScriptBuilder(final String script, final String[] args) {
         this.script = script;
         this.args = args;
     }
 
-    BaseGeneratedScript(final String[] command) {
+    private GeneratedScriptBuilder(final String[] command) {
         this.command = command;
     }
 
@@ -58,11 +57,22 @@ public class BaseGeneratedScript implements GeneratedScript {
         return command;
     }
 
+    /**
+     * Create a script
+     *
+     * @param script the script text
+     * @param args   the arguments for the script
+     */
     public static GeneratedScript script(final String script, final String[] args) {
-        return new BaseGeneratedScript(script, args);
+        return new GeneratedScriptBuilder(script, args);
     }
 
+    /**
+     * Create a command
+     *
+     * @param command the command and arguments
+     */
     public static GeneratedScript command(final String... command) {
-        return new BaseGeneratedScript(command);
+        return new GeneratedScriptBuilder(command);
     }
 }

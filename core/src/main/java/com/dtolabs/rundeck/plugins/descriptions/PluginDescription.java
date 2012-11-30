@@ -1,4 +1,4 @@
-/*
+package com.dtolabs.rundeck.plugins.descriptions;/*
  * Copyright 2012 DTO Labs, Inc. (http://dtolabs.com)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,33 +15,25 @@
  *
  */
 
-/*
-* GeneratedScript.java
-* 
-* User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 11/20/12 11:46 AM
-* 
-*/
-package com.dtolabs.rundeck.plugins.step;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 
 /**
- * GeneratedScript represents either a script and arguments, or a single command to execute on a remote system
- *
- * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
+ * Add title and description attributes to a Plugin
  */
-public interface GeneratedScript {
-    /**
-     * Return the script to execute
-     */
-    public String getScript();
-
-    /**
-     * Return arguments to the script
-     */
-    public String[] getArgs();
-
-    /**
-     * Return the command to execute
-     */
-    public String[] getCommand();
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+/*
+* PluginDescription.java
+* 
+* User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
+* Created: 11/29/12 3:27 PM
+* 
+*/
+public @interface PluginDescription {
+    String title() default "";
+    String description() default "";
 }

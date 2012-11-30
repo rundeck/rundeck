@@ -16,32 +16,37 @@
  */
 
 /*
-* GeneratedScript.java
+* BaseStepPlugin.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 11/20/12 11:46 AM
+* Created: 11/21/12 10:45 AM
 * 
 */
 package com.dtolabs.rundeck.plugins.step;
 
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
+import com.dtolabs.rundeck.core.plugins.configuration.Describable;
+
+
+
 /**
- * GeneratedScript represents either a script and arguments, or a single command to execute on a remote system
+ * BaseStepPlugin provides a base class for {@link StepPlugin} classes. Subclasses should implement {@link
+ * #performStep(PluginStepContext)}
  *
+ * @see AbstractBasePlugin
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface GeneratedScript {
-    /**
-     * Return the script to execute
-     */
-    public String getScript();
+public abstract class BaseStepPlugin extends AbstractBasePlugin implements StepPlugin, Describable {
+
+    @Override
+    public final boolean executeStep(final PluginStepContext context, final PluginStepItem item) throws StepException {
+        configureDescribedProperties(item.getStepConfiguration());
+        return performStep(context);
+    }
 
     /**
-     * Return arguments to the script
+     * Perform the step and return true if successful
      */
-    public String[] getArgs();
+    protected abstract boolean performStep(PluginStepContext context);
 
-    /**
-     * Return the command to execute
-     */
-    public String[] getCommand();
 }
