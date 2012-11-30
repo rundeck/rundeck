@@ -29,85 +29,152 @@ public class PropertyBuilder {
         return new PropertyBuilder();
     }
 
+    /**
+     * Return a new instance preconfigured with a previously defined Property
+     */
+    public static PropertyBuilder builder(final Property orig) {
+        return new PropertyBuilder()
+            .name(orig.getName())
+            .defaultValue(orig.getDefaultValue())
+            .required(orig.isRequired())
+            .type(orig.getType())
+            .description(orig.getDescription())
+            .title(orig.getTitle())
+            .values(orig.getSelectValues())
+            .validator(orig.getValidator())
+            ;
+    }
+
+    /**
+     * Return a new PropertyBuilder of type {@link Property.Type.String}
+     */
     public PropertyBuilder string(final String name) {
         name(name);
         type(Property.Type.String);
         return this;
     }
 
+    /**
+     * Return a new PropertyBuilder of type {@link Property.Type.Boolean}
+     */
     public PropertyBuilder booleanType(final String name) {
         name(name);
         type(Property.Type.Boolean);
         return this;
     }
 
+    /**
+     * Return a new PropertyBuilder of type {@link Property.Type.Integer}
+     */
     public PropertyBuilder integer(final String name) {
         name(name);
         type(Property.Type.Integer);
         return this;
     }
 
+    /**
+     * Return a new PropertyBuilder of type {@link Property.Type.Long}
+     */
     public PropertyBuilder longType(final String name) {
         name(name);
         type(Property.Type.Long);
         return this;
     }
 
+    /**
+     * Return a new PropertyBuilder of type {@link Property.Type.Select}
+     */
     public PropertyBuilder select(final String name) {
         name(name);
         type(Property.Type.Select);
         return this;
     }
 
+    /**
+     * Return a new PropertyBuilder of type {@link Property.Type.FreeSelect}
+     */
     public PropertyBuilder freeSelect(final String name) {
         name(name);
         type(Property.Type.FreeSelect);
         return this;
     }
 
+    /**
+     * Set the type
+     */
     public PropertyBuilder type(final Property.Type type) {
         this.type = type;
         return this;
     }
 
+    /**
+     * Set the name (identifier)
+     */
     public PropertyBuilder name(final String name) {
         this.name = name;
         return this;
     }
 
+    /**
+     * Set the title (display name)
+     */
     public PropertyBuilder title(final String title) {
         this.title = title;
         return this;
     }
 
+    /**
+     * Set the description
+     */
     public PropertyBuilder description(final String description) {
         this.description = description;
         return this;
     }
 
+    /**
+     * Set required
+     */
     public PropertyBuilder required(final boolean required) {
         this.required = required;
         return this;
     }
 
+    /**
+     * Set the default value
+     */
     public PropertyBuilder defaultValue(final String value) {
         this.value = value;
         return this;
     }
 
+    /**
+     * Set the select values
+     */
     public PropertyBuilder values(final List<String> values) {
         this.values = values;
         return this;
     }
+
+    /**
+     * Set the select values
+     */
     public PropertyBuilder values(final String... values) {
         this.values = Arrays.asList(values);
         return this;
     }
+
+    /**
+     * Set the property validator, only applies to String, Integer, Long, and FreeSelect types
+     */
     public PropertyBuilder validator(final PropertyValidator validator) {
         this.validator = validator;
         return this;
     }
 
+    /**
+     * Build the Property object
+     * @throws IllegalStateException if type or name is not set
+     */
     public Property build() {
         if (null == type) {
             throw new IllegalStateException("type is required");
@@ -115,6 +182,6 @@ public class PropertyBuilder {
         if (null == name) {
             throw new IllegalStateException("name is required");
         }
-        return PropertyUtil.forType(type, name, title, description, required, value, values);
+        return PropertyUtil.forType(type, name, title, description, required, value, values, validator);
     }
 }
