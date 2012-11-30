@@ -33,9 +33,9 @@
                         <g:each in="${nodeStepDescriptions}" var="typedesc">
                             <span class="button action add_node_step_type"
                                   data-node-step-type="${typedesc.name.encodeAsHTML()}"
-                                  title="${typedesc.title.encodeAsHTML()}: ${typedesc.description.encodeAsHTML()}">
+                                  title="${typedesc.title?.encodeAsHTML()}: ${typedesc.description?.encodeAsHTML()}">
                                 <g:img file='icon-tiny-Reportcenter.png'/>
-                                ${typedesc.title.encodeAsHTML()}
+                                ${typedesc.title?.encodeAsHTML()}
                             </span>
                         </g:each>
                     </td>
