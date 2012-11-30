@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 
 /**
  * Interfaces with the core Framework object
@@ -420,7 +421,12 @@ class FrameworkService implements ApplicationContextAware {
      * @return
      */
     def getPluginDescriptionForItem(Framework framework, PluginStep step) {
-        return step.nodeStep ? getNodeStepPluginDescription(framework, step.type) : getStepPluginDescription(framework, step.type)
+        try {
+            return step.nodeStep ? getNodeStepPluginDescription(framework, step.type) : getStepPluginDescription(framework, step.type)
+        } catch (MissingProviderException e) {
+            log.warn("Couldn't load description for step ${step}: ${e.message}",e)
+            return null
+        }
     }
     /**
      * Return node step plugin description of a certain type

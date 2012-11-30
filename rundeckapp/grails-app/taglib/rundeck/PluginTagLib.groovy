@@ -10,16 +10,11 @@ class PluginTagLib {
     def display={attrs,body->
         def step=attrs.step
         def Framework framework = frameworkService.getFrameworkFromUserSession(request.session, request)
-        def description
-        try {
-            description = frameworkService.getPluginDescriptionForItem(framework, step)
-            if(description){
-                out << render(template: "/framework/renderPluginConfig", model: [type: step.type, values: step?.configuration, description: description] + attrs.subMap(['prefix', 'includeFormFields']))
-            }else{
-                out << "Plugin " + (step.nodeStep ? "Node" : "") + " Step (${step.type})"
-            }
-        } catch (Exception e) {
-            out << "Plugin " + (step.nodeStep ? "Node" : "") + " Step (${step.type}) (not found)"
+        def description = frameworkService.getPluginDescriptionForItem(framework, step)
+        if(description){
+            out << render(template: "/framework/renderPluginConfig", model: [type: step.type, values: step?.configuration, description: description] + attrs.subMap(['prefix', 'includeFormFields']))
+        }else{
+            out << "Plugin " + (step.nodeStep ? "Node" : "") + " Step (${step.type})"
         }
 
     }
