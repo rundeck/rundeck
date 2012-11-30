@@ -109,6 +109,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             return result;
         }
 
+        @Override
         protected StepExecutionResult executeWFItem(final StepExecutionContext executionContext,
                                                     final Map<Integer, Object> failedMap,
                                                     final int c,
