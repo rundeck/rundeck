@@ -160,6 +160,14 @@ public class DescriptionBuilder {
     }
 
     /**
+     * Add a new property, or replace an existing property with the same name by passing in a builder.
+     */
+    public DescriptionBuilder property(final PropertyBuilder property) {
+        replaceOrAddProperty(property.build());
+        return this;
+    }
+
+    /**
      * Add a new property, or replace an existing property with the same name.
      */
     public DescriptionBuilder property(final Property property) {
