@@ -3,7 +3,7 @@ package rundeck
 import com.fasterxml.jackson.databind.ObjectMapper
 
 class PluginStep extends WorkflowStep{
-    Boolean nodeStep
+    boolean nodeStep
     String type
     String jsonData
     static constraints = {
