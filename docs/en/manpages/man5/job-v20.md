@@ -645,6 +645,7 @@ See:
 
 * [Script sequence step](#script-sequence-step)
 * [Job sequence step](#job-sequence-step)
+* [Plugin step](#plugin-step)
 
 A command can embed a [errorhandler](#errorhandler) to define
 an action to run if the step fails.
@@ -668,6 +669,7 @@ See:
 
 * [Script sequence step](#script-sequence-step)
 * [Job sequence step](#job-sequence-step)
+* [Plugin step](#plugin-step)
 
 Example:
 
@@ -704,7 +706,7 @@ Example job reference:
     </errorhandler>      
 
  
-#### Script sequence step 
+### Script sequence step 
 
 Script steps can be defined in three ways within a command element:
 
@@ -747,11 +749,11 @@ Script URL:
     </command>      
 
 
-#### Job sequence step
+### Job sequence step
 
 Define a [jobref](#jobref) element within the [command](#command) element
 
-##### jobref 
+#### jobref 
 
 *Attributes*
 
@@ -779,6 +781,84 @@ Example passing arguments to the job:
            <arg line="-option value -option2 value2"/>
         </jobref>
     </command>      
+
+### Plugin step
+
+There are two types of plugin steps that can be defined: Node steps, and workflow steps.
+
+Define either one within the [command](#command) element:
+
+* [node-step-plugin](#node-step-plugin)
+* [step-plugin](#step-plugin)
+
+Both have the following contents:
+
+*Attributes*
+
+type
+
+:    The plugin provider type identifier
+
+*Nested elements*
+
+Optional 'configuration' can be embedded containing a list of 'entry' key/value pairs:
+
+[configuration](#configuration)
+
+:    Defines plugin configuration entries
+
+[entry](#entry)
+
+:    Defines a key/value pair for the configuration.
+
+
+Example node step plugin definition:
+
+    <command>
+        <node-step-plugin type="my-node-step-plugin">
+           <configuration>
+            <entry key="someconfig" value="a value"/>
+            <entry key="timout" value="2000"/>
+           </configuration>
+        </node-step-plugin>
+    </command> 
+
+Example workflow step plugin definition:
+
+    <command>
+        <step-plugin type="my-step-plugin">
+           <configuration>
+            <entry key="repeat" value="12"/>
+            <entry key="debug" value="true"/>
+           </configuration>
+        </step-plugin>
+    </command>     
+
+#### node-step-plugin
+
+Defines a plugin step that executes for each node.
+
+#### step-plugin
+
+Defines a plugin step that executes once in a workflow.
+
+#### configuration
+
+Contains the key/value pair entries for plugin configuration, within a [node-step-plugin](#node-step-plugin) or [step-plugin](#step-plugin).
+
+#### entry
+
+Defines a key/value pair within a [configuration](#configuration).
+
+*Attributes*:
+
+key
+
+:    Key for the pair
+
+value
+
+:    Textual value
 
 ## notification 
 

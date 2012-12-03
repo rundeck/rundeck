@@ -126,6 +126,11 @@ Example:
           name: jobname
           group: group
           args: args
+      - nodeStep: true/false
+        type: plugin-type
+        configuration: 
+          key: value
+          another: value
 
 The sequence has these required entries:
 
@@ -150,6 +155,7 @@ Each command in the [Sequence](#sequence) can be of these different types:
 * [Script execution entry](#script-execution-entry)
 * [Script file execution entry](#script-file-execution-entry)
 * [Job Reference entry](#job-reference-entry)
+* [Plugin step entry](#plugin-step-entry)
 
 Each command can also embed an [Error Handler](#error-handler).
 
@@ -174,7 +180,7 @@ The errorhandler has this additional optional entry:
 
 :    "true/false" - If true, and the error handler succeeds, the workflow sequence will continue even if the workflow `keepgoing` is false.
 
-#### Simple Command Entry
+### Simple Command Entry
 
 This [Command](#command) consists of a single entry:
 
@@ -182,7 +188,7 @@ This [Command](#command) consists of a single entry:
 
 :    the command to execute
 
-#### Script Execution Entry
+### Script Execution Entry
 
 This [Command](#command) executes the script content specified.
 
@@ -203,7 +209,7 @@ Example:
         echo this is option value: @option.test@
       args: arguments passed to the script
 
-#### Script File Execution Entry
+### Script File Execution Entry
 
 This [Command](#command) executes a script file stored on the server.
 
@@ -220,7 +226,7 @@ Example:
     - scriptfile: /path/to/script
       args: arguments to script
 
-#### Script URL Execution Entry
+### Script URL Execution Entry
 
 This [Command](#command) downloads a script file from a URL and executes it.
 
@@ -237,7 +243,7 @@ Example:
     - scripturl: http://example.com/path/to/script
       args: arguments to script
 
-#### Job Reference Entry
+### Job Reference Entry
 
 This [Command](#command) executes another Rundeck Job.
 
@@ -263,6 +269,29 @@ Example:
         group: test
         name: simple job test
         args: args for the job
+
+### Plugin Step Entry
+
+This [Command](#command) executes a plugin.  There are two types of step plugins: Node step, and Workflow step.
+
+`nodeStep`
+
+:   boolean: true indicates it is a Node step plugin, false indicates a Workflow step plugin.
+
+`type`
+
+:   The plugin provider type identifier.
+
+`configuration`
+
+:   map consisting of a single level of configuration entries for the plugin. Refer to the plugin documentation for appropriate configuration keys and values.
+
+Example:
+
+    - nodeStep: false
+      type: jenkins-build
+      configuration:
+        job: "${option.job}"
 
 ### Options
 
