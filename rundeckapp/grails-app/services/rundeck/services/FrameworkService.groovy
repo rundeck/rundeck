@@ -102,6 +102,16 @@ class FrameworkService implements ApplicationContextAware {
     }
 
     /**
+     * Filter nodes for a project given the node selector
+     * @param framework
+     * @param selector
+     * @param project
+     */
+    def INodeSet filterNodeSet(Framework framework, NodesSelector selector, String project) {
+        framework.filterNodeSet(selector, project, null)
+    }
+
+    /**
      *  return true if the user is authorized to execute a script in the given project
      *
      * @param user username

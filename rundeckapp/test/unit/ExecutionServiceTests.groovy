@@ -17,6 +17,7 @@ import rundeck.services.ExecutionServiceException
 import rundeck.services.HtTableLogger
 import rundeck.services.HtFormatter
 import rundeck.services.FrameworkService
+import com.dtolabs.rundeck.core.common.NodeSetImpl
 
 class ExecutionServiceTests extends GrailsUnitTestCase {
 
@@ -800,8 +801,14 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         ConfigurationHolder.metaClass.getConfig = {-> [:] }
 
         def testService = new ExecutionService()
-        def frameworkService = new FrameworkService()
-        testService.frameworkService = frameworkService
+        def fcontrol = mockFor(FrameworkService, true)
+        fcontrol.demand.parseOptsFromString(1..1){argString ->
+            [test:'args']
+        }
+        fcontrol.demand.filterNodeSet(1..1){fwk,sel,proj->
+            new NodeSetImpl()
+        }
+        testService.frameworkService=fcontrol.createMock()
         //create mock user
         User u1 = new User(login: 'testuser')
         u1.save()
@@ -809,7 +816,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         t:{//basic test
 
             Execution se = new Execution(argString:"-test args",user:"testuser",project:"testproj", loglevel:'WARN',doNodedispatch: false)
-            def val=testService.createContext(se,null,null,null,null,null)
+            def val=testService.createContext(se,null,null,null,null,null,null)
             assertNotNull(val)
             assertNull(val.nodeSelector)
             assertEquals("testproj",val.frameworkProject)
@@ -818,21 +825,65 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             assertNull(val.framework)
             assertNull(val.executionListener)
         }
+    }
+
+    /**
+     * Test createContext
+     */
+    void testCreateContextUserDNE() {
+        mockDomain(Execution)
+        mockDomain(User)
+        ConfigurationHolder.metaClass.getConfig = {-> [:] }
+
+        def testService = new ExecutionService()
+        def fcontrol = mockFor(FrameworkService, true)
+        fcontrol.demand.parseOptsFromString(1..1) {argString ->
+            [test: 'args']
+        }
+        fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
+            new NodeSetImpl()
+        }
+        testService.frameworkService = fcontrol.createMock()
+        //create mock user
+        User u1 = new User(login: 'testuser')
+        u1.save()
         t:{//test DNE user
 
             Execution se = new Execution(argString:"-test args",user:"DNEuser",project:"testproj", loglevel:'WARN',doNodedispatch: false)
             try {
-                def val=testService.createContext(se,null,null,null,null,null)
+                def val=testService.createContext(se,null,null,null,null,null,null)
                 fail("Should not succeed")
             } catch (Exception e) {
                 assertEquals("User DNEuser is not authorized to run this Job.",e.message)
             }
 
         }
+    }
+
+    /**
+     * Test createContext method
+     */
+    void testCreateContextDatacontext() {
+        mockDomain(Execution)
+        mockDomain(User)
+        ConfigurationHolder.metaClass.getConfig = {-> [:] }
+
+        def testService = new ExecutionService()
+        def fcontrol = mockFor(FrameworkService, true)
+        fcontrol.demand.parseOptsFromString(1..1) {argString ->
+            [test: 'args']
+        }
+        fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
+            new NodeSetImpl()
+        }
+        testService.frameworkService = fcontrol.createMock()
+        //create mock user
+        User u1 = new User(login: 'testuser')
+        u1.save()
         t: {//check datacontext
 
             Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
-            def val = testService.createContext(se, null, null, null, null, null)
+            def val = testService.createContext(se, null,null, null, null, null, null)
             assertNotNull(val)
             assertNotNull(val.dataContext)
             assertNotNull(val.dataContext.job)
@@ -840,21 +891,66 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             assertNotNull(val.dataContext.option)
             assertEquals([test:"args"],val.dataContext.option)
         }
+    }
+
+    /**
+     * Test createContext method
+     */
+    void testCreateContextArgsarray() {
+        mockDomain(Execution)
+        mockDomain(User)
+        ConfigurationHolder.metaClass.getConfig = {-> [:] }
+
+        def testService = new ExecutionService()
+        def fcontrol = mockFor(FrameworkService, true)
+        fcontrol.demand.parseOptsFromArray(1..1) {argString ->
+            [test: 'args',test2:'monkey args']
+        }
+        fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
+            new NodeSetImpl()
+        }
+        testService.frameworkService = fcontrol.createMock()
+        //create mock user
+        User u1 = new User(login: 'testuser')
+        u1.save()
         t: {//check datacontext, inputargs instead of argString
 
             Execution se = new Execution(user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
-            def val = testService.createContext(se, null, null, null, null, ['-test','args','-test2','monkey args'] as String[])
+            def val = testService.createContext(se, null,null, null, null, null, ['-test','args','-test2','monkey args'] as String[])
             assertNotNull(val)
             assertNotNull(val.dataContext)
             assertNotNull(val.dataContext.job)
             assertEquals(0,val.dataContext.job.size())
             assertNotNull(val.dataContext.option)
+            println val.dataContext.option
             assertEquals([test:"args",test2:'monkey args'],val.dataContext.option)
         }
+    }
+
+    /**
+     * Test createContext method
+     */
+    void testCreateContextJobData() {
+        mockDomain(Execution)
+        mockDomain(User)
+        ConfigurationHolder.metaClass.getConfig = {-> [:] }
+
+        def testService = new ExecutionService()
+        def fcontrol = mockFor(FrameworkService, true)
+        fcontrol.demand.parseOptsFromString(1..1) {argString ->
+            [test: 'args']
+        }
+        fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
+            new NodeSetImpl()
+        }
+        testService.frameworkService = fcontrol.createMock()
+        //create mock user
+        User u1 = new User(login: 'testuser')
+        u1.save()
         t: {//check datacontext, include job data
 
             Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
-            def val = testService.createContext(se, null, null, [id:"3",name:"testjob"], null, null)
+            def val = testService.createContext(se, null,null, null, [id:"3",name:"testjob"], null, null)
             assertNotNull(val)
             assertNotNull(val.dataContext)
             assertNotNull(val.dataContext.job)
@@ -862,17 +958,61 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             assertNotNull(val.dataContext.option)
             assertEquals([test:"args"],val.dataContext.option)
         }
+    }
+
+    /**
+     * Test createContext method
+     */
+    void testCreateContextJobDataEmptyNodeset() {
+        mockDomain(Execution)
+        mockDomain(User)
+        ConfigurationHolder.metaClass.getConfig = {-> [:] }
+
+        def testService = new ExecutionService()
+        def fcontrol = mockFor(FrameworkService, true)
+        fcontrol.demand.parseOptsFromString(1..1) {argString ->
+            [test: 'args']
+        }
+        fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
+            new NodeSetImpl()
+        }
+        testService.frameworkService = fcontrol.createMock()
+        //create mock user
+        User u1 = new User(login: 'testuser')
+        u1.save()
         t: {//check nodeset, empty
 
             Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
-            def val = testService.createContext(se, null, null, [id:"3",name:"testjob"], null, null)
+            def val = testService.createContext(se, null,null, null, [id:"3",name:"testjob"], null, null)
             assertNotNull(val)
             assertNull(val.nodeSelector)
         }
+    }
+
+    /**
+     * Test createContext method
+     */
+    void testCreateContextJobDataNodeInclude() {
+        mockDomain(Execution)
+        mockDomain(User)
+        ConfigurationHolder.metaClass.getConfig = {-> [:] }
+
+        def testService = new ExecutionService()
+        def fcontrol = mockFor(FrameworkService, true)
+        fcontrol.demand.parseOptsFromString(1..1) {argString ->
+            [test: 'args']
+        }
+        fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
+            new NodeSetImpl()
+        }
+        testService.frameworkService = fcontrol.createMock()
+        //create mock user
+        User u1 = new User(login: 'testuser')
+        u1.save()
         t: {//check nodeset, filtered from execution obj. include name
 
             Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true, nodeIncludeName: "testnode")
-            def val = testService.createContext(se, null, null, [id: "3", name: "testjob"], null, null)
+            def val = testService.createContext(se, null, null, null, [id: "3", name: "testjob"], null, null)
             assertNotNull(val)
             assertNotNull(val.nodeSelector)
             assertNotNull(val.nodeSelector.exclude)
@@ -880,10 +1020,32 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             assertNull(val.nodeSelector.exclude.name)
             assertEquals("testnode", val.nodeSelector.include.name)
         }
+    }
+
+    /**
+     * Test createContext method
+     */
+    void testCreateContextJobDataNodeExclude() {
+        mockDomain(Execution)
+        mockDomain(User)
+        ConfigurationHolder.metaClass.getConfig = {-> [:] }
+
+        def testService = new ExecutionService()
+        def fcontrol = mockFor(FrameworkService, true)
+        fcontrol.demand.parseOptsFromString(1..1) {argString ->
+            [test: 'args']
+        }
+        fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
+            new NodeSetImpl()
+        }
+        testService.frameworkService = fcontrol.createMock()
+        //create mock user
+        User u1 = new User(login: 'testuser')
+        u1.save()
         t: {//check nodeset, filtered from execution obj. exclude name
 
             Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true, nodeExcludeName: "testnode")
-            def val = testService.createContext(se, null, null, [id: "3", name: "testjob"], null, null)
+            def val = testService.createContext(se, null, null, null, [id: "3", name: "testjob"], null, null)
             assertNotNull(val)
             assertNotNull(val.nodeSelector)
             assertNotNull(val.nodeSelector.exclude)
@@ -896,12 +1058,18 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
     /**
      * Test use of ${option.x} and ${job.y} parameter expansion in node filter tag and name filters.
      */
-    void testCreateContextParameterizedFilters() {
+    void testCreateContextFilters() {
         mockDomain(Execution)
         mockDomain(User)
         def testService = new ExecutionService()
-        def frameworkService = new FrameworkService()
-        testService.frameworkService = frameworkService
+        def fcontrol = mockFor(FrameworkService, true)
+        fcontrol.demand.parseOptsFromString(1..1) {argString ->
+            [test: 'args',test3:'something']
+        }
+        fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
+            new NodeSetImpl()
+        }
+        testService.frameworkService = fcontrol.createMock()
         //create mock user
         User u1 = new User(login: 'testuser')
         u1.save()
@@ -909,7 +1077,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
         t: {//basic test
 
             Execution se = new Execution(argString: "-test args -test3 something", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true,nodeIncludeName: "basic")
-            def val = testService.createContext(se, null, null, [id:'3',name:'blah',group:'something/else',username:'bill',project:'testproj'], null, null)
+            def val = testService.createContext(se, null, null, null, [id:'3',name:'blah',group:'something/else',username:'bill',project:'testproj'], null, null)
             assertNotNull(val)
             assertNotNull(val.nodeSelector)
             assertNotNull(val.nodeSelector.exclude)
@@ -919,6 +1087,28 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             assertNull(val.nodeSelector.include.tags)
             assertEquals("basic", val.nodeSelector.include.name)
         }
+    }
+
+    /**
+     * Test use of ${option.x} and ${job.y} parameter expansion in node filter tag and name filters.
+     */
+    void testCreateContextParameterizedFilters() {
+        mockDomain(Execution)
+        mockDomain(User)
+        def testService = new ExecutionService()
+        def fcontrol = mockFor(FrameworkService, true)
+        fcontrol.demand.parseOptsFromString(1..1) {argString ->
+            [test: 'args', test3: 'something']
+        }
+        fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
+            new NodeSetImpl()
+        }
+        testService.frameworkService = fcontrol.createMock()
+        //create mock user
+        User u1 = new User(login: 'testuser')
+        u1.save()
+
+
         t: {//variable expansion in include name
 
             Execution se = new Execution(argString: "-test args -test3 something", user: "testuser", project: "testproj", loglevel: 'WARN',
@@ -938,7 +1128,7 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
                 nodeExcludeOsName: "m,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
                 nodeExcludeOsVersion: "n,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
             )
-            def val = testService.createContext(se, null, null, [id:'3',name:'blah',group:'something/else',username:'bill',project:'testproj'], null, null)
+            def val = testService.createContext(se, null, null, null, [id:'3',name:'blah',group:'something/else',username:'bill',project:'testproj'], null, null)
             assertNotNull(val)
             assertNotNull(val.nodeSelector)
             assertNotNull(val.nodeSelector.exclude)

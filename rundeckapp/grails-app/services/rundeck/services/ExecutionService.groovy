@@ -710,7 +710,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             nodeselector = null
         }
 
-        def INodeSet nodeSet=framework.filterNodeSet(nodeselector,execMap.project,null)
+        def INodeSet nodeSet=frameworkService.filterNodeSet(framework,nodeselector,execMap.project)
 
         def Map<String, Map<String, String>> privatecontext = new HashMap<String, Map<String, String>>()
         if (null != extraParams) {
