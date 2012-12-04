@@ -124,8 +124,9 @@ class MenuController {
         }
         
         def results = jobsFragment(query)
+        results.execQueryParams=query.asExecQueryParams()
         results.reportQueryParams=query.asReportQueryParams()
-        
+
         withFormat{
             yaml{
                 final def encoded = JobsYAMLCodec.encode(results.nextScheduled as List)

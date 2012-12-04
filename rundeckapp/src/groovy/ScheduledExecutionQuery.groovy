@@ -98,7 +98,7 @@ public class ScheduledExecutionQuery extends BaseQuery{
        
     }
 
-    public Map asReportQueryParams() {
+    public Map asExecQueryParams() {
         def map = [:]
         def convert=[
                 proj: 'projFilter',
@@ -109,6 +109,22 @@ public class ScheduledExecutionQuery extends BaseQuery{
             if(this[c]){
                 map["${it}Filter"]= this[c]
             }
+        }
+
+        map
+    }
+
+    public Map asReportQueryParams() {
+        def map = [:]
+        if(projFilter){
+            map.projFilter=projFilter
+        }
+        if(groupPath=='*'){
+
+        }else if (groupPath){
+            map['jobFilter']=groupPath
+        }else if(groupPathExact && jobFilter){
+            map['jobFilter'] = groupPathExact+'/'+jobFilter
         }
 
         map

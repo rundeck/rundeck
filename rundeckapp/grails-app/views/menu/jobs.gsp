@@ -131,9 +131,9 @@
         /** START history
          *
          */
-        var histControl = new HistoryControl('histcontent',{compact:true,nofilters:true,recentFilter:'1d',projFilter:'${session.project}'});
+        var histControl = new HistoryControl('histcontent',{compact:true,nofilters:true,recentFilter:'1d'});
         function loadHistory(){
-            histControl.loadHistory();
+            histControl.loadHistory( ${(reportQueryParams?:[projFilter:session.project]).encodeAsJSON()});
         }
         /** now running section update */
         var savedcount=0;
@@ -160,9 +160,8 @@
         //now running
         var runupdate;
         function loadNowRunning(){
-            runupdate=new Ajax.PeriodicalUpdater({success:'nowrunning'},'${createLink(controller:"menu",action:"nowrunningFragment",params: reportQueryParams?:[:])}',{
+            runupdate=new Ajax.PeriodicalUpdater({success:'nowrunning'},'${createLink(controller:"menu",action:"nowrunningFragment",params: execQueryParams?:[projFilter: session.project])}',{
                 evalScripts:true,
-                %{--parameters:{projFilter:'${session.project}'},--}%
                 onFailure:function (response) {
                     showError("AJAX error: Now Running ["+ runupdate.url+"]: "+response.status+" "+response.statusText);
                     runupdate.stop();
@@ -366,13 +365,17 @@
 
     </div>
 </div>
-<div class="runbox">History</div>
+<div class="runbox">
+    <g:if test="${reportQueryParams}">
+        <g:link controller="reports" action="index" params="${reportQueryParams ?: [:]}">History</g:link>
+    </g:if>
+    <g:else>History</g:else>
+</div>
     <div class="pageBody">
         <div id="histcontent"></div>
         <g:javascript>
             fireWhenReady('histcontent',loadHistory);
         </g:javascript>
-        <g:link controller="menu"  action="nowrunningFragment"  params="${reportQueryParams ?: [:]}">History</g:link>
 
     </div>
 </body>
