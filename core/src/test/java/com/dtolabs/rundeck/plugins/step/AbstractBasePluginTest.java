@@ -25,15 +25,14 @@
 package com.dtolabs.rundeck.plugins.step;
 
 import com.dtolabs.rundeck.core.plugins.Plugin;
-import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues;
 import junit.framework.TestCase;
 
-import java.lang.reflect.Field;
 import java.util.*;
 
 
@@ -324,7 +323,20 @@ public class AbstractBasePluginTest extends TestCase {
         Long testlong2;
     }
 
-    public void testConfigureDescribedPropertiesEmpty() throws Exception {
+    static class mapResolver implements PropertyResolver{
+        private Map<String,Object> map;
+
+        mapResolver(Map<String, Object> map) {
+            this.map = map;
+        }
+
+        @Override
+        public Object resolvePropertyValue(String name, PropertyScope scope) {
+            return map.get(name);
+        }
+    }
+
+    public void testConfigurePropertiesEmpty() throws Exception {
         configuretest1 test = new configuretest1();
         assertNull(test.testString);
         assertNull(test.testSelect1);
@@ -335,7 +347,7 @@ public class AbstractBasePluginTest extends TestCase {
         assertNull(test.testint2);
         assertEquals(0, test.testlong1);
         assertNull(test.testlong2);
-        test.configureDescribedProperties(new HashMap<String, Object>());
+        test.configureProperties(new mapResolver(new HashMap<String, Object>()));
         assertNull(test.testString);
         assertNull(test.testSelect1);
         assertNull(test.testSelect2);
@@ -347,30 +359,30 @@ public class AbstractBasePluginTest extends TestCase {
         assertNull(test.testlong2);
     }
 
-    public void testConfigureDescribedPropertiesString() throws Exception {
+    public void testConfigurePropertiesString() throws Exception {
         configuretest1 test = new configuretest1();
         HashMap<String, Object> configuration = new HashMap<String, Object>();
         configuration.put("testString", "monkey");
         configuration.put("testSelect1", "a");
         configuration.put("testSelect2", "b");
-        test.configureDescribedProperties(configuration);
+        test.configureProperties(new mapResolver(configuration));
         assertEquals("monkey", test.testString);
         assertEquals("a", test.testSelect1);
         assertEquals("b", test.testSelect2);
     }
-    public void testConfigureDescribedPropertiesSelectAllowed() throws Exception {
+    public void testConfigurePropertiesSelectAllowed() throws Exception {
         configuretest1 test = new configuretest1();
         String[] values = {"a", "b", "c"};
         for (final String value : values) {
             HashMap<String, Object> configuration = new HashMap<String, Object>();
             configuration.put("testSelect1", value);
             configuration.put("testSelect2", value);
-            test.configureDescribedProperties(configuration);
+            test.configureProperties(new mapResolver(configuration));
             assertEquals(value, test.testSelect1);
             assertEquals(value, test.testSelect2);
         }
     }
-    public void testConfigureDescribedPropertiesSelectInvalidSelect() throws Exception{
+    public void testConfigurePropertiesSelectInvalidSelect() throws Exception{
         configuretest1 test = new configuretest1();
         //invalid for select field
         String[] invalid = {"monkey", "spaghetti", "wheel"};
@@ -378,7 +390,7 @@ public class AbstractBasePluginTest extends TestCase {
             HashMap<String, Object> config = new HashMap<String, Object>();
             config.put("testSelect1", value);
             try {
-                test.configureDescribedProperties(config);
+                test.configureInstanceScopeProperties(config);
                 fail("Should not allow value: " + value);
             } catch (RuntimeException e) {
                 e.printStackTrace();
@@ -387,32 +399,32 @@ public class AbstractBasePluginTest extends TestCase {
         }
     }
 
-    public void testConfigureDescribedPropertiesSelectInvalidFreeSelect() throws Exception {
+    public void testConfigurePropertiesSelectInvalidFreeSelect() throws Exception {
         configuretest1 test = new configuretest1();
         //invalid for select field
         String[] invalid = {"monkey", "spaghetti", "wheel"};
         for (final String value : invalid) {
             HashMap<String, Object> config = new HashMap<String, Object>();
             config.put("testSelect2", value);
-            test.configureDescribedProperties(config);
+            test.configureInstanceScopeProperties(config);
             assertEquals(value,test.testSelect2);
         }
     }
 
-    public void testConfigureDescribedPropertiesBool() throws Exception {
+    public void testConfigurePropertiesBool() throws Exception {
         configuretest1 test = new configuretest1();
         HashMap<String, Object> configuration = new HashMap<String, Object>();
         //true value string
         configuration.put("testbool1", "true");
         configuration.put("testbool2", "true");
-        test.configureDescribedProperties(configuration);
+        test.configureProperties(new mapResolver(configuration));
         assertTrue(test.testbool1);
         assertTrue(test.testbool2);
 
         //false value string
         configuration.put("testbool1", "false");
         configuration.put("testbool2", "false");
-        test.configureDescribedProperties(configuration);
+        test.configureProperties(new mapResolver(configuration));
         assertFalse(test.testbool1);
         assertFalse(test.testbool2);
 
@@ -422,17 +434,17 @@ public class AbstractBasePluginTest extends TestCase {
         //other value string
         configuration.put("testbool1", "monkey");
         configuration.put("testbool2", "elf");
-        test.configureDescribedProperties(configuration);
+        test.configureProperties(new mapResolver(configuration));
         assertFalse(test.testbool1);
         assertFalse(test.testbool2);
     }
-    public void testConfigureDescribedPropertiesInt() throws Exception {
+    public void testConfigurePropertiesInt() throws Exception {
         configuretest1 test = new configuretest1();
         HashMap<String, Object> configuration = new HashMap<String, Object>();
         //int values
         configuration.put("testint1", "1");
         configuration.put("testint2", "2");
-        test.configureDescribedProperties(configuration);
+        test.configureProperties(new mapResolver(configuration));
         assertEquals(1, test.testint1);
         assertEquals(2, (int) test.testint2);
 
@@ -440,7 +452,7 @@ public class AbstractBasePluginTest extends TestCase {
         configuration.put("testint1", "asdf");
         configuration.put("testint2", "fdjkfd");
         try {
-            test.configureDescribedProperties(configuration);
+            test.configureProperties(new mapResolver(configuration));
             fail("shouldn't succeed");
         } catch (NumberFormatException e) {
             e.printStackTrace();
@@ -448,13 +460,13 @@ public class AbstractBasePluginTest extends TestCase {
         assertEquals(1, test.testint1);
         assertEquals(2, (int) test.testint2);
     }
-    public void testConfigureDescribedPropertiesLong() throws Exception {
+    public void testConfigurePropertiesLong() throws Exception {
         configuretest1 test = new configuretest1();
         HashMap<String, Object> configuration = new HashMap<String, Object>();
         //int values
         configuration.put("testlong1", "1");
         configuration.put("testlong2", "2");
-        test.configureDescribedProperties(configuration);
+        test.configureProperties(new mapResolver(configuration));
         assertEquals(1,test.testlong1);
         assertEquals(2,(long)test.testlong2);
 
@@ -462,7 +474,7 @@ public class AbstractBasePluginTest extends TestCase {
         configuration.put("testlong1", "asdf");
         configuration.put("testlong2", "fdjkfd");
         try {
-            test.configureDescribedProperties(configuration);
+            test.configureProperties(new mapResolver(configuration));
             fail("shouldn't succeed");
         } catch (NumberFormatException e) {
             e.printStackTrace();

@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.plugins.util;
 
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator;
 
@@ -20,6 +21,7 @@ public class PropertyBuilder {
     private String value;
     private List<String> values;
     private PropertyValidator validator;
+    private PropertyScope scope;
 
     private PropertyBuilder() {
 
@@ -42,6 +44,7 @@ public class PropertyBuilder {
             .title(orig.getTitle())
             .values(orig.getSelectValues())
             .validator(orig.getValidator())
+            .scope(orig.getScope())
             ;
     }
 
@@ -172,6 +175,14 @@ public class PropertyBuilder {
     }
 
     /**
+     * Set the property scope
+     */
+    public PropertyBuilder scope(final PropertyScope scope) {
+        this.scope = scope;
+        return this;
+    }
+
+    /**
      * Build the Property object
      * @throws IllegalStateException if type or name is not set
      */
@@ -182,6 +193,6 @@ public class PropertyBuilder {
         if (null == name) {
             throw new IllegalStateException("name is required");
         }
-        return PropertyUtil.forType(type, name, title, description, required, value, values, validator);
+        return PropertyUtil.forType(type, name, title, description, required, value, values, validator, scope);
     }
 }

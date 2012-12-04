@@ -42,7 +42,7 @@ public abstract class BaseNodeStepPlugin extends AbstractBasePlugin implements N
                                          final INodeEntry entry)
         throws NodeStepException {
 
-        configureDescribedProperties(item.getStepConfiguration());
+        configureProperties(context.getPropertyResolver());
         return performNodeStep(context, entry);
     }
 

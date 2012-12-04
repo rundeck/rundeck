@@ -25,11 +25,12 @@ package com.dtolabs.rundeck.core.plugins.configuration;
 
 import java.util.List;
 
+
 /**
-* PropertyBase base implementation of Property
-*
-* @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-*/
+ * PropertyBase base implementation of Property
+ *
+ * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
+ */
 abstract class PropertyBase implements Property {
     private final String title;
     private final String name;
@@ -37,9 +38,16 @@ abstract class PropertyBase implements Property {
     private final boolean required;
     private final String defaultValue;
     private final PropertyValidator validator;
+    private final PropertyScope scope;
 
     public PropertyBase(final String name, final String title, final String description, final boolean required,
                         final String defaultValue, final PropertyValidator validator) {
+
+        this(name, title, description, required, defaultValue, validator, null);
+    }
+
+    public PropertyBase(final String name, final String title, final String description, final boolean required,
+                        final String defaultValue, final PropertyValidator validator, final PropertyScope scope) {
 
         this.title = title;
         this.name = name;
@@ -47,6 +55,7 @@ abstract class PropertyBase implements Property {
         this.required = required;
         this.defaultValue = defaultValue;
         this.validator = validator;
+        this.scope = scope;
     }
 
     public String getTitle() {
@@ -75,5 +84,10 @@ abstract class PropertyBase implements Property {
 
     public String getName() {
         return name;
+    }
+
+    @Override
+    public PropertyScope getScope() {
+        return scope;
     }
 }

@@ -42,6 +42,10 @@ public interface PluginStepContext {
      */
     public PluginLogger getLogger();
     /**
+     * Return the property resolver
+     */
+    public PropertyResolver getPropertyResolver();
+    /**
      * Return the project name
      */
     public String getFrameworkProject();

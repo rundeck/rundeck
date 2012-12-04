@@ -31,8 +31,10 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.utils.Converter;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.step.PluginStepItem;
+import com.dtolabs.rundeck.plugins.step.PropertyResolver;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
 
 import java.util.*;
@@ -77,7 +79,11 @@ class StepPluginAdapter implements StepExecutor, Describable {
                                                    final StepExecutionItem item)
         throws StepException {
         final PluginStepItem step = toPluginStepItem(item, executionContext);
-        PluginStepContext stepContext = PluginStepContextImpl.from(executionContext);
+        PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(executionContext,
+                                                                                            ServiceNameConstants.WorkflowStep,
+                                                                                            step
+        );
+        PluginStepContext stepContext = PluginStepContextImpl.from(executionContext, resolver);
         final boolean success = plugin.executeStep(stepContext, step);
         return new StepExecutionResultImpl(success);
     }

@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
+import com.dtolabs.rundeck.plugins.step.PropertyResolver;
 
 import java.util.List;
 import java.util.Map;
@@ -46,6 +47,7 @@ public class PluginStepContextImpl implements PluginStepContext {
     private INodeSet nodes;
     private int stepNumber;
     private List<Integer> stepContext;
+    private PropertyResolver propertyResolver;
 
     public PluginStepContextImpl() {
         stepNumber = -1;
@@ -67,7 +69,7 @@ public class PluginStepContextImpl implements PluginStepContext {
         return logger;
     }
 
-    public static PluginStepContextImpl from(final StepExecutionContext context) {
+    public static PluginStepContextImpl from(final StepExecutionContext context, final PropertyResolver propertyResolver) {
         final PluginStepContextImpl context1 = new PluginStepContextImpl();
         context1.dataContext = context.getDataContext();
         context1.frameworkProject = context.getFrameworkProject();
@@ -75,6 +77,7 @@ public class PluginStepContextImpl implements PluginStepContext {
         context1.nodes = context.getNodes();
         context1.stepNumber = context.getStepNumber();
         context1.stepContext = context.getStepContext();
+        context1.propertyResolver = propertyResolver;
         return context1;
     }
 
@@ -88,5 +91,9 @@ public class PluginStepContextImpl implements PluginStepContext {
 
     public List<Integer> getStepContext() {
         return stepContext;
+    }
+
+    public PropertyResolver getPropertyResolver() {
+        return propertyResolver;
     }
 }

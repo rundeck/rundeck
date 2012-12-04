@@ -30,19 +30,22 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepContextImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepItemImpl;
+import com.dtolabs.rundeck.core.execution.workflow.steps.PropertyResolverFactory;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.utils.Converter;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.step.PluginStepItem;
+import com.dtolabs.rundeck.plugins.step.PropertyResolver;
 
 import java.util.*;
 
 
 /**
- * NodeStepPluginAdapter implements NodeStepExecutor, and makes use of a {@link NodeStepPlugin}
- * instance to perform the execution.
+ * NodeStepPluginAdapter implements NodeStepExecutor, and makes use of a {@link NodeStepPlugin} instance to perform the
+ * execution.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
@@ -77,7 +80,11 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
                                           final INodeEntry node)
         throws NodeStepException {
         final PluginStepItem step = toPluginStepItem(item, context);
-        final PluginStepContext pluginContext = PluginStepContextImpl.from(context);
+        PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(context,
+                                                                                            ServiceNameConstants.WorkflowNodeStep,
+                                                                                            step
+        );
+        final PluginStepContext pluginContext = PluginStepContextImpl.from(context, resolver);
         final boolean success = plugin.executeNodeStep(pluginContext, step, node);
         return new NodeStepResultImpl(success, node);
     }

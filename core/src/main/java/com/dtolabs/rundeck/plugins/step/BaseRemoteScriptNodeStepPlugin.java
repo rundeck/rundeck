@@ -43,7 +43,7 @@ public abstract class BaseRemoteScriptNodeStepPlugin extends AbstractBasePlugin
     public final GeneratedScript generateScript(final PluginStepContext context,
                                                 final PluginStepItem item,
                                                 final INodeEntry entry) throws NodeStepException {
-        configureDescribedProperties(item.getStepConfiguration());
+        configureProperties(context.getPropertyResolver());
         return buildScript(context, entry);
     }
 

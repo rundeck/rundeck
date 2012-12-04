@@ -30,12 +30,15 @@ import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepContextImpl;
+import com.dtolabs.rundeck.core.execution.workflow.steps.PropertyResolverFactory;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNodeStepExecutor;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.utils.Converter;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.step.GeneratedScript;
 import com.dtolabs.rundeck.plugins.step.PluginStepItem;
+import com.dtolabs.rundeck.plugins.step.PropertyResolver;
 import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin;
 
 
@@ -77,7 +80,11 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
         throws NodeStepException {
 
         final PluginStepItem item1 = NodeStepPluginAdapter.toPluginStepItem(item, context);
-        final PluginStepContextImpl pluginContext = PluginStepContextImpl.from(context);
+        final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(context,
+                                                                                                  ServiceNameConstants.RemoteScriptNodeStep,
+                                                                                                  item1
+        );
+        final PluginStepContextImpl pluginContext = PluginStepContextImpl.from(context, resolver);
         final GeneratedScript script = plugin.generateScript(pluginContext, item1, node);
         final ExecutionService executionService = context.getFramework().getExecutionService();
         if (null != script.getCommand()) {

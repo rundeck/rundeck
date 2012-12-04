@@ -24,11 +24,13 @@
 */
 package com.dtolabs.rundeck.plugins.step;
 
+import com.dtolabs.rundeck.core.execution.workflow.steps.PropertyResolverFactory;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues;
@@ -40,16 +42,17 @@ import java.util.*;
 
 
 /**
- * AbstractBasePlugin provides base functionality for describable plugin implementations. <p>
- * Subclasses can annotate fields to declare them as configuration properties. </p> <p> Use {@link PluginProperty} to
- * declare a field as a property, and use {@link SelectValues} to annotate a String field to declare multiple select
- * values and whether it is restricted to those values or not. </p> <p> Annotate your subclass with the {@link
- * PluginDescription} to declare a title and description for the plugin type. </p> <p> To add properties
- * programattically, subclasses can
- * override {@link #buildDescription(com.dtolabs.rundeck.plugins.util.DescriptionBuilder)} and modify the description
- * that is being built at runtime, such as redeclaring property descriptions, titles, select values, and validators.
- * Any properties added that do not correspond to annotated fields will be available via {@link
- * #getExtraConfiguration()} when the plugin is executed.</p>
+ * AbstractBasePlugin provides base functionality for describable plugin implementations. <p> Subclasses can annotate
+ * fields to declare them as configuration properties. </p> <p> Use {@link PluginProperty} to declare a field as a
+ * property, and use {@link SelectValues} to annotate a String field to declare multiple select values and whether it is
+ * restricted to those values or not. </p> <p> Scope of the input value can be specified with the {@link
+ * com.dtolabs.rundeck.plugins.descriptions.PluginProperty#scope()} value.  If not specified, the default scope used is
+ * </p> <p> Annotate your subclass with the {@link PluginDescription} to declare a title and description for the plugin
+ * type. </p> <p> To add properties programmatically, subclasses can override {@link
+ * #buildDescription(com.dtolabs.rundeck.plugins.util.DescriptionBuilder)} and modify the description that is being
+ * built at runtime, such as redeclaring property descriptions, titles, select values, and validators. Any properties
+ * added that do not correspond to annotated fields will be available via {@link #getExtraConfiguration()} when the
+ * plugin is executed.</p>
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
@@ -177,103 +180,144 @@ public abstract class AbstractBasePlugin implements Describable {
         }
         pbuild.required(annotation.required());
 
+        pbuild.scope(annotation.scope());
+
         return pbuild.build();
     }
+
+    private static final List<PropertyScope> instanceScopes = Arrays.asList(PropertyScope.Instance,
+                                                                            PropertyScope.InstanceOnly);
 
     /**
      * Call this method to set field values on the current instance based on the input configuration
      */
-    protected final void configureDescribedProperties(final Map<String, Object> configuration) {
-        final Map<String, Object> inputConfig = new HashMap<String, Object>(configuration);
+    protected final void configureInstanceScopeProperties(final Map<String, Object> configuration) {
+        final Map<String, Object> inputConfig = new HashMap<String, Object>();
         for (final Property property : getDescription().getProperties()) {
-            final Object value = inputConfig.get(property.getName());
+            if (property.getScope() != null && property.getScope() != PropertyScope.Unspecified) {
+                if (!instanceScopes.contains(property.getScope())) {
+                    continue;
+                }
+            }
+            final Object value = configuration.get(property.getName());
 
             if (null == value) {
                 continue;
             }
-            final Field field = fieldForPropertyName(property.getName());
-            if (null == field) {
+            if (!setValueForProperty(property, value)) {
+                inputConfig.put(property.getName(), value);
+            }
+        }
+        this.extraConfiguration = inputConfig;
+    }
 
+    /**
+     * Subclasses should call this method to set field values on the current instance by mapping the Description
+     * Property's to resolved property values
+     */
+    protected final void configureProperties(final PropertyResolver resolver) {
+        //use a default scope of InstanceOnly if the Property doesn't specify it
+        final PropertyResolver defaulted = PropertyResolverFactory.withDefaultScope(PropertyScope.InstanceOnly,
+                                                                                    resolver);
+        final Map<String, Object> inputConfig = new HashMap<String, Object>();
+        for (final Property property : getDescription().getProperties()) {
+            final Object value = defaulted.resolvePropertyValue(property.getName(), property.getScope());
+
+            if (null == value) {
                 continue;
             }
-            Property.Type type = property.getType();
-            Property.Type ftype = propertyTypeFromFieldType(field.getType());
-            if (ftype != property.getType()
-                && !(ftype == Property.Type.String
-                     && (property.getType() == Property.Type.Select
-                         || property.getType() == Property.Type.FreeSelect))) {
-
-                throw new IllegalStateException(
-                    "cannot map property {" + property.getName() + " type: " + property.getType() + "} to field {"
-                    + field.getName() + " type: " + ftype + "}");
+            if (!setValueForProperty(property, value)) {
+                inputConfig.put(property.getName(), value);
             }
-            final Object resolvedValue;
-            if (type == Property.Type.Integer) {
-                final Integer intvalue;
-                if (value instanceof String) {
-                    intvalue = Integer.parseInt((String) value);
-                } else if (value instanceof Integer) {
-                    intvalue = (Integer) value;
-                } else {
-                    //XXX
-                    continue;
-                }
-                resolvedValue = intvalue;
-            } else if (type == Property.Type.Long) {
-                final Long longvalue;
-                if (value instanceof String) {
-                    longvalue = Long.parseLong((String) value);
-                } else if (value instanceof Long) {
-                    longvalue = (Long) value;
-                } else if (value instanceof Integer) {
-                    final int val = (Integer) value;
-                    longvalue = (long) val;
-                } else {
-                    //XXX
-                    continue;
-                }
-                resolvedValue = longvalue;
-            } else if (type == Property.Type.Boolean) {
-                final Boolean boolvalue;
-                if (value instanceof String) {
-                    boolvalue = Boolean.parseBoolean((String) value);
-                } else if (value instanceof Boolean) {
-                    boolvalue = (Boolean) value;
-                } else {
-                    //XXX
-                    continue;
-                }
-                resolvedValue = boolvalue;
-            } else if (type == Property.Type.String || type == Property.Type.FreeSelect) {
-                if (value instanceof String) {
-                    resolvedValue = value;
-                } else {
-                    //XXX
-                    continue;
-                }
-            } else if (type == Property.Type.Select) {
-                if (value instanceof String) {
-                    resolvedValue = value;
-                    if (!property.getSelectValues().contains((String) resolvedValue)) {
-                        throw new RuntimeException(
-                            "value not allowed for property " + property.getName() + ": " + resolvedValue);
-                    }
-                } else {
-                    //XXX
-                    continue;
+        }
+        this.extraConfiguration = inputConfig;
+    }
+
+    /**
+     * Set instance field value for the given property, returns true if the field value was set, false otherwise
+     */
+    private boolean setValueForProperty(Property property, Object value) {
+        final Field field = fieldForPropertyName(property.getName());
+        if (null == field) {
+
+            return false;
+        }
+        Property.Type type = property.getType();
+        Property.Type ftype = propertyTypeFromFieldType(field.getType());
+        if (ftype != property.getType()
+            && !(ftype == Property.Type.String
+                 && (property.getType() == Property.Type.Select
+                     || property.getType() == Property.Type.FreeSelect))) {
+
+            throw new IllegalStateException(
+                "cannot map property {" + property.getName() + " type: " + property.getType() + "} to field {"
+                + field.getName() + " type: " + ftype + "}");
+        }
+        final Object resolvedValue;
+        if (type == Property.Type.Integer) {
+            final Integer intvalue;
+            if (value instanceof String) {
+                intvalue = Integer.parseInt((String) value);
+            } else if (value instanceof Integer) {
+                intvalue = (Integer) value;
+            } else {
+                //XXX
+                return false;
+            }
+            resolvedValue = intvalue;
+        } else if (type == Property.Type.Long) {
+            final Long longvalue;
+            if (value instanceof String) {
+                longvalue = Long.parseLong((String) value);
+            } else if (value instanceof Long) {
+                longvalue = (Long) value;
+            } else if (value instanceof Integer) {
+                final int val = (Integer) value;
+                longvalue = (long) val;
+            } else {
+                //XXX
+                return false;
+            }
+            resolvedValue = longvalue;
+        } else if (type == Property.Type.Boolean) {
+            final Boolean boolvalue;
+            if (value instanceof String) {
+                boolvalue = Boolean.parseBoolean((String) value);
+            } else if (value instanceof Boolean) {
+                boolvalue = (Boolean) value;
+            } else {
+                //XXX
+                return false;
+            }
+            resolvedValue = boolvalue;
+        } else if (type == Property.Type.String || type == Property.Type.FreeSelect) {
+            if (value instanceof String) {
+                resolvedValue = value;
+            } else {
+                //XXX
+                return false;
+            }
+        } else if (type == Property.Type.Select) {
+            if (value instanceof String) {
+                resolvedValue = value;
+                if (!property.getSelectValues().contains((String) resolvedValue)) {
+                    throw new RuntimeException(
+                        "value not allowed for property " + property.getName() + ": " + resolvedValue);
                 }
             } else {
                 //XXX
-                continue;
+                return false;
             }
-            try {
-                setFieldValue(field, resolvedValue);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException("Unable to configure plugin: " + e.getMessage(), e);
-            }
-            inputConfig.remove(property.getName());
+        } else {
+            //XXX
+            return false;
         }
-        this.extraConfiguration = inputConfig;
+        try {
+            setFieldValue(field, resolvedValue);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException("Unable to configure plugin: " + e.getMessage(), e);
+        }
+        return true;
     }
 
     private void setFieldValue(final Field field, final Object value) throws IllegalAccessException {

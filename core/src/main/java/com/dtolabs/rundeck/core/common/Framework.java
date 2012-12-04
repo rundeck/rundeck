@@ -432,6 +432,22 @@ public class Framework extends FrameworkResourceParent {
         return lookup.getProperty(name);
     }
 
+    final PropertyRetriever propertyRetriever = new PropertyRetriever() {
+        @Override
+        public String getProperty(final String name) {
+            if(hasProperty(name)){
+                return Framework.this.getProperty(name);
+            }else{
+                return null;
+            }
+        }
+    };
+    /**
+     * Return a PropertyRetriever interface for framework-scoped properties
+     */
+    public PropertyRetriever getPropertyRetriever() {
+        return propertyRetriever;
+    }
 
     /**
      * Return true if the property exists

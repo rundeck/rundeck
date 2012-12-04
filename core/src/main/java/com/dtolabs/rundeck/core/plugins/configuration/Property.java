@@ -62,11 +62,6 @@ public interface Property {
 //        MultiSelect,
 //        MultiFreeSelect
     }
-    static enum Scope{
-        Framework,
-        Project,
-        Instance
-    }
 
     /**
      * Return descriptive name of the property
@@ -108,4 +103,9 @@ public interface Property {
      */
     public List<String> getSelectValues();
 
+    /**
+     * Return the scope of this property, i.e. where the value can be retrieved and overridden, or null to indicate
+     * the default scope.
+     */
+    public PropertyScope getScope();
 }

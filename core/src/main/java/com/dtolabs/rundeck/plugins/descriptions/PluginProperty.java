@@ -15,6 +15,8 @@ package com.dtolabs.rundeck.plugins.descriptions;/*
  *
  */
 
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -58,4 +60,9 @@ public @interface PluginProperty {
      * True if the property value is required
      */
     boolean required() default false;
+
+    /**
+     * The scope for resolving the property value at runtime
+     */
+    PropertyScope scope() default PropertyScope.Unspecified;
 }

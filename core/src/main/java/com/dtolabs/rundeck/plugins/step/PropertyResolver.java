@@ -16,37 +16,25 @@
  */
 
 /*
-* BaseStepPlugin.java
+* PropertyResolver.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 11/21/12 10:45 AM
+* Created: 12/3/12 3:20 PM
 * 
 */
 package com.dtolabs.rundeck.plugins.step;
 
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
-import com.dtolabs.rundeck.core.plugins.configuration.Describable;
-
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
 
 
 /**
- * BaseStepPlugin provides a base class for {@link StepPlugin} classes. Subclasses should implement {@link
- * #performStep(PluginStepContext)}
+ * PropertyResolver can return a property value resolved from a particular configuration scope
  *
- * @see AbstractBasePlugin
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public abstract class BaseStepPlugin extends AbstractBasePlugin implements StepPlugin, Describable {
-
-    @Override
-    public final boolean executeStep(final PluginStepContext context, final PluginStepItem item) throws StepException {
-        configureProperties(context.getPropertyResolver());
-        return performStep(context);
-    }
-
+public interface PropertyResolver {
     /**
-     * Perform the step and return true if successful
+     * Return a value for a named property found in the given scope, or null if not found.
      */
-    protected abstract boolean performStep(PluginStepContext context);
-
+    public Object resolvePropertyValue(String name, PropertyScope scope);
 }

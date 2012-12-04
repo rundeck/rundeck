@@ -603,6 +603,35 @@ public class FrameworkProject extends FrameworkResourceParent {
         return lookup.getPropertiesMap();
     }
 
+    /**
+     * Return the property value by name or null if not present
+     *
+     * @param name
+     *
+     * @return
+     */
+    private synchronized String getPropertySafe(final String name) {
+        checkReloadProperties();
+        if(lookup.hasProperty(name)){
+            return lookup.getProperty(name);
+        }
+        return null;
+    }
+
+
+    final PropertyRetriever propertyRetriever = new PropertyRetriever() {
+        @Override
+        public String getProperty(final String name) {
+            return getPropertySafe(name);
+        }
+    };
+
+    /**
+     * Return a PropertyRetriever interface for project-scoped properties
+     */
+    public PropertyRetriever getPropertyRetriever() {
+        return propertyRetriever;
+    }
 
 
    /**
