@@ -124,6 +124,7 @@ class MenuController {
         }
         
         def results = jobsFragment(query)
+        results.reportQueryParams=query.asReportQueryParams()
         
         withFormat{
             yaml{

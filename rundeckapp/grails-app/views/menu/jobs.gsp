@@ -160,9 +160,9 @@
         //now running
         var runupdate;
         function loadNowRunning(){
-            runupdate=new Ajax.PeriodicalUpdater({success:'nowrunning'},'${createLink(controller:"menu",action:"nowrunningFragment")}',{
+            runupdate=new Ajax.PeriodicalUpdater({success:'nowrunning'},'${createLink(controller:"menu",action:"nowrunningFragment",params: reportQueryParams?:[:])}',{
                 evalScripts:true,
-                parameters:{projFilter:'${session.project}'},
+                %{--parameters:{projFilter:'${session.project}'},--}%
                 onFailure:function (response) {
                     showError("AJAX error: Now Running ["+ runupdate.url+"]: "+response.status+" "+response.statusText);
                     runupdate.stop();
@@ -372,6 +372,8 @@
         <g:javascript>
             fireWhenReady('histcontent',loadHistory);
         </g:javascript>
+        <g:link controller="menu"  action="nowrunningFragment"  params="${reportQueryParams ?: [:]}">History</g:link>
+
     </div>
 </body>
 </html>

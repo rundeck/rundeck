@@ -117,6 +117,16 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
 //            job:'jobName',
 //            tags:'tags',
         ]
+        def schedTxtFilters= [
+            job:'jobName',
+        ]
+        def schedPathFilters=[
+            groupPath: 'groupPath'
+        ]
+        def schedExactFilters= [
+            groupPathExact:'groupPath'
+        ]
+        def schedFilterKeys= (schedExactFilters.keySet() + schedTxtFilters.keySet() + schedPathFilters.keySet())
 
         def filters = [ :]
         filters.putAll(txtfilters)
@@ -165,12 +175,34 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
                          }
                      }
                  }
+                 def schedfilts=[:]
+                 schedFilterKeys.each {
+                     if( query["${it}Filter"]){
+                         schedfilts[it]= query["${it}Filter"]
+                     }
+                 }
+                 if(schedfilts.groupPath=='*'){
+                     schedfilts.remove('groupPath')
+                 }
+                 if(schedfilts){
+                     scheduledExecution {
 
-                 //original Job name filter
-                 if(query.jobFilter){
-                    scheduledExecution{
-                        ilike('jobName','%'+query.jobFilter+'%')
-                    }
+                         schedExactFilters.each{key,v->
+                             if (query["${key}Filter"]) {
+                                 eq(v, query["${key}Filter"] )
+                             }
+                         }
+                         schedTxtFilters.each{key,v->
+                             if (query["${key}Filter"]) {
+                                 ilike(v, '%'+query["${key}Filter"] + '%')
+                             }
+                         }
+                         schedPathFilters.each{key,v->
+                             if (query["${key}Filter"]) {
+                                 ilike(v, query["${key}Filter"] + '%')
+                             }
+                         }
+                     }
                  }
 
 //                if(query.dostartafterFilter && query.dostartbeforeFilter && query.startbeforeFilter && query.startafterFilter){
