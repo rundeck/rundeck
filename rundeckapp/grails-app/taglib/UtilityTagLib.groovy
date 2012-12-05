@@ -5,7 +5,7 @@ class UtilityTagLib{
     def static  daysofweekkey = [Calendar.SUNDAY,Calendar.MONDAY,Calendar.TUESDAY,Calendar.WEDNESDAY,Calendar.THURSDAY,Calendar.FRIDAY,Calendar.SATURDAY];
     def public static daysofweekord = ScheduledExecution.daysofweeklist;
     def public static monthsofyearord = ScheduledExecution.monthsofyearlist;
-	static returnObjectForTags = ['rkey','w3cDateValue']
+	static returnObjectForTags = ['rkey','w3cDateValue','sortGroupKeys']
     def frameworkService
   
     private static Random rand=new java.util.Random()
@@ -24,7 +24,25 @@ class UtilityTagLib{
         return sprintf(attrs.format?:'%02x'*len,b)
     }
 
+    /**
+     * Return the group map sorted by group path
+     */
+    def sortGroupKeys={attrs,body->
+        def groups=attrs.groups
 
+        return groups.sort {a, b ->
+            def aa=a.key.split('/')
+            def ba = b.key.split('/')
+            def i=0
+            def comp=0
+            //compare each path component
+            while(i<aa.length && i<ba.length && comp==0){
+                comp= aa[i] <=> ba[i]
+                i++
+            }
+            comp ?: aa.length - ba.length
+        }
+    }
 
     /**
     * Render expander component
