@@ -3,7 +3,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 apply plugin: 'java'
 apply plugin: 'maven'
 sourceCompatibility = 1.5
-version = '1.4.4'
+version = '1.4.5-dev'
 archivesBaseName = 'rundeck-core'
 group = "com.dtolabs.rundeck"
 defaultTasks 'clean','assemble'
