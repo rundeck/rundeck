@@ -1893,6 +1893,8 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 scheduledExecution.errors.rejectValue('nodeInclude', 'scheduledExecution.nodeIncludeExclude.blank.message')
                 scheduledExecution.errors.rejectValue('nodeExclude', 'scheduledExecution.nodeIncludeExclude.blank.message')
                 failed = true
+            }else if (!scheduledExecution.nodeThreadcount){
+                scheduledExecution.nodeThreadcount=1
             }
         }
         failed = failed || !valid

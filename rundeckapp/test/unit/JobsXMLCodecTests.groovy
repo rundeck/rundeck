@@ -406,6 +406,34 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNotNull jobs
             assertNull "incorrect groupPath",jobs[0].groupPath
     }
+    void testDecodeNodedispatchEmptyThreadcount(){
+        def basic7 = """<joblist>
+  <job>
+    <id>8</id>
+    <name>punch2</name>
+    <description>dig it potato</description>
+    <loglevel>WARN</loglevel>
+    <context>
+      <project>zig</project>
+      <options>
+        <option name='clip' value='true' />
+      </options>
+    </context>
+    <sequence><command><exec>test</exec></command></sequence>
+     <dispatch>
+      <threadcount/>
+      <keepgoing>false</keepgoing>
+      <excludePrecedence>false</excludePrecedence>
+      <rankOrder>ascending</rankOrder>
+    </dispatch>
+  </job>
+</joblist>
+"""
+        def jobs = JobsXMLCodec.decode(basic7)
+        assertNotNull jobs
+        assertNotNull "incorrect nodeThreadcount", jobs[0].nodeThreadcount
+        assertEquals "incorrect nodeThreadcount", 1, jobs[0].nodeThreadcount
+    }
 
     void testDecodeExample(){
         def example1 = """<joblist>
