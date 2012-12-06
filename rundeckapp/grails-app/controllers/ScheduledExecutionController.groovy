@@ -586,29 +586,19 @@ class ScheduledExecutionController  {
     def delete = {
         log.debug("ScheduledExecutionController: delete : params: " + params)
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
-        if(scheduledExecution) {
-            if(!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_DELETE],
-                scheduledExecution.project)){
-                return unauthorized("Delete Job: ${params.id}")
-            }
-            def changeinfo=[user:session.user,method:'delete',change:'delete']
-            def jobdata=scheduledExecution.properties
-            def jobtitle=scheduledExecution.jobName
-            def result = scheduledExecutionService.deleteScheduledExecution(scheduledExecution)
+        def result = scheduledExecutionService.deleteScheduledExecutionById(params.id, framework, session.user, 'delete')
 
-            if (!result.success) {
-                flash.error = result.error
-                return redirect(action: show, id: params.id)
-            }else{
-                scheduledExecutionService.logJobChange(changeinfo, jobdata)
-                flash.message = "Job '${jobtitle}' was successfully deleted."
-                redirect(action:index, params:[:])
-            }
-        } else {
+        if(result.error?.errorCode=='notfound'){
             flash.message = "ScheduledExecution not found with id ${params.id}"
-            redirect(action:index, params:params)
+            return redirect(action: index, params: params)
+        }else if (result.error) {
+            flash.error = result.error.message
+            return redirect(action: show, id: params.id)
+        } else {
+            flash.message = result.success.message
+            redirect(action: index, params: [:])
         }
+
     }
     /**
      * Delete a set of jobs as specified in the idlist parameter.
@@ -618,10 +608,9 @@ class ScheduledExecutionController  {
         log.debug("ScheduledExecutionController: deleteBulk : params: " + params)
         if (!deleteRequest.ids && !deleteRequest.idlist) {
             flash.error = g.message(code: "api.error.parameter.required", args: ['ids or idlist'])
-            redirect(action: index, params: params)
+            return redirect(action: index, params: params)
         }
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-
         def ids = new HashSet<String>()
         if (deleteRequest.ids) {
             ids.addAll(deleteRequest.ids)
