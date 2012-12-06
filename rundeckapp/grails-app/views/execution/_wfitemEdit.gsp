@@ -1,4 +1,4 @@
-<%@ page import="rundeck.PluginStep; rundeck.CommandExec; rundeck.JobExec" %>
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; rundeck.PluginStep; rundeck.CommandExec; rundeck.JobExec" %>
 <%--
  Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
 
@@ -103,14 +103,16 @@
         <g:hiddenField name="newitemnodestep" value="${item?item.nodeStep:newitemnodestep=='true'}"/>
         <div>
             <table class="simpleForm nexecDetails">
-                <g:set var="nodeexecprefix" value="pluginConfig."/>
+                <g:set var="pluginprefix" value="pluginConfig."/>
                 <g:each in="${newitemDescription.properties}" var="prop">
+                    <g:if test="${!prop.scope || prop.scope.isInstanceLevel() || prop.scope.isUnspecified()}">
                     <tr>
                         <g:render
                                 template="/framework/pluginConfigPropertyField"
-                                model="${[prop: prop, prefix: nodeexecprefix, error: null, values: item?.configuration,
-                                        fieldname: nodeexecprefix + prop.name, origfieldname: 'orig.' + nodeexecprefix + prop.name, error: report?.errors ? report?.errors[prop.name] : null]}"/>
+                                model="${[prop: prop, prefix: pluginprefix, values: item?.configuration,
+                                        fieldname: pluginprefix + prop.name, origfieldname: 'orig.' + pluginprefix + prop.name, error: report?.errors ? report?.errors[prop.name] : null]}"/>
                     </tr>
+                    </g:if>
                 </g:each>
             </table>
         </div>
