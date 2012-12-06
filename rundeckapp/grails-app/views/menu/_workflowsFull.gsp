@@ -178,7 +178,38 @@
 <g:timerEnd key="head"/>
                 <g:if test="${ jobgroups}">
                     <g:timerStart key="groupTree"/>
+                    <g:form controller="scheduledExecution" action="deleteBulk">
+                    <div class="floatr" style="padding: 10px">
+                        <div>
+                            <span class="action textbtn job_bulk_edit bulk_edit_invoke">Bulk Delete</span>
+                        </div>
+                        <div class="bulk_edit_controls popout" style="display: none">
+                            <div style="border-bottom: 1px solid #aaa;padding-bottom: 4px;">
+                                <span class="action textbtn job_bulk_select_none" >Select None</span>
+                                <span class="action textbtn job_bulk_select_all" >Select All</span>
+                                <span class="action textbtn job_bulk_edit_hide " style="margin-left: 10px" >
+                                    Cancel
+                                    <g:img file="icon-tiny-removex.png" width="12px" height="12px" />
+                                </span>
+                            </div>
+                            <div class="bulk_edit_controls " style="display: none; margin: 5px;">
+                                <div class="info note">Select Jobs to delete.</div>
+
+                                <span id="bulk_del_prompt" class="button confirm_action floatr" data-confirm="bulk_del_confirm">Delete Selected Jobs</span>
+
+                                <div id="bulk_del_confirm" class="confirmMessage popout confirmbox" style="display:none; height: auto;">
+                                    Really delete these Jobs?
+                                    <div>
+                                        <button class="confirm_decline" data-confirm="bulk_del_prompt" data-confirm-view="bulk_del_confirm">No</button>
+                                        <g:submitButton name="Yes" class="button"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="clear"></div>
+                        </div>
+                    </div>
                     <g:render template="groupTree" model="${[small:params.compact?true:false,currentJobs:jobgroups['']?jobgroups['']:[],wasfiltered:wasfiltered?true:false,nowrunning:nowrunning,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
+                    </g:form>
                     <g:timerEnd key="groupTree"/>
                 </g:if>
     <g:timerStart key="tail"/>
@@ -208,6 +239,59 @@
         if(elem.type=='text'){
             elem.observe('keypress',noenter);
         }
+    });
+    $$('.confirm_action').each(function(elem){
+        var el=$(elem.getAttribute('data-confirm'));
+        Event.observe(elem,'click',function(e){
+            new MenuController().showRelativeTo(elem,el);
+//            $(elem).hide();
+        });
+    });
+    $$('.confirm_decline').each(function(elem){
+        var el=$(elem.getAttribute('data-confirm'));
+        var view=$(elem.getAttribute('data-confirm-view'));
+        Event.observe(elem,'click',function(e){
+            $(el).show();
+            $(view).hide();
+            e.preventDefault();
+        });
+    });
+    $$('.job_bulk_edit').each(function(elem){
+        Event.observe(elem,'click',function(e){
+            $$('.jobbulkeditfield').each(Element.show);
+            $$('.bulk_edit_controls').each(Element.show);
+            $$('.bulk_edit_invoke').each(Element.hide);
+        });
+    });
+    $$('.job_bulk_edit_hide').each(function(elem){
+        Event.observe(elem,'click',function(e){
+            $$('.jobbulkeditfield').each(Element.hide);
+            $$('.bulk_edit_controls').each(Element.hide);
+            $$('.bulk_edit_invoke').each(Element.show);
+            $$('.jobbulkeditfield').each(function(z){
+                z.select('input[type=checkbox]').each(function(box){
+                    box.checked=false;
+                });
+            });
+        });
+    });
+    $$('.job_bulk_select_all').each(function(elem){
+        Event.observe(elem,'click',function(e){
+            $$('.jobbulkeditfield').each(function(z){
+                z.select('input[type=checkbox]').each(function(box){
+                    box.checked=true;
+                });
+            });
+        });
+    });
+    $$('.job_bulk_select_none').each(function(elem){
+        Event.observe(elem,'click',function(e){
+            $$('.jobbulkeditfield').each(function(z){
+                z.select('input[type=checkbox]').each(function(box){
+                    box.checked=false;
+                });
+            });
+        });
     });
 
 </g:javascript>

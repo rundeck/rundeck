@@ -356,6 +356,24 @@
 
     <div id="error" class="error message" style="display:none;"></div>
 </div>
+<g:if test="${flash.bulkDeleteResult?.errors}">
+    <span class="error note">
+        <ul>
+            <g:each in="${flash.bulkDeleteResult.errors*.message}" var="message">
+                <li>${message.encodeAsHTML()}</li>
+            </g:each>
+        </ul>
+    </span>
+</g:if>
+<g:if test="${flash.bulkDeleteResult?.success}">
+    <span class="message note">
+        <ul>
+        <g:each in="${flash.bulkDeleteResult.success*.message}" var="message">
+            <li>${message.encodeAsHTML()}</li>
+        </g:each>
+        </ul>
+    </span>
+</g:if>
 <div class="runbox jobs" id="indexMain">
     <g:render template="workflowsFull" model="${[jobgroups:jobgroups,wasfiltered:wasfiltered?true:false,nowrunning:nowrunning,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,rkey:rkey]}"/>
 </div>

@@ -169,7 +169,7 @@ a.tab,span.tab{
 a.toptab + a.toptab{
     border-left:0;
 }
-a.tab:hover, a.toptab:hover, a.tab.selected, a.toptab.selected{
+a.tab:hover, a.toptab:hover, a.tab.selected, a.toptab.selected, span.button.selected{
     background: #ddd;
 }
 a.tab.disabled, span.tab.disabled{
