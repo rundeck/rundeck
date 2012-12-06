@@ -179,6 +179,7 @@
                 <g:if test="${ jobgroups}">
                     <g:timerStart key="groupTree"/>
                     <g:form controller="scheduledExecution" action="deleteBulk">
+                    <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE  }">
                     <div class="floatr" style="padding: 10px">
                         <div>
                             <span class="action textbtn job_bulk_edit bulk_edit_invoke">Bulk Delete</span>
@@ -208,6 +209,7 @@
                             <div class="clear"></div>
                         </div>
                     </div>
+                    </auth:resourceAllowed>
                     <g:render template="groupTree" model="${[small:params.compact?true:false,currentJobs:jobgroups['']?jobgroups['']:[],wasfiltered:wasfiltered?true:false,nowrunning:nowrunning,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
                     </g:form>
                     <g:timerEnd key="groupTree"/>

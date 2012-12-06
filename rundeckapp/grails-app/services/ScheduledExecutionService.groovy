@@ -415,9 +415,10 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             ]
             return [error: err]
         }
-        if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_DELETE], scheduledExecution.project)) {
+        if (!frameworkService.authorizeProjectResource (framework, [type: 'resource', kind: 'job'], AuthConstants.ACTION_DELETE, scheduledExecution.project)
+            || !frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_DELETE], scheduledExecution.project)) {
             def err = [
-                    message: lookupMessage('api.error.item.unauthorized', ['Delete', 'Job ID', scheduledExecution.extid]),
+                    message: lookupMessage('api.error.item.unauthorized', ['Delete', 'Job ID', scheduledExecution.extid] as Object[]),
                     errorCode: 'unauthorized',
                     id: scheduledExecution.extid,
                     job: scheduledExecution
