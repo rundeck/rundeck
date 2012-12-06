@@ -134,7 +134,7 @@ class ScheduledExecution extends ExecutionContext {
         }
         if(doNodedispatch){
             def yfilters=["":"hostname"]
-            map.nodefilters=[dispatch:[threadcount:nodeThreadcount,keepgoing:nodeKeepgoing,excludePrecedence:nodeExcludePrecedence]]
+            map.nodefilters=[dispatch:[threadcount:null!=nodeThreadcount?nodeThreadcount:1,keepgoing:nodeKeepgoing?true:false,excludePrecedence:nodeExcludePrecedence?true:false]]
             if(nodeRankAttribute){
                 map.nodefilters.dispatch.rankAttribute= nodeRankAttribute
             }
@@ -221,8 +221,7 @@ class ScheduledExecution extends ExecutionContext {
             se.multipleExecutions=data.multipleExecutions?true:false
         }
         if(data.nodefilters){
-
-            se.nodeThreadcount = data.nodefilters.dispatch.threadcount
+            se.nodeThreadcount = data.nodefilters.dispatch.threadcount ? data.nodefilters.dispatch.threadcount : 1
             if(data.nodefilters.dispatch.containsKey('keepgoing')){
                 se.nodeKeepgoing = data.nodefilters.dispatch.keepgoing
             }

@@ -40,9 +40,11 @@
         <span class="group floatr" id="${ukey}jobDisplayButtons${scheduledExecution.id}">
             <g:if test="${!small }">
                 <g:if test="${!execPage}">
-                <g:if test="${jobAuths[AuthConstants.ACTION_DELETE]?.contains(idKey) }">
-                    <span class="icon button floatl" title="Delete ${g.message(code:'domain.ScheduledExecution.title')}" onclick="menus.showRelativeTo(this,'${ukey}jobDisplayDeleteConf${scheduledExecution.id}',-2,-2);return false;"><img src="${resource(dir:'images',file:'icon-small-removex.png')}" alt="delete" width="16px" height="16px"/></span>
-                </g:if>
+                    <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}">
+                        <g:if test="${jobAuths[AuthConstants.ACTION_DELETE]?.contains(idKey) }">
+                            <span class="icon button floatl" title="Delete ${g.message(code:'domain.ScheduledExecution.title')}" onclick="menus.showRelativeTo(this,'${ukey}jobDisplayDeleteConf${scheduledExecution.id}',-2,-2);return false;"><img src="${resource(dir:'images',file:'icon-small-removex.png')}" alt="delete" width="16px" height="16px"/></span>
+                        </g:if>
+                    </auth:resourceAllowed>
                 </g:if>
                 <g:if test="${jobAuths[AuthConstants.ACTION_CREATE] && jobAuths[AuthConstants.ACTION_READ]?.contains(idKey) }">
                     <g:link controller="scheduledExecution" title="Copy Job" action="copy" id="${scheduledExecution.extid}" class="icon button floatl"><img src="${resource(dir:'images',file:'icon-small-copy.png')}" alt="copy" width="16px" height="16px"/></g:link>

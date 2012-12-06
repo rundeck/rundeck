@@ -5,7 +5,7 @@ for:
   resource:
     - equals:
         kind: job
-      allow: [create] # allow create jobs
+      allow: [create,delete] # allow create and delete jobs
     - equals:
         kind: node
       allow: [read,create,update,refresh] # allow refresh node sources

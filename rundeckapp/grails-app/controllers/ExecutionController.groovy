@@ -445,6 +445,24 @@ class ExecutionController {
                     }
                 }
             }
+        }else if (params.markdown=='group'){
+            def ctx=[:]
+            def newe=[]
+            def buf=[]
+            entry.each {et->
+                if(et.command!=ctx.command || et.node!=ctx.node){
+                    if (newe){
+                        //push buf
+                        ctx.loghtml=buf.join("\n").decodeMarkdown()
+                        buf = []
+                    }
+                    ctx = et
+                    newe<< et
+                }
+                buf<< et.mesg
+            }
+            ctx.loghtml = buf.join("\n").decodeMarkdown()
+            entry=newe
         }
         long marktime=System.currentTimeMillis()
         def lastmodl = file.lastModified()
@@ -618,7 +636,7 @@ class ExecutionController {
                         if(list.size() > ExecutionService.EXEC_FORMAT_SEQUENCE.size()){
                             //join last sections into one message.
                             def sb = new StringBuffer()
-                            sb.append(list.get(ExecutionService.EXEC_FORMAT_SEQUENCE.size()).trim())
+                            sb.append(list.get(ExecutionService.EXEC_FORMAT_SEQUENCE.size()))
                             for(def i=ExecutionService.EXEC_FORMAT_SEQUENCE.size()+1;i<list.size();i++){
                                 sb.append('|')
                                 sb.append(list.get(i).trim())

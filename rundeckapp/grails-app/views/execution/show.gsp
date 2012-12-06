@@ -47,7 +47,7 @@
         var followControl = new FollowControl('${execution?.id}','commandPerform',{
             appLinks:appLinks,
             iconUrl: "${resource(dir: 'images', file: 'icon')}",
-            extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>",
+            extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${params.markdown}",
             lastlines: ${params.lastlines ? params.lastlines : defaultLastLines},
             maxLastLines: ${maxLastLines},
             collapseCtx: {value:${null == execution?.dateCompleted },changed:false},

@@ -24,6 +24,8 @@
 class ExecQuery extends ReportQuery{
     String controllerFilter
     String cmdFilter
+    String groupPathFilter
+    String groupPathExactFilter
 
     static constraints = {
         statFilter(nullable:true,inList:["succeed","fail"])

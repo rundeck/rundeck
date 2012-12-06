@@ -241,6 +241,41 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
         }
     }
 
+    public void testDoValidateNodedispatchIsBlank() {
+        mockDomain(ScheduledExecution)
+        mockDomain(Workflow)
+        def testService = new ScheduledExecutionService()
+
+        //test nodedispatch true, threadcount should default to 1 if input is blank
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.existsFrameworkProject {project, framework ->
+            assertEquals 'testProject', project
+            return true
+        }
+        fwkControl.demand.getCommand {project, type, command, framework ->
+            assertEquals 'testProject', project
+            assertEquals 'aType', type
+            assertEquals 'aCommand', command
+            return null
+        }
+        testService.frameworkService = fwkControl.createMock()
+
+        def params = [jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: 'a command',doNodedispatch: 'true',nodeInclude: 'blah',nodeThreadcount: ""]
+        def results = testService._dovalidate(params,'test','test',null)
+        assertFalse(results.failed)
+        assertNotNull(results.scheduledExecution)
+        assertTrue(results.scheduledExecution instanceof ScheduledExecution)
+        final ScheduledExecution execution = results.scheduledExecution
+        assertNotNull(execution)
+        assertNotNull(execution.errors)
+        assertFalse(execution.errors.hasErrors())
+        assertFalse(execution.errors.hasFieldErrors())
+        assertTrue(execution.doNodedispatch)
+        assertNotNull(execution.nodeThreadcount)
+        assertEquals(1,execution.nodeThreadcount)
+    }
+
     public void testDoValidateWorkflow() {
         def testService = new ScheduledExecutionService()
         if (true) {//test job with options
@@ -4648,6 +4683,64 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertNotNull(execution.errors)
             assertFalse(execution.errors.hasErrors())
             assertNull execution.options
+        }
+    }
+    public void testDoUpdateSessionOptsShouldRemoveOptions() {
+
+        def sec = new ScheduledExecutionService()
+        if (true) {//test updateJob: no options in input job should remove existing options
+
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2',
+                                            workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]),
+                                            )
+            def opt1 = new Option(name: 'test1', defaultValue: 'val1', enforced: false, valuesUrl: "http://test.com/test")
+            def opt2 = new Option(name: 'test2', defaultValue: 'val2', enforced: true, values: ['a', 'b', 'c'])
+            se.addToOptions(opt1)
+            se.addToOptions(opt2)
+            se.save()
+
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.existsFrameworkProject {project, framework ->
+                return true
+            }
+            fwkControl.demand.getCommand {project, type, command, framework ->
+                return null
+            }
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            sec.frameworkService = fwkControl.createMock()
+
+            def params = [
+                    id: se.id.toString(),
+                    jobName: 'monkey2',
+                    project: 'testProject',
+                    description: 'blah',
+                    workflow: [threadcount: 1, keepgoing: true, "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
+                    _sessionopts: true,
+                    _sessionEditOPTSObject:[:] //empty map to clear options
+            ]
+
+            def results = sec._doupdate(params, 'test', 'test', null)
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            assertTrue succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = scheduledExecution
+            assertNotNull(execution)
+            assertNotNull(execution.errors)
+            assertFalse(execution.errors.hasErrors())
+            assertNull "should not have options",execution.options
         }
     }
 

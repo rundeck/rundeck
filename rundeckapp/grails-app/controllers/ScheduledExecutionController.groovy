@@ -46,6 +46,7 @@ class ScheduledExecutionController  {
     def static allowedMethods = [delete:'POST',
         save:'POST',
         update:'POST',
+        deleteBulk:'POST',
         apiJobsImport:'POST',
         apiJobDelete:'DELETE',
         apiJobAction:['GET','DELETE'],
@@ -585,29 +586,51 @@ class ScheduledExecutionController  {
     def delete = {
         log.debug("ScheduledExecutionController: delete : params: " + params)
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
-        if(scheduledExecution) {
-            if(!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_DELETE],
-                scheduledExecution.project)){
-                return unauthorized("Delete Job: ${params.id}")
-            }
-            def changeinfo=[user:session.user,method:'delete',change:'delete']
-            def jobdata=scheduledExecution.properties
-            def jobtitle=scheduledExecution.jobName
-            def result = scheduledExecutionService.deleteScheduledExecution(scheduledExecution)
+        def result = scheduledExecutionService.deleteScheduledExecutionById(params.id, framework, session.user, 'delete')
 
-            if (!result.success) {
-                flash.error = result.error
-                return redirect(action: show, id: params.id)
-            }else{
-                scheduledExecutionService.logJobChange(changeinfo, jobdata)
-                flash.message = "Job '${jobtitle}' was successfully deleted."
-                redirect(action:index, params:[:])
-            }
-        } else {
+        if(result.error?.errorCode=='notfound'){
             flash.message = "ScheduledExecution not found with id ${params.id}"
-            redirect(action:index, params:params)
+            return redirect(action: index, params: params)
+        }else if (result.error) {
+            flash.error = result.error.message
+            return redirect(action: show, id: params.id)
+        } else {
+            flash.message = result.success.message
+            redirect(action: index, params: [:])
         }
+
+    }
+    /**
+     * Delete a set of jobs as specified in the idlist parameter.
+     * Only allowed via POST http method
+     */
+    def deleteBulk = {ApiBulkJobDeleteRequest deleteRequest ->
+        log.debug("ScheduledExecutionController: deleteBulk : params: " + params)
+        if (!deleteRequest.ids && !deleteRequest.idlist) {
+            flash.error = g.message(code: "api.error.parameter.required", args: ['ids or idlist'])
+            return redirect(action: index, params: params)
+        }
+        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
+        def ids = new HashSet<String>()
+        if (deleteRequest.ids) {
+            ids.addAll(deleteRequest.ids)
+        }
+        if (deleteRequest.idlist) {
+            ids.addAll(deleteRequest.idlist.split(','))
+        }
+
+        def successful = []
+        def deleteerrs = []
+        ids.sort().each {jobid ->
+            def result = scheduledExecutionService.deleteScheduledExecutionById(jobid, framework, session.user, 'deleteBulk')
+            if (result.error) {
+                deleteerrs << result.error
+            } else {
+                successful << result.success
+            }
+        }
+        flash.bulkDeleteResult = [success: successful, errors: deleteerrs]
+        redirect(controller: 'menu', action: 'jobs')
     }
 
     /**
@@ -634,34 +657,11 @@ class ScheduledExecutionController  {
         def successful = []
         def deleteerrs=[]
         ids.sort().each{jobid->
-
-            def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
-            if (!scheduledExecution) {
-                deleteerrs << [
-                        message: g.message(code: "api.error.item.doesnotexist", args: ['Job ID', jobid]),
-                        errorCode: 'notfound',
-                        id: jobid
-                ]
-                return
-            }
-            if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_DELETE], scheduledExecution.project)) {
-                deleteerrs << [
-                        message:g.message(code: 'api.error.item.unauthorized', args: ['Delete', 'Job ID', scheduledExecution.extid]),
-                        errorCode: 'unauthorized',
-                        id: scheduledExecution.extid,
-                        job:scheduledExecution
-                ]
-                return
-            }
-            def changeinfo = [user: session.user, method: 'apiJobDeleteBulk', change: 'delete']
-            def jobdata = scheduledExecution.properties
-            def jobtitle = "[" + scheduledExecution.extid + "] " + scheduledExecution.generateFullName()
-            def result = scheduledExecutionService.deleteScheduledExecution(scheduledExecution)
-            if (!result.success) {
-                deleteerrs<< [message:result.error,job:scheduledExecution,errorCode:'failed',id:scheduledExecution.extid]
+            def result = scheduledExecutionService.deleteScheduledExecutionById(jobid,framework,session.user, 'apiJobDeleteBulk')
+            if (result.error) {
+                deleteerrs<< result.error
             } else {
-                scheduledExecutionService.logJobChange(changeinfo, jobdata)
-                successful<< [message:g.message(code: 'api.success.job.delete.message', args: [jobtitle]),job:scheduledExecution]
+                successful<< result.success
             }
         }
         return new ApiController().success { delegate ->
@@ -741,11 +741,10 @@ class ScheduledExecutionController  {
             if(scheduledExecution.errors){
                 log.debug scheduledExecution.errors.allErrors.collect {g.message(error: it)}.join(", ")
             }
-            flash.message="Error updating scheduled command "
-            if(result.message >2){
-                flash.message= flash.message+": "+result.message
+            request.message="Error updating Job "
+            if(result.message){
+                request.message+=": "+result.message
             }
-            log.debug("update operation failed. redirecting to edit ...")
 
             if(!scheduledExecution.isAttached()) {
                 scheduledExecution.attach()
@@ -926,12 +925,12 @@ class ScheduledExecutionController  {
         session.redoWF?.remove(id)
     }
 
-    private transferSessionEditState(session,params,id){
+    void transferSessionEditState(session,params,id){
         //pass session-stored edit state in params map
-        if (params['_sessionwf'] && session.editWF && session.editWF[id]) {
+        if (params['_sessionwf'] && session.editWF && null != session.editWF[id]) {
             params['_sessionEditWFObject'] = session.editWF[id]
         }
-        if (params['_sessionopts'] && session.editOPTS && session.editOPTS[id]) {
+        if (params['_sessionopts'] && session.editOPTS && null != session.editOPTS[id]) {
             params['_sessionEditOPTSObject'] = session.editOPTS[id]
         }
     }

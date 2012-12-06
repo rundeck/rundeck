@@ -131,9 +131,9 @@
         /** START history
          *
          */
-        var histControl = new HistoryControl('histcontent',{compact:true,nofilters:true,recentFilter:'1d',projFilter:'${session.project}'});
+        var histControl = new HistoryControl('histcontent',{compact:true,nofilters:true});
         function loadHistory(){
-            histControl.loadHistory();
+            histControl.loadHistory( ${(reportQueryParams?:[projFilter:session.project]).encodeAsJSON()});
         }
         /** now running section update */
         var savedcount=0;
@@ -160,9 +160,8 @@
         //now running
         var runupdate;
         function loadNowRunning(){
-            runupdate=new Ajax.PeriodicalUpdater({success:'nowrunning'},'${createLink(controller:"menu",action:"nowrunningFragment")}',{
+            runupdate=new Ajax.PeriodicalUpdater({success:'nowrunning'},'${createLink(controller:"menu",action:"nowrunningFragment",params: execQueryParams?:[projFilter: session.project])}',{
                 evalScripts:true,
-                parameters:{projFilter:'${session.project}'},
                 onFailure:function (response) {
                     showError("AJAX error: Now Running ["+ runupdate.url+"]: "+response.status+" "+response.statusText);
                     runupdate.stop();
@@ -357,6 +356,24 @@
 
     <div id="error" class="error message" style="display:none;"></div>
 </div>
+<g:if test="${flash.bulkDeleteResult?.errors}">
+    <span class="error note">
+        <ul>
+            <g:each in="${flash.bulkDeleteResult.errors*.message}" var="message">
+                <li>${message.encodeAsHTML()}</li>
+            </g:each>
+        </ul>
+    </span>
+</g:if>
+<g:if test="${flash.bulkDeleteResult?.success}">
+    <span class="message note">
+        <ul>
+        <g:each in="${flash.bulkDeleteResult.success*.message}" var="message">
+            <li>${message.encodeAsHTML()}</li>
+        </g:each>
+        </ul>
+    </span>
+</g:if>
 <div class="runbox jobs" id="indexMain">
     <g:render template="workflowsFull" model="${[jobgroups:jobgroups,wasfiltered:wasfiltered?true:false,nowrunning:nowrunning,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,rkey:rkey]}"/>
 </div>
@@ -366,12 +383,18 @@
 
     </div>
 </div>
-<div class="runbox">History</div>
+<div class="runbox">
+    <g:if test="${reportQueryParams}">
+        <g:link controller="reports" action="index" params="${reportQueryParams ?: [:]}">History</g:link>
+    </g:if>
+    <g:else>History</g:else>
+</div>
     <div class="pageBody">
         <div id="histcontent"></div>
         <g:javascript>
             fireWhenReady('histcontent',loadHistory);
         </g:javascript>
+
     </div>
 </body>
 </html>

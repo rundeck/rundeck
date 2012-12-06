@@ -6,8 +6,7 @@ class FeedController {
             return 
         }
         if(null!=query && !params.find{ it.key.endsWith('Filter')}){
-            query.recentFilter="1d"
-            params.recentFilter="1d"
+            //no default filter
         }
 
         if(null!=query){
@@ -24,8 +23,7 @@ class FeedController {
             return
         }
         if(null!=query && !params.find{ it.key.endsWith('Filter')}){
-            query.recentFilter="1d"
-            params.recentFilter="1d"
+            //no default filter
         }
 
         if(null!=query){
@@ -41,8 +39,7 @@ class FeedController {
             return
         }
         if(null!=query && !params.find{ it.key.endsWith('Filter')}){
-            query.recentFilter="1d"
-            params.recentFilter="1d"
+            //no default filter
         }
 
         if(null!=query){

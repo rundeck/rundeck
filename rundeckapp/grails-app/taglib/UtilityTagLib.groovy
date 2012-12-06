@@ -5,7 +5,7 @@ class UtilityTagLib{
     def static  daysofweekkey = [Calendar.SUNDAY,Calendar.MONDAY,Calendar.TUESDAY,Calendar.WEDNESDAY,Calendar.THURSDAY,Calendar.FRIDAY,Calendar.SATURDAY];
     def public static daysofweekord = ScheduledExecution.daysofweeklist;
     def public static monthsofyearord = ScheduledExecution.monthsofyearlist;
-	static returnObjectForTags = ['rkey','w3cDateValue']
+	static returnObjectForTags = ['rkey','w3cDateValue','sortGroupKeys']
     def frameworkService
   
     private static Random rand=new java.util.Random()
@@ -24,7 +24,25 @@ class UtilityTagLib{
         return sprintf(attrs.format?:'%02x'*len,b)
     }
 
+    /**
+     * Return the group map sorted by group path
+     */
+    def sortGroupKeys={attrs,body->
+        def groups=attrs.groups
 
+        return groups.sort {a, b ->
+            def aa=a.key.split('/')
+            def ba = b.key.split('/')
+            def i=0
+            def comp=0
+            //compare each path component
+            while(i<aa.length && i<ba.length && comp==0){
+                comp= aa[i] <=> ba[i]
+                i++
+            }
+            comp ?: aa.length - ba.length
+        }
+    }
 
     /**
     * Render expander component
@@ -550,36 +568,32 @@ class UtilityTagLib{
      */
     def humanize={attrs,body->
         if(attrs.unit && null!=attrs.value){
-            if(attrs.unit=='byte'){
+            if(attrs.unit=='byte' || attrs.unit=='hbyte'){
                 long val=attrs.value instanceof String?Long.parseLong(attrs.value):attrs.value
-                def testset=[
-                    [value: 0, name: 'B'],
-                    [value: 1024, name: 'KiB'],
-                    [value: 1024*1024, name: 'MiB'],
-                    [value: 1024 * 1024 * 1024, name: 'GiB'],
-                    [value: 1024 * 1024 * 1024 * 1024, name: 'TiB'],
-                ]
+                def testmap=[
+                        byte:[
+                            [value: 0, name: 'B'],
+                            [value: 1024L, name: 'KiB'],
+                            [value: 1024L * 1024, name: 'MiB'],
+                            [value: 1024L * 1024 * 1024, name: 'GiB'],
+                            [value: 1024L * 1024 * 1024 * 1024, name: 'TiB'],
+                        ],
+                        hbyte: [
+                            [value: 0, name: 'B'],
+                            [value: 1000L, name: 'KB'],
+                            [value: 1000L * 1000, name: 'MB'],
+                            [value: 1000L * 1000 * 1000, name: 'GB'],
+                            [value: 1000L * 1000 * 1000 * 1000, name: 'TB'],
+                        ]
+                    ]
+                def testset=testmap[attrs.unit]
                 def found
                 testset.eachWithIndex  {lvl, x -> if (!found && val < lvl.value) {found = testset[x-1]} }
                 if(!found){
                     found=testset[-1]
                 }
-                out<<g.formatNumber([number : (val/found.value), type : "number", maxFractionDigits: "2"],body)+' '+found.name
-            }else if(attrs.unit=='hbyte'){
-                long val=attrs.value instanceof String?Long.parseLong(attrs.value):attrs.value
-                def testset=[
-                    [value: 0, name: 'B'],
-                    [value: 1000, name: 'KB'],
-                    [value: 1000* 1000, name: 'MB'],
-                    [value: 1000 * 1000 * 1000, name: 'GB'],
-                    [value: 1000 * 1000 * 1000 * 1000, name: 'TB'],
-                ]
-                def found
-                testset.eachWithIndex  {lvl, x -> if (!found && val < lvl.value) {found = testset[x-1]} }
-                if(!found){
-                    found=testset[-1]
-                }
-                out<<g.formatNumber([number : (val/found.value), type : "number", maxFractionDigits: "2"],body)+' '+found.name
+                def outputNumber = found.value > 0 ? (val / found.value) : val
+                out<<g.formatNumber([number : outputNumber, type : "number", maxFractionDigits: "2"],body)+' '+found.name
             }else if(attrs.unit=='ms'){
                 attrs.time=attrs.value
                 out<<timeDuration(attrs,body)

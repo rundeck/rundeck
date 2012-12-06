@@ -434,8 +434,7 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
 
             configurePrintStream(argQuiet);
 
-            if ((null == argsDeferred || 0 == argsDeferred.length) && null == getScript()
-                && null == getServerScriptFilePath() && !isInlineScript()) {
+            if (!hasNecessaryRunArgs()) {
                 listAction();
             } else if (argNoQueue) {
                 runAction();
@@ -463,6 +462,21 @@ public class ExecTool implements CLITool,IDispatchedScript,CLILoggerParams, Exec
             }
         }
         exit(exitCode);
+    }
+
+    /**
+     * Return true if any necessary args for dispatch are present.
+     */
+    private boolean hasNecessaryRunArgs() {
+        return hasArgsDeferred()
+                || null != getScript()
+                || null != getServerScriptFilePath()
+                || isInlineScript()
+                || null != getScriptURLString();
+    }
+
+    private boolean hasArgsDeferred() {
+        return null != argsDeferred && 0 != argsDeferred.length;
     }
 
     /**
