@@ -48,18 +48,6 @@ class RuntimePropertyResolver implements PropertyResolver {
         this.frameworkScopeResolver = frameworkScopeResolver;
     }
 
-    private boolean allowsInstanceScope(PropertyScope scope) {
-        return scope == PropertyScope.Instance;
-    }
-
-    private boolean allowsProjectScope(PropertyScope scope) {
-        return allowsInstanceScope(scope) || scope == PropertyScope.Project;
-    }
-
-    private boolean allowsFrameworkScope(PropertyScope scope) {
-        return allowsProjectScope(scope) || scope == PropertyScope.Framework;
-    }
-
     /**
      * Resolve the property value
      *
@@ -71,7 +59,7 @@ class RuntimePropertyResolver implements PropertyResolver {
             throw new IllegalArgumentException("scope must be specified");
         }
         String value = null;
-        if (allowsInstanceScope(scope) || scope == PropertyScope.InstanceOnly) {
+        if (scope.isInstanceLevel()) {
             if (null != instanceScopeResolver) {
                 value = instanceScopeResolver.getProperty(name);
             }
@@ -80,7 +68,7 @@ class RuntimePropertyResolver implements PropertyResolver {
             return value;
         }
 
-        if (allowsProjectScope(scope) || scope == PropertyScope.ProjectOnly) {
+        if (scope.isProjectLevel()) {
             if (null != projectScopeResolver) {
                 value = projectScopeResolver.getProperty(name);
             }
@@ -89,7 +77,7 @@ class RuntimePropertyResolver implements PropertyResolver {
             return value;
         }
         if (null != frameworkScopeResolver) {
-            if (allowsFrameworkScope(scope)) {
+            if (scope.isFrameworkLevel()) {
                 value = frameworkScopeResolver.getProperty(name);
             }
         }
