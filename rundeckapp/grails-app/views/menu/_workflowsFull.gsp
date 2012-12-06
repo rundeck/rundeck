@@ -182,27 +182,27 @@
                     <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE  }">
                     <div class="floatr" style="padding: 10px">
                         <div>
-                            <span class="action textbtn job_bulk_edit bulk_edit_invoke">Bulk Delete</span>
+                            <span class="action textbtn job_bulk_edit bulk_edit_invoke"><g:message code="bulk.delete" /></span>
                         </div>
                         <div class="bulk_edit_controls popout" style="display: none">
                             <div style="border-bottom: 1px solid #aaa;padding-bottom: 4px;">
-                                <span class="action textbtn job_bulk_select_none" >Select None</span>
-                                <span class="action textbtn job_bulk_select_all" >Select All</span>
+                                <span class="action textbtn job_bulk_select_none" ><g:message code="select.none" /></span>
+                                <span class="action textbtn job_bulk_select_all" ><g:message code="select.all" /></span>
                                 <span class="action textbtn job_bulk_edit_hide " style="margin-left: 10px" >
-                                    Cancel
+                                    <g:message code="cancel" />
                                     <g:img file="icon-tiny-removex.png" width="12px" height="12px" />
                                 </span>
                             </div>
                             <div class="bulk_edit_controls " style="display: none; margin: 5px;">
-                                <div class="info note">Select Jobs to delete.</div>
+                                <div class="info note"><g:message code="select.jobs.to.delete" /></div>
 
-                                <span id="bulk_del_prompt" class="button confirm_action floatr" data-confirm="bulk_del_confirm">Delete Selected Jobs</span>
+                                <span id="bulk_del_prompt" class="button confirm_action floatr" data-confirm="bulk_del_confirm"><g:message code="delete.selected.jobs" /></span>
 
                                 <div id="bulk_del_confirm" class="confirmMessage popout confirmbox" style="display:none; height: auto;">
-                                    Really delete these Jobs?
+                                    <g:message code="really.delete.these.jobs" />
                                     <div>
-                                        <button class="confirm_decline" data-confirm="bulk_del_prompt" data-confirm-view="bulk_del_confirm">No</button>
-                                        <g:submitButton name="Yes" class="button"/>
+                                        <button class="confirm_decline" data-confirm="bulk_del_prompt" data-confirm-view="bulk_del_confirm"><g:message code="no" /></button>
+                                        <g:submitButton name="${g.message(code:'yes')}" class="button"/>
                                     </div>
                                 </div>
                             </div>
