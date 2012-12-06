@@ -241,6 +241,41 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
         }
     }
 
+    public void testDoValidateNodedispatchIsBlank() {
+        mockDomain(ScheduledExecution)
+        mockDomain(Workflow)
+        def testService = new ScheduledExecutionService()
+
+        //test nodedispatch true, threadcount should default to 1 if input is blank
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+        fwkControl.demand.existsFrameworkProject {project, framework ->
+            assertEquals 'testProject', project
+            return true
+        }
+        fwkControl.demand.getCommand {project, type, command, framework ->
+            assertEquals 'testProject', project
+            assertEquals 'aType', type
+            assertEquals 'aCommand', command
+            return null
+        }
+        testService.frameworkService = fwkControl.createMock()
+
+        def params = [jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: 'a command',doNodedispatch: 'true',nodeInclude: 'blah',nodeThreadcount: ""]
+        def results = testService._dovalidate(params,'test','test',null)
+        assertFalse(results.failed)
+        assertNotNull(results.scheduledExecution)
+        assertTrue(results.scheduledExecution instanceof ScheduledExecution)
+        final ScheduledExecution execution = results.scheduledExecution
+        assertNotNull(execution)
+        assertNotNull(execution.errors)
+        assertFalse(execution.errors.hasErrors())
+        assertFalse(execution.errors.hasFieldErrors())
+        assertTrue(execution.doNodedispatch)
+        assertNotNull(execution.nodeThreadcount)
+        assertEquals(1,execution.nodeThreadcount)
+    }
+
     public void testDoValidateWorkflow() {
         def testService = new ScheduledExecutionService()
         if (true) {//test job with options

@@ -63,13 +63,12 @@ class ReportsController {
 
         if(params['Clear']){
             query=new ReportQuery()
-            query.recentFilter="1d"
-            params.recentFilter="1d"
+            //no default filter
+            params.recentFilter=null
             usedFilter=null
         }
         if(null!=query && !params.find{ it.key.endsWith('Filter')}){
-            query.recentFilter="1d"
-            params.recentFilter="1d"
+            //no default filter
         }
         if(query && !query.projFilter && session.project){
             query.projFilter = session.project
@@ -128,8 +127,7 @@ class ReportsController {
         def options = [:]
 
         if(null!=query && !params.find{ it.key.endsWith('Filter')}){
-            query.recentFilter="1d"
-            params.recentFilter="1d"
+            //no default filter
         }
         if(query && !query.projFilter && session.project){
             query.projFilter = session.project
@@ -324,8 +322,7 @@ class ReportsController {
             query=null
         }
         if(null!=query && !params.find{ it.key.endsWith('Filter')}){
-            query.recentFilter="1d"
-            params.recentFilter="1d"
+            //no default filter
         }
 
         if(null!=query){
@@ -360,8 +357,7 @@ class ReportsController {
             query=null
         }
         if(null!=query && !params.find{ it.key.endsWith('Filter')}){
-            query.recentFilter="1d"
-            params.recentFilter="1d"
+            //no default filter
         }
         if(null!=query){
             query.configureFilter()

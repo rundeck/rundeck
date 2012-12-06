@@ -98,4 +98,36 @@ public class ScheduledExecutionQuery extends BaseQuery{
        
     }
 
+    public Map asExecQueryParams() {
+        def map = [:]
+        def convert=[
+                proj: 'projFilter',
+                job: 'jobFilter',
+        ]
+        ['proj','groupPath','groupPathExact','job'].each {
+            def c=convert[it]?:it
+            if(this[c]){
+                map["${it}Filter"]= this[c]
+            }
+        }
+
+        map
+    }
+
+    public Map asReportQueryParams() {
+        def map = [:]
+        if(projFilter){
+            map.projFilter=projFilter
+        }
+        if(groupPath=='*'){
+
+        }else if (groupPath){
+            map['jobFilter']=groupPath
+        }else if(groupPathExact && jobFilter){
+            map['jobFilter'] = groupPathExact+'/'+jobFilter
+        }
+
+        map
+    }
+
 }

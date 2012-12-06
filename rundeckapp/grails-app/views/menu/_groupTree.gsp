@@ -28,7 +28,7 @@
         </g:else>
     </div>
 </g:if>
-<g:set var="gkeys" value="${jobgroups.sort{a,b->a.key<=>b.key}.grep{it.key!=''}}"/>
+<g:set var="gkeys" value="${g.sortGroupKeys(groups: jobgroups.grep {it.key != ''})}"/>
 <g:timerEnd key="gtx"/>
 <g:set var="prevkey" value="${null}"/>
 <g:set var="indent" value="${0}"/>

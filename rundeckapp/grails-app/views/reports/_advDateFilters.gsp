@@ -11,7 +11,7 @@ gcal.setTime(new Date())
 def CUR_YEAR=gcal.get(java.util.GregorianCalendar.YEAR)
 %>
 <tr>
-    <td colspan="2" id="extDateFilters" style="${params.recentFilter && params.recentFilter!='-' ? 'display:none;':''} background: #ccc; border:1px solid #aaa; text-align:left;">
+    <td colspan="2" id="extDateFilters" style="${!params.recentFilter || params.recentFilter!='-' ? 'display:none;':''} background: #ccc; border:1px solid #aaa; text-align:left;">
                             <g:if test="${!hidestart}">
                             <div>
                                 <span class="prompt">
