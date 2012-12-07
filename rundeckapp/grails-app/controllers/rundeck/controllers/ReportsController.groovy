@@ -10,6 +10,7 @@ import com.dtolabs.rundeck.app.support.ReportQuery
 import rundeck.User
 import rundeck.ReportFilter
 import rundeck.services.FrameworkService
+import rundeck.filters.ApiRequestFilters
 
 class ReportsController {
     def reportService

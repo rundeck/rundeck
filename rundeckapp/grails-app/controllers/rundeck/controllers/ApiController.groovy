@@ -3,6 +3,7 @@ package rundeck.controllers
 import java.lang.management.ManagementFactory
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import rundeck.filters.ApiRequestFilters
 
 /**
  * Contains utility actions for API access and responses

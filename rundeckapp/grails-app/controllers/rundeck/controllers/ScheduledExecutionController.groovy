@@ -42,6 +42,7 @@ import rundeck.services.ExecutionService
 import rundeck.services.ExecutionServiceException
 import rundeck.services.FrameworkService
 import rundeck.services.ScheduledExecutionService
+import rundeck.filters.ApiRequestFilters
 
 class ScheduledExecutionController  {
     def Scheduler quartzScheduler

@@ -24,6 +24,7 @@ import rundeck.services.FrameworkService
 import rundeck.services.MenuService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.UserService
+import rundeck.filters.ApiRequestFilters
 
 class MenuController {
     FrameworkService frameworkService

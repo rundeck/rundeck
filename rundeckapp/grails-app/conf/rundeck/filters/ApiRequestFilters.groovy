@@ -1,3 +1,4 @@
+package rundeck.filters
 /*
  * Copyright 2011 DTO Labs, Inc. (http://dtolabs.com)
  * 

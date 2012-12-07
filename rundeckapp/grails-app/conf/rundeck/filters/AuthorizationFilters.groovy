@@ -1,3 +1,5 @@
+package rundeck.filters
+
 import javax.security.auth.Subject;
 
 import com.dtolabs.rundeck.core.authentication.Group;
@@ -7,6 +9,7 @@ import rundeck.User
 import rundeck.AuthToken
 
 import rundeck.services.FrameworkService
+import rundeck.filters.ApiRequestFilters
 
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)

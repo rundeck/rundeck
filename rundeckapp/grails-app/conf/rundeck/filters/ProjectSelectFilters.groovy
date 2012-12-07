@@ -1,3 +1,5 @@
+package rundeck.filters
+
 import com.dtolabs.rundeck.core.common.Framework
 
 /*

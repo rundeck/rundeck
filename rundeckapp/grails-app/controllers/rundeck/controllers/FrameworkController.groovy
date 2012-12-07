@@ -37,6 +37,7 @@ import rundeck.NodeFilter
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.UserService
+import rundeck.filters.ApiRequestFilters
 
 class FrameworkController  {
     FrameworkService frameworkService
