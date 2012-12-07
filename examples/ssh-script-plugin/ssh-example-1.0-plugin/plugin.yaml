@@ -8,12 +8,16 @@ version: 1.0
 providers:
     - name: ssh-example
       service: NodeExecutor
+      title: System SSH
+      description: Executes the command by calling the system SSH binary
       plugin-type: script
       script-interpreter: /bin/bash
       script-file: ssh-exec.sh
       script-args: ${node.username} ${node.hostname} ${exec.command}
-    - name: ssh-example
+    - name: scp-example
       service: FileCopier
+      title: System SCP
+      description: Copies the file by calling the system SCP binary
       plugin-type: script
       script-interpreter: /bin/bash
       script-file: ssh-copy.sh
