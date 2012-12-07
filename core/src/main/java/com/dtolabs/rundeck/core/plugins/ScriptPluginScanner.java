@@ -76,7 +76,7 @@ class ScriptPluginScanner extends DirPluginScanner {
                 valid = ScriptPluginProviderLoader.validatePluginMeta(metadata, file);
             }
             if (!valid) {
-                log.warn("Skipping plugin file: metadata was invalid: " + file.getAbsolutePath());
+                log.error("Skipping plugin file: metadata was invalid: " + file.getAbsolutePath());
             }
             return valid;
         } catch (IOException e) {
