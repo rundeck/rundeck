@@ -1,9 +1,10 @@
-version = '1.4.0'
+version = '1.5-dev'
 defaultTasks 'clean','build'
 apply plugin: 'java'
+apply plugin: 'idea'
 sourceCompatibility = 1.5
 archivesBaseName = "rundeck-$project.name"
-rundeckPluginVersion= '1.0'
+rundeckPluginVersion= '1.1'
 
 repositories {
     mavenCentral()
