@@ -27,9 +27,14 @@ package com.dtolabs.rundeck.core.execution.workflow.steps;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
 import com.dtolabs.rundeck.plugins.step.PluginStepItem;
 import com.dtolabs.rundeck.plugins.step.PropertyResolver;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -53,6 +58,23 @@ public class PropertyResolverFactory {
 
     public static String frameworkPropertyPrefix(final String basePrefix) {
         return FRAMEWORK_PREFIX + basePrefix;
+    }
+
+    /**
+     * Return All property values for the input property set mapped by name to value.
+     *
+     * @return All mapped properties by name and value.
+     */
+    public static Map<String, Object> mapPropertyValues(final List<Property> list, final PropertyResolver resolver) {
+        final Map<String, Object> inputConfig = new HashMap<String, Object>();
+        for (final Property property : list) {
+            final Object value = resolver.resolvePropertyValue(property.getName(), property.getScope());
+            if (null == value) {
+                continue;
+            }
+            inputConfig.put(property.getName(), value);
+        }
+        return inputConfig;
     }
 
     /**
@@ -137,6 +159,35 @@ public class PropertyResolverFactory {
                 scope = defaultScope;
             }
             return resolver.resolvePropertyValue(name, scope);
+        }
+    }
+
+    /**
+     * Return a new PropertyResolver which will return values taken from the defaults if the given resolver returns
+     * null
+     */
+    public static PropertyResolver withDefaultValues(final PropertyResolver resolver,
+                                                     final PropertyRetriever defaults) {
+        return new DefaultValueRetriever(resolver, defaults);
+    }
+
+    /**
+     * Uses a PropertyRetriever for default values
+     */
+    private static class DefaultValueRetriever implements PropertyResolver {
+        private final PropertyResolver resolver;
+        final PropertyRetriever defaults;
+
+        private DefaultValueRetriever(final PropertyResolver resolver,
+                                      final PropertyRetriever defaults) {
+            this.defaults = defaults;
+            this.resolver = resolver;
+        }
+
+        @Override
+        public Object resolvePropertyValue(final String name, final PropertyScope scope) {
+            final Object value = resolver.resolvePropertyValue(name, scope);
+            return null == value ? defaults.getProperty(name) : value;
         }
     }
 }
