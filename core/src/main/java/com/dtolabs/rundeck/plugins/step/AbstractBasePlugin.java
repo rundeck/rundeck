@@ -24,9 +24,9 @@
 */
 package com.dtolabs.rundeck.plugins.step;
 
+import com.dtolabs.rundeck.core.common.PropertyRetriever;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PropertyResolverFactory;
 import com.dtolabs.rundeck.core.plugins.Plugin;
-import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
@@ -74,7 +74,7 @@ public abstract class AbstractBasePlugin implements Describable {
 
     /**
      * Subclasses can override this method to add additional custom properties or modify the automatically generated
-     * propeties of the description.
+     * properties of the description.
      */
     protected void buildDescription(final DescriptionBuilder builder) {
         //default does nothing
@@ -84,21 +84,22 @@ public abstract class AbstractBasePlugin implements Describable {
         //analyze this class to determine properties
         final DescriptionBuilder builder = DescriptionBuilder.builder();
         final Plugin annotation1 = this.getClass().getAnnotation(Plugin.class);
-        if (null == annotation1) {
-            return;
+        if (null != annotation1) {
+            final String pluginName = annotation1.name();
+            builder
+                .name(pluginName)
+                .title(pluginName)
+                .description("");
         }
-        final String pluginName = annotation1.name();
-        builder
-            .name(pluginName)
-            .title(pluginName)
-            .description("");
 
         final PluginDescription descAnnotation = this.getClass().getAnnotation(PluginDescription.class);
         if (null != descAnnotation) {
-            final String title = descAnnotation.title();
-            builder
-                .title(!"".equals(title) ? title : pluginName)
-                .description(descAnnotation.description());
+            if (!"".equals(descAnnotation.title())) {
+                builder.title(descAnnotation.title());
+            }
+            if (!"".equals(descAnnotation.description())) {
+                builder.description(descAnnotation.description());
+            }
         }
 
         for (final Field field : this.getClass().getDeclaredFields()) {
@@ -213,30 +214,65 @@ public abstract class AbstractBasePlugin implements Describable {
 
     /**
      * Subclasses should call this method to set field values on the current instance by mapping the Description
-     * Property's to resolved property values
+     * Property's to resolved property values. Any resolved properties that are not mapped to a field will add a value
+     * to the {@link #getExtraConfiguration()} map.
      */
     protected final void configureProperties(final PropertyResolver resolver) {
         //use a default scope of InstanceOnly if the Property doesn't specify it
-        final PropertyResolver defaulted = PropertyResolverFactory.withDefaultScope(PropertyScope.InstanceOnly,
-                                                                                    resolver);
-        final Map<String, Object> inputConfig = new HashMap<String, Object>();
+        final Map<String, Object> inputConfig = mapDescribedProperties(resolver);
         for (final Property property : getDescription().getProperties()) {
-            final Object value = defaulted.resolvePropertyValue(property.getName(), property.getScope());
-
-            if (null == value) {
-                continue;
-            }
-            if (!setValueForProperty(property, value)) {
-                inputConfig.put(property.getName(), value);
+            if (null != inputConfig.get(property.getName())) {
+                if (setValueForProperty(property, inputConfig.get(property.getName()))) {
+                    inputConfig.remove(property.getName());
+                }
             }
         }
         this.extraConfiguration = inputConfig;
     }
 
+    private static class PropertyDefaultValues implements PropertyRetriever {
+        private Map<String, String> properties;
+
+        private PropertyDefaultValues(final List<Property> properties1) {
+            properties = new HashMap<String, String>();
+            for (final Property property : properties1) {
+                if (null != property.getDefaultValue()) {
+                    properties.put(property.getName(), property.getDefaultValue());
+                }
+
+            }
+        }
+
+        @Override
+        public String getProperty(String name) {
+            return properties.get(name);
+        }
+
+    }
+
+    /**
+     * Subclasses may call this method to retrieve the Description's Properties mapped to resolved values given the
+     * resolver.
+     *
+     * @return All mapped properties by name and value.
+     */
+    protected final Map<String, Object> mapDescribedProperties(final PropertyResolver resolver) {
+        //use a default scope of InstanceOnly if the Property doesn't specify it
+        //use property default value if otherwise not resolved
+        final List<Property> properties = getDescription().getProperties();
+        final PropertyResolver defaulted =
+            PropertyResolverFactory.withDefaultValues(
+                PropertyResolverFactory.withDefaultScope(PropertyScope.InstanceOnly, resolver),
+                new PropertyDefaultValues(properties)
+            );
+
+        return PropertyResolverFactory.mapPropertyValues(properties, defaulted);
+    }
+
     /**
      * Set instance field value for the given property, returns true if the field value was set, false otherwise
      */
-    private boolean setValueForProperty(Property property, Object value) {
+    private boolean setValueForProperty(final Property property, final Object value) {
         final Field field = fieldForPropertyName(property.getName());
         if (null == field) {
 

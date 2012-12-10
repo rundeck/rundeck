@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.plugins.step.AbstractBasePlugin;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 
@@ -50,7 +51,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public abstract class AbstractDescribableScriptPlugin implements Describable {
+public abstract class AbstractDescribableScriptPlugin extends AbstractBasePlugin implements Describable {
     public static final String TITLE_PROP = "title";
     public static final String DESCRIPTION_PROP = "description";
     public static final String CONFIG_PROP_PREFIX = "config";
@@ -61,10 +62,10 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
     public static final String CONFIG_REQUIRED = "required";
     public static final String CONFIG_DEFAULT = "default";
     public static final String CONFIG_VALUES = "values";
+    public static final String CONFIG_SCOPE = "scope";
 
     private final ScriptPluginProvider provider;
     private final Framework framework;
-    Description providerDescription;
 
     public AbstractDescribableScriptPlugin(final ScriptPluginProvider provider, final Framework framework) {
         this.provider = provider;
@@ -149,6 +150,15 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                     }
                     pbuild.values(values);
 
+                    final String scopeString = metaStringProp(itemmeta, CONFIG_SCOPE);
+                    if(null!=scopeString) {
+                        try {
+                            pbuild.scope(PropertyScope.valueOf(scopeString.trim()));
+                        } catch (IllegalArgumentException e) {
+                            throw new ConfigurationException("Invalid property scope: " + scopeString);
+                        }
+                    }
+
                     try {
                         dbuilder.property(pbuild.build());
                     } catch (IllegalStateException e) {
@@ -167,9 +177,9 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
         final Object titleobj = metadata.get(prop);
         return null != titleobj && titleobj instanceof String ? (String) titleobj : defString;
     }
-    protected static Description createDescription(final ScriptPluginProvider provider,
-                                                 final boolean allowCustomProperties) throws ConfigurationException {
-        final DescriptionBuilder builder = DescriptionBuilder.builder();
+    protected static void createDescription(final ScriptPluginProvider provider,
+                                                   final boolean allowCustomProperties,
+                                                   final DescriptionBuilder builder) throws ConfigurationException {
         builder
             .name(provider.getName())
             .title(metaStringProp(provider.getMetadata(), TITLE_PROP, provider.getName() + " Script Plugin"))
@@ -178,20 +188,17 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
         if(allowCustomProperties) {
             createProperties(provider, builder);
         }
-        return builder.build();
     }
 
-
-    public Description getDescription() {
-        if (null == providerDescription) {
-            try {
-                providerDescription = createDescription(provider, isAllowCustomProperties());
-            } catch (ConfigurationException e) {
-                e.printStackTrace();
-            }
+    @Override
+    protected void buildDescription(final DescriptionBuilder builder) {
+        try {
+            createDescription(provider, isAllowCustomProperties(), builder);
+        } catch (ConfigurationException e) {
+            e.printStackTrace();
         }
-        return providerDescription;
     }
+
 
     /**
      * Subclasses return true if the script-plugin allows custom configuration properties defined in plugin metadata.

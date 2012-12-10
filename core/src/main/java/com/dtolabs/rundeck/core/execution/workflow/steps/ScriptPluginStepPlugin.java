@@ -32,8 +32,10 @@ import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.step.PluginStepItem;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import java.io.IOException;
+import java.util.Map;
 
 
 /**
@@ -53,7 +55,7 @@ class ScriptPluginStepPlugin extends BaseScriptPlugin implements StepPlugin {
 
     static void validateScriptPlugin(final ScriptPluginProvider plugin) throws PluginException {
         try {
-            createDescription(plugin, true);
+            createDescription(plugin, true, DescriptionBuilder.builder());
         } catch (ConfigurationException e) {
             throw new PluginException(e);
         }
@@ -66,10 +68,15 @@ class ScriptPluginStepPlugin extends BaseScriptPlugin implements StepPlugin {
         executionContext.getLogger()
             .log(3, "[" + pluginname + "] step started, config: " + item.getStepConfiguration());
 
+        //call method to resolve all description properties
+        final Map<String,Object> resolvedProperties = mapDescribedProperties(executionContext.getPropertyResolver());
 
+        //create a new step item containing the resolved properties, which will be used in the script
+        // execution context
+        final PluginStepItem newitem = new PluginStepItemImpl(item.getType(), resolvedProperties);
         int result = -1;
         try {
-            result = runPluginScript(executionContext, item, System.out, System.err, getFramework());
+            result = runPluginScript(executionContext, newitem, System.out, System.err, getFramework());
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {

@@ -58,8 +58,14 @@ public class AbstractBasePluginTest extends TestCase {
 
     public void testInvalid() {
         invalidTest1 test = new invalidTest1();
-        Description description = test.getDescription();
-        assertNull(description);
+        Description description = null;
+        try {
+            description = test.getDescription();
+            fail("no plugin annotation and no buildDescription method should cause exception");
+        } catch (IllegalStateException e) {
+
+        }
+
     }
 
     /**
