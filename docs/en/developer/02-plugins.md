@@ -20,7 +20,7 @@ one or more service provider, as well as any other java jar dependency files.
 The `.jar` file you distribute must have this metadata within the main Manifest
 for the jar file to be correctly loaded by the system:
 
-* `Rundeck-Plugin-Version: 1.0`
+* `Rundeck-Plugin-Version: 1.1`
 * `Rundeck-Plugin-Archive: true`
 * `Rundeck-Plugin-Classnames: classname,..`
 * `Rundeck-Plugin-Libs: lib/something.jar ...` *(optional)*
@@ -100,6 +100,12 @@ Then include the jar files in the Plugin's jar contents:
 * `ResourceModelSource` - produces a set of Node definitions for a project
 * `ResourceFormatParser` - parses a document into a set of Node resources
 * `ResourceFormatGenerator` - generates a document from a set of Node resources
+
+Workflow Step services:
+
+* `WorkflowStep` - runs a single step in a workflow
+* `WorkflowNodeStep` - runs a single step for each node in a workflow
+* `RemoteScriptNodeStep` - generates a script or command to execute remotely for each node in a workflow
 
 ## Provider Lifecycle
 
@@ -243,6 +249,10 @@ For Generators, your provider class must implement the `com.dtolabs.rundeck.core
 
 More information is available in the Javadoc.
 
+### Workflow Step Providers
+
+Refer to the section: [Workflow Step Plugin Development](workflow-step-plugin-development.html).
+
 ## Script Plugin Development
 
 Script plugins can provide the same services as Java plugins, but they do so
@@ -253,6 +263,8 @@ These Services support Script Plugins:
 * `NodeExecutor`
 * `FileCopier`
 * `ResourceModelSource`
+* `WorkflowNodeStep`
+    * See [Workflow Step Plugin Development - Script-based Step Plugins](workflow-step-plugin-development.html#script-based-step-plugins)
 
 **Note:** Currently, the Resource Format Parser and Generator services *do not* support Script Plugins.
 
@@ -367,6 +379,7 @@ map entries for each configuration property you want to define. In the map entry
 * `required` - (true/false) if true, require a non-empty value (optional)
 * `default` - A default value to use (optional)
 * `values` - A comma-separated list of values to use for Select or FreeSelect. Required for Select/FreeSelect.
+* `scope` - A resolution scope for the property (Only supported by [Workflow Step Plugins](workflow-step-plugin-development.html) currently)
 
 When your script is invoked, each configuration property defined for the plugin will be set as `config.NAME` in the data context passed to your script (see below).
 
