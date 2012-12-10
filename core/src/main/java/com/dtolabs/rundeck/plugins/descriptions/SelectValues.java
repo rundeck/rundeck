@@ -1,4 +1,5 @@
-package com.dtolabs.rundeck.plugins.descriptions;/*
+package com.dtolabs.rundeck.plugins.descriptions;
+/*
  * Copyright 2012 DTO Labs, Inc. (http://dtolabs.com)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,14 +16,16 @@ package com.dtolabs.rundeck.plugins.descriptions;/*
  *
  */
 
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+
 /**
- * Declare a String field as a {@link com.dtolabs.rundeck.core.plugins.configuration.Property.Type#Select} or
- * {@link com.dtolabs.rundeck.core.plugins.configuration.Property.Type#FreeSelect}, and specify the selectable values.
+ * Declare a String field as a {@link com.dtolabs.rundeck.core.plugins.configuration.Property.Type#Select} or {@link
+ * com.dtolabs.rundeck.core.plugins.configuration.Property.Type#FreeSelect}, and specify the selectable values.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
@@ -38,6 +41,7 @@ public @interface SelectValues {
      * True if the property allows free text entry in addition to selection from a list
      */
     boolean freeSelect() default false;
+
     /**
      * The set of values that can be selected
      */

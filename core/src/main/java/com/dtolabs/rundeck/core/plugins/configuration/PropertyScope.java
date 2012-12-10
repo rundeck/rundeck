@@ -24,9 +24,6 @@
 */
 package com.dtolabs.rundeck.core.plugins.configuration;
 
-import java.util.*;
-
-
 /**
  * Available scopes for properties, indicating where the runtime values can be resolved from.
  */

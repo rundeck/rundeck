@@ -1,4 +1,5 @@
-package com.dtolabs.rundeck.plugins.descriptions;/*
+package com.dtolabs.rundeck.plugins.descriptions;
+/*
  * Copyright 2012 DTO Labs, Inc. (http://dtolabs.com)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,6 +15,7 @@ package com.dtolabs.rundeck.plugins.descriptions;/*
  * limitations under the License.
  *
  */
+
 
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
 

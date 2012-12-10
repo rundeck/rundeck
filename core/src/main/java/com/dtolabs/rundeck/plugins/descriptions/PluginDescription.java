@@ -1,4 +1,6 @@
-package com.dtolabs.rundeck.plugins.descriptions;/*
+package com.dtolabs.rundeck.plugins.descriptions;
+
+/*
  * Copyright 2012 DTO Labs, Inc. (http://dtolabs.com)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,6 +16,7 @@ package com.dtolabs.rundeck.plugins.descriptions;/*
  * limitations under the License.
  *
  */
+
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -35,5 +38,6 @@ import java.lang.annotation.Target;
 */
 public @interface PluginDescription {
     String title() default "";
+
     String description() default "";
 }
