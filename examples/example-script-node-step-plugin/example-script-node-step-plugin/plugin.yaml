@@ -39,3 +39,14 @@ providers:
           - simon
           - bellfunkle
           - droom
+      - type: String
+        name: projectExample
+        title: Example Project scope property
+        description: An example string scoped to Project or Framework level configuration
+        default: whatever
+        scope: Project
+      - type: String
+        name: fwkExample
+        title: Example Framework scope property
+        description: An example string scoped to Framework level configuration with no default
+        scope: Framework

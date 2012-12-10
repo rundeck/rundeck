@@ -25,6 +25,8 @@ VAMPIRES=$RD_CONFIG_VAMPIRES
 
 echo "Example script plugin executing on node $NODE"
 echo "Config values: "
+echo "Project Example: $RD_CONFIG_PROJECTEXAMPLE"
+echo "Framework Example: $RD_CONFIG_FWKEXAMPLE"
 echo "Example: $EXAMPLE"
 echo "Number: $NUMBER"
 echo "Vapires: $VAMPIRES"
