@@ -32,7 +32,7 @@ import java.util.Map;
 
 
 /**
- * PluginStepContext is ...
+ * Contains runtime context information for a Step plugin.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
@@ -41,10 +41,6 @@ public interface PluginStepContext {
      * Return the logger
      */
     public PluginLogger getLogger();
-    /**
-     * Return the property resolver
-     */
-    public PropertyResolver getPropertyResolver();
     /**
      * Return the project name
      */

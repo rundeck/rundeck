@@ -24,18 +24,25 @@
 */
 package com.dtolabs.rundeck.plugins.step;
 
-import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
+
+import java.util.Map;
 
 
 /**
- * StepPlugin is ...
+ * The plugin interface for a Workflow Step Plugin.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface StepPlugin {
     /**
-     * Execute the step, return true if the step succeeded
+     * Execute the step, return true if the step succeeded.
+     *
+     * @param context       the plugin step context
+     * @param configuration Any configuration property values not otherwise applied to the plugin
+     *
+     * @throws StepException if an error occurs
      */
-    public boolean executeStep(final PluginStepContext context, final PluginStepItem item) throws StepException;
+    public boolean executeStep(final PluginStepContext context, final Map<String, Object> configuration)
+        throws StepException;
 }

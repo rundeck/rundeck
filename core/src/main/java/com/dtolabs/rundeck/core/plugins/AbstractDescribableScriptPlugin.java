@@ -25,7 +25,6 @@ package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
-import com.dtolabs.rundeck.plugins.step.AbstractBasePlugin;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 
@@ -47,11 +46,12 @@ import java.util.*;
  *     config.X.required = true/false, if the property is required.
  *     config.X.default = default string of the property
  *     config.X.values = comma-separated values list for Select or FreeSelect properties
+ *     config.X.scope = scope of the property, from {@link PropertyScope}
  * </pre>
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public abstract class AbstractDescribableScriptPlugin extends AbstractBasePlugin implements Describable {
+public abstract class AbstractDescribableScriptPlugin implements Describable {
     public static final String TITLE_PROP = "title";
     public static final String DESCRIPTION_PROP = "description";
     public static final String CONFIG_PROP_PREFIX = "config";
@@ -66,6 +66,7 @@ public abstract class AbstractDescribableScriptPlugin extends AbstractBasePlugin
 
     private final ScriptPluginProvider provider;
     private final Framework framework;
+    Description description;
 
     public AbstractDescribableScriptPlugin(final ScriptPluginProvider provider, final Framework framework) {
         this.provider = provider;
@@ -191,14 +192,18 @@ public abstract class AbstractDescribableScriptPlugin extends AbstractBasePlugin
     }
 
     @Override
-    protected void buildDescription(final DescriptionBuilder builder) {
-        try {
-            createDescription(provider, isAllowCustomProperties(), builder);
-        } catch (ConfigurationException e) {
-            e.printStackTrace();
+    public Description getDescription() {
+        if(null==description){
+            final DescriptionBuilder builder = DescriptionBuilder.builder();
+            try {
+                createDescription(provider, isAllowCustomProperties(), builder);
+            } catch (ConfigurationException e) {
+                e.printStackTrace();
+            }
+            description = builder.build();
         }
+        return description;
     }
-
 
     /**
      * Subclasses return true if the script-plugin allows custom configuration properties defined in plugin metadata.

@@ -16,13 +16,13 @@
  */
 
 /*
-* AbstractBasePluginTest.java
+* PluginAdapterUtilityTest.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 11/29/12 3:22 PM
 * 
 */
-package com.dtolabs.rundeck.plugins.step;
+package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
@@ -31,23 +31,24 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues;
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import junit.framework.TestCase;
 
 import java.util.*;
 
 
 /**
- * AbstractBasePluginTest is ...
+ * PluginAdapterUtilityTest is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class AbstractBasePluginTest extends TestCase {
+public class PluginAdapterUtilityTest extends TestCase {
     //test reflection of property values
 
     /**
      * invalid: doesn't have @Plugin annotation
      */
-    static class invalidTest1 extends AbstractBasePlugin {
+    static class invalidTest1  {
         @PluginProperty
         private String testString;
         @PluginProperty(title = "test2", description = "testdesc2")
@@ -60,7 +61,7 @@ public class AbstractBasePluginTest extends TestCase {
         invalidTest1 test = new invalidTest1();
         Description description = null;
         try {
-            description = test.getDescription();
+            description = PluginAdapterUtility.buildDescription(test, DescriptionBuilder.builder());
             fail("no plugin annotation and no buildDescription method should cause exception");
         } catch (IllegalStateException e) {
 
@@ -72,13 +73,13 @@ public class AbstractBasePluginTest extends TestCase {
      * basic annotation test
      */
     @Plugin(name = "basicTest1", service = "x")
-    static class basicTest1 extends AbstractBasePlugin {
+    static class basicTest1  {
 
     }
 
     public void testBasic1() {
         basicTest1 test = new basicTest1();
-        Description description = test.getDescription();
+        Description description = PluginAdapterUtility.buildDescription(test, DescriptionBuilder.builder());
         assertNotNull(description);
         assertNotNull(description.getName());
         assertEquals("basicTest1", description.getName());
@@ -93,13 +94,13 @@ public class AbstractBasePluginTest extends TestCase {
      */
     @Plugin(name = "basicTest2", service = "x")
     @PluginDescription(title = "basictest2 title", description = "basicTest Description")
-    static class basicTest2 extends AbstractBasePlugin {
+    static class basicTest2  {
 
     }
 
     public void testBasic2() {
         basicTest2 test = new basicTest2();
-        Description description = test.getDescription();
+        Description description = PluginAdapterUtility.buildDescription(test, DescriptionBuilder.builder());;
         assertNotNull(description);
         assertNotNull(description.getName());
         assertEquals("basicTest2", description.getName());
@@ -114,7 +115,7 @@ public class AbstractBasePluginTest extends TestCase {
      * string property test
      */
     @Plugin(name = "stringTest1", service = "x")
-    static class stringTest1 extends AbstractBasePlugin {
+    static class stringTest1  {
         @PluginProperty
         private String testString;
         @PluginProperty(title = "test2", description = "testdesc2")
@@ -129,7 +130,7 @@ public class AbstractBasePluginTest extends TestCase {
 
     public void testPropertiesStringDefault() {
         stringTest1 test1 = new stringTest1();
-        Description description = test1.getDescription();
+        Description description = PluginAdapterUtility.buildDescription(test1, DescriptionBuilder.builder());;
         assertNotNull(description);
         assertEquals("stringTest1", description.getName());
         assertNotNull(description.getProperties());
@@ -147,7 +148,7 @@ public class AbstractBasePluginTest extends TestCase {
      */
     public void testPropertiesStringAnnotationsDefault() {
         stringTest1 test1 = new stringTest1();
-        Description description = test1.getDescription();
+        Description description = PluginAdapterUtility.buildDescription(test1, DescriptionBuilder.builder());;
         HashMap<String, Property> map = mapOfProperties(description);
 
         Property p1 = map.get("testString");
@@ -165,7 +166,7 @@ public class AbstractBasePluginTest extends TestCase {
      */
     public void testPropertiesStringAnnotationsTitle() {
         stringTest1 test1 = new stringTest1();
-        Description description = test1.getDescription();
+        Description description = PluginAdapterUtility.buildDescription(test1, DescriptionBuilder.builder());
         HashMap<String, Property> map = mapOfProperties(description);
 
         Property p1 = map.get("testString2");
@@ -183,7 +184,7 @@ public class AbstractBasePluginTest extends TestCase {
      */
     public void testPropertiesStringAnnotationsName() {
         stringTest1 test1 = new stringTest1();
-        Description description = test1.getDescription();
+        Description description = PluginAdapterUtility.buildDescription(test1, DescriptionBuilder.builder());
         HashMap<String, Property> map = mapOfProperties(description);
 
         Property p1 = map.get("test3");
@@ -201,7 +202,7 @@ public class AbstractBasePluginTest extends TestCase {
      */
     public void testPropertiesStringAnnotationsDefaultValue() {
         stringTest1 test1 = new stringTest1();
-        Description description = test1.getDescription();
+        Description description = PluginAdapterUtility.buildDescription(test1, DescriptionBuilder.builder());
         HashMap<String, Property> map = mapOfProperties(description);
 
         Property p1 = map.get("testString4");
@@ -213,7 +214,7 @@ public class AbstractBasePluginTest extends TestCase {
      */
     public void testPropertiesStringAnnotationsRequired() {
         stringTest1 test1 = new stringTest1();
-        Description description = test1.getDescription();
+        Description description = PluginAdapterUtility.buildDescription(test1, DescriptionBuilder.builder());
         HashMap<String, Property> map = mapOfProperties(description);
 
         Property p1 = map.get("testString5");
@@ -235,7 +236,7 @@ public class AbstractBasePluginTest extends TestCase {
      * test property types
      */
     @Plugin(name = "typeTest1", service = "x")
-    static class typeTest1 extends AbstractBasePlugin {
+    static class typeTest1  {
         @PluginProperty
         private String testString;
         @PluginProperty
@@ -254,8 +255,9 @@ public class AbstractBasePluginTest extends TestCase {
 
     public void testFieldTypesString() throws Exception {
         typeTest1 test = new typeTest1();
-        assertNotNull(test.getDescription());
-        HashMap<String, Property> map = mapOfProperties(test.getDescription());
+        Description desc = PluginAdapterUtility.buildDescription(test, DescriptionBuilder.builder());
+        assertNotNull(desc);
+        HashMap<String, Property> map = mapOfProperties(desc);
         assertPropertyType(map, "testString", Property.Type.String);
         assertPropertyType(map, "testbool1", Property.Type.Boolean);
         assertPropertyType(map, "testbool2", Property.Type.Boolean);
@@ -276,7 +278,7 @@ public class AbstractBasePluginTest extends TestCase {
      * test property types
      */
     @Plugin(name = "typeSelect1", service = "x")
-    static class typeSelect1 extends AbstractBasePlugin {
+    static class typeSelect1  {
         @PluginProperty
         @SelectValues(values = {"a", "b"})
         private String testSelect1;
@@ -287,8 +289,9 @@ public class AbstractBasePluginTest extends TestCase {
 
     public void testSelectFields() {
         typeSelect1 test = new typeSelect1();
-        assertNotNull(test.getDescription());
-        HashMap<String, Property> map = mapOfProperties(test.getDescription());
+        Description desc = PluginAdapterUtility.buildDescription(test, DescriptionBuilder.builder());
+        assertNotNull(desc);
+        HashMap<String, Property> map = mapOfProperties(desc);
         assertPropertyType(map, "testSelect1", Property.Type.Select);
         Property select1 = map.get("testSelect1");
         assertNotNull(select1.getSelectValues());
@@ -306,7 +309,7 @@ public class AbstractBasePluginTest extends TestCase {
      * test property types
      */
     @Plugin(name = "typeTest1", service = "x")
-    static class configuretest1 extends AbstractBasePlugin {
+    static class configuretest1  {
         @PluginProperty
         String testString;
         @PluginProperty
@@ -329,7 +332,7 @@ public class AbstractBasePluginTest extends TestCase {
         Long testlong2;
     }
 
-    static class mapResolver implements PropertyResolver{
+    static class mapResolver implements PropertyResolver {
         private Map<String,Object> map;
 
         mapResolver(Map<String, Object> map) {
@@ -353,7 +356,7 @@ public class AbstractBasePluginTest extends TestCase {
         assertNull(test.testint2);
         assertEquals(0, test.testlong1);
         assertNull(test.testlong2);
-        test.configureProperties(new mapResolver(new HashMap<String, Object>()));
+        PluginAdapterUtility.configureProperties(new mapResolver(new HashMap<String, Object>()),test);
         assertNull(test.testString);
         assertNull(test.testSelect1);
         assertNull(test.testSelect2);
@@ -371,7 +374,7 @@ public class AbstractBasePluginTest extends TestCase {
         configuration.put("testString", "monkey");
         configuration.put("testSelect1", "a");
         configuration.put("testSelect2", "b");
-        test.configureProperties(new mapResolver(configuration));
+        PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
         assertEquals("monkey", test.testString);
         assertEquals("a", test.testSelect1);
         assertEquals("b", test.testSelect2);
@@ -383,7 +386,7 @@ public class AbstractBasePluginTest extends TestCase {
             HashMap<String, Object> configuration = new HashMap<String, Object>();
             configuration.put("testSelect1", value);
             configuration.put("testSelect2", value);
-            test.configureProperties(new mapResolver(configuration));
+            PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
             assertEquals(value, test.testSelect1);
             assertEquals(value, test.testSelect2);
         }
@@ -396,7 +399,7 @@ public class AbstractBasePluginTest extends TestCase {
             HashMap<String, Object> config = new HashMap<String, Object>();
             config.put("testSelect1", value);
             try {
-                test.configureInstanceScopeProperties(config);
+                PluginAdapterUtility.configureProperties(new mapResolver(config), test);
                 fail("Should not allow value: " + value);
             } catch (RuntimeException e) {
                 e.printStackTrace();
@@ -412,7 +415,7 @@ public class AbstractBasePluginTest extends TestCase {
         for (final String value : invalid) {
             HashMap<String, Object> config = new HashMap<String, Object>();
             config.put("testSelect2", value);
-            test.configureInstanceScopeProperties(config);
+            PluginAdapterUtility.configureProperties(new mapResolver(config),test);
             assertEquals(value,test.testSelect2);
         }
     }
@@ -423,14 +426,14 @@ public class AbstractBasePluginTest extends TestCase {
         //true value string
         configuration.put("testbool1", "true");
         configuration.put("testbool2", "true");
-        test.configureProperties(new mapResolver(configuration));
+        PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
         assertTrue(test.testbool1);
         assertTrue(test.testbool2);
 
         //false value string
         configuration.put("testbool1", "false");
         configuration.put("testbool2", "false");
-        test.configureProperties(new mapResolver(configuration));
+        PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
         assertFalse(test.testbool1);
         assertFalse(test.testbool2);
 
@@ -440,7 +443,7 @@ public class AbstractBasePluginTest extends TestCase {
         //other value string
         configuration.put("testbool1", "monkey");
         configuration.put("testbool2", "elf");
-        test.configureProperties(new mapResolver(configuration));
+        PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
         assertFalse(test.testbool1);
         assertFalse(test.testbool2);
     }
@@ -450,7 +453,7 @@ public class AbstractBasePluginTest extends TestCase {
         //int values
         configuration.put("testint1", "1");
         configuration.put("testint2", "2");
-        test.configureProperties(new mapResolver(configuration));
+        PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
         assertEquals(1, test.testint1);
         assertEquals(2, (int) test.testint2);
 
@@ -458,7 +461,7 @@ public class AbstractBasePluginTest extends TestCase {
         configuration.put("testint1", "asdf");
         configuration.put("testint2", "fdjkfd");
         try {
-            test.configureProperties(new mapResolver(configuration));
+            PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
             fail("shouldn't succeed");
         } catch (NumberFormatException e) {
             e.printStackTrace();
@@ -472,7 +475,7 @@ public class AbstractBasePluginTest extends TestCase {
         //int values
         configuration.put("testlong1", "1");
         configuration.put("testlong2", "2");
-        test.configureProperties(new mapResolver(configuration));
+        PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
         assertEquals(1,test.testlong1);
         assertEquals(2,(long)test.testlong2);
 
@@ -480,7 +483,7 @@ public class AbstractBasePluginTest extends TestCase {
         configuration.put("testlong1", "asdf");
         configuration.put("testlong2", "fdjkfd");
         try {
-            test.configureProperties(new mapResolver(configuration));
+            PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
             fail("shouldn't succeed");
         } catch (NumberFormatException e) {
             e.printStackTrace();

@@ -16,25 +16,25 @@
  */
 
 /*
-* PropertyResolver.java
+* ConfiguredStepExecutionItem.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 12/3/12 3:20 PM
+* Created: 12/11/12 3:16 PM
 * 
 */
-package com.dtolabs.rundeck.plugins.step;
+package com.dtolabs.rundeck.core.execution;
 
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
+import java.util.Map;
 
 
 /**
- * PropertyResolver can return a property value resolved from a particular configuration scope
+ * A Step execution item with embedded runtime configuration properties
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface PropertyResolver {
+public interface ConfiguredStepExecutionItem extends StepExecutionItem {
     /**
-     * Return a value for a named property found in the given scope, or null if not found.
+     * Returns the configuration properties
      */
-    public Object resolvePropertyValue(String name, PropertyScope scope);
+    public Map<String,Object> getStepConfiguration();
 }

@@ -33,12 +33,14 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues;
-import com.dtolabs.rundeck.plugins.step.BaseRemoteScriptNodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.GeneratedScript;
 import com.dtolabs.rundeck.plugins.step.GeneratedScriptBuilder;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
+import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
+
+import java.util.Map;
 
 
 /**
@@ -49,14 +51,12 @@ import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
  * {@link PropertyScope} can also allow values to be configured in a Rundeck Project or at the global application
  * (Framework) level.
  * <p/>
- * A property "scope" defines how the property value is determined at runtime. When a property value is not found at a particular scope, the search widens to the next scope (with some caveats).
- * Property scopes from narrowest to widest are:
- * <ol>
- *     <li>Instance - the value set for a workflow step</li>
- *     <li>Project - the value set in the project's configuration properties</li>
- *     <li>Framework - the value set in the application configuration properties</li>
- * </ol>
- * Two special scopes "InstanceOnly" and "ProjectOnly" do not allow the search to widen, and must be present in that scope.
+ * A property "scope" defines how the property value is determined at runtime. When a property value is not found at a
+ * particular scope, the search widens to the next scope (with some caveats). Property scopes from narrowest to widest
+ * are: <ol> <li>Instance - the value set for a workflow step</li> <li>Project - the value set in the project's
+ * configuration properties</li> <li>Framework - the value set in the application configuration properties</li> </ol>
+ * Two special scopes "InstanceOnly" and "ProjectOnly" do not allow the search to widen, and must be present in that
+ * scope.
  * <p/>
  * The default scope for plugin properties is "InstanceOnly", but you can use any scope for property. Note: only
  * properties of "Instance"/"InstanceOnly" scope will be shown for configuration in the Workflow step GUI.
@@ -74,7 +74,7 @@ import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 @Plugin(service = ServiceNameConstants.RemoteScriptNodeStep,
         name = ExampleRemoteScriptNodeStepPlugin.SERVICE_PROVIDER_NAME)
 @PluginDescription(title = "Remote Script Node Step", description = "Generator")
-public class ExampleRemoteScriptNodeStepPlugin extends BaseRemoteScriptNodeStepPlugin {
+public class ExampleRemoteScriptNodeStepPlugin implements RemoteScriptNodeStepPlugin, DescriptionBuilder.Collaborator {
     /**
      * Define a name used to identify your plugin. It is a good idea to use a fully qualified package-style name.
      */
@@ -136,7 +136,7 @@ public class ExampleRemoteScriptNodeStepPlugin extends BaseRemoteScriptNodeStepP
      * description is changed, and the "money" field property is altered to define a custom validator for the field.
      */
     @Override
-    protected void buildDescription(final DescriptionBuilder builder) {
+    public void buildWith(final DescriptionBuilder builder) {
         //override the annotated description of this plugin
         builder.title("Example Remote Script Node Step");
         builder.description("Demonstrates a remote script node step");
@@ -179,7 +179,7 @@ public class ExampleRemoteScriptNodeStepPlugin extends BaseRemoteScriptNodeStepP
 
         /**
          * Here we create a wholly new property not bound to an existing instance field.  The runtime
-         * value for this property will be available with the {@link #getExtraConfiguration()} method.
+         * value for this property will be included in the input configuration map when the plugin method is called.
          */
         builder.property(
             PropertyBuilder.builder()
@@ -196,7 +196,9 @@ public class ExampleRemoteScriptNodeStepPlugin extends BaseRemoteScriptNodeStepP
      * The {@link GeneratedScriptBuilder} provides a factory for returning the correct type.
      */
     @Override
-    public GeneratedScript buildScript(final PluginStepContext context, final INodeEntry entry) {
+    public GeneratedScript generateScript(final PluginStepContext context,
+                                          final Map<String, Object> configuration,
+                                          final INodeEntry entry) {
         if (debug) {
             System.err.println("DEBUG for ExampleRemoteScriptNodeStepPlugin is true");
         }
@@ -214,7 +216,7 @@ public class ExampleRemoteScriptNodeStepPlugin extends BaseRemoteScriptNodeStepP
                 + "echo amount is " + amount + "\n"
                 + "echo money is " + money + "\n"
                 + "echo cake is " + cake + "\n"
-                + "echo extra: " + getExtraConfiguration() + "\n"
+                + "echo extra: " + configuration + "\n"
                 ,
                 null
 

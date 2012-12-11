@@ -29,8 +29,6 @@ import com.dtolabs.rundeck.core.common.PropertyRetriever;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
-import com.dtolabs.rundeck.plugins.step.PluginStepItem;
-import com.dtolabs.rundeck.plugins.step.PropertyResolver;
 
 import java.util.HashMap;
 import java.util.List;
@@ -81,13 +79,14 @@ public class PropertyResolverFactory {
      * Create a PropertyResolver for a plugin for resolving Framework, Project and instance scoped properties.
      */
     public static PropertyResolver createStepPluginRuntimeResolver(final StepExecutionContext context,
+                                                                   final Map<String, Object> instanceProperties,
                                                                    final String pluginType,
-                                                                   final PluginStepItem step) {
+                                                                   final String providerName) {
 
-        final String projectPrefix = projectPropertyPrefix(pluginPropertyPrefix(pluginType, step.getType()));
-        final String frameworkPrefix = frameworkPropertyPrefix(pluginPropertyPrefix(pluginType, step.getType()));
+        final String projectPrefix = projectPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
+        final String frameworkPrefix = frameworkPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
 
-        return new RuntimePropertyResolver(instanceRetriever(step),
+        return new RuntimePropertyResolver(instanceRetriever(instanceProperties),
                                            projectRetriever(projectPrefix,
                                                             context.getFramework(),
                                                             context.getFrameworkProject()),
@@ -110,8 +109,22 @@ public class PropertyResolverFactory {
             .getPropertyRetriever());
     }
 
-    private static PropertyRetriever instanceRetriever(final PluginStepItem step) {
-        return new PluginStepPropertyRetriever(step);
+    private static PropertyRetriever instanceRetriever(final Map<String, Object> configuration) {
+        return new MapPropertyRetriever(configuration);
+    }
+    private static class MapPropertyRetriever implements PropertyRetriever{
+        private Map<String,Object> map;
+
+        private MapPropertyRetriever(Map<String, Object> map) {
+            this.map = map;
+        }
+
+        @Override
+        public String getProperty(String name) {
+            Object o = map.get(name);
+            return o != null ? o.toString() : null;
+        }
+
     }
 
     /**

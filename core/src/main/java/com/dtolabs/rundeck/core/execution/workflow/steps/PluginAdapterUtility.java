@@ -16,18 +16,16 @@
  */
 
 /*
-* AbstractBasePlugin.java
+* PluginAdapterUtility.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 11/29/12 10:52 AM
+* Created: 12/11/12 9:08 AM
 * 
 */
-package com.dtolabs.rundeck.plugins.step;
+package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
-import com.dtolabs.rundeck.core.execution.workflow.steps.PropertyResolverFactory;
 import com.dtolabs.rundeck.core.plugins.Plugin;
-import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
@@ -42,48 +40,19 @@ import java.util.*;
 
 
 /**
- * AbstractBasePlugin provides base functionality for describable plugin implementations. <p> Subclasses can annotate
- * fields to declare them as configuration properties. </p> <p> Use {@link PluginProperty} to declare a field as a
- * property, and use {@link SelectValues} to annotate a String field to declare multiple select values and whether it is
- * restricted to those values or not. </p> <p> Scope of the input value can be specified with the {@link
- * com.dtolabs.rundeck.plugins.descriptions.PluginProperty#scope()} value.  If not specified, the default scope used is
- * </p> <p> Annotate your subclass with the {@link PluginDescription} to declare a title and description for the plugin
- * type. </p> <p> To add properties programmatically, subclasses can override {@link
- * #buildDescription(com.dtolabs.rundeck.plugins.util.DescriptionBuilder)} and modify the description that is being
- * built at runtime, such as redeclaring property descriptions, titles, select values, and validators. Any properties
- * added that do not correspond to annotated fields will be available via {@link #getExtraConfiguration()} when the
- * plugin is executed.</p>
+ * Utility for creating {@link Description}s from Plugin class annotations and setting property values for annotated
+ * property fields.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public abstract class AbstractBasePlugin implements Describable {
-
-    private Description builtDescription;
-    private Map<String, Object> extraConfiguration;
+public class PluginAdapterUtility {
 
     /**
-     * Returns the description built from introspection.
+     * Create a Description using a builder by analyzing the annotations on a plugin object.
      */
-    @Override
-    public final Description getDescription() {
-        if (null == builtDescription) {
-            buildDescription();
-        }
-        return builtDescription;
-    }
-
-    /**
-     * Subclasses can override this method to add additional custom properties or modify the automatically generated
-     * properties of the description.
-     */
-    protected void buildDescription(final DescriptionBuilder builder) {
-        //default does nothing
-    }
-
-    private void buildDescription() {
+    public static Description buildDescription(final Object object, final DescriptionBuilder builder) {
         //analyze this class to determine properties
-        final DescriptionBuilder builder = DescriptionBuilder.builder();
-        final Plugin annotation1 = this.getClass().getAnnotation(Plugin.class);
+        final Plugin annotation1 = object.getClass().getAnnotation(Plugin.class);
         if (null != annotation1) {
             final String pluginName = annotation1.name();
             builder
@@ -92,7 +61,7 @@ public abstract class AbstractBasePlugin implements Describable {
                 .description("");
         }
 
-        final PluginDescription descAnnotation = this.getClass().getAnnotation(PluginDescription.class);
+        final PluginDescription descAnnotation = object.getClass().getAnnotation(PluginDescription.class);
         if (null != descAnnotation) {
             if (!"".equals(descAnnotation.title())) {
                 builder.title(descAnnotation.title());
@@ -102,7 +71,7 @@ public abstract class AbstractBasePlugin implements Describable {
             }
         }
 
-        for (final Field field : this.getClass().getDeclaredFields()) {
+        for (final Field field : object.getClass().getDeclaredFields()) {
             final PluginProperty annotation = field.getAnnotation(PluginProperty.class);
             if (null == annotation) {
                 continue;
@@ -113,12 +82,12 @@ public abstract class AbstractBasePlugin implements Describable {
             }
             builder.property(pbuild);
         }
-        buildDescription(builder);
-        builtDescription = builder.build();
+        builder.collaborate(object);
+        return builder.build();
     }
 
-    private Field fieldForPropertyName(final String name) {
-        for (final Field field : this.getClass().getDeclaredFields()) {
+    private static Field fieldForPropertyName(final String name, final Object object) {
+        for (final Field field : object.getClass().getDeclaredFields()) {
             final PluginProperty annotation = field.getAnnotation(PluginProperty.class);
             if (null == annotation) {
                 continue;
@@ -132,7 +101,7 @@ public abstract class AbstractBasePlugin implements Describable {
         return null;
     }
 
-    private Property.Type propertyTypeFromFieldType(Class clazz) {
+    private static Property.Type propertyTypeFromFieldType(final Class clazz) {
         if (clazz == Integer.class || clazz == int.class) {
             return Property.Type.Integer;
         } else if (clazz == Long.class || clazz == long.class) {
@@ -145,7 +114,7 @@ public abstract class AbstractBasePlugin implements Describable {
         return null;
     }
 
-    private Property propertyFromField(final Field field, final PluginProperty annotation) {
+    private static Property propertyFromField(final Field field, final PluginProperty annotation) {
         final PropertyBuilder pbuild = PropertyBuilder.builder();
         //determine type
         final Property.Type type = propertyTypeFromFieldType(field.getType());
@@ -189,45 +158,38 @@ public abstract class AbstractBasePlugin implements Describable {
     private static final List<PropertyScope> instanceScopes = Arrays.asList(PropertyScope.Instance,
                                                                             PropertyScope.InstanceOnly);
 
-    /**
-     * Call this method to set field values on the current instance based on the input configuration
-     */
-    protected final void configureInstanceScopeProperties(final Map<String, Object> configuration) {
-        final Map<String, Object> inputConfig = new HashMap<String, Object>();
-        for (final Property property : getDescription().getProperties()) {
-            if (property.getScope() != null && property.getScope() != PropertyScope.Unspecified) {
-                if (!instanceScopes.contains(property.getScope())) {
-                    continue;
-                }
-            }
-            final Object value = configuration.get(property.getName());
 
-            if (null == value) {
-                continue;
-            }
-            if (!setValueForProperty(property, value)) {
-                inputConfig.put(property.getName(), value);
-            }
-        }
-        this.extraConfiguration = inputConfig;
+    /**
+     * Set field values on a plugin object by using annotated field values to create a Description, and setting field
+     * values to resolved property values. Any resolved properties that are not mapped to a field will  be included in
+     * the return result.
+     *
+     * @return Map of resolved properties that were not configured in the object's fields
+     */
+    public static Map<String, Object> configureProperties(final PropertyResolver resolver,
+                                                          final Object object) {
+        return configureProperties(resolver, buildDescription(object, DescriptionBuilder.builder()), object);
     }
 
     /**
-     * Subclasses should call this method to set field values on the current instance by mapping the Description
-     * Property's to resolved property values. Any resolved properties that are not mapped to a field will add a value
-     * to the {@link #getExtraConfiguration()} map.
+     * Set field values on a plugin object by using a Description, and setting field values to resolved property values.
+     * Any resolved properties that are not mapped to a field will  be included in the return result.
+     *
+     * @return Map of resolved properties that were not configured in the object's fields
      */
-    protected final void configureProperties(final PropertyResolver resolver) {
+    public static Map<String, Object> configureProperties(final PropertyResolver resolver,
+                                                          final Description description,
+                                                          final Object object) {
         //use a default scope of InstanceOnly if the Property doesn't specify it
-        final Map<String, Object> inputConfig = mapDescribedProperties(resolver);
-        for (final Property property : getDescription().getProperties()) {
+        final Map<String, Object> inputConfig = mapDescribedProperties(resolver, description);
+        for (final Property property : description.getProperties()) {
             if (null != inputConfig.get(property.getName())) {
-                if (setValueForProperty(property, inputConfig.get(property.getName()))) {
+                if (setValueForProperty(property, inputConfig.get(property.getName()), object)) {
                     inputConfig.remove(property.getName());
                 }
             }
         }
-        this.extraConfiguration = inputConfig;
+        return inputConfig;
     }
 
     private static class PropertyDefaultValues implements PropertyRetriever {
@@ -244,22 +206,22 @@ public abstract class AbstractBasePlugin implements Describable {
         }
 
         @Override
-        public String getProperty(String name) {
+        public String getProperty(final String name) {
             return properties.get(name);
         }
 
     }
 
     /**
-     * Subclasses may call this method to retrieve the Description's Properties mapped to resolved values given the
-     * resolver.
+     * Retrieve the Description's Properties mapped to resolved values given the resolver.
      *
      * @return All mapped properties by name and value.
      */
-    protected final Map<String, Object> mapDescribedProperties(final PropertyResolver resolver) {
+    public static Map<String, Object> mapDescribedProperties(final PropertyResolver resolver,
+                                                             final Description description) {
         //use a default scope of InstanceOnly if the Property doesn't specify it
         //use property default value if otherwise not resolved
-        final List<Property> properties = getDescription().getProperties();
+        final List<Property> properties = description.getProperties();
         final PropertyResolver defaulted =
             PropertyResolverFactory.withDefaultValues(
                 PropertyResolverFactory.withDefaultScope(PropertyScope.InstanceOnly, resolver),
@@ -272,14 +234,14 @@ public abstract class AbstractBasePlugin implements Describable {
     /**
      * Set instance field value for the given property, returns true if the field value was set, false otherwise
      */
-    private boolean setValueForProperty(final Property property, final Object value) {
-        final Field field = fieldForPropertyName(property.getName());
+    private static boolean setValueForProperty(final Property property, final Object value, final Object object) {
+        final Field field = fieldForPropertyName(property.getName(), object);
         if (null == field) {
 
             return false;
         }
-        Property.Type type = property.getType();
-        Property.Type ftype = propertyTypeFromFieldType(field.getType());
+        final Property.Type type = property.getType();
+        final Property.Type ftype = propertyTypeFromFieldType(field.getType());
         if (ftype != property.getType()
             && !(ftype == Property.Type.String
                  && (property.getType() == Property.Type.Select
@@ -349,24 +311,18 @@ public abstract class AbstractBasePlugin implements Describable {
             return false;
         }
         try {
-            setFieldValue(field, resolvedValue);
+            setFieldValue(field, resolvedValue, object);
         } catch (IllegalAccessException e) {
             throw new RuntimeException("Unable to configure plugin: " + e.getMessage(), e);
         }
         return true;
     }
 
-    private void setFieldValue(final Field field, final Object value) throws IllegalAccessException {
+    private static void setFieldValue(final Field field, final Object value, final Object object)
+        throws IllegalAccessException {
         if (!field.isAccessible()) {
             field.setAccessible(true);
         }
-        field.set(this, value);
-    }
-
-    /**
-     * Returns any property input values which were not mapped to fields.
-     */
-    public Map<String, Object> getExtraConfiguration() {
-        return extraConfiguration;
+        field.set(object, value);
     }
 }

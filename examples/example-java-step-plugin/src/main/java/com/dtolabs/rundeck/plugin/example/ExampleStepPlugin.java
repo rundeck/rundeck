@@ -25,11 +25,15 @@
 package com.dtolabs.rundeck.plugin.example;
 
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.core.plugins.configuration.Describable;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
-import com.dtolabs.rundeck.plugins.step.BaseStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
+import com.dtolabs.rundeck.plugins.step.StepPlugin;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
+
+import java.util.Map;
 
 
 /**
@@ -45,7 +49,7 @@ import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 @Plugin(name = ExampleStepPlugin.SERVICE_PROVIDER_NAME, service = ServiceNameConstants.WorkflowStep)
-public class ExampleStepPlugin extends BaseStepPlugin {
+public class ExampleStepPlugin implements StepPlugin, Describable {
     /**
      * Define a name used to identify your plugin. It is a good idea to use a fully qualified package-style name.
      */
@@ -62,8 +66,8 @@ public class ExampleStepPlugin extends BaseStepPlugin {
      *      fields
      */
     @Override
-    protected void buildDescription(final DescriptionBuilder builder) {
-        builder
+    public Description getDescription() {
+        return DescriptionBuilder.builder()
             .name(SERVICE_PROVIDER_NAME)
             .title("Example Step")
             .description("Does nothing")
@@ -114,7 +118,8 @@ public class ExampleStepPlugin extends BaseStepPlugin {
                           .required(false)
                           .values("Flambe", "Crambo")
                           .build()
-            );
+            )
+            .build();
     }
 
     /**
@@ -124,9 +129,9 @@ public class ExampleStepPlugin extends BaseStepPlugin {
      * details about the step number and context.
      */
     @Override
-    protected boolean performStep(final PluginStepContext context) {
+    public boolean executeStep(final PluginStepContext context, final Map<String, Object> configuration) {
         System.out.println("Stub step executing on nodes: " + context.getNodes().getNodeNames());
-        System.out.println("Stub step configuration: " + getExtraConfiguration());
+        System.out.println("Stub step configuration: " + configuration);
         System.out.println("Stub step num: " + context.getStepNumber());
         System.out.println("Stub step context: " + context.getStepContext());
         return true;

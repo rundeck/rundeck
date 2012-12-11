@@ -27,10 +27,12 @@ package com.dtolabs.rundeck.plugin.example;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
-import com.dtolabs.rundeck.plugins.step.BaseNodeStepPlugin;
+import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
+
+import java.util.Map;
 
 
 /**
@@ -46,14 +48,13 @@ import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 @Plugin(name = ExampleNodeStepPlugin.SERVICE_PROVIDER_NAME, service = ServiceNameConstants.WorkflowNodeStep)
-public class ExampleNodeStepPlugin extends BaseNodeStepPlugin {
+public class ExampleNodeStepPlugin implements NodeStepPlugin, DescriptionBuilder.Collaborator {
     /**
      * Define a name used to identify your plugin. It is a good idea to use a fully qualified package-style name.
      */
     public static final String SERVICE_PROVIDER_NAME = "com.dtolabs.rundeck.plugin.example.ExampleNodeStepPlugin";
 
-    @Override
-    protected void buildDescription(DescriptionBuilder builder) {
+    public void buildWith(DescriptionBuilder builder) {
         builder
             .name(SERVICE_PROVIDER_NAME)
             .title("Example Node Step")
@@ -119,10 +120,10 @@ public class ExampleNodeStepPlugin extends BaseNodeStepPlugin {
      * action.
      */
     @Override
-    protected boolean performNodeStep(final PluginStepContext context, final INodeEntry entry) {
+    public boolean executeNodeStep(final PluginStepContext context, final Map<String,Object> configuration, final INodeEntry entry) {
 
         System.out.println("Stub node step executing on node: " + entry.getNodename());
-        System.out.println("Stub step extra config: " + getExtraConfiguration());
+        System.out.println("Stub step extra config: " + configuration);
         System.out.println("Stub step num: " + context.getStepNumber());
         System.out.println("Stub step context: " + context.getStepContext());
         return true;

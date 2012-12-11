@@ -16,41 +16,25 @@
  */
 
 /*
-* PluginStepItemImpl.java
+* PropertyResolver.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 11/19/12 4:57 PM
+* Created: 12/3/12 3:20 PM
 * 
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
-import com.dtolabs.rundeck.plugins.step.PluginStepItem;
-
-import java.util.*;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
 
 
 /**
-* PluginStepItemImpl is ...
-*
-* @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-*/
-public class PluginStepItemImpl implements PluginStepItem {
-
-    String type;
-    Map<String, Object> configuration;
-
-    public PluginStepItemImpl(String type, Map<String, Object> configuration) {
-        this.type = type;
-        this.configuration = configuration;
-    }
-
-    @Override
-    public Map<String, Object> getStepConfiguration() {
-        return configuration;
-    }
-
-    @Override
-    public String getType() {
-        return type;
-    }
+ * PropertyResolver can return a property value resolved from a particular configuration scope
+ *
+ * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
+ */
+public interface PropertyResolver {
+    /**
+     * Return a value for a named property found in the given scope, or null if not found.
+     */
+    public Object resolvePropertyValue(String name, PropertyScope scope);
 }

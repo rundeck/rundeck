@@ -257,4 +257,33 @@ public class DescriptionBuilder {
             }
         };
     }
+
+    /**
+     * Allows the Collaborator to assist using this DescriptionBuilder.
+     */
+    public DescriptionBuilder collaborate(final Collaborator colab) {
+        colab.buildWith(this);
+        return this;
+    }
+
+    /**
+     * Allows any object to collaborate on this DescriptionBuilder if it implements {@link Collaborator}, otherwise
+     * simply returns this builder.
+     */
+    public DescriptionBuilder collaborate(final Object colab) {
+        if (colab instanceof Collaborator) {
+            return collaborate((Collaborator) colab);
+        }
+        return this;
+    }
+
+    /**
+     * Allows a class to collaborate in building a Description using a DescriptionBuilder
+     */
+    public static interface Collaborator {
+        /**
+         * visit the builder and do some work
+         */
+        public void buildWith(DescriptionBuilder builder);
+    }
 }

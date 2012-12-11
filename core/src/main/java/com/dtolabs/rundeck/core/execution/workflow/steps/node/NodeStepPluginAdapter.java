@@ -26,10 +26,11 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
-import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.PluginAdapterUtility;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepContextImpl;
-import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepItemImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PropertyResolverFactory;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
@@ -37,8 +38,8 @@ import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
-import com.dtolabs.rundeck.plugins.step.PluginStepItem;
-import com.dtolabs.rundeck.plugins.step.PropertyResolver;
+import com.dtolabs.rundeck.core.execution.workflow.steps.PropertyResolver;
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import java.util.*;
 
@@ -50,13 +51,16 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
+
+
     @Override
     public Description getDescription() {
         if (plugin instanceof Describable) {
             final Describable desc = (Describable) plugin;
             return desc.getDescription();
+        } else {
+            return PluginAdapterUtility.buildDescription(plugin, DescriptionBuilder.builder());
         }
-        return null;
     }
 
     private NodeStepPlugin plugin;
@@ -79,27 +83,28 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
                                           final NodeStepExecutionItem item,
                                           final INodeEntry node)
         throws NodeStepException {
-        final PluginStepItem step = toPluginStepItem(item, context);
-        PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(context,
-                                                                                            ServiceNameConstants.WorkflowNodeStep,
-                                                                                            step
-        );
-        final PluginStepContext pluginContext = PluginStepContextImpl.from(context, resolver);
-        final boolean success = plugin.executeNodeStep(pluginContext, step, node);
+        Map<String, Object> instanceConfiguration = getStepConfiguration(item);
+        if (null != instanceConfiguration) {
+            instanceConfiguration = DataContextUtils.replaceDataReferences(instanceConfiguration,
+                                                                           context.getDataContext());
+        }
+        final String providerName = item.getNodeStepType();
+
+        final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(context,
+                                                                                                  instanceConfiguration,
+                                                                                                  ServiceNameConstants.WorkflowNodeStep,
+                                                                                                  providerName);
+        final PluginStepContext pluginContext = PluginStepContextImpl.from(context);
+        final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, getDescription(), plugin);
+        final boolean success = plugin.executeNodeStep(pluginContext, config, node);
         return new NodeStepResultImpl(success, node);
     }
 
-    static PluginStepItem toPluginStepItem(final NodeStepExecutionItem item, final ExecutionContext executionContext) {
-        if (!(item instanceof PluginStepItem)) {
-            return new PluginStepItemImpl(item.getNodeStepType(), null);
+    private Map<String, Object> getStepConfiguration(StepExecutionItem item) {
+        if (item instanceof ConfiguredStepExecutionItem) {
+            return ((ConfiguredStepExecutionItem) item).getStepConfiguration();
+        } else {
+            return null;
         }
-
-        final PluginStepItem step = (PluginStepItem) item;
-        if (step.getStepConfiguration() == null) {
-            return step;
-        }
-        final Map<String, Object> map = DataContextUtils.replaceDataReferences(step.getStepConfiguration(),
-                                                                               executionContext.getDataContext());
-        return new PluginStepItemImpl(item.getNodeStepType(), map);
     }
 }

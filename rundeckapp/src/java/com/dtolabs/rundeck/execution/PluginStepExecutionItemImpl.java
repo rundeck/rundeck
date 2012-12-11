@@ -24,10 +24,10 @@
 */
 package com.dtolabs.rundeck.execution;
 
+import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.HandlerExecutionItem;
 import com.dtolabs.rundeck.core.execution.HasFailureHandler;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
-import com.dtolabs.rundeck.plugins.step.PluginStepItem;
 
 import java.util.*;
 
@@ -38,7 +38,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class PluginStepExecutionItemImpl implements StepExecutionItem, PluginStepItem, HandlerExecutionItem,
+public class PluginStepExecutionItemImpl implements StepExecutionItem, ConfiguredStepExecutionItem, HandlerExecutionItem,
                                                     HasFailureHandler {
     private String type;
     private Map stepConfiguration;

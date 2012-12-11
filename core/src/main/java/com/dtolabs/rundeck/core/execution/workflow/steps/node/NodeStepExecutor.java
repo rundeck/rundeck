@@ -30,11 +30,15 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 
 
 /**
- * NodeStepExecutor is ...
+ * NodeStepExecutor executes a step for a node.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface NodeStepExecutor {
-    public NodeStepResult executeNodeStep(StepExecutionContext context, NodeStepExecutionItem item, INodeEntry node) throws
-                                                                                                         NodeStepException;
+    /**
+     * Execute the step
+     */
+    public NodeStepResult executeNodeStep(StepExecutionContext context, NodeStepExecutionItem item, INodeEntry node)
+        throws
+        NodeStepException;
 }

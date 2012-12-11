@@ -2,78 +2,138 @@
 % Greg Schueler
 % December 10, 2012
 
-## About Rundeck Workflow Execution
+## About Rundeck Workflow Steps
 
-When Rundeck executes a Workflow, there are several elements involved
-in producing the correct behavior:
+There are two types of steps in a workflow:
 
-* Set of Nodes to execute on
-* Number of parallel threads to use
-* Workflow execution strategy
-* Sequence of workflow steps to execute
-
-Each step in a workflow is either performed by one of the built-in providers,
-or by a plugin. Some built-in steps automatically dispatch to multiple nodes
-such as command or script execution. Job-Reference steps however *do not*
-dispatch to multiple nodes: these steps execute only once in a workflow.
+1. **Node Steps** -  executed on multiple nodes
+    * example: a command or script execution
+2. **Workflow Steps** -  only executes once in a workflow
+    * example: a Job-Reference step
 
 When there are multiple Nodes to execute on, the Node Steps execute multiple
-times, although the Workflow Steps execute only once.
+times, although the Workflow Steps will execute only once. Workflow steps
+are always executed in order, so any sequence of steps will be completed
+before the next step is executed even if they run on multiple nodes or threads.
 
-If multiple threads are configured for the workflow, then the Node Steps
-may be executing in parallel with each other.
+You can create a plugin to execute either type of step.
 
-Rundeck also uses two different "strategies" to execute the steps in a
-workflow:
+## Use cases
 
-1. Step-first - execute a step on all Nodes before executing the next step
-2. Node-first - execute all steps in sequence for each Node
+There are several reasons to create a Rundeck Step Plugin:
+
+* You want to take the set of nodes defined for a Job, and use them with some other batch processing system, such as another kind of remote dispatcher or orchestration tool, rather than executing commands on them directly.
+    * You would implement a [Workflow Step Plugin](#workflow-step-plugin) plugin which is provided with the set of Nodes
+* You want to interact with another system on a per-node basis, such as for updating or reporting the state of a Node or process, rather than executing a command on the node
+    * You would implement a [Workflow Node Step Plugin](#workflow-node-step-plugin)
+* You want to wrap a command or script in a simplified user interface and have it executed remotely on nodes
+    * You would implement a [Remote Script Node Step Plugin](#remote-script-node-step-plugin) which allows you to define a command or script and declare a custom set of input fields.
 
 ## Example code
 
-See the [example-java-step-plugin](https://github.com/dtolabs/rundeck/tree/examples/example-java-step-plugin) for
-examples of all three plugin types.
+See the source directory `examples/example-java-step-plugin` for
+examples of all three provider types.
 
-## Define a plugin class
+* On github: [example-java-step-plugin](https://github.com/dtolabs/rundeck/tree/examples/example-java-step-plugin) 
+
+## Define a plugin provider class
 
 Refer to the [Plugin Development - Java Plugin Development](plugin-development.html#java-plugin-development)
  section for information about correct
 definition of a Plugin class, including packaging as a Jar and annotation.
 
-You must be sure to use the `@Plugin` annotation on your provider implementation class to
-let it be recognized by Rundeck.
-
-Your Service name should be one of the three listed below.
+Be sure to use the `@Plugin` annotation on your provider implementation class
+to let it be recognized by Rundeck. Your `service` name should be one of the
+three listed below.  The class
+`com.dtolabs.rundeck.plugins.ServiceNameConstants` contains static definitions
+of all Rundeck Service names.
 
 ## Workflow Step Plugin types
 
-You can create a plugin to execute a step in a workflow.  
+Your plugins can be one of three types. Each plugin type has an associated Java interface.
 
-Your plugins can be one of three types. Each plugin type has an associated Java interface, and a predefined
-abstract Base implementation with convenient ways to define your plugin's configuration properties.
+### Workflow Step Plugin
 
-The class `com.dtolabs.rundeck.plugins.ServiceNameConstants` contains static definitions of all Rundeck Service
-names.
+Annotate your class with `@Plugin` and use the service name `WorkflowStep`.
 
-1. Workflow step
-    * Define a class that extends `com.dtolabs.rundeck.plugins.step.BaseStepPlugin`
-    * OR implements `com.dtolabs.rundeck.plugins.step.StepPlugin`
-    * Annotate your class with `@Plugin` and use the service name `WorkflowStep`
-2. Node step
-    * Define a class that extends `com.dtolabs.rundeck.plugins.step.BaseNodeStepPlugin`
-    * OR implements `com.dtolabs.rundeck.plugins.step.NodeStepPlugin`
-    * Annotate your class with `@Plugin` and use the service name `WorkflowNodeStep`
-3. Remote Script Node Step
-    * These are a specialized use-case of the Node Step
+Implement the interface `com.dtolabs.rundeck.plugins.step.StepPlugin`:
+
+    /**
+     * Execute the step, return true if the step succeeded.
+     *
+     * @param context       the plugin step context
+     * @param configuration Any configuration property values not otherwise applied to the plugin
+     */
+    public boolean executeStep(final PluginStepContext context, final Map<String, Object> configuration)
+        throws StepException;
+
+Your implementation should return `true` if it was successful, and `false` otherwise.
+
+### Workflow Node Step Plugin
+
+Annotate your class with `@Plugin` and use the service name `WorkflowNodeStep`.
+
+Implement the interface `com.dtolabs.rundeck.plugins.step.NodeStepPlugin`
+
+    /**
+     * Execute the plugin step logic for the given node.
+     *
+     * @param context       the step context
+     * @param configuration Any configuration property values not otherwise applied to the plugin
+     * @param entry         the Node
+     *
+     * @throws NodeStepException if an error occurs
+     */
+    public boolean executeNodeStep(final PluginStepContext context,
+                                   final Map<String, Object> configuration,
+                                   final INodeEntry entry)
+        throws NodeStepException;
+
+Your implementation should return `true` if it was successful, and `false` otherwise.
+
+### Remote Script Node Step Plugin
+
+These are a specialized use-case of the Node Step
 plugin.  They allow you to simply define a command or a script that should be
 executed on the remote nodes, and Rundeck will handle the remote execution of the
 command/script via the appropriate services.
-    * Define a class that extends `com.dtolabs.rundeck.plugins.step.BaseRemoteScriptNodeStepPlugin`
-    * OR implements `com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin`
-    * Annotate your class with `@Plugin` and use the service name `RemoteScriptNodeStep`
+    
+Annotate your class with `@Plugin` and use the service name `RemoteScriptNodeStep`
 
-It is recommended that you extend the base implementation to simplify
-the interface you have to implement and to use the [Description Annotations](#description-annotations).
+Implement the interface `com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin`
+
+    /**
+     * Generate a full script or command string to execute on the remote node
+     *
+     * @param context       the step context
+     * @param configuration Any configuration property values not otherwise applied to the plugin
+     * @param entry         the Node
+     *
+     * @throws NodeStepException if an error occurs
+     */
+    public GeneratedScript generateScript(final PluginStepContext context,
+                                          final Map<String, Object> configuration,
+                                          final INodeEntry entry)
+        throws NodeStepException;
+
+Your implementation should return a `GeneratedScript` object.  You can make use of the 
+`com.dtolabs.rundeck.plugins.step.GeneratedScriptBuilder` class to generate the appropriate return type using these
+two factory methods:
+
+    /**
+     * Create a script
+     *
+     * @param script the script text
+     * @param args   the arguments for the script
+     */
+    public static GeneratedScript script(final String script, final String[] args);
+
+    /**
+     * Create a command
+     *
+     * @param command the command and arguments
+     */
+    public static GeneratedScript command(final String... command);
 
 ### Step context information
 
@@ -85,10 +145,6 @@ details about the step and its configuration:
          * Return the logger
          */
         public PluginLogger getLogger();
-        /**
-         * Return the property resolver
-         */
-        public PropertyResolver getPropertyResolver();
         /**
          * Return the project name
          */
@@ -112,81 +168,40 @@ details about the step and its configuration:
         public List<Integer> getStepContext();
     }
 
-
-### Workflow Step Plugin
-
-1. Extend `com.dtolabs.rundeck.plugins.step.BaseStepPlugin`.
-
-2. Implement the abstract method:
-
-        /**
-         * Perform the step and return true if successful
-         */
-        protected abstract boolean performStep(PluginStepContext context);
-
-Your implementation should return `true` if it was successful, and `false` otherwise.
-
-### Workflow Node Step Plugin
-
-1. Extend `com.dtolabs.rundeck.plugins.step.BaseNodeStepPlugin`
-
-2. Implement the abstract method:
-
-        /**
-         * Perform the step for the node and return true if successful
-         */
-        protected abstract boolean performNodeStep(PluginStepContext context, INodeEntry entry);
-
-Your implementation should return `true` if it was successful, and `false` otherwise.
-
-### Remote Script Node Step Plugin
-
-1. Extend `com.dtolabs.rundeck.plugins.step.BaseRemoteScriptNodeStepPlugin`
-2. Implement the abstract method:
-
-        /**
-         * Create the GeneratedScript to be executed on the node
-         * @see GeneratedScriptBuilder
-         */
-        public abstract GeneratedScript buildScript(PluginStepContext context, INodeEntry entry);
-
-Your implementation should return a `GeneratedScript` object.  You can make use of the 
-`com.dtolabs.rundeck.plugins.step.GeneratedScriptBuilder` class to generate the appropriate return type using these
-two factory methods:
-
-    /**
-     * Create a script
-     *
-     * @param script the script text
-     * @param args   the arguments for the script
-     */
-    public static GeneratedScript script(final String script, final String[] args);
-
-    /**
-     * Create a command
-     *
-     * @param command the command and arguments
-     */
-    public static GeneratedScript command(final String... command);
-
 ## Plugin Descriptions
 
 To define a plugin that presents custom GUI configuration properties and/or
 uses Project/Framework level configuration, you need to provide a Description
 of your plugin.  The Description defines metadata about the plugin, such as the
-display name and descriptive text to identify it, as well as the list of all
+display name and descriptive text, as well as the list of all
 configuration Properties that it supports.
 
-If you are extending the provided plugin Base classes, see below about using
-[Description Annotations](#description-annotations) to define your plugin
-Description.
+There are several ways to declare your plugin's Description:
 
-If you are implementing the plugin interfaces directly, you will need to do
-the following to provide a Description for your plugin:
+**Annotations**
 
-* Implement the `com.dtolabs.rundeck.core.plugins.configuration.Describable` interface
-    * Return a `com.dtolabs.rundeck.core.plugins.configuration.Description` instance
-    * You can construct one by using the `com.dtolabs.rundeck.plugins.util.DescriptionBuilder` builder class.
+The simplest way to declare your plugin description is via
+[Description Annotations](#description-annotations) as described in the following section.
+
+**Collaborator interface**
+
+Implement the `com.dtolabs.rundeck.plugins.util.DescriptionBuilder#Collaborator` interface
+in your plugin class, and it will be given an opportunity to perform actions on the Builder
+object before it finally constructs a Description.
+
+You can use this in addition to the *Annotations* method if you want to modify the static
+annotation values.
+
+**Describable interface**
+
+If you want to build the Description object yourself, you can do so by
+implementing the `com.dtolabs.rundeck.core.plugins.configuration.Describable`
+interface. Return a
+`com.dtolabs.rundeck.core.plugins.configuration.Description` instance. You can
+construct one by using the
+`com.dtolabs.rundeck.plugins.util.DescriptionBuilder` builder class.
+
+This mechanism will bypass the use of Annotations to provide the description.
 
 ## Description Annotations
 
@@ -202,15 +217,20 @@ You can define the display name, and descriptive text about your plugin by addin
 `com.dtolabs.rundeck.plugins.descriptions.PluginDescription` annotation to your
 plugin class.
 
+Attributes of `@PluginDescription`:
+
+* `title` - the display name for your plugin
+* `description` - descriptive text shown next to the display name
+
 Example:
 
-    @Plugin(name="myplugin", service="WorkflowStep")
+    @Plugin(name="myplugin", service=ServiceNameConstants.WorkflowStep)
     @PluginDescription(title="My Plugin", description="Performs a custom step")
-    public class MyPlugin extends BaseStepPlugin{
+    public class MyPlugin implements StepPlugin{
         ...
     }
 
-If you do not add this annotation, the plugin display name will be the same as the provider name, and will have 
+*Note:* If you do not add this annotation, the plugin display name will be the same as the provider name, and will have 
 no descriptive text when displayed.
 
 ### Properties
@@ -222,16 +242,25 @@ properties of your class.  These are the supported Java types for annotated fiel
 * Boolean/boolean
 * Integer/integer, Long/long
 
-Annotations and their fields:
+When your plugin is executed, the fields will be set to the appropriate values
+based on their default value, scope, and any value set by the user in the
+workflow configuration.
+
+These annotation classes are used:
 
 * `com.dtolabs.rundeck.plugins.descriptions.PluginProperty` - Declares a class field as a plugin configuration property
+* `com.dtolabs.rundeck.plugins.descriptions.SelectValues` - Declares a String property to be a "Select" property, which defines a set of input values that can be chosen from a list
+
+Attributes:
+
+* `@PluginProperty`
     * `name` - the property identifier name
     * `title` - the property display name
     * `description` - descriptive text
     * `defaultValue` - default value
     * `required` - (boolean) whether the property is required to have an input value. Default: false.
     * `scope` (PropertyScope) the resolution scope for the property value
-* `com.dtolabs.rundeck.plugins.descriptions.SelectValues` - Declares a String property to be a "Select" property, which defines a set of input values that can be chosen from a list
+* `@SelectValues`
     * `values` (String[]) the set of values that can be chosen
     * `freeSelect` (boolean) whether the user can enter values not in the list. Default: false.
 
@@ -261,9 +290,19 @@ You can define the scope for a property by adding `scope` to the PluginProperty 
 
 The default effective scope if you do not specify it in the annotation is `InstanceOnly`.
 
+When resolving a property in a Project or Framework scope, the following properties will be searched:
+
+* Framework scope
+    * file: `$RDBASE/etc/framework.properties`
+    * property: `framework.plugin.[ServiceName].[providerName].[propertyname]`
+
+* Project scope
+    * file: `$RDBASE/projects/[ProjectName]/etc/project.properties`
+    * property: `project.plugin.[ServiceName].[providerName].[propertyname]`
+
 ## Script-based Step Plugins
 
-Currently you can only implement Node Steps as script-based plugins.
+*Note:* Currently only Node Steps can be implemented as script-based plugins.
 
 See the [Plugin Development - Script Plugin Development](plugin-development.html#script-plugin-development) 
 for the basics of developing script-based plugins for Rundeck.

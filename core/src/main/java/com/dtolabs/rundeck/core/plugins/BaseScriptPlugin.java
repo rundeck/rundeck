@@ -27,7 +27,6 @@ package com.dtolabs.rundeck.core.plugins;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
-import com.dtolabs.rundeck.plugins.step.PluginStepItem;
 import com.dtolabs.utils.Streams;
 
 import java.io.File;
@@ -41,7 +40,7 @@ import java.util.Map;
 
 
 /**
- * BaseScriptPlugin is ...
+ * BaseScriptPlugin provides common methods for running scripts, used by the script plugin implementations.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
@@ -88,15 +87,15 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
      * the
      */
     protected int runPluginScript(final PluginStepContext executionContext,
-                                  final PluginStepItem item,
                                   final PrintStream outputStream,
                                   final PrintStream errorStream,
-                                  final Framework framework)
+                                  final Framework framework, final Map<String, Object> configuration)
         throws IOException, InterruptedException {
-        final Map<String, Map<String, String>> localDataContext = createStepItemDataContext(item,
-                                                                                            framework,
+        final Map<String, Map<String, String>> localDataContext = createStepItemDataContext(
+            framework,
                                                                                             executionContext.getFrameworkProject(),
-                                                                                            executionContext.getDataContext());
+                                                                                            executionContext.getDataContext(),
+                                                                                            configuration);
         final String[] finalargs = createScriptArgs(localDataContext);
 
         executionContext.getLogger().log(3, "[" + getProvider().getName() + "] executing: " + Arrays.asList(
@@ -113,16 +112,16 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
     /**
      * Create a data context containing the plugin values "file","scriptfile" and "base", as well as all config values.
      */
-    protected Map<String, Map<String, String>> createStepItemDataContext(final PluginStepItem item,
-                                                                         final Framework framework,
+    protected Map<String, Map<String, String>> createStepItemDataContext(final Framework framework,
                                                                          final String project,
-                                                                         final Map<String, Map<String, String>> context) {
+                                                                         final Map<String, Map<String, String>> context,
+                                                                         final Map<String, Object> configuration) {
 
         final Map<String, Map<String, String>> localDataContext = createScriptDataContext(framework, project, context);
 
         final HashMap<String, String> configMap = new HashMap<String, String>();
         //convert values to string
-        for (final Map.Entry<String, Object> entry : item.getStepConfiguration().entrySet()) {
+        for (final Map.Entry<String, Object> entry : configuration.entrySet()) {
             configMap.put(entry.getKey(), entry.getValue().toString());
         }
         localDataContext.put("config", configMap);

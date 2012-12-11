@@ -26,14 +26,12 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepItemImpl;
 import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
-import com.dtolabs.rundeck.plugins.step.PluginStepItem;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import java.io.IOException;
@@ -42,7 +40,6 @@ import java.util.Map;
 
 /**
  * ScriptPluginNodeStepPlugin is a {@link NodeStepPlugin} that uses a {@link ScriptPluginProvider}
- *
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
@@ -67,24 +64,21 @@ class ScriptPluginNodeStepPlugin extends BaseScriptPlugin implements NodeStepPlu
 
     @Override
     public boolean executeNodeStep(final PluginStepContext executionContext,
-                                   final PluginStepItem item,
+                                   final Map<String, Object> configuration,
                                    final INodeEntry node)
         throws NodeStepException {
         final ScriptPluginProvider plugin = getProvider();
         final String pluginname = plugin.getName();
         executionContext.getLogger().log(3,
-                                                    "[" + pluginname + "] step started, config: "
-                                                    + item.getStepConfiguration());
+                                         "[" + pluginname + "] step started, config: "
+                                         + configuration);
 
 
-        //call method to resolve all description properties
-        final Map<String, Object> resolvedProperties = mapDescribedProperties(executionContext.getPropertyResolver());
         //create a new step item containing the resolved properties, which will be used in the script
         // execution context
-        final PluginStepItem newitem = new PluginStepItemImpl(item.getType(), resolvedProperties);
         int result = -1;
         try {
-            result = runPluginScript(executionContext, newitem, System.out, System.err, getFramework());
+            result = runPluginScript(executionContext, System.out, System.err, getFramework(), configuration);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {

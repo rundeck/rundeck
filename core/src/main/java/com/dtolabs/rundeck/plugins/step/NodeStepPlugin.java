@@ -27,15 +27,26 @@ package com.dtolabs.rundeck.plugins.step;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 
+import java.util.Map;
+
 
 /**
- * NodeStepPlugin is ...
+ * The plugin interface for a Workflow Node Step Plugin.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface NodeStepPlugin {
+    /**
+     * Execute the plugin step logic for the given node.
+     *
+     * @param context       the step context
+     * @param configuration Any configuration property values not otherwise applied to the plugin
+     * @param entry         the Node
+     *
+     * @throws NodeStepException if an error occurs
+     */
     public boolean executeNodeStep(final PluginStepContext context,
-                                   final PluginStepItem item,
+                                   final Map<String, Object> configuration,
                                    final INodeEntry entry)
         throws NodeStepException;
 }

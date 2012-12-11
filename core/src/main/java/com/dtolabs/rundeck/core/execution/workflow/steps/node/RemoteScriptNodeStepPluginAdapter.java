@@ -25,10 +25,14 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.PluginAdapterUtility;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepContextImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PropertyResolverFactory;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNodeStepExecutor;
@@ -37,31 +41,33 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.step.GeneratedScript;
-import com.dtolabs.rundeck.plugins.step.PluginStepItem;
-import com.dtolabs.rundeck.plugins.step.PropertyResolver;
+import com.dtolabs.rundeck.core.execution.workflow.steps.PropertyResolver;
 import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin;
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
+
+import java.util.Map;
 
 
 /**
- * RemoteScriptNodeStepPluginAdapter is a NodeStepExecutor that makes use of a RemoteScriptNodeStepPlugin to
- * provide the remote script to execute.
+ * RemoteScriptNodeStepPluginAdapter is a NodeStepExecutor that makes use of a RemoteScriptNodeStepPlugin to provide the
+ * remote script to execute.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable {
+    final Description description;
+
     @Override
     public Description getDescription() {
-        if (plugin instanceof Describable) {
-            final Describable desc = (Describable) plugin;
-            return desc.getDescription();
-        }
-        return null;
+        return description;
     }
+
 
     private RemoteScriptNodeStepPlugin plugin;
 
     public RemoteScriptNodeStepPluginAdapter(final RemoteScriptNodeStepPlugin plugin) {
         this.plugin = plugin;
+        description = PluginAdapterUtility.buildDescription(plugin, DescriptionBuilder.builder());
     }
 
     static class Convert implements Converter<RemoteScriptNodeStepPlugin, NodeStepExecutor> {
@@ -79,13 +85,21 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
                                           final INodeEntry node)
         throws NodeStepException {
 
-        final PluginStepItem item1 = NodeStepPluginAdapter.toPluginStepItem(item, context);
+        Map<String, Object> instanceConfiguration = getStepConfiguration(item);
+        if (null != instanceConfiguration) {
+            instanceConfiguration = DataContextUtils.replaceDataReferences(instanceConfiguration,
+                                                                           context.getDataContext());
+        }
+        final String providerName = item.getNodeStepType();
         final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(context,
+                                                                                                  instanceConfiguration,
                                                                                                   ServiceNameConstants.RemoteScriptNodeStep,
-                                                                                                  item1
+                                                                                                  providerName
         );
-        final PluginStepContextImpl pluginContext = PluginStepContextImpl.from(context, resolver);
-        final GeneratedScript script = plugin.generateScript(pluginContext, item1, node);
+        final PluginStepContextImpl pluginContext = PluginStepContextImpl.from(context);
+        final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, description, plugin);
+
+        final GeneratedScript script = plugin.generateScript(pluginContext, config, node);
         final ExecutionService executionService = context.getFramework().getExecutionService();
         if (null != script.getCommand()) {
             //execute the command
@@ -109,6 +123,14 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
 
         } else {
             return new NodeStepResultImpl(false, node);
+        }
+    }
+
+    private Map<String, Object> getStepConfiguration(StepExecutionItem item) {
+        if (item instanceof ConfiguredStepExecutionItem) {
+            return ((ConfiguredStepExecutionItem) item).getStepConfiguration();
+        } else {
+            return null;
         }
     }
 

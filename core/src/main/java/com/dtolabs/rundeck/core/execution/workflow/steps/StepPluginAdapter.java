@@ -25,7 +25,7 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
-import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
@@ -33,9 +33,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
-import com.dtolabs.rundeck.plugins.step.PluginStepItem;
-import com.dtolabs.rundeck.plugins.step.PropertyResolver;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import java.util.*;
 
@@ -65,8 +64,9 @@ class StepPluginAdapter implements StepExecutor, Describable {
         if (plugin instanceof Describable) {
             final Describable desc = (Describable) plugin;
             return desc.getDescription();
+        } else {
+            return PluginAdapterUtility.buildDescription(plugin, DescriptionBuilder.builder());
         }
-        return null;
     }
 
     @Override
@@ -78,27 +78,29 @@ class StepPluginAdapter implements StepExecutor, Describable {
     public StepExecutionResult executeWorkflowStep(final StepExecutionContext executionContext,
                                                    final StepExecutionItem item)
         throws StepException {
-        final PluginStepItem step = toPluginStepItem(item, executionContext);
-        PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(executionContext,
-                                                                                            ServiceNameConstants.WorkflowStep,
-                                                                                            step
+        Map<String, Object> instanceConfiguration = getStepConfiguration(item);
+        if (null != instanceConfiguration) {
+            instanceConfiguration = DataContextUtils.replaceDataReferences(instanceConfiguration,
+                                                                           executionContext.getDataContext());
+        }
+        final String providerName = item.getType();
+        final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(executionContext,
+                                                                                                  instanceConfiguration,
+                                                                                                  ServiceNameConstants.WorkflowStep,
+                                                                                                  providerName
         );
-        PluginStepContext stepContext = PluginStepContextImpl.from(executionContext, resolver);
-        final boolean success = plugin.executeStep(stepContext, step);
+        final PluginStepContext stepContext = PluginStepContextImpl.from(executionContext);
+        final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, getDescription(), plugin);
+        final boolean success = plugin.executeStep(stepContext, config);
         return new StepExecutionResultImpl(success);
     }
 
-    private PluginStepItem toPluginStepItem(final StepExecutionItem item, final ExecutionContext executionContext) {
-        if (!(item instanceof PluginStepItem)) {
-            return new PluginStepItemImpl(item.getType(), null);
+    private Map<String, Object> getStepConfiguration(StepExecutionItem item) {
+        if (item instanceof ConfiguredStepExecutionItem) {
+            return ((ConfiguredStepExecutionItem) item).getStepConfiguration();
+        } else {
+            return null;
         }
-
-        final PluginStepItem step = (PluginStepItem) item;
-        if (step.getStepConfiguration() == null) {
-            return step;
-        }
-        final Map<String, Object> map = DataContextUtils.replaceDataReferences(step.getStepConfiguration(),
-                                                                               executionContext.getDataContext());
-        return new PluginStepItemImpl(item.getType(), map);
     }
+
 }
