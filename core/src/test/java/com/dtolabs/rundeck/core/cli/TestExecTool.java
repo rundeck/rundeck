@@ -30,7 +30,15 @@ import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.*;
-import com.dtolabs.rundeck.core.execution.commands.*;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandExecutionItem;
 import com.dtolabs.rundeck.core.utils.NodeSet;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
@@ -103,7 +111,7 @@ public class TestExecTool extends AbstractBaseTest {
 
         getFrameworkInstance().getFrameworkProjectMgr().remove(TEST_EXEC_TOOL_PROJ2);
 //        ExecutionServiceFactory.resetDefaultExecutorClasses();
-        getFrameworkInstance().setService(CommandInterpreterService.SERVICE_NAME, null);
+        getFrameworkInstance().setService(NodeStepExecutionService.SERVICE_NAME, null);
     }
 
     public static Test suite() {
@@ -394,10 +402,10 @@ public class TestExecTool extends AbstractBaseTest {
     }*/
 
     /**
-     * Stub to set as Executor class for ExecutionItem types, used for testing.
+     * Stub to set as Executor class for StepExecutionItem types, used for testing.
      */
     /*public static class testExecutor1 implements Executor {
-        static ExecutionItem testItem;
+        static StepExecutionItem testItem;
         static ExecutionListener testListener;
         static boolean executeItemCalled=false;
         static Framework testFramework;
@@ -405,7 +413,7 @@ public class TestExecTool extends AbstractBaseTest {
         static ExecutionService testExecutionService;
         public testExecutor1() {
         }
-        public ExecutionResult executeItem(ExecutionItem item, ExecutionListener listener,
+        public ExecutionResult executeItem(StepExecutionItem item, ExecutionListener listener,
                                            final ExecutionService executionService,
                                            final Framework framework) throws ExecutionException {
             testItem=item;
@@ -424,21 +432,21 @@ public class TestExecTool extends AbstractBaseTest {
         }
 
     }*/
-    public static class testExecutor1 implements CommandInterpreter{
-        static ExecutionItem testItem;
+    public static class testExecutor1 implements NodeStepExecutor {
+        static StepExecutionItem testItem;
         static ExecutionContext testContext;
         static ExecutionListener testListener;
         static boolean executeItemCalled = false;
         static Framework testFramework;
-        static InterpreterResult returnResult = null;
+        static NodeStepResult returnResult = null;
         Framework framework;
 
         public testExecutor1(Framework framework) {
             this.framework = framework;
         }
 
-        public InterpreterResult interpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node) throws
-            InterpreterException {
+        public NodeStepResult executeNodeStep(StepExecutionContext context, NodeStepExecutionItem item, INodeEntry node) throws
+                                                                                                             NodeStepException {
             testContext=context;
             testItem = item;
             testListener = context.getExecutionListener();
@@ -540,17 +548,13 @@ public class TestExecTool extends AbstractBaseTest {
     public void testRunActionShouldLogResult() throws Exception {
         //set up test Executors
 //        ExecutionServiceFactory.setDefaultExecutorClass(DispatchedScriptExecutionItem.class, testExecutor1.class);
-        final CommandInterpreterService cis = CommandInterpreterService.getInstanceForFramework(
+        final NodeStepExecutionService cis = NodeStepExecutionService.getInstanceForFramework(
             getFrameworkInstance());
         cis.registerClass("exec", testExecutor1.class);
 
 
         //set return result
-        testExecutor1.returnResult = new InterpreterResult() {
-            public boolean isSuccess() {
-                return true;
-            }
-
+        testExecutor1.returnResult = new NodeStepResultImpl(true,null) {
             @Override
             public String toString() {
                 return "test1ResultString";
@@ -578,7 +582,6 @@ public class TestExecTool extends AbstractBaseTest {
             assertEquals(1, test1.successNodeCount);
             assertEquals("", test1.tags);
             assertEquals("dispatch -p " + TEST_EXEC_TOOL_PROJECT + " -- uptime for ever", test1.script);
-            assertEquals("DispatcherResult{status=true, results={test1=test1ResultString}}", test1.summary);
             assertNotNull(test1.start);
             assertNotNull(test1.end);
 
@@ -590,14 +593,11 @@ public class TestExecTool extends AbstractBaseTest {
     public void testRunActionShouldLogResultFailure() throws Exception {
         //set up test Executors
 //        ExecutionServiceFactory.setDefaultExecutorClass(DispatchedScriptExecutionItem.class, testExecutor1.class);
-        final CommandInterpreterService cis = CommandInterpreterService.getInstanceForFramework(
+        final NodeStepExecutionService cis = NodeStepExecutionService.getInstanceForFramework(
             getFrameworkInstance());
         cis.registerClass("exec", testExecutor1.class);
         //set return result
-        testExecutor1.returnResult = new InterpreterResult() {
-            public boolean isSuccess() {
-                return false;
-            }
+        testExecutor1.returnResult = new NodeStepResultImpl(false,null) {
             public String toString() {
                 return "test failure result";
             }
@@ -616,7 +616,6 @@ public class TestExecTool extends AbstractBaseTest {
                 main.runAction();
                 fail("should have thrown exception");
             } catch (Exception e) {
-                assertEquals("DispatcherResult{status=false, results={test1=test failure result}}", e.getMessage());
             }
             assertTrue(test1.wascalled);
             assertEquals(TEST_EXEC_TOOL_PROJECT, test1.project);
@@ -626,7 +625,6 @@ public class TestExecTool extends AbstractBaseTest {
             assertEquals(0, test1.successNodeCount);
             assertEquals("", test1.tags);
             assertEquals("dispatch -p " + TEST_EXEC_TOOL_PROJECT + " -- uptime for ever", test1.script);
-            assertEquals("DispatcherResult{status=false, results={test1=test failure result}}", test1.summary);
             assertNotNull(test1.start);
             assertNotNull(test1.end);
 
@@ -637,7 +635,7 @@ public class TestExecTool extends AbstractBaseTest {
     public void testRunAction() throws Exception{
         //set up test Executors
 //        ExecutionServiceFactory.setDefaultExecutorClass(DispatchedScriptExecutionItem.class, testExecutor1.class);
-        final CommandInterpreterService cis = CommandInterpreterService.getInstanceForFramework(
+        final NodeStepExecutionService cis = NodeStepExecutionService.getInstanceForFramework(
             getFrameworkInstance());
         cis.registerClass("exec", testExecutor1.class);
         cis.registerClass("script", testExecutor1.class);
@@ -656,7 +654,6 @@ public class TestExecTool extends AbstractBaseTest {
                 fail("run shouldn't succeed");
             } catch (CoreException e) {
                 assertNotNull(e);
-                assertEquals("DispatcherResult{status=false, results={}}", e.getMessage());
                 e.printStackTrace(System.err);
             }
             assertTrue("executeItem not called", testExecutor1.executeItemCalled);
@@ -667,11 +664,7 @@ public class TestExecTool extends AbstractBaseTest {
         }
 
         //set return result
-        testExecutor1.returnResult=new InterpreterResult(){
-            public boolean isSuccess() {
-                return true;
-            }
-
+        testExecutor1.returnResult=new NodeStepResultImpl(true,null){
             public String toString() {
                 return "testResult1";
             }
@@ -736,8 +729,8 @@ public class TestExecTool extends AbstractBaseTest {
             ScriptFileCommandExecutionItem item1 = (ScriptFileCommandExecutionItem) testExecutor1.testItem;
             assertEquals(TEST_EXEC_TOOL_PROJECT, testExecutor1.testContext.getFrameworkProject());
             assertEquals(testScriptFile.getAbsolutePath(), item1.getServerScriptFilePath());
-            assertNotNull(testExecutor1.testContext.getArgs());
-            String[] args = testExecutor1.testContext.getArgs();
+            assertNotNull(item1.getArgs());
+            String[] args = item1.getArgs();
             assertEquals("incorrect args count", 2, args.length);
             assertEquals("incorrect args count", "test", args[0]);
             assertEquals("incorrect args count", "args", args[1]);
@@ -764,8 +757,8 @@ public class TestExecTool extends AbstractBaseTest {
             ScriptFileCommandExecutionItem item1 = (ScriptFileCommandExecutionItem) testExecutor1.testItem;
             assertEquals(TEST_EXEC_TOOL_PROJECT, testExecutor1.testContext.getFrameworkProject());
             assertEquals(testScriptFile.getAbsolutePath(), item1.getServerScriptFilePath());
-            assertNotNull(testExecutor1.testContext.getArgs());
-            String[] args = testExecutor1.testContext.getArgs();
+            assertNotNull(item1.getArgs());
+            String[] args = item1.getArgs();
             assertEquals("incorrect args count", 3, args.length);
             assertEquals("test", args[0]);
             assertEquals("args", args[1]);
@@ -792,8 +785,8 @@ public class TestExecTool extends AbstractBaseTest {
             ScriptFileCommandExecutionItem item1 = (ScriptFileCommandExecutionItem) testExecutor1.testItem;
             assertEquals(TEST_EXEC_TOOL_PROJECT, testExecutor1.testContext.getFrameworkProject());
             assertNotNull(item1.getServerScriptFilePath());
-            assertNotNull(testExecutor1.testContext.getArgs());
-            String[] args = testExecutor1.testContext.getArgs();
+            assertNotNull(item1.getArgs());
+            String[] args = item1.getArgs();
             assertEquals("incorrect args count", 2, args.length);
             assertEquals("test", args[0]);
             assertEquals("args", args[1]);

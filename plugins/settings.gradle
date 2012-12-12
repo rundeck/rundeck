@@ -1,1 +1,1 @@
-include "stub-plugin","script-plugin"
+include "stub-plugin","script-plugin","test-node-step-plugin"

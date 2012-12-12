@@ -1,4 +1,4 @@
-<%@ page contentType="text/xml;charset=UTF-8" %><%--
+<%@ page import="rundeck.ExecReport" contentType="text/xml;charset=UTF-8" %><%--
 --%><g:set var="feedTitle" value="Reports Feed ${paginateParams?.size()>0?' (Filtered)':''}"/><%--
 --%><g:set var="feedLink" value="${createLink(controller:'reports',action:'index',params:paginateParams)}"/><%--
 --%><g:set var="feedDescription" value="Recent Reports ${paginateParams?.size()>0?' (Filtered)':''}"/><%--

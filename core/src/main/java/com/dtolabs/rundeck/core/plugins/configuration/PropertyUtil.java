@@ -27,6 +27,7 @@ import java.util.List;
 
 import static com.dtolabs.rundeck.core.plugins.configuration.Property.Type.*;
 
+
 /**
  * PropertyUtil factory for specific property types
  *
@@ -39,30 +40,53 @@ public class PropertyUtil {
     public static Property forType(final Property.Type type, final String name, final String title,
                                    final String description, final boolean required,
                                    final String defaultValue, final List<String> values) {
-        switch (type) {
-            case Integer:
-                return integer(name, title, description, required, defaultValue);
-            case Boolean:
-                return bool(name, title, description, required, defaultValue);
-            case Long:
-                return longProp(name, title, description, required, defaultValue);
-            case Select:
-                return PropertyUtil.select(name, title, description, required, defaultValue, values);
-            case FreeSelect:
-                return PropertyUtil.freeSelect(name, title, description, required, defaultValue, values);
-            default:
-                return string(name, title, description, required, defaultValue);
-        }
+        return forType(type, name, title, description, required, defaultValue, values, null);
     }
 
     /**
-     * Return a string property
+     * Return a property instance for a particular simple type
      */
-    public static Property string(final String name, final String title, final String description,
-                                  final boolean required,
-                                  final String defaultValue, final Property.Validator validator) {
-        return new StringProperty(name, title, description, required, defaultValue, validator);
+    public static Property forType(final Property.Type type,
+                                   final String name,
+                                   final String title,
+                                   final String description,
+                                   final boolean required,
+                                   final String defaultValue,
+                                   final List<String> values,
+                                   final PropertyValidator validator) {
+        return forType(type, name, title, description, required, defaultValue, values, validator, null);
     }
+
+    /**
+     * Return a property instance for a particular simple type
+     */
+    public static Property forType(final Property.Type type,
+                                   final String name,
+                                   final String title,
+                                   final String description,
+                                   final boolean required,
+                                   final String defaultValue,
+                                   final List<String> values,
+                                   final PropertyValidator validator,
+                                   final PropertyScope scope
+    ) {
+        switch (type) {
+            case Integer:
+                return integer(name, title, description, required, defaultValue, validator, scope);
+            case Boolean:
+                return bool(name, title, description, required, defaultValue, scope);
+            case Long:
+                return longProp(name, title, description, required, defaultValue, validator, scope);
+            case Select:
+                return PropertyUtil.select(name, title, description, required, defaultValue, values, scope);
+            case FreeSelect:
+                return PropertyUtil.freeSelect(name, title, description, required, defaultValue, values, validator,
+                                               scope);
+            default:
+                return string(name, title, description, required, defaultValue, validator, scope);
+        }
+    }
+
 
     /**
      * Return a string property
@@ -70,7 +94,26 @@ public class PropertyUtil {
     public static Property string(final String name, final String title, final String description,
                                   final boolean required,
                                   final String defaultValue) {
-        return new StringProperty(name, title, description, required, defaultValue, null);
+        return string(name, title, description, required, defaultValue, null);
+    }
+
+    /**
+     * Return a string property
+     */
+    public static Property string(final String name, final String title, final String description,
+                                  final boolean required,
+                                  final String defaultValue, final PropertyValidator validator) {
+        return string(name, title, description, required, defaultValue, validator, null);
+    }
+
+    /**
+     * Return a string property
+     */
+    public static Property string(final String name, final String title, final String description,
+                                  final boolean required,
+                                  final String defaultValue, final PropertyValidator validator,
+                                  final PropertyScope scope) {
+        return new StringProperty(name, title, description, required, defaultValue, validator, scope);
     }
 
     /**
@@ -78,7 +121,18 @@ public class PropertyUtil {
      */
     public static Property bool(final String name, final String title, final String description, final boolean required,
                                 final String defaultValue) {
-        return new BooleanProperty(name, title, description, required, defaultValue);
+        return bool(name, title, description, required, defaultValue, null);
+    }
+
+    /**
+     * Return a boolean property
+     */
+    public static BooleanProperty bool(String name,
+                                       String title,
+                                       String description,
+                                       boolean required,
+                                       String defaultValue, final PropertyScope scope) {
+        return new BooleanProperty(name, title, description, required, defaultValue, scope);
     }
 
     /**
@@ -87,7 +141,32 @@ public class PropertyUtil {
     public static Property integer(final String name, final String title, final String description,
                                    final boolean required,
                                    final String defaultValue) {
-        return new IntegerProperty(name, title, description, required, defaultValue);
+        return integer(name, title, description, required, defaultValue, null);
+
+    }
+
+    /**
+     * Return an integer property with additional validator
+     */
+    public static Property integer(final String name, final String title, final String description,
+                                   final boolean required,
+                                   final String defaultValue, final PropertyValidator validator) {
+
+        return integer(name, title, description, required, defaultValue, validator, null);
+    }
+
+    /**
+     * Return an integer property with additional validator
+     */
+    public static Property integer(final String name,
+                                   final String title,
+                                   final String description,
+                                   final boolean required,
+                                   final String defaultValue,
+                                   final PropertyValidator validator,
+                                   final PropertyScope scope) {
+
+        return new IntegerProperty(name, title, description, required, defaultValue, validator, scope);
     }
 
     /**
@@ -95,8 +174,33 @@ public class PropertyUtil {
      */
     public static Property longProp(final String name, final String title, final String description,
                                     final boolean required, final String defaultValue) {
+        return longProp(name, title, description, required, defaultValue, null);
+    }
 
-        return new LongProperty(name, title, description, required, defaultValue);
+    /**
+     * Return a long property
+     */
+    public static Property longProp(final String name,
+                                    final String title,
+                                    final String description,
+                                    final boolean required,
+                                    final String defaultValue,
+                                    final PropertyValidator validator) {
+        return longProp(name, title, description, required, defaultValue, validator, null);
+    }
+
+    /**
+     * Return a long property
+     */
+    public static Property longProp(final String name,
+                                    final String title,
+                                    final String description,
+                                    final boolean required,
+                                    final String defaultValue,
+                                    final PropertyValidator validator,
+                                    final PropertyScope scope) {
+
+        return new LongProperty(name, title, description, required, defaultValue, validator, scope);
     }
 
 
@@ -105,8 +209,17 @@ public class PropertyUtil {
      */
     public static Property select(final String name, final String title, final String description,
                                   final boolean required, final String defaultValue, final List<String> selectValues) {
+        return select(name, title, description, required, defaultValue, selectValues, null);
+    }
 
-        return new SelectProperty(name, title, description, required, defaultValue, selectValues);
+    /**
+     * Create a Select property with a list of values
+     */
+    public static Property select(final String name, final String title, final String description,
+                                  final boolean required, final String defaultValue, final List<String> selectValues,
+                                  final PropertyScope scope) {
+
+        return new SelectProperty(name, title, description, required, defaultValue, selectValues, scope);
     }
 
     /**
@@ -115,15 +228,40 @@ public class PropertyUtil {
     public static Property freeSelect(final String name, final String title, final String description,
                                       final boolean required, final String defaultValue,
                                       final List<String> selectValues) {
+        return freeSelect(name, title, description, required, defaultValue, selectValues, null);
+    }
 
-        return new FreeSelectProperty(name, title, description, required, defaultValue, selectValues);
+    /**
+     * Create a Free Select property with a list of values
+     */
+    public static Property freeSelect(final String name, final String title, final String description,
+                                      final boolean required, final String defaultValue,
+                                      final List<String> selectValues, final PropertyValidator validator) {
+
+        return freeSelect(name, title, description, required, defaultValue, selectValues, validator, null);
+    }
+
+    /**
+     * Create a Free Select property with a list of values
+     */
+    public static Property freeSelect(final String name, final String title, final String description,
+                                      final boolean required, final String defaultValue,
+                                      final List<String> selectValues, final PropertyValidator validator,
+                                      final PropertyScope scope) {
+
+        return new FreeSelectProperty(name, title, description, required, defaultValue, selectValues, validator, scope);
     }
 
     static final class StringProperty extends PropertyBase {
 
-        public StringProperty(final String name, final String title, final String description, final boolean required,
-                              final String defaultValue, final Validator validator) {
-            super(name, title, description, required, defaultValue, validator);
+        public StringProperty(final String name,
+                              final String title,
+                              final String description,
+                              final boolean required,
+                              final String defaultValue,
+                              final PropertyValidator validator,
+                              final PropertyScope scope) {
+            super(name, title, description, required, defaultValue, validator, scope);
         }
 
         public Type getType() {
@@ -131,13 +269,31 @@ public class PropertyUtil {
         }
     }
 
+    static PropertyValidator andValidator(final PropertyValidator first, final PropertyValidator second) {
+        if (null == first) {
+            return second;
+        } else if (null == second) {
+            return first;
+        }
+        return new PropertyValidator() {
+            @Override
+            public boolean isValid(String value) throws ValidationException {
+                return first.isValid(value) && second.isValid(value);
+            }
+        };
+    }
+
     static final class FreeSelectProperty extends PropertyBase {
         final List<String> selectValues;
 
-        public FreeSelectProperty(final String name, final String title, final String description,
+        public FreeSelectProperty(final String name,
+                                  final String title,
+                                  final String description,
                                   final boolean required,
-                                  final String defaultValue, final List<String> selectValues) {
-            super(name, title, description, required, defaultValue, null);
+                                  final String defaultValue,
+                                  final List<String> selectValues, final PropertyValidator validator,
+                                  final PropertyScope scope) {
+            super(name, title, description, required, defaultValue, validator, scope);
             this.selectValues = selectValues;
         }
 
@@ -155,8 +311,8 @@ public class PropertyUtil {
         final List<String> selectValues;
 
         public SelectProperty(final String name, final String title, final String description, final boolean required,
-                              final String defaultValue, final List<String> selectValues) {
-            super(name, title, description, required, defaultValue, new SelectValidator(selectValues));
+                              final String defaultValue, final List<String> selectValues, final PropertyScope scope) {
+            super(name, title, description, required, defaultValue, new SelectValidator(selectValues), scope);
             this.selectValues = selectValues;
         }
 
@@ -170,7 +326,7 @@ public class PropertyUtil {
         }
     }
 
-    static final class SelectValidator implements Property.Validator {
+    static final class SelectValidator implements PropertyValidator {
 
         final List<String> selectValues;
 
@@ -185,8 +341,8 @@ public class PropertyUtil {
 
     static final class BooleanProperty extends PropertyBase {
         public BooleanProperty(final String name, final String title, final String description, final boolean required,
-                               final String defaultValue) {
-            super(name, title, description, required, defaultValue, booleanValidator);
+                               final String defaultValue, final PropertyScope scope) {
+            super(name, title, description, required, defaultValue, booleanValidator, scope);
         }
 
         public Type getType() {
@@ -194,7 +350,7 @@ public class PropertyUtil {
         }
     }
 
-    static final Property.Validator booleanValidator = new Property.Validator() {
+    static final PropertyValidator booleanValidator = new PropertyValidator() {
         public boolean isValid(final String value) throws ValidationException {
             return "true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value);
         }
@@ -202,8 +358,8 @@ public class PropertyUtil {
 
     static final class IntegerProperty extends PropertyBase {
         public IntegerProperty(final String name, final String title, final String description, final boolean required,
-                               final String defaultValue) {
-            super(name, title, description, required, defaultValue, integerValidator);
+                               final String defaultValue, final PropertyValidator validator, final PropertyScope scope) {
+            super(name, title, description, required, defaultValue, andValidator(integerValidator, validator), scope);
         }
 
         public Type getType() {
@@ -212,7 +368,7 @@ public class PropertyUtil {
 
     }
 
-    static final Property.Validator integerValidator = new Property.Validator() {
+    static final PropertyValidator integerValidator = new PropertyValidator() {
         public boolean isValid(final String value) throws ValidationException {
             try {
                 java.lang.Integer.parseInt(value);
@@ -225,8 +381,8 @@ public class PropertyUtil {
 
     static final class LongProperty extends PropertyBase {
         public LongProperty(final String name, final String title, final String description, final boolean required,
-                            final String defaultValue) {
-            super(name, title, description, required, defaultValue, longValidator);
+                            final String defaultValue, final PropertyValidator validator, final PropertyScope scope) {
+            super(name, title, description, required, defaultValue, andValidator(longValidator, validator), scope);
         }
 
         public Type getType() {
@@ -235,7 +391,7 @@ public class PropertyUtil {
 
     }
 
-    static final Property.Validator longValidator = new Property.Validator() {
+    static final PropertyValidator longValidator = new PropertyValidator() {
         public boolean isValid(final String value) throws ValidationException {
             try {
                 java.lang.Long.parseLong(value);
@@ -251,7 +407,7 @@ public class PropertyUtil {
 
         public Generic(final String name, final String title, final String description, final boolean required,
                        final String defaultValue,
-                       final Validator validator, final Type type) {
+                       final PropertyValidator validator, final Type type) {
             super(name, title, description, required, defaultValue, validator);
             this.type = type;
         }

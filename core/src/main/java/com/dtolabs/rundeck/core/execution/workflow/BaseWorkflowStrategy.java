@@ -28,14 +28,10 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.SelectorUtils;
 import com.dtolabs.rundeck.core.execution.*;
-import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
-import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 
-import java.io.File;
-import java.io.InputStream;
 import java.util.*;
 
 /**
@@ -51,14 +47,13 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
         this.framework = framework;
     }
 
-    static class WorkflowExecutionResult implements
-        com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult {
-        private final HashMap<String, List<StatusResult>> results;
+    static class BaseWorkflowExecutionResult implements WorkflowExecutionResult {
+        private final List<StepExecutionResult> results;
         private final Map<String, Collection<String>> failures;
         private final boolean success;
         private final Exception orig;
 
-        public WorkflowExecutionResult(HashMap<String, List<StatusResult>> results,
+        public BaseWorkflowExecutionResult(List<StepExecutionResult> results,
                                        Map<String, Collection<String>> failures,
                                        boolean success, Exception orig) {
             this.results = results;
@@ -67,7 +62,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
             this.orig = orig;
         }
 
-        public Map<String, List<StatusResult>> getResultSet() {
+        public List<StepExecutionResult> getResultSet() {
             return results;
         }
 
@@ -95,7 +90,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
 
     }
 
-    public final WorkflowExecutionResult executeWorkflow(final ExecutionContext executionContext,
+    public final WorkflowExecutionResult executeWorkflow(final StepExecutionContext executionContext,
                                                          final WorkflowExecutionItem item) {
 
         final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
@@ -113,7 +108,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
         return result;
     }
 
-    private WorkflowExecutionListener getWorkflowListener(final ExecutionContext executionContext) {
+    protected WorkflowExecutionListener getWorkflowListener(final ExecutionContext executionContext) {
         WorkflowExecutionListener wlistener = null;
         final ExecutionListener elistener = executionContext.getExecutionListener();
         if (null != elistener && elistener instanceof WorkflowExecutionListener) {
@@ -122,7 +117,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
         return wlistener;
     }
 
-    public abstract WorkflowExecutionResult executeWorkflowImpl(ExecutionContext executionContext,
+    public abstract WorkflowExecutionResult executeWorkflowImpl(StepExecutionContext executionContext,
                                                                 WorkflowExecutionItem item);
 
     /**
@@ -130,7 +125,6 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
      * item fails and the Workflow is has keepgoing==false.
      *
      * @param failedMap  List to add any messages if the item fails
-     * @param resultList List to add any Objects that are results of execution
      * @param c          index of the WF item
      * @param cmd        WF item descriptor
      * @param keepgoing
@@ -140,32 +134,32 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
      * @throws WorkflowStepFailureException if underlying WF item throws exception and the workflow is not "keepgoing",
      *                                      or the result from the execution includes an exception
      */
-    protected boolean executeWFItem(final ExecutionContext executionContext,
-                                    final Map<Integer, Object> failedMap,
-                                    final List<DispatcherResult> resultList,
-                                    final int c,
-                                    final ExecutionItem cmd, final boolean keepgoing) throws
+    protected StepExecutionResult executeWFItem(final StepExecutionContext executionContext,
+                                                final Map<Integer, Object> failedMap,
+                                                final int c,
+                                                final StepExecutionItem cmd, final boolean keepgoing) throws
         WorkflowStepFailureException {
 
-        //TODO evaluate conditionals set for cmd within the data context, and skip cmd if necessary
         if(null!=executionContext.getExecutionListener()){
             executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, c + ": " + cmd.toString());
         }
-        ExecutionResult result = null;
+        StepExecutionResult result = null;
         boolean itemsuccess;
         Throwable wfstepthrowable = null;
         try {
             if(null!=executionContext.getExecutionListener()){
                 executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
-                "ExecutionItem created, executing: " + cmd);
+                "StepExecutionItem created, executing: " + cmd);
             }
-            result = framework.getExecutionService().executeItem(executionContext, cmd);
+            result = framework.getExecutionService()
+                .executeStep(ExecutionContextImpl.builder(executionContext)
+                                 .stepNumber(c)
+                                 .build(),
+                             cmd);
             itemsuccess = null != result && result.isSuccess();
         } catch (Throwable exc) {
             if (keepgoing) {
                 //don't fail
-//                executionContext.getExecutionListener().log(Constants.ERR_LEVEL,
-//                    "Step " + c + "of the workflow failed: " + exc.getMessage());
                 if (null != executionContext.getExecutionListener()) {
                 executionContext.getExecutionListener().log(Constants.VERBOSE_LEVEL,
                     "Step " + c + "of the workflow failed: " + org.apache.tools.ant.util
@@ -174,65 +168,77 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                 wfstepthrowable = exc;
                 itemsuccess = false;
             } else {
-//                executionContext.getExecutionListener().log(Constants.ERR_LEVEL,
-//                    "Step " + c + "of the workflow failed: " + exc.getMessage());
 
                 failedMap.put(c, exc.getMessage());
                 throw new WorkflowStepFailureException(
                     "Step " + c + " of the workflow threw exception: " + exc.getMessage(), exc, c);
             }
         }
-        //TODO: evaluate result object and set result data into the data context
-        if (null != result && null != result.getResultObject()) {
-            resultList.add(result.getResultObject());
+        Exception exception=null;
+        if(null!=result && (result instanceof ExceptionStatusResult)) {
+            exception = ((ExceptionStatusResult) result).getException();
         }
         if (itemsuccess) {
             if (null != executionContext.getExecutionListener()) {
-            executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
-                c + ": ExecutionItem finished, result: " + result);
+                executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
+                                                            c + ": StepExecutionItem finished, result: " + result);
             }
         } else if (keepgoing) {
             //don't fail yet
             failedMap.put(c, (null != wfstepthrowable ? wfstepthrowable.getMessage()
-                                                      : (null != result && null != result.getException() ? result
-                                                          .getException() : (null != result && null != result
-                                                          .getResultObject() ? result.getResultObject()
-                                                                             : "no result"))));
+                                                      : (null != result && null != exception ? exception
+                                                                                             : "no result")));
             executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, "Workflow continues");
         } else {
             failedMap.put(c, (null != wfstepthrowable ? wfstepthrowable.getMessage()
-                                                      : (null != result && null != result.getException() ? result
-                                                          .getException() : (null != result && null != result
-                                                          .getResultObject() ? result.getResultObject()
-                                                                             : "no result"))));
-            if (null != result && null != result.getException()) {
+                                                      : (null != result && null != exception ? exception
+                                                                                             : "no result")));
+            if (null != result && null != exception) {
                 throw new WorkflowStepFailureException(
-                    "Step " + c + " of the workflow threw an exception: " + result.getException().getMessage(),
-                    result.getException(), c);
+                    "Step " + c + " of the workflow threw an exception: " + exception.getMessage(),
+                    exception, c);
             } else {
                 throw new WorkflowStepFailureException(
-                    "Step " + c + " of the workflow failed with result: " + (result != null ? result
-                        .getResultObject() : null), result, c);
+                    "Step " + c + " of the workflow failed with result: " + (result != null ? result : null),
+                    result,
+                    c);
             }
         }
-        return itemsuccess;
+        return result;
     }
+
+
+
 
     /**
      * Execute the sequence of ExecutionItems within the context, and with the given keepgoing value, return true if
      * successful
      */
-    protected boolean executeWorkflowItemsForNodeSet(final ExecutionContext executionContext,
+    protected boolean executeWorkflowItemsForNodeSet(final StepExecutionContext executionContext,
                                                      final Map<Integer, Object> failedMap,
-                                                     final List<DispatcherResult> resultList,
-                                                     final List<ExecutionItem> iWorkflowCmdItems,
+                                                     final List<StepExecutionResult> resultList,
+                                                     final List<StepExecutionItem> iWorkflowCmdItems,
                                                      final boolean keepgoing) throws
+        WorkflowStepFailureException {
+        return executeWorkflowItemsForNodeSet(executionContext, failedMap, resultList, iWorkflowCmdItems, keepgoing,
+                                              executionContext.getStepNumber());
+    }
+    /**
+     * Execute the sequence of ExecutionItems within the context, and with the given keepgoing value, return true if
+     * successful
+     */
+    protected boolean executeWorkflowItemsForNodeSet(final StepExecutionContext executionContext,
+                                                     final Map<Integer, Object> failedMap,
+                                                     final List<StepExecutionResult> resultList,
+                                                     final List<StepExecutionItem> iWorkflowCmdItems,
+                                                     final boolean keepgoing,
+                                                     final int beginStepIndex) throws
         WorkflowStepFailureException {
 
         boolean workflowsuccess = true;
         final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
-        int c = 1;
-        for (final ExecutionItem cmd : iWorkflowCmdItems) {
+        int c = beginStepIndex;
+        for (final StepExecutionItem cmd : iWorkflowCmdItems) {
             boolean stepSuccess=false;
             WorkflowStepFailureException stepFailure=null;
             if (null != wlistener) {
@@ -241,17 +247,19 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
 
             //wrap node failed listener (if any) and capture status results
             NodeRecorder stepCaptureFailedNodesListener = new NodeRecorder();
-            ExecutionContext stepContext = replaceFailedNodesListenerInContext(executionContext,
+            StepExecutionContext stepContext = replaceFailedNodesListenerInContext(executionContext,
                 stepCaptureFailedNodesListener);
             Map<String,Object> nodeFailures;
 
             //execute the step item, and store the results
-            ArrayList<DispatcherResult> stepResult = new ArrayList<DispatcherResult>();
+            StepExecutionResult stepResult=null;
             Map<Integer, Object> stepFailedMap = new HashMap<Integer, Object>();
             try {
-                stepSuccess = executeWFItem(stepContext, stepFailedMap, stepResult, c, cmd, keepgoing);
+                stepResult = executeWFItem(stepContext, stepFailedMap, c, cmd, keepgoing);
+                stepSuccess=stepResult.isSuccess();
             } catch (WorkflowStepFailureException e) {
                 stepFailure = e;
+                stepResult=e.getStatusResult();
             }
             nodeFailures = stepCaptureFailedNodesListener.getFailedNodes();
 
@@ -264,14 +272,14 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
             try {
                 if(!stepSuccess && cmd instanceof HasFailureHandler) {
                     final HasFailureHandler handles = (HasFailureHandler) cmd;
-                    final ExecutionItem handler = handles.getFailureHandler();
+                    final StepExecutionItem handler = handles.getFailureHandler();
                     if (null != handler) {
                         //if there is a failure, and a failureHandler item, execute the failure handler
                         //set keepgoing=false, and store the results
                         //will throw an exception on failure because keepgoing=false
 
                         NodeRecorder handlerCaptureFailedNodesListener = new NodeRecorder();
-                        ExecutionContext handlerExecContext = replaceFailedNodesListenerInContext(executionContext,
+                        StepExecutionContext handlerExecContext = replaceFailedNodesListenerInContext(executionContext,
                             handlerCaptureFailedNodesListener);
 
                         //if multi-node, determine set of nodes to run handler on: (failed node list only)
@@ -284,38 +292,32 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
 
                         }
 
-                        ArrayList<DispatcherResult> handlerResult = new ArrayList<DispatcherResult>();
+                        StepExecutionResult handlerResult = null;
                         Map<Integer, Object> handlerFailedMap = new HashMap<Integer, Object>();
                         WorkflowStepFailureException handlerFailure = null;
                         boolean handlerSuccess = false;
                         try {
-                            handlerSuccess = executeWFItem(handlerExecContext, handlerFailedMap, handlerResult, c,
-                                                           handler,
-                                false);
+                            handlerResult = executeWFItem(handlerExecContext, handlerFailedMap, c, handler, false);
+                            handlerSuccess = handlerResult.isSuccess();
                         } catch (WorkflowStepFailureException e) {
                             handlerFailure = e;
+                            handlerResult=e.getStatusResult();
                         }
 
                         //handle success conditions:
                         //1. if keepgoing=true, then status from handler overrides original step
                         //2. keepgoing=false, then status is the same as the original step, unless
                         //   the keepgoingOnSuccess is set to true and the handler succeeded
-                        if (keepgoing) {
+                        boolean useHandlerResults=keepgoing;
+                        if(!keepgoing && handlerSuccess && handler instanceof HandlerExecutionItem) {
+                            useHandlerResults= ((HandlerExecutionItem) handler).isKeepgoingOnSuccess();
+                        }
+                        if(useHandlerResults){
                             stepSuccess = handlerSuccess;
                             stepFailure = handlerFailure;
-                            stepResult.addAll(handlerResult);
+                            stepResult=handlerResult;
                             stepFailedMap = handlerFailedMap;
                             nodeFailures = handlerCaptureFailedNodesListener.getFailedNodes();
-                        }else if(handlerSuccess && handler instanceof HandlerExecutionItem) {
-                            final boolean keepgoingOnSuccess
-                                = ((HandlerExecutionItem) handler).isKeepgoingOnSuccess();
-                            if(keepgoingOnSuccess){
-                                stepSuccess = handlerSuccess;
-                                stepFailure = handlerFailure;
-                                stepResult.addAll(handlerResult);
-                                stepFailedMap = handlerFailedMap;
-                                nodeFailures = handlerCaptureFailedNodesListener.getFailedNodes();
-                            }
                         }
                     }
                 }
@@ -324,7 +326,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                     wlistener.finishWorkflowItem(c, cmd);
                 }
             }
-            resultList.addAll(stepResult);
+            resultList.add(stepResult);
             failedMap.putAll(stepFailedMap);
             if(!stepSuccess){
                 workflowsuccess = false;
@@ -363,7 +365,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
         }
     }
 
-    private ExecutionContext replaceFailedNodesListenerInContext(ExecutionContext executionContext,
+    private StepExecutionContext replaceFailedNodesListenerInContext(StepExecutionContext executionContext,
                                                                  FailedNodesListener captureFailedNodesListener) {
         ExecutionListenerOverride listen=null;
         if(null!= executionContext.getExecutionListener()) {
@@ -377,29 +379,30 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
     }
 
     /**
-     * Convert list of DispatcherResult items to map of Node name to Map of InterpreterResult items keyed by index in
+     * Convert list of DispatcherResult items to map of Node name to Map of NodeStepResult items keyed by index in
      * the list (0-first)
      *
      * @param resultList dispatcher result list
      *
-     * @return map of node name to Map of InterpreterResult items keyed by index in the list (0-first)
+     * @return map of node name to Map of NodeStepResult items keyed by index in the list (0-first)
      */
-    protected HashMap<String, List<StatusResult>> convertResults(final List<DispatcherResult> resultList) {
-        final HashMap<String, List<StatusResult>> results = new HashMap<String, List<StatusResult>>();
-        //iterate resultSet and place in map
-        int i = 0;
-        for (final DispatcherResult dispatcherResult : resultList) {
-            for (final String s : dispatcherResult.getResults().keySet()) {
-                final StatusResult interpreterResult = dispatcherResult.getResults().get(s);
-                if (!results.containsKey(s)) {
-                    results.put(s, new ArrayList<StatusResult>());
-                }
-                results.get(s).add(interpreterResult);
-            }
-            i++;
-        }
-        return results;
-    }
+//    protected HashMap<String, List<StatusResult>> convertResults(final List<StepExecutionResult> resultList) {
+//        final HashMap<String, List<StatusResult>> results = new HashMap<String, List<StatusResult>>();
+//        //iterate resultSet and place in map
+//        int i = 0;
+//        for (final StepExecutionResult result : resultList) {
+//
+//            for (final String s : dispatcherResult.getResults().keySet()) {
+//                final StatusResult interpreterResult = dispatcherResult.getResults().get(s);
+//                if (!results.containsKey(s)) {
+//                    results.put(s, new ArrayList<StatusResult>());
+//                }
+//                results.get(s).add(interpreterResult);
+//            }
+//            i++;
+//        }
+//        return results;
+//    }
 
     /**
      * Convert map of integer to failure object to map of node name to collection o string.

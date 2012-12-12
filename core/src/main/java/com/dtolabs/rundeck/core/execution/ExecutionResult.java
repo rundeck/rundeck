@@ -31,7 +31,6 @@ import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public interface ExecutionResult extends StatusResult {
-    public Exception getException();
+public interface ExecutionResult extends ExceptionStatusResult {
     public DispatcherResult getResultObject();
 }

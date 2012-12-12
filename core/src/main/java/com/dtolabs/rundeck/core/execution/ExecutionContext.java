@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.common.NodesSelector;
 
 import java.io.File;
@@ -60,6 +61,12 @@ public interface ExecutionContext {
      */
     NodesSelector getNodeSelector();
     /**
+     * Return the node selector
+     *
+     * @return nodeset
+     */
+    INodeSet getNodes();
+    /**
      * Return node dispatch threadcount
      */
     int getThreadCount();
@@ -78,13 +85,6 @@ public interface ExecutionContext {
      * return node dispatch keepgoing
      */
     boolean isKeepgoing();
-
-    /**
-     * Get the argument line definition
-     *
-     * @return the arg
-     */
-    String[] getArgs();
 
     /**
      * Return the loglevel value, using the Ant equivalents: DEBUG=1,

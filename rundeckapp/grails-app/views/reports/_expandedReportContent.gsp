@@ -1,3 +1,4 @@
+<%@ page import="rundeck.ScheduledExecution; rundeck.ExecReport" %>
 <%--
   Created by IntelliJ IDEA.
   User: greg

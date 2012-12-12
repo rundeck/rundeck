@@ -27,10 +27,10 @@ import com.dtolabs.rundeck.core.NodesetFailureException;
 import com.dtolabs.rundeck.core.cli.CallableWrapperTask;
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
-import com.dtolabs.rundeck.core.execution.StatusResult;
-import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.tasks.dispatch.NodeExecutionStatusTask;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
@@ -57,30 +57,24 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         this.framework = framework;
     }
 
-    public DispatcherResult dispatch(final ExecutionContext context,
-                                     final ExecutionItem item) throws
+    public DispatcherResult dispatch(final StepExecutionContext context,
+                                     final NodeStepExecutionItem item) throws
         DispatcherException {
         return dispatch(context, item, null);
     }
 
-    public DispatcherResult dispatch(final ExecutionContext context,
+    public DispatcherResult dispatch(final StepExecutionContext context,
                                      final Dispatchable item) throws
         DispatcherException {
         return dispatch(context, null, item);
     }
 
-    public DispatcherResult dispatch(final ExecutionContext context,
-                                     final ExecutionItem item, final Dispatchable toDispatch) throws
+    public DispatcherResult dispatch(final StepExecutionContext context,
+                                     final NodeStepExecutionItem item, final Dispatchable toDispatch) throws
         DispatcherException {
-        final NodesSelector nodeSelector = context.getNodeSelector();
-        INodeSet nodes = null;
-        try {
-            nodes = framework.filterAuthorizedNodes(context.getFrameworkProject(),
-                new HashSet<String>(Arrays.asList("read", "run")),
-                framework.filterNodeSet(nodeSelector, context.getFrameworkProject(), context.getNodesFile()));
-        } catch (NodeFileParserException e) {
-            throw new DispatcherException(e);
-        }
+        INodeSet nodes = framework.filterAuthorizedNodes(context.getFrameworkProject(),
+                                                         new HashSet<String>(Arrays.asList("read", "run")),
+                                                         context.getNodes());
         boolean keepgoing = context.isKeepgoing();
 
         final HashSet<String> nodeNames = new HashSet<String>();
@@ -98,7 +92,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         parallelTask.setThreadCount(context.getThreadCount());
         parallelTask.setFailOnAny(!keepgoing);
         boolean success = false;
-        final HashMap<String, StatusResult> resultMap = new HashMap<String, StatusResult>();
+        final HashMap<String, NodeStepResult> resultMap = new HashMap<String, NodeStepResult>();
         final HashMap<String, Object> failureMap = new HashMap<String, Object>();
         final Collection<INodeEntry> nodes1 = nodes.getNodes();
         //reorder based on configured rank property and order
@@ -153,29 +147,16 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
 
         final boolean status = success;
 
-        return new DispatcherResult() {
-            public Map<String, StatusResult> getResults() {
-                return resultMap;
-            }
-
-            public boolean isSuccess() {
-                return status;
-            }
-
-            @Override
-            public String toString() {
-                return "Parallel dispatch: (" + isSuccess() + ") " + resultMap;
-            }
-        };
+        return new DispatcherResultImpl(resultMap, status, "Parallel dispatch: (" + status + ") " + resultMap);
     }
 
     private Callable dispatchableCallable(final ExecutionContext context, final Dispatchable toDispatch,
-                                          final HashMap<String, StatusResult> resultMap, final INodeEntry node,
+                                          final HashMap<String, NodeStepResult> resultMap, final INodeEntry node,
                                           final Map<String, Object> failureMap) {
         return new Callable() {
             public Object call() throws Exception {
                 try {
-                    final StatusResult dispatch = toDispatch.dispatch(context, node);
+                    final NodeStepResult dispatch = toDispatch.dispatch(context, node);
                     if (!dispatch.isSuccess()) {
                         failureMap.put(node.getNodename(), dispatch);
                     }
@@ -189,13 +170,13 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         };
     }
 
-    private Callable execItemCallable(final ExecutionContext context, final ExecutionItem item,
-                                      final HashMap<String, StatusResult> resultMap, final INodeEntry node,
+    private Callable execItemCallable(final StepExecutionContext context, final NodeStepExecutionItem item,
+                                      final HashMap<String, NodeStepResult> resultMap, final INodeEntry node,
                                       final Map<String, Object> failureMap) {
         return new Callable() {
             public Object call() throws Exception {
                 try {
-                    final InterpreterResult interpreterResult = framework.getExecutionService().interpretCommand(
+                    final NodeStepResult interpreterResult = framework.getExecutionService().executeNodeStep(
                         context, item, node);
                     if (!interpreterResult.isSuccess()) {
                         failureMap.put(node.getNodename(), interpreterResult);

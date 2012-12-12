@@ -30,5 +30,8 @@ package com.dtolabs.rundeck.core.common;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface FrameworkSupportService {
+    /**
+     * Return the name used to identify the service
+     */
     public String getName();
 }

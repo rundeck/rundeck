@@ -25,6 +25,8 @@ package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
+import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 
 import java.util.*;
 
@@ -44,6 +46,7 @@ import java.util.*;
  *     config.X.required = true/false, if the property is required.
  *     config.X.default = default string of the property
  *     config.X.values = comma-separated values list for Select or FreeSelect properties
+ *     config.X.scope = scope of the property, from {@link PropertyScope}
  * </pre>
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
@@ -59,10 +62,11 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
     public static final String CONFIG_REQUIRED = "required";
     public static final String CONFIG_DEFAULT = "default";
     public static final String CONFIG_VALUES = "values";
+    public static final String CONFIG_SCOPE = "scope";
 
     private final ScriptPluginProvider provider;
     private final Framework framework;
-    Description providerDescription;
+    Description description;
 
     public AbstractDescribableScriptPlugin(final ScriptPluginProvider provider, final Framework framework) {
         this.provider = provider;
@@ -83,26 +87,29 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
     }
 
 
-    static private List<Property> createProperties(final ScriptPluginProvider provider) throws ConfigurationException {
-        final ArrayList<Property> properties = new ArrayList<Property>();
-        int i = 1;
+    static private void createProperties(final ScriptPluginProvider provider,
+                                                   final DescriptionBuilder dbuilder) throws ConfigurationException {
         final Map<String, Object> metadata = provider.getMetadata();
         final Object config = metadata.get("config");
-        if(config instanceof List){
-            final List configs=(List) config;
+        if (config instanceof List) {
+            final List configs = (List) config;
             for (final Object citem : configs) {
-                if(citem instanceof Map){
-                    Map<String,Object> itemmeta=(Map<String,Object>) citem;
+                if (citem instanceof Map) {
+                    final PropertyBuilder pbuild = PropertyBuilder.builder();
+                    final Map<String, Object> itemmeta = (Map<String, Object>) citem;
                     final String typestr = metaStringProp(itemmeta, CONFIG_TYPE);
                     final Property.Type type;
                     try {
-                        type = Property.Type.valueOf(typestr);
+                        pbuild.type(Property.Type.valueOf(typestr));
                     } catch (IllegalArgumentException e) {
                         throw new ConfigurationException("Invalid property type: " + typestr);
                     }
-                    final String name = metaStringProp(itemmeta, CONFIG_NAME);
-                    final String title = metaStringProp(itemmeta,CONFIG_TITLE);
-                    final String description = metaStringProp(itemmeta,CONFIG_DESCRIPTION);
+
+                    pbuild
+                        .name(metaStringProp(itemmeta, CONFIG_NAME))
+                        .title(metaStringProp(itemmeta, CONFIG_TITLE))
+                        .description(metaStringProp(itemmeta, CONFIG_DESCRIPTION));
+
                     final Object reqValue = itemmeta.get(CONFIG_REQUIRED);
                     final boolean required;
                     if (reqValue instanceof Boolean) {
@@ -111,30 +118,57 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                         required = reqValue instanceof String && Boolean.parseBoolean((String) reqValue);
                     }
 
+                    pbuild.required(required);
+
+
                     final Object defObj = itemmeta.get(CONFIG_DEFAULT);
-                    final String defaultValue = null != defObj ? defObj.toString() : null;
-                    if (null == name) {
-                        throw new ConfigurationException("Name required");
+
+                    pbuild.defaultValue(null != defObj ? defObj.toString() : null);
+
+                    final List<String> valueList;
+
+                    final String valuesstr = metaStringProp(itemmeta, CONFIG_VALUES);
+                    if (null != valuesstr) {
+                        final String[] split = null != valuesstr ? valuesstr.split(",") : null;
+                        valueList = Arrays.asList(split);
+                    } else {
+                        Object vlist = itemmeta.get(CONFIG_VALUES);
+                        if (vlist instanceof List) {
+                            valueList = (List<String>) vlist;
+                        } else {
+                            valueList = null;
+                        }
                     }
-                    final String valuesstr = metaStringProp(itemmeta,CONFIG_VALUES);
-                    final String[] split = null != valuesstr ? valuesstr.split(",") : null;
                     final List<String> values;
-                    if(null!=split){
+                    if (null != valueList) {
                         final ArrayList<String> valuesA = new ArrayList<String>();
-                        for (final String s : split) {
+                        for (final String s : valueList) {
                             valuesA.add(s.trim());
                         }
                         values = valuesA;
-                    }else{
-                        values=null;
+                    } else {
+                        values = null;
+                    }
+                    pbuild.values(values);
+
+                    final String scopeString = metaStringProp(itemmeta, CONFIG_SCOPE);
+                    if(null!=scopeString) {
+                        try {
+                            pbuild.scope(PropertyScope.valueOf(scopeString.trim()));
+                        } catch (IllegalArgumentException e) {
+                            throw new ConfigurationException("Invalid property scope: " + scopeString);
+                        }
                     }
 
-                    properties.add(PropertyUtil.forType(type, name, title, description, required, defaultValue,
-                        values));
+                    try {
+                        dbuilder.property(pbuild.build());
+                    } catch (IllegalStateException e) {
+                        throw new ConfigurationException(e.getMessage());
+                    }
+
                 }
             }
         }
-        return properties;
     }
 
     private static String metaStringProp(final Map<String, Object> metadata, final String prop) {
@@ -144,41 +178,31 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
         final Object titleobj = metadata.get(prop);
         return null != titleobj && titleobj instanceof String ? (String) titleobj : defString;
     }
-    protected static Description createDescription(final ScriptPluginProvider provider,
-                                                 final boolean allowCustomProperties) throws ConfigurationException {
-        final String title = metaStringProp(provider.getMetadata(), TITLE_PROP, provider.getName() + " Script Plugin");
-        final String description = metaStringProp(provider.getMetadata(), DESCRIPTION_PROP, "");
-        final List<Property> properties = allowCustomProperties ? createProperties(provider) : null;
+    protected static void createDescription(final ScriptPluginProvider provider,
+                                                   final boolean allowCustomProperties,
+                                                   final DescriptionBuilder builder) throws ConfigurationException {
+        builder
+            .name(provider.getName())
+            .title(metaStringProp(provider.getMetadata(), TITLE_PROP, provider.getName() + " Script Plugin"))
+            .description(metaStringProp(provider.getMetadata(), DESCRIPTION_PROP, ""));
 
-        return new AbstractBaseDescription() {
-            public String getName() {
-                return provider.getName();
-            }
-
-            public String getTitle() {
-                return title;
-            }
-
-            public String getDescription() {
-                return description;
-            }
-
-            public List<Property> getProperties() {
-                return properties;
-            }
-        };
+        if(allowCustomProperties) {
+            createProperties(provider, builder);
+        }
     }
 
-
+    @Override
     public Description getDescription() {
-        if (null == providerDescription) {
+        if(null==description){
+            final DescriptionBuilder builder = DescriptionBuilder.builder();
             try {
-                providerDescription = createDescription(provider, isAllowCustomProperties());
+                createDescription(provider, isAllowCustomProperties(), builder);
             } catch (ConfigurationException e) {
                 e.printStackTrace();
             }
+            description = builder.build();
         }
-        return providerDescription;
+        return description;
     }
 
     /**

@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.core.execution.script.ExecTaskParameterGeneratorImpl;
 import com.dtolabs.rundeck.core.execution.script.ExecTaskParameters;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
@@ -93,16 +94,7 @@ public class LocalNodeExecutor implements NodeExecutor {
             }
         }
         final boolean status = 0==result;
-        final int resultCode = result;
-        return new NodeExecutorResult() {
-            public int getResultCode() {
-                return resultCode;
-            }
-
-            public boolean isSuccess() {
-                return status;
-            }
-
+        return new NodeExecutorResultImpl(status,node,result) {
             @Override
             public String toString() {
                 return "[local node exec] result was " + (isSuccess() ? "success" : "failure") + ", resultcode: "

@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.AbstractBaseDescription;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
@@ -80,17 +81,7 @@ public class StubNodeExecutor implements NodeExecutor, Describable {
                 "[stub] fail on node " + node.getNodename() + ": " + StringArrayUtil.asString(command, " "));
         }
 
-        final int returnCode = tcode;
-        final boolean returnSuccess = tsuccess;
-        return new NodeExecutorResult() {
-            public int getResultCode() {
-                return returnCode;
-            }
-
-            public boolean isSuccess() {
-                return returnSuccess;
-            }
-
+        return new NodeExecutorResultImpl(tsuccess,node, tcode) {
             public String toString() {
                 return "[Stub result: success? "+isSuccess()+", result code: "+getResultCode()+"]";
             }

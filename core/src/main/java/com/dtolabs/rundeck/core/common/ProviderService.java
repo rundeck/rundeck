@@ -24,6 +24,10 @@
 package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
+import com.dtolabs.rundeck.core.plugins.ProviderIdent;
+
+import java.util.List;
+
 
 /**
  * ProviderService is a FrameworkSupportService that can return specific
@@ -37,4 +41,5 @@ public interface ProviderService<T> extends FrameworkSupportService {
      * Return the provider instance of the given name.
      */
     public T providerOfType(final String providerName) throws ExecutionServiceException;
+    public List<ProviderIdent> listProviders();
 }

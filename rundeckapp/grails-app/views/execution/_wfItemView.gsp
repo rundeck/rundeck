@@ -1,3 +1,4 @@
+<%@ page import="rundeck.PluginStep; rundeck.ScheduledExecution; rundeck.JobExec" %>
 <%--
  Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
 
@@ -22,6 +23,7 @@
     $Id$
  --%>
             <g:set var="jobitem" value="${item.instanceOf(JobExec)|| (item instanceof java.util.Map && item.jobName)}"/>
+            <g:set var="pluginitem" value="${item.instanceOf(PluginStep)}"/>
             <span class="${edit?'autohilite autoedit':''} wfitem ${jobitem?'jobtype':'exectype'}" title="${edit?'Click to edit':''}">
 
             <g:if test="${jobitem}">
@@ -36,6 +38,15 @@
                    <span class="argString"><g:truncate max="50"  showtitle="true">${item.argString.encodeAsHTML()}</g:truncate></span>
                 </g:if>
             </g:if>
+            <g:elseif test="${pluginitem}">
+                <g:if test="${item && item.nodeStep}">
+                    <g:if test="${!noimgs}"><g:img file="icon-small-Node.png" width="16px" height="16px"/></g:if>
+                </g:if>
+                <g:else>
+                    <g:if test="${!noimgs}"><g:img file="icon-small-file.png" width="16px" height="16px"/></g:if>
+                </g:else>
+                <stepplugin:display step="${item}" prefix="" includeFormFields="false"/>
+            </g:elseif>
             <g:else>
                 <g:if test="${!noimgs}"><g:img file="icon-small-shell.png" width="16px" height="16px"/></g:if>
                 <g:if test="${item.adhocRemoteString}">

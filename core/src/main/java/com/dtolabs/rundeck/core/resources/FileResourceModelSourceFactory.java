@@ -51,7 +51,7 @@ public class FileResourceModelSourceFactory implements ResourceModelSourceFactor
     }
 
     public com.dtolabs.rundeck.core.plugins.configuration.Description getDescription() {
-        return new FileResourceModelSource.Description(
+        return FileResourceModelSource.createDescription(
             framework.getResourceFormatParserService().listFormats());
     }
 }

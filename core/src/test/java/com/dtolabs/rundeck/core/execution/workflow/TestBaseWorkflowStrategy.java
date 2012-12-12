@@ -27,11 +27,19 @@ package com.dtolabs.rundeck.core.execution.workflow;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.NodeFileParserException;
 import com.dtolabs.rundeck.core.execution.*;
-import com.dtolabs.rundeck.core.execution.commands.*;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.core.utils.NodeSet;
@@ -86,6 +94,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         private int execIndex=0;
         private List<Object> results;
         private List<Map<String,Object>> inputs;
+        private int executeWfItemCalled=0;
 
         public testWorkflowStrategy(Framework framework) {
             super(framework);
@@ -94,35 +103,36 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         }
 
         @Override
-        public WorkflowExecutionResult executeWorkflowImpl(ExecutionContext executionContext,
+        public WorkflowExecutionResult executeWorkflowImpl(StepExecutionContext executionContext,
                                                            WorkflowExecutionItem item) {
 
             return result;
         }
 
-        protected boolean executeWFItem(final ExecutionContext executionContext,
-                                        final Map<Integer, Object> failedMap,
-                                        final List<DispatcherResult> resultList,
-                                        final int c,
-                                        final ExecutionItem cmd, final boolean keepgoing) throws
-                                                                                          WorkflowStepFailureException {
-            HashMap<String,Object> input=new HashMap<String, Object>();
+        @Override
+        protected StepExecutionResult executeWFItem(final StepExecutionContext executionContext,
+                                                    final Map<Integer, Object> failedMap,
+                                                    final int c,
+                                                    final StepExecutionItem cmd, final boolean keepgoing)
+            throws WorkflowStepFailureException {
+            executeWfItemCalled++;
+            HashMap<String, Object> input = new HashMap<String, Object>();
             input.put("context", executionContext);
             input.put("failedMap", failedMap);
-            input.put("resultList", resultList);
             input.put("c", c);
+            input.put("stack", executionContext.getStepContext());
             input.put("cmd", cmd);
             input.put("keepgoing", keepgoing);
             inputs.add(input);
 
-            int ndx=execIndex++;
+            int ndx = execIndex++;
             final Object o = results.get(ndx);
-            if(o instanceof Boolean){
-                return (Boolean)o;
-            }else if(o instanceof WorkflowStepFailureException) {
+            if (o instanceof Boolean) {
+                return new StepExecutionResultImpl((Boolean) o);
+            } else if (o instanceof WorkflowStepFailureException) {
                 throw (WorkflowStepFailureException) o;
-            }else if(o instanceof String) {
-                throw new WorkflowStepFailureException((String) o, new ExecutionResult() {
+            } else if (o instanceof String) {
+                throw new WorkflowStepFailureException((String) o, new StepExecutionResult() {
                     public Exception getException() {
                         return null;
                     }
@@ -135,10 +145,11 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
                         return false;
                     }
                 }, c);
-            }else {
+            } else {
                 fail("Unexpected result at index " + ndx + ": " + o);
-                return false;
+                return new StepExecutionResultImpl(false);
             }
+
         }
 
         public WorkflowExecutionResult getResult() {
@@ -162,23 +173,14 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         }
     }
 
-    void assertExecWFItems(final List<ExecutionItem> items,
+    void assertExecWFItems(final List<StepExecutionItem> items,
                            final boolean wfKeepgoing,
                            final List<Map<String, Object>> expected,
                            final boolean expectedSuccess,
-                           final List<Object> returnResults, final boolean expectStepException)
-         {
+                           final List<Object> returnResults, final boolean expectStepException) {
 
         //test success 1 item
         final NodeSet nodeset = new NodeSet();
-             final com.dtolabs.rundeck.core.execution.ExecutionContext context =
-                 new ExecutionContextImpl.Builder()
-                     .frameworkProject(TEST_PROJECT)
-                     .user("user1")
-                     .nodeSelector(nodeset)
-                     .executionListener(new testListener())
-                     .framework(testFramework)
-                     .build();
 
         testWorkflowStrategy strategy = new testWorkflowStrategy(testFramework);
 
@@ -186,24 +188,33 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
 
 
         final Map<Integer, Object> map = new HashMap<Integer, Object>();
-        final List<DispatcherResult> resultList = new ArrayList<DispatcherResult>();
+        final List<StepExecutionResult> resultList = new ArrayList<StepExecutionResult>();
         final boolean keepgoing = wfKeepgoing;
 
         boolean itemsSuccess=false;
         boolean sawException=false;
         try {
-            itemsSuccess = strategy.executeWorkflowItemsForNodeSet(context,
-                                                                                 map,
-                                                                                 resultList,
-                                                                                 items,
-                                                                                 keepgoing);
+            final StepExecutionContext context =
+                new ExecutionContextImpl.Builder()
+                    .frameworkProject(TEST_PROJECT)
+                    .user("user1")
+                    .nodeSelector(nodeset)
+                    .executionListener(new testListener())
+                    .framework(testFramework)
+                    .nodes(testFramework.filterNodeSet(nodeset, TEST_PROJECT, null))
+                    .stepNumber(1)
+                    .build();
+            itemsSuccess = strategy.executeWorkflowItemsForNodeSet(context, map, resultList, items, keepgoing);
             assertFalse(expectStepException);
         } catch (WorkflowStepFailureException e) {
-            assertTrue("Unexpected step exception: " + e.getMessage(), expectStepException);
             e.printStackTrace();
+            assertTrue("Unexpected step exception: " + e.getMessage(), expectStepException);
             sawException = true;
+        } catch (NodeFileParserException e) {
+            e.printStackTrace();
+            fail();
         }
-
+        assertEquals(expected.size(), strategy.executeWfItemCalled);
         assertEquals(expectStepException, sawException);
         assertEquals(expectedSuccess, itemsSuccess);
 
@@ -218,7 +229,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         }
 
     }
-    private List<ExecutionItem> mkTestItems(ExecutionItem... item) {
+    private List<StepExecutionItem> mkTestItems(StepExecutionItem... item) {
         return Arrays.asList(item);
     }
 
@@ -227,7 +238,22 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             //test success 1 item
 
             final testWorkflowCmdItem testCmd1 = new testWorkflowCmdItem();
+            testCmd1.type = "test1";
+            StepExecutor object = new StepExecutor() {
+                @Override
+                public boolean isNodeDispatchStep(StepExecutionItem item) {
+                    return true;
+                }
 
+                @Override
+                public StepExecutionResult executeWorkflowStep(StepExecutionContext executionContext,
+                                                               StepExecutionItem item)
+                    throws StepException {
+                    assertEquals(1, executionContext.getStepNumber());
+                    return null;
+                }
+            };
+            getFrameworkInstance().getStepExecutionService().registerInstance("test1", object);
             final Map<String, Object> expectResult1 = new HashMap<String, Object>();
             expectResult1.put("c", 1);
             expectResult1.put("cmd", testCmd1);
@@ -588,8 +614,9 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
     }
 
 
-    static class testWorkflowCmdItem implements HandlerExecutionItem {
+    static class testWorkflowCmdItem implements NodeStepExecutionItem,HandlerExecutionItem {
         private String type;
+        private String nodeStepType;
         int flag = -1;
         boolean keepgoingOnSuccess;
 
@@ -610,11 +637,16 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         public String getType() {
             return type;
         }
+
+        @Override
+        public String getNodeStepType() {
+            return type;
+        }
     }
 
-    static class testHandlerWorkflowCmdItem implements ExecutionItem,HasFailureHandler {
+    static class testHandlerWorkflowCmdItem implements StepExecutionItem,HasFailureHandler {
         private String type;
-        private ExecutionItem failureHandler;
+        private StepExecutionItem failureHandler;
         int flag = -1;
 
         @Override
@@ -630,27 +662,27 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             return type;
         }
 
-        public ExecutionItem getFailureHandler() {
+        public StepExecutionItem getFailureHandler() {
             return failureHandler;
         }
     }
 
-    static class testInterpreter implements CommandInterpreter {
-        List<ExecutionItem> executionItemList = new ArrayList<ExecutionItem>();
+    static class testInterpreter implements NodeStepExecutor {
+        List<StepExecutionItem> executionItemList = new ArrayList<StepExecutionItem>();
         List<ExecutionContext> executionContextList = new ArrayList<ExecutionContext>();
         List<INodeEntry> nodeEntryList = new ArrayList<INodeEntry>();
         int index = 0;
-        List<InterpreterResult> resultList = new ArrayList<InterpreterResult>();
+        List<NodeStepResult> resultList = new ArrayList<NodeStepResult>();
         boolean shouldThrowException = false;
 
-        public InterpreterResult interpretCommand(ExecutionContext executionContext,
-                                                  ExecutionItem executionItem, INodeEntry iNodeEntry) throws
-                                                                                                      InterpreterException {
+        public NodeStepResult executeNodeStep(StepExecutionContext executionContext,
+                                                 NodeStepExecutionItem executionItem, INodeEntry iNodeEntry) throws
+                                                                                                     NodeStepException {
             executionItemList.add(executionItem);
             executionContextList.add(executionContext);
             nodeEntryList.add(iNodeEntry);
             if (shouldThrowException) {
-                throw new InterpreterException("testInterpreter test exception");
+                throw new NodeStepException("testInterpreter test exception", iNodeEntry.getNodename());
             }
             System.out.println("return index: (" + index + ") in size: " + resultList.size());
             return resultList.get(index++);
@@ -675,10 +707,10 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             return null;
         }
 
-        public void beginExecution(ExecutionContext context, ExecutionItem item) {
+        public void beginStepExecution(ExecutionContext context, StepExecutionItem item) {
         }
 
-        public void finishExecution(ExecutionResult result, ExecutionContext context, ExecutionItem item) {
+        public void finishStepExecution(StatusResult result, ExecutionContext context, StepExecutionItem item) {
         }
 
         public void beginNodeExecution(ExecutionContext context, String[] command, INodeEntry node) {
@@ -688,13 +720,13 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
                                         INodeEntry node) {
         }
 
-        public void beginNodeDispatch(ExecutionContext context, ExecutionItem item) {
+        public void beginNodeDispatch(ExecutionContext context, StepExecutionItem item) {
         }
 
         public void beginNodeDispatch(ExecutionContext context, Dispatchable item) {
         }
 
-        public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, ExecutionItem item) {
+        public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, StepExecutionItem item) {
         }
 
         public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, Dispatchable item) {
@@ -712,11 +744,11 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         public void finishFileCopy(String result, ExecutionContext context, INodeEntry node) {
         }
 
-        public void beginInterpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node) {
+        public void beginExecuteNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node) {
         }
 
-        public void finishInterpretCommand(InterpreterResult result, ExecutionContext context, ExecutionItem item,
-                                           INodeEntry node) {
+        public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item,
+                                          INodeEntry node) {
         }
 
         public BuildListener getBuildListener() {

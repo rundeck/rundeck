@@ -46,6 +46,8 @@ import java.util.jar.Manifest;
  */
 public class TestJarPluginProviderLoader extends AbstractBaseTest {
     private static final String TEST_SERVICE = "TestService";
+    public static final String CURRENT_PLUGIN_VERSION = "1.1";
+    public static final String TOO_LOW_PLUGIN_VERSION = "1.0";
     Framework testFramework;
     String testnode;
     private static final String TEST_PROJECT = "TestJarPluginProviderLoader";
@@ -96,8 +98,11 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         } catch (JarPluginProviderLoader.InvalidManifestException e) {
             assertNotNull(e);
             assertEquals("Jar plugin manifest attribute missing: " + JarPluginProviderLoader.RUNDECK_PLUGIN_ARCHIVE,
-                e.getMessage());
+                         e.getMessage());
         }
+    }
+
+    public void testValidateJarManifestNotArchive() throws Exception {
         //plugin archive attribute was not 'true'
         try {
             final Attributes mainAttributes = new Attributes();
@@ -109,6 +114,9 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
             assertEquals(JarPluginProviderLoader.RUNDECK_PLUGIN_ARCHIVE + " was not 'true': false",
                 e.getMessage());
         }
+    }
+
+    public void testValidateJarManifestNoVersion() throws Exception {
         //no plugin version attribute
         try {
             final Attributes mainAttributes = new Attributes();
@@ -120,7 +128,9 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
             assertEquals("Jar plugin manifest attribute missing: " + JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION,
                 e.getMessage());
         }
+    }
 
+    public void testValidateJarManifestInvalidVersion() throws Exception {
         //invalid version attribute
         try {
             final Attributes mainAttributes = new Attributes();
@@ -131,14 +141,33 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         } catch (JarPluginProviderLoader.InvalidManifestException e) {
             assertNotNull(e);
             assertEquals(
-                "Unssupported plugin version: " + JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION + ": invalid",
+                "Unsupported plugin version: " + JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION + ": invalid",
                 e.getMessage());
         }
+    }
+
+    public void testValidateJarManifestLowVersion() throws Exception {
+        //invalid version attribute
+        try {
+            final Attributes mainAttributes = new Attributes();
+            mainAttributes.putValue(JarPluginProviderLoader.RUNDECK_PLUGIN_ARCHIVE, "true");
+            mainAttributes.putValue(JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION, TOO_LOW_PLUGIN_VERSION);
+            JarPluginProviderLoader.validateJarManifest(mainAttributes);
+            fail("should not validate");
+        } catch (JarPluginProviderLoader.InvalidManifestException e) {
+            assertNotNull(e);
+            assertEquals(
+                "Unsupported plugin version: " + JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION + ": "+ TOO_LOW_PLUGIN_VERSION,
+                e.getMessage());
+        }
+    }
+
+    public void testValidateJarManifestNoClassnames() throws Exception {
         //no plugin classnames attribute
         try {
             final Attributes mainAttributes = new Attributes();
             mainAttributes.putValue(JarPluginProviderLoader.RUNDECK_PLUGIN_ARCHIVE, "true");
-            mainAttributes.putValue(JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION, "1.0");
+            mainAttributes.putValue(JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION, CURRENT_PLUGIN_VERSION);
             JarPluginProviderLoader.validateJarManifest(mainAttributes);
             fail("should not validate");
         } catch (JarPluginProviderLoader.InvalidManifestException e) {
@@ -147,11 +176,14 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
                 "Jar plugin manifest attribute missing: " + JarPluginProviderLoader.RUNDECK_PLUGIN_CLASSNAMES,
                 e.getMessage());
         }
+    }
+
+    public void testValidateJarManifestValid() throws Exception {
         {
             //valid
             final Attributes mainAttributes = new Attributes();
             mainAttributes.putValue(JarPluginProviderLoader.RUNDECK_PLUGIN_ARCHIVE, "true");
-            mainAttributes.putValue(JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION, "1.0");
+            mainAttributes.putValue(JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION, CURRENT_PLUGIN_VERSION);
             mainAttributes.putValue(JarPluginProviderLoader.RUNDECK_PLUGIN_CLASSNAMES, "something");
             JarPluginProviderLoader.validateJarManifest(mainAttributes);
         }
@@ -172,14 +204,14 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         {
             final Map<String, String> entries = new HashMap<String, String>();
             entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_ARCHIVE, "true");
-            entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION, "1.0");
+            entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION, CURRENT_PLUGIN_VERSION);
             final File testJar = createTestJar(entries, null);
             assertFalse(JarPluginProviderLoader.isValidJarPlugin(testJar));
         }
         {
             final Map<String, String> entries = new HashMap<String, String>();
             entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_ARCHIVE, "true");
-            entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION, "1.0");
+            entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION, CURRENT_PLUGIN_VERSION);
             entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_CLASSNAMES, "something");
             final File testJar = createTestJar(entries, null);
             assertTrue(JarPluginProviderLoader.isValidJarPlugin(testJar));
@@ -251,7 +283,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
 
         final Map<String, String> entries = new HashMap<String, String>();
         entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_ARCHIVE, "true");
-        entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION, "1.0");
+        entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION, CURRENT_PLUGIN_VERSION);
         entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_CLASSNAMES, classnameString(classes));
 
         final File testJar11 = createTestJar(entries, null, classes);
@@ -284,7 +316,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
 
         final Map<String, String> entries = new HashMap<String, String>();
         entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_ARCHIVE, "true");
-        entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION, "1.0");
+        entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION, CURRENT_PLUGIN_VERSION);
         entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_CLASSNAMES, classnameString(classes));
 
         final File testJar11 = createTestJar(entries, null, classes);
@@ -314,7 +346,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
 
         final Map<String, String> entries = new HashMap<String, String>();
         entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_ARCHIVE, "true");
-        entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION, "1.0");
+        entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION, CURRENT_PLUGIN_VERSION);
         entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_CLASSNAMES, classnameString(classes));
 
         final File testJar11 = createTestJar(entries, null, classes);
@@ -423,7 +455,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
 
         final Map<String, String> entries = new HashMap<String, String>();
         entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_ARCHIVE, "true");
-        entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION, "1.0");
+        entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION, CURRENT_PLUGIN_VERSION);
         entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_CLASSNAMES, classnameString(classes));
 
         final File testJar11 = createTestJar(entries, null, classes);
@@ -443,7 +475,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
 
         final Manifest manifest = new Manifest();
         final Attributes mainAttributes = manifest.getMainAttributes();
-        mainAttributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        mainAttributes.put(Attributes.Name.MANIFEST_VERSION, CURRENT_PLUGIN_VERSION);
 
         if (null != entries) {
             for (final String s : entries.keySet()) {
@@ -472,7 +504,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
 
         final Manifest manifest = new Manifest();
         final Attributes mainAttributes = manifest.getMainAttributes();
-        mainAttributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        mainAttributes.put(Attributes.Name.MANIFEST_VERSION, CURRENT_PLUGIN_VERSION);
 
         if (null != entries) {
             for (final String s : entries.keySet()) {

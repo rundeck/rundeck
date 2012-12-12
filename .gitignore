@@ -3,6 +3,7 @@
 *.iws
 *.ipr
 *.iml
+*.gradle
 build
 rundeckapp/stacktrace.log
 rundeckapp/grails-app/i18n/messages.properties.orig
@@ -15,9 +16,5 @@ rundeckapp/target
 rundeckapp/.project
 rundeckapp/.settings/
 packaging/dist
-core/.gradle
-plugins/.gradle
-plugins/script-plugin/.gradle
-plugins/stub-plugin/.gradle
 docs/en/manpages/**/*.gz
 *.DS_Store

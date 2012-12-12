@@ -26,6 +26,8 @@ package com.dtolabs.rundeck.core.execution.dispatch;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.StatusResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+
 
 /**
  * Dispatchable is ...
@@ -33,5 +35,5 @@ import com.dtolabs.rundeck.core.execution.StatusResult;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface Dispatchable {
-    public StatusResult dispatch(ExecutionContext context, INodeEntry node) throws DispatcherException;
+    public NodeStepResult dispatch(ExecutionContext context, INodeEntry node) throws DispatcherException;
 }

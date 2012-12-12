@@ -74,4 +74,9 @@ public class AdditiveListNodeSet implements INodeSet {
     public Collection<String> getNodeNames() {
         return nodeNames;
     }
+
+    @Override
+    public Iterator<INodeEntry> iterator() {
+        return getNodes().iterator();
+    }
 }

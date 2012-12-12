@@ -23,18 +23,16 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow;
 
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
-import com.dtolabs.rundeck.core.utils.NodeSet;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 
-import java.util.Map;
 
 /**
- * WorkflowExecutionItem is ...
+ * WorkflowExecutionItem is an execution item representing an entire workflow.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public interface WorkflowExecutionItem extends ExecutionItem {
+public interface WorkflowExecutionItem extends StepExecutionItem {
     /**
      * Node first strategy name
      */

@@ -44,6 +44,17 @@ public class BaseExecutionResult implements ExecutionResult{
 
     /**
      * Create a Success result with an object
+     *
+     * @param object result object
+     *
+     * @return success result containing the object
+     */
+    public static ExecutionResult create(final boolean success, final DispatcherResult object) {
+        return new BaseExecutionResult(object, success, null);
+    }
+
+    /**
+     * Create a Success result with an object
      * @param object result object
      * @return success result containing the object
      */

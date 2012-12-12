@@ -84,7 +84,7 @@
                 Event.observe(e,'click',function(evt){
                     var f=$('workflowContent').down('form');
                     if(!f || 0==f.length){
-                        _wfishownewErrorHandler("${i}","${stepNum}");
+                        _wfishownewErrorHandler("${i}","${stepNum}",${item.nodeStep});
                     }
                 });
             });

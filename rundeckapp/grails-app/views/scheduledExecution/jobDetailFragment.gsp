@@ -1,3 +1,4 @@
+<%@ page import="rundeck.Execution" %>
 <%--
   Copyright 2011 DTO Labs, Inc. (http://dtolabs.com)
 

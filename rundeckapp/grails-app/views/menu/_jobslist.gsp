@@ -1,4 +1,4 @@
-<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="rundeck.Execution; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
 <g:set var="ukey" value="${g.rkey()}"/>
         <div class="jobslist ${small?'small':''}">

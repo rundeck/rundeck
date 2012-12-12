@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.plugins.AbstractDescribableScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import java.util.*;
 
@@ -57,7 +58,7 @@ class ScriptPluginResourceModelSourceFactory extends AbstractDescribableScriptPl
     public static void validateScriptPlugin(final ScriptPluginProvider provider) throws PluginException {
 
         try {
-            createDescription(provider, true);
+            createDescription(provider, true, DescriptionBuilder.builder());
         } catch (ConfigurationException e) {
             throw new PluginException(e);
         }
