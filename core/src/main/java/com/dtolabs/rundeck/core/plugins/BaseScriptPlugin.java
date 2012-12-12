@@ -83,8 +83,7 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
     }
 
     /**
-     * Runs the script configured for the script plugin and channels the output to two streams.
-     * the
+     * Runs the script configured for the script plugin and channels the output to two streams. the
      */
     protected int runPluginScript(final PluginStepContext executionContext,
                                   final PrintStream outputStream,
@@ -93,19 +92,19 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
         throws IOException, InterruptedException {
         final Map<String, Map<String, String>> localDataContext = createStepItemDataContext(
             framework,
-                                                                                            executionContext.getFrameworkProject(),
-                                                                                            executionContext.getDataContext(),
-                                                                                            configuration);
+            executionContext.getFrameworkProject(),
+            executionContext.getDataContext(),
+            configuration);
         final String[] finalargs = createScriptArgs(localDataContext);
 
         executionContext.getLogger().log(3, "[" + getProvider().getName() + "] executing: " + Arrays.asList(
             finalargs));
 
         return runScript(finalargs,
-                           DataContextUtils.generateEnvVarsFromContext(localDataContext),
-                           null,
-                           outputStream,
-                           errorStream
+                         DataContextUtils.generateEnvVarsFromContext(localDataContext),
+                         null,
+                         outputStream,
+                         errorStream
         );
     }
 
@@ -153,22 +152,51 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
         final boolean interpreterargsquoted = plugin.getInterpreterArgsQuoted();
 
 
+        return createScriptArgs(localDataContext,
+                                scriptargs, null, scriptinterpreter, interpreterargsquoted,
+                                scriptfile.getAbsolutePath());
+    }
+
+    /**
+     * Generate argument array for a script file invocation
+     *
+     * @param localDataContext      data context properties to expand among the args
+     * @param scriptargs            arguments to the script file
+     * @param scriptargsarr         arguments to the script file as an array
+     * @param scriptinterpreter     interpreter invocation for the file, or null to invoke it directly
+     * @param interpreterargsquoted if true, pass the script file and args as a single argument to the interpreter
+     * @param filepath              remote filepath for the script
+     */
+    public static String[] createScriptArgs(final Map<String, Map<String, String>> localDataContext,
+                                            final String scriptargs,
+                                            final String[] scriptargsarr,
+                                            final String scriptinterpreter,
+                                            final boolean interpreterargsquoted, final String filepath) {
         final ArrayList<String> arglist = new ArrayList<String>();
         if (null != scriptinterpreter) {
             arglist.addAll(Arrays.asList(scriptinterpreter.split(" ")));
         }
         if (null != scriptinterpreter && interpreterargsquoted) {
-            final StringBuilder sbuf = new StringBuilder(scriptfile.getAbsolutePath());
+            final StringBuilder sbuf = new StringBuilder(filepath);
             if (null != scriptargs) {
                 sbuf.append(" ");
                 sbuf.append(DataContextUtils.replaceDataReferences(scriptargs, localDataContext));
+            } else if (null != scriptargsarr) {
+
+                final String[] strings = DataContextUtils.replaceDataReferences(scriptargsarr, localDataContext);
+                for (final String string : strings) {
+                    sbuf.append(" ");
+                    sbuf.append(string);
+                }
             }
             arglist.add(sbuf.toString());
         } else {
-            arglist.add(scriptfile.getAbsolutePath());
+            arglist.add(filepath);
             if (null != scriptargs) {
                 arglist.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargs.split(" "),
                                                                                     localDataContext)));
+            } else if (null != scriptargsarr) {
+                arglist.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargsarr, localDataContext)));
             }
         }
         return arglist.toArray(new String[arglist.size()]);

@@ -302,12 +302,18 @@ When resolving a property in a Project or Framework scope, the following propert
 
 ## Script-based Step Plugins
 
-*Note:* Currently only Node Steps can be implemented as script-based plugins.
+*Note:* Currently these type of plugins can be implemented as script-based plugins:
+
+* Node Steps - the plugin will execute the script *locally* on the Rundeck server for each node
+* Remote Script Node Steps - the plugin will execute the script *remotely* on each node
 
 See the [Plugin Development - Script Plugin Development](plugin-development.html#script-plugin-development) 
 for the basics of developing script-based plugins for Rundeck.
 
-Use the service name `WorkflowNodeStep`.
+Use the service name for the plugin type:
+
+* `WorkflowNodeStep`
+* `RemoteScriptNodeStep`
 
 For configuration properties, see the [Plugin Development - Configurable Resource Model Source Script Plugin](plugin-development.html#configurable-resource-model-source-script-plugin).
 

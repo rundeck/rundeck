@@ -25,18 +25,12 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
 import com.dtolabs.rundeck.core.plugins.BasePluggableProviderService;
 import com.dtolabs.rundeck.core.plugins.PluginException;
-import com.dtolabs.rundeck.core.plugins.ProviderIdent;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
-import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
-import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin;
-
-import java.util.*;
 
 
 /**
@@ -50,5 +44,17 @@ class RemoteScriptNodeStepPluginService extends BasePluggableProviderService<Rem
 
     RemoteScriptNodeStepPluginService(final String name, final Framework framework) {
         super(name, framework, RemoteScriptNodeStepPlugin.class);
+    }
+
+    @Override
+    public boolean isScriptPluggable() {
+        return true;
+    }
+
+    @Override
+    public RemoteScriptNodeStepPlugin createScriptProviderInstance(ScriptPluginProvider provider)
+        throws PluginException {
+        ScriptBasedRemoteScriptNodeStepPlugin.validateScriptPlugin(provider);
+        return new ScriptBasedRemoteScriptNodeStepPlugin(provider, getFramework());
     }
 }

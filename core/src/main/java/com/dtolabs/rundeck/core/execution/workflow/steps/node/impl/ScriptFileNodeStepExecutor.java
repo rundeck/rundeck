@@ -25,16 +25,17 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
-import com.dtolabs.rundeck.core.execution.service.*;
+import com.dtolabs.rundeck.core.execution.service.FileCopierException;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 
 import java.io.File;
 
@@ -52,8 +53,9 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
         this.framework = framework;
     }
 
-    public NodeStepResult executeNodeStep(StepExecutionContext context, NodeStepExecutionItem item, INodeEntry node) throws
-                                                                                                                 NodeStepException {
+    public NodeStepResult executeNodeStep(StepExecutionContext context, NodeStepExecutionItem item, INodeEntry node)
+        throws
+        NodeStepException {
         final ScriptFileCommand script = (ScriptFileCommand) item;
         final ExecutionService executionService = framework.getExecutionService();
         final String filepath; //result file path
@@ -82,11 +84,32 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
      * @param args      arguments to script
      * @param filepath  the remote path for the script
      */
-    public static NodeStepResult executeRemoteScript(ExecutionContext context,
-                                                     Framework framework,
-                                                     INodeEntry node,
-                                                     String[] args,
-                                                     String filepath) throws NodeStepException {
+    public static NodeStepResult executeRemoteScript(final ExecutionContext context,
+                                                     final Framework framework,
+                                                     final INodeEntry node,
+                                                     final String[] args,
+                                                     final String filepath) throws NodeStepException {
+        return executeRemoteScript(context, framework, node, args, filepath, null, false);
+    }
+
+    /**
+     * Execute a scriptfile already copied to a remote node with the given args
+     *
+     * @param context               context
+     * @param framework             framework
+     * @param node                  the node
+     * @param args                  arguments to script
+     * @param filepath              the remote path for the script
+     * @param scriptInterpreter     interpreter used to invoke the script
+     * @param interpreterargsquoted if true, pass the file and script args as a single argument to the interpreter
+     */
+    public static NodeStepResult executeRemoteScript(final ExecutionContext context,
+                                                     final Framework framework,
+                                                     final INodeEntry node,
+                                                     final String[] args,
+                                                     final String filepath,
+                                                     final String scriptInterpreter,
+                                                     final boolean interpreterargsquoted) throws NodeStepException {
         try {
             /**
              * TODO: Avoid this horrific hack. Discover how to get SCP task to preserve the execute bit.
@@ -102,15 +125,12 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
             }
 
             //replace data references
-            String[] newargs = null;
-            if (null != args && args.length > 0) {
-                newargs = new String[args.length + 1];
-                final String[] replargs = DataContextUtils.replaceDataReferences(args, context.getDataContext());
-                newargs[0] = filepath;
-                System.arraycopy(replargs, 0, newargs, 1, replargs.length);
-            } else {
-                newargs = new String[]{filepath};
-            }
+            final String[] newargs = BaseScriptPlugin.createScriptArgs(context.getDataContext(),
+                                                                       null,
+                                                                       args,
+                                                                       scriptInterpreter,
+                                                                       interpreterargsquoted,
+                                                                       filepath);
             //XXX: windows specific call?
 
             return framework.getExecutionService().executeCommand(context, newargs, node);
