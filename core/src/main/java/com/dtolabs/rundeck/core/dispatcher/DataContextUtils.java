@@ -126,6 +126,23 @@ public class DataContextUtils {
     }
 
     /**
+     * Merge one context onto another by adding or replacing values.
+     */
+    public static Map<String, Map<String, String>> merge(final Map<String, Map<String, String>> context,
+                                                         final Map<String, Map<String, String>> context2) {
+        final HashMap<String, Map<String, String>> newcontext = new HashMap<String, Map<String, String>>();
+        for (final Map.Entry<String, Map<String, String>> entry : context2.entrySet()) {
+            if (!context.containsKey(entry.getKey())) {
+                newcontext.put(entry.getKey(), new HashMap<String, String>());
+            }else {
+                newcontext.put(entry.getKey(), new HashMap<String, String>(context.get(entry.getKey())));
+            }
+            newcontext.get(entry.getKey()).putAll(entry.getValue());
+        }
+        return newcontext;
+    }
+
+    /**
      * Indicates that the value of a property reference could not be resolved.
      */
     public static class UnresolvedDataReferenceException extends RuntimeException{
