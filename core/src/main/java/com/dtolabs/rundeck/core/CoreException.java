@@ -16,13 +16,10 @@
 
 package com.dtolabs.rundeck.core;
 
-import org.apache.tools.ant.BuildException;
-
-
 /**
  * CoreException, base exception class for the core framework
  */
-public class CoreException extends BuildException {
+public class CoreException extends RuntimeException {
     public CoreException(final String msg) {
         super(msg);
     }
