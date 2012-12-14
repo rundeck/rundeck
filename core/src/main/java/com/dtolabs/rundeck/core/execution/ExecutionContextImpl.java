@@ -24,13 +24,20 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.common.NodeSetImpl;
 import com.dtolabs.rundeck.core.common.NodesSelector;
+import com.dtolabs.rundeck.core.common.SelectorUtils;
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeExecutionContext;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -38,7 +45,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ExecutionContextImpl implements ExecutionContext, StepExecutionContext {
+public class ExecutionContextImpl implements ExecutionContext, StepExecutionContext, NodeExecutionContext {
     private String frameworkProject;
     private String user;
     private NodesSelector nodeSet;
@@ -48,6 +55,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private int loglevel;
     private Map<String, Map<String, String>> dataContext;
     private Map<String, Map<String, String>> privateDataContext;
+    private Map<String, Map<String, Map<String, String>>> nodeDataContext;
     private ExecutionListener executionListener;
     private Framework framework;
     private File nodesFile;
@@ -59,6 +67,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private ExecutionContextImpl() {
         stepContext = new ArrayList<Integer>();
         nodes = new NodeSetImpl();
+        nodeDataContext = new HashMap<String, Map<String, Map<String, String>>>();
     }
 
     public static Builder builder() {
@@ -70,6 +79,12 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     public static Builder builder(StepExecutionContext context) {
         return new Builder(context);
     }
+
+    @Override
+    public Map<String, Map<String, Map<String, String>>> getNodeDataContext() {
+        return nodeDataContext;
+    }
+
     public static class Builder {
         private ExecutionContextImpl ctx;
 
@@ -95,6 +110,10 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.keepgoing = original.isKeepgoing();
                 ctx.nodeRankAttribute = original.getNodeRankAttribute();
                 ctx.nodeRankOrderAscending = original.isNodeRankOrderAscending();
+                if(original instanceof NodeExecutionContext){
+                    NodeExecutionContext original1 = (NodeExecutionContext) original;
+                    ctx.nodeDataContext.putAll(original1.getNodeDataContext());
+                }
             }
         }
 
@@ -123,6 +142,24 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
         public Builder nodes(INodeSet nodeSet) {
             ctx.nodes = nodeSet;
+            return this;
+        }
+
+        /**
+         * Set node set/selector to single node context, and optionally merge node-specific context data
+         */
+        public Builder singleNodeContext(INodeEntry node, boolean setContextData) {
+            nodeSelector(SelectorUtils.singleNode(node.getNodename()));
+            nodes(NodeSetImpl.singleNodeSet(node));
+            if(setContextData) {
+                //merge in any node-specific data context
+                ctx.dataContext = DataContextUtils.addContext("node", DataContextUtils.nodeData(node), ctx.dataContext);
+
+                if (null != ctx.nodeDataContext && null != ctx.nodeDataContext.get(node.getNodename())) {
+                    ctx.dataContext = DataContextUtils.merge(ctx.dataContext,
+                                                             ctx.nodeDataContext.get(node.getNodename()));
+                }
+            }
             return this;
         }
 
@@ -188,6 +225,11 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         public Builder pushContextStep(final int step) {
             ctx.stepContext.add(ctx.stepNumber);
             ctx.stepNumber = step;
+            return this;
+        }
+
+        public Builder nodeDataContext(final String nodeName, final Map<String,Map<String,String>> dataContext) {
+            ctx.nodeDataContext.put(nodeName, dataContext);
             return this;
         }
 
