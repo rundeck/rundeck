@@ -27,6 +27,9 @@ import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.NodesetFailureException;
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.*;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -44,30 +47,25 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
         this.framework = framework;
     }
 
-    public DispatcherResult dispatch(final ExecutionContext context,
-                                     final ExecutionItem item) throws
+    public DispatcherResult dispatch(final StepExecutionContext context,
+                                     final NodeStepExecutionItem item) throws
         DispatcherException {
         return dispatch(context, item, null);
     }
 
-    public DispatcherResult dispatch(final ExecutionContext context,
+    public DispatcherResult dispatch(final StepExecutionContext context,
                                      final Dispatchable item) throws
         DispatcherException {
         return dispatch(context, null, item);
     }
 
-    public DispatcherResult dispatch(final ExecutionContext context,
-                                     final ExecutionItem item, final Dispatchable toDispatch) throws
+    public DispatcherResult dispatch(final StepExecutionContext context,
+                                     final NodeStepExecutionItem item, final Dispatchable toDispatch) throws
         DispatcherException {
-        final NodesSelector nodesSelector = context.getNodeSelector();
-        INodeSet nodes = null;
-        try {
-            nodes = framework.filterAuthorizedNodes(context.getFrameworkProject(),
-                new HashSet<String>(Arrays.asList("read", "run")),
-                framework.filterNodeSet(nodesSelector, context.getFrameworkProject(), context.getNodesFile()));
-        } catch (NodeFileParserException e) {
-            throw new DispatcherException(e);
-        }
+
+        INodeSet nodes = framework.filterAuthorizedNodes(context.getFrameworkProject(),
+                                                         new HashSet<String>(Arrays.asList("read", "run")),
+                                                         context.getNodes());
         if(nodes.getNodes().size()<1) {
             throw new DispatcherException("No nodes matched");
         }
@@ -83,7 +81,7 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
         boolean interrupted = false;
         final Thread thread = Thread.currentThread();
         boolean success = true;
-        final HashMap<String, StatusResult> resultMap = new HashMap<String, StatusResult>();
+        final HashMap<String, NodeStepResult> resultMap = new HashMap<String, NodeStepResult>();
         final Collection<INodeEntry> nodes1 = nodes.getNodes();
         //reorder based on configured rank property and order
         final String rankProperty = null != context.getNodeRankAttribute() ? context.getNodeRankAttribute() : "nodename";
@@ -96,7 +94,7 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
         INodeEntry failedNode=null;
         for (final Object node1 : orderedNodes) {
             if (thread.isInterrupted()
-                || thread instanceof ExecutionServiceThread && ((ExecutionServiceThread) thread).isAborted()) {
+                || thread instanceof ServiceThreadBase && ((ServiceThreadBase) thread).isAborted()) {
                 interrupted = true;
                 break;
             }
@@ -106,16 +104,17 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
             try {
 
                 if (thread.isInterrupted()
-                    || thread instanceof ExecutionServiceThread && ((ExecutionServiceThread) thread).isAborted()) {
+                    || thread instanceof ServiceThreadBase && ((ServiceThreadBase) thread).isAborted()) {
                     interrupted = true;
                     break;
                 }
-                final StatusResult result;
-                final ExecutionContext interimcontext = new ExecutionContextImpl.Builder(context).nodeSelector(
+                final NodeStepResult result;
+                final StepExecutionContext interimcontext = new ExecutionContextImpl.Builder(context).nodeSelector(
                     SelectorUtils.singleNode(node.getNodename())).build();
+
+                //execute the step or dispatchable
                 if (null != item) {
-                    result = framework.getExecutionService().interpretCommand(
-                        interimcontext, item, node);
+                    result = framework.getExecutionService().executeNodeStep(interimcontext, item, node);
                 } else {
                     result = toDispatch.dispatch(interimcontext, node);
 
@@ -183,25 +182,6 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
         }
 
         final boolean status = success;
-        return new DispatcherResult() {
-            public Map<String, ? extends StatusResult> getResults() {
-                return resultMap;
-            }
-
-            public boolean isSuccess() {
-                return status;
-            }
-
-            @Override
-            public String toString() {
-                return "DispatcherResult{"
-                       + "status="
-                       + isSuccess()
-                       + ", "
-                       + "results="
-                       + getResults()
-                       + "}";
-            }
-        };
+        return new DispatcherResultImpl(resultMap, status);
     }
 }

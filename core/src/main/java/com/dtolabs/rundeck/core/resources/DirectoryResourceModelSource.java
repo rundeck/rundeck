@@ -29,6 +29,8 @@ import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
+import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -61,24 +63,19 @@ public class DirectoryResourceModelSource implements ResourceModelSource, Config
             null));
     }
 
-    public static final Description DESCRIPTION = new AbstractBaseDescription() {
-        public String getName() {
-            return "directory";
-        }
+    public static final Description DESCRIPTION = DescriptionBuilder.builder()
+        .name("directory")
+        .title("Directory")
+        .description("Scans a directory and loads all resource document files")
+        .property(PropertyBuilder.builder()
+                      .string(Configuration.DIRECTORY)
+                      .title("Directory Path")
+                      .description("Directory path to scan")
+                      .required(true)
+                      .build()
+        )
+        .build();
 
-        public String getTitle() {
-            return "Directory";
-        }
-
-        public String getDescription() {
-            return "Scans a directory and loads all resource document files";
-        }
-
-        public List<Property> getProperties() {
-
-            return properties;
-        }
-    };
     public void configure(final Properties configuration) throws ConfigurationException {
 
         final Configuration configuration1 = Configuration.fromProperties(configuration);

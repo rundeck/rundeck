@@ -1,4 +1,6 @@
 import grails.test.GrailsUnitTestCase
+import rundeck.CommandExec
+import rundeck.Workflow
 /*
  * Copyright 2012 DTO Solutions, Inc. (http://dtosolutions.com)
  *

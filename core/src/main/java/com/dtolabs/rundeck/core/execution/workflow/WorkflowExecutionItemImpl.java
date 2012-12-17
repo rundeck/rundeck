@@ -23,10 +23,6 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow;
 
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
-
-import java.util.List;
-
 /**
  * WorkflowExecutionItemImpl is ...
  *

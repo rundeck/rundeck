@@ -23,13 +23,12 @@
 */
 package com.dtolabs.rundeck.core.execution;
 
-import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
-import com.dtolabs.rundeck.core.execution.workflow.ContextLogger;
 
 import java.io.File;
 import java.io.InputStream;
@@ -72,15 +71,15 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
     }
 
 
-    public void beginExecution(ExecutionContext context, ExecutionItem item) {
+    public void beginStepExecution(ExecutionContext context, StepExecutionItem item) {
         if (null != delegate) {
-            delegate.beginExecution(context, item);
+            delegate.beginStepExecution(context, item);
         }
     }
 
-    public void finishExecution(ExecutionResult result, ExecutionContext context, ExecutionItem item) {
+    public void finishStepExecution(StatusResult result, ExecutionContext context, StepExecutionItem item) {
         if (null != delegate) {
-            delegate.finishExecution(result, context, item);
+            delegate.finishStepExecution(result, context, item);
         }
     }
 
@@ -97,13 +96,13 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
         }
     }
 
-    public void beginNodeDispatch(ExecutionContext context, ExecutionItem item) {
+    public void beginNodeDispatch(ExecutionContext context, StepExecutionItem item) {
         if (null != delegate) {
             delegate.beginNodeDispatch(context, item);
         }
     }
 
-    public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, ExecutionItem item) {
+    public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, StepExecutionItem item) {
         if (null != delegate) {
             delegate.finishNodeDispatch(result, context, item);
         }
@@ -145,16 +144,16 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
         }
     }
 
-    public void beginInterpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node) {
+    public void beginExecuteNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node) {
         if (null != delegate) {
-            delegate.beginInterpretCommand(context, item, node);
+            delegate.beginExecuteNodeStep(context, item, node);
         }
     }
 
-    public void finishInterpretCommand(InterpreterResult result, ExecutionContext context, ExecutionItem item,
-                                       INodeEntry node) {
+    public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item,
+                                      INodeEntry node) {
         if (null != delegate) {
-            delegate.finishInterpretCommand(result, context, item, node);
+            delegate.finishExecuteNodeStep(result, context, item, node);
         }
     }
 

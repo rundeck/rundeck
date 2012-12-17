@@ -1,3 +1,4 @@
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; rundeck.PluginStep; rundeck.CommandExec; rundeck.JobExec" %>
 <%--
  Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
 
@@ -62,7 +63,7 @@
         </div>
     </div>
 </g:if>
-<g:elseif test="${'script'==newitemtype || 'scriptfile'==newitemtype || 'command'==newitemtype || item?.adhocExecution}">
+<g:elseif test="${'script'==newitemtype || 'scriptfile'==newitemtype || 'command'==newitemtype || item instanceof CommandExec }">
     <g:set var="isAdhocRemote" value="${'command'==newitemtype || item?.adhocRemoteString}"/>
     <g:set var="isAdhocLocal" value="${'script'==newitemtype || item?.adhocLocalString}"/>
     <g:set var="isAdhocFileExecution" value="${'scriptfile'==newitemtype || item?.adhocFilepath}"/>
@@ -91,6 +92,31 @@
         <input type='text' name="argString" value="${item?.argString?.encodeAsHTML()}" size="80" id="argStringField"/>
     </div>
     </g:if>
+</g:elseif>
+<g:elseif test="${( newitemtype || item && item.instanceOf(PluginStep) ) && newitemDescription}">
+    <div>
+        <div>
+            <span class="prompt">${newitemDescription.title?.encodeAsHTML()}</span>
+            <span class="info note">${newitemDescription.description?.encodeAsHTML()}</span>
+        </div>
+        <g:hiddenField name="pluginItem" value="true"/>
+        <g:hiddenField name="newitemnodestep" value="${item?item.nodeStep:newitemnodestep=='true'}"/>
+        <div>
+            <table class="simpleForm nexecDetails">
+                <g:set var="pluginprefix" value="pluginConfig."/>
+                <g:each in="${newitemDescription.properties}" var="prop">
+                    <g:if test="${!prop.scope || prop.scope.isInstanceLevel() || prop.scope.isUnspecified()}">
+                    <tr>
+                        <g:render
+                                template="/framework/pluginConfigPropertyField"
+                                model="${[prop: prop, prefix: pluginprefix, values: item?.configuration,
+                                        fieldname: pluginprefix + prop.name, origfieldname: 'orig.' + pluginprefix + prop.name, error: report?.errors ? report?.errors[prop.name] : null]}"/>
+                    </tr>
+                    </g:if>
+                </g:each>
+            </table>
+        </div>
+    </div>
 </g:elseif>
 <g:if test="${isErrorHandler}">
     <div class="presentation">

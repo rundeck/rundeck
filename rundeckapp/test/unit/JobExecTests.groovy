@@ -1,4 +1,6 @@
 import grails.test.GrailsUnitTestCase
+import rundeck.JobExec
+import rundeck.CommandExec
 /*
  * Copyright 2012 DTO Solutions, Inc. (http://dtosolutions.com)
  *
@@ -89,9 +91,7 @@ class JobExecTests extends GrailsUnitTestCase{
     void testCreateClone() {
         mockDomain(JobExec)
         JobExec t = new JobExec(jobGroup: 'group1', jobName: 'name1', argString: 'job args1')
-        CommandExec t1 = t.createClone()
-        assertTrue(t1 instanceof JobExec)
-        JobExec j1=(JobExec)t1
+        JobExec j1 = t.createClone()
         assertEquals('group1', j1.jobGroup)
         assertEquals('name1', j1.jobName)
         assertEquals('job args1', j1.argString)
@@ -103,9 +103,7 @@ class JobExecTests extends GrailsUnitTestCase{
         mockDomain(CommandExec)
         CommandExec h = new CommandExec(adhocRemoteString: 'testerr')
         JobExec t = new JobExec(jobGroup: 'group1', jobName: 'name1', argString: 'job args1',errorHandler: h)
-        CommandExec t1 = t.createClone()
-        assertTrue(t1 instanceof JobExec)
-        JobExec j1 = (JobExec) t1
+        JobExec j1 = t.createClone()
         assertEquals('group1', j1.jobGroup)
         assertEquals('name1', j1.jobName)
         assertEquals('job args1', j1.argString)

@@ -23,9 +23,8 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow;
 
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 
-import java.util.*;
 
 /**
  * WFStepContext holds current step info.
@@ -33,11 +32,26 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 class WFStepContext {
-    ExecutionItem stepItem;
-    int step = -1;
+    private StepExecutionItem stepItem;
+    private int step = -1;
 
-    WFStepContext(final ExecutionItem stepItem, final int step) {
+    WFStepContext(final StepExecutionItem stepItem, final int step) {
         this.stepItem = stepItem;
         this.step = step;
     }
+
+    /**
+     * Return the step item
+     */
+    public StepExecutionItem getStepItem() {
+        return stepItem;
+    }
+
+    /**
+     * Return the step number in the current workflow
+     */
+    public int getStep() {
+        return step;
+    }
+
 }

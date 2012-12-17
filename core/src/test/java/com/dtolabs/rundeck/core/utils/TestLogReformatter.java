@@ -52,91 +52,120 @@ public class TestLogReformatter extends TestCase {
     }
 
 
-    public void testReformat() throws Exception {
+    public void testReformatEmptyContext() throws Exception {
         { //no context data
             LogReformatter reformat = new LogReformatter("%node", (Map<String,String>)null);
-            assertEquals("null", reformat.reformat(null, "test"));
+            assertEquals("", reformat.reformat(null, "test"));
         }
+    }
+
+    public void testReformatEmptyContextMulti() throws Exception {
         { //no context data
             LogReformatter reformat = new LogReformatter("%node%user%level", (Map<String,String>)null);
-            assertEquals("nullnullnull", reformat.reformat(null, "test"));
+            assertEquals("null", reformat.reformat(null, "test"));
         }
+    }
+
+    public void testReformatNoContextMessage() throws Exception {
         { //no context data, include message
             LogReformatter reformat = new LogReformatter("%node%user%level%message", (Map<String,String>)null);
-            assertEquals("nullnullnulltest", reformat.reformat(null, "test"));
+            assertEquals("nulltest", reformat.reformat(null, "test"));
         }
+    }
+
+    public void testReformatOnlyNode() throws Exception {
         { //add context data
             HashMap<String, String> data = new HashMap<String, String>();
             data.put("node", "test1");
-            LogReformatter reformat = new LogReformatter("%node%user%level%message", data);
-            assertEquals("test1nullnulltest", reformat.reformat(null, "test"));
+            LogReformatter reformat = new LogReformatter("%node:%user:%level:%message", data);
+            assertEquals("test1::null:test", reformat.reformat(null, "test"));
         }
+    }
+
+    public void testReformatOnlyUser() throws Exception {
         { //add context data
             HashMap<String, String> data = new HashMap<String, String>();
             data.put("user", "test2");
-            LogReformatter reformat = new LogReformatter("%node%user%level%message", data);
-            assertEquals("nulltest2nulltest", reformat.reformat(null, "test"));
+            LogReformatter reformat = new LogReformatter("%node:%user:%level:%message", data);
+            assertEquals(":test2:null:test", reformat.reformat(null, "test"));
         }
+    }
+
+    public void testReformatOnlyLevel() throws Exception {
         { //add context data
             HashMap<String, String> data = new HashMap<String, String>();
             data.put("level", "test3");
-            LogReformatter reformat = new LogReformatter("%node%user%level%message", data);
-            assertEquals("nullnulltest3test", reformat.reformat(null, "test"));
+            LogReformatter reformat = new LogReformatter("%node:%user:%level:%message", data);
+            assertEquals("::test3:test", reformat.reformat(null, "test"));
         }
+    }
+
+    public void testReformatOnlyCommand() throws Exception {
         { //add context data
             HashMap<String, String> data = new HashMap<String, String>();
             data.put("command", "test4");
-            LogReformatter reformat = new LogReformatter("%node%user%level%command%message", data);
-            assertEquals("nullnullnulltest4test", reformat.reformat(null, "test"));
+            LogReformatter reformat = new LogReformatter("%node:%user:%level:%command:%message", data);
+            assertEquals("::null:test4:test", reformat.reformat(null, "test"));
         }
+    }
 
+    public void testReformatInputLevelContext() throws Exception {
 
         //test direct context input to reformat
 
         { //add context data
             HashMap<String, String> data = new HashMap<String, String>();
             data.put("level", "test3");
-            LogReformatter reformat = new LogReformatter("%node%user%level%message", (Map<String,String>)null);
-            assertEquals("nullnulltest3test", reformat.reformat(data, "test"));
+            LogReformatter reformat = new LogReformatter("%node:%user:%level:%message", (Map<String,String>)null);
+            assertEquals("::test3:test", reformat.reformat(data, "test"));
         }
         //test direct context input to reformat
+    }
 
+    public void testReformatInputUserContext() throws Exception {
         { //add context data
             HashMap<String, String> data = new HashMap<String, String>();
             data.put("user", "test2");
-            LogReformatter reformat = new LogReformatter("%node%user%level%message", (Map<String,String>)null);
-            assertEquals("nulltest2nulltest", reformat.reformat(data, "test"));
+            LogReformatter reformat = new LogReformatter("%node:%user:%level:%message", (Map<String,String>)null);
+            assertEquals(":test2:null:test", reformat.reformat(data, "test"));
         }
         //test direct context input to reformat
+    }
 
+    public void testReformatInputNodeContext() throws Exception {
         { //add context data
             HashMap<String, String> data = new HashMap<String, String>();
             data.put("node", "test1");
-            LogReformatter reformat = new LogReformatter("%node%user%level%message", (Map<String,String>)null);
-            assertEquals("test1nullnulltest", reformat.reformat(data, "test"));
+            LogReformatter reformat = new LogReformatter("%node:%user:%level:%message", (Map<String,String>)null);
+            assertEquals("test1::null:test", reformat.reformat(data, "test"));
         }
+    }
+
+    public void testReformatInputComandContext() throws Exception {
         //test direct context input to reformat
 
         { //add context data
             HashMap<String, String> data = new HashMap<String, String>();
             data.put("command", "test4");
-            LogReformatter reformat = new LogReformatter("%node%user%level%command%message", (Map<String,String>)null);
-            assertEquals("nullnullnulltest4test", reformat.reformat(data, "test"));
+            LogReformatter reformat = new LogReformatter("%node:%user:%level:%command:%message", (Map<String,String>)null);
+            assertEquals("::null:test4:test", reformat.reformat(data, "test"));
         }
         //test using MapGenerator
+    }
 
+    public void testReformatGenerator() throws Exception {
         { //add context data
             final HashMap<String, String> data = new HashMap<String, String>();
             data.put("node", "test1");
             data.put("user", "test2");
             data.put("level", "test3");
             data.put("command", "test4");
-            LogReformatter reformat = new LogReformatter("%node%user%level%command%message", new MapGenerator<String, String>() {
+            LogReformatter reformat = new LogReformatter("%node:%user:%level:%command:%message", new MapGenerator<String, String>() {
                 public Map<String, String> getMap() {
                     return data;
                 }
             });
-            assertEquals("test1test2test3test4test", reformat.reformat(null, "test"));
+            assertEquals("test1:test2:test3:test4:test", reformat.reformat(null, "test"));
         }
     }
 }

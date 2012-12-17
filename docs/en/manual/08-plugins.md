@@ -53,6 +53,22 @@ referring to an actual file containing the provider implementations we will say
 Rundeck supports several different types of plugins to perform different kinds 
 of services.
 
+### Workflow Step Plugins
+
+These plugins define the behavior taken for a single step in a workflow.  
+
+There are two types of steps that can be executed in a workflow, so there are two
+types of plugins that can be defined:
+
+1. Workflow Step - runs once in a workflow
+    * Defined by a "Workflow Step Plugin"
+2. Node Steps - runs once per Node in the Job definition
+    * Defined by a "Workflow Node Step Plugin"
+
+More information:
+
+* Configuration: [Workflow Step Services](plugins.html#workflow-step-services)
+
 ### Node Execution Plugins
 
 These plugins define ways of executing commands on nodes, and copying files to nodes.  
@@ -116,11 +132,54 @@ Services fall into different categories, which determine how and where they are 
     1. Resource Format Parser - these define document format parsers
     2. Resource Format Generators - these define document format generators
 
+3. **Workflow services** 
+
+    1. Workflow Step - providers define behavior for all nodes 
+    2. Workflow Node Step - providers define behavior for a single node
+    3. Remote Script Node Step - a specific use-case for Node Step providers 
+
 Specifics of how providers of these plugins work is listed below.
 
-Rundeck Plugins can contain more than one Provider.
+Rundeck Plugin Files can contain more than one Provider.
 
 ## Using Providers
+
+### Workflow Step Services
+
+Workflow Step and Workflow Node Step providers are used to define custom steps that
+can be performed in Workflows.
+
+You can select a step plugin in the GUI when adding a new step to a Workflow.  You
+will be prompted to enter any configuration properties for the step, and can save those
+configuration values into your workflow.
+
+If you are defining a workflow in an XML/Yaml-formatted file, you can
+specify the configuration properties there.
+
+Each configuration property has a "scope" defined by the provider. Scoped properties 
+allow default values to be specified at Framework (application) or Project level 
+configuration properties.  Properties can also be defined to only
+exist at Framework or Project levels. 
+
+1. Instance (Job) scope: the property values defined in the Job definition
+2. Project scope: property values defined in the Project's *project.properties* file
+3. Framework (Application) scope: property values defined in Rundeck's *framework.properties* file.
+
+When determining the property value to use, Rundeck will evaluate the most-specific scope first (Instance level), and
+then widen the scope to Project, then Framework definitions.
+
+When you create a Job in the Rundeck GUI, you will be shown the Instance-scope properties
+as part of the GUI Workflow Builder for any plugin step that you add to your workflow.
+
+When a property can be configured at the framework/project level, you will be able to define it like this:
+
+*Framework scope property definition in `framework.properties`*
+
+    framework.plugin.[ServiceName].[providerName].[property]=value
+
+*Project scope property definition in `project.properties`*
+
+    project.plugin.[ServiceName].[providerName].[property]=value
 
 ### Node Execution Services
 

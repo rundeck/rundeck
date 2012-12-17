@@ -1,0 +1,76 @@
+version = '1.5-dev'
+defaultTasks 'clean','build'
+apply plugin: 'java'
+apply plugin: 'idea'
+sourceCompatibility = 1.5
+ext.rundeckPluginVersion= '1.1'
+
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile files("${rootProject.projectDir}/../../core/build/libs/rundeck-core-${version}.jar")
+    testCompile(
+        //[group: 'junit', name: 'junit', version: '3.8.1',ext:'jar']
+    )
+}
+
+ext.pluginClassNames='com.dtolabs.rundeck.plugin.example.ExampleNodeStepPlugin,com.dtolabs.rundeck.plugin.example.ExampleStepPlugin,com.dtolabs.rundeck.plugin.example.ExampleRemoteScriptNodeStepPlugin'
+jar {
+    manifest {
+        attributes 'Rundeck-Plugin-Classnames': pluginClassNames
+        attributes 'Rundeck-Plugin-File-Version': version
+        attributes 'Rundeck-Plugin-Version': rundeckPluginVersion, 'Rundeck-Plugin-Archive': 'true'
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.0'
+}
+
+
+
+apply plugin: 'maven'
+task createPom << {
+    pom {
+        project {
+            artifactId 'rundeck-test-node-step-plugin'
+            groupId "com.dtolabs.rundeck"
+            inceptionYear '2012'
+            packaging 'jar'
+            version version
+            name "RunDeck Test Node Step Plugin"
+            url 'http://rundeck.org'
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+            parent{
+                groupId 'com.dtolabs.rundeck'
+                artifactId "rundeck-bundled-plugins"
+                version(version)
+            }
+            build{
+                plugins{
+                    plugin{
+                        groupId 'org.apache.maven.plugins'
+                        artifactId 'maven-jar-plugin'
+                        version '2.3.2'
+                        configuration{
+                            archive{
+                              manifestEntries{
+                                'Rundeck-Plugin-Classnames'(pluginClassNames)
+                              }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }.writeTo("pom.xml")
+}

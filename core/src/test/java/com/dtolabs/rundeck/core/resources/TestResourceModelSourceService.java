@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.common.NodeSetImpl;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
@@ -96,28 +97,13 @@ public class TestResourceModelSourceService extends AbstractBaseTest {
         }
     }
 
-    class nodesettest implements INodeSet {
-
-        public Collection<INodeEntry> getNodes() {
-            return null;
-        }
-
-        public INodeEntry getNode(String name) {
-            return null;
-        }
-
-        public Collection<String> getNodeNames() {
-            return null;
-        }
-    }
-
     public void testGetProviderForConfiguration() throws Exception {
         final ResourceModelSourceService service = ResourceModelSourceService.getInstanceForFramework(
             getFrameworkInstance());
         {
             final test1 factory = new test1();
             final sourceTest1 provider = new sourceTest1();
-            final nodesettest nodesettest = new nodesettest();
+            final INodeSet nodesettest = new NodeSetImpl();
             provider.toReturn = nodesettest;
             factory.toReturn = provider;
 
@@ -134,7 +120,7 @@ public class TestResourceModelSourceService extends AbstractBaseTest {
         {
             final test1 factory = new test1();
             final sourceTest1 provider = new sourceTest1();
-            final nodesettest nodesettest = new nodesettest();
+            final INodeSet nodesettest = new NodeSetImpl();
             provider.toReturn = nodesettest;
             factory.toReturn = provider;
 
@@ -154,7 +140,8 @@ public class TestResourceModelSourceService extends AbstractBaseTest {
         {
             final test1 factory = new test1();
             final sourceTest1 provider = new sourceTest1();
-            final nodesettest nodesettest = new nodesettest();
+            final INodeSet nodesettest = new NodeSetImpl();
+
             provider.toReturn = nodesettest;
             factory.toReturn = provider;
             factory.toThrow = new ConfigurationException("test1");

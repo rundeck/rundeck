@@ -24,15 +24,8 @@
 package com.dtolabs.rundeck.core.cli;
 
 import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.*;
-import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
-import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
-import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 
-import java.io.File;
-import java.io.InputStream;
 
 /**
  * CLIExecutionListener implements ExecutionListener, and is used to supply other listeners to the ExecutionService,

@@ -23,12 +23,8 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow;
 
-import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
-
-import java.util.*;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 
 /**
  * WorkflowExecutionListener is ...
@@ -37,10 +33,10 @@ import java.util.*;
  */
 public interface WorkflowExecutionListener extends ExecutionListener {
 
-    public void beginWorkflowExecution(ExecutionContext executionContext, WorkflowExecutionItem item);
+    public void beginWorkflowExecution(StepExecutionContext executionContext, WorkflowExecutionItem item);
 
-    public void finishWorkflowExecution(WorkflowExecutionResult result, ExecutionContext executionContext,
+    public void finishWorkflowExecution(WorkflowExecutionResult result, StepExecutionContext executionContext,
                                         WorkflowExecutionItem item);
-    public void beginWorkflowItem(int step, ExecutionItem node);
-    public void finishWorkflowItem(int step, ExecutionItem node);
+    public void beginWorkflowItem(int step, StepExecutionItem node);
+    public void finishWorkflowItem(int step, StepExecutionItem node);
 }

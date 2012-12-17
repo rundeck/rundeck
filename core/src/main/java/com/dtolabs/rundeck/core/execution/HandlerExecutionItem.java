@@ -24,15 +24,13 @@
 */
 package com.dtolabs.rundeck.core.execution;
 
-import java.util.*;
-
 
 /**
  * HandlerExecutionItem is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface HandlerExecutionItem extends ExecutionItem{
+public interface HandlerExecutionItem extends StepExecutionItem {
     /**
      * Return true if the handler result of success should indicate that the workflow should keep going
      */

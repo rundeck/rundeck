@@ -15,7 +15,10 @@
  */
 
 import groovy.xml.MarkupBuilder
-
+import com.dtolabs.rundeck.app.support.BuilderUtil
+import com.dtolabs.rundeck.util.XmlParserUtil
+import rundeck.ScheduledExecution
+import rundeck.controllers.JobXMLException
 
 /*
 * JobsXMLCodec encapsulates encoding and decoding of the Jobs XML format.
@@ -221,6 +224,20 @@ class JobsXMLCodec {
                 } else if (cmd.jobref?.arg?.line) {
                     cmd.jobref.args = cmd.jobref.arg.remove('line')
                     cmd.jobref.remove('arg')
+                }else if(cmd['node-step-plugin'] || cmd['step-plugin']){
+                    if(cmd['node-step-plugin']){
+                        def plugin= cmd.remove('node-step-plugin')
+
+                        cmd.nodeStep=true
+                        cmd.type = plugin.type
+                        cmd.configuration = plugin.configuration
+                    }else if(cmd['step-plugin']){
+                        def plugin= cmd.remove('step-plugin')
+
+                        cmd.nodeStep = false
+                        cmd.type = plugin.type
+                        cmd.configuration = plugin.configuration
+                    }
                 }
             }
             data.commands.each(fixup)
@@ -357,6 +374,24 @@ class JobsXMLCodec {
                 if (null != remove) {
                     cmd.jobref.arg = BuilderUtil.toAttrMap('line', remove)
                 }
+            }else if(cmd.exec){
+                //no change
+            }else{
+                def nodestep= cmd.remove('nodeStep')
+                def pluginconf= cmd.remove('configuration')
+                def entries=[]
+                //wrap key/value in 'entry'
+                pluginconf.keySet().sort().each{k->
+                    def entry = [key: k, value: pluginconf[k]]
+                    BuilderUtil.makeAttribute(entry, 'key')
+                    BuilderUtil.makeAttribute(entry, 'value')
+                    entries<<entry
+                }
+
+                def cdata= [type: cmd.remove('type'), configuration: [entry:entries]]
+                BuilderUtil.makeAttribute(cdata, 'type')
+
+                cmd[(nodestep?'node-':'')+'step-plugin']=cdata
             }
             if(iseh){
                 BuilderUtil.makeAttribute(cmd, 'keepgoingOnSuccess')

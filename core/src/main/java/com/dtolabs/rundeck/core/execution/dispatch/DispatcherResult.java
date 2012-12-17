@@ -24,7 +24,7 @@
 package com.dtolabs.rundeck.core.execution.dispatch;
 
 import com.dtolabs.rundeck.core.execution.StatusResult;
-import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 
 import java.util.Map;
 
@@ -34,5 +34,5 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface DispatcherResult extends StatusResult {
-    public Map<String, ? extends StatusResult> getResults();
+    public Map<String, ? extends NodeStepResult> getResults();
 }

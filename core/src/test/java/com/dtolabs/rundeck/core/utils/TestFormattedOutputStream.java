@@ -53,7 +53,7 @@ public class TestFormattedOutputStream extends TestCase {
     }
 
 
-    public void testWrite() throws Exception {
+    public void testWriteEmptyContext() throws Exception {
         {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             formattedOutputStream = new FormattedOutputStream(new LogReformatter(
@@ -66,8 +66,11 @@ public class TestFormattedOutputStream extends TestCase {
             catch (IOException ex) {
                 fail("Should not have thrown an Exception: " + ex.getMessage());
             }
-            assertEquals("test1 : null :  : null : This is a test\n",baos.toString());
+            assertEquals("test1 :  :  : null : This is a test\n",baos.toString());
         }
+    }
+
+    public void testWrite() throws Exception {
         {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             formattedOutputStream = new FormattedOutputStream(new LogReformatter(

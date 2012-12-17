@@ -31,6 +31,6 @@ import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public interface DispatchedScriptExecutionItem extends ExecutionItem {
+public interface DispatchedScriptExecutionItem extends StepExecutionItem {
     public IDispatchedScript getDispatchedScript();
 }

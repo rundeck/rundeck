@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.resources.ResourceModelSource;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +48,7 @@ import java.util.Properties;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class NodeExecutorService extends NodeSpecifiedService<NodeExecutor> implements DescribableService {
-    private static final String SERVICE_NAME = "NodeExecutor";
+    private static final String SERVICE_NAME = ServiceNameConstants.NodeExecutor;
     public static final String SERVICE_DEFAULT_PROVIDER_PROPERTY = "service." + SERVICE_NAME + ".default.provider";
     private static final String SERVICE_DEFAULT_LOCAL_PROVIDER_PROPERTY =
         "service." + SERVICE_NAME + ".default.local.provider";

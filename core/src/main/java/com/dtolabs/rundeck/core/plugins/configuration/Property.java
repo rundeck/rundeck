@@ -64,13 +64,6 @@ public interface Property {
     }
 
     /**
-     * Validator can validate a value
-     */
-    static interface Validator {
-        public boolean isValid(String value) throws ValidationException;
-    }
-
-    /**
      * Return descriptive name of the property
      */
     public String getTitle();
@@ -93,7 +86,7 @@ public interface Property {
     /**
      * Return the validator for this property
      */
-    public Validator getValidator();
+    public PropertyValidator getValidator();
 
     /**
      * Return true if an empty value is not allowed
@@ -110,4 +103,9 @@ public interface Property {
      */
     public List<String> getSelectValues();
 
+    /**
+     * Return the scope of this property, i.e. where the value can be retrieved and overridden, or null to indicate
+     * the default scope.
+     */
+    public PropertyScope getScope();
 }

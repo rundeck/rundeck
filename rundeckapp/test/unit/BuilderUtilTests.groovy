@@ -1,4 +1,6 @@
 import groovy.xml.MarkupBuilder
+import com.dtolabs.rundeck.app.support.BuilderUtil
+import rundeck.CommandExec
 
 /*
 * Copyright 2011 DTO Labs, Inc. (http://dtolabs.com)

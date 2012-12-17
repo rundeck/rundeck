@@ -23,8 +23,6 @@
 */
 package com.dtolabs.rundeck.execution;
 
-import java.util.*;
-
 /**
  * JobRefCommand is ...
  *
@@ -32,6 +30,6 @@ import java.util.*;
  */
 public abstract class JobRefCommand implements JobExecutionItem{
     public String getType() {
-        return COMMAND_TYPE;
+        return JobExecutionItem.STEP_EXECUTION_TYPE;
     }
 }

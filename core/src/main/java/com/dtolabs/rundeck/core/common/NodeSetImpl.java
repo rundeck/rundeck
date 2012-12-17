@@ -25,7 +25,9 @@ package com.dtolabs.rundeck.core.common;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.TreeMap;
+
 
 /**
  * Basic Implementation of INodeSet
@@ -41,6 +43,12 @@ public class NodeSetImpl implements INodeSet, NodeReceiver {
 
     public NodeSetImpl(final HashMap<String, INodeEntry> nodes) {
         this.nodes = new TreeMap<String, INodeEntry>(nodes);
+    }
+
+    public static NodeSetImpl singleNodeSet(final INodeEntry node) {
+        NodeSetImpl entries = new NodeSetImpl();
+        entries.putNode(node);
+        return entries;
     }
 
     public void putNode(INodeEntry node) {
@@ -83,5 +91,10 @@ public class NodeSetImpl implements INodeSet, NodeReceiver {
         return "NodeSetImpl{" +
                "nodes=" + nodes +
                '}';
+    }
+
+    @Override
+    public Iterator<INodeEntry> iterator() {
+        return nodes.values().iterator();
     }
 }

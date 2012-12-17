@@ -1,5 +1,11 @@
 import grails.test.GrailsUnitTestCase
-import com.dtolabs.rundeck.server.authorization.AuthConstants
+import rundeck.ScheduledExecution
+import rundeck.Workflow
+import rundeck.CommandExec
+import rundeck.Execution
+import rundeck.services.FrameworkService
+import rundeck.controllers.ExecutionController
+
 /*
  * Copyright 2012 DTO Labs, Inc. (http://dtolabs.com)
  * 

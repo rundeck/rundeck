@@ -1,5 +1,6 @@
 import org.quartz.CronExpression
 import grails.test.GrailsUnitTestCase
+import rundeck.ScheduledExecution
 
 class ScheduledExecutionTests extends GrailsUnitTestCase {
 

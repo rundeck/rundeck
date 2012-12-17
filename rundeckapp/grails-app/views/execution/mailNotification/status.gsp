@@ -21,7 +21,7 @@
    Created: May 17, 2010 6:30:25 PM
    $Id$
 --%>
-<%@ page contentType="text/html" %>
+<%@ page import="rundeck.Execution" contentType="text/html" %>
 <html>
 <head><title>Execution <g:message code="status.label.${execution.status=='true'?'succeed':'fail'}"/></title>
     <style type="text/css">

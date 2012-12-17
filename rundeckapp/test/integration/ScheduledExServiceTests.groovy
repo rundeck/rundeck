@@ -1,8 +1,5 @@
 import grails.test.GrailsUnitTestCase
-import javax.security.auth.Subject
-import com.dtolabs.rundeck.core.authentication.Username
-import com.dtolabs.rundeck.core.authentication.Group
-import org.quartz.core.QuartzScheduler
+
 import org.quartz.Scheduler
 import org.quartz.SchedulerContext
 import org.quartz.SchedulerMetaData
@@ -14,8 +11,16 @@ import org.quartz.Calendar
 import org.quartz.JobListener
 import org.quartz.TriggerListener
 import org.quartz.SchedulerListener
-import org.springframework.mock.web.MockMultipartFile
+
 import org.springframework.context.MessageSource
+import rundeck.ScheduledExecution
+import rundeck.CommandExec
+import rundeck.Workflow
+import rundeck.JobExec
+import rundeck.Option
+import rundeck.Notification
+import rundeck.services.FrameworkService
+import rundeck.services.ScheduledExecutionService
 /*
  * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
  *
@@ -5592,7 +5597,10 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
         sec.frameworkService = fwkControl.createMock()
-
+        def ms = mockFor(MessageSource)
+        ms.demand.getMessage {key, data, locale -> key}
+        ms.demand.getMessage {error, locale -> error.toString()}
+        sec.messageSource = ms.createMock()
         //test upload job with error-handlers
 
         def xml = '''
@@ -5687,15 +5695,11 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
         }
         (0..2).each {ndx ->
             assertTrue(test.workflow.commands[ndx] instanceof CommandExec)
-            assertFalse(test.workflow.commands[ndx] instanceof JobExec)
             assertTrue(test.workflow.commands[ndx].errorHandler instanceof CommandExec)
-            assertFalse(test.workflow.commands[ndx].errorHandler instanceof JobExec)
             assertNotNull(test.workflow.commands[ndx].errorHandler.id)
         }
         [3].each {ndx ->
-            assertTrue(test.workflow.commands[ndx] instanceof CommandExec)
             assertTrue(test.workflow.commands[ndx] instanceof JobExec)
-            assertTrue(test.workflow.commands[ndx].errorHandler instanceof CommandExec)
             assertTrue(test.workflow.commands[ndx].errorHandler instanceof JobExec)
             assertNotNull(test.workflow.commands[ndx].errorHandler.id)
         }

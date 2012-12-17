@@ -24,13 +24,13 @@
 package com.dtolabs.rundeck.core.execution;
 
 /**
- * HasFailureHandler interface indicates that an ExecutionItem is set as a failure handler.
+ * HasFailureHandler interface indicates that an StepExecutionItem is set as a failure handler.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface HasFailureHandler {
     /**
-     * Return the {@link ExecutionItem} to handle failure
+     * Return the {@link StepExecutionItem} to handle failure
      */
-    public ExecutionItem getFailureHandler();
+    public StepExecutionItem getFailureHandler();
 }

@@ -34,6 +34,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.jcraft.jsch.JSchException;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
@@ -55,27 +56,14 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
     public static final String SERVICE_PROVIDER_TYPE = "jsch-scp";
 
 
-    static final Description DESC = new Description() {
-        public String getName() {
-            return SERVICE_PROVIDER_TYPE;
-        }
+    static final Description DESC = DescriptionBuilder.builder()
+        .name(SERVICE_PROVIDER_TYPE)
+        .title("SCP")
+        .description("Copies a script file to a remote node via SCP.")
+        .mapping(JschNodeExecutor.CONFIG_KEYPATH, JschNodeExecutor.PROJ_PROP_SSH_KEYPATH)
+        .mapping(JschNodeExecutor.CONFIG_AUTHENTICATION, JschNodeExecutor.PROJ_PROP_SSH_AUTHENTICATION)
+        .build();
 
-        public String getTitle() {
-            return "SCP";
-        }
-
-        public String getDescription() {
-            return "Copies a script file to a remote node via SCP.";
-        }
-
-        public List<Property> getProperties() {
-            return JschNodeExecutor.CONFIG_PROPERTIES;
-        }
-
-        public Map<String, String> getPropertiesMapping() {
-            return JschNodeExecutor.CONFIG_MAPPING;
-        }
-    };
 
     public Description getDescription() {
         return DESC;
