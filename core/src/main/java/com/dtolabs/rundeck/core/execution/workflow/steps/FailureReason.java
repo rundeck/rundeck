@@ -16,35 +16,20 @@
  */
 
 /*
-* StepExecutionResult.java
+* FailureReason.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 11/2/12 11:46 AM
+* Created: 12/13/12 10:50 AM
 * 
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
-import com.dtolabs.rundeck.core.execution.ExceptionStatusResult;
-
-import java.util.Map;
-
-
 /**
- * StepExecutionResult is ...
+ * A base interface for enum failure reasons, implementations should provide a {@link #toString()} implementation
+ * returning a single word reason.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface StepExecutionResult extends ExceptionStatusResult {
-    public Map<String,Object> getResultData();
-    public Map<String,Object> getFailureData();
-
-    public FailureReason getFailureReason();
-    public String getFailureMessage();
-
-    static enum Reason implements FailureReason{
-        ConfigurationFailure,
-        Unknown,
-        Other
-    }
+public interface FailureReason {
 
 }

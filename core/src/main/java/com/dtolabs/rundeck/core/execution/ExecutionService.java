@@ -65,7 +65,7 @@ public interface ExecutionService extends FrameworkSupportService {
      *
      * @param item item
      *
-     * @return result
+     * @return not-null result
      */
     public StepExecutionResult executeStep(StepExecutionContext context, StepExecutionItem item) throws ExecutionException;
 
@@ -113,6 +113,5 @@ public interface ExecutionService extends FrameworkSupportService {
     /**
      * Execute a command within the context on the node.
      */
-    public NodeExecutorResult executeCommand(ExecutionContext context, String[] command, INodeEntry node) throws
-        ExecutionException;
+    public NodeExecutorResult executeCommand(ExecutionContext context, String[] command, INodeEntry node) ;
 }

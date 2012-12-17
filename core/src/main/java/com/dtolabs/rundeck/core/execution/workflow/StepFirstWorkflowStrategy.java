@@ -51,7 +51,7 @@ public class StepFirstWorkflowStrategy extends BaseWorkflowStrategy {
         boolean workflowsuccess = false;
         Exception exception = null;
         final IWorkflow workflow = item.getWorkflow();
-        final Map<Integer, Object> failedList = new HashMap<Integer, Object>();
+        final Map<Integer, StepExecutionResult> failedList = new HashMap<Integer, StepExecutionResult>();
         final List<StepExecutionResult> resultList = new ArrayList<StepExecutionResult>();
         try {
             executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,

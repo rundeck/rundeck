@@ -16,17 +16,21 @@
 
 package com.dtolabs.rundeck.core.cli;
 
-import com.dtolabs.rundeck.core.execution.FailedNodesListener;
-import com.dtolabs.rundeck.core.utils.NodeSet;
 import com.dtolabs.rundeck.core.cli.project.ProjectToolException;
-
-import java.io.*;
-import java.util.Collection;
-import java.util.Properties;
-import java.util.Map;
-import java.util.HashMap;
-
+import com.dtolabs.rundeck.core.execution.FailedNodesListener;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+import com.dtolabs.rundeck.core.utils.NodeSet;
 import org.apache.log4j.Logger;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * Utility class for managing the failed nodes filestore
@@ -107,7 +111,7 @@ public class FailedNodesFilestore {
             }
         }
 
-        public void nodesFailed(final Map<String,Object> failedNodeNames) {
+        public void nodesFailed(final Map<String, NodeStepResult> failedNodeNames) {
             if (null != failedNodesFile) {
                 if (failedNodeNames.size() > 0) {
                     //store failed node list into file, echo Commandline with nodelist

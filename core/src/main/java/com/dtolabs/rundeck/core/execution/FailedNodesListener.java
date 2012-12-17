@@ -23,6 +23,8 @@
 */
 package com.dtolabs.rundeck.core.execution;
 
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+
 import java.util.Collection;
 import java.util.Map;
 
@@ -38,7 +40,7 @@ public interface FailedNodesListener {
      *
      * @param names node names
      */
-    public void nodesFailed(Map<String,Object> failures);
+    public void nodesFailed(Map<String, NodeStepResult> failures);
 
     /**
      * Called if no nodes failed during execution.

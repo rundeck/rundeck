@@ -30,7 +30,6 @@ import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.impl.common.AntSupport;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
@@ -39,13 +38,16 @@ import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.execution.utils.LeadPipeOutputStream;
 import com.dtolabs.rundeck.core.execution.utils.Responder;
 import com.dtolabs.rundeck.core.execution.utils.ResponderTask;
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import com.dtolabs.rundeck.core.tasks.net.ExtSSHExec;
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.jcraft.jsch.JSchException;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.log4j.Logger;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
@@ -53,10 +55,20 @@ import org.apache.tools.ant.Project;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.net.NoRouteToHostException;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.text.MessageFormat;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
+
 
 /**
  * JschNodeExecutor is ...
@@ -85,7 +97,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String DEFAULT_SSH_PASSWORD_OPTION = "option.sshPassword";
     public static final String SUDO_OPT_PREFIX = "sudo-";
     public static final String SUDO2_OPT_PREFIX = "sudo2-";
-    public static final String NODE_ATTR_SUDO_PASSWORD_OPTION =  "password-option";
+    public static final String NODE_ATTR_SUDO_PASSWORD_OPTION = "password-option";
     public static final String DEFAULT_SUDO_PASSWORD_OPTION = "option.sudoPassword";
     public static final String DEFAULT_SUDO2_PASSWORD_OPTION = "option.sudo2Password";
     public static final String NODE_ATTR_SSH_KEY_PASSPHRASE_OPTION = "ssh-key-passphrase-option";
@@ -139,17 +151,18 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         .build();
 
 
-
     public Description getDescription() {
         return DESC;
     }
 
     public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
-                                             final INodeEntry node) throws
-        ExecutionException {
+                                             final INodeEntry node)  {
         if (null == node.getHostname() || null == node.extractHostname()) {
-            throw new ExecutionException(
-                "Hostname must be set to connect to remote node '" + node.getNodename() + "'");
+            return NodeExecutorResultImpl.createFailure(
+                StepExecutionResult.Reason.ConfigurationFailure,
+                "Hostname must be set to connect to remote node '" + node.getNodename() + "'",
+                node
+            );
         }
 
         final ExecutionListener listener = context.getExecutionListener();
@@ -160,14 +173,15 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         final ExtSSHExec sshexec;
         //perform jsch sssh command
         final NodeSSHConnectionInfo nodeAuthentication = new NodeSSHConnectionInfo(node, framework,
-            context);
+                                                                                   context);
         final int timeout = nodeAuthentication.getSSHTimeout();
         try {
 
             sshexec = SSHTaskBuilder.build(node, command, project, context.getDataContext(),
-                nodeAuthentication, context.getLoglevel());
+                                           nodeAuthentication, context.getLoglevel());
         } catch (SSHTaskBuilder.BuilderException e) {
-            throw new ExecutionException(e);
+            return NodeExecutorResultImpl.createFailure(StepExecutionResult.Reason.ConfigurationFailure,
+                                                        e.getMessage(), node);
         }
 
         //Sudo support
@@ -188,7 +202,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                 responderInput.connect(jschOutput);
                 jschInput.connect(responderOutput);
             } catch (IOException e) {
-                throw new ExecutionException(e);
+                return NodeExecutorResultImpl.createFailure(NodeStepResult.Reason.IOFailure, e.getMessage(), node);
             }
 
             //first sudo prompt responder
@@ -226,7 +240,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
 
             responderFuture = executor.submit(responderResultCallable);
-        }else {
+        } else {
             responderFuture = null;
         }
         if (null != context.getExecutionListener()) {
@@ -236,37 +250,14 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                                                + node.getNodename() + ")");
         }
         String errormsg = null;
+        FailureReason failureReason = StepExecutionResult.Reason.Unknown;
         try {
             sshexec.execute();
             success = true;
         } catch (BuildException e) {
-            if (e.getMessage().contains("Timeout period exceeded, connection dropped")) {
-                errormsg =
-                    "Failed execution for node: " + node.getNodename() + ": Execution Timeout period exceeded (after "
-                    + timeout + "ms), connection dropped";
-            } else if (null != e.getCause() && e.getCause() instanceof JSchException && (
-                e.getCause().getMessage().contains("timeout:") || e.getCause().getMessage().contains(
-                    "SocketTimeoutException") || e.getCause().getMessage().contains(
-                    "java.net.ConnectException: Operation timed out"))) {
-                errormsg = "Failed execution for node: " + node.getNodename() + ": Connection Timeout (after " + timeout
-                           + "ms): " + e.getMessage();
-            } else if (null != e.getCause() && e.getCause() instanceof JSchException && e.getCause().getMessage()
-                .contains("Auth cancel")) {
-                String msgformat = FWK_PROP_AUTH_CANCEL_MSG_DEFAULT;
-                if (framework.getPropertyLookup().hasProperty(FWK_PROP_AUTH_CANCEL_MSG)) {
-                    msgformat = framework.getProperty(FWK_PROP_AUTH_CANCEL_MSG);
-                }
-                errormsg = MessageFormat.format(msgformat, node.getNodename(), e.getMessage());
-            }else if (null != e.getCause() && e.getCause() instanceof JSchException && e.getCause().getMessage()
-                .contains("Auth fail")) {
-                String msgformat = FWK_PROP_AUTH_FAIL_MSG_DEFAULT;
-                if (framework.getPropertyLookup().hasProperty(FWK_PROP_AUTH_FAIL_MSG)) {
-                    msgformat = framework.getProperty(FWK_PROP_AUTH_FAIL_MSG);
-                }
-                errormsg = MessageFormat.format(msgformat, node.getNodename(), e.getMessage());
-            } else {
-                errormsg = e.getMessage();
-            }
+            final ExtractFailure extractJschFailure = extractFailure(e,node, timeout, framework);
+            errormsg = extractJschFailure.getErrormsg();
+            failureReason = extractJschFailure.getReason();
             context.getExecutionListener().log(0, errormsg);
         }
         shutdownAndAwaitTermination(executor);
@@ -289,16 +280,86 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             }
         }
         final int resultCode = sshexec.getExitStatus();
-        final String resultmsg = null != errormsg ? errormsg : null;
 
-        return new NodeExecutorResultImpl(success, node,resultCode) {
-            @Override
-            public String toString() {
-                return "[jsch-ssh] result was " + (isSuccess() ? "success" : "failure") + ", resultcode: "
-                       + getResultCode() + (null != resultmsg ? ": " + resultmsg : "");
+        if (success) {
+            return NodeExecutorResultImpl.createSuccess(node);
+        } else {
+            return NodeExecutorResultImpl.createFailure(failureReason, errormsg, node, resultCode);
+        }
+    }
 
+    static enum JschFailureReason implements FailureReason {
+        /**
+         * A problem with the SSH connection
+         */
+        SSHProtocolFailure
+    }
+
+    static ExtractFailure extractFailure(BuildException e, INodeEntry node, int timeout, Framework framework) {
+        String errormsg;
+        FailureReason failureReason;
+
+        if (e.getMessage().contains("Timeout period exceeded, connection dropped")) {
+            errormsg =
+                "Failed execution for node: " + node.getNodename() + ": Execution Timeout period exceeded (after "
+                + timeout + "ms), connection dropped";
+            failureReason = NodeStepResult.Reason.ConnectionTimeout;
+        } else if (null != e.getCause() && e.getCause() instanceof JSchException) {
+            JSchException jSchException = (JSchException) e.getCause();
+            return extractJschFailure(node, timeout, jSchException, framework);
+        } else if (e.getMessage().contains("Remote command failed with exit status")) {
+            errormsg = e.getMessage();
+            failureReason = NodeExecutorResult.Reason.NonZeroResultCode;
+        } else {
+            failureReason = StepExecutionResult.Reason.Other;
+            errormsg = e.getMessage();
+        }
+        return new ExtractFailure(errormsg, failureReason);
+    }
+
+    static ExtractFailure extractJschFailure(final INodeEntry node,
+                                             final int timeout,
+                                             final JSchException jSchException, final Framework framework) {
+        String errormsg;
+        FailureReason reason;
+
+        if (null == jSchException.getCause()) {
+            if (jSchException.getMessage().contains("Auth cancel")) {
+
+                String msgformat = FWK_PROP_AUTH_CANCEL_MSG_DEFAULT;
+                if (framework.getPropertyLookup().hasProperty(FWK_PROP_AUTH_CANCEL_MSG)) {
+                    msgformat = framework.getProperty(FWK_PROP_AUTH_CANCEL_MSG);
+                }
+                errormsg = MessageFormat.format(msgformat, node.getNodename(), jSchException.getMessage());
+                reason = NodeStepResult.Reason.AuthenticationFailure;
+            } else if (jSchException.getMessage().contains("Auth fail")) {
+                String msgformat = FWK_PROP_AUTH_FAIL_MSG_DEFAULT;
+                if (framework.getPropertyLookup().hasProperty(FWK_PROP_AUTH_FAIL_MSG)) {
+                    msgformat = framework.getProperty(FWK_PROP_AUTH_FAIL_MSG);
+                }
+                errormsg = MessageFormat.format(msgformat, node.getNodename(), jSchException.getMessage());
+                reason = NodeStepResult.Reason.AuthenticationFailure;
+            } else {
+                reason = JschFailureReason.SSHProtocolFailure;
+                errormsg = jSchException.getMessage();
             }
-        };
+        } else {
+            Throwable cause = ExceptionUtils.getRootCause(jSchException);
+            errormsg = cause.getMessage();
+            if (cause instanceof NoRouteToHostException) {
+                reason = NodeStepResult.Reason.ConnectionFailure;
+            } else if (cause instanceof UnknownHostException) {
+                reason = NodeStepResult.Reason.HostNotFound;
+            } else if (cause instanceof SocketTimeoutException) {
+                errormsg = "Connection Timeout (after " + timeout + "ms): " + cause.getMessage();
+                reason = NodeStepResult.Reason.ConnectionTimeout;
+            } else if (cause instanceof SocketException) {
+                reason = NodeStepResult.Reason.ConnectionFailure;
+            } else {
+                reason = StepExecutionResult.Reason.Other;
+            }
+        }
+        return new ExtractFailure(errormsg, reason);
     }
 
     /**
@@ -422,16 +483,16 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         }
 
         /**
-         * Return null if the input is null or empty or whitespace, otherwise return the input
-         * string trimmed.
+         * Return null if the input is null or empty or whitespace, otherwise return the input string trimmed.
          */
-        public static String nonBlank(final String input){
-            if(null==input|| "".equals(input.trim())){
+        public static String nonBlank(final String input) {
+            if (null == input || "".equals(input.trim())) {
                 return null;
-            }else {
+            } else {
                 return input.trim();
             }
         }
+
         public String getUsername() {
             String user;
             if (null != nonBlank(node.getUsername()) || node.containsUserName()) {
@@ -514,6 +575,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     private static class DisconnectResultHandler implements ResponderTask.ResultHandler,
                                                             ExtSSHExec.DisconnectHolder {
         private ExtSSHExec.Disconnectable disconnectable;
+
         public void setDisconnectable(final ExtSSHExec.Disconnectable disconnectable) {
             this.disconnectable = disconnectable;
         }
@@ -537,7 +599,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
      * lines, or 5000 milliseconds, then assume success (isFailOnResponseThreshold)</li> <li>if seen, then fail</li>
      * </ol>
      */
-    private static class SudoResponder implements Responder{
+    private static class SudoResponder implements Responder {
         public static final String DEFAULT_DESCRIPTION = "Sudo execution password response";
         private String sudoCommandPattern;
         private String inputSuccessPattern;
@@ -565,21 +627,24 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             defaultSudoCommandPattern = DEFAULT_SUDO_COMMAND_PATTERN;
             configPrefix = SUDO_OPT_PREFIX;
         }
-        private SudoResponder(final String configPrefix, final String defaultSudoPasswordOption, final String defaultSudoCommandPattern) {
+
+        private SudoResponder(final String configPrefix,
+                              final String defaultSudoPasswordOption,
+                              final String defaultSudoCommandPattern) {
             this();
-            if(null!= configPrefix) {
+            if (null != configPrefix) {
                 this.configPrefix = configPrefix;
             }
-            if(null!=defaultSudoPasswordOption){
-                this.defaultSudoPasswordOption=defaultSudoPasswordOption;
+            if (null != defaultSudoPasswordOption) {
+                this.defaultSudoPasswordOption = defaultSudoPasswordOption;
             }
-            if(null!=defaultSudoCommandPattern){
-                this.defaultSudoCommandPattern=defaultSudoCommandPattern;
+            if (null != defaultSudoCommandPattern) {
+                this.defaultSudoCommandPattern = defaultSudoCommandPattern;
             }
         }
 
         static SudoResponder create(final INodeEntry node, final Framework framework, final ExecutionContext context) {
-            return create(node, framework, context, null,null, null);
+            return create(node, framework, context, null, null, null);
         }
 
         static SudoResponder create(final INodeEntry node,
@@ -587,7 +652,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                                     final ExecutionContext context,
                                     final String configPrefix,
                                     final String defaultSudoPasswordOption, final String defaultSudoCommandPattern) {
-            final SudoResponder sudoResponder = new SudoResponder(configPrefix,defaultSudoPasswordOption,
+            final SudoResponder sudoResponder = new SudoResponder(configPrefix, defaultSudoPasswordOption,
                                                                   defaultSudoCommandPattern);
             sudoResponder.init(node, framework.getFrameworkProjectMgr().getFrameworkProject(
                 context.getFrameworkProject()), framework, context);
@@ -606,11 +671,17 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
         private void init(final INodeEntry node, final FrameworkProject frameworkProject,
                           final Framework framework, final ExecutionContext context) {
-            sudoEnabled = resolveBooleanProperty(configPrefix + NODE_ATTR_SUDO_COMMAND_ENABLED, false, node, frameworkProject,
-                framework);
+            sudoEnabled = resolveBooleanProperty(configPrefix + NODE_ATTR_SUDO_COMMAND_ENABLED,
+                                                 false,
+                                                 node,
+                                                 frameworkProject,
+                                                 framework);
             if (sudoEnabled) {
-                final String sudoPassOptname=resolveProperty(configPrefix + NODE_ATTR_SUDO_PASSWORD_OPTION, null, node, frameworkProject,
-                    framework);
+                final String sudoPassOptname = resolveProperty(configPrefix + NODE_ATTR_SUDO_PASSWORD_OPTION,
+                                                               null,
+                                                               node,
+                                                               frameworkProject,
+                                                               framework);
                 final String sudoPassword = NodeSSHConnectionInfo.evaluateSecureOption(
                     null != sudoPassOptname ? sudoPassOptname : defaultSudoPasswordOption, context);
                 inputString = (null != sudoPassword ? sudoPassword : "") + "\n";
@@ -753,4 +824,24 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     }
 
 
+    static class ExtractFailure {
+
+        private String errormsg;
+        private FailureReason reason;
+
+        private ExtractFailure(String errormsg, FailureReason reason) {
+            this.errormsg = errormsg;
+            this.reason = reason;
+        }
+
+        public String getErrormsg() {
+            return errormsg;
+        }
+
+        public FailureReason getReason() {
+            return reason;
+        }
+
+
+    }
 }

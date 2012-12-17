@@ -111,9 +111,9 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
 
         @Override
         protected StepExecutionResult executeWFItem(final StepExecutionContext executionContext,
-                                                    final Map<Integer, Object> failedMap,
+                                                    final Map<Integer, StepExecutionResult> failedMap,
                                                     final int c,
-                                                    final StepExecutionItem cmd, final boolean keepgoing)
+                                                    final StepExecutionItem cmd)
             throws WorkflowStepFailureException {
             executeWfItemCalled++;
             HashMap<String, Object> input = new HashMap<String, Object>();
@@ -122,32 +122,20 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             input.put("c", c);
             input.put("stack", executionContext.getStepContext());
             input.put("cmd", cmd);
-            input.put("keepgoing", keepgoing);
             inputs.add(input);
 
             int ndx = execIndex++;
             final Object o = results.get(ndx);
             if (o instanceof Boolean) {
-                return new StepExecutionResultImpl((Boolean) o);
+                return ((Boolean)o)?new StepExecutionResultImpl():
+                    new StepExecutionResultImpl(null,null,"false result");
             } else if (o instanceof WorkflowStepFailureException) {
                 throw (WorkflowStepFailureException) o;
             } else if (o instanceof String) {
-                throw new WorkflowStepFailureException((String) o, new StepExecutionResult() {
-                    public Exception getException() {
-                        return null;
-                    }
-
-                    public DispatcherResult getResultObject() {
-                        return null;
-                    }
-
-                    public boolean isSuccess() {
-                        return false;
-                    }
-                }, c);
+                throw new WorkflowStepFailureException((String) o, new StepExecutionResultImpl(null,null,(String)o), c);
             } else {
                 fail("Unexpected result at index " + ndx + ": " + o);
-                return new StepExecutionResultImpl(false);
+                return new StepExecutionResultImpl(null,null, "Unexpected result at index " + ndx + ": " + o);
             }
 
         }
@@ -187,7 +175,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         strategy.getResults().addAll(returnResults);
 
 
-        final Map<Integer, Object> map = new HashMap<Integer, Object>();
+        final Map<Integer, StepExecutionResult> map = new HashMap<Integer, StepExecutionResult>();
         final List<StepExecutionResult> resultList = new ArrayList<StepExecutionResult>();
         final boolean keepgoing = wfKeepgoing;
 
@@ -224,7 +212,6 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             final Map<String, Object> map1 = strategy.getInputs().get(i);
             assertEquals("ExpectedMap index " + i + " value c",expectedMap.get("c"), map1.get("c"));
             assertEquals("ExpectedMap index " + i + " value cmd",expectedMap.get("cmd"), map1.get("cmd"));
-            assertEquals("ExpectedMap index "+i+" value keepgoing",expectedMap.get("keepgoing"), map1.get("keepgoing"));
             i++;
         }
 
@@ -287,7 +274,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
                 false,
                 Arrays.asList(expectResult1),
                 false,
-                Arrays.asList((Object) false), false
+                Arrays.asList((Object) false), true
             );
         }
 
@@ -384,7 +371,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
                 Arrays.asList(expectResult1,expectResult2),
                 false,
                 Arrays.asList((Object) false,true),//item1 fails, handler succeeds
-                false
+                true
             );
 
 
@@ -606,7 +593,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
                 Arrays.asList(expectResult1, expectResult2),
                 false,
                 Arrays.asList((Object) false, false, "should not be executed"),//item1 fails, handler fails, item2 succeeds
-                false
+                true
             );
 
         }
@@ -682,7 +669,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             executionContextList.add(executionContext);
             nodeEntryList.add(iNodeEntry);
             if (shouldThrowException) {
-                throw new NodeStepException("testInterpreter test exception", iNodeEntry.getNodename());
+                throw new NodeStepException("testInterpreter test exception", null,iNodeEntry.getNodename());
             }
             System.out.println("return index: (" + index + ") in size: " + resultList.size());
             return resultList.get(index++);

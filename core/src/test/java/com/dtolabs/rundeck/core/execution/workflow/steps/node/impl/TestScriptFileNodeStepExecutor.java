@@ -30,20 +30,26 @@ import com.dtolabs.rundeck.core.common.NodeEntryImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
-import com.dtolabs.rundeck.core.execution.ExecutionListener;
-import com.dtolabs.rundeck.core.execution.service.*;
+import com.dtolabs.rundeck.core.execution.service.FileCopier;
+import com.dtolabs.rundeck.core.execution.service.FileCopierException;
+import com.dtolabs.rundeck.core.execution.service.FileCopierService;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorService;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
-import com.dtolabs.rundeck.core.utils.NodeSet;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * TestScriptFileNodeStepExecutor is ...
@@ -78,7 +84,9 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         File projectdir = new File(getFrameworkProjectsBase(), PROJ_NAME);
         FileUtils.deleteDir(projectdir);
     }
-
+    static enum TestReason implements FailureReason{
+        Test
+    }
     public static class testFileCopier implements FileCopier {
         String testResult;
         ExecutionContext testContext;
@@ -92,7 +100,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             testNode = node;
             testInput = input;
             if(throwException) {
-                throw new FileCopierException("copyFileStream test");
+                throw new FileCopierException("copyFileStream test", TestReason.Test);
             }
             return testResult;
         }
@@ -104,7 +112,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             testNode = node;
             testFile = file;
             if (throwException) {
-                throw new FileCopierException("copyFile test");
+                throw new FileCopierException("copyFile test", TestReason.Test);
             }
             return testResult;
         }
@@ -118,7 +126,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             testScript = script;
 
             if (throwException) {
-                throw new FileCopierException("copyScriptContent test");
+                throw new FileCopierException("copyScriptContent test", TestReason.Test);
             }
             return testResult;
         }
@@ -131,8 +139,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         List<NodeExecutorResult> testResult = new ArrayList<NodeExecutorResult>();
         int index = 0;
 
-        public NodeExecutorResult executeCommand(ExecutionContext context, String[] command, INodeEntry node) throws
-            ExecutionException {
+        public NodeExecutorResult executeCommand(ExecutionContext context, String[] command, INodeEntry node)  {
             this.testContext.add(context);
             this.testCommand.add(command);
             this.testNode.add(node);
@@ -176,8 +183,8 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         };
         {
             final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>();
-            nodeExecutorResults.add(new NodeExecutorResultImpl(true, null, 1));
-            nodeExecutorResults.add(new NodeExecutorResultImpl(true, null, 2));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             testexec.testResult=nodeExecutorResults;
             testcopier.testResult="/test/file/path";
             final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
@@ -248,8 +255,8 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         };
         {
             final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>();
-            nodeExecutorResults.add(new NodeExecutorResultImpl(true, null, 1));
-            nodeExecutorResults.add(new NodeExecutorResultImpl(true, null, 2));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             testexec.testResult = nodeExecutorResults;
             testcopier.testResult = "/test/file/path";
             final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
@@ -323,7 +330,9 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         };
         {
             final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>();
-            nodeExecutorResults.add(new NodeExecutorResultImpl(false, null, 1));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createFailure(NodeExecutorResult.Reason.NonZeroResultCode,
+                                                                         "failed",
+                                                                         null));
             testexec.testResult=nodeExecutorResults;
             testcopier.testResult = "/test/file/path";
             final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
@@ -387,7 +396,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         };
         {
             final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>();
-            nodeExecutorResults.add(new NodeExecutorResultImpl(true, null, 1));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             testexec.testResult=nodeExecutorResults;
             testcopier.testResult = "/test/file/path";
             final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
@@ -450,8 +459,8 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         };
         {
             final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>();
-            nodeExecutorResults.add(new NodeExecutorResultImpl(true, null, 1));
-            nodeExecutorResults.add(new NodeExecutorResultImpl(true, null, 2));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             testexec.testResult = nodeExecutorResults;
             testcopier.testResult = "/test/file/path";
             final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
@@ -524,8 +533,8 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         };
         {
             final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>();
-            nodeExecutorResults.add(new NodeExecutorResultImpl(true, null, 1));
-            nodeExecutorResults.add(new NodeExecutorResultImpl(true, null, 2));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             testexec.testResult = nodeExecutorResults;
             testcopier.testResult = "/test/file/path";
             final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
@@ -596,8 +605,8 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         };
         {
             final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>();
-            nodeExecutorResults.add(new NodeExecutorResultImpl(true, null, 1));
-            nodeExecutorResults.add(new NodeExecutorResultImpl(true, null, 2));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+            nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
             testexec.testResult = nodeExecutorResults;
 
             //set filecopier to throw exception

@@ -27,14 +27,17 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
+import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -56,8 +59,12 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
     static void validateScriptPlugin(final ScriptPluginProvider plugin) throws PluginException {
     }
 
+    static enum Reason implements FailureReason{
+        ScriptPluginNodeExecutorIOError,
+        ScriptPluginNodeExecutorExecutionError
+    }
     public NodeExecutorResult executeCommand(final ExecutionContext executionContext, final String[] command,
-                                             final INodeEntry node) throws ExecutionException {
+                                             final INodeEntry node)  {
         final ScriptPluginProvider plugin = getProvider();
         final String pluginname = plugin.getName();
         executionContext.getExecutionListener().log(3,
@@ -79,30 +86,30 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
 
         int result = -1;
         try {
-            result = runScript(finalargs,
-                               DataContextUtils.generateEnvVarsFromContext(localDataContext),
-                               null,
-                               System.out,
-                               System.err
+            result = ScriptExecUtil.runLocalCommand(finalargs,
+                                                    DataContextUtils.generateEnvVarsFromContext(localDataContext),
+                                                    null,
+                                                    System.out,
+                                                    System.err
             );
+            executionContext.getExecutionListener().log(3,
+                                                        "[" + pluginname + "]: result code: " + result + ", success: "
+                                                        + (0 == result));
+            if(0!=result){
+                return NodeExecutorResultImpl.createFailure(NodeExecutorResult.Reason.NonZeroResultCode,
+                                                            "Result code: " + result, node, result);
+            }else {
+                return NodeExecutorResultImpl.createSuccess(node);
+            }
         } catch (IOException e) {
             executionContext.getExecutionListener().log(0,e.getMessage());
             e.printStackTrace();
+            return NodeExecutorResultImpl.createFailure(Reason.ScriptPluginNodeExecutorIOError, e.getMessage(),e, node, result);
         } catch (InterruptedException e) {
             executionContext.getExecutionListener().log(0, e.getMessage());
             e.printStackTrace();
+            return NodeExecutorResultImpl.createFailure(Reason.ScriptPluginNodeExecutorExecutionError, e.getMessage(), e, node, result);
         }
-        final boolean success = result == 0;
-        executionContext.getExecutionListener().log(3,
-                                                    "[" + pluginname + "]: result code: " + result + ", success: "
-                                                    + success);
-
-        return new NodeExecutorResultImpl(success, node, result) {
-            @Override
-            public String toString() {
-                return "[" + pluginname + "] success: " + isSuccess() + ", result code: " + getResultCode();
-            }
-        };
     }
 
 }

@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
@@ -211,18 +212,21 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             executionContextList.add(executionContext);
             nodeEntryList.add(iNodeEntry);
             if (shouldThrowException) {
-                throw new NodeStepException("testInterpreter test exception",iNodeEntry.getNodename());
+                throw new NodeStepException("testInterpreter test exception",null,iNodeEntry.getNodename());
             }
             System.out.println("return index: (" + index + ") in size: " + resultList.size());
             return resultList.get(index++);
         }
     }
-    static class testResult implements NodeStepResult {
+    static enum Reason implements FailureReason{
+        Test
+    }
+    static class testResult extends NodeStepResultImpl {
         boolean success;
         int flag;
         INodeEntry node;
-
         testResult(boolean success, int flag) {
+            super(null,success?null: TestStepFirstWorkflowStrategy.Reason.Test,success?null:"test failure",null);
             this.success = success;
             this.flag = flag;
         }
@@ -340,11 +344,8 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             assertTrue("threw exception: " + result.getException(),
                        result.getException() instanceof WorkflowStepFailureException);
             StatusResult result1 = ((WorkflowStepFailureException) result.getException()).getStatusResult();
-//            assertNotNull("should not be null: " + result.getException(), result1);
-//            assertTrue("not right type:" + result1, result1 instanceof ExceptionStatusResult);
-//            ExceptionStatusResult eresult = (ExceptionStatusResult) result1;
             assertEquals("threw exception: " + result.getException(),
-                         "Step 1 of the workflow threw an exception: Failed dispatching to node test1: provider name was null for Service: WorkflowNodeStep",
+                         "Step 1 of the workflow failed: NodeDispatchFailure: Failed dispatching to node test1: provider name was null for Service: WorkflowNodeStep",
                          result.getException().getMessage());
         }
 
@@ -386,7 +387,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
 //            interpreterService.registerInstance(JobExecutionItem.COMMAND_TYPE, failMock);
 
             //set resturn result
-            interpreterMock.resultList.add(new NodeStepResultImpl(true,null));
+            interpreterMock.resultList.add(new NodeStepResultImpl(null));
 
             final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
 
@@ -454,7 +455,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
 //            interpreterService.registerInstance(JobExecutionItem.COMMAND_TYPE, failMock);
 
             //set resturn result
-            interpreterMock.resultList.add(new NodeStepResultImpl(true,null));
+            interpreterMock.resultList.add(new NodeStepResultImpl(null));
 
             final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
 
@@ -1567,7 +1568,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
 
             //set resturn result
-            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
+            interpreterMock.resultList.add(new NodeStepResultImpl(null));
 
             final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
 
@@ -1633,9 +1634,9 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
 
             //set resturn result node 1
-            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
+            interpreterMock.resultList.add(new NodeStepResultImpl(null));
             //set resturn result node 2
-            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
+            interpreterMock.resultList.add(new NodeStepResultImpl(null));
 
             final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
 
@@ -1726,13 +1727,13 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
 
             //set resturn result node 1 step 1
-            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
+            interpreterMock.resultList.add(new NodeStepResultImpl(null));
             //set resturn result node 2 step 1
-            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
+            interpreterMock.resultList.add(new NodeStepResultImpl(null));
             //set resturn result node 1 step 2
-            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
+            interpreterMock.resultList.add(new NodeStepResultImpl(null));
             //set resturn result node 2 step 2
-            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
+            interpreterMock.resultList.add(new NodeStepResultImpl(null));
 
             final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
 

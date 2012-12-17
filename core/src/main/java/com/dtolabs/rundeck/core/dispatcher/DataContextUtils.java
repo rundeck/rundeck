@@ -127,19 +127,30 @@ public class DataContextUtils {
 
     /**
      * Merge one context onto another by adding or replacing values.
+     * @param targetContext the target of the merge
+     *                @param newContext context to merge
      */
-    public static Map<String, Map<String, String>> merge(final Map<String, Map<String, String>> context,
-                                                         final Map<String, Map<String, String>> context2) {
-        final HashMap<String, Map<String, String>> newcontext = new HashMap<String, Map<String, String>>();
-        for (final Map.Entry<String, Map<String, String>> entry : context2.entrySet()) {
-            if (!context.containsKey(entry.getKey())) {
-                newcontext.put(entry.getKey(), new HashMap<String, String>());
-            }else {
-                newcontext.put(entry.getKey(), new HashMap<String, String>(context.get(entry.getKey())));
+    public static Map<String, Map<String, String>> merge(final Map<String, Map<String, String>> targetContext,
+                                                         final Map<String, Map<String, String>> newContext) {
+
+        final HashMap<String, Map<String, String>> result = deepCopy(targetContext);
+        for (final Map.Entry<String, Map<String, String>> entry : newContext.entrySet()) {
+            if (!targetContext.containsKey(entry.getKey())) {
+                result.put(entry.getKey(), new HashMap<String, String>());
+            } else {
+                result.put(entry.getKey(), new HashMap<String, String>(targetContext.get(entry.getKey())));
             }
-            newcontext.get(entry.getKey()).putAll(entry.getValue());
+            result.get(entry.getKey()).putAll(entry.getValue());
         }
-        return newcontext;
+        return result;
+    }
+
+    private static HashMap<String, Map<String, String>> deepCopy(Map<String, Map<String, String>> context) {
+        HashMap<String, Map<String, String>> map = new HashMap<String, Map<String, String>>();
+        for (final Map.Entry<String, Map<String, String>> entry : context.entrySet()) {
+            map.put(entry.getKey(), new HashMap<String, String>(entry.getValue()));
+        }
+        return map;
     }
 
     /**

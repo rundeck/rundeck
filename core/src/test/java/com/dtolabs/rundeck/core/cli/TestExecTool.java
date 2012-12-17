@@ -24,29 +24,41 @@ package com.dtolabs.rundeck.core.cli;
 */
 
 
-import com.dtolabs.rundeck.core.CoreException;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.*;
-import com.dtolabs.rundeck.core.execution.*;
+import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.ExecutionListener;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
+import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandExecutionItem;
-import com.dtolabs.rundeck.core.utils.NodeSet;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
+import com.dtolabs.rundeck.core.utils.NodeSet;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 public class TestExecTool extends AbstractBaseTest {
     ExecTool main;
@@ -554,7 +566,7 @@ public class TestExecTool extends AbstractBaseTest {
 
 
         //set return result
-        testExecutor1.returnResult = new NodeStepResultImpl(true,null) {
+        testExecutor1.returnResult = new NodeStepResultImpl(null) {
             @Override
             public String toString() {
                 return "test1ResultString";
@@ -597,7 +609,7 @@ public class TestExecTool extends AbstractBaseTest {
             getFrameworkInstance());
         cis.registerClass("exec", testExecutor1.class);
         //set return result
-        testExecutor1.returnResult = new NodeStepResultImpl(false,null) {
+        testExecutor1.returnResult = new NodeStepResultImpl(null,null,null,null) {
             public String toString() {
                 return "test failure result";
             }
@@ -652,7 +664,7 @@ public class TestExecTool extends AbstractBaseTest {
             try {
                 main.runAction();
                 fail("run shouldn't succeed");
-            } catch (CoreException e) {
+            } catch (DispatcherException e) {
                 assertNotNull(e);
                 e.printStackTrace(System.err);
             }
@@ -664,7 +676,7 @@ public class TestExecTool extends AbstractBaseTest {
         }
 
         //set return result
-        testExecutor1.returnResult=new NodeStepResultImpl(true,null){
+        testExecutor1.returnResult=new NodeStepResultImpl(null){
             public String toString() {
                 return "testResult1";
             }

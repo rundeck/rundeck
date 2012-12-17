@@ -74,6 +74,9 @@ class StepPluginAdapter implements StepExecutor, Describable {
         return false;
     }
 
+    static enum Reason implements FailureReason{
+        StepPluginFailed
+    }
     @Override
     public StepExecutionResult executeWorkflowStep(final StepExecutionContext executionContext,
                                                    final StepExecutionItem item)
@@ -91,8 +94,18 @@ class StepPluginAdapter implements StepExecutor, Describable {
         );
         final PluginStepContext stepContext = PluginStepContextImpl.from(executionContext);
         final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, getDescription(), plugin);
-        final boolean success = plugin.executeStep(stepContext, config);
-        return new StepExecutionResultImpl(success);
+        final boolean success;
+        try {
+            success = plugin.executeStep(stepContext, config);
+            if (success) {
+                return new StepExecutionResultImpl();
+            } else {
+                return new StepExecutionResultImpl(null, Reason.StepPluginFailed, "[" + providerName + "] Failed");
+            }
+        } catch (RuntimeException e) {
+            return new StepExecutionResultImpl(e, Reason.StepPluginFailed, e.getMessage());
+        }
+
     }
 
     private Map<String, Object> getStepConfiguration(StepExecutionItem item) {

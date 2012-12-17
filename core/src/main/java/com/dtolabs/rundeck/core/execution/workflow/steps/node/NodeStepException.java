@@ -23,34 +23,42 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 
 
 /**
- * NodeStepException is ...
+ * Represents an exception when executing a node step
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class NodeStepException extends StepException {
     private final String nodeName;
+    private FailureReason failureReason;
 
-
-    public NodeStepException(String s, String nodeName) {
+    public NodeStepException(String s, FailureReason reason, String nodeName) {
         super(s);
         this.nodeName = nodeName;
+        this.failureReason = failureReason;
     }
 
-    public NodeStepException(String s, Throwable throwable, String nodeName) {
+    public NodeStepException(String s, Throwable throwable, FailureReason reason, String nodeName) {
         super(s, throwable);
         this.nodeName = nodeName;
+        this.failureReason = failureReason;
     }
 
-    public NodeStepException(Throwable throwable, String nodeName) {
+    public NodeStepException(Throwable throwable, FailureReason reason, String nodeName) {
         super(throwable);
         this.nodeName = nodeName;
+        this.failureReason = failureReason;
     }
 
     public String getNodeName() {
         return nodeName;
+    }
+
+    public FailureReason getFailureReason() {
+        return failureReason;
     }
 }

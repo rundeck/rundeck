@@ -153,7 +153,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             nodes(NodeSetImpl.singleNodeSet(node));
             if(setContextData) {
                 //merge in any node-specific data context
-                ctx.dataContext = DataContextUtils.addContext("node", DataContextUtils.nodeData(node), ctx.dataContext);
+                nodeContextData(node);
 
                 if (null != ctx.nodeDataContext && null != ctx.nodeDataContext.get(node.getNodename())) {
                     ctx.dataContext = DataContextUtils.merge(ctx.dataContext,
@@ -161,6 +161,26 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 }
             }
             return this;
+        }
+
+        public Builder nodeContextData(INodeEntry node) {
+            ctx.dataContext = DataContextUtils.addContext("node", DataContextUtils.nodeData(node), ctx.dataContext);
+            return this;
+        }
+
+        /**
+         * Add/replace a context data set
+         */
+        public Builder setContext(final String key, final Map<String,String> data) {
+            return dataContext(DataContextUtils.addContext(key, data, ctx.dataContext));
+        }
+        /**
+         * merge a context data set
+         */
+        public Builder mergeContext(final String key, final Map<String,String> data) {
+            HashMap<String, Map<String, String>> tomerge = new HashMap<String, Map<String, String>>();
+            tomerge.put(key, data);
+            return dataContext(DataContextUtils.merge(ctx.dataContext, tomerge));
         }
 
         public Builder loglevel(int loglevel) {

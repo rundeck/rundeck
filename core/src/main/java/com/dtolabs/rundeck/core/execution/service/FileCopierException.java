@@ -23,25 +23,28 @@
 */
 package com.dtolabs.rundeck.core.execution.service;
 
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
+
+
 /**
  * FileCopierException is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class FileCopierException extends Exception {
-    public FileCopierException() {
-        super();
-    }
+    private FailureReason failureReason;
 
-    public FileCopierException(String msg) {
+    public FileCopierException(String msg, FailureReason failureReason) {
         super(msg);
+        this.failureReason = failureReason;
     }
 
-    public FileCopierException(Exception cause) {
-        super(cause);
-    }
-
-    public FileCopierException(String msg, Exception cause) {
+    public FileCopierException(String msg, FailureReason failureReason, Exception cause) {
         super(msg, cause);
+        this.failureReason = failureReason;
+    }
+
+    public FailureReason getFailureReason() {
+        return failureReason;
     }
 }

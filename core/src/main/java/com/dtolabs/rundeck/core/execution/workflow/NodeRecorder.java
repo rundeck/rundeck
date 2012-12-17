@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 
 import java.util.*;
 
@@ -34,16 +35,16 @@ import java.util.*;
  */
 public class NodeRecorder implements FailedNodesListener {
     private HashSet<String> matchedNodes;
-    private HashMap<String,Object> failedNodes;
+    private HashMap<String, NodeStepResult> failedNodes;
     private boolean success=false;
 
     public NodeRecorder() {
         matchedNodes =new HashSet<String>();
-        failedNodes=new HashMap<String,Object>();
+        failedNodes=new HashMap<String, NodeStepResult>();
         success=false;
     }
 
-    public void nodesFailed(final Map<String,Object> failures) {
+    public void nodesFailed(final Map<String, NodeStepResult> failures) {
         failedNodes.putAll(failures);
     }
 
@@ -69,7 +70,7 @@ public class NodeRecorder implements FailedNodesListener {
      * Return the set of failed nodes
      * @return
      */
-    public HashMap<String,Object> getFailedNodes() {
+    public HashMap<String, NodeStepResult> getFailedNodes() {
         return failedNodes;
     }
 

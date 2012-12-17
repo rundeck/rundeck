@@ -30,11 +30,12 @@ import com.dtolabs.rundeck.core.common.UpdateUtils;
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdaterBuilder;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
-import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
@@ -87,6 +88,9 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         }
         return Integer.toString(url.hashCode());
     }
+    static enum Reason implements FailureReason{
+        URLDownloadFailure
+    }
 
     public NodeStepResult executeNodeStep(StepExecutionContext context, NodeStepExecutionItem item, INodeEntry node) throws
                                                                                                          NodeStepException {
@@ -104,7 +108,7 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         try {
             url = new URL(finalUrl);
         } catch (MalformedURLException e) {
-            throw new NodeStepException(e, node.getNodename());
+            throw new NodeStepException(e, StepExecutionResult.Reason.ConfigurationFailure, node.getNodename());
         }
         if(null!=context.getExecutionListener()){
             context.getExecutionListener().log(4, "Requesting URL: " + url.toExternalForm());
@@ -138,7 +142,7 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         } catch (UpdateUtils.UpdateException e) {
             if (!destinationTempFile.isFile() || destinationTempFile.length() < 1) {
                 throw new NodeStepException(
-                    "Error requesting URL Script: " + cleanUrl + ": " + e.getMessage(), e,node.getNodename());
+                    "Error requesting URL Script: " + cleanUrl + ": " + e.getMessage(), e, Reason.URLDownloadFailure, node.getNodename());
             } else {
                 logger.error(
                     "Error requesting URL script: " + cleanUrl + ": " + e.getMessage(), e);
@@ -149,39 +153,35 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         try {
             filepath = executionService.fileCopyFile(context, destinationTempFile, node);
         } catch (FileCopierException e) {
-            throw new NodeStepException(e, node.getNodename());
+            throw new NodeStepException(e.getMessage(), e, NodeStepResult.Reason.IOFailure, node.getNodename());
         }
 
-        try {
-            /**
-             * TODO: Avoid this horrific hack. Discover how to get SCP task to preserve the execute bit.
-             */
-            if (!"windows".equalsIgnoreCase(node.getOsFamily())) {
-                //perform chmod+x for the file
+        /**
+         * TODO: Avoid this horrific hack. Discover how to get SCP task to preserve the execute bit.
+         */
+        if (!"windows".equalsIgnoreCase(node.getOsFamily())) {
+            //perform chmod+x for the file
 
-                final NodeExecutorResult nodeExecutorResult = framework.getExecutionService().executeCommand(
-                    context, new String[]{"chmod", "+x", filepath}, node);
-                if (!nodeExecutorResult.isSuccess()) {
-                    return nodeExecutorResult;
-                }
+            final NodeExecutorResult nodeExecutorResult = framework.getExecutionService().executeCommand(
+                context, new String[]{"chmod", "+x", filepath}, node);
+            if (!nodeExecutorResult.isSuccess()) {
+                return nodeExecutorResult;
             }
-
-            final String[] args = script.getArgs();
-            //replace data references
-            String[] newargs = null;
-            if (null != args && args.length > 0) {
-                newargs = new String[args.length + 1];
-                final String[] replargs = DataContextUtils.replaceDataReferences(args, nodeDataContext);
-                newargs[0] = filepath;
-                System.arraycopy(replargs, 0, newargs, 1, replargs.length);
-            } else {
-                newargs = new String[]{filepath};
-            }
-
-            return framework.getExecutionService().executeCommand(context, newargs, node);
-        } catch (ExecutionException e) {
-            throw new NodeStepException(e, node.getNodename());
         }
+
+        final String[] args = script.getArgs();
+        //replace data references
+        String[] newargs = null;
+        if (null != args && args.length > 0) {
+            newargs = new String[args.length + 1];
+            final String[] replargs = DataContextUtils.replaceDataReferences(args, nodeDataContext);
+            newargs[0] = filepath;
+            System.arraycopy(replargs, 0, newargs, 1, replargs.length);
+        } else {
+            newargs = new String[]{filepath};
+        }
+
+        return framework.getExecutionService().executeCommand(context, newargs, node);
     }
 
     public static final Converter<String, String> urlPathEncoder = new Converter<String, String>() {

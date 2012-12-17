@@ -28,9 +28,11 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
+import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -87,6 +89,9 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements FileCopier {
         return copyFile(executionContext, null, null, s, node);
     }
 
+    static enum ScriptPluginFailureReason implements FailureReason {
+        ScriptPluginFileCopierExpectedOutputMissing
+    }
 
     /**
      * Internal copy method accepting file, inputstream or string
@@ -97,8 +102,8 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements FileCopier {
         final String pluginname = getProvider().getName();
         final Map<String, Map<String, String>> localDataContext = createScriptDataContext(
             executionContext.getFramework(),
-                                                                                          executionContext.getFrameworkProject(),
-                                                                                          executionContext.getDataContext());
+            executionContext.getFrameworkProject(),
+            executionContext.getDataContext());
 
         //add node context data
         localDataContext.put("node", DataContextUtils.nodeData(node));
@@ -120,11 +125,11 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements FileCopier {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         int result = -1;
         try {
-            result = runScript(finalargs,
-                               DataContextUtils.generateEnvVarsFromContext(localDataContext),
-                               null,
-                               byteArrayOutputStream,
-                               System.err
+            result = ScriptExecUtil.runLocalCommand(finalargs,
+                                                    DataContextUtils.generateEnvVarsFromContext(localDataContext),
+                                                    null,
+                                                    byteArrayOutputStream,
+                                                    System.err
             );
         } catch (IOException e) {
             executionContext.getExecutionListener().log(0, e.getMessage());
@@ -139,19 +144,23 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements FileCopier {
                                                     + success);
 
         if (!success) {
-            throw new FileCopierException("[" + pluginname + "]: external script failed with exit code: " + result);
+            throw new FileCopierException("[" + pluginname + "]: external script failed with exit code: " + result,
+                                          NodeExecutorResult.Reason.NonZeroResultCode);
         }
 
         //load string of output from outputstream
         final String output = byteArrayOutputStream.toString();
         if (null == output || output.length() < 1) {
-            throw new FileCopierException("[" + pluginname + "]: No output from external script");
+            throw new FileCopierException("[" + pluginname + "]: No output from external script",
+                                          ScriptPluginFailureReason.ScriptPluginFileCopierExpectedOutputMissing
+            );
         }
         //TODO: require any specific format for the data?
         //look for first line of output
         final String[] split1 = output.split("(\\r?\\n)");
         if (split1.length < 1) {
-            throw new FileCopierException("[" + pluginname + "]: No output from external script");
+            throw new FileCopierException("[" + pluginname + "]: No output from external script",
+                                          ScriptPluginFailureReason.ScriptPluginFileCopierExpectedOutputMissing);
         }
         final String remotefilepath = split1[0];
 

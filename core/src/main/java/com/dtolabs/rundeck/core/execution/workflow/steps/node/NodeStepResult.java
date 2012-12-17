@@ -24,7 +24,7 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.execution.StatusResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 
 
@@ -35,4 +35,11 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
  */
 public interface NodeStepResult extends StepExecutionResult {
     public INodeEntry getNode();
+    public static enum Reason implements FailureReason {
+        HostNotFound,
+        ConnectionTimeout,
+        ConnectionFailure,
+        IOFailure,
+        AuthenticationFailure,
+    }
 }
