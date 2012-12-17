@@ -30,12 +30,12 @@ dependencies {
     )
 	
     warBundle(
-        [group: 'com.dtolabs.rundeck', name: 'rundeck', version: version, ext:'war']
+        project(':rundeckapp')
     )
 	
     pluginFiles(
-        [group: 'com.dtolabs.rundeck', name: 'rundeck-script-plugin', version: version,ext:'jar'],            
-        [group: 'com.dtolabs.rundeck', name: 'rundeck-stub-plugin', version: version,ext:'jar']
+        project(':plugins:script-plugin'),
+        project(':plugins:stub-plugin')
     )
 	
     jettyServerLib(project(path:":rundeck-launcher:rundeck-jetty-server", configuration:'runtime')) {
@@ -92,7 +92,6 @@ task copyPluginLibs(dependsOn: setupLauncherContent) << {
 
 
 jar {
-    dependsOn expandCli, expandWar, copyJettyServerLib, copyPluginLibs
     from launcherContentsDir
     from sourceSets.main.output
     exclude 'com/dtolabs/rundeck/RunServer.class'
@@ -100,6 +99,7 @@ jar {
         attributes 'Rundeck-Version': version, 'Main-Class':"${launcherMainClass}", "Rundeck-Start-Class":"${launcherStartClass}", "Rundeck-Jetty-Libs":"${launcherJettyLibs}", "Rundeck-Jetty-Lib-Path":"${launcherJettyLibPath}"
     }
 }
+jar.dependsOn(expandCli, expandWar, copyJettyServerLib, copyPluginLibs)
 
 apply plugin: 'maven'
 task createPom << {

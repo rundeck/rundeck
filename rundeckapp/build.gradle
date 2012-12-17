@@ -128,7 +128,7 @@ task test(type: Exec, overwrite: true,
 /**
  * Sets the value of app.version under application.properties
  */
-task replaceVersion(type: PropertyReplacer) {
+task replaceVersion(type: PropertyValueUpdater) {
 	propertyFile = file("${projectDir.path}/application.properties")
 	propertiesMap = [ 'app.version' : project.version ]
 }
@@ -161,11 +161,11 @@ task install(type: Exec, overwrite: true, dependsOn: build) {
 }
 
 /**
- * Replaces the values of a property file
+ * Does an "in-place" substitution of a property value without having to using placeholders
  * 
  * @author jburbridge
  */
-class PropertyReplacer extends DefaultTask {
+class PropertyValueUpdater extends DefaultTask {
 
 	@OutputFile
 	File propertyFile
