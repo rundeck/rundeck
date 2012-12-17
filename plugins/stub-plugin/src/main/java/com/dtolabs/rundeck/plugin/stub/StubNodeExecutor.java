@@ -25,35 +25,32 @@ package com.dtolabs.rundeck.plugin.stub;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.AbstractBaseDescription;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
-import java.util.List;
 
 /**
  * StubNodeExecutor is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-@Plugin (name="stub",service = "NodeExecutor")
+@Plugin(name = "stub", service = ServiceNameConstants.NodeExecutor)
 public class StubNodeExecutor implements NodeExecutor, Describable {
     public static final String SERVICE_PROVIDER_NAME = "stub";
     private static final String STUB_EXEC_SUCCESS = "stub-exec-success";
     private static final String STUB_RESULT_CODE = "stub-result-code";
 
     public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
-                                             final INodeEntry node) throws
-        ExecutionException {
+                                             final INodeEntry node) {
         //replace data context in args
         int tcode = 0;
         boolean tsuccess = true;
@@ -62,7 +59,7 @@ public class StubNodeExecutor implements NodeExecutor, Describable {
                 tcode = Integer.parseInt(node.getAttributes().get(STUB_RESULT_CODE));
             } catch (NumberFormatException e) {
                 context.getExecutionListener().log(Constants.WARN_LEVEL,
-                    "[stub] (failed to parse stub-result-code for node)");
+                                                   "[stub] (failed to parse stub-result-code for node)");
             }
         }
         if (null != node.getAttributes() && null != node.getAttributes().get(STUB_EXEC_SUCCESS)) {
@@ -70,25 +67,27 @@ public class StubNodeExecutor implements NodeExecutor, Describable {
                 tsuccess = Boolean.parseBoolean(node.getAttributes().get(STUB_EXEC_SUCCESS));
             } catch (NumberFormatException e) {
                 context.getExecutionListener().log(Constants.WARN_LEVEL,
-                    "[stub] (failed to parse " + STUB_EXEC_SUCCESS + " for node)");
+                                                   "[stub] (failed to parse " + STUB_EXEC_SUCCESS + " for node)");
             }
         }
-        if(tsuccess){
+        if (tsuccess) {
             context.getExecutionListener().log(Constants.WARN_LEVEL,
-                "[stub] execute on node " + node.getNodename() + ": " + StringArrayUtil.asString(command, " "));
-        }else{
+                                               "[stub] execute on node " + node.getNodename() + ": "
+                                               + StringArrayUtil.asString(command, " "));
+            return NodeExecutorResultImpl.createSuccess(node);
+        } else {
             context.getExecutionListener().log(Constants.ERR_LEVEL,
-                "[stub] fail on node " + node.getNodename() + ": " + StringArrayUtil.asString(command, " "));
+                                               "[stub] fail on node " + node.getNodename() + ": "
+                                               + StringArrayUtil.asString(command, " "));
+            return NodeExecutorResultImpl.createFailure(Reason.Intentional, "Intentional failure", node);
         }
-
-        return new NodeExecutorResultImpl(tsuccess,node, tcode) {
-            public String toString() {
-                return "[Stub result: success? "+isSuccess()+", result code: "+getResultCode()+"]";
-            }
-        };
     }
 
-    static final Description DESC= new AbstractBaseDescription(){
+    static enum Reason implements FailureReason {
+        Intentional
+    }
+
+    static final Description DESC = new AbstractBaseDescription() {
         public String getName() {
             return SERVICE_PROVIDER_NAME;
         }
@@ -101,6 +100,7 @@ public class StubNodeExecutor implements NodeExecutor, Describable {
             return "Prints the command instead of executing it. (Useful for mocking processes.)";
         }
     };
+
     public Description getDescription() {
         return DESC;
     }
