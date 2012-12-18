@@ -19,9 +19,6 @@ package com.dtolabs.rundeck.core.utils;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.NodesSelector;
 import com.dtolabs.rundeck.core.common.SelectorUtils;
-import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.Project;
-import org.apache.tools.ant.ProjectComponent;
 
 import java.io.File;
 import java.util.*;
@@ -31,7 +28,7 @@ import java.util.regex.PatternSyntaxException;
 /**
  * NodeSet provides filtering logic for Node criteria
  */
-public class NodeSet extends ProjectComponent implements NodesSelector {
+public class NodeSet  implements NodesSelector {
     public static final String HOSTNAME = "hostname";
     public static final String NAME = "name";
     public static final String TYPE = "type";
@@ -168,21 +165,21 @@ public class NodeSet extends ProjectComponent implements NodesSelector {
     }
     public Include createInclude() {
         if (null != includes) {
-            throw new BuildException("only one include is allowed");
+            throw new IllegalStateException("only one include is allowed");
         }
         includes = new Include();
         return includes;
     }
 
-    public Exclude createExclude() throws BuildException{
+    public Exclude createExclude() {
         if(null!=excludes) {
-            throw new BuildException("only one exclude is allowed");
+            throw new IllegalStateException("only one exclude is allowed");
         }
         excludes = new Exclude();
         return excludes;
     }
 
-    public Include getInclude() throws BuildException{
+    public Include getInclude() {
         return includes;
     }
 
@@ -201,8 +198,8 @@ public class NodeSet extends ProjectComponent implements NodesSelector {
             return !getSingleNodeName().equals(entry.getNodename());
         }
 
-        boolean includesMatch = includes!=null?includes.matches(entry):false;
-        boolean excludesMatch = excludes!=null?excludes.matches(entry):false;
+        boolean includesMatch = includes != null && includes.matches(entry);
+        boolean excludesMatch = excludes != null && excludes.matches(entry);
         if (null==excludes ||excludes.isBlank()) {
             return !includesMatch;
         } else if (null==includes || includes.isBlank()) {
@@ -300,33 +297,33 @@ public class NodeSet extends ProjectComponent implements NodesSelector {
         if(null==inputSelector || "".equals(inputSelector.trim())){
             return false;
         }
-        if (inputSelector.indexOf("+")>=0 || inputSelector.indexOf(",") >= 0) {
+        if (inputSelector.contains("+") || inputSelector.contains(",")) {
             HashSet orSet = new HashSet();
             orSet.addAll(Arrays.asList(inputSelector.split(",")));
-            for (Iterator i = orSet.iterator(); i.hasNext();) {
-                String clause = (String) i.next();
+            for (Object anOrSet : orSet) {
+                String clause = (String) anOrSet;
                 HashSet set = new HashSet();
                 set.addAll(Arrays.asList(clause.split("\\+")));
-                boolean found=true;
-                for (Iterator j = set.iterator(); j.hasNext();) {
-                    String tag = (String) j.next();
+                boolean found = true;
+                for (Object aSet : set) {
+                    String tag = (String) aSet;
 
-                    if(!propSet.contains(tag.trim())){
+                    if (!propSet.contains(tag.trim())) {
                         //try regular expression match
-                        boolean rematch=false;
-                        for (Iterator k = propSet.iterator(); k.hasNext();) {
-                            String item = (String) k.next();
-                            if(matchRegexOrEquals(tag, item)){
-                                rematch=true;
+                        boolean rematch = false;
+                        for (Object aPropSet : propSet) {
+                            String item = (String) aPropSet;
+                            if (matchRegexOrEquals(tag, item)) {
+                                rematch = true;
                                 break;
                             }
                         }
-                        if(!rematch){
-                            found=false;
+                        if (!rematch) {
+                            found = false;
                         }
                     }
                 }
-                if(found){
+                if (found) {
                     return true;
                 }
             }
@@ -334,8 +331,8 @@ public class NodeSet extends ProjectComponent implements NodesSelector {
         }else {
             boolean contain = propSet.contains(inputSelector);
             boolean rematch = false;
-            for (Iterator k = propSet.iterator(); k.hasNext();) {
-                String item = (String) k.next();
+            for (Object aPropSet : propSet) {
+                String item = (String) aPropSet;
                 if (matchRegexOrEquals(inputSelector, item)) {
                     rematch = true;
                     break;
@@ -509,13 +506,14 @@ public class NodeSet extends ProjectComponent implements NodesSelector {
         private String tags = "";
         private String osversion = "";
         private String name = "";
-        private Collection<Attribute> attributes;
-        private AttributeSet attributeSet;
         private Map<String,String> attributesMap;
+
+        protected SetSelector() {
+            attributesMap = new HashMap<String, String>();
+        }
 
         public void setHostname(String hostname) {
             this.hostname = hostname;
-            attributes =new ArrayList<Attribute>();
         }
 
         public String getHostname() {
@@ -548,13 +546,7 @@ public class NodeSet extends ProjectComponent implements NodesSelector {
             }
             builder.append("dominant=").append(isDominant()).append(", ");
 
-            if (null != getAttributes() && getAttributes().size() > 0) {
-                builder.append("attributes=").append(getAttributes()).append(", ");
-            }
-            if (null != getAttributeSet() && null != getProject()) {
-                builder.append("attributeset=").append(getAttributeSet()).append(", ");
-            }
-            if (null != getAttributes() && getAttributes().size() > 0 || null!=getAttributeSet() && null!=getProject()) {
+            if (null != getAttributesMap() && getAttributesMap().size() > 0) {
                 builder.append("attributesMap=").append(getAttributesMap());
             }
             builder.append("}");
@@ -572,7 +564,6 @@ public class NodeSet extends ProjectComponent implements NodesSelector {
                    && isBlank(tags)
                    && isBlank(osversion)
                    && isBlank(name)
-                   && (null== attributes ||0== attributes.size())
                    && isBlank(getAttributesMap())
                 ;
         }
@@ -660,69 +651,14 @@ public class NodeSet extends ProjectComponent implements NodesSelector {
             this.dominant = dominant;
         }
 
-        /**
-         * Create Attribute element
-         * @return
-         */
-        public Attribute createAttribute() {
-            Attribute atr = new Attribute();
-            if(null==attributes){
-                attributes = new ArrayList<Attribute>();
-            }
-            getAttributes().add(atr);
-            return atr;
-        }
 
-        /**
-         * Get the Attributes collection
-         * @return
-         */
-        public Collection<Attribute> getAttributes() {
-            return attributes;
-        }
-
-        /**
-         * Set attributes
-         * @param attributes
-         */
-        public void setAttributes(Collection<Attribute> attributes) {
-            this.attributes = attributes;
-        }
 
         /**
          * Generate a Map of attribute names to values
          * @return
          */
         Map<String,String> getAttributesMap(){
-            if(null==attributesMap){
-                HashMap<String,String> attrs = new HashMap<String, String>();
-                if(null!=attributes){
-                    for(Attribute a:attributes) {
-                        attrs.put(a.getName(), a.getValue());
-                    }
-                }
-                if(null!=attributeSet && null!=attributeSet.getPrefix() && null!=getProject()) {
-                    String prefix = attributeSet.getPrefix();
-                    for (Iterator iterator = getProject().getProperties().keySet().iterator(); iterator.hasNext() ;) {
-                        String key = (String) iterator.next();
-                        if (key.startsWith(prefix)) {
-                            String subkey = key.substring(prefix.length());
-                            attrs.put(subkey, getProject().getProperty(key));
-                        }
-                    }
-                }else if(null!=attributeSet && null==getProject()){
-                    log("Error: project is not set", Project.MSG_ERR);
-                }
-                attributesMap=attrs;
-            }
             return attributesMap;
-        }
-        public AttributeSet createAttributeSet() {
-            this.attributeSet = new AttributeSet();
-            return attributeSet;
-        }
-        public AttributeSet getAttributeSet() {
-            return attributeSet;
         }
 
         public void setAttributesMap(Map<String, String> attributesMap) {
@@ -791,49 +727,5 @@ public class NodeSet extends ProjectComponent implements NodesSelector {
     }
 
     public class Exclude extends SetSelector {
-    }
-    public static class Attribute{
-        private String name;
-        private String value;
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public String getValue() {
-            return value;
-        }
-
-        public void setValue(String value) {
-            this.value = value;
-        }
-
-        public String toString() {
-            return "Attribute{" +
-                   "name='" + name + '\'' +
-                   ", value='" + value + '\'' +
-                   '}';
-        }
-    }
-    public static class AttributeSet{
-        private String prefix;
-
-        public String getPrefix() {
-            return prefix;
-        }
-
-        public void setPrefix(String prefix) {
-            this.prefix = prefix;
-        }
-
-        public String toString() {
-            return "AttributeSet{" +
-                   "prefix='" + prefix + '\'' +
-                   '}';
-        }
     }
 }

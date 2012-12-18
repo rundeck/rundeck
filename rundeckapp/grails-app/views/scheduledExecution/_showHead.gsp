@@ -1,3 +1,4 @@
+<%@ page import="rundeck.ScheduledExecution" %>
         <g:set var="execInfo" value="${scheduledExecution?scheduledExecution:execution}"/>
         <div class="jobInfo" id="jobInfo_${execution?execution.id:''}">
             <g:if test="${scheduledExecution}">

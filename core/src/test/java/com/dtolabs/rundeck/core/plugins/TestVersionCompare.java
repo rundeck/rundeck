@@ -33,8 +33,8 @@ import junit.framework.TestCase;
 public class TestVersionCompare extends TestCase {
     public void testComp() throws Exception {
         assertEquals(0, VersionCompare.comp(null, null, null, null));
-        assertEquals(0, VersionCompare.comp(1, null, null, null));
-        assertEquals(0, VersionCompare.comp(null, null, 1, null));
+        assertEquals(1, VersionCompare.comp(1, null, null, null));
+        assertEquals(-1, VersionCompare.comp(null, null, 1, null));
 
         assertEquals(1, VersionCompare.comp(1, "1", null, null));
         assertEquals(-1, VersionCompare.comp(null, null, 1, "1"));
@@ -75,6 +75,20 @@ public class TestVersionCompare extends TestCase {
         assertEquals(1, VersionCompare.forString("3.1").compareTo(VersionCompare.forString("2.1")));
         assertEquals(1, VersionCompare.forString("3.1.1").compareTo(VersionCompare.forString("2.1.1")));
         assertEquals(1, VersionCompare.forString("3.1.1-blah").compareTo(VersionCompare.forString("2.1.1-blah")));
+    }
+    public void testInvalid(){
+        assertEquals(-1, VersionCompare.forString("invalid").compareTo(VersionCompare.forString("0")));
+        assertEquals(-1, VersionCompare.forString("invalid").compareTo(VersionCompare.forString("2")));
+        assertEquals(-1, VersionCompare.forString("invalid").compareTo(VersionCompare.forString("2.1")));
+        assertEquals(-1, VersionCompare.forString("invalid").compareTo(VersionCompare.forString("2.1.1")));
+        assertEquals(-1, VersionCompare.forString("invalid").compareTo(VersionCompare.forString("2.1.1-blah")));
+    }
+    public void testNull(){
+        assertEquals(-1, VersionCompare.forString(null).compareTo(VersionCompare.forString("0")));
+        assertEquals(-1, VersionCompare.forString(null).compareTo(VersionCompare.forString("2")));
+        assertEquals(-1, VersionCompare.forString(null).compareTo(VersionCompare.forString("2.1")));
+        assertEquals(-1, VersionCompare.forString(null).compareTo(VersionCompare.forString("2.1.1")));
+        assertEquals(-1, VersionCompare.forString(null).compareTo(VersionCompare.forString("2.1.1-blah")));
 
     }
 

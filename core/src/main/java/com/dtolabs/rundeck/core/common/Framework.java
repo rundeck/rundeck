@@ -27,31 +27,27 @@ import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException;
 import com.dtolabs.rundeck.core.dispatcher.CentralDispatcherMgrFactory;
 import com.dtolabs.rundeck.core.dispatcher.NoCentralDispatcher;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionItem;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.ExecutionServiceFactory;
-import com.dtolabs.rundeck.core.execution.commands.CommandInterpreter;
-import com.dtolabs.rundeck.core.execution.commands.CommandInterpreterService;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcherService;
 import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService;
 import com.dtolabs.rundeck.core.plugins.PluginManagerService;
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.resources.FileResourceModelSource;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
-import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
-import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import org.apache.log4j.Logger;
-import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.Project;
-import org.apache.tools.ant.input.InputHandler;
 
 import java.io.File;
 import java.net.URI;
@@ -152,12 +148,13 @@ public class Framework extends FrameworkResourceParent {
             //enable plugin service only if framework property does not disable them
             PluginManagerService.getInstanceForFramework(this);
         }
-        CommandInterpreterService.getInstanceForFramework(this);
+        NodeStepExecutionService.getInstanceForFramework(this);
         NodeExecutorService.getInstanceForFramework(this);
         FileCopierService.getInstanceForFramework(this);
         NodeDispatcherService.getInstanceForFramework(this);
         ExecutionServiceFactory.getInstanceForFramework(this);
         WorkflowExecutionService.getInstanceForFramework(this);
+        StepExecutionService.getInstanceForFramework(this);
         ResourceModelSourceService.getInstanceForFramework(this);
         ResourceFormatParserService.getInstanceForFramework(this);
         ResourceFormatGeneratorService.getInstanceForFramework(this);
@@ -307,6 +304,9 @@ public class Framework extends FrameworkResourceParent {
     public WorkflowExecutionService getWorkflowExecutionService() {
         return WorkflowExecutionService.getInstanceForFramework(this);
     }
+    public StepExecutionService getStepExecutionService() {
+        return StepExecutionService.getInstanceForFramework(this);
+    }
 
     public FileCopier getFileCopierForNodeAndProject(INodeEntry node, final String project) throws ExecutionServiceException {
         return getFileCopierService().getProviderForNodeAndProject(node, project);
@@ -322,8 +322,11 @@ public class Framework extends FrameworkResourceParent {
     public NodeExecutorService getNodeExecutorService() throws ExecutionServiceException {
         return NodeExecutorService.getInstanceForFramework(this);
     }
-    public CommandInterpreter getCommandInterpreterForItem(ExecutionItem item) throws ExecutionServiceException {
-        return CommandInterpreterService.getInstanceForFramework(this).getInterpreterForExecutionItem(item);
+    public NodeStepExecutionService getNodeStepExecutorService() throws ExecutionServiceException {
+        return NodeStepExecutionService.getInstanceForFramework(this);
+    }
+    public NodeStepExecutor getNodeStepExecutorForItem(NodeStepExecutionItem item) throws ExecutionServiceException {
+        return NodeStepExecutionService.getInstanceForFramework(this).getExecutorForExecutionItem(item);
     }
     public NodeDispatcher getNodeDispatcherForContext(ExecutionContext context) throws ExecutionServiceException {
         return NodeDispatcherService.getInstanceForFramework(this).getNodeDispatcher(context);
@@ -360,60 +363,6 @@ public class Framework extends FrameworkResourceParent {
         return new Framework(rdeck_base_dir, projects_base_dir);
     }
 
-    /**
-     * Get the Framework instance from an Ant project.
-     * @param project
-     * @return
-     */
-    public static Framework getInstance(Project project) {
-        return getInstance(project, true);
-    }
-
-    /**
-     * Get the Framework instance from an Ant project.
-     * @param project
-     * @return
-     */
-    public static Framework getInstance(Project project, boolean fail) {
-        Object o = project.getReference(Framework.class.getName() + ".instance");
-        if (null != o && o instanceof Framework) {
-            return (Framework) o;
-        }else {
-            if(fail){
-                throw new IllegalArgumentException("Project does not contain a reference to the Framework instance.");
-            }else{
-                return null;
-            }
-        }
-    }
-
-    /**
-     * Retrieve a Framework from the project in several ways: look for embedded reference, otherwise construct with
-     * 'rdeck.base' property value from the project, otherwise create new Framework from system property
-     * 'rdeck.base' value.
-     *
-     * @param project ant project
-     *
-     * @return existing or new Framework instance
-     */
-    public static Framework getInstanceOrCreate(final Project project) {
-        Framework fw = null;
-        if (null != project) {
-            fw = getInstance(project, false);
-        }
-        if (null != project && null == fw && null != project.getProperty("rdeck.base")) {
-            fw = Framework.getInstance(project.getProperty("rdeck.base"),
-                                       project.getProperty("projects.dir"));
-            fw.configureFromProject(project);
-            fw.configureProject(project);
-        }
-        if (null == fw) {
-            fw = Framework.getInstance(Constants.getSystemBaseDir());
-            fw.configureFromProject(project);
-            fw.configureProject(project);
-        }
-        return fw;
-    }
     /**
      * Returns an instance of Framework object.
      * Specify the rdeck_base path and let the projects and modules dir be constructed from it.
@@ -465,40 +414,6 @@ public class Framework extends FrameworkResourceParent {
     }
 
     /**
-     * Set properties of this Framework instance based on project properties
-     *
-     * @param project the ant project
-     */
-    private void configureFromProject(final Project project) {
-        if ("true".equals(project.getProperty(FRAMEWORK_USERINPUT_DISABLED))) {
-            setAllowUserInput(false);
-        } else {
-            setAllowUserInput(true);
-        }
-    }
-
-    /**
-     * Configure a project to embed this framework instance as a reference.
-     *
-     * @param project the ant project
-     */
-    public void configureProject(final Project project) {
-        project.addReference(Framework.class.getName() + ".instance", this);
-        if (!isAllowUserInput()) {
-            final InputHandler h = project.getInputHandler();
-            project.setInputHandler(new FailInputHandler(h));
-            project.setProperty(FRAMEWORK_USERINPUT_DISABLED, "true");
-        } else {
-            final InputHandler h = project.getInputHandler();
-            if (h instanceof FailInputHandler) {
-                final InputHandler orig = ((FailInputHandler) h).getOriginal();
-                project.setInputHandler(orig);
-            }
-            project.setProperty(FRAMEWORK_USERINPUT_DISABLED, "false");
-        }
-    }
-
-    /**
      * Set the CentralDispatcherMgr instance
      * @param centralDispatcherMgr the instance
      */
@@ -507,25 +422,6 @@ public class Framework extends FrameworkResourceParent {
     }
 
 
-    /**
-     * An InputHandler implementation which simply throws an exception.  It also stores an original implementation that
-     * it may have replaced.
-     */
-    static class FailInputHandler implements InputHandler {
-        private InputHandler orig;
-
-        public FailInputHandler(final InputHandler h) {
-            this.orig = h;
-        }
-
-        public void handleInput(final org.apache.tools.ant.input.InputRequest request) throws BuildException {
-            throw new BuildException("User input is not available.");
-        }
-
-        public InputHandler getOriginal() {
-            return orig;
-        }
-    }
     /**
      * Return the property value by name
      *
@@ -536,6 +432,22 @@ public class Framework extends FrameworkResourceParent {
         return lookup.getProperty(name);
     }
 
+    final PropertyRetriever propertyRetriever = new PropertyRetriever() {
+        @Override
+        public String getProperty(final String name) {
+            if(hasProperty(name)){
+                return Framework.this.getProperty(name);
+            }else{
+                return null;
+            }
+        }
+    };
+    /**
+     * Return a PropertyRetriever interface for framework-scoped properties
+     */
+    public PropertyRetriever getPropertyRetriever() {
+        return propertyRetriever;
+    }
 
     /**
      * Return true if the property exists
@@ -758,14 +670,6 @@ public class Framework extends FrameworkResourceParent {
         return homeDir;
     }
 
-    public boolean isAllowUserInput() {
-        return allowUserInput;
-    }
-
-    public void setAllowUserInput(boolean allowUserInput) {
-        this.allowUserInput = allowUserInput;
-    }
-
     /**
      * References the {@link INodeDesc} instance representing the framework node.
      */
@@ -791,22 +695,5 @@ public class Framework extends FrameworkResourceParent {
     public boolean isLocalNode(INodeDesc node) {
         final String fwkNodeName = getFrameworkNodeName();
         return fwkNodeName.equals(node.getNodename());
-    }
-
-     /**
-     * Check's if this node is the server node. Based on comparing framework.server.name and framework.node.name
-     * Assumes framework.server.name property exists.
-     * @return Returns true if framework.server.name and framework.node.name match
-     */
-    public boolean isServerNode() {
-        String serverNode = null;
-        if (hasProperty("framework.server.name")) {
-            serverNode = getProperty("framework.server.name");
-        }
-        if (null!=serverNode && serverNode.equals(getPropertyLookup().getProperty("framework.node.name"))) {
-            return true;
-        } else {
-            return false;
-        }
     }
 }

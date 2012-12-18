@@ -293,18 +293,18 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
     static boolean validatePluginMeta(final PluginMeta pluginList, final File file) {
         boolean valid = true;
         if (null == pluginList.getName()) {
-            log.warn("name not found in metadata: " + file.getAbsolutePath());
+            log.error("name not found in metadata: " + file.getAbsolutePath());
             valid = false;
         }
         if (null == pluginList.getVersion()) {
-            log.warn("version not found in metadata: " + file.getAbsolutePath());
+            log.error("version not found in metadata: " + file.getAbsolutePath());
             valid = false;
         }
         if (null == pluginList.getRundeckPluginVersion()) {
-            log.warn("rundeckPluginVersion not found in metadata: " + file.getAbsolutePath());
+            log.error("rundeckPluginVersion not found in metadata: " + file.getAbsolutePath());
             valid = false;
         } else if (!SCRIPT_PLUGIN_VERSION.equals(pluginList.getRundeckPluginVersion())) {
-            log.warn("rundeckPluginVersion: " + pluginList.getRundeckPluginVersion() + " is not supported: " + file
+            log.error("rundeckPluginVersion: " + pluginList.getRundeckPluginVersion() + " is not supported: " + file
                     .getAbsolutePath());
             valid = false;
         }

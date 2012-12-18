@@ -1,4 +1,4 @@
-<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="rundeck.Execution; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
 <g:set var="ukey" value="${g.rkey()}"/>
         <div class="jobslist ${small?'small':''}">
@@ -40,6 +40,17 @@
                             <td class="jobname">
                                 <div style="overflow:hidden; text-overflow: ellipsis; height:16px;">
                                 %{--<g:expander key="${ukey+'jobDisplay'+scheduledExecution.id}" open="${paginateParams?.idlist==scheduledExecution.id.toString()?'true':'false'}" imgfirst="true">${scheduledExecution.jobName.encodeAsHTML()}</g:expander>--}%
+                                    <span class="jobbulkeditfield" style="display: none">
+                                    <g:if test="${jobauthorizations[AuthConstants.ACTION_DELETE].contains(scheduledExecution.id.toString())}">
+                                        <input type="checkbox" name="ids" value="${scheduledExecution.extid}"/>
+                                    </g:if>
+                                    <g:else>
+                                        <span class="info note" style="width:12px;margin: 3px;"
+                                              title="${message(code: 'unauthorized.job.delete',default: 'Not authorized to delete this job')}"><img
+                                                src="${resource(dir: 'images', file: 'icon-tiny-warn.png')}" alt=""
+                                                width="12px" height="12px"/></span>
+                                    </g:else>
+                                </span>
                                 <g:link action="show" controller="scheduledExecution" id="${scheduledExecution.extid}" class="jobIdLink">
                                     ${scheduledExecution.jobName.encodeAsHTML()}</g:link>
 

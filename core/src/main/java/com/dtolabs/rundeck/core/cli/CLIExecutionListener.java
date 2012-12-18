@@ -24,15 +24,8 @@
 package com.dtolabs.rundeck.core.cli;
 
 import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.*;
-import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
-import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
-import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 
-import java.io.File;
-import java.io.InputStream;
 
 /**
  * CLIExecutionListener implements ExecutionListener, and is used to supply other listeners to the ExecutionService,
@@ -41,13 +34,15 @@ import java.io.InputStream;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public class CLIExecutionListener implements ExecutionListener {
-    private FailedNodesListener failedNodesListener;
+public class CLIExecutionListener extends ExecutionListenerOverrideBase  {
     private CLIToolLogger logger;
-    private boolean terse;
     private int loglevel;
-    private String logFormat;
+    private CLIExecutionListener delegate;
 
+    private CLIExecutionListener(CLIExecutionListener delegate) {
+        super(delegate);
+        this.delegate = delegate;
+    }
     /**
      * Create the CLIExecutionListener
      *
@@ -56,7 +51,7 @@ public class CLIExecutionListener implements ExecutionListener {
      */
     public CLIExecutionListener(final FailedNodesListener failedNodesListener,
                                 final CLIToolLogger logger, final int loglevel) {
-        this.failedNodesListener = failedNodesListener;
+        super(failedNodesListener,false,null);
         this.logger = logger;
         this.loglevel=loglevel;
     }
@@ -65,21 +60,18 @@ public class CLIExecutionListener implements ExecutionListener {
                                 final CLIToolLogger logger,
                                 final int loglevel,
                                 final boolean terse) {
-        this.failedNodesListener = failedNodesListener;
+        super(failedNodesListener,terse, null);
         this.logger = logger;
         this.loglevel=loglevel;
-        this.terse = terse;
     }
 
     public CLIExecutionListener(final FailedNodesListener failedNodesListener,
                                 final CLIToolLogger logger,
                                 final int loglevel,
                                 final boolean terse, final String logFormat) {
-        this.failedNodesListener = failedNodesListener;
+        super(failedNodesListener,terse,logFormat);
         this.logger = logger;
         this.loglevel=loglevel;
-        this.terse = terse;
-        this.logFormat = logFormat;
     }
 
     /**
@@ -95,6 +87,10 @@ public class CLIExecutionListener implements ExecutionListener {
     }
 
     public void log(final int level, final String message) {
+        if (null != delegate) {
+            delegate.log(level, message);
+            return;
+        }
         if (shouldlog(level)) {
             if (level >= Constants.DEBUG_LEVEL) {
                 logger.verbose(message);
@@ -112,68 +108,9 @@ public class CLIExecutionListener implements ExecutionListener {
         }
     }
 
-    public void beginExecution(ExecutionContext context, ExecutionItem item) {
+
+    public ExecutionListenerOverride createOverride() {
+        return new CLIExecutionListener(this);
     }
 
-    public void finishExecution(ExecutionResult result, ExecutionContext context, ExecutionItem item) {
-    }
-
-    public void beginNodeExecution(ExecutionContext context, String[] command, INodeEntry node) {
-    }
-
-    public void finishNodeExecution(NodeExecutorResult result, ExecutionContext context, String[] command,
-                                    INodeEntry node) {
-    }
-
-    public void beginNodeDispatch(ExecutionContext context, ExecutionItem item) {
-    }
-
-    public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, ExecutionItem item) {
-    }
-
-    public void beginNodeDispatch(ExecutionContext context, Dispatchable item) {
-    }
-
-    public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, Dispatchable item) {
-    }
-
-    public void beginFileCopyFileStream(ExecutionContext context, InputStream input, INodeEntry node) {
-    }
-
-    public void beginFileCopyFile(ExecutionContext context, File input, INodeEntry node) {
-    }
-
-    public void beginFileCopyScriptContent(ExecutionContext context, String input, INodeEntry node) {
-    }
-
-    public void finishFileCopy(String result, ExecutionContext context, INodeEntry node) {
-    }
-
-    public void beginInterpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node) {
-    }
-
-    public void finishInterpretCommand(InterpreterResult result, ExecutionContext context, ExecutionItem item,
-                                       INodeEntry node) {
-    }
-
-    public FailedNodesListener getFailedNodesListener() {
-        return failedNodesListener;
-    }
-
-
-    public boolean isTerse() {
-        return terse;
-    }
-
-    public void setTerse(final boolean terse) {
-        this.terse = terse;
-    }
-
-    public String getLogFormat() {
-        return logFormat;
-    }
-
-    public void setLogFormat(String logFormat) {
-        this.logFormat = logFormat;
-    }
 }

@@ -29,7 +29,7 @@ package com.dtolabs.rundeck.execution;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public interface IWorkflowJobItem extends IWorkflowCmdItem{
+public interface IWorkflowJobItem {
     /**
      * Return a string identifying the job to execute
      * @return identifier string

@@ -47,7 +47,7 @@ public class ScriptResourceModelSourceFactory implements ResourceModelSourceFact
 
 
     public Description getDescription() {
-        return new ScriptResourceModelSource.Description(framework.getResourceFormatParserService().listFormats());
+        return ScriptResourceModelSource.createDescription(framework.getResourceFormatParserService().listFormats());
     }
 
     public ResourceModelSource createResourceModelSource(final Properties configuration) throws ConfigurationException {

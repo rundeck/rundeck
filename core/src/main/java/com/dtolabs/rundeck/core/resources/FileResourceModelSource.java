@@ -26,6 +26,8 @@ package com.dtolabs.rundeck.core.resources;
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.resources.format.*;
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
+import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 import com.dtolabs.shared.resources.ResourceXMLGenerator;
 
 import java.io.File;
@@ -52,49 +54,53 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
         nodeSet = new NodeSetImpl();
     }
 
+    static Description createDescription(final List<String> formats) {
+        return DescriptionBuilder.builder()
+            .name("file")
+            .title("File")
+            .description("Reads a file containing node definitions in a supported format")
+            .property(PropertyBuilder.builder()
+                          .freeSelect(Configuration.FORMAT)
+                          .title("Format")
+                          .description("Format of the file")
+                          .values(formats)
+                          .build()
+            )
+            .property(PropertyBuilder.builder()
+                          .string(Configuration.FILE)
+                          .title("File Path")
+                          .description("Path of the file")
+                          .required(true)
+                          .build()
+            )
+            .property(PropertyBuilder.builder()
+                          .booleanType(Configuration.GENERATE_FILE_AUTOMATICALLY)
+                          .title("Generate")
+                          .description("Automatically generate the file if it is missing?")
+                          .required(true)
+                          .defaultValue("false")
+                          .build()
+            )
+            .property(PropertyBuilder.builder()
+                          .booleanType(Configuration.INCLUDE_SERVER_NODE)
+                          .title("Include Server Node")
+                          .description("Automatically include the server node in the generated file?")
+                          .required(true)
+                          .defaultValue("false")
+                          .build()
+            )
+            .property(PropertyBuilder.builder()
+                          .booleanType(Configuration.REQUIRE_FILE_EXISTS)
+                          .title("Require File Exists")
+                          .description("Require that the file exists")
+                          .required(true)
+                          .defaultValue("false")
+                          .build()
+            )
 
-    static ArrayList<Property> fileResourceProperties = new ArrayList<Property>();
-
-    static {
-        fileResourceProperties.add(PropertyUtil.string(Configuration.FILE, "File Path", "Path of the file", true,
-            null));
-        fileResourceProperties.add(PropertyUtil.bool(Configuration.GENERATE_FILE_AUTOMATICALLY, "Generate",
-            "Automatically generate the file if it is missing?", true, "false"));
-        fileResourceProperties.add(PropertyUtil.bool(Configuration.INCLUDE_SERVER_NODE, "Include Server Node",
-            "Automatically include the server node in the generated file?", true, "false"));
-        fileResourceProperties.add(PropertyUtil.bool(Configuration.REQUIRE_FILE_EXISTS, "Require File Exists",
-            "Require that the file exists", true, "false"));
-
+            .build();
     }
 
-    static final class Description extends AbstractBaseDescription {
-        final List<Property> properties;
-
-        Description(List<String> formats) {
-            final ArrayList<Property> properties1 = new ArrayList<Property>(fileResourceProperties);
-            properties1.add(PropertyUtil.freeSelect(Configuration.FORMAT, "Format", "Format of the file",
-                false, null, formats));
-            properties = Collections.unmodifiableList(properties1);
-
-        }
-
-        public String getName() {
-            return "file";
-        }
-
-        public String getTitle() {
-            return "File";
-        }
-
-        public String getDescription() {
-            return "Reads a file containing node definitions in a supported format";
-        }
-
-        public List<Property> getProperties() {
-
-            return properties;
-        }
-    }
 
     public static class Configuration {
         public static final String GENERATE_FILE_AUTOMATICALLY = "generateFileAutomatically";
@@ -251,12 +257,12 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
     }
 
     /**
-     * Returns a {@link Nodes} object conatining the nodes config data.
+     * Returns a {@link INodeSet} object conatining the nodes config data.
      *
      * @param nodesFile the source file
      * @param format
      *
-     * @return an instance of {@link Nodes}
+     * @return an instance of {@link INodeSet}
      */
     public synchronized INodeSet getNodes(final File nodesFile, final String format) throws
         ResourceModelSourceException {

@@ -645,10 +645,68 @@ See:
 
 * [Script sequence step](#script-sequence-step)
 * [Job sequence step](#job-sequence-step)
+* [Plugin step](#plugin-step)
 
+A command can embed a [errorhandler](#errorhandler) to define
+an action to run if the step fails.
+
+### errorhandler
+
+Defines an action to handle an error in a [command](#command).
+
+The contents of an `<errorhandler>` are exactly the same as for a 
+[command](#command) except it cannot contain any errorhandler itself.
+
+The different types of errorhandler steps are defined in different ways.
+
+*Attributes*
+
+`keepgoingOnSuccess`
+
+:    true/false. (default false). If true, and the error handler succeeds, the workflow sequence will continue even if the workflow `keepgoing` is false.
+
+See:
+
+* [Script sequence step](#script-sequence-step)
+* [Job sequence step](#job-sequence-step)
+* [Plugin step](#plugin-step)
+
+Example:
+
+    <errorhandler>
+       <exec>echo this is a shell command</exec>
+    </errorhandler>
+
+Inline script.  Note that using CDATA section will preserve linebreaks
+in the script.  Simply put the script within a <code>script</code>
+element:
+
+
+    <errorhandler>
+        <script><![CDATA[#!/bin/bash
+    echo this is a test
+    echo whatever
+    exit 2 ]></script>
+    </errorhandler>
+
+
+Script File:
+
+    <errorhandler>
+        <scriptfile>/path/to/a/script</scriptfile>
+        <scriptargs>-whatever something</scriptargs>
+    </errorhandler>      
+
+Example job reference:
+
+    <errorhandler >
+        <jobref group="My group" name="My Job">
+           <arg line="-option value -option2 value2"/>
+        </jobref>
+    </errorhandler>      
 
  
-#### Script sequence step 
+### Script sequence step 
 
 Script steps can be defined in three ways within a command element:
 
@@ -691,11 +749,11 @@ Script URL:
     </command>      
 
 
-#### Job sequence step
+### Job sequence step
 
 Define a [jobref](#jobref) element within the [command](#command) element
 
-##### jobref 
+#### jobref 
 
 *Attributes*
 
@@ -723,6 +781,84 @@ Example passing arguments to the job:
            <arg line="-option value -option2 value2"/>
         </jobref>
     </command>      
+
+### Plugin step
+
+There are two types of plugin steps that can be defined: Node steps, and workflow steps.
+
+Define either one within the [command](#command) element:
+
+* [node-step-plugin](#node-step-plugin)
+* [step-plugin](#step-plugin)
+
+Both have the following contents:
+
+*Attributes*
+
+type
+
+:    The plugin provider type identifier
+
+*Nested elements*
+
+Optional 'configuration' can be embedded containing a list of 'entry' key/value pairs:
+
+[configuration](#configuration)
+
+:    Defines plugin configuration entries
+
+[entry](#entry)
+
+:    Defines a key/value pair for the configuration.
+
+
+Example node step plugin definition:
+
+    <command>
+        <node-step-plugin type="my-node-step-plugin">
+           <configuration>
+            <entry key="someconfig" value="a value"/>
+            <entry key="timout" value="2000"/>
+           </configuration>
+        </node-step-plugin>
+    </command> 
+
+Example workflow step plugin definition:
+
+    <command>
+        <step-plugin type="my-step-plugin">
+           <configuration>
+            <entry key="repeat" value="12"/>
+            <entry key="debug" value="true"/>
+           </configuration>
+        </step-plugin>
+    </command>     
+
+#### node-step-plugin
+
+Defines a plugin step that executes for each node.
+
+#### step-plugin
+
+Defines a plugin step that executes once in a workflow.
+
+#### configuration
+
+Contains the key/value pair entries for plugin configuration, within a [node-step-plugin](#node-step-plugin) or [step-plugin](#step-plugin).
+
+#### entry
+
+Defines a key/value pair within a [configuration](#configuration).
+
+*Attributes*:
+
+key
+
+:    Key for the pair
+
+value
+
+:    Textual value
 
 ## notification 
 

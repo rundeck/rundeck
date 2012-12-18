@@ -122,19 +122,42 @@
         </span>
     </div>
     <div id="wfnewtypes" style="display:none; margin-top:10px" class="popout">
-        <span > Add a Workflow ${g.message(code:'Workflow.step.label')}</span>
-        <div class="info note">Choose the type of Workflow ${g.message(code:'Workflow.step.label')}:</div>
-        <div style="margin:10px;">
-        <span class="button action" onclick="_wfiaddnew('command');" title="Execute a remote command"><g:img file='icon-tiny-add.png'/> Command</span>
-        <span class="button action" onclick="_wfiaddnew('script');" title="Execute  an inline script"><g:img file='icon-tiny-add.png'/> Script</span>
-        <span class="button action" onclick="_wfiaddnew('scriptfile');" title="Execute a script file or URL"><g:img file='icon-tiny-add.png'/> Script file or URL</span>
-        <span class="button action" onclick="_wfiaddnew('job');" title="Execute another Job"><g:img file='icon-tiny-add.png'/> Job Reference</span>
-        </div>
-        <div style="margin:10px; text-align:right;">
-            <span class="action button small" onclick="$('wfnewtypes').hide();$('wfnewbutton').show();" title="Cancel adding new item"> Cancel</span>
-        </div>
+        <g:render template="/execution/wfAddStep"
+            model="[addMessage:'Workflow.step.label.add',chooseMessage:'Workflow.step.label.choose.the.type']"
+        />
+    </div>
+
+    <div id="wfnew_eh_types" style="display:none; margin-top:10px;background: white;" class="popout">
+        %{--This element is moved around to show the add error-handle buttons for a step--}%
+        <g:render template="/execution/wfAddStep"
+                model="[addMessage:'Workflow.stepErrorHandler.label.add',descriptionMessage:'Workflow.stepErrorHandler.description',chooseMessage:'Workflow.stepErrorHandler.label.choose.the.type']"
+        />
     </div>
     </div>
+        <script type="text/javascript">
+            fireWhenReady('wfnew_eh_types',function(){
+                $('wfnew_eh_types').select('span.add_step_type').each(function (e) {
+                    Event.observe(e, 'click', _evtNewEHChooseType);
+                });
+                $('wfnew_eh_types').select('span.add_node_step_type').each(function (e) {
+                    Event.observe(e, 'click', _evtNewEHNodeStepType);
+                });
+                $('wfnew_eh_types').select('span.cancel_add_step_type').each(function (e) {
+                    Event.observe(e, 'click', _evtNewEHCancel);
+                });
+            })
+            fireWhenReady('wfnewtypes', function () {
+                $('wfnewtypes').select('span.add_step_type').each(function (e) {
+                    Event.observe(e, 'click', _evtNewStepChooseType);
+                });
+                $('wfnewtypes').select('span.add_node_step_type').each(function (e) {
+                    Event.observe(e, 'click', _evtNewNodeStepChooseType);
+                });
+                $('wfnewtypes').select('span.cancel_add_step_type').each(function (e) {
+                    Event.observe(e, 'click', _evtNewStepCancel);
+                });
+            })
+        </script>
 </g:if>
 </div>
 <div class="clear"></div>

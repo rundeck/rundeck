@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ProviderIdent;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +45,7 @@ import java.util.Properties;
 public class ResourceModelSourceService extends PluggableProviderRegistryService<ResourceModelSourceFactory> implements
     ConfigurableService<ResourceModelSource>, DescribableService {
 
-    public static final String SERVICE_NAME = "ResourceModelSource";
+    public static final String SERVICE_NAME = ServiceNameConstants.ResourceModelSource;
 
 
     public ResourceModelSourceService(final Framework framework) {

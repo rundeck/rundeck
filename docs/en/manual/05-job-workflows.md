@@ -215,6 +215,53 @@ The "Redo" button can be pressed to reapply the last undone change.
 
 Press the "Revert All Changes" button to go back to the original step order.
 
+## Error Handlers
+
+Each step in a Workflow can have an associated "Error Handler" action.  This handler
+is a secondary step of any of the available types that will execute if the Workflow
+step fails. Error Handler steps can be used to recover the workflow from failure, or
+simply to execute a secondary action.
+
+This provides a few different ways to deal with a step's failure:
+
+* Print additional information about a failure
+* Roll back a change
+* Recover the workflow from failure, and continue normally
+
+When a Workflow step has a failure, the behavior depends on whether it has an Error Handler or not,
+and the value of the "keepgoing" setting for the Workflow, and the value of the "keepgoingOnSuccess" for the Error Handler.
+
+* When a step fails **without an Error Handler**
+    1. the Workflow is marked as "failed"
+    2. If `keepgoing="false"`
+        1. then the entire Workflow stops
+    3. Otherwise, the remaining Workflow steps are executed in order
+    4. the Workflow ends with a "failed" result status
+    
+If you define an Error Handler for a step, then the behavior changes. The handler can recover the step's failure by executing successfully, and a secondary option "keepgoingOnSuccess" will
+let you override the Workflow's "keepgoing" value if it is false.
+
+* When a step fails **with an Error Handler**
+    1. The Error Handler is executed
+    2. If the Error Handler was successful and has `keepgoingOnSuccess="true"`
+        1. The workflow `keepgoing` is ignored,
+        2. The Workflow failure status is *not* marked, and it will continue to the next step
+    3. Else if `keepgoing="false"`
+        1. The Workflow is marked as "failed"
+        2. Then the entire Workflow stops
+    4. Else if `keepgoing="true"`
+        1. If the Error Handler failed then the Workflow is marked as "failed"
+        2. Otherwise, the Workflow is *not* additionally marked
+    5. the remaining Workflow steps are executed in order (including other triggered Error Handlers)
+    6. when the Workflow ends, its status depends on if it is marked
+
+Essentially, the result status of the Error Handler becomes the result status of its Step, if the Workflow 
+has `keepgoing="true"` or if the Error Handler overrides it with `keepgoingOnSuccess="true"`. If the Error Handler succeeds, then the step is not considered to have failed. This 
+includes scripts, commands, job references, etc. (Scripts and commands must have an exit status of `0` to 
+return success.)
+
+It is a good practice, when you are defining Error Handlers, to **always** have them fail (e.g. scripts/commands return a non-zero exit-code), unless you specifically want them to be used for Recovery.
+
 ## Save the changes
 
 Once the Workflow steps have been defined and order, changes are

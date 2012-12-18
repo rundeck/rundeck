@@ -14,12 +14,19 @@
  * limitations under the License.
  */
 import grails.test.GrailsUnitTestCase
-import com.dtolabs.rundeck.core.common.Framework
+
 import org.springframework.mock.web.MockMultipartHttpServletRequest
 import org.springframework.mock.web.MockMultipartFile
 import javax.security.auth.Subject
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authentication.Group
+import rundeck.CommandExec
+import rundeck.Workflow
+import rundeck.Option
+import rundeck.ScheduledExecution
+import rundeck.services.FrameworkService
+import rundeck.services.ScheduledExecutionService
+import rundeck.controllers.ScheduledExecutionController
 
 /*
  * ScheduledExecValidationTests.java
@@ -442,6 +449,8 @@ public class ScheduledExecValidationTests extends GrailsUnitTestCase{
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.getNodeStepPluginDescriptions { [] }
+            fwkControl.demand.getStepPluginDescriptions { [] }
             sec.frameworkService = fwkControl.createMock()
             def seServiceControl = mockFor(ScheduledExecutionService,true)
 

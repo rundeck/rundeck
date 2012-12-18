@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
@@ -207,17 +208,7 @@ public class ScriptNodeExecutor implements NodeExecutor, Describable {
         }
         executionContext.getExecutionListener().log(3,
             "[script-exec]: result code: " + result + ", success: " + success);
-        final int returnresult = result;
-        final boolean returnsuccess = success;
-        return new NodeExecutorResult() {
-            public int getResultCode() {
-                return returnresult;
-            }
-
-            public boolean isSuccess() {
-                return returnsuccess;
-            }
-
+        return new NodeExecutorResultImpl(success, node, result) {
             @Override
             public String toString() {
                 return "[script-exec] success: " + isSuccess() + ", result code: " + getResultCode();

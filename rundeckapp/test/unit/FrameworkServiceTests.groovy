@@ -1,4 +1,6 @@
 import com.dtolabs.rundeck.core.authorization.Attribute
+import rundeck.ScheduledExecution
+import rundeck.services.FrameworkService
 
 class FrameworkServiceTests extends GroovyTestCase {
 

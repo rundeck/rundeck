@@ -784,11 +784,7 @@ var FollowControl = Class.create({
         cell.setAttribute('colSpan', '2');
 
 
-        if (null != data['node'] && 'run' != data['command']) {
-            cell.innerHTML +=
-            "<span class='node'>" + "<img src='" + AppImages.iconSmallNodeObject + "' width='16' height='16' alt=''/> "
-                + data['node'] + "</span>";
-        } else if (null != data['node'] && 'run' == data['command']) {
+        if (null != data['node'] && '' != data['node']) {
             cell.innerHTML +=
             "<span class='node'>" + "<img src='" + AppImages.iconSmallNodeObject + "' width='16' height='16' alt=''/> "
                 + data['node'] + "</span>";
@@ -934,11 +930,7 @@ var FollowControl = Class.create({
         //         cell.colSpan=2;
 
 
-        if (null != data['node'] && 'run' != data['command']) {
-            cell.innerHTML +=
-            "<span class='node'>" + "<img src='" + AppImages.iconSmallNodeObject + "' width='16' height='16' alt=''/> "
-                + data['node'] + "</span>";
-        } else if (null != data['node'] && 'run' == data['command']) {
+        if (null != data['node'] && '' != data['node']) {
             cell.innerHTML +=
             "<span class='node'>" + "<img src='" + AppImages.iconSmallNodeObject + "' width='16' height='16' alt=''/> "
                 + data['node'] + "</span>";
@@ -1063,13 +1055,14 @@ var FollowControl = Class.create({
         tddata.setAttribute('colspan', '2');
         if (null != data['loghtml']) {
             tddata.innerHTML = data.loghtml;
-            tddata.addClassName('datahtml');
+            tddata.addClassName('datahtml log_'+ data.level.toLowerCase());
         } else {
             var txt = data.log;
             txt = txt.replace(/[\\\n\\\r]+$/, '');
             txt = txt.replace(/</g, '&lt;');
             txt = txt.replace(/>/g, '&gt;');
             tddata.innerHTML = txt;
+            tddata.addClassName('log_'+data.level.toLowerCase());
         }
     },
     clearCmdOutput: function() {

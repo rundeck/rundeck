@@ -27,6 +27,8 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.plugins.ScriptDataContextUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
+import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -50,59 +52,57 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
     public static final String CONFIG_INTERPRETER_ARGS_QUOTED = "argsQuoted";
 
     public static final String CONFIG_FORMAT = "format";
+    public static final PropertyValidator FILE_VALIDATOR = new PropertyValidator() {
+        public boolean isValid(String value) throws ValidationException {
+            return new File(value).isFile();
+        }
+    };
 
-    static {
-        scriptResourceProperties.add(PropertyUtil.string(CONFIG_FILE, "Script File Path",
-            "Path to script file to execute", true,
-            null,
-            new Property.Validator() {
-                public boolean isValid(String value) throws ValidationException {
-                    return new File(value).isFile();
-                }
-            }));
-        scriptResourceProperties.add(PropertyUtil.string(CONFIG_INTERPRETER, "Interpreter",
-            "Command interpreter to use (optional)",
-            false,
-            null));
-        scriptResourceProperties.add(PropertyUtil.string(CONFIG_ARGS, "Arguments",
-            "Arguments to pass to the script (optional)",
-            false,
-            null));
-        scriptResourceProperties.add(PropertyUtil.bool(CONFIG_INTERPRETER_ARGS_QUOTED, "Quote Interpreter Args",
-            "If true, pass script file and args as a single argument to interpreter, otherwise, pass as multiple arguments",
-            false,
-            "false"));
-
+    static Description createDescription(final List<String> formats) {
+        return DescriptionBuilder.builder()
+            .name("script")
+            .title("Script")
+            .description("Run a script to produce resource model data")
+            .property(PropertyBuilder.builder()
+                          .freeSelect(CONFIG_FORMAT)
+                          .title("Resource Format")
+                          .description("Resources document format that the script will produce")
+                          .required(true)
+                          .values(formats)
+                          .build()
+            )
+            .property(PropertyBuilder.builder()
+                          .string(CONFIG_FILE)
+                          .title("Script File Path")
+                          .description("Path to script file to execute")
+                          .required(true)
+                          .validator(FILE_VALIDATOR)
+                          .build()
+            )
+            .property(PropertyBuilder.builder()
+                          .string(CONFIG_INTERPRETER)
+                          .title("Interpreter")
+                          .description("Command interpreter to use (optional)")
+                          .build()
+            )
+            .property(PropertyBuilder.builder()
+                          .string(CONFIG_ARGS)
+                          .title("Arguments")
+                          .description("Arguments to pass to the script (optional)")
+                          .build()
+            )
+            .property(PropertyBuilder.builder()
+                          .booleanType(CONFIG_INTERPRETER_ARGS_QUOTED)
+                          .title("Quote Interpreter Args")
+                          .description(
+                              "If true, pass script file and args as a single argument to "
+                              + "interpreter, otherwise, pass as multiple arguments")
+                          .defaultValue("false")
+                          .build()
+            )
+            .build();
     }
 
-    static final class Description extends AbstractBaseDescription {
-        final List<Property> properties;
-
-        Description(List<String> formats) {
-            final ArrayList<Property> properties1 = new ArrayList<Property>(scriptResourceProperties);
-            properties1.add(PropertyUtil.freeSelect(CONFIG_FORMAT, "Resource Format",
-                "Resources document format that the script will produce",
-                true, null, formats));
-            properties = Collections.unmodifiableList(properties1);
-
-        }
-
-        public String getName() {
-            return "script";
-        }
-
-        public String getTitle() {
-            return "Script";
-        }
-
-        public String getDescription() {
-            return "Run a script to produce resource model data";
-        }
-
-        public List<Property> getProperties() {
-            return properties;
-        }
-    }
 
     private String format;
     private File scriptFile;

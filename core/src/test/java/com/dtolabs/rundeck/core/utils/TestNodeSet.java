@@ -28,7 +28,6 @@ import com.dtolabs.rundeck.core.common.NodeEntryImpl;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.apache.tools.ant.BuildException;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -109,13 +108,13 @@ public class TestNodeSet extends TestCase {
         try {
             set.createExclude();
             fail("createExclude should fail the second time");
-        } catch (BuildException e) {
+        } catch (IllegalStateException e) {
 
         }
         try {
             set.createInclude();
             fail("createInclude should fail the second time");
-        } catch (BuildException e) {
+        } catch (IllegalStateException e) {
 
         }
 
@@ -188,9 +187,7 @@ public class TestNodeSet extends TestCase {
         {
             set = new NodeSet();
             NodeSet.SetSelector sel = set.createInclude();
-            final NodeSet.Attribute attribute = sel.createAttribute();
-            attribute.setName("test1");
-            attribute.setValue("value1");
+            sel.getAttributesMap().put("test1", "value1");
             assertFalse("should not be blank", sel.isBlank());
             final Map<String, String> attributesMap = sel.getAttributesMap();
             assertNotNull("incorrect value", attributesMap);
@@ -198,11 +195,8 @@ public class TestNodeSet extends TestCase {
             assertEquals("incorrect size", 1, attributesMap.size());
             assertTrue("missing key", attributesMap.containsKey("test1"));
             assertEquals("wrong value", "value1", attributesMap.get("test1"));
-            sel.setAttributes(null);
             sel.setAttributesMap(null);
             assertTrue("should be blank", sel.isBlank());
-            assertNotNull("incorrect value", sel.getAttributesMap());
-            assertTrue("should be empty", sel.getAttributesMap().isEmpty());
         }
         //test setting attributesMap
         {
@@ -219,27 +213,17 @@ public class TestNodeSet extends TestCase {
             assertEquals("incorrect size", 1, attributesMap.size());
             assertTrue("missing key", attributesMap.containsKey("test1"));
             assertEquals("wrong value", "value1", attributesMap.get("test1"));
-            sel.setAttributes(null);
             sel.setAttributesMap(null);
             assertTrue("should be blank", sel.isBlank());
-            assertNotNull("incorrect value", sel.getAttributesMap());
-            assertTrue("should be empty", sel.getAttributesMap().isEmpty());
         }
         //test multiple attributes
         {
             set = new NodeSet();
             NodeSet.SetSelector sel = set.createInclude();
-            final NodeSet.Attribute attribute = sel.createAttribute();
-            attribute.setName("test1");
-            attribute.setValue("value1");
-            final NodeSet.Attribute attribute2 = sel.createAttribute();
-            attribute2.setName("test2");
-            attribute2.setValue("value2");
-            final NodeSet.Attribute attribute3 = sel.createAttribute();
-            attribute3.setName("test3");
-            attribute3.setValue("value3");
+            sel.getAttributesMap().put("test1", "value1");
+            sel.getAttributesMap().put("test2", "value2");
+            sel.getAttributesMap().put("test3", "value3");
             assertFalse("should not be blank", sel.isBlank());
-            sel.setAttributesMap(null);
             final Map<String, String> attributesMap = sel.getAttributesMap();
             assertNotNull("incorrect value", attributesMap);
             assertFalse("should not be empty", attributesMap.isEmpty());
@@ -250,18 +234,14 @@ public class TestNodeSet extends TestCase {
             assertEquals("wrong value", "value2", attributesMap.get("test2"));
             assertTrue("missing key", attributesMap.containsKey("test3"));
             assertEquals("wrong value", "value3", attributesMap.get("test3"));
-            sel.setAttributes(null);
             sel.setAttributesMap(null);
             assertTrue("should be blank", sel.isBlank());
-            assertNotNull("incorrect value", sel.getAttributesMap());
-            assertTrue("should be empty", sel.getAttributesMap().isEmpty());
         }
 
         //test included attributeSet with no matching imported attributes
         {
             set = new NodeSet();
             NodeSet.SetSelector sel = set.createInclude();
-            NodeSet.AttributeSet attset = sel.createAttributeSet();
             assertTrue("should be blank", sel.isBlank());
             final Map<String, String> attributesMap = sel.getAttributesMap();
             assertNotNull("incorrect value", attributesMap);
@@ -269,7 +249,6 @@ public class TestNodeSet extends TestCase {
             assertEquals("incorrect size", 0, attributesMap.size());
             assertFalse("missing key", attributesMap.containsKey("test1"));
             assertNull("wrong value", attributesMap.get("test1"));
-            sel.setAttributes(null);
         }
 
 
@@ -1018,65 +997,46 @@ public class TestNodeSet extends TestCase {
             set = new NodeSet();
             NodeSet.SetSelector inc = set.createInclude();
             NodeSet.SetSelector exc = set.createExclude();
-            final NodeSet.Attribute attribute = inc.createAttribute();
-            attribute.setName("testattribute1");
-            attribute.setValue("testvalue1");
+            inc.getAttributesMap().put("testattribute1", "testvalue1");
             assertTrue(set.shouldExclude(nodeimp1));
             assertFalse(set.shouldExclude(nodeimp2));
             assertFalse(set.shouldExclude(nodeimp3));
 
-            inc.setAttributesMap(null);
-            exc.setAttributesMap(null);
-            attribute.setValue("testvalue2");
+            inc.getAttributesMap().put("testattribute1", "testvalue2");
             assertTrue(set.shouldExclude(nodeimp1));
             assertTrue(set.shouldExclude(nodeimp2));
             assertTrue(set.shouldExclude(nodeimp3));
 
-            inc.setAttributesMap(null);
-            exc.setAttributesMap(null);
-            attribute.setName("testattribute2");
-            attribute.setValue("testvalue2");
+            inc.getAttributesMap().remove("testattribute1");
+            inc.getAttributesMap().put("testattribute2", "testvalue2");
             assertTrue(set.shouldExclude(nodeimp1));
             assertFalse(set.shouldExclude(nodeimp2));
             assertTrue(set.shouldExclude(nodeimp3));
 
-            inc.setAttributesMap(null);
-            exc.setAttributesMap(null);
-            attribute.setName("testattribute2");
-            attribute.setValue("testvalue2redux");
+            inc.getAttributesMap().put("testattribute2", "testvalue2redux");
             assertTrue(set.shouldExclude(nodeimp1));
             assertTrue(set.shouldExclude(nodeimp2));
             assertFalse(set.shouldExclude(nodeimp3));
 
             //use list
-            inc.setAttributesMap(null);
-            exc.setAttributesMap(null);
-            attribute.setName("testattribute2");
-            attribute.setValue("testvalue2,testvalue2redux");
+            inc.getAttributesMap().put("testattribute2", "testvalue2,testvalue2redux");
             assertTrue(set.shouldExclude(nodeimp1));
             assertFalse(set.shouldExclude(nodeimp2));
             assertFalse(set.shouldExclude(nodeimp3));
 
-            inc.setAttributesMap(null);
-            exc.setAttributesMap(null);
-            attribute.setName("testattribute3");
-            attribute.setValue("testvalue3");
+            inc.getAttributesMap().remove("testattribute2");
+            inc.getAttributesMap().put("testattribute3", "testvalue3");
             assertTrue(set.shouldExclude(nodeimp1));
             assertFalse(set.shouldExclude(nodeimp2));
             assertTrue(set.shouldExclude(nodeimp3));
 
-            inc.setAttributesMap(null);
-            exc.setAttributesMap(null);
-            attribute.setName("testattribute3");
-            attribute.setValue("testvalue4");
+            inc.getAttributesMap().put("testattribute3", "testvalue4");
             assertTrue(set.shouldExclude(nodeimp1));
             assertTrue(set.shouldExclude(nodeimp2));
             assertTrue(set.shouldExclude(nodeimp3));
 
-            inc.setAttributesMap(null);
-            exc.setAttributesMap(null);
-            attribute.setName("testattribute4");
-            attribute.setValue("testvalue5");
+            inc.getAttributesMap().remove("testattribute3");
+            inc.getAttributesMap().put("testattribute4", "testvalue5");
             assertTrue(set.shouldExclude(nodeimp1));
             assertTrue(set.shouldExclude(nodeimp2));
             assertFalse(set.shouldExclude(nodeimp3));
@@ -1161,9 +1121,9 @@ public class TestNodeSet extends TestCase {
             NodeSet.SetSelector inc = set.createInclude();
             NodeSet.SetSelector exc = set.createExclude();
             inc.setTags("devenv");
-            final NodeSet.Attribute attribute = exc.createAttribute();
-            attribute.setName("testattribute1");
-            attribute.setValue("testvalue1");
+            exc.getAttributesMap().put("testattribute1", "testvalue1");
+//            attribute.setName("testattribute1");
+//            attribute.setValue("testvalue1");
             assertFalse(set.shouldExclude(nodeimp1));
             assertTrue(set.shouldExclude(nodeimp2));
             assertTrue(set.shouldExclude(nodeimp3));

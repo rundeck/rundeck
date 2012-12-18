@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import org.apache.tools.ant.Project;
@@ -87,103 +88,33 @@ public class TestFramework extends AbstractBaseTest {
         final Framework fw = Framework.getInstance(getBaseDir(), getFrameworkProjectsBase());
         //test default service implementations
         assertNotNull(fw.services);
-        assertNotNull(fw.getService("CommandInterpreter"));
-        assertNotNull(fw.getService("NodeExecutor"));
-        assertNotNull(fw.getService("FileCopier"));
-        assertNotNull(fw.getService("NodeDispatcher"));
+        assertNotNull(fw.getService(ServiceNameConstants.WorkflowStep));
+        assertNotNull(fw.getService(ServiceNameConstants.WorkflowNodeStep));
+        assertNotNull(fw.getService(ServiceNameConstants.NodeExecutor));
+        assertNotNull(fw.getService(ServiceNameConstants.FileCopier));
+        assertNotNull(fw.getService(ServiceNameConstants.NodeDispatcher));
+        assertNotNull(fw.getService(ServiceNameConstants.ResourceModelSource));
+        assertNotNull(fw.getService(ServiceNameConstants.ResourceFormatParser));
+        assertNotNull(fw.getService(ServiceNameConstants.ResourceFormatGenerator));
     }
     public void testSetService() {
         final Framework fw = Framework.getInstance(getBaseDir(), getFrameworkProjectsBase());
         //test removing services
         assertNotNull(fw.services);
-        final FrameworkSupportService commandInterpreter = fw.getService("CommandInterpreter");
+        final FrameworkSupportService commandInterpreter = fw.getService(ServiceNameConstants.WorkflowNodeStep);
         assertNotNull(commandInterpreter);
-        fw.setService("CommandInterpreter", null);
-        assertNull(fw.getService("CommandInterpreter"));
-        fw.setService("CommandInterpreter", commandInterpreter);
-        assertNotNull(fw.getService("CommandInterpreter"));
-        final FrameworkSupportService commandInterpreter2 = fw.getService("CommandInterpreter");
+        fw.setService(ServiceNameConstants.WorkflowNodeStep, null);
+        assertNull(fw.getService(ServiceNameConstants.WorkflowNodeStep));
+        fw.setService(ServiceNameConstants.WorkflowNodeStep, commandInterpreter);
+        assertNotNull(fw.getService(ServiceNameConstants.WorkflowNodeStep));
+        final FrameworkSupportService commandInterpreter2 = fw.getService(ServiceNameConstants.WorkflowNodeStep);
         assertEquals(commandInterpreter, commandInterpreter2);
 
     }
 
-    /**
-     * Test the allowUserInput property of Framework class
-     */
-    public void testAllowUserInput() {
-
-        final Framework newfw = Framework.getInstance(getBaseDir());
-        assertTrue("User input should be enabled by default", newfw.isAllowUserInput());
-
-        newfw.setAllowUserInput(false);
-        assertFalse("User input should be disabled", newfw.isAllowUserInput());
-        {
-            final Project p = new Project();
-            assertNull("property should not be set", p.getProperty("framework.userinput.disabled"));
-
-            newfw.configureProject(p);
-            assertEquals("Ant property not set to disable user input",
-                    "true",
-                    p.getProperty("framework.userinput.disabled"));
-            assertNotNull("Input Handler should be configured", p.getInputHandler());
-            assertEquals("Input Handler isn't expected type",
-                    Framework.FailInputHandler.class,
-                    p.getInputHandler().getClass());
-
-            newfw.setAllowUserInput(true);
-            newfw.configureProject(p);
-            assertTrue("Ant property not set to enable user input",
-                    "false".equals(p.getProperty("framework.userinput.disabled")) || null == p.getProperty(
-                            "framework.userinput.disabled"));
-            assertTrue("Input Handler shouldn't be configured",
-                    null == p.getInputHandler() || !(p.getInputHandler() instanceof Framework.FailInputHandler));
-
-        }
-        {
-            final Project p = new Project();
-            p.setProperty("framework.userinput.disabled", "true");
-            p.setProperty("rdeck.base", getBaseDir());
-
-            final Framework ftest1 = Framework.getInstanceOrCreate(p);
-            assertNotNull("instance should be found from PRoject", ftest1);
-            assertFalse("framework input should be disabled", ftest1.isAllowUserInput());
-            assertNotNull("Input Handler should be configured", p.getInputHandler());
-            assertEquals("Input Handler isn't expected type",
-                    Framework.FailInputHandler.class,
-                    p.getInputHandler().getClass());
-
-        }
-        {
-            final Project p = new Project();
-            p.setProperty("framework.userinput.disabled", "false");
-            p.setProperty("rdeck.base", getBaseDir());
-
-            final Framework ftest1 = Framework.getInstanceOrCreate(p);
-            assertNotNull("instance should be found from PRoject", ftest1);
-            assertTrue("framework input should be enabled", ftest1.isAllowUserInput());
-            assertTrue("Input Handler shouldn't be configured",
-                    null == p.getInputHandler() || !(p.getInputHandler() instanceof Framework.FailInputHandler));
-
-        }
-        {
-            final Project p = new Project();
-//            p.setResultproperty("framework.userinput.disabled", "false");
-            p.setProperty("rdeck.base", getBaseDir());
-
-            final Framework ftest1 = Framework.getInstanceOrCreate(p);
-            assertNotNull("instance should be found from PRoject", ftest1);
-            assertTrue("framework input should be enabled", ftest1.isAllowUserInput());
-            assertTrue("Input Handler shouldn't be configured",
-                    null == p.getInputHandler() || !(p.getInputHandler() instanceof Framework.FailInputHandler));
-
-        }
-    }
 
     public void testIsLocal() {
-        final Project p = new Project();
-        p.setProperty("rdeck.base", getBaseDir());
-
-        final Framework framework = Framework.getInstanceOrCreate(p);
+        final Framework framework = Framework.getInstance(getBaseDir());
         assertTrue("framework node self-comparison should be true",
                 framework.isLocalNode(framework.getNodeDesc()));
 

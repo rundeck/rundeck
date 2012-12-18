@@ -22,8 +22,6 @@ import com.dtolabs.rundeck.core.cli.CLIToolLogger;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.FrameworkResource;
-import com.dtolabs.rundeck.core.common.context.FrameworkProjectContext;
-import com.dtolabs.rundeck.core.common.context.IDepotContext;
 import org.apache.commons.cli.CommandLine;
 
 import java.io.File;
@@ -38,7 +36,7 @@ public class BaseAction implements Action {
     final protected Framework framework;
     private boolean verbose=false;
 
-    protected IDepotContext project;
+    protected String project;
 
     public BaseAction(final CLIToolLogger main, final Framework framework, final CommandLine cli) {
         this(main, framework, parseBaseActionArgs(cli));
@@ -118,11 +116,11 @@ public class BaseAction implements Action {
 
     private void initArgs(BaseActionArgs args) {
         if (null != args.getProject()) {
-            project = FrameworkProjectContext.create(args.getProject());
+            project = args.getProject();
         } else if (null == args.getProject() &&
                 framework.getFrameworkProjectMgr().listFrameworkProjects().size() == 1) {
             final FrameworkProject d = (FrameworkProject) framework.getFrameworkProjectMgr().listFrameworkProjects().iterator().next();
-            project = FrameworkProjectContext.create(d.getName());
+            project = d.getName();
             main.log("defaulting to project: " + d.getName());
         } else {
             throw new InvalidArgumentsException("-p option not specified");

@@ -1,4 +1,9 @@
 import org.yaml.snakeyaml.Yaml
+import rundeck.ScheduledExecution
+import rundeck.Workflow
+import rundeck.CommandExec
+import rundeck.JobExec
+import rundeck.Option
 
 /*
 * Copyright 2011 DTO Labs, Inc. (http://dtolabs.com)
@@ -109,6 +114,82 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             assertEquals "not scheduled.time", "3", doc[0].schedule.month
             assertEquals "not scheduled.time", "4", doc[0].schedule.weekday.day
             assertEquals "not scheduled.time", "2011", doc[0].schedule.year
+
+    }
+    void testEncodeErrorHandlers(){
+
+        def Yaml yaml = new Yaml()
+        def errhandlers=[
+            new CommandExec([adhocRemoteString: 'err exec']),
+            new CommandExec([adhocLocalString: "err script",argString:'err script args',keepgoingOnSuccess:false]),
+            new CommandExec([adhocFilepath: 'err file path',argString: 'err file args', keepgoingOnSuccess: true]),
+            new JobExec([jobName: 'err job', jobGroup: 'err group',argString: 'err job args', keepgoingOnSuccess: true])
+        ]
+        ScheduledExecution se = new ScheduledExecution([
+            jobName: 'test job 1',
+            description: 'test descrip',
+            loglevel: 'INFO',
+            project: 'test1',
+            workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [
+                new CommandExec([adhocRemoteString: 'test script',errorHandler:errhandlers[0]]),
+                new CommandExec([adhocLocalString: "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", errorHandler: errhandlers[1]]),
+                new CommandExec([adhocFilepath: 'some file path', errorHandler: errhandlers[2]]),
+                new JobExec([jobName: 'another job', jobGroup: 'agroup', errorHandler: errhandlers[3]]),
+            ]]),
+            options: [new Option(name: 'opt1', description: "an opt", defaultValue: "xyz", enforced: true, required: true, values: new TreeSet(["a", "b"]))] as TreeSet,
+            nodeThreadcount: 1,
+            nodeKeepgoing: true,
+            doNodedispatch: true,
+            nodeInclude: "testhost1",
+            nodeExcludeName: "x1",
+            scheduled: true,
+            seconds: '*',
+            minute: '0',
+            hour: '2',
+            month: '3',
+            dayOfMonth: '?',
+            dayOfWeek: '4',
+            year: '2011'
+        ])
+        def jobs1 = [se]
+        def ymlstr = JobsYAMLCodec.encode(jobs1)
+        assertNotNull ymlstr
+        assertTrue ymlstr instanceof String
+
+
+        def doc = yaml.load(ymlstr)
+        assertNotNull doc
+        System.err.println("yaml: ${ymlstr}") ;
+        System.err.println("doc: ${doc}") ;
+        assertEquals "wrong number of jobs", 1, doc.size()
+        assertNotNull "missing sequence", doc[0].sequence
+        assertFalse "wrong wf keepgoing", doc[0].sequence.keepgoing
+        assertEquals "wrong wf strategy", "node-first", doc[0].sequence.strategy
+        assertNotNull "missing commands", doc[0].sequence.commands
+        assertEquals "missing commands", 4, doc[0].sequence.commands.size()
+        assertEquals "missing command exec", "test script", doc[0].sequence.commands[0].exec
+        assertEquals "missing command script", "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", doc[0].sequence.commands[1].script
+        assertEquals "missing command scriptfile", "some file path", doc[0].sequence.commands[2].scriptfile
+        assertNotNull "missing command jobref", doc[0].sequence.commands[3].jobref
+        assertEquals "missing command jobref.name", "another job", doc[0].sequence.commands[3].jobref.name
+        assertEquals "missing command jobref.group", "agroup", doc[0].sequence.commands[3].jobref.group
+
+        //test handlers
+        def ndx=0
+        assertNotNull doc[0].sequence.commands[ndx].errorhandler
+        assertEquals([exec:'err exec'], doc[0].sequence.commands[ndx].errorhandler)
+
+        ndx++
+        assertNotNull doc[0].sequence.commands[ndx].errorhandler
+        assertEquals([script:'err script',args:'err script args'], doc[0].sequence.commands[ndx].errorhandler)
+
+        ndx++
+        assertNotNull doc[0].sequence.commands[ndx].errorhandler
+        assertEquals([scriptfile: 'err file path', args: 'err file args', keepgoingOnSuccess:true], doc[0].sequence.commands[ndx].errorhandler)
+
+        ndx++
+        assertNotNull doc[0].sequence.commands[ndx].errorhandler
+        assertEquals([jobref: [name: 'err job', group:'err group',args: 'err job args'], keepgoingOnSuccess: true], doc[0].sequence.commands[ndx].errorhandler)
 
     }
 
@@ -326,7 +407,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertEquals "wrong workflow item", "some job", se.workflow.commands[3].jobName
         assertEquals "wrong workflow item", "another group", se.workflow.commands[3].jobGroup
         assertEquals "wrong workflow item", "yankee doodle", se.workflow.commands[3].argString
-        assertFalse "wrong workflow item", se.workflow.commands[3].adhocExecution
+            assertTrue "wrong exec type", se.workflow.commands[4] instanceof CommandExec
             assertEquals "wrong workflow item", "http://example.com/path/to/file", se.workflow.commands[4].adhocFilepath
             assertEquals "wrong workflow item", "-blah bloo -blee", se.workflow.commands[4].argString
             assertTrue "wrong workflow item", se.workflow.commands[4].adhocExecution
@@ -357,6 +438,115 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertEquals "missing valuesUrl ", "http://something.com", opt2.realValuesUrl.toExternalForm()
         assertEquals "wrong option regex", "\\d+", opt2.regex
         }
+
+    }
+
+    void testDecodeErrorHandlers(){
+        def ymlstr1 = """- id: myid
+  project: test1
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - exec: test script
+      errorhandler:
+        exec: test err
+    - script: script string
+      args: script args
+      errorhandler:
+        script: err script
+        args: err script args
+    - scriptfile: file path
+      args: file args
+      errorhandler:
+        keepgoingOnSuccess: false
+        scriptfile: err file
+        args: err file args
+    - jobref:
+        name: job name
+        group: job group
+        args: job args
+      errorhandler:
+        keepgoingOnSuccess: true
+        jobref:
+          name: err job name
+          group: err job group
+          args: err job args
+  description: ''
+  name: test job 1
+  group: my group
+"""
+        def list = JobsYAMLCodec.decode(ymlstr1)
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+
+        //workflow
+        assertNotNull "missing workflow", se.workflow
+        assertNotNull "missing workflow", se.workflow.commands
+        assertEquals "wrong workflow size", 4, se.workflow.commands.size()
+
+        def ndx=0
+        assertEquals CommandExec.class, se.workflow.commands[ndx].class
+        assertEquals "test script", se.workflow.commands[ndx].adhocRemoteString
+        assertNull se.workflow.commands[ndx].adhocLocalString
+        assertNull se.workflow.commands[ndx].adhocFilepath
+        assertNull se.workflow.commands[ndx].argString
+
+        assertNotNull se.workflow.commands[ndx].errorHandler
+        assertEquals CommandExec.class,se.workflow.commands[ndx].errorHandler.class
+        assertEquals "test err", se.workflow.commands[ndx].errorHandler.adhocRemoteString
+        assertNull se.workflow.commands[ndx].errorHandler.adhocLocalString
+        assertNull se.workflow.commands[ndx].errorHandler.adhocFilepath
+        assertNull se.workflow.commands[ndx].errorHandler.argString
+        assertFalse se.workflow.commands[ndx].errorHandler.keepgoingOnSuccess
+
+        ndx++
+        assertEquals CommandExec.class, se.workflow.commands[ndx].class
+        assertEquals "script string", se.workflow.commands[ndx].adhocLocalString
+        assertEquals "script args",se.workflow.commands[ndx].argString
+        assertNull se.workflow.commands[ndx].adhocRemoteString
+        assertNull se.workflow.commands[ndx].adhocFilepath
+
+        assertNotNull se.workflow.commands[ndx].errorHandler
+        assertEquals CommandExec.class, se.workflow.commands[ndx].errorHandler.class
+        assertEquals "err script", se.workflow.commands[ndx].errorHandler.adhocLocalString
+        assertEquals "err script args", se.workflow.commands[ndx].errorHandler.argString
+        assertNull se.workflow.commands[ndx].errorHandler.adhocRemoteString
+        assertNull se.workflow.commands[ndx].errorHandler.adhocFilepath
+        assertFalse se.workflow.commands[ndx].errorHandler.keepgoingOnSuccess
+
+        ndx++
+        assertEquals CommandExec.class, se.workflow.commands[ndx].class
+        assertEquals "file path", se.workflow.commands[ndx].adhocFilepath
+        assertEquals "file args",se.workflow.commands[ndx].argString
+        assertNull se.workflow.commands[ndx].adhocLocalString
+        assertNull se.workflow.commands[ndx].adhocRemoteString
+
+        assertNotNull se.workflow.commands[ndx].errorHandler
+        assertEquals CommandExec.class, se.workflow.commands[ndx].errorHandler.class
+        assertEquals "err file", se.workflow.commands[ndx].errorHandler.adhocFilepath
+        assertEquals "err file args", se.workflow.commands[ndx].errorHandler.argString
+        assertNull se.workflow.commands[ndx].errorHandler.adhocLocalString
+        assertNull se.workflow.commands[ndx].errorHandler.adhocRemoteString
+        assertFalse se.workflow.commands[ndx].errorHandler.keepgoingOnSuccess
+
+        ndx++
+        assertEquals JobExec.class, se.workflow.commands[ndx].class
+        assertEquals "job name", se.workflow.commands[ndx].jobName
+        assertEquals "job group", se.workflow.commands[ndx].jobGroup
+        assertEquals "job args",se.workflow.commands[ndx].argString
+
+        assertNotNull se.workflow.commands[ndx].errorHandler
+        assertEquals JobExec.class, se.workflow.commands[ndx].errorHandler.class
+        assertEquals "err job name", se.workflow.commands[ndx].errorHandler.jobName
+        assertEquals "err job group", se.workflow.commands[ndx].errorHandler.jobGroup
+        assertEquals "err job args", se.workflow.commands[ndx].errorHandler.argString
+        assertTrue "err job keepgoing", se.workflow.commands[ndx].errorHandler.keepgoingOnSuccess
+
 
     }
 

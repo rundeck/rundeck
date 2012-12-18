@@ -1,0 +1,52 @@
+name: example script-based remote script node step plugin
+version: 1.0
+rundeckPluginVersion: 1.0
+author: Greg Schueler
+date: 12/7/12
+providers:
+  - name: example-remote-script-node-step
+    service: RemoteScriptNodeStep
+    title: Example Script Remote Script Node Step
+    description: Executes the embedded script on a remote node
+    plugin-type: script
+    script-interpreter: /bin/bash
+    script-file: nodestep.sh
+    script-args: '${node.name} ${config.example} ${config.asif} ${config.number} ${config.vampires}'
+    config:
+      - type: String
+        name: example
+        title: Example
+        description: An example string
+        default: whatever
+      - type: Boolean
+        name: asif
+        title: As if
+        description: If something
+        default: true
+      - type: Integer
+        name: number
+        title: Numbor
+        description: A number for something
+        default: 1
+      - type: Select
+        name: vampires
+        title: Vampires
+        description: What vampire
+        default: albert
+        values:
+          - albert
+          - ross
+          - simon
+          - bellfunkle
+          - droom
+      - type: String
+        name: projectExample
+        title: Example Project scope property
+        description: An example string scoped to Project or Framework level configuration
+        default: whatever
+        scope: Project
+      - type: String
+        name: fwkExample
+        title: Example Framework scope property
+        description: An example string scoped to Framework level configuration with no default
+        scope: Framework

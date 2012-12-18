@@ -27,14 +27,19 @@ import com.dtolabs.rundeck.core.cli.ExecTool;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
-import com.dtolabs.rundeck.core.execution.commands.CommandInterpreter;
-import com.dtolabs.rundeck.core.execution.commands.InterpreterException;
-import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
 import com.dtolabs.rundeck.core.execution.service.*;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
 import com.dtolabs.rundeck.core.utils.FormattedOutputStream;
 import com.dtolabs.rundeck.core.utils.LogReformatter;
 import com.dtolabs.rundeck.core.utils.MapGenerator;
@@ -58,10 +63,14 @@ class ExecutionServiceImpl implements ExecutionService {
         this.framework = framework;
     }
 
-    public ExecutionResult executeItem(ExecutionContext context, ExecutionItem item) throws ExecutionException {
+    public ExecutionResult executeItem(StepExecutionContext context, StepExecutionItem executionItem) throws ExecutionException {
         if (null != context.getExecutionListener()) {
-            context.getExecutionListener().beginExecution(context, item);
+            context.getExecutionListener().beginStepExecution(context, executionItem);
         }
+        if(!(executionItem instanceof NodeStepExecutionItem)) {
+            throw new IllegalArgumentException("Cannot dispatch item which is not a NodeStepExecutionItem: " + executionItem);
+        }
+        NodeStepExecutionItem item=(NodeStepExecutionItem) executionItem;
 
         boolean success = false;
         DispatcherResult result = null;
@@ -74,38 +83,75 @@ class ExecutionServiceImpl implements ExecutionService {
             baseExecutionResult = new BaseExecutionResult(result, success, e);
         } finally {
             if (null != context.getExecutionListener()) {
-                context.getExecutionListener().finishExecution(baseExecutionResult, context, item);
+                context.getExecutionListener().finishStepExecution(baseExecutionResult, context, item);
             }
         }
 
         return baseExecutionResult;
     }
-
-    public InterpreterResult interpretCommand(ExecutionContext context,
-                                              ExecutionItem item, INodeEntry node) throws InterpreterException {
-
-        final CommandInterpreter interpreter;
-        try {
-            interpreter = framework.getCommandInterpreterForItem(item);
-        } catch (ExecutionServiceException e) {
-            throw new InterpreterException(e);
-        }
-
+    public StepExecutionResult executeStep(StepExecutionContext context, StepExecutionItem item) throws ExecutionException {
         if (null != context.getExecutionListener()) {
-            context.getExecutionListener().beginInterpretCommand(context, item, node);
+            context.getExecutionListener().beginStepExecution(context, item);
         }
-        InterpreterResult result = null;
+
+        final StepExecutor executor;
         try {
-            result = interpreter.interpretCommand(context, item, node);
+            executor = framework.getStepExecutionService().getExecutorForItem(item);
+        } catch (ExecutionServiceException e) {
+            throw new ExecutionException(e);
+        }
+
+        StepExecutionResult result=null;
+        final LogReformatter formatter = createLogReformatter(null, context.getExecutionListener());
+        final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
+        try {
+            result = executor.executeWorkflowStep(context, item);
+        } catch (StepException e) {
+            throw new ExecutionException(e);
         } finally {
+            loggingReformatter.resetOutputStreams();
             if (null != context.getExecutionListener()) {
-                context.getExecutionListener().finishInterpretCommand(result, context, item, node);
+                context.getExecutionListener().finishStepExecution(result, context, item);
             }
         }
         return result;
     }
 
-    public DispatcherResult dispatchToNodes(ExecutionContext context, ExecutionItem item) throws
+    public NodeStepResult executeNodeStep(StepExecutionContext context,
+                                          NodeStepExecutionItem item, INodeEntry node) throws NodeStepException {
+
+        final NodeStepExecutor interpreter;
+        try {
+            interpreter = framework.getNodeStepExecutorForItem(item);
+        } catch (ExecutionServiceException e) {
+            throw new NodeStepException(e, node.getNodename());
+        }
+
+        if (null != context.getExecutionListener()) {
+            context.getExecutionListener().beginExecuteNodeStep(context, item, node);
+        }
+        //create node context for node and substitute data references in command
+        final Map<String, Map<String, String>> nodeDataContext =
+            DataContextUtils.addContext("node", DataContextUtils.nodeData(node), context.getDataContext());
+//        final String[] nodeCommand = DataContextUtils.replaceDataReferences(command, nodeDataContext);
+
+        final LogReformatter formatter = createLogReformatter(node, context.getExecutionListener());
+        final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
+        NodeStepResult result = null;
+        try {
+            final ExecutionContextImpl nodeContext = new ExecutionContextImpl.Builder(context).dataContext(
+                nodeDataContext).build();
+            result = interpreter.executeNodeStep(nodeContext, item, node);
+        } finally {
+            loggingReformatter.resetOutputStreams();
+            if (null != context.getExecutionListener()) {
+                context.getExecutionListener().finishExecuteNodeStep(result, context, item, node);
+            }
+        }
+        return result;
+    }
+
+    public DispatcherResult dispatchToNodes(StepExecutionContext context, NodeStepExecutionItem item) throws
         DispatcherException {
 
         if (null != context.getExecutionListener()) {
@@ -128,7 +174,7 @@ class ExecutionServiceImpl implements ExecutionService {
         return result;
     }
 
-    public DispatcherResult dispatchToNodes(ExecutionContext context, Dispatchable item) throws
+    public DispatcherResult dispatchToNodes(StepExecutionContext context, Dispatchable item) throws
         DispatcherException {
 
         if (null != context.getExecutionListener()) {
@@ -277,6 +323,10 @@ class ExecutionServiceImpl implements ExecutionService {
             return ctxListener.getLoggingContext();
         }
     }
+    /**
+     * Create a LogReformatter for the specified node and listener. If the listener is a {@link ContextLoggerExecutionListener},
+     * then the context map data is used by the reformatter.
+     */
     public static LogReformatter createLogReformatter(final INodeEntry node, final ExecutionListener listener) {
         LogReformatter gen;
         if (null != listener && listener.isTerse()) {
@@ -292,8 +342,8 @@ class ExecutionServiceImpl implements ExecutionService {
             } else {
                 final HashMap<String, String> baseContext = new HashMap<String, String>();
                 //discover node name and username
-                baseContext.put("node", node.getNodename());
-                baseContext.put("user", node.extractUserName());
+                baseContext.put("node", null != node?node.getNodename():"");
+                baseContext.put("user", null != node?node.extractUserName():"");
                 gen = new LogReformatter(logformat, baseContext);
             }
 

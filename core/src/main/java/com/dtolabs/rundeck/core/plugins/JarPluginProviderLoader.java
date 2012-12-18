@@ -51,7 +51,8 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
     public static final String RUNDECK_PLUGIN_ARCHIVE = "Rundeck-Plugin-Archive";
     public static final String RUNDECK_PLUGIN_CLASSNAMES = "Rundeck-Plugin-Classnames";
     public static final String RUNDECK_PLUGIN_LIBS = "Rundeck-Plugin-Libs";
-    public static final String JAR_PLUGIN_VERSION = "1.0";
+    public static final String JAR_PLUGIN_VERSION = "1.1";
+    public static final VersionCompare LOWEST_JAR_PLUGIN_VERSION = VersionCompare.forString(JAR_PLUGIN_VERSION);
     public static final String RUNDECK_PLUGIN_VERSION = "Rundeck-Plugin-Version";
     public static final String RUNDECK_PLUGIN_FILE_VERSION = "Rundeck-Plugin-File-Version";
     private final File file;
@@ -450,13 +451,10 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
             jarInputStream.close();
             return true;
         } catch (IOException e) {
-            e.printStackTrace(System.err);
-            log.warn(e.getMessage() + ": " + file.getAbsolutePath());
+            log.error(file.getAbsolutePath() + ": " + e.getMessage());
             return false;
         } catch (InvalidManifestException e) {
-            e.printStackTrace(System.err);
-
-            log.warn(e.getMessage() + ": " + file.getAbsolutePath());
+            log.error(file.getAbsolutePath() + ": " + e.getMessage());
             return false;
         }
     }
@@ -467,6 +465,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
     static void validateJarManifest(final Attributes mainAttributes) throws InvalidManifestException {
         final String value1 = mainAttributes.getValue(RUNDECK_PLUGIN_ARCHIVE);
         final String plugvers = mainAttributes.getValue(RUNDECK_PLUGIN_VERSION);
+
         final String plugclassnames = mainAttributes.getValue(
             RUNDECK_PLUGIN_CLASSNAMES);
         if (null == value1) {
@@ -478,9 +477,11 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         }
         if (null == plugvers) {
             throw new InvalidManifestException("Jar plugin manifest attribute missing: " + RUNDECK_PLUGIN_VERSION);
-        } else if (!JAR_PLUGIN_VERSION.equals(plugvers)) {
+        }
+        final VersionCompare pluginVersion = VersionCompare.forString(plugvers);
+        if (!pluginVersion.atLeast(LOWEST_JAR_PLUGIN_VERSION)) {
             throw new InvalidManifestException(
-                "Unssupported plugin version: " + RUNDECK_PLUGIN_VERSION + ": " + plugvers);
+                "Unsupported plugin version: " + RUNDECK_PLUGIN_VERSION + ": " + plugvers);
         }
         if (null == plugclassnames) {
             throw new InvalidManifestException(

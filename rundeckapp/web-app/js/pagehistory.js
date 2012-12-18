@@ -34,17 +34,17 @@ var HistoryControl = Class.create({
     setHiliteSince:function(val){
         this.hiliteSince=val;
     },
-    timedLoadHistory:function() {
+    timedLoadHistory:function(xparams) {
         this.histTimer = null;
-        this.loadHistory();
+        this.loadHistory(xparams);
     },
-    loadHistory:function() {
+    loadHistory:function(xparams) {
         var tNow = new Date().getTime();
         var obj = this;
         if (tNow - this.lastHistload < 3000 || this.histLoading || this.histTimer) {
             if (!this.histLoading && !this.histTimer && this.lastHistload) {
                 var when = (this.lastHistload + 3000) - tNow;
-                this.histTimer = setTimeout(function(){obj.timedLoadHistory();}, when);
+                this.histTimer = setTimeout(function(){obj.timedLoadHistory(xparams);}, when);
             }
             return;
         } else {
@@ -55,6 +55,9 @@ var HistoryControl = Class.create({
         Object.extend(params, this.defaultParams);
         if (this.hiliteSince) {
             params.hiliteSince = this.hiliteSince;
+        }
+        if(xparams){
+            Object.extend(params,xparams);
         }
         new Ajax.Updater(this.target, appLinks.reportsEventsFragment, {
             parameters:params,

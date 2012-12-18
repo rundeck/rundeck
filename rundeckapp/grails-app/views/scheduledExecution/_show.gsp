@@ -1,3 +1,4 @@
+<%@ page import="rundeck.Execution" %>
 <g:javascript>
 /** START history
          *

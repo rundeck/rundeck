@@ -24,15 +24,8 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.*;
-import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
-import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
-import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 
-import java.io.File;
-import java.io.InputStream;
 import java.util.Map;
 
 /**
@@ -40,11 +33,13 @@ import java.util.Map;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class ContextualExecutionListener implements ContextLoggerExecutionListener {
-    private FailedNodesListener failedNodesListener;
+class ContextualExecutionListener extends ExecutionListenerOverrideBase implements ContextLoggerExecutionListener {
     private ContextLogger logger;
-    private boolean terse;
-    private String logFormat;
+    private ContextualExecutionListener delegate;
+    protected ContextualExecutionListener(ContextualExecutionListener delegate){
+        super(delegate);
+        this.delegate=delegate;
+    }
 
     public ContextualExecutionListener(
         final FailedNodesListener failedNodesListener,
@@ -52,25 +47,23 @@ class ContextualExecutionListener implements ContextLoggerExecutionListener {
         final boolean terse,
         final String logFormat
     ) {
-
-        this.failedNodesListener = failedNodesListener;
-        this.terse = terse;
-        this.logFormat = logFormat;
+        super(failedNodesListener, terse, logFormat);
         this.logger = logger;
     }
 
     public final void log(final int level, final String message) {
-        log(level, message, getLoggingContext());
-    }
-
-    /**
-     * Method should be overridden to return appropriate logging context data
-     */
-    public Map<String, String> getLoggingContext() {
-        return null;
+        if(null!=delegate) {
+            delegate.log(level, message);
+        }else{
+            log(level, message, getLoggingContext());
+        }
     }
 
     public void log(final int level, final String message, Map<String, String> data) {
+        if (null != delegate) {
+            delegate.log(level, message, data);
+            return ;
+        }
         if (level >= Constants.DEBUG_LEVEL) {
             logger.verbose(message, data);
         } else if (level >= Constants.VERBOSE_LEVEL) {
@@ -86,69 +79,7 @@ class ContextualExecutionListener implements ContextLoggerExecutionListener {
         }
     }
 
-    public void beginExecution(ExecutionContext context, ExecutionItem item) {
+    public ExecutionListenerOverride createOverride() {
+        return new ContextualExecutionListener(this);
     }
-
-    public void finishExecution(ExecutionResult result, ExecutionContext context, ExecutionItem item) {
-    }
-
-    public void beginNodeExecution(ExecutionContext context, String[] command, INodeEntry node) {
-    }
-
-    public void finishNodeExecution(NodeExecutorResult result, ExecutionContext context, String[] command,
-                                    INodeEntry node) {
-    }
-
-    public void beginNodeDispatch(ExecutionContext context, ExecutionItem item) {
-    }
-
-    public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, ExecutionItem item) {
-    }
-
-    public void beginNodeDispatch(ExecutionContext context, Dispatchable item) {
-    }
-
-    public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, Dispatchable item) {
-    }
-
-    public void beginFileCopyFileStream(ExecutionContext context, InputStream input, INodeEntry node) {
-    }
-
-    public void beginFileCopyFile(ExecutionContext context, File input, INodeEntry node) {
-    }
-
-    public void beginFileCopyScriptContent(ExecutionContext context, String input, INodeEntry node) {
-    }
-
-    public void finishFileCopy(String result, ExecutionContext context, INodeEntry node) {
-    }
-
-    public void beginInterpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node) {
-    }
-
-    public void finishInterpretCommand(InterpreterResult result, ExecutionContext context, ExecutionItem item,
-                                       INodeEntry node) {
-    }
-
-    public FailedNodesListener getFailedNodesListener() {
-        return failedNodesListener;
-    }
-
-
-    public boolean isTerse() {
-        return terse;
-    }
-
-    public void setTerse(final boolean terse) {
-        this.terse = terse;
-    }
-
-    public String getLogFormat() {
-        return logFormat;
-    }
-
-    public void setLogFormat(String logFormat) {
-        this.logFormat = logFormat;
-    }
-
 }

@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -46,7 +47,7 @@ import java.util.List;
 public class ResourceFormatGeneratorService extends PluggableProviderRegistryService<ResourceFormatGenerator> implements
     DescribableService {
 
-    public static final String SERVICE_NAME = "ResourceFormatGenerator";
+    public static final String SERVICE_NAME = ServiceNameConstants.ResourceFormatGenerator;
 
 
     public ResourceFormatGeneratorService(final Framework framework) {

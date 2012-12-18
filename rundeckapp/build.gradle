@@ -22,7 +22,7 @@ apply plugin: 'eclipse'
 // set the convention to rundeck:<branch>:<path>:<projectName>
 eclipse.project.name =  "${project.getParent().eclipse.project.name}:webapp"
 
-// Properties for downloading & installing Grails
+// Properties for downloading, installing and running Grails
 def grailsBaseName = "grails-${grailsVersion}"
 def grailsZipFile = "${grailsBaseName}.zip"
 def grailsZipFileLocation = "${rootProject.buildDir}/tmp/${grailsZipFile}"
@@ -81,7 +81,8 @@ task extractGrails(dependsOn: downloadGrails) {
  * 
  * TODO: this feels a bit circular? jetty-server --> webapp --> jetty-server?
  */
-task installDependencies(dependsOn: [project(":core").install, project(":rundeck-launcher:rundeck-jetty-server").install]) << {
+task installDependencies(dependsOn: [project(":core").install, 
+		project(":rundeck-launcher:rundeck-jetty-server").install]) << {
 	description = "Builds and installs dependencies on other subprojects"
 }
 

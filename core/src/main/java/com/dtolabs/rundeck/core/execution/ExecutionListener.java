@@ -24,11 +24,12 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.execution.commands.CommandInterpreter;
-import com.dtolabs.rundeck.core.execution.commands.InterpreterResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.plugins.PluginLogger;
 
 import java.io.File;
 import java.io.InputStream;
@@ -39,7 +40,7 @@ import java.io.InputStream;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public interface ExecutionListener {
+public interface ExecutionListener extends PluginLogger {
     /**
      * Return true if output should be terse and not prefixed
      *
@@ -72,14 +73,14 @@ public interface ExecutionListener {
 
 
     /**
-     * Called when executionb begins
+     * Called when execution begins for a step
      */
-    public void beginExecution(ExecutionContext context, ExecutionItem item);
+    public void beginStepExecution(ExecutionContext context, StepExecutionItem item);
 
     /**
-     * Called when execution finishes
+     * Called when execution finishes for a step
      */
-    public void finishExecution(ExecutionResult result, ExecutionContext context, ExecutionItem item);
+    public void finishStepExecution(StatusResult result, ExecutionContext context, StepExecutionItem item);
 
     /**
      * Called before execution of command on node
@@ -95,7 +96,7 @@ public interface ExecutionListener {
     /**
      * Begin dispatch of command to set of nodes
      */
-    public void beginNodeDispatch(ExecutionContext context, ExecutionItem item);
+    public void beginNodeDispatch(ExecutionContext context, StepExecutionItem item);
     /**
      * Begin dispatch of command to set of nodes
      */
@@ -104,7 +105,7 @@ public interface ExecutionListener {
     /**
      * Finish node dispatch
      */
-    public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, ExecutionItem item);
+    public void finishNodeDispatch(DispatcherResult result, ExecutionContext context, StepExecutionItem item);
 
     /**
      * Finish node dispatch
@@ -132,13 +133,19 @@ public interface ExecutionListener {
     public void finishFileCopy(String result, ExecutionContext context, INodeEntry node);
 
     /**
-     * Begin command interpretation
+     * Begin execution of a node step
      */
-    public void beginInterpretCommand(ExecutionContext context, ExecutionItem item, INodeEntry node);
+    public void beginExecuteNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node);
 
     /**
-     * Finish command interpretation
+     * Finish execution of a node step
      */
-    public void finishInterpretCommand(InterpreterResult result, ExecutionContext context, ExecutionItem item,
-                                       INodeEntry node);
+    public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item,
+                                      INodeEntry node);
+
+    /**
+     * Return an ExecutionListenerOverride that will delegate to this ExecutionListener, but allows overriding
+     * property values.
+     */
+    public ExecutionListenerOverride createOverride();
 }

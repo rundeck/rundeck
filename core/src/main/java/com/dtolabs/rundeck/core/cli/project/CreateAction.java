@@ -157,7 +157,7 @@ public class CreateAction extends BaseAction {
             throw new IllegalStateException("project was null");
 
         }
-        final File projectDir = new File(framework.getFrameworkProjectsBaseDir(), project.getFrameworkProject());
+        final File projectDir = new File(framework.getFrameworkProjectsBaseDir(), project);
         main.verbose("project directory exists: " + projectDir.exists());
         try {
             main.verbose("creating project structure in: " + projectDir.getAbsolutePath() + "...");
@@ -167,9 +167,9 @@ public class CreateAction extends BaseAction {
             main.error(e.getMessage());
             throw new ProjectToolException("failed creating project structure", e);
         }
-        main.verbose("initializing project: " + project.getFrameworkProject());
+        main.verbose("initializing project: " + project);
         final FrameworkProject d = framework.getFrameworkProjectMgr().createFrameworkProject(
-            project.getFrameworkProject(), properties);
+            project, properties);
         if (!d.getBaseDir().exists() && !d.getBaseDir().mkdir()) {
             throw new ProjectToolException("Failed to create project dir: " + d.getBaseDir());
         }

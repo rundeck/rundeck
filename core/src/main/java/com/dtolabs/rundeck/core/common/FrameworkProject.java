@@ -529,19 +529,6 @@ public class FrameworkProject extends FrameworkResourceParent {
      * @param source the source nodes
      * @throws UpdateUtils.UpdateException if an error occurs while trying to update the resources file or generate
      * nodes
-     * @deprecated in favor of INodeSet interface
-     */
-    public void updateNodesResourceFile(final Nodes source) throws UpdateUtils.UpdateException {
-        final NodeSetImpl nodeset = new NodeSetImpl();
-        nodeset.putNodes(source.listNodes());
-        updateNodesResourceFile(nodeset);
-    }
-    /**
-     * Update the resources file given an input Nodes set
-     *
-     * @param source the source nodes
-     * @throws UpdateUtils.UpdateException if an error occurs while trying to update the resources file or generate
-     * nodes
      *
      */
     public void updateNodesResourceFile(final INodeSet nodeset) throws UpdateUtils.UpdateException {
@@ -616,6 +603,35 @@ public class FrameworkProject extends FrameworkResourceParent {
         return lookup.getPropertiesMap();
     }
 
+    /**
+     * Return the property value by name or null if not present
+     *
+     * @param name
+     *
+     * @return
+     */
+    private synchronized String getPropertySafe(final String name) {
+        checkReloadProperties();
+        if(lookup.hasProperty(name)){
+            return lookup.getProperty(name);
+        }
+        return null;
+    }
+
+
+    final PropertyRetriever propertyRetriever = new PropertyRetriever() {
+        @Override
+        public String getProperty(final String name) {
+            return getPropertySafe(name);
+        }
+    };
+
+    /**
+     * Return a PropertyRetriever interface for project-scoped properties
+     */
+    public PropertyRetriever getPropertyRetriever() {
+        return propertyRetriever;
+    }
 
 
    /**

@@ -169,7 +169,7 @@ a.tab,span.tab{
 a.toptab + a.toptab{
     border-left:0;
 }
-a.tab:hover, a.toptab:hover, a.tab.selected, a.toptab.selected{
+a.tab:hover, a.toptab:hover, a.tab.selected, a.toptab.selected, span.button.selected{
     background: #ddd;
 }
 a.tab.disabled, span.tab.disabled{
@@ -1297,7 +1297,6 @@ span.dragHandle{
     border:1px solid #aaa;
     padding:5px;
     width:220px;
-    height:25px;
 }
 
 
@@ -1877,7 +1876,13 @@ span.node, span.node a{
     color:black;
     font-family:Courier,monospace;
 }
+ul.wfhandleritem, ul.wfhandleritem li{
+    margin:0;
+}
 
+ul.wfhandleritem li span.wfitemcontrols{
+    margin-right:11px;
+}
 /**
   base report page
 **/

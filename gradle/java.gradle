@@ -22,8 +22,8 @@ repositories {
 	mavenLocal();
 }
 
-sourceCompatibility = 1.5
-targetCompatibility = 1.5
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
 
 // set the eclipse project naming convention to rundeck:<path>:<projectName>
 // so it matches the logical hierarchy more closely

@@ -77,6 +77,42 @@ public class DataContextUtils {
     }
 
     /**
+     * Recursively replace data references in the values in a map which contains either string, collection or Map
+     * values.
+     *
+     * @param input input map
+     * @param data  context data
+     *
+     * @return Map with all string values having references replaced
+     */
+    public static Map<String, Object> replaceDataReferences(final Map<String, Object> input,
+                                                            final Map<String, Map<String, String>> data) {
+        final HashMap<String, Object> output = new HashMap<String, Object>();
+        for (final String s : input.keySet()) {
+            Object o = input.get(s);
+            output.put(s, replaceDataReferencesInObject(o, data));
+        }
+        return output;
+    }
+    private static Object replaceDataReferencesInObject(Object o, final Map<String, Map<String, String>> data){
+        if (o instanceof String) {
+            return replaceDataReferences((String) o, data);
+        } else if (o instanceof Map) {
+            Map<String, Object> sub = (Map<String, Object>) o;
+            return replaceDataReferences(sub, data);
+        } else if (o instanceof Collection) {
+            ArrayList result = new ArrayList();
+            Collection r = (Collection)o;
+            for (final Object o1 : r) {
+                result.add(replaceDataReferencesInObject(o1, data));
+            }
+            return result;
+        }else{
+            return o;
+        }
+    }
+
+    /**
      * Replace the embedded  properties of the form '${key.name}' in the input Strings with the value from the data
      * context
      *

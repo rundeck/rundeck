@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
 import java.io.File;
 import java.util.*;
@@ -45,7 +46,7 @@ import java.util.*;
 public class ResourceFormatParserService extends PluggableProviderRegistryService<ResourceFormatParser> implements
     DescribableService {
 
-    public static final String SERVICE_NAME = "ResourceFormatParser";
+    public static final String SERVICE_NAME = ServiceNameConstants.ResourceFormatParser;
 
 
     public ResourceFormatParserService(final Framework framework) {
