@@ -24,7 +24,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <Rundeck-Plugin-Version>1.0</Rundeck-Plugin-Version>
+              <Rundeck-Plugin-Version>1.1</Rundeck-Plugin-Version>
               <Rundeck-Plugin-Archive>true</Rundeck-Plugin-Archive>
               <Rundeck-Plugin-File-Version>1.5-dev</Rundeck-Plugin-File-Version>
             </manifestEntries>
@@ -44,6 +44,7 @@
   <modules>
     <module>stub-plugin</module>
     <module>script-plugin</module>
+    <module>localexec-plugin</module>
   </modules>
   <dependencies>
     <dependency>

@@ -1,4 +1,4 @@
-ext.pluginClassNames='com.dtolabs.rundeck.plugin.stub.StubFileCopier,com.dtolabs.rundeck.plugin.stub.StubNodeExecutor'
+ext.pluginClassNames='com.dtolabs.rundeck.plugin.localexec.LocalExecNodeStepPlugin'
 jar {
     manifest {
         attributes 'Rundeck-Plugin-Classnames':pluginClassNames
@@ -9,17 +9,18 @@ task wrapper(type: Wrapper) {
     gradleVersion = '1.0'
 }
 
+apply plugin: 'idea'
 
 apply plugin: 'maven'
 task createPom << {
     pom {
         project {
-            artifactId 'rundeck-stub-plugin'
+            artifactId 'rundeck-localexec-plugin'
             groupId "com.dtolabs.rundeck"
             inceptionYear '2011'
             packaging 'jar'
             version version
-            name "RunDeck Stub Plugin"
+            name "RunDeck LocalExec Node Step Plugin"
             url 'http://rundeck.org'
             licenses {
                 license {

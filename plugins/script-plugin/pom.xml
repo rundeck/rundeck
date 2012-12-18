@@ -29,6 +29,9 @@
           <archive>
             <manifestEntries>
               <Rundeck-Plugin-Classnames>com.dtolabs.rundeck.plugin.script.ScriptFileCopier,com.dtolabs.rundeck.plugin.script.ScriptNodeExecutor</Rundeck-Plugin-Classnames>
+              <Rundeck-Plugin-Version>1.1</Rundeck-Plugin-Version>
+              <Rundeck-Plugin-Archive>true</Rundeck-Plugin-Archive>
+              <Rundeck-Plugin-File-Version>1.5-dev</Rundeck-Plugin-File-Version>
             </manifestEntries>
           </archive>
         </configuration>

@@ -26,7 +26,8 @@ dependencies {
     )
     pluginFiles(
         [group: 'com.dtolabs.rundeck', name: 'rundeck-script-plugin', version: version,ext:'jar'],            
-        [group: 'com.dtolabs.rundeck', name: 'rundeck-stub-plugin', version: version,ext:'jar']
+        [group: 'com.dtolabs.rundeck', name: 'rundeck-stub-plugin', version: version,ext:'jar'],
+        [group: 'com.dtolabs.rundeck', name: 'rundeck-localexec-plugin', version: version,ext:'jar']
     )
     jettyServerLib(project(path:":rundeck-jetty-server",configuration:'runtime')){
         exclude module:'commons-cli'
@@ -188,14 +189,14 @@ task createPom << {
                         type 'jar'
                     }
                 }
-                (configurations.jettyServerLib.dependencies).each{ dep ->
-                    dependency{
-                        groupId dep.group
-                        artifactId dep.name
-                        version dep.version
-                        type 'jar'
-                    }
-                }
+//                (configurations.jettyServerLib.dependencies).each{ dep ->
+//                    dependency{
+//                        groupId dep.group
+//                        artifactId dep.name
+//                        version dep.version
+//                        type 'jar'
+//                    }
+//                }
             }
         }
     }.writeTo("pom.xml")
