@@ -48,7 +48,10 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
     }
 
     /**
-     * Runs the script configured for the script plugin and channels the output to two streams. the
+     * Runs the script configured for the script plugin and channels the output to two streams.
+
+     * @throws IOException          if any IO exception occurs
+     * @throws InterruptedException if interrupted while waiting for the command to finish
      */
     protected int runPluginScript(final PluginStepContext executionContext,
                                   final PrintStream outputStream,

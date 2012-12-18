@@ -28,20 +28,24 @@ import com.dtolabs.rundeck.core.cli.ExecTool;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
-import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
-import com.dtolabs.rundeck.core.execution.service.*;
+import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
+import com.dtolabs.rundeck.core.execution.service.FileCopier;
+import com.dtolabs.rundeck.core.execution.service.FileCopierException;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.utils.FormattedOutputStream;
 import com.dtolabs.rundeck.core.utils.LogReformatter;
 import com.dtolabs.rundeck.core.utils.MapGenerator;
@@ -91,7 +95,8 @@ class ExecutionServiceImpl implements ExecutionService {
 
         return baseExecutionResult;
     }
-    public StepExecutionResult executeStep(StepExecutionContext context, StepExecutionItem item) throws ExecutionException {
+
+    public StepExecutionResult executeStep(StepExecutionContext context, StepExecutionItem item) {
         if (null != context.getExecutionListener()) {
             context.getExecutionListener().beginStepExecution(context, item);
         }
@@ -100,16 +105,14 @@ class ExecutionServiceImpl implements ExecutionService {
         try {
             executor = framework.getStepExecutionService().getExecutorForItem(item);
         } catch (ExecutionServiceException e) {
-            throw new ExecutionException(e);
+            return new StepExecutionResultImpl(e, ServiceFailureReason.ServiceFailure, e.getMessage());
         }
 
-        StepExecutionResult result=null;
+        StepExecutionResult result = null;
         final LogReformatter formatter = createLogReformatter(null, context.getExecutionListener());
         final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
         try {
             result = executor.executeWorkflowStep(context, item);
-        } catch (StepException e) {
-            throw new ExecutionException(e);
         } finally {
             loggingReformatter.resetOutputStreams();
             if (null != context.getExecutionListener()) {

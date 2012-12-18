@@ -29,20 +29,20 @@ import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PluginAdapterUtility;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepContextImpl;
+import com.dtolabs.rundeck.core.execution.workflow.steps.PropertyResolver;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PropertyResolverFactory;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
-import com.dtolabs.rundeck.core.execution.workflow.steps.PropertyResolver;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
-import java.util.*;
+import java.util.Map;
 
 
 /**
@@ -78,10 +78,6 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
 
     public static final Convert CONVERTER = new Convert();
 
-    static enum Reason implements FailureReason {
-        NodeStepPluginFailed
-    }
-
     @Override
     public NodeStepResult executeNodeStep(final StepExecutionContext context,
                                           final NodeStepExecutionItem item,
@@ -100,20 +96,15 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
                                                                                                   providerName);
         final PluginStepContext pluginContext = PluginStepContextImpl.from(context);
         final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, getDescription(), plugin);
-        final boolean success;
         try {
-            success = plugin.executeNodeStep(pluginContext, config, node);
+            plugin.executeNodeStep(pluginContext, config, node);
         } catch (RuntimeException e) {
             return new NodeStepResultImpl(e,
-                                          Reason.NodeStepPluginFailed,
+                                          StepFailureReason.PluginFailed,
                                           "[" + providerName + "] " + e.getMessage(),
                                           node);
         }
-        if (success) {
-            return new NodeStepResultImpl(node);
-        } else {
-            return new NodeStepResultImpl(null, Reason.NodeStepPluginFailed, "[" + providerName + "] Failed", node);
-        }
+        return new NodeStepResultImpl(node);
     }
 
     private Map<String, Object> getStepConfiguration(StepExecutionItem item) {

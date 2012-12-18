@@ -16,25 +16,41 @@
  */
 
 /*
-* StepExecutor.java
+* NodeStepFailureReason.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 11/2/12 10:42 AM
+* Created: 12/18/12 11:05 AM
 * 
 */
-package com.dtolabs.rundeck.core.execution.workflow.steps;
+package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
-import com.dtolabs.rundeck.core.execution.StepExecutionItem;
-import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 
 
 /**
- * StepExecutor is ...
+ * Failure reasons for node steps
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface StepExecutor {
-    public boolean isNodeDispatchStep(StepExecutionItem item);
-
-    StepExecutionResult executeWorkflowStep(StepExecutionContext executionContext, StepExecutionItem item);
+public enum NodeStepFailureReason implements FailureReason {
+    /**
+     * Host name could not be resolved
+     */
+    HostNotFound,
+    /**
+     * Timeout on connection
+     */
+    ConnectionTimeout,
+    /**
+     * Connection unsuccessful
+     */
+    ConnectionFailure,
+    /**
+     * Authentication unsuccessful
+     */
+    AuthenticationFailure,
+    /**
+     * Command or script execution result code was not zero
+     */
+    NonZeroResultCode,
 }

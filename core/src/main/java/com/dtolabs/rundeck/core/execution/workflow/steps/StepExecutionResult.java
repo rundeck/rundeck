@@ -41,10 +41,4 @@ public interface StepExecutionResult extends ExceptionStatusResult {
     public FailureReason getFailureReason();
     public String getFailureMessage();
 
-    static enum Reason implements FailureReason{
-        ConfigurationFailure,
-        Unknown,
-        Other
-    }
-
 }

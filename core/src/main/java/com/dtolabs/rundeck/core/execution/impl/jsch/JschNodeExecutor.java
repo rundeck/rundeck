@@ -39,8 +39,8 @@ import com.dtolabs.rundeck.core.execution.utils.LeadPipeOutputStream;
 import com.dtolabs.rundeck.core.execution.utils.Responder;
 import com.dtolabs.rundeck.core.execution.utils.ResponderTask;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.tasks.net.ExtSSHExec;
@@ -159,7 +159,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                                              final INodeEntry node)  {
         if (null == node.getHostname() || null == node.extractHostname()) {
             return NodeExecutorResultImpl.createFailure(
-                StepExecutionResult.Reason.ConfigurationFailure,
+                StepFailureReason.ConfigurationFailure,
                 "Hostname must be set to connect to remote node '" + node.getNodename() + "'",
                 node
             );
@@ -180,7 +180,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             sshexec = SSHTaskBuilder.build(node, command, project, context.getDataContext(),
                                            nodeAuthentication, context.getLoglevel());
         } catch (SSHTaskBuilder.BuilderException e) {
-            return NodeExecutorResultImpl.createFailure(StepExecutionResult.Reason.ConfigurationFailure,
+            return NodeExecutorResultImpl.createFailure(StepFailureReason.ConfigurationFailure,
                                                         e.getMessage(), node);
         }
 
@@ -202,7 +202,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                 responderInput.connect(jschOutput);
                 jschInput.connect(responderOutput);
             } catch (IOException e) {
-                return NodeExecutorResultImpl.createFailure(NodeStepResult.Reason.IOFailure, e.getMessage(), node);
+                return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
             }
 
             //first sudo prompt responder
@@ -250,7 +250,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                                                + node.getNodename() + ")");
         }
         String errormsg = null;
-        FailureReason failureReason = StepExecutionResult.Reason.Unknown;
+        FailureReason failureReason=null;
         try {
             sshexec.execute();
             success = true;
@@ -303,15 +303,15 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             errormsg =
                 "Failed execution for node: " + node.getNodename() + ": Execution Timeout period exceeded (after "
                 + timeout + "ms), connection dropped";
-            failureReason = NodeStepResult.Reason.ConnectionTimeout;
+            failureReason = NodeStepFailureReason.ConnectionTimeout;
         } else if (null != e.getCause() && e.getCause() instanceof JSchException) {
             JSchException jSchException = (JSchException) e.getCause();
             return extractJschFailure(node, timeout, jSchException, framework);
         } else if (e.getMessage().contains("Remote command failed with exit status")) {
             errormsg = e.getMessage();
-            failureReason = NodeExecutorResult.Reason.NonZeroResultCode;
+            failureReason = NodeStepFailureReason.NonZeroResultCode;
         } else {
-            failureReason = StepExecutionResult.Reason.Other;
+            failureReason = StepFailureReason.Unknown;
             errormsg = e.getMessage();
         }
         return new ExtractFailure(errormsg, failureReason);
@@ -331,14 +331,14 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                     msgformat = framework.getProperty(FWK_PROP_AUTH_CANCEL_MSG);
                 }
                 errormsg = MessageFormat.format(msgformat, node.getNodename(), jSchException.getMessage());
-                reason = NodeStepResult.Reason.AuthenticationFailure;
+                reason = NodeStepFailureReason.AuthenticationFailure;
             } else if (jSchException.getMessage().contains("Auth fail")) {
                 String msgformat = FWK_PROP_AUTH_FAIL_MSG_DEFAULT;
                 if (framework.getPropertyLookup().hasProperty(FWK_PROP_AUTH_FAIL_MSG)) {
                     msgformat = framework.getProperty(FWK_PROP_AUTH_FAIL_MSG);
                 }
                 errormsg = MessageFormat.format(msgformat, node.getNodename(), jSchException.getMessage());
-                reason = NodeStepResult.Reason.AuthenticationFailure;
+                reason = NodeStepFailureReason.AuthenticationFailure;
             } else {
                 reason = JschFailureReason.SSHProtocolFailure;
                 errormsg = jSchException.getMessage();
@@ -347,16 +347,16 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             Throwable cause = ExceptionUtils.getRootCause(jSchException);
             errormsg = cause.getMessage();
             if (cause instanceof NoRouteToHostException) {
-                reason = NodeStepResult.Reason.ConnectionFailure;
+                reason = NodeStepFailureReason.ConnectionFailure;
             } else if (cause instanceof UnknownHostException) {
-                reason = NodeStepResult.Reason.HostNotFound;
+                reason = NodeStepFailureReason.HostNotFound;
             } else if (cause instanceof SocketTimeoutException) {
                 errormsg = "Connection Timeout (after " + timeout + "ms): " + cause.getMessage();
-                reason = NodeStepResult.Reason.ConnectionTimeout;
+                reason = NodeStepFailureReason.ConnectionTimeout;
             } else if (cause instanceof SocketException) {
-                reason = NodeStepResult.Reason.ConnectionFailure;
+                reason = NodeStepFailureReason.ConnectionFailure;
             } else {
-                reason = StepExecutionResult.Reason.Other;
+                reason = StepFailureReason.Unknown;
             }
         }
         return new ExtractFailure(errormsg, reason);

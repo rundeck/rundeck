@@ -31,12 +31,15 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
 import com.dtolabs.rundeck.core.plugins.Plugin;
-import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.core.plugins.configuration.AbstractBaseDescription;
+import com.dtolabs.rundeck.core.plugins.configuration.Describable;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.plugins.configuration.Property;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.utils.Streams;
 
@@ -44,7 +47,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -198,7 +205,7 @@ public class ScriptFileCopier implements FileCopier, Describable {
                 + node
                     .getNodename() + ", and no " + SCRIPT_COPY_DEFAULT_COMMAND_PROPERTY
                 + " property was configured for the project or framework.",
-                StepExecutionResult.Reason.ConfigurationFailure
+                StepFailureReason.ConfigurationFailure
             );
         }
 
@@ -265,7 +272,7 @@ public class ScriptFileCopier implements FileCopier, Describable {
                                               newDataContext, "script-copy");
             }
         } catch (IOException e) {
-            throw new FileCopierException(e.getMessage(), NodeStepResult.Reason.IOFailure, e);
+            throw new FileCopierException(e.getMessage(), StepFailureReason.IOFailure, e);
         }
 
         final Thread errthread;
@@ -292,13 +299,14 @@ public class ScriptFileCopier implements FileCopier, Describable {
             }
             success = 0 == result;
         } catch (InterruptedException e) {
-            throw new FileCopierException(e.getMessage(), NodeStepResult.Reason.IOFailure, e);
+            Thread.currentThread().interrupt();
+            throw new FileCopierException(e.getMessage(), StepFailureReason.Interrupted, e);
         } catch (IOException e) {
-            throw new FileCopierException(e.getMessage(), NodeStepResult.Reason.IOFailure, e);
+            throw new FileCopierException(e.getMessage(), StepFailureReason.IOFailure, e);
         }
         if (!success) {
             throw new FileCopierException("[script-copy]: external script failed with exit code: " + result,
-                                          NodeExecutorResult.Reason.NonZeroResultCode);
+                                          NodeStepFailureReason.NonZeroResultCode);
         }
 
         if (null != copiedFilepath) {

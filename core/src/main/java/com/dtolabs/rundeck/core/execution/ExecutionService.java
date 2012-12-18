@@ -67,7 +67,7 @@ public interface ExecutionService extends FrameworkSupportService {
      *
      * @return not-null result
      */
-    public StepExecutionResult executeStep(StepExecutionContext context, StepExecutionItem item) throws ExecutionException;
+    public StepExecutionResult executeStep(StepExecutionContext context, StepExecutionItem item);
 
     /**
      * Interpret the execution item within the context for the given node.

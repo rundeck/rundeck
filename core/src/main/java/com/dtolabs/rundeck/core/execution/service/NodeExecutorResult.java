@@ -23,7 +23,6 @@
 */
 package com.dtolabs.rundeck.core.execution.service;
 
-import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 
 
@@ -38,10 +37,4 @@ public interface NodeExecutorResult extends NodeStepResult {
      */
     public int getResultCode();
 
-    public static enum Reason implements FailureReason {
-        /**
-         * Execution failed because the result code was not zero
-         */
-        NonZeroResultCode
-    }
 }

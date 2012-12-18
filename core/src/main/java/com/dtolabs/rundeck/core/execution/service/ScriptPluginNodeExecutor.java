@@ -27,7 +27,8 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
 import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
@@ -59,10 +60,6 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
     static void validateScriptPlugin(final ScriptPluginProvider plugin) throws PluginException {
     }
 
-    static enum Reason implements FailureReason{
-        ScriptPluginNodeExecutorIOError,
-        ScriptPluginNodeExecutorExecutionError
-    }
     public NodeExecutorResult executeCommand(final ExecutionContext executionContext, final String[] command,
                                              final INodeEntry node)  {
         final ScriptPluginProvider plugin = getProvider();
@@ -96,19 +93,24 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
                                                         "[" + pluginname + "]: result code: " + result + ", success: "
                                                         + (0 == result));
             if(0!=result){
-                return NodeExecutorResultImpl.createFailure(NodeExecutorResult.Reason.NonZeroResultCode,
+                return NodeExecutorResultImpl.createFailure(NodeStepFailureReason.NonZeroResultCode,
                                                             "Result code: " + result, node, result);
             }else {
                 return NodeExecutorResultImpl.createSuccess(node);
             }
         } catch (IOException e) {
-            executionContext.getExecutionListener().log(0,e.getMessage());
-            e.printStackTrace();
-            return NodeExecutorResultImpl.createFailure(Reason.ScriptPluginNodeExecutorIOError, e.getMessage(),e, node, result);
+            return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure,
+                                                        e.getMessage(),
+                                                        e,
+                                                        node,
+                                                        result);
         } catch (InterruptedException e) {
-            executionContext.getExecutionListener().log(0, e.getMessage());
-            e.printStackTrace();
-            return NodeExecutorResultImpl.createFailure(Reason.ScriptPluginNodeExecutorExecutionError, e.getMessage(), e, node, result);
+            Thread.currentThread().interrupt();
+            return NodeExecutorResultImpl.createFailure(StepFailureReason.Interrupted,
+                                                        e.getMessage(),
+                                                        e,
+                                                        node,
+                                                        result);
         }
     }
 

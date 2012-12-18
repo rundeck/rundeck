@@ -30,7 +30,7 @@ import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
@@ -67,10 +67,6 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                                      final Dispatchable item) throws
                                                               DispatcherException {
         return dispatch(context, null, item);
-    }
-
-    static enum Reason implements FailureReason {
-        NodeDispatchFailure
     }
 
     public DispatcherResult dispatch(final StepExecutionContext context,
@@ -146,13 +142,10 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                 } else {
                     nodeNames.remove(node.getNodename());
                 }
-            } catch (Exception e) {
+            } catch (NodeStepException e) {
                 success = false;
                 failures.put(node.getNodename(),
-                             new NodeStepResultImpl(e,
-                                                    Reason.NodeDispatchFailure,
-                                                    "Error dispatching command to the node: " + node.getNodename(),
-                                                    node)
+                             new NodeStepResultImpl(e, e.getFailureReason(), e.getMessage(), node)
                 );
                 context.getExecutionListener().log(Constants.ERR_LEVEL,
                                                    "Failed dispatching to node " + node.getNodename() + ": "
@@ -186,8 +179,6 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                 failedListener.nodesFailed(failures);
             }
             //now fail
-            //XXX: needs to change from exception
-//            throw new NodesetFailureException(failures);
             return new DispatcherResultImpl(failures, false);
         } else if (null != failedListener && failures.isEmpty() && !interrupted) {
             failedListener.nodesSucceeded();

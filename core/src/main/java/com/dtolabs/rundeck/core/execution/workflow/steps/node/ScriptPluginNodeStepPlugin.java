@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
@@ -63,7 +64,7 @@ class ScriptPluginNodeStepPlugin extends BaseScriptPlugin implements NodeStepPlu
     }
 
     @Override
-    public boolean executeNodeStep(final PluginStepContext executionContext,
+    public void executeNodeStep(final PluginStepContext executionContext,
                                    final Map<String, Object> configuration,
                                    final INodeEntry node)
         throws NodeStepException {
@@ -80,15 +81,20 @@ class ScriptPluginNodeStepPlugin extends BaseScriptPlugin implements NodeStepPlu
         try {
             result = runPluginScript(executionContext, System.out, System.err, getFramework(), configuration);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new NodeStepException(e.getMessage(),
+                                        StepFailureReason.IOFailure,
+                                        node.getNodename());
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Thread.currentThread().interrupt();
+            throw new NodeStepException(e.getMessage(),
+                                        StepFailureReason.Interrupted,
+                                        node.getNodename());
         }
-        boolean success = result == 0;
-
-        executionContext.getLogger().log(3,
-                                         "[" + pluginname + "]: result code: " + result + ", success: "
-                                         + success);
-        return success;
+        executionContext.getLogger().log(3, "[" + pluginname + "]: result code: " + result);
+        if (result != 0) {
+            throw new NodeStepException("Script result code was: " + result,
+                                        NodeStepFailureReason.NonZeroResultCode,
+                                        node.getNodename());
+        }
     }
 }

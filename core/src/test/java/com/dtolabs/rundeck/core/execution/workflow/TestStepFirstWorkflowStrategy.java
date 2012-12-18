@@ -342,10 +342,9 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
             assertEquals(0, interpreterMock.executionItemList.size());
             assertNotNull("threw exception: " + result.getException(), result.getException());
             assertTrue("threw exception: " + result.getException(),
-                       result.getException() instanceof WorkflowStepFailureException);
-            StatusResult result1 = ((WorkflowStepFailureException) result.getException()).getStatusResult();
+                       result.getException() instanceof NullPointerException);
             assertEquals("threw exception: " + result.getException(),
-                         "Step 1 of the workflow failed: NodeDispatchFailure: Failed dispatching to node test1: provider name was null for Service: WorkflowNodeStep",
+                         "provider name was null for Service: WorkflowNodeStep",
                          result.getException().getMessage());
         }
 

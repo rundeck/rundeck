@@ -26,9 +26,9 @@ package com.dtolabs.rundeck.plugin.localexec;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
@@ -55,11 +55,11 @@ public class LocalExecNodeStepPlugin implements NodeStepPlugin {
     private String command;
 
     @Override
-    public boolean executeNodeStep(PluginStepContext context, Map<String, Object> map, INodeEntry entry)
+    public void executeNodeStep(PluginStepContext context, Map<String, Object> map, INodeEntry entry)
         throws NodeStepException {
         if(null==command || "".equals(command.trim())) {
             throw new NodeStepException("Command is not set",
-                                        StepExecutionResult.Reason.ConfigurationFailure,
+                                        StepFailureReason.ConfigurationFailure,
                                         entry.getNodename());
         }
         String[] split = command.split(" ");
@@ -71,11 +71,16 @@ public class LocalExecNodeStepPlugin implements NodeStepPlugin {
         final int result;
         try {
             result = ScriptExecUtil.runLocalCommand(finalCommand, env, null, System.out, System.err);
+            if(result!=0) {
+                throw new NodeStepException("Result code was " + result,
+                                            NodeStepFailureReason.NonZeroResultCode,
+                                            entry.getNodename());
+            }
         } catch (IOException e) {
-            throw new NodeStepException(e, NodeStepResult.Reason.IOFailure, entry.getNodename());
+            throw new NodeStepException(e, StepFailureReason.IOFailure, entry.getNodename());
         } catch (InterruptedException e) {
-            throw new NodeStepException(e, NodeStepResult.Reason.IOFailure, entry.getNodename());
+            Thread.currentThread().interrupt();
+            throw new NodeStepException(e, StepFailureReason.Interrupted, entry.getNodename());
         }
-        return result == 0;
     }
 }

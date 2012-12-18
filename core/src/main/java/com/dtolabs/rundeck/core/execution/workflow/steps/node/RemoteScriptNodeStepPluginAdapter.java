@@ -32,12 +32,11 @@ import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PluginAdapterUtility;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepContextImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PropertyResolver;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PropertyResolverFactory;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNodeStepExecutor;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
@@ -85,9 +84,6 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
     public static final Convert CONVERTER = new Convert();
 
 
-    static enum Reason implements FailureReason {
-        NodeStepPluginFailed
-    }
 
     @Override
     public NodeStepResult executeNodeStep(final StepExecutionContext context,
@@ -114,10 +110,7 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
         try {
             script = plugin.generateScript(pluginContext, config, node);
         } catch (RuntimeException e) {
-            return new NodeStepResultImpl(e,
-                                          Reason.NodeStepPluginFailed,
-                                          e.getMessage(),
-                                          node);
+            return new NodeStepResultImpl(e, StepFailureReason.PluginFailed, e.getMessage(), node);
         }
 
         //get all plugin config properties, and add to the data context used when executing the remote script
@@ -173,7 +166,7 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
 
         } else {
             return new NodeStepResultImpl(null,
-                                          StepExecutionResult.Reason.ConfigurationFailure,
+                                          StepFailureReason.ConfigurationFailure,
                                           "Generated script must have a command or script defined",
                                           node);
         }

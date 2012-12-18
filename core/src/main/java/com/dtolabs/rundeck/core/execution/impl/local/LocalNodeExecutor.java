@@ -36,7 +36,8 @@ import com.dtolabs.rundeck.core.execution.script.ExecTaskParameters;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.ExecTask;
@@ -74,7 +75,7 @@ public class LocalNodeExecutor implements NodeExecutor {
             execTask = buildExecTask(project, parameterGenerator.generate(node, true, null, command),
                 context.getDataContext());
         } catch (ExecutionException e) {
-            return NodeExecutorResultImpl.createFailure(StepExecutionResult.Reason.ConfigurationFailure,
+            return NodeExecutorResultImpl.createFailure(StepFailureReason.ConfigurationFailure,
                                                         e.getMessage(),
                                                         node);
         }
@@ -100,7 +101,7 @@ public class LocalNodeExecutor implements NodeExecutor {
         if(status) {
             return NodeExecutorResultImpl.createSuccess(node);
         }else {
-            return NodeExecutorResultImpl.createFailure(NodeExecutorResult.Reason.NonZeroResultCode,
+            return NodeExecutorResultImpl.createFailure(NodeStepFailureReason.NonZeroResultCode,
                                                         "Result code was " + result, node, result);
         }
     }

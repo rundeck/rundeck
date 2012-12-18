@@ -457,6 +457,7 @@ public class TestExecTool extends AbstractBaseTest {
             this.framework = framework;
         }
 
+        @Override
         public NodeStepResult executeNodeStep(StepExecutionContext context, NodeStepExecutionItem item, INodeEntry node) throws
                                                                                                              NodeStepException {
             testContext=context;
@@ -664,7 +665,7 @@ public class TestExecTool extends AbstractBaseTest {
             try {
                 main.runAction();
                 fail("run shouldn't succeed");
-            } catch (DispatcherException e) {
+            } catch (NullPointerException e) {
                 assertNotNull(e);
                 e.printStackTrace(System.err);
             }

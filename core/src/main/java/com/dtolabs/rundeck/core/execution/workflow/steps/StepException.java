@@ -30,19 +30,24 @@ package com.dtolabs.rundeck.core.execution.workflow.steps;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class StepException extends Exception {
-    public StepException() {
-        super();
-    }
+    protected FailureReason failureReason;
 
-    public StepException(String msg) {
+    public StepException(String msg, FailureReason reason) {
         super(msg);
+        this.failureReason = reason;
     }
 
-    public StepException(Throwable cause) {
+    public StepException(Throwable cause, FailureReason reason) {
         super(cause);
+        this.failureReason = reason;
     }
 
-    public StepException(String msg, Throwable cause) {
+    public StepException(String msg, Throwable cause, FailureReason reason) {
         super(msg, cause);
+        this.failureReason = reason;
+    }
+
+    public FailureReason getFailureReason() {
+        return failureReason;
     }
 }

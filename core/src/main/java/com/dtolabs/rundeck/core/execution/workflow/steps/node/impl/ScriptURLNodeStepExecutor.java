@@ -35,7 +35,7 @@ import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
@@ -89,6 +89,9 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         return Integer.toString(url.hashCode());
     }
     static enum Reason implements FailureReason{
+        /**
+         * Failed to download required URL
+         */
         URLDownloadFailure
     }
 
@@ -108,7 +111,7 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         try {
             url = new URL(finalUrl);
         } catch (MalformedURLException e) {
-            throw new NodeStepException(e, StepExecutionResult.Reason.ConfigurationFailure, node.getNodename());
+            throw new NodeStepException(e, StepFailureReason.ConfigurationFailure, node.getNodename());
         }
         if(null!=context.getExecutionListener()){
             context.getExecutionListener().log(4, "Requesting URL: " + url.toExternalForm());
@@ -142,7 +145,10 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         } catch (UpdateUtils.UpdateException e) {
             if (!destinationTempFile.isFile() || destinationTempFile.length() < 1) {
                 throw new NodeStepException(
-                    "Error requesting URL Script: " + cleanUrl + ": " + e.getMessage(), e, Reason.URLDownloadFailure, node.getNodename());
+                    "Error requesting URL Script: " + cleanUrl + ": " + e.getMessage(),
+                    e,
+                    Reason.URLDownloadFailure,
+                    node.getNodename());
             } else {
                 logger.error(
                     "Error requesting URL script: " + cleanUrl + ": " + e.getMessage(), e);
@@ -153,7 +159,7 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         try {
             filepath = executionService.fileCopyFile(context, destinationTempFile, node);
         } catch (FileCopierException e) {
-            throw new NodeStepException(e.getMessage(), e, NodeStepResult.Reason.IOFailure, node.getNodename());
+            throw new NodeStepException(e.getMessage(), e, StepFailureReason.IOFailure, node.getNodename());
         }
 
         /**

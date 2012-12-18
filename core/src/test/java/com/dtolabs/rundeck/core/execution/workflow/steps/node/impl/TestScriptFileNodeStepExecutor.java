@@ -29,7 +29,6 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.NodeEntryImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
-import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.service.FileCopierService;
@@ -40,6 +39,7 @@ import com.dtolabs.rundeck.core.execution.service.NodeExecutorService;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
@@ -330,7 +330,7 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
         };
         {
             final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>();
-            nodeExecutorResults.add(NodeExecutorResultImpl.createFailure(NodeExecutorResult.Reason.NonZeroResultCode,
+            nodeExecutorResults.add(NodeExecutorResultImpl.createFailure(NodeStepFailureReason.NonZeroResultCode,
                                                                          "failed",
                                                                          null));
             testexec.testResult=nodeExecutorResults;

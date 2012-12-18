@@ -32,8 +32,8 @@ import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.AbstractBaseDescription;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
@@ -151,7 +151,7 @@ public class ScriptNodeExecutor implements NodeExecutor, Describable {
             scriptargs = node.getAttributes().get(SCRIPT_ATTRIBUTE);
         }
         if (null == scriptargs) {
-            return NodeExecutorResultImpl.createFailure(StepExecutionResult.Reason.ConfigurationFailure,
+            return NodeExecutorResultImpl.createFailure(StepFailureReason.ConfigurationFailure,
                                                         "[script-exec node executor] no script-exec attribute "
                                                         + SCRIPT_ATTRIBUTE + " was found on node: "
                                                         + node
@@ -198,7 +198,7 @@ public class ScriptNodeExecutor implements NodeExecutor, Describable {
                                               newDataContext, "script-exec");
             }
         } catch (IOException e) {
-            return NodeExecutorResultImpl.createFailure(NodeStepResult.Reason.IOFailure, e.getMessage(), e, node, -1);
+            return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), e, node, -1);
         }
 
         int result = -1;
@@ -223,15 +223,15 @@ public class ScriptNodeExecutor implements NodeExecutor, Describable {
             if (success) {
                 return NodeExecutorResultImpl.createSuccess(node);
             }
-            reason = NodeExecutorResult.Reason.NonZeroResultCode;
+            reason = NodeStepFailureReason.NonZeroResultCode;
             message = "Result code was " + result;
         } catch (InterruptedException e) {
-            e.printStackTrace(System.err);
-            reason = NodeStepResult.Reason.IOFailure;
+            Thread.currentThread().interrupt();
+            reason = StepFailureReason.Interrupted;
             message = e.getMessage();
         } catch (IOException e) {
             e.printStackTrace(System.err);
-            reason = NodeStepResult.Reason.IOFailure;
+            reason = StepFailureReason.IOFailure;
             message = e.getMessage();
         }
         executionContext.getExecutionListener().log(3,

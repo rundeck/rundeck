@@ -32,8 +32,8 @@ import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 
 import java.util.ArrayList;
@@ -129,12 +129,6 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
     public abstract WorkflowExecutionResult executeWorkflowImpl(StepExecutionContext executionContext,
                                                                 WorkflowExecutionItem item);
 
-    static enum Reason implements FailureReason{
-        /**
-         * Step failed for unknown reason
-         */
-        StepFailure
-    }
     /**
      * Execute a workflow item, returns true if the item succeeds.  This method will throw an exception if the workflow
      * item fails and the Workflow is has keepgoing==false.
@@ -150,34 +144,23 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
     protected StepExecutionResult executeWFItem(final StepExecutionContext executionContext,
                                                 final Map<Integer, StepExecutionResult> failedMap,
                                                 final int c,
-                                                final StepExecutionItem cmd)
-        throws WorkflowStepFailureException {
+                                                final StepExecutionItem cmd) {
 
         if (null != executionContext.getExecutionListener()) {
-            executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, c + ": " + cmd.toString());
+            executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
+                                                        c + ": Workflow step executing: " + cmd);
         }
-        try {
-            if (null != executionContext.getExecutionListener()) {
-                executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
-                                                            "StepExecutionItem created, executing: " + cmd);
-            }
-            final StepExecutionResult result = framework.getExecutionService()
-                .executeStep(
-                    ExecutionContextImpl.builder(executionContext).stepNumber(c).build(),
-                    cmd);
-            if (!result.isSuccess()) {
-                failedMap.put(c, result);
-            }
-            if (null != executionContext.getExecutionListener()) {
-                executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
-                                                            c + ": StepExecutionItem finished, result: " + result);
-            }
-            return result;
-        } catch (ExecutionException exc) {
-            failedMap.put(c, new StepExecutionResultImpl(exc,Reason.StepFailure,exc.getMessage()));
-            throw new WorkflowStepFailureException(
-                "Step " + c + " of the workflow threw exception: " + exc.getMessage(), exc, c);
+        final StepExecutionResult result = framework.getExecutionService().executeStep(
+            ExecutionContextImpl.builder(executionContext).stepNumber(c).build(),
+            cmd);
+        if (!result.isSuccess()) {
+            failedMap.put(c, result);
         }
+        if (null != executionContext.getExecutionListener()) {
+            executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
+                                                        c + ": Workflow step finished, result: " + result);
+        }
+        return result;
     }
 
 
@@ -225,13 +208,8 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
             //execute the step item, and store the results
             StepExecutionResult stepResult=null;
             Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<Integer, StepExecutionResult>();
-            try {
-                stepResult = executeWFItem(stepContext, stepFailedMap, c, cmd);
-                stepSuccess = stepResult.isSuccess();
-            } catch (WorkflowStepFailureException e) {
-                stepFailure = e;
-                stepResult=e.getStatusResult();
-            }
+            stepResult = executeWFItem(stepContext, stepFailedMap, c, cmd);
+            stepSuccess = stepResult.isSuccess();
             nodeFailures = stepCaptureFailedNodesListener.getFailedNodes();
 
             if(null!=executionContext.getExecutionListener() && null!=executionContext.getExecutionListener().getFailedNodesListener()) {
@@ -275,13 +253,8 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                         Map<Integer, StepExecutionResult> handlerFailedMap = new HashMap<Integer, StepExecutionResult>();
                         WorkflowStepFailureException handlerFailure = null;
                         boolean handlerSuccess = false;
-                        try {
-                            handlerResult = executeWFItem(handlerExecContext, handlerFailedMap, c, handler);
-                            handlerSuccess = handlerResult.isSuccess();
-                        } catch (WorkflowStepFailureException e) {
-                            handlerFailure = e;
-                            handlerResult=e.getStatusResult();
-                        }
+                        handlerResult = executeWFItem(handlerExecContext, handlerFailedMap, c, handler);
+                        handlerSuccess = handlerResult.isSuccess();
 
                         //handle success conditions:
                         //1. if keepgoing=true, then status from handler overrides original step
@@ -350,7 +323,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
         }
         FailureReason reason = stepResult.getFailureReason();
         if(null== reason){
-            reason= StepExecutionResult.Reason.Unknown;
+            reason= StepFailureReason.Unknown;
         }
         resultData.put("reason", reason.toString());
         String message = stepResult.getFailureMessage();
@@ -394,7 +367,7 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
             }
             FailureReason reason = stepResult.getFailureReason();
             if (null == reason) {
-                reason = StepExecutionResult.Reason.Unknown;
+                reason = StepFailureReason.Unknown;
             }
             resultData.put("reason", reason.toString());
             String message = stepResult.getFailureMessage();

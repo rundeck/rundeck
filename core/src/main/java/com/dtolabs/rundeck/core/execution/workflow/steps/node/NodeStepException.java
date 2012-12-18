@@ -34,31 +34,24 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
  */
 public class NodeStepException extends StepException {
     private final String nodeName;
-    private FailureReason failureReason;
 
     public NodeStepException(String s, FailureReason reason, String nodeName) {
-        super(s);
+        super(s, reason);
         this.nodeName = nodeName;
-        this.failureReason = failureReason;
     }
 
     public NodeStepException(String s, Throwable throwable, FailureReason reason, String nodeName) {
-        super(s, throwable);
+        super(s, throwable, reason);
         this.nodeName = nodeName;
-        this.failureReason = failureReason;
     }
 
     public NodeStepException(Throwable throwable, FailureReason reason, String nodeName) {
-        super(throwable);
+        super(throwable, reason);
         this.nodeName = nodeName;
-        this.failureReason = failureReason;
     }
 
     public String getNodeName() {
         return nodeName;
     }
 
-    public FailureReason getFailureReason() {
-        return failureReason;
-    }
 }

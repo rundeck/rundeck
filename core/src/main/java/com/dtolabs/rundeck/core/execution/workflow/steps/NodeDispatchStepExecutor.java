@@ -64,7 +64,7 @@ public class NodeDispatchStepExecutor implements StepExecutor {
 
     static enum Reason implements FailureReason{
         /**
-         * Node dispatch failed for unknown reason
+         * Node dispatch failed on at least one node
          */
         NodeDispatchFailure
     }

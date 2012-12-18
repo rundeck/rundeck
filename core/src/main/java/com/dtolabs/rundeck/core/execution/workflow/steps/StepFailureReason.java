@@ -16,25 +16,38 @@
  */
 
 /*
-* StepExecutor.java
+* StepFailureReason.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 11/2/12 10:42 AM
+* Created: 12/18/12 11:04 AM
 * 
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
-import com.dtolabs.rundeck.core.execution.StepExecutionItem;
-import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-
-
 /**
- * StepExecutor is ...
- *
- * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- */
-public interface StepExecutor {
-    public boolean isNodeDispatchStep(StepExecutionItem item);
-
-    StepExecutionResult executeWorkflowStep(StepExecutionContext executionContext, StepExecutionItem item);
+* Failure causes for workflow steps
+*
+* @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
+*/
+public enum StepFailureReason implements FailureReason{
+    /**
+     * A misconfiguration caused a failure
+     */
+    ConfigurationFailure,
+    /**
+     * A process was interrupted
+     */
+    Interrupted,
+    /**
+     * An IO error
+     */
+    IOFailure,
+    /**
+     * Plugin failed
+     */
+    PluginFailed,
+    /**
+     * Cause was not identified
+     */
+    Unknown,
 }

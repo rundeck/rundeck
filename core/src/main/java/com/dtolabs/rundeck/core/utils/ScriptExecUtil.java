@@ -54,7 +54,7 @@ public class ScriptExecUtil {
      * @return the exit code of the command
      *
      * @throws IOException          if any IO exception occurs
-     * @throws InterruptedException if interrupted
+     * @throws InterruptedException if interrupted while waiting for the command to finish
      */
     public static int runLocalCommand(final String[] command,
                                       final Map<String, String> envMap, final File workingdir,

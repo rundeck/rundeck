@@ -30,7 +30,6 @@ import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
@@ -163,28 +162,16 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
                                           final Map<String, NodeStepResult> failureMap) {
         return new Callable() {
             public Object call() throws Exception {
-                try {
-                    final NodeStepResult dispatch = toDispatch.dispatch(context, node);
-                    if (!dispatch.isSuccess()) {
-                        failureMap.put(node.getNodename(), dispatch);
-                    }
-                    resultMap.put(node.getNodename(), dispatch);
-                    return dispatch;
-                } catch (DispatcherException e) {
-                    failureMap.put(node.getNodename(), new NodeStepResultImpl(e,
-                                                                              Reason.InternalError,
-                                                                              e.getMessage(),
-                                                                              node));
-
-                    return null;
+                final NodeStepResult dispatch = toDispatch.dispatch(context, node);
+                if (!dispatch.isSuccess()) {
+                    failureMap.put(node.getNodename(), dispatch);
                 }
+                resultMap.put(node.getNodename(), dispatch);
+                return dispatch;
             }
         };
     }
 
-    static enum Reason implements FailureReason{
-        InternalError
-    }
     static class ExecNodeStepCallable implements Callable<NodeStepResult>{
         final StepExecutionContext context;
         final NodeStepExecutionItem item;
@@ -218,12 +205,12 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
                 resultMap.put(node.getNodename(), interpreterResult);
                 return interpreterResult;
             } catch (NodeStepException e) {
-                failureMap.put(node.getNodename(),
-                               new NodeStepResultImpl(e,
-                                                      Reason.InternalError,
-                                                      e.getMessage(),
-                                                      node));
-                return null;
+                NodeStepResultImpl result = new NodeStepResultImpl(e,
+                                                                   e.getFailureReason(),
+                                                                   e.getMessage(),
+                                                                   node);
+                failureMap.put(node.getNodename(), result);
+                return result;
             }
         }
     }

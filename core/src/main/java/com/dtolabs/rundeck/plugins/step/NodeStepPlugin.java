@@ -45,7 +45,7 @@ public interface NodeStepPlugin {
      *
      * @throws NodeStepException if an error occurs
      */
-    public boolean executeNodeStep(final PluginStepContext context,
+    public void executeNodeStep(final PluginStepContext context,
                                    final Map<String, Object> configuration,
                                    final INodeEntry entry)
         throws NodeStepException;

@@ -32,7 +32,6 @@ import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
@@ -48,7 +47,11 @@ import org.apache.tools.ant.BuildListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -114,7 +117,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
                                                     final Map<Integer, StepExecutionResult> failedMap,
                                                     final int c,
                                                     final StepExecutionItem cmd)
-            throws WorkflowStepFailureException {
+             {
             executeWfItemCalled++;
             HashMap<String, Object> input = new HashMap<String, Object>();
             input.put("context", executionContext);
@@ -129,10 +132,8 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             if (o instanceof Boolean) {
                 return ((Boolean)o)?new StepExecutionResultImpl():
                     new StepExecutionResultImpl(null,null,"false result");
-            } else if (o instanceof WorkflowStepFailureException) {
-                throw (WorkflowStepFailureException) o;
             } else if (o instanceof String) {
-                throw new WorkflowStepFailureException((String) o, new StepExecutionResultImpl(null,null,(String)o), c);
+                return new StepExecutionResultImpl(null, null, (String)o);
             } else {
                 fail("Unexpected result at index " + ndx + ": " + o);
                 return new StepExecutionResultImpl(null,null, "Unexpected result at index " + ndx + ": " + o);
@@ -235,7 +236,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
                 @Override
                 public StepExecutionResult executeWorkflowStep(StepExecutionContext executionContext,
                                                                StepExecutionItem item)
-                    throws StepException {
+                    {
                     assertEquals(1, executionContext.getStepNumber());
                     return null;
                 }

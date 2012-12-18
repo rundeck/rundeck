@@ -31,7 +31,7 @@ import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
@@ -117,7 +117,7 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
                                           context.getLoglevel());
         } catch (SSHTaskBuilder.BuilderException e) {
             throw new FileCopierException("Configuration error: " + e.getMessage(),
-                                          StepExecutionResult.Reason.ConfigurationFailure, e);
+                                          StepFailureReason.ConfigurationFailure, e);
         }
 
         /**
