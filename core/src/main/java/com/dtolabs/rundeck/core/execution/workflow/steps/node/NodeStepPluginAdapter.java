@@ -101,7 +101,12 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
         } catch (RuntimeException e) {
             return new NodeStepResultImpl(e,
                                           StepFailureReason.PluginFailed,
-                                          "[" + providerName + "] " + e.getMessage(),
+                                          e.getMessage(),
+                                          node);
+        } catch (NodeStepException e){
+            return new NodeStepResultImpl(e,
+                                          e.getFailureReason(),
+                                          e.getMessage(),
                                           node);
         }
         return new NodeStepResultImpl(node);

@@ -24,10 +24,12 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
+import com.dtolabs.rundeck.core.CoreException;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
+import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 
@@ -59,6 +61,9 @@ public class NodeDispatchStepExecutor implements StepExecutor {
             return wrapDispatcherResult(framework.getExecutionService().dispatchToNodes(context, item));
         } catch (DispatcherException e) {
             return wrapDispatcherException(e);
+        } catch (ExecutionServiceException e) {
+            //internal error if failure using node dispatchers
+            throw new CoreException(e);
         }
     }
 
@@ -119,6 +124,16 @@ public class NodeDispatchStepExecutor implements StepExecutor {
         public DispatcherResult getDispatcherResult(){
             return dispatcherResult;
         }
+
+        @Override
+        public String toString() {
+            if (null!=dispatcherResult) {
+                return dispatcherResult.toString();
+            } else {
+                return super.toString();
+            }
+        }
+
     }
     static class NodeDispatchStepExecutorExceptionResult extends StepExecutionResultImpl{
         DispatcherException dispatcherResult;

@@ -706,16 +706,9 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 result.getException().printStackTrace(System.out);
             }
             assertFalse(result.isSuccess());
-            assertNotNull("threw exception: " + result.getException(), result.getException());
-            assertTrue("threw exception: " + result.getException(), result.getException() instanceof WorkflowStepFailureException);
-            WorkflowStepFailureException wfsfe = (WorkflowStepFailureException) result.getException();
-            assertEquals(2, wfsfe.getWorkflowStep());
-            assertNotNull(wfsfe.getStatusResult());
-            //thrown after NodeDispatchStepExecutor returns false, extract DispatcherResult from StepExecutionResult
-            StatusResult result1 = wfsfe.getStatusResult();
-            assertTrue("wrong type: " + result1.getClass(), result1 instanceof StepExecutionResult);
-            final DispatcherResult executionResult
-                = NodeDispatchStepExecutor.extractDispatcherResult((StepExecutionResult) result1);
+            assertNull("threw exception: " + result.getException(), result.getException());
+            StepExecutionResult result1 = result.getResultSet().get(1);
+            final DispatcherResult executionResult = NodeDispatchStepExecutor.extractDispatcherResult(result1);
             assertNotNull(executionResult.getResults());
             assertEquals(1, executionResult.getResults().size());
             assertNotNull(executionResult.getResults().get(testnode));
@@ -863,9 +856,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 result.getException().printStackTrace(System.err);
             }
             assertFalse(result.isSuccess());
-            assertNotNull("threw exception: " + result.getException(), result.getException());
-            assertTrue("threw exception: " + result.getException(), result.getException() instanceof WorkflowFailureException);
-            WorkflowFailureException wfsfe = (WorkflowFailureException) result.getException();
+            assertNull("threw exception: " + result.getException(), result.getException());
 
             assertNotNull(result.getResultSet());
             final List<StepExecutionResult> test1 = result.getResultSet();
@@ -1026,14 +1017,10 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 result.getException().printStackTrace(System.err);
             }
             assertFalse(result.isSuccess());
-            assertNotNull("threw exception: " + result.getException(), result.getException());
-            assertTrue("threw exception: " + result.getException(),
-                result.getException() instanceof WorkflowStepFailureException);
-            WorkflowStepFailureException wfsfe = (WorkflowStepFailureException) result.getException();
-            assertEquals(1, wfsfe.getWorkflowStep());
-            assertNotNull(wfsfe.getStatusResult());
+            assertNull("threw exception: " + result.getException(), result.getException());
+            StepExecutionResult result1 = result.getResultSet().get(0);
             final DispatcherResult executionResult
-                = NodeDispatchStepExecutor.extractDispatcherResult(wfsfe.getStatusResult());
+                = NodeDispatchStepExecutor.extractDispatcherResult(result1);
             assertNotNull(executionResult.getResults());
             assertEquals(1, executionResult.getResults().size());
             assertNotNull(executionResult.getResults().get(testnode));
@@ -1213,10 +1200,7 @@ public class TestStepFirstWorkflowStrategy extends AbstractBaseTest {
                 result.getException().printStackTrace(System.err);
             }
             assertFalse(result.isSuccess());
-            assertNotNull("threw exception: " + result.getException(), result.getException());
-            assertTrue("threw exception: " + result.getException(),
-                result.getException() instanceof WorkflowFailureException);
-            WorkflowFailureException wfsfe = (WorkflowFailureException) result.getException();
+            assertNull("threw exception: " + result.getException(), result.getException());
 
             assertNotNull(result.getResultSet());
             final List<StepExecutionResult> test1 = result.getResultSet();

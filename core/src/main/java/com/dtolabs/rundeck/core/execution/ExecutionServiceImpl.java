@@ -69,7 +69,8 @@ class ExecutionServiceImpl implements ExecutionService {
         this.framework = framework;
     }
 
-    public ExecutionResult executeItem(StepExecutionContext context, StepExecutionItem executionItem) throws ExecutionException {
+    public ExecutionResult executeItem(StepExecutionContext context, StepExecutionItem executionItem)
+        throws ExecutionException, ExecutionServiceException {
         if (null != context.getExecutionListener()) {
             context.getExecutionListener().beginStepExecution(context, executionItem);
         }
@@ -149,6 +150,9 @@ class ExecutionServiceImpl implements ExecutionService {
                 .singleNodeContext(node,true)
                 .build();
             result = interpreter.executeNodeStep(nodeContext, item, node);
+            if (!result.isSuccess()) {
+                context.getExecutionListener().log(0, "Failed: " + result.toString());
+            }
         } finally {
             loggingReformatter.resetOutputStreams();
             if (null != context.getExecutionListener()) {
@@ -159,17 +163,13 @@ class ExecutionServiceImpl implements ExecutionService {
     }
 
     public DispatcherResult dispatchToNodes(StepExecutionContext context, NodeStepExecutionItem item) throws
-        DispatcherException {
+                                                                                                      DispatcherException,
+                                                                                                      ExecutionServiceException {
 
         if (null != context.getExecutionListener()) {
             context.getExecutionListener().beginNodeDispatch(context, item);
         }
-        final NodeDispatcher dispatcher;
-        try {
-            dispatcher = framework.getNodeDispatcherForContext(context);
-        } catch (ExecutionServiceException e) {
-            throw new DispatcherException(e);
-        }
+        final NodeDispatcher dispatcher = framework.getNodeDispatcherForContext(context);
         DispatcherResult result = null;
         try {
             result = dispatcher.dispatch(context, item);
@@ -182,17 +182,13 @@ class ExecutionServiceImpl implements ExecutionService {
     }
 
     public DispatcherResult dispatchToNodes(StepExecutionContext context, Dispatchable item) throws
-        DispatcherException {
+                                                                                             DispatcherException,
+                                                                                             ExecutionServiceException {
 
         if (null != context.getExecutionListener()) {
             context.getExecutionListener().beginNodeDispatch(context, item);
         }
-        final NodeDispatcher dispatcher;
-        try {
-            dispatcher = framework.getNodeDispatcherForContext(context);
-        } catch (ExecutionServiceException e) {
-            throw new DispatcherException(e);
-        }
+        final NodeDispatcher dispatcher = framework.getNodeDispatcherForContext(context);
         DispatcherResult result = null;
         try {
             result = dispatcher.dispatch(context, item);
