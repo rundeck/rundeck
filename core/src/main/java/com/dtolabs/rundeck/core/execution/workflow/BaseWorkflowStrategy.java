@@ -93,8 +93,9 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
         @Override
         public String toString() {
             return "[Workflow "
-                   + (null != getResultSet() && getResultSet().size() > 0 ? "results: " + getResultSet() : "")
-                   + (null != getNodeFailures() && getNodeFailures().size() > 0 ? ", failures: "
+//                   + (null != getResultSet() && getResultSet().size() > 0 ? "results: " + getResultSet() : "")
+                   + (null != getStepFailures() && getStepFailures().size() > 0 ? "step failures: " + getStepFailures() : "")
+                   + (null != getNodeFailures() && getNodeFailures().size() > 0 ? ", Node failures: "
                                                                                         + getNodeFailures() : "")
                    + (null != getException() ? ": exception: " + getException() : "")
                    + "]";
@@ -435,12 +436,6 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
                         failures.get(s).add(interpreterResult);
                     }
                 }
-            } else {
-                String s = "*allnodes*";
-                if (!failures.containsKey(s)) {
-                    failures.put(s, new ArrayList<StepExecutionResult>());
-                }
-                failures.get(s).add(o);
             }
         }
         return failures;

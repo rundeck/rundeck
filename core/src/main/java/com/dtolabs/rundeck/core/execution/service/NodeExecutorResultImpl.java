@@ -100,7 +100,7 @@ public class NodeExecutorResultImpl extends NodeStepResultImpl implements NodeEx
 
     @Override
     public String toString() {
-        return isSuccess() ? "Succeeded" : "Failed: " + getFailureReason() + ": " + getFailureMessage();
+        return isSuccess() ? "Succeeded" : getFailureReason() + ": " + getFailureMessage();
     }
 
 }
