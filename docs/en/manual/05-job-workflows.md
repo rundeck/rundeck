@@ -301,14 +301,20 @@ Node context variables:
 Additional Error-handler context variables:  
 
 * `result.reason`: A code indicating the reason the step failed
-    * Some common reason code strings used by default:
+    * Common reason code strings used by node execution of commands or scripts:
         * `NonZeroResultCode` - the execution returned a non-zero code
         * `SSHProtocolFailure` - SSH protocol failure
         * `HostNotFound` - host not found
         * `ConnectionTimeout` - connection timeout
         * `ConnectionFailure` - connection failure (e.g. refused)
         * `IOFailure` - IO error
-        * `AuthenticationFailure` - authentication problem
+        * `AuthenticationFailure` - authentication was refused or incorrect
+    * Reason code strings used by Job references
+        * `JobFailed` - referenced Job workflow failed
+        * `NotFound` - referenced Job not found
+        * `Unauthorized` - referenced Job not authorized
+        * `InvalidOptions` - referenced Job input options invalid
+        * `NoMatchedNodes` - referenced Job node dispatch filters had no match
 * `result.message`: A string describing the failure
 * `result.resultCode`: Exit code from an execution (if available)
 
