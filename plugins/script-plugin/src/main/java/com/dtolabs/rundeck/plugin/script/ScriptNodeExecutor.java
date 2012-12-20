@@ -28,18 +28,30 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
 import com.dtolabs.rundeck.core.plugins.Plugin;
-import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.core.plugins.configuration.AbstractBaseDescription;
+import com.dtolabs.rundeck.core.plugins.configuration.Describable;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.plugins.configuration.Property;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.utils.Streams;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 
 /**
  * <p>ExternalScriptExecutor is a {@link NodeExecutor} that delegates execution to an external script. The external
@@ -60,7 +72,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-@Plugin (name = "script-exec", service = "NodeExecutor")
+@Plugin(name = "script-exec", service = ServiceNameConstants.NodeExecutor)
 public class ScriptNodeExecutor implements NodeExecutor, Describable {
     public static String SERVICE_PROVIDER_NAME = "script-exec";
     public static String SCRIPT_ATTRIBUTE = "script-exec";
@@ -82,14 +94,14 @@ public class ScriptNodeExecutor implements NodeExecutor, Describable {
 
     static {
         properties.add(PropertyUtil.string(CONFIG_COMMAND, "Command",
-            "Shell command to execute",
-            true, null));
+                                           "Shell command to execute",
+                                           true, null));
         properties.add(PropertyUtil.string(CONFIG_INTERPRETER, "Interpreter",
-            "Shell or interpreter to pass the command string to. Not required.",
-            false, null));
+                                           "Shell or interpreter to pass the command string to. Not required.",
+                                           false, null));
         properties.add(PropertyUtil.string(CONFIG_DIRECTORY, "Directory",
-            "Directory to execute within",
-            false, null));
+                                           "Directory to execute within",
+                                           false, null));
 
 
         final Map<String, String> mapping = new HashMap<String, String>();
@@ -123,7 +135,7 @@ public class ScriptNodeExecutor implements NodeExecutor, Describable {
     };
 
     public NodeExecutorResult executeCommand(final ExecutionContext executionContext, final String[] command,
-                                             final INodeEntry node) throws ExecutionException {
+                                             final INodeEntry node)  {
         File workingdir = null;
         String scriptargs;
         String dirstring;
@@ -132,22 +144,25 @@ public class ScriptNodeExecutor implements NodeExecutor, Describable {
         final Framework framework = executionContext.getFramework();
         //look for specific property
         scriptargs = framework.getProjectProperty(executionContext.getFrameworkProject(),
-            SCRIPT_EXEC_DEFAULT_COMMAND_PROPERTY);
+                                                  SCRIPT_EXEC_DEFAULT_COMMAND_PROPERTY);
 
 
         if (null != node.getAttributes().get(SCRIPT_ATTRIBUTE)) {
             scriptargs = node.getAttributes().get(SCRIPT_ATTRIBUTE);
         }
         if (null == scriptargs) {
-            throw new ExecutionException(
-                "[script-exec node executor] no script-exec attribute " + SCRIPT_ATTRIBUTE + " was found on node: "
-                + node
-                    .getNodename() + ", and no " + SCRIPT_EXEC_DEFAULT_COMMAND_PROPERTY
-                + " property was configured for the project or framework.");
+            return NodeExecutorResultImpl.createFailure(StepFailureReason.ConfigurationFailure,
+                                                        "[script-exec node executor] no script-exec attribute "
+                                                        + SCRIPT_ATTRIBUTE + " was found on node: "
+                                                        + node
+                                                            .getNodename() + ", and no "
+                                                        + SCRIPT_EXEC_DEFAULT_COMMAND_PROPERTY
+                                                        + " property was configured for the project or framework.",
+                                                        node);
         }
 
         dirstring = framework.getProjectProperty(executionContext.getFrameworkProject(),
-            SCRIPT_EXEC_DEFAULT_DIR_PROPERTY);
+                                                 SCRIPT_EXEC_DEFAULT_DIR_PROPERTY);
         if (null != node.getAttributes().get(DIR_ATTRIBUTE)) {
             dirstring = node.getAttributes().get(DIR_ATTRIBUTE);
         }
@@ -164,33 +179,34 @@ public class ScriptNodeExecutor implements NodeExecutor, Describable {
             scptexec.put("dir", workingdir.getAbsolutePath());
         }
         final Map<String, Map<String, String>> newDataContext = DataContextUtils.addContext("exec", scptexec,
-            dataContext);
+                                                                                            dataContext);
 
         final Process exec;
 
         String remoteShell = framework.getProjectProperty(executionContext.getFrameworkProject(),
-            SCRIPT_EXEC_DEFAULT_REMOTE_SHELL);
+                                                          SCRIPT_EXEC_DEFAULT_REMOTE_SHELL);
         if (null != node.getAttributes().get(SHELL_ATTRIBUTE)) {
             remoteShell = node.getAttributes().get(SHELL_ATTRIBUTE);
         }
         try {
             if (null != remoteShell) {
                 exec = ScriptUtil.execShellProcess(executionContext.getExecutionListener(), workingdir, scriptargs,
-                    dataContext, newDataContext, remoteShell, "script-exec");
+                                                   dataContext, newDataContext, remoteShell, "script-exec");
             } else {
                 exec = ScriptUtil.execProcess(executionContext.getExecutionListener(), workingdir, scriptargs,
-                    dataContext,
-                    newDataContext, "script-exec");
+                                              dataContext,
+                                              newDataContext, "script-exec");
             }
         } catch (IOException e) {
-            throw new ExecutionException(e);
+            return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), e, node, -1);
         }
 
         int result = -1;
         boolean success = false;
         Thread errthread;
         Thread outthread;
-
+        FailureReason reason;
+        String message;
         try {
             errthread = Streams.copyStreamThread(exec.getErrorStream(), System.err);
             outthread = Streams.copyStreamThread(exec.getInputStream(), System.out);
@@ -201,19 +217,26 @@ public class ScriptNodeExecutor implements NodeExecutor, Describable {
             errthread.join();
             outthread.join();
             success = 0 == result;
+            executionContext.getExecutionListener().log(3,
+                                                        "[script-exec]: result code: " + result + ", success: "
+                                                        + success);
+            if (success) {
+                return NodeExecutorResultImpl.createSuccess(node);
+            }
+            reason = NodeStepFailureReason.NonZeroResultCode;
+            message = "Result code was " + result;
         } catch (InterruptedException e) {
-            e.printStackTrace(System.err);
+            Thread.currentThread().interrupt();
+            reason = StepFailureReason.Interrupted;
+            message = e.getMessage();
         } catch (IOException e) {
             e.printStackTrace(System.err);
+            reason = StepFailureReason.IOFailure;
+            message = e.getMessage();
         }
         executionContext.getExecutionListener().log(3,
-            "[script-exec]: result code: " + result + ", success: " + success);
-        return new NodeExecutorResultImpl(success, node, result) {
-            @Override
-            public String toString() {
-                return "[script-exec] success: " + isSuccess() + ", result code: " + getResultCode();
-            }
-        };
+                                                    "[script-exec]: result code: " + result + ", success: " + success);
+        return NodeExecutorResultImpl.createFailure(reason, message, node, result);
     }
 
     public Description getDescription() {

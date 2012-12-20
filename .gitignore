@@ -3,8 +3,8 @@
 *.iws
 *.ipr
 *.iml
-*.gradle
-build
+*.gradle/
+*/build/
 rundeckapp/stacktrace.log
 rundeckapp/grails-app/i18n/messages.properties.orig
 rundeckapp/lib/rundeck-core-*.jar

@@ -26,7 +26,6 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
@@ -35,7 +34,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
-import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
+import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 
 import java.io.File;
 
@@ -69,7 +68,7 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
                 filepath = executionService.fileCopyFileStream(context, script.getScriptAsStream(), node);
             }
         } catch (FileCopierException e) {
-            throw new NodeStepException(e, node.getNodename());
+            throw new NodeStepException(e.getMessage(), e, e.getFailureReason(), node.getNodename());
         }
 
         return executeRemoteScript(context, context.getFramework(), node, script.getArgs(), filepath);
@@ -110,33 +109,29 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
                                                      final String filepath,
                                                      final String scriptInterpreter,
                                                      final boolean interpreterargsquoted) throws NodeStepException {
-        try {
-            /**
-             * TODO: Avoid this horrific hack. Discover how to get SCP task to preserve the execute bit.
-             */
-            if (!"windows".equalsIgnoreCase(node.getOsFamily())) {
-                //perform chmod+x for the file
+        /**
+         * TODO: Avoid this horrific hack. Discover how to get SCP task to preserve the execute bit.
+         */
+        if (!"windows".equalsIgnoreCase(node.getOsFamily())) {
+            //perform chmod+x for the file
 
-                final NodeExecutorResult nodeExecutorResult = framework.getExecutionService().executeCommand(
-                    context, new String[]{"chmod", "+x", filepath}, node);
-                if (!nodeExecutorResult.isSuccess()) {
-                    return nodeExecutorResult;
-                }
+            final NodeExecutorResult nodeExecutorResult = framework.getExecutionService().executeCommand(
+                context, new String[]{"chmod", "+x", filepath}, node);
+            if (!nodeExecutorResult.isSuccess()) {
+                return nodeExecutorResult;
             }
-
-            //replace data references
-            final String[] newargs = BaseScriptPlugin.createScriptArgs(context.getDataContext(),
-                                                                       null,
-                                                                       args,
-                                                                       scriptInterpreter,
-                                                                       interpreterargsquoted,
-                                                                       filepath);
-            //XXX: windows specific call?
-
-            return framework.getExecutionService().executeCommand(context, newargs, node);
-            //TODO: remove remote temp file after exec?
-        } catch (ExecutionException e) {
-            throw new NodeStepException(e, node.getNodename());
         }
+
+        //replace data references
+        final String[] newargs = ScriptExecUtil.createScriptArgs(context.getDataContext(),
+                                                                 null,
+                                                                 args,
+                                                                 scriptInterpreter,
+                                                                 interpreterargsquoted,
+                                                                 filepath);
+        //XXX: windows specific call?
+
+        return framework.getExecutionService().executeCommand(context, newargs, node);
+        //TODO: remove remote temp file after exec?
     }
 }

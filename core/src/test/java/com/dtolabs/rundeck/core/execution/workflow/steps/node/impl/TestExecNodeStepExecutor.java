@@ -30,7 +30,6 @@ import com.dtolabs.rundeck.core.common.NodeEntryImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
-import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
@@ -39,12 +38,10 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
-import com.dtolabs.rundeck.core.utils.NodeSet;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Map;
 
 /**
  * TestExecNodeStepExecutor is ...
@@ -86,8 +83,7 @@ public class TestExecNodeStepExecutor extends AbstractBaseTest {
         String[] testCommand;
         INodeEntry testNode;
         NodeExecutorResult testResult;
-        public NodeExecutorResult executeCommand(ExecutionContext context, String[] command, INodeEntry node) throws
-            ExecutionException {
+        public NodeExecutorResult executeCommand(ExecutionContext context, String[] command, INodeEntry node) {
             this.testContext=context;
             this.testCommand=command;
             this.testNode=node;
@@ -129,7 +125,7 @@ public class TestExecNodeStepExecutor extends AbstractBaseTest {
             assertTrue(Arrays.deepEquals(strings, testexec.testCommand));
             assertEquals(test1, testexec.testNode);
         }
-        testexec.testResult= new NodeExecutorResultImpl(true, null, -2);
+        testexec.testResult= NodeExecutorResultImpl.createSuccess(test1);
 
         {
             final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
@@ -137,7 +133,8 @@ public class TestExecNodeStepExecutor extends AbstractBaseTest {
             assertTrue(interpreterResult.isSuccess());
             assertTrue(interpreterResult instanceof NodeExecutorResult);
             NodeExecutorResult result = (NodeExecutorResult) interpreterResult;
-            assertEquals(-2, result.getResultCode());
+            assertEquals(0, result.getResultCode());
+            assertEquals(test1, result.getNode());
 
 //            assertEquals(context, testexec.testContext);
             assertTrue(Arrays.deepEquals(strings, testexec.testCommand));
@@ -182,7 +179,7 @@ public class TestExecNodeStepExecutor extends AbstractBaseTest {
             assertTrue(Arrays.deepEquals(strings, testexec.testCommand));
             assertEquals(test1, testexec.testNode);
         }
-        testexec.testResult = new NodeExecutorResultImpl(true, null, -2);
+        testexec.testResult = NodeExecutorResultImpl.createSuccess(test1);
 
         {
             final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
@@ -190,7 +187,8 @@ public class TestExecNodeStepExecutor extends AbstractBaseTest {
             assertTrue(interpreterResult.isSuccess());
             assertTrue(interpreterResult instanceof NodeExecutorResult);
             NodeExecutorResult result = (NodeExecutorResult) interpreterResult;
-            assertEquals(-2, result.getResultCode());
+            assertEquals(0, result.getResultCode());
+            assertEquals(test1, result.getNode());
 
 //            assertEquals(context, testexec.testContext);
             assertTrue(Arrays.deepEquals(strings, testexec.testCommand));

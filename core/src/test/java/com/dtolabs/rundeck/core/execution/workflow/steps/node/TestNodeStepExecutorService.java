@@ -207,7 +207,7 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
                 }
             });
             fail("Should have thrown exception");
-        } catch (IllegalArgumentException e) {
+        } catch (NullPointerException e) {
             assertNotNull(e);
         }
     }

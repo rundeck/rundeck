@@ -24,7 +24,7 @@
 package com.dtolabs.rundeck.core.execution.service;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
 
 
@@ -34,16 +34,44 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class NodeExecutorResultImpl extends NodeStepResultImpl implements NodeExecutorResult {
+    public static final String FAILURE_DATA_RESULT_CODE = "resultCode";
     private int resultCode;
 
-    public NodeExecutorResultImpl(boolean success, INodeEntry node, int resultCode) {
-        super(success, node);
-        this.resultCode = resultCode;
+    public static NodeExecutorResultImpl createSuccess(INodeEntry node) {
+        return new NodeExecutorResultImpl(node, 0);
     }
 
-    public NodeExecutorResultImpl(boolean success, Exception exception, INodeEntry node, int resultCode) {
-        super(success, exception, node);
+    private NodeExecutorResultImpl(INodeEntry node, int resultCode) {
+        super(node);
         this.resultCode = resultCode;
+        getFailureData().put(FAILURE_DATA_RESULT_CODE, resultCode);
+    }
+
+    public static NodeExecutorResultImpl createFailure(FailureReason reason, String message,
+                                                       Exception exception, INodeEntry node, int resultCode) {
+
+        return new NodeExecutorResultImpl(exception, node, resultCode, reason, message);
+    }
+
+    public static NodeExecutorResultImpl createFailure(FailureReason reason,
+                                                       String message,
+                                                       INodeEntry node,
+                                                       int resultCode) {
+
+        return new NodeExecutorResultImpl(null, node, resultCode, reason, message);
+    }
+
+    public static NodeExecutorResultImpl createFailure(FailureReason reason, String message, INodeEntry node) {
+
+        return new NodeExecutorResultImpl(null, node, -1, reason, message);
+    }
+
+    private NodeExecutorResultImpl(Exception exception,
+                                   INodeEntry node,
+                                   int resultCode, final FailureReason reason, final String failureMessage) {
+        super(exception, reason, failureMessage, node);
+        this.resultCode = resultCode;
+        getFailureData().put(FAILURE_DATA_RESULT_CODE, resultCode);
     }
 
     public int getResultCode() {
@@ -72,9 +100,7 @@ public class NodeExecutorResultImpl extends NodeStepResultImpl implements NodeEx
 
     @Override
     public String toString() {
-        return "NodeExecutorResultImpl{" +
-               "resultCode=" + resultCode +
-               ", success=" + isSuccess() +
-               '}';
+        return isSuccess() ? "Succeeded" : getFailureReason() + ": " + getFailureMessage();
     }
+
 }

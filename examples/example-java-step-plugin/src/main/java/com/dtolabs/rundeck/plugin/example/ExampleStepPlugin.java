@@ -24,6 +24,8 @@
 */
 package com.dtolabs.rundeck.plugin.example;
 
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
@@ -65,7 +67,6 @@ public class ExampleStepPlugin implements StepPlugin, Describable {
      *      using annotations such that the property values will be automatically bound to the plugin class instance
      *      fields
      */
-    @Override
     public Description getDescription() {
         return DescriptionBuilder.builder()
             .name(SERVICE_PROVIDER_NAME)
@@ -96,9 +97,9 @@ public class ExampleStepPlugin implements StepPlugin, Describable {
                           .build()
             )
             .property(PropertyBuilder.builder()
-                          .integer("mant")
-                          .title("Mant")
-                          .description("How manty?")
+                          .integer("many")
+                          .title("Many")
+                          .description("How many?")
                           .required(false)
                           .defaultValue("2")
                           .build()
@@ -123,17 +124,26 @@ public class ExampleStepPlugin implements StepPlugin, Describable {
     }
 
     /**
+     * This enum lists the known reasons this plugin might fail
+     */
+    static enum Reason implements FailureReason{
+        ExampleReason
+    }
+
+    /**
      * Here is the meat of the plugin implementation, which should perform the appropriate logic for your plugin.
      * <p/>
      * The {@link PluginStepContext} provides access to the appropriate Nodes, the configuration of the plugin, and
      * details about the step number and context.
      */
-    @Override
-    public boolean executeStep(final PluginStepContext context, final Map<String, Object> configuration) {
-        System.out.println("Stub step executing on nodes: " + context.getNodes().getNodeNames());
-        System.out.println("Stub step configuration: " + configuration);
-        System.out.println("Stub step num: " + context.getStepNumber());
-        System.out.println("Stub step context: " + context.getStepContext());
-        return true;
+    public void executeStep(final PluginStepContext context, final Map<String, Object> configuration) throws
+                                                                                                      StepException{
+        System.out.println("Example step executing on nodes: " + context.getNodes().getNodeNames());
+        System.out.println("Example step configuration: " + configuration);
+        System.out.println("Example step num: " + context.getStepNumber());
+        System.out.println("Example step context: " + context.getStepContext());
+        if ("true".equals(configuration.get("lampkin"))) {
+            throw new StepException("lampkin was true", Reason.ExampleReason);
+        }
     }
 }

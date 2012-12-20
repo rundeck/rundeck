@@ -41,8 +41,8 @@ public interface StepPlugin {
      * @param context       the plugin step context
      * @param configuration Any configuration property values not otherwise applied to the plugin
      *
-     * @throws StepException if an error occurs
+     * @throws StepException if an error occurs, the failureReason should indicate the reason
      */
-    public boolean executeStep(final PluginStepContext context, final Map<String, Object> configuration)
+    public void executeStep(final PluginStepContext context, final Map<String, Object> configuration)
         throws StepException;
 }

@@ -6,6 +6,7 @@ import rundeck.Option
 import rundeck.Notification
 import rundeck.controllers.JobXMLException
 import rundeck.PluginStep
+import rundeck.codecs.JobsXMLCodec
 
 /*
 * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)

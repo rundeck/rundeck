@@ -24,11 +24,12 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
+import com.dtolabs.rundeck.core.CoreException;
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
+import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 
@@ -60,45 +61,87 @@ public class NodeDispatchStepExecutor implements StepExecutor {
             return wrapDispatcherResult(framework.getExecutionService().dispatchToNodes(context, item));
         } catch (DispatcherException e) {
             return wrapDispatcherException(e);
+        } catch (ExecutionServiceException e) {
+            //internal error if failure using node dispatchers
+            throw new CoreException(e);
         }
+    }
+
+    static enum Reason implements FailureReason{
+        /**
+         * Node dispatch failed on at least one node
+         */
+        NodeDispatchFailure
+    }
+    /**
+     * Return a StepExecutionResult based on the DispatcherResult, that can later be extracted.
+     */
+    public static StepExecutionResult wrapDispatcherException(final DispatcherException dispatcherResult) {
+        final StepExecutionResultImpl result = new NodeDispatchStepExecutorExceptionResult(dispatcherResult,
+                                                                                           Reason.NodeDispatchFailure,
+                                                                                           dispatcherResult.getMessage());
+
+        return result;
     }
 
     /**
      * Return a StepExecutionResult based on the DispatcherResult, that can later be extracted.
      */
-    public static StepExecutionResult wrapDispatcherException(final DispatcherException dispatcherResult) {
-        final StepExecutionResultImpl result = new NodeDispatchStepExecutorExceptionResult(dispatcherResult);
-        return result;
-    }
-    /**
-     * Return a StepExecutionResult based on the DispatcherResult, that can later be extracted.
-     */
     public static StepExecutionResult wrapDispatcherResult(final DispatcherResult dispatcherResult) {
-        final StepExecutionResultImpl result = new NodeDispatchStepExecutorResult(dispatcherResult.isSuccess(),
-                                                                            dispatcherResult);
-        result.setSourceResult(dispatcherResult);
+        final StepExecutionResultImpl result;
+        if(dispatcherResult.isSuccess()) {
+            result = NodeDispatchStepExecutorResult.success(dispatcherResult);
+        }else{
+            result = NodeDispatchStepExecutorResult.failure(dispatcherResult,
+                                                            null,
+                                                            Reason.NodeDispatchFailure,
+                                                            "Node dispatch failed");
+        }
         return result;
     }
 
     static class NodeDispatchStepExecutorResult extends StepExecutionResultImpl{
         DispatcherResult dispatcherResult;
-
-        NodeDispatchStepExecutorResult(final boolean success, DispatcherResult dispatcherResult) {
-            super(success);
+        static NodeDispatchStepExecutorResult success(DispatcherResult dispatcherResult) {
+            return new NodeDispatchStepExecutorResult(dispatcherResult);
+        }
+        static NodeDispatchStepExecutorResult failure(DispatcherResult dispatcherResult,
+                                                      final Exception exception,
+                                                      final FailureReason reason, final String message){
+            return new NodeDispatchStepExecutorResult(dispatcherResult, exception, reason, message);
+        }
+        NodeDispatchStepExecutorResult(DispatcherResult dispatcherResult) {
+            super();
+            this.dispatcherResult = dispatcherResult;
+            setSourceResult(dispatcherResult);
+        }
+        NodeDispatchStepExecutorResult(DispatcherResult dispatcherResult,
+                                       final Exception exception, final FailureReason reason, final String message) {
+            super(exception, reason, message);
             this.dispatcherResult = dispatcherResult;
             setSourceResult(dispatcherResult);
         }
         public DispatcherResult getDispatcherResult(){
             return dispatcherResult;
         }
+
+        @Override
+        public String toString() {
+            if (null!=dispatcherResult) {
+                return dispatcherResult.toString();
+            } else {
+                return super.toString();
+            }
+        }
+
     }
     static class NodeDispatchStepExecutorExceptionResult extends StepExecutionResultImpl{
         DispatcherException dispatcherResult;
 
-        NodeDispatchStepExecutorExceptionResult(DispatcherException dispatcherResult) {
-            super(false);
+        NodeDispatchStepExecutorExceptionResult(DispatcherException dispatcherResult,
+                                                final FailureReason reason, final String message) {
+            super(dispatcherResult, reason, message);
             this.dispatcherResult = dispatcherResult;
-            setException(dispatcherResult);
         }
         public DispatcherException getDispatcherException(){
             return dispatcherResult;

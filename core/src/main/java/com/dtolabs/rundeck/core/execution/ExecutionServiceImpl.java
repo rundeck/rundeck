@@ -23,23 +23,30 @@
 */
 package com.dtolabs.rundeck.core.execution;
 
+import com.dtolabs.rundeck.core.CoreException;
 import com.dtolabs.rundeck.core.cli.ExecTool;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
-import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
-import com.dtolabs.rundeck.core.execution.service.*;
+import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
+import com.dtolabs.rundeck.core.execution.service.FileCopier;
+import com.dtolabs.rundeck.core.execution.service.FileCopierException;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.utils.FormattedOutputStream;
 import com.dtolabs.rundeck.core.utils.LogReformatter;
 import com.dtolabs.rundeck.core.utils.MapGenerator;
@@ -63,7 +70,8 @@ class ExecutionServiceImpl implements ExecutionService {
         this.framework = framework;
     }
 
-    public ExecutionResult executeItem(StepExecutionContext context, StepExecutionItem executionItem) throws ExecutionException {
+    public ExecutionResult executeItem(StepExecutionContext context, StepExecutionItem executionItem)
+        throws ExecutionException, ExecutionServiceException {
         if (null != context.getExecutionListener()) {
             context.getExecutionListener().beginStepExecution(context, executionItem);
         }
@@ -89,7 +97,8 @@ class ExecutionServiceImpl implements ExecutionService {
 
         return baseExecutionResult;
     }
-    public StepExecutionResult executeStep(StepExecutionContext context, StepExecutionItem item) throws ExecutionException {
+
+    public StepExecutionResult executeStep(StepExecutionContext context, StepExecutionItem item) throws StepException {
         if (null != context.getExecutionListener()) {
             context.getExecutionListener().beginStepExecution(context, item);
         }
@@ -98,16 +107,14 @@ class ExecutionServiceImpl implements ExecutionService {
         try {
             executor = framework.getStepExecutionService().getExecutorForItem(item);
         } catch (ExecutionServiceException e) {
-            throw new ExecutionException(e);
+            return new StepExecutionResultImpl(e, ServiceFailureReason.ServiceFailure, e.getMessage());
         }
 
-        StepExecutionResult result=null;
+        StepExecutionResult result = null;
         final LogReformatter formatter = createLogReformatter(null, context.getExecutionListener());
         final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
         try {
             result = executor.executeWorkflowStep(context, item);
-        } catch (StepException e) {
-            throw new ExecutionException(e);
         } finally {
             loggingReformatter.resetOutputStreams();
             if (null != context.getExecutionListener()) {
@@ -117,6 +124,10 @@ class ExecutionServiceImpl implements ExecutionService {
         return result;
     }
 
+    static enum ServiceFailureReason implements FailureReason{
+        ServiceFailure
+    }
+
     public NodeStepResult executeNodeStep(StepExecutionContext context,
                                           NodeStepExecutionItem item, INodeEntry node) throws NodeStepException {
 
@@ -124,24 +135,25 @@ class ExecutionServiceImpl implements ExecutionService {
         try {
             interpreter = framework.getNodeStepExecutorForItem(item);
         } catch (ExecutionServiceException e) {
-            throw new NodeStepException(e, node.getNodename());
+            throw new NodeStepException(e, ServiceFailureReason.ServiceFailure, node.getNodename());
         }
 
         if (null != context.getExecutionListener()) {
             context.getExecutionListener().beginExecuteNodeStep(context, item, node);
         }
         //create node context for node and substitute data references in command
-        final Map<String, Map<String, String>> nodeDataContext =
-            DataContextUtils.addContext("node", DataContextUtils.nodeData(node), context.getDataContext());
-//        final String[] nodeCommand = DataContextUtils.replaceDataReferences(command, nodeDataContext);
 
         final LogReformatter formatter = createLogReformatter(node, context.getExecutionListener());
         final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
         NodeStepResult result = null;
         try {
-            final ExecutionContextImpl nodeContext = new ExecutionContextImpl.Builder(context).dataContext(
-                nodeDataContext).build();
+            final ExecutionContextImpl nodeContext = new ExecutionContextImpl.Builder(context)
+                .singleNodeContext(node,true)
+                .build();
             result = interpreter.executeNodeStep(nodeContext, item, node);
+            if (!result.isSuccess()) {
+                context.getExecutionListener().log(0, "Failed: " + result.toString());
+            }
         } finally {
             loggingReformatter.resetOutputStreams();
             if (null != context.getExecutionListener()) {
@@ -152,17 +164,13 @@ class ExecutionServiceImpl implements ExecutionService {
     }
 
     public DispatcherResult dispatchToNodes(StepExecutionContext context, NodeStepExecutionItem item) throws
-        DispatcherException {
+                                                                                                      DispatcherException,
+                                                                                                      ExecutionServiceException {
 
         if (null != context.getExecutionListener()) {
             context.getExecutionListener().beginNodeDispatch(context, item);
         }
-        final NodeDispatcher dispatcher;
-        try {
-            dispatcher = framework.getNodeDispatcherForContext(context);
-        } catch (ExecutionServiceException e) {
-            throw new DispatcherException(e);
-        }
+        final NodeDispatcher dispatcher = framework.getNodeDispatcherForContext(context);
         DispatcherResult result = null;
         try {
             result = dispatcher.dispatch(context, item);
@@ -175,17 +183,13 @@ class ExecutionServiceImpl implements ExecutionService {
     }
 
     public DispatcherResult dispatchToNodes(StepExecutionContext context, Dispatchable item) throws
-        DispatcherException {
+                                                                                             DispatcherException,
+                                                                                             ExecutionServiceException {
 
         if (null != context.getExecutionListener()) {
             context.getExecutionListener().beginNodeDispatch(context, item);
         }
-        final NodeDispatcher dispatcher;
-        try {
-            dispatcher = framework.getNodeDispatcherForContext(context);
-        } catch (ExecutionServiceException e) {
-            throw new DispatcherException(e);
-        }
+        final NodeDispatcher dispatcher = framework.getNodeDispatcherForContext(context);
         DispatcherResult result = null;
         try {
             result = dispatcher.dispatch(context, item);
@@ -208,7 +212,7 @@ class ExecutionServiceImpl implements ExecutionService {
         try {
             copier = framework.getFileCopierForNodeAndProject(node, context.getFrameworkProject());
         } catch (ExecutionServiceException e) {
-            throw new FileCopierException(e);
+            throw new FileCopierException(e.getMessage(), ServiceFailureReason.ServiceFailure, e);
         }
         final LogReformatter formatter = createLogReformatter(node, context.getExecutionListener());
         final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
@@ -233,7 +237,7 @@ class ExecutionServiceImpl implements ExecutionService {
         try {
             copier = framework.getFileCopierForNodeAndProject(node, context.getFrameworkProject());
         } catch (ExecutionServiceException e) {
-            throw new FileCopierException(e);
+            throw new FileCopierException(e.getMessage(), ServiceFailureReason.ServiceFailure, e);
         }
         final LogReformatter formatter = createLogReformatter(node, context.getExecutionListener());
         final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
@@ -258,7 +262,7 @@ class ExecutionServiceImpl implements ExecutionService {
         try {
             copier = framework.getFileCopierForNodeAndProject(node, context.getFrameworkProject());
         } catch (ExecutionServiceException e) {
-            throw new FileCopierException(e);
+            throw new FileCopierException(e.getMessage(), ServiceFailureReason.ServiceFailure, e);
         }
         final LogReformatter formatter = createLogReformatter(node, context.getExecutionListener());
         final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
@@ -275,7 +279,7 @@ class ExecutionServiceImpl implements ExecutionService {
     }
 
     public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
-                                             final INodeEntry node) throws ExecutionException {
+                                             final INodeEntry node) {
 
         if (null != context.getExecutionListener()) {
             context.getExecutionListener().beginNodeExecution(context, command, node);
@@ -284,20 +288,18 @@ class ExecutionServiceImpl implements ExecutionService {
         try {
             nodeExecutor = framework.getNodeExecutorForNodeAndProject(node, context.getFrameworkProject());
         } catch (ExecutionServiceException e) {
-            throw new ExecutionException(e);
+            throw new CoreException(e);
         }
 
         //create node context for node and substitute data references in command
-        final Map<String, Map<String, String>> nodeDataContext =
-            DataContextUtils.addContext("node", DataContextUtils.nodeData(node), context.getDataContext());
-        final String[] nodeCommand = DataContextUtils.replaceDataReferences(command, nodeDataContext);
+        final ExecutionContextImpl nodeContext = new ExecutionContextImpl.Builder(context).nodeContextData(node).build();
+
+        final String[] nodeCommand = DataContextUtils.replaceDataReferences(command, nodeContext.getDataContext());
 
         final LogReformatter formatter = createLogReformatter(node, context.getExecutionListener());
         final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
         NodeExecutorResult result = null;
         try {
-            final ExecutionContextImpl nodeContext = new ExecutionContextImpl.Builder(context).dataContext(
-                nodeDataContext).build();
             result = nodeExecutor.executeCommand(nodeContext, nodeCommand, node);
         } finally {
             loggingReformatter.resetOutputStreams();

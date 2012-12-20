@@ -15,6 +15,7 @@ subprojects{
             addArtifactPattern "$projectDir/../../rundeckapp/target/[module]-[revision](-[classifier]).[ext]"
             addArtifactPattern "$projectDir/../../plugins/script-plugin/build/libs/[module]-[revision](-[classifier]).[ext]"
             addArtifactPattern "$projectDir/../../plugins/stub-plugin/build/libs/[module]-[revision](-[classifier]).[ext]"
+            addArtifactPattern "$projectDir/../../plugins/localexec-plugin/build/libs/[module]-[revision](-[classifier]).[ext]"
             descriptor = 'optional'
             checkmodified = true
         }

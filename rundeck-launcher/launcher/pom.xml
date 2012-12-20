@@ -81,7 +81,7 @@
     </dependency>
     <dependency>
       <groupId>com.dtolabs.rundeck</groupId>
-      <artifactId>rundeck-jetty-server</artifactId>
+      <artifactId>rundeck-localexec-plugin</artifactId>
       <version>1.5-dev</version>
     </dependency>
     <dependency>

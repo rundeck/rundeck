@@ -25,10 +25,14 @@ package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.execution.*;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * StepFirstWorkflowStrategy iterates over the workflow steps and dispatches each one to all nodes matching the filter.
@@ -51,8 +55,8 @@ public class StepFirstWorkflowStrategy extends BaseWorkflowStrategy {
         boolean workflowsuccess = false;
         Exception exception = null;
         final IWorkflow workflow = item.getWorkflow();
-        final Map<Integer, Object> failedList = new HashMap<Integer, Object>();
-        final List<StepExecutionResult> resultList = new ArrayList<StepExecutionResult>();
+        final Map<Integer, StepExecutionResult> stepFailures = new HashMap<Integer, StepExecutionResult>();
+        final List<StepExecutionResult> stepResults = new ArrayList<StepExecutionResult>();
         try {
             executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
                                                         "NodeSet: " + executionContext.getNodeSelector());
@@ -64,22 +68,15 @@ public class StepFirstWorkflowStrategy extends BaseWorkflowStrategy {
             if (iWorkflowCmdItems.size() < 1) {
                 executionContext.getExecutionListener().log(Constants.WARN_LEVEL, "Workflow has 0 items");
             }
-            workflowsuccess = executeWorkflowItemsForNodeSet(executionContext, failedList, resultList,
+            workflowsuccess = executeWorkflowItemsForNodeSet(executionContext, stepFailures, stepResults,
                                                              iWorkflowCmdItems, workflow.isKeepgoing());
-            if (!workflowsuccess) {
-                throw new WorkflowFailureException("Some steps in the workflow failed: " + failedList);
-            }
         } catch (RuntimeException e) {
-            exception = e;
-        } catch (WorkflowStepFailureException e) {
-            exception = e;
-        } catch (WorkflowFailureException e) {
             exception = e;
         }
         final boolean success = workflowsuccess;
         final Exception orig = exception;
-        final Map<String, Collection<String>> failures = convertFailures(failedList);
-        return new BaseWorkflowExecutionResult(resultList, failures, success, orig);
+        final Map<String, Collection<StepExecutionResult>> nodeFailures = convertFailures(stepFailures);
+        return new BaseWorkflowExecutionResult(stepResults, nodeFailures, stepFailures, success, orig);
 
     }
 

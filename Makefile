@@ -51,10 +51,10 @@ launcher = rundeck-launcher/launcher/build/libs/rundeck-launcher-$(VERSION).jar
 rundeck:  $(launcher)
 	@echo $(VERSION)-$(RELEASE)
 
-rpm: docs $(launcher) $(plugs)
+rpm: docs $(launcher) plugins
 	cd packaging; $(MAKE) VERSION=$(VNUMBER) VNAME=$(VERSION) RELEASE=$(RELEASE) rpmclean rpm
 
-deb: docs $(launcher) $(plugs)
+deb: docs $(launcher) plugins
 	cd packaging; $(MAKE) VERSION=$(VNUMBER) VNAME=$(VERSION) RELEASE=$(RELEASE) debclean deb
 
 makedocs:
@@ -95,10 +95,8 @@ $(war): $(core) $(RUNDECK_FILES) $(GRAILS_HOME)
 	cd rundeckapp; $(GRAILS)   test-app
 	cd rundeckapp; yes | $(GRAILS) prod war
 
-$(plugs): $(core) $(PLUGIN_FILES)
-	cd plugins && ./gradlew	
-
-plugins: $(plugs)
+plugins: $(core) $(PLUGIN_FILES)
+	cd plugins && ./gradlew
 
 docs: makedocs
 	mkdir -p ./rundeckapp/web-app/docs

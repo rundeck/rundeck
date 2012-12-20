@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.utils.Streams;
 
 import java.io.*;
@@ -95,7 +96,8 @@ public class BaseFileCopier {
                 return null;
             }
         } catch (IOException e) {
-            throw new FileCopierException("error writing script to tempfile: " + e.getMessage(), e);
+            throw new FileCopierException("error writing script to tempfile: " + e.getMessage(),
+                                          StepFailureReason.IOFailure, e);
         }
 //        System.err.println("Wrote script content to file: " + tempfile);
         try {

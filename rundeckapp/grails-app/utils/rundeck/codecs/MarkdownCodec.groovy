@@ -1,3 +1,4 @@
+package rundeck.codecs
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
  *

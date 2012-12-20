@@ -135,7 +135,6 @@ public class ExampleRemoteScriptNodeStepPlugin implements RemoteScriptNodeStepPl
      * Rundeck.  All fields which were annotated as properties can be modified/removed.  In this example, the Plugin
      * description is changed, and the "money" field property is altered to define a custom validator for the field.
      */
-    @Override
     public void buildWith(final DescriptionBuilder builder) {
         //override the annotated description of this plugin
         builder.title("Example Remote Script Node Step");
@@ -160,7 +159,6 @@ public class ExampleRemoteScriptNodeStepPlugin implements RemoteScriptNodeStepPl
                      * set a custom validator for the property
                      */
                 .validator(new PropertyValidator() {
-                    @Override
                     public boolean isValid(String s) throws ValidationException {
                         try {
                             final int i = Integer.parseInt(s);
@@ -195,7 +193,6 @@ public class ExampleRemoteScriptNodeStepPlugin implements RemoteScriptNodeStepPl
      * <p/>
      * The {@link GeneratedScriptBuilder} provides a factory for returning the correct type.
      */
-    @Override
     public GeneratedScript generateScript(final PluginStepContext context,
                                           final Map<String, Object> configuration,
                                           final INodeEntry entry) {

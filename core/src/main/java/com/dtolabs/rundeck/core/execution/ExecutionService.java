@@ -25,7 +25,9 @@ package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.common.FrameworkSupportService;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
@@ -56,7 +58,8 @@ public interface ExecutionService extends FrameworkSupportService {
      * @return result
      * @deprecated use {@link #executeStep(com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext, StepExecutionItem)}
      */
-    public ExecutionResult executeItem(StepExecutionContext context, StepExecutionItem item) throws ExecutionException;
+    public ExecutionResult executeItem(StepExecutionContext context, StepExecutionItem item)
+        throws ExecutionException, ExecutionServiceException;
 
     /**
      * Execute a workflow step item for the given context and return the result.
@@ -65,9 +68,9 @@ public interface ExecutionService extends FrameworkSupportService {
      *
      * @param item item
      *
-     * @return result
+     * @return not-null result
      */
-    public StepExecutionResult executeStep(StepExecutionContext context, StepExecutionItem item) throws ExecutionException;
+    public StepExecutionResult executeStep(StepExecutionContext context, StepExecutionItem item) throws StepException;
 
     /**
      * Interpret the execution item within the context for the given node.
@@ -79,11 +82,13 @@ public interface ExecutionService extends FrameworkSupportService {
     /**
      * Dispatch the command (execution item) to all the nodes within the context.
      */
-    public DispatcherResult dispatchToNodes(StepExecutionContext context, NodeStepExecutionItem item) throws DispatcherException;
+    public DispatcherResult dispatchToNodes(StepExecutionContext context, NodeStepExecutionItem item)
+        throws DispatcherException, ExecutionServiceException;
     /**
      * Dispatch the command (execution item) to all the nodes within the context.
      */
-    public DispatcherResult dispatchToNodes(StepExecutionContext context, Dispatchable item) throws DispatcherException;
+    public DispatcherResult dispatchToNodes(StepExecutionContext context, Dispatchable item)
+        throws DispatcherException, ExecutionServiceException;
 
 
     /**
@@ -113,6 +118,5 @@ public interface ExecutionService extends FrameworkSupportService {
     /**
      * Execute a command within the context on the node.
      */
-    public NodeExecutorResult executeCommand(ExecutionContext context, String[] command, INodeEntry node) throws
-        ExecutionException;
+    public NodeExecutorResult executeCommand(ExecutionContext context, String[] command, INodeEntry node) ;
 }

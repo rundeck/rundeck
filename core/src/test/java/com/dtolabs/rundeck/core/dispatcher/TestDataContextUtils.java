@@ -573,4 +573,32 @@ public class TestDataContextUtils extends AbstractBaseTest {
             assertEquals(0, map.get("test2").size());
         }
     }
+
+    public void testMerge(){
+        final HashMap<String, Map<String, String>> origContext = new HashMap<String, Map<String, String>>();
+        final HashMap<String, String> test1data = new HashMap<String, String>();
+        test1data.put("key1", "value1");
+        origContext.put("test1", test1data);
+        final HashMap<String, String> test2data = new HashMap<String, String>();
+        test2data.put("key2", "value2");
+        origContext.put("test2", test2data);
+
+
+        final HashMap<String, Map<String, String>> newContext = new HashMap<String, Map<String, String>>();
+        final HashMap<String, String> test3data = new HashMap<String, String>();
+        test3data.put("key1", "value2");
+        newContext.put("test1", test3data);
+        final Map<String, Map<String, String>> result = DataContextUtils.merge(origContext, newContext);
+
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertNotNull(result.get("test1"));
+        assertEquals(1, result.get("test1").size());
+        assertNotNull(result.get("test1").get("key1"));
+        assertEquals("value2", result.get("test1").get("key1"));
+        assertNotNull(result.get("test2"));
+        assertEquals(1, result.get("test2").size());
+        assertNotNull(result.get("test2").get("key2"));
+        assertEquals("value2", result.get("test2").get("key2"));
+    }
 }

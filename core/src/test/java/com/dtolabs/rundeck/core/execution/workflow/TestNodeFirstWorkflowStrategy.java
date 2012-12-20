@@ -27,15 +27,20 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.SelectorUtils;
-import com.dtolabs.rundeck.core.execution.*;
+import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
+import com.dtolabs.rundeck.core.execution.ExecutionListenerOverride;
+import com.dtolabs.rundeck.core.execution.FailedNodesListener;
+import com.dtolabs.rundeck.core.execution.StatusResult;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
+import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
+import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
-import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
-import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
@@ -216,33 +221,9 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             executionContextList.add(executionContext);
             nodeEntryList.add(iNodeEntry);
             if (shouldThrowException) {
-                throw new NodeStepException("testInterpreter test exception", iNodeEntry.getNodename());
+                throw new NodeStepException("testInterpreter test exception", null,iNodeEntry.getNodename());
             }
             return resultList.get(index++);
-        }
-    }
-
-    static class testResult implements NodeStepResult {
-        boolean success;
-        int flag;
-        INodeEntry node;
-        Exception exception;
-
-        testResult(boolean success, int flag) {
-            this.success = success;
-            this.flag = flag;
-        }
-
-        public boolean isSuccess() {
-            return success;
-        }
-
-        public INodeEntry getNode() {
-            return node;
-        }
-
-        public Exception getException() {
-            return exception;
         }
     }
 
@@ -282,9 +263,9 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
 
             //set resturn result node 1
-            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
+            interpreterMock.resultList.add(new NodeStepResultImpl(null));
             //set resturn result node 2
-            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
+            interpreterMock.resultList.add(new NodeStepResultImpl(null));
 
             final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
 
@@ -371,11 +352,11 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
 
             //set resturn result node 1
-            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
+            interpreterMock.resultList.add(new NodeStepResultImpl(null));
             //set resturn result node 2
-            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
+            interpreterMock.resultList.add(new NodeStepResultImpl(null));
             //set resturn result node 3
-            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
+            interpreterMock.resultList.add(new NodeStepResultImpl(null));
 
             final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
 
@@ -574,7 +555,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
 
         for (final String s : expected) {
             //set resturn result
-            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
+            interpreterMock.resultList.add(new NodeStepResultImpl(null));
         }
 
         final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
@@ -637,13 +618,13 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
 
             //set resturn result node 1 step 1
-            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
+            interpreterMock.resultList.add(new NodeStepResultImpl(null));
             //set resturn result node 2 step 1
-            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
+            interpreterMock.resultList.add(new NodeStepResultImpl(null));
             //set resturn result node 1 step 2
-            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
+            interpreterMock.resultList.add(new NodeStepResultImpl(null));
             //set resturn result node 2 step 2
-            interpreterMock.resultList.add(new NodeStepResultImpl(true, null));
+            interpreterMock.resultList.add(new NodeStepResultImpl(null));
 
             final WorkflowExecutionResult result = strategy.executeWorkflow(context, executionItem);
 
