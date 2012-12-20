@@ -4,9 +4,13 @@
 
 description = 'This is the launcher application which wraps the Jetty server'
 
+apply plugin:'application'
+
+mainClassName = 'com.dtolabs.rundeck.ExpandRunServer'
+
 archivesBaseName = 'rundeck-launcher'
 defaultTasks 'clean','launcherJar'
-ext.launcherMainClass = "com.dtolabs.rundeck.ExpandRunServer"
+ext.launcherMainClass = mainClassName
 ext.launcherStartClass = "com.dtolabs.rundeck.RunServer"
 ext.launcherJettyLibs = "servlet-api-2.5-20081211.jar jetty-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-naming-${jettyVersion}.jar jetty-plus-${jettyVersion}.jar"
 ext.launcherJettyLibsUnexpanded = 'servlet-api-2.5-20081211.jar jetty-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-naming-${jettyVersion}.jar jetty-plus-${jettyVersion}.jar'
