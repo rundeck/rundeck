@@ -59,6 +59,9 @@ public class StepExecutionResultImpl implements StepExecutionResult, HasSourceRe
         this.failureReason=failureReason;
         this.failureMessage=failureMessage;
     }
+    public static StepExecutionResultImpl wrapStepException(StepException e) {
+        return new StepExecutionResultImpl(e, e.getFailureReason(), e.getMessage());
+    }
 
     public boolean isSuccess() {
         return success;

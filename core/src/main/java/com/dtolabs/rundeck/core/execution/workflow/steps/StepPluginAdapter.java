@@ -76,7 +76,7 @@ class StepPluginAdapter implements StepExecutor, Describable {
 
     @Override
     public StepExecutionResult executeWorkflowStep(final StepExecutionContext executionContext,
-                                                   final StepExecutionItem item)
+                                                   final StepExecutionItem item) throws StepException
         {
         Map<String, Object> instanceConfiguration = getStepConfiguration(item);
         if (null != instanceConfiguration) {
@@ -95,8 +95,6 @@ class StepPluginAdapter implements StepExecutor, Describable {
             plugin.executeStep(stepContext, config);
         } catch (RuntimeException e) {
             return new StepExecutionResultImpl(e, StepFailureReason.PluginFailed, e.getMessage());
-        } catch (StepException e) {
-            return new StepExecutionResultImpl(e, e.getFailureReason(), e.getMessage());
         }
         return new StepExecutionResultImpl();
     }

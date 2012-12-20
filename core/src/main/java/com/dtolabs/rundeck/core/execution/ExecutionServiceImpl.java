@@ -39,6 +39,7 @@ import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
@@ -97,7 +98,7 @@ class ExecutionServiceImpl implements ExecutionService {
         return baseExecutionResult;
     }
 
-    public StepExecutionResult executeStep(StepExecutionContext context, StepExecutionItem item) {
+    public StepExecutionResult executeStep(StepExecutionContext context, StepExecutionItem item) throws StepException {
         if (null != context.getExecutionListener()) {
             context.getExecutionListener().beginStepExecution(context, item);
         }

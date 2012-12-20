@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.common.FrameworkSupportService;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
@@ -69,7 +70,7 @@ public interface ExecutionService extends FrameworkSupportService {
      *
      * @return not-null result
      */
-    public StepExecutionResult executeStep(StepExecutionContext context, StepExecutionItem item);
+    public StepExecutionResult executeStep(StepExecutionContext context, StepExecutionItem item) throws StepException;
 
     /**
      * Interpret the execution item within the context for the given node.

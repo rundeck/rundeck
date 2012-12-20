@@ -32,6 +32,8 @@ import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
@@ -155,10 +157,16 @@ public abstract class BaseWorkflowStrategy implements WorkflowStrategy {
             executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
                                                         c + ": Workflow step executing: " + cmd);
         }
-        final StepExecutionResult result = framework.getExecutionService().executeStep(
-            ExecutionContextImpl.builder(executionContext).stepNumber(c).build(),
-            cmd);
-        if (!result.isSuccess()) {
+        StepExecutionResult result;
+        try {
+            result = framework.getExecutionService().executeStep(
+                ExecutionContextImpl.builder(executionContext).stepNumber(c).build(),
+                cmd);
+            if (!result.isSuccess()) {
+                failedMap.put(c, result);
+            }
+        } catch (StepException e) {
+            result = StepExecutionResultImpl.wrapStepException(e);
             failedMap.put(c, result);
         }
         if (null != executionContext.getExecutionListener()) {
