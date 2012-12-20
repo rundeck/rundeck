@@ -2,23 +2,45 @@ package rundeck.services
 
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 
+import com.dtolabs.rundeck.app.support.BaseNodeFilters
+import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.cli.CLIToolLogger
 import com.dtolabs.rundeck.core.cli.CLIUtils
 import com.dtolabs.rundeck.core.common.Framework
-
+import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.NodesSelector
 import com.dtolabs.rundeck.core.common.SelectorUtils
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
-import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.ExecutionListener
+import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
-
 import com.dtolabs.rundeck.execution.JobExecutionItem
+import com.dtolabs.rundeck.execution.JobReferenceFailureReason
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.util.GrailsWebUtil
+import org.apache.tools.ant.BuildEvent
+import org.apache.tools.ant.BuildException
+import org.apache.tools.ant.BuildLogger
+import org.apache.tools.ant.Project
+import org.codehaus.groovy.grails.web.context.ServletContextHolder
+import org.hibernate.StaleObjectStateException
+import org.springframework.beans.BeansException
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
+import org.springframework.context.MessageSource
+import org.springframework.web.context.request.RequestContextHolder
+import org.springframework.web.context.support.WebApplicationContextUtils
+import rundeck.controllers.ExecutionController
+
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
 import java.util.logging.Handler
@@ -26,45 +48,11 @@ import java.util.logging.Level
 import java.util.logging.LogRecord
 import java.util.logging.Logger
 import java.util.regex.Pattern
+import javax.security.auth.Subject
 import javax.servlet.http.HttpSession
-import org.apache.tools.ant.BuildEvent
-import org.apache.tools.ant.BuildException
-import org.apache.tools.ant.BuildLogger
-import org.apache.tools.ant.Project
-import org.codehaus.groovy.grails.web.context.ServletContextHolder
-import org.springframework.beans.BeansException
-import org.springframework.context.ApplicationContext
-import org.springframework.context.ApplicationContextAware
-import org.springframework.context.MessageSource
-import org.springframework.web.context.request.RequestContextHolder
-import org.springframework.web.context.support.WebApplicationContextUtils
 
 import com.dtolabs.rundeck.core.execution.workflow.*
-import com.dtolabs.rundeck.server.authorization.AuthConstants
-
-import org.hibernate.StaleObjectStateException
-import javax.security.auth.Subject
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService
-
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
-
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
-import rundeck.WorkflowStep
-import com.dtolabs.rundeck.app.support.BaseNodeFilters
-import com.dtolabs.rundeck.app.support.QueueQuery
-import rundeck.ScheduledExecution
-import rundeck.Execution
-import rundeck.ExecutionContext
-import rundeck.User
-import rundeck.CommandExec
-import rundeck.JobExec
-import rundeck.Workflow
-import rundeck.Option
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult
-import rundeck.PluginStep
-import rundeck.controllers.ExecutionController
-import com.dtolabs.rundeck.core.common.INodeSet
+import rundeck.*
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -1297,7 +1285,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
      * require the values in the properties to match the regular expressions.  Throw ExecutionServiceException if
      * any options don't match.
      */
-    def boolean validateOptionValues(ScheduledExecution scheduledExecution, Map optparams) throws ExecutionServiceException{
+    def boolean validateOptionValues(ScheduledExecution scheduledExecution, Map optparams) throws ExecutionServiceValidationException {
+
         def fail = false
         def StringBuffer sb = new StringBuffer()
 
@@ -1719,9 +1708,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         return false
     }
 
-    StepExecutionResult executeWorkflowStep(StepExecutionContext executionContext, StepExecutionItem executionItem) {
+    StepExecutionResult executeWorkflowStep(StepExecutionContext executionContext, StepExecutionItem executionItem) throws StepException{
         if (!(executionItem instanceof JobExecutionItem)) {
-            throw new StepException("Unsupported item type: " + executionItem.getClass().getName());
+            throw new IllegalArgumentException("Unsupported item type: " + executionItem.getClass().getName());
         }
         def requestAttributes = RequestContextHolder.getRequestAttributes()
         boolean unbindrequest = false
@@ -1749,20 +1738,21 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             }
             def schedlist = ScheduledExecution.findAllScheduledExecutions(group,name,executionContext.getFrameworkProject())
             if (!schedlist || 1 != schedlist.size()) {
-                executionContext.getExecutionListener().log(0,"Job ref [${jitem.jobIdentifier}] invalid: No Unique Job found for name: ${name}, group: ${group}, project: ${executionContext.getFrameworkProject()}")
-                throw new StepException("Job ref [${jitem.jobIdentifier}] invalid: No Unique Job found for name: ${name}, group: ${group}, project: ${executionContext.getFrameworkProject()}")
+                def msg= "Job [${jitem.jobIdentifier}] not found, project: ${executionContext.getFrameworkProject()}"
+                executionContext.getExecutionListener().log(0,msg)
+                throw new StepException(msg,JobReferenceFailureReason.NotFound)
             }
             id = schedlist[0].id
-            def com.dtolabs.rundeck.core.execution.ExecutionContext newContext
+            def StepExecutionContext newContext
             def WorkflowExecutionItem newExecItem
 
             ScheduledExecution.withTransaction{status->
                 ScheduledExecution se = ScheduledExecution.get(id)
 
                 if (!frameworkService.authorizeProjectJobAll(executionContext.getFramework(), se, [AuthConstants.ACTION_RUN], se.project)) {
-                    def msg= "Unauthorized to execute job ${jitem.jobIdentifier}: ${se.extid}"
-                    executionContext.getExecutionListener().log(0,"Job ref [${jitem.jobIdentifier}] failed: " + msg);
-                    result = new StepExecutionResultImpl(false,msg)
+                    def msg= "Unauthorized to execute job [${jitem.jobIdentifier}}: ${se.extid}"
+                    executionContext.getExecutionListener().log(0, msg);
+                    result = new StepExecutionResultImpl(null,JobReferenceFailureReason.Unauthorized,msg)
                     return
                 }
 //                    se.refresh()
@@ -1812,10 +1802,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                 //validate the option values
                 try {
                     validateOptionValues(se, evalPlainOpts + evalSecOpts + evalSecAuthOpts)
-                } catch (Exception e) {
-                    def msg = "Failed to execute job ${jitem.jobIdentifier}: ${se.extid}: ${e.message}"
-                    executionContext.getExecutionListener().log(0, "Job ref [${jitem.jobIdentifier}] failed: " + msg);
-                    result = new StepExecutionResultImpl(false, msg)
+                } catch (ExecutionServiceValidationException e) {
+                    executionContext.getExecutionListener().log(0, "Option input was not valid for [${jitem.jobIdentifier}]: ${e.message}");
+                    def msg = "Invalid options: ${e.errors.keySet()}"
+                    result = new StepExecutionResultImpl(e,JobReferenceFailureReason.InvalidOptions, msg)
                     return
                 }
 
@@ -1840,14 +1830,24 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             if(null!=result){
                 return result
             }
+
+            if (newContext.getNodes().getNodeNames().size()<1){
+                def msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
+                executionContext.getExecutionListener().log(0, msg)
+                throw new StepException(JobReferenceFailureReason.NoMatchedNodes, msg)
+            }
+
             def WorkflowExecutionService service = executionContext.getFramework().getWorkflowExecutionService()
 
-            final WorkflowExecutionResult wresult = service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
-            if(!wresult || !wresult.isSuccess()){
-                System.err.println("Job ref [${jitem.jobIdentifier}] failed: "+ wresult);
+            def wresult = service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
+
+            if(!wresult || !wresult.success ){
+                result = new StepExecutionResultImpl(null, JobReferenceFailureReason.JobFailed, "Job [${jitem.jobIdentifier}] failed")
+            }else{
+                result=new StepExecutionResultImpl()
             }
-            result=new StepExecutionResultImpl(wresult.isSuccess())
-            result.sourceResult=wresult
+            result.sourceResult = wresult
+
         } finally {
             if (unbindrequest) {
                 RequestContextHolder.setRequestAttributes (null)
