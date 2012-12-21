@@ -656,21 +656,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
      * @return ScheduledExecution found or null
      */
     def ScheduledExecution getByIDorUUID(anid){
-        def found=null
-        if(anid instanceof Long){
-            return ScheduledExecution.get(anid)
-        }else if(anid instanceof String){
-            //attempt to parse as long id
-            try {
-                def long idlong = Long.parseLong(anid)
-                found = ScheduledExecution.get(idlong)
-            } catch (NumberFormatException e) {
-            }
-            if (!found) {
-                found=ScheduledExecution.findByUuid(anid)
-            }
-        }
-        return found
+        ScheduledExecution.getByIdOrUUID(anid)
     }
 
     /**
