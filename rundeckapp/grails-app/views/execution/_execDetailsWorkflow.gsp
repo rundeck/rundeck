@@ -136,24 +136,24 @@
     </div>
         <script type="text/javascript">
             fireWhenReady('wfnew_eh_types',function(){
-                $('wfnew_eh_types').select('span.add_step_type').each(function (e) {
+                $('wfnew_eh_types').select('.add_step_type').each(function (e) {
                     Event.observe(e, 'click', _evtNewEHChooseType);
                 });
-                $('wfnew_eh_types').select('span.add_node_step_type').each(function (e) {
+                $('wfnew_eh_types').select('.add_node_step_type').each(function (e) {
                     Event.observe(e, 'click', _evtNewEHNodeStepType);
                 });
-                $('wfnew_eh_types').select('span.cancel_add_step_type').each(function (e) {
+                $('wfnew_eh_types').select('.cancel_add_step_type').each(function (e) {
                     Event.observe(e, 'click', _evtNewEHCancel);
                 });
             })
             fireWhenReady('wfnewtypes', function () {
-                $('wfnewtypes').select('span.add_step_type').each(function (e) {
+                $('wfnewtypes').select('.add_step_type').each(function (e) {
                     Event.observe(e, 'click', _evtNewStepChooseType);
                 });
-                $('wfnewtypes').select('span.add_node_step_type').each(function (e) {
+                $('wfnewtypes').select('.add_node_step_type').each(function (e) {
                     Event.observe(e, 'click', _evtNewNodeStepChooseType);
                 });
-                $('wfnewtypes').select('span.cancel_add_step_type').each(function (e) {
+                $('wfnewtypes').select('.cancel_add_step_type').each(function (e) {
                     Event.observe(e, 'click', _evtNewStepCancel);
                 });
             })

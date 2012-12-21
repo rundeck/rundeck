@@ -68,7 +68,7 @@
     <td>
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
     <g:textField name="${fieldname}" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
-                 id="${fieldid}" size="40"/>
+                 id="${fieldid}" size="80"/>
 </g:else>
     <div class="info note">${prop.description?.encodeAsHTML()}</div>
     <g:if test="${error}">

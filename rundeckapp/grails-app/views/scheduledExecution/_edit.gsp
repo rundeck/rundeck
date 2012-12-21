@@ -304,6 +304,18 @@ var applinks={
     #matchednodes .allnodes{
         width:600px;
     }
+
+    /** add step styles */
+    .add_step_buttons ul{
+        margin:0;
+        list-style-type: none;
+    }
+    .add_step_buttons td{
+        vertical-align: top;
+    }
+    .add_step_buttons td .action{
+        padding: 2px 0;
+    }
 </style>
 <g:set var="wasSaved" value="${ (params?.saved=='true') || scheduledExecution?.id || scheduledExecution?.jobName || scheduledExecution?.scheduled}"/>
     
@@ -575,7 +587,10 @@ var applinks={
                 <g:hiddenField name="_sessionwf" value="true"/>
                 <g:if test="${null==editwf || null==editwf.commands || 0==editwf.commands.size()}">
                     <g:javascript>
-                        fireWhenReady('workflowContent',function(){_wfiaddnew('command');});
+                        fireWhenReady('workflowContent',function(){
+                            $('wfnewtypes').show();
+                            $('wfnewbutton').hide();
+                        });
                     </g:javascript>
                 </g:if>
             </td>
