@@ -607,7 +607,7 @@ class ScheduledExecution extends ExecutionContext {
      * @param anid
      * @return ScheduledExecution found or null
      */
-    static ScheduledExecution getByIdOrUUID(String anid){
+    static ScheduledExecution getByIdOrUUID(anid){
         def found = null
         if (anid instanceof Long) {
             return ScheduledExecution.get(anid)
