@@ -4,10 +4,10 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <artifactId>rundeck-bundled-plugins</artifactId>
-    <groupId>com.dtolabs.rundeck</groupId>
+    <groupId>org.rundeck</groupId>
     <version>1.4.4</version>
   </parent>
-  <groupId>com.dtolabs.rundeck</groupId>
+  <groupId>org.rundeck</groupId>
   <artifactId>rundeck-script-plugin</artifactId>
   <version>1.4.4</version>
   <name>RunDeck Script Plugin</name>

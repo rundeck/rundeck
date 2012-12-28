@@ -5,7 +5,7 @@ apply plugin: 'maven'
 sourceCompatibility = 1.5
 version = '1.4.4'
 archivesBaseName = 'rundeck-core'
-group = "com.dtolabs.rundeck"
+group = "org.rundeck"
 defaultTasks 'clean','assemble'
 repositories {
     mavenCentral()
@@ -81,7 +81,7 @@ uploadArchives {
 			configuration = configurations.archives
             pom.project {
                 artifactId archivesBaseName
-                groupId "com.dtolabs.rundeck"
+                groupId "org.rundeck"
                 inceptionYear '2011'
                 packaging 'jar'
                 version version
@@ -107,7 +107,7 @@ task createPom << {
     pom {
         project {
             artifactId archivesBaseName
-            groupId "com.dtolabs.rundeck"
+            groupId project.group
             inceptionYear '2011'
             packaging 'jar'
             version version

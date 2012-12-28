@@ -22,11 +22,11 @@ dependencies {
         [group: 'commons-cli', name: 'commons-cli', version: '1.0',ext:'jar'],
     )
     warBundle(
-        [group: 'com.dtolabs.rundeck', name: 'rundeck', version: version,ext:'war']
+        [group: 'org.rundeck', name: 'rundeck', version: version,ext:'war']
     )
     pluginFiles(
-        [group: 'com.dtolabs.rundeck', name: 'rundeck-script-plugin', version: version,ext:'jar'],            
-        [group: 'com.dtolabs.rundeck', name: 'rundeck-stub-plugin', version: version,ext:'jar']
+        [group: 'org.rundeck', name: 'rundeck-script-plugin', version: version,ext:'jar'],            
+        [group: 'org.rundeck', name: 'rundeck-stub-plugin', version: version,ext:'jar']
     )
     jettyServerLib(project(path:":rundeck-jetty-server",configuration:'runtime')){
         exclude module:'commons-cli'
@@ -102,7 +102,7 @@ task createPom << {
     pom {
         project {
             artifactId archivesBaseName
-            groupId "com.dtolabs.rundeck"
+            groupId project.group
             inceptionYear '2011'
             packaging 'jar'
             version version
