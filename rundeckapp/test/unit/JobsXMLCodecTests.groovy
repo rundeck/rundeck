@@ -416,6 +416,65 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNotNull jobs
             assertNull "incorrect groupPath",jobs[0].groupPath
     }
+    /**
+     * Empty options declaration
+     */
+    void testDecodeEmptyOptions(){
+        def xml= """<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description>a simple desc</description>
+    <loglevel>INFO</loglevel>
+    <group>some/group</group>
+    <context>
+      <project>test1</project>
+      <options/>
+    </context>
+    <sequence><command><exec>test</exec></command></sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+  </job>
+</joblist>
+"""
+
+        def jobs = JobsXMLCodec.decode(xml)
+        assertNotNull jobs
+        assertNull "incorrect options", jobs[0].options
+    }
+    /**
+     * Options contains text content
+     */
+    void testDecodeInvalidOptions(){
+        def xml= """<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description>a simple desc</description>
+    <loglevel>INFO</loglevel>
+    <group>some/group</group>
+    <context>
+      <project>test1</project>
+      <options>asdf</options>
+    </context>
+    <sequence><command><exec>test</exec></command></sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+  </job>
+</joblist>
+"""
+
+        try {
+            def jobs = JobsXMLCodec.decode(xml)
+            fail "Should not succeed"
+        } catch (JobXMLException e) {
+            assertNotNull e
+        }
+    }
     void testDecodeNodedispatchEmptyThreadcount(){
         def basic7 = """<joblist>
   <job>
