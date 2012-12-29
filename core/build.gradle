@@ -81,7 +81,7 @@ uploadArchives {
 			configuration = configurations.archives
             pom.project {
                 artifactId archivesBaseName
-                groupId "org.rundeck"
+                groupId project.group
                 inceptionYear '2011'
                 packaging 'jar'
                 version version
@@ -97,6 +97,22 @@ uploadArchives {
             }
     }
 
+}
+
+//create javadoc archive
+task javadocJar(type: Jar,dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+//create sources archive
+task sourcesJar(type:Jar){
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts{
+    archives javadocJar, sourcesJar
 }
 
 task wrapper(type: Wrapper) {
