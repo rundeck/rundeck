@@ -4,10 +4,10 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <artifactId>rundeck-bundled-plugins</artifactId>
-    <groupId>com.dtolabs.rundeck</groupId>
+    <groupId>org.rundeck</groupId>
     <version>1.5-dev</version>
   </parent>
-  <groupId>com.dtolabs.rundeck</groupId>
+  <groupId>org.rundeck</groupId>
   <artifactId>rundeck-localexec-plugin</artifactId>
   <version>1.5-dev</version>
   <name>RunDeck LocalExec Node Step Plugin</name>
