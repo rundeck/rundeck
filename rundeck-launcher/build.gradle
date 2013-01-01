@@ -2,7 +2,7 @@ allprojects{
     version = '1.5-dev'
     defaultTasks 'clean','assemble'
     apply plugin: 'idea'
-    group  = 'com.dtolabs.rundeck'
+    group  = 'org.rundeck'
 }
 subprojects{
     apply plugin: 'java'
@@ -30,7 +30,7 @@ task createPom << {
     pom {
         project {
             artifactId 'rundeck-launcher-parent'
-            groupId "com.dtolabs.rundeck"
+            groupId project.group
             inceptionYear '2011'
             packaging 'pom'
             version version

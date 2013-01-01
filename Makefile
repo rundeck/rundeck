@@ -46,7 +46,7 @@ launcher = rundeck-launcher/launcher/build/libs/rundeck-launcher-$(VERSION).jar
 
 
 
-.PHONY: clean rundeck docs makedocs plugins war launcher
+.PHONY: clean rundeck docs makedocs plugins war launcher core-release core-snapshot
 
 rundeck:  $(launcher)
 	@echo $(VERSION)-$(RELEASE)
@@ -62,6 +62,12 @@ makedocs:
 
 $(core): $(CORE_FILES)
 	cd core; ./gradlew $(PROXY_DEFS) -PbuildNum=$(RELEASE) clean check assemble javadoc
+
+core-snapshot: $(CORE_FILES)
+	cd core; ./gradlew $(PROXY_DEFS) -Psnapshot -PbuildNum=$(RELEASE) uploadArchives
+
+core-release: $(CORE_FILES)
+	cd core; ./gradlew $(PROXY_DEFS) -Prelease -PbuildNum=$(RELEASE) uploadArchives
 
 war: $(war)
 

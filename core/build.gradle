@@ -1,12 +1,28 @@
 import org.apache.tools.ant.filters.ReplaceTokens
+import org.gradle.plugins.signing.Sign
 
 apply plugin: 'java'
 apply plugin: 'maven'
+apply plugin: 'signing'
 sourceCompatibility = 1.5
 version = '1.5-dev'
 archivesBaseName = 'rundeck-core'
-group = "com.dtolabs.rundeck"
+group = "org.rundeck"
 defaultTasks 'clean','assemble'
+
+def isReleaseBuild
+def isSnapshotBuild
+def isDevBuild
+
+if(hasProperty("release")){
+    isReleaseBuild=true
+}else if(hasProperty("snapshot")){
+    isSnapshotBuild=true
+    version=version.split('-')[0]+ '-SNAPSHOT'
+}else{
+    isDevBuild=true
+}
+
 repositories {
     mavenCentral()
     add(new org.apache.ivy.plugins.resolver.FileSystemResolver()) {
@@ -76,102 +92,172 @@ assemble {
     }
 }
 
-uploadArchives {
-		repositories.mavenDeployer {
-			configuration = configurations.archives
-            pom.project {
-                artifactId archivesBaseName
-                groupId "com.dtolabs.rundeck"
-                inceptionYear '2011'
-                packaging 'jar'
-                version version
-                name "RunDeck Core"
-                url 'http://rundeck.org'
-                licenses {
-                    license {
-                        name 'The Apache Software License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                        distribution 'repo'
-                    }
-                }
-            }
-    }
 
+//create javadoc archive
+task javadocJar(type: Jar,dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+//create sources archive
+task sourcesJar(type:Jar){
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts{
+    archives jar, javadocJar, sourcesJar
+}
+
+//********* artifact signing *********
+if(isReleaseBuild) {
+    signing {
+        sign configurations.archives
+    }
+} else {
+    task signArchives {
+        // do nothing
+    }
 }
 
 task wrapper(type: Wrapper) {
     gradleVersion = '1.0'
 }
 
-task createPom << {
-    pom {
-        project {
-            artifactId archivesBaseName
-            groupId "com.dtolabs.rundeck"
-            inceptionYear '2011'
-            packaging 'jar'
-            version version
-            name "RunDeck Core"
-            url 'http://rundeck.org'
-            licenses {
-                license {
-                    name 'The Apache Software License, Version 2.0'
-                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    distribution 'repo'
+//build a pom we reuse for both maven builds and release to sonatype
+def buildpom=pom {
+    project {
+        artifactId archivesBaseName
+        groupId project.group
+        inceptionYear '2011'
+        packaging 'jar'
+        version version
+        name "Rundeck Core"
+        description "Core library for the Rundeck web console for command dispatching and job scheduling"
+        url 'http://rundeck.org'
+        licenses {
+            license {
+                name 'The Apache Software License, Version 2.0'
+                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution 'repo'
+            }
+        }
+        properties{
+            'version'(version)
+            'version_build'(buildNum)
+            'version_ident'(version+'-'+buildNum)
+        }
+        scm {
+            url 'https://github.com/dtolabs/rundeck'
+            connection 'scm:git:git@github.com/dtolabs/rundeck.git'
+            developerConnection 'scm:git:git@github.com:dtolabs/rundeck.git'
+        }
+        developers {
+          developer {
+            id('gschueler')
+            name('Greg Schueler')
+            email('greg@dtosolutions.com')
+          }
+        }
+        parent {
+            groupId('org.sonatype.oss')
+            artifactId('oss-parent')
+            version('7')
+        }
+        build {
+            resources{
+                resource{
+                    directory 'src/main/meta'
+                    targetPath 'META-INF'
+                    filtering=true
+                }
+                resource{
+                    directory 'src/main/resources'
                 }
             }
-            properties{
-                'version'(version)
-                'version_build'(buildNum)
-                'version_ident'(version+'-'+buildNum)
-            }
-            build {
-                resources{
-                    resource{
-                        directory 'src/main/meta'
-                        targetPath 'META-INF'
-                        filtering=true
-                    }
-                    resource{
-                        directory 'src/main/resources'
+            plugins{
+                plugin{
+                    groupId 'org.apache.maven.plugins'
+                    artifactId 'maven-compiler-plugin'
+                    version '2.3.2'
+                    configuration{
+                        'source'('1.5')
+                        'target'('1.5')
                     }
                 }
-                plugins{
-                    plugin{
-                        groupId 'org.apache.maven.plugins'
-                        artifactId 'maven-compiler-plugin'
-                        version '2.3.2'
-                        configuration{
-                            'source'('1.5')
-                            'target'('1.5')
+                plugin{
+                    groupId 'org.apache.maven.plugins'
+                    artifactId 'maven-surefire-plugin'
+                    version '2.10'
+                    configuration{
+                        systemPropertyVariables{
+                            'rdeck.base'('${project.build.directory}/rdeck_base')
                         }
+                        redirectTestOutputToFile 'true'
                     }
-                    plugin{
-                        groupId 'org.apache.maven.plugins'
-                        artifactId 'maven-surefire-plugin'
-                        version '2.10'
-                        configuration{
-                            systemPropertyVariables{
-                                'rdeck.base'('${project.build.directory}/rdeck_base')
-                            }
-                            redirectTestOutputToFile 'true'
-                        }
-                    }
-                    plugin{
-                        groupId 'org.apache.maven.plugins'
-                        artifactId 'maven-jar-plugin'
-                        version '2.3.2'
-                        configuration{
-                            archive{
-                              manifestEntries{
-                                'Rundeck-Version'(version)
-                                'Rundeck-Tools-Dependencies'(configurations.runtime.collect { "$it.name" }.join(" "))
-                              }
-                            }
+                }
+                plugin{
+                    groupId 'org.apache.maven.plugins'
+                    artifactId 'maven-jar-plugin'
+                    version '2.3.2'
+                    configuration{
+                        archive{
+                          manifestEntries{
+                            'Rundeck-Version'(version)
+                            'Rundeck-Tools-Dependencies'(configurations.runtime.collect { "$it.name" }.join(" "))
+                          }
                         }
                     }
                 }
             }
         }
-    }.writeTo("pom.xml")
+    }
+}
+
+task createPom << {
+    buildpom.writeTo("pom.xml")
+}
+
+
+// prompt for PGP key passphrase if not set
+gradle.taskGraph.whenReady { taskGraph ->
+    if (taskGraph.allTasks.any { it instanceof Sign } && !ext.hasProperty("signing.password") && !isDevBuild) {
+        // Use Java 6's console to read from the console (no good for a CI environment)
+        Console console = System.console()
+        console.printf "\n\nWe have to sign some things in this build.\n\nPlease enter your signing details.\n\n"
+
+        //def id = console.readLine("PGP Key Id: ")
+        //def file = console.readLine("PGP Secret Key Ring File (absolute path): ")
+        def password = console.readPassword("PGP Private Key Password: ")
+
+        //allprojects { ext."signing.keyId" = id }
+        //allprojects { ext."signing.secretKeyRingFile" = file }
+        allprojects { ext."signing.password" = password }
+
+        console.printf "\nThanks.\n\n"
+    }
+}
+
+uploadArchives {
+    if(isDevBuild){
+        repositories{
+            mavenLocal()
+        }
+    }else{
+        repositories.mavenDeployer {
+            if(isReleaseBuild){
+                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+            }
+ 
+            configuration = configurations.archives
+
+            repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2') {
+                authentication(userName: sonatypeUsername, password: sonatypePassword)
+            }
+            snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
+                authentication(userName: sonatypeUsername, password: sonatypePassword)
+            }
+            pom=buildpom
+        }
+    }
 }

@@ -2,7 +2,7 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.dtolabs.rundeck</groupId>
+  <groupId>org.rundeck</groupId>
   <artifactId>rundeck-launcher</artifactId>
   <version>1.5-dev</version>
   <name>Rundeck Launcher</name>
@@ -64,28 +64,28 @@
   </build>
   <dependencies>
     <dependency>
-      <groupId>com.dtolabs.rundeck</groupId>
+      <groupId>org.rundeck</groupId>
       <artifactId>rundeck</artifactId>
       <version>1.5-dev</version>
       <type>war</type>
     </dependency>
     <dependency>
-      <groupId>com.dtolabs.rundeck</groupId>
+      <groupId>org.rundeck</groupId>
       <artifactId>rundeck-script-plugin</artifactId>
       <version>1.5-dev</version>
     </dependency>
     <dependency>
-      <groupId>com.dtolabs.rundeck</groupId>
+      <groupId>org.rundeck</groupId>
       <artifactId>rundeck-stub-plugin</artifactId>
       <version>1.5-dev</version>
     </dependency>
     <dependency>
-      <groupId>com.dtolabs.rundeck</groupId>
+      <groupId>org.rundeck</groupId>
       <artifactId>rundeck-localexec-plugin</artifactId>
       <version>1.5-dev</version>
     </dependency>
     <dependency>
-      <groupId>com.dtolabs.rundeck</groupId>
+      <groupId>org.rundeck</groupId>
       <artifactId>rundeck-jetty-server</artifactId>
       <version>1.5-dev</version>
       <scope>compile</scope>

@@ -2,10 +2,16 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.dtolabs.rundeck</groupId>
+  <parent>
+    <artifactId>oss-parent</artifactId>
+    <groupId>org.sonatype.oss</groupId>
+    <version>7</version>
+  </parent>
+  <groupId>org.rundeck</groupId>
   <artifactId>rundeck-core</artifactId>
   <version>1.5-dev</version>
   <name>RunDeck Core</name>
+  <description>Core library for the Rundeck web console for command dispatching and job scheduling</description>
   <url>http://rundeck.org</url>
   <inceptionYear>2011</inceptionYear>
   <licenses>
@@ -15,6 +21,18 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
+  <developers>
+    <developer>
+      <id>gschueler</id>
+      <name>Greg Schueler</name>
+      <email>greg@dtosolutions.com</email>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git:git@github.com/dtolabs/rundeck.git</connection>
+    <developerConnection>scm:git:git@github.com:dtolabs/rundeck.git</developerConnection>
+    <url>https://github.com/dtolabs/rundeck</url>
+  </scm>
   <build>
     <resources>
       <resource>
