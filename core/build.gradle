@@ -246,7 +246,7 @@ uploadArchives {
     }else{
         repositories.mavenDeployer {
             if(isReleaseBuild){
-                beforeDeployment { MavenDeployment deployment -> signPom(deployment) }
+                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
             }
  
             configuration = configurations.archives
