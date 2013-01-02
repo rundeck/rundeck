@@ -497,7 +497,7 @@ class ExecutionController {
                     def datamap = [
                         time: it.time.toString(),
                         level: it.level,
-                        log: it.mesg,
+                        log: it.mesg.replaceAll(/\r?\n$/,''),
                         user: it.user,
 //                        module: it.module,
                         command: it.command,
