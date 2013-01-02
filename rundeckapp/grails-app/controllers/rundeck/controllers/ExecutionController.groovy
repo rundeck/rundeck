@@ -497,7 +497,7 @@ class ExecutionController {
                     def datamap = [
                         time: it.time.toString(),
                         level: it.level,
-                        log: it.mesg.trim(),
+                        log: it.mesg,
                         user: it.user,
 //                        module: it.module,
                         command: it.command,
@@ -540,7 +540,7 @@ class ExecutionController {
                 response.addHeader('X-Rundeck-ExecOutput-TotalSize', totsize.toString())
                 render(contentType:"text/plain"){
                     entry.each{
-                        out<<it.mesg?.trim() + lSep
+                        out<<it.mesg
                     }
                 }
             }

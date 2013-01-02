@@ -816,7 +816,7 @@ table.execoutput tr.alternateRow td.info{
 }
 table.execoutput td.data{
     border-left: 1px solid white;
-    /*white-space: pre;*/
+    white-space: pre;
     font-family: "Lucida Console",courier,monospace;
     padding: 1px 3px;
     vertical-align:top;
