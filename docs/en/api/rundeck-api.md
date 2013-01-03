@@ -35,6 +35,15 @@ If the version number is not included or if the requested version number is unsu
 
 Changes introduced by API Version number:
 
+**Version 6**:
+
+* Updated endpoints 
+    * `/api/6/execution/[ID]/output` - [Execution Output](#execution-output)
+        * XML format has changed for API v6: entry log content is now specified as a `log` attribute value
+        * The old XML format will still be used for queries using `/api/5`
+        * Fixed invalid XML when no format was specified and XML was used by default
+        * **documentation typo fixed**: the JSON format incorrectly specified the log text key as 'mesg', corrected to 'log'
+
 **Version 5**:
 
 * New endpoint
@@ -886,12 +895,15 @@ Content of each Log Entry:
 
 * `time`: Timestamp in format: "HH:MM:SS"
 * `level`: Log level, one of: SEVERE,WARNING,INFO,CONFIG,FINEST
-* `mesg`: The log message (JSON only)
+* `log`: The log message
 * `user`: User name
 * `command`: Workflow command context string
 * `node`: Node name
 
-The XML `entry` will have the log message as the text value.
+**Note for API version 5:**
+
+For API requests using version `5` only, the XML `entry` will have the log message as the text value. Otherwise the log entry
+value will be within the `log` attribute.
 
 #### Text Format Content
 

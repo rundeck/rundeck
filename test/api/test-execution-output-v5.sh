@@ -1,6 +1,7 @@
 #!/bin/bash
 
 #test output from /api/execution/{id}/output
+# using API v5
 
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
@@ -8,6 +9,10 @@ source $DIR/include.sh
 ####
 # Setup: create simple adhoc command execution to provide execution ID.
 ####
+
+TEST_API_VERSION=5
+
+APIURL="${RDURL}/api/${TEST_API_VERSION}"
 
 runurl="${APIURL}/run/command"
 proj="test"
@@ -38,7 +43,7 @@ verify_entry_output(){
     ocount=$($XMLSTARLET sel -T -t -v "count(/result/output/entries/entry)" $file)
     
     #output text
-    xout=$($XMLSTARLET sel -T -t -m "/result/output/entries/entry" -v "@log" -n $file)
+    xout=$($XMLSTARLET sel -T -t -m "/result/output/entries/entry" -v "." -n $file)
     unmod=$($XMLSTARLET sel -T -t -v "/result/output/unmodified" $DIR/curl.out)
     if [[ $ocount > 0 && $unmod != "true" ]]; then
         echo "OUT: $xout"
@@ -223,62 +228,6 @@ fi
 runurl="${APIURL}/execution/${execid}/output.xml"
 
 echo "TEST: /api/execution/${execid}/output.xml ..."
-
-doff=0
-ddone="false"
-dlast=0
-dmax=20
-dc=0
-while [[ $ddone == "false" && $dc -lt $dmax ]]; do
-    #statements
-    params="offset=$doff"
-
-    # get listing
-    docurl ${runurl}?${params} > $DIR/curl.out
-    if [ 0 != $? ] ; then
-        errorMsg "ERROR: failed query request"
-        exit 2
-    fi
-
-    sh $DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-    verify_entry_output $DIR/curl.out
-    
-    unmod=$($XMLSTARLET sel -T -t -v "/result/output/unmodified" $DIR/curl.out)
-    doff=$($XMLSTARLET sel -T -t -v "/result/output/offset" $DIR/curl.out)
-    dlast=$($XMLSTARLET sel -T -t -v "/result/output/lastModified" $DIR/curl.out)
-    ddone=$($XMLSTARLET sel -T -t -v "/result/output/completed" $DIR/curl.out)
-    #echo "unmod $unmod, doff $doff, dlast $dlast, ddone $ddone"
-    if [[ $unmod == "true" ]]; then
-
-        #echo "unmodifed, sleep 3..."
-        sleep 2
-    else
-        #echo "$ocount lines, sleep 1"
-        if [[ $ddone != "true" ]]; then
-            sleep 1
-        fi
-    fi
-    dc=$(( $dc + 1 ))
-
-done
-
-if [[ $ddone != "true" ]]; then
-    errorMsg "ERROR: not all output was received in $dc requests"
-    exit 2
-fi
-
-echo "OK"
-
-
-####
-# Test: specify xml format by default
-####
-
-# now submit req
-runurl="${APIURL}/execution/${execid}/output"
-
-echo "TEST: /api/execution/${execid}/output ..."
 
 doff=0
 ddone="false"

@@ -479,8 +479,7 @@ class ExecutionController {
         def percent=100.0 * (((float)storeoffset)/((float)totsize))
 
         def idstr=e.id.toString()
-        def outf = request.format
-        def renderclos ={ delegate->
+        def renderclos ={ outf, delegate->
             delegate.id(idstr)
             delegate.offset(storeoffset.toString())
             delegate.completed(completed)
@@ -507,11 +506,16 @@ class ExecutionController {
                     if(it.loghtml){
                         datamap.loghtml=it.loghtml
                     }
-                    if(!outf||'xml'==outf){
-                        def text= datamap.remove('log')
-                        delegate.'entry'(datamap,text)
-                    }else{
+                    if(outf=='json'){
                         delegate.'entries'(datamap)
+                    }else{
+                        //xml
+                        if(request.api_version <= ApiRequestFilters.V5){
+                            def text= datamap.remove('log')
+                            delegate.'entry'(datamap,text)
+                        }else{
+                            delegate.'entry'(datamap)
+                        }
                     }
                 }
             }
@@ -521,13 +525,13 @@ class ExecutionController {
             xml {
                 api.success({del ->
                     del.'output' {
-                        renderclos(del)
+                        renderclos('xml',del)
                     }
                 })
             }
             json {
                 render(contentType: "text/json") {
-                    renderclos(delegate)
+                    renderclos('json',delegate)
                 }
             }
             text{
