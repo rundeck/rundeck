@@ -40,7 +40,7 @@ dependencies {
     pluginFiles(
         project(':plugins:script-plugin'),
         project(':plugins:stub-plugin'),
-        project(':plugins:rundeck-localexec-plugin')
+        project(':plugins:localexec-plugin')
     )
 	
     jettyServerLib(project(path:":rundeck-launcher:rundeck-jetty-server", configuration:'runtime')) {
