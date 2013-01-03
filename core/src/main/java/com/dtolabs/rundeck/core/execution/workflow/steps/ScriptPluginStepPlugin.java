@@ -25,6 +25,7 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
 import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
@@ -61,7 +62,8 @@ class ScriptPluginStepPlugin extends BaseScriptPlugin implements StepPlugin {
     }
 
     @Override
-    public boolean executeStep(final PluginStepContext executionContext, final Map<String,Object> config) throws StepException {
+    public void executeStep(final PluginStepContext executionContext, final Map<String, Object> config)
+        throws StepException {
         final ScriptPluginProvider plugin = getProvider();
         final String pluginname = plugin.getName();
         executionContext.getLogger()
@@ -73,14 +75,16 @@ class ScriptPluginStepPlugin extends BaseScriptPlugin implements StepPlugin {
         try {
             result = runPluginScript(executionContext, System.out, System.err, getFramework(), config);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new StepException(e.getMessage(), StepFailureReason.IOFailure);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Thread.currentThread().interrupt();
+            throw new StepException(e.getMessage(), StepFailureReason.Interrupted);
         }
-        boolean success=result==0;
+        executionContext.getLogger().log(3, "[" + pluginname + "]: result code: " + result);
+        if (result != 0) {
+            throw new StepException("Script result code was: " + result, NodeStepFailureReason.NonZeroResultCode);
+        }
 
-        executionContext.getLogger().log(3, "[" + pluginname + "]: result code: " + result + ", success: " + success);
-        return success;
     }
 
 }

@@ -24,7 +24,6 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.execution.ExceptionStatusResult;
-import com.dtolabs.rundeck.core.execution.StatusResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 
 import java.util.Collection;
@@ -46,5 +45,9 @@ public interface WorkflowExecutionResult extends ExceptionStatusResult {
     /**
      * Return map of workflow item failures, keyed by node name
      */
-    public Map<String, Collection<String>> getFailureMessages();
+    public Map<String, Collection<StepExecutionResult>> getNodeFailures();
+    /**
+     * Return map of workflow item failures, keyed by node name
+     */
+    public Map<Integer, StepExecutionResult> getStepFailures();
 }

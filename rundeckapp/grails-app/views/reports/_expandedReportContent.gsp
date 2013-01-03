@@ -34,7 +34,7 @@
                     </g:if>
                     <div class="rptitem">
                         <g:if test="${it.jcJobId}">
-                            <g:set var="foundJob" value="${ ScheduledExecution.get(it.jcJobId)}"/>
+                            <g:set var="foundJob" value="${ ScheduledExecution.getByIdOrUUID(it.jcJobId)}"/>
                             <g:if test="${foundJob}">
                                 <g:link controller="scheduledExecution" action="show" id="${foundJob.extid}"><g:message code="domain.ScheduledExecution.title"/> Detail &raquo;</g:link>
                             </g:if>

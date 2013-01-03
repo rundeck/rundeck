@@ -192,7 +192,7 @@ function _wfiview(key,num,isErrorHandler) {
         }
     });
 }
-function _wfisave(key,num, formelem) {
+function _wfisave(key,num, formelem,iseh) {
     new Ajax.Updater($('wfli_' + key),
         applinks.workflowSave, {
         parameters: Form.serialize(formelem),
@@ -201,12 +201,15 @@ function _wfisave(key,num, formelem) {
             if (transport.request.success()) {
                 if (!$('wfli_' + key).down('div.wfitemEditForm')) {
                     _showWFItemControls();
+                    if(iseh){
+                        _hideWFItemControlsAddEH(num);
+                    }
                 }
             }
         }
     });
 }
-var newitemli;
+var newitemElem;
 function _wfiaddnew(type,nodestep) {
     var params = {newitemtype:type,newitemnodestep:nodestep?true:false};
     if (getCurSEID()) {
@@ -219,52 +222,65 @@ function _wfiaddnew(type,nodestep) {
     var litems = $$('#workflowContent ol > li');
     var num = litems.length;
     params['key']=num;
-    newitemli = new Element('li');
+    var parentli = new Element('li');
     if (num % 2 == 1) {
-        newitemli.addClassName('alternate');
+        parentli.addClassName('alternate');
     }
-    newitemli.setAttribute('id', 'wfli_' + num);
-    newitemli.setAttribute('wfitemNum', num);
+    parentli.setAttribute('wfitemNum', num);
+    newitemElem = new Element('span');
+    newitemElem.setAttribute('id', 'wfli_' + num);
+    parentli.appendChild(newitemElem);
     var createElement = new Element('div');
     createElement.setAttribute('id','wfivis_' + num);
-    newitemli.appendChild(createElement);
-    olist.appendChild(newitemli);
-    new Ajax.Updater(createElement,
+    parentli.appendChild(createElement);
+
+    var ehUlElement = new Element('ul');
+    ehUlElement.addClassName('wfhandleritem');
+    ehUlElement.style.display='none';
+    ehUlElement.setAttribute('wfitemNum',num);
+    var ehLiElement = new Element('li');
+    ehLiElement.setAttribute('id','wfli_eh_'+num);
+    ehUlElement.appendChild(ehLiElement);
+    parentli.appendChild(ehUlElement);
+    olist.appendChild(parentli);
+    new Ajax.Updater(newitemElem,
         applinks.workflowEdit, {
         parameters: params,
         evalScripts:true,
         onComplete: function(transport) {
             if (transport.request.success()) {
-                $(createElement).select('input').each(function(elem) {
+                $(newitemElem).select('input').each(function(elem) {
                     if (elem.type == 'text') {
                         elem.observe('keypress', noenter);
                     }
                 });
+                $(newitemElem).down('input[type=text]').focus();
             }
         }
     });
 }
 function _wfisavenew(formelem) {
     var params = Form.serialize(formelem);
-    new Ajax.Updater(newitemli,
+    new Ajax.Updater(newitemElem,
         applinks.workflowSave, {
         parameters: params,
         evalScripts: true,
         onComplete: function(transport) {
-            if (transport.request.success() && !newitemli.down('div.wfitemEditForm')) {
-                $(newitemli).highlight();
+            if (transport.request.success() && !newitemElem.down('div.wfitemEditForm')) {
+                var litem=$(newitemElem.parentNode);
+                $(litem).highlight();
                 $('wfnewbutton').show();
                 _showWFItemControls();
-                $('workflowDropfinal').setAttribute('wfitemNum', parseInt(newitemli.getAttribute('wfitemNum')) + 1);
-                newitemli = null;
+                $('workflowDropfinal').setAttribute('wfitemNum', parseInt(litem.getAttribute('wfitemNum')) + 1);
+                newitemElem = null;
             }
         }
     });
 }
 function _wficancelnew() {
     var olist = $('workflowContent').down('ol');
-    $(olist).removeChild(newitemli);
-    newitemli = null;
+    $(olist).removeChild($(newitemElem.parentNode));
+    newitemElem = null;
     $('wfnewbutton').show();
     _showWFItemControls();
 }
@@ -302,6 +318,10 @@ function _showWFItemControls() {
     _updateWFUndoRedo();
     _enableDragdrop();
     _updateEmptyMessage();
+}
+function _hideWFItemControlsAddEH(num){
+    var lielem=$('wfli_'+num);
+    lielem.select('.wfitem_add_errorhandler').each(Element.hide);
 }
 
 function _evtNewEHChooseType(evt){
@@ -371,7 +391,7 @@ function _wfiaddNewErrorHandler(elem,type,num,nodestep){
         params.scheduledExecutionId = getCurSEID();
     }
     var wfiehli = $('wfli_' + key);
-    _hideAddNewEH(elem);
+    _hideAddNewEH();
 
     new Ajax.Updater(wfiehli,
         applinks.workflowEdit, {
@@ -402,7 +422,7 @@ function _doMoveItem(from, to) {
         evalScripts:true,
         onComplete: function(transport) {
             if (transport.request.success()) {
-                newitemli = null;
+                newitemElem = null;
                 $('wfnewbutton').show();
                 _showWFItemControls();
             }
@@ -422,7 +442,7 @@ function _doRemoveItem(key,num,isErrorHandler) {
                 evalScripts:true,
                 onComplete: function(transport) {
                     if (transport.request.success()) {
-                        newitemli = null;
+                        newitemElem = null;
                         $('wfnewbutton').show();
                         _showWFItemControls();
                     }
@@ -443,7 +463,7 @@ function _doUndoWFAction() {
         evalScripts:true,
         onComplete: function(transport) {
             if (transport.request.success()) {
-                newitemli = null;
+                newitemElem = null;
                 $('wfnewbutton').show();
                 _showWFItemControls();
             }
@@ -462,7 +482,7 @@ function _doRedoWFAction() {
         evalScripts:true,
         onComplete: function(transport) {
             if (transport.request.success()) {
-                newitemli = null;
+                newitemElem = null;
                 $('wfnewbutton').show();
                 _showWFItemControls();
             }
@@ -481,7 +501,7 @@ function _doResetWFAction() {
         evalScripts:true,
         onComplete: function(transport) {
             if (transport.request.success()) {
-                newitemli = null;
+                newitemElem = null;
                 $('wfnewbutton').show();
                 _showWFItemControls();
             }

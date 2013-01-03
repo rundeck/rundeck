@@ -47,6 +47,5 @@ public interface RemoteScriptNodeStepPlugin {
      */
     public GeneratedScript generateScript(final PluginStepContext context,
                                           final Map<String, Object> configuration,
-                                          final INodeEntry entry)
-        throws NodeStepException;
+                                          final INodeEntry entry) throws NodeStepException;
 }

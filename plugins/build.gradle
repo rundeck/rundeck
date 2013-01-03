@@ -2,9 +2,6 @@
  * The Rundeck plugins parent project
  */
 
-description = "The plug-ins project defines defaults for it's children"
-
-apply plugin: 'eclipse'
 
 eclipse.project.name =  "${project.getParent().eclipse.project.name}:plugins";
 
@@ -50,11 +47,12 @@ task createPom << {
             modules{
                 module 'stub-plugin'
                 module 'script-plugin'
+                module 'localexec-plugin'
             }
             dependencies{
                 dependency{
                     artifactId 'rundeck-core'
-                    groupId 'com.dtolabs.rundeck'
+                    groupId 'org.rundeck'
                     version version
                 }
             }

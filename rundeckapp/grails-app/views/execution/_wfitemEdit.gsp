@@ -145,7 +145,8 @@
                 <g:hiddenField name="num" value="${num}"/>
                 <span class="action button small textbtn" onclick="_wficancelnewEH(this);"
                       title="Cancel adding new ${g.message(code: 'Workflow.'+ msgItem+'.label')}">Cancel</span>
-                <span class="action button small textbtn" onclick="_wfisave('${key}', ${num}, 'wfiedit_${rkey}');" title="Save the new ${g.message(code:'Workflow.'+ msgItem+'.label')}">Save</span>
+                <span class="action button small textbtn" onclick="_wfisave('${key}', ${num}, 'wfiedit_${rkey}',${
+                        isErrorHandler?true:false});" title="Save the new ${g.message(code:'Workflow.'+ msgItem+'.label')}">Save</span>
             </g:if>
             <g:else>
 
@@ -157,7 +158,8 @@
         <g:else>
             <g:hiddenField name="num" value="${num}"/>
             <span class="action button small textbtn" onclick="_wfiview('${key}',${num},${isErrorHandler?true:false});" title="Discard changes to the ${g.message(code:'Workflow.'+ msgItem+'.label')}">Discard</span>
-            <span class="action button small textbtn" onclick="_wfisave('${key}',${num}, 'wfiedit_${rkey}');"
+            <span class="action button small textbtn" onclick="_wfisave('${key}',${num}, 'wfiedit_${rkey}', ${
+                    isErrorHandler?true:false});"
                   title="Save changes to the ${g.message(code:'Workflow.'+ msgItem+'.label')}">Save</span>
         </g:else>
     </div>

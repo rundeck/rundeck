@@ -1,42 +1,23 @@
 package rundeck.services
 
-import javax.security.auth.Subject;
-
-import org.quartz.Scheduler
-import org.quartz.JobDetail
-import org.quartz.Trigger
-import org.quartz.CronTrigger
-import org.quartz.TriggerUtils
-
-import org.quartz.JobExecutionContext
-import org.quartz.InterruptableJob
-
+import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.common.Framework
-
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
-
-import org.quartz.CronExpression
-import org.quartz.SchedulerException
-import java.text.SimpleDateFormat
+import org.quartz.*
 import org.springframework.context.MessageSource
-import java.text.MessageFormat
-import org.springframework.web.servlet.support.RequestContextUtils
-
-import javax.servlet.http.HttpSession
 import org.springframework.web.context.request.RequestContextHolder
-import rundeck.WorkflowStep
-import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
-import rundeck.CommandExec
-import rundeck.ScheduledExecution
-import rundeck.Workflow
-import rundeck.JobExec
-import rundeck.Execution
-import rundeck.Option
-import rundeck.Notification
-import rundeck.controllers.WorkflowController
+import org.springframework.web.servlet.support.RequestContextUtils
+import rundeck.*
 import rundeck.controllers.EditOptsController
+import rundeck.controllers.WorkflowController
+import rundeck.quartzjobs.ExecutionJob
+
+import javax.security.auth.Subject
+import javax.servlet.http.HttpSession
+import java.text.MessageFormat
+import java.text.SimpleDateFormat
 
 /**
  *  ScheduledExecutionService manages scheduling jobs with the Quartz scheduler
@@ -656,21 +637,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
      * @return ScheduledExecution found or null
      */
     def ScheduledExecution getByIDorUUID(anid){
-        def found=null
-        if(anid instanceof Long){
-            return ScheduledExecution.get(anid)
-        }else if(anid instanceof String){
-            //attempt to parse as long id
-            try {
-                def long idlong = Long.parseLong(anid)
-                found = ScheduledExecution.get(idlong)
-            } catch (NumberFormatException e) {
-            }
-            if (!found) {
-                found=ScheduledExecution.findByUuid(anid)
-            }
-        }
-        return found
+        ScheduledExecution.getByIdOrUUID(anid)
     }
 
     /**

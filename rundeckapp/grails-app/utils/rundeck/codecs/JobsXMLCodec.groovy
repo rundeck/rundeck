@@ -1,3 +1,4 @@
+package rundeck.codecs
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
  *
@@ -106,7 +107,7 @@ class JobsXMLCodec {
 
         //perform structure conversions for expected input for populating ScheduledExecution
 
-        if(!map.context){
+        if(!map.context|| !(map.context instanceof Map)){
             throw new JobXMLException("'context' element not found")
         }
         map.project=map.context.remove('project')
@@ -136,7 +137,10 @@ class JobsXMLCodec {
             }
         }
         //convert options:[option:[]] into options:[]
-        if(map.context?.options?.option){
+        if(map.context?.options && !(map.context?.options instanceof Map)){
+            throw new JobXMLException("'context/options' element is not valid")
+        }
+        if(map.context?.options && map.context?.options?.option){
             final def opts = map.context.options.remove('option')
             map.remove('context')
             map.options=[:]

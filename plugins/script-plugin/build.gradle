@@ -43,6 +43,9 @@ task createPom << {
                             archive{
                               manifestEntries{
                                 'Rundeck-Plugin-Classnames'(pluginClassNames)
+                                  'Rundeck-Plugin-Version'(rundeckPluginVersion)
+                                  'Rundeck-Plugin-Archive'('true')
+                                  'Rundeck-Plugin-File-Version'(version)
                               }
                             }
                         }

@@ -23,6 +23,9 @@
 */
 package com.dtolabs.rundeck.core;
 
+import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+
 import java.util.Collection;
 import java.util.Map;
 
@@ -32,7 +35,7 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public class NodesetFailureException extends CoreException {
+public class NodesetFailureException extends DispatcherException {
     /**
      * Exit code for a Nodeset failure exception
      */
@@ -44,7 +47,6 @@ public class NodesetFailureException extends CoreException {
      * @param retryMsg commandline for retrying the command for the failed nodes.
      */
     private Collection<String> nodeset;
-    private Map<String,Object> nodeFailures;
 
     /**
      * Create NodesetFailureException
@@ -58,9 +60,9 @@ public class NodesetFailureException extends CoreException {
      * Create NodesetFailureException
      * @param nodeset node names
      */
-    public NodesetFailureException(final Map<String,Object> failures) {
+    public NodesetFailureException(final Map<String, NodeStepResult> failures) {
         super("Execution failed on the following " + (null != failures ? failures.size() : 0) + " nodes: " + failures);
-        this.nodeFailures = failures;
+        setResultMap(failures);
     }
 
     /**
@@ -71,19 +73,7 @@ public class NodesetFailureException extends CoreException {
         return nodeset;
     }
 
-    /**
-     * Set the nodeset
-     * @param nodeset node names collection
-     */
-    public void setNodeset(final Collection<String> nodeset) {
-        this.nodeset = nodeset;
-    }
-
-    public Map<String, Object> getNodeFailures() {
-        return nodeFailures;
-    }
-
-    public void setNodeFailures(Map<String, Object> nodeFailures) {
-        this.nodeFailures = nodeFailures;
+    public Map<String, NodeStepResult> getNodeFailures() {
+        return getResultMap();
     }
 }

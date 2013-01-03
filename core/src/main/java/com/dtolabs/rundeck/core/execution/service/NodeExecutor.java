@@ -25,7 +25,7 @@ package com.dtolabs.rundeck.core.execution.service;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionException;
+
 
 /**
  * NodeExecutor executes a command on a node.
@@ -41,9 +41,6 @@ public interface NodeExecutor {
      * @param node    the node to execute on
      *
      * @return a result
-     *
-     * @throws ExecutionException if there is an error performing the execution
      */
-    public NodeExecutorResult executeCommand(ExecutionContext context, String[] command, INodeEntry node) throws
-        ExecutionException;
+    public NodeExecutorResult executeCommand(ExecutionContext context, String[] command, INodeEntry node);
 }

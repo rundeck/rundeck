@@ -599,6 +599,33 @@ class ScheduledExecution extends ExecutionContext {
     }
 
     /**
+     * Find a ScheduledExecution by UUID or ID.  Checks if the
+     * input value is a Long, if so finds the ScheduledExecution with that ID.
+     * If it is a String it attempts to parse the String as a Long and if it is
+     * valid it finds the ScheduledExecution by ID. Otherwise it attempts to find the ScheduledExecution with that
+     * UUID.
+     * @param anid
+     * @return ScheduledExecution found or null
+     */
+    static ScheduledExecution getByIdOrUUID(anid){
+        def found = null
+        if (anid instanceof Long) {
+            return ScheduledExecution.get(anid)
+        } else if (anid instanceof String) {
+            //attempt to parse as long id
+            try {
+                def long idlong = Long.parseLong(anid)
+                found = ScheduledExecution.get(idlong)
+            } catch (NumberFormatException e) {
+            }
+            if (!found) {
+                found = ScheduledExecution.findByUuid(anid)
+            }
+        }
+        return found
+    }
+
+    /**
      * Find the only ScheduledExecution with the given group, name and project
      * @param group
      * @param name

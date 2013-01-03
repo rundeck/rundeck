@@ -25,6 +25,8 @@
 package com.dtolabs.rundeck.plugin.example;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
@@ -108,6 +110,12 @@ public class ExampleNodeStepPlugin implements NodeStepPlugin, DescriptionBuilder
                           .build()
             );
     }
+    /**
+     * This enum lists the known reasons this plugin might fail
+     */
+    static enum Reason implements FailureReason{
+        PancakeReason
+    }
 
     /**
      * The {@link #performNodeStep(com.dtolabs.rundeck.plugins.step.PluginStepContext,
@@ -116,16 +124,19 @@ public class ExampleNodeStepPlugin implements NodeStepPlugin, DescriptionBuilder
      * about the step number and context.
      * <p/>
      * The {@link INodeEntry} parameter is the node that should be executed on.  Your plugin should make use of the
-     * node's attributes (such has "hostname" or any others required by your plugin) to perform the appropriate
-     * action.
+     * node's attributes (such has "hostname" or any others required by your plugin) to perform the appropriate action.
      */
-    @Override
-    public boolean executeNodeStep(final PluginStepContext context, final Map<String,Object> configuration, final INodeEntry entry) {
+    public void executeNodeStep(final PluginStepContext context,
+                                final Map<String, Object> configuration,
+                                final INodeEntry entry) throws NodeStepException {
 
-        System.out.println("Stub node step executing on node: " + entry.getNodename());
-        System.out.println("Stub step extra config: " + configuration);
-        System.out.println("Stub step num: " + context.getStepNumber());
-        System.out.println("Stub step context: " + context.getStepContext());
-        return true;
+        System.out.println("Example node step executing on node: " + entry.getNodename());
+        System.out.println("Example step extra config: " + configuration);
+        System.out.println("Example step num: " + context.getStepNumber());
+        System.out.println("Example step context: " + context.getStepContext());
+        if ("true".equals(configuration.get("pancake"))) {
+            //throw exception indicating the cause of the error
+            throw new NodeStepException("pancake was true", Reason.PancakeReason, entry.getNodename());
+        }
     }
 }

@@ -66,7 +66,7 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
     @Override
     public GeneratedScript generateScript(final PluginStepContext context,
                                           final Map<String, Object> configuration,
-                                          final INodeEntry entry) throws NodeStepException {
+                                          final INodeEntry entry)  {
         final ScriptPluginProvider provider = getProvider();
         final String args = provider.getScriptArgs();
         final String[] argsarr;

@@ -46,15 +46,15 @@ launcher = rundeck-launcher/launcher/build/libs/rundeck-launcher-$(VERSION).jar
 
 
 
-.PHONY: clean rundeck docs makedocs plugins war launcher
+.PHONY: clean rundeck docs makedocs plugins war launcher core-release core-snapshot
 
 rundeck:  $(launcher)
 	@echo $(VERSION)-$(RELEASE)
 
-rpm: docs $(launcher) $(plugs)
+rpm: docs $(launcher) plugins
 	cd packaging; $(MAKE) VERSION=$(VNUMBER) VNAME=$(VERSION) RELEASE=$(RELEASE) rpmclean rpm
 
-deb: docs $(launcher) $(plugs)
+deb: docs $(launcher) plugins
 	cd packaging; $(MAKE) VERSION=$(VNUMBER) VNAME=$(VERSION) RELEASE=$(RELEASE) debclean deb
 
 makedocs:
@@ -62,6 +62,12 @@ makedocs:
 
 $(core): $(CORE_FILES)
 	cd core; ./gradlew $(PROXY_DEFS) -PbuildNum=$(RELEASE) clean check assemble javadoc
+
+core-snapshot: $(CORE_FILES)
+	cd core; ./gradlew $(PROXY_DEFS) -Psnapshot -PbuildNum=$(RELEASE) uploadArchives
+
+core-release: $(CORE_FILES)
+	cd core; ./gradlew $(PROXY_DEFS) -Prelease -PbuildNum=$(RELEASE) uploadArchives
 
 war: $(war)
 
@@ -95,10 +101,8 @@ $(war): $(core) $(RUNDECK_FILES) $(GRAILS_HOME)
 	cd rundeckapp; $(GRAILS)   test-app
 	cd rundeckapp; yes | $(GRAILS) prod war
 
-$(plugs): $(core) $(PLUGIN_FILES)
-	cd plugins && ./gradlew	
-
-plugins: $(plugs)
+plugins: $(core) $(PLUGIN_FILES)
+	cd plugins && ./gradlew
 
 docs: makedocs
 	mkdir -p ./rundeckapp/web-app/docs

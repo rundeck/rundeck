@@ -1,3 +1,5 @@
+package rundeck.quartzjobs
+
 import org.quartz.JobExecutionContext
 
 import org.quartz.JobDataMap

@@ -31,15 +31,28 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
 import com.dtolabs.rundeck.core.plugins.Plugin;
-import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.core.plugins.configuration.AbstractBaseDescription;
+import com.dtolabs.rundeck.core.plugins.configuration.Describable;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.plugins.configuration.Property;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.utils.Streams;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 
 /**
  * ExternalScriptFileCopier plugin provides the FileCopier service by allowing an external script to handle the
@@ -62,7 +75,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-@Plugin (name = "script-copy", service = "FileCopier")
+@Plugin(name = "script-copy", service = ServiceNameConstants.FileCopier)
 public class ScriptFileCopier implements FileCopier, Describable {
     public static String SERVICE_PROVIDER_NAME = "script-copy";
     public static String SCRIPT_ATTRIBUTE = "script-copy";
@@ -87,17 +100,17 @@ public class ScriptFileCopier implements FileCopier, Describable {
 
     static {
         properties.add(PropertyUtil.string(CONFIG_COMMAND, "Command",
-            "Shell command to execute the file copy",
-            true, null));
+                                           "Shell command to execute the file copy",
+                                           true, null));
         properties.add(PropertyUtil.string(CONFIG_FILEPATH, "Remote Filepath",
-            "Remote filepath destination for the script.",
-            false, null));
+                                           "Remote filepath destination for the script.",
+                                           false, null));
         properties.add(PropertyUtil.string(CONFIG_INTERPRETER, "Interpreter",
-            "Shell or interpreter to pass the command string to. Not required.",
-            false, null));
+                                           "Shell or interpreter to pass the command string to. Not required.",
+                                           false, null));
         properties.add(PropertyUtil.string(CONFIG_DIRECTORY, "Directory",
-            "Directory to execute within",
-            false, null));
+                                           "Directory to execute within",
+                                           false, null));
 
         final Map<String, String> mapping = new HashMap<String, String>();
         mapping.put(CONFIG_COMMAND, SCRIPT_COPY_DEFAULT_COMMAND_PROPERTY);
@@ -147,7 +160,7 @@ public class ScriptFileCopier implements FileCopier, Describable {
      * Copy existing file
      */
     public String copyFile(final ExecutionContext executionContext, final File file, final INodeEntry node) throws
-        FileCopierException {
+                                                                                                            FileCopierException {
         return copyFile(executionContext, file, null, null, node);
     }
 
@@ -156,17 +169,20 @@ public class ScriptFileCopier implements FileCopier, Describable {
      */
     public String copyScriptContent(final ExecutionContext executionContext, final String s,
                                     final INodeEntry node) throws
-        FileCopierException {
+                                                           FileCopierException {
         return copyFile(executionContext, null, null, s, node);
     }
 
+    static enum Reason implements FailureReason {
+        ScriptFileCopierPluginExpectedOutputMissing
+    }
 
     /**
      * Internal copy method accepting file, inputstream or string
      */
     String copyFile(final ExecutionContext executionContext, final File file, final InputStream input,
                     final String content, final INodeEntry node) throws
-        FileCopierException {
+                                                                 FileCopierException {
 
         File workingdir = null;
         String scriptargs;
@@ -177,7 +193,7 @@ public class ScriptFileCopier implements FileCopier, Describable {
         final Framework framework = executionContext.getFramework();
         //look for specific property
         scriptargs = framework.getProjectProperty(executionContext.getFrameworkProject(),
-            SCRIPT_COPY_DEFAULT_COMMAND_PROPERTY);
+                                                  SCRIPT_COPY_DEFAULT_COMMAND_PROPERTY);
 
 
         if (null != node.getAttributes().get(SCRIPT_ATTRIBUTE)) {
@@ -188,11 +204,13 @@ public class ScriptFileCopier implements FileCopier, Describable {
                 "[script-copy file copier] no attribute " + SCRIPT_ATTRIBUTE + " was found on node: "
                 + node
                     .getNodename() + ", and no " + SCRIPT_COPY_DEFAULT_COMMAND_PROPERTY
-                + " property was configured for the project or framework.");
+                + " property was configured for the project or framework.",
+                StepFailureReason.ConfigurationFailure
+            );
         }
 
         dirstring = framework.getProjectProperty(executionContext.getFrameworkProject(),
-            SCRIPT_COPY_DEFAULT_DIR_PROPERTY);
+                                                 SCRIPT_COPY_DEFAULT_DIR_PROPERTY);
         if (null != node.getAttributes().get(DIR_ATTRIBUTE)) {
             dirstring = node.getAttributes().get(DIR_ATTRIBUTE);
         }
@@ -201,7 +219,7 @@ public class ScriptFileCopier implements FileCopier, Describable {
         }
 
         attrRemoteFilepath = framework.getProjectProperty(executionContext.getFrameworkProject(),
-            SCRIPT_COPY_DEFAULT_REMOTE_FILEPATH_PROPERTY);
+                                                          SCRIPT_COPY_DEFAULT_REMOTE_FILEPATH_PROPERTY);
         if (null != node.getAttributes().get(REMOTE_FILEPATH_ATTRIBUTE)) {
             attrRemoteFilepath = node.getAttributes().get(REMOTE_FILEPATH_ATTRIBUTE);
         }
@@ -226,7 +244,7 @@ public class ScriptFileCopier implements FileCopier, Describable {
         }
 
         final Map<String, Map<String, String>> newDataContext = DataContextUtils.addContext("file-copy", scptexec,
-            nodeContext);
+                                                                                            nodeContext);
 
         final String copiedFilepath;
         if (null != attrRemoteFilepath) {
@@ -239,7 +257,7 @@ public class ScriptFileCopier implements FileCopier, Describable {
         final Process exec;
 
         String remoteShell = framework.getProjectProperty(executionContext.getFrameworkProject(),
-            SCRIPT_COPY_DEFAULT_REMOTE_SHELL);
+                                                          SCRIPT_COPY_DEFAULT_REMOTE_SHELL);
         if (null != node.getAttributes().get(SHELL_ATTRIBUTE)) {
             remoteShell = node.getAttributes().get(SHELL_ATTRIBUTE);
         }
@@ -247,14 +265,14 @@ public class ScriptFileCopier implements FileCopier, Describable {
         try {
             if (null != remoteShell) {
                 exec = ScriptUtil.execShellProcess(executionContext.getExecutionListener(), workingdir, scriptargs,
-                    nodeContext, newDataContext, remoteShell, "script-copy");
+                                                   nodeContext, newDataContext, remoteShell, "script-copy");
             } else {
                 exec = ScriptUtil.execProcess(executionContext.getExecutionListener(), workingdir, scriptargs,
-                    nodeContext,
-                    newDataContext, "script-copy");
+                                              nodeContext,
+                                              newDataContext, "script-copy");
             }
         } catch (IOException e) {
-            throw new FileCopierException(e);
+            throw new FileCopierException(e.getMessage(), StepFailureReason.IOFailure, e);
         }
 
         final Thread errthread;
@@ -281,12 +299,14 @@ public class ScriptFileCopier implements FileCopier, Describable {
             }
             success = 0 == result;
         } catch (InterruptedException e) {
-            throw new FileCopierException(e);
+            Thread.currentThread().interrupt();
+            throw new FileCopierException(e.getMessage(), StepFailureReason.Interrupted, e);
         } catch (IOException e) {
-            throw new FileCopierException(e);
+            throw new FileCopierException(e.getMessage(), StepFailureReason.IOFailure, e);
         }
         if (!success) {
-            throw new FileCopierException("[script-copy]: external script failed with exit code: " + result);
+            throw new FileCopierException("[script-copy]: external script failed with exit code: " + result,
+                                          NodeStepFailureReason.NonZeroResultCode);
         }
 
         if (null != copiedFilepath) {
@@ -295,13 +315,15 @@ public class ScriptFileCopier implements FileCopier, Describable {
         //load string of output from outputstream
         final String output = byteArrayOutputStream.toString();
         if (null == output || output.length() < 1) {
-            throw new FileCopierException("[script-copy]: No output from external script");
+            throw new FileCopierException("[script-copy]: No output from external script",
+                                          Reason.ScriptFileCopierPluginExpectedOutputMissing);
         }
         //TODO: require any specific format for the data?
         //look for first line of output
         final String[] split1 = output.split("(\\r?\\n)");
         if (split1.length < 1) {
-            throw new FileCopierException("[script-copy]: No output from external script");
+            throw new FileCopierException("[script-copy]: No output from external script",
+                                          Reason.ScriptFileCopierPluginExpectedOutputMissing);
         }
         final String remotefilepath = split1[0];
 

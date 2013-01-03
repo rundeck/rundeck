@@ -24,7 +24,6 @@
 package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkSupportService;
 import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
@@ -68,7 +67,7 @@ public abstract class BaseProviderRegistryService<T> implements ProviderService<
      */
     public T providerOfType(final String providerName) throws ExecutionServiceException {
         if (null == providerName) {
-            throw new IllegalArgumentException("provider name was null for Service: " + getName());
+            throw new NullPointerException("provider name was null for Service: " + getName());
         }
         if (null == instanceregistry.get(providerName)) {
             T instance = createProviderInstanceOfType(providerName);

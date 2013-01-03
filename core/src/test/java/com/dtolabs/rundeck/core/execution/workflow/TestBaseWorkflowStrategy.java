@@ -32,7 +32,6 @@ import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
@@ -48,7 +47,11 @@ import org.apache.tools.ant.BuildListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -58,7 +61,7 @@ import java.util.*;
  */
 public class TestBaseWorkflowStrategy extends AbstractBaseTest {
 
-    public static final String TEST_PROJECT="TestBaseWorkflowStrategy";
+    public static final String TEST_PROJECT = "TestBaseWorkflowStrategy";
     Framework testFramework;
     String testnode;
 
@@ -89,12 +92,12 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         FileUtils.deleteDir(projectdir);
     }
 
-    public static class testWorkflowStrategy extends BaseWorkflowStrategy{
+    public static class testWorkflowStrategy extends BaseWorkflowStrategy {
         private WorkflowExecutionResult result;
-        private int execIndex=0;
+        private int execIndex = 0;
         private List<Object> results;
-        private List<Map<String,Object>> inputs;
-        private int executeWfItemCalled=0;
+        private List<Map<String, Object>> inputs;
+        private int executeWfItemCalled = 0;
 
         public testWorkflowStrategy(Framework framework) {
             super(framework);
@@ -111,10 +114,9 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
 
         @Override
         protected StepExecutionResult executeWFItem(final StepExecutionContext executionContext,
-                                                    final Map<Integer, Object> failedMap,
+                                                    final Map<Integer, StepExecutionResult> failedMap,
                                                     final int c,
-                                                    final StepExecutionItem cmd, final boolean keepgoing)
-            throws WorkflowStepFailureException {
+                                                    final StepExecutionItem cmd) {
             executeWfItemCalled++;
             HashMap<String, Object> input = new HashMap<String, Object>();
             input.put("context", executionContext);
@@ -122,32 +124,18 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
             input.put("c", c);
             input.put("stack", executionContext.getStepContext());
             input.put("cmd", cmd);
-            input.put("keepgoing", keepgoing);
             inputs.add(input);
 
             int ndx = execIndex++;
             final Object o = results.get(ndx);
             if (o instanceof Boolean) {
-                return new StepExecutionResultImpl((Boolean) o);
-            } else if (o instanceof WorkflowStepFailureException) {
-                throw (WorkflowStepFailureException) o;
+                return ((Boolean) o) ? new StepExecutionResultImpl() :
+                       new StepExecutionResultImpl(null, null, "false result");
             } else if (o instanceof String) {
-                throw new WorkflowStepFailureException((String) o, new StepExecutionResult() {
-                    public Exception getException() {
-                        return null;
-                    }
-
-                    public DispatcherResult getResultObject() {
-                        return null;
-                    }
-
-                    public boolean isSuccess() {
-                        return false;
-                    }
-                }, c);
+                return new StepExecutionResultImpl(null, null, (String) o);
             } else {
                 fail("Unexpected result at index " + ndx + ": " + o);
-                return new StepExecutionResultImpl(false);
+                return new StepExecutionResultImpl(null, null, "Unexpected result at index " + ndx + ": " + o);
             }
 
         }
@@ -187,12 +175,12 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         strategy.getResults().addAll(returnResults);
 
 
-        final Map<Integer, Object> map = new HashMap<Integer, Object>();
+        final Map<Integer, StepExecutionResult> map = new HashMap<Integer, StepExecutionResult>();
         final List<StepExecutionResult> resultList = new ArrayList<StepExecutionResult>();
         final boolean keepgoing = wfKeepgoing;
 
-        boolean itemsSuccess=false;
-        boolean sawException=false;
+        boolean itemsSuccess = false;
+        boolean sawException = false;
         try {
             final StepExecutionContext context =
                 new ExecutionContextImpl.Builder()
@@ -206,10 +194,6 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
                     .build();
             itemsSuccess = strategy.executeWorkflowItemsForNodeSet(context, map, resultList, items, keepgoing);
             assertFalse(expectStepException);
-        } catch (WorkflowStepFailureException e) {
-            e.printStackTrace();
-            assertTrue("Unexpected step exception: " + e.getMessage(), expectStepException);
-            sawException = true;
         } catch (NodeFileParserException e) {
             e.printStackTrace();
             fail();
@@ -219,402 +203,401 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         assertEquals(expectedSuccess, itemsSuccess);
 
         assert expected.size() == strategy.getInputs().size();
-        int i=0;
+        int i = 0;
         for (final Map<String, Object> expectedMap : expected) {
             final Map<String, Object> map1 = strategy.getInputs().get(i);
-            assertEquals("ExpectedMap index " + i + " value c",expectedMap.get("c"), map1.get("c"));
-            assertEquals("ExpectedMap index " + i + " value cmd",expectedMap.get("cmd"), map1.get("cmd"));
-            assertEquals("ExpectedMap index "+i+" value keepgoing",expectedMap.get("keepgoing"), map1.get("keepgoing"));
+            assertEquals("ExpectedMap index " + i + " value c", expectedMap.get("c"), map1.get("c"));
+            assertEquals("ExpectedMap index " + i + " value cmd", expectedMap.get("cmd"), map1.get("cmd"));
             i++;
         }
 
     }
+
     private List<StepExecutionItem> mkTestItems(StepExecutionItem... item) {
         return Arrays.asList(item);
     }
 
-    public void testExecuteWorkflowItemsForNodeSet() throws Exception {
-        {
-            //test success 1 item
+    public void testExecuteWorkflowItemsForNodeSetSuccessful() throws Exception {
+        //test success 1 item
 
-            final testWorkflowCmdItem testCmd1 = new testWorkflowCmdItem();
-            testCmd1.type = "test1";
-            StepExecutor object = new StepExecutor() {
-                @Override
-                public boolean isNodeDispatchStep(StepExecutionItem item) {
-                    return true;
-                }
+        final testWorkflowCmdItem testCmd1 = new testWorkflowCmdItem();
+        testCmd1.type = "test1";
+        StepExecutor object = new StepExecutor() {
+            @Override
+            public boolean isNodeDispatchStep(StepExecutionItem item) {
+                return true;
+            }
 
-                @Override
-                public StepExecutionResult executeWorkflowStep(StepExecutionContext executionContext,
-                                                               StepExecutionItem item)
-                    throws StepException {
-                    assertEquals(1, executionContext.getStepNumber());
-                    return null;
-                }
-            };
-            getFrameworkInstance().getStepExecutionService().registerInstance("test1", object);
-            final Map<String, Object> expectResult1 = new HashMap<String, Object>();
-            expectResult1.put("c", 1);
-            expectResult1.put("cmd", testCmd1);
-            expectResult1.put("keepgoing", false);
+            @Override
+            public StepExecutionResult executeWorkflowStep(StepExecutionContext executionContext,
+                                                           StepExecutionItem item) {
+                assertEquals(1, executionContext.getStepNumber());
+                return null;
+            }
+        };
+        getFrameworkInstance().getStepExecutionService().registerInstance("test1", object);
+        final Map<String, Object> expectResult1 = new HashMap<String, Object>();
+        expectResult1.put("c", 1);
+        expectResult1.put("cmd", testCmd1);
+        expectResult1.put("keepgoing", false);
 
-            assertExecWFItems(
-                mkTestItems(testCmd1),
-                false,
-                Arrays.asList(expectResult1),
-                true,
-                Arrays.asList((Object) true), false
-            );
+        assertExecWFItems(
+            mkTestItems(testCmd1),
+            false,
+            Arrays.asList(expectResult1),
+            true,
+            Arrays.asList((Object) true), false
+        );
 
-
-        }
-
-
-        {
-
-            //test failure 1 item no keepgoing
-
-            final testWorkflowCmdItem testCmd1 = new testWorkflowCmdItem();
-
-            final Map<String, Object> expectResult1 = new HashMap<String, Object>();
-            expectResult1.put("c", 1);
-            expectResult1.put("cmd", testCmd1);
-            expectResult1.put("keepgoing", false);
-
-            assertExecWFItems(
-                mkTestItems(testCmd1),
-                false,
-                Arrays.asList(expectResult1),
-                false,
-                Arrays.asList((Object) false), false
-            );
-        }
-
-        {
-            //test failure 1 exception no keepgoing
-
-
-            final testWorkflowCmdItem testCmd1 = new testWorkflowCmdItem();
-
-            final Map<String, Object> expectResult1 = new HashMap<String, Object>();
-            expectResult1.put("c", 1);
-            expectResult1.put("cmd", testCmd1);
-            expectResult1.put("keepgoing", false);
-
-            assertExecWFItems(
-                mkTestItems(testCmd1),
-                false,
-                Arrays.asList(expectResult1),
-                false,
-                Arrays.asList((Object) "Failure"),
-                true
-            );
-
-        }
-        {
-            //test failure 1 exception yes keepgoing
-
-
-            final testWorkflowCmdItem testCmd1 = new testWorkflowCmdItem();
-
-            final Map<String, Object> expectResult1 = new HashMap<String, Object>();
-            expectResult1.put("c", 1);
-            expectResult1.put("cmd", testCmd1);
-            expectResult1.put("keepgoing", true);
-
-            assertExecWFItems(
-                mkTestItems(testCmd1),
-                true,
-                Arrays.asList(expectResult1),
-                false,
-                Arrays.asList((Object) "Failure"), false
-            );
-
-        }
 
     }
 
-    public void testExecuteWorkflowItemsForNodeSetFailureHandler() throws Exception {
-        {
-            //test success 1 item, no failure handler
+    public void testExecuteWorkflowItemsForNodeSetFailureNoKeepgoing() throws Exception {
 
 
-            final testHandlerWorkflowCmdItem testCmd1 = new testHandlerWorkflowCmdItem();
-            testCmd1.failureHandler = null;
+        //test failure 1 item no keepgoing
 
-            final Map<String, Object> expectResult1 = new HashMap<String, Object>();
-            expectResult1.put("c", 1);
-            expectResult1.put("cmd", testCmd1);
-            expectResult1.put("keepgoing", false);
+        final testWorkflowCmdItem testCmd1 = new testWorkflowCmdItem();
 
-            assertExecWFItems(
-                mkTestItems(testCmd1),
-                false,
-                Arrays.asList(expectResult1),
-                true,
-                Arrays.asList((Object) true), false
-            );
+        final Map<String, Object> expectResult1 = new HashMap<String, Object>();
+        expectResult1.put("c", 1);
+        expectResult1.put("cmd", testCmd1);
+        expectResult1.put("keepgoing", false);
 
-        }
-
-
-        {
-            //test failure 1 item no keepgoing, with failure handler (keepgoing=false)
-
-
-            final testHandlerWorkflowCmdItem testCmd1 = new testHandlerWorkflowCmdItem();
-            testCmd1.failureHandler = null;
-            final testWorkflowCmdItem testCmdHandler1 = new testWorkflowCmdItem();
-            testCmd1.failureHandler = testCmdHandler1;
-            testCmdHandler1.keepgoingOnSuccess = false;
-
-            final Map<String, Object> expectResult1 = new HashMap<String, Object>();
-            expectResult1.put("c", 1);
-            expectResult1.put("cmd", testCmd1);
-            expectResult1.put("keepgoing", false);
-            final Map<String, Object> expectResult2 = new HashMap<String, Object>();
-            expectResult2.put("c", 1);
-            expectResult2.put("cmd", testCmdHandler1);
-            expectResult2.put("keepgoing", false);
-
-            assertExecWFItems(
-                mkTestItems(testCmd1),
-                false,
-                Arrays.asList(expectResult1,expectResult2),
-                false,
-                Arrays.asList((Object) false,true),//item1 fails, handler succeeds
-                false
-            );
-
-
-        }
-
-        {
-            //test failure 1 item no keepgoing throw exception, with failure handler (keepgoing=false)
-
-
-            final testHandlerWorkflowCmdItem testCmd1 = new testHandlerWorkflowCmdItem();
-            testCmd1.failureHandler = null;
-            final testWorkflowCmdItem testCmdHandler1 = new testWorkflowCmdItem();
-            testCmd1.failureHandler = testCmdHandler1;
-            testCmdHandler1.keepgoingOnSuccess = false;
-
-            final Map<String, Object> expectResult1 = new HashMap<String, Object>();
-            expectResult1.put("c", 1);
-            expectResult1.put("cmd", testCmd1);
-            expectResult1.put("keepgoing", false);
-            final Map<String, Object> expectResult2 = new HashMap<String, Object>();
-            expectResult2.put("c", 1);
-            expectResult2.put("cmd", testCmdHandler1);
-            expectResult2.put("keepgoing", false);
-
-            assertExecWFItems(
-                mkTestItems(testCmd1),
-                false,
-                Arrays.asList(expectResult1, expectResult2),
-                false,
-                Arrays.asList((Object) "Failure", true),//item1 fails, handler succeeds
-                true
-            );
-
-        }
+        assertExecWFItems(
+            mkTestItems(testCmd1),
+            false,
+            Arrays.asList(expectResult1),
+            false,
+            Arrays.asList((Object) false), false
+        );
     }
+
+    public void testExecuteWorkflowItemsForNodeSetFailureNoKeepgoing2() throws Exception {
+
+        //test failure 1 exception no keepgoing
+
+
+        final testWorkflowCmdItem testCmd1 = new testWorkflowCmdItem();
+
+        final Map<String, Object> expectResult1 = new HashMap<String, Object>();
+        expectResult1.put("c", 1);
+        expectResult1.put("cmd", testCmd1);
+        expectResult1.put("keepgoing", false);
+
+        assertExecWFItems(
+            mkTestItems(testCmd1),
+            false,
+            Arrays.asList(expectResult1),
+            false,
+            Arrays.asList((Object) "Failure"),
+            false
+        );
+
+    }
+
+    public void testExecuteWorkflowItemsForNodeSetFailureKeepgoing() throws Exception {
+
+        //test failure 1 exception yes keepgoing
+
+
+        final testWorkflowCmdItem testCmd1 = new testWorkflowCmdItem();
+
+        final Map<String, Object> expectResult1 = new HashMap<String, Object>();
+        expectResult1.put("c", 1);
+        expectResult1.put("cmd", testCmd1);
+        expectResult1.put("keepgoing", true);
+
+        assertExecWFItems(
+            mkTestItems(testCmd1),
+            true,
+            Arrays.asList(expectResult1),
+            false,
+            Arrays.asList((Object) "Failure"), false
+        );
+
+
+    }
+
+    public void testExecuteWorkflowItemsForNodeSetFailureHandlerSuccessNoHandler() throws Exception {
+        //test success 1 item, no failure handler
+
+
+        final testHandlerWorkflowCmdItem testCmd1 = new testHandlerWorkflowCmdItem();
+        testCmd1.failureHandler = null;
+
+        final Map<String, Object> expectResult1 = new HashMap<String, Object>();
+        expectResult1.put("c", 1);
+        expectResult1.put("cmd", testCmd1);
+        expectResult1.put("keepgoing", false);
+
+        assertExecWFItems(
+            mkTestItems(testCmd1),
+            false,
+            Arrays.asList(expectResult1),
+            true,
+            Arrays.asList((Object) true), false
+        );
+
+    }
+
+    public void testExecuteWorkflowItemsForNodeSetFailureHandlerFailureNoKeepgoingWithHandler() throws Exception {
+
+
+        //test failure 1 item no keepgoing, with failure handler (keepgoing=false)
+
+
+        final testHandlerWorkflowCmdItem testCmd1 = new testHandlerWorkflowCmdItem();
+        testCmd1.failureHandler = null;
+        final testWorkflowCmdItem testCmdHandler1 = new testWorkflowCmdItem();
+        testCmd1.failureHandler = testCmdHandler1;
+        testCmdHandler1.keepgoingOnSuccess = false;
+
+        final Map<String, Object> expectResult1 = new HashMap<String, Object>();
+        expectResult1.put("c", 1);
+        expectResult1.put("cmd", testCmd1);
+        expectResult1.put("keepgoing", false);
+        final Map<String, Object> expectResult2 = new HashMap<String, Object>();
+        expectResult2.put("c", 1);
+        expectResult2.put("cmd", testCmdHandler1);
+        expectResult2.put("keepgoing", false);
+
+        assertExecWFItems(
+            mkTestItems(testCmd1),
+            false,
+            Arrays.asList(expectResult1, expectResult2),
+            false,
+            Arrays.asList((Object) false, true),//item1 fails, handler succeeds
+            false
+        );
+
+
+    }
+
+    public void testExecuteWorkflowItemsForNodeSetFailureHandlerFailureNoKeepgoingWithHandler2() throws Exception {
+
+        //test failure 1 item no keepgoing throw exception, with failure handler (keepgoing=false)
+
+
+        final testHandlerWorkflowCmdItem testCmd1 = new testHandlerWorkflowCmdItem();
+        testCmd1.failureHandler = null;
+        final testWorkflowCmdItem testCmdHandler1 = new testWorkflowCmdItem();
+        testCmd1.failureHandler = testCmdHandler1;
+        testCmdHandler1.keepgoingOnSuccess = false;
+
+        final Map<String, Object> expectResult1 = new HashMap<String, Object>();
+        expectResult1.put("c", 1);
+        expectResult1.put("cmd", testCmd1);
+        expectResult1.put("keepgoing", false);
+        final Map<String, Object> expectResult2 = new HashMap<String, Object>();
+        expectResult2.put("c", 1);
+        expectResult2.put("cmd", testCmdHandler1);
+        expectResult2.put("keepgoing", false);
+
+        assertExecWFItems(
+            mkTestItems(testCmd1),
+            false,
+            Arrays.asList(expectResult1, expectResult2),
+            false,
+            Arrays.asList((Object) "Failure", true),//item1 fails, handler succeeds
+            false
+        );
+
+    }
+
     public void testExecuteWorkflowItemsForNodeSetFailureHandlerKeepgoing() throws Exception {
-        {
-            //test failure 1 item yes keepgoing, with failure handler (keepgoing=false)
+        //test failure 1 item yes keepgoing, with failure handler (keepgoing=false)
 
 
-            final testHandlerWorkflowCmdItem testCmd1 = new testHandlerWorkflowCmdItem();
-            testCmd1.failureHandler = null;
-            final testWorkflowCmdItem testCmdHandler1 = new testWorkflowCmdItem();
-            testCmd1.failureHandler = testCmdHandler1;
-            testCmdHandler1.keepgoingOnSuccess = false;
+        final testHandlerWorkflowCmdItem testCmd1 = new testHandlerWorkflowCmdItem();
+        testCmd1.failureHandler = null;
+        final testWorkflowCmdItem testCmdHandler1 = new testWorkflowCmdItem();
+        testCmd1.failureHandler = testCmdHandler1;
+        testCmdHandler1.keepgoingOnSuccess = false;
 
-            final Map<String, Object> expectResult1 = new HashMap<String, Object>();
-            expectResult1.put("c", 1);
-            expectResult1.put("cmd", testCmd1);
-            expectResult1.put("keepgoing", true);
-            final Map<String, Object> expectResult2 = new HashMap<String, Object>();
-            expectResult2.put("c", 1);
-            expectResult2.put("cmd", testCmdHandler1);
-            expectResult2.put("keepgoing", false);
+        final Map<String, Object> expectResult1 = new HashMap<String, Object>();
+        expectResult1.put("c", 1);
+        expectResult1.put("cmd", testCmd1);
+        expectResult1.put("keepgoing", true);
+        final Map<String, Object> expectResult2 = new HashMap<String, Object>();
+        expectResult2.put("c", 1);
+        expectResult2.put("cmd", testCmdHandler1);
+        expectResult2.put("keepgoing", false);
 
-            assertExecWFItems(
-                mkTestItems(testCmd1),
-                true,
-                Arrays.asList(expectResult1, expectResult2),
-                true,
-                Arrays.asList((Object) false, true),//item1 fails, handler succeeds
-                false
-            );
+        assertExecWFItems(
+            mkTestItems(testCmd1),
+            true,
+            Arrays.asList(expectResult1, expectResult2),
+            true,
+            Arrays.asList((Object) false, true),//item1 fails, handler succeeds
+            false
+        );
 
-        }
+    }
 
-        {
-            //test failure 1 item yes keepgoing throw exception, with failure handler (keepgoing=false)
+    public void testExecuteWorkflowItemsForNodeSetFailureHandlerKeepgoing2() throws Exception {
+        //test failure 1 item yes keepgoing throw exception, with failure handler (keepgoing=false)
 
 
-            final testHandlerWorkflowCmdItem testCmd1 = new testHandlerWorkflowCmdItem();
-            testCmd1.failureHandler = null;
-            final testWorkflowCmdItem testCmdHandler1 = new testWorkflowCmdItem();
-            testCmd1.failureHandler = testCmdHandler1;
-            testCmdHandler1.keepgoingOnSuccess = false;
+        final testHandlerWorkflowCmdItem testCmd1 = new testHandlerWorkflowCmdItem();
+        testCmd1.failureHandler = null;
+        final testWorkflowCmdItem testCmdHandler1 = new testWorkflowCmdItem();
+        testCmd1.failureHandler = testCmdHandler1;
+        testCmdHandler1.keepgoingOnSuccess = false;
 
-            final Map<String, Object> expectResult1 = new HashMap<String, Object>();
-            expectResult1.put("c", 1);
-            expectResult1.put("cmd", testCmd1);
-            expectResult1.put("keepgoing", true);
-            final Map<String, Object> expectResult2 = new HashMap<String, Object>();
-            expectResult2.put("c", 1);
-            expectResult2.put("cmd", testCmdHandler1);
-            expectResult2.put("keepgoing", false);
+        final Map<String, Object> expectResult1 = new HashMap<String, Object>();
+        expectResult1.put("c", 1);
+        expectResult1.put("cmd", testCmd1);
+        expectResult1.put("keepgoing", true);
+        final Map<String, Object> expectResult2 = new HashMap<String, Object>();
+        expectResult2.put("c", 1);
+        expectResult2.put("cmd", testCmdHandler1);
+        expectResult2.put("keepgoing", false);
 
-            assertExecWFItems(
-                mkTestItems(testCmd1),
-                true,
-                Arrays.asList(expectResult1, expectResult2),
-                true,
-                Arrays.asList((Object) "Failure", true),//item1 fails, handler succeeds
-                false
-            );
+        assertExecWFItems(
+            mkTestItems(testCmd1),
+            true,
+            Arrays.asList(expectResult1, expectResult2),
+            true,
+            Arrays.asList((Object) "Failure", true),//item1 fails, handler succeeds
+            false
+        );
 
-        }
+    }
 
-        {
-            //test failure 2 items yes keepgoing throw exception, with failure handler (keepgoing=false)
-            final testHandlerWorkflowCmdItem testCmd1 = new testHandlerWorkflowCmdItem();
-            testCmd1.failureHandler = null;
-            final testWorkflowCmdItem testCmdHandler1 = new testWorkflowCmdItem();
-            testCmd1.failureHandler = testCmdHandler1;
-            testCmdHandler1.keepgoingOnSuccess = false;
-            final testWorkflowCmdItem testCmd2 = new testWorkflowCmdItem();
+    public void testExecuteWorkflowItemsForNodeSetFailureHandlerKeepgoing3() throws Exception {
+        //test failure 2 items yes keepgoing throw exception, with failure handler (keepgoing=false)
+        final testHandlerWorkflowCmdItem testCmd1 = new testHandlerWorkflowCmdItem();
+        testCmd1.failureHandler = null;
+        final testWorkflowCmdItem testCmdHandler1 = new testWorkflowCmdItem();
+        testCmd1.failureHandler = testCmdHandler1;
+        testCmdHandler1.keepgoingOnSuccess = false;
+        final testWorkflowCmdItem testCmd2 = new testWorkflowCmdItem();
 
-            final Map<String, Object> expectResult1 = new HashMap<String, Object>();
-            expectResult1.put("c", 1);
-            expectResult1.put("cmd", testCmd1);
-            expectResult1.put("keepgoing", true);
-            final Map<String, Object> expectResult2 = new HashMap<String, Object>();
-            expectResult2.put("c", 1);
-            expectResult2.put("cmd", testCmdHandler1);
-            expectResult2.put("keepgoing", false);
-            final Map<String, Object> expectResult3 = new HashMap<String, Object>();
-            expectResult3.put("c", 2);
-            expectResult3.put("cmd", testCmd2);
-            expectResult3.put("keepgoing", true);
+        final Map<String, Object> expectResult1 = new HashMap<String, Object>();
+        expectResult1.put("c", 1);
+        expectResult1.put("cmd", testCmd1);
+        expectResult1.put("keepgoing", true);
+        final Map<String, Object> expectResult2 = new HashMap<String, Object>();
+        expectResult2.put("c", 1);
+        expectResult2.put("cmd", testCmdHandler1);
+        expectResult2.put("keepgoing", false);
+        final Map<String, Object> expectResult3 = new HashMap<String, Object>();
+        expectResult3.put("c", 2);
+        expectResult3.put("cmd", testCmd2);
+        expectResult3.put("keepgoing", true);
 
-            assertExecWFItems(
-                mkTestItems(testCmd1, testCmd2),
-                true,
-                Arrays.asList(expectResult1, expectResult2, expectResult3),
-                true,
-                Arrays.asList((Object) "Failure",true, true),//item1 fails, handler succeeds, item2 succeeds
-                false
-            );
+        assertExecWFItems(
+            mkTestItems(testCmd1, testCmd2),
+            true,
+            Arrays.asList(expectResult1, expectResult2, expectResult3),
+            true,
+            Arrays.asList((Object) "Failure", true, true),//item1 fails, handler succeeds, item2 succeeds
+            false
+        );
 
-        }
-        {
-            //test failure 2 items yes keepgoing throw exception, with failure handler (keepgoing=false)
+    }
 
-            final testHandlerWorkflowCmdItem testCmd1 = new testHandlerWorkflowCmdItem();
-            testCmd1.failureHandler = null;
-            final testWorkflowCmdItem testCmdHandler1 = new testWorkflowCmdItem();
-            testCmd1.failureHandler = testCmdHandler1;
-            testCmdHandler1.keepgoingOnSuccess = false;
-            final testWorkflowCmdItem testCmd2 = new testWorkflowCmdItem();
+    public void testExecuteWorkflowItemsForNodeSetFailureHandlerKeepgoing4() throws Exception {
+        //test failure 2 items yes keepgoing throw exception, with failure handler (keepgoing=false)
 
-            final Map<String, Object> expectResult1 = new HashMap<String, Object>();
-            expectResult1.put("c", 1);
-            expectResult1.put("cmd", testCmd1);
-            expectResult1.put("keepgoing", true);
-            final Map<String, Object> expectResult2 = new HashMap<String, Object>();
-            expectResult2.put("c", 1);
-            expectResult2.put("cmd", testCmdHandler1);
-            expectResult2.put("keepgoing", false);
-            final Map<String, Object> expectResult3 = new HashMap<String, Object>();
-            expectResult3.put("c", 2);
-            expectResult3.put("cmd", testCmd2);
-            expectResult3.put("keepgoing", true);
+        final testHandlerWorkflowCmdItem testCmd1 = new testHandlerWorkflowCmdItem();
+        testCmd1.failureHandler = null;
+        final testWorkflowCmdItem testCmdHandler1 = new testWorkflowCmdItem();
+        testCmd1.failureHandler = testCmdHandler1;
+        testCmdHandler1.keepgoingOnSuccess = false;
+        final testWorkflowCmdItem testCmd2 = new testWorkflowCmdItem();
 
-            assertExecWFItems(
-                mkTestItems(testCmd1, testCmd2),
-                true,
-                Arrays.asList(expectResult1, expectResult2, expectResult3),
-                false,
-                Arrays.asList((Object) "Failure", true, false),//item1 fails, handler succeeds, item2 fails
-                false
-            );
+        final Map<String, Object> expectResult1 = new HashMap<String, Object>();
+        expectResult1.put("c", 1);
+        expectResult1.put("cmd", testCmd1);
+        expectResult1.put("keepgoing", true);
+        final Map<String, Object> expectResult2 = new HashMap<String, Object>();
+        expectResult2.put("c", 1);
+        expectResult2.put("cmd", testCmdHandler1);
+        expectResult2.put("keepgoing", false);
+        final Map<String, Object> expectResult3 = new HashMap<String, Object>();
+        expectResult3.put("c", 2);
+        expectResult3.put("cmd", testCmd2);
+        expectResult3.put("keepgoing", true);
 
-        }
+        assertExecWFItems(
+            mkTestItems(testCmd1, testCmd2),
+            true,
+            Arrays.asList(expectResult1, expectResult2, expectResult3),
+            false,
+            Arrays.asList((Object) "Failure", true, false),//item1 fails, handler succeeds, item2 fails
+            false
+        );
+
     }
 
     public void testExecuteWorkflowItemsForNodeSetFailureHandlerKeepgoingOnSuccess() throws Exception {
 
-        {
-            //test failure 1 item no keepgoing, with failure handler (keepgoing=true)
-            final testHandlerWorkflowCmdItem testCmd1 = new testHandlerWorkflowCmdItem();
-            testCmd1.failureHandler = null;
-            final testWorkflowCmdItem testCmdHandler1 = new testWorkflowCmdItem();
-            testCmd1.failureHandler = testCmdHandler1;
-            testCmdHandler1.keepgoingOnSuccess = true;
-            final testWorkflowCmdItem testCmd2 = new testWorkflowCmdItem();
+        //test failure 1 item no keepgoing, with failure handler (keepgoing=true)
+        final testHandlerWorkflowCmdItem testCmd1 = new testHandlerWorkflowCmdItem();
+        testCmd1.failureHandler = null;
+        final testWorkflowCmdItem testCmdHandler1 = new testWorkflowCmdItem();
+        testCmd1.failureHandler = testCmdHandler1;
+        testCmdHandler1.keepgoingOnSuccess = true;
+        final testWorkflowCmdItem testCmd2 = new testWorkflowCmdItem();
 
-            final Map<String, Object> expectResult1 = new HashMap<String, Object>();
-            expectResult1.put("c", 1);
-            expectResult1.put("cmd", testCmd1);
-            expectResult1.put("keepgoing", false);
-            final Map<String, Object> expectResult2 = new HashMap<String, Object>();
-            expectResult2.put("c", 1);
-            expectResult2.put("cmd", testCmdHandler1);
-            expectResult2.put("keepgoing", false);
-            final Map<String, Object> expectResult3 = new HashMap<String, Object>();
-            expectResult3.put("c", 2);
-            expectResult3.put("cmd", testCmd2);
-            expectResult3.put("keepgoing", false);
+        final Map<String, Object> expectResult1 = new HashMap<String, Object>();
+        expectResult1.put("c", 1);
+        expectResult1.put("cmd", testCmd1);
+        expectResult1.put("keepgoing", false);
+        final Map<String, Object> expectResult2 = new HashMap<String, Object>();
+        expectResult2.put("c", 1);
+        expectResult2.put("cmd", testCmdHandler1);
+        expectResult2.put("keepgoing", false);
+        final Map<String, Object> expectResult3 = new HashMap<String, Object>();
+        expectResult3.put("c", 2);
+        expectResult3.put("cmd", testCmd2);
+        expectResult3.put("keepgoing", false);
 
-            assertExecWFItems(
-                mkTestItems(testCmd1, testCmd2),
-                false,
-                Arrays.asList(expectResult1, expectResult2, expectResult3),
-                true,
-                Arrays.asList((Object) false, true, true),//item1 fails, handler succeeds, item2 succeeds
-                false
-            );
+        assertExecWFItems(
+            mkTestItems(testCmd1, testCmd2),
+            false,
+            Arrays.asList(expectResult1, expectResult2, expectResult3),
+            true,
+            Arrays.asList((Object) false, true, true),//item1 fails, handler succeeds, item2 succeeds
+            false
+        );
 
-        }
-        {
-            //test failure 1 item no keepgoing, with failure handler (keepgoing=true) fails
-            final testHandlerWorkflowCmdItem testCmd1 = new testHandlerWorkflowCmdItem();
-            testCmd1.failureHandler = null;
-            final testWorkflowCmdItem testCmdHandler1 = new testWorkflowCmdItem();
-            testCmd1.failureHandler = testCmdHandler1;
-            testCmdHandler1.keepgoingOnSuccess = true;
-            final testWorkflowCmdItem testCmd2 = new testWorkflowCmdItem();
+    }
 
-            final Map<String, Object> expectResult1 = new HashMap<String, Object>();
-            expectResult1.put("c", 1);
-            expectResult1.put("cmd", testCmd1);
-            expectResult1.put("keepgoing", false);
-            final Map<String, Object> expectResult2 = new HashMap<String, Object>();
-            expectResult2.put("c", 1);
-            expectResult2.put("cmd", testCmdHandler1);
-            expectResult2.put("keepgoing", false);
+    public void testExecuteWorkflowItemsForNodeSetFailureHandlerKeepgoingOnSuccessHandlerFails() throws Exception {
+        //test failure 1 item no keepgoing, with failure handler (keepgoing=true) fails
+        final testHandlerWorkflowCmdItem testCmd1 = new testHandlerWorkflowCmdItem();
+        testCmd1.failureHandler = null;
+        final testWorkflowCmdItem testCmdHandler1 = new testWorkflowCmdItem();
+        testCmd1.failureHandler = testCmdHandler1;
+        testCmdHandler1.keepgoingOnSuccess = true;
+        final testWorkflowCmdItem testCmd2 = new testWorkflowCmdItem();
 
-            assertExecWFItems(
-                mkTestItems(testCmd1, testCmd2),
-                false,
-                Arrays.asList(expectResult1, expectResult2),
-                false,
-                Arrays.asList((Object) false, false, "should not be executed"),//item1 fails, handler fails, item2 succeeds
-                false
-            );
+        final Map<String, Object> expectResult1 = new HashMap<String, Object>();
+        expectResult1.put("c", 1);
+        expectResult1.put("cmd", testCmd1);
+        expectResult1.put("keepgoing", false);
+        final Map<String, Object> expectResult2 = new HashMap<String, Object>();
+        expectResult2.put("c", 1);
+        expectResult2.put("cmd", testCmdHandler1);
+        expectResult2.put("keepgoing", false);
 
-        }
+        assertExecWFItems(
+            mkTestItems(testCmd1, testCmd2),
+            false,
+            Arrays.asList(expectResult1, expectResult2),
+            false,
+            Arrays.asList((Object) false, false, "should not be executed"),//item1 fails, handler fails, item2 succeeds
+            false
+        );
+
 
     }
 
 
-    static class testWorkflowCmdItem implements NodeStepExecutionItem,HandlerExecutionItem {
+    static class testWorkflowCmdItem implements NodeStepExecutionItem, HandlerExecutionItem {
         private String type;
         private String nodeStepType;
         int flag = -1;
@@ -644,7 +627,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         }
     }
 
-    static class testHandlerWorkflowCmdItem implements StepExecutionItem,HasFailureHandler {
+    static class testHandlerWorkflowCmdItem implements StepExecutionItem, HasFailureHandler {
         private String type;
         private StepExecutionItem failureHandler;
         int flag = -1;
@@ -676,13 +659,13 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         boolean shouldThrowException = false;
 
         public NodeStepResult executeNodeStep(StepExecutionContext executionContext,
-                                                 NodeStepExecutionItem executionItem, INodeEntry iNodeEntry) throws
-                                                                                                     NodeStepException {
+                                              NodeStepExecutionItem executionItem, INodeEntry iNodeEntry) throws
+                                                                                                          NodeStepException {
             executionItemList.add(executionItem);
             executionContextList.add(executionContext);
             nodeEntryList.add(iNodeEntry);
             if (shouldThrowException) {
-                throw new NodeStepException("testInterpreter test exception", iNodeEntry.getNodename());
+                throw new NodeStepException("testInterpreter test exception", null, iNodeEntry.getNodename());
             }
             System.out.println("return index: (" + index + ") in size: " + resultList.size());
             return resultList.get(index++);

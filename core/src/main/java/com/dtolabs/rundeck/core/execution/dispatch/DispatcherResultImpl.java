@@ -24,10 +24,10 @@
 */
 package com.dtolabs.rundeck.core.execution.dispatch;
 
-import com.dtolabs.rundeck.core.execution.StatusResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Map;
 
 
 /**
@@ -77,10 +77,19 @@ public class DispatcherResultImpl implements DispatcherResult, HasDispatcherResu
         if(null!=description){
             return description;
         }
-        return "DispatcherResultImpl{" +
-               "results=" + results +
-               ", success=" + success +
-               ", description='" + description + '\'' +
-               '}';
+        if(success) {
+            return "Dispatch successful (" + results.size() + " nodes)";
+        }else{
+            int i=0;
+            ArrayList<String> names = new ArrayList<String>();
+            for (final String s : results.keySet()) {
+                NodeStepResult stepResult = results.get(s);
+                if(!stepResult.isSuccess()){
+                    i++;
+                    names.add(s);
+                }
+            }
+            return "Dispatch failed on " + i + " nodes: " + names;
+        }
     }
 }

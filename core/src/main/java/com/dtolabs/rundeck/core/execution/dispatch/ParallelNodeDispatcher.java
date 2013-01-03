@@ -23,14 +23,17 @@
 */
 package com.dtolabs.rundeck.core.execution.dispatch;
 
-import com.dtolabs.rundeck.core.NodesetFailureException;
 import com.dtolabs.rundeck.core.cli.CallableWrapperTask;
-import com.dtolabs.rundeck.core.common.*;
+import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
 import com.dtolabs.rundeck.core.tasks.dispatch.NodeExecutionStatusTask;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
@@ -38,7 +41,13 @@ import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Parallel;
 import org.apache.tools.ant.taskdefs.Sequential;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
 
 /**
@@ -93,7 +102,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         parallelTask.setFailOnAny(!keepgoing);
         boolean success = false;
         final HashMap<String, NodeStepResult> resultMap = new HashMap<String, NodeStepResult>();
-        final HashMap<String, Object> failureMap = new HashMap<String, Object>();
+        final HashMap<String, NodeStepResult> failureMap = new HashMap<String, NodeStepResult>();
         final Collection<INodeEntry> nodes1 = nodes.getNodes();
         //reorder based on configured rank property and order
         final String rankProperty = null != context.getNodeRankAttribute() ? context.getNodeRankAttribute() : "nodename";
@@ -138,9 +147,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
                 //extract status results
                 failedListener.nodesFailed(failureMap);
             }
-            //now fail
-            //XXXX: needs to change from exception
-            throw new NodesetFailureException(failureMap);
+            return new DispatcherResultImpl(failureMap, false);
         } else if (null != failedListener && nodeNames.isEmpty()) {
             failedListener.nodesSucceeded();
         }
@@ -152,43 +159,65 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
 
     private Callable dispatchableCallable(final ExecutionContext context, final Dispatchable toDispatch,
                                           final HashMap<String, NodeStepResult> resultMap, final INodeEntry node,
-                                          final Map<String, Object> failureMap) {
+                                          final Map<String, NodeStepResult> failureMap) {
         return new Callable() {
             public Object call() throws Exception {
-                try {
-                    final NodeStepResult dispatch = toDispatch.dispatch(context, node);
-                    if (!dispatch.isSuccess()) {
-                        failureMap.put(node.getNodename(), dispatch);
-                    }
-                    resultMap.put(node.getNodename(), dispatch);
-                    return dispatch;
-                } catch (Throwable t) {
-                    failureMap.put(node.getNodename(), t);
-                    return null;
+                final NodeStepResult dispatch = toDispatch.dispatch(context, node);
+                if (!dispatch.isSuccess()) {
+                    failureMap.put(node.getNodename(), dispatch);
                 }
+                resultMap.put(node.getNodename(), dispatch);
+                return dispatch;
             }
         };
     }
 
-    private Callable execItemCallable(final StepExecutionContext context, final NodeStepExecutionItem item,
-                                      final HashMap<String, NodeStepResult> resultMap, final INodeEntry node,
-                                      final Map<String, Object> failureMap) {
-        return new Callable() {
-            public Object call() throws Exception {
-                try {
-                    final NodeStepResult interpreterResult = framework.getExecutionService().executeNodeStep(
-                        context, item, node);
-                    if (!interpreterResult.isSuccess()) {
-                        failureMap.put(node.getNodename(), interpreterResult);
-                    }
-                    resultMap.put(node.getNodename(), interpreterResult);
-                    return interpreterResult;
-                } catch (Throwable t) {
-                    failureMap.put(node.getNodename(), t);
-                    return null;
+    static class ExecNodeStepCallable implements Callable<NodeStepResult>{
+        final StepExecutionContext context;
+        final NodeStepExecutionItem item;
+        final HashMap<String, NodeStepResult> resultMap;
+        final INodeEntry node;
+        final Map<String, NodeStepResult> failureMap;
+        final Framework framework;
+
+        ExecNodeStepCallable(StepExecutionContext context,
+                             NodeStepExecutionItem item,
+                             HashMap<String, NodeStepResult> resultMap,
+                             INodeEntry node,
+                             Map<String, NodeStepResult> failureMap,
+                             Framework framework) {
+            this.context = context;
+            this.item = item;
+            this.resultMap = resultMap;
+            this.node = node;
+            this.failureMap = failureMap;
+            this.framework = framework;
+        }
+
+        @Override
+        public NodeStepResult call() {
+            try {
+                final NodeStepResult interpreterResult = framework.getExecutionService().executeNodeStep(
+                    context, item, node);
+                if (!interpreterResult.isSuccess()) {
+                    failureMap.put(node.getNodename(), interpreterResult);
                 }
+                resultMap.put(node.getNodename(), interpreterResult);
+                return interpreterResult;
+            } catch (NodeStepException e) {
+                NodeStepResultImpl result = new NodeStepResultImpl(e,
+                                                                   e.getFailureReason(),
+                                                                   e.getMessage(),
+                                                                   node);
+                failureMap.put(node.getNodename(), result);
+                return result;
             }
-        };
+        }
+    }
+    private ExecNodeStepCallable execItemCallable(final StepExecutionContext context, final NodeStepExecutionItem item,
+                                      final HashMap<String, NodeStepResult> resultMap, final INodeEntry node,
+                                      final Map<String, NodeStepResult> failureMap) {
+        return new ExecNodeStepCallable(context, item, resultMap, node, failureMap, framework);
     }
 
     /**

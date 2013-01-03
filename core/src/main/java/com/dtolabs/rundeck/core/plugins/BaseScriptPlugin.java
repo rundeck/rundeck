@@ -26,14 +26,12 @@ package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
-import com.dtolabs.utils.Streams;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -50,40 +48,10 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
     }
 
     /**
-     * Run a command with environment variables in a working dir, and copy the streams
-     */
-    protected int runScript(final String[] command,
-                            final Map<String, String> envMap, final File workingdir,
-                            final OutputStream outputStream, final OutputStream errorStream)
-        throws IOException, InterruptedException {
-        final String[] envarr = createEnvironmentArray(envMap);
+     * Runs the script configured for the script plugin and channels the output to two streams.
 
-        final Runtime runtime = Runtime.getRuntime();
-        final Process exec = runtime.exec(command, envarr, workingdir);
-        final Thread errthread = Streams.copyStreamThread(exec.getErrorStream(), errorStream);
-        final Thread outthread = Streams.copyStreamThread(exec.getInputStream(), outputStream);
-        errthread.start();
-        outthread.start();
-        exec.getOutputStream().close();
-        final int result = exec.waitFor();
-        errthread.join();
-        outthread.join();
-        return result;
-    }
-
-    /**
-     * Create the environment array for executing via {@link Runtime}.
-     */
-    private String[] createEnvironmentArray(final Map<String, String> envMap) {
-        final ArrayList<String> envlist = new ArrayList<String>();
-        for (final Map.Entry<String, String> entry : envMap.entrySet()) {
-            envlist.add(entry.getKey() + "=" + entry.getValue());
-        }
-        return envlist.toArray(new String[envlist.size()]);
-    }
-
-    /**
-     * Runs the script configured for the script plugin and channels the output to two streams. the
+     * @throws IOException          if any IO exception occurs
+     * @throws InterruptedException if interrupted while waiting for the command to finish
      */
     protected int runPluginScript(final PluginStepContext executionContext,
                                   final PrintStream outputStream,
@@ -100,11 +68,11 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
         executionContext.getLogger().log(3, "[" + getProvider().getName() + "] executing: " + Arrays.asList(
             finalargs));
 
-        return runScript(finalargs,
-                         DataContextUtils.generateEnvVarsFromContext(localDataContext),
-                         null,
-                         outputStream,
-                         errorStream
+        return ScriptExecUtil.runLocalCommand(finalargs,
+                                              DataContextUtils.generateEnvVarsFromContext(localDataContext),
+                                              null,
+                                              outputStream,
+                                              errorStream
         );
     }
 
@@ -152,53 +120,9 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
         final boolean interpreterargsquoted = plugin.getInterpreterArgsQuoted();
 
 
-        return createScriptArgs(localDataContext,
-                                scriptargs, null, scriptinterpreter, interpreterargsquoted,
-                                scriptfile.getAbsolutePath());
+        return ScriptExecUtil.createScriptArgs(localDataContext,
+                                               scriptargs, null, scriptinterpreter, interpreterargsquoted,
+                                               scriptfile.getAbsolutePath());
     }
 
-    /**
-     * Generate argument array for a script file invocation
-     *
-     * @param localDataContext      data context properties to expand among the args
-     * @param scriptargs            arguments to the script file
-     * @param scriptargsarr         arguments to the script file as an array
-     * @param scriptinterpreter     interpreter invocation for the file, or null to invoke it directly
-     * @param interpreterargsquoted if true, pass the script file and args as a single argument to the interpreter
-     * @param filepath              remote filepath for the script
-     */
-    public static String[] createScriptArgs(final Map<String, Map<String, String>> localDataContext,
-                                            final String scriptargs,
-                                            final String[] scriptargsarr,
-                                            final String scriptinterpreter,
-                                            final boolean interpreterargsquoted, final String filepath) {
-        final ArrayList<String> arglist = new ArrayList<String>();
-        if (null != scriptinterpreter) {
-            arglist.addAll(Arrays.asList(scriptinterpreter.split(" ")));
-        }
-        if (null != scriptinterpreter && interpreterargsquoted) {
-            final StringBuilder sbuf = new StringBuilder(filepath);
-            if (null != scriptargs) {
-                sbuf.append(" ");
-                sbuf.append(DataContextUtils.replaceDataReferences(scriptargs, localDataContext));
-            } else if (null != scriptargsarr) {
-
-                final String[] strings = DataContextUtils.replaceDataReferences(scriptargsarr, localDataContext);
-                for (final String string : strings) {
-                    sbuf.append(" ");
-                    sbuf.append(string);
-                }
-            }
-            arglist.add(sbuf.toString());
-        } else {
-            arglist.add(filepath);
-            if (null != scriptargs) {
-                arglist.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargs.split(" "),
-                                                                                    localDataContext)));
-            } else if (null != scriptargsarr) {
-                arglist.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargsarr, localDataContext)));
-            }
-        }
-        return arglist.toArray(new String[arglist.size()]);
-    }
 }

@@ -25,7 +25,8 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.execution.ExceptionStatusResult;
-import com.dtolabs.rundeck.core.execution.StatusResult;
+
+import java.util.Map;
 
 
 /**
@@ -34,4 +35,10 @@ import com.dtolabs.rundeck.core.execution.StatusResult;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface StepExecutionResult extends ExceptionStatusResult {
+    public Map<String,Object> getResultData();
+    public Map<String,Object> getFailureData();
+
+    public FailureReason getFailureReason();
+    public String getFailureMessage();
+
 }
