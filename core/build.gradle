@@ -1,13 +1,15 @@
+/**
+ * The Rundeck Core API build file
+ **/
+
+description = 'The Rundeck Core API project'
+
 import org.apache.tools.ant.filters.ReplaceTokens
 import org.gradle.plugins.signing.Sign
 
-apply plugin: 'java'
-apply plugin: 'maven'
-apply plugin: 'signing'
-sourceCompatibility = 1.5
-version = '1.5-dev'
+apply from: "${rootDir}/gradle/java.gradle"
+
 archivesBaseName = 'rundeck-core'
-group = "org.rundeck"
 defaultTasks 'clean','assemble'
 
 def isReleaseBuild
@@ -33,6 +35,7 @@ repositories {
         checkmodified = true
     }
 }
+
 dependencies {
     compile( 
         [group: 'org.apache.ant', name: 'ant', version: '1.7.1',ext:'jar'],
@@ -59,7 +62,8 @@ dependencies {
 
 jar {
     manifest {
-        attributes 'Rundeck-Version': version,'Rundeck-Tools-Dependencies':configurations.runtime.collect { "$it.name" }.join(" ") 
+        attributes 'Rundeck-Version': version, 
+                   'Rundeck-Tools-Dependencies': configurations.runtime.collect { "$it.name" }.join(" ") 
     }
 }
 
@@ -92,36 +96,26 @@ assemble {
     }
 }
 
-
-//create javadoc archive
-task javadocJar(type: Jar,dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-}
-
-//create sources archive
-task sourcesJar(type:Jar){
-    classifier = 'sources'
-    from sourceSets.main.allSource
-}
-
-artifacts{
-    archives jar, javadocJar, sourcesJar
-}
-
-//********* artifact signing *********
-if(isReleaseBuild) {
-    signing {
-        sign configurations.archives
+uploadArchives {
+		repositories.mavenDeployer {
+			configuration = configurations.archives
+            pom.project {
+                artifactId archivesBaseName
+                groupId "com.dtolabs.rundeck"
+                inceptionYear '2011'
+                packaging 'jar'
+                version version
+                name "RunDeck Core"
+                url 'http://rundeck.org'
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution 'repo'
+                    }
+                }
+            }
     }
-} else {
-    task signArchives {
-        // do nothing
-    }
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '1.0'
 }
 
 //build a pom we reuse for both maven builds and release to sonatype

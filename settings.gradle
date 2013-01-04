@@ -1,0 +1,11 @@
+rootProject.name = 'rundeck'
+include ':core', 
+	':plugins', 
+        ':plugins:localexec-plugin',
+	':plugins:script-plugin', 
+	':plugins:stub-plugin',
+	':plugins:test-node-step-plugin',
+	':rundeckapp',
+	':rundeck-launcher',
+	':rundeck-launcher:launcher',
+	':rundeck-launcher:rundeck-jetty-server'
