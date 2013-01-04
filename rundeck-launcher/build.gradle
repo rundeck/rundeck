@@ -1,12 +1,16 @@
-allprojects{
-    version = '1.5-dev'
-    defaultTasks 'clean','assemble'
-    apply plugin: 'idea'
-    group  = 'org.rundeck'
-}
+/**
+ * The Rundeck Launch parent build file
+ */
+
+description = "The parent launcher project provides defaults for it's children"
+
+apply from: "${rootDir}/gradle/java.gradle"
+
+eclipse.project.name = "${project.getParent().eclipse.project.name}:launcher"
+
 subprojects{
-    apply plugin: 'java'
-    sourceCompatibility = 1.5
+    apply from: "${rootDir}/gradle/java.gradle"
+    defaultTasks 'clean','assemble'
     ext.jettyVersion='6.1.21'
     repositories {
         add(new org.apache.ivy.plugins.resolver.FileSystemResolver()) {
@@ -21,16 +25,12 @@ subprojects{
         }
     }
 }
-task wrapper(type: Wrapper) {
-    gradleVersion = '1.0'
-}
 
-apply plugin: 'maven'
 task createPom << {
     pom {
         project {
             artifactId 'rundeck-launcher-parent'
-            groupId project.group
+            groupId group
             inceptionYear '2011'
             packaging 'pom'
             version version

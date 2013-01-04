@@ -1,0 +1,31 @@
+/**
+ * Rundeck Master-Build Project
+ * 
+ * This project does not contain any buildable code and does not generate any 
+ * artifacts, however it allows us to set defaults for the subjects and provides 
+ * Groovy syntax highlighting for gradle build files (like this one)
+ **/
+
+description = 'The master-build project for Rundeck';
+
+apply plugin: 'groovy';
+apply plugin: 'eclipse';
+
+/**
+ * Defaults for all projects
+ */
+allprojects {
+    
+    // the environment can be set by adding -Penvironment={value} as a command
+    // line switch. by default we run as 'development'
+    ext.environment = project.hasProperty('environment') ? environment : 'development';
+    
+    // Unless we're doing a release build, append -SNAPSHOT to the end of the
+    // artifacts. Otherwise use the currentVersion as defined in gradle.properties
+    version = project.hasProperty('environment') && environment == 'release' ? 
+        currentVersion : currentVersion + '-SNAPSHOT';
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.2'
+}

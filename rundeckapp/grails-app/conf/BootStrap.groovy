@@ -33,10 +33,10 @@ class BootStrap {
          if(!grailsApplication.config.rdeck.base){
              //look for system property
              rdeckBase=System.getProperty('rdeck.base')
-             log.info("using rdeck.base system property: ${rdeckBase}");
+             log.warn("using rdeck.base system property: ${rdeckBase}");
          }else{
              rdeckBase=grailsApplication.config.rdeck.base
-             log.info("using rdeck.base config property: ${rdeckBase}");
+             log.warn("using rdeck.base config property: ${rdeckBase}");
          }
          if("test"!=GrailsUtil.environment){
              if(!rdeckBase){
