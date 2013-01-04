@@ -8,6 +8,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 import org.gradle.plugins.signing.Sign
 
 apply from: "${rootDir}/gradle/java.gradle"
+apply plugin: 'signing'
 
 archivesBaseName = 'rundeck-core'
 defaultTasks 'clean','assemble'
@@ -16,7 +17,7 @@ def isReleaseBuild
 def isSnapshotBuild
 def isDevBuild
 
-if(hasProperty("release")){
+if(hasProperty('environment') && environment == 'release'){
     isReleaseBuild=true
 }else if(hasProperty("snapshot")){
     isSnapshotBuild=true
@@ -95,26 +96,14 @@ assemble {
         }
     }
 }
-
-uploadArchives {
-		repositories.mavenDeployer {
-			configuration = configurations.archives
-            pom.project {
-                artifactId archivesBaseName
-                groupId "com.dtolabs.rundeck"
-                inceptionYear '2011'
-                packaging 'jar'
-                version version
-                name "RunDeck Core"
-                url 'http://rundeck.org'
-                licenses {
-                    license {
-                        name 'The Apache Software License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                        distribution 'repo'
-                    }
-                }
-            }
+//********* artifact signing *********
+if(isReleaseBuild) {
+    signing {
+        sign configurations.archives
+    }
+} else {
+    task signArchives {
+        // do nothing
     }
 }
 
