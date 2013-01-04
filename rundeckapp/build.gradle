@@ -29,8 +29,15 @@ def grailsZipFileLocation = "${rootProject.buildDir}/tmp/${grailsZipFile}"
 def grailsInstallLocation = "${rootProject.buildDir}/local"
 def grailsDownloadUrl = "http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/grails-${grailsVersion}.zip"
 def grailsHome = "${grailsInstallLocation}/${grailsBaseName}"
-def graislCommandLine = "${grailsHome}/bin/grails"
+def grailsCommandLine = "${grailsHome}/bin/grails"
 def warFileLocation = "${project(':rundeckapp').projectDir}/target/rundeck-${version}.war"
+
+/**
+ * Depend on core 
+ */
+dependencies{
+	compile project(":core")
+}
 
 /**
  * Downloads Grails from the SpringSource archives
@@ -74,22 +81,17 @@ task extractGrails(dependsOn: downloadGrails) {
 }
 
 /**
- * The Grails webapp has both compile and runtime dependencies on "core" and 
- * "rundeck-jetty-server" respectively - this task acts as a container for those 
- * dependencies so they are built and installed into the local ~/.m2 repo before 
+ * "core" needs to be built and installed into the local ~/.m2 repo before 
  * we attempt to do anything further with Grails. 
- * 
- * TODO: this feels a bit circular? jetty-server --> webapp --> jetty-server?
  */
-task installDependencies(dependsOn: [project(":core").install, 
-		project(":rundeck-launcher:rundeck-jetty-server").install]) << {
+task installDependencies(dependsOn: [project(":core").install]) << {
 	description = "Builds and installs dependencies on other subprojects"
 }
 
 /**
  * Installs the jetty-plugin into the .grails folder
  */
-task installJettyPlugin(type: Exec, dependsOn: [extractGrails, installDependencies]) {
+task installJettyPlugin(type: Exec, dependsOn: [extractGrails]) {
 
 	def jettyPluginZip = "${rootDir}/dependencies/grails-jetty/zips/grails-jetty-1.2-SNAPSHOT.zip"
 	def jettyPluginInstalled = "${System.properties['user.home']}/.grails/${grailsVersion}/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT"
@@ -99,30 +101,34 @@ task installJettyPlugin(type: Exec, dependsOn: [extractGrails, installDependenci
 	
 	workingDir project(':rundeckapp').projectDir
 	environment 'GRAILS_HOME', grailsHome
-	commandLine graislCommandLine
+	commandLine grailsCommandLine
 	args 'install-plugin', jettyPluginZip
 }
 
 task cleanWar(type: Delete) {
-	delete file(warFileLocation)
+	delete file(warFileLocation), file("${project(':rundeckapp').projectDir}/target")
 }
 
 task clean(overwrite: true, dependsOn: cleanWar) {
-	// noop clean - just chains cleanWar
 }
+
+task grailsClean(type: Exec, dependsOn: clean) {
+	workingDir project(':rundeckapp').projectDir
+	environment 'GRAILS_HOME', grailsHome
+	commandLine grailsCommandLine
+	args 'clean'
+}
+
 
 /**
  * Wrapper task for grails test-app
  */
 task test(type: Exec, overwrite: true, 
-		dependsOn: [installJettyPlugin,
-			project(":core").install, 
-			project(":plugins:script-plugin").install, 
-			project(":plugins:stub-plugin").install]) {
+		dependsOn: [installJettyPlugin,installDependencies]) {
 			
 	workingDir project(':rundeckapp').projectDir
 	environment 'GRAILS_HOME', grailsHome
-	commandLine graislCommandLine
+	commandLine grailsCommandLine
 	args 'test-app','-coverage','-xml'
 }
 
@@ -142,8 +148,17 @@ task war(type: Exec, dependsOn: [replaceVersion, test]) {
 	outputs.file file(warFileLocation)
 	workingDir project(':rundeckapp').projectDir
 	environment 'GRAILS_HOME', grailsHome
-	commandLine graislCommandLine
+	commandLine grailsCommandLine
 	args 'prod','war'
+}
+
+// add the war to default configuration for this project
+artifacts{
+	'default'(file(warFileLocation)){
+        name 'rundeck'
+        type 'war'
+        builtBy war
+	}
 }
 
 task build(overwrite: true, dependsOn: [test, war]) {
@@ -157,7 +172,7 @@ task build(overwrite: true, dependsOn: [test, war]) {
 task install(type: Exec, overwrite: true, dependsOn: build) {
 	inputs.file file(warFileLocation)
 	workingDir project(':rundeckapp').projectDir
-	commandLine graislCommandLine
+	commandLine grailsCommandLine
 	args 'maven-install'
 }
 
