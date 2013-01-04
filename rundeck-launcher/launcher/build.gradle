@@ -23,7 +23,9 @@ eclipse.project.name = "${rootProject.eclipse.project.name}:launcher:app";
 configurations{
     warBundle
     jettyServerLib
-    pluginFiles
+    pluginFiles{
+        transitive = false
+    }
 }
 
 dependencies {
@@ -64,7 +66,7 @@ task expandCli(dependsOn: setupLauncherContent) << {
         into launcherContentsDir
     }
 }
-task expandWar(dependsOn: [setupLauncherContent, project(':rundeckapp').install]) << {
+task expandWar(dependsOn: setupLauncherContent) << {
     //copy libs to a tools lib dir
     File webappDir=new File(launcherContentsDir,"pkgs/webapp")
     webappDir.mkdirs()
