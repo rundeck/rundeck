@@ -103,19 +103,13 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
      */
     def queryQueue(QueueQuery query){
         def eqfilters = [
-//            maprefUri:'maprefUri',
-//            running:'running',
+                proj: 'project',
         ]
         def txtfilters = [
             obj:'name',
             type:'type',
-            proj:'project',
             cmd:'command',
             user:'user',
-//            node:'node',
-//            message:'message',
-//            job:'jobName',
-//            tags:'tags',
         ]
         def schedTxtFilters= [
             job:'jobName',
