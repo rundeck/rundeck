@@ -209,24 +209,6 @@ class ExecutionController {
         }
         return tailExecutionOutput()
     }
-    
-    /**
-     * Allow output to be posted to an execution via the API:
-     *  PUT /api/execution/{id}/output
-     */
-    def apiExecutionAppendOutput = {
-        if (!new ApiController().requireVersion(ApiRequestFilters.V5)) {
-            return
-        }
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        Execution e = Execution.get(Long.parseLong(params.id))
-        // TODO: add actual "append" API call. For now this just prints the payload back - useful for testing.
-        render(contentType: "text/plain") {
-            out << """output file: ${e.outputfilepath}
-                payload: ${request.JSON?.payload}"""
-            }
-    }
-    
     /**
      * tailExecutionOutput action, used by execution/show.gsp view to display output inline
      * Also used by apiExecutionOutput for API response
