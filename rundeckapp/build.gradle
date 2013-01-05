@@ -30,7 +30,7 @@ def grailsInstallLocation = "${rootProject.buildDir}/local"
 def grailsDownloadUrl = "http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/grails-${grailsVersion}.zip"
 def grailsHome = "${grailsInstallLocation}/${grailsBaseName}"
 def grailsCommandLine = "${grailsHome}/bin/grails"
-def warFileLocation = "${project(':rundeckapp').projectDir}/target/rundeck-${version}.war"
+def warFileLocation = "${project.projectDir}/target/rundeck-${version}.war"
 
 /**
  * Depend on core 
@@ -99,21 +99,21 @@ task installJettyPlugin(type: Exec, dependsOn: [extractGrails]) {
 	inputs.source file(jettyPluginZip)
 	outputs.dir file(jettyPluginInstalled)
 	
-	workingDir project(':rundeckapp').projectDir
+	workingDir project.projectDir
 	environment 'GRAILS_HOME', grailsHome
 	commandLine grailsCommandLine
 	args 'install-plugin', jettyPluginZip
 }
 
 task cleanWar(type: Delete) {
-	delete file(warFileLocation), file("${project(':rundeckapp').projectDir}/target")
+	delete file(warFileLocation), file("${project.projectDir}/target")
 }
 
 task clean(overwrite: true, dependsOn: cleanWar) {
 }
 
 task grailsClean(type: Exec, dependsOn: clean) {
-	workingDir project(':rundeckapp').projectDir
+	workingDir project.projectDir
 	environment 'GRAILS_HOME', grailsHome
 	commandLine grailsCommandLine
 	args 'clean'
@@ -126,7 +126,7 @@ task grailsClean(type: Exec, dependsOn: clean) {
 task test(type: Exec, overwrite: true, 
 		dependsOn: [installJettyPlugin,installDependencies]) {
 			
-	workingDir project(':rundeckapp').projectDir
+	workingDir project.projectDir
 	environment 'GRAILS_HOME', grailsHome
 	commandLine grailsCommandLine
 	args 'test-app','-coverage','-xml'
@@ -146,7 +146,7 @@ task replaceVersion(type: PropertyValueUpdater) {
 task war(type: Exec, dependsOn: [replaceVersion, test]) {
 	inputs.sourceDir file("${projectDir}/src")
 	outputs.file file(warFileLocation)
-	workingDir project(':rundeckapp').projectDir
+	workingDir project.projectDir
 	environment 'GRAILS_HOME', grailsHome
 	commandLine grailsCommandLine
 	args 'prod','war'
@@ -171,7 +171,7 @@ task build(overwrite: true, dependsOn: [test, war]) {
  */
 task install(type: Exec, overwrite: true, dependsOn: build) {
 	inputs.file file(warFileLocation)
-	workingDir project(':rundeckapp').projectDir
+	workingDir project.projectDir
 	commandLine grailsCommandLine
 	args 'maven-install'
 }

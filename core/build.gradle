@@ -224,7 +224,10 @@ gradle.taskGraph.whenReady { taskGraph ->
 uploadArchives {
     if(isDevBuild){
         repositories{
-            mavenLocal()
+            repositories.mavenDeployer {
+                configuration = configurations.archives
+                pom=buildpom
+            }
         }
     }else{
         repositories.mavenDeployer {

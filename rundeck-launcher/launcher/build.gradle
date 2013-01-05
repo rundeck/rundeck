@@ -113,7 +113,7 @@ task createPom << {
     pom {
         project {
             artifactId archivesBaseName
-            groupId group
+            groupId project.group
             inceptionYear '2011'
             packaging 'jar'
             version version
@@ -186,7 +186,7 @@ task createPom << {
                 (configurations.warBundle.dependencies).each{ dep ->
                     dependency{
                         groupId dep.group
-                        artifactId dep.name
+                        artifactId 'rundeck' //override gradle project name
                         version dep.version
                         type 'war'
                     }
@@ -194,7 +194,7 @@ task createPom << {
                 (configurations.pluginFiles.dependencies).each{ dep ->
                     dependency{
                         groupId dep.group
-                        artifactId dep.name
+                        artifactId "rundeck-${dep.name}" //override gradle project name
                         version dep.version
                         type 'jar'
                     }

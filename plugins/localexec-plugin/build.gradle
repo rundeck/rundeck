@@ -12,7 +12,7 @@ task createPom << {
     pom {
         project {
             artifactId 'rundeck-localexec-plugin'
-            groupId group
+            groupId project.group
             inceptionYear '2011'
             packaging 'jar'
             version version
