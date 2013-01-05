@@ -18,6 +18,7 @@ description = 'The Rundeck Grails webapp project'
 
 apply plugin: 'groovy'
 apply plugin: 'eclipse'
+apply plugin: 'idea'
 
 // set the convention to rundeck:<branch>:<path>:<projectName>
 eclipse.project.name =  "${project.getParent().eclipse.project.name}:webapp"

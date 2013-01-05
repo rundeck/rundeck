@@ -10,6 +10,7 @@ description = 'The master-build project for Rundeck';
 
 apply plugin: 'groovy';
 apply plugin: 'eclipse';
+apply plugin: 'idea'
 
 /**
  * Defaults for all projects
