@@ -2,55 +2,32 @@
 
 //Test the result of the build to verify expected artifacts are created
 
-def target="build/libs"
+def target
 
 if("-maven" in args){
     target="target"
+}else if("-gradle" in args){
+    target="build/libs"
+}else{
+    println "ERROR: specify -maven or -gradle to indicate build file locations"
+    System.exit(2)
 }
-
 
 def props=new Properties()
 new File('gradle.properties').withReader{
     props.load(it)
 }
 def tag=Boolean.getBoolean('release')?"":"-SNAPSHOT"
-def debug=Boolean.getBoolean('debug')
+def debug=Boolean.getBoolean('debug')?:("-debug" in args)
 def version=props.currentVersion+tag
 
-
-def failed=false
-
-def ok=debug?{t->println "OK: ${t}"}:{}
-def fail={t->
-    println "FAIL: ${t}"
-    failed=true
-}
-
-def require={t,v->
-    if(!v){
-        fail(t)
-    }else{
-        ok(t)
-    }
-}
-def dirname={
-    it.contains('/')?it.substring(0,it.lastIndexOf('/'))+'/':''
-}
-
-def artifacts=[
-    corejar:"core/${target}/rundeck-core-${version}.jar",
-    coresources:"core/${target}/rundeck-core-${version}-sources.jar",
-    coredoc:"core/${target}/rundeck-core-${version}-javadoc.jar",
-    war:"rundeckapp/target/rundeck-${version}.war",
-    launcherjar:"rundeck-launcher/launcher/${target}/rundeck-launcher-${version}.jar",
-    scriptplugin:"plugins/script-plugin/${target}/rundeck-script-plugin-${version}.jar",
-    stubplugin:"plugins/stub-plugin/${target}/rundeck-stub-plugin-${version}.jar",
-    localexecplugin:"plugins/localexec-plugin/${target}/rundeck-localexec-plugin-${version}.jar",
-]
-
-//test contents
-def ziptest=[
-    launcherjar:[
+//manifest describing expected build results
+def manifest=[
+    "core/${target}/rundeck-core-${version}.jar":[:],
+    "core/${target}/rundeck-core-${version}-sources.jar":[:],
+    "core/${target}/rundeck-core-${version}-javadoc.jar":[:],
+    "rundeckapp/target/rundeck-${version}.war":[:],
+    "rundeck-launcher/launcher/${target}/rundeck-launcher-${version}.jar":[
         "com/dtolabs/rundeck/#+",
         "pkgs/webapp/WEB-INF/classes/#+",
         "pkgs/webapp/WEB-INF/lib/rundeck-core-${version}.jar",
@@ -71,39 +48,80 @@ def ziptest=[
         "lib/log4j-1.2.16.jar",
         "lib/rundeck-jetty-server-1.5-SNAPSHOT.jar",
         "lib/servlet-api-2.5-20081211.jar",
-        "pkgs/webapp/docs/#+"
-    ]
+        "pkgs/webapp/docs/#?"
+    ],
+    "plugins/script-plugin/${target}/rundeck-script-plugin-${version}.jar":[:],
+    "plugins/stub-plugin/${target}/rundeck-stub-plugin-${version}.jar":[:],
+    "plugins/localexec-plugin/${target}/rundeck-localexec-plugin-${version}.jar":[:],
 ]
 
+def isValid=true
+
+def ok=debug?{t->println "OK: ${t}"}:{}
+def warn={t-> println "WARN: ${t}"}
+def fail={t->
+    println "FAIL: ${t}"
+    isValid=false
+    false
+}
+
+def require={t,v->
+    if(!v){
+        fail(t)
+    }else{
+        ok(t)
+        true
+    }
+}
+def expect={t,v->
+    if(!v){
+        warn(t)
+    }else{
+        ok(t)
+    }
+    true
+}
+
+def dirname={it.contains('/')?it.substring(0,it.lastIndexOf('/'))+'/':''}
+
+File.metaClass.getBasename={name.contains('/')?name.substring(name.lastIndexOf('/')):name}
+
+//test contents
+def ziptest=[:]
+
 //require files exist
-artifacts.each{ k,a->
-    f=new File(a)
-    require("EXISTS: ${a}",f.exists())
+manifest.each{ fname,mfest->
+    f=new File(fname)
+    if(require("[${fname}] MUST exist: ${f.exists()}",f.exists())){
+        if(mfest){
+            ziptest[f]=mfest
+        }
+    }
 }
 
 //require zip contents
-ziptest.each{ artifact,dir->
-    def f=new File(artifacts[artifact])
-    if(!f.exists()){
-        return
-    }
+ziptest.each{ f,dir->
     def z = new java.util.zip.ZipFile(f)
     def counts=[:]
+    def fverify=true
     dir.each{ path->
         if(path==~/^.+\/(#.+)$/){
             //verify number of entries
             def n = path.split('#')[1]
             def dname = path.split('#')[0]
             def found=z.getEntry(dname)
-            require("CONTAINS:${f}: ${dname}",found)
             if(n==~/^\d+/){
+                fverify&=require("[${f.basename}] \"${dname}\" MUST exist. Result: (${found?:false})",found)
                 counts[dname]=[equal:Integer.parseInt(n)]
             }else if(n=='+'){
+                fverify&=require("[${f.basename}] \"${dname}\" MUST exist. Result: (${found?:false})",found)
                 counts[dname]=[atleast:1]
+            }else if(n=='?'){
+                counts[dname]=[maybe:1]
             }
         }else{  
             def found=z.getEntry(path)
-            require("CONTAINS:${f}: ${path}",found)
+            fverify&=require("[${f.basename}] \"${path}\" MUST exist. Result: (${found?:false})",found)
         }
     }
     //verify any counts
@@ -119,16 +137,16 @@ ziptest.each{ artifact,dir->
     }
     counts.each{n,c->
         if(c['equal']){
-            require("FILE COUNT:${n} ${c.equal}==(${fcounts[n]})",c.equal==fcounts[n])
+            fverify&=require("[${f.basename}] \"${n}\" MUST have ==${c.equal} files. Result: ${fcounts[n]?:0}",c.equal==fcounts[n])
         }else if(c['atleast']){
-            require("FILE COUNT:${n} ${c.atleast}<=(${fcounts[n]})",c.atleast<=fcounts[n])
+            fverify&=require("[${f.basename}] \"${n}\" MUST have >=${c.atleast} files. Result: ${fcounts[n]?:0}",c.atleast<=fcounts[n])
+        }else if(c['maybe']){
+            fverify&=expect("[${f.basename}] \"${n}\" SHOULD have >=${c.maybe} files. Result: ${fcounts[n]?:0}",fcounts[n]>0)
         }
     }
+    require("${f}: was${fverify?'':' NOT'} verified",fverify)
 }
 
-if(!failed){
-    println "OK"
-}else{
-    println "ERROR: could not validate build"
+if(!require("Build manifest was${isValid?'':' NOT'} verified.",isValid)){
     System.exit(1)
 }
