@@ -1,40 +1,33 @@
+/**
+ * The Rundeck plugins parent project
+ */
 
-allprojects{
-    version = '1.5-dev'
-    defaultTasks 'clean','build'
-    ext.rundeckPluginVersion= '1.1'
-    group = 'org.rundeck'
-}
-task wrapper(type: Wrapper) {
-    gradleVersion = '1.0'
-}
 
+eclipse.project.name =  "${project.getParent().eclipse.project.name}:plugins";
+
+ext.rundeckPluginVersion= '1.1'
 subprojects{
-    //applies to all the plugin sub projects
-    apply plugin: 'java'
-    sourceCompatibility = 1.5
+
+    apply from: "${rootDir}/gradle/java.gradle"
+    
+    defaultTasks 'clean','build'
     archivesBaseName = "rundeck-$project.name"
 
-    repositories {
-        mavenCentral()
-    }
-
     dependencies {
-        compile files("${rootProject.projectDir}/../core/build/libs/rundeck-core-${version}.jar")
-        testCompile(
-            //[group: 'junit', name: 'junit', version: '3.8.1',ext:'jar']
-        )
+        compile project(":core")
     }
+    
     jar {
         manifest {
-            attributes 'Rundeck-Plugin-Version': rundeckPluginVersion, 'Rundeck-Plugin-Archive': 'true', 'Rundeck-Plugin-File-Version': version
+            attributes 'Rundeck-Plugin-Version': rundeckPluginVersion, 
+                       'Rundeck-Plugin-Archive': 'true', 
+                       'Rundeck-Plugin-File-Version': version
         }
     }
-
 }
+apply plugin: 'maven';
 
 
-apply plugin: 'maven'
 task createPom << {
     pom {
         project {
@@ -60,7 +53,7 @@ task createPom << {
             dependencies{
                 dependency{
                     artifactId 'rundeck-core'
-                    groupId 'org.rundeck'
+                    groupId project.group
                     version version
                 }
             }

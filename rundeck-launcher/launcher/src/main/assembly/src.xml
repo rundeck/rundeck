@@ -14,19 +14,19 @@
             <scope>runtime</scope>
             <!-- <useTransitiveDependencies>false</useTransitiveDependencies> -->
             <!-- <excludes> -->
-            <!-- <exclude>com.dtolabs.rundeck:rundeck-jetty-server</exclude> -->
-            <!-- <exclude>com.dtolabs.rundeck:rundeck:war</exclude> -->
+            <!-- <exclude>org.rundeck:rundeck-jetty-server</exclude> -->
+            <!-- <exclude>org.rundeck:rundeck:war</exclude> -->
             <!-- </excludes> -->
             <includes>
                 <include>commons-cli:commons-cli</include>
-                <include>com.dtolabs.rundeck:rundeck-launcher:jar</include>
+                <include>org.rundeck:rundeck-launcher:jar</include>
             </includes>
         </dependencySet>
         <dependencySet>
             <useTransitiveDependencies>true</useTransitiveDependencies>
             <outputDirectory>/lib</outputDirectory>
             <includes>
-                <include>com.dtolabs.rundeck:rundeck-jetty-server</include>
+                <include>org.rundeck:rundeck-jetty-server</include>
                 <include>org.mortbay.jetty:jetty</include>
                 <include>org.mortbay.jetty:jetty-util</include>
                 <include>org.mortbay.jetty:jetty-plus</include>
@@ -37,14 +37,14 @@
         <dependencySet>
             <outputDirectory>/libext</outputDirectory>
             <includes>
-                <include>com.dtolabs.rundeck:rundeck-*-plugin</include>
+                <include>org.rundeck:rundeck-*-plugin</include>
             </includes>
         </dependencySet>
         <dependencySet>
             <outputDirectory>/pkgs/webapp</outputDirectory>
             <unpack>true</unpack>
             <includes>
-                <include>com.dtolabs.rundeck:rundeck:war</include>
+                <include>org.rundeck:rundeck:war</include>
             </includes>
         </dependencySet>
     </dependencySets>

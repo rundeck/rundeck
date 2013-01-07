@@ -1,6 +1,16 @@
+/**
+ * The Rundeck launcher app build file
+ */
+
+description = 'This is the launcher application which wraps the Jetty server'
+
+apply plugin:'application'
+
+mainClassName = 'com.dtolabs.rundeck.ExpandRunServer'
+
 archivesBaseName = 'rundeck-launcher'
 defaultTasks 'clean','launcherJar'
-ext.launcherMainClass = "com.dtolabs.rundeck.ExpandRunServer"
+ext.launcherMainClass = mainClassName
 ext.launcherStartClass = "com.dtolabs.rundeck.RunServer"
 ext.launcherJettyLibs = "servlet-api-2.5-20081211.jar jetty-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-naming-${jettyVersion}.jar jetty-plus-${jettyVersion}.jar"
 ext.launcherJettyLibsUnexpanded = 'servlet-api-2.5-20081211.jar jetty-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-naming-${jettyVersion}.jar jetty-plus-${jettyVersion}.jar'
@@ -8,30 +18,36 @@ ext.launcherJettyLibPath = "pkgs/webapp/WEB-INF/lib"
 
 ext.launcherContentsDir = new File("$projectDir/build/launcher-contents")
 
+eclipse.project.name = "${rootProject.eclipse.project.name}:launcher:app";
 
 configurations{
     warBundle
     jettyServerLib
-    pluginFiles
+    pluginFiles{
+        transitive = false
+    }
 }
 
 dependencies {
-    compile project(":rundeck-jetty-server")
+    compile project(":rundeck-launcher:rundeck-jetty-server")
     compile(
         //[group: 'log4j', name: 'log4j', version: '1.2.16',ext:'jar'],
         [group: 'commons-cli', name: 'commons-cli', version: '1.0',ext:'jar'],
     )
+	
     warBundle(
-        [group: 'org.rundeck', name: 'rundeck', version: version,ext:'war']
+        project(':rundeckapp')
     )
+	
     pluginFiles(
-        [group: 'org.rundeck', name: 'rundeck-script-plugin', version: version,ext:'jar'],
-        [group: 'org.rundeck', name: 'rundeck-stub-plugin', version: version,ext:'jar'],
-        [group: 'org.rundeck', name: 'rundeck-localexec-plugin', version: version, ext: 'jar']
+        project(':plugins:script-plugin'),
+        project(':plugins:stub-plugin'),
+        project(':plugins:localexec-plugin')
     )
-    jettyServerLib(project(path:":rundeck-jetty-server",configuration:'runtime')){
+	
+    jettyServerLib(project(path:":rundeck-launcher:rundeck-jetty-server", configuration:'runtime')) {
         exclude module:'commons-cli'
-        transitive=true
+        transitive = true
 
     }
 }
@@ -83,7 +99,6 @@ task copyPluginLibs(dependsOn: setupLauncherContent) << {
 
 
 jar {
-    dependsOn expandCli, expandWar, copyJettyServerLib, copyPluginLibs
     from launcherContentsDir
     from sourceSets.main.output
     exclude 'com/dtolabs/rundeck/RunServer.class'
@@ -91,12 +106,7 @@ jar {
         attributes 'Rundeck-Version': version, 'Main-Class':"${launcherMainClass}", "Rundeck-Start-Class":"${launcherStartClass}", "Rundeck-Jetty-Libs":"${launcherJettyLibs}", "Rundeck-Jetty-Lib-Path":"${launcherJettyLibPath}"
     }
 }
-/*
-artifacts{
-    archives launcherJar
-}
-*/
-
+jar.dependsOn(expandCli, expandWar, copyJettyServerLib, copyPluginLibs)
 
 apply plugin: 'maven'
 task createPom << {
@@ -176,7 +186,7 @@ task createPom << {
                 (configurations.warBundle.dependencies).each{ dep ->
                     dependency{
                         groupId dep.group
-                        artifactId dep.name
+                        artifactId 'rundeck' //override gradle project name
                         version dep.version
                         type 'war'
                     }
@@ -184,7 +194,7 @@ task createPom << {
                 (configurations.pluginFiles.dependencies).each{ dep ->
                     dependency{
                         groupId dep.group
-                        artifactId dep.name
+                        artifactId "rundeck-${dep.name}" //override gradle project name
                         version dep.version
                         type 'jar'
                     }

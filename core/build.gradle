@@ -1,20 +1,23 @@
+/**
+ * The Rundeck Core API build file
+ **/
+
+description = 'The Rundeck Core API project'
+
 import org.apache.tools.ant.filters.ReplaceTokens
 import org.gradle.plugins.signing.Sign
 
-apply plugin: 'java'
-apply plugin: 'maven'
+apply from: "${rootDir}/gradle/java.gradle"
 apply plugin: 'signing'
-sourceCompatibility = 1.5
-version = '1.5-dev'
+
 archivesBaseName = 'rundeck-core'
-group = "org.rundeck"
 defaultTasks 'clean','assemble'
 
 def isReleaseBuild
 def isSnapshotBuild
 def isDevBuild
 
-if(hasProperty("release")){
+if(hasProperty('environment') && environment == 'release'){
     isReleaseBuild=true
 }else if(hasProperty("snapshot")){
     isSnapshotBuild=true
@@ -33,6 +36,7 @@ repositories {
         checkmodified = true
     }
 }
+
 dependencies {
     compile( 
         [group: 'org.apache.ant', name: 'ant', version: '1.7.1',ext:'jar'],
@@ -59,7 +63,8 @@ dependencies {
 
 jar {
     manifest {
-        attributes 'Rundeck-Version': version,'Rundeck-Tools-Dependencies':configurations.runtime.collect { "$it.name" }.join(" ") 
+        attributes 'Rundeck-Version': version, 
+                   'Rundeck-Tools-Dependencies': configurations.runtime.collect { "$it.name" }.join(" ") 
     }
 }
 
@@ -91,24 +96,6 @@ assemble {
         }
     }
 }
-
-
-//create javadoc archive
-task javadocJar(type: Jar,dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-}
-
-//create sources archive
-task sourcesJar(type:Jar){
-    classifier = 'sources'
-    from sourceSets.main.allSource
-}
-
-artifacts{
-    archives jar, javadocJar, sourcesJar
-}
-
 //********* artifact signing *********
 if(isReleaseBuild) {
     signing {
@@ -118,10 +105,6 @@ if(isReleaseBuild) {
     task signArchives {
         // do nothing
     }
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '1.0'
 }
 
 //build a pom we reuse for both maven builds and release to sonatype
@@ -176,6 +159,51 @@ def buildpom=pom {
                 }
             }
             plugins{
+                plugin() {
+                  groupId('org.apache.maven.plugins')
+                  artifactId('maven-source-plugin')
+                  executions() {
+                    execution() {
+                      id('attach-sources')
+                      goals() {
+                        goal('jar')
+                      }
+                    }
+                  }
+                }
+                plugin() {
+                  groupId('org.apache.maven.plugins')
+                  artifactId('maven-javadoc-plugin')
+                  version('2.8')
+                  configuration() {
+                    docletArtifact() {
+                      groupId('com.google.doclava')
+                      artifactId('doclava')
+                      version('1.0.3')
+                    }
+                    doclet('com.google.doclava.Doclava')
+                    /* bootclasspath required by Sun's JVM */
+                    bootclasspath('${sun.boot.class.path}')
+                    additionalparam('''-quiet
+                             -federate JDK http://download.oracle.com/javase/6/docs/api/index.html?
+                             -federationxml JDK http://doclava.googlecode.com/svn/static/api/openjdk-6.xml
+                             -hdf project.name "${project.name}"
+                             -d .
+                             -hide 101
+                             -proofread ./proof-read.txt''')
+                    useStandardDocletOptions('false')
+                    /* Apple's JVM sometimes requires more memory */
+                    additionalJOption('-J-Xmx1024m')
+                  }
+                  executions() {
+                    execution() {
+                      id('attach-javadoc')
+                      goals() {
+                        goal('jar')
+                      }
+                    }
+                  }
+                }
                 plugin{
                     groupId 'org.apache.maven.plugins'
                     artifactId 'maven-compiler-plugin'
@@ -241,7 +269,10 @@ gradle.taskGraph.whenReady { taskGraph ->
 uploadArchives {
     if(isDevBuild){
         repositories{
-            mavenLocal()
+            repositories.mavenDeployer {
+                configuration = configurations.archives
+                pom=buildpom
+            }
         }
     }else{
         repositories.mavenDeployer {

@@ -1,0 +1,55 @@
+/**
+ * Common build settings for java projects
+ */
+apply plugin: 'java';
+apply plugin: 'maven';
+apply plugin: 'eclipse';
+apply plugin: 'idea';
+
+// add static analysis support when running on build servers (-Penvironment=build)
+if (project.hasProperty('environment') && environment == 'build') {
+
+	apply from: rootDir.path + '/gradle/cobertura.gradle'
+	apply plugin: 'findbugs'
+	
+	findbugs {
+		ignoreFailures = true
+	}
+}
+
+repositories {
+	mavenCentral();
+	mavenLocal();
+}
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
+// set the eclipse project naming convention to rundeck:<path>:<projectName>
+// so it matches the logical hierarchy more closely
+eclipse.project.name = "${project.getParent().eclipse.project.name}:${name}"
+
+// produce a jar file for our test classes
+task testJar(type: Jar, dependsOn: test) {
+	classifier = 'tests'
+	from sourceSets.test.output
+}
+
+// produce a jar file for our source files
+task sourceJar(type: Jar, dependsOn: classes) {
+	classifier = 'sources'
+	from sourceSets.test.java
+}
+
+// produce a jar file for our javadoc
+task javadocJar(type: Jar, dependsOn: javadoc) {
+	classifier = 'javadoc'
+	from javadoc.destinationDir
+}
+
+// add all of the artifacts above to our archives list
+artifacts {
+	archives testJar
+	archives sourceJar
+	archives javadocJar
+}

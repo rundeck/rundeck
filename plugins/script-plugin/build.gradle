@@ -1,3 +1,9 @@
+/**
+ * The Rundeck script plugin build file
+ */
+
+description 'This plugin provides the ability to delegate execution to an external script'
+
 ext.pluginClassNames='com.dtolabs.rundeck.plugin.script.ScriptFileCopier,com.dtolabs.rundeck.plugin.script.ScriptNodeExecutor'
 jar {
     manifest {
@@ -5,13 +11,6 @@ jar {
     }
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '1.0'
-}
-
-
-
-apply plugin: 'maven'
 task createPom << {
     pom {
         project {
