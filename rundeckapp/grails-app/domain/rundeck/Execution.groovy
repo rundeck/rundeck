@@ -55,17 +55,14 @@ class Execution extends ExecutionContext {
     }
 
     static mapping = {
-        def config = ConfigurationHolder.config
-        if (config?.rundeck?.v14?.rdbsupport == 'true') {
 
-            //mapping overrides superclass, so we need to relist these
-            user column: "rduser"
-            argString type: 'text'
-            
-            failedNodeList type: 'text'
-            outputfilepath type: 'text'
-            nodeIncludeName type: 'text'
-        }
+        //mapping overrides superclass, so we need to relist these
+        user column: "rduser"
+        argString type: 'text'
+
+        failedNodeList type: 'text'
+        outputfilepath type: 'text'
+        nodeIncludeName type: 'text'
     }
 
 
