@@ -17,7 +17,7 @@ PROXY_DEFS="-Dhttp.proxyHost=$gradle_proxy_host -Dhttp.proxyPort=$gradle_proxy_p
 endif
 
 
-.PHONY: clean rundeck docs makedocs release core-snapshot test app
+.PHONY: clean rundeck docs makedocs release core-snapshot test app notes
 
 rundeck:  app
 	@echo $(VERSION)-$(RELEASE)
@@ -52,7 +52,23 @@ deb: docs app
 
 #doc build
 
-makedocs:
+notes: docs/en/release_notes/toc.conf
+
+docs/en/release_notes/version-$(VNUMBER).md: RELEASE.md
+	( echo "% Version $(VNUMBER)" ; \
+		echo "%" $(shell whoami) ; \
+		echo "%" $(shell date "+%m/%d/%Y") ; \
+		echo ; ) >$@
+	cat RELEASE.md >>$@
+
+docs/en/release_notes/toc.conf: docs/en/release_notes/version-$(VNUMBER).md
+	echo "1:version-$(VNUMBER).md:Version $(VNUMBER)" > $@.new
+	test -f $@ && ( grep -v -q "$(VNUMBER)" $@ && \
+		cat $@ >> $@.new && \
+		mv $@.new $@ ) || (  mv $@.new $@ )
+	
+
+makedocs: 
 	$(MAKE) -C docs
 
 docs: makedocs
