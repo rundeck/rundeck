@@ -13,10 +13,7 @@ class ExecReport extends BaseReport{
     String abortedByUser
 
     static mapping = {
-        def config = ConfigurationHolder.config
-        if (config?.rundeck?.v14?.rdbsupport == 'true') {
-            adhocScript type: 'text'
-        }
+        adhocScript type: 'text'
     }
 
     static constraints = {

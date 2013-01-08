@@ -12,14 +12,11 @@ abstract class ExecutionContext extends BaseNodeFilters{
     String loglevel="WARN"
 
     static mapping = {
-        def config = ConfigurationHolder.config
-        if (config.rundeck.v14.rdbsupport == 'true') {
-            user column: "rduser"
-            adhocLocalString type:'text'
-            adhocRemoteString type:'text'
-            adhocFilepath type:'text'
-            argString type:'text'
-        }
+        user column: "rduser"
+        adhocLocalString type:'text'
+        adhocRemoteString type:'text'
+        adhocFilepath type:'text'
+        argString type:'text'
     }
     Boolean nodeKeepgoing=false
     Boolean doNodedispatch=false

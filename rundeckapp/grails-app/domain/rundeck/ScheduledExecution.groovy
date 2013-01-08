@@ -82,16 +82,13 @@ class ScheduledExecution extends ExecutionContext {
     }
 
     static mapping = {
-        def config = ConfigurationHolder.config
-        if (config?.rundeck?.v14?.rdbsupport == 'true') {
-            user column: "rduser"
-            argString type: 'text'
-            nodeIncludeName type: 'text'
-            notifySuccessRecipients type: 'text'
-            notifyFailureRecipients type: 'text'
-            notifySuccessUrl type: 'text'
-            notifyFailureUrl type: 'text'
-        }
+        user column: "rduser"
+        argString type: 'text'
+        nodeIncludeName type: 'text'
+        notifySuccessRecipients type: 'text'
+        notifyFailureRecipients type: 'text'
+        notifySuccessUrl type: 'text'
+        notifyFailureUrl type: 'text'
     }
 
 
