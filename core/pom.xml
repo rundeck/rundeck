@@ -9,8 +9,8 @@
   </parent>
   <groupId>org.rundeck</groupId>
   <artifactId>rundeck-core</artifactId>
-  <version>1.5-dev</version>
-  <name>RunDeck Core</name>
+  <version>1.5-SNAPSHOT</version>
+  <name>Rundeck Core</name>
   <description>Core library for the Rundeck web console for command dispatching and job scheduling</description>
   <url>http://rundeck.org</url>
   <inceptionYear>2011</inceptionYear>
@@ -46,6 +46,47 @@
     </resources>
     <plugins>
       <plugin>
+        <artifactId>maven-source-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.8</version>
+        <executions>
+          <execution>
+            <id>attach-javadoc</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <docletArtifact>
+            <groupId>com.google.doclava</groupId>
+            <artifactId>doclava</artifactId>
+            <version>1.0.3</version>
+          </docletArtifact>
+          <doclet>com.google.doclava.Doclava</doclet>
+          <bootclasspath>${sun.boot.class.path}</bootclasspath>
+          <additionalparam>-quiet
+                             -federate JDK http://download.oracle.com/javase/6/docs/api/index.html?
+                             -federationxml JDK http://doclava.googlecode.com/svn/static/api/openjdk-6.xml
+                             -hdf project.name "${project.name}"
+                             -d .
+                             -hide 101
+                             -proofread ./proof-read.txt</additionalparam>
+          <useStandardDocletOptions>false</useStandardDocletOptions>
+          <additionalJOption>-J-Xmx1024m</additionalJOption>
+        </configuration>
+      </plugin>
+      <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>2.3.2</version>
         <configuration>
@@ -69,7 +110,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <Rundeck-Version>1.5-dev</Rundeck-Version>
+              <Rundeck-Version>1.5-SNAPSHOT</Rundeck-Version>
               <Rundeck-Tools-Dependencies>ant-1.7.1.jar ant-launcher-1.7.1.jar log4j-1.2.16.jar commons-codec-1.5.jar commons-httpclient-3.0.1.jar commons-beanutils-1.8.0.jar commons-collections-3.2.1.jar commons-logging-1.1.jar commons-lang-2.4.jar xercesImpl-2.6.0.jar dom4j-1.6.1.jar jaxen-1.1.jar commons-cli-1.0.jar ant-jsch-1.7.1.jar jsch-0.1.45.jar snakeyaml-1.9.jar</Rundeck-Tools-Dependencies>
             </manifestEntries>
           </archive>
@@ -182,8 +223,8 @@
     </dependency>
   </dependencies>
   <properties>
-    <version_ident>1.5-dev-0</version_ident>
-    <version>1.5-dev</version>
+    <version_ident>1.5-SNAPSHOT-0</version_ident>
+    <version>1.5-SNAPSHOT</version>
     <version_build>0</version_build>
   </properties>
 </project>

@@ -209,24 +209,6 @@ class ExecutionController {
         }
         return tailExecutionOutput()
     }
-    
-    /**
-     * Allow output to be posted to an execution via the API:
-     *  PUT /api/execution/{id}/output
-     */
-    def apiExecutionAppendOutput = {
-        if (!new ApiController().requireVersion(ApiRequestFilters.V5)) {
-            return
-        }
-        def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        Execution e = Execution.get(Long.parseLong(params.id))
-        // TODO: add actual "append" API call. For now this just prints the payload back - useful for testing.
-        render(contentType: "text/plain") {
-            out << """output file: ${e.outputfilepath}
-                payload: ${request.JSON?.payload}"""
-            }
-    }
-    
     /**
      * tailExecutionOutput action, used by execution/show.gsp view to display output inline
      * Also used by apiExecutionOutput for API response
@@ -497,8 +479,7 @@ class ExecutionController {
         def percent=100.0 * (((float)storeoffset)/((float)totsize))
 
         def idstr=e.id.toString()
-        def outf = request.format
-        def renderclos ={ delegate->
+        def renderclos ={ outf, delegate->
             delegate.id(idstr)
             delegate.offset(storeoffset.toString())
             delegate.completed(completed)
@@ -525,11 +506,16 @@ class ExecutionController {
                     if(it.loghtml){
                         datamap.loghtml=it.loghtml
                     }
-                    if(!outf||'xml'==outf){
-                        def text= datamap.remove('log')
-                        delegate.'entry'(datamap,text)
-                    }else{
+                    if(outf=='json'){
                         delegate.'entries'(datamap)
+                    }else{
+                        //xml
+                        if(request.api_version <= ApiRequestFilters.V5){
+                            def text= datamap.remove('log')
+                            delegate.'entry'(datamap,text)
+                        }else{
+                            delegate.'entry'(datamap)
+                        }
                     }
                 }
             }
@@ -539,13 +525,13 @@ class ExecutionController {
             xml {
                 api.success({del ->
                     del.'output' {
-                        renderclos(del)
+                        renderclos('xml',del)
                     }
                 })
             }
             json {
                 render(contentType: "text/json") {
-                    renderclos(delegate)
+                    renderclos('json',delegate)
                 }
             }
             text{

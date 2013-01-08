@@ -112,6 +112,8 @@ that is used to identify it, and most Services have default Providers unless
 you specify different ones to use.
 
 ![Rundeck Services and Providers](../figures/fig1101.png)
+![Rundeck Services and Providers](../figures/fig1101_2.png)
+![Rundeck Services and Providers](../figures/fig1101_3.png)
 
 Services fall into different categories, which determine how and where they are used.
 

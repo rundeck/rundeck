@@ -5,12 +5,12 @@
 
 eclipse.project.name =  "${project.getParent().eclipse.project.name}:plugins";
 
+ext.rundeckPluginVersion= '1.1'
 subprojects{
 
     apply from: "${rootDir}/gradle/java.gradle"
     
     defaultTasks 'clean','build'
-    ext.rundeckPluginVersion= '1.1'
     archivesBaseName = "rundeck-$project.name"
 
     dependencies {
@@ -25,13 +25,14 @@ subprojects{
         }
     }
 }
+apply plugin: 'maven';
 
 
 task createPom << {
     pom {
         project {
             artifactId 'rundeck-bundled-plugins'
-            groupId group
+            groupId project.group
             inceptionYear '2011'
             packaging 'pom'
             version version
@@ -52,7 +53,7 @@ task createPom << {
             dependencies{
                 dependency{
                     artifactId 'rundeck-core'
-                    groupId 'org.rundeck'
+                    groupId project.group
                     version version
                 }
             }
