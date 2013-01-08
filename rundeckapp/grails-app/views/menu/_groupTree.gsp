@@ -85,11 +85,16 @@
             <g:set var="jsfunc" value="Expander.toggle(this,null,'.expandComponentHolder.sub_${currkey}_group');"/>
             <g:expander open="${groupopen?'true':'false'}" jsfunc="${jsfunc}" imgfirst="true" style="padding-left:4px;" classnames="jobgroupexpand">
                 <span class="foldertoggle">&nbsp;</span>
+                <g:if test="${jobsjscallback}">
+                    ${displaygroup}
+                </g:if>
             </g:expander>
+            <g:if test="${!jobsjscallback}">
             <a class=" groupname" href="${createLink(controller: 'menu', action: 'jobs', params: [groupPath: prefix ? prefix + '/' + group.key : group.key])}">${displaygroup}</a>
+            </g:if>
         </g:else>
         </div>
-        
+
         <g:timerEnd key="prepare"/>
         ${"<"}div class="expandComponent sub_${currkey}_group sub_group" style="${wdgt.styleVisible(if: groupopen)}"${">"}
         %{ divcounts++;}%
