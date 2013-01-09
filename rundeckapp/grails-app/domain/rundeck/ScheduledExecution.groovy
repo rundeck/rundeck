@@ -1,6 +1,4 @@
 package rundeck
-
-import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import com.dtolabs.rundeck.app.support.BaseNodeFilters
 
 class ScheduledExecution extends ExecutionContext {
@@ -77,7 +75,7 @@ class ScheduledExecution extends ExecutionContext {
         adhocRemoteString(nullable:true, blank:true)
         adhocLocalString(nullable:true, blank:true)
         adhocFilepath(nullable:true, blank:true)
-        uuid(unique: true, nullable:true, blank:false)
+        uuid(unique: true, nullable:true, blank:false, matches: /^\S+$/)
         multipleExecutions(nullable: true)
     }
 
