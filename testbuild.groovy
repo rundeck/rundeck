@@ -27,14 +27,20 @@ def manifest=[
     "core/${target}/rundeck-core-${version}-sources.jar":[:],
     "core/${target}/rundeck-core-${version}-javadoc.jar":[:],
     "rundeckapp/target/rundeck-${version}.war":[:],
+    "rundeck-launcher/rundeck-jetty-server/${target}/rundeck-jetty-server-${version}.jar":[:],
     "rundeck-launcher/launcher/${target}/rundeck-launcher-${version}.jar":[
-        "com/dtolabs/rundeck/#+",
+        "com/dtolabs/rundeck/#+",// require 1+ files in dir
         "pkgs/webapp/WEB-INF/classes/#+",
         "pkgs/webapp/WEB-INF/lib/rundeck-core-${version}.jar",
+        // ##file : require checksum verify to top level
+        "pkgs/webapp/WEB-INF/lib/rundeck-core-${version}.jar##core/${target}/rundeck-core-${version}.jar",
         "libext/rundeck-script-plugin-${version}.jar",
+        "libext/rundeck-script-plugin-${version}.jar##plugins/script-plugin/${target}/rundeck-script-plugin-${version}.jar",
         "libext/rundeck-stub-plugin-${version}.jar",
+        "libext/rundeck-stub-plugin-${version}.jar##plugins/stub-plugin/${target}/rundeck-stub-plugin-${version}.jar",
         "libext/rundeck-localexec-plugin-${version}.jar",
-        "libext/#3",
+        "libext/rundeck-localexec-plugin-${version}.jar##plugins/localexec-plugin/${target}/rundeck-localexec-plugin-${version}.jar",
+        "libext/#3",//require 3 files in dir
         "templates/config/#4",
         "templates/config/jaas-loginmodule.conf.template",
         "templates/config/realm.properties.template",
@@ -47,8 +53,9 @@ def manifest=[
         "lib/jetty-util-6.1.21.jar",
         "lib/log4j-1.2.16.jar",
         "lib/rundeck-jetty-server-1.5-SNAPSHOT.jar",
+        "lib/rundeck-jetty-server-1.5-SNAPSHOT.jar##rundeck-launcher/rundeck-jetty-server/${target}/rundeck-jetty-server-${version}.jar",
         "lib/servlet-api-2.5-20081211.jar",
-        "pkgs/webapp/docs/#?"
+        "pkgs/webapp/docs/#?"//optional files
     ],
     "plugins/script-plugin/${target}/rundeck-script-plugin-${version}.jar":[:],
     "plugins/stub-plugin/${target}/rundeck-stub-plugin-${version}.jar":[:],
@@ -82,12 +89,33 @@ def expect={t,v->
     true
 }
 
+getSha256={fis->
+    java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+    // FileInputStream fis = new FileInputStream(delegate);
+
+    byte[] dataBytes = new byte[1024];
+
+    int nread = 0; 
+    while ((nread = fis.read(dataBytes)) != -1) {
+      md.update(dataBytes, 0, nread);
+    };
+    byte[] mdbytes = md.digest();
+
+   //convert the byte to hex format method 2
+    StringBuffer hexString = new StringBuffer();
+    for (int i=0;i<mdbytes.length;i++) {
+      hexString.append(Integer.toHexString(0xFF & mdbytes[i]));
+    }
+    hexString.toString()
+}
+
 def dirname={it.contains('/')?it.substring(0,it.lastIndexOf('/'))+'/':''}
 
 File.metaClass.getBasename={name.contains('/')?name.substring(name.lastIndexOf('/')):name}
 
 //test contents
 def ziptest=[:]
+def sumtest=[:]
 
 //require files exist
 manifest.each{ fname,mfest->
@@ -96,6 +124,7 @@ manifest.each{ fname,mfest->
         if(mfest){
             ziptest[f]=mfest
         }
+        sumtest[fname]=getSha256(new FileInputStream(f))
     }
 }
 
@@ -105,10 +134,10 @@ ziptest.each{ f,dir->
     def counts=[:]
     def fverify=true
     dir.each{ path->
-        if(path==~/^.+\/(#.+)$/){
+        if(path==~/^.+(#.+)$/){
             //verify number of entries
-            def n = path.split('#')[1]
-            def dname = path.split('#')[0]
+            def n = path.split('#',2)[1]
+            def dname = path.split('#',2)[0]
             def found=z.getEntry(dname)
             if(n==~/^\d+/){
                 fverify&=require("[${f.basename}] \"${dname}\" MUST exist. Result: (${found?:false})",found)
@@ -118,6 +147,10 @@ ziptest.each{ f,dir->
                 counts[dname]=[atleast:1]
             }else if(n=='?'){
                 counts[dname]=[maybe:1]
+            }else if(n.startsWith('#')){
+                n=n.substring(1)
+                def sum=getSha256(z.getInputStream(found))
+                require("[${f.basename}] \"${dname}\" SHA-256 MUST match \"${n}\". Seen: ($sum) Expected: (${sumtest[n]})", sum==sumtest[n])
             }
         }else{  
             def found=z.getEntry(path)

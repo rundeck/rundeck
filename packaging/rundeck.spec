@@ -6,7 +6,7 @@ summary: It Slices, it Dices, it Takes Out Your Garbage
 group: System
 requires(post): chkconfig
 requires(postun): chkconfig
-requires: java-1.6.0-openjdk
+requires: java
 requires: openssh
 requires: rundeck-config
 
@@ -15,6 +15,8 @@ RunDeck, is no ordinary wooden deck. You can build a bon fire on this deck.
 Rundeck provides a single console for dispatching commands across many resources.
 
 %changelog
+* Sun Jan 6 2013 Jordi Llonch <llonchj@gmail.com> 1.4-0
+	- Soft-coded version numbers
 * Thu Jan 13 2011 Greg Schueler <greg@dtosolutions.com> 1.1-0
 	- Soft-coded version numbers
 * Wed Dec 15 2010 Noah Campbell <noahcampbell@gmail.com> 1.0-1

@@ -109,24 +109,24 @@ task installJettyPlugin(type: Exec, dependsOn: [extractGrails]) {
 task cleanWar(type: Delete) {
 	delete file(warFileLocation), file("${project.projectDir}/target")
 }
-
-task clean(overwrite: true, dependsOn: cleanWar) {
-}
-
-task grailsClean(type: Exec, dependsOn: clean) {
+task grailsClean(type: Exec) {
+    ignoreExitValue=true
 	workingDir project.projectDir
 	environment 'GRAILS_HOME', grailsHome
 	commandLine grailsCommandLine
 	args 'clean'
 }
+grailsClean.enabled = new File(grailsCommandLine).exists()
 
+task clean(overwrite: true, dependsOn: [cleanWar, grailsClean]) {
+}
 
 /**
  * Wrapper task for grails test-app
  */
 task test(type: Exec, overwrite: true, 
 		dependsOn: [installJettyPlugin,installDependencies]) {
-			
+
 	workingDir project.projectDir
 	environment 'GRAILS_HOME', grailsHome
 	commandLine grailsCommandLine

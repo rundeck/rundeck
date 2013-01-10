@@ -6,31 +6,58 @@ It lets you easily run commands across a set of nodes.
 
 For more information, mailing lists, IRC channel, visit <http://rundeck.org>
 
+See the [Release Notes](RELEASE.md) for the latest version information.
+
 To Build:
 =====
 
-    make
+Primary build is supported with either gradle or maven2+. (Note: to include docs for the launcher, do `make clean docs` first.)
 
-Creates the rundeck-launcher.jar
+Gradle Build
+=====
 
-Build the RPM:
+    ./gradlew build
 
-    make rpm
+Artifacts: 
 
-To build clean:
-
-    make clean
+* `rundeckapp/build/libs/rundeck-X.Y.war`
+* `rundeck-launcher/launcher/build/libs/rundeck-launcher-X.Y.jar`
 
 Maven2 Build
 ======
 
-You can use maven2 to build the war and plugin artifacts. It does not build the standalone launcher Jar (yet).
-
     MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=192m" mvn clean package
 
-produces: `rundeckapp/target/rundeck-X.Y.war`
+Artifacts: 
+
+* `rundeckapp/target/rundeck-X.Y.war`
+* `rundeck-launcher/launcher/target/rundeck-launcher-X.Y.jar`
 
 Note: the underlying Grails build requires the MaxPermSize to be increased in the MAVEN_OPTS as shown above.
+
+
+Other builds
+======
+
+The documentation can be built with [pandoc](http://johnmacfarlane.net/pandoc/).
+    
+Build the documentation. Artifacts in `docs/en/dist`:
+
+    make docs
+
+You can build .rpm or .deb files (requires pandoc to build the docs):
+
+Build the RPM. Artifacts in `packaging/rpmdist/RPMS/noarch/*.rpm`
+
+    make rpm
+    
+Build the .deb. Artifacts in `packaging/*.deb`:
+
+    make deb
+
+To build clean:
+
+    make clean
 
 Installation
 ======
@@ -43,7 +70,7 @@ To start from the rundeck-launcher.jar, put it in a directory named ~/rundeck, t
 
 If you'd like to install via RPM, you can use Yum:
 
-    rpm -Uvh http://rundeck.org/latest.rpm
+    rpm -Uvh http://repo.rundeck.org/latest.rpm 
     yum install rundeck
 
 OR install directly from RPM:
@@ -63,11 +90,7 @@ Requirements
 
 Java 5 (openjdk, sun)
 
-To build docs (required for rpm, not required for launcher):
-
-[pandoc](http://johnmacfarlane.net/pandoc/)
-
-*Note, to build docs for launcher, do `make clean docs`, then `make`*
+[Pandoc](http://johnmacfarlane.net/pandoc/) (documentation build only)
 
 Documentation
 ======
@@ -76,6 +99,8 @@ Available online at <http://rundeck.org/docs>
 
 Development
 ======
+
+Refer to the [IDE Development Environment](https://github.com/dtolabs/rundeck/wiki/IDE-Development-Environment) to get set up using IntelliJ IDEA or Eclipse/STS.
 
 * [Issue tracker](https://github.com/dtolabs/rundeck/issues) at github.com
 * [Fresh builds](http://build.rundeck.org) served by Jenkins

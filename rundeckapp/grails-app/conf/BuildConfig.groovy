@@ -2,6 +2,7 @@ grails.project.dependency.resolution = {
     inherits "global" // inherit Grails' default dependencies
     log "warn" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
     repositories {
+        useOrigin true
         //include snakeyaml from deps dir
         flatDir name:'sourceDeps', dirs:'../dependencies/snakeyaml/jars'
         mavenLocal()
@@ -30,20 +31,26 @@ grails.project.dependency.resolution = {
         
         test 'org.yaml:snakeyaml:1.9', 'org.apache.ant:ant:1.7.1', 'org.apache.ant:ant-jsch:1.7.1', 
              'com.jcraft:jsch:0.1.45', 'log4j:log4j:1.2.16', 'commons-collections:commons-collections:3.2.1', 
-             'commons-codec:commons-codec:1.5', 'com.fasterxml.jackson.core:jackson-databind:2.0.2',
-             "org.rundeck:rundeck-core:${appVersion}"
+             'commons-codec:commons-codec:1.5', 'com.fasterxml.jackson.core:jackson-databind:2.0.2'
+        test("org.rundeck:rundeck-core:${appVersion}"){
+            changing=true
+        }
              
         compile 'org.yaml:snakeyaml:1.9', 'org.apache.ant:ant:1.7.1', 'org.apache.ant:ant-jsch:1.7.1', 
                 'com.jcraft:jsch:0.1.45','log4j:log4j:1.2.16','commons-collections:commons-collections:3.2.1',
-                'commons-codec:commons-codec:1.5', 'com.fasterxml.jackson.core:jackson-databind:2.0.2', 
-                "org.rundeck:rundeck-core:${appVersion}"
-                
+                'commons-codec:commons-codec:1.5', 'com.fasterxml.jackson.core:jackson-databind:2.0.2'
+        compile("org.rundeck:rundeck-core:${appVersion}") {
+            changing = true
+        }
+
         runtime 'org.yaml:snakeyaml:1.9', 'org.apache.ant:ant:1.7.1', 'org.apache.ant:ant-launcher:1.7.1',
                 'org.apache.ant:ant-jsch:1.7.1','com.jcraft:jsch:0.1.45', 'org.springframework:spring-test:3.0.5.RELEASE',
                 'log4j:log4j:1.2.16' ,'commons-collections:commons-collections:3.2.1','commons-codec:commons-codec:1.5', 
                 'com.fasterxml.jackson.core:jackson-databind:2.0.2',
-                'postgresql:postgresql:9.1-901.jdbc4',
-                "org.rundeck:rundeck-core:${appVersion}"
+                'postgresql:postgresql:9.1-901.jdbc4'
+        runtime("org.rundeck:rundeck-core:${appVersion}") {
+            changing = true
+        }
     }
     
     grails.plugin.location.'webrealms' = "webrealms"

@@ -2,6 +2,36 @@
 % Greg Schueler
 % September 12, 2011
 
+## Important Changes in Rundeck 1.5
+
+If you are upgrading from Rundeck 1.4.x, please follow the following directions to migrate your projects.  It is also recommended that if you are using the default Hsqldb datastore, you should migrate to using H2 which is now the default.
+
+### Database changes
+
+Rundeck has changed some of the schema used for the database since the 1.4 release.  These changes can't be handled by the Grails automatic schema updating.  To make a general solution to upgrade, we introduced the [Project Export](../administration/backup-and-recovery.html#project-import-and-export) feature in Rundeck 1.4.4.  You can easily use this to export Rundeck 1.4.4+ projects and re-import them into a Rundeck 1.5 project.
+
+1. Before you install Rundeck 1.5, follow the instructions for [Project Import and Export](../administration/backup-and-recovery.html#project-import-and-export) feature for any projects you want to migrate. 
+2. You should do the other [Backup procedures](../administration/backup-and-recovery.html#backup) of your data to ensure you have an operational backup of your 1.4.x intallation.
+2. (Optional) Configure your `rundeck-config.properties` file with a new database backend. It is recommended that you use H2 which is now the default database (see below), or you can use another [relational database](../administration/relational-database.html).
+3. Drop or remove the previous 1.4.x database contents if you are using the same data store. (If you used the default hsqldb installation, you can remove the files located under `$RDECK_BASE/server/data`.)
+4. Remove the old log files located in `$RDECK_BASE/var/logs/rundeck`: these files will be recreated by the project import process.
+
+Once you have done these steps, you can upgrade to Rundeck 1.5.  Then you can import any project archives you created in step 1.
+
+### Default database
+
+The default database for new installations is now H2, instead of Hsqldb.  
+
+If you are migrating from Rundeck 1.4 you can modify your `rundeck-config.properties` to specify the new dataSource URL:
+
+    dataSource.url = jdbc:h2:file:/path/to/datastore
+
+### Maintaining use of Hsqldb
+
+If you still want to use hsqldb, you will now have to manually specify the right JDBC driver classname, by adding this to your `rundeck-config.properties` since the default is now H2:
+
+    dataSource.driverClassName=org.hsqldb.jdbcDriver
+
 ## Important Changes in Rundeck 1.4.1
 
 In Rundeck 1.4.0.x, the new ACL Policy format used an incorrect property key ("job") to check Job Authorizations by name.  The correct key was used in all documentation, but not in the underlying code.  The correct key is "name".

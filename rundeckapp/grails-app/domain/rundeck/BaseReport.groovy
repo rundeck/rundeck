@@ -1,7 +1,5 @@
 package rundeck
 
-import org.codehaus.groovy.grails.commons.ConfigurationHolder
-
 class BaseReport {
 
     String node
@@ -20,11 +18,8 @@ class BaseReport {
     String message
 
     static mapping = {
-        def config = ConfigurationHolder.config
-        if (config.rundeck.v14.rdbsupport == 'true') {
-            message type: 'text'
-            title type: 'text'
-        }
+        message type: 'text'
+        title type: 'text'
     }
    static constraints = {
         reportId(nullable:true)

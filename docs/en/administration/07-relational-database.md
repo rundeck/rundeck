@@ -4,17 +4,6 @@ You can configure Rundeck to use a RDB instead of the default file-based data st
 
 You must modify the `server/config/rundeck-config.properties` file, to change the `dataSource` configuration, and you will have to add the appropriate JDBC driver JAR file to the lib directory.
 
-## Enable rdbsupport
-
-First, you **must** enable the `rundeck.v14.rdbsupport` property:
-
-    #note, make sure this is set to "true" if you are using Oracle or Mysql
-    rundeck.v14.rdbsupport=true
-
-This makes Rundeck use table/field names that are compatible with Oracle/Mysql.
-
-Note: It is safe to set this to true if you are using the default file based backend, but only for a fresh install. It will cause a problem if you set it to true for an existing Rundeck 1.3 HSQLDB database.  Make sure it is set to "false" or is absent from your config file if you are upgrading from Rundeck 1.3 and using the filesystem storage.
-
 ## Customize the Datasource
 
 The default dataSource is configured for filesystem storage using HSQLDB:
