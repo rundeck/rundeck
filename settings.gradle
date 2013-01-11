@@ -1,7 +1,6 @@
 rootProject.name = 'rundeck'
 include ':core', 
-	':plugins', 
-        ':plugins:localexec-plugin',
+    ':plugins:localexec-plugin',
 	':plugins:script-plugin', 
 	':plugins:stub-plugin',
 	':rundeckapp',
