@@ -1,6 +1,6 @@
 % Version 1.5
 % greg
-% 01/09/2013
+% 01/11/2013
 
 Release 1.5 RC1
 ===========
@@ -20,8 +20,19 @@ Notable Changes:
 * Error Handlers - Each step in a workflow can now have an error handler that will be run if the step fails. 
 * bug fix: Job references in a workflow will now only run once, and not operate as a node-step.
 
+Plugin developers:
+
+You will need to update your plugins to work in Rundeck 1.5. Refer to the Developer Guide for more information.
+
 Issues:
 
+* [Now running and History views don't use Job view filter](https://github.com/dtolabs/rundeck/issues/273)
+* [History views default to recentFilter=1d, should be all events](https://github.com/dtolabs/rundeck/issues/272)
+* [History project filter is not exact](https://github.com/dtolabs/rundeck/issues/271)
+* [Allow group path in URL of jobs page to filter groups](https://github.com/dtolabs/rundeck/issues/270)
+* [Node dispatch threadcount can be set to blank. export+import fails.](https://github.com/dtolabs/rundeck/issues/269)
+* [Bulk delete of jobs via GUI](https://github.com/dtolabs/rundeck/issues/268)
+* [add release notes to generated docs](https://github.com/dtolabs/rundeck/issues/264)
 * [remove unneeded "rdbsupport" config property for 1.5](https://github.com/dtolabs/rundeck/issues/262)
 * [API: Now running execution project filter is not exact](https://github.com/dtolabs/rundeck/issues/261)
 * [execution output api: xml content problems](https://github.com/dtolabs/rundeck/issues/259)
@@ -30,9 +41,12 @@ Issues:
 * [Error handler failure reason as context data](https://github.com/dtolabs/rundeck/issues/248)
 * [Workflow step plugins](https://github.com/dtolabs/rundeck/issues/246)
 * [Job folder/group display still buggy](https://github.com/dtolabs/rundeck/issues/241)
+* [dispatch -s scriptfile is broken](https://github.com/dtolabs/rundeck/issues/228)
 * [can't delete job option](https://github.com/dtolabs/rundeck/issues/227)
 * [dispatch with url option don't work](https://github.com/dtolabs/rundeck/issues/225)
 * [Job references should run only once within a workflow](https://github.com/dtolabs/rundeck/issues/224)
 * [divide by zero error on system info page](https://github.com/dtolabs/rundeck/issues/221)
 * [workflow step failure handlers](https://github.com/dtolabs/rundeck/issues/218)
 * [make H2 the default rundeck database backend](https://github.com/dtolabs/rundeck/issues/183)
+* [UUID permits spaces](https://github.com/dtolabs/rundeck/issues/171)
+* [more compatible rpm dependency for java](https://github.com/dtolabs/rundeck/issues/263)
