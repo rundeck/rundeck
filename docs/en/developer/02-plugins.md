@@ -12,6 +12,36 @@ in a zip file with some metadata.   See [Script Plugin Development](plugin-devel
 Either way, the resultant plugin archive file, either a .jar java archive, 
 or a .zip file archive, will be placed in the `$RDECK_BASE/libext` dir.
 
+## Changes in Rundeck 1.5
+
+If you have created a plugin for Rundeck 1.4 or earlier, you will need to update your plugin to work with Rundeck 1.5.
+
+### Metadata
+
+* the `Rundeck-Plugin-Version` has updated to `1.1`.  If a plugin specifies the earlier `1.0`, Rundeck 1.5 will not load it.
+
+### Java Interfaces
+
+Some Java Plugins will need to be modified. The interfaces for plugins have changed slightly:
+
+* `NodeExecutor.executeCommand` method no longer throws any exception.
+* `NodeExecutorResultImpl` - no longer has public constructors, but provides factory methods.
+
+Plugin failure results:
+
+Some plugin methods return a "Result" interface which indicates the result status of the call to the plugin class. If there is an error, some plugins allow an Exception to be thrown or for the error to be included in the Result class.  In both cases, there is now a "FailureReason" that must be specified.  Interface: `com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason`.
+
+This can be any implementation of the FailureReason interface, and this object's `toString()` method will be used to return the reason value (for example, it is passed to Error Handler steps in a Workflow as the "result.reason" string). The mechanism used internally is to provide an Enum implementation of the FailureReason interface, and to enumerate the possible reasons for failure within the enum. 
+
+You are encouraged to re-use existing FailureReasons as much as possible as they provide some basic failure causes. Existing classes:
+
+* `com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason`
+* `com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason`
+
+### Java Dependency management
+
+* Rundeck's core jar is now published to the central Maven repository, so you can now declare a build dependency more easily, see [below](#build-dependency).
+
 ## Java Plugin Development
 
 Java plugins are distributed as .jar files containing the necessary classes for 
@@ -33,6 +63,25 @@ Additionally, you should include a manifest entry to indicate the plugin file's 
 
 This version number will be used to load only the newest plugin file, if more than one provider of
 the same name and type is defined.
+
+## Build dependency
+
+Rundeck's core jar is published to the central Maven repository, so you can simply specify a dependency in your build file.
+
+For gradle, use:
+
+    compile(group:'org.rundeck', name: 'rundeck-core', version: '${VERSION}')
+
+For maven use:
+
+    <dependencies>
+        <dependency>
+            <groupId>org.rundeck</groupId>
+            <artifactId>rundeck-core</artifactId>
+            <version>${VERSION}</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
 
 ### Provider Classes
 
@@ -101,7 +150,7 @@ Then include the jar files in the Plugin's jar contents:
 * `ResourceFormatParser` - parses a document into a set of Node resources
 * `ResourceFormatGenerator` - generates a document from a set of Node resources
 
-Workflow Step services:
+Workflow Step services (described more in the [Workflow Step Plugin Development](workflow-step-plugin-development.html) chapter.):
 
 * `WorkflowStep` - runs a single step in a workflow
 * `WorkflowNodeStep` - runs a single step for each node in a workflow
@@ -128,7 +177,7 @@ Your provider class must implement the `com.dtolabs.rundeck.core.execution.servi
 
     public interface NodeExecutor {
         public NodeExecutorResult executeCommand(ExecutionContext context, 
-            String[] command, INodeEntry node) throws ExecutionException;
+                String[] command, INodeEntry node);
     }
 
 
@@ -301,7 +350,7 @@ The file `plugin.yaml` must have this structure:
     
     name: plugin name
     version: plugin version
-    rundeckPluginVersion: 1.0
+    rundeckPluginVersion: 1.1
     author: author name
     date: release date
     providers:
@@ -316,7 +365,7 @@ The main metadata that is required:
 
 * `name` - name for the plugin
 * `version` - version number of the plugin
-* `rundeckPluginVersion` - Rundeck Plugin type version, currently "1.0"
+* `rundeckPluginVersion` - Rundeck Plugin type version, currently "1.1"
 * `providers` - list of provider metadata maps
 
 These are optional:

@@ -32,6 +32,12 @@ If you still want to use hsqldb, you will now have to manually specify the right
 
     dataSource.driverClassName=org.hsqldb.jdbcDriver
 
+### Plugins
+
+Rundeck plugins created for 1.4.x or earlier will not work with Rundeck 1.5 without some minor changes.
+
+For Plugin developers, please read the [Plugin Development > Changes in Rundeck 1.5](../developer/plugin-development.html#changes-in-rundeck-1.5) section.
+
 ## Important Changes in Rundeck 1.4.1
 
 In Rundeck 1.4.0.x, the new ACL Policy format used an incorrect property key ("job") to check Job Authorizations by name.  The correct key was used in all documentation, but not in the underlying code.  The correct key is "name".
