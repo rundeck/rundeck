@@ -52,16 +52,19 @@ deb: docs app
 
 #doc build
 
-notes: docs/en/release_notes/toc.conf
+notes: docs/en/history/toc.conf docs/en/RELEASE.md
 
-docs/en/release_notes/version-$(VNUMBER).md: RELEASE.md
+docs/en/RELEASE.md: RELEASE.md
+	cp $< $@
+
+docs/en/history/version-$(VNUMBER).md: RELEASE.md
 	( echo "% Version $(VNUMBER)" ; \
 		echo "%" $(shell whoami) ; \
 		echo "%" $(shell date "+%m/%d/%Y") ; \
 		echo ; ) >$@
 	cat RELEASE.md >>$@
 
-docs/en/release_notes/toc.conf: docs/en/release_notes/version-$(VNUMBER).md
+docs/en/history/toc.conf: docs/en/history/version-$(VNUMBER).md
 	echo "1:version-$(VNUMBER).md:Version $(VNUMBER)" > $@.new
 	test -f $@ && ( grep -v -q "$(VNUMBER)" $@ && \
 		cat $@ >> $@.new && \
