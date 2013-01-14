@@ -11,10 +11,17 @@ description = 'The master-build project for Rundeck';
 apply plugin: 'eclipse';
 apply plugin: 'idea'
 
+eclipse.project.name = 'rundeck'
+
 /**
  * Defaults for all projects
  */
-allprojects {
+subprojects {
+
+    // set the eclipse project naming convention to rundeck:<path>:<projectName>
+    // so it matches the logical hierarchy more closely
+    apply plugin: 'eclipse'
+    eclipse.project.name = "${project.getParent().eclipse.project.name}:${name}"
     
     // the environment can be set by adding -Penvironment={value} as a command
     // line switch. by default we run as 'development'
