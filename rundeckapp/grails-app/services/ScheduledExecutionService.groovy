@@ -14,16 +14,14 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
-import com.dtolabs.rundeck.core.authentication.Group
+
 import org.quartz.CronExpression
 import org.quartz.SchedulerException
 import java.text.SimpleDateFormat
 import org.springframework.context.MessageSource
 import java.text.MessageFormat
 import org.springframework.web.servlet.support.RequestContextUtils
-import org.springframework.context.ApplicationContext
-import org.springframework.beans.BeansException
-import org.springframework.context.ApplicationContextAware
+
 import javax.servlet.http.HttpSession
 import org.springframework.web.context.request.RequestContextHolder
 
@@ -355,6 +353,11 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         return list;
     }
 
+    /**
+     * Immediately delete a ScheduledExecution
+     * @param scheduledExecution
+     * @return
+     */
     def deleteScheduledExecution(ScheduledExecution scheduledExecution){
         scheduledExecution = ScheduledExecution.lock(scheduledExecution.id)
         def jobname = scheduledExecution.generateJobScheduledName()
@@ -392,6 +395,53 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         }
         return [success:success,error:errmsg]
     }
+    /**
+     * Attempt to delete a job given an id
+     * @param jobid
+     * @param framework
+     * @param user user requesting delete action
+     * @param callingAction name of action/method requesting delete
+     *
+     * @return
+     */
+    def deleteScheduledExecutionById(jobid, Framework framework, String user, String callingAction){
+
+        def ScheduledExecution scheduledExecution = getByIDorUUID(jobid)
+        if (!scheduledExecution) {
+            def err = [
+                    message: g.message(code: "api.error.item.doesnotexist", args: ['Job ID', jobid]),
+                    errorCode: 'notfound',
+                    id: jobid
+            ]
+            return [error: err]
+        }
+        if (!frameworkService.authorizeProjectResource (framework, [type: 'resource', kind: 'job'], AuthConstants.ACTION_DELETE, scheduledExecution.project)
+            || !frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_DELETE], scheduledExecution.project)) {
+            def err = [
+                    message: lookupMessage('api.error.item.unauthorized', ['Delete', 'Job ID', scheduledExecution.extid] as Object[]),
+                    errorCode: 'unauthorized',
+                    id: scheduledExecution.extid,
+                    job: scheduledExecution
+            ]
+            return [error: err]
+        }
+        def changeinfo = [user: user, method: callingAction, change: 'delete']
+        def jobdata = scheduledExecution.properties
+        def jobtitle = "[" + scheduledExecution.extid + "] " + scheduledExecution.generateFullName()
+        def result = deleteScheduledExecution(scheduledExecution)
+        if (!result.success) {
+            return [error:  [message: result.error, job: scheduledExecution, errorCode: 'failed', id: scheduledExecution.extid]]
+        } else {
+            logJobChange(changeinfo, jobdata)
+            return [success: [message: lookupMessage('api.success.job.delete.message', [jobtitle] as Object[]), job: scheduledExecution]]
+        }
+    }
+    /**
+     * Delete a quartz job by name/group
+     * @param jobname
+     * @param groupname
+     * @return
+     */
     def deleteJob(String jobname, String groupname){
         log.info("deleting job from scheduler")
         quartzScheduler.deleteJob(jobname,groupname)
@@ -1893,6 +1943,8 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 scheduledExecution.errors.rejectValue('nodeInclude', 'scheduledExecution.nodeIncludeExclude.blank.message')
                 scheduledExecution.errors.rejectValue('nodeExclude', 'scheduledExecution.nodeIncludeExclude.blank.message')
                 failed = true
+            }else if (!scheduledExecution.nodeThreadcount){
+                scheduledExecution.nodeThreadcount=1
             }
         }
         failed = failed || !valid

@@ -206,7 +206,6 @@ class ReportService  {
             obj: 'ctxName',
             type: 'ctxType',
 //            controller:'ctxController',
-            proj: 'ctxProject',
             cmd: 'ctxCommand',
             user: 'author',
             abortedBy: 'abortedByUser',
@@ -226,6 +225,7 @@ class ReportService  {
             stat: 'status',
             reportId: 'reportId',
             jobId:'jcJobId',
+            proj: 'ctxProject',
         ]
         return eqfilters
     }

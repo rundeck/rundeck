@@ -28,7 +28,6 @@ import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.*;
-import com.dtolabs.rundeck.core.execution.ExecutionResult;
 import com.dtolabs.rundeck.core.utils.NodeSet;
 import com.dtolabs.utils.Streams;
 import org.apache.commons.httpclient.URIException;
@@ -224,7 +223,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         String scriptURL=null;
         final boolean isExec;
         final boolean isUrl;
-
+        File uploadFile=null;
         try {
 
             //write script to file
@@ -249,13 +248,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
                 isUrl = false;
             } else if (null != iDispatchedScript.getServerScriptFilePath()) {
                 //server-local script filepath
-
-                //read stream to string
-                final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                Streams.copyStream(new FileInputStream(new File(iDispatchedScript.getServerScriptFilePath())),
-                    byteArrayOutputStream);
-                scriptString = new String(byteArrayOutputStream.toByteArray());
-
+                uploadFile = new File(iDispatchedScript.getServerScriptFilePath());
                 if (null != iDispatchedScript.getArgs() && iDispatchedScript.getArgs().length > 0) {
                     argString = CLIUtils.generateArgline(null, iDispatchedScript.getArgs());
                 } else {
@@ -297,8 +290,6 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
             params.put("exec", argString);
         }else if (null != scriptURL) {
             params.put("scriptURL", scriptURL);
-        } else {
-            params.put("scriptFile", scriptString);
         }
         if(null!=argString){
             params.put("argString", argString);
@@ -306,8 +297,10 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         addLoglevelParams(params, iDispatchedScript.getLoglevel());
         addAPINodeSetParams(params, iDispatchedScript.getNodeSet(), iDispatchedScript.getNodeSet().isKeepgoing());
 
-        return submitRunRequest(null, params,
-            isExec ? RUNDECK_API_RUN_COMMAND : isUrl ? RUNDECK_API_RUN_URL : RUNDECK_API_RUN_SCRIPT);
+        return submitRunRequest(uploadFile,
+                                params,
+                                isExec ? RUNDECK_API_RUN_COMMAND : isUrl ? RUNDECK_API_RUN_URL : RUNDECK_API_RUN_SCRIPT,
+                                "scriptFile");
     }
 
     /**
@@ -334,7 +327,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
 
         final WebserviceResponse response;
         try {
-            response = serverService.makeRundeckRequest(requestPath, params, tempxml, null);
+            response = serverService.makeRundeckRequest(requestPath, params, tempxml, null, "xmlBatch");
         } catch (MalformedURLException e) {
             throw new CentralDispatcherServerRequestException("Failed to make request", e);
         }
@@ -357,6 +350,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      * Submit a request to the server which expects an execution id in response, and return a single
      * QueuedItemResult parsed from the response.
      *
+     * @param uploadFileParam name of file upload parameter
      * @param tempxml     xml temp file (or null)
      * @param otherparams parameters for the request
      * @param requestPath
@@ -366,8 +360,10 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
      * @throws com.dtolabs.rundeck.core.dispatcher.CentralDispatcherException
      *          if an error occurs
      */
-    private QueuedItemResult submitRunRequest(final File tempxml, final HashMap<String, String> otherparams,
-                                              final String requestPath) throws CentralDispatcherException {
+    private QueuedItemResult submitRunRequest(final File tempxml,
+                                              final HashMap<String, String> otherparams,
+                                              final String requestPath,
+                                              final String uploadFileParam) throws CentralDispatcherException {
 
 
         final HashMap<String, String> params = new HashMap<String, String>();
@@ -377,7 +373,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
 
         final WebserviceResponse response;
         try {
-            response = serverService.makeRundeckRequest(requestPath, params, tempxml, null);
+            response = serverService.makeRundeckRequest(requestPath, params, tempxml, null, null, null, uploadFileParam);
         } catch (MalformedURLException e) {
             throw new CentralDispatcherServerRequestException("Failed to make request", e);
         }
@@ -430,7 +426,8 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
 
         final WebserviceResponse response;
         try {
-            response = serverService.makeRundeckRequest(RUNDECK_API_LIST_EXECUTIONS_PATH, params, null, null);
+            response = serverService.makeRundeckRequest(RUNDECK_API_LIST_EXECUTIONS_PATH, params, null, null,
+                                                        null);
         } catch (MalformedURLException e) {
             throw new CentralDispatcherServerRequestException("Failed to make request", e);
         }
@@ -707,7 +704,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         //2. send request via ServerService
         final WebserviceResponse response;
         try {
-            response = serverService.makeRundeckRequest(rundeckApiKillJobPath, params, null, null);
+            response = serverService.makeRundeckRequest(rundeckApiKillJobPath, params, null, null, null);
         } catch (MalformedURLException e) {
             throw new CentralDispatcherServerRequestException("Failed to make request", e);
         }
@@ -743,7 +740,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         //2. send request via ServerService
         final WebserviceResponse response;
         try {
-            response = serverService.makeRundeckRequest(rundeckApiKillJobPath, params, null, null);
+            response = serverService.makeRundeckRequest(rundeckApiKillJobPath, params, null, null, null);
         } catch (MalformedURLException e) {
             throw new CentralDispatcherServerRequestException("Failed to make request", e);
         }
@@ -816,7 +813,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
             //2. send request via ServerService
             final WebserviceResponse response;
             try {
-                response = serverService.makeRundeckRequest(rundeckApiExecOutputJobPath, params, null, null);
+                response = serverService.makeRundeckRequest(rundeckApiExecOutputJobPath, params, null, null, null);
             } catch (MalformedURLException e) {
                 throw new CentralDispatcherServerRequestException("Failed to make request", e);
             }
@@ -1044,7 +1041,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         final WebserviceResponse response;
         try {
             response = serverService.makeRundeckRequest(RUNDECK_API_JOBS_EXPORT_PATH, params, null, null,
-                expectedContentType);
+                expectedContentType, null);
         } catch (MalformedURLException e) {
             throw new CentralDispatcherServerRequestException("Failed to make request", e);
         }
@@ -1244,7 +1241,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         //2. send request via ServerService
         final WebserviceResponse response;
         try {
-            response = serverService.makeRundeckRequest(RUNDECK_API_JOBS_LIST_PATH, params, null, null);
+            response = serverService.makeRundeckRequest(RUNDECK_API_JOBS_LIST_PATH, params, null, null, null);
         } catch (MalformedURLException e) {
             throw new CentralDispatcherServerRequestException("Failed to make request", e);
         }
@@ -1477,7 +1474,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         //2. send request via ServerService
         final WebserviceResponse response;
         try {
-            response = serverService.makeRundeckRequest(RUNDECK_API_JOBS_UPLOAD, params, input, null);
+            response = serverService.makeRundeckRequest(RUNDECK_API_JOBS_UPLOAD, params, input, null, "xmlBatch");
         } catch (MalformedURLException e) {
             throw new CentralDispatcherServerRequestException("Failed to make request", e);
         }

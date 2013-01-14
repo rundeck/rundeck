@@ -48,7 +48,7 @@ class UrlMappings {
         //simplified url mappings for link generation
         "/run/$id?"(controller: 'framework', action: 'nodes')
         "/history/$id?"(controller: 'reports', action: 'index')
-        "/jobs/$id?"(controller: 'menu', action: 'jobs')
+        "/jobs/$groupPath**?"(controller: 'menu', action: 'jobs')
         "/job/$action?/$id?"(controller: 'scheduledExecution')
         "/resources/$action?/$id?"(controller: 'framework')
         "/events/$action?/$id?"(controller: 'reports')
