@@ -12,18 +12,6 @@ subprojects{
     apply from: "${rootDir}/gradle/java.gradle"
     defaultTasks 'clean','assemble'
     ext.jettyVersion='6.1.21'
-    repositories {
-        add(new org.apache.ivy.plugins.resolver.FileSystemResolver()) {
-            name = 'localJarsPlus'
-            addArtifactPattern "${rootDir}/dependencies/[module]/[ext]s/[module]-[revision](-[classifier]).[ext]"
-            addArtifactPattern "${rootDir}/rundeckapp/target/[module]-[revision](-[classifier]).[ext]"
-            addArtifactPattern "${rootDir}/plugins/script-plugin/build/libs/[module]-[revision](-[classifier]).[ext]"
-            addArtifactPattern "${rootDir}/plugins/stub-plugin/build/libs/[module]-[revision](-[classifier]).[ext]"
-            addArtifactPattern "${rootDir}/plugins/localexec-plugin/build/libs/[module]-[revision](-[classifier]).[ext]"
-            descriptor = 'optional'
-            checkmodified = true
-        }
-    }
 }
 
 task createPom << {

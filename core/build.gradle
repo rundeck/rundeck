@@ -26,19 +26,6 @@ if(hasProperty('environment') && environment == 'release'){
     isDevBuild=true
 }
 
-/*
-repositories {
-    mavenCentral()
-    add(new org.apache.ivy.plugins.resolver.FileSystemResolver()) {
-        name = 'localJars'
-        //addIvyPattern "$projectDir/../dependencies/[organisation]/[module]-ivy-[revision].xml"
-        addArtifactPattern "${rootDir}/dependencies/[module]/[ext]s/[module]-[revision](-[classifier]).[ext]"
-        descriptor = 'optional'
-        checkmodified = true
-    }
-}
-*/
-
 dependencies {
     compile 'org.apache.ant:ant:1.7.1',
         'org.apache.ant:ant-launcher:1.7.1',
