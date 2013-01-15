@@ -34,13 +34,6 @@ def grailsCommandLine = "${grailsHome}/bin/grails"
 def warFileLocation = "${project.projectDir}/target/rundeck-${version}.war"
 
 /**
- * Depend on core 
- */
-dependencies{
-	compile project(":core")
-}
-
-/**
  * Downloads Grails from the SpringSource archives
  */
 task downloadGrails {
@@ -94,31 +87,30 @@ task installDependencies(dependsOn: [project(":core").install]) << {
  */
 task installJettyPlugin(type: Exec, dependsOn: [extractGrails]) {
 
-	def jettyPluginZip = "${rootDir}/dependencies/grails-jetty/zips/grails-jetty-1.2-SNAPSHOT.zip"
-	def jettyPluginInstalled = "${System.properties['user.home']}/.grails/${grailsVersion}/projects/rundeckapp/plugins/jetty-1.2-SNAPSHOT"
+    def jettyPluginVersion = '1.2-SNAPSHOT'
+	def jettyPluginInstalled = "${System.properties['user.home']}/.grails/${grailsVersion}/projects/rundeckapp/plugins/jetty-${jettyPluginVersion}"
 	
-	inputs.source file(jettyPluginZip)
 	outputs.dir file(jettyPluginInstalled)
 	
 	workingDir project.projectDir
 	environment 'GRAILS_HOME', grailsHome
 	commandLine grailsCommandLine
-	args 'install-plugin', jettyPluginZip
+	args 'install-plugin', 'jetty', jettyPluginVersion
 }
 
 task cleanWar(type: Delete) {
 	delete file(warFileLocation), file("${project.projectDir}/target")
 }
-task grailsClean(type: Exec, dependsOn: [extractGrails]) {
+
+task cleanGrails(type: Exec, dependsOn: [extractGrails]) {
     ignoreExitValue=true
 	workingDir project.projectDir
 	environment 'GRAILS_HOME', grailsHome
 	commandLine grailsCommandLine
 	args 'clean'
 }
-grailsClean.enabled = new File(grailsCommandLine).exists()
 
-task clean(overwrite: true, dependsOn: [cleanWar, grailsClean]) {
+task clean(overwrite: true, dependsOn: [cleanEclipse, cleanWar]) {
 }
 
 /**
