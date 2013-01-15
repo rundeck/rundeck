@@ -160,10 +160,12 @@ class ReportService  {
     def getCombinedReports(ReportQuery query) {
         def eqfilters = getEqFilters()
         def txtfilters = getTxtFilters()
+        def startfilters = getStartsWithFilters()
 
         def filters = [ :]
         filters.putAll(txtfilters)
         filters.putAll(eqfilters)
+        filters.putAll(startfilters)
 
 
         def crit = BaseReport.createCriteria()
@@ -207,6 +209,12 @@ class ReportService  {
             ]
 	}
 
+    private def getStartsWithFilters() {
+        return [
+            //job filter repurposed for reportId
+            job: 'reportId',
+        ]
+    }
     private def getTxtFilters() {
         def txtfilters = [
             obj: 'ctxName',
@@ -217,8 +225,6 @@ class ReportService  {
             abortedBy: 'abortedByUser',
             node: 'node',
             message: 'message',
-            //job filter repurposed for reportId 
-            job: 'reportId',
             title: 'title',
             tags: 'tags',
         ]
@@ -240,8 +246,6 @@ class ReportService  {
      * Count the query results matching the filter
      */
     def countCombinedReports(ReportQuery query) {
-        def eqfilters = getEqFilters()
-        def txtfilters = getTxtFilters()
 
         def total = BaseReport.createCriteria().count {
 
@@ -260,12 +264,19 @@ class ReportService  {
     private applyReportsCriteria(ReportQuery query, delegate){
         def eqfilters = getEqFilters()
         def txtfilters = getTxtFilters()
+        def startFilters = getStartsWithFilters()
         delegate.with{
 
             if (query) {
                 txtfilters.each {key, val ->
                     if (query["${key}Filter"]) {
                         ilike(val, '%' + query["${key}Filter"] + '%')
+                    }
+                }
+                startFilters.each { key, val ->
+                    def qval = query["${key}Filter"]
+                    if (qval) {
+                        ilike(val, qval.contains('%') ? qval : (qval + (qval.endsWith('/')? '%': '/%')))
                     }
                 }
 
