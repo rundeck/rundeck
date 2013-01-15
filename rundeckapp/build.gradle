@@ -36,9 +36,9 @@ def warFileLocation = "${project.projectDir}/target/rundeck-${version}.war"
 /**
  * Depend on core 
  */
-dependencies{
-	compile project(":core")
-}
+//dependencies{
+//	compile project(":core")
+//}
 
 /**
  * Downloads Grails from the SpringSource archives
@@ -109,16 +109,16 @@ task installJettyPlugin(type: Exec, dependsOn: [extractGrails]) {
 task cleanWar(type: Delete) {
 	delete file(warFileLocation), file("${project.projectDir}/target")
 }
-task grailsClean(type: Exec) {
+
+task grailsClean(type: Exec, dependsOn: [extractGrails]) {
     ignoreExitValue=true
 	workingDir project.projectDir
 	environment 'GRAILS_HOME', grailsHome
 	commandLine grailsCommandLine
 	args 'clean'
 }
-grailsClean.enabled = new File(grailsCommandLine).exists()
 
-task clean(overwrite: true, dependsOn: [cleanWar, grailsClean]) {
+task clean(overwrite: true, dependsOn: [cleanEclipse, cleanWar, grailsClean]) {
 }
 
 /**

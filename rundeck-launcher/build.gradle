@@ -14,12 +14,12 @@ subprojects{
     ext.jettyVersion='6.1.21'
     repositories {
         add(new org.apache.ivy.plugins.resolver.FileSystemResolver()) {
-            name = 'localdeps'
-            addArtifactPattern "$projectDir/../../dependencies/[module]/[ext]s/[module]-[revision](-[classifier]).[ext]"
-            addArtifactPattern "$projectDir/../../rundeckapp/target/[module]-[revision](-[classifier]).[ext]"
-            addArtifactPattern "$projectDir/../../plugins/script-plugin/build/libs/[module]-[revision](-[classifier]).[ext]"
-            addArtifactPattern "$projectDir/../../plugins/stub-plugin/build/libs/[module]-[revision](-[classifier]).[ext]"
-            addArtifactPattern "$projectDir/../../plugins/localexec-plugin/build/libs/[module]-[revision](-[classifier]).[ext]"
+            name = 'localJarsPlus'
+            addArtifactPattern "${rootDir}/dependencies/[module]/[ext]s/[module]-[revision](-[classifier]).[ext]"
+            addArtifactPattern "${rootDir}/rundeckapp/target/[module]-[revision](-[classifier]).[ext]"
+            addArtifactPattern "${rootDir}/plugins/script-plugin/build/libs/[module]-[revision](-[classifier]).[ext]"
+            addArtifactPattern "${rootDir}/plugins/stub-plugin/build/libs/[module]-[revision](-[classifier]).[ext]"
+            addArtifactPattern "${rootDir}/plugins/localexec-plugin/build/libs/[module]-[revision](-[classifier]).[ext]"
             descriptor = 'optional'
             checkmodified = true
         }
