@@ -207,7 +207,13 @@ public class TestDataContextUtils extends AbstractBaseTest {
         }
         {
             //null data context is ok
-            File temp = DataContextUtils.replaceTokensInScript("test script", null, fwk);
+            File temp = null;
+            try {
+                temp = DataContextUtils.replaceTokensInScript("test script", null, fwk);
+            } catch (IOException e) {
+                e.printStackTrace(System.out);
+                fail("Unexpected IO Exception: " + e.getMessage());
+            }
             assertNotNull(temp);
             assertTrue(temp.length() > 0);
             temp.delete();
@@ -346,7 +352,13 @@ public class TestDataContextUtils extends AbstractBaseTest {
         {
             assertTrue(testfile1.length() > 0);
             //null data context is ok
-            File temp = DataContextUtils.replaceTokensInFile(testfile1, null, fwk);
+            File temp = null;
+            try {
+                temp = DataContextUtils.replaceTokensInFile(testfile1, null, fwk);
+            } catch (IOException e) {
+                e.printStackTrace(System.out);
+                fail("Unexpected IO Exception: " + e.getMessage());
+            }
             assertNotNull(temp);
             assertTrue(temp.length() > 0);
             temp.delete();
