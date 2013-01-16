@@ -47,6 +47,9 @@ public class Notification {
         type(nullable:false,blank:false)
         content(nullable:true,blank:true)
     }
+    static mapping = {
+        content type: 'text'
+    }
 
     public static Notification fromMap(String key,Map data){
         Notification n = new Notification(eventTrigger:key)

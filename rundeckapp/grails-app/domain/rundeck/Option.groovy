@@ -1,7 +1,4 @@
 package rundeck
-
-import org.codehaus.groovy.grails.commons.ConfigurationHolder
-
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
  *
@@ -80,6 +77,7 @@ public class Option implements Comparable{
     static mapping = {
         table "rdoption"
         valuesUrlLong length:3000
+        values type: 'text'
     }
     /**
      * Return canonical map representation
