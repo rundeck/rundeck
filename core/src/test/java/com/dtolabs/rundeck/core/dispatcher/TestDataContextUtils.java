@@ -55,10 +55,10 @@ public class TestDataContextUtils extends AbstractBaseTest {
         FrameworkProject d = getFrameworkInstance().getFrameworkProjectMgr().createFrameworkProject(
             TEST_PROJECT);
         final File dir = new File(d.getBaseDir(), "var");
-        dir.mkdirs();
+        assertTrue(dir.mkdirs());
         testfile1 = new File(dir, "test-file.sh");
         try {
-            testfile1.createNewFile();
+            assertTrue(testfile1.createNewFile());
             final FileWriter writer = new FileWriter(testfile1);
             writer.write("test @test.data1@\n"
                          + "node test @node.test1@\n");
