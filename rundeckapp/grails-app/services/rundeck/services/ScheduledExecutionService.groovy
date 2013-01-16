@@ -1395,7 +1395,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         def oldjobgroup = scheduledExecution.generateJobGroupName()
         def oldsched = scheduledExecution.scheduled
         scheduledExecution.properties = null
-        final Collection foundprops = params.properties.keySet().findAll {it != 'lastUpdated' && it != 'dateCreated' && (params.properties[it] instanceof String || params.properties[it] instanceof Boolean) }
+        final Collection foundprops = params.properties.keySet().findAll {it != 'lastUpdated' && it != 'dateCreated' && (params.properties[it] instanceof String || params.properties[it] instanceof Boolean || params.properties[it] instanceof Integer) }
         final Map newprops = foundprops ? params.properties.subMap(foundprops) : [:]
         if (scheduledExecution.uuid) {
             newprops.uuid = scheduledExecution.uuid//don't modify uuid if it exists
