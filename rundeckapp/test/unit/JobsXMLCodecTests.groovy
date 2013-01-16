@@ -927,7 +927,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
         </include>
     </nodefilters>
     <dispatch>
-      <threadcount>1</threadcount>
+      <threadcount>4</threadcount>
       <keepgoing>false</keepgoing>
       <rankAttribute>testRank</rankAttribute>
       <rankOrder>ascending</rankOrder>
@@ -939,7 +939,7 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertNotNull jobs
         assertEquals "incorrect size", 1, jobs.size()
         assertTrue "incorrect nodefilter doNodedispatch", jobs[0].doNodedispatch
-        assertEquals "incorrect nodefilter doNodedispatch", 1, jobs[0].nodeThreadcount
+        assertEquals "incorrect nodefilter doNodedispatch", 4, jobs[0].nodeThreadcount
         assertEquals "incorrect nodefilter doNodedispatch", false, jobs[0].nodeKeepgoing
         assertEquals "incorrect nodefilter doNodedispatch", "testRank",jobs[0].nodeRankAttribute
         assertTrue "incorrect nodefilter doNodedispatch", jobs[0].nodeRankOrderAscending
