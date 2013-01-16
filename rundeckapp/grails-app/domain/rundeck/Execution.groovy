@@ -1,6 +1,4 @@
 package rundeck
-
-import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import com.dtolabs.rundeck.app.support.BaseNodeFilters
 /**
 * Execution
@@ -62,7 +60,25 @@ class Execution extends ExecutionContext {
 
         failedNodeList type: 'text'
         outputfilepath type: 'text'
-        nodeIncludeName type: 'text'
+        nodeInclude(type: 'text')
+        nodeExclude(type: 'text')
+        nodeIncludeName(type: 'text')
+        nodeExcludeName(type: 'text')
+        nodeIncludeTags(type: 'text')
+        nodeExcludeTags(type: 'text')
+        nodeIncludeOsName(type: 'text')
+        nodeExcludeOsName(type: 'text')
+        nodeIncludeOsFamily(type: 'text')
+        nodeExcludeOsFamily(type: 'text')
+        nodeIncludeOsArch(type: 'text')
+        nodeExcludeOsArch(type: 'text')
+        nodeIncludeOsVersion(type: 'text')
+        nodeExcludeOsVersion(type: 'text')
+
+        adhocLocalString type: 'text'
+        adhocRemoteString type: 'text'
+        adhocFilepath type: 'text'
+        argString type: 'text'
     }
 
 

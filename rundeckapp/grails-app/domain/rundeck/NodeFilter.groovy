@@ -64,6 +64,23 @@ public class NodeFilter {
         nodeExcludePrecedence(nullable: true)
         project(nullable: true)
     }
+    static mapping = {
+
+        nodeInclude(type: 'text')
+        nodeExclude(type: 'text')
+        nodeIncludeName(type: 'text')
+        nodeExcludeName(type: 'text')
+        nodeIncludeTags(type: 'text')
+        nodeExcludeTags(type: 'text')
+        nodeIncludeOsName(type: 'text')
+        nodeExcludeOsName(type: 'text')
+        nodeIncludeOsFamily(type: 'text')
+        nodeExcludeOsFamily(type: 'text')
+        nodeIncludeOsArch(type: 'text')
+        nodeExcludeOsArch(type: 'text')
+        nodeIncludeOsVersion(type: 'text')
+        nodeExcludeOsVersion(type: 'text')
+    }
 
     public ExtNodeFilters createExtNodeFilters(){
         ExtNodeFilters query = new ExtNodeFilters(this.properties.findAll{it.key=~/^(project|node(Include|Exclude).*)$/})

@@ -81,8 +81,25 @@ class ScheduledExecution extends ExecutionContext {
 
     static mapping = {
         user column: "rduser"
+        nodeInclude(type: 'text')
+        nodeExclude(type: 'text')
+        nodeIncludeName(type: 'text')
+        nodeExcludeName(type: 'text')
+        nodeIncludeTags(type: 'text')
+        nodeExcludeTags(type: 'text')
+        nodeIncludeOsName(type: 'text')
+        nodeExcludeOsName(type: 'text')
+        nodeIncludeOsFamily(type: 'text')
+        nodeExcludeOsFamily(type: 'text')
+        nodeIncludeOsArch(type: 'text')
+        nodeExcludeOsArch(type: 'text')
+        nodeIncludeOsVersion(type: 'text')
+        nodeExcludeOsVersion(type: 'text')
+
+        adhocLocalString type: 'text'
+        adhocRemoteString type: 'text'
+        adhocFilepath type: 'text'
         argString type: 'text'
-        nodeIncludeName type: 'text'
         notifySuccessRecipients type: 'text'
         notifyFailureRecipients type: 'text'
         notifySuccessUrl type: 'text'
