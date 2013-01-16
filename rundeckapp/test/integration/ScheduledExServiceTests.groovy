@@ -1839,6 +1839,62 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
     }
 
 
+    public void testDoUpdateJobShouldNotBeBlankNodeThreadcount() {
+        def sec = new ScheduledExecutionService()
+        if (true) {//test update basic job details
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah',
+                                            doNodedispatch: true, nodeInclude: "hostname",
+                    nodeThreadcount: 1,
+                                            workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)])
+            )
+            se.save()
+
+            assertNotNull se.id
+            assertNotNull se.nodeThreadcount
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+            fwkControl.demand.existsFrameworkProject { project, framework ->
+                assertEquals 'testProject2', project
+                return true
+            }
+            fwkControl.demand.getCommand { project, type, command, framework ->
+                assertEquals 'testProject2', project
+                assertEquals 'aType2', type
+                assertEquals 'aCommand2', command
+                return null
+            }
+            sec.frameworkService = fwkControl.createMock()
+
+            def params = new ScheduledExecution(jobName: 'monkey2', project: 'testProject2', description: 'blah',
+                                                doNodedispatch: true, nodeIncludeName: "nodename",
+                                                nodeThreadcount: '',
+                                                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)])
+            )
+            def results = sec._doupdateJob(se.id.toString(), params, 'test', 'test', null)
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.err.println(it);
+                }
+            }
+            assertTrue succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = scheduledExecution
+            assertNotNull(execution)
+            assertNotNull(execution.errors)
+            assertFalse(execution.errors.hasErrors())
+            assertTrue execution.doNodedispatch
+            assertEquals 1, execution.nodeThreadcount
+            assertEquals "nodename", execution.nodeIncludeName
+            assertNull "Filters should have been replaced, but hostname was: ${execution.nodeInclude}", execution.nodeInclude
+        }
+    }
+
+
     public void testDoUpdateScheduled() {
         if (true) {//test set scheduled with crontabString
             def sec = new ScheduledExecutionService()
@@ -4174,6 +4230,79 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertLength(1, execution.workflow.commands as Object[])
             def CommandExec cexec = execution.workflow.commands[0]
             assertEquals 'test command2', cexec.adhocRemoteString
+        }
+    }
+
+    public void testDoUpdateNodeThreadcountShouldNotBeBlank() {
+        def sec = new ScheduledExecutionService()
+        if (true) {//test update workflow
+
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah3',nodeThreadcount: 1)
+            def workflow = new Workflow(threadcount: 1, keepgoing: true)
+            def wfitem = new CommandExec(adhocExecution: true, adhocRemoteString: 'test command',)
+            workflow.addToCommands(wfitem)
+            se.workflow = workflow
+            se.save()
+
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+            fwkControl.demand.existsFrameworkProject { project, framework ->
+                return true
+            }
+            fwkControl.demand.getCommand { project, type, command, framework ->
+                return null
+            }
+            fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
+            fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+            fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+            sec.frameworkService = fwkControl.createMock()
+
+//            def sesControl = mockFor(ScheduledExecutionService, true)
+//            sesControl.demand.getByIDorUUID {id -> return se }
+//            sec.scheduledExecutionService = sesControl.createMock()
+
+            def params = [id: se.id.toString(), description: 'changed description',
+                    //set nodeThreadcount to blank
+                    nodeThreadcount:'',
+                    workflow: ['commands[0]': [adhocExecution: true, adhocRemoteString: 'test command2',]], '_workflow_data': true]
+            def results = sec._doupdate(params, 'test', 'test', null)
+            def succeeded = results.success
+            def scheduledExecution = results.scheduledExecution
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.out.println(it);
+                }
+            }
+            if (scheduledExecution.workflow) {
+                if (scheduledExecution.workflow.errors.hasErrors()) {
+                    scheduledExecution.workflow.errors.allErrors.each {
+                        System.out.println(it);
+                    }
+                }
+                if (scheduledExecution.workflow.commands) {
+                    scheduledExecution.workflow.commands.each { cexec ->
+                        if (cexec.errors.hasErrors()) {
+                            cexec.errors.allErrors.each {
+                                System.out.println(it);
+                            }
+                        }
+                    }
+                }
+            }
+
+            assertTrue succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = scheduledExecution
+            assertNotNull(execution)
+            assertNotNull(execution.errors)
+            assertFalse(execution.errors.hasErrors())
+            assertEquals('changed description', execution.description)
+            assertNotNull(execution.nodeThreadcount)
+            assertEquals(1, execution.nodeThreadcount)
         }
     }
 

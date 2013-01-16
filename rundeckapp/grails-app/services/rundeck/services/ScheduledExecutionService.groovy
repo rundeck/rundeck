@@ -897,6 +897,10 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         }
         scheduledExecution.properties = nonopts
 
+        if(!scheduledExecution.nodeThreadcount){
+            scheduledExecution.nodeThreadcount=1
+        }
+
         //fix potential null/blank issue after upgrading rundeck to 1.3.1/1.4
         if (!scheduledExecution.description) {
             scheduledExecution.description = ''
