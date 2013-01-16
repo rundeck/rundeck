@@ -1000,7 +1000,7 @@ var applinks={
         <tr>
             <td>
                 <label for="schedJobnodeThreadcount" class=" ${hasErrors(bean:scheduledExecution,field:'nodeThreadcount','fieldError')}">
-                    Thread Count
+                    <g:message code="scheduledExecution.property.nodeThreadcount.label" />
                 </label>
             </td>
             <td>
@@ -1016,7 +1016,7 @@ var applinks={
                     </g:hasErrors>
                 </span>
                 <span class="info note">
-                    Maximum number of parallel threads to use.
+                    <g:message code="scheduledExecution.property.nodeThreadcount.description" />
                 </span>
 
             </td>
