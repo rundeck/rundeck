@@ -28,10 +28,18 @@
         <g:render template="/execution/wflistitemContent" model="${[i:i,stepNum: i,item:item,workflow:workflow,edit:edit,highlight:highlight,noimgs:noimgs, project: project]}"/>
         </span>
         <g:if test="${item.errorHandler}">
-            <ul class="wfhandleritem">
+            <ul class="wfhandleritem ${item.errors?.hasFieldErrors('errorHandler') ? 'fieldError' : ''}">
 
                 <li id="wfli_eh_${i}" ><g:render template="/execution/wflistitemContent"
-                          model="${[i: 'eh_' + i, stepNum:i, item: item.errorHandler, workflow: workflow, edit: edit, highlight: highlight, noimgs: noimgs, isErrorHandler:true]}"/></li>
+                          model="${[i: 'eh_' + i, stepNum:i, item: item.errorHandler, workflow: workflow, edit: edit, highlight: highlight, noimgs: noimgs, isErrorHandler:true]}"/>
+                    <g:hasErrors bean="${item}" field="errorHandler">
+                        <span class="info error">
+                            <g:eachError field="errorHandler" bean="${item}" var="err">
+                                <g:message error="${err}" encodeAs="HTML"/>
+                            </g:eachError>
+                        </span>
+                    </g:hasErrors>
+                </li>
 
             </ul>
         </g:if>

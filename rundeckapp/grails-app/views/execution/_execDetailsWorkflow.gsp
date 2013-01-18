@@ -36,7 +36,7 @@
     <span class="label" title="Strategy for iteration">Strategy:</span>
     <g:if test="${edit}">
         <label title="Execute the full workflow on each node before the next node">
-            <input type="radio" name="workflow.strategy" value="node-first" ${!workflow?.strategy||workflow?.strategy=='node-first'?'checked':''}/>
+            <input id="wf_strat_node_first" type="radio" name="workflow.strategy" value="node-first" ${!workflow?.strategy||workflow?.strategy=='node-first'?'checked':''}/>
             <g:message code="Workflow.strategy.label.node-first"/>
         </label>
         <label title="Execute each step on all nodes before the next step">
