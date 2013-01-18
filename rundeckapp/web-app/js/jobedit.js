@@ -367,8 +367,10 @@ function _wfishownewErrorHandler(key,num,nodeStep){
     newehdiv.parentNode.removeChild(newehdiv);
     wfiehli.appendChild(newehdiv);
 
-//    $(newehdiv).select('.node_step_section').each(nodeStep?Element.show:Element.hide);
-    $(newehdiv).select('.step_section').each(!nodeStep ? Element.show : Element.hide);
+    var nodeFirstWfStrat = $('wf_strat_node_first').checked;
+    var allowedWfStepEh=!(nodeStep && nodeFirstWfStrat);
+    //WF step error handler not allowed if strategy is "node-first" and the step is a node step
+    $(newehdiv).select('.step_section').each(allowedWfStepEh ? Element.show : Element.hide);
 
     newehdiv.show();
     $(wfiehli.parentNode).show();

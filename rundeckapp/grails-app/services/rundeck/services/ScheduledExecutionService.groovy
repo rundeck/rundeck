@@ -1061,6 +1061,11 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             failed = true
             scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message')
         }
+
+        //validate error handler types
+        if (!validateWorkflow(scheduledExecution.workflow,scheduledExecution)) {
+            failed = true
+        }
         if (( params.options || params['_nooptions']) && scheduledExecution.options) {
             def todelete = []
             scheduledExecution.options.each {
@@ -1498,6 +1503,11 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             failed = true
             scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message')
         }
+
+        //validate error handler types
+        if (!validateWorkflow(scheduledExecution.workflow,scheduledExecution)) {
+            failed = true
+        }
         if (scheduledExecution.options) {
             def todelete = []
             scheduledExecution.options.each {
@@ -1655,6 +1665,41 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             scheduledExecution.discard()
             return [success: false, scheduledExecution: scheduledExecution]
         }
+    }
+
+    /**
+     * Validate workflow command error handler types, return true if valid
+     * @param workflow
+     * @param scheduledExecution
+     * @return
+     */
+    private boolean validateWorkflow(Workflow workflow, ScheduledExecution scheduledExecution){
+        def failed=false
+        //validate error handler types
+        if (workflow?.strategy == 'node-first') {
+            //if a step is a Node step and has an error handler
+            def cmdi = 1;
+            workflow.commands
+                    .findAll { WorkflowStep step -> step.errorHandler }
+            .findAll { it.instanceOf(CommandExec) || it.instanceOf(PluginStep) }
+            .each { WorkflowStep step ->
+                def isNodeStepEh = false;
+                if (step.errorHandler.instanceOf(PluginStep)) {
+                    PluginStep pseh = step.errorHandler.asType(PluginStep)
+                    isNodeStepEh = pseh.nodeStep
+                } else {
+                    isNodeStepEh = step.errorHandler.instanceOf(CommandExec)
+                }
+                //reject if the Error Handler is not a node step
+                if (!isNodeStepEh) {
+                    step.errors.rejectValue('errorHandler', 'WorkflowStep.errorHandler.nodeStep.invalid', [cmdi] as Object[], "Step {0}: Must have a Node Step as an Error Handler")
+                    scheduledExecution?.errors.rejectValue('workflow', 'Workflow.stepErrorHandler.nodeStep.invalid', [cmdi] as Object[], "Step {0}: Must have a Node Step as an Error Handler")
+                    failed = true
+                }
+                cmdi++
+            }
+        }
+        return !failed
     }
 
     def _dovalidate (Map params, user, String roleList, Framework framework ){
@@ -1847,6 +1892,11 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         } else if (!scheduledExecution.workflow || !scheduledExecution.workflow.commands || scheduledExecution.workflow.commands.size() < 1) {
             failed = true
             scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message')
+        }
+
+        //validate error handler types
+        if(!validateWorkflow(scheduledExecution.workflow,scheduledExecution)){
+            failed = true
         }
 
         if (scheduledExecution.argString) {

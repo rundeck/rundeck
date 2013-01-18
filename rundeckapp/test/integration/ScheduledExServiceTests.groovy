@@ -1,24 +1,8 @@
 import grails.test.GrailsUnitTestCase
-
-import org.quartz.Scheduler
-import org.quartz.SchedulerContext
-import org.quartz.SchedulerMetaData
+import org.quartz.*
 import org.quartz.spi.JobFactory
-import org.quartz.JobDetail
-import org.quartz.Trigger
-import org.quartz.JobDataMap
-import org.quartz.Calendar
-import org.quartz.JobListener
-import org.quartz.TriggerListener
-import org.quartz.SchedulerListener
-
 import org.springframework.context.MessageSource
-import rundeck.ScheduledExecution
-import rundeck.CommandExec
-import rundeck.Workflow
-import rundeck.JobExec
-import rundeck.Option
-import rundeck.Notification
+import rundeck.*
 import rundeck.services.FrameworkService
 import rundeck.services.ScheduledExecutionService
 /*
@@ -369,6 +353,84 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals('test1', next3.jobName)
             assertEquals('a/test', next3.jobGroup)
         }
+    }
+
+    public void testDoValidateWorkflowStepFirstErrorhandlers() {
+        def testService = new ScheduledExecutionService()
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework ->
+            assertEquals 'testProject', project
+            return true
+        }
+        testService.frameworkService = fwkControl.createMock()
+
+        //step first allows any combination of step and error handler types
+        def params = [jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(keepgoing: true,strategy: 'step-first',commands: [
+                        new CommandExec(adhocRemoteString: 'test command1', adhocExecution: true, errorHandler:
+                                new JobExec(jobGroup: 'test1',jobName: 'blah')),
+                        new CommandExec(adhocRemoteString: 'test command2', adhocExecution: true,errorHandler:
+                                new CommandExec(adhocRemoteString: 'test ehcommand', adhocExecution: true)),
+                        new JobExec(jobGroup: 'test1', jobName: 'blah2', errorHandler:
+                                new CommandExec(adhocRemoteString: 'test command1', adhocExecution: true)),
+                        new JobExec(jobGroup: 'test1', jobName: 'blah3', errorHandler:
+                                new JobExec(jobGroup: 'test1', jobName: 'blah4')),
+                ])
+        ]
+        def results = testService._dovalidate(params, 'test', 'test', null)
+        if (results.scheduledExecution.errors.hasErrors()) {
+            results.scheduledExecution.errors.allErrors.each {
+                System.err.println(it);
+            }
+        }
+        assertFalse results.failed
+
+        assertFalse results.scheduledExecution.workflow.commands[0].errors.hasErrors()
+        assertFalse results.scheduledExecution.workflow.commands[1].errors.hasErrors()
+        assertFalse results.scheduledExecution.workflow.commands[2].errors.hasErrors()
+        assertFalse results.scheduledExecution.workflow.commands[3].errors.hasErrors()
+    }
+    public void testDoValidateWorkflowNodeFirstErrorhandlers() {
+        def testService = new ScheduledExecutionService()
+        def fwkControl = mockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        fwkControl.demand.existsFrameworkProject { project, framework ->
+            assertEquals 'testProject', project
+            return true
+        }
+        testService.frameworkService = fwkControl.createMock()
+
+        //Node first rejects non-Node error handler steps for Node steps.
+        def params = [jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(keepgoing: true,strategy: 'node-first',commands: [
+                        new CommandExec(adhocRemoteString: 'test command1', adhocExecution: true, errorHandler:
+                                new JobExec(jobGroup: 'test1',jobName: 'blah')),
+                        new CommandExec(adhocRemoteString: 'test command2', adhocExecution: true,errorHandler:
+                                new CommandExec(adhocRemoteString: 'test ehcommand', adhocExecution: true)),
+                        new JobExec(jobGroup: 'test1', jobName: 'blah2', errorHandler:
+                                new CommandExec(adhocRemoteString: 'test command1', adhocExecution: true)),
+                        new JobExec(jobGroup: 'test1', jobName: 'blah3', errorHandler:
+                                new JobExec(jobGroup: 'test1', jobName: 'blah4')),
+                ])
+        ]
+        def results = testService._dovalidate(params, 'test', 'test', null)
+        results.scheduledExecution.workflow.commands.each{ cmd->
+            if (cmd.errors.hasErrors()) {
+                cmd.errors.allErrors.each {
+                    System.out.println("command: "+cmd+", error: "+it);
+                }
+            }
+        }
+        assertTrue results.failed
+        assertTrue results.scheduledExecution.workflow.commands[0].errors.hasErrors()
+        assertTrue results.scheduledExecution.workflow.commands[0].errors.hasFieldErrors('errorHandler')
+
+        //no error in other commands
+        assertFalse results.scheduledExecution.workflow.commands[1].errors.hasErrors()
+        assertFalse results.scheduledExecution.workflow.commands[2].errors.hasErrors()
+        assertFalse results.scheduledExecution.workflow.commands[3].errors.hasErrors()
+
     }
 
     public void testDoValidateWorkflowOptions() {
@@ -1731,6 +1793,114 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
 
             def CommandExec ehexec = cexec.errorHandler
             assertEquals 'err command', ehexec.adhocRemoteString
+        }
+    }
+    public void testDoUpdateJobErrorHandlersStepFirst() {
+        def sec = new ScheduledExecutionService()
+        if (true) {//test update basic job details
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',
+                    workflow: new Workflow(strategy: 'step-first',
+                            commands: [
+                                    new CommandExec(adhocRemoteString: 'test command', adhocExecution: true),
+                                    new CommandExec(adhocRemoteString: 'test command', adhocExecution: true),
+                                    new JobExec(jobName: 'test1',jobGroup: 'test'),
+                                    new JobExec(jobName: 'test1', jobGroup: 'test'),
+                            ]))
+            se.save()
+
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.existsFrameworkProject {project, framework ->
+                assertEquals 'testProject2', project
+                return true
+            }
+            fwkControl.demand.getCommand {project, type, command, framework ->
+                assertEquals 'testProject2', project
+                assertEquals 'aType2', type
+                assertEquals 'aCommand2', command
+                return null
+            }
+            sec.frameworkService = fwkControl.createMock()
+
+            def eh1 = new CommandExec(adhocRemoteString: 'err command')
+            def eh2 = new CommandExec(adhocRemoteString: 'err command')
+            def eh3 = new JobExec(jobGroup: 'eh',jobName: 'eh1')
+            def eh4 = new JobExec(jobGroup: 'eh',jobName: 'eh2')
+            def params = new ScheduledExecution(jobName: 'monkey2', project: 'testProject2', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',
+                workflow: new Workflow(strategy: 'step-first',
+                       commands: [
+                               new CommandExec(adhocRemoteString: 'test command', adhocExecution: true,errorHandler: eh1),
+                               new CommandExec(adhocRemoteString: 'test command', adhocExecution: true,errorHandler:eh3),
+                               new JobExec(jobName: 'test1', jobGroup: 'test',errorHandler: eh2),
+                               new JobExec(jobName: 'test1', jobGroup: 'test',errorHandler: eh4),
+                       ]
+                )
+            )
+            def results = sec._doupdateJob(se.id.toString(), params, 'test', 'test', null)
+            def succeeded = results[0]
+            assertTrue succeeded
+
+        }
+    }
+    public void testDoUpdateJobErrorHandlersNodeFirst() {
+        def sec = new ScheduledExecutionService()
+        if (true) {//test update basic job details
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',
+                    workflow: new Workflow(strategy: 'node-first',
+                            commands: [
+                                    new CommandExec(adhocRemoteString: 'test command', adhocExecution: true),
+                                    new CommandExec(adhocRemoteString: 'test command', adhocExecution: true),
+                                    new JobExec(jobName: 'test1',jobGroup: 'test'),
+                                    new JobExec(jobName: 'test1', jobGroup: 'test'),
+                            ]))
+            se.save()
+
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
+            fwkControl.demand.existsFrameworkProject {project, framework ->
+                assertEquals 'testProject2', project
+                return true
+            }
+            fwkControl.demand.getCommand {project, type, command, framework ->
+                assertEquals 'testProject2', project
+                assertEquals 'aType2', type
+                assertEquals 'aCommand2', command
+                return null
+            }
+            sec.frameworkService = fwkControl.createMock()
+
+            def eh1 = new CommandExec(adhocRemoteString: 'err command')
+            def eh2 = new CommandExec(adhocRemoteString: 'err command')
+            def eh3 = new JobExec(jobGroup: 'eh',jobName: 'eh1')
+            def eh4 = new JobExec(jobGroup: 'eh',jobName: 'eh2')
+            def params = new ScheduledExecution(jobName: 'monkey2', project: 'testProject2', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',
+                workflow: new Workflow(strategy: 'node-first',
+                       commands: [
+                               new CommandExec(adhocRemoteString: 'test command', adhocExecution: true,errorHandler: eh1),
+                               new CommandExec(adhocRemoteString: 'test command', adhocExecution: true,errorHandler:eh3),
+                               new JobExec(jobName: 'test1', jobGroup: 'test',errorHandler: eh2),
+                               new JobExec(jobName: 'test1', jobGroup: 'test',errorHandler: eh4),
+                       ]
+                )
+            )
+            def results = sec._doupdateJob(se.id.toString(), params, 'test', 'test', null)
+            def succeeded = results[0]
+            def ScheduledExecution rese=results[1]
+            assertFalse succeeded
+
+            assertFalse rese.workflow.commands[0].errors.hasErrors()
+
+            assertTrue rese.workflow.commands[1].errors.hasErrors()
+            assertTrue rese.workflow.commands[1].errors.hasFieldErrors('errorHandler')
+            assertFalse rese.workflow.commands[2].errors.hasErrors()
+            assertFalse rese.workflow.commands[3].errors.hasErrors()
+
         }
     }
 
