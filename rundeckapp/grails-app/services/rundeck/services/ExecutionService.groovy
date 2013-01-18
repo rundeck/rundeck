@@ -1749,13 +1749,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                     result = new StepExecutionResultImpl(null,JobReferenceFailureReason.Unauthorized,msg)
                     return
                 }
-//                    se.refresh()
-                //replace data context within arg string
                 String[] newargs = jitem.args
-                //create node context for node and substitute data references in args
-//                    if (null != newargs) {
-//                        newargs = DataContextUtils.replaceDataReferences(newargs, [node: DataContextUtils.nodeData(iNodeEntry)])
-//                    }
+                //substitute any data context references in the arguments
+                if (null != newargs && executionContext.dataContext) {
+                    newargs = DataContextUtils.replaceDataReferences(newargs, executionContext.dataContext)
+                }
 
                 final jobOptsMap = frameworkService.parseOptsFromArray(newargs)
                 jobOptsMap = addOptionDefaults(se, jobOptsMap)
