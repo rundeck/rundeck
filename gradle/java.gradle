@@ -30,15 +30,15 @@ targetCompatibility = 1.6
 eclipse.project.name = "${project.getParent().eclipse.project.name}:${name}"
 
 // produce a jar file for our test classes
-task testJar(type: Jar, dependsOn: test) {
+task testJar(type: Jar) {
 	classifier = 'tests'
-	from sourceSets.test.output
+	from sourceSets.test.java
 }
 
 // produce a jar file for our source files
-task sourceJar(type: Jar, dependsOn: classes) {
+task sourceJar(type: Jar) {
 	classifier = 'sources'
-	from sourceSets.test.java
+	from sourceSets.main.java
 }
 
 // produce a jar file for our javadoc

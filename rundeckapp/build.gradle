@@ -40,6 +40,11 @@ dependencies{
 	compile project(":core")
 }
 
+repositories {
+	mavenLocal()
+	mavenCentral()
+}
+
 /**
  * Downloads Grails from the SpringSource archives
  */
@@ -61,7 +66,7 @@ task extractGrails(dependsOn: downloadGrails) {
 	inputs.file file(grailsZipFileLocation);
 	
 	logger.debug("grailsInstallLocation: ${grailsInstallLocation}")
-	outputs.dir file(grailsInstallLocation);
+	outputs.dir file(grailsHome);
 	
 	doLast {
 		logger.info("Extracting ${grailsZipFile}...")
@@ -124,14 +129,14 @@ task clean(overwrite: true, dependsOn: [cleanWar, grailsClean]) {
 /**
  * Wrapper task for grails test-app
  */
-task test(type: Exec, overwrite: true, 
-		dependsOn: [installJettyPlugin, installDependencies]) {
+task testGrails(type: Exec, overwrite: true, dependsOn: [installJettyPlugin, installDependencies,extractGrails]) {
 
 	workingDir project.projectDir
 	environment 'GRAILS_HOME', grailsHome
 	commandLine grailsCommandLine
 	args 'test-app','-coverage','-xml'
 }
+test.dependsOn testGrails
 
 /**
  * Sets the value of app.version under application.properties
@@ -144,7 +149,7 @@ task replaceVersion(type: PropertyValueUpdater) {
 /**
  * Builds the rundeck war file
  */
-task war(type: Exec, dependsOn: [replaceVersion, test]) {
+task war(type: Exec, dependsOn: [replaceVersion,installJettyPlugin, installDependencies,extractGrails]) {
 	inputs.sourceDir file("${projectDir}/src")
 	outputs.file file(warFileLocation)
 	workingDir project.projectDir
@@ -170,7 +175,7 @@ task build(overwrite: true, dependsOn: [test, war]) {
 /**
  * Installs the war file into the ~/.m2 maven repo 
  */
-task install(type: Exec, overwrite: true, dependsOn: build) {
+task install(type: Exec, overwrite: true, dependsOn: war) {
 	inputs.file file(warFileLocation)
 	workingDir project.projectDir
 	commandLine grailsCommandLine
