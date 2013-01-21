@@ -173,26 +173,9 @@ public class ScriptfileUtils {
      * @throws IOException if an error occurs
      */
     public static void setExecutePermissions(final File scriptfile) throws IOException {
-        ////////////////////
-        // XXX: the following commented block is available in java 6 only
-        /*if (!scriptfile.setExecutable(true, true)) {
-            warn("Unable to set executable bit on temp script file, execution may fail: " + scriptfile
+        if (!scriptfile.setExecutable(true, true)) {
+            System.err.println("Unable to set executable bit on temp script file, execution may fail: " + scriptfile
                 .getAbsolutePath());
-        }*/
-        ///////////////////
-
-        if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
-            final Process process = Runtime.getRuntime().exec(
-                new String[]{"chmod", "+x", scriptfile.getAbsolutePath()});
-            int result=-1;
-            try {
-                result=process.waitFor();
-            } catch (InterruptedException e) {
-
-            }
-            if(result>0) {
-                throw new IOException("exec returned: " + result);
-            }
         }
     }
 
