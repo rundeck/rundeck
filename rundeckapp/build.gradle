@@ -149,7 +149,7 @@ task replaceVersion(type: PropertyValueUpdater) {
 /**
  * Builds the rundeck war file
  */
-task war(type: Exec, dependsOn: [replaceVersion,installJettyPlugin, installDependencies,extractGrails]) {
+task grailsWar(type: Exec, overwrite:true, dependsOn: [replaceVersion,installJettyPlugin, installDependencies,extractGrails]) {
 	inputs.sourceDir file("${projectDir}/src")
 	outputs.file file(warFileLocation)
 	workingDir project.projectDir
@@ -163,11 +163,11 @@ artifacts{
 	'default'(file(warFileLocation)){
         name 'rundeck'
         type 'war'
-        builtBy war
+        builtBy grailsWar
 	}
 }
 
-task build(overwrite: true, dependsOn: [test, war]) {
+task build(overwrite: true, dependsOn: [test, grailsWar]) {
 	// noop build because this isn't actually a java project 
 	// besides the war task is handling building by issuing a "grails war" 
 }
@@ -175,7 +175,7 @@ task build(overwrite: true, dependsOn: [test, war]) {
 /**
  * Installs the war file into the ~/.m2 maven repo 
  */
-task install(type: Exec, overwrite: true, dependsOn: war) {
+task install(type: Exec, overwrite: true, dependsOn: grailsWar) {
 	inputs.file file(warFileLocation)
 	workingDir project.projectDir
 	commandLine grailsCommandLine
