@@ -97,7 +97,7 @@ assemble {
     }
 }
 //********* artifact signing *********
-if(isReleaseBuild) {
+if(isReleaseBuild && project.hasProperty("signing.keyId")) {
     signing {
         sign configurations.archives
     }
@@ -249,7 +249,7 @@ task createPom << {
 
 // prompt for PGP key passphrase if not set
 gradle.taskGraph.whenReady { taskGraph ->
-    if (taskGraph.allTasks.any { it instanceof Sign } && !ext.hasProperty("signing.password") && !isDevBuild) {
+    if (taskGraph.allTasks.any { it instanceof Sign } && project.hasProperty("signing.keyId") && !project.hasProperty("signing.password") && !isDevBuild) {
         // Use Java 6's console to read from the console (no good for a CI environment)
         Console console = System.console()
         console.printf "\n\nWe have to sign some things in this build.\n\nPlease enter your signing details.\n\n"
