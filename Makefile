@@ -1,9 +1,11 @@
 SHELL=/bin/bash
 
 VNUMBER=$(shell grep version.number= ${PWD}/version.properties | cut -d= -f 2)
-VTAG=$(shell grep version.tag= ${PWD}/version.properties | cut -d= -f 2)
-VERSION=${VNUMBER}-${VTAG}
-ifeq ($(strip $(VTAG)),GA)
+ifndef TAG
+TAG=$(shell grep version.tag= ${PWD}/version.properties | cut -d= -f 2)
+endif
+VERSION=${VNUMBER}-${TAG}
+ifeq ($(strip $(TAG)),GA)
 VERSION=${VNUMBER}
 endif
 RELEASE=$(shell grep version.release.number= ${PWD}/version.properties | cut -d= -f 2)
@@ -24,8 +26,10 @@ rundeck:  app
 
 #app build via gradle
 
-app: 
-	./gradlew -g $$(pwd)/gradle-cache $(PROXY_DEFS) -PbuildNum=$(RELEASE) assemble
+app: rundeck-launcher/launcher/build/libs/rundeck-launcher-$(VERSION).jar 
+
+rundeck-launcher/launcher/build/libs/rundeck-launcher-$(VERSION).jar:
+	./gradlew -g $$(pwd)/gradle-cache $(PROXY_DEFS) -Penvironment=release -PreleaseTag=$(TAG) -PbuildNum=$(RELEASE) assemble
 
 
 #snapshot and release
@@ -72,7 +76,7 @@ docs/en/history/toc.conf: docs/en/history/version-$(VNUMBER).md
 	
 
 makedocs: 
-	$(MAKE) -C docs
+	$(MAKE) VERSION=$(VERSION) -C docs
 
 docs: makedocs
 	mkdir -p ./rundeckapp/web-app/docs
@@ -81,7 +85,6 @@ docs: makedocs
 #clean various components
 
 clean:
-	-./gradlew -p rundeckapp grailsClean
 	./gradlew clean
 	$(MAKE) -C docs clean
 	$(MAKE) -C packaging clean
