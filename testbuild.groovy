@@ -52,8 +52,8 @@ def manifest=[
         "lib/jetty-plus-6.1.21.jar",
         "lib/jetty-util-6.1.21.jar",
         "lib/log4j-1.2.16.jar",
-        "lib/rundeck-jetty-server-1.5-SNAPSHOT.jar",
-        "lib/rundeck-jetty-server-1.5-SNAPSHOT.jar##rundeck-launcher/rundeck-jetty-server/${target}/rundeck-jetty-server-${version}.jar",
+        "lib/rundeck-jetty-server-${version}.jar",
+        "lib/rundeck-jetty-server-${version}.jar##rundeck-launcher/rundeck-jetty-server/${target}/rundeck-jetty-server-${version}.jar",
         "lib/servlet-api-2.5-20081211.jar",
         "pkgs/webapp/docs/#?"//optional files
     ],
