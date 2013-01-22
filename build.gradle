@@ -28,9 +28,10 @@ subprojects {
     ext.environment = project.hasProperty('environment') ? environment : 'development';
     
     // Unless we're doing a release build, append -SNAPSHOT to the end of the
-    // artifacts. Otherwise use the currentVersion as defined in gradle.properties
-    version = project.hasProperty('environment') && environment == 'release' ? 
-        currentVersion : currentVersion + '-SNAPSHOT';
+    // artifacts. Otherwise use the currentVersion as defined in gradle.properties and
+    // the releaseTag if it is not 'GA'
+    def vtag = environment != 'release' ? '-SNAPSHOT' : (project.hasProperty('releaseTag') && releaseTag!='GA' ? '-'+releaseTag : '')  
+    version = currentVersion + vtag
 }
 
 task wrapper(type: Wrapper) {

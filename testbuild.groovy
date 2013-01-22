@@ -4,20 +4,32 @@
 
 def target
 
-if("-maven" in args){
-    target="target"
-}else if("-gradle" in args){
-    target="build/libs"
-}else{
-    println "ERROR: specify -maven or -gradle to indicate build file locations"
-    System.exit(2)
-}
-
 def props=new Properties()
 new File('gradle.properties').withReader{
     props.load(it)
 }
-def tag=Boolean.getBoolean('release')?"":"-SNAPSHOT"
+args.each{
+    if("-maven" == it){
+        target="target"
+    }else if("-gradle" == it){
+        target="build/libs"
+    }else{
+        def m=it=~/^-[PD](.+?)(=(.+))?$/
+        if(m.matches()){
+            props[m[0][1]]=m[0][2]?m[0][3]:true
+        }
+    }
+}
+
+if(!target){
+    println "ERROR: specify -maven or -gradle to indicate build file locations"
+    System.exit(2)
+}
+
+def tag="-SNAPSHOT"
+if(props.'release'){
+    tag= props.releaseTag && props.releaseTag!='GA' ? '-'+props.releaseTag : ''
+} 
 def debug=Boolean.getBoolean('debug')?:("-debug" in args)
 def version=props.currentVersion+tag
 
