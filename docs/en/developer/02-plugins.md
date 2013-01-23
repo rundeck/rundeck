@@ -18,7 +18,8 @@ If you have created a plugin for Rundeck 1.4 or earlier, you will need to update
 
 ### Metadata
 
-* the `Rundeck-Plugin-Version` has updated to `1.1`.  If a plugin specifies the earlier `1.0`, Rundeck 1.5 will not load it.
+* the `Rundeck-Plugin-Version` for Java plugins has updated to `1.1`.  If a plugin specifies the earlier `1.0`, Rundeck 1.5 will not load it.
+* 
 
 ### Java Interfaces
 
@@ -350,7 +351,7 @@ The file `plugin.yaml` must have this structure:
     
     name: plugin name
     version: plugin version
-    rundeckPluginVersion: 1.1
+    rundeckPluginVersion: 1.0
     author: author name
     date: release date
     providers:
@@ -365,7 +366,7 @@ The main metadata that is required:
 
 * `name` - name for the plugin
 * `version` - version number of the plugin
-* `rundeckPluginVersion` - Rundeck Plugin type version, currently "1.1"
+* `rundeckPluginVersion` - Rundeck Plugin type version, currently "1.0"
 * `providers` - list of provider metadata maps
 
 These are optional:
