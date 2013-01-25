@@ -528,6 +528,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             jobcontext.execid = execution.id.toString()
             jobcontext.username=execution.user
             jobcontext.project=execution.project
+            jobcontext.loglevel= textLogLevels[execution.loglevel] ?: execution.loglevel
 
             WorkflowExecutionItem item = createExecutionItemForExecutionContext(execution, framework, execution.user)
 
@@ -1393,6 +1394,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
     }
 
     def static loglevels=['ERR':Project.MSG_ERR,'ERROR':Project.MSG_ERR,'WARN':Project.MSG_WARN,'INFO':Project.MSG_INFO,'VERBOSE':Project.MSG_VERBOSE,'DEBUG':Project.MSG_DEBUG]
+    def static textLogLevels=['ERR':'ERROR']
+    def static mappedLogLevels=['ERROR','WARN','INFO','VERBOSE','DEBUG']
 
     def LogHandler createLogHandler(command, filepath,loglevel="WARN", Map defaultData=null){
         def namespace = "com.dtolabs.rundeck.core."+command
@@ -1810,6 +1813,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                 def jobcontext = new HashMap<String, String>()
                 jobcontext.id = se.extid
                 jobcontext.execid = executionContext.dataContext.job?.execid?:null;
+                jobcontext.loglevel= mappedLogLevels[executionContext.loglevel]
                 jobcontext.name = se.jobName
                 jobcontext.group = se.groupPath
                 jobcontext.project = se.project

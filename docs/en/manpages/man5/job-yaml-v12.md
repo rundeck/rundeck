@@ -56,7 +56,7 @@ Each Job definition requires these values:
     * `VERBOSE`
     * `INFO`
     * `WARN`
-    * `ERR`
+    * `ERROR`
 
 [`sequence`](#sequence)
 

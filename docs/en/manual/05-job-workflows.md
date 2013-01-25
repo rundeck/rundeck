@@ -287,6 +287,7 @@ Job context variables:
 * `job.execid`: ID of the current Execution
 * `job.username`: Username of the user executing the Job
 * `job.project`: Project name
+* `job.loglevel`: Logging level, one of: 'ERROR','WARN','INFO','VERBOSE','DEBUG'
 
 Node context variables:
 

@@ -53,7 +53,7 @@
 <div class="presentation">
     <g:select name="extra.loglevel"
               from="${['1. Debug','2. Verbose','3. Information','4. Warning','5. Error']}"
-              keys="${['DEBUG','VERBOSE','INFO','WARN','ERR']}"
+              keys="${['DEBUG','VERBOSE','INFO','WARN','ERROR']}"
               value="${scheduledExecution.loglevel?scheduledExecution.loglevel:'WARN'}"
         />
 
