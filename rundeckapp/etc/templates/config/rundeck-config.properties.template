@@ -1,4 +1,4 @@
-#loglevel.default is the default log level for jobs: ERR,WARN,INFO,VERBOSE,DEBUG
+#loglevel.default is the default log level for jobs: ERROR,WARN,INFO,VERBOSE,DEBUG
 loglevel.default=INFO
 
 #rss.enabled if set to true enables RSS feeds that are public (non-authenticated)
