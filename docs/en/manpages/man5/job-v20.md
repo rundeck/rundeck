@@ -522,7 +522,7 @@ The [job](#job) logging level. The lower the more profuse the messages.
 * VERBOSE
 * INFO
 * WARN
-* ERR
+* ERROR
 
 ## nodefilters
      
