@@ -26,7 +26,8 @@ eclipse.project.name =  "${project.getParent().eclipse.project.name}:webapp"
 // Properties for downloading, installing and running Grails
 def grailsBaseName = "grails-${grailsVersion}"
 def grailsZipFile = "${grailsBaseName}.zip"
-def grailsZipFileLocation = "${rootProject.buildDir}/tmp/${grailsZipFile}"
+def grailsZipFileBasePath = hasProperty("grailsZipFileBasePath") ? grailsZipFileBasePath : "${rootProject.buildDir}/tmp"
+def grailsZipFileLocation = "${grailsZipFileBasePath}/${grailsZipFile}"
 def grailsInstallLocation = "${rootProject.buildDir}/local"
 def grailsDownloadUrl = "http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/grails-${grailsVersion}.zip"
 def grailsHome = "${grailsInstallLocation}/${grailsBaseName}"
@@ -45,12 +46,14 @@ dependencies{
  */
 task downloadGrails {
 	File grailsArchive = file(grailsZipFileLocation);
-	if (!grailsArchive.isFile()) {
-		outputs.file grailsArchive;
-		doLast {
+	outputs.file grailsArchive;
+	doLast {
+		if (!grailsArchive.isFile()) {
 			logger.warn("Downloading ${grailsBaseName}...");
-			file("${rootProject.buildDir}/tmp/").mkdirs();
+			file("${grailsZipFileBasePath}").mkdirs();
 			ant.get(src: grailsDownloadUrl, dest: grailsZipFileLocation, verbose: true);
+		} else {
+			logger.warn("Using existing Grails zip file: ${grailsZipFileLocation}");
 		}
 	}
 }
