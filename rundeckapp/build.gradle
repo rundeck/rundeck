@@ -26,7 +26,8 @@ eclipse.project.name =  "${project.getParent().eclipse.project.name}:webapp"
 // Properties for downloading, installing and running Grails
 def grailsBaseName = "grails-${grailsVersion}"
 def grailsZipFile = "${grailsBaseName}.zip"
-def grailsZipFileBasePath = hasProperty("grailsZipFileBasePath") ? grailsZipFileBasePath : "${rootProject.buildDir}/tmp"
+def grailsZipFileDefaultBasePath = "${rootProject.buildDir}/tmp"
+def grailsZipFileBasePath = hasProperty("grailsZipFileBasePath") ? grailsZipFileBasePath : grailsZipFileDefaultBasePath
 def grailsZipFileLocation = "${grailsZipFileBasePath}/${grailsZipFile}"
 def grailsInstallLocation = "${rootProject.buildDir}/local"
 def grailsDownloadUrl = "http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/grails-${grailsVersion}.zip"
@@ -37,7 +38,7 @@ def warFileLocation = "${project.projectDir}/target/rundeck-${version}.war"
 /**
  * Depend on core 
  */
-dependencies{
+dependencies {
 	compile project(":core")
 }
 
@@ -48,12 +49,15 @@ task downloadGrails {
 	File grailsArchive = file(grailsZipFileLocation);
 	outputs.file grailsArchive;
 	doLast {
-		if (!grailsArchive.isFile()) {
+		if (grailsZipFileBasePath == grailsZipFileDefaultBasePath) {
 			logger.warn("Downloading ${grailsBaseName}...");
 			file("${grailsZipFileBasePath}").mkdirs();
 			ant.get(src: grailsDownloadUrl, dest: grailsZipFileLocation, verbose: true);
 		} else {
 			logger.warn("Using existing Grails zip file: ${grailsZipFileLocation}");
+			if (!grailsArchive.isFile()) {
+				throw new InvalidUserDataException("Grails zip file does not exist: ${grailsZipFileLocation}");
+			}
 		}
 	}
 }
