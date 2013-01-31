@@ -44,11 +44,14 @@ dependencies{
  * Downloads Grails from the SpringSource archives
  */
 task downloadGrails {
-	outputs.file file(grailsZipFileLocation);
-	doLast {
-		logger.warn("Downloading ${grailsBaseName}...")
-		file("${rootProject.buildDir}/tmp/").mkdirs();
-		ant.get(src: grailsDownloadUrl, dest: grailsZipFileLocation, verbose: true);
+	File grailsArchive = file(grailsZipFileLocation);
+	if (!grailsArchive.isFile()) {
+		outputs.file grailsArchive;
+		doLast {
+			logger.warn("Downloading ${grailsBaseName}...");
+			file("${rootProject.buildDir}/tmp/").mkdirs();
+			ant.get(src: grailsDownloadUrl, dest: grailsZipFileLocation, verbose: true);
+		}
 	}
 }
 
