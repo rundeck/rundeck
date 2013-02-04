@@ -1169,15 +1169,13 @@ Contents of `/tmp/myexec.sh`:
 
     # args are [hostname] [username] -- [command to exec...]
 
-    host=$1
-    shift
-    user=$1
-    shift
-    command="$*"
+    host=$1; shift
+    user=$1; shift
+    printf -v commands '%q ' "$@"
 
     REMOTECMD=ssh
 
-    exec $REMOTECMD $user@$host $command
+    exec "$REMOTECMD" "$user@$host" "$command"
 
 **Example script-copy**:
 
@@ -1197,20 +1195,17 @@ Contents of `/tmp/mycopy.sh`:
 
     # args are [hostname] [username] [destdir] [filepath]
 
-    host=$1
-    shift
-    user=$1
-    shift
-    dir=$1
-    shift
+    host=$1; shift
+    user=$1; shift
+    dir=$1; shift
     file=$1
 
-    name=`basename $file`
+    name=${file##*/}
 
     # copy to node
     CPCMD=scp
 
-    exec $CPCMD $file $user@$host:$dir/$name > /dev/null || exit $?
+    "$CPCMD" "$file" "$user@$host:$dir/$name" >/dev/null || exit
 
     echo "$dir/$name"
 
