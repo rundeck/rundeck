@@ -43,7 +43,7 @@ public class CLIUtils {
      * @param args       arguments to pass to the command
      *
      * @return a String of the command followed by the arguments, where each item which has spaces is appropriately
-     *         quoted.  Pre-quoted items are not changed.
+     *         quoted.  Pre-quoted items are not changed during "unsafe" quoting.
      *
      *         At this point in time, default behavior is "unsafe" quoting.
      */
@@ -59,7 +59,7 @@ public class CLIUtils {
      * @param unsafe     whether to use backwards-compatible, known-insecure quoting
      *
      * @return a String of the command followed by the arguments, where each item which has spaces is appropriately
-     *         quoted.  Pre-quoted items are not changed.
+     *         quoted.  Pre-quoted items are not changed during "unsafe" quoting.
      */
     public static String generateArgline(final String scriptpath, final String[] args, final Boolean unsafe) {
         return generateArgline(scriptpath, args, " ", unsafe);
@@ -74,7 +74,7 @@ public class CLIUtils {
      * @param unsafe     whether to use backwards-compatible, known-insecure quoting
      *
      * @return a String of the command followed by the arguments, where each item which has spaces is appropriately
-     *         quoted.  Pre-quoted items are not changed.
+     *         quoted.  Pre-quoted items are not changed during "unsafe" quoting.
      */
     public static String generateArgline(final String scriptpath, final String[] args, final String separator, final Boolean unsafe) {
         final StringBuffer sb = new StringBuffer();
