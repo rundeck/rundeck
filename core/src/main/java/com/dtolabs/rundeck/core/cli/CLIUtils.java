@@ -44,20 +44,39 @@ public class CLIUtils {
      *
      * @return a String of the command followed by the arguments, where each item which has spaces is appropriately
      *         quoted.  Pre-quoted items are not changed.
+     *
+     *         At this point in time, default behavior is "unsafe" quoting.
      */
     public static String generateArgline(final String scriptpath, final String[] args) {
-        return generateArgline(scriptpath, args, " ");
+        return generateArgline(scriptpath, args, " ", true);
     }
+
     /**
      * Create an appropriately quoted argline to use given the command (script path) and argument strings.
      *
      * @param scriptpath path to command or script
      * @param args       arguments to pass to the command
+     * @param unsafe     whether to use backwards-compatible, known-insecure quoting
      *
      * @return a String of the command followed by the arguments, where each item which has spaces is appropriately
      *         quoted.  Pre-quoted items are not changed.
      */
-    public static String generateArgline(final String scriptpath, final String[] args, final String separator) {
+    public static String generateArgline(final String scriptpath, final String[] args, final Boolean unsafe) {
+        return generateArgline(scriptpath, args, " ", unsafe);
+    }
+
+    /**
+     * Create an appropriately quoted argline to use given the command (script path) and argument strings.
+     *
+     * @param scriptpath path to command or script
+     * @param args       arguments to pass to the command
+     * @param separator  character to use to separate arguments
+     * @param unsafe     whether to use backwards-compatible, known-insecure quoting
+     *
+     * @return a String of the command followed by the arguments, where each item which has spaces is appropriately
+     *         quoted.  Pre-quoted items are not changed.
+     */
+    public static String generateArgline(final String scriptpath, final String[] args, final String separator, final Boolean unsafe) {
         final StringBuffer sb = new StringBuffer();
         final ArrayList<String> list = new ArrayList<String>();
         if (null != scriptpath) {
@@ -73,10 +92,17 @@ public class CLIUtils {
             if (sb.length() > 0) {
                 sb.append(separator);
             }
-            if (arg.indexOf(" ") >= 0 && !(0 == arg.indexOf("'") && (arg.length() - 1) == arg.lastIndexOf("'"))) {
-                sb.append("'").append(arg).append("'");
+            if(unsafe) {
+                /* DEPRECATED SECURITY RISK: Exists for backwards compatibility only. */
+                if (arg.indexOf(" ") >= 0 && !(0 == arg.indexOf("'") && (arg.length() - 1) == arg.lastIndexOf("'"))) {
+                    sb.append("'").append(arg).append("'");
+                } else {
+                    sb.append(arg);
+                }
             } else {
-                sb.append(arg);
+                sb.append("'");
+                sb.append(arg.replace("'", "'\"'\"'"));
+                sb.append("'");
             }
         }
         return sb.toString();
