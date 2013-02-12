@@ -63,7 +63,7 @@
             <tr id="${rkeytok}" class="userapitoken">
                 <td>API Tokens:</td>
                 <td>
-                    <g:set var="tokens" value="${AuthToken.findAllByUser(user)}"/>
+                    <g:set var="tokens" value="${rundeck.AuthToken.findAllByUser(user)}"/>
 
 
                     <table class="apitokentable">
