@@ -1205,7 +1205,7 @@ Contents of `/tmp/mycopy.sh`:
     # copy to node
     CPCMD=scp
 
-    "$CPCMD" "$file" "$user@$host:$dir/$name" >/dev/null || exit
+    "$CPCMD" "$file" "$user@$host:$dir/$name" >/dev/null || exit $?
 
     echo "$dir/$name"
 

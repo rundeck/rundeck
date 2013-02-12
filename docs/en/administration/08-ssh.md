@@ -1,6 +1,6 @@
 % SSH
 
-Rundeck by default uses [SSH] for remote execution.
+Rundeck includes a built-in plugin for [SSH].
 You do _not_ need to have root account access on either the server or
 the remote hosts.  
 

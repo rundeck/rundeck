@@ -14,42 +14,53 @@ Several fundamental concepts underly and drive the development of the
 Rundeck system. If you are a new user, knowing about them will
 help you use and integrate Rundeck into your environment.
 
-### Command dispatching
+### Plugins
 
-Rundeck supports a notion called *command dispatching* wherein a
-user specifies dispatch criteria along with an action (called a
-command) and this specification is used to perform a distributed execution.
+Most of what Rundeck does is via one of its plugins. Plugins exist
+to execute commands on nodes, perform a step in a workflow, gather
+information about the hosts in your network, copy a file to a remote
+server, or talk to a user directory.
 
-The *command dispatcher* is an internal mechanism that looks up
-node resources meeting specified filtering criteria and then
-performs the distributed command execution. The command executes in a data
-context that contains information about the Node resource. Besides
-node filtering, dispatcher options include parameters to control
-parallel execution, ordering and error handling.
+### Node execution
 
-The command dispatcher supports two methods of command execution:
+Rundeck supports a notion called *node execution* wherein a
+user specifies a "command" and a "node filter" to match a list of nodes.
+Rundeck uses the filter to produce a list of matching nodes and
+then dispatches the command to them.
+A *node executor* is a Rundeck plugin that implements how to
+communicate with the Node and how to invoke the command action.
 
-* *Ad-hoc commands*: Execute any shell command or shell script across a
-  set of hosts.  
-* *Jobs*: Encapsulate commands as a named Job and tie them
-  together into multi-step workflows.   
+The command executes in a data context that contains information 
+about the Node resource, job, and job option data. 
 
-Rundeck provides both graphical and command line interfaces to
-interact with the command dispatcher.
 
-You can also use the Web API to interface with all aspects of the command
-dispatcher. (See the [Rundeck API](../api/index.html).)
+### Jobs
+
+*Jobs* encapsulate a sequence of steps, node filter and job options
+to provide a single executable action. Jobs can be given a unique
+ID, a name and group to organize them to run any time 
+or they may be declared and executed just once and forgotten.
+
+Jobs take a number of parameters to control execution, including
+what to do when an error occurs in one of the steps or
+how many threads to execute actions across a list of nodes.
+
+Jobs can be composed out of other jobs. Each job can be a step
+in another job sequence. 
 
 ### Resource model
 
-The command dispatcher works in conjunction with a resource model. A
-*resource model* is a representation of hosts deployed in your
+The *resource model* is a representation of hosts deployed in your
 network. A _Node_  is a resource that is either a physical or virtual instance
 of a network accessible host.
 
-Nodes have a number of basic properties but these properties can be
-extended to include arbitrary named key value pairs.
+Nodes have a number of basic attributes but these attributes can be
+extended to include arbitrary named key/value pairs. Rundeck 
+node filters let you match Nodes based on a pattern like "tags" or
+a node attribute.
 
+A *resource model source* is a Rundeck plugin that produces a set of
+node definitions for a project.
 You can configure Rundeck to retrieve and store resource model data
 from multiple sources, and Rundeck defines several resource model
 document formats to facilitate the transfer of this information. 
@@ -59,7 +70,8 @@ accessible services. A *URL resource model source* is an external service
 accessible via the HTTP GET method that returns data in one of the supported
 resource document formats.
 
-Rundeck currently supports XML and YAML document formats. See [Resource Model Document formats](rundeck-basics.html#resource-model-document-formats)).
+Rundeck currently supports XML and YAML document formats. 
+See [Resource Model Document formats](rundeck-basics.html#resource-model-document-formats)).
 
 Each project can be configured to have multiple sources of Resource Model data. 
 See [Resource Model Sources](plugins.html#resource-model-sources).
@@ -68,7 +80,7 @@ See [Resource Model Sources](plugins.html#resource-model-sources).
 
 Rundeck enforces an *access control policy* that grants certain
 privileges to groups of users.
-Every action executed through the Rundeck command dispatcher must meet
+Every action executed through the Rundeck node executor must meet
 the requirements of an access control policy definition. 
 
 Since Rundeck respects the policy definition, you can define role-based
@@ -89,19 +101,26 @@ Projects are independent from one another, so you can use them to
 organize unrelated systems within a single Rundeck
 installation. This can be useful for managing different infrastructures.
 
+### API
+
+You can also use the Web API to interface with all aspects of node
+and Job execution. (See the [Rundeck API](../api/index.html).)
+
 ## Installing Rundeck
 
 For more detailed install instructions, see the [Administration - Installation](../administration/installation.html) chapter.
 
-The simplest way to install is using the Launcher jar.  Simply download it, and place it into a directory that will be the `RD_BASE` base directory.
+The simplest way to install is using the Launcher jar.  
+Simply download it, and place it into a directory that will be the `RDECK_BASE` base directory.
 
 Start the Rundeck server by running the jar using java:
 
-    java -jar rundeck-launcher-1.4.1.jar
+    java -jar rundeck-launcher-1.5.0.jar
 
 ## Upgrading Rundeck
 
-If you are upgrading Rundeck from a previous version, please read the [Rundeck Upgrade Guide](../upgrading/index.html).
+If you are upgrading Rundeck from a previous version, 
+please read the [Rundeck Upgrade Guide](../upgrading/index.html).
 
 ## First-Time Setup
 
@@ -109,7 +128,8 @@ If you are upgrading Rundeck from a previous version, please read the [Rundeck U
 
 Rundeck supports a number of user directory configurations. By
 default, the installation uses a file based directory, but connectivity to
-LDAP is also available. See [Administration - Authentication](../administration/authentication.html).
+LDAP is also available. 
+See [Administration - Authentication](../administration/authentication.html).
 
 The Rundeck installation process will have defined a set of temporary
 logins useful during the getting started phase.

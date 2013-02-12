@@ -5,18 +5,18 @@
 ## What is this manual about?
 
 Welcome to the Rundeck user manual. This manual was written to help
-administrators quickly become productive with the Rundeck server and tools. 
+you quickly become productive with the Rundeck service and tools. 
 
 ## What is Rundeck?
 
 Rundeck is open source software that helps you automate ad-hoc and routine
 procedures in data center or cloud environments. Rundeck provides a number 
 of features that will alleviate time-consuming grunt work and make it easy for
-you to scale up your scripting efforts.
+you to scale up your automation efforts.
 
 Rundeck allows you to run tasks on any number of nodes from a web-based 
 or command-line interface. Rundeck also includes other features that make 
-it easy to scale up your scripting efforts including: access control, workflow 
+it easy to scale up your automation efforts including: access control, workflow 
 building, scheduling, logging, and integration with external sources for node and 
 option data.
 
@@ -48,24 +48,25 @@ Rundeck is free software and is public under the [Apache Software License].
 
 ### Rundeck features
 
+* Web API
 * distributed command execution
-* pluggable execution system uses SSH by default
+* pluggable execution system (SSH by default)
 * multi-step workflows 
-* job definition and on demand or scheduled runs
+* job execution with on demand or scheduled runs
 * graphical console for command and job execution
 * role-based access control policy with support for LDAP/ActiveDirectory
 * history and auditing logs
 * open integration to external host inventory tools
-* command line interface 
-* Web API
+* command line interface tools
+
 
 ### Rundeck in context
 
 Rundeck is meant to compliment the tools you already use 
-(including frameworks like Puppet, Chef, and Rightscale) and is geared
+(including frameworks like Puppet, Chef, and Jenkins, Cloud, VM) and is geared
 towards helping you automate actions across them. If you currently
 manage your servers by running commands from the terminal or through
-scripts that SSH commands in a loop, Rundeck is a more user friendly
+scripts, Rundeck is a more user friendly
 alternative. Instead of managing node lists in a spreadsheet or wiki
 page and then having to transcribe the list to where you execute commands,
 Rundeck acts as a command and control portal that lets you execute
@@ -76,13 +77,13 @@ cloud provider or from locally hosted virtualization software. The
 node abstraction enabled by the Rundeck command dispatcher 
 helps you cope with managing dynamic environments.
 
-Many automation tasks cross the boundaries of tool sets. For example,
+Many automation tasks cross the tool boundaries. For example,
 deploying software or maintaining an application often involves
 using tools up and down the management tool chain. Rundeck has a simple
 to use interface to create multi-step workflows that might call a
 package manager, configuration management tool, system utilities, or your
-own scripts. Rundeck is really meant to help glue tools together and
-in return enable a push button interface you can hand off to others.
+own scripts. Rundeck is really meant to help automate tasks across
+tools and  in return enable a push button interface you can hand off to others.
 
 ### Rundeck architecture
 
@@ -91,11 +92,11 @@ a central administrative control point. Internally, Rundeck stores job
 definitions and execution history in a relational database. Output
 from command and job executions is saved on disk. 
 
-Rundeck distributed command execution is performed using SSH. 
-SSH connections are made using key-based authentication.
+Rundeck distributed command execution is performed using a pluggable
+node execution layer but defaults to SSH. 
 Rundeck server configuration includes settings to define the outbound
 user allowed by the remote hosts. Remote machines
-are not required to make SSH connections back to the server.
+are not required to make connections back to the server.
 
 ![Rundeck architecture](../figures/fig0001.png)
 
@@ -109,9 +110,10 @@ password. The default Rundeck installation uses a flat file user
 directory containing a set of default logins. Logins are defined in
 terms of a username and password as well as one or more user
 groups. An alternative configuration to the flat file user directory,
-is LDAP (e.g., ActiveDirectory). 
-Users must also be authorized to perform actions like command and job
-execution. This is controlled by an access control facility that reads
+is LDAP (e.g., ActiveDirectory) but Rundeck authentication and authorization
+is customizable via [JAAS](http://en.wikipedia.org/wiki/Java_Authentication_and_Authorization_Service).
+Users must also be authorized to perform actions like define a job
+or execute one. This is controlled by an access control facility that reads
 policy files defined by the Rundeck administrator. Privilege is
 granted if a user's group membership meets the requirements of the policy.
 

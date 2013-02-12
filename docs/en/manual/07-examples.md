@@ -5,8 +5,9 @@
 This chapter presents working examples reflecting a variety of
 solutions you can create with Rundeck. Helping you apply concepts
 and features introduced in earlier chapters is the focus of these examples.
-Rather than make the examples abstract, they are set in the context
-of Acme Anvils, a fictitious organization that manages an online application. 
+To give them some context, the examples are about solutions used
+by Acme Anvils, a fictitious organization that manages an online
+e-commerce application. 
 
 ## Acme Anvils 
 
@@ -50,8 +51,7 @@ activities.
 
 The administrator creates the project using the
 [rd-project](../manpages/man1/rd-project.html) shell tool though this could be done with the
-Rundeck GUI (see ([project setup](rundeck-basics.html#project-setup)). 
-After logging into the Rundeck server, the command is run:
+Rundeck GUI (see ([project setup](rundeck-basics.html#project-setup)):
 
     rd-project -p anvils -a create
 
@@ -71,8 +71,8 @@ as the "www" user while the app and database components run as user
 "anvils".  
 
 With this information in hand, the administrator prepares the project
-resource model using the [resource-v13(5) XML](../manpages/man5/resource-v13.html) or
-[resource-v13(5) YAML](../manpages/man5/resource-yaml-v13.html) document format. The file listing
+resource model using the [resource-v13(5) XML](../manpages/man5/resource-v13.html)
+document format. The file listing
 below contains the node definitions for the five nodes -- 
 anv1, anv2, anv3, anv4, anv5:
 
@@ -182,7 +182,7 @@ of nodes supporting the Anvils application.
 
 Jobs are a convenient method to establish a library of routine
 procedures. By its nature, a saved Job encapsulates a process into a
-logically named interface. Jobs can begin as a single item workflow
+logically named interface. Jobs can begin as a single step workflow
 that calls a small or large shell script but evolve into a multi-step
 workflow. One job can also call another job as a step in its
 workflow. Using this approach one can view each Job as a reusable
@@ -317,7 +317,7 @@ inside the script using a named token. For example, the value for the
 
 Value referenced as an environment variable:
 
-* Bash: $CT\_OPTION\_METHOD
+* Bash: $RD\_OPTION\_METHOD
 
 Value passed in the argument vector to the executed script or command
 via the ``scriptargs`` tag:
@@ -589,4 +589,70 @@ See [Administration - Node Resource Sources - Resource Editor](../administration
 
 ## Option model provider examples
 
-See [Job Options - Option Model Provider](job-options.html#option-model-provider).
+### Yum repoquery option model provider
+
+[Yum] is a great tool for automating [RPM] package management. With Yum,
+administrators can publish packages to the repository and then use the
+yum client tool to automate the installation of packages along with
+their declared dependencies. Yum includes a command
+called [repoquery] useful for
+querying Yum repositories similarly to rpm queries.
+
+Acme Anvils set up their own Yum repository to distribute application release
+packages. The Acme administrator wants to provide an option model to Jobs that
+need to know what packages provide a given capability.
+
+The code listing below shows it is a simple wrapper around the
+repoquery command that formats the results as JSON data.
+
+File listing: yum-repoquery.cgi
+    
+    #!/bin/bash
+    # Requires: repoquery
+    # 
+    # Query Params and their defaults
+    repo=acme-staging
+    label="Anvils Release"
+    package=anvils
+    max=30
+    #
+    echo Content-type: application/json
+    echo ""
+    for VAR in `echo $QUERY_STRING | tr "&" "\t"`
+    do
+      NAME=$(echo $VAR | tr = " " | awk '{print $1}';);
+      VALUE=$(echo $VAR | tr = " " | awk '{ print $2}' | tr + " ");
+      declare $NAME="$VALUE";
+    done
+
+    echo '{'
+    repoquery --enablerepo=$repo --show-dupes \
+      --qf='"${label} %{VERSION}-%{RELEASE}":"%{NAME}-%{VERSION}-%{RELEASE}",' \
+      -q --whatprovides ${package} | sort -t - -k 4,4nr | head -n${max}
+    echo '}'
+
+After deploying this script to the CGI enabled directory on the
+operations web server, it can be tested directly by requesting it using `curl`.
+
+    curl -d "repo=acme&label=Anvils&package=anvils" \
+        --get http://ops.acme.com/cgi/yum-repoquery.cgi
+ 
+The server response should return JSON data resembling the example below:
+
+    [ 
+      {name:"anvils-1.1.rpm", value:"/dist/RPMS/noarch/anvils-1.1.rpm"}, 
+      {name:"anvils-1.2.rpm", value:"/dist/RPMS/noarch/anvils-1.2.rpm"} 
+    ]
+    
+Jobs can request the option model data like so:
+
+     <option name="package" enforcedvalues="true" required="true"
+        valuesUrl="http://ops.acme.com/cgi/yum-repoquery.cgi?package=anvils"/> 
+
+The Rundeck UI will display the package names in the menu and once
+selected, the Job will have the matching package versions.
+ 
+[Yum]: http://yum.baseurl.org/
+[RPM]: http://www.rpm.org/
+[repoquery]: http://linux.die.net/man/1/repoquery
+

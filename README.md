@@ -1,8 +1,9 @@
 RunDeck
 ========
 
-RunDeck is a command dispatcher with a modern web console.
-It lets you easily run commands across a set of nodes.
+RunDeck is an open source automation service with a web console, 
+command line tools and a WebAPI.
+It lets you easily run automation tasks across a set of nodes.
 
 For more information, mailing lists, IRC channel, visit <http://rundeck.org>
 
@@ -66,7 +67,7 @@ There are two install options, a self-contained jar file, or RPM.
 
 To start from the rundeck-launcher.jar, put it in a directory named ~/rundeck, then execute:
 
-    java -jar rundeck-launcher-1.1.0.jar
+    java -jar rundeck-launcher-1.5.0.jar
 
 If you'd like to install via RPM, you can use Yum:
 
@@ -75,7 +76,7 @@ If you'd like to install via RPM, you can use Yum:
 
 OR install directly from RPM:
 
-    rpm -ivh rundeck-1.1.0-xxx.rpm
+    rpm -ivh rundeck-1.5.0-xxx.rpm
 
 Once the RPM is installed, execute:
 
@@ -88,7 +89,7 @@ The server should launch on port 4440, with default username/password of `admin/
 Requirements
 =======
 
-Java 5 (openjdk, sun)
+Java 6 (openjdk, sun)
 
 [Pandoc](http://johnmacfarlane.net/pandoc/) (documentation build only)
 
@@ -110,7 +111,7 @@ Do you have changes to contribute? Please see the [Development](https://github.c
 License
 ======
 
-Copyright 2011 DTO Solutions
+Copyright 2013 DTO Solutions
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

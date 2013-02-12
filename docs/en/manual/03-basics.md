@@ -5,22 +5,22 @@
 This chapter covers the basics for using Rundeck. The chapter begins
 by describing the Rundeck user interfaces, both its graphical and
 command line. From there it will show you how to set up a project and
-learn about command execution. You will learn more about using the
-command dispatcher to control execution and finally, how to find and
+learn about command execution. You will learn more about 
+how to control execution and finally, how to find and
 use history.
 
 ## Rundeck Interfaces 
 
 Rundeck provides two primary user interfaces:
 
-* An HTML-based graphical console 
-* A suite of shell tools
+* An HTML-based graphical console.
+* A suite of shell tools.
 
 Both interfaces allow you to view resources, dispatch commands, as
 well as, store and run jobs.
 
 In addition Rundeck provides a Web API which can be used to interact with
-the server programattically. See [Rundeck API](../api/index.html).
+the server programatically. See [Rundeck API](../api/index.html).
 
 ### Graphical Console 
 
@@ -32,7 +32,8 @@ The default port for the web interface is `4440`, so try this URL:
 
 <http://localhost:4440>
 
-You will be shown the Login page.  The default username and password are `admin`/`admin`, so enter those in the fields.
+You will be shown the Login page.  
+The default username and password are `admin`/`admin`.
 
 #### Navigation
 
@@ -70,14 +71,16 @@ Project menu
 
 :    The top navigation bar contains a menu to select the
      desired project. If only one project exists, the menu will
-     automatically be defaulted.
+     automatically be defaulted. You can create new projects from
+     this menu, too.
      
 Admin
 
 :    If your login belongs to the "admin" group and therefore granted
      "admin" privileges, a wrench icon will be displayed next to your login
      name. This page allows the admin to view group memberships for all
-     users, as well as, edit their profile data.
+     users, as well as, edit their profile data. Project configuration includes
+     adding plugins and exporting/importing project archives.
 
 User profile
 
@@ -89,15 +92,17 @@ Logout
 
 Help
 
-:    Opens a page to the online help system.
+:    Opens a page to this user manual.
 
 
 #### Now running
 
 The "Now running" section appears at the top of the Run and Jobs pages
 and provides a view into the execution queue.
-Any currently executing ad hoc command or Job will be listed
-and include information like the name of the job, when it started,
+Any currently executing command executed from the Run page
+or any Job executed in the Jobs page will be listed.
+The "Now running" section will 
+include information like the name of the job, when it started,
 who ran it, and a link to the execution output.
 
 ![Now running](../figures/fig0215.png)
@@ -113,17 +118,17 @@ command tools are an alternative to functions accessible in the
 graphical console.
 
 [dispatch]
-  ~ Execute ad hoc commands and scripts
+  ~ Execute ad hoc commands and scripts.
 [rd-queue]
-  ~ Query the dispatcher for currently running Jobs and possibly kill them  
+  ~ Query Rundeck for currently running Jobs and possibly kill them.
 [rd-jobs]
-  ~ List defined jobs as well as load them from text file definitions
+  ~ List defined jobs as well as load them from text file definitions.
 [run]
-  ~ Invoke the execution of a stored Job
+  ~ Invoke the execution of a stored Job.
 [rd-project]
-  ~ Setup a new Rundeck project
+  ~ Setup a new Rundeck project.
 [rd-setup]
-  ~ (Re-)configure an instance of Rundeck   
+  ~ (Re-)configure an instance of Rundeck.
   
 Consult the online manual pages for options and usage information.
 
@@ -150,7 +155,8 @@ create a new project.
 ![Create project prompt](../figures/fig0203-a.png)
 
 To start with, the only field you need to enter is the Project Name. You can
-change the other values later from the [GUI Admin Page](../administration/configuration.html#gui-admin-page).
+change the other values later from the 
+[GUI Admin Page](../administration/configuration.html#gui-admin-page).
 
 After entering your project name, Rundeck initializes it and returns
 you to the "Run" page.
@@ -185,7 +191,9 @@ distinguished with the word "server" in red text.
 
 ### Resource model
 
-The Resource Model is the set of available Nodes that Rundeck can dispatch commands to, and their associated metadata. Each Rundeck Project has its own Resource Model.
+The Resource Model is the set of available Nodes that
+Rundeck can dispatch commands to, and their associated metadata. 
+Each Rundeck Project has its own Resource Model.
 
 The initial resource model will contain
 information just about the Rundeck server host and is useful just for
@@ -210,20 +218,21 @@ a verbose listing that includes more detail:
         tags: ''
 
 Node resources have standard properties, such as "hostname" but these
-can be extended via attributes. One of the more useful properties
-is the "tags" property. A *tag* is a text label that you give to the
+can be extended via attributes. One of the more useful attributes
+is "tags". A *tag* is a text label that you give to the
 Node, perhaps denoting a classification, a role the node plays in the
-environment, or group membership. Multiple tags can be defined for
+environment, or group membership. A list of tags can be defined for
 a given node. 
 
 The output above shows the "strongbad" node currently has an empty
 tags property: `tags: ''`. 
 
 It is important to start thinking about node tagging for the nodes you manage
-because you will use them later when specifying filtering
-options to drive distributed command dispatch.
+because you will use them later when specifying node filtering
+options.
 
-Each Project has a configuration file called [project.properties](../administration/configuration.html#project.properties),
+Each Project has a configuration file called 
+[project.properties](../administration/configuration.html#project.properties),
 located at this path:
 `$RDECK_BASE/projects/`_project_`/etc/project.properties`.
 
@@ -234,13 +243,14 @@ storing resource model data:
 * `project.resources.url`: URL to an external resource model source (optional)
 
 In addition, multiple pluggable "Resource Model Sources" can be configured for a project
-to retrieve additional Resource Model content from other sources. See [Resource Model Sources](plugins.html#resource-model-sources).
+to retrieve additional Resource Model content from other sources. 
+See [Resource Model Sources](plugins.html#resource-model-sources).
 
 You can configure Rundeck to retrieve and store resource model data
 from any source, so long as it can produce one of the Rundeck resource model
 document formats. (See 
-[Resource Model Document formats](rundeck-basics.html#resource-model-document-formats).) Set the 
-`project.resource.url` to the URL resource model source of your choice.
+[Resource Model Document formats](rundeck-basics.html#resource-model-document-formats).) 
+Set the `project.resource.url` to the URL resource model source of your choice.
 
 Here's the XML document stored for the "examples" project that corresponds
 to the output printed by the `dispatch -v` shown earlier:
@@ -255,9 +265,9 @@ to the output printed by the `dispatch -v` shown earlier:
     </project>
 
 You'll notice the root node is called `project` and there is a single
-node descriptor for "strongbad". The `node` tag has a number of
+node descriptor for "strongbad". The `node` element has a number of
 required and optional attributes. Additional node descriptors can be
-added by defining new `node` elements inside the `project` tag. 
+added by defining new `node` elements inside the `project` root element. 
 
 The strongbad host does not have any tags defined for it. One or
 more tags can be defined. Use comma for the delimiter (e.g, `tags="tag1,tag2"`).
@@ -282,11 +292,12 @@ considered the authority of knowledge about the nodes
 deployed in your network. Therefore, it is best to create an interface
 to the authoritative tool and expose it as Rundeck URL resource model source. This
 can be done as a simple CGI script that does a transformation from
-the tool's format to the one Rundeck understands.
+the tool's format to the one Rundeck understands. You can also
+develop a plugin to interface with the external source.
 
 Of course, a rudimentary alternative is to maintain this information
 as an XML document, storing it in a source repository that is
-periodically exported to Rundeck. This method could be practical if
+periodically exported to Rundeck. This method would be practical if
 your host infrastructure infrequently changes.
 
 Check the Rundeck web site for URL resource model sources. If you are
@@ -309,7 +320,8 @@ Each project can have multiple sources for Resource model information, and
 you can use or write plugins to enable new sources for entries in the Resource model.
 
 You can configure the sources via the GUI from the Admin page, see
-[GUI Admin Page](../administration/configuration.html#gui-admin-page), or by modifying the project configuration file,
+[GUI Admin Page](../administration/configuration.html#gui-admin-page), 
+or by modifying the project configuration file,
 see [Resource Model Sources](plugins.html#resource-model-sources).
 
 ## Command Execution
@@ -317,18 +329,18 @@ see [Resource Model Sources](plugins.html#resource-model-sources).
 Rundeck supports two modes of execution: *ad-hoc commands* and *Job*.
 
 An *ad-hoc command* is any system command or shell script executed
-via the command dispatcher. Ad hoc commands can be executed via a
+via a node executor. Ad hoc commands can be executed via a
 command line utility named `dispatch` or run from
 the graphical console.
 
-A *Job* specifies a sequence of one or more command invocations that
+A *Job* specifies a sequence of one or more steps that
 can be run once (i.e, is temporary) or named and stored for later use.
-Stored jobs can be started via the shell tool, `run`, and
-their progress checked with `rd-queue`.
 
-### Dispatcher options
+See [Jobs](jobs.html) to learn how to execute Rundeck jobs.
 
-Dispatcher execution can be controlled by various types of options.
+### Execution options
+
+Execution can be controlled by various types of options.
 
 Execution control
 
@@ -414,8 +426,8 @@ case an error occurs :
 
     dispatch -p examples -I tags=web -K -C 10 -- sudo apachectl restart 
 
-Consult the [rd-options(1)](../manpages/man1/rd-options.html) manual page for the complete reference on
-available dispatcher options.
+Consult the [rd-options(1)](../manpages/man1/rd-options.html) 
+manual page for the complete reference on available dispatch options.
   
 ### Ad-hoc commands 
 
@@ -443,7 +455,7 @@ directly, and not queue it. Use the ``--noqueue`` option to execute
 and follow the output from the console.
 
     $ dispatch -I os-family=unix  --noqueue -- uptime
-    [ctier@centos54 dispatch][INFO]  10:34:54 up 46 min,  2 users,  load average: 0.00, 0.00, 0.00
+    [demo@centos54 dispatch][INFO]  10:34:54 up 46 min,  2 users,  load average: 0.00, 0.00, 0.00
     [alexh@strongbad dispatch][INFO] 10:34  up 2 days, 18:51, 2 users, load averages: 0.55 0.80 0.75
     [examples@ubuntu dispatch][INFO]  10:35:01 up 2 days, 18:40,  2 users,  load average: 0.00, 0.01, 0.00
 
@@ -460,7 +472,7 @@ Execute the Unix `whomi` command to see what user ID is
 used by that Node to run dispatched commands:
 
     $ dispatch -I os-family=unix --noqueue -- whoami
-    [ctier@centos54 dispatch][INFO] ctier
+    [demo@centos54 dispatch][INFO] demo
     [alexh@strongbad dispatch][INFO] alexh
     [examples@ubuntu dispatch][INFO] examples
 
@@ -468,7 +480,9 @@ You can see that the resource model defines each Node to use a
 different login to execute `dispatch` commands.  That
 feature can be handy when Nodes serve different roles and therefore,
 use different logins to manage processes. See the
-`username` attribute in [resource-v13(5) XML](../manpages/man5/resource-v13.html) or [resource-v13(5) YAML](../manpages/man5/resource-yaml-v13.html) manual page.
+`username` attribute in 
+[resource-v13(5) XML](../manpages/man5/resource-v13.html) or 
+[resource-v13(5) YAML](../manpages/man5/resource-yaml-v13.html) manual page.
 
 The `dispatch` command can also execute shell
 scripts. Here's a trivial script that generates a bit of system info:
@@ -615,7 +629,7 @@ dispatch to fail unless the keepgoing flag is set.
     $ dispatch -I os-family=unix -s /tmp/listening.sh --noqueue
     [alexh@strongbad dispatch][INFO] Connecting to centos54:22
     [alexh@strongbad dispatch][INFO] done.
-    [ctier@centos54 dispatch][INFO] not listening on 4440
+    [demo@centos54 dispatch][INFO] not listening on 4440
     error: Remote command failed with exit status 1
 
 The script failed on centos54 and caused dispatch to error out immediately.
@@ -627,8 +641,8 @@ failed:
     $ dispatch  --noqueue -K -I tags=web -s /tmp/listening.sh
     [alexh@strongbad dispatch][INFO] Connecting to centos54:22
     [alexh@strongbad dispatch][INFO] done.
-    [ctier@centos54 dispatch][INFO] not listening on 4440
-    [ctier@centos54 dispatch][ERROR] Failed execution for node: centos54: Remote command failed with exit status 1
+    [demo@centos54 dispatch][INFO] not listening on 4440
+    [demo@centos54 dispatch][ERROR] Failed execution for node: centos54: Remote command failed with exit status 1
     [alexh@strongbad dispatch][INFO] listening port=4440, host=strongbad
     [alexh@strongbad dispatch][INFO] Connecting to 172.16.167.211:22
     [alexh@strongbad dispatch][INFO] done.
@@ -745,15 +759,15 @@ Two plugin files are included with the default Rundeck installation for your use
 
 ## History
 
-History for queued ad-hoc commands, as well as, temporary and
-saved Job executions  is stored by the Rundeck server. History data
+History for queued ad-hoc commands, as well as, 
+Job executions  is stored by the Rundeck server. History data
 can be filtered and viewed inside the "History" page.
 
 ![History page](../figures/fig0211.png)
 
 ### Filtering event history
 
-By default, the History page will list history for the last day's
+By default, the History page will list history for the 8
 executions. The page contains a filter control that can be used to
 expand or limit the executions.
 
@@ -824,4 +838,4 @@ At this point, you can do basic Rundeck operations - setup a project,
 define and query the project resource model, execute ad-hoc
 commands, run and save Jobs and view history.
 
-Next, we'll cover one of Rundeck's core features: Jobs.
+Next, we'll cover Rundeck's core feature: Jobs.

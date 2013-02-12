@@ -16,10 +16,10 @@ Here are some issues that might arise over time:
 * Routine procedures need to be encapsulated and become the basis for
   other routine procedures.  
 
-Jobs provide a means to encapsulate a procedure in a logically
-named Job. A *Job* is a configuration representing the steps in a
-procedure, a Node filter specification, and dispatcher execution
-control parameters. Jobs access is governed by an access control
+Jobs provide a means to encapsulate a procedure.
+A *Job* is a configuration representing the steps in a
+procedure, a Node filter specification, and execution
+control parameters. Job access is governed by an access control
 policy that describes how users are granted authorization to use Jobs.
 
 Rundeck lets you organize and execute Jobs,  and observe the output as

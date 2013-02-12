@@ -3,9 +3,7 @@
 % November 20, 2010
 
 The Job's most basic feature is its ability to execute one or more
-commands across a set of nodes. This sequence of commands is called a
-_workflow_, and each step in the workflow is defined as an invocation
-to a command. 
+steps. This sequence of steps is called a _workflow_.
 
 The steps of the Job workflow are displayed when viewing a Job's
 detail from a Job listing or within the Job editor form.
@@ -41,8 +39,8 @@ and *Strategy*.
 
 *Keepgoing*: This manages what to do if a step incurs and error:
 
-*   No: Fail immediately (default)
-*   Yes: Continue to next step
+*   No: Fail immediately (default).
+*   Yes: Continue to next step.
 
 The default is to fail immediately but depending on the procedure at
 hand you can choose to have the execution continue.
@@ -104,16 +102,15 @@ sequence unchanged.
 ![Workflow step types](../figures/fig0403.png)
 
 New steps are always added to the end of the sequence. See
-[Reordering steps](job-workflows.html#reordering-steps) for directions on modifying the
-step order.
+[Reordering steps](job-workflows.html#reordering-steps) 
+for directions on modifying the step order.
 
 The next several sections describe the specification of each kind of
-command step.
+workflow step.
 
 ### Command step
 
-Use the command step to call system commands. This is the default type
-of workflow step when creating a Job. Enter any command string you
+Use the command step to call system commands. Enter any command string you
 would type at the terminal on the remote hosts.
 
 ![Command step type](../figures/fig0404.png)
@@ -180,7 +177,9 @@ any input options for the current job.  Format:
 
     -optname <value> -optname <value> ...
 
-The format for specifying options is exactly the same as you would pass to the `run` commandline tool, and you can substitute values of input options to the current job. For example:
+The format for specifying options is exactly the same as you would pass 
+to the `run` commandline tool, and you can substitute values of input 
+options to the current job. For example:
 
     -opt1 something -opt2 ${option.opt2}
 

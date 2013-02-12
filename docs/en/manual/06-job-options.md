@@ -2,19 +2,6 @@
 % Alex Honor; Greg Schueler
 % November 20, 2010
 
-Any command or script can be wrapped as a Job. Creating a Job for
-every use case will proliferate a large number of Jobs differing only
-by how the Job calls the scripts. These
-differences are often environment or application version
-related. Other times only the person running the Job can provide the
-needed information to run the Job correctly. 
-
-Making your scripts and commands data driven, will also make them
-more generic and therefore, reusable in different contexts. Rather than
-maintain variations of the same basic process, letting Jobs be driven
-by a model of options from externally provided data will lead to
-better abstraction and encapsulation of your process.
-
 Rundeck Jobs can be configured to prompt a user for input by defining
 one or more named *options*. An *option* models a named parameter that
 can be required or optional and include a range of choices that will
@@ -61,75 +48,9 @@ Option Input Types define how the option is presented in the GUI, and how it is 
 Input types:
 
 * "Plain" - a normal option which is shown in clear text
-* "Secure" - a secure option which is obscured at user input time, and the value of which is not stored in the database
-*  "Secure Remote Authentication" - a secure option which is used only for remote authentication and is not exposed in scripts or commands.
+* "Secure" - a secure option which is obscured at user input time, and the value of which is not stored in the database. See [secure-options](#secure-options).
+*  "Secure Remote Authentication" - a secure option which is used only for remote authentication and is not exposed in scripts or commands. See [secure-remote-authentication-options](#secure-remote-authentication-options).
 
-## Secure Options
-
-Options can be marked as Secure, to show a password prompt in the GUI, instead of a normal text field or drop down menu.  Secure option values are not stored with the Execution as are the other option values.
-
-There are two types of Secure options:
-
-* Secure - these option values are exposed in scripts and commands.
-* Secure Remote Authentication - these option values *are not* exposed in scripts and commands, and are only used by Node Executors to authenticate to Nodes and execute commands.
-
-Secure Options do not support Multi-valued input. 
-
-Secure Options cannot be used as authentication input to Node Executors, you must use a Secure Remote Authentication option described below.
-
-**Important Note**
-
-"Secure" option values are not stored in the Rundeck database when the Job is executed, but the value that is entered 
-is exposed to use in scripts and commands.  Make sure you acknowledge these security implications before using them. Secure options are available for use in scripts and command like any other option value: 
-
-* as plaintext arguments using `${option.name}`
-    * Using the option value as an argument to a command could expose the plaintext value in the system process table
-* as plaintext environment variables in remote and local script execution as `$RD_OPTION_NAME`
-    * Local and possibly remote scripts may be passed this value into their environment
-* as plaintext tokens expanded in remote scripts as `@option.name@`.
-    * Inline Script workflow steps that contain a token expansion will be expanded into a temporary file, and the temp file will contain the plaintext option value.
-
-Note: that when passed as arguments to Job References, they can only be passed as the value of another Secure option.  See [Using Secure Options with Job References](#using-secure-options-with-job-references).
-
-### Secure Remote Authentication Options
-
-The built-in [SSH Provider](plugins.html#ssh-provider) for node execution allows using passwords for SSH and/or Sudo authentication mechanisms, and the passwords are supplied by Secure Remote Authentication Options defined in a Job.
-
-Secure Remote Authentication Options have some limitations compared to Plain and Secure options:
-
-* The values entered by the user are not available for normal script and command option value expansion. This means that they can only be used for the purposes of the Remote Authentication.
-
-### Using Secure Options with Job References
-
-When you [define a Job Reference step in a workflow](job-workflows.html#job-reference-step), you can specify the arguments that are passed to it. You can pass Secure Option values and Secure Remote Authentication Option values from a top-level job to a Job Reference, but option values *cannot be passed into another option of a different type*. So a parent job can only pass option values to the Job reference if the option type is the same between the jobs.
-
-This constraint is to maintain the security design of these options:
-
-1. Secure options should not to be stored in the Rundeck execution database, so must not be used as plain option values.
-2. Secure Remote Authentication options should not be used in scripts/commands, so must not be used as Secure or Plain option values.
-
-As an example, here is are two jobs, Job A and Job B, which define some options:
-
-* Job A
-    * Option "plain1" - Plain
-    * Option "secure1" - Secure
-    * Option "auth1" - Secure remote authentication
-* Job B
-    * Option "plain2" - Plain
-    * Option "secure2" - Secure
-    * Option "auth2" - Secure remote authentication
-
-If Job A defines a Job reference to call Job B, then the only valid mapping is shown below:
-
-* plain1 -> plain2
-* secure1 -> secure2
-* auth1 -> auth2
-
-So the arguments for the Job Reference might look like this:
-
-    -plain2 ${option.plain1} -secure2 ${option.secure1} -auth2 ${option.auth1}
-
-Note: If you define arguments in the wrong manner, then the Secure and Secure Remote Authentication options will not be set when the Job reference is called.  Plain options will behave the way they do in Command or Script arguments, and be left as-is as uninterpreted property references.
 
 ## Options editor
 
@@ -219,21 +140,6 @@ Once satisfied with the option definition, press the "Save" button to
 add it to the Job definition. Pressing the "Cancel" button will
 dismiss the changes and close the form.
 
-## Remote option values
-
-A model of option values can be retrieved from an external source.
-When the `valuesUrl` is specified for an Option, then the model of
-allowed values is retrieved from the specified URL. 
-
-This is useful in a couple of scenarios when Rundeck is used to 
-coordinate process that depend on other systems:
-
-* Deploying packages or artifacts produced by a build or CI server, e.g. Hudson.
-    * A list of recent Hudson build artifacts can be imported as Options data, so that a User can pick an appropriate package name to deploy from a list.
-* Selecting from a set of available environments, defined in a CMDB
-* Any situation in which input variables for your Jobs must be selected from some set of values produced by a different system.
-
-See [Chapter 9 - Option Model Provider](job-options.html#option-model-provider).
 
 ## Script usage
 
@@ -292,7 +198,7 @@ Environment variable:
      perhaps set a default value.
      To test its existence you might use: 
 
-         test -s  $RD_OPTION_NAME
+         test -s "$RD_OPTION_NAME"
 
      You might also use a Bash feature that tests and defaults it to a
      value:
@@ -336,6 +242,87 @@ Inside an XML definition, insert them as an `arg` element:
 Consult the [run(1)](../manpages/man1/run.html) and [job-v20(5)](../manpages/man5/job-v20.html) manual pages for additional
 information.
 
+## Secure Options
+
+Options can be marked as Secure, to show a password prompt in the GUI, instead of a normal text field or drop down menu.  Secure option values are not stored with the Execution as are the other option values.
+
+There are two types of Secure options:
+
+* Secure - these option values are exposed in scripts and commands.
+* Secure Remote Authentication - these option values *are not* exposed in scripts and commands, and are only used by Node Executors to authenticate to Nodes and execute commands.
+
+Secure Options do not support Multi-valued input. 
+
+Secure Options cannot be used as authentication input to Node Executors, you must use a Secure Remote Authentication option described below.
+
+**Important Note**
+
+"Secure" option values are not stored in the Rundeck database when the Job is executed, but the value that is entered 
+is exposed to use in scripts and commands.  Make sure you acknowledge these security implications before using them. Secure options are available for use in scripts and command like any other option value: 
+
+* as plaintext arguments using `${option.name}`
+    * Using the option value as an argument to a command could expose the plaintext value in the system process table
+* as plaintext environment variables in remote and local script execution as `$RD_OPTION_NAME`
+    * Local and possibly remote scripts may be passed this value into their environment
+* as plaintext tokens expanded in remote scripts as `@option.name@`.
+    * Inline Script workflow steps that contain a token expansion will be expanded into a temporary file, and the temp file will contain the plaintext option value.
+
+Note: that when passed as arguments to Job References, they can only be passed as the value of another Secure option.  See [Using Secure Options with Job References](#using-secure-options-with-job-references).
+
+### Secure Remote Authentication Options
+
+The built-in [SSH Provider](plugins.html#ssh-provider) for node execution allows using passwords for SSH and/or Sudo authentication mechanisms, and the passwords are supplied by Secure Remote Authentication Options defined in a Job.
+
+Secure Remote Authentication Options have some limitations compared to Plain and Secure options:
+
+* The values entered by the user are not available for normal script and command option value expansion. This means that they can only be used for the purposes of the Remote Authentication.
+
+### Using Secure Options with Job References
+
+When you [define a Job Reference step in a workflow](job-workflows.html#job-reference-step), you can specify the arguments that are passed to it. You can pass Secure Option values and Secure Remote Authentication Option values from a top-level job to a Job Reference, but option values *cannot be passed into another option of a different type*. So a parent job can only pass option values to the Job reference if the option type is the same between the jobs.
+
+This constraint is to maintain the security design of these options:
+
+1. Secure options should not to be stored in the Rundeck execution database, so must not be used as plain option values.
+2. Secure Remote Authentication options should not be used in scripts/commands, so must not be used as Secure or Plain option values.
+
+As an example, here is are two jobs, Job A and Job B, which define some options:
+
+* Job A
+    * Option "plain1" - Plain
+    * Option "secure1" - Secure
+    * Option "auth1" - Secure remote authentication
+* Job B
+    * Option "plain2" - Plain
+    * Option "secure2" - Secure
+    * Option "auth2" - Secure remote authentication
+
+If Job A defines a Job reference to call Job B, then the only valid mapping is shown below:
+
+* plain1 -> plain2
+* secure1 -> secure2
+* auth1 -> auth2
+
+So the arguments for the Job Reference might look like this:
+
+    -plain2 ${option.plain1} -secure2 ${option.secure1} -auth2 ${option.auth1}
+
+Note: If you define arguments in the wrong manner, then the Secure and Secure Remote Authentication options will not be set when the Job reference is called.  Plain options will behave the way they do in Command or Script arguments, and be left as-is as uninterpreted property references.
+
+## Remote option values
+
+A model of option values can be retrieved from an external source
+called an *option model provider*.
+When the `valuesUrl` is specified for an Option, then the model of
+allowed values is retrieved from the specified URL. 
+
+This is useful in a couple of scenarios when Rundeck is used to 
+coordinate process that depend on other systems:
+
+* Deploying packages or artifacts produced by a build or CI server, e.g. Jenkins.
+    * A list of recent Jenkins build artifacts can be imported as Options data, so that a User can pick an appropriate package name to deploy from a list.
+* Selecting from a set of available environments, defined in a CMDB
+* Any situation in which input variables for your Jobs must be selected from some set of values produced by a different system.
 
 ## Option model provider
 
@@ -499,155 +486,13 @@ In this case, the option will be allowed to use a textfield to set the value.
 
 ### Implementations and Examples ###
 
-The following two sections describe examples using simple CGI scripts
-that act as option model providers.
- 
-#### Hudson artifacts option provider 
+#### Jenkins artifacts option provider 
 
-An end-to-end release process often requires obtaining build artifacts
-and publishing them to a central repository for later distribution.
-A continuous integration server like [Hudson] makes identifying the
-build artifacts a simple Job configuration step. The [Hudson API]
-provides a network interface to obtain the list of artifacts from
-successful builds via a simple HTTP GET request.
-
-Acme builds its artifacts as RPMs and has configured their build job
-to identify them. The operations team wants to create Jobs that would
-allow them to choose a version of these artifacts generated by the
-automated build.
-
-A simple CGI script that requests the information from Hudson and then
-generates a [JSON] document is sufficient to accomplish this. The CGI
-script can use query parameters to specify the Hudson server, hudson job
-and artifact path. Job writers can then specify the parameterized URL
-to the CGI script to obtain the artifacts list as an options model
-and present the results as a menu to Job users.
-
-The code listing below shows the the CGI script essentially does a
-call to the [curl] command to retrieve the XML document
-containing the artifacts information and then parses it using
-[xmlstarlet].
- 
-File listing: hudson-artifacts.cgi
- 
-    #!/bin/bash
-    # Requires: curl, xmlstarlet
-    # Returns a JSON list of key/val pairs
-    #
-    # Query Params and their defaults
-    hudsonUrl=https://build.acme.com:4440/job
-    hudsonJob=ApplicationBuild
-    artifactPath=/artifact/bin/dist/RPMS/noarch/
-    
-    echo Content-type: application/json
-    echo ""
-    for VAR in `echo $QUERY_STRING | tr "&" "\t"`
-    do
-      NAME=$(echo $VAR | tr = " " | awk '{print $1}';);
-      VALUE=$(echo $VAR | tr = " " | awk '{ print $2}' | tr + " ");
-      declare $NAME="$VALUE";
-    done
-
-    curl -s -L -k $hudsonUrl/${hudsonJob}/api/xml?depth=1 | \
-      xmlstarlet sel -t -o "{" \
-        -t -m "//build[result/text()='SUCCESS']" --sort A:T:L number  \
-        -m . -o "&quot;Release" -m changeSet/item -o ' ' -v revision -b \
-        -m . -o ", Hudson Build " -v number -o "&quot;:" \
-        -m 'artifact[position() = 1]' -o "&quot;" -v '../number' -o $artifactPath -o "{" -b \
-        -m 'artifact[position() != last()]' -v 'fileName' -o "," -b \
-        -m 'artifact[position() = last()]' -v 'fileName' -o "}&quot;," \
-        -t -o "}"
-
-After deploying this script to a CGI enabled directory on the
-operations web server, it can be tested directly by requesting it using `curl`.
-
-    curl -d "hudsonJob=anvils&artifactPath=/artifact/bin/dist/RPMS/noarch/" \
-        --get http://opts.acme.com/cgi/hudson-artifacts.cgi
-
-The server response should return JSON data resembling the example below:
-
-    [ 
-      {name:"anvils-1.1.rpm", value:"/artifact/bin/dist/RPMS/noarch/anvils-1.1.rpm"}, 
-      {name:"anvils-1.2.rpm", value:"/artifact/bin/dist/RPMS/noarch/anvils-1.2.rpm"} 
-    ]	
-
-Now in place, jobs can request this option data like so:
-
-     <option name="package" enforcedvalues="true" required="true"
-        valuesUrl="http://ops.acme.com/cgi/hudson-artifacts.cgi?hudsonJob=anvils"/> 
-
-The Rundeck UI will display the package names in the menu and once
-selected the Job will have the path to the build artifact on the
-Hudson server.
-
-[Hudson]: http://hudson-ci.org/
-[Hudson API]: http://wiki.hudson-ci.org/display/HUDSON/Remote+access+API
-[JSON]: http://www.json.org/
+* See the [Jenkins Rundeck plugin](https://wiki.jenkins-ci.org/display/JENKINS/RunDeck+Plugin).
 
 #### Yum repoquery option model provider
 
-[Yum] is a great tool for automating [RPM] package management. With Yum,
-administrators can publish packages to the repository and then use the
-yum client tool to automate the installation of packages along with
-their declared dependencies. Yum includes a command
-called [repoquery] useful for
-querying Yum repositories similarly to rpm queries.
-
-Acme set up their own Yum repository to distribute application release
-packages. The Acme administrator wants to provide an option model to Jobs that
-need to know what packages provide a given capability.
-
-The code listing below shows it is a simple wrapper around the
-repoquery command that formats the results as JSON data.
-
-File listing: yum-repoquery.cgi
-    
-    #!/bin/bash
-    # Requires: repoquery
-    # 
-    # Query Params and their defaults
-    repo=acme-staging
-    label="Anvils Release"
-    package=anvils
-    max=30
-    #
-    echo Content-type: application/json
-    echo ""
-    for VAR in `echo $QUERY_STRING | tr "&" "\t"`
-    do
-      NAME=$(echo $VAR | tr = " " | awk '{print $1}';);
-      VALUE=$(echo $VAR | tr = " " | awk '{ print $2}' | tr + " ");
-      declare $NAME="$VALUE";
-    done
-
-    echo '{'
-    repoquery --enablerepo=$repo --show-dupes \
-      --qf='"${label} %{VERSION}-%{RELEASE}":"%{NAME}-%{VERSION}-%{RELEASE}",' \
-      -q --whatprovides ${package} | sort -t - -k 4,4nr | head -n${max}
-    echo '}'
-
-After deploying this script to the CGI enabled directory on the
-operations web server, it can be tested directly by requesting it using `curl`.
-
-    curl -d "repo=acme&label=Anvils&package=anvils" \
-        --get http://ops.acme.com/cgi/yum-repoquery.cgi
- 
-The server response should return JSON data resembling the example below:
-
-    TODO: include JSON example
- 
-Now in place, jobs can request the option model data like so:
-
-     <option name="package" enforcedvalues="true" required="true"
-        valuesUrl="http://ops.acme.com/cgi/yum-repoquery.cgi?package=anvils"/> 
-
-The Rundeck UI will display the package names in the menu and once
-selected, the Job will have the matching package versions.
- 
-[Yum]: http://yum.baseurl.org/
-[RPM]: http://www.rpm.org/
-[repoquery]: http://linux.die.net/man/1/repoquery
-
+* [Rundeck by example: Yum option provider](rundeck-by-example.html#yum-repoquery-option-model-provider)
 
 ## Summary
 

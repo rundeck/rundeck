@@ -121,14 +121,14 @@ Use the launcher as an alternative to a system package:
 1. Copy the launcher jar to the installation directory.
 
     ~~~~~~~
-    cp rundeck-launcher-1.1.0.jar $RDECK_BASE
+    cp rundeck-launcher-1.5.0.jar $RDECK_BASE
     ~~~~~~~
 
 1. Change directory and run the jar.
 
     ~~~~~~~
     cd $RDECK_BASE    
-    java -jar rundeck-launcher-1.1.0.jar
+    java -jar rundeck-launcher-1.5.0.jar
     ~~~~~~~
 
 1. Wait for the Started message.
@@ -158,7 +158,7 @@ rundeck launcher process.
 
 The launcher jar can take a number of options to specify how the server should start. If you execute with a "-h" you will see the usage information:
 
-    java -jar rundeck-launcher-1.3.0.jar -h
+    java -jar rundeck-launcher-1.5.0.jar -h
 
     usage: java [JAVA_OPTIONS] -jar rundeck-launcher.jar  [-c PATH] [-d]
            [--installonly] [-s PATH] [-b PATH] [-p PATH] [-h] [-x PATH]
