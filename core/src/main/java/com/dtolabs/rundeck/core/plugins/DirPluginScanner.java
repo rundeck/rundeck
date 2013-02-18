@@ -160,7 +160,7 @@ abstract class DirPluginScanner implements PluginScanner {
         }
         if (scanned.size() != files.length) {
             log.debug("shouldScanAll: yes, count: " + scanned.size() + " vs " + files.length);
-            clearCache();
+            clearCache(files);
             return true;
         }else{
             log.debug("(shouldScanAll: ...: " + scanned.size() + " vs " + files.length);
@@ -170,11 +170,11 @@ abstract class DirPluginScanner implements PluginScanner {
             final boolean validPluginFile = cachedFileValidity(file);
             if (validPluginFile && !scanned.contains(s)) {
                 log.debug("shouldScanAll: yes, file: " + s);
-                clearCache();
+                clearCache(files);
                 return true;
             }else if(!validPluginFile && scanned.contains(s)){
                 log.debug("shouldScanAll: yes, file: " + s);
-                clearCache();
+                clearCache(files);
                 return true;
             }
         }
@@ -183,8 +183,11 @@ abstract class DirPluginScanner implements PluginScanner {
         return false;
     }
 
-    private void clearCache() {
+    private void clearCache(File[] files) {
         scanned.clear();
+        for(File file:files) {
+            filecache.remove(file);
+        }
 //        validity.clear();
     }
 
@@ -228,7 +231,7 @@ abstract class DirPluginScanner implements PluginScanner {
      */
     private File scanAll(final ProviderIdent ident, final File[] files) throws PluginScannerException {
         final List<File> candidates = new ArrayList<File>();
-        clearCache();
+        clearCache(files);
         for (final File file : files) {
             if (cachedFileValidity(file)) {
                 scanned.add(memoFile(file));
@@ -238,7 +241,7 @@ abstract class DirPluginScanner implements PluginScanner {
             }
         }
         if (candidates.size() > 1) {
-            clearCache();
+            clearCache(files);
             final File resolved = resolveProviderConflict(candidates);
             if(null==resolved){
                 throw new PluginScannerException(
