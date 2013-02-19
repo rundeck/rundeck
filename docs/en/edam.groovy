@@ -117,7 +117,7 @@ def addTempFile(File file,boolean auto=false){
     return file
 }
 def writeTempFile(String content){
-    def tfile = addTempFile(File.createTempFile("edam","temp"))
+    def tfile = addTempFile(File.createTempFile("edam","temp.html"))
     tfile.text=content
     return tfile
 }
