@@ -144,11 +144,12 @@ class MenuController {
         results.reportQueryParams=query.asReportQueryParams()
 
         withFormat{
+            html {
+                results
+            }
             yaml{
                 final def encoded = JobsYAMLCodec.encode(results.nextScheduled as List)
                 render(text:encoded,contentType:"text/yaml",encoding:"UTF-8")
-            }
-            html{ results
             }
             xml{
                 response.setHeader(Constants.X_RUNDECK_RESULT_HEADER,"Jobs found: ${results.nextScheduled?.size()}")
