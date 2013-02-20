@@ -1,10 +1,10 @@
 include ../Makefile.inc
 
 #APIVERS=1
-APIVERS=$(shell cat api/version.info)
+APIVERS=$(shell cat ../en/api/version.info)
 
 DIRS = manpages
-CSS = style.css
+CSS = ../en/style.css
 DIST = dist
 DATE = $(shell date "+%Y-%m-%dT%H:%M:%S%Z")
 HRDATE = $(shell date "+%B %e %Y, %H:%M %Z")
@@ -19,7 +19,7 @@ ifneq ($(TAG),GA)
 RVERSION=$(VERSION)-$(TAG)
 endif
 
-EDAM=groovy edam.groovy
+EDAM=groovy ../en/edam.groovy
 
 .PHONY: man html clean oldlinks
 
