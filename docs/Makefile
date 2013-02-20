@@ -1,6 +1,6 @@
 include Makefile.inc
 
-DIRS = en
+DIRS = en jp
 ifndef VERSION
 VERSION=$(shell grep version.number= ../version.properties | cut -d= -f 2)
 ifndef TAG
@@ -14,7 +14,11 @@ endif
 .PHONY: all clean
 
 all : $(DIRS)
-	$(MAKE) VERSION=$(VERSION) -C $<
+	for i in $^ ; do \
+	$(MAKE) VERSION=$(VERSION) -C $$i ; \
+	done ;
 
 clean : $(DIRS)
-	$(MAKE) -C $< clean
+	for i in $^ ; do \
+	$(MAKE) -C $$i clean ; \
+	done ;
