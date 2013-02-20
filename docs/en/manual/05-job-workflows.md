@@ -94,7 +94,7 @@ have a form open asking to enter a shell command as the first step.
 
 To add new steps simply press the "Add a step" link inside the workflow
 editor form. This will prompt you with a dialog asking which kind of
-workflow step you would like to add. Each kind of step has its own
+ step you would like to add. Each kind of step has its own
 form. When you are done filling out the form, press "Save" to add it
 to the sequence. Pressing "Cancel" will close the form and leave the
 sequence unchanged.
@@ -107,6 +107,19 @@ for directions on modifying the step order.
 
 The next several sections describe the specification of each kind of
 workflow step.
+
+**Types of Steps**
+
+Steps in a workflow can be either *Node Steps* or *Workflow Steps*.
+
+* Node Steps operate once on each Node, which could be multiple times within a workflow
+* Workflow Steps operate only once in the workflow
+
+**Step Plugins**
+
+You can create or install third-party plugins which provide new Steps for your workflows.
+
+* See the chapter on [Plugins](plugins.html).
 
 ### Command step
 
@@ -195,6 +208,8 @@ then a "defaultValue" of that option will be used if it is defined.  If a
 required option does not have a default value, then the execution will fail
 because the option is not specified.
 
+Job References are *Workflow Steps*, and only operate once within a workflow.
+
 ## Reordering steps
 
 The order of the Workflow steps can be modified by hovering over any
@@ -261,10 +276,14 @@ return success.)
 
 It is a good practice, when you are defining Error Handlers, to **always** have them fail (e.g. scripts/commands return a non-zero exit-code), unless you specifically want them to be used for Recovery.
 
+Note that Error-handlers can be attached to either Node Steps or Workflow Steps, and the type of step and the Strategy of the Workflow determines what type of Error-handler steps can be attached to a step.  The only restriction is in the case that the Workflow is "Node-oriented", which means that the workflow is executed independently for each node.  In this case, Node Steps can only have other Node steps as Error Handlers.  In other cases, the Error Handler can be other Workflow steps.
+
 ### Context information
 
 When the Error-handler step is executed, its execution context will contain some information about the nature
 of the failure that occurred for the original step.
+
+In the case where a Node Step has a Workflow Step as an Error Handler, then the failure data for multiple nodes is rolled up into a single failure reason to be used by the Workflow Step.
 
 See the section on [Context Variables](#context-variables) for more information.
 
@@ -315,8 +334,11 @@ Additional Error-handler context variables:
         * `Unauthorized` - referenced Job not authorized
         * `InvalidOptions` - referenced Job input options invalid
         * `NoMatchedNodes` - referenced Job node dispatch filters had no match
+    * Reason code used from a failed Node Step if the handler is a Workflow Step
+        * `NodeDispatchFailure` - one or more nodes failed the step
 * `result.message`: A string describing the failure
 * `result.resultCode`: Exit code from an execution (if available)
+* `result.failedNodes`: Comma-separated list of node names that failed for a `NodeDispatchFailure`
 
 Option context variables are referred to as `option.NAME` (more about [Job Options](job-options.html) in the next chapter.)
 
