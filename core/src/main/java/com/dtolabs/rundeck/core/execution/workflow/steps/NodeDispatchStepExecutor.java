@@ -32,6 +32,10 @@ import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+import org.apache.commons.lang.StringUtils;
+
+import java.util.ArrayList;
 
 
 /**
@@ -41,6 +45,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionI
  */
 public class NodeDispatchStepExecutor implements StepExecutor {
     public static final String STEP_EXECUTION_TYPE = "NodeDispatch";
+    public static final String FAILURE_DATA_FAILED_NODES = "failedNodes";
 
     @Override
     public boolean isNodeDispatchStep(StepExecutionItem item) {
@@ -96,6 +101,17 @@ public class NodeDispatchStepExecutor implements StepExecutor {
                                                             null,
                                                             Reason.NodeDispatchFailure,
                                                             "Node dispatch failed");
+            //extract failed nodes
+            ArrayList<String> nodeNames = new ArrayList<String>();
+            for (String nodeName : dispatcherResult.getResults().keySet()) {
+                NodeStepResult nodeStepResult = dispatcherResult.getResults().get(nodeName);
+                if(!nodeStepResult.isSuccess()) {
+                    nodeNames.add(nodeName);
+                }
+            }
+            if(!nodeNames.isEmpty()){
+                result.getFailureData().put(FAILURE_DATA_FAILED_NODES, StringUtils.join(nodeNames, ","));
+            }
         }
         return result;
     }
