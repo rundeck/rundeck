@@ -117,8 +117,10 @@ def addTempFile(File file,boolean auto=false){
     return file
 }
 def writeTempFile(String content){
-    def tfile = addTempFile(File.createTempFile("edam","temp"))
-    tfile.text=content
+    def tfile = addTempFile(File.createTempFile("edam","temp.md"))
+    tfile.withWriter("UTF-8"){
+        it<<content
+    }
     return tfile
 }
 def pageLinkTitle(Map page){
@@ -149,6 +151,9 @@ def expandFile(File file){
 def outfileName(title,index,file,toc){
     def filestub=replaceParams(options.pageFileName,[title:titleToIdentifier(title),index:index,name:file.name.replaceAll(/\.(md|txt)$/,'')])
     def name=filestub
+    if(!name){
+        name=file.name.replaceAll(/\.(md|txt)$/,'')
+    }
     def x=1
     while(toc.find{it.outfile==name+".html"}){
         x++
@@ -160,7 +165,7 @@ def readToc(File tocfile){
     def toc=[]
     def dirs=[]
     if(tocfile.exists()){
-        tocfile.eachLine { line ->
+        tocfile.eachLine("UTF-8"){ line ->
             def match=line=~/^(\d+):([^:]+):(.+)$/
             if(match.matches()){
                 def file=new File(tocfile.parentFile,match.group(2))
@@ -188,7 +193,7 @@ def getToc(File dir, File routputdir){
         addTempFile tocfile,true
         //create toc.conf
         def ndx=1
-        tocfile.withWriter { out ->
+        tocfile.withWriter("UTF-8") { out ->
             mdfiles.each{file->
                 def title=replaceParams(file.title,pagevars,options.tokenStart,options.tokenEnd)
                 toc<<[index:ndx,file:file,title:title,outfile:outfileName(title,ndx,file,toc)]
@@ -215,7 +220,7 @@ def createTocMdFile(File dir,toc,title,content=null, subdirs=null){
         addTempFile tocout,true
     }
     //println "createTocMdFile: ${tocout}"
-    tocout.withWriter{writer->
+    tocout.withWriter("UTF-8"){writer->
         if(content || !flags.genTocOnly){
             writer<< (content?:"% ${title}")
             writer<<"\n\n"
@@ -478,11 +483,11 @@ def generateAll(allpages,toc,templates,File dir, File outdir, crumbs, subdirs){
             }
             def bcrumbnav=templates.navCrumbs.text
             //write nav temp files
-            navfileTop.withWriter{writer->
+            navfileTop.withWriter("UTF-8"){writer->
                 def txt=replaceNavContent(navs + [navclass:'top',crumbs:crumbs],bcrumbnav + navcontent)
                 writer.write(pagevars?replaceParams(txt,pagevars,options.tokenStart,options.tokenEnd):txt)
             }
-            navfileBot.withWriter{writer->
+            navfileBot.withWriter("UTF-8"){writer->
                 def txt=replaceNavContent(navs + [navclass:'bottom',crumbs:crumbs],navcontent + bcrumbnav)
                 writer.write(pagevars?replaceParams(txt,pagevars,options.tokenStart,options.tokenEnd):txt)
             }
