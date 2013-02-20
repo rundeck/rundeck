@@ -318,6 +318,46 @@ class WorkflowControllerTests extends ControllerUnitTestCase {
         assertEquals 'test', item.errorHandler.type
         assertEquals true, item.errorHandler.nodeStep
         assertEquals(['blah': 'value'], item.errorHandler.configuration)
+        assertTrue(!item.errorHandler.keepgoingOnSuccess)
+
+        //test undo memo
+        assertNotNull result.undo
+        assertEquals 'removeHandler', result.undo.action
+        assertEquals 0, result.undo.num
+    }
+
+    public void testWFErrorHandlerActionsInsertPluginStepKeepgoingOnSuccess() {
+        mockDomain(Workflow)
+        mockDomain(JobExec)
+        mockDomain(CommandExec)
+        mockDomain(PluginStep)
+        WorkflowController ctrl = new WorkflowController()
+
+        def fwmock = mockFor(FrameworkService)
+        fwmock.demand.getFrameworkFromUserSession {s, r -> null}
+        fwmock.demand.getNodeStepPluginDescription {fwk, type -> null}
+        fwmock.demand.validateDescription {desc, p, params -> [valid: true, props: ['blah': 'value']]}
+        ctrl.frameworkService = fwmock.createMock()
+        //test insert
+        Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands: [new CommandExec(adhocRemoteString: 'test')])
+
+
+        def result = ctrl._applyWFEditAction(wf, [action: 'addHandler', num: 0, params: [
+                keepgoingOnSuccess: 'true',
+                pluginItem: true, newitemtype: 'test', newitemnodestep: 'true', pluginConfig: ['blah': 'value']]])
+        assertNull result.error
+        assertEquals 1, wf.commands.size()
+        final Object item = wf.commands.get(0)
+
+        assertTrue item instanceof CommandExec
+        final CommandExec stepitem = (CommandExec) item
+        assertNotNull item.errorHandler
+
+        assertTrue item.errorHandler instanceof PluginStep
+        assertEquals 'test', item.errorHandler.type
+        assertEquals true, item.errorHandler.nodeStep
+        assertEquals(['blah': 'value'], item.errorHandler.configuration)
+        assertTrue(item.errorHandler.keepgoingOnSuccess)
 
         //test undo memo
         assertNotNull result.undo
@@ -385,6 +425,51 @@ class WorkflowControllerTests extends ControllerUnitTestCase {
         //type and nodeStep do not get modified
         assertEquals 'test1', item.errorHandler.type
         assertEquals true, item.errorHandler.nodeStep
+        assertEquals true, !item.errorHandler.keepgoingOnSuccess
+
+        assertEquals(['blah': 'value'], item.errorHandler.configuration)
+
+        //test undo
+        assertNotNull result.undo
+        assertEquals 'modifyHandler', result.undo.action
+        assertEquals 0, result.undo.num
+        assertNotNull result.undo.params
+        assertEquals(['elf': 'monkey'], result.undo.params.configuration)
+    }
+    public void testWFErrorHandlerActionsModifyPluginStepKeepgoingOnSuccess() {
+        mockDomain(Workflow)
+        mockDomain(JobExec)
+        mockDomain(CommandExec)
+        mockDomain(PluginStep)
+        WorkflowController ctrl = new WorkflowController()
+
+        def fwmock = mockFor(FrameworkService)
+        fwmock.demand.getFrameworkFromUserSession {s, r -> null}
+        fwmock.demand.getNodeStepPluginDescription {fwk, type -> null}
+        fwmock.demand.validateDescription {desc, p, params -> [valid: true, props: ['blah': 'value']]}
+        ctrl.frameworkService = fwmock.createMock()
+
+        //test modify
+        Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands:
+                [new CommandExec(adhocRemoteString: 'test', errorHandler: new PluginStep(type: 'test1', nodeStep: true,
+                        configuration: ['elf': 'monkey']))])
+        assertNotNull(wf.commands[0].errorHandler)
+
+        def result = ctrl._applyWFEditAction(wf, [action: 'modifyHandler', num: 0, params: [
+                keepgoingOnSuccess: 'true',
+                pluginItem: true, newitemtype: 'test', newitemnodestep: 'false', pluginConfig: ['blah': 'value']]])
+        assertNull result.error
+        assertEquals 1, wf.commands.size()
+        final Object item = wf.commands.get(0)
+        assertTrue item instanceof CommandExec
+        final CommandExec stepitem = (CommandExec) item
+        assertNotNull item.errorHandler
+
+        assertTrue item.errorHandler instanceof PluginStep
+        //type and nodeStep do not get modified
+        assertEquals 'test1', item.errorHandler.type
+        assertEquals true, item.errorHandler.nodeStep
+        assertEquals true, item.errorHandler.keepgoingOnSuccess
 
         assertEquals(['blah': 'value'], item.errorHandler.configuration)
 
@@ -552,6 +637,40 @@ class WorkflowControllerTests extends ControllerUnitTestCase {
 
             assertEquals 'blah', item.errorHandler.jobName
             assertEquals 'blee', item.errorHandler.jobGroup
+            assertTrue "should be false",!item.errorHandler.keepgoingOnSuccess
+
+            //test undo memo
+            assertNotNull result.undo
+            assertEquals 'removeHandler', result.undo.action
+            assertEquals 0, result.undo.num
+
+            //apply undo
+            def result2 = ctrl._applyWFEditAction(wf, result.undo)
+            assertNull result2.error
+            assertEquals 1, wf.commands.size()
+            assertNull wf.commands.get(0).errorHandler
+        }
+    }
+    public void testUndoWFErrorHandlerEditActionsAddHandlerKeepgoingTrue(){
+        mockDomain(Workflow)
+        mockDomain(JobExec)
+        mockDomain(CommandExec)
+        WorkflowController ctrl = new WorkflowController()
+        //test addHandler then undo
+        test: {
+            Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands: [new JobExec(jobName: 'bladf',jobGroup: 'elf')])
+
+            def result = ctrl._applyWFEditAction(wf, [action: 'addHandler', num: 0, params: [jobName: 'blah', jobGroup: 'blee',keepgoingOnSuccess:'true']])
+            assertNull result.error
+            assertEquals 1, wf.commands.size()
+            final Object item = wf.commands.get(0)
+            assertNotNull item.errorHandler
+
+            assertTrue item.errorHandler instanceof JobExec
+
+            assertEquals 'blah', item.errorHandler.jobName
+            assertEquals 'blee', item.errorHandler.jobGroup
+            assertTrue item.errorHandler.keepgoingOnSuccess
 
             //test undo memo
             assertNotNull result.undo

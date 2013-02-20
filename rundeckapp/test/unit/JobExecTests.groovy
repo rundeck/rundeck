@@ -109,4 +109,16 @@ class JobExecTests extends GrailsUnitTestCase{
         assertEquals('job args1', j1.argString)
         assertNull(j1.errorHandler)
     }
+
+    void testCreateCloneKeepgoing() {
+        mockDomain(JobExec)
+        mockDomain(CommandExec)
+        JobExec t = new JobExec(jobGroup: 'group1', jobName: 'name1', argString: 'job args1',keepgoingOnSuccess: true)
+        JobExec j1 = t.createClone()
+        assertEquals('group1', j1.jobGroup)
+        assertEquals('name1', j1.jobName)
+        assertEquals('job args1', j1.argString)
+        assertEquals(true, !!j1.keepgoingOnSuccess)
+        assertNull(j1.errorHandler)
+    }
 }

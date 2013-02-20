@@ -325,6 +325,7 @@ class WorkflowController {
             def item
             if (params.pluginItem) {
                 item = new PluginStep()
+                item.keepgoingOnSuccess=params.keepgoingOnSuccess
                 item.type = params.newitemtype
                 item.nodeStep = params.newitemnodestep == 'true'
                 item.configuration = params.pluginConfig
@@ -343,6 +344,7 @@ class WorkflowController {
         }
         def modifyItemFromParams={moditem,params->
             if (params.pluginItem) {
+                moditem.properties=params.subMap(['keepgoingOnSuccess'])
                 moditem.configuration = params.pluginConfig
             } else {
                 moditem.properties = params

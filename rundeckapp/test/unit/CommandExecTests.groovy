@@ -134,4 +134,20 @@ class CommandExecTests extends GrailsUnitTestCase{
         assertEquals('test1', t1.adhocFilepath)
         assertNull(t1.errorHandler)
     }
+    void testCreateCloneKeepgoing() {
+        mockDomain(CommandExec)
+        CommandExec h = new CommandExec(adhocRemoteString: 'testerr',keepgoingOnSuccess: true)
+        CommandExec t1 = h.createClone()
+        assertEquals('testerr', t1.adhocRemoteString)
+        assertEquals(true, !!t1.keepgoingOnSuccess)
+        assertNull(t1.errorHandler)
+    }
+    void testCreateCloneKeepgoingFalse() {
+        mockDomain(CommandExec)
+        CommandExec h = new CommandExec(adhocRemoteString: 'testerr',keepgoingOnSuccess: false)
+        CommandExec t1 = h.createClone()
+        assertEquals('testerr', t1.adhocRemoteString)
+        assertEquals(true, !t1.keepgoingOnSuccess)
+        assertNull(t1.errorHandler)
+    }
 }

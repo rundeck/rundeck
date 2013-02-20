@@ -1795,6 +1795,70 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'err command', ehexec.adhocRemoteString
         }
     }
+
+    public void testDoUpdateJobErrorHandlersPlugins() {
+        def sec = new ScheduledExecutionService()
+        if (true) {//test update basic job details
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',
+                    workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)]))
+            se.save()
+
+            assertNotNull se.id
+
+            //try to do update of the ScheduledExecution
+            def fwkControl = mockFor(FrameworkService, true)
+            fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+            fwkControl.demand.existsFrameworkProject { project, framework ->
+                assertEquals 'testProject2', project
+                return true
+            }
+            fwkControl.demand.getCommand { project, type, command, framework ->
+                assertEquals 'testProject2', project
+                assertEquals 'aType2', type
+                assertEquals 'aCommand2', command
+                return null
+            }
+            sec.frameworkService = fwkControl.createMock()
+
+            def eh1 = new PluginStep(keepgoingOnSuccess: true,type: 'asdf',nodeStep: true,configuration: ["blah":"value"])
+            def params = new ScheduledExecution(jobName: 'monkey2', project: 'testProject2', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',
+                    workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', errorHandler: eh1)])
+            )
+            def results = sec._doupdateJob(se.id.toString(), params, 'test', 'test', null)
+            def succeeded = results[0]
+            def scheduledExecution = results[1]
+            if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
+                scheduledExecution.errors.allErrors.each {
+                    System.out.println(it);
+                }
+            }
+            assertTrue succeeded
+            assertNotNull(scheduledExecution)
+            assertTrue(scheduledExecution instanceof ScheduledExecution)
+            final ScheduledExecution execution = scheduledExecution
+            assertNotNull(execution)
+            assertNotNull(execution.errors)
+            assertFalse(execution.errors.hasErrors())
+            assertEquals 'monkey2', execution.jobName
+            assertEquals 'testProject2', execution.project
+            assertEquals 'blah', execution.description
+
+            assertFalse execution.adhocExecution
+            assertNotNull execution.workflow
+            assertNotNull execution.workflow.commands
+            assertEquals 1, execution.workflow.commands.size()
+            def CommandExec cexec = execution.workflow.commands[0]
+            assertEquals 'test command', cexec.adhocRemoteString
+            assertNotNull cexec.errorHandler
+
+            def PluginStep ehexec = cexec.errorHandler
+            assertTrue( "should be true",!!ehexec.keepgoingOnSuccess)
+            assertEquals 'asdf', ehexec.type
+            assertEquals true, ehexec.nodeStep
+            assertEquals([blah:'value'], ehexec.configuration)
+        }
+    }
+
     public void testDoUpdateJobErrorHandlersStepFirst() {
         def sec = new ScheduledExecutionService()
         if (true) {//test update basic job details

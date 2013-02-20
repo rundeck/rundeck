@@ -59,7 +59,7 @@ class PluginStep extends WorkflowStep{
     }
 
     public PluginStep createClone() {
-        return new PluginStep(type: type, nodeStep: nodeStep, jsonData: jsonData)
+        return new PluginStep(type: type, nodeStep: nodeStep, jsonData: jsonData,keepgoingOnSuccess: keepgoingOnSuccess)
     }
 
     @Override
