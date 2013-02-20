@@ -79,8 +79,9 @@ makedocs:
 	$(MAKE) VERSION=$(VERSION) -C docs
 
 docs: makedocs
-	mkdir -p ./rundeckapp/web-app/docs
+	mkdir -p ./rundeckapp/web-app/docs/jp
 	cp -r docs/en/dist/html/* ./rundeckapp/web-app/docs
+	cp -r docs/jp/dist/html/* ./rundeckapp/web-app/docs/jp
 
 #clean various components
 
