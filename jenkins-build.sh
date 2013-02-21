@@ -1,4 +1,7 @@
-#!/bin/bash -e
+#!/bin/bash
+
+set -e
+set -x
 
 # script for use by jenkins to build rundeck
 # arguments: ['release' [tag]]
@@ -15,7 +18,7 @@ echo "RTAG: ${RTAG}"
 make clean
 make TAG=${RTAG} docs
 
-if [ "$REL" == "release" ] ; then
+if [ "$REL" = "release" ] ; then
     ./gradlew -Penvironment=release -PreleaseTag=${RTAG} build
     groovy testbuild.groovy -gradle -Drelease -DreleaseTag=${RTAG}
 else
