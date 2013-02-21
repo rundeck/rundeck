@@ -40,6 +40,8 @@ perl  -i'.orig' -p -e "s#^currentVersion\s*=.*\$#currentVersion = $VERSION#" `pw
 
 echo MODIFIED: `pwd`/version.properties
 
+perl  -i'.orig' -p -e "s#^build.ident\s*=.*\$#build.ident = $VERSION-${RELEASE}${TAG}#" `pwd`/rundeckapp/application.properties
+
 #alter pom.xml version
 
 XML=$(which xmlstarlet)
