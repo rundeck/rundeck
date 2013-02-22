@@ -186,7 +186,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
         //Sudo support
 
-        final ExecutorService executor = Executors.newFixedThreadPool(1);
+        final ExecutorService executor = Executors.newSingleThreadExecutor();
 
         final Future<ResponderTask.ResponderResult> responderFuture;
         final SudoResponder sudoResponder = SudoResponder.create(node, framework, context);
@@ -197,6 +197,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             final PipedInputStream responderInput = new PipedInputStream();
             final PipedOutputStream responderOutput = new PipedOutputStream();
             final PipedInputStream jschInput = new PipedInputStream();
+            //lead pipe allows connected inputstream to close and not hang the writer to this stream
             final PipedOutputStream jschOutput = new LeadPipeOutputStream();
             try {
                 responderInput.connect(jschOutput);
@@ -240,6 +241,17 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
 
             responderFuture = executor.submit(responderResultCallable);
+            executor.submit(new Runnable() {
+                //when responder is done close the piped input stream, which will cause output to silently be consumed.
+                @Override
+                public void run() {
+                    try {
+                        responderInput.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
         } else {
             responderFuture = null;
         }
