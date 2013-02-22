@@ -4,6 +4,7 @@ import java.util.Map;
 import org.gradle.api.Project;
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
+import org.gradle.plugins.signing.Sign
 
 /**
  * The Rundeck webapp build file
@@ -19,6 +20,20 @@ description = 'The Rundeck Grails webapp project'
 apply plugin: 'groovy'
 apply plugin: 'eclipse'
 apply plugin: 'idea'
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+def isReleaseBuild
+def isSnapshotBuild
+def isDevBuild
+
+if(hasProperty('environment') && environment == 'release'){
+    isReleaseBuild=true
+}else if(hasProperty("snapshot")){
+    isSnapshotBuild=true
+}else{
+    isDevBuild=true
+}
 
 // set the convention to rundeck:<branch>:<path>:<projectName>
 eclipse.project.name =  "${project.getParent().eclipse.project.name}:webapp"
@@ -193,6 +208,103 @@ task install(type: Exec, overwrite: true, dependsOn: grailsWar) {
 	args 'maven-install'
 }
 
+//********* artifact signing *********
+if(isReleaseBuild && project.hasProperty("signing.keyId")) {
+    signing {
+        sign configurations.archives
+    }
+} else {
+    task signArchives {
+        // do nothing
+    }
+}
+
+//build a pom we reuse for both maven builds and release to sonatype
+def deploypom=pom {
+    project {
+        artifactId archivesBaseName
+        groupId project.group
+        inceptionYear '2011'
+        packaging 'war'
+        version version
+        name "Rundeck Web app"
+        description "Rundeck web console for command dispatching and job scheduling"
+        url 'http://rundeck.org'
+        licenses {
+            license {
+                name 'The Apache Software License, Version 2.0'
+                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution 'repo'
+            }
+        }
+        properties{
+            'version'(version)
+        }
+        scm {
+            url 'https://github.com/dtolabs/rundeck'
+            connection 'scm:git:git@github.com/dtolabs/rundeck.git'
+            developerConnection 'scm:git:git@github.com:dtolabs/rundeck.git'
+        }
+        developers {
+          developer {
+            id('gschueler')
+            name('Greg Schueler')
+            email('greg@dtosolutions.com')
+          }
+        }
+        parent {
+            groupId('org.sonatype.oss')
+            artifactId('oss-parent')
+            version('7')
+        }
+    }
+}
+// prompt for PGP key passphrase if not set
+gradle.taskGraph.whenReady { taskGraph ->
+    if (taskGraph.allTasks.any { it instanceof Sign } && project.hasProperty("signing.keyId") && !project.hasProperty("signing.password") && !isDevBuild) {
+        // Use Java 6's console to read from the console (no good for a CI environment)
+        Console console = System.console()
+        console.printf "\n\nWe have to sign some things in this build.\n\nPlease enter your signing details.\n\n"
+
+        //def id = console.readLine("PGP Key Id: ")
+        //def file = console.readLine("PGP Secret Key Ring File (absolute path): ")
+        def password = console.readPassword("PGP Private Key Password: ")
+
+        //allprojects { ext."signing.keyId" = id }
+        //allprojects { ext."signing.secretKeyRingFile" = file }
+        allprojects { ext."signing.password" = password }
+
+        console.printf "\nThanks.\n\n"
+    }
+}
+
+uploadArchives {
+    if(isDevBuild){
+        repositories{
+            repositories.mavenDeployer {
+                configuration = configurations.archives
+                pom=deploypom
+            }
+        }
+    }else{
+        repositories.mavenDeployer {
+            if(isReleaseBuild){
+                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+            }
+ 
+            configuration = configurations.archives
+            if(project.hasProperty('sonatypeUsername') && project.hasProperty('sonatypePassword')){
+                repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2') {
+                    authentication(userName: sonatypeUsername, password: sonatypePassword)
+                }
+                snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
+                    authentication(userName: sonatypeUsername, password: sonatypePassword)
+                }
+            }
+            pom=deploypom
+        }
+    }
+}
 /**
  * Does an "in-place" substitution of a property value without having to using placeholders
  * 
