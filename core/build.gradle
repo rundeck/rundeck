@@ -26,6 +26,10 @@ if(hasProperty('environment') && environment == 'release'){
     isDevBuild=true
 }
 
+configurations {
+	missingJars
+}
+
 dependencies {
     compile 'org.apache.ant:ant:1.7.1',
         'org.apache.ant:ant-launcher:1.7.1',
@@ -34,23 +38,54 @@ dependencies {
         'commons-httpclient:commons-httpclient:3.0.1',
         'commons-beanutils:commons-beanutils:1.8.0',
         'commons-collections:commons-collections:3.2.1',
-        'commons-logging:commons-logging:1.1',
+        'commons-logging:commons-logging:1.1.1',
         'commons-lang:commons-lang:2.4',
-        'xerces:xercesImpl:2.6.0',
         'dom4j:dom4j:1.6.1',
-        'jaxen:jaxen:1.1',
         'commons-cli:commons-cli:1.0',
         'org.apache.ant:ant-jsch:1.7.1',
         'com.jcraft:jsch:0.1.45',
-        'org.yaml:snakeyaml:1.9'
-
-    testCompile 'junit:junit:3.8.1'
+        'org.yaml:snakeyaml:1.9',
+        'jaxen:jaxen:1.1',
+        'xerces:xercesImpl:2.6.2',
+        'xml-apis:xml-apis:2.0.2'
+    
+    testCompile 'junit:junit:4.8.1'
+    
+    /*
+     *  This is a bit of a hack: the following dependencies are already transitive deps
+     *  of the compile configuration but their archives are missing for some reason
+     *  which causes rundeck-launcher to throw errors when trying to extract them
+     *  on install. by listing them here, we can filter them out of the manifest
+     *  which makes the rundeck-launcher install process much happier
+     */
+    missingJars 'junit:junit:3.8.1',
+        'xom:xom:1.0',
+        'xerces:xmlParserAPIs:2.6.2',
+        'xalan:xalan:2.6.0',
+        'com.ibm.icu:icu4j:2.6.1'
+    
 }
+
+/* 
+ * The runtime dependencies will be added to the rundeck-core manifest as a concatenated list
+ * so that the rundeck-launcher jar can find and extract them from the build/tools/lib 
+ * directory during the installation process. (note that these dependencies are also added to the 
+ * pom, so technically they are already listed as transitive dependencies of the rundeck war file and 
+ * therefor could be extracted from WEB-INF/lib instead)
+ * 
+ * Some of the dependencies are not available and will cause the rundeck-laucher to fail, but because 
+ * they aren't needed we can explicitly subtract them from the manifest as a work-arouind
+ * 
+ * See Rundeck issue #285 for more details:
+ * https://github.com/dtolabs/rundeck/pull/285
+ */
+def runtimeMinusMissingJars = configurations.runtime - configurations.missingJars
+def rundeckToolsDependencies = runtimeMinusMissingJars.collect { "$it.name" }.join(" ")
 
 jar {
     manifest {
         attributes 'Rundeck-Version': version, 
-                   'Rundeck-Tools-Dependencies': configurations.runtime.collect { "$it.name" }.join(" ") 
+                   'Rundeck-Tools-Dependencies': rundeckToolsDependencies
     }
 }
 
@@ -82,6 +117,10 @@ assemble {
         }
     }
 }
+
+// make sure that we've rebuilt and assembled before install
+install.dependsOn(build)
+
 //********* artifact signing *********
 if(isReleaseBuild) {
     signing {
@@ -218,7 +257,7 @@ def buildpom=pom {
                         archive{
                           manifestEntries{
                             'Rundeck-Version'(version)
-                            'Rundeck-Tools-Dependencies'(configurations.runtime.collect { "$it.name" }.join(" "))
+                            'Rundeck-Tools-Dependencies'(rundeckToolsDependencies)
                           }
                         }
                     }
