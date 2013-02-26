@@ -8,6 +8,10 @@ jar {
 apply plugin: 'idea'
 apply plugin: 'maven'
 
+dependencies {
+	compile project(":core")
+}
+
 task createPom << {
     pom {
         project {
