@@ -111,7 +111,7 @@
           <archive>
             <manifestEntries>
               <Rundeck-Version>1.5-SNAPSHOT</Rundeck-Version>
-              <Rundeck-Tools-Dependencies>ant-1.7.1.jar ant-launcher-1.7.1.jar log4j-1.2.16.jar commons-codec-1.5.jar commons-httpclient-3.0.1.jar commons-beanutils-1.8.0.jar commons-collections-3.2.1.jar commons-logging-1.1.jar commons-lang-2.4.jar xercesImpl-2.6.0.jar dom4j-1.6.1.jar jaxen-1.1.jar commons-cli-1.0.jar ant-jsch-1.7.1.jar jsch-0.1.45.jar snakeyaml-1.9.jar</Rundeck-Tools-Dependencies>
+              <Rundeck-Tools-Dependencies>ant-1.7.1.jar ant-launcher-1.7.1.jar log4j-1.2.16.jar commons-codec-1.5.jar commons-httpclient-3.0.1.jar commons-beanutils-1.8.0.jar commons-collections-3.2.1.jar commons-logging-1.1.1.jar commons-lang-2.4.jar dom4j-1.6.1.jar commons-cli-1.0.jar ant-jsch-1.7.1.jar jsch-0.1.45.jar snakeyaml-1.9.jar jaxen-1.1.jar xercesImpl-2.6.2.jar junit-3.8.1.jar jdom-1.0.jar xalan-2.6.0.jar icu4j-2.6.1.jar xom-1.0.jar</Rundeck-Tools-Dependencies>
             </manifestEntries>
           </archive>
         </configuration>
@@ -119,6 +119,12 @@
     </plugins>
   </build>
   <dependencies>
+    <dependency>
+      <groupId>jaxen</groupId>
+      <artifactId>jaxen</artifactId>
+      <version>1.1</version>
+      <scope>compile</scope>
+    </dependency>
     <dependency>
       <groupId>commons-httpclient</groupId>
       <artifactId>commons-httpclient</artifactId>
@@ -132,12 +138,6 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>jaxen</groupId>
-      <artifactId>jaxen</artifactId>
-      <version>1.1</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
       <groupId>org.apache.ant</groupId>
       <artifactId>ant-launcher</artifactId>
       <version>1.7.1</version>
@@ -148,6 +148,18 @@
       <artifactId>commons-codec</artifactId>
       <version>1.5</version>
       <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.1.1</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.8.1</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.ant</groupId>
@@ -180,9 +192,9 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <version>1.1</version>
+      <groupId>xml-apis</groupId>
+      <artifactId>xml-apis</artifactId>
+      <version>2.0.2</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -192,15 +204,15 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>commons-lang</groupId>
-      <artifactId>commons-lang</artifactId>
-      <version>2.4</version>
+      <groupId>xerces</groupId>
+      <artifactId>xercesImpl</artifactId>
+      <version>2.6.2</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>xerces</groupId>
-      <artifactId>xercesImpl</artifactId>
-      <version>2.6.0</version>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
+      <version>2.4</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -208,12 +220,6 @@
       <artifactId>snakeyaml</artifactId>
       <version>1.9</version>
       <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.1</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.jcraft</groupId>
