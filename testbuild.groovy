@@ -33,14 +33,19 @@ if(props.'release'){
 def debug=Boolean.getBoolean('debug')?:("-debug" in args)
 def version=props.currentVersion+tag
 
+def warFile= "rundeckapp/target/rundeck-${version}.war"
+def coreJarFile = "core/${target}/rundeck-core-${version}.jar"
+def launcherJarFile = "rundeck-launcher/launcher/${target}/rundeck-launcher-${version}.jar"
+
+
 //manifest describing expected build results
 def manifest=[
-    "core/${target}/rundeck-core-${version}.jar":[:],
+    (coreJarFile):[:],
     "core/${target}/rundeck-core-${version}-sources.jar":[:],
     "core/${target}/rundeck-core-${version}-javadoc.jar":[:],
-    "rundeckapp/target/rundeck-${version}.war":[:],
+    (warFile):[:],
     "rundeck-launcher/rundeck-jetty-server/${target}/rundeck-jetty-server-${version}.jar":[:],
-    "rundeck-launcher/launcher/${target}/rundeck-launcher-${version}.jar":[
+    (launcherJarFile):[
         "com/dtolabs/rundeck/#+",// require 1+ files in dir
         "pkgs/webapp/WEB-INF/classes/#+",
         "pkgs/webapp/WEB-INF/lib/rundeck-core-${version}.jar",
@@ -140,57 +145,79 @@ manifest.each{ fname,mfest->
     }
 }
 
-//require zip contents
-ziptest.each{ f,dir->
-    def z = new java.util.zip.ZipFile(f)
-    def counts=[:]
-    def fverify=true
-    dir.each{ path->
-        if(path==~/^.+(#.+)$/){
-            //verify number of entries
-            def n = path.split('#',2)[1]
-            def dname = path.split('#',2)[0]
-            def found=z.getEntry(dname)
-            if(n==~/^\d+/){
-                fverify&=require("[${f.basename}] \"${dname}\" MUST exist. Result: (${found?:false})",found)
-                counts[dname]=[equal:Integer.parseInt(n)]
-            }else if(n=='+'){
-                fverify&=require("[${f.basename}] \"${dname}\" MUST exist. Result: (${found?:false})",found)
-                counts[dname]=[atleast:1]
-            }else if(n=='?'){
-                counts[dname]=[maybe:1]
-            }else if(n.startsWith('#')){
-                n=n.substring(1)
-                def sum=getSha256(z.getInputStream(found))
-                require("[${f.basename}] \"${dname}\" SHA-256 MUST match \"${n}\". Seen: ($sum) Expected: (${sumtest[n]})", sum==sumtest[n])
-            }
-        }else{  
-            def found=z.getEntry(path)
-            fverify&=require("[${f.basename}] \"${path}\" MUST exist. Result: (${found?:false})",found)
-        }
-    }
-    //verify any counts
-    def fcounts=[:]
-    def path=[]
-    z.entries().findAll{!it.isDirectory()}.each{e->
-        //println e.name
-        counts.each{n,v->
-            if(dirname(e.name)==n){
-                fcounts[n]=1+(fcounts[n]?:0)
+//test zip contents
+def testZip={ totest ->
+    totest.each{ f,dir->
+        def z = new java.util.zip.ZipFile(f)
+        def counts=[:]
+        def fverify=true
+        dir.each{ path->
+            if(path==~/^.+(#.+)$/){
+                //verify number of entries
+                def n = path.split('#',2)[1]
+                def dname = path.split('#',2)[0]
+                def found=z.getEntry(dname)
+                if(n==~/^\d+/){
+                    fverify&=require("[${f.basename}] \"${dname}\" MUST exist. Result: (${found?:false})",found)
+                    counts[dname]=[equal:Integer.parseInt(n)]
+                }else if(n=='+'){
+                    fverify&=require("[${f.basename}] \"${dname}\" MUST exist. Result: (${found?:false})",found)
+                    counts[dname]=[atleast:1]
+                }else if(n=='?'){
+                    counts[dname]=[maybe:1]
+                }else if(n.startsWith('#')){
+                    n=n.substring(1)
+                    def sum=getSha256(z.getInputStream(found))
+                    require("[${f.basename}] \"${dname}\" SHA-256 MUST match \"${n}\". Seen: ($sum) Expected: (${sumtest[n]})", sum==sumtest[n])
+                }
+            }else{
+                def found=z.getEntry(path)
+                fverify&=require("[${f.basename}] \"${path}\" MUST exist. Result: (${found?:false})",found)
             }
         }
-    }
-    counts.each{n,c->
-        if(c['equal']){
-            fverify&=require("[${f.basename}] \"${n}\" MUST have ==${c.equal} files. Result: ${fcounts[n]?:0}",c.equal==fcounts[n])
-        }else if(c['atleast']){
-            fverify&=require("[${f.basename}] \"${n}\" MUST have >=${c.atleast} files. Result: ${fcounts[n]?:0}",c.atleast<=fcounts[n])
-        }else if(c['maybe']){
-            fverify&=expect("[${f.basename}] \"${n}\" SHOULD have >=${c.maybe} files. Result: ${fcounts[n]?:0}",fcounts[n]>0)
+        //verify any counts
+        def fcounts=[:]
+        def path=[]
+        z.entries().findAll{!it.isDirectory()}.each{e->
+            //println e.name
+            counts.each{n,v->
+                if(dirname(e.name)==n){
+                    fcounts[n]=1+(fcounts[n]?:0)
+                }
+            }
         }
+        counts.each{n,c->
+            if(c['equal']){
+                fverify&=require("[${f.basename}] \"${n}\" MUST have ==${c.equal} files. Result: ${fcounts[n]?:0}",c.equal==fcounts[n])
+            }else if(c['atleast']){
+                fverify&=require("[${f.basename}] \"${n}\" MUST have >=${c.atleast} files. Result: ${fcounts[n]?:0}",c.atleast<=fcounts[n])
+            }else if(c['maybe']){
+                fverify&=expect("[${f.basename}] \"${n}\" SHOULD have >=${c.maybe} files. Result: ${fcounts[n]?:0}",fcounts[n]>0)
+            }
+        }
+        require("${f}: was${fverify?'':' NOT'} verified",fverify)
     }
-    require("${f}: was${fverify?'':' NOT'} verified",fverify)
 }
+testZip(ziptest)
+
+//test core jar MF entry 'Rundeck-Tools-Dependencies' is a space-separated list of jars present in the war libs
+def RundeckToolsDependencies = 'Rundeck-Tools-Dependencies'
+def toolDepsStr = new java.util.jar.JarFile(coreJarFile).getManifest().getMainAttributes().getValue(RundeckToolsDependencies)
+require("[${RundeckToolsDependencies}] Manifest entry exists in jar file: "+ coreJarFile, toolDepsStr)
+
+def toolDepsList=toolDepsStr.split(" ") as List
+require("[${RundeckToolsDependencies}] Manifest entry not empty in jar file: " + coreJarFile, toolDepsList)
+
+//test war contents
+def warPkgsDir = "WEB-INF/lib"
+def warLibsZipManifest=toolDepsList.collect{ "${warPkgsDir}/${it}" }
+testZip([(new File(warFile)):warLibsZipManifest])
+
+//test launcher contents
+def launcherPkgsDir = "pkgs/webapp/WEB-INF/lib"
+def launcherLibsZipManifest = toolDepsList.collect { "${launcherPkgsDir}/${it}" }
+testZip([(new File(launcherJarFile)): launcherLibsZipManifest])
+
 
 if(!require("Build manifest was${isValid?'':' NOT'} verified.",isValid)){
     System.exit(1)
