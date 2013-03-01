@@ -477,6 +477,9 @@ class ExecutionController {
         long marktime=System.currentTimeMillis()
         def lastmodl = file.lastModified()
         def percent=100.0 * (((float)storeoffset)/((float)totsize))
+        //via http://benjchristensen.com/2008/02/07/how-to-strip-invalid-xml-characters/
+        String invalidXmlPattern = "[^" + "\\u0009\\u000A\\u000D" + "\\u0020-\\uD7FF" +
+                "\\uE000-\\uFFFD" + "\\u10000-\\u10FFFF" + "]+";
 
         def idstr=e.id.toString()
         def renderclos ={ outf, delegate->
@@ -490,6 +493,7 @@ class ExecutionController {
             delegate.execDuration(execDuration)
             delegate.percentLoaded(percent)
             delegate.totalSize(totsize)
+
 
             delegate.entries(){
                 entry.each{
@@ -509,6 +513,7 @@ class ExecutionController {
                     if(outf=='json'){
                         delegate.'entries'(datamap)
                     }else{
+                        datamap.log=datamap.log.replaceAll(invalidXmlPattern,'')
                         //xml
                         if(request.api_version <= ApiRequestFilters.V5){
                             def text= datamap.remove('log')
