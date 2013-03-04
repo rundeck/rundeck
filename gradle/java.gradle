@@ -18,8 +18,10 @@ if (project.hasProperty('environment') && environment == 'build') {
 }
 
 repositories {
-    mavenLocal();
-	mavenCentral();
+	mavenLocal()
+	maven {
+		url mavenCentralUrl
+	}
 }
 
 sourceCompatibility = 1.6
