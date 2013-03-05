@@ -19,7 +19,7 @@ ifneq ($(TAG),GA)
 RVERSION=$(VERSION)-$(TAG)
 endif
 
-EDAM=groovy ../en/edam.groovy
+EDAM=groovy ../scripts/edam.groovy
 
 .PHONY: man html clean oldlinks
 

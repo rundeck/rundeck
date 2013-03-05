@@ -72,7 +72,6 @@ def manifest=[
         "lib/rundeck-jetty-server-${version}.jar",
         "lib/rundeck-jetty-server-${version}.jar##rundeck-launcher/rundeck-jetty-server/${target}/rundeck-jetty-server-${version}.jar",
         "lib/servlet-api-2.5-20081211.jar",
-        "pkgs/webapp/docs/#?"//optional files
     ],
     "plugins/script-plugin/${target}/rundeck-script-plugin-${version}.jar":[:],
     "plugins/stub-plugin/${target}/rundeck-stub-plugin-${version}.jar":[:],

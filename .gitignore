@@ -21,5 +21,7 @@ rundeckapp/target-eclipse
 rundeckapp/var/logs/*
 rundeckapp/var/tmp/*
 packaging/dist
-docs/en/manpages/**/*.gz
+docs/*/manpages/man*/*.gz
+docs/*/manpages/man*/*.1
+docs/*/manpages/man*/*.5
 tmp/**

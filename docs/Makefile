@@ -13,12 +13,40 @@ endif
 
 .PHONY: all clean
 
-all : $(DIRS)
+dist/rundeck-docs-$(VERSION).zip: all
+	mkdir -p dist
+	for i in $(DIRS) ; do \
+		if [ "$$i" != "en" ] ; then \
+		mkdir en/dist/html/$$i ; \
+		cp -r $$i/dist/html/* en/dist/html/$$i/ ; \
+		fi \
+	done ;
+	cd en/dist && zip -r ../../dist/$(@F) *
+
+all: $(DIRS)
 	for i in $^ ; do \
 	$(MAKE) VERSION=$(VERSION) -C $$i ; \
 	done ;
 
-clean : $(DIRS)
+clean: $(DIRS)
 	for i in $^ ; do \
 	$(MAKE) -C $$i clean ; \
 	done ;
+
+notes: en/history/toc.conf en/RELEASE.md
+
+en/RELEASE.md: ../RELEASE.md
+	cp $< $@
+
+en/history/version-$(VERSION).md: en/RELEASE.md
+	( $(ECHO) "% Version $(VERSION)" ; \
+        $(ECHO) "%" $(shell whoami) ; \
+        $(ECHO) "%" $(shell date "+%m/%d/%Y") ; \
+        $(ECHO) ; ) >$@
+	cat $< >>$@
+
+en/history/toc.conf: en/history/version-$(VERSION).md
+	$(ECHO) "1:version-$(VERSION).md:Version $(VERSION)" > $@.new
+	test -f $@ && ( grep -v -q "$(VERSION)" $@ && \
+		cat $@ >> $@.new && \
+		mv $@.new $@ ) || (  mv $@.new $@ )

@@ -16,7 +16,6 @@ export BUILD_ROOT=$WORKSPACE/build_root
 echo "RTAG: ${RTAG}"
 
 make clean
-make TAG=${RTAG} docs
 
 if [ "$REL" = "release" ] ; then
     ./gradlew -Penvironment=release -PreleaseTag=${RTAG} build
