@@ -97,6 +97,7 @@ function doCreateProject(){
             <g:link controller="framework" action="showFrameworkProject" params="[project:session.project]" title="Select a project">${session.project}</g:link>
         </span>
     </g:if>--}%
+    <g:set var="helpLinkUrl" value="${org.codehaus.groovy.grails.commons.ConfigurationHolder.config.rundeck?.gui?.helpLink ?: g.message(code: 'rundeck.docsite.url', default: 'http://rundeck.org/' + grailsApplication.metadata['app.version'])}"/>
     <g:if test="${session?.user && request.subject}">
         <span class="headright">
             <g:set var="adminauth" value="${false}"/>
@@ -119,7 +120,7 @@ function doCreateProject(){
                 </span> &raquo;
                 <g:link action="logout" controller="user" title="Logout user: ${session.user}" params="${[refLink:controllerName&&actionName?createLink(controller:controllerName,action:actionName,params:params,absolute:true):'']}">logout</g:link>
             </span>
-            <a href="${org.codehaus.groovy.grails.commons.ConfigurationHolder.config.rundeck?.gui?.helpLink ? org.codehaus.groovy.grails.commons.ConfigurationHolder.config.rundeck?.gui?.helpLink : g.message(code:'rundeck.docsite.url',default:'http://rundeck.org/docs/?v='+ grailsApplication.metadata['app.version'].split('-')[0] )}" class="help">
+            <a href="${helpLinkUrl}" class="help">
                 help
                 <img src="${resource(dir:'images',file:'icon-small-help.png')}" width="16px" height="16px" alt=""/>
             </a>
@@ -127,7 +128,7 @@ function doCreateProject(){
     </g:if>
     <g:else>
         <span class="headright">
-            <a href="${org.codehaus.groovy.grails.commons.ConfigurationHolder.config.rundeck?.gui?.helpLink ? org.codehaus.groovy.grails.commons.ConfigurationHolder.config.rundeck?.gui?.helpLink : g.message(code: 'rundeck.docsite.url', default: 'http://rundeck.org/docs/?v=' + grailsApplication.metadata['app.version'].split('-')[0])}" class="help">
+            <a href="${helpLinkUrl}" class="help">
                 help
                 <img src="${resource(dir:'images',file:'icon-small-help.png')}" width="16px" height="16px" alt=""/>
             </a>
