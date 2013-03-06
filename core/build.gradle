@@ -13,19 +13,6 @@ apply plugin: 'signing'
 archivesBaseName = 'rundeck-core'
 defaultTasks 'clean','assemble'
 
-def isReleaseBuild
-def isSnapshotBuild
-def isDevBuild
-
-if(hasProperty('environment') && environment == 'release'){
-    isReleaseBuild=true
-}else if(hasProperty("snapshot")){
-    isSnapshotBuild=true
-    version=version.split('-')[0]+ '-SNAPSHOT'
-}else{
-    isDevBuild=true
-}
-
 configurations {
 	missingJars
 }

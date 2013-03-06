@@ -17,7 +17,6 @@ eclipse.project.name = 'rundeck'
  * Defaults for all projects
  */
 subprojects {
-
     // set the eclipse project naming convention to rundeck:<path>:<projectName>
     // so it matches the logical hierarchy more closely
     apply plugin: 'eclipse'
@@ -32,6 +31,18 @@ subprojects {
     // the releaseTag if it is not 'GA'
     def vtag = environment != 'release' ? '-SNAPSHOT' : (project.hasProperty('releaseTag') && releaseTag!='GA' ? '-'+releaseTag : '')  
     version = currentVersion + vtag
+
+    ext.isReleaseBuild = false
+    ext.isSnapshotBuild = false
+    ext.isDevBuild = false
+
+    if(hasProperty('environment') && environment == 'release'){
+        ext.isReleaseBuild=true
+    }else if(hasProperty("snapshot")){
+        ext.isSnapshotBuild=true
+    }else{
+        ext.isDevBuild=true
+    }
 }
 
 task wrapper(type: Wrapper) {
