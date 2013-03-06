@@ -19,7 +19,8 @@ ifneq ($(TAG),GA)
 RVERSION=$(VERSION)-$(TAG)
 endif
 
-EDAM=groovy ../scripts/edam.groovy
+# use templates from en dir
+EDAM=groovy ../scripts/edam.groovy -t ../en/templates
 
 .PHONY: man html clean oldlinks
 
