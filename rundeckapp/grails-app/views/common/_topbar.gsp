@@ -97,7 +97,9 @@ function doCreateProject(){
             <g:link controller="framework" action="showFrameworkProject" params="[project:session.project]" title="Select a project">${session.project}</g:link>
         </span>
     </g:if>--}%
-    <g:set var="helpLinkUrl" value="${org.codehaus.groovy.grails.commons.ConfigurationHolder.config.rundeck?.gui?.helpLink ?: g.message(code: 'rundeck.docsite.url', default: 'http://rundeck.org/' + grailsApplication.metadata['app.version'])}"/>
+    <g:set var="helpParams" value="${[utm_source:'rundeckapp',utm_medium:'app',utm_campaign:'helplink', utm_content: (controllerName + '/' + actionName)].collect { k, v -> k + '=' + v }.join('&')}"/>
+    <g:set var="helpUrl" value="${'http://rundeck.org/' + grailsApplication.metadata['app.version'] + '?'+helpParams}"/>
+    <g:set var="helpLinkUrl" value="${org.codehaus.groovy.grails.commons.ConfigurationHolder.config.rundeck?.gui?.helpLink ?: helpUrl}"/>
     <g:if test="${session?.user && request.subject}">
         <span class="headright">
             <g:set var="adminauth" value="${false}"/>
