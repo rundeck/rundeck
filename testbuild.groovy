@@ -49,6 +49,7 @@ def manifest=[
         "com/dtolabs/rundeck/#+",// require 1+ files in dir
         "pkgs/webapp/WEB-INF/classes/#+",
         "pkgs/webapp/WEB-INF/lib/rundeck-core-${version}.jar",
+        "pkgs/webapp/WEB-INF/lib/rundeck-jetty-server-${version}.jar",
         // ##file : require checksum verify to top level
         "pkgs/webapp/WEB-INF/lib/rundeck-core-${version}.jar##core/${target}/rundeck-core-${version}.jar",
         "libext/rundeck-script-plugin-${version}.jar",
