@@ -23,21 +23,22 @@ grails.project.dependency.resolution = {
         delete(file: "${stagingDir}/WEB-INF/lib/jasper-compiler-jdt-5.5.15.jar")
     }
 
-	println "Application Version: ${appVersion}"
+    rundeckVersion = System.getProperty("RUNDECK_VERSION", appVersion)
+    println "Application Version: ${rundeckVersion}"
 	
     dependencies {
         
         test 'org.yaml:snakeyaml:1.9', 'org.apache.ant:ant:1.7.1', 'org.apache.ant:ant-jsch:1.7.1', 
              'com.jcraft:jsch:0.1.45', 'log4j:log4j:1.2.16', 'commons-collections:commons-collections:3.2.1', 
              'commons-codec:commons-codec:1.5', 'com.fasterxml.jackson.core:jackson-databind:2.0.2'
-        test("org.rundeck:rundeck-core:${appVersion}"){
+        test("org.rundeck:rundeck-core:${rundeckVersion}"){
             changing=true
         }
              
         compile 'org.yaml:snakeyaml:1.9', 'org.apache.ant:ant:1.7.1', 'org.apache.ant:ant-jsch:1.7.1', 
                 'com.jcraft:jsch:0.1.45','log4j:log4j:1.2.16','commons-collections:commons-collections:3.2.1',
                 'commons-codec:commons-codec:1.5', 'com.fasterxml.jackson.core:jackson-databind:2.0.2'
-        compile("org.rundeck:rundeck-core:${appVersion}") {
+        compile("org.rundeck:rundeck-core:${rundeckVersion}") {
             changing = true
         }
 
@@ -45,7 +46,7 @@ grails.project.dependency.resolution = {
                 'org.apache.ant:ant-jsch:1.7.1','com.jcraft:jsch:0.1.45', 'org.springframework:spring-test:3.0.5.RELEASE',
                 'log4j:log4j:1.2.16' ,'commons-collections:commons-collections:3.2.1','commons-codec:commons-codec:1.5', 
                 'com.fasterxml.jackson.core:jackson-databind:2.0.2', 'postgresql:postgresql:9.1-901.jdbc4'
-        runtime("org.rundeck:rundeck-core:${appVersion}") {
+        runtime("org.rundeck:rundeck-core:${rundeckVersion}") {
             changing = true
         }
     }
