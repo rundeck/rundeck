@@ -27,7 +27,7 @@ dist/rundeck-docs-$(VERSION).zip: all
 
 all: $(DIRS)
 	for i in $^ ; do \
-	$(MAKE) VERSION=$(VERSION) -C $$i ; \
+	$(MAKE) VERSION=$(RVERSION) TAG=$(TAG) -C $$i ; \
 	done ;
 
 clean: $(DIRS)
