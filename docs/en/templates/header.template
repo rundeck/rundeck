@@ -1,0 +1,46 @@
+<div class="rundecksite">
+<nav class="site" >
+      <ul  class="container_12">
+    <li class="item index grid_4 alpha">
+    <a href="http://rundeck.org/index.html">
+      <h1>Rundeck</h1>
+      <p class="rd_version">Open-Source Process Automation</p>
+      </a>
+    </li>
+    <li class="item about grid_2 selected">
+      <a href="http://rundeck.org/about.html">
+        <h1>About</h1>
+        <p>Docs, Screencasts</p>
+      </a>
+    </li>
+    <li class="item help grid_2">
+      <a href="http://rundeck.org/help.html">
+        <h1>Get Help</h1>
+        <p>IRC List Tracker</p>
+      </a>
+    </li>
+    <li class="item plugins grid_2">
+      <a href="http://rundeck.org/plugins/index.html">
+        <h1>Plugins</h1>
+        <p>Integrate Rundeck</p>
+      </a>
+    </li>
+    <li class="item downloads grid_2 omega">
+    <a href="http://rundeck.org/downloads.html">
+      <h1>Download</h1>
+      <p class="rd_version">${VERSION}</p>
+      </a>
+    </li>
+<div class="clear"></div>
+</ul>
+    </nav>
+    <div class="container_12 searchbox">
+    <div class="grid_4 prefix_8">
+        <form action="http://rundeck.org/search/">
+            <input type="search" name="q"/>
+            <input type="submit" value="Search"/>
+        </form>
+    </div>
+<div class="clear"></div>
+</div>
+</div>
