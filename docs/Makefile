@@ -2,20 +2,22 @@ include Makefile.inc
 
 DIRS = en jp
 ifndef VERSION
-RVERSION=$(shell grep version.number= ../version.properties | cut -d= -f 2)
+VERSION=$(shell grep version.number= ../version.properties | cut -d= -f 2)
+endif
+
 ifndef TAG
 TAG=$(shell grep version.tag= ../version.properties | cut -d= -f 2)
 endif
+
 ifneq ($(TAG),GA)
-VERSION=$(RVERSION)-$(TAG)
+RVERSION=$(VERSION)-$(TAG)
 else
-VERSION=$(RVERSION)
-endif
+RVERSION=$(VERSION)
 endif
 
 .PHONY: all clean
 
-dist/rundeck-docs-$(VERSION).zip: all
+dist/rundeck-docs-$(RVERSION).zip: all
 	mkdir -p dist
 	for i in $(DIRS) ; do \
 		if [ "$$i" != "en" ] ; then \
@@ -27,7 +29,7 @@ dist/rundeck-docs-$(VERSION).zip: all
 
 all: $(DIRS)
 	for i in $^ ; do \
-	$(MAKE) VERSION=$(RVERSION) TAG=$(TAG) -C $$i ; \
+	$(MAKE) VERSION=$(VERSION) TAG=$(TAG) -C $$i ; \
 	done ;
 
 clean: $(DIRS)
@@ -40,15 +42,15 @@ notes: en/history/toc.conf en/RELEASE.md
 en/RELEASE.md: ../RELEASE.md
 	cp $< $@
 
-en/history/version-$(VERSION).md: en/RELEASE.md
-	( $(ECHO) "% Version $(VERSION)" ; \
+en/history/version-$(RVERSION).md: en/RELEASE.md
+	( $(ECHO) "% Version $(RVERSION)" ; \
         $(ECHO) "%" $(shell whoami) ; \
         $(ECHO) "%" $(shell date "+%m/%d/%Y") ; \
         $(ECHO) ; ) >$@
 	cat $< >>$@
 
-en/history/toc.conf: en/history/version-$(VERSION).md
-	$(ECHO) "1:version-$(VERSION).md:Version $(VERSION)" > $@.new
-	test -f $@ && ( grep -v -q "$(VERSION)" $@ && \
+en/history/toc.conf: en/history/version-$(RVERSION).md
+	$(ECHO) "1:version-$(RVERSION).md:Version $(RVERSION)" > $@.new
+	test -f $@ && ( grep -v -q "$(RVERSION)" $@ && \
 		cat $@ >> $@.new && \
 		mv $@.new $@ ) || (  mv $@.new $@ )
