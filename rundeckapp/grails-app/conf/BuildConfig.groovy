@@ -1,3 +1,13 @@
+/*
+ * The following allows grails to leverage a different url setting for maven central. This would
+ * typically be passed along as a -D parameter to grails, ie: grails -Dmaven.central.ur=http://...
+ */
+def mavenCentralUrl = "http://repo1.maven.org/maven2/"
+if (System.properties["maven.central.url"]) {
+    mavenCentralUrl = System.properties["maven.central.url"]
+}
+println "Maven Central: ${mavenCentralUrl}"
+
 grails.project.dependency.resolution = {
     inherits "global" // inherit Grails' default dependencies
     log "warn" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
@@ -7,7 +17,7 @@ grails.project.dependency.resolution = {
         grailsHome()
         grailsPlugins()
         grailsCentral()
-        mavenCentral()
+        mavenRepo mavenCentralUrl
     }
 
     grails.war.resources = {def stagingDir ->
@@ -23,8 +33,8 @@ grails.project.dependency.resolution = {
         delete(file: "${stagingDir}/WEB-INF/lib/jasper-compiler-jdt-5.5.15.jar")
     }
 
-	println "Application Version: ${appVersion}"
-	
+    println "Application Version: ${appVersion}"
+    
     dependencies {
         
         test 'org.yaml:snakeyaml:1.9', 'org.apache.ant:ant:1.7.1', 'org.apache.ant:ant-jsch:1.7.1', 
