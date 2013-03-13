@@ -4,13 +4,13 @@
     <li class="item index grid_4 alpha">
     <a href="http://rundeck.org/index.html">
       <h1>Rundeck</h1>
-      <p class="rd_version">Open-Source Process Automation</p>
+      <p class="rd_version">Open-Source Workflow Automation</p>
       </a>
     </li>
     <li class="item about grid_2 selected">
       <a href="http://rundeck.org/about.html">
         <h1>About</h1>
-        <p>Docs, Screencasts</p>
+        <p>News, Videos, Docs</p>
       </a>
     </li>
     <li class="item help grid_2">
