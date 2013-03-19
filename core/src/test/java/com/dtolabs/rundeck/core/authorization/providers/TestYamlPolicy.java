@@ -177,10 +177,9 @@ public class TestYamlPolicy extends TestCase {
 
 
         {
-            //if type=='job' and rules: exists, it uses legacy
+            //if type=='job' and rules: exists but no 'for', it uses legacy
             final Map map = new HashMap();
             map.put("description", "test1");
-            map.put("for", new HashMap());
             map.put("rules", new HashMap());
             final YamlPolicy.TypeContextFactory typeContextFactory = null;
             final TestLegacyContextFactory legacyContextFactory = new TestLegacyContextFactory();

@@ -32,4 +32,26 @@ public class Attribute {
     public String toString() {
         return property.toString() + ":" + value;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Attribute attribute = (Attribute) o;
+
+        if (!property.equals(attribute.property)) return false;
+        if (!value.equals(attribute.value)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = property.hashCode();
+        result = 31 * result + value.hashCode();
+        return result;
+    }
+
+
 }

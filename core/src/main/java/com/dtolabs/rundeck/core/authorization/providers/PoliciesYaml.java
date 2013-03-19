@@ -80,9 +80,31 @@ public class PoliciesYaml implements PolicyCollection {
         throws InvalidCollection {
         final ArrayList<AclContext> matchedContexts = new ArrayList<AclContext>();
         int i = 0;
+        Set<Username> userPrincipals = subject.getPrincipals(Username.class);
+        Set<String> usernamePrincipals = new HashSet<String>();
+        if (userPrincipals.size() > 0) {
+            for (Username username : userPrincipals) {
+                usernamePrincipals.add(username.getName());
+            }
+        }
+        Set<Group> groupPrincipals = subject.getPrincipals(Group.class);
+        Set<Object> groupNames = new HashSet<Object>();
+        if (groupPrincipals.size() > 0) {
+            for (Group groupPrincipal : groupPrincipals) {
+                if (groupPrincipal instanceof LdapGroup) {
+                    try {
+                        groupNames.add(new LdapName(groupPrincipal.getName()));
+                    } catch (InvalidNameException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                } else {
+                    groupNames.add(groupPrincipal.getName());
+                }
+            }
+        }
         for (final Policy policy : policyLister) {
             long userMatchStart = System.currentTimeMillis();
-
 
             if(null!=policy.getEnvironment()){
                 final EnvironmentalContext environment1 = policy.getEnvironment();
@@ -90,7 +112,9 @@ public class PoliciesYaml implements PolicyCollection {
                     logger.warn(policy.toString()+ ": Context section not valid: " + environment1.toString());
                 }
                 if(!environment1.matches(environment)){
-                    logger.debug(policy.toString() + ": environment not matched: " + environment1.toString());
+                    if(logger.isDebugEnabled()){
+                        logger.debug(policy.toString() + ": environment not matched: " + environment1.toString());
+                    }
                     continue;
                 }
             }else if (null != environment && environment.size() > 0) {
@@ -99,49 +123,29 @@ public class PoliciesYaml implements PolicyCollection {
             }
             
 
-            Set<Username> userPrincipals = subject.getPrincipals(Username.class);
-            if (userPrincipals.size() > 0) {
+            if (usernamePrincipals.size() > 0) {
                 Set<String> policyUsers = policy.getUsernames();
-                Set<String> usernamePrincipals = new HashSet<String>();
-                for (Username username : userPrincipals) {
-                    usernamePrincipals.add(username.getName());
-                }
-
                 if (!Collections.disjoint(policyUsers, usernamePrincipals)) {
                     matchedContexts.add(policy.getContext());
                     continue;
                 }else if(policyUsers.size()>0){
-                    logger.debug(policy.toString() + ": username not matched: "+ policyUsers);
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(policy.toString() + ": username not matched: "+ policyUsers);
+                    }
                 }
             }
 
 
-            Set<Group> groupPrincipals = subject.getPrincipals(Group.class);
-            if (groupPrincipals.size() > 0) {
+            if (groupNames.size() > 0) {
                 // no username matched, check groups.
-                long groupCollectStart = System.currentTimeMillis();
-
                 Set<Object> policyGroups = policy.getGroups();
-                Set<Object> groupNames = new HashSet<Object>();
-                for (Group groupPrincipal : groupPrincipals) {
-                    if (groupPrincipal instanceof LdapGroup) {
-                        try {
-                            groupNames.add(new LdapName(groupPrincipal.getName()));
-                        } catch (InvalidNameException e) {
-                            // TODO Auto-generated catch block
-                            e.printStackTrace();
-                        }
-                    } else {
-                        groupNames.add(groupPrincipal.getName());
-                    }
-                }
-
-                long collectDuration = System.currentTimeMillis() - groupCollectStart;
                 if (!Collections.disjoint(policyGroups, groupNames)) {
                     matchedContexts.add(policy.getContext());
                     continue;
                 }else if(policyGroups.size()>0){
-                    logger.debug(policy.toString() + ": group not matched: " + policyGroups);
+                    if(logger.isDebugEnabled()){
+                        logger.debug(policy.toString() + ": group not matched: " + policyGroups);
+                    }
                 }
             }
 

@@ -86,11 +86,14 @@ class FrameworkService implements ApplicationContextAware {
      */
     def projects (Framework framework) {
         //authorize the list of projects
-        def projs = framework.getFrameworkProjectMgr().listFrameworkProjects()
-        def allowed=projs.findAll { FrameworkProject fp->
-            authorizeApplicationResource(framework,[type:'project',name:fp.getName()],'read')
+        def projMap=[:]
+        def resources=[] as Set
+        for (proj in framework.frameworkProjectMgr.listFrameworkProjects()) {
+            projMap[proj.name] = proj;
+            resources << [type: 'project', name: proj.name]
         }
-        return new ArrayList(allowed)
+        def authed = authorizeApplicationResourceSet(framework, resources, 'read')
+        return new ArrayList(authed.collect{projMap[it.name]})
     }
 
     def existsFrameworkProject(String project, Framework framework) {
@@ -275,6 +278,21 @@ class FrameworkService implements ApplicationContextAware {
             action,
             Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
         return decision.authorized
+    }
+    /**
+     * return all authorized resources for the action evaluated in the application context
+     * @param framework
+     * @param resources requested resources to authorize
+     * @param action
+     * @return set of authorized resources
+     */
+    def Set authorizeApplicationResourceSet(Framework framework, Set<Map> resources, String action) {
+        def decisions = framework.getAuthorizationMgr().evaluate(
+                resources,
+                framework.getAuthenticationMgr().subject,
+                [action] as Set,
+                Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
+        return decisions.findAll {it.authorized}.collect {it.resource}
     }
 
     /**

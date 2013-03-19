@@ -41,7 +41,8 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class PoliciesCache implements Iterable<PolicyCollection> {
-    
+    static final long DIR_LIST_CHECK_DELAY = Long.getLong(PoliciesCache.class.getName()+".DirListCheckDelay", 60000);
+    static final long FILE_CHECK_DELAY = Long.getLong(PoliciesCache.class.getName() +".FileCheckDelay", 60000);
     private final static Logger logger = Logger.getLogger(PoliciesCache.class);
     
     static final FilenameFilter filenameFilter = new FilenameFilter() {
@@ -51,8 +52,7 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
     };
     
     private Set<File> warned = new HashSet<File>();
-    private HashMap<File, PolicyCollection> cache = new HashMap<File, PolicyCollection>();
-    private HashMap<File, Long> expiry = new HashMap<File, Long>();
+    private Map<File, CacheItem> cache = new HashMap<File, CacheItem>();
     private DocumentBuilder builder;
     private File rootDir;
 
@@ -64,8 +64,34 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
         builder.setErrorHandler(null);
     }
 
+    private static class CacheItem{
+        PolicyCollection policyCollection;
+        Long cacheTime;
+        Long modTime;
+
+        private CacheItem(PolicyCollection policyCollection, Long modTime) {
+            this.policyCollection = policyCollection;
+            this.modTime = modTime;
+            this.cacheTime=System.currentTimeMillis();
+        }
+
+        public void touch(Long time) {
+            this.cacheTime = time;
+        }
+    }
+
+    long lastDirListCheckTime=0;
+    private File[] lastDirList;
     private File[] listDirFiles() {
-        return rootDir.listFiles(filenameFilter);
+        if(System.currentTimeMillis()-lastDirListCheckTime > DIR_LIST_CHECK_DELAY) {
+            doListDir();
+        }
+        return lastDirList;
+    }
+
+    private void doListDir() {
+        lastDirList = rootDir.listFiles(filenameFilter);
+        lastDirListCheckTime=System.currentTimeMillis();
     }
 
     public synchronized void add(final File file) throws PoliciesParseException {
@@ -92,24 +118,36 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
     }
 
     public synchronized PolicyCollection getDocument(final File file) throws PoliciesParseException {
-        if(!file.exists()) {
-            expiry.remove(file);
-            cache.remove(file);
-            return null;
-        }
-        final long lastmod = file.lastModified();
-        final Long cachetime = expiry.get(file);
-        final PolicyCollection entry;
-        if (null == cachetime || lastmod > cachetime) {
-            entry = createEntry(file);
-            if (null != entry) {
-                expiry.put(file, lastmod);
-                cache.put(file, entry);
+//        cacheTotal++;
+        CacheItem entry = cache.get(file);
+
+        long checkTime = System.currentTimeMillis();
+        if (null == entry || ((checkTime - entry.cacheTime) > FILE_CHECK_DELAY)) {
+            final long lastmod = file.lastModified();
+            if (null == entry || lastmod > entry.modTime) {
+                    if (!file.exists()) {
+                        CacheItem remove = cache.remove(file);
+                        entry = null;
+//                        cacheRemove++;
+                    } else {
+//                        cacheMiss++;
+                        PolicyCollection entry1 = createEntry(file);
+                        if (null != entry1) {
+                            entry = new CacheItem(entry1, lastmod);
+                            cache.put(file, entry);
+                        } else {
+                            cache.remove(file);
+                            entry = null;
+                        }
+                    }
+            }else{
+//                cacheUnmodifiedHit++;
+                entry.touch(checkTime);
             }
-        } else {
-            entry = cache.get(file);
+        }else{
+//            cacheHit++;
         }
-        return entry;
+        return null != entry ? entry.policyCollection : null;
     }
 
     public Iterator<PolicyCollection> iterator() {
