@@ -52,6 +52,9 @@ grails.project.dependency.resolution = {
         runtime("org.rundeck:rundeck-jetty-server:${appVersion}") {
             changing = true
         }
+        runtime("org.rundeck:rundeck-jetty-server:${appVersion}") {
+            changing = true
+        }
     }
     
     grails.plugin.location.'webrealms' = "webrealms"
