@@ -13,19 +13,6 @@ apply plugin: 'signing'
 archivesBaseName = 'rundeck-core'
 defaultTasks 'clean','assemble'
 
-def isReleaseBuild
-def isSnapshotBuild
-def isDevBuild
-
-if(hasProperty('environment') && environment == 'release'){
-    isReleaseBuild=true
-}else if(hasProperty("snapshot")){
-    isSnapshotBuild=true
-    version=version.split('-')[0]+ '-SNAPSHOT'
-}else{
-    isDevBuild=true
-}
-
 dependencies {
     compile 'org.apache.ant:ant:1.7.1',
         'org.apache.ant:ant-launcher:1.7.1',

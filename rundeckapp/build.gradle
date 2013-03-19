@@ -23,18 +23,6 @@ apply plugin: 'idea'
 apply plugin: 'maven'
 apply plugin: 'signing'
 
-def isReleaseBuild
-def isSnapshotBuild
-def isDevBuild
-
-if(hasProperty('environment') && environment == 'release'){
-    isReleaseBuild=true
-}else if(hasProperty("snapshot")){
-    isSnapshotBuild=true
-}else{
-    isDevBuild=true
-}
-
 // set the convention to rundeck:<branch>:<path>:<projectName>
 eclipse.project.name =  "${project.getParent().eclipse.project.name}:webapp"
 
@@ -49,19 +37,8 @@ def grailsInstallLocation = "${rootProject.buildDir}/local"
 def grailsDownloadUrl = "http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/grails-${grailsVersion}.zip"
 def grailsHome = "${grailsInstallLocation}/${grailsBaseName}"
 def grailsCommandLine = "${grailsHome}/bin/grails"
-def warFileLocation = "${project.projectDir}/target/rundeck-${version}.war"
-
-/**
- * Depend on core
- */
-//dependencies {
-//	compile project(":core")
-//}
-//
-//repositories {
-//	mavenLocal()
-//	mavenCentral()
-//}
+def warFileName = "rundeck-${version}.war"
+def warFileLocation = "${project.projectDir}/target/${warFileName}"
 
 /**
  * Downloads Grails from the SpringSource archives
@@ -133,7 +110,7 @@ task installJettyPlugin(type: Exec, dependsOn: [extractGrails]) {
 	workingDir project.projectDir
 	environment 'GRAILS_HOME', grailsHome
 	commandLine grailsCommandLine
-	args 'install-plugin', 'jetty', jettyPluginVersion
+	args "-DRUNDECK_VERSION=${version}", 'install-plugin', 'jetty', jettyPluginVersion
 }
 
 task cleanWar(type: Delete) {
@@ -145,7 +122,7 @@ task cleanGrails(type: Exec, dependsOn: [extractGrails]) {
 	workingDir project.projectDir
 	environment 'GRAILS_HOME', grailsHome
 	commandLine grailsCommandLine
-	args 'clean'
+	args "-DRUNDECK_VERSION=${version}", 'clean'
 }
 
 task clean(overwrite: true, dependsOn: [cleanEclipse, cleanWar]) {
@@ -159,28 +136,20 @@ task testGrails(type: Exec, overwrite: true, dependsOn: [installJettyPlugin, ins
 	workingDir project.projectDir
 	environment 'GRAILS_HOME', grailsHome
 	commandLine grailsCommandLine
-	args 'test-app','-coverage','-xml'
+	args "-DRUNDECK_VERSION=${version}", 'test-app','-coverage','-xml'
 }
 test.dependsOn testGrails
 
 /**
- * Sets the value of app.version under application.properties
- */
-task replaceVersion(type: PropertyValueUpdater) {
-	propertyFile = file("${projectDir.path}/application.properties")
-	propertiesMap = [ 'app.version' : project.version ]
-}
-			
-/**
  * Builds the rundeck war file
  */
-task grailsWar(type: Exec, overwrite:true, dependsOn: [replaceVersion,installJettyPlugin, installDependencies,extractGrails]) {
+task grailsWar(type: Exec, overwrite:true, dependsOn: [installJettyPlugin, installDependencies,extractGrails]) {
 	inputs.sourceDir file("${projectDir}/src")
 	outputs.file file(warFileLocation)
 	workingDir project.projectDir
 	environment 'GRAILS_HOME', grailsHome
 	commandLine grailsCommandLine
-	args 'prod','war'
+	args "-DRUNDECK_VERSION=${version}", 'prod','war', warFileLocation 
 }
 
 // add the war to default configuration for this project
@@ -304,46 +273,3 @@ uploadArchives {
         }
     }
 }
-/**
- * Does an "in-place" substitution of a property value without having to using placeholders
- * 
- * @author jburbridge
- */
-class PropertyValueUpdater extends DefaultTask {
-
-	@OutputFile
-	File propertyFile
-	
-	@Input
-	Map propertiesMap
-	
-	@TaskAction
-	def void replaceContents() {
-		
-		if (propertyFile.isFile() && propertyFile.exists()) {
-			
-			def newLines = []
-			propertyFile.readLines().each { line ->
-				
-				logger.debug("${this} processing line: ${line}")
-				// match the key and the value, but skip comments 
-				def matcher = line =~ /^#{0}\s*([\w\.].*)\s*\=\s*(.*)$/
-				// if there's a match and we have a property value, replace it 
-				if (matcher.size() != 0 && matcher[0] != null && matcher[0].size() > 1) {
-					newLines.add((propertiesMap[matcher[0][1]] != null) ?
-						"${matcher[0][1]}=${propertiesMap[matcher[0][1]]}" : line)
-				// if we don't find a match, just add the line back as-is
-				} else {
-					newLines.add(line)
-				}
-			}
-			
-			propertyFile.write(newLines.join("\n"))
-			logger.warn("Wrote file: ${propertyFile}")
-			
-		} else {
-			throw new TaskExecutionException(this, new RuntimeException("Could not find property file ${propertyFile}!"))
-		}
-	}
-}
-
