@@ -93,7 +93,7 @@ task extractGrails(dependsOn: downloadGrails) {
  * "core" needs to be built and installed into the local ~/.m2 repo before 
  * we attempt to do anything further with Grails. 
  */
-task installDependencies(dependsOn: [project(":core").install]) << {
+task installDependencies(dependsOn: [project(":core").install, project(":rundeck-launcher:rundeck-jetty-server").install]) << {
 	description = "Builds and installs dependencies on other subprojects"
 }
 

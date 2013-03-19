@@ -28,6 +28,7 @@ jar {
     }
 }
 
+install.dependsOn build 
 
 apply plugin: 'maven'
 task createPom << {
