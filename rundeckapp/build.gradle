@@ -110,7 +110,11 @@ task installJettyPlugin(type: Exec, dependsOn: [extractGrails]) {
 	workingDir project.projectDir
 	environment 'GRAILS_HOME', grailsHome
 	commandLine grailsCommandLine
-	args "-DRUNDECK_VERSION=${version}", 'install-plugin', 'jetty', jettyPluginVersion
+	args "-Dmaven.central.url=${mavenCentralUrl}",
+        "-DRUNDECK_VERSION=${version}",
+		'install-plugin', 
+		'jetty', 
+		jettyPluginVersion
 }
 
 task cleanWar(type: Delete) {
@@ -136,7 +140,11 @@ task testGrails(type: Exec, overwrite: true, dependsOn: [installJettyPlugin, ins
 	workingDir project.projectDir
 	environment 'GRAILS_HOME', grailsHome
 	commandLine grailsCommandLine
-	args "-DRUNDECK_VERSION=${version}", 'test-app','-coverage','-xml'
+	args "-Dmaven.central.url=${mavenCentralUrl}",
+        "-DRUNDECK_VERSION=${version}",
+		'test-app',
+		'-coverage',
+		'-xml'
 }
 test.dependsOn testGrails
 
@@ -149,7 +157,7 @@ task grailsWar(type: Exec, overwrite:true, dependsOn: [installJettyPlugin, insta
 	workingDir project.projectDir
 	environment 'GRAILS_HOME', grailsHome
 	commandLine grailsCommandLine
-	args "-DRUNDECK_VERSION=${version}", 'prod','war', warFileLocation 
+	args "-Dmaven.central.url=${mavenCentralUrl}", "-DRUNDECK_VERSION=${version}", 'prod','war', warFileLocation
 }
 
 // add the war to default configuration for this project
@@ -173,7 +181,7 @@ task install(type: Exec, overwrite: true, dependsOn: grailsWar) {
 	inputs.file file(warFileLocation)
 	workingDir project.projectDir
 	commandLine grailsCommandLine
-	args 'maven-install'
+	args "-Dmaven.central.url=${mavenCentralUrl}", 'maven-install'
 }
 
 //********* artifact signing *********
