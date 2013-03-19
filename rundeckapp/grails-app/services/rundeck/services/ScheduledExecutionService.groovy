@@ -895,6 +895,9 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         if (nonopts.uuid != scheduledExecution.uuid) {
             changeinfo.extraInfo = " (internalID:${scheduledExecution.id})"
         }
+        def origJobName=scheduledExecution.jobName
+        def origGroupPath=scheduledExecution.groupPath
+
         scheduledExecution.properties = nonopts
 
         if(!scheduledExecution.nodeThreadcount){
@@ -941,6 +944,14 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
 
         if (!scheduledExecution.validate()) {
             failed = true
+        }
+        if(origGroupPath!=scheduledExecution.groupPath || origJobName!=scheduledExecution.jobName){
+            //reauthorize if the name/group has changed
+            if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_CREATE], scheduledExecution.project)) {
+                failed = true
+                scheduledExecution.errors.rejectValue('jobName', 'ScheduledExecution.jobName.unauthorized', [AuthConstants.ACTION_CREATE, scheduledExecution.jobName].toArray(), 'Unauthorized action: {0} for value: {1}')
+                scheduledExecution.errors.rejectValue('groupPath', 'ScheduledExecution.groupPath.unauthorized', [ AuthConstants.ACTION_CREATE, scheduledExecution.groupPath].toArray(), 'Unauthorized action: {0} for value: {1}')
+            }
         }
         if (scheduledExecution.scheduled) {
             scheduledExecution.populateTimeDateFields(params)
@@ -1417,6 +1428,9 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         }
         //clear filter params
         scheduledExecution.clearFilterFields()
+        def origGroupPath=scheduledExecution.groupPath
+        def origJobName=scheduledExecution.jobName
+
         scheduledExecution.properties = newprops
 
         //fix potential null/blank issue after upgrading rundeck to 1.3.1/1.4
@@ -1432,6 +1446,15 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
 
         if (!scheduledExecution.validate()) {
             failed = true
+        }
+
+        if (origGroupPath != scheduledExecution.groupPath || origJobName != scheduledExecution.jobName) {
+            //reauthorize if the name/group has changed
+            if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_CREATE], scheduledExecution.project)) {
+                failed = true
+                scheduledExecution.errors.rejectValue('jobName', 'ScheduledExecution.jobName.unauthorized', [AuthConstants.ACTION_CREATE, scheduledExecution.jobName].toArray(), 'Unauthorized action: {0} for value: {1}')
+                scheduledExecution.errors.rejectValue('groupPath', 'ScheduledExecution.groupPath.unauthorized', [AuthConstants.ACTION_CREATE, scheduledExecution.groupPath].toArray(), 'Unauthorized action: {0} for value: {1}')
+            }
         }
         if (scheduledExecution.scheduled) {
             scheduledExecution.user = user
