@@ -50,6 +50,7 @@ grails.project.dependency.resolution = {
                 'commons-codec:commons-codec:1.5', 'com.fasterxml.jackson.core:jackson-databind:2.0.2'
         compile("org.rundeck:rundeck-core:${rundeckVersion}") {
             changing = true
+            excludes("xalan")
         }
 
         runtime 'org.yaml:snakeyaml:1.9', 'org.apache.ant:ant:1.7.1', 'org.apache.ant:ant-launcher:1.7.1',
