@@ -1543,6 +1543,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 return null
             }
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
@@ -1605,6 +1606,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 return null
             }
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             sec.frameworkService = fwkControl.createMock()
@@ -1647,12 +1649,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 assertEquals 'testProject2', project
                 return true
             }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject2', project
-                assertEquals 'aType2', type
-                assertEquals 'aCommand2', command
-                return null
-            }
+            fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
             sec.frameworkService = fwkControl.createMock()
 
             def params = new ScheduledExecution(jobName: 'monkey2', project: 'testProject2', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',
@@ -1705,12 +1702,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 assertEquals 'testProject2', project
                 return true
             }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject2', project
-                assertEquals 'aType2', type
-                assertEquals 'aCommand2', command
-                return null
-            }
+            fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
             sec.frameworkService = fwkControl.createMock()
 
             def params = new ScheduledExecution(jobName: 'test/monkey2', project: 'testProject2', description: 'blah', adhocExecution: true, adhocRemoteString: 'test command',
@@ -1752,12 +1744,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 assertEquals 'testProject2', project
                 return true
             }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject2', project
-                assertEquals 'aType2', type
-                assertEquals 'aCommand2', command
-                return null
-            }
+            fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
             sec.frameworkService = fwkControl.createMock()
 
             def eh1 = new CommandExec(adhocRemoteString: 'err command')
@@ -1812,12 +1799,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 assertEquals 'testProject2', project
                 return true
             }
-            fwkControl.demand.getCommand { project, type, command, framework ->
-                assertEquals 'testProject2', project
-                assertEquals 'aType2', type
-                assertEquals 'aCommand2', command
-                return null
-            }
+            fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
             sec.frameworkService = fwkControl.createMock()
 
             def eh1 = new PluginStep(keepgoingOnSuccess: true,type: 'asdf',nodeStep: true,configuration: ["blah":"value"])
@@ -1881,12 +1863,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 assertEquals 'testProject2', project
                 return true
             }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject2', project
-                assertEquals 'aType2', type
-                assertEquals 'aCommand2', command
-                return null
-            }
+            fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
             sec.frameworkService = fwkControl.createMock()
 
             def eh1 = new CommandExec(adhocRemoteString: 'err command')
@@ -1931,12 +1908,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 assertEquals 'testProject2', project
                 return true
             }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject2', project
-                assertEquals 'aType2', type
-                assertEquals 'aCommand2', command
-                return null
-            }
+            fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
             sec.frameworkService = fwkControl.createMock()
 
             def eh1 = new CommandExec(adhocRemoteString: 'err command')
@@ -1986,12 +1958,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 assertEquals 'testProject2', project
                 return true
             }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject2', project
-                assertEquals 'aType2', type
-                assertEquals 'aCommand2', command
-                return null
-            }
+            fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
             sec.frameworkService = fwkControl.createMock()
 
             def params = new ScheduledExecution(jobName: 'monkey2', project: 'testProject2', description: 'blah',
@@ -2037,12 +2004,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 assertEquals 'testProject2', project
                 return true
             }
-            fwkControl.demand.getCommand { project, type, command, framework ->
-                assertEquals 'testProject2', project
-                assertEquals 'aType2', type
-                assertEquals 'aCommand2', command
-                return null
-            }
+            fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
             sec.frameworkService = fwkControl.createMock()
 
             def params = new ScheduledExecution(jobName: 'monkey2', project: 'testProject2', description: 'blah',
@@ -2093,12 +2055,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 assertEquals 'testProject2', project
                 return true
             }
-            fwkControl.demand.getCommand { project, type, command, framework ->
-                assertEquals 'testProject2', project
-                assertEquals 'aType2', type
-                assertEquals 'aCommand2', command
-                return null
-            }
+            fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
             sec.frameworkService = fwkControl.createMock()
 
             def params = new ScheduledExecution(jobName: 'monkey2', project: 'testProject2', description: 'blah',
@@ -3131,12 +3088,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 assertEquals 'testProject2', project
                 return true
             }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject2', project
-                assertEquals '', type
-                assertEquals '', command
-                return null
-            }
+            fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
@@ -3189,12 +3141,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 assertEquals 'testProject2', project
                 return true
             }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject2', project
-                assertEquals '', type
-                assertEquals '', command
-                return null
-            }
+            fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
@@ -3252,12 +3199,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 assertEquals 'testProject2', project
                 return true
             }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject2', project
-                assertEquals '', type
-                assertEquals '', command
-                return null
-            }
+            fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
@@ -3316,12 +3258,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 assertEquals 'testProject2', project
                 return true
             }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject2', project
-                assertEquals '', type
-                assertEquals '', command
-                return null
-            }
+            fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
@@ -3379,12 +3316,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 assertEquals 'testProject2', project
                 return true
             }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject2', project
-                assertEquals '', type
-                assertEquals '', command
-                return null
-            }
+            fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
@@ -3442,12 +3374,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 assertEquals 'testProject2', project
                 return true
             }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject2', project
-                assertEquals '', type
-                assertEquals '', command
-                return null
-            }
+            fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
@@ -3505,12 +3432,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
                 assertEquals 'testProject2', project
                 return true
             }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                assertEquals 'testProject2', project
-                assertEquals '', type
-                assertEquals '', command
-                return null
-            }
+            fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
@@ -3572,12 +3494,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'testProject2', project
             return true
         }
-        fwkControl.demand.getCommand {project, type, command, framework ->
-            assertEquals 'testProject2', project
-            assertEquals '', type
-            assertEquals '', command
-            return null
-        }
+        fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
         sec.frameworkService = fwkControl.createMock()
 
         def params = new ScheduledExecution(jobName: 'monkey2', project: 'testProject2', description: 'blah',
@@ -3628,6 +3545,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertEquals 'testProject2', project
             return true
         }
+        fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
         sec.frameworkService = fwkControl.createMock()
 
         def params = new ScheduledExecution(jobName: 'monkey2', project: 'testProject2', description: 'blah',
@@ -5129,9 +5047,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             fwkControl.demand.existsFrameworkProject {project, framework ->
                 return true
             }
-            fwkControl.demand.getCommand {project, type, command, framework ->
-                return null
-            }
+            fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
             fwkControl.demand.getFrameworkFromUserSession {session, request -> return null }
