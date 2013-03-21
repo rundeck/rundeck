@@ -34,6 +34,7 @@ def boolean grailsZipFileBasePathOverriden = hasProperty("grailsZipFileBasePath"
 def grailsZipFileBasePath = grailsZipFileBasePathOverriden ? grailsZipFileBasePath : grailsZipFileDefaultBasePath
 def grailsZipFileLocation = "${grailsZipFileBasePath}/${grailsZipFile}"
 def grailsInstallLocation = "${rootProject.buildDir}/local"
+def grailsLocalRepo = hasProperty("grailsLocalRepo") ? grailsLocalRepo : "grails-app/plugins"
 def grailsDownloadUrl = "http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/grails-${grailsVersion}.zip"
 def grailsHome = "${grailsInstallLocation}/${grailsBaseName}"
 def grailsCommandLine = "${grailsHome}/bin/grails"
@@ -111,10 +112,11 @@ task installJettyPlugin(type: Exec, dependsOn: [extractGrails]) {
 	environment 'GRAILS_HOME', grailsHome
 	commandLine grailsCommandLine
 	args "-Dmaven.central.url=${mavenCentralUrl}",
-        "-DRUNDECK_VERSION=${version}",
-		'install-plugin', 
-		'jetty', 
-		jettyPluginVersion
+            "-Dgrails.local.repo=${grailsLocalRepo}",
+            "-DRUNDECK_VERSION=${version}",
+            'install-plugin', 
+            'jetty', 
+            jettyPluginVersion
 }
 
 task cleanWar(type: Delete) {
@@ -141,10 +143,11 @@ task testGrails(type: Exec, overwrite: true, dependsOn: [installJettyPlugin, ins
 	environment 'GRAILS_HOME', grailsHome
 	commandLine grailsCommandLine
 	args "-Dmaven.central.url=${mavenCentralUrl}",
-        "-DRUNDECK_VERSION=${version}",
-		'test-app',
-		'-coverage',
-		'-xml'
+            "-Dgrails.local.repo=${grailsLocalRepo}",
+            "-DRUNDECK_VERSION=${version}",
+            'test-app',
+            '-coverage',
+            '-xml'
 }
 test.dependsOn testGrails
 
@@ -157,7 +160,12 @@ task grailsWar(type: Exec, overwrite:true, dependsOn: [installJettyPlugin, insta
 	workingDir project.projectDir
 	environment 'GRAILS_HOME', grailsHome
 	commandLine grailsCommandLine
-	args "-Dmaven.central.url=${mavenCentralUrl}", "-DRUNDECK_VERSION=${version}", 'prod','war', warFileLocation
+	args "-Dmaven.central.url=${mavenCentralUrl}",
+            "-Dgrails.local.repo=${grailsLocalRepo}",
+            "-DRUNDECK_VERSION=${version}",
+            'prod',
+            'war',
+            warFileLocation
 }
 
 // add the war to default configuration for this project
@@ -181,7 +189,9 @@ task install(type: Exec, overwrite: true, dependsOn: grailsWar) {
 	inputs.file file(warFileLocation)
 	workingDir project.projectDir
 	commandLine grailsCommandLine
-	args "-Dmaven.central.url=${mavenCentralUrl}", 'maven-install'
+	args "-Dmaven.central.url=${mavenCentralUrl}",
+            "-Dgrails.local.repo=${grailsLocalRepo}",
+            'maven-install'
 }
 
 //********* artifact signing *********
