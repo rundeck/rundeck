@@ -192,6 +192,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
         final Future<ResponderTask.ResponderResult> responderFuture;
         final SudoResponder sudoResponder = SudoResponder.create(node, framework, context);
+        Runnable responderCleanup=null;
         if (sudoResponder.isSudoEnabled() && sudoResponder.matchesCommandPattern(command[0])) {
             final DisconnectResultHandler resultHandler = new DisconnectResultHandler();
 
@@ -244,7 +245,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
             responderFuture = executor.submit(responderResultCallable);
             //close streams after responder is finished
-            executor.submit(new Runnable() {
+            responderCleanup = new Runnable() {
                 public void run() {
                     logger.debug("SudoResponder shutting down...");
                     try {
@@ -261,8 +262,9 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                     //executor pool shutdown
                     executor.shutdownNow();
                 }
-            });
-        } else {
+            };
+            executor.submit(responderCleanup);
+        }else {
             responderFuture = null;
         }
         if (null != context.getExecutionListener()) {
@@ -281,6 +283,9 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             errormsg = extractJschFailure.getErrormsg();
             failureReason = extractJschFailure.getReason();
             context.getExecutionListener().log(0, errormsg);
+        }
+        if (null != responderCleanup) {
+            responderCleanup.run();
         }
         shutdownAndAwaitTermination(executor);
         if (null != responderFuture) {
