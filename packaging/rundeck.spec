@@ -95,7 +95,6 @@ fi
 /var/lib/rundeck/cli/rundeck-core-%{_vname}.jar
 /var/lib/rundeck/cli/snakeyaml-1.9.jar
 /var/lib/rundeck/cli/xercesImpl-2.6.2.jar
-/var/lib/rundeck/cli/xalan-2.6.0.jar
 /var/lib/rundeck/cli/xom-1.0.jar
 
 # CLI Tools
