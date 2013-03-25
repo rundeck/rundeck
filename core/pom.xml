@@ -111,7 +111,7 @@
           <archive>
             <manifestEntries>
               <Rundeck-Version>1.5.1-SNAPSHOT</Rundeck-Version>
-              <Rundeck-Tools-Dependencies>ant-1.7.1.jar ant-launcher-1.7.1.jar log4j-1.2.16.jar commons-codec-1.5.jar commons-beanutils-1.8.0.jar commons-collections-3.2.1.jar commons-logging-1.1.1.jar commons-lang-2.4.jar dom4j-1.6.1.jar commons-cli-1.0.jar ant-jsch-1.7.1.jar jsch-0.1.45.jar snakeyaml-1.9.jar xercesImpl-2.6.2.jar jaxen-1.1.jar commons-httpclient-3.0.1.jar jdom-1.0.jar xalan-2.6.0.jar icu4j-2.6.1.jar xom-1.0.jar</Rundeck-Tools-Dependencies>
+              <Rundeck-Tools-Dependencies>ant-1.7.1.jar ant-launcher-1.7.1.jar log4j-1.2.16.jar commons-codec-1.5.jar commons-beanutils-1.8.0.jar commons-collections-3.2.1.jar commons-logging-1.1.1.jar commons-lang-2.4.jar dom4j-1.6.1.jar commons-cli-1.0.jar ant-jsch-1.7.1.jar jsch-0.1.45.jar snakeyaml-1.9.jar xercesImpl-2.6.2.jar jaxen-1.1.jar commons-httpclient-3.0.1.jar jdom-1.0.jar icu4j-2.6.1.jar xom-1.0.jar</Rundeck-Tools-Dependencies>
             </manifestEntries>
           </archive>
         </configuration>
@@ -144,6 +144,10 @@
         <exclusion>
           <artifactId>xml-apis</artifactId>
           <groupId>xml-apis</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>xalan</artifactId>
+          <groupId>xalan</groupId>
         </exclusion>
       </exclusions>
     </dependency>

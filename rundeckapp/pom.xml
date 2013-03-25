@@ -252,6 +252,10 @@
           <groupId>xerces</groupId>
           <artifactId>xmlParserAPIs</artifactId>
         </exclusion>
+          <exclusion>
+              <groupId>xalan</groupId>
+              <artifactId>xalan</artifactId>
+          </exclusion>
       </exclusions>
     </dependency>
 
