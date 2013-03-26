@@ -59,7 +59,7 @@
                             &quot;
                         </g:if>
                     </g:if>
-                    <g:render template="/execution/scriptDetailDisplay" model="${[script:item.adhocLocalString,label:'Script: ']}"/>
+                    <g:render template="/execution/scriptDetailDisplay" model="${[script:item.adhocLocalString,label:'Script: ',edit:edit]}"/>
                 </g:elseif>
                 <g:elseif test="${item.adhocFilepath}">
                     <g:if test="${item.scriptInterpreter}">
