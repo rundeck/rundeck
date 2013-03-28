@@ -5,7 +5,7 @@ apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'signing'
 sourceCompatibility = 1.5
-version = '1.4.5'
+version = '1.4.6-SNAPSHOT'
 archivesBaseName = 'rundeck-core'
 group = "org.rundeck"
 defaultTasks 'clean','assemble'

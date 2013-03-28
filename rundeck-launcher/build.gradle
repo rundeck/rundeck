@@ -1,5 +1,5 @@
 allprojects{
-    version = '1.4.5'
+    version = '1.4.6-SNAPSHOT'
     defaultTasks 'clean','assemble'
     apply plugin: 'idea'
     group  = 'org.rundeck'

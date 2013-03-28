@@ -4,12 +4,12 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <artifactId>rundeck-bundled-plugins</artifactId>
-    <version>1.4.5</version>
     <groupId>org.rundeck</groupId>
+    <version>1.4.6-SNAPSHOT</version>
   </parent>
   <groupId>org.rundeck</groupId>
   <artifactId>rundeck-script-plugin</artifactId>
-  <version>1.4.5</version>
+  <version>1.4.6-SNAPSHOT</version>
   <name>RunDeck Script Plugin</name>
   <url>http://rundeck.org</url>
   <inceptionYear>2011</inceptionYear>
