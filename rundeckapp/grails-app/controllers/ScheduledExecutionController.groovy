@@ -1,8 +1,6 @@
 import org.quartz.*
 
 import com.dtolabs.rundeck.core.common.Framework
-import java.text.SimpleDateFormat
-
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import java.util.regex.Pattern
 import org.apache.commons.httpclient.HttpClient
@@ -30,7 +28,6 @@ import com.dtolabs.rundeck.core.common.INodeEntry
 import org.apache.commons.collections.list.TreeList
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
-import org.apache.commons.httpclient.SimpleHttpConnectionManager
 
 class ScheduledExecutionController  {
     def Scheduler quartzScheduler
@@ -1081,6 +1078,16 @@ class ScheduledExecutionController  {
         params.jobName='Temporary_Job'
         params.groupPath='adhoc'
 
+        if (params.asUser && new ApiController().requireVersion(ApiRequestFilters.V5)) {
+            //authorize RunAs User
+            if (!frameworkService.authorizeProjectResource(framework, [type: 'adhoc'], AuthConstants.ACTION_RUNAS, params.project)) {
+
+                def msg = g.message(code: "api.error.item.unauthorized", args: ['Run as User', 'Run', 'Adhoc'])
+                return [error: 'unauthorized', message: msg]
+            }
+            params['user'] = params.asUser
+        }
+
         //pass session-stored edit state in params map
         transferSessionEditState(session, params,'_new')
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
@@ -1556,63 +1563,6 @@ class ScheduledExecutionController  {
         render(template:'execOptionsForm',model:model)
     }
 
-    def runJobByName = {
-        //lookup job
-        if(!(params.jobName  && params.project || params.id)){
-            flash.error="jobName or id is required"
-            response.setStatus (404)
-            return error()
-        }
-        def jobs
-        if(params.id){
-            final def get = scheduledExecutionService.getByIDorUUID(params.id)
-            if(!get){
-                log.error("No Job found for id: " + params.id)
-                flash.error="No Job found for id: " + params.id
-                response.setStatus (404)
-                return error()
-            }
-            jobs = [get]
-        }else{
-            jobs = ScheduledExecution.findAllScheduledExecutions(params.groupPath, params.jobName, params.project)
-        }
-        if(!jobs || jobs.size()<1 || jobs.size()>1){
-            flash.error="No unique job matched the input: ${params.jobName}, ${params.groupPath}. found (${jobs.size()})"
-            response.setStatus (404)
-            return error()
-        }
-        Framework framework = frameworkService.getFrameworkFromUserSession(session,request)
-        params["user"] = (session?.user) ? session.user : "anonymous"
-        def scheduledExecution = jobs[0]
-        def result = executionService.executeScheduledExecution(scheduledExecution,framework,request.subject,params)
-        if(result.error){
-            flash.error=result.message
-            return error()
-        }else{
-            withFormat{
-                html{
-                    redirect(controller:"execution", action:"follow",id:result.executionId)
-                }
-                xml {
-                    response.setHeader(Constants.X_RUNDECK_RESULT_HEADER,"Execution started: ${result.executionId}")
-                    render(contentType:"text/xml"){
-                        delegate.'result'(success:true){
-                            success{
-                                message("Execution started: ${result.executionId}")
-                            }
-                            succeeded(count:1){
-                                execution(index:0){
-                                    id(result.executionId)
-                                    name(result.name)
-                                    url(g.createLink(controller:'execution',action:'follow',id:result.executionId))
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
     /**
      * Execute job specified by parameters, and return json results
      */
@@ -1926,8 +1876,18 @@ class ScheduledExecutionController  {
             request.errorArgs = ['Run', 'Job ID', params.id]
             return new ApiController().renderError()
         }
-        def inparams = [extra:[:]]
+        def inparams = [extra: [:]]
         inparams["user"] = (session?.user) ? session.user : "anonymous"
+        if(params.asUser && new ApiController().requireVersion(ApiRequestFilters.V5)){
+            //authorize RunAs User
+            if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_RUNAS],
+                    scheduledExecution.project)) {
+                request.errorCode = "api.error.item.unauthorized"
+                request.errorArgs = ['Run as User', 'Job ID', params.id]
+                return new ApiController().renderError()
+            }
+            inparams['user']= params.asUser
+        }
 
         if (params.argString) {
             inparams.extra["argString"] = params.argString
