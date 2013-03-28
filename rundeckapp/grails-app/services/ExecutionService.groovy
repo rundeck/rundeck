@@ -585,6 +585,9 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
         if (!execMap.workflow.commands || execMap.workflow.commands.size() < 1) {
             throw new Exception("Workflow is empty")
         }
+        if (!userName) {
+            userName = execMap.user
+        }
 
         //create thread object with an execution item, and start it
         final WorkflowExecutionItemImpl item = new WorkflowExecutionItemImpl(
@@ -646,6 +649,9 @@ class ExecutionService implements ApplicationContextAware, CommandInterpreter{
      * Return an ExecutionItem instance for the given workflow Execution, suitable for the ExecutionService layer
      */
     public com.dtolabs.rundeck.core.execution.ExecutionContext createContext(ExecutionContext execMap, Framework framework, String userName = null, Map<String, String> jobcontext, ExecutionListener listener, String[] inputargs=null, Map extraParams=null, Map extraParamsExposed=null) {
+        if (!userName) {
+            userName=execMap.user
+        }
         //convert argString into Map<String,String>
         def String[] args = execMap.argString? CLIUtils.splitArgLine(execMap.argString):inputargs
         def Map<String, String> optsmap = execMap.argString ? frameworkService.parseOptsFromString(execMap.argString) : null!=args? frameworkService.parseOptsFromArray(args):[:]

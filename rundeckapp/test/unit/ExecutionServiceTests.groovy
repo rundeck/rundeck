@@ -808,17 +808,6 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             assertNull(val.framework)
             assertNull(val.executionListener)
         }
-        t:{//test DNE user
-
-            Execution se = new Execution(argString:"-test args",user:"DNEuser",project:"testproj", loglevel:'WARN',doNodedispatch: false)
-            try {
-                def val=testService.createContext(se,null,null,null,null,null)
-                fail("Should not succeed")
-            } catch (Exception e) {
-                assertEquals("User DNEuser is not authorized to run this Job.",e.message)
-            }
-
-        }
         t: {//check datacontext
 
             Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
