@@ -1083,7 +1083,7 @@ class ScheduledExecutionController  {
             if (!frameworkService.authorizeProjectResource(framework, [type: 'adhoc'], AuthConstants.ACTION_RUNAS, params.project)) {
 
                 def msg = g.message(code: "api.error.item.unauthorized", args: ['Run as User', 'Run', 'Adhoc'])
-                return [error: 'unauthorized', message: msg]
+                return [failed:true,error: 'unauthorized', message: msg]
             }
             params['user'] = params.asUser
         }
