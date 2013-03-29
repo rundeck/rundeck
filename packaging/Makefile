@@ -55,6 +55,7 @@ rpm:
 	@cp ../docs/en/manpages/man5/*.5.gz rpmdist/SOURCES/usr/share/man/en/man5
 	@cp -R ../core/build/tools/lib/*.jar rpmdist/SOURCES/var/lib/rundeck/cli
 	@cp ../core/build/libs/rundeck-core-*.jar rpmdist/SOURCES/var/lib/rundeck/cli
+	@-rm -f  rpmdist/SOURCES/var/lib/rundeck/cli/rundeck-core-*{javadoc,sources}.jar
 	@cp ../rundeck-launcher/rundeck-jetty-server/build/libs/rundeck-jetty-server-*.jar rpmdist/SOURCES/var/lib/rundeck/bootstrap
 	@cp ../plugins/*-plugin/build/libs/*-plugin*.jar rpmdist/SOURCES/var/lib/rundeck/libext
 	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/admin.aclpolicy.template rpmdist/SOURCES/etc/rundeck/admin.aclpolicy
