@@ -828,39 +828,6 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
     }
 
     /**
-     * Test createContext
-     */
-    void testCreateContextUserDNE() {
-        mockDomain(Execution)
-        mockDomain(User)
-        ConfigurationHolder.metaClass.getConfig = {-> [:] }
-
-        def testService = new ExecutionService()
-        def fcontrol = mockFor(FrameworkService, true)
-        fcontrol.demand.parseOptsFromString(1..1) {argString ->
-            [test: 'args']
-        }
-        fcontrol.demand.filterNodeSet(1..1) {fwk, sel, proj ->
-            new NodeSetImpl()
-        }
-        testService.frameworkService = fcontrol.createMock()
-        //create mock user
-        User u1 = new User(login: 'testuser')
-        u1.save()
-        t:{//test DNE user
-
-            Execution se = new Execution(argString:"-test args",user:"DNEuser",project:"testproj", loglevel:'WARN',doNodedispatch: false)
-            try {
-                def val=testService.createContext(se,null,null,null,null,null,null)
-                fail("Should not succeed")
-            } catch (Exception e) {
-                assertEquals("User DNEuser is not authorized to run this Job.",e.message)
-            }
-
-        }
-    }
-
-    /**
      * Test createContext method
      */
     void testCreateContextDatacontext() {

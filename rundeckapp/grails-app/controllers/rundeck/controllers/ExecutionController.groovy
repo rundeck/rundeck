@@ -826,7 +826,13 @@ class ExecutionController {
         }
         def ScheduledExecution se = e.scheduledExecution
         def Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
-        def abortresult=executionService.abortExecution(se, e, session.user, framework)
+        def user=session.user
+        def killas=null
+        if (params.asUser && new ApiController().requireVersion(ApiRequestFilters.V5)) {
+            //authorized within service call
+            killas= params.asUser
+        }
+        def abortresult=executionService.abortExecution(se, e, user, framework, killas)
 
         def reportstate=[status: abortresult.abortstate]
         if(abortresult.failedreason){
