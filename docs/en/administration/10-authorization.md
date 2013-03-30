@@ -51,9 +51,9 @@ File listing: admin.aclpolicy example
             kind: event
           allow: [read,create] # allow read/create events
       adhoc:
-        - allow: [read,run,kill] # allow running/killing adhoc jobs
+        - allow: [read,run,runAs,kill,killAs] # allow running/killing adhoc jobs
       job: 
-        - allow: [read,update,delete,run,kill] # allow read/write/delete/run/kill of all jobs
+        - allow: [read,update,delete,run,runAs,kill,killAs] # allow read/write/delete/run/kill of all jobs
       node:
         - allow: [read,run] # allow read/run for all nodes
     by:
@@ -206,12 +206,16 @@ Type      Properties                         Actions  Description
 -----     -----------                        -------- ------------
 `adhoc`                                      `read`   Read adhoc execution output
 "                                            `run`    Run an adhoc execution
+"                                            `runAs`  Run an adhoc execution as another user
 "                                            `kill`   Kill an adhoc execution
+"                                            `killAs` Kill an adhoc execution as another user
 `job`     "name","group"                     `read`   View a Job and its executions
 "                                            `update` Modify a job
 "                                            `delete` Delete a job
 "                                            `run`    Run a job
+"                                            `runAs`  Run a job as another user
 "                                            `kill`   Kill a running job
+"                                            `killAs` Kill a running job as another user
 "                                            `create` Create the matching job
 `node`    "rundeck_server", "nodename", ...  `read`   View the node in the UI (see [Node resource properties](authorization.html#node-resource-properties))
 "                                            `run`    Run jobs/adhoc on the node
@@ -220,6 +224,8 @@ Type      Properties                         Actions  Description
 Table: Project scope specific resource actions
 
 Note: see [Node resource properties](authorization.html#node-resource-properties) for more node resource properties for authorization.
+
+Note: `runAs` and `killAs` actions only apply to certain API endpoints, and allow running jobs or adhoc executions or killing executions to be performed with a different username attached as the author of the action.  See [Rundeck API - Running a Job](../api/index.html#running-a-job).
 
 Recall that defining rules for a resource type is done in this way:
 
