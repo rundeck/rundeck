@@ -37,6 +37,17 @@ Changes introduced by API Version number:
 
 **Version 5**:
 
+Added in Rundeck 1.4.6:
+
+* New feature for some endpoints:
+    * new `asUser` parameter can record an action (run or abort) as having been performed by another user
+    * Affected endpoints
+        * [Running a Job](#running-a-job)
+        * [Running Adhoc Commands](#running-adhoc-commands)
+        * [Running Adhoc Scripts](#running-adhoc-scripts)
+        * [Running Adhoc Script URLs](#running-adhoc-script-urls)
+        * [Aborting Executions](#aborting-executions)
+
 * New endpoint
     * `/api/5/jobs/delete` - [Bulk Job Delete](#bulk-job-delete)
 * New endpoint
@@ -433,6 +444,7 @@ Optional parameters:
 
 * `argString`: argument string to pass to the job, of the form: `-opt value -opt2 value ...`.
 * `loglevel`: argument specifying the loglevel to use, one of: 'DEBUG','VERBOSE','INFO','WARN','ERR'
+* `asUser` : specifies a username identifying the user who ran the job. Requires `runAs` permission.
 * Node filter parameters as described under [Using Node Filters](#using-node-filters)
 
 Result:  An Item List of `executions` containing a single entry for the execution that was created.  See [Listing Running Executions](#listing-running-executions).
@@ -919,6 +931,10 @@ URL:
 
     /api/1/execution/[ID]/abort
 
+Optional Parameters:
+
+* `asUser` : specifies a username identifying the user who aborted the execution. Requires `runAs` permission.
+
 Result:  The result will contain a `success/message` element will contain a descriptive message.  The status of the abort action will be included as an element:
 
     <abort status="[abort-state]">
@@ -944,6 +960,7 @@ Optional Parameters:
 
 * `nodeThreadcount`: threadcount to use
 * `nodeKeepgoing`: if "true", continue executing on other nodes even if some fail.
+* `asUser` : specifies a username identifying the user who ran the command. Requires `runAs` permission.
 
 Node filter parameters as described under [Using Node Filters](#using-node-filters)
 
@@ -977,6 +994,7 @@ Optional Parameters:
 * `argString`: Arguments to pass to the script when executed.
 * `nodeThreadcount`: threadcount to use
 * `nodeKeepgoing`: if "true", continue executing on other nodes even if some fail.
+* `asUser` : specifies a username identifying the user who ran the script. Requires `runAs` permission.
 
 Node filter parameters as described under [Using Node Filters](#using-node-filters)
 
@@ -1010,6 +1028,7 @@ Optional Parameters:
 * `argString`: Arguments to pass to the script when executed.
 * `nodeThreadcount`: threadcount to use
 * `nodeKeepgoing`: if "true", continue executing on other nodes even if some fail.
+* `asUser` : specifies a username identifying the user who ran the script. Requires `runAs` permission.
 
 Node filter parameters as described under [Using Node Filters](#using-node-filters)
 
