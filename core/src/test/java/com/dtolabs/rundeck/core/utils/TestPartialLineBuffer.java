@@ -326,4 +326,16 @@ public class TestPartialLineBuffer extends TestCase {
         assertEquals("", partialLineBuffer.readLine());
         assertNull(partialLineBuffer.getPartialLine());
     }
+    public void testUnmarkPartial() {
+        PartialLineBuffer partialLineBuffer = new PartialLineBuffer();
+        char[] data = "Test1\r\nTest2\r\nTest3: ".toCharArray();
+        partialLineBuffer.addData(data, 0, data.length);
+
+        assertEquals(2, partialLineBuffer.getLines().size());
+        assertEquals("Test3: ", partialLineBuffer.getPartialLine(false));
+        assertEquals("Test3: ", partialLineBuffer.getPartialLine());
+        assertEquals(null, partialLineBuffer.getPartialLine());
+        partialLineBuffer.unmarkPartial();
+        assertEquals("Test3: ", partialLineBuffer.getPartialLine(false));
+    }
 }

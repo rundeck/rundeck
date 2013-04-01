@@ -298,6 +298,8 @@ public class ResponderTask implements Callable<ResponderTask.ResponderResult> {
                     logger.debug("failure matched partial");
                     buffer.clearPartial();
                     return false;
+                }else {
+                    buffer.unmarkPartial();
                 }
             }
 

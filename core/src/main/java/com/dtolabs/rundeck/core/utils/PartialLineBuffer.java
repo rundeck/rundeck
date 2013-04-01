@@ -144,6 +144,14 @@ public class PartialLineBuffer {
     }
 
     /**
+     * Unmark any partial line so it can be read again
+     */
+    public void unmarkPartial(){
+        if(null!=partialLine) {
+            newdata = true;
+        }
+    }
+    /**
      * Clear the partial fragment string
      */
     public void clearPartial(){
