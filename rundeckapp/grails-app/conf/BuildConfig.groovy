@@ -8,12 +8,19 @@ if (System.properties["maven.central.url"]) {
 }
 println "Maven Central: ${mavenCentralUrl}"
 
+def grailsLocalRepo = "grails-app/plugins"
+if (System.properties["grails.local.repo"]) {
+        grailsLocalRepo = System.properties["grails.local.repo"]
+}
+println "Grails Local Repo: ${grailsLocalRepo}"
+
 grails.project.dependency.resolution = {
     inherits "global" // inherit Grails' default dependencies
     log "warn" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
     repositories {
         useOrigin true
         mavenLocal()
+        flatDir name:'grailsLocalRepo', dirs:"${grailsLocalRepo}"
         grailsHome()
         grailsPlugins()
         grailsCentral()
