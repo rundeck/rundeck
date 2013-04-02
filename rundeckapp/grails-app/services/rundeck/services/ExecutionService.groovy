@@ -596,9 +596,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         if (!execMap.workflow.commands || execMap.workflow.commands.size() < 1) {
             throw new Exception("Workflow is empty")
         }
-        def User user = User.findByLogin(userName?userName:execMap.user)
-        if (!user) {
-            throw new Exception(g.message(code:'unauthorized.job.run.user',args:[userName?userName:execMap.user]))
+        if (!userName) {
+            userName = execMap.user
         }
 
         //create thread object with an execution item, and start it
@@ -677,9 +676,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
      * Return an StepExecutionItem instance for the given workflow Execution, suitable for the ExecutionService layer
      */
     public StepExecutionContext createContext(ExecutionContext execMap, StepExecutionContext origContext, Framework framework, String userName = null, Map<String, String> jobcontext, ExecutionListener listener, String[] inputargs=null, Map extraParams=null, Map extraParamsExposed=null) {
-        def User user = User.findByLogin(userName ? userName : execMap.user)
-        if (!user) {
-            throw new Exception("User ${userName ? userName : execMap.user} is not authorized to run this Job.")
+        if (!userName) {
+            userName=execMap.user
         }
         //convert argString into Map<String,String>
         def String[] args = execMap.argString? CLIUtils.splitArgLine(execMap.argString):inputargs
@@ -735,7 +733,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         //create execution context
         def builder = com.dtolabs.rundeck.core.execution.ExecutionContextImpl.builder(origContext)
             .frameworkProject(execMap.project)
-            .user(user.login)
+            .user(userName)
             .nodeSelector(nodeselector)
             .nodes(nodeSet)
             .loglevel(loglevels[null != execMap.loglevel ? execMap.loglevel : 'WARN'])
@@ -796,7 +794,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         return thread.isSuccessful()
     }
 
-    def abortExecution(ScheduledExecution se, Execution e, String user, final def framework){
+    def abortExecution(ScheduledExecution se, Execution e, String user, final def framework, String killAsUser=null
+    ){
         def eid=e.id
         def dateCompleted = e.dateCompleted
         e.discard()
@@ -805,15 +804,21 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         def abortstate
         def jobstate
         def failedreason
+        def userIdent=killAsUser?:user
         if (!frameworkService.authorizeProjectExecutionAll(framework,e,[AuthConstants.ACTION_KILL])){
             jobstate = ExecutionController.getExecutionState(e)
             abortstate= ExecutionController.ABORT_FAILED
             failedreason="unauthorized"
             statusStr= jobstate
+        }else if(killAsUser && !frameworkService.authorizeProjectExecutionAll(framework, e, [AuthConstants.ACTION_KILLAS])) {
+            jobstate = ExecutionController.getExecutionState(e)
+            abortstate = ExecutionController.ABORT_FAILED
+            failedreason = "unauthorized"
+            statusStr = jobstate
         }else if (scheduledExecutionService.existsJob(ident.jobname, ident.groupname)){
             Execution e2 = Execution.lock(eid)
             if(!e2.abortedby){
-                e2.abortedby=user
+                e2.abortedby= userIdent
                 e2.save(flush:true)
             }
             def didcancel=scheduledExecutionService.interruptJob(ident.jobname, ident.groupname)
@@ -828,7 +833,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                     status:String.valueOf(false),
                     dateCompleted:new Date(),
                     cancelled:true,
-                    abortedby:user
+                    abortedby: userIdent
                     ]
                 )
             abortstate=ExecutionController.ABORT_ABORTED
@@ -1014,12 +1019,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
 
 
     public Map executeScheduledExecution(ScheduledExecution scheduledExecution, Framework framework, Subject subject, params) {
-        def User user = User.findByLogin(params.user)
-        if (!user) {
-            def msg = g.message(code: 'unauthorized.job.run.user', args: [params.user])
-            log.error(msg)
-            return [error: 'unauthorized', message: msg]
-        }
         if (!frameworkService.authorizeProjectJobAll(framework, scheduledExecution, [AuthConstants.ACTION_RUN],
             scheduledExecution.project)) {
 //            unauthorized("Execute Job ${scheduledExecution.extid}")
@@ -1029,10 +1028,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         def extra = params.extra
 
         try {
-            def Execution e = createExecution(scheduledExecution, framework, user.login, extra)
+            def Execution e = createExecution(scheduledExecution, framework, params.user, extra)
             def extraMap = selectSecureOptionInput(scheduledExecution, extra)
             def extraParamsExposed = selectSecureOptionInput(scheduledExecution, extra, true)
-            def eid = scheduledExecutionService.scheduleTempJob(scheduledExecution, user.login, subject, e, extraMap, extraParamsExposed) ;
+            def eid = scheduledExecutionService.scheduleTempJob(scheduledExecution, params.user, subject, e, extraMap, extraParamsExposed) ;
 
             return [executionId: eid, name: scheduledExecution.jobName, execution: e]
         } catch (ExecutionServiceValidationException exc) {

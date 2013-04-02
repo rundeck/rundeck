@@ -3,6 +3,7 @@ import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.CommandExec
 import rundeck.Execution
+import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.controllers.ExecutionController
 
@@ -606,6 +607,57 @@ class ExecutionControlTests extends GrailsUnitTestCase{
         controller.params.excludeJobExactFilter = "blue green and red color"
 
         controller.apiExecutionsQuery(null)
+
+        assert 200 == controller.response.status
+        assert null == controller.request.apiErrorCode
+    }
+    /**
+     * Test abort
+     */
+    public void testApiExecutionAbort() {
+        def controller = new ExecutionController()
+        def execs = createTestExecs()
+        def fwkControl = mockFor(FrameworkService, false)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        def execControl = mockFor(ExecutionService, false)
+        execControl.demand.abortExecution{se, e, user, framework, killas ->
+            assert null==killas
+            [abortstate: 'aborted', jobstate: 'running', statusStr: 'blah', failedreason: null]
+        }
+
+        controller.frameworkService = fwkControl.createMock()
+        controller.executionService = execControl.createMock()
+        controller.request.api_version = 5
+        controller.params.project = "Test"
+        controller.params.id = execs[2].id.toString()
+
+        controller.apiExecutionAbort(null)
+
+        assert 200 == controller.response.status
+        assert null == controller.request.apiErrorCode
+    }
+    /**
+     * Test abort as user
+     */
+    public void testApiExecutionAbortAsUser() {
+        def controller = new ExecutionController()
+        def execs = createTestExecs()
+        def fwkControl = mockFor(FrameworkService, false)
+        fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
+        def execControl = mockFor(ExecutionService, false)
+        execControl.demand.abortExecution{se, e, user, framework, killas ->
+            assert killas=='testuser'
+            [abortstate: 'aborted', jobstate: 'running', statusStr: 'blah', failedreason: null]
+        }
+
+        controller.frameworkService = fwkControl.createMock()
+        controller.executionService = execControl.createMock()
+        controller.request.api_version = 5
+        controller.params.project = "Test"
+        controller.params.id = execs[2].id.toString()
+        controller.params.asUser = "testuser"
+
+        controller.apiExecutionAbort(null)
 
         assert 200 == controller.response.status
         assert null == controller.request.apiErrorCode
