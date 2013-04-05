@@ -26,6 +26,8 @@ package com.dtolabs.rundeck.core.utils;
 import com.dtolabs.rundeck.core.utils.PartialLineBuffer;
 import junit.framework.TestCase;
 
+import java.util.List;
+
 /**
  * TestPartialLineBuffer is ...
  *
@@ -337,5 +339,42 @@ public class TestPartialLineBuffer extends TestCase {
         assertEquals(null, partialLineBuffer.getPartialLine());
         partialLineBuffer.unmarkPartial();
         assertEquals("Test3: ", partialLineBuffer.getPartialLine(false));
+    }
+
+    /**
+     * Test input ending with CR, then empty string
+     */
+    public void testCRLine(){
+        PartialLineBuffer partialLineBuffer = new PartialLineBuffer();
+        char[] data = "Test1\r".toCharArray();
+        partialLineBuffer.addData(data, 0, data.length);
+
+        data = "".toCharArray();
+        partialLineBuffer.addData(data, 0, data.length);
+
+        List<String> lines = partialLineBuffer.getLines();
+        assertEquals(0, lines.size());
+
+        String partialLine = partialLineBuffer.getPartialLine(true);
+        assertEquals("Test1",partialLine);
+    }
+
+    /**
+     * test input ending with CR, then NL
+     */
+    public void testCRNLLine(){
+        PartialLineBuffer partialLineBuffer = new PartialLineBuffer();
+        char[] data = "Test1\r".toCharArray();
+        partialLineBuffer.addData(data, 0, data.length);
+
+        data = "\n".toCharArray();
+        partialLineBuffer.addData(data, 0, data.length);
+
+        List<String> lines = partialLineBuffer.getLines();
+        assertEquals(1, lines.size());
+        assertEquals("Test1", lines.get(0));
+
+        String partialLine = partialLineBuffer.getPartialLine(true);
+        assertEquals(null,partialLine);
     }
 }
