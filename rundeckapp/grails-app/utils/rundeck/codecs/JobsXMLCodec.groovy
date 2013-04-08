@@ -229,18 +229,31 @@ class JobsXMLCodec {
                     cmd.jobref.args = cmd.jobref.arg.remove('line')
                     cmd.jobref.remove('arg')
                 }else if(cmd['node-step-plugin'] || cmd['step-plugin']){
+                    def parsePluginConfig={ plc->
+                        def outconf=[:]
+                        if (plc?.entry instanceof Map && plc?.entry['key']) {
+                            outconf[plc?.entry['key']] = plc?.entry['value']
+                        } else if (plc?.entry instanceof Collection) {
+                            plc?.entry.each { o ->
+                                if (o instanceof Map && o['key']) {
+                                    outconf[o['key']] = o['value']
+                                }
+                            }
+                        }
+                        outconf
+                    }
                     if(cmd['node-step-plugin']){
                         def plugin= cmd.remove('node-step-plugin')
 
                         cmd.nodeStep=true
                         cmd.type = plugin.type
-                        cmd.configuration = plugin.configuration
+                        cmd.configuration=parsePluginConfig(plugin.configuration)
                     }else if(cmd['step-plugin']){
                         def plugin= cmd.remove('step-plugin')
 
                         cmd.nodeStep = false
                         cmd.type = plugin.type
-                        cmd.configuration = plugin.configuration
+                        cmd.configuration = parsePluginConfig(plugin.configuration)
                     }
                 }
             }

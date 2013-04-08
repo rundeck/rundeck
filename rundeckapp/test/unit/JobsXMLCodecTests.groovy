@@ -551,13 +551,13 @@ class JobsXMLCodecTests extends GroovyTestCase {
         <command>
             <step-plugin type="blah">
                 <configuration>
-                    <elf>cheese</elf>
+                    <entry key="elf" value="cheese"/>
                 </configuration>
             </step-plugin>
             <errorhandler keepgoingOnSuccess='true'>
                 <node-step-plugin type="blah2">
                     <configuration>
-                        <rice>pilaf</rice>
+                        <entry key="rice" value="pilaf"/>
                     </configuration>
                 </node-step-plugin>
             </errorhandler>
@@ -1717,8 +1717,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
         <command>
             <node-step-plugin type="blah">
                 <configuration>
-                    <elf>monkey</elf>
-                    <ok>howdy</ok>
+                    <entry key="elf" value="monkey"/>
+                    <entry key="ok" value="howdy"/>
                 </configuration>
             </node-step-plugin>
         </command>
@@ -1767,8 +1767,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
         <command>
             <step-plugin type="blah">
                 <configuration>
-                    <elf>monkey</elf>
-                    <ok>howdy</ok>
+                    <entry key="elf" value="monkey"/>
+                    <entry key="ok" value="howdy"/>
                 </configuration>
             </step-plugin>
         </command>
