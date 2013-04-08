@@ -1827,9 +1827,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             }
 
             if (newContext.getNodes().getNodeNames().size()<1){
-                def msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
+                String msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
                 executionContext.getExecutionListener().log(0, msg)
-                throw new StepException(JobReferenceFailureReason.NoMatchedNodes, msg)
+                throw new StepException(msg, JobReferenceFailureReason.NoMatchedNodes)
             }
 
             def WorkflowExecutionService service = executionContext.getFramework().getWorkflowExecutionService()
