@@ -1262,7 +1262,12 @@ class ScheduledExecutionController  {
         if('xml'==fileformat){
             try{
                 jobset= input.decodeJobsXML()
+            } catch (JobXMLException e) {
+                log.error("Error parsing upload Job XML: ${e}")
+                log.warn("Error parsing upload Job XML", e)
+                return [error: "${e}"]
             }catch(Exception e){
+                log.error("Error parsing upload Job XML",e)
                 return [error:"${e}"]
             }
         }else if ('yaml'==fileformat){
@@ -1270,7 +1275,12 @@ class ScheduledExecutionController  {
             try{
                 //load file into string
                 jobset = input.decodeJobsYAML()
+            } catch (JobXMLException e) {
+                log.error("Error parsing upload Job Yaml: ${e}")
+                log.warn("Error parsing upload Job Yaml", e)
+                return [error: "${e}"]
             }catch (Exception e){
+                log.error("Error parsing upload Job Yaml", e)
                 return [error:"${e}"]
             }
         }else{

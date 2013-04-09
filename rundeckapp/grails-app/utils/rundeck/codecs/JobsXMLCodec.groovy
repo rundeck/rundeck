@@ -223,11 +223,19 @@ class JobsXMLCodec {
                 data.commands = [data.remove('commands')]
             }  //convert script args values to idiosyncratic label
             def fixup = { cmd ->
-                if (cmd.scriptfile || cmd.script || cmd.scripturl) {
-                    cmd.args = cmd.remove('scriptargs')
-                } else if (cmd.jobref?.arg?.line) {
-                    cmd.jobref.args = cmd.jobref.arg.remove('line')
-                    cmd.jobref.remove('arg')
+                if (cmd.scriptfile!=null || cmd.script!=null || cmd.scripturl!=null) {
+                    cmd.args = cmd.remove('scriptargs')?.toString()
+                } else if (cmd.jobref!=null) {
+                    if(!(cmd.jobref instanceof Map)){
+                        throw new JobXMLException("'jobref' value incorrect: ${cmd.jobref}, expected elements: arg, group, name")
+                    }
+                    if(cmd.jobref.arg!=null){
+                        if (!(cmd.jobref.arg instanceof Map)) {
+                            throw new JobXMLException("'jobref/arg' value incorrect: ${cmd.jobref.arg}, expected attribute: line")
+                        }
+                        cmd.jobref.args = cmd.jobref.arg.remove('line')?.toString()
+                        cmd.jobref.remove('arg')
+                    }
                 }else if(cmd['node-step-plugin'] || cmd['step-plugin']){
                     def parsePluginConfig={ plc->
                         def outconf=[:]

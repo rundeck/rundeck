@@ -99,9 +99,9 @@ public class Workflow {
             Set handlers = new HashSet()
             def createStep={Map map->
                 WorkflowStep exec
-                if (map.jobref) {
+                if (map.jobref!=null) {
                     exec = JobExec.jobExecFromMap(map)
-                } else if (map.exec || map.script || map.scriptfile || map.scripturl) {
+                } else if (map.exec != null || map.script != null || map.scriptfile != null || map.scripturl != null) {
                     exec = CommandExec.fromMap(map)
                 } else {
                     exec = PluginStep.fromMap(map)

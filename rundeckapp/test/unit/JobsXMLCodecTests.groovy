@@ -416,6 +416,87 @@ class JobsXMLCodecTests extends GroovyTestCase {
             assertNotNull jobs
             assertNull "incorrect groupPath",jobs[0].groupPath
     }
+    public void testDecodeBasic2(){
+
+        def xml = """<joblist>
+  <job>
+    <id>8</id>
+    <name>punch2</name>
+    <description>dig it potato</description>
+    <loglevel>WARN</loglevel>
+    <context>
+      <project>zig</project>
+      <options>
+        <option name='clip' value='true' />
+      </options>
+    </context>
+    <sequence>
+        <command>
+        <exec>true</exec>
+        </command>
+        <command>
+        <exec>false</exec>
+        </command>
+        <command>
+        <exec>0</exec>
+        </command>
+        <command>
+        <script>true</script>
+            <scriptargs>true</scriptargs>
+        </command>
+        <command>
+        <script>false</script>
+            <scriptargs>false</scriptargs>
+        </command>
+        <command>
+        <script>0</script>
+            <scriptargs>0</scriptargs>
+        </command>
+        <command>
+            <scriptfile>false</scriptfile>
+            <scriptargs>false</scriptargs>
+            <errorhandler  keepgoingOnSuccess='false'>
+                <scriptfile>false</scriptfile>
+                <scriptargs>0</scriptargs>
+            </errorhandler>
+        </command>
+        <command>
+            <jobref>
+            <name>false</name>
+            <group>false</group>
+            <arg line="123"/>
+            </jobref>
+        </command>
+    </sequence>
+    <dispatch>
+      <threadcount>2</threadcount>
+      <keepgoing>true</keepgoing>
+    </dispatch>
+  </job>
+</joblist>
+"""
+        def jobs = JobsXMLCodec.decode(xml)
+        assertNotNull jobs
+        assertEquals  8, jobs[0].workflow.commands.size()
+        assertEquals 'true', jobs[0].workflow.commands[0].adhocRemoteString
+        assertEquals 'false', jobs[0].workflow.commands[1].adhocRemoteString
+        assertEquals '0', jobs[0].workflow.commands[2].adhocRemoteString
+        assertEquals 'true', jobs[0].workflow.commands[3].adhocLocalString
+        assertEquals 'true', jobs[0].workflow.commands[3].argString
+        assertEquals 'false', jobs[0].workflow.commands[4].adhocLocalString
+        assertEquals 'false', jobs[0].workflow.commands[4].argString
+        assertEquals '0', jobs[0].workflow.commands[5].adhocLocalString
+        assertEquals '0', jobs[0].workflow.commands[5].argString
+
+        assertEquals 'false', jobs[0].workflow.commands[6].adhocFilepath
+        assertEquals 'false', jobs[0].workflow.commands[6].argString
+        assertEquals 'false', jobs[0].workflow.commands[6].errorHandler.adhocFilepath
+        assertEquals '0', jobs[0].workflow.commands[6].errorHandler.argString
+
+        assertEquals 'false', jobs[0].workflow.commands[7].jobName
+        assertEquals 'false', jobs[0].workflow.commands[7].jobGroup
+        assertEquals '123', jobs[0].workflow.commands[7].argString
+    }
     /**
      * Empty options declaration
      */
