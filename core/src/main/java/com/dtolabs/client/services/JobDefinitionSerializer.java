@@ -24,10 +24,10 @@
 package com.dtolabs.client.services;
 
 import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
 import com.dtolabs.rundeck.core.execution.ExecutionUtils;
 import com.dtolabs.rundeck.core.utils.NodeSet;
+import com.dtolabs.rundeck.core.utils.OptsUtil;
 import org.dom4j.Document;
 import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
@@ -109,7 +109,7 @@ public class JobDefinitionSerializer {
             }
             if (null != dispatchdef.getArgs() && dispatchdef.getArgs().length > 0) {
                 final Element argstring = cmd.addElement("scriptargs");
-                argstring.addText(CLIUtils.generateArgline(null, dispatchdef.getArgs()));
+                argstring.addText(OptsUtil.join(dispatchdef.getArgs()));
             }
         } else if (null != dispatchdef.getServerScriptFilePath()) {
             //server-local script filepath
@@ -117,12 +117,12 @@ public class JobDefinitionSerializer {
             filepath.addText(dispatchdef.getServerScriptFilePath());
             if (null != dispatchdef.getArgs() && dispatchdef.getArgs().length>0) {
                 final Element argstring = cmd.addElement("scriptargs");
-                argstring.addText(CLIUtils.generateArgline(null, dispatchdef.getArgs()));
+                argstring.addText(OptsUtil.join(dispatchdef.getArgs()));
             }
         } else if (null != dispatchdef.getArgs() && dispatchdef.getArgs().length > 0) {
             //shell command
             final Element exec = cmd.addElement("exec");
-            exec.addText(CLIUtils.generateArgline(null, dispatchdef.getArgs()));
+            exec.addText(OptsUtil.join(dispatchdef.getArgs()));
         } else {
             throw new IllegalArgumentException("Dispatched script did not specify a command, script or filepath");
         }

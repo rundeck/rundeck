@@ -1,12 +1,12 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.utils.OptsUtil
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 
 import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.cli.CLIToolLogger
-import com.dtolabs.rundeck.core.cli.CLIUtils
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.NodesSelector
@@ -611,7 +611,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             CommandExec cmd=step.asType(CommandExec)
             if (null != cmd.getAdhocRemoteString()) {
 
-                final List<String> strings = CLIUtils.splitArgLine(cmd.getAdhocRemoteString());
+                final List<String> strings = OptsUtil.burst(cmd.getAdhocRemoteString());
                 final String[] args = strings.toArray(new String[strings.size()]);
 
                 return ExecutionItemFactory.createExecCommand(args, handler, !!cmd.keepgoingOnSuccess);
@@ -620,7 +620,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                 final String script = cmd.getAdhocLocalString();
                 final String[] args;
                 if (null != cmd.getArgString()) {
-                    final List<String> strings = CLIUtils.splitArgLine(cmd.getArgString());
+                    final List<String> strings = OptsUtil.burst(cmd.getArgString());
                     args = strings.toArray(new String[strings.size()]);
                 } else {
                     args = new String[0];
@@ -631,7 +631,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
                 final String filepath = cmd.getAdhocFilepath();
                 final String[] args;
                 if (null != cmd.getArgString()) {
-                    final List<String> strings = CLIUtils.splitArgLine(cmd.getArgString());
+                    final List<String> strings = OptsUtil.burst(cmd.getArgString());
                     args = strings.toArray(new String[strings.size()]);
                 } else {
                     args = new String[0];
@@ -647,7 +647,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
 
             final String[] args;
             if (null != jobcmditem.getArgString()) {
-                final List<String> strings = CLIUtils.splitArgLine(jobcmditem.getArgString());
+                final List<String> strings = OptsUtil.burst(jobcmditem.getArgString());
                 args = strings.toArray(new String[strings.size()]);
             } else {
                 args = new String[0];
@@ -680,7 +680,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
             userName=execMap.user
         }
         //convert argString into Map<String,String>
-        def String[] args = execMap.argString? CLIUtils.splitArgLine(execMap.argString):inputargs
+        def String[] args = execMap.argString? OptsUtil.burst(execMap.argString):inputargs
         def Map<String, String> optsmap = execMap.argString ? frameworkService.parseOptsFromString(execMap.argString) : null!=args? frameworkService.parseOptsFromArray(args):[:]
         if(extraParamsExposed){
             optsmap.putAll(extraParamsExposed)
@@ -1612,31 +1612,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
     * Generate an argString from a map of options and values
      */
     public static String generateArgline(Map<String,String> opts){
-        StringBuffer sb = new StringBuffer()
+        def argsList = []
         for (String key: opts.keySet().sort()) {
             String val = opts.get(key)
-            if(val.contains(" ")){
-                if(val.contains("\\")){
-                    val = val.replaceAll("\\","\\\\")
-                }
-                if(val.contains("'")){
-                    val = val.replaceAll("'","\\'")
-                }
-                if(sb.size()>0){
-                    sb.append(" ")
-                }
-                sb.append("-").append(key).append(" ")
-
-                sb.append("'").append(val).append("'")
-            }else if(val){
-                if(sb.size()>0){
-                    sb.append(" ")
-                }
-                sb.append("-").append(key).append(" ")
-                sb.append(val)
-            }
+            argsList<<'-'+key
+            argsList<<val
         }
-        return sb.toString()
+        return OptsUtil.join(argsList)
     }
 
     /**

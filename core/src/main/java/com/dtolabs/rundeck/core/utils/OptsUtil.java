@@ -23,7 +23,13 @@
 */
 package com.dtolabs.rundeck.core.utils;
 
+import org.apache.commons.lang.CharUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.text.StrMatcher;
+import org.apache.commons.lang.text.StrTokenizer;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,44 +41,88 @@ import java.util.regex.Pattern;
  * @version $Revision$
  */
 public class OptsUtil {
+    static StrTokenizer TOKENIZER = new StrTokenizer();
+
+    static {
+        TOKENIZER.setDelimiterMatcher(StrMatcher.spaceMatcher());//delimit whitespace
+        TOKENIZER.setQuoteMatcher(StrMatcher.quoteMatcher());//match double or single quoted
+        TOKENIZER.setIgnoredMatcher(StrMatcher.noneMatcher());//dont ignore other chars
+        TOKENIZER.setTrimmerMatcher(StrMatcher.trimMatcher());//trim whitespace
+        TOKENIZER.setEmptyTokenAsNull(false);
+        TOKENIZER.setIgnoreEmptyTokens(true);//ignore empty strings
+    }
 
     /**
      * Bursts input string that may have emebedded quoted text into a String array.
      * Single quoted text is preserved as a single token
+     *
      * @param argLine input string
      * @return String array of parsed tokens
      */
     public static String[] burst(final String argLine) {
-        if(null==argLine) {
-            throw new NullPointerException("input cannot be null");
-        }
-        final List<String> tokens = new ArrayList<String>();
-        // look for patterns like:
-        //     -arg1 one -whitespaces 'string with white space'
-        final String ARG_PATTERN =
-           "'([^'\\\\]*(\\\\.[^'\\\\]*)*)' ?|([^ ]+) ?| ";
-
-        final Pattern arg = Pattern.compile(ARG_PATTERN);
-        final Matcher match = arg.matcher(argLine);
-        while (match.find()) {
-
-//        for (int offset = 0; arg.match(argLine, offset);) {
-            // print the field (0=null, 1=quoted, 3=unquoted)
-//            final int n = arg.getParenCount()-1;
-            if(null!=match.group(3)){
-                tokens.add(match.group(3));
-            }else if (null!=match.group(1)) {
-                //matched a quoted string with escapes
-                //replace all escaped chars with the regular versions
-                final String ms = match.group(1);
-                final String value = ms.replaceAll("\\\\([\\\\'])", "$1");
-                tokens.add(value);
-            }
-
-
-        }
-
-        return tokens.toArray(new String[tokens.size()]);
+        StrTokenizer clone = (StrTokenizer) TOKENIZER.clone();
+        clone.reset(argLine);
+        return clone.getTokenArray();
     }
 
+    public static String join(String first, String[] args) {
+        return join(first, Arrays.asList(args));
+    }
+
+    public static String join(String[] args) {
+        return join(Arrays.asList(args));
+    }
+
+    public static String join(String first, List<String> args) {
+        List<String> strings = new ArrayList<String>(args.size() + 1);
+        strings.add(first);
+        strings.addAll(args);
+        return join(strings);
+    }
+
+    public static String join(List<String> args) {
+        StringBuilder sb = new StringBuilder();
+        for (String str : args) {
+            if (sb.length() > 0) {
+                sb.append(" ");
+            }
+            sb.append(escapeChars(str));
+        }
+        return sb.toString();
+    }
+
+    private static final char DBL_QUOTE = '"';
+    private static final char SINGLE_QUOTE = '\'';
+    private static final char[] CSV_SEARCH_CHARS = new char[]{' ', DBL_QUOTE, SINGLE_QUOTE, CharUtils.CR, CharUtils.LF};
+
+    public static String escapeChars(String str) {
+        StringBuilder stringBuilder = new StringBuilder();
+        escapeChars(stringBuilder, str);
+        return stringBuilder.toString();
+    }
+
+    public static void escapeChars(StringBuilder out, String str) {
+        if (StringUtils.containsNone(str, CSV_SEARCH_CHARS)) {
+            if (str != null) {
+                out.append(str);
+            }
+            return;
+        }
+        out.append(DBL_QUOTE);
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            if (c == DBL_QUOTE) {
+                out.append(DBL_QUOTE); // escape double quote
+            }
+            out.append(c);
+        }
+        out.append(DBL_QUOTE);
+    }
+
+    public static String unescapeChars(String str) {
+        StrTokenizer clone = (StrTokenizer) TOKENIZER.clone();
+        clone.reset(str);
+        String[] tokenArray = clone.getTokenArray();
+        return tokenArray[0];
+    }
 }
