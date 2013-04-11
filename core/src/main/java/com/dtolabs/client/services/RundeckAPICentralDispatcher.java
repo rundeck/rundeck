@@ -25,10 +25,10 @@ package com.dtolabs.client.services;
 
 import com.dtolabs.client.utils.WebserviceResponse;
 import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.utils.NodeSet;
+import com.dtolabs.rundeck.core.utils.OptsUtil;
 import com.dtolabs.utils.Streams;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.util.URIUtil;
@@ -218,68 +218,52 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
 
     public QueuedItemResult queueDispatcherScript(final IDispatchedScript iDispatchedScript) throws
         CentralDispatcherException {
-        final String argString;
+        final List<String> args = new ArrayList<String>();
         final String scriptString;
         String scriptURL=null;
         final boolean isExec;
         final boolean isUrl;
         File uploadFile=null;
-        try {
 
-            //write script to file
-            final InputStream stream = iDispatchedScript.getScriptAsStream();
-            if (null != iDispatchedScript.getScript() || null != stream) {
-                //full script
-                if (null != iDispatchedScript.getScript()) {
-                    scriptString = iDispatchedScript.getScript();
-                } else {
-                    //read stream to string
-                    final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                    Streams.copyStream(stream, byteArrayOutputStream);
-                    scriptString = new String(byteArrayOutputStream.toByteArray());
-                }
-                if (null != iDispatchedScript.getArgs() && iDispatchedScript.getArgs().length > 0) {
-                    argString = CLIUtils.generateArgline(null, iDispatchedScript.getArgs());
-                } else {
-                    argString = null;
-                }
-
-                isExec = false;
-                isUrl = false;
-            } else if (null != iDispatchedScript.getServerScriptFilePath()) {
-                //server-local script filepath
-                uploadFile = new File(iDispatchedScript.getServerScriptFilePath());
-                if (null != iDispatchedScript.getArgs() && iDispatchedScript.getArgs().length > 0) {
-                    argString = CLIUtils.generateArgline(null, iDispatchedScript.getArgs());
-                } else {
-                    argString = null;
-                }
-                isExec = false;
-                isUrl = false;
-            }else if(null!=iDispatchedScript.getScriptURLString()) {
-                //read stream to string
-                scriptURL = iDispatchedScript.getScriptURLString();
-                scriptString=null;
-
-                if (null != iDispatchedScript.getArgs() && iDispatchedScript.getArgs().length > 0) {
-                    argString = CLIUtils.generateArgline(null, iDispatchedScript.getArgs());
-                } else {
-                    argString = null;
-                }
-                isExec = false;
-                isUrl = true;
-            } else if (null != iDispatchedScript.getArgs() && iDispatchedScript.getArgs().length > 0) {
-                //shell command
-                scriptString = null;
-                argString = CLIUtils.generateArgline(null, iDispatchedScript.getArgs());
-                isExec = true;
-                isUrl = false;
+        //write script to file
+        final InputStream stream = iDispatchedScript.getScriptAsStream();
+        if (null != iDispatchedScript.getScript() || null != stream) {
+            //full script
+            if (null != iDispatchedScript.getScript()) {
+                scriptString = iDispatchedScript.getScript();
             } else {
-                throw new IllegalArgumentException("Dispatched script did not specify a command, script or filepath");
+                //read stream to string
+                final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                try {
+                    Streams.copyStream(stream, byteArrayOutputStream);
+                } catch (IOException e) {
+                    throw new CentralDispatcherServerRequestException("Unable to queue command: " + e.getMessage(), e);
+                }
+                scriptString = new String(byteArrayOutputStream.toByteArray());
             }
-
-        } catch (IOException e) {
-            throw new CentralDispatcherServerRequestException("Unable to queue command: " + e.getMessage(), e);
+            isExec = false;
+            isUrl = false;
+        } else if (null != iDispatchedScript.getServerScriptFilePath()) {
+            //server-local script filepath
+            uploadFile = new File(iDispatchedScript.getServerScriptFilePath());
+            isExec = false;
+            isUrl = false;
+        }else if(null!=iDispatchedScript.getScriptURLString()) {
+            //read stream to string
+            scriptURL = iDispatchedScript.getScriptURLString();
+            scriptString=null;
+            isExec = false;
+            isUrl = true;
+        } else if (null != iDispatchedScript.getArgs() && iDispatchedScript.getArgs().length > 0) {
+            //shell command
+            scriptString = null;
+            isExec = true;
+            isUrl = false;
+        } else {
+            throw new IllegalArgumentException("Dispatched script did not specify a command, script or filepath");
+        }
+        if (null != iDispatchedScript.getArgs() && iDispatchedScript.getArgs().length > 0) {
+            args.addAll(Arrays.asList(iDispatchedScript.getArgs()));
         }
 
         //request parameters
@@ -287,12 +271,12 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
 
         params.put("project", iDispatchedScript.getFrameworkProject());
         if (isExec) {
-            params.put("exec", argString);
+            params.put("exec", OptsUtil.join(args));
         }else if (null != scriptURL) {
             params.put("scriptURL", scriptURL);
         }
-        if(null!=argString){
-            params.put("argString", argString);
+        if (!isExec && args.size() > 0) {
+            params.put("argString", OptsUtil.join(args));
         }
         addLoglevelParams(params, iDispatchedScript.getLoglevel());
         addAPINodeSetParams(params, iDispatchedScript.getNodeSet(), iDispatchedScript.getNodeSet().isKeepgoing());
@@ -396,8 +380,6 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
 
     /**
      * List the items on the dispatcher queue for a project
-     *
-     * @param project Project name
      *
      * @return Collection of Strings listing the active dispatcher queue items
      *
@@ -1365,7 +1347,7 @@ public class RundeckAPICentralDispatcher implements CentralDispatcher {
         addAPINodeSetParams(params, dispatchedJob.getNodeSet(), dispatchedJob.isKeepgoing());
         addLoglevelParams(params, dispatchedJob.getLoglevel());
         if (null != dispatchedJob.getArgs() && dispatchedJob.getArgs().length > 0) {
-            params.put("argString", CLIUtils.generateArgline(null, dispatchedJob.getArgs()));
+            params.put("argString", OptsUtil.join(dispatchedJob.getArgs()));
         }
 
         final String apipath = substitutePathVariable(RUNDECK_API_JOBS_RUN, "id", jobid);

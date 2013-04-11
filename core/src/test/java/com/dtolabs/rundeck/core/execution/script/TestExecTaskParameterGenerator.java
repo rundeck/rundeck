@@ -77,7 +77,7 @@ public class TestExecTaskParameterGenerator extends TestCase {
                 testArgs);
 
             assertEquals("Wrong executable for local unix command", "/bin/sh", params.getCommandexecutable());
-            assertEquals("Wrong argline for local command", "-c \"id\"", params.getCommandargline());
+            assertEquals("Wrong argline for local command", "-c id", params.getCommandargline());
         }
         {
             //command input with unix os-family
@@ -96,7 +96,7 @@ public class TestExecTaskParameterGenerator extends TestCase {
                 testArgs);
 
             assertEquals("Wrong executable for local unix command", "/bin/sh", params.getCommandexecutable());
-            assertEquals("Wrong argline for local command", "-c \"id && hostname\"", params.getCommandargline());
+            assertEquals("Wrong argline for local command", "-c 'id && hostname'", params.getCommandargline());
         }
         {
             //basic command with windows os-family
@@ -135,7 +135,7 @@ public class TestExecTaskParameterGenerator extends TestCase {
                 testArgs);
 
             assertEquals("Wrong executable for local windows command", "cmd.exe", params.getCommandexecutable());
-            assertEquals("Wrong argline for local command", "/c \"id potato hell\"", params.getCommandargline());
+            assertEquals("Wrong argline for local command", "/c id potato hell", params.getCommandargline());
 
         }
         {// quoted command with windows os-family
@@ -154,7 +154,7 @@ public class TestExecTaskParameterGenerator extends TestCase {
                 testArgs);
 
             assertEquals("Wrong executable for local windows command", "cmd.exe", params.getCommandexecutable());
-            assertEquals("Wrong argline for local command", "/c \"echo 'test belief'\"", params.getCommandargline());
+            assertEquals("Wrong argline for local command", "/c echo 'test belief'", params.getCommandargline());
 
         }
     }
@@ -240,7 +240,7 @@ public class TestExecTaskParameterGenerator extends TestCase {
                 testArgs);
 
             assertEquals("Wrong executable for local unix command", "cmd.exe", params.getCommandexecutable());
-            assertEquals("Wrong argline for local command", "/c \"" + testScriptFile.getAbsolutePath()+" test args something\"",
+            assertEquals("Wrong argline for local command", "/c " + testScriptFile.getAbsolutePath()+" test args something",
                 params.getCommandargline());
         }
     }

@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.CoreException;
+import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.cli.ExecTool;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
@@ -47,10 +48,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
-import com.dtolabs.rundeck.core.utils.FormattedOutputStream;
-import com.dtolabs.rundeck.core.utils.LogReformatter;
-import com.dtolabs.rundeck.core.utils.MapGenerator;
-import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream;
+import com.dtolabs.rundeck.core.utils.*;
 
 import java.io.File;
 import java.io.InputStream;
@@ -295,6 +293,14 @@ class ExecutionServiceImpl implements ExecutionService {
         final ExecutionContextImpl nodeContext = new ExecutionContextImpl.Builder(context).nodeContextData(node).build();
 
         final String[] nodeCommand = DataContextUtils.replaceDataReferences(command, nodeContext.getDataContext());
+        Converter<String,String> quote = CLIUtils.argumentQuoteForOperatingSystem(node.getOsFamily());
+        //quote args that have substituted context input
+        for (int i = 0; i < nodeCommand.length; i++) {
+            String replaced = nodeCommand[i];
+            if(!replaced.equals(command[i])) {
+                nodeCommand[i] = quote.convert(replaced);
+            }
+        }
 
         final LogReformatter formatter = createLogReformatter(node, context.getExecutionListener());
         final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
