@@ -457,7 +457,6 @@ public class TestExecTool extends AbstractBaseTest {
             this.framework = framework;
         }
 
-        @Override
         public NodeStepResult executeNodeStep(StepExecutionContext context, NodeStepExecutionItem item, INodeEntry node) throws
                                                                                                              NodeStepException {
             testContext=context;
@@ -809,36 +808,6 @@ public class TestExecTool extends AbstractBaseTest {
 
             testExecutor1.reset();
         }
-    }
-
-    public void testGenerateArglineUnsafe() throws Exception {
-        assertEquals("invalid", "test 1 2", CLIUtils.generateArgline("test", new String[]{"1", "2"}, true));
-        assertEquals("invalid", "test 1 2 '3 4'", CLIUtils.generateArgline("test", new String[]{"1", "2", "3 4"}, true));
-        assertEquals("invalid", "test 1 2 '\"3 4\"'", CLIUtils.generateArgline("test", new String[]{"1", "2", "\"3 4\""}, true));
-        assertEquals("invalid", "test 1 2 \"34\"", CLIUtils.generateArgline("test", new String[]{"1", "2", "\"34\""}, true));
-        assertEquals("invalid", "test 1 2 '3 4'", CLIUtils.generateArgline("test", new String[]{"1", "2", "'3 4'"}, true));
-        // test empty and null values
-        assertEquals("invalid", "test", CLIUtils.generateArgline("test", null, true));
-        assertEquals("invalid", "test", CLIUtils.generateArgline("test", new String[0], true));
-        // demonstrate _why_ this version is unsafe
-        assertEquals("invalid",
-            "test rm * && do\tthings\t>/etc/passwd",
-            CLIUtils.generateArgline("test", new String[] {"rm", "*", "&&", "do\tthings\t>/etc/passwd"}, true));
-    }
-
-    public void testGenerateArglineSafe() throws Exception {
-        assertEquals("invalid", "'test' '1' '2'", CLIUtils.generateArgline("test", new String[]{"1", "2"}, false));
-        assertEquals("invalid", "'test' '1' '2' '3 4'", CLIUtils.generateArgline("test", new String[]{"1", "2", "3 4"}, false));
-        assertEquals("invalid", "'test' '1' '2' '\"3 4\"'", CLIUtils.generateArgline("test", new String[]{"1", "2", "\"3 4\""}, false));
-        assertEquals("invalid", "'test' '1' '2' '\"34\"'", CLIUtils.generateArgline("test", new String[]{"1", "2", "\"34\""}, false));
-        assertEquals("invalid", "'test' '1' '2' ''\"'\"'3 4'\"'\"''", CLIUtils.generateArgline("test", new String[]{"1", "2", "'3 4'"}, false));
-        //test empty and null values
-        assertEquals("invalid", "'test'", CLIUtils.generateArgline("test", null, false));
-        assertEquals("invalid", "'test'", CLIUtils.generateArgline("test", new String[0], false));
-        // demonstrate _why_ this version is safe
-        assertEquals("invalid",
-            "'test' 'rm' '*' '&&' 'do\tthings\t>/etc/passwd'",
-            CLIUtils.generateArgline("test", new String[] {"rm", "*", "&&", "do\tthings\t>/etc/passwd"}, false));
     }
 
     /**

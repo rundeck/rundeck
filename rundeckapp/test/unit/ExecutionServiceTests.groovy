@@ -782,13 +782,11 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             assertNotNull(se2.options)
             assertEquals(3, se2.options.size())
 
-            assertEquals "-test3 'some value'", ExecutionService.generateJobArgline(se2, ['test3': 'some value'])
-            assertEquals "-test2 'some value'", ExecutionService.generateJobArgline(se2, ['test2': 'some value'])
-            assertEquals "-test1 'some value'", ExecutionService.generateJobArgline(se2, ['test1': 'some value'])
+            assertEquals "-test1 \"some value\"", ExecutionService.generateJobArgline(se2, ['test1': 'some value'])
             //multivalue
-            assertEquals "-test1 'some value+another value'", ExecutionService.generateJobArgline(se2, ['test1': ['some value','another value']])
-            assertEquals "-test2 'some value,another value'", ExecutionService.generateJobArgline(se2, ['test2': ['some value','another value']])
-            assertEquals "-test3 'some value,another value'", ExecutionService.generateJobArgline(se2, ['test3': ['some value','another value']])
+            assertEquals "-test1 \"some value+another value\"", ExecutionService.generateJobArgline(se2, ['test1': ['some value','another value']])
+            assertEquals "-test2 \"some value,another value\"", ExecutionService.generateJobArgline(se2, ['test2': ['some value','another value']])
+            assertEquals "-test3 \"some value,another value\"", ExecutionService.generateJobArgline(se2, ['test3': ['some value','another value']])
         }
     }
 

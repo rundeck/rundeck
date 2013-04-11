@@ -17,10 +17,16 @@
 package com.dtolabs.rundeck.core.execution.script;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.cli.CLIUtils;
+import com.dtolabs.rundeck.core.utils.Converter;
+import com.dtolabs.rundeck.core.utils.OptsUtil;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * This class takes the input objects, and synthesizes the executable string and arguments string for the Ant Exec task
@@ -36,7 +42,6 @@ public class ExecTaskParameterGeneratorImpl implements ExecTaskParameterGenerato
     }
 
     /**
-     * Generate the {@link #commandexecutable} and {@link #commandargline} values.
      *
      * @throws ExecutionException if an error occurs
      * @param nodeentry
@@ -54,34 +59,45 @@ public class ExecTaskParameterGeneratorImpl implements ExecTaskParameterGenerato
             throw new ExecutionException("Could not determine the command to dispatch");
         }
         if ("windows".equals(nodeentry.getOsFamily())) {
+            //TODO: escape args properly for windows
+            commandexecutable = "cmd.exe";
             if (command) {
-                commandString = CLIUtils.generateArgline(null, args);
+                commandargline = CLIUtils.generateArgline("/c", args, false);
             } else if (null != scriptfile) {
                 //commandString is the script file location
-                commandString = CLIUtils.generateArgline(scriptfile.getAbsolutePath(), args);
+                ArrayList<String> list = new ArrayList<String>();
+                list.add(scriptfile.getAbsolutePath());
+                if(args!=null && args.length>0){
+                    list.addAll(Arrays.asList(args));
+                }
+                commandargline = CLIUtils.generateArgline("/c", list.toArray(new String[list.size()]), false);
             } else {
                 throw new ExecutionException("Could not determine the command to dispatch");
             }
-            commandexecutable = "cmd.exe";
-            String argline;
-            if (commandString.indexOf("\"") >= 0) {
-                argline = "/c " + commandString;
-            } else if (commandString.indexOf(" ") >= 0) {
-                argline = "/c " + "\"" + commandString + "\"";
-            } else {
-                argline = "/c " + commandString;
-            }
-            commandargline = argline;
         } else {
             if (command) {
                 commandexecutable = "/bin/sh";
-                commandString = CLIUtils.generateArgline(null, args);
-                commandargline = "-c " + (commandString.contains("\"") ? "'" + commandString + "'"
-                                                                       : "\"" + commandString + "\"");
+//
+//                final String[] quotedCommand = new String[args.length];
+//                {
+//                    Converter<String, String> quote = CLIUtils.argumentQuoteForOperatingSystem(nodeentry.getOsFamily());
+//                    for (int i = 0; i < args.length; i++) {
+//                        String replaced = args[i];
+//                        quotedCommand[i] = quote.convert(replaced);
+//                    }
+//                }
+//                commandString = StringUtils.join(args, " ");
+//                commandargline = CLIUtils.generateArgline("-c", new String[]{commandString},false);
+
+//                commandexecutable = args[0];
+//                String[] newargs = new String[args.length-1];
+//                System.arraycopy(args, 1, newargs, 0, newargs.length);
+                commandString = StringUtils.join(args," ");//CLIUtils.generateArgline(null,args,false);
+                commandargline = CLIUtils.generateArgline("-c",new String[]{commandString},false);
             } else if (null != scriptfile) {
                 final String scriptPath = scriptfile.getAbsolutePath();
                 commandexecutable = scriptPath;
-                commandargline = CLIUtils.generateArgline(null, args);
+                commandargline = CLIUtils.generateArgline(null, args, false);
             } else {
                 throw new ExecutionException("Could not determine the command to dispatch");
             }

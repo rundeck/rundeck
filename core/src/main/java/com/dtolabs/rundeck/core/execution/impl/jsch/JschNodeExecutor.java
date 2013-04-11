@@ -223,7 +223,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                                                                       DEFAULT_SUDO2_PASSWORD_OPTION,
                                                                       DEFAULT_SUDO2_COMMAND_PATTERN);
             if (sudoResponder2.isSudoEnabled()
-                && sudoResponder2.matchesCommandPattern(CLIUtils.generateArgline(null, command))) {
+                && sudoResponder2.matchesCommandPattern(CLIUtils.generateArgline(null, command, false))) {
                 logger.debug("Enable second sudo responder");
 
                 sudoResponder2.setDescription("Second " + SudoResponder.DEFAULT_DESCRIPTION);

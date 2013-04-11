@@ -56,24 +56,35 @@ public class DataContextUtils {
      *
      * @param args argument string array
      * @param data data context
-     *
      * @return string array with replaced embedded properties
      */
-    public static String[] replaceDataReferences(final String[] args, final Map<String, Map<String, String>> data) {
+    public static String[] replaceDataReferences(final String[] args, final Map<String, Map<String, String>> data, Converter<String, String> converter, boolean failIfUnexpanded) {
         if (null == data || data.isEmpty()) {
             return args;
         }
-        if(null==args || args.length<1){
+        if (null == args || args.length < 1) {
             return args;
         }
         final String[] newargs = new String[args.length];
 
-        for (int i = 0 ; i < args.length ; i++) {
+        for (int i = 0; i < args.length; i++) {
             final String arg = args[i];
-            newargs[i] = replaceDataReferences(arg, data);
+            newargs[i] = replaceDataReferences(arg, data, converter, failIfUnexpanded);
         }
 
         return newargs;
+    }
+    /**
+     * Replace the embedded  properties of the form '${key.name}' in the input Strings with the value from the data
+     * context
+     *
+     * @param args argument string array
+     * @param data data context
+     *
+     * @return string array with replaced embedded properties
+     */
+    public static String[] replaceDataReferences(final String[] args, final Map<String, Map<String, String>> data) {
+        return replaceDataReferences(args, data, null, false);
     }
 
     /**
