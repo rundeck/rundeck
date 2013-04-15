@@ -188,12 +188,12 @@ class JobsXMLCodec {
         convertXmlWorkflowToMap(map.sequence)
 
         if(null!=map.notification){
-            if(!map.notification || null==map.notification.onsuccess && null==map.notification.onfailure){
-                throw new JobXMLException("notification section had no onsuccess or onfailure element")
+            def triggers=map.notification?.keySet().findAll { it.startsWith('on') }
+            if(!map.notification || !triggers){
+                throw new JobXMLException("notification section had no trigger elements")
             }
-            ['onsuccess','onfailure'].each{trigger->
+            triggers.each{trigger->
                 if(null!=map.notification[trigger]){
-
                     if(!map.notification[trigger] || null==map.notification[trigger].email && null == map.notification[trigger].webhook){
                         throw new JobXMLException("notification '${trigger}' element had missing 'email' or 'webhook' element")
                     }
@@ -358,13 +358,24 @@ class JobsXMLCodec {
 
         convertWorkflowMapForBuilder(map.sequence)
         if(map.notification){
-            ['onsuccess','onfailure'].each{trigger->
+            map.notification.keySet().findAll { it.startsWith('on') }.each{trigger->
                 if(map.notification[trigger]){
                     if(map.notification[trigger]?.recipients){
                         map.notification[trigger].email=BuilderUtil.toAttrMap('recipients',map.notification[trigger].remove('recipients'))
                     }
                     if(map.notification[trigger]?.urls){
                         map.notification[trigger].webhook=BuilderUtil.toAttrMap('urls',map.notification[trigger].remove('urls'))
+                    }
+                    if(map.notification[trigger]?.plugin){
+                        if(map.notification[trigger]?.plugin instanceof Map){
+                            def Map pluginMap = map.notification[trigger]?.plugin
+                            BuilderUtil.makeAttribute(pluginMap, 'type')
+                        }else if(map.notification[trigger]?.plugin instanceof Collection){
+                            //list of plugins,
+                            map.notification[trigger].plugin.each{Map plugin->
+                                BuilderUtil.makeAttribute(plugin, 'type')
+                            }
+                        }
                     }
                 }
             }

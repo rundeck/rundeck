@@ -52,6 +52,7 @@ environments {
     }
     development{
         grails.serverURL="http://localhost:9090/rundeck"
+        plugin.refreshDelay=5000
     }
     test {
     }

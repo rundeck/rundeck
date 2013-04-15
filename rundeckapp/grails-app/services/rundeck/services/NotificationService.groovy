@@ -1,5 +1,8 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
+import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
+import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
 import groovy.xml.MarkupBuilder
 
 import org.apache.commons.httpclient.HttpClient
@@ -9,6 +12,9 @@ import org.apache.commons.httpclient.Header
 
 import org.apache.commons.httpclient.methods.StringRequestEntity
 import grails.util.GrailsWebUtil
+import org.springframework.beans.factory.NoSuchBeanDefinitionException
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 import org.springframework.web.context.support.WebApplicationContextUtils
 import org.codehaus.groovy.grails.web.context.ServletContextHolder
 import org.springframework.web.context.request.RequestContextHolder
@@ -16,6 +22,7 @@ import rundeck.ScheduledExecution
 import rundeck.Notification
 import rundeck.Execution
 import rundeck.controllers.ExecutionController
+import com.fasterxml.jackson.databind.ObjectMapper
 
 /*
 * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
@@ -40,10 +47,31 @@ import rundeck.controllers.ExecutionController
  * $Id$
  */
 
-public class NotificationService {
+public class NotificationService implements ApplicationContextAware{
 
+    ApplicationContext applicationContext
+    def grailsApplication
     def mailService
+    def RundeckPluginRegistry rundeckPluginRegistry
+    def NotificationPluginProviderService notificationPluginProviderService
 
+    def NotificationPlugin getNotificationPlugin(String name) {
+        for(String key in [name, "${name}NotificationPlugin"]){
+            def bean= rundeckPluginRegistry.loadPluginByName(key, notificationPluginProviderService)
+            if (bean ) {
+                return (NotificationPlugin) bean
+            }
+        }
+        log.error("Notification plugin not found: ${name}")
+        return null
+    }
+    def Map listNotificationPlugins(){
+        def plugins=[:]
+        plugins=rundeckPluginRegistry.listPlugins(NotificationPlugin, notificationPluginProviderService)
+        System.err.println("listed plugins: ${plugins}")
+
+        plugins
+    }
     def boolean triggerJobNotification(String trigger, schedId, Map content){
         if(trigger && schedId){
             ScheduledExecution.withNewSession {
@@ -79,7 +107,6 @@ public class NotificationService {
                     }
                     didsend= true
                 }else if(n.type=='url'){    //sending notification of a status trigger for the Job
-
                     def requestAttributes = RequestContextHolder.getRequestAttributes()
                     boolean unbindrequest = false
                     // outside of an executing request, establish a mock version
@@ -133,6 +160,31 @@ public class NotificationService {
                         }
                     }
                     didsend=!webhookfailure
+                }else if (n.type) {
+
+                    def plugin = getNotificationPlugin(n.type)
+                    if(!plugin){
+                        log.error("No Notification plugin found of type: " + n.type)
+                        return
+                    }
+                    //read config content as json
+                    final ObjectMapper mapper = new ObjectMapper()
+                    def Map config = mapper.readValue(n.content, Map.class)
+                    def Execution exec = content.execution
+                    //[execution: execution,nodestatus:[succeeded:sucCount,failed:failedCount,total:totalCount]]
+                    final state = ExecutionController.getExecutionState(exec)
+                    def execMap = [
+                            executionId: exec.id,
+                            user: exec.user,
+                            started: exec.dateStarted,
+                            completed: exec.dateCompleted,
+                            abortedBy: exec.abortedby,
+                            status: state,
+                            nodestatus: content['nodestatus']
+                    ]
+                    if(!plugin.postNotification(trigger, execMap, config)){
+                        log.error("Notification Failed: " + n.type);
+                    }
                 }else{
                     log.error("Unsupported notification type: " + n.type);
                 }

@@ -37,6 +37,7 @@ import rundeck.filters.ApiRequestFilters
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionServiceException
 import rundeck.services.FrameworkService
+import rundeck.services.NotificationService
 import rundeck.services.ScheduledExecutionService
 
 import java.util.regex.Pattern
@@ -47,6 +48,7 @@ class ScheduledExecutionController  {
     def ExecutionService executionService
     def FrameworkService frameworkService
     def ScheduledExecutionService scheduledExecutionService
+    def NotificationService notificationService
 
  
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -727,6 +729,7 @@ class ScheduledExecutionController  {
         def stepTypes = frameworkService.getStepPluginDescriptions(framework)
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         return [ scheduledExecution:scheduledExecution, crontab:crontab,params:params,
+                notificationPlugins: notificationService.listNotificationPlugins(),
             nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
             authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework), projects: frameworkService.projects(framework),nodeStepDescriptions: nodeStepTypes,stepDescriptions:stepTypes]
     }
@@ -818,7 +821,12 @@ class ScheduledExecutionController  {
         }
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions(framework)
         def stepTypes = frameworkService.getStepPluginDescriptions(framework)
-        render(view:'create',model: [ scheduledExecution:newScheduledExecution, crontab:crontab,params:params, iscopy:true, authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework), projects: frameworkService.projects(framework), nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes])
+        render(view:'create',model: [ scheduledExecution:newScheduledExecution, crontab:crontab,params:params,
+                iscopy:true,
+                authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework),
+                projects: frameworkService.projects(framework), nodeStepDescriptions: nodeStepTypes,
+                stepDescriptions: stepTypes,
+                notificationPlugins: notificationService.listNotificationPlugins()])
 
     }
     /**
@@ -921,7 +929,9 @@ class ScheduledExecutionController  {
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions(framework)
         def stepTypes = frameworkService.getStepPluginDescriptions(framework)
         log.debug("ScheduledExecutionController: create : now returning model data to view...")
-        return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],projects:projects,nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes]
+        return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],projects:projects,
+                nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes,
+                notificationPlugins: notificationService.listNotificationPlugins()]
     }
 
     private clearEditSession(id='_new'){

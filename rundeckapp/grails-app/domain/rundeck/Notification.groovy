@@ -1,4 +1,7 @@
 package rundeck
+
+import com.fasterxml.jackson.databind.ObjectMapper
+
 /*
  * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
  *
@@ -50,8 +53,31 @@ public class Notification {
     static mapping = {
         content type: 'text'
     }
+    //ignore fake property 'configuration' and do not store it
+    static transients = ['configuration']
 
-    public static Notification fromMap(String key,Map data){
+    public Map getConfiguration() {
+        //de-serialize the json
+        if (null != content) {
+            final ObjectMapper mapper = new ObjectMapper()
+            return mapper.readValue(content, Map.class)
+        } else {
+            return null
+        }
+
+    }
+
+    public void setConfiguration(Map obj) {
+        //serialize json and store into field
+        if (null != obj) {
+            final ObjectMapper mapper = new ObjectMapper()
+            content = mapper.writeValueAsString(obj)
+        } else {
+            content = null
+        }
+    }
+
+    public static Notification fromMap(String key, Map data){
         Notification n = new Notification(eventTrigger:key)
         if(data.recipients){
             n.type='email'
@@ -59,6 +85,15 @@ public class Notification {
         }else if(data.urls){
             n.type='url'
             n.content=data.urls
+        }else if(data.type){
+            n.type=data.type
+            if(data.config && data.config instanceof Map){
+                n.configuration=data.config
+            }else if(data.config && data.config instanceof String){
+                n.configuration = ['_content':data.config]
+            }else{
+                n.content=null
+            }
         }
         return n;
     }
@@ -67,6 +102,12 @@ public class Notification {
             return [recipients:content]
         }else if(type=='url'){
             return [urls:content]
+        }else if(type){
+            def config=[:]
+            if(content){
+                config=this.configuration
+            }
+            return [type:type,config:config]
         }else{
             return null
         }

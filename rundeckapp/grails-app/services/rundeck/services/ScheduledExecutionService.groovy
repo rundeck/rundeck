@@ -26,6 +26,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
     boolean transactional = false
 
     def FrameworkService frameworkService
+    def NotificationService notificationService
 
     def Scheduler quartzScheduler
 
@@ -1142,7 +1143,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
 
         }
 
-        if (!params.notifications && (params.notifyOnsuccess || params.notifyOnfailure || params.notifyOnsuccessUrl || params.notifyOnfailureUrl)) {
+        if (!params.notifications && (params.notifyOnsuccessPlugin ||params.notifyOnsuccess || params.notifyOnfailure || params.notifyOnsuccessUrl || params.notifyOnfailureUrl)) {
             def nots = []
             if ('true' == params.notifyOnsuccess) {
                 nots << [eventTrigger: 'onsuccess', type: 'email', content: params.notifySuccessRecipients]
@@ -1155,6 +1156,16 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             }
             if ('true' == params.notifyOnfailureUrl) {
                 nots << [eventTrigger: 'onfailure', type: 'url', content: params.notifyFailureUrl]
+            }
+            //notifyOnsuccessPlugin
+            if (params.notifyOnsuccessPlugin) {
+                params.notifyOnsuccessPlugin.each { k, v ->
+                    if (v == 'true') {
+//                        def content = params.notifySuccessPluginContent?.get(k)
+                        def config = params.notifySuccessPluginConfig?.get(k)
+                        nots << [eventTrigger: 'onsuccess', type: k, content: config]
+                    }
+                }
             }
             params.notifications = nots
         }
@@ -1230,8 +1241,10 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         boolean failed = false
         def fieldNames = [onsuccess: 'notifySuccessRecipients', onfailure: 'notifyFailureRecipients']
         def fieldNamesUrl = [onsuccess: 'notifySuccessUrl', onfailure: 'notifyFailureUrl']
+        System.err.println("_updateNotifications: ${params.notifications}")
         params.notifications.each {notif ->
             def trigger = notif.eventTrigger
+            def Notification n=null
             if (notif && notif.type == 'email' && notif.content) {
                 def arr = notif.content.split(",")
                 arr.each {email ->
@@ -1249,20 +1262,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                     return
                 }
                 def addrs = arr.findAll {it.trim()}.join(",")
-                Notification n = new Notification(eventTrigger: trigger, type: 'email', content: addrs)
-                scheduledExecution.addToNotifications(n)
-                if (!n.validate()) {
-                    failed = true
-                    n.discard()
-                    def errmsg = trigger + " notification: " + n.errors.allErrors.collect {lookupMessageError(it)}.join(";")
-                    scheduledExecution.errors.rejectValue(
-                            fieldNames[trigger],
-                            'scheduledExecution.notifications.invalid.message',
-                            [errmsg] as Object[],
-                            'Invalid notification definition: {0}'
-                    )
-                }
-                n.scheduledExecution = scheduledExecution
+                n = new Notification(eventTrigger: trigger, type: 'email', content: addrs)
             } else if (notif && notif.type == 'url' && notif.content) {
                 def arr = notif.content.split(",")
 
@@ -1288,12 +1288,28 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                     return
                 }
                 def addrs = arr.findAll {it.trim()}.join(",")
-                Notification n = new Notification(eventTrigger: trigger, type: 'url', content: addrs)
+                n = new Notification(eventTrigger: trigger, type: 'url', content: addrs)
+            }else{
+                //plugin type
+                System.err.println("try to save notification type: ${notif.type}")
+                def plugin=notificationService.getNotificationPlugin(notif.type)
+                if(!plugin){
+                    return
+                }
+                //TODO: validate config
+                def validation=plugin.validateForm(notif.content)
+                System.err.println("plugin validation: ${validation}")
+                //TODO: better config test
+                def data = [type: notif.type, config: notif.content]
+                System.err.println("plugin data: ${data}")
+                n = Notification.fromMap(trigger, data)
+            }
+            if(n){
                 scheduledExecution.addToNotifications(n)
                 if (!n.validate()) {
                     failed = true
                     n.discard()
-                    def errmsg = trigger + " notification: " + n.errors.allErrors.collect {lookupMessageError(it)}.join(";")
+                    def errmsg = trigger + " notification: " + n.errors.allErrors.collect { lookupMessageError(it) }.join(";")
                     scheduledExecution.errors.rejectValue(
                             fieldNamesUrl[trigger],
                             'scheduledExecution.notifications.invalid.message',
@@ -1998,7 +2014,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 }
             }
         }
-        if (!params.notifications && (params.notifyOnsuccess || params.notifyOnfailure || params.notifyOnsuccessUrl || params.notifyOnfailureUrl)) {
+        if (!params.notifications) {
             def nots = []
             if ('true' == params.notifyOnsuccess) {
                 nots << [eventTrigger: 'onsuccess', type: 'email', content: params.notifySuccessRecipients]
@@ -2011,6 +2027,16 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             }
             if ('true' == params.notifyOnfailureUrl) {
                 nots << [eventTrigger: 'onfailure', type: 'url', content: params.notifyFailureUrl]
+            }
+            //notifyOnsuccessPlugin
+            if (params.notifyOnsuccessPlugin) {
+                params.notifyOnsuccessPlugin.each { k, v ->
+                    if (v == 'true') {
+//                        def content = params.notifySuccessPluginContent?.get(k)
+                        def config = params.notifySuccessPluginConfig?.get(k)
+                        nots << [eventTrigger: 'onsuccess', type: k, content: config]
+                    }
+                }
             }
             params.notifications = nots
         }
