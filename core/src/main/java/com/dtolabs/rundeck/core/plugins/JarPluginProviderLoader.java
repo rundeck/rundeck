@@ -15,20 +15,13 @@
  */
 
 /*
-* JarFileProviderLoader.java
-* 
-* User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 4/12/11 7:29 PM
-* 
-*/
+ * JarFileProviderLoader.java
+ * 
+ * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
+ * Created: 4/12/11 7:29 PM
+ * 
+ */
 package com.dtolabs.rundeck.core.plugins;
-
-import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
-import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
-import com.dtolabs.rundeck.core.utils.FileUtils;
-import com.dtolabs.rundeck.core.utils.ZipUtil;
-import com.dtolabs.rundeck.core.utils.cache.FileCache;
-import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,14 +29,30 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.jar.Attributes;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
+import org.apache.log4j.Logger;
+
+import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
+import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
+import com.dtolabs.rundeck.core.utils.FileUtils;
+import com.dtolabs.rundeck.core.utils.ZipUtil;
+import com.dtolabs.rundeck.core.utils.cache.FileCache;
+
 /**
  * JarPluginProviderLoader can load jar plugin files as provider instances.
- *
+ * 
+ * Calls to load a provider instance should be synchronized as this class will
+ * perform file copy operations.
+ * 
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
@@ -55,49 +64,52 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
     public static final VersionCompare LOWEST_JAR_PLUGIN_VERSION = VersionCompare.forString(JAR_PLUGIN_VERSION);
     public static final String RUNDECK_PLUGIN_VERSION = "Rundeck-Plugin-Version";
     public static final String RUNDECK_PLUGIN_FILE_VERSION = "Rundeck-Plugin-File-Version";
-    private final File file;
+    private final File pluginJar;
+    private final File pluginJarCacheDirectory;
     private final File cachedir;
-    private Map<ProviderIdent, Class> pluginProviderDefs =
-        new HashMap<ProviderIdent, Class>();
+    @SuppressWarnings("rawtypes")
+    private Map<ProviderIdent, Class> pluginProviderDefs = new HashMap<ProviderIdent, Class>();
 
-    public JarPluginProviderLoader(final File file, final File cachedir) {
-        if (null == file) {
-            throw new NullPointerException("file");
+    public JarPluginProviderLoader(final File pluginJar, final File pluginJarCacheDirectory, final File cachedir) {
+        if (null == pluginJar) {
+            throw new NullPointerException("Expected non-null plugin jar argument.");
         }
-        if(!file.exists()) {
-            throw new IllegalArgumentException("File does not exist: " + file);
+        if (!pluginJar.exists()) {
+            throw new IllegalArgumentException("File does not exist: " + pluginJar);
         }
-        if(!file.isFile()) {
-            throw new IllegalArgumentException("Not a file: " + file);
+        if (!pluginJar.isFile()) {
+            throw new IllegalArgumentException("Not a file: " + pluginJar);
         }
-        this.file = file;
-        this.cachedir=cachedir;
+        this.pluginJar = pluginJar;
+        this.pluginJarCacheDirectory = pluginJarCacheDirectory;
+        this.cachedir = cachedir;
     }
 
     /**
      * Load provider instance for the service
      */
-    public synchronized <T> T load(final PluggableService<T> service, final String providerName) throws
-        ProviderLoaderException {
+    @SuppressWarnings("unchecked")
+    public synchronized <T> T load(final PluggableService<T> service, final String providerName)
+            throws ProviderLoaderException {
         final ProviderIdent ident = new ProviderIdent(service.getName(), providerName);
-        debug("loadInstance for " + ident + ": " + file);
+        debug("loadInstance for " + ident + ": " + pluginJar);
 
         if (null == pluginProviderDefs.get(ident)) {
             final String[] strings = getClassnames();
             for (final String classname : strings) {
-                final Class cls;
+                final Class<?> cls;
                 try {
-                    cls = loadClass(classname, file);
+                    cls = loadClass(classname);
                     if (matchesProviderDeclaration(ident, cls)) {
                         pluginProviderDefs.put(ident, cls);
                     }
                 } catch (PluginException e) {
-                    log.error(
-                        "Failed to load class from " + file + ": classname: " + classname + ": " + e.getMessage());
+                    log.error("Failed to load class from " + pluginJar + ": classname: " + classname + ": "
+                            + e.getMessage());
                 }
             }
         }
-        final Class cls = pluginProviderDefs.get(ident);
+        final Class<T> cls = pluginProviderDefs.get(ident);
         if (null != cls) {
             try {
                 return createProviderForClass(service, cls);
@@ -108,21 +120,18 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         return null;
     }
 
-
     /**
      * Return true if the ident matches the Plugin annotation for the class
      */
-    static boolean matchesProviderDeclaration(final ProviderIdent ident, final Class cls) throws
-        PluginException {
+    static boolean matchesProviderDeclaration(final ProviderIdent ident, final Class<?> cls) throws PluginException {
         final Plugin annotation = getPluginMetadata(cls);
-        return ident.getFirst().equals(annotation.service()) &&
-               ident.getSecond().equals(annotation.name());
+        return ident.getFirst().equals(annotation.service()) && ident.getSecond().equals(annotation.name());
     }
 
     /**
      * Return true if the ident matches the Plugin annotation for the class
      */
-    static ProviderIdent getProviderDeclaration(final Class cls) throws PluginException {
+    static ProviderIdent getProviderDeclaration(final Class<?> cls) throws PluginException {
         final Plugin annotation = getPluginMetadata(cls);
         return new ProviderIdent(annotation.service(), annotation.name());
     }
@@ -149,7 +158,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
      */
     private Attributes getMainAttributes() {
         if (null == mainAttributes) {
-            mainAttributes = getJarMainAttributes(file);
+            mainAttributes = getJarMainAttributes(pluginJar);
         }
         return mainAttributes;
     }
@@ -175,12 +184,11 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
 
     /**
      * Attempt to create an instance of thea provider for the given service
-     *
+     * 
      * @param cls
      */
-    @SuppressWarnings ("unchecked")
-    static <T> T createProviderForClass(final PluggableService<T> service, final Class cls) throws
-        PluginException, ProviderCreationException {
+    static <T> T createProviderForClass(final PluggableService<T> service, final Class cls) throws PluginException,
+            ProviderCreationException {
         debug("Try loading provider " + cls.getName());
 
         final Plugin annotation = getPluginMetadata(cls);
@@ -188,9 +196,8 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         final String pluginname = annotation.name();
 
         if (!service.isValidProviderClass(cls)) {
-            throw new PluginException(
-                "Class " + cls.getName() + " was not a valid plugin class for service: " + service
-                    .getName());
+            throw new PluginException("Class " + cls.getName() + " was not a valid plugin class for service: "
+                    + service.getName());
         }
         debug("Succeeded loading plugin " + cls.getName() + " for service: " + service.getName());
         return service.createProviderInstance(cls, pluginname);
@@ -205,67 +212,114 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
     /**
      * Get the Plugin annotation for the class
      */
-    @SuppressWarnings ("unchecked")
-    static Plugin getPluginMetadata(final Class cls) throws PluginException {
-        //try to get plugin provider name
+    static Plugin getPluginMetadata(final Class<?> cls) throws PluginException {
+        // try to get plugin provider name
         final String pluginname;
         if (!cls.isAnnotationPresent(Plugin.class)) {
-            throw new PluginException(
-                "No Plugin annotation was found for the class: " + cls.getName());
+            throw new PluginException("No Plugin annotation was found for the class: " + cls.getName());
         }
 
         final Plugin annotation = (Plugin) cls.getAnnotation(Plugin.class);
         pluginname = annotation.name();
         if (null == pluginname || "".equals(pluginname)) {
-            throw new PluginException(
-                "Plugin annotation 'name' cannot be empty for the class: " + cls.getName());
+            throw new PluginException("Plugin annotation 'name' cannot be empty for the class: " + cls.getName());
         }
-        //get service name from annotation
+        // get service name from annotation
         final String servicename = annotation.service();
         if (null == servicename || "".equals(servicename)) {
-            throw new PluginException(
-                "Plugin annotation 'service' cannot be empty for the class: " + cls.getName());
+            throw new PluginException("Plugin annotation 'service' cannot be empty for the class: " + cls.getName());
         }
         return annotation;
     }
 
-    private Map<String, Class> classCache = new HashMap<String, Class>();
+    private Map<String, Class<?>> classCache = new HashMap<String, Class<?>>();
+
+    /**
+     * @return true if the other jar is a copy of the pluginJar based on names returned by generateCachedJarName
+     */
+    protected boolean isEquivalentPluginJar(File other) {
+        String name = other.getName();
+        // 37 is length of UUID + 1 for the dash in generateCachedJarName
+        if (name.length() <= 37) {
+            log.warn(String.format("%s does not conform to cached plugin jar naming convention.", other));
+            return false;
+        } else {
+            return other.getName().substring(37).equals(pluginJar.getName());
+        }
+    }
+    
+    /**
+     * @return a randomly generated name for the pluginJar
+     */
+    protected String generateCachedJarName() {
+        return String.format("%s-%s", UUID.randomUUID(), pluginJar.getName());
+    }
+
+    /**
+     * Creates a single cached version of the pluginJar located within pluginJarCacheDirectory
+     * deleting all existing versions of pluginJar
+     */
+    protected File createCachedJar() throws PluginException {
+        File cachedJar;
+        try {
+            debug(String.format("Scanning %s for cached versions of %s", pluginJarCacheDirectory, pluginJar));
+            for (File f : pluginJarCacheDirectory.listFiles()) {
+                if (isEquivalentPluginJar(f)) {
+                    debug(String.format("Found %s, deleting...", f));
+                    if (!f.delete()) {
+                        log.warn(String.format("Could not delete %s", f));
+                    }
+                }
+            }
+            cachedJar = new File(pluginJarCacheDirectory, generateCachedJarName());
+            cachedJar.deleteOnExit();
+            FileUtils.fileCopy(pluginJar, cachedJar, true);
+        } catch (IOException e) {
+            throw new PluginException(e);
+        }
+        return cachedJar;
+    }
 
     /**
      * Load a class from the jar file by name
      */
-    private Class loadClass(final String classname, final File file) throws PluginException {
+    private Class<?> loadClass(final String classname) throws PluginException {
         if (null == classname) {
             throw new IllegalArgumentException("A null java class name was specified.");
         }
         if (null != classCache.get(classname)) {
-            debug("(loadClass) " + classname + ": " + file);
+            debug("(loadClass) " + classname + ": " + pluginJar);
             return classCache.get(classname);
         }
-        debug("loadClass! " + classname + ": " + file);
-        final ClassLoader parent = JarPluginProviderLoader.class.getClassLoader();
-        final Class cls;
 
-        //if jar manifest declares secondary lib deps, expand lib into cachedir, and setup classloader to use the libs
-        Collection<File> extlibs=null;
+        debug(String.format("Deleting dependency lib cache %s",  getFileCacheDir()));
+        FileUtils.deleteDir(getFileCacheDir());
+        File cachedJar = createCachedJar();
+        debug("loadClass! " + classname + ": " + cachedJar);
+
+        final ClassLoader parent = JarPluginProviderLoader.class.getClassLoader();
+        final Class<?> cls;
+
+        // if jar manifest declares secondary lib deps, expand lib into cachedir, and setup classloader to use the libs
+        Collection<File> extlibs = null;
         try {
-            extlibs=extractDependentLibs();
+            extlibs = extractDependentLibs();
         } catch (IOException e) {
-            throw new PluginException("Unable to expand plugin libs: "+e.getMessage(), e);
+            throw new PluginException("Unable to expand plugin libs: " + e.getMessage(), e);
         }
 
         try {
-            final URL url = file.toURI().toURL();
+            final URL url = cachedJar.toURI().toURL();
             final URL[] urlarray;
-            if(null!=extlibs && extlibs.size()>0){
+            if (null != extlibs && extlibs.size() > 0) {
                 final ArrayList<URL> urls = new ArrayList<URL>();
                 urls.add(url);
                 for (final File extlib : extlibs) {
                     urls.add(extlib.toURI().toURL());
                 }
                 urlarray = urls.toArray(new URL[urls.size()]);
-            }else {
-                urlarray = new URL[]{url};
+            } else {
+                urlarray = new URL[] { url };
             }
             final URLClassLoader urlClassLoader = URLClassLoader.newInstance(urlarray, parent);
             cls = Class.forName(classname, true, urlClassLoader);
@@ -282,6 +336,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
 
     /**
      * Extract the dependent libs and return the extracted jar files
+     * 
      * @return the collection of extracted files
      */
     private Collection<File> extractDependentLibs() throws IOException {
@@ -293,8 +348,8 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
 
         final ArrayList<File> files = new ArrayList<File>();
         final String libs = attributes.getValue(RUNDECK_PLUGIN_LIBS);
-        if(null!=libs) {
-            debug("jar libs listed: " + libs + " for file: " + file);
+        if (null != libs) {
+            debug("jar libs listed: " + libs + " for file: " + pluginJar);
 
             final String[] libsarr = libs.split(" ");
             final File cachedir = getFileCacheDir();
@@ -302,8 +357,8 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
             for (final String s : libsarr) {
                 files.add(new File(cachedir, s));
             }
-        }else {
-            debug("no jar libs listed in manifest: " + file);
+        } else {
+            debug("no jar libs listed in manifest: " + pluginJar);
         }
         return files;
     }
@@ -311,8 +366,11 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
     /**
      * Extract specific entries from the jar to a destination directory. Creates the
      * destination directory if it does not exist
-     * @param entries the entries to extract
-     * @param destdir destination directory
+     * 
+     * @param entries
+     *            the entries to extract
+     * @param destdir
+     *            destination directory
      */
     private void extractJarContents(final String[] entries, final File destdir) throws IOException {
         if (!destdir.exists()) {
@@ -321,10 +379,10 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
             }
         }
 
-        debug("extracting lib files from jar: " + file);
+        debug("extracting lib files from jar: " + pluginJar);
         for (final String path : entries) {
-            debug("Expand zip " + file.getAbsolutePath() + " to dir: " + destdir + ", file: " + path);
-            ZipUtil.extractZipFile(file.getAbsolutePath(), destdir, path);
+            debug("Expand zip " + pluginJar.getAbsolutePath() + " to dir: " + destdir + ", file: " + path);
+            ZipUtil.extractZipFile(pluginJar.getAbsolutePath(), destdir, path);
         }
 
     }
@@ -333,7 +391,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
      * Basename of the file
      */
     String getFileBasename() {
-        return basename(file);
+        return basename(pluginJar);
     }
 
     /**
@@ -350,6 +408,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
     File getFileCacheDir() {
         return new File(cachedir, getFileBasename());
     }
+
     /**
      * Return true if the file has a class that provides the ident.
      */
@@ -357,7 +416,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         final String[] strings = getClassnames();
         for (final String classname : strings) {
             try {
-                if (matchesProviderDeclaration(ident, loadClass(classname, file))) {
+                if (matchesProviderDeclaration(ident, loadClass(classname))) {
                     return true;
                 }
             } catch (PluginException e) {
@@ -367,12 +426,12 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         return false;
     }
 
-    public List<ProviderIdent> listProviders() {
+    public synchronized List<ProviderIdent> listProviders() {
         final ArrayList<ProviderIdent> providerIdents = new ArrayList<ProviderIdent>();
         final String[] strings = getClassnames();
         for (final String classname : strings) {
             try {
-                providerIdents.add(getProviderDeclaration(loadClass(classname, file)));
+                providerIdents.add(getProviderDeclaration(loadClass(classname)));
             } catch (PluginException e) {
                 e.printStackTrace();
             }
@@ -391,6 +450,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         }
         return true;
     }
+
     /**
      * Expire the loader cache item
      */
@@ -412,14 +472,14 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         if (classCache != null ? !classCache.equals(that.classCache) : that.classCache != null) {
             return false;
         }
-        if (!file.equals(that.file)) {
+        if (!pluginJar.equals(that.pluginJar)) {
             return false;
         }
         if (mainAttributes != null ? !mainAttributes.equals(that.mainAttributes) : that.mainAttributes != null) {
             return false;
         }
         if (pluginProviderDefs != null ? !pluginProviderDefs.equals(that.pluginProviderDefs)
-                                       : that.pluginProviderDefs != null) {
+                : that.pluginProviderDefs != null) {
             return false;
         }
 
@@ -428,7 +488,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
 
     @Override
     public int hashCode() {
-        int result = file.hashCode();
+        int result = pluginJar.hashCode();
         result = 31 * result + (pluginProviderDefs != null ? pluginProviderDefs.hashCode() : 0);
         result = 31 * result + (mainAttributes != null ? mainAttributes.hashCode() : 0);
         result = 31 * result + (classCache != null ? classCache.hashCode() : 0);
@@ -442,7 +502,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         try {
             final JarInputStream jarInputStream = new JarInputStream(new FileInputStream(file));
             final Manifest manifest = jarInputStream.getManifest();
-            if(null==manifest){
+            if (null == manifest) {
                 jarInputStream.close();
                 return false;
             }
@@ -466,26 +526,22 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         final String value1 = mainAttributes.getValue(RUNDECK_PLUGIN_ARCHIVE);
         final String plugvers = mainAttributes.getValue(RUNDECK_PLUGIN_VERSION);
 
-        final String plugclassnames = mainAttributes.getValue(
-            RUNDECK_PLUGIN_CLASSNAMES);
+        final String plugclassnames = mainAttributes.getValue(RUNDECK_PLUGIN_CLASSNAMES);
         if (null == value1) {
-            throw new InvalidManifestException(
-                "Jar plugin manifest attribute missing: " + RUNDECK_PLUGIN_ARCHIVE);
+            throw new InvalidManifestException("Jar plugin manifest attribute missing: " + RUNDECK_PLUGIN_ARCHIVE);
         } else if (!"true".equals(value1)) {
-            throw new InvalidManifestException(
-                RUNDECK_PLUGIN_ARCHIVE + " was not 'true': " + value1);
+            throw new InvalidManifestException(RUNDECK_PLUGIN_ARCHIVE + " was not 'true': " + value1);
         }
         if (null == plugvers) {
             throw new InvalidManifestException("Jar plugin manifest attribute missing: " + RUNDECK_PLUGIN_VERSION);
         }
         final VersionCompare pluginVersion = VersionCompare.forString(plugvers);
         if (!pluginVersion.atLeast(LOWEST_JAR_PLUGIN_VERSION)) {
-            throw new InvalidManifestException(
-                "Unsupported plugin version: " + RUNDECK_PLUGIN_VERSION + ": " + plugvers);
+            throw new InvalidManifestException("Unsupported plugin version: " + RUNDECK_PLUGIN_VERSION + ": "
+                    + plugvers);
         }
         if (null == plugclassnames) {
-            throw new InvalidManifestException(
-                "Jar plugin manifest attribute missing: " + RUNDECK_PLUGIN_CLASSNAMES);
+            throw new InvalidManifestException("Jar plugin manifest attribute missing: " + RUNDECK_PLUGIN_CLASSNAMES);
         }
     }
 
@@ -498,6 +554,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
     /**
      * Return the version string metadata value for the plugin file, or null if it is not available or could not
      * loaded
+     * 
      * @param file
      * @return version string
      */
@@ -505,9 +562,8 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         return loadManifestAttribute(file, RUNDECK_PLUGIN_FILE_VERSION);
     }
 
-
     private static String loadManifestAttribute(final File file, final String attribute) {
-        String plugvers=null;
+        String plugvers = null;
         try {
             final JarInputStream jarInputStream = new JarInputStream(new FileInputStream(file));
             final Manifest manifest = jarInputStream.getManifest();
