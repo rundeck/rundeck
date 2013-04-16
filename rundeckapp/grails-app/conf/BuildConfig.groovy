@@ -23,8 +23,8 @@ grails.project.dependency.resolution = {
         flatDir name:'grailsLocalRepo', dirs:"${grailsLocalRepo}"
         grailsHome()
         grailsPlugins()
-        grailsCentral()
         mavenRepo mavenCentralUrl
+        grailsCentral()
     }
 
     grails.war.resources = {def stagingDir ->
