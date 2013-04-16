@@ -2,17 +2,24 @@ package com.dtolabs.rundeck.plugin.example;
 
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin;
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
+import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
 import java.util.*;
 
 @Plugin(service="Notification",name="example")
+@PluginDescription(title="Example Plugin", description="An example Plugin for Rundeck Notifications.")
 public class ExampleNotificationPlugin implements NotificationPlugin{
+
+    @PluginProperty(name = "test",title = "Test String",description = "a description")
+    private String test;
 
     public ExampleNotificationPlugin(){
 
     }
 
     public boolean postNotification(String trigger, Map executionData, Map config) {
-        System.err.printf("Trigger %s fired for %s, configuration: %s",trigger,executionData,config);
+        System.err.printf("Trigger %s fired for %s, configuration: %s\n",trigger,executionData,config);
+        System.err.printf("Local field test is: %s\n",test);
         return true;
     }
 
@@ -25,13 +32,6 @@ public class ExampleNotificationPlugin implements NotificationPlugin{
 
         }};
         return map;
-    }
-
-    public String renderHtmlForm(String inputPrefix, Map config) {
-        return 
-"<label>Test input:\n"+
-"<input type=\"text\" name=\""+inputPrefix+"test\">\n"+
-"</label>";
     }
 
     public Map validateForm(Map config) {

@@ -56,7 +56,7 @@ public class NotificationService implements ApplicationContextAware{
     def NotificationPluginProviderService notificationPluginProviderService
 
     def NotificationPlugin getNotificationPlugin(String name) {
-        for(String key in [name, "${name}NotificationPlugin"]){
+        for(String key in [name]){
             def bean= rundeckPluginRegistry.loadPluginByName(key, notificationPluginProviderService)
             if (bean ) {
                 return (NotificationPlugin) bean
@@ -65,9 +65,26 @@ public class NotificationService implements ApplicationContextAware{
         log.error("Notification plugin not found: ${name}")
         return null
     }
+    private NotificationPlugin configureNotificationPlugin(String name, Map configuration) {
+        def bean= rundeckPluginRegistry.configurePluginByName(name, notificationPluginProviderService,configuration)
+        if (bean ) {
+            return (NotificationPlugin) bean
+        }
+        log.error("Notification plugin not found: ${name}")
+        return null
+    }
     def Map listNotificationPlugins(){
         def plugins=[:]
-        plugins=rundeckPluginRegistry.listPlugins(NotificationPlugin, notificationPluginProviderService)
+        plugins=rundeckPluginRegistry.listPluginDescriptors(NotificationPlugin, notificationPluginProviderService)
+        //clean up name of any Groovy plugin without annotations that ends with "NotificationPlugin"
+        plugins.each {key,Map plugin->
+            def desc = plugin.description
+            if(desc && desc instanceof Map){
+                if(desc.name.endsWith("NotificationPlugin")){
+                    desc.name=desc.name.replaceAll(/NotificationPlugin$/,'')
+                }
+            }
+        }
         System.err.println("listed plugins: ${plugins}")
 
         plugins
@@ -162,14 +179,12 @@ public class NotificationService implements ApplicationContextAware{
                     didsend=!webhookfailure
                 }else if (n.type) {
 
-                    def plugin = getNotificationPlugin(n.type)
-                    if(!plugin){
-                        log.error("No Notification plugin found of type: " + n.type)
-                        return
-                    }
                     //read config content as json
                     final ObjectMapper mapper = new ObjectMapper()
                     def Map config = mapper.readValue(n.content, Map.class)
+                    //TODO: replace exec info data references in config?
+
+                    //prep execution data
                     def Execution exec = content.execution
                     //[execution: execution,nodestatus:[succeeded:sucCount,failed:failedCount,total:totalCount]]
                     final state = ExecutionController.getExecutionState(exec)
@@ -182,6 +197,16 @@ public class NotificationService implements ApplicationContextAware{
                             status: state,
                             nodestatus: content['nodestatus']
                     ]
+
+                    //load plugin and configure with config values
+                    def plugin = configureNotificationPlugin(n.type, config)
+                    if (!plugin) {
+                        log.error("No Notification plugin found of type: " + n.type)
+                        return
+                    }
+
+                    //invoke plugin
+                    //TODO: use executor
                     if(!plugin.postNotification(trigger, execMap, config)){
                         log.error("Notification Failed: " + n.type);
                     }

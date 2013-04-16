@@ -17,11 +17,12 @@ beans={
     def serverLibextDir = application.config.rundeck?.server?.plugins?.dir?:"${application.config.rdeck.base}/libext/server"
     File pluginDir = new File(serverLibextDir)
     def serverLibextCacheDir = application.config.rundeck?.server?.plugins?.cacheDir?:"${serverLibextDir}/cache"
+    File cacheDir= new File(serverLibextCacheDir)
 
     /*
      * Define beans for Rundeck core-style plugin loader to load plugins from jar/zip files
      */
-    rundeckServerServiceProviderLoader(PluginManagerService, pluginDir, new File(serverLibextCacheDir))
+    rundeckServerServiceProviderLoader(PluginManagerService, pluginDir, cacheDir)
 
     /**
      * the Notification plugin provider service
@@ -55,5 +56,7 @@ beans={
     rundeckPluginRegistry(RundeckPluginRegistry){
         pluginRegistryMap=pluginRegistry
         rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
+        pluginDirectory=pluginDir
+        pluginCacheDirectory=cacheDir
     }
 }
