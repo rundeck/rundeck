@@ -3,7 +3,7 @@ package com.dtolabs.rundeck.plugins.notification;
 import java.util.Map;
 
 /**
- * ${CLASSNAME} is ...
+ * NotificationPlugin interface for a Notification plugin
  * Created by greg
  * Date: 3/11/13
  * Time: 2:20 PM
@@ -16,6 +16,4 @@ public interface NotificationPlugin {
      * @param config notification configuration
      */
     public boolean postNotification(String trigger,Map executionData,Map config);
-    public Map getConfigurationProperties();
-    public Map validateForm(Map config);
 }
