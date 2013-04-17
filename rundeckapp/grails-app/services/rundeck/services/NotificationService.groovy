@@ -181,7 +181,10 @@ public class NotificationService implements ApplicationContextAware{
 
                     //read config content as json
                     final ObjectMapper mapper = new ObjectMapper()
-                    def Map config = mapper.readValue(n.content, Map.class)
+                    def Map config =null
+                    if(n.content){
+                        config= mapper.readValue(n.content, Map.class)
+                    }
                     //TODO: replace exec info data references in config?
 
                     //prep execution data
