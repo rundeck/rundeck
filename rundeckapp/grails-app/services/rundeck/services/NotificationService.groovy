@@ -85,7 +85,7 @@ public class NotificationService implements ApplicationContextAware{
                 }
             }
         }
-        System.err.println("listed plugins: ${plugins}")
+//        System.err.println("listed plugins: ${plugins}")
 
         plugins
     }

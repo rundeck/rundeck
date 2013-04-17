@@ -8,8 +8,10 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.ProviderIdent
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
+import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
+import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
 import org.apache.log4j.Logger
 import org.springframework.beans.factory.BeanNotOfRequiredTypeException
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
@@ -22,7 +24,6 @@ import org.springframework.context.ApplicationContextAware
  * User: greg
  * Date: 4/11/13
  * Time: 7:07 PM
- * To change this template use File | Settings | File Templates.
  */
 class RundeckPluginRegistry implements ApplicationContextAware{
     public static Logger log = Logger.getLogger(RundeckPluginRegistry.class.name)
@@ -73,6 +74,9 @@ class RundeckPluginRegistry implements ApplicationContextAware{
             def beanName = pluginRegistryMap[name]
             if(beanName){
                 def bean = applicationContext.getBean(beanName)
+                if(bean instanceof PluginBuilder){
+                    bean=((PluginBuilder)bean).buildPlugin()
+                }
                 beanDesc=[instance:bean,
                         description: [
                                 name: name,
@@ -80,7 +84,9 @@ class RundeckPluginRegistry implements ApplicationContextAware{
                         file: new File(pluginDirectory, name + ".groovy")
                 ]
                 //try to check annotations
-                if (PluginAdapterUtility.canBuildDescription(bean)) {
+                if (bean instanceof Describable) {
+                    beanDesc['description'] = ((Describable) bean).description
+                } else if (PluginAdapterUtility.canBuildDescription(bean)) {
                     beanDesc['description'] = PluginAdapterUtility.buildDescription(bean, DescriptionBuilder.builder())
                 }
                 return beanDesc
@@ -139,7 +145,9 @@ class RundeckPluginRegistry implements ApplicationContextAware{
         pluginRegistryMap.each { k, String v ->
             try {
                 def bean = applicationContext.getBean(v)
-//                def test = groovyPluginType.cast(bean)
+                if (bean instanceof PluginBuilder) {
+                    bean = ((PluginBuilder) bean).buildPlugin()
+                }
                 if(bean){
                     list[k]=[instance:bean,
                             description:[
@@ -148,7 +156,9 @@ class RundeckPluginRegistry implements ApplicationContextAware{
                             file: new File(pluginDirectory, k + ".groovy")
                     ]
                     //try to check annotations
-                    if(PluginAdapterUtility.canBuildDescription(bean)){
+                    if(bean instanceof Describable){
+                        list[k]['description'] = ((Describable)bean).description
+                    }else if (PluginAdapterUtility.canBuildDescription(bean)){
                         list[k]['description']= PluginAdapterUtility.buildDescription(bean,DescriptionBuilder.builder())
                     }
                 }else{
