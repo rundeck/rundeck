@@ -66,7 +66,7 @@ class RundeckPluginRegistry implements ApplicationContextAware{
      * Load a plugin instance with the given bean or provider name
      * @param name name of bean or provider
      * @param service provider service
-     * @return
+     * @return map containing [instance:(plugin instance), description: (map or Description),
      */
     public Object loadPluginDescriptorByName(String name, PluggableProviderService service){
         def beanDesc=[:]

@@ -23,10 +23,4 @@ public class TestNotificationPlugin implements NotificationPlugin{
         System.err.println("test2: Trigger ${trigger} fired for ${executionData}, configuration: ${config}")
         true
     }
-
-    def Map configurationProperties=[test:[type:'String',title:'Test String']]
-
-    public Map validateForm(Map config) {
-        return null
-    }
 }

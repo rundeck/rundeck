@@ -58,11 +58,6 @@ class ScriptNotificationPlugin implements NotificationPlugin, Describable {
     }
 
     @Override
-    Map validateForm(Map config) {
-        return null  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
     Description getDescription() {
         return description;
     }

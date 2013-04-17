@@ -101,15 +101,14 @@
             </span>
             <wdgt:eventHandler for="notifyOnsuccessUrl" state="checked" target="notifSuccessholder2" visible="true"/>
         </div>
-
-        %{--TODO: list plugin types--}%
         <g:each in="${notificationPlugins?.keySet()}" var="pluginName">
         <g:set var="plugin" value="${notificationPlugins[pluginName]}"/>
         <g:set var="pluginInstance" value="${notificationPlugins[pluginName]['instance']}"/>
         <g:set var="pkey" value="${g.rkey()}"/>
         <g:set var="definedNotif" value="${scheduledExecution?.findNotification('onsuccess',pluginName)}"/>
-        <g:set var="definedConfig" value="${definedNotif?.configuration?:[:]}"/>
+        <g:set var="definedConfig" value="${params.notifySuccessPluginConfig?.get(pluginName)?:definedNotif?.configuration}"/>
         <g:set var="pluginDescription" value="${plugin.description}"/>
+        <g:set var="validation" value="${notificationValidation?.onsuccess?.get(pluginName)?.report}"/>
         <div>
             <span>
                 <g:checkBox name="notifyOnsuccessPlugin.${pluginName.encodeAsHTML()}" value="true" checked="${definedNotif ? true : false}"/>
@@ -120,24 +119,7 @@
             </span>
             <span id="notifSuccessholderPlugin${pkey}" style="${wdgt.styleVisible(if: definedNotif ? true : false)}"
                   class="notificationplugin">
-                %{--<label>Content:--}%
-                    %{--<textarea name="notifySuccessPluginContent.${pluginName}"--}%
-                              %{--style="vertical-align:top;"--}%
-                              %{--rows="6" cols="40">${params.notifySuccessPluginContent?.encodeAsHTML()}</textarea>--}%
-                %{--</label>--}%
                 <g:set var="prefix" value="${('notifySuccessPluginConfig.' + pluginName + '.').encodeAsHTML()}"/>
-                %{--XXX: TODO: use plugin descriptor properties?--}%
-                %{--<g:each in="${pluginInstance.configurationProperties?.keySet()}" var="confKey">--}%
-                    %{--<label for="${rkey}_conf_${confKey.encodeAsHTML()}">${pluginInstance.configurationProperties[confKey]['title']?:confKey}</label>--}%
-                    %{--<g:if test="${pluginInstance.configurationProperties[confKey]}">--}%
-                        %{--<input type="text" name="${prefix}${confKey.encodeAsHTML()}"--}%
-                               %{--placeholder="${pluginInstance.configurationProperties[confKey]['placeholder']?.encodeAsHTML()}"--}%
-                               %{--value="${definedConfig?.get(confKey)?.encodeAsHTML()}"--}%
-                            %{--id="${rkey}_conf_${confKey.encodeAsHTML()}"--}%
-                        %{--/>--}%
-                    %{--</g:if>--}%
-                    %{--<span class="info note">${pluginInstance.configurationProperties[confKey]['description']?.encodeAsHTML()}</span>--}%
-                %{--</g:each>--}%
                 <g:if test="${pluginDescription instanceof com.dtolabs.rundeck.core.plugins.configuration.Description}">
                     <table class="simpleForm">
                     <g:each in="${pluginDescription?.properties}" var="prop">
@@ -145,7 +127,7 @@
                             <g:render
                                     template="/framework/pluginConfigPropertyField"
                                     model="${[prop: prop, prefix: prefix,
-                                            error: nodeexecreport?.errors ? nodeexecreport?.errors[prop.name] : null,
+                                            error: validation?.errors ? validation?.errors[prop.name] : null,
                                             values: definedConfig,
                                             fieldname: prefix+ prop.name,
                                             origfieldname: 'orig.' + prefix + prop.name]}"/>

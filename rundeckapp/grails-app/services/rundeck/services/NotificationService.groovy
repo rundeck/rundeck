@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
@@ -48,19 +49,40 @@ import com.fasterxml.jackson.databind.ObjectMapper
  */
 
 public class NotificationService implements ApplicationContextAware{
+    boolean transactional = false
 
     ApplicationContext applicationContext
     def grailsApplication
     def mailService
     def RundeckPluginRegistry rundeckPluginRegistry
     def NotificationPluginProviderService notificationPluginProviderService
+    def FrameworkService frameworkService
 
     def NotificationPlugin getNotificationPlugin(String name) {
-        for(String key in [name]){
-            def bean= rundeckPluginRegistry.loadPluginByName(key, notificationPluginProviderService)
-            if (bean ) {
-                return (NotificationPlugin) bean
-            }
+        def bean= rundeckPluginRegistry.loadPluginByName(name, notificationPluginProviderService)
+        if (bean ) {
+            return (NotificationPlugin) bean
+        }
+        log.error("Notification plugin not found: ${name}")
+        return null
+    }
+    def Map validatePluginConfig(String name, Map config){
+        def Map pluginDesc=getNotificationPluginDescriptor(name)
+        if(pluginDesc && pluginDesc.description instanceof Description){
+            return frameworkService.validateDescription(pluginDesc.description,'',config)
+        }else{
+            return null
+        }
+    }
+    /**
+     *
+     * @param name
+     * @return map containing [instance:(plugin instance), description: (map or Description), ]
+     */
+    def Map getNotificationPluginDescriptor(String name) {
+        def bean= rundeckPluginRegistry.loadPluginDescriptorByName(name, notificationPluginProviderService)
+        if (bean ) {
+            return (Map) bean
         }
         log.error("Notification plugin not found: ${name}")
         return null
