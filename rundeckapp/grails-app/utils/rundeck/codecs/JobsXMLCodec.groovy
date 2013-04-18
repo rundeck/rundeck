@@ -196,7 +196,7 @@ class JobsXMLCodec {
                 throw new JobXMLException("notification section had no trigger elements")
             }
             def convertPluginToMap={Map plugin->
-                def e=plugin.remove('entry')
+                def e=plugin.configuration?.remove('entry')
                 def confMap=[:]
                 if(e instanceof Map){
                     confMap[e['key']]=e['value']
@@ -205,7 +205,7 @@ class JobsXMLCodec {
                         confMap[it['key']] = it['value']
                     }
                 }
-                plugin['config']=confMap
+                plugin['configuration']=confMap
             }
             triggers.each{trigger->
                 if(null!=map.notification[trigger]){
@@ -394,16 +394,16 @@ class JobsXMLCodec {
         convertWorkflowMapForBuilder(map.sequence)
         if(map.notification){
             def convertNotificationPlugin={Map pluginMap->
-                def confMap = pluginMap.remove('config')
+                def confMap = pluginMap.remove('configuration')
                 BuilderUtil.makeAttribute(pluginMap, 'type')
                 confMap.each { k, v ->
-                    if (!pluginMap['config']) {
-                        pluginMap['config'] = [entry: []]
+                    if (!pluginMap['configuration']) {
+                        pluginMap['configuration'] = [entry: []]
                     }
                     def entryMap= [key: k, value: v]
                     BuilderUtil.makeAttribute(entryMap,'key')
                     BuilderUtil.makeAttribute(entryMap,'value')
-                    pluginMap['config']['entry'] <<  entryMap
+                    pluginMap['configuration']['entry'] <<  entryMap
                 }
             }
             map.notification.keySet().findAll { it.startsWith('on') }.each{trigger->

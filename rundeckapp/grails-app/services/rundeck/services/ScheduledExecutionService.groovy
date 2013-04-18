@@ -883,7 +883,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 plugs['type'].each { pluginType ->
                     def config = plugs[pluginType]?.config
                     if (plugs['enabled'][pluginType] == 'true') {
-                        nots << [eventTrigger: 'on' + trig, type: pluginType, content: config]
+                        nots << [eventTrigger: 'on' + trig, type: pluginType, configuration: config]
                     }
                 }
             }
@@ -1257,7 +1257,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         if (!pluginDesc) {
             return //closure
         }
-        def validation = notificationService.validatePluginConfig(notif.type, notif.content)
+        def validation = notificationService.validatePluginConfig(notif.type, notif.configuration)
         if (!validation.valid) {
             failed = true
             if(params instanceof Map){
@@ -1280,8 +1280,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             return [failed:true]
         }
         //TODO: better config test
-        def data = [type: notif.type, config: notif.content]
-        def n = Notification.fromMap(trigger, data)
+        def n = Notification.fromMap(trigger, notif)
         [failed:failed,notification:n]
     }
     private Map validateEmailNotification(ScheduledExecution scheduledExecution, String trigger, notif, params = null){
@@ -1371,7 +1370,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             } else if (notif.type) {
                 def data=notif
                 if(notif instanceof Notification){
-                    data=[type:notif.type,content:notif.configuration]
+                    data=[type:notif.type, configuration:notif.configuration]
                 }
                 def result = validatePluginNotification(scheduledExecution, trigger, data, params)
                 if (result.failed) {

@@ -157,7 +157,7 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         System.out.println("doc: ${doc}");
         assertEquals(1,doc[0].notification.size())
         assertEquals(1,doc[0].notification.onsuccess.size())
-        assertEquals([type:'test1',config:['blah':'blee']],doc[0].notification.onsuccess.plugin)
+        assertEquals([type:'test1', configuration:['blah':'blee']],doc[0].notification.onsuccess.plugin)
 
     }
     void testEncodeErrorHandlers(){
@@ -612,13 +612,13 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
     onsuccess:
       plugin:
         type: test1
-        config:
+        configuration:
           a: b
           c: d
     onfailure:
       plugin:
         type: test2
-        config:
+        configuration:
           x: yz
 """
         def list = JobsYAMLCodec.decode(ymlstr1)

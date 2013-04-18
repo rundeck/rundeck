@@ -87,10 +87,10 @@ public class Notification {
             n.content=data.urls
         }else if(data.type){
             n.type=data.type
-            if(data.config && data.config instanceof Map){
-                n.configuration=data.config
-            }else if(data.config && data.config instanceof String){
-                n.configuration = ['_content':data.config]
+            if(data.configuration && data.configuration instanceof Map){
+                n.configuration=data.configuration
+            }else if(data.configuration && data.configuration instanceof String){
+                n.configuration = ['_content':data.configuration]
             }else{
                 n.content=null
             }
@@ -107,7 +107,7 @@ public class Notification {
             if(content){
                 config=this.configuration
             }
-            return [type:type,config:config]
+            return [type:type,configuration:config]
         }else{
             return null
         }

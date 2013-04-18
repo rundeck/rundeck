@@ -2431,8 +2431,10 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <notification>
         <onsuccess>
             <plugin type="test1">
-                <entry key="name" value="test"/>
-                <entry key="key" value="value"/>
+                <configuration>
+                    <entry key="name" value="test"/>
+                    <entry key="key" value="value"/>
+                </configuration>
             </plugin>
         </onsuccess>
     </notification>
@@ -2472,13 +2474,43 @@ class JobsXMLCodecTests extends GroovyTestCase {
     <notification>
         <onsuccess>
             <plugin type="test1">
+                <configuration>
                 <entry key="name" value="test"/>
                 <entry key="key" value="value"/>
+                </configuration>
             </plugin>
             <plugin type="test2">
+                <configuration>
                 <entry key="name2" value="test2"/>
+                </configuration>
             </plugin>
         </onsuccess>
+        <onfailure>
+            <plugin type="test3">
+                <configuration>
+                <entry key="name3" value="test3"/>
+                <entry key="key3" value="value3"/>
+                </configuration>
+            </plugin>
+            <plugin type="test4">
+                <configuration>
+                <entry key="name4" value="test4"/>
+                </configuration>
+            </plugin>
+        </onfailure>
+        <onstart>
+            <plugin type="test5">
+                <configuration>
+                <entry key="name5" value="test5"/>
+                <entry key="key5" value="value5"/>
+                </configuration>
+            </plugin>
+            <plugin type="test6">
+                <configuration>
+                <entry key="name6" value="test6"/>
+                </configuration>
+            </plugin>
+        </onstart>
     </notification>
   </job>
 </joblist>
@@ -2488,7 +2520,8 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertNotNull jobs
         assertEquals "incorrect size", 1, jobs.size()
         assertNotNull "missing notifications", jobs[0].notifications
-        assertEquals "incorrect notifications size", 2, jobs[0].notifications.size()
+        assertEquals "incorrect notifications size", 6, jobs[0].notifications.size()
+
         final def onsuccess = jobs[0].notifications.findAll { 'onsuccess' == it.eventTrigger } as List
         assertNotNull "missing notifications onsuccess", onsuccess
         assertEquals (2, onsuccess.size())
@@ -2503,6 +2536,37 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertNotNull "missing content", on2.content
         assertEquals "test2", on2.type
         assertEquals([name2:'test2'], on2.configuration)
+
+
+        final def onfailure = jobs[0].notifications.findAll { 'onfailure' == it.eventTrigger } as List
+        assertNotNull "missing notifications onfailure", onfailure
+        assertEquals(2, onfailure.size())
+        def on3 = onfailure.find { it.type == 'test3' }
+        assertNotNull "missing content", on3
+        assertNotNull "missing content", on3.content
+        assertEquals "test3", on3.type
+        assertEquals([key3: 'value3', name3: 'test3'], on3.configuration)
+
+        def on4 = onfailure.find { it.type == 'test4' }
+        assertNotNull "missing content", on4
+        assertNotNull "missing content", on4.content
+        assertEquals "test4", on4.type
+        assertEquals([name4: 'test4'], on4.configuration)
+
+        final def onstart = jobs[0].notifications.findAll { 'onstart' == it.eventTrigger } as List
+        assertNotNull "missing notifications onstart", onstart
+        assertEquals(2, onstart.size())
+        def on5 = onstart.find { it.type == 'test5' }
+        assertNotNull "missing content", on5
+        assertNotNull "missing content", on5.content
+        assertEquals "test5", on5.type
+        assertEquals([key5: 'value5', name5: 'test5'], on5.configuration)
+
+        def on6 = onstart.find { it.type == 'test6' }
+        assertNotNull "missing content", on6
+        assertNotNull "missing content", on6.content
+        assertEquals "test6", on6.type
+        assertEquals([name6: 'test6'], on6.configuration)
 
     }
 
@@ -4471,19 +4535,19 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertEquals "incorrect notifications onsuccess plugin/@type", "test1", doc.job[0].notification[0].onsuccess[0].plugin[0]['@type'].text()
         assertEquals "incorrect notifications onfailure plugin/@type", "test2", doc.job[0].notification[0].onfailure[0].plugin[0]['@type'].text()
 
-        assertEquals "incorrect notifications onsuccess plugin/config size", 1, doc.job[0].notification[0].onsuccess[0].plugin[0].config.size()
-        assertEquals "incorrect notifications onfailure plugin/config size", 1, doc.job[0].notification[0].onfailure[0].plugin[0].config.size()
-        assertEquals "incorrect notifications onsuccess plugin/config/entry size", 2, doc.job[0].notification[0].onsuccess[0].plugin[0].config[0].entry.size()
-        assertEquals "incorrect notifications onfailure plugin/config/entry size", 1, doc.job[0].notification[0].onfailure[0].plugin[0].config[0].entry.size()
+        assertEquals "incorrect notifications onsuccess plugin/configuration size", 1, doc.job[0].notification[0].onsuccess[0].plugin[0].configuration.size()
+        assertEquals "incorrect notifications onfailure plugin/configuration size", 1, doc.job[0].notification[0].onfailure[0].plugin[0].configuration.size()
+        assertEquals "incorrect notifications onsuccess plugin/configuration/entry size", 2, doc.job[0].notification[0].onsuccess[0].plugin[0].configuration[0].entry.size()
+        assertEquals "incorrect notifications onfailure plugin/configuration/entry size", 1, doc.job[0].notification[0].onfailure[0].plugin[0].configuration[0].entry.size()
 
-        assertEquals "incorrect notifications onsuccess plugin/config/entry/@key value", "a", doc.job[0].notification[0].onsuccess[0].plugin[0].config[0].entry[0]['@key'].text()
-        assertEquals "incorrect notifications onsuccess plugin/config/entry/@value value", "b", doc.job[0].notification[0].onsuccess[0].plugin[0].config[0].entry[0]['@value'].text()
-        assertEquals "incorrect notifications onsuccess plugin/config/entry/@key value", "c", doc.job[0].notification[0].onsuccess[0].plugin[0].config[0].entry[1]['@key'].text()
-        assertEquals "incorrect notifications onsuccess plugin/config/entry/@value value", "d", doc.job[0].notification[0].onsuccess[0].plugin[0].config[0].entry[1]['@value'].text()
+        assertEquals "incorrect notifications onsuccess plugin/configuration/entry/@key value", "a", doc.job[0].notification[0].onsuccess[0].plugin[0].configuration[0].entry[0]['@key'].text()
+        assertEquals "incorrect notifications onsuccess plugin/configuration/entry/@value value", "b", doc.job[0].notification[0].onsuccess[0].plugin[0].configuration[0].entry[0]['@value'].text()
+        assertEquals "incorrect notifications onsuccess plugin/configuration/entry/@key value", "c", doc.job[0].notification[0].onsuccess[0].plugin[0].configuration[0].entry[1]['@key'].text()
+        assertEquals "incorrect notifications onsuccess plugin/configuration/entry/@value value", "d", doc.job[0].notification[0].onsuccess[0].plugin[0].configuration[0].entry[1]['@value'].text()
 
 
-        assertEquals "incorrect notifications onsuccess plugin/config/entry/@key value", "x", doc.job[0].notification[0].onfailure[0].plugin[0].config[0].entry[0]['@key'].text()
-        assertEquals "incorrect notifications onsuccess plugin/config/entry/@value value", "yz", doc.job[0].notification[0].onfailure[0].plugin[0].config[0].entry[0]['@value'].text()
+        assertEquals "incorrect notifications onsuccess plugin/configuration/entry/@key value", "x", doc.job[0].notification[0].onfailure[0].plugin[0].configuration[0].entry[0]['@key'].text()
+        assertEquals "incorrect notifications onsuccess plugin/configuration/entry/@value value", "yz", doc.job[0].notification[0].onfailure[0].plugin[0].configuration[0].entry[0]['@value'].text()
 
         def jobs2 = [
                 new ScheduledExecution(
