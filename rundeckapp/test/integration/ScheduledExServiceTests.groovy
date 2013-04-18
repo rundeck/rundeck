@@ -3821,7 +3821,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertNull execution.adhocRemoteString
             assertNull execution.argString
 
-            assertNull execution.notifications
+            assertTrue(execution.notifications==null || execution.notifications.size()==0)
         }
 
         if (true) {//test update job  notifications, removing all notifications by unchecking
@@ -3891,7 +3891,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertNull execution.adhocRemoteString
             assertNull execution.argString
 
-            assertNull execution.notifications
+            assertTrue(execution.notifications == null || execution.notifications.size() == 0)
         }
     }
 
