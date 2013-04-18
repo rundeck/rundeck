@@ -1,4 +1,4 @@
-<%@ page import="rundeck.ExecutionContext; rundeck.ScheduledExecution" %>
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.Description; rundeck.ExecutionContext; rundeck.ScheduledExecution" %>
 <g:set var="rkey" value="${g.rkey()}"/>
 
 <table class="simpleForm" cellpadding="0" cellspacing="0">
@@ -168,15 +168,24 @@
     </g:if>
     <g:if test="${execdata instanceof ScheduledExecution && execdata.notifications}">
         <tr>
-        <g:each var="notify" in="${execdata.notifications}" status="i">
+        <g:each var="notify" in="${execdata.notifications.sort{a,b->a.eventTrigger<=>b.eventTrigger}}" status="i">
                 <td class="displabel">Notify <g:message code="notification.event.${notify.eventTrigger}"/>:</td>
                 <td>
                     <g:if test="${notify.type=='url'}">
                         <g:expander key="webhook${rkey}_${i}">Webhook</g:expander>
                         <span class="webhooklink note" id="webhook${rkey}_${i}" style="display:none;" title="URLs: ${notify.content.encodeAsHTML()}">${notify.content.encodeAsHTML()}</span>
                     </g:if>
-                    <g:else>
+                    <g:elseif test="${notify.type=='email'}">
                         ${notify.content.encodeAsHTML()}
+                    </g:elseif>
+                    <g:else>
+                        %{--plugin display--}%
+                        <g:set var="desc" value="${notificationPlugins?.get(notify.type)?.description}"/>
+                        <g:if test="${desc && desc instanceof Description}">
+
+                            <g:render template="/framework/renderPluginConfig"
+                                      model="${[values: notify.configuration, description: desc]}"/>
+                        </g:if>
                     </g:else>
                 </td>
 

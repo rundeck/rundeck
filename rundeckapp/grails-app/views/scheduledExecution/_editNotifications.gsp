@@ -8,6 +8,11 @@
 <g:set var="isFailure" value="${params.notifyFailureRecipients && 'true' == params.notifyOnfailure || defFailure}"/>
 <g:set var="defFailureUrl" value="${scheduledExecution.findNotification('onfailure', 'url')}"/>
 <g:set var="isFailureUrl" value="${params.notifyFailureUrl && 'true' == params.notifyOnfailureUrl || defFailureUrl}"/>
+
+<g:set var="defStart" value="${scheduledExecution.findNotification('onstart', 'email')}"/>
+<g:set var="isStart" value="${ defStart}"/>
+<g:set var="defStartUrl" value="${scheduledExecution.findNotification('onstart', 'url')}"/>
+<g:set var="isStartUrl" value="${ defStartUrl}"/>
 <tr>
     <td>
         Send Notification?
@@ -42,169 +47,29 @@
         </g:javascript>
     </td>
 </tr>
-<tr class="notifyFields" style="${wdgt.styleVisible(if: isFailure || isSuccess || isSuccessUrl || isFailureUrl)}">
+<g:render template="/scheduledExecution/editNotificationsTrigger"
+    model="${[
+            isVisible:( notifications ),
+            trigger:'success',
+            isEmail:isSuccess,
+            isUrl:isSuccessUrl,
+            definedNotifications: scheduledExecution.notifications?.findAll{it.eventTrigger=='onsuccess'}
+    ]}"
+    />
+<g:render template="/scheduledExecution/editNotificationsTrigger"
+          model="${[
+                  isVisible: (notifications),
+                  trigger: 'failure',
+                  isEmail: isFailure,
+                  isUrl: isFailureUrl,
+                  definedNotifications: scheduledExecution.notifications?.findAll { it.eventTrigger == 'onfailure' }
+          ]}"/>
 
-    <!-- onsuccess-->
-    <td>
-        <label for="notifyOnsuccess"
-               class=" ${hasErrors(bean: scheduledExecution, field: 'notifySuccessRecipients', 'fieldError')} ${hasErrors(bean: scheduledExecution, field: 'notifySuccessUrl', 'fieldError')}">
-            <g:message code="notification.event.onsuccess"/>
-        </label>
-    </td>
-    <td>
-        <div>
-            <span>
-                <g:checkBox name="notifyOnsuccess" value="true" checked="${isSuccess ? true : false}"/>
-                <label for="notifyOnsuccess">Send Email</label>
-            </span>
-            <span id="notifSuccessholder" style="${wdgt.styleVisible(if: isSuccess)}">
-                <label>to: <g:textField name="notifySuccessRecipients" cols="70" rows="3"
-                                        value="${defSuccess ? defSuccess.content : params.notifySuccessRecipients}"
-                                        size="60"/></label>
-
-                <div class="info note">comma-separated email addresses</div>
-                <g:hasErrors bean="${scheduledExecution}" field="notifySuccessRecipients">
-                    <div class="fieldError">
-                        <g:renderErrors bean="${scheduledExecution}" as="list" field="notifySuccessRecipients"/>
-                    </div>
-                </g:hasErrors>
-            </span>
-            <wdgt:eventHandler for="notifyOnsuccess" state="checked" target="notifSuccessholder" visible="true"/>
-        </div>
-
-        <div>
-            <span>
-                <g:checkBox name="notifyOnsuccessUrl" value="true" checked="${isSuccessUrl ? true : false}"/>
-                <label for="notifyOnsuccessUrl">Webhook</label>
-            </span>
-            <span id="notifSuccessholder2" style="${wdgt.styleVisible(if: isSuccessUrl)}">
-                <label>POST to URLs:
-                    <g:set var="notifsuccessurlcontent"
-                           value="${defSuccessUrl ? defSuccessUrl.content : params.notifySuccessUrl}"/>
-                    <g:if test="${notifsuccessurlcontent && notifsuccessurlcontent.length() > 30}">
-                        <textarea name="notifySuccessUrl"
-                                  style="vertical-align:top;"
-                                  rows="6" cols="40">${notifsuccessurlcontent?.encodeAsHTML()}</textarea>
-                    </g:if>
-                    <g:else>
-                        <g:textField name="notifySuccessUrl" cols="70" rows="3"
-                                     value="${notifsuccessurlcontent?.encodeAsHTML()}" size="60"/>
-                    </g:else>
-                </label>
-
-                <div class="info note">comma-separated URLs</div>
-                <g:hasErrors bean="${scheduledExecution}" field="notifySuccessUrl">
-                    <div class="fieldError">
-                        <g:renderErrors bean="${scheduledExecution}" as="list" field="notifySuccessUrl"/>
-                    </div>
-                </g:hasErrors>
-            </span>
-            <wdgt:eventHandler for="notifyOnsuccessUrl" state="checked" target="notifSuccessholder2" visible="true"/>
-        </div>
-        <g:each in="${notificationPlugins?.keySet()}" var="pluginName">
-        <g:set var="plugin" value="${notificationPlugins[pluginName]}"/>
-        <g:set var="pluginInstance" value="${notificationPlugins[pluginName]['instance']}"/>
-        <g:set var="pkey" value="${g.rkey()}"/>
-        <g:set var="definedNotif" value="${scheduledExecution?.findNotification('onsuccess',pluginName)}"/>
-        <g:set var="definedConfig" value="${params.notifySuccessPluginConfig?.get(pluginName)?:definedNotif?.configuration}"/>
-        <g:set var="pluginDescription" value="${plugin.description}"/>
-        <g:set var="validation" value="${notificationValidation?.onsuccess?.get(pluginName)?.report}"/>
-        <div>
-            <span>
-                <g:checkBox name="notifyOnsuccessPlugin.${pluginName.encodeAsHTML()}" value="true" checked="${definedNotif ? true : false}"/>
-                <label for="notifyOnsuccessPlugin.${pluginName.encodeAsHTML()}">${pluginDescription['title']?: pluginDescription['name']?: pluginName}</label>
-                <g:if test="${pluginDescription['description']}">
-                    <span class="info note">${pluginDescription['description']?.encodeAsHTML()}</span>
-                </g:if>
-            </span>
-            <span id="notifSuccessholderPlugin${pkey}" style="${wdgt.styleVisible(if: definedNotif ? true : false)}"
-                  class="notificationplugin">
-                <g:set var="prefix" value="${('notifySuccessPluginConfig.' + pluginName + '.').encodeAsHTML()}"/>
-                <g:if test="${pluginDescription instanceof com.dtolabs.rundeck.core.plugins.configuration.Description}">
-                    <table class="simpleForm">
-                    <g:each in="${pluginDescription?.properties}" var="prop">
-                        <tr>
-                            <g:render
-                                    template="/framework/pluginConfigPropertyField"
-                                    model="${[prop: prop, prefix: prefix,
-                                            error: validation?.errors ? validation?.errors[prop.name] : null,
-                                            values: definedConfig,
-                                            fieldname: prefix+ prop.name,
-                                            origfieldname: 'orig.' + prefix + prop.name]}"/>
-                        </tr>
-                    </g:each>
-                    </table>
-                </g:if>
-                %{--<g:hasErrors bean="${scheduledExecution}" field="notifySuccessUrl">--}%
-                    %{--<div class="fieldError">--}%
-                        %{--<g:renderErrors bean="${scheduledExecution}" as="list" field="notifySuccessUrl"/>--}%
-                    %{--</div>--}%
-                %{--</g:hasErrors>--}%
-            </span>
-            <wdgt:eventHandler for="notifyOnsuccessPlugin.${pluginName}" state="checked" target="notifSuccessholderPlugin${pkey}" visible="true"/>
-        </div>
-        </g:each>
-    </td>
-</tr>
-
-<tr class="notifyFields" style="${wdgt.styleVisible(if: isFailure || isSuccess || isSuccessUrl || isFailureUrl)}">
-
-    <!-- onfailure-->
-    <td>
-        <label for="notifyOnfailure"
-               class=" ${hasErrors(bean: scheduledExecution, field: 'notifyFailureRecipients', 'fieldError')}">
-            <g:message code="notification.event.onfailure"/>
-        </label>
-    </td>
-    <td>
-        <div>
-            <span>
-                <g:checkBox name="notifyOnfailure" value="true" checked="${isFailure ? true : false}"/>
-                <label for="notifyOnfailure">Send Email</label>
-            </span>
-            <span id="notifFailureholder" style="${wdgt.styleVisible(if: isFailure)}">
-                <label>to: <g:textField name="notifyFailureRecipients" cols="70" rows="3"
-                                        value="${defFailure ? defFailure.content : params.notifyFailureRecipients}"
-                                        size="60"/></label>
-
-                <div class="info note">comma-separated email addresses</div>
-                <g:hasErrors bean="${scheduledExecution}" field="notifyFailureRecipients">
-                    <div class="fieldError">
-                        <g:renderErrors bean="${scheduledExecution}" as="list" field="notifyFailureRecipients"/>
-                    </div>
-                </g:hasErrors>
-            </span>
-            <wdgt:eventHandler for="notifyOnfailure" state="checked" target="notifFailureholder" visible="true"/>
-        </div>
-
-        <div>
-            <span>
-                <g:checkBox name="notifyOnfailureUrl" value="true" checked="${isFailureUrl ? true : false}"/>
-                <label for="notifyOnfailureUrl">Webhook</label>
-            </span>
-            <span id="notifFailureholder2" style="${wdgt.styleVisible(if: isFailureUrl)}">
-                <label>POST to URLs:
-                    <g:set var="notiffailureurlcontent"
-                           value="${defFailureUrl ? defFailureUrl.content : params.notifyFailureUrl}"/>
-                    <g:if test="${notiffailureurlcontent && notiffailureurlcontent.length() > 30}">
-                        <textarea name="notifyFailureUrl"
-                                  style="vertical-align:top;"
-                                  rows="6" cols="40">${notiffailureurlcontent?.encodeAsHTML()}</textarea>
-                    </g:if>
-                    <g:else>
-                        <g:textField name="notifyFailureUrl" cols="70" rows="3"
-                                     value="${notiffailureurlcontent?.encodeAsHTML()}" size="60"/>
-                    </g:else>
-                </label>
-
-                <div class="info note">comma-separated URLs</div>
-                <g:hasErrors bean="${scheduledExecution}" field="notifyFailureUrl">
-                    <div class="fieldError">
-                        <g:renderErrors bean="${scheduledExecution}" as="list" field="notifyFailureUrl"/>
-                    </div>
-                </g:hasErrors>
-            </span>
-            <wdgt:eventHandler for="notifyOnfailureUrl" state="checked" target="notifFailureholder2" visible="true"/>
-        </div>
-    </td>
-</tr>
+<g:render template="/scheduledExecution/editNotificationsTrigger"
+          model="${[
+                  isVisible: (notifications),
+                  trigger: 'start',
+                  isEmail: isStart,
+                  isUrl: isStartUrl,
+                  definedNotifications: scheduledExecution.notifications?.findAll { it.eventTrigger == 'onstart' }
+          ]}"/>

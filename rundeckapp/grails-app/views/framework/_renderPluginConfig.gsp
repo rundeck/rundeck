@@ -24,7 +24,7 @@
 
 <g:if test="${description}">
     <span class="prompt">${description.title.encodeAsHTML()}</span>
-    <span class="desc">${description.description.encodeAsHTML()}</span>
+    <span class="desc">${description.description?.encodeAsHTML()}</span>
 </g:if>
 <div class="" style="margin-top:5px;">
     <g:set var="rkey" value="${g.rkey()}"/><g:if test="${includeFormFields && saved}">
