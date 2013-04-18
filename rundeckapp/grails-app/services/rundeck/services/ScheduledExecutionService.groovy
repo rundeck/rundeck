@@ -1381,6 +1381,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 }
             }
             if(n){
+                scheduledExecution.addToNotifications(n)
                 if (!n.validate()) {
                     failed = true
                     n.discard()
@@ -1392,7 +1393,6 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                             'Invalid notification definition: {0}'
                     )
                 }else{
-                    scheduledExecution.addToNotifications(n)
                     n.scheduledExecution = scheduledExecution
                 }
             }

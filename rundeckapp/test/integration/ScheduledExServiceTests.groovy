@@ -885,6 +885,11 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             }
             sec.frameworkService = fwkControl.createMock()
 
+            def ms = mockFor(MessageSource)
+            ms.demand.getMessage { key, data, locale -> key+":"+data.toString()+":"+locale.toString() }
+            ms.demand.getMessage { error, locale -> error.toString()+":"+locale.toString() }
+            sec.messageSource = ms.createMock()
+
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: "test command",
                     notifications: [[eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com']]
             ]
