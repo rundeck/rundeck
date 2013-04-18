@@ -43,10 +43,12 @@ class ScriptNotificationPlugin implements NotificationPlugin, Describable {
             } else if (closure.getMaximumNumberOfParameters() == 1 && closure.parameterTypes[0] == Map) {
                 def Closure newclos = closure.clone()
                 newclos.delegate = config
+                newclos.resolveStrategy = Closure.DELEGATE_ONLY
                 return newclos.call(executionData)
             } else if (closure.getMaximumNumberOfParameters() == 1 && closure.parameterTypes[0] == Object) {
                 def Closure newclos = closure.clone()
                 newclos.delegate = [config: config, execution: executionData, trigger: trigger]
+                newclos.resolveStrategy=Closure.DELEGATE_ONLY
                 return newclos.call(executionData)
             } else {
                 logger.error("Trigger \"on${trigger}\" signature invalid for plugin ${description.name}, notification not sent")
