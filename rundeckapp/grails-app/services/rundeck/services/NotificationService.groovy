@@ -13,7 +13,6 @@ import org.apache.commons.httpclient.Header
 
 import org.apache.commons.httpclient.methods.StringRequestEntity
 import grails.util.GrailsWebUtil
-import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.web.context.support.WebApplicationContextUtils
@@ -122,6 +121,29 @@ public class NotificationService implements ApplicationContextAware{
         }
         return false
     }
+    private Object doWithMockRequest(Closure clos){
+
+        def requestAttributes = RequestContextHolder.getRequestAttributes()
+        boolean unbindrequest = false
+        // outside of an executing request, establish a mock version
+        if (!requestAttributes) {
+            def servletContext = ServletContextHolder.getServletContext()
+            def applicationContext = WebApplicationContextUtils.getRequiredWebApplicationContext(servletContext)
+            requestAttributes = GrailsWebUtil.bindMockWebRequest(applicationContext)
+            unbindrequest = true
+        }
+
+        //prep execution data
+        def result
+        try {
+            result = clos.call()
+        } finally {
+            if (unbindrequest) {
+                RequestContextHolder.setRequestAttributes(null)
+            }
+        }
+        result
+    }
     def boolean triggerJobNotification(String trigger,ScheduledExecution source, Map content){
         def didsend = false
         if(source.notifications && source.notifications.find{it.eventTrigger=='on'+trigger}){
@@ -146,38 +168,23 @@ public class NotificationService implements ApplicationContextAware{
                     }
                     didsend= true
                 }else if(n.type=='url'){    //sending notification of a status trigger for the Job
-                    def requestAttributes = RequestContextHolder.getRequestAttributes()
-                    boolean unbindrequest = false
-                    // outside of an executing request, establish a mock version
-                    if (!requestAttributes) {
-                        def servletContext = ServletContextHolder.getServletContext()
-                        def applicationContext = WebApplicationContextUtils.getRequiredWebApplicationContext(servletContext)
-                        requestAttributes = GrailsWebUtil.bindMockWebRequest(applicationContext)
-                        unbindrequest = true
-                    }
                     def Execution exec = content.execution
-                    def urlarr = n.content.split(",") as List
                     //iterate through the URLs, and submit a POST to the destination with the XML Execution result
-
-                    def writer = new StringWriter()
-                    def xml = new MarkupBuilder(writer)
                     final state = ExecutionController.getExecutionState(exec)
+                    String xmlStr = doWithMockRequest {
+                        def writer = new StringWriter()
+                        def xml = new MarkupBuilder(writer)
 
-                    try {
                         xml.'notification'(trigger:trigger,status:state,executionId:exec.id){
                             new ExecutionController().renderApiExecutions([exec], [:], delegate)
                         }
-
-                    } finally {
-                        if (unbindrequest) {
-                            RequestContextHolder.setRequestAttributes(null)
-                        }
+                        writer.flush()
+                        writer.toString()
                     }
-                    writer.flush()
-                    String xmlStr = writer.toString()
                     if (log.traceEnabled){
                         log.trace("Posting webhook notification[${n.eventTrigger},${state},${exec.id}]; to URLs: ${n.content}")
                     }
+                    def urlarr = n.content.split(",") as List
                     def webhookfailure=false
                     urlarr.each{String urlstr->
                         //perform token expansion within URL.
@@ -200,41 +207,16 @@ public class NotificationService implements ApplicationContextAware{
                     }
                     didsend=!webhookfailure
                 }else if (n.type) {
-
-                    //read config content as json
-                    final ObjectMapper mapper = new ObjectMapper()
-                    def Map config =null
-                    if(n.content){
-                        config= mapper.readValue(n.content, Map.class)
-                    }
-                    //TODO: replace exec info data references in config?
-
                     //prep execution data
-                    def Execution exec = content.execution
-                    //[execution: execution,nodestatus:[succeeded:sucCount,failed:failedCount,total:totalCount]]
-                    final state = ExecutionController.getExecutionState(exec)
-                    def execMap = [
-                            executionId: exec.id,
-                            user: exec.user,
-                            started: exec.dateStarted,
-                            completed: exec.dateCompleted,
-                            abortedBy: exec.abortedby,
-                            status: state,
-                            nodestatus: content['nodestatus']
-                    ]
-
-                    //load plugin and configure with config values
-                    def plugin = configureNotificationPlugin(n.type, config)
-                    if (!plugin) {
-                        log.error("No Notification plugin found of type: " + n.type)
-                        return
+                    def Map execMap=doWithMockRequest {
+                        new ExecutionController().exportExecutionData([content.execution])[0]
+                    }
+                    //TBD: nodestatus will migrate to execution data
+                    if(content['nodestatus']){
+                        execMap['nodestatus'] = content['nodestatus']
                     }
 
-                    //invoke plugin
-                    //TODO: use executor
-                    if(!plugin.postNotification(trigger, execMap, config)){
-                        log.error("Notification Failed: " + n.type);
-                    }
+                    didsend=triggerPlugin(trigger,execMap,n.type, n.configuration)
                 }else{
                     log.error("Unsupported notification type: " + n.type);
                 }
@@ -249,6 +231,34 @@ public class NotificationService implements ApplicationContextAware{
 
         return didsend
     }
+
+    /**
+     * Perform a plugin notification
+     * @param trigger trigger name
+     * @param data data content for the plugin
+     * @param content content for notification
+     * @param type plugin type
+     * @param config user configuration
+     */
+    private boolean triggerPlugin(String trigger, Map data,String type, Map config){
+        //replace exec info data references in config???
+
+        //load plugin and configure with config values
+        def plugin = configureNotificationPlugin(type, config)
+        if (!plugin) {
+            log.error("No Notification plugin found of type: " + type)
+            return false
+        }
+
+        //invoke plugin
+        //TODO: use executor
+        if (!plugin.postNotification(trigger, data, config)) {
+            log.error("Notification Failed: " + type);
+            return false
+        }
+        true
+    }
+
     String expandWebhookNotificationUrl(String url,Execution exec, ScheduledExecution job, String trigger){
         def state=ExecutionController.getExecutionState(exec)
         /**

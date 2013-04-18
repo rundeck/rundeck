@@ -786,6 +786,52 @@ class ExecutionController {
     }
 
     /**
+     * Render execution list into a map data structure
+     */
+    public List<Map> exportExecutionData(List<Execution> execlist){
+        def executions= execlist.collect { Execution e ->
+            e = Execution.get(e.id)
+            def emap =[
+                id: e.id,
+                href: g.createLink(controller: 'execution', action: 'follow', id: e.id, absolute: true),
+                status: getExecutionState(e),
+                user:e.user,
+                dateStarted: e.dateStarted,
+                'dateStartedUnixtime': e.dateStarted.time,
+                'dateStartedW3c':g.w3cDateValue(date: e.dateStarted),
+                description:executionService.summarizeJob(e.scheduledExecution, e),
+                argstring:e.argString,
+                project: e.project,
+                failedNodeList:  e.failedNodeList,
+                loglevel : e.loglevel
+            ]
+            if (null != e.dateCompleted) {
+                emap.dateEnded= e.dateCompleted
+                emap['dateEndedUnixtime']= e.dateCompleted.time
+                emap['dateEndedW3c']=g.w3cDateValue(date: e.dateCompleted)
+            }
+            if (e.cancelled) {
+                emap['abortedby']=e.abortedby
+            }
+            if (e.scheduledExecution) {
+                emap.job = [
+                    id: e.scheduledExecution.extid,
+                    href: g.createLink(controller: 'scheduledExecution', action: 'show', id: e.scheduledExecution.extid, absolute: true),
+                    name: e.scheduledExecution.jobName,
+                    group: e.scheduledExecution.groupPath ?: '',
+                    project: e.scheduledExecution.project,
+                    description: e.scheduledExecution.description
+                ]
+                if (e.scheduledExecution.totalTime >= 0 && e.scheduledExecution.execCount > 0) {
+                    def long avg = Math.floor(e.scheduledExecution.totalTime / e.scheduledExecution.execCount)
+                    emap.job.averageDuration = avg
+                }
+            }
+            emap
+        }
+        executions
+    }
+    /**
      * Utility, render xml response for a list of executions
      */
     public def renderApiExecutionListResultXML={execlist,paging=[:] ->

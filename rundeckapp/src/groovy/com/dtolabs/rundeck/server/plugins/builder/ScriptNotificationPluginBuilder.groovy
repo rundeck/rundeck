@@ -10,7 +10,7 @@ import org.codehaus.groovy.runtime.InvokerHelper
 /**
  * Builds a {@link NotificationPlugin} from the groovy DSL for rundeck plugins.  Allows
  * Notification trigger X to be defined by calling a method "onX" and passing a closure.  The closure
- * can have
+ * can have 0-3 arguments.
  * User: greg
  * Date: 4/16/13
  * Time: 4:32 PM
