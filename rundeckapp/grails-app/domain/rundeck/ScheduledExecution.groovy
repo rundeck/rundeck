@@ -285,14 +285,13 @@ class ScheduledExecution extends ExecutionContext {
             def nots=[]
             data.notification.keySet().findAll{it.startsWith('on')}.each{ name->
                 if(data.notification[name]){
-                    if (data.notification[name]['urls','recipients']) {
                         //support for built-in notification types
-                        ['urls','recipients'].each{ subkey->
-                            if(data.notification[name][subkey]){
-                                nots << Notification.fromMap(name, [(subkey):data.notification[name][subkey]])
-                            }
+                    ['urls','recipients'].each{ subkey->
+                        if(data.notification[name][subkey]){
+                            nots << Notification.fromMap(name, [(subkey):data.notification[name][subkey]])
                         }
-                    }else if(data.notification[name]['plugin']){
+                    }
+                    if(data.notification[name]['plugin']){
                         def pluginElement=data.notification[name]['plugin']
                         def plugins=[]
                         if(pluginElement instanceof Map){
