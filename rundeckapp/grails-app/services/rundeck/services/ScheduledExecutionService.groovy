@@ -1177,21 +1177,26 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
             params.notified = 'false'
         }
         def todiscard = []
+        def modifiednotifs = []
+        if (params.notifications && 'false' != params.notified) {
+            //create notifications
+            def result = _updateNotificationsData(params, scheduledExecution)
+            failed=result.failed
+            modifiednotifs=result.modified
+        }
+        //delete notifications that are not part of the modified set
         if (scheduledExecution.notifications) {
             def todelete = []
-            scheduledExecution.notifications.each {Notification note ->
-                todelete << note
+            scheduledExecution.notifications.each { Notification note ->
+                if (!(note in modifiednotifs)) {
+                    todelete << note
+                }
             }
             todelete.each {
                 it.delete()
                 scheduledExecution.removeFromNotifications(it)
                 todiscard << it
             }
-            scheduledExecution.notifications = null
-        }
-        if (params.notifications && 'false' != params.notified) {
-            //create notifications
-            failed = _updateNotifications(params, scheduledExecution)
         }
 
         //try to save workflow
@@ -1322,33 +1327,17 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         def n = new Notification(eventTrigger: trigger, type: 'url', content: addrs)
         [failed:false,notification: n]
     }
-    /**
-     * Update ScheduledExecution notification definitions based on input params.
-     *
-     * expected params: [notifications: [<eventTrigger>:[email:<content>]]]
-     */
-    private boolean _updateNotifications(Map params, ScheduledExecution scheduledExecution) {
-        return _updateNotificationsData(params, scheduledExecution)
-    }
 
     /**
      * Update ScheduledExecution notification definitions based on input params.
      *
      * expected params: [notifications: [<eventTrigger>:[email:<content>]]]
      */
-    private boolean _updateNotifications(ScheduledExecution params, ScheduledExecution scheduledExecution) {
-        return _updateNotificationsData(params,scheduledExecution)
-    }
-
-    /**
-     * Update ScheduledExecution notification definitions based on input params.
-     *
-     * expected params: [notifications: [<eventTrigger>:[email:<content>]]]
-     */
-    private boolean _updateNotificationsData( params, ScheduledExecution scheduledExecution) {
+    private Map _updateNotificationsData( params, ScheduledExecution scheduledExecution) {
         boolean failed = false
         def fieldNames = [onsuccess: 'notifySuccessRecipients', onfailure: 'notifyFailureRecipients']
         def fieldNamesUrl = [onsuccess: 'notifySuccessUrl', onfailure: 'notifyFailureUrl']
+        def addedNotifications=[]
         params.notifications.each {notif ->
             def trigger = notif.eventTrigger
             def Notification n
@@ -1384,7 +1373,14 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                 }
             }
             if(n){
-                scheduledExecution.addToNotifications(n)
+                //modify existing notification
+                def oldn = scheduledExecution.findNotification(n.eventTrigger,n.type)
+                if(oldn){
+                    oldn.content=n.content
+                    n=oldn
+                }else{
+                    n.scheduledExecution = scheduledExecution
+                }
                 if (!n.validate()) {
                     failed = true
                     n.discard()
@@ -1395,12 +1391,16 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
                             [errmsg] as Object[],
                             'Invalid notification definition: {0}'
                     )
+                    scheduledExecution.discard()
                 }else{
-                    n.scheduledExecution = scheduledExecution
+                    if(!oldn){
+                        scheduledExecution.addToNotifications(n)
+                    }
+                    addedNotifications << n
                 }
             }
         }
-        return failed
+        return [failed:failed,modified:addedNotifications]
     }
     public List _doupdateJob(id, ScheduledExecution params, user, String roleList, Framework framework, changeinfo = [:]) {
         log.debug("ScheduledExecutionController: update : attempting to update: " + id +
@@ -1578,21 +1578,27 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         }
 
         def todiscard = []
+        def modifiednotifs=[]
+        if (params.notifications) {
+            //create notifications
+            def result = _updateNotificationsData(params, scheduledExecution)
+            failed=result.failed
+            modifiednotifs=result.modified
+        }
+
+        //delete notifications that are not part of the modified set
         if (scheduledExecution.notifications) {
             def todelete = []
-            scheduledExecution.notifications.each {Notification note ->
-                todelete << note
+            scheduledExecution.notifications.each { Notification note ->
+                if(!(note in modifiednotifs)){
+                    todelete << note
+                }
             }
             todelete.each {
                 it.delete()
                 scheduledExecution.removeFromNotifications(it)
                 todiscard << it
             }
-            scheduledExecution.notifications = null
-        }
-        if (params.notifications) {
-            //create notifications
-            failed = _updateNotifications(params, scheduledExecution)
         }
 
         //try to save workflow
@@ -2037,7 +2043,8 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         }
         if (params.notifications) {
             //create notifications
-            failed = _updateNotifications(params, scheduledExecution)
+            def result = _updateNotificationsData(params, scheduledExecution)
+            failed=result.failed
         }
         if (scheduledExecution.doNodedispatch) {
             if (       !scheduledExecution.nodeInclude
