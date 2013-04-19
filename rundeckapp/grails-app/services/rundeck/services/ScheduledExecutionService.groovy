@@ -869,6 +869,12 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
         if ('true' == params.notifyOnfailureUrl) {
             nots << [eventTrigger: 'onfailure', type: 'url', content: params.notifyFailureUrl]
         }
+        if ('true' == params.notifyOnstart) {
+            nots << [eventTrigger: 'onstart', type: 'email', content: params.notifyStartRecipients]
+        }
+        if ('true' == params.notifyOnstartUrl) {
+            nots << [eventTrigger: 'onstart', type: 'url', content: params.notifyStartUrl]
+        }
         //notifyOnsuccessPlugin
         if (params.notifyPlugin) {
             ['success', 'failure', 'start'].each { trig ->
@@ -1280,7 +1286,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
     }
     private Map validateEmailNotification(ScheduledExecution scheduledExecution, String trigger, notif, params = null){
         def failed
-        def fieldNames = [onsuccess: 'notifySuccessRecipients', onfailure: 'notifyFailureRecipients']
+        def fieldNames = [onsuccess: 'notifySuccessRecipients', onfailure: 'notifyFailureRecipients', onstart: 'notifyStartRecipients']
         def arr = notif.content.split(",")
         arr.each { email ->
             if (email && !EmailValidator.getInstance().isValid(email)) {
@@ -1303,7 +1309,7 @@ class ScheduledExecutionService /*implements ApplicationContextAware*/{
     }
     private Map validateUrlNotification(ScheduledExecution scheduledExecution, String trigger, notif, params = null){
         def failed
-        def fieldNamesUrl = [onsuccess: 'notifySuccessUrl', onfailure: 'notifyFailureUrl']
+        def fieldNamesUrl = [onsuccess: 'notifySuccessUrl', onfailure: 'notifyFailureUrl', onstart: 'notifyStartUrl']
         def arr = notif.content.split(",")
         arr.each { String url ->
             boolean valid = false

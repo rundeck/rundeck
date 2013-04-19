@@ -10,9 +10,7 @@
 <g:set var="isFailureUrl" value="${params.notifyFailureUrl && 'true' == params.notifyOnfailureUrl || defFailureUrl}"/>
 
 <g:set var="defStart" value="${scheduledExecution.findNotification('onstart', 'email')}"/>
-<g:set var="isStart" value="${ defStart}"/>
 <g:set var="defStartUrl" value="${scheduledExecution.findNotification('onstart', 'url')}"/>
-<g:set var="isStartUrl" value="${ defStartUrl}"/>
 <tr>
     <td>
         Send Notification?
@@ -69,7 +67,7 @@
           model="${[
                   isVisible: (notifications),
                   trigger: 'start',
-                  isEmail: isStart,
-                  isUrl: isStartUrl,
+                  isEmail: defStart,
+                  isUrl: defStartUrl,
                   definedNotifications: scheduledExecution.notifications?.findAll { it.eventTrigger == 'onstart' }
           ]}"/>
