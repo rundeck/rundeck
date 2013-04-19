@@ -64,9 +64,8 @@ class ScriptPluginConfigBuilder {
         if (props['values'] != null) {
             pbuilder.values(InvokerHelper.asList(props['values']))
             if (props['type'] == null) {
-                //if no 'type' is defined, set to Select
-                //if 'freeSelect' is true, use FreeSelect
-                if (props['freeSelect']) {
+                //if no 'type' is defined, set to Select, unless required is not set to true
+                if (!props['required']) {
                     pbuilder.type(Property.Type.FreeSelect)
                 } else {
                     pbuilder.type(Property.Type.Select)

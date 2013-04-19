@@ -47,7 +47,7 @@ class ScriptNotificationPlugin implements NotificationPlugin, Describable {
                 return newclos.call(executionData)
             } else if (closure.getMaximumNumberOfParameters() == 1 && closure.parameterTypes[0] == Object) {
                 def Closure newclos = closure.clone()
-                newclos.delegate = [config: config, execution: executionData, trigger: trigger]
+                newclos.delegate = [configuration: config, execution: executionData, trigger: trigger]
                 newclos.resolveStrategy=Closure.DELEGATE_ONLY
                 return newclos.call(executionData)
             } else {
