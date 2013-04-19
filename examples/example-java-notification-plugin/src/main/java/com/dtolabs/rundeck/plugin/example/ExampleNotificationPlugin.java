@@ -10,8 +10,8 @@ import java.util.*;
 @PluginDescription(title="Example Plugin", description="An example Plugin for Rundeck Notifications.")
 public class ExampleNotificationPlugin implements NotificationPlugin{
 
-    @PluginProperty(name = "test",title = "Test String",description = "a description")
-    private String test;
+    @PluginProperty(name = "example",title = "Example String",description = "Example description")
+    private String example;
 
     public ExampleNotificationPlugin(){
 
@@ -19,22 +19,8 @@ public class ExampleNotificationPlugin implements NotificationPlugin{
 
     public boolean postNotification(String trigger, Map executionData, Map config) {
         System.err.printf("Trigger %s fired for %s, configuration: %s\n",trigger,executionData,config);
-        System.err.printf("Local field test is: %s\n",test);
+        System.err.printf("Local field example is: %s\n",example);
         return true;
     }
 
-    public Map getConfigurationProperties() {
-        HashMap<String,Object> map = new HashMap<String,Object>(){{
-            put("test",new HashMap<String,String>(){{
-                put("type","String");
-                put("title","Test String");
-            }});
-
-        }};
-        return map;
-    }
-
-    public Map validateForm(Map config) {
-        return null;
-    }
 }
