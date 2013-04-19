@@ -14,7 +14,7 @@ beans={
         quartzScheduler=ref('quartzScheduler')
     }
 
-    def serverLibextDir = application.config.rundeck?.server?.plugins?.dir?:"${application.config.rdeck.base}/libext/server"
+    def serverLibextDir = application.config.rundeck?.server?.plugins?.dir?:"${application.config.rdeck.base}/libext"
     File pluginDir = new File(serverLibextDir)
     def serverLibextCacheDir = application.config.rundeck?.server?.plugins?.cacheDir?:"${serverLibextDir}/cache"
     File cacheDir= new File(serverLibextCacheDir)
