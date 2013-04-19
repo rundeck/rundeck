@@ -802,8 +802,9 @@ class ExecutionController {
                 description:executionService.summarizeJob(e.scheduledExecution, e),
                 argstring:e.argString,
                 project: e.project,
-                failedNodeList:  e.failedNodeList,
-                loglevel : e.loglevel
+                failedNodeListString:  e.failedNodeList,
+                failedNodeList:  e.failedNodeList?.split(",") as List,
+                loglevel : ExecutionService.textLogLevels[e.loglevel] ?: e.loglevel
             ]
             if (null != e.dateCompleted) {
                 emap.dateEnded= e.dateCompleted
