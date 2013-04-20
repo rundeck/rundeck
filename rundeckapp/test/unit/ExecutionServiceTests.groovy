@@ -789,6 +789,28 @@ class ExecutionServiceTests extends GrailsUnitTestCase {
             assertEquals "-test3 \"some value,another value\"", ExecutionService.generateJobArgline(se2, ['test3': ['some value','another value']])
         }
     }
+    void testGenerateJobArglinePreservesOptionSortIndexOrder() {
+        mockDomain(ScheduledExecution)
+        mockDomain(Option)
+        ScheduledExecution se = new ScheduledExecution()
+        def testService = new ExecutionService()
+        def frameworkService = new FrameworkService()
+        testService.frameworkService = frameworkService
+
+        t: {
+            //test regex and optional value
+            ScheduledExecution se2 = new ScheduledExecution()
+            se2.addToOptions(new Option(name: 'abc', enforced: false, multivalued: true,delimiter: "+"))
+            se2.addToOptions(new Option(name: 'zyx', enforced: false, multivalued: true,sortIndex: 1))
+            se2.addToOptions(new Option(name: 'pst', enforced: false, multivalued: false,sortIndex: 0))
+            assertNotNull(se2.options)
+            assertEquals(3, se2.options.size())
+
+            assertEquals "-zyx value", ExecutionService.generateJobArgline(se2, ['zyx': 'value'])
+            assertEquals "-pst blah -zyx value", ExecutionService.generateJobArgline(se2, ['zyx': 'value','pst':'blah'])
+            assertEquals "-pst blah -zyx value -abc elf", ExecutionService.generateJobArgline(se2, ['zyx': 'value','pst':'blah', abc:'elf'])
+        }
+    }
 
     /**
      * Test createContext method
