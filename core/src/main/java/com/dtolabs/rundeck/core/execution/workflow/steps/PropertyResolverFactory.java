@@ -94,6 +94,14 @@ public class PropertyResolverFactory {
         );
     }
 
+    /**
+     * Create a PropertyResolver for a plugin for resolving only instance scoped properties.
+     */
+    public static PropertyResolver createInstanceResolver(final Map<String, Object> instanceProperties) {
+
+        return new RuntimePropertyResolver(instanceRetriever(instanceProperties), null, null);
+    }
+
     private static PropertyRetriever frameworkRetriever(final StepExecutionContext context,
                                                         final String frameworkPrefix) {
         return prefixedRetriever(frameworkPrefix,

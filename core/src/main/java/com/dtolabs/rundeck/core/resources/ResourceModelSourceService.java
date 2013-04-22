@@ -118,35 +118,11 @@ public class ResourceModelSourceService extends PluggableProviderRegistryService
     }
 
     public List<Description> listDescriptions() {
-        final ArrayList<Description> list = new ArrayList<Description>();
-        for (final ProviderIdent providerIdent : listProviders()) {
-            try {
-                final ResourceModelSourceFactory providerForType = providerOfType(providerIdent.getProviderName());
-                if (providerForType instanceof Describable) {
-                    Describable desc = (Describable) providerForType;
-                    list.add(desc.getDescription());
-                }
-            } catch (ExecutionServiceException e) {
-                e.printStackTrace();
-            }
-
-        }
-        return list;
+        //TODO: enable field annotations for properties, update plugin Interface and deprecate use of Factory
+        return DescribableServiceUtil.listDescriptions(this, false);
     }
 
     public List<ProviderIdent> listDescribableProviders() {
-        final ArrayList<ProviderIdent> list = new ArrayList<ProviderIdent>();
-        for (final ProviderIdent providerIdent : listProviders()) {
-            try {
-                final ResourceModelSourceFactory providerForType = providerOfType(providerIdent.getProviderName());
-                if (providerForType instanceof Describable) {
-                    list.add(providerIdent);
-                }
-            } catch (ExecutionServiceException e) {
-                e.printStackTrace();
-            }
-
-        }
-        return list;
+        return DescribableServiceUtil.listDescribableProviders(this);
     }
 }

@@ -25,7 +25,7 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.plugins.BasePluggableProviderService;
+import com.dtolabs.rundeck.core.plugins.FrameworkPluggableProviderService;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
@@ -39,7 +39,7 @@ import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class RemoteScriptNodeStepPluginService extends BasePluggableProviderService<RemoteScriptNodeStepPlugin>
+class RemoteScriptNodeStepPluginService extends FrameworkPluggableProviderService<RemoteScriptNodeStepPlugin>
     implements DescribableService {
 
     RemoteScriptNodeStepPluginService(final String name, final Framework framework) {

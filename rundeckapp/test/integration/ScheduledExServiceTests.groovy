@@ -885,6 +885,11 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             }
             sec.frameworkService = fwkControl.createMock()
 
+            def ms = mockFor(MessageSource)
+            ms.demand.getMessage { key, data, locale -> key+":"+data.toString()+":"+locale.toString() }
+            ms.demand.getMessage { error, locale -> error.toString()+":"+locale.toString() }
+            sec.messageSource = ms.createMock()
+
             def params = [jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: true, adhocRemoteString: "test command",
                     notifications: [[eventTrigger: 'onsuccess', type: 'email', content: 'c@example.com,d@example.com']]
             ]
@@ -3816,7 +3821,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertNull execution.adhocRemoteString
             assertNull execution.argString
 
-            assertNull execution.notifications
+            assertTrue(execution.notifications==null || execution.notifications.size()==0)
         }
 
         if (true) {//test update job  notifications, removing all notifications by unchecking
@@ -3886,7 +3891,7 @@ class ScheduledExServiceTests extends GrailsUnitTestCase {
             assertNull execution.adhocRemoteString
             assertNull execution.argString
 
-            assertNull execution.notifications
+            assertTrue(execution.notifications == null || execution.notifications.size() == 0)
         }
     }
 

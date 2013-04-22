@@ -19,7 +19,6 @@ If you have created a plugin for Rundeck 1.4 or earlier, you will need to update
 ### Metadata
 
 * the `Rundeck-Plugin-Version` for Java plugins has updated to `1.1`.  If a plugin specifies the earlier `1.0`, Rundeck 1.5 will not load it.
-* 
 
 ### Java Interfaces
 
@@ -143,7 +142,7 @@ Then include the jar files in the Plugin's jar contents:
     lib/somejar-1.2.jar
     lib/anotherjar-1.3.jar
 
-### Available Services:
+### Available Services
 
 * `NodeExecutor` - executes a command on a node
 * `FileCopier` - copies a file to a node
@@ -156,6 +155,11 @@ Workflow Step services (described more in the [Workflow Step Plugin Development]
 * `WorkflowStep` - runs a single step in a workflow
 * `WorkflowNodeStep` - runs a single step for each node in a workflow
 * `RemoteScriptNodeStep` - generates a script or command to execute remotely for each node in a workflow
+
+Notification services
+
+* `Notification` - performs an action after a Job state trigger. 
+See the chapter about [Notification Plugin Development](notification-plugin-development.html).
 
 ## Provider Lifecycle
 
@@ -302,6 +306,10 @@ More information is available in the Javadoc.
 ### Workflow Step Providers
 
 Refer to the section: [Workflow Step Plugin Development](workflow-step-plugin-development.html).
+
+### Notification Providers
+
+Refer to the section: [Notification Plugin Development](notification-plugin-development.html).
 
 ## Script Plugin Development
 

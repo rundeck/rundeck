@@ -195,4 +195,12 @@ public class PropertyBuilder {
         }
         return PropertyUtil.forType(type, name, title, description, required, value, values, validator, scope);
     }
+
+    /**
+     * Return the type already defined for the builder
+     * @return
+     */
+    public Property.Type getType() {
+        return type;
+    }
 }

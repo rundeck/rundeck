@@ -101,6 +101,16 @@ More information:
 * Configuration: [Resource Format Generators and Parsers](plugins.html#resource-format-generators-and-parsers)
 * Built-in Providers: [Resource Format services](plugins.html#resource-format-services)
 
+### Notification Plugins
+
+These plugins define notification mechanisms, and are triggered when a Job 
+finishes or starts.
+
+More information:
+
+* Configuration: [Notifications](plugins.html#notifications)
+* Built-in Providers: [Notification services](plugins.html#notification-services)
+
 ## About Services and Providers
 
 The Rundeck core makes use of several different "Services" that provide
@@ -138,7 +148,11 @@ Services fall into different categories, which determine how and where they are 
 
     1. Workflow Step - providers define behavior for all nodes 
     2. Workflow Node Step - providers define behavior for a single node
-    3. Remote Script Node Step - a specific use-case for Node Step providers 
+    3. Remote Script Node Step - a specific use-case for Node Step providers
+
+5. **Notification services**
+    
+    1. Notifications - external actions that are triggered when a Job starts or finishes.
 
 Specifics of how providers of these plugins work is listed below.
 
@@ -331,6 +345,22 @@ In other cases, the exact name of the provider may not be known (for example
 when loading content from a remote URL).  Each Generator and Parser must define
 a list of MIME Type strings and file extensions that they support. These 
 are used to determine which parser/generator is to be used.
+
+### Notifications
+
+Notifications can be configured for Jobs, and can be triggered when certain
+conditions occur.  These conditions are called "triggers", these are the 
+currently available triggers:
+
+* `onstart` - the Job started
+* `onsuccess` - the Job succeeded
+* `onfailure` - the Job failed
+
+When you define the Job in the GUI or via [XML](../manpages/man5/job-v20.html#notification) or
+[Yaml](../manpages/man5/job-yaml-v12.html#notification), you can add any of the available Notification types to happen for
+an of the possible triggers.  Each Notification type can have unique
+configuration properties that you specify. Each combination of trigger and
+ Notification type has a unique configuration.
 
 ## When Node Execution Service providers are invoked
 
