@@ -1618,9 +1618,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
      */
     public static String generateArgline(Map<String,String> opts){
         def argsList = []
-        for (String key: opts.keySet().sort()) {
-            String val = opts.get(key)
-            argsList<<'-'+key
+        for (Map.Entry<String, String> entry : opts.entrySet()) {
+            String val = opts.get(entry.key)
+            argsList<<'-'+entry.key
             argsList<<val
         }
         return OptsUtil.join(argsList)
@@ -1630,22 +1630,27 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
     * Generate an argString from a map of options and values
      */
     public static String generateJobArgline(ScheduledExecution sched,Map<String,Object> opts){
-        HashMap<String,String> newopts = new HashMap<String,String>();
-        for (String key: opts.keySet().sort()) {
-            Object obj=opts.get(key)
+        def newopts = [:]
+        def addOptVal={key,obj,Option opt=null->
             String val
             if (obj instanceof String[] || obj instanceof Collection) {
                 //join with delimiter
-                def opt = sched.options.find {it.name == key}
                 if (opt && opt.delimiter) {
-                    val = obj.grep {it}.join(opt.delimiter)
+                    val = obj.grep { it }.join(opt.delimiter)
                 } else {
-                    val = obj.grep {it}.join(",")
+                    val = obj.grep { it }.join(",")
                 }
-            }else{
+            } else {
                 val = (String) obj
             }
-            newopts[key]=val
+            newopts[key] = val
+        }
+        for (Option opt : sched.options.findAll {opts[it.name]}) {
+            addOptVal(opt.name, opts.get(opt.name),opt)
+        }
+        //add any input options that don't match job options, to preserve information
+        opts.keySet().findAll {!newopts[it]}.sort().each {
+            addOptVal(it, opts[it])
         }
         return generateArgline(newopts)
     }

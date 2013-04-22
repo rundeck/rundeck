@@ -1527,7 +1527,8 @@ class ScheduledExecutionController  {
     }
 
     /**
-     * Return topo sorted list of nodes, if acyclic
+     * Return topo sorted list of nodes, if acyclic, preserving
+     * order of input node list for independent nodes
      * @param nodes
      * @param oedgesin
      * @param iedgesin
@@ -1537,7 +1538,7 @@ class ScheduledExecutionController  {
         def Map oedges = deepClone(oedgesin)
         def Map iedges = deepClone(iedgesin)
         def l = new ArrayList()
-        def s = new TreeSet(nodes.findAll {!iedges[it]})
+        def s = new ArrayList(nodes.findAll {!iedges[it]})
         while(s){
             def n = s.first()
             s.remove(n)

@@ -351,6 +351,12 @@ Optional map entries are:
 
 :   "true/false" - whether the option is a secure input option. Not compatible with "multivalued"
 
+`sortIndex`
+
+:   *integer* - A number indicating the order this option should appear in the GUI.  If specified this
+    option will be arranged in order with other options with a `sortIndex` value. Any options without
+    a value will be arranged in alphabetical order below the other options.
+
 Example:
 
     test:
