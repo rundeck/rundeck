@@ -37,6 +37,7 @@ import rundeck.filters.ApiRequestFilters
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionServiceException
 import rundeck.services.FrameworkService
+import rundeck.services.NotificationService
 import rundeck.services.ScheduledExecutionService
 
 import java.util.regex.Pattern
@@ -47,6 +48,7 @@ class ScheduledExecutionController  {
     def ExecutionService executionService
     def FrameworkService frameworkService
     def ScheduledExecutionService scheduledExecutionService
+    def NotificationService notificationService
 
  
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -166,6 +168,7 @@ class ScheduledExecutionController  {
             total:total,
             nextExecution:scheduledExecutionService.nextExecutionTime(scheduledExecution),
             max: params.max?params.max:10,
+                notificationPlugins: notificationService.listNotificationPlugins(),
             offset:params.offset?params.offset:0])
     }
     def show = {
@@ -199,6 +202,7 @@ class ScheduledExecutionController  {
             executions:executions,
             total:total,
             nextExecution:scheduledExecutionService.nextExecutionTime(scheduledExecution),
+            notificationPlugins: notificationService.listNotificationPlugins(),
             max: params.max?params.max:10,
             offset:params.offset?params.offset:0]
 
@@ -727,8 +731,12 @@ class ScheduledExecutionController  {
         def stepTypes = frameworkService.getStepPluginDescriptions(framework)
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         return [ scheduledExecution:scheduledExecution, crontab:crontab,params:params,
-            nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
-            authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework), projects: frameworkService.projects(framework),nodeStepDescriptions: nodeStepTypes,stepDescriptions:stepTypes]
+                notificationPlugins: notificationService.listNotificationPlugins(),
+                nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
+                authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework),
+                projects: frameworkService.projects(framework),
+                nodeStepDescriptions: nodeStepTypes,
+                stepDescriptions:stepTypes]
     }
 
 
@@ -763,9 +771,17 @@ class ScheduledExecutionController  {
             }else{
                 scheduledExecution.refresh()
             }
-            render(view:'edit',model:[scheduledExecution:scheduledExecution,
-                       nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution), projects: frameworkService.projects(framework)],
-                   params:[project:params.project])
+            def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions(framework)
+            def stepTypes = frameworkService.getStepPluginDescriptions(framework)
+            return render(view:'edit', model: [scheduledExecution:scheduledExecution,
+                       nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
+                    projects: frameworkService.projects(framework),
+                    notificationValidation: params['notificationValidation'],
+                    nodeStepDescriptions: nodeStepTypes,
+                    stepDescriptions: stepTypes,
+                    notificationPlugins: notificationService.listNotificationPlugins(),
+                    params:params
+                   ])
         }else{
 
             clearEditSession('_new')
@@ -818,7 +834,12 @@ class ScheduledExecutionController  {
         }
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions(framework)
         def stepTypes = frameworkService.getStepPluginDescriptions(framework)
-        render(view:'create',model: [ scheduledExecution:newScheduledExecution, crontab:crontab,params:params, iscopy:true, authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework), projects: frameworkService.projects(framework), nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes])
+        render(view:'create',model: [ scheduledExecution:newScheduledExecution, crontab:crontab,params:params,
+                iscopy:true,
+                authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,framework),
+                projects: frameworkService.projects(framework), nodeStepDescriptions: nodeStepTypes,
+                stepDescriptions: stepTypes,
+                notificationPlugins: notificationService.listNotificationPlugins()])
 
     }
     /**
@@ -921,7 +942,9 @@ class ScheduledExecutionController  {
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions(framework)
         def stepTypes = frameworkService.getStepPluginDescriptions(framework)
         log.debug("ScheduledExecutionController: create : now returning model data to view...")
-        return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],projects:projects,nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes]
+        return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],projects:projects,
+                nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes,
+                notificationPlugins: notificationService.listNotificationPlugins()]
     }
 
     private clearEditSession(id='_new'){
@@ -1178,51 +1201,6 @@ class ScheduledExecutionController  {
 
 
 
-
-    /**
-     * Update ScheduledExecution notification definitions based on input params.
-     *
-     * expected params: [notifications: [<eventTrigger>:[email:<content>]]]
-     */
-    private boolean _validateNotifications(Map params,ScheduledExecution scheduledExecution) {
-        boolean failed=false
-        def fieldNames=[onsuccess:'notifySuccessRecipients',onfailure:'notifyFailureRecipients']
-        ['onsuccess', 'onfailure'].each {trigger ->
-            def notif = params.notifications[trigger]
-            if (notif && notif.email) {
-                def arr=notif.email.split(",")
-                arr.each{email->
-                    if(email && !org.apache.commons.validator.EmailValidator.getInstance().isValid(email)){
-                        failed=true
-                         scheduledExecution.errors.rejectValue(
-                            fieldNames[trigger],
-                            'scheduledExecution.notifications.invalidemail.message',
-                            [email] as Object[],
-                            'Invalid email address: {0}'
-                        )
-                    }
-                }
-                if(failed){
-                    return
-                }
-                def addrs = arr.findAll{it.trim()}.join(",")
-                Notification n = new Notification(eventTrigger: trigger, type: 'email', content: addrs)
-                if (!n.validate()) {
-                    failed = true
-                    def errmsg = trigger + " notification: " + n.errors.allErrors.collect {g.message(error: it)}.join(";")
-                    scheduledExecution.errors.rejectValue(
-                        fieldNames[trigger],
-                        'scheduledExecution.notifications.invalid.message',
-                        [errmsg] as Object[],
-                        'Invalid notification definition: {0}'
-                    )
-                }
-                n.discard()
-            }
-        }
-        return failed
-    }
-
     def save = {
         Framework framework = frameworkService.getFrameworkFromUserSession(session, request)
         def changeinfo=[user:session.user,change:'create',method:'save']
@@ -1251,7 +1229,12 @@ class ScheduledExecutionController  {
 
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions(framework)
         def stepTypes = frameworkService.getStepPluginDescriptions(framework)
-        render(view: 'create', model: [scheduledExecution: scheduledExecution, params: params, projects: frameworkService.projects(framework), nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes])
+        render(view: 'create', model: [scheduledExecution: scheduledExecution, params: params,
+                projects: frameworkService.projects(framework), nodeStepDescriptions: nodeStepTypes,
+                stepDescriptions: stepTypes,
+                notificationPlugins: notificationService.listNotificationPlugins(),
+                notificationValidation:params['notificationValidation']
+        ])
     }
     /**
      * Parse some kind of job input request using the specified format

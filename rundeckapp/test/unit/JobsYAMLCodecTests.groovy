@@ -1,4 +1,5 @@
 import org.yaml.snakeyaml.Yaml
+import rundeck.Notification
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.CommandExec
@@ -115,6 +116,48 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
             assertEquals "not scheduled.time", "3", doc[0].schedule.month
             assertEquals "not scheduled.time", "4", doc[0].schedule.weekday.day
             assertEquals "not scheduled.time", "2011", doc[0].schedule.year
+
+    }
+    void testEncodeNotificationPlugin() {
+        def Yaml yaml = new Yaml()
+        ScheduledExecution se = new ScheduledExecution([
+            jobName: 'test job 1',
+            description: 'test descrip',
+            loglevel: 'INFO',
+            project: 'test1',
+            workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [
+                new CommandExec([adhocFilepath: 'http://example.com/blah'])
+            ]]),
+            options: [new Option(name: 'opt1', description: "an opt", defaultValue: "xyz", enforced: true, required: true, values: new TreeSet(["a", "b"]))] as TreeSet,
+            nodeThreadcount: 1,
+            nodeKeepgoing: true,
+            doNodedispatch: true,
+            nodeInclude: "testhost1",
+            nodeExcludeName: "x1",
+            scheduled: true,
+            seconds: '*',
+            minute: '0',
+            hour: '2',
+            month: '3',
+            dayOfMonth: '?',
+            dayOfWeek: '4',
+            year: '2011',
+                notifications:[
+                    new Notification([eventTrigger:'onsuccess',type:'test1',configuration:["blah":"blee"]])
+                ]
+        ])
+        def jobs1 = [se]
+        def  ymlstr = JobsYAMLCodec.encode(jobs1)
+        assertNotNull ymlstr
+        assertTrue ymlstr instanceof String
+
+        def doc = yaml.load(ymlstr)
+        assertNotNull doc
+        System.out.println("yaml: ${ymlstr}");
+        System.out.println("doc: ${doc}");
+        assertEquals(1,doc[0].notification.size())
+        assertEquals(1,doc[0].notification.onsuccess.size())
+        assertEquals([type:'test1', configuration:['blah':'blee']],doc[0].notification.onsuccess.plugin)
 
     }
     void testEncodeErrorHandlers(){
@@ -548,6 +591,54 @@ public class JobsYAMLCodecTests extends GroovyTestCase {
         assertEquals "err job args", se.workflow.commands[ndx].errorHandler.argString
         assertTrue "err job keepgoing", se.workflow.commands[ndx].errorHandler.keepgoingOnSuccess
 
+
+    }
+
+    void testDecodeNotificationPlugin(){
+        def ymlstr1 = """- id: myid
+  project: test1
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - exec: test script
+      errorhandler:
+        exec: test err
+  description: ''
+  name: test job 1
+  group: my group
+  notification:
+    onsuccess:
+      plugin:
+        type: test1
+        configuration:
+          a: b
+          c: d
+    onfailure:
+      plugin:
+        type: test2
+        configuration:
+          x: yz
+"""
+        def list = JobsYAMLCodec.decode(ymlstr1)
+        assertNotNull list
+        assertEquals(1, list.size())
+        def obj = list[0]
+        assertTrue(obj instanceof ScheduledExecution)
+        ScheduledExecution se = (ScheduledExecution) list[0]
+
+
+        assertNotNull se.notifications
+        assertEquals 2,se.notifications.size()
+        def n1=se.notifications.find{it.type=='test1'}
+        assertNotNull(n1)
+        assertEquals('test1',n1.type)
+        assertEquals([a:'b',c:'d'],n1.configuration)
+        def n2=se.notifications.find{it.type=='test2'}
+        assertNotNull(n2)
+        assertEquals('test2', n2.type)
+        assertEquals([x:'yz'], n2.configuration)
 
     }
 

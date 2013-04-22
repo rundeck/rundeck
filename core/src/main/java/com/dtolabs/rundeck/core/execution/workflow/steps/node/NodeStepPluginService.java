@@ -25,20 +25,9 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.ProviderService;
-import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
-import com.dtolabs.rundeck.core.plugins.AdapterService;
-import com.dtolabs.rundeck.core.plugins.BasePluggableProviderService;
-import com.dtolabs.rundeck.core.plugins.PluginException;
-import com.dtolabs.rundeck.core.plugins.ProviderIdent;
-import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
+import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
-import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
-import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
-
-import java.util.*;
 
 
 /**
@@ -46,7 +35,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class NodeStepPluginService extends BasePluggableProviderService<NodeStepPlugin> implements DescribableService {
+class NodeStepPluginService extends FrameworkPluggableProviderService<NodeStepPlugin> implements DescribableService {
 
     /**
      * Create the service with a given name

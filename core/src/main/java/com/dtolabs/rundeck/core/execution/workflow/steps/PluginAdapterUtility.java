@@ -48,17 +48,42 @@ import java.util.*;
 public class PluginAdapterUtility {
 
     /**
-     * Create a Description using a builder by analyzing the annotations on a plugin object.
+     * Return true if the object has a valid Plugin annotation
+     */
+    public static boolean canBuildDescription(final Object object) {
+        final Plugin annotation1 = object.getClass().getAnnotation(Plugin.class);
+        return null != annotation1;
+    }
+
+    /**
+     * Create a Description using a builder by analyzing the annotations on a plugin object, and including
+     * annotations on fields as DescriptionProperties.
+     *
+     * @param object  the object
+     * @param builder builder
      */
     public static Description buildDescription(final Object object, final DescriptionBuilder builder) {
+        return buildDescription(object, builder, true);
+    }
+
+    /**
+     * Create a Description using a builder by analyzing the annotations on a plugin object.
+     *
+     * @param object  the object
+     * @param builder builder
+     * @param includeAnnotatedFieldProperties
+     *                if true, add DescriptionProperties to the Description based on annotations of fields in the class of the instance
+     */
+    public static Description buildDescription(final Object object, final DescriptionBuilder builder,
+                                               final boolean includeAnnotatedFieldProperties) {
         //analyze this class to determine properties
         final Plugin annotation1 = object.getClass().getAnnotation(Plugin.class);
         if (null != annotation1) {
             final String pluginName = annotation1.name();
             builder
-                .name(pluginName)
-                .title(pluginName)
-                .description("");
+                    .name(pluginName)
+                    .title(pluginName)
+                    .description("");
         }
 
         final PluginDescription descAnnotation = object.getClass().getAnnotation(PluginDescription.class);
@@ -71,16 +96,18 @@ public class PluginAdapterUtility {
             }
         }
 
-        for (final Field field : object.getClass().getDeclaredFields()) {
-            final PluginProperty annotation = field.getAnnotation(PluginProperty.class);
-            if (null == annotation) {
-                continue;
+        if (includeAnnotatedFieldProperties) {
+            for (final Field field : object.getClass().getDeclaredFields()) {
+                final PluginProperty annotation = field.getAnnotation(PluginProperty.class);
+                if (null == annotation) {
+                    continue;
+                }
+                final Property pbuild = propertyFromField(field, annotation);
+                if (null == pbuild) {
+                    continue;
+                }
+                builder.property(pbuild);
             }
-            final Property pbuild = propertyFromField(field, annotation);
-            if (null == pbuild) {
-                continue;
-            }
-            builder.property(pbuild);
         }
         builder.collaborate(object);
         return builder.build();
@@ -156,7 +183,7 @@ public class PluginAdapterUtility {
     }
 
     private static final List<PropertyScope> instanceScopes = Arrays.asList(PropertyScope.Instance,
-                                                                            PropertyScope.InstanceOnly);
+            PropertyScope.InstanceOnly);
 
 
     /**
@@ -223,10 +250,10 @@ public class PluginAdapterUtility {
         //use property default value if otherwise not resolved
         final List<Property> properties = description.getProperties();
         final PropertyResolver defaulted =
-            PropertyResolverFactory.withDefaultValues(
-                PropertyResolverFactory.withDefaultScope(PropertyScope.InstanceOnly, resolver),
-                new PropertyDefaultValues(properties)
-            );
+                PropertyResolverFactory.withDefaultValues(
+                        PropertyResolverFactory.withDefaultScope(PropertyScope.InstanceOnly, resolver),
+                        new PropertyDefaultValues(properties)
+                );
 
         return PropertyResolverFactory.mapPropertyValues(properties, defaulted);
     }
@@ -243,13 +270,13 @@ public class PluginAdapterUtility {
         final Property.Type type = property.getType();
         final Property.Type ftype = propertyTypeFromFieldType(field.getType());
         if (ftype != property.getType()
-            && !(ftype == Property.Type.String
-                 && (property.getType() == Property.Type.Select
-                     || property.getType() == Property.Type.FreeSelect))) {
+                && !(ftype == Property.Type.String
+                && (property.getType() == Property.Type.Select
+                || property.getType() == Property.Type.FreeSelect))) {
 
             throw new IllegalStateException(
-                "cannot map property {" + property.getName() + " type: " + property.getType() + "} to field {"
-                + field.getName() + " type: " + ftype + "}");
+                    "cannot map property {" + property.getName() + " type: " + property.getType() + "} to field {"
+                            + field.getName() + " type: " + ftype + "}");
         }
         final Object resolvedValue;
         if (type == Property.Type.Integer) {
@@ -300,7 +327,7 @@ public class PluginAdapterUtility {
                 resolvedValue = value;
                 if (!property.getSelectValues().contains((String) resolvedValue)) {
                     throw new RuntimeException(
-                        "value not allowed for property " + property.getName() + ": " + resolvedValue);
+                            "value not allowed for property " + property.getName() + ": " + resolvedValue);
                 }
             } else {
                 //XXX
@@ -319,7 +346,7 @@ public class PluginAdapterUtility {
     }
 
     private static void setFieldValue(final Field field, final Object value, final Object object)
-        throws IllegalAccessException {
+            throws IllegalAccessException {
         if (!field.isAccessible()) {
             field.setAccessible(true);
         }

@@ -862,7 +862,7 @@ value
 
 ## notification 
 
-Defines email and webhook notifications for Job success and failure, with in a
+Defines email, webhook or plugin notifications for Job success and failure, with in a
 [job](#job) definition.
 
 *Nested elements*
@@ -875,6 +875,10 @@ Defines email and webhook notifications for Job success and failure, with in a
 
 :    define notifications for failure/kill result
 
+[onstart](#onstart)
+
+:    define notifications for job start
+
 *Example*
 
     <notification>
@@ -885,6 +889,13 @@ Defines email and webhook notifications for Job success and failure, with in a
             <email recipients="test@example.com" />
             <webhook urls="http://example.com?id=${execution.id}" />
        </onsuccess>
+        <onstart>
+            <plugin type="MyPlugin">
+              <configuration>
+                <entry key="customkey" value="customvalue"/>
+              </configuration>
+            </plugin>
+       </onstart>
     </notification>      
 
  
@@ -896,6 +907,9 @@ Embed an [email](#email) element to send email on success, within
 Embed an [webhook](#webhook) element to perform a HTTP POST to some URLs, within
 [notification](#notification).
 
+Embed an [plugin](#plugin) element to perform a custom action, within
+[notification](#notification).
+
 ### onfailure 
 
 Embed an [email](#email) element to send email on failure or kill,
@@ -904,10 +918,27 @@ within [notification](#notification).
 Embed an [webhook](#webhook) element to perform a HTTP POST to some URLs, within
 [notification](#notification).
 
+Embed an [plugin](#plugin) element to perform a custom action, within
+[notification](#notification).
+
+### onstart 
+
+Embed an [email](#email) element to send email on failure or kill,
+within [notification](#notification).
+
+Embed an [webhook](#webhook) element to perform a HTTP POST to some URLs, within
+[notification](#notification).
+
+Embed an [plugin](#plugin) element to perform a custom action, within
+[notification](#notification).
+
 ### email 
 
-Define email recipients for Job execution result, within
-[onsuccess](#onsuccess) or [onfailure](#onfailure).
+Define email recipients for Job execution result, within [onsuccess][], [onfailure][] or [onstart][].
+
+[onsuccess]: #onsuccess
+[onfailure]: #onfailure
+[onstart]: #onstart
 
 *Attributes*
 
@@ -921,7 +952,11 @@ recipients
 
 ### webhook
 
-Define URLs to submit a HTTP POST to containing the job execution result, within [onsuccess](#onsuccess) or [onfailure](#onfailure).
+Define URLs to submit a HTTP POST to containing the job execution result, within [onsuccess][], [onfailure][] or [onstart][].
+
+[onsuccess]: #onsuccess
+[onfailure]: #onfailure
+[onstart]: #onstart
 
 *Attributes*
 
@@ -935,6 +970,63 @@ urls
         <webhook urls="http://server/callback?id=${execution.id}&status=${execution.status}&trigger=${notification.trigger}"/>
 
 * For more information about the Webhook mechanism used, see the chapter [Integration - Webhooks](manual/jobs.html#webhooks).
+
+### plugin
+
+Defines a configuration for a plugin to perform a Notification, within [onsuccess][], [onfailure][] or [onstart][].
+
+[onsuccess]: #onsuccess
+[onfailure]: #onfailure
+[onstart]: #onstart
+
+*Attributes*
+
+type
+
+:    The plugin provider type identifier
+
+*Nested elements*
+
+Optional 'configuration' can be embedded containing a list of 'entry' key/value pairs:
+
+[configuration](#configuration-1)
+
+:    Defines plugin configuration entries
+
+[entry](#entry-1)
+
+:    Defines a key/value pair for the configuration.
+
+
+Example notification plugin definition:
+
+    <onstart>
+        <plugin type="my-notification-plugin">
+           <configuration>
+            <entry key="someconfig" value="a value"/>
+            <entry key="timout" value="2000"/>
+           </configuration>
+        </plugin>
+    </onstart> 
+
+#### configuration
+
+Contains the key/value pair entries for plugin configuration, within a [plugin](#plugin) notification definition.
+
+#### entry
+
+Defines a key/value pair within a [configuration](#configuration-1).
+
+*Attributes*:
+
+key
+
+:    Key for the pair
+
+value
+
+:    Textual value
+
 
 # SEE ALSO
 

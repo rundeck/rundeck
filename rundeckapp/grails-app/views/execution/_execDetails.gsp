@@ -1,4 +1,4 @@
-<%@ page import="rundeck.ExecutionContext; rundeck.ScheduledExecution" %>
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.Description; rundeck.ExecutionContext; rundeck.ScheduledExecution" %>
 <g:set var="rkey" value="${g.rkey()}"/>
 
 <table class="simpleForm" cellpadding="0" cellspacing="0">
@@ -168,20 +168,27 @@
     </g:if>
     <g:if test="${execdata instanceof ScheduledExecution && execdata.notifications}">
         <tr>
-        <g:each var="notify" in="${execdata.notifications}" status="i">
-                <td class="displabel">Notify <g:message code="notification.event.${notify.eventTrigger}"/>:</td>
+            <td class="displabel">Notification:</td>
+            <g:set var="bytrigger" value="${execdata.notifications.groupBy{ it.eventTrigger }}"/>
+            <g:each var="trigger" in="${bytrigger.keySet().sort()}" status="k">
                 <td>
-                    <g:if test="${notify.type=='url'}">
-                        <g:expander key="webhook${rkey}_${i}">Webhook</g:expander>
-                        <span class="webhooklink note" id="webhook${rkey}_${i}" style="display:none;" title="URLs: ${notify.content.encodeAsHTML()}">${notify.content.encodeAsHTML()}</span>
-                    </g:if>
-                    <g:else>
-                        ${notify.content.encodeAsHTML()}
-                    </g:else>
+                    <span class=""><g:message code="notification.event.${trigger}"/>:</span>
+                <g:if test="${bytrigger[trigger].size()>1}">
+                <ul>
+                <g:each var="notify" in="${bytrigger[trigger].sort{a,b->a.type.toLowerCase()<=>b.type.toLowerCase()}}" status="i">
+                    <li>
+                        <g:render template="/execution/execDetailsNotification" model="${[notification: notify]}"/>
+                    </li>
+                </g:each>
+                </ul>
+                </g:if>
+                <g:else>
+                    <g:render template="/execution/execDetailsNotification" model="${[notification: bytrigger[trigger][0]]}"/>
+                </g:else>
                 </td>
-
-        </g:each>
-        </tr>
+            </g:each>
+        </td>
+    </tr>
     </g:if>
    
     

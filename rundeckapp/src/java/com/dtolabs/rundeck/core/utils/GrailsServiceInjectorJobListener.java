@@ -44,12 +44,16 @@ public class GrailsServiceInjectorJobListener extends JobListenerSupport {
     private static final transient Logger LOG = Logger.getLogger(GrailsServiceInjectorJobListener.class);
     private String name;
     private Map services;
+    private Scheduler quartzScheduler;
 
+    public GrailsServiceInjectorJobListener(){
+
+    }
     public GrailsServiceInjectorJobListener(String name, Map services, Scheduler quartzScheduler)
         throws SchedulerException {
         this.name = name;
         this.services = services;
-        quartzScheduler.addJobListener(this);
+        setQuartzScheduler(quartzScheduler);
         LOG.info("GrailsServiceInjectorJobListener initialized, added to quartzScheduler");
     }
 
@@ -78,4 +82,13 @@ public class GrailsServiceInjectorJobListener extends JobListenerSupport {
         this.services = services;
     }
 
+    public Scheduler getQuartzScheduler() {
+        return quartzScheduler;
+    }
+
+    public void setQuartzScheduler(Scheduler quartzScheduler) throws SchedulerException {
+        this.quartzScheduler = quartzScheduler;
+
+        quartzScheduler.addJobListener(this);
+    }
 }

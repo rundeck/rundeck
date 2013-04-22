@@ -513,11 +513,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor{
         def LogHandler loghandler = createLogHandler(lognamespace, execution.outputfilepath,execution.loglevel,
             [user:execution.user,node:framework.getFrameworkNodeName()])
 
+        if(scheduledExecution){
+            //send onstart notification
+            def result = notificationService.triggerJobNotification('start', scheduledExecution.id, [execution: execution])
+        }
         //install custom outputstreams for System.out and System.err for this thread and any child threads
         //output will be sent to loghandler instead.
         sysThreadBoundOut.installThreadStream(loghandler.createLoggerStream(Level.WARNING, null));
         sysThreadBoundErr.installThreadStream(loghandler.createLoggerStream(Level.SEVERE, null));
 
+        def startMap
         try{
             def jobcontext=new HashMap<String,String>()
             if(scheduledExecution){

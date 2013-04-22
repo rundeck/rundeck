@@ -49,7 +49,12 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
     private File cachedir;
     private final PluginCache cache;
 
-    private PluginManagerService(final File extdir, final File cachedir) {
+    /**
+     * Create a PluginManagerService for the given directory and cache directory
+     * @param extdir
+     * @param cachedir
+     */
+    public PluginManagerService(final File extdir, final File cachedir) {
         this.extdir = extdir;
         this.cachedir = cachedir;
         final FileCache<ProviderLoader> filecache = new FileCache<ProviderLoader>();
@@ -76,7 +81,7 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
         return (PluginManagerService) framework.getService(SERVICE_NAME);
     }
 
-    private synchronized static PluginManagerService getInstanceForExtDir(final File libextDir, final File cachedir) {
+    public synchronized static PluginManagerService getInstanceForExtDir(final File libextDir, final File cachedir) {
         if (null == managerRegistry.get(libextDir)) {
             final PluginManagerService service = new PluginManagerService(libextDir, cachedir);
             managerRegistry.put(libextDir, service);

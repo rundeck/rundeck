@@ -1,5 +1,9 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
+import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
+import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
 import groovy.xml.MarkupBuilder
 
 import org.apache.commons.httpclient.HttpClient
@@ -9,6 +13,8 @@ import org.apache.commons.httpclient.Header
 
 import org.apache.commons.httpclient.methods.StringRequestEntity
 import grails.util.GrailsWebUtil
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 import org.springframework.web.context.support.WebApplicationContextUtils
 import org.codehaus.groovy.grails.web.context.ServletContextHolder
 import org.springframework.web.context.request.RequestContextHolder
@@ -16,6 +22,7 @@ import rundeck.ScheduledExecution
 import rundeck.Notification
 import rundeck.Execution
 import rundeck.controllers.ExecutionController
+import com.fasterxml.jackson.databind.ObjectMapper
 
 /*
 * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
@@ -40,10 +47,69 @@ import rundeck.controllers.ExecutionController
  * $Id$
  */
 
-public class NotificationService {
+public class NotificationService implements ApplicationContextAware{
+    boolean transactional = false
 
+    ApplicationContext applicationContext
+    def grailsApplication
     def mailService
+    def RundeckPluginRegistry rundeckPluginRegistry
+    def NotificationPluginProviderService notificationPluginProviderService
+    def FrameworkService frameworkService
 
+    def NotificationPlugin getNotificationPlugin(String name) {
+        def bean= rundeckPluginRegistry.loadPluginByName(name, notificationPluginProviderService)
+        if (bean ) {
+            return (NotificationPlugin) bean
+        }
+        log.error("Notification plugin not found: ${name}")
+        return null
+    }
+    def Map validatePluginConfig(String name, Map config){
+        def Map pluginDesc=getNotificationPluginDescriptor(name)
+        if(pluginDesc && pluginDesc.description instanceof Description){
+            return frameworkService.validateDescription(pluginDesc.description,'',config)
+        }else{
+            return null
+        }
+    }
+    /**
+     *
+     * @param name
+     * @return map containing [instance:(plugin instance), description: (map or Description), ]
+     */
+    def Map getNotificationPluginDescriptor(String name) {
+        def bean= rundeckPluginRegistry.loadPluginDescriptorByName(name, notificationPluginProviderService)
+        if (bean ) {
+            return (Map) bean
+        }
+        log.error("Notification plugin not found: ${name}")
+        return null
+    }
+    private NotificationPlugin configureNotificationPlugin(String name, Map configuration) {
+        def bean= rundeckPluginRegistry.configurePluginByName(name, notificationPluginProviderService,configuration)
+        if (bean ) {
+            return (NotificationPlugin) bean
+        }
+        log.error("Notification plugin not found: ${name}")
+        return null
+    }
+    def Map listNotificationPlugins(){
+        def plugins=[:]
+        plugins=rundeckPluginRegistry.listPluginDescriptors(NotificationPlugin, notificationPluginProviderService)
+        //clean up name of any Groovy plugin without annotations that ends with "NotificationPlugin"
+        plugins.each {key,Map plugin->
+            def desc = plugin.description
+            if(desc && desc instanceof Map){
+                if(desc.name.endsWith("NotificationPlugin")){
+                    desc.name=desc.name.replaceAll(/NotificationPlugin$/,'')
+                }
+            }
+        }
+//        System.err.println("listed plugins: ${plugins}")
+
+        plugins
+    }
     def boolean triggerJobNotification(String trigger, schedId, Map content){
         if(trigger && schedId){
             ScheduledExecution.withNewSession {
@@ -54,6 +120,29 @@ public class NotificationService {
             }
         }
         return false
+    }
+    private Object doWithMockRequest(Closure clos){
+
+        def requestAttributes = RequestContextHolder.getRequestAttributes()
+        boolean unbindrequest = false
+        // outside of an executing request, establish a mock version
+        if (!requestAttributes) {
+            def servletContext = ServletContextHolder.getServletContext()
+            def applicationContext = WebApplicationContextUtils.getRequiredWebApplicationContext(servletContext)
+            requestAttributes = GrailsWebUtil.bindMockWebRequest(applicationContext)
+            unbindrequest = true
+        }
+
+        //prep execution data
+        def result
+        try {
+            result = clos.call()
+        } finally {
+            if (unbindrequest) {
+                RequestContextHolder.setRequestAttributes(null)
+            }
+        }
+        result
     }
     def boolean triggerJobNotification(String trigger,ScheduledExecution source, Map content){
         def didsend = false
@@ -79,39 +168,23 @@ public class NotificationService {
                     }
                     didsend= true
                 }else if(n.type=='url'){    //sending notification of a status trigger for the Job
-
-                    def requestAttributes = RequestContextHolder.getRequestAttributes()
-                    boolean unbindrequest = false
-                    // outside of an executing request, establish a mock version
-                    if (!requestAttributes) {
-                        def servletContext = ServletContextHolder.getServletContext()
-                        def applicationContext = WebApplicationContextUtils.getRequiredWebApplicationContext(servletContext)
-                        requestAttributes = GrailsWebUtil.bindMockWebRequest(applicationContext)
-                        unbindrequest = true
-                    }
                     def Execution exec = content.execution
-                    def urlarr = n.content.split(",") as List
                     //iterate through the URLs, and submit a POST to the destination with the XML Execution result
-
-                    def writer = new StringWriter()
-                    def xml = new MarkupBuilder(writer)
                     final state = ExecutionController.getExecutionState(exec)
+                    String xmlStr = doWithMockRequest {
+                        def writer = new StringWriter()
+                        def xml = new MarkupBuilder(writer)
 
-                    try {
                         xml.'notification'(trigger:trigger,status:state,executionId:exec.id){
                             new ExecutionController().renderApiExecutions([exec], [:], delegate)
                         }
-
-                    } finally {
-                        if (unbindrequest) {
-                            RequestContextHolder.setRequestAttributes(null)
-                        }
+                        writer.flush()
+                        writer.toString()
                     }
-                    writer.flush()
-                    String xmlStr = writer.toString()
                     if (log.traceEnabled){
                         log.trace("Posting webhook notification[${n.eventTrigger},${state},${exec.id}]; to URLs: ${n.content}")
                     }
+                    def urlarr = n.content.split(",") as List
                     def webhookfailure=false
                     urlarr.each{String urlstr->
                         //perform token expansion within URL.
@@ -133,6 +206,17 @@ public class NotificationService {
                         }
                     }
                     didsend=!webhookfailure
+                }else if (n.type) {
+                    //prep execution data
+                    def Map execMap=doWithMockRequest {
+                        new ExecutionController().exportExecutionData([content.execution])[0]
+                    }
+                    //TBD: nodestatus will migrate to execution data
+                    if(content['nodestatus']){
+                        execMap['nodestatus'] = content['nodestatus']
+                    }
+
+                    didsend=triggerPlugin(trigger,execMap,n.type, n.configuration)
                 }else{
                     log.error("Unsupported notification type: " + n.type);
                 }
@@ -147,6 +231,34 @@ public class NotificationService {
 
         return didsend
     }
+
+    /**
+     * Perform a plugin notification
+     * @param trigger trigger name
+     * @param data data content for the plugin
+     * @param content content for notification
+     * @param type plugin type
+     * @param config user configuration
+     */
+    private boolean triggerPlugin(String trigger, Map data,String type, Map config){
+        //replace exec info data references in config???
+
+        //load plugin and configure with config values
+        def plugin = configureNotificationPlugin(type, config)
+        if (!plugin) {
+            log.error("No Notification plugin found of type: " + type)
+            return false
+        }
+
+        //invoke plugin
+        //TODO: use executor
+        if (!plugin.postNotification(trigger, data, config)) {
+            log.error("Notification Failed: " + type);
+            return false
+        }
+        true
+    }
+
     String expandWebhookNotificationUrl(String url,Execution exec, ScheduledExecution job, String trigger){
         def state=ExecutionController.getExecutionState(exec)
         /**

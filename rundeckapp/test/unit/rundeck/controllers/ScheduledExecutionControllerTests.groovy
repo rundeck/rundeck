@@ -17,6 +17,8 @@ package rundeck.controllers
 
 import grails.test.ControllerUnitTestCase
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
+import rundeck.services.NotificationService
+
 import javax.security.auth.Subject
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authentication.Group
@@ -351,6 +353,9 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
             sec.scheduledExecutionService = seServiceControl.createMock()
+            def nServiceControl = mockFor(NotificationService, true)
+            nServiceControl.demand.listNotificationPlugins { []}
+            sec.notificationService = nServiceControl.createMock()
 
             def params = [
                     jobName: 'monkey1',
@@ -408,6 +413,10 @@ class ScheduledExecutionControllerTests extends ControllerUnitTestCase {
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
             sec.scheduledExecutionService = seServiceControl.createMock()
+
+            def nServiceControl = mockFor(NotificationService, true)
+            nServiceControl.demand.listNotificationPlugins { [] }
+            sec.notificationService = nServiceControl.createMock()
 
             def params = [
                     jobName: 'monkey1',
