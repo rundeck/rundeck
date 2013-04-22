@@ -142,11 +142,13 @@ class JobsXMLCodec {
         }
         if(map.context?.options && map.context?.options?.option){
             final def opts = map.context.options.remove('option')
+            def ndx = map.context.options.preserveOrder ? 0 : -1;
             map.remove('context')
             map.options=[:]
             if (opts && opts instanceof Map){
                 opts=[opts]
             }
+            //if preserveOrder is true, include sortIndex information
             if(opts && opts instanceof Collection){
                 opts.each{optm->
                     map.options[optm.name.toString()]=optm
@@ -157,6 +159,9 @@ class JobsXMLCodec {
                     }
                     if(null!=optm.enforcedvalues){
                         optm.enforced=optm.remove('enforcedvalues')
+                    }
+                    if(ndx>-1){
+                        optm.sortIndex=ndx++;
                     }
                 }
             }
@@ -314,13 +319,23 @@ class JobsXMLCodec {
     static convertJobMap={Map map->
         map.context=[project:map.remove('project')]
         final Map opts = map.remove('options')
+        boolean preserveOrder=false
         if(null!=opts){
+            preserveOrder=opts.any{it.value.sortIndex!=null}
             def optslist=[]
-            //xml expects sorted option names
-            opts.keySet().sort().each{
-                def x = opts[it]
+            //options are sorted by (sortIndex, name)
+            opts.sort{a,b->
+                if(null != a.value.sortIndex && null != b.value.sortIndex){
+                    return a.value.sortIndex<=>b.value.sortIndex
+                }else if (null == a.value.sortIndex && null == b.value.sortIndex) {
+                    return a.value.name <=> b.value.name
+                }else{
+                    return a.value.sortIndex!=null?-1:1
+                }
+            }.each{k,x->
+                x.remove('sortIndex')
                 //add 'name' attribute
-                BuilderUtil.addAttribute(x,'name',it)
+                BuilderUtil.addAttribute(x,'name',k)
                 //convert to attributes: 'value','regex','valuesUrl'
                 BuilderUtil.makeAttribute(x,'value')
                 BuilderUtil.makeAttribute(x,'regex')
@@ -363,7 +378,11 @@ class JobsXMLCodec {
                 }
                 optslist<<x
             }
-            map.context[BuilderUtil.pluralize('option')]=optslist
+            if(preserveOrder){
+                map.context['options'] = [option:optslist] + BuilderUtil.toAttrMap('preserveOrder',true)
+            }else{
+                map.context[BuilderUtil.pluralize('option')] = optslist
+            }
         }
         if(map.nodefilters?.dispatch){
             map.dispatch=map.nodefilters.remove('dispatch')

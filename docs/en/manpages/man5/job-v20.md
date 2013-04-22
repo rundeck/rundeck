@@ -364,11 +364,16 @@ The [context](#context) project name.
 
 ### options
      
-The [context](#context)  options that correspond to the called [command](#command).
+The [context](#context) options for user input.
+
+preserveOrder
+
+  :  If set to "true", then the order of the [option](#option) elements will be preserved in
+     the Rundeck GUI.  Otherwise the options will be shown in alphabetical order.
 
 *Nested elements*
 
-option](#option)
+[option](#option)
 
 :    an option element
 

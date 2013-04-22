@@ -2301,6 +2301,46 @@ class JobsXMLCodecTests extends GroovyTestCase {
 
     }
 
+    void testDecodeOptionsPreserveOrder() {
+        //secure option
+        def xml1 = """<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description></description>
+    <loglevel>INFO</loglevel>
+    <context>
+        <project>test1</project>
+        <options preserveOrder="true">
+          <option name="zxy" value="789" multivalued="true" delimiter=","/>
+          <option name="abc" value="789" multivalued="true" delimiter=","/>
+          <option name="wxy" value="789" multivalued="true" delimiter=","/>
+        </options>
+    </context>
+    <sequence><command><exec>test</exec></command></sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+    <schedule>
+      <time hour='11' minute='21' />
+      <weekday day='*' />
+      <month month='*' />
+    </schedule>
+  </job>
+</joblist>
+"""
+
+        def jobs = JobsXMLCodec.decode(xml1)
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+        assertNotNull "incorrect options", jobs[0].options
+        assertEquals "incorrect options size", 3, jobs[0].options.size()
+        assertEquals(['zxy','abc','wxy'], jobs[0].options*.name)
+
+    }
+
+
     void testDecodeNotification(){
 
         //onsuccess notification
@@ -4231,6 +4271,122 @@ class JobsXMLCodecTests extends GroovyTestCase {
         assertEquals 1, doc2.job[0].context[0].options[0].option[0]['@delimiter'].size()
         assertEquals "incorrect context options option 2 regex", 'true', doc2.job[0].context[0].options[0].option[0]['@multivalued'].text()
         assertEquals "incorrect context options option 2 regex", '<', doc2.job[0].context[0].options[0].option[0]['@delimiter'].text()
+    }
+
+    void testEncodeOptionSortIndexPreservesOrder() {
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                jobName: 'a Job',
+                                jobGroup: '/some/path',
+                        )]
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        options: [
+                                new Option(name: 'abc', defaultValue: '12', sortIndex: 4),
+                                new Option(name: 'bcd', defaultValue: '12', sortIndex: 2),
+                                new Option(name: 'cde', defaultValue: '12', sortIndex: 3),
+                                new Option(name: 'def', defaultValue: '12', sortIndex: 1),
+                        ] as TreeSet,
+                )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+        println xmlstr
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "incorrect context options size", 4, doc.job[0].context[0].options[0].option.size()
+        assertEquals "incorrect context options/@preserveOrder", 'true', doc.job[0].context[0].options[0]['@preserveOrder'].text()
+        assertEquals "incorrect context options option 1 name", 'def', doc.job[0].context[0].options[0].option[0]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'bcd', doc.job[0].context[0].options[0].option[1]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'cde', doc.job[0].context[0].options[0].option[2]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'abc', doc.job[0].context[0].options[0].option[3]['@name'].text()
+    }
+    void testEncodeOptionNullSortIndexDoesNotPreserveOrder() {
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                jobName: 'a Job',
+                                jobGroup: '/some/path',
+                        )]
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        options: [
+                                new Option(name: 'abc', defaultValue: '12', sortIndex: null),
+                                new Option(name: 'bcd', defaultValue: '12', sortIndex: null),
+                                new Option(name: 'cde', defaultValue: '12', sortIndex: null),
+                                new Option(name: 'def', defaultValue: '12', sortIndex: null),
+                        ] as TreeSet,
+                )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+        println xmlstr
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "incorrect context options size", 4, doc.job[0].context[0].options[0].option.size()
+        assertEquals "incorrect context options/@preserveOrder",0, doc.job[0].context[0].options[0]['@preserveOrder'].size()
+        assertEquals "incorrect context options option 1 name", 'abc', doc.job[0].context[0].options[0].option[0]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'bcd', doc.job[0].context[0].options[0].option[1]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'cde', doc.job[0].context[0].options[0].option[2]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'def', doc.job[0].context[0].options[0].option[3]['@name'].text()
+    }
+    void testEncodeOptionMixedSortIndexDoesNotPreserveOrder() {
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                jobName: 'a Job',
+                                jobGroup: '/some/path',
+                        )]
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        options: [
+                                new Option(name: 'abc', defaultValue: '12', sortIndex: null),
+                                new Option(name: 'bcd', defaultValue: '12', sortIndex: 1),
+                                new Option(name: 'cde', defaultValue: '12', sortIndex: null),
+                                new Option(name: 'def', defaultValue: '12', sortIndex: 0),
+                        ] as TreeSet,
+                )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+        println xmlstr
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "incorrect context options size", 4, doc.job[0].context[0].options[0].option.size()
+        assertEquals "incorrect context options/@preserveOrder",1, doc.job[0].context[0].options[0]['@preserveOrder'].size()
+        assertEquals "incorrect context options/@preserveOrder",'true', doc.job[0].context[0].options[0]['@preserveOrder'].text()
+        assertEquals "incorrect context options option 1 name", 'def', doc.job[0].context[0].options[0].option[0]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'bcd', doc.job[0].context[0].options[0].option[1]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'abc', doc.job[0].context[0].options[0].option[2]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'cde', doc.job[0].context[0].options[0].option[3]['@name'].text()
     }
 
     void testEncodePluginNodeStep(){
