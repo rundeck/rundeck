@@ -94,19 +94,35 @@ class FrameworkServiceTests extends GroovyTestCase {
             assertNotNull(m1['test2'])
             assertEquals("flam jamps", m1['test2'])
         }
-        test:{
-            def m1 = testService.parseOptsFromString("-test 1 -test2 'flam jamps' notparsed -isboolean")
-            assertNotNull(m1)
-            assertTrue(m1 instanceof Map<String, String>)
-            assertEquals("wrong size: "+m1,3, m1.size())
-            assertNotNull(m1['test'])
-            assertEquals("1", m1['test'])
-            assertNotNull(m1['test2'])
-            assertEquals("flam jamps", m1['test2'])
-            assertNotNull(m1['isboolean'])
-            assertEquals("true", m1['isboolean'])
-        }
     }
+
+    void testParseOptsIgnoredValues() {
+        def FrameworkService testService = new FrameworkService();
+        //ignores unassociated string and trailing -opt
+        def m1 = testService.parseOptsFromString("-test 1 -test2 'flam jamps' notparsed -ignored")
+        assertNotNull(m1)
+        assertEquals(['test':'1',test2:'flam jamps'],m1)
+    }
+
+    void testParseOptsFromStringShouldPreserveDashedValue() {
+        def FrameworkService testService = new FrameworkService();
+        def m1 = testService.parseOptsFromString("-test -blah")
+        assertNotNull(m1)
+        assertTrue(m1 instanceof Map<String, String>)
+        assertLength(1, m1)
+        assertNotNull(m1['test'])
+        assertEquals("-blah", m1['test'])
+    }
+    void testParseOptsFromArrayShouldPreserveDashedValue() {
+        def FrameworkService testService = new FrameworkService();
+        def m1 = testService.parseOptsFromArray(["-test","-blah"] as String[])
+        assertNotNull(m1)
+        assertTrue(m1 instanceof Map<String, String>)
+        assertLength(1, m1)
+        assertNotNull(m1['test'])
+        assertEquals("-blah", m1['test'])
+    }
+
     void testAuthorizeProjectJobAll(){
         FrameworkService test= new FrameworkService();
         test:{
