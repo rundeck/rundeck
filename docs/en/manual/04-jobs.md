@@ -360,11 +360,13 @@ If you want to receive notifications, click Yes under "Send Notification?".
 
 ![Notification form](../figures/fig0322.png)
 
-You can enable notifications for either Success or Failure, and either notification by email, or by webhooks.  Click the checkbox next to the type of notification to enable.
+You can enable notifications for either Success or Failure or Start, and either notification by email, by webhooks or a plugin.  Click the checkbox next to the type of notification to enable.
 
 ![Notifications enabled](../figures/fig0323.png)
 
 Enter either comma-separated email addresses for email notification, or comma-separated URLs for webhook notification.
+
+When the Job starts, all "start" notifications will be triggered.
 
 When the Job finishes executing, all "success" notifications will be triggered if the Job is successful.  Otherwise, all "failure" notifications will be triggered if the Job fails or is cancelled.
 
