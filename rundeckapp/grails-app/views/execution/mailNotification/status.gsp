@@ -278,10 +278,8 @@ div.progressContainer div.progressContent{
                     <g:if test="${scheduledExecution}">
                         <td style="vertical-align:top;" class="toolbar small">
                             %{--<g:render template="/scheduledExecution/actionButtons" model="${[scheduledExecution:scheduledExecution,objexists:objexists,jobAuthorized:jobAuthorized,execPage:true]}"/>--}%
-                            <g:set var="successcount" value="${scheduledExecution.id?Execution.countByScheduledExecutionAndStatus(scheduledExecution,'true'):0}"/>
-                            <g:set var="execCount" value="${scheduledExecution.id?Execution.countByScheduledExecution(scheduledExecution):0}"/>
-                            <g:set var="successrate" value="${execCount>0? (successcount/execCount) : 0}"/>
-                            <g:render template="/scheduledExecution/showStats" model="[scheduledExecution:scheduledExecution,lastrun:null, successrate:successrate]"/>
+                            <g:render template="/scheduledExecution/renderJobStats"
+                                      model="${[scheduledExecution: scheduledExecution]}"/>
                         </td>
                     </g:if>
                 </tr>
